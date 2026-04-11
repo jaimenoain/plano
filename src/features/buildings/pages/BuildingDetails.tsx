@@ -414,6 +414,9 @@ export default function BuildingDetails() {
   const [showDirectionsAlert, setShowDirectionsAlert] = useState(false);
   const [ratingAreaHovered, setRatingAreaHovered] = useState(false);
 
+  const buildingInteractionsExpanded =
+    noteEditorOpen || showCollections || showVisitWith;
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isMapExpanded) setIsMapExpanded(false);
@@ -882,186 +885,146 @@ export default function BuildingDetails() {
           </div>
 
           {/* ── USER ACTIONS ── */}
-          <div
-            className={cn(
-              "flex items-center gap-3 pb-8",
-              !(user && (userStatus === "visited" || userStatus === "pending")) &&
-                "border-b border-border-default",
-            )}
-          >
-            {userStatus === null ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => void handleStatusChange("visited")}
-                  className="text-xs font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
-                >
-                  <Check className="mr-1 inline h-4 w-4" />
-                  Visited
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void handleStatusChange("pending")}
-                  className="text-xs font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
-                >
-                  <Bookmark className="mr-1 inline h-4 w-4" />
-                  Save
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void handleStatusChange("ignored")}
-                  className="text-xs font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
-                >
-                  <EyeOff className="mr-1 inline h-4 w-4" />
-                  Hide
-                </button>
-              </>
-            ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  type="button"
-                  className="inline-flex items-center gap-0.5 text-xs font-medium uppercase tracking-widest text-text-primary outline-none transition-colors hover:text-brand-primary focus-visible:ring-2 focus-visible:ring-border-default data-[state=open]:text-brand-primary"
-                >
-                  {userStatus === "visited" ? (
-                    <>
+          {user && (userStatus === "visited" || userStatus === "pending") ? (
+            <div className="group/actions space-y-3 border-b border-border-default pb-4">
+              <div className="flex items-center gap-3">
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    type="button"
+                    className="inline-flex items-center gap-0.5 text-xs font-medium uppercase tracking-widest text-text-primary outline-none transition-colors hover:text-brand-primary focus-visible:ring-2 focus-visible:ring-border-default data-[state=open]:text-brand-primary"
+                  >
+                    {userStatus === "visited" ? (
+                      <>
+                        <Check
+                          className={cn(
+                            "mr-1 inline h-4 w-4",
+                            "stroke-[2.5px]",
+                          )}
+                          aria-hidden
+                        />
+                        Visited
+                      </>
+                    ) : userStatus === "pending" ? (
+                      <>
+                        <Bookmark
+                          className="mr-1 inline h-4 w-4 fill-current"
+                          aria-hidden
+                        />
+                        Save
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="mr-1 inline h-4 w-4" aria-hidden />
+                        Hide
+                      </>
+                    )}
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-60" aria-hidden />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-40">
+                    <DropdownMenuItem
+                      className="text-xs font-medium uppercase tracking-widest"
+                      onSelect={() => void handleStatusChange("visited")}
+                    >
                       <Check
                         className={cn(
-                          "mr-1 inline h-4 w-4",
-                          "stroke-[2.5px]",
+                          "mr-2 h-4 w-4",
+                          userStatus === "visited" && "stroke-[2.5px]",
                         )}
                         aria-hidden
                       />
                       Visited
-                    </>
-                  ) : userStatus === "pending" ? (
-                    <>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-xs font-medium uppercase tracking-widest"
+                      onSelect={() => void handleStatusChange("pending")}
+                    >
                       <Bookmark
-                        className="mr-1 inline h-4 w-4 fill-current"
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          userStatus === "pending" && "fill-current",
+                        )}
                         aria-hidden
                       />
                       Save
-                    </>
-                  ) : (
-                    <>
-                      <EyeOff className="mr-1 inline h-4 w-4" aria-hidden />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-xs font-medium uppercase tracking-widest"
+                      onSelect={() => void handleStatusChange("ignored")}
+                    >
+                      <EyeOff className="mr-2 h-4 w-4" aria-hidden />
                       Hide
-                    </>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <div
+                  className="ml-2 flex min-h-4 min-w-14 items-center gap-1"
+                  onMouseEnter={() => setRatingAreaHovered(true)}
+                  onMouseLeave={() => {
+                    setRatingAreaHovered(false);
+                    setHoverRating(null);
+                  }}
+                >
+                  {[1, 2, 3].map((i) => {
+                    const filled =
+                      hoverRating !== null ? i <= hoverRating : i <= myRating;
+                    const showCell =
+                      hoverRating !== null || ratingAreaHovered || i <= myRating;
+                    return (
+                      <Circle
+                        key={i}
+                        className={cn(
+                          "h-4 w-4 shrink-0 cursor-pointer transition-opacity hover:opacity-80",
+                          !showCell && "opacity-0",
+                          filled
+                            ? "fill-text-primary text-text-primary"
+                            : "fill-transparent text-text-disabled",
+                        )}
+                        onMouseEnter={() => setHoverRating(i)}
+                        onClick={() =>
+                          void handleRate(building.id, i === myRating ? 0 : i)
+                        }
+                      />
+                    );
+                  })}
+                </div>
+
+                <div className="min-w-0 flex-1" />
+
+                <div
+                  className={cn(
+                    "flex flex-wrap items-center justify-end gap-x-3 gap-y-1 transition-opacity duration-150",
+                    buildingInteractionsExpanded
+                      ? "opacity-100"
+                      : "max-md:opacity-100 md:opacity-0 md:group-hover/actions:opacity-100 md:focus-within:opacity-100",
                   )}
-                  <ChevronDown className="h-4 w-4 shrink-0 opacity-60" aria-hidden />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="min-w-40">
-                  <DropdownMenuItem
-                    className="text-xs font-medium uppercase tracking-widest"
-                    onSelect={() => void handleStatusChange("visited")}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        userStatus === "visited" && "stroke-[2.5px]",
-                      )}
-                      aria-hidden
-                    />
-                    Visited
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-xs font-medium uppercase tracking-widest"
-                    onSelect={() => void handleStatusChange("pending")}
-                  >
-                    <Bookmark
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        userStatus === "pending" && "fill-current",
-                      )}
-                      aria-hidden
-                    />
-                    Save
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-xs font-medium uppercase tracking-widest"
-                    onSelect={() => void handleStatusChange("ignored")}
-                  >
-                    <EyeOff className="mr-2 h-4 w-4" aria-hidden />
-                    Hide
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-
-            {(userStatus === "visited" || userStatus === "pending") ? (
-              <div
-                className="ml-2 flex min-h-4 min-w-14 items-center gap-1"
-                onMouseEnter={() => setRatingAreaHovered(true)}
-                onMouseLeave={() => {
-                  setRatingAreaHovered(false);
-                  setHoverRating(null);
-                }}
-              >
-                {[1, 2, 3].map((i) => {
-                  const filled =
-                    hoverRating !== null ? i <= hoverRating : i <= myRating;
-                  const showCell =
-                    hoverRating !== null || ratingAreaHovered || i <= myRating;
-                  return (
-                    <Circle
-                      key={i}
-                      className={cn(
-                        "h-4 w-4 shrink-0 cursor-pointer transition-opacity hover:opacity-80",
-                        !showCell && "opacity-0",
-                        filled
-                          ? "fill-text-primary text-text-primary"
-                          : "fill-transparent text-text-disabled",
-                      )}
-                      onMouseEnter={() => setHoverRating(i)}
-                      onClick={() =>
-                        void handleRate(building.id, i === myRating ? 0 : i)
-                      }
-                    />
-                  );
-                })}
-              </div>
-            ) : null}
-
-            <div className="flex-1" />
-
-            <Link
-              to={
-                getBuildingUrl(building.id, building.slug, building.short_id) +
-                "/review"
-              }
-              className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary"
-            >
-              Write review →
-            </Link>
-          </div>
-
-          {user && (userStatus === "visited" || userStatus === "pending") ? (
-            <div className="space-y-4 border-b border-border-default pb-8">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                <button
-                  type="button"
-                  onClick={() => setNoteEditorOpen((open) => !open)}
-                  aria-expanded={noteEditorOpen}
-                  className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
                 >
-                  <Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden />
-                  Add note
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCollections(!showCollections)}
-                  className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-                >
-                  <Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden />
-                  Add to collection
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowVisitWith(!showVisitWith)}
-                  className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-                >
-                  <Users className="mr-1 inline h-3.5 w-3.5" aria-hidden />
-                  Plan a visit
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setNoteEditorOpen((open) => !open)}
+                    aria-expanded={noteEditorOpen}
+                    className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                  >
+                    <Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden />
+                    Add note
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCollections(!showCollections)}
+                    className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                  >
+                    <Plus className="mr-1 inline h-3.5 w-3.5" aria-hidden />
+                    Add to collection
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowVisitWith(!showVisitWith)}
+                    className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                  >
+                    <Users className="mr-1 inline h-3.5 w-3.5" aria-hidden />
+                    Plan a visit
+                  </button>
+                </div>
               </div>
 
               {noteEditorOpen ? (
@@ -1147,7 +1110,125 @@ export default function BuildingDetails() {
                 </div>
               ) : null}
             </div>
-          ) : null}
+          ) : (
+            <div
+              className={cn(
+                "flex items-center gap-3",
+                "pb-8",
+                "border-b border-border-default",
+              )}
+            >
+              {userStatus === null ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => void handleStatusChange("visited")}
+                    className="text-xs font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
+                  >
+                    <Check className="mr-1 inline h-4 w-4" />
+                    Visited
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleStatusChange("pending")}
+                    className="text-xs font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
+                  >
+                    <Bookmark className="mr-1 inline h-4 w-4" />
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleStatusChange("ignored")}
+                    className="text-xs font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
+                  >
+                    <EyeOff className="mr-1 inline h-4 w-4" />
+                    Hide
+                  </button>
+                </>
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    type="button"
+                    className="inline-flex items-center gap-0.5 text-xs font-medium uppercase tracking-widest text-text-primary outline-none transition-colors hover:text-brand-primary focus-visible:ring-2 focus-visible:ring-border-default data-[state=open]:text-brand-primary"
+                  >
+                    {userStatus === "visited" ? (
+                      <>
+                        <Check
+                          className={cn(
+                            "mr-1 inline h-4 w-4",
+                            "stroke-[2.5px]",
+                          )}
+                          aria-hidden
+                        />
+                        Visited
+                      </>
+                    ) : userStatus === "pending" ? (
+                      <>
+                        <Bookmark
+                          className="mr-1 inline h-4 w-4 fill-current"
+                          aria-hidden
+                        />
+                        Save
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="mr-1 inline h-4 w-4" aria-hidden />
+                        Hide
+                      </>
+                    )}
+                    <ChevronDown className="h-4 w-4 shrink-0 opacity-60" aria-hidden />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-40">
+                    <DropdownMenuItem
+                      className="text-xs font-medium uppercase tracking-widest"
+                      onSelect={() => void handleStatusChange("visited")}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          userStatus === "visited" && "stroke-[2.5px]",
+                        )}
+                        aria-hidden
+                      />
+                      Visited
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-xs font-medium uppercase tracking-widest"
+                      onSelect={() => void handleStatusChange("pending")}
+                    >
+                      <Bookmark
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          userStatus === "pending" && "fill-current",
+                        )}
+                        aria-hidden
+                      />
+                      Save
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-xs font-medium uppercase tracking-widest"
+                      onSelect={() => void handleStatusChange("ignored")}
+                    >
+                      <EyeOff className="mr-2 h-4 w-4" aria-hidden />
+                      Hide
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              <div className="flex-1" />
+
+              <Link
+                to={
+                  getBuildingUrl(building.id, building.slug, building.short_id) +
+                  "/review"
+                }
+                className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary"
+              >
+                Write review →
+              </Link>
+            </div>
+          )}
 
           {user &&
           pendingImages.length > 0 &&

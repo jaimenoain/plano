@@ -11,7 +11,7 @@
  * File location: src/features/buildings/hooks/useBuildingInteractions.ts
  */
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -220,6 +220,7 @@ export function useBuildingInteractions({
 }: UseBuildingInteractionsInput): BuildingInteractions {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const userId = user?.id ?? null;
 
   // ── Building state (mutable copy for hero / lookbook updates on this page) ────
   const [building, setBuilding] = useState<BuildingDetails | null>(
@@ -229,12 +230,17 @@ export function useBuildingInteractions({
     if (loaderBuilding) setBuilding(loaderBuilding);
   }, [loaderBuilding]);
 
+  const buildingRef = useRef(building);
+  buildingRef.current = building;
+
   const [heroImageUrl, setHeroImageUrl] = useState<string | null>(
     initialHeroImageUrl,
   );
 
   // ── Core loading ─────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
+  /** Avoid full-page spinner on background refetches (credits/user deps, etc.). */
+  const lastSuccessfulLoadBuildingId = useRef<string | null>(null);
 
   // ── User relationship ────────────────────────────────────────────────────
   const [isCreator, setIsCreator] = useState(false);
@@ -389,28 +395,30 @@ export function useBuildingInteractions({
       if (!linksError && linksData) {
         const links = linksData as unknown as TopLink[];
         setTopLinks(links);
-        if (user && links.length > 0) {
+        if (userId && links.length > 0) {
           const linkIds = links.map((l) => l.link_id);
           const { data: likes } = await supabase
             .from("link_likes")
             .select("link_id")
-            .eq("user_id", user.id)
+            .eq("user_id", userId)
             .in("link_id", linkIds);
           if (likes) setLikedLinkIds(new Set(likes.map((l) => l.link_id)));
         }
       }
       setLinksLoading(false);
     },
-    [user],
+    [userId],
   );
 
   const fetchUserSpecificData = useCallback(async () => {
-    if (!building) return;
-    setLoading(true);
+    const b = buildingRef.current;
+    if (!b) return;
+    const showFullPageLoad = lastSuccessfulLoadBuildingId.current !== b.id;
+    if (showFullPageLoad) setLoading(true);
     try {
-      const resolvedBuildingId = building.id;
+      const resolvedBuildingId = b.id;
 
-      if (user && building.created_by === user.id) setIsCreator(true);
+      if (userId && b.created_by === userId) setIsCreator(true);
 
       const tasks: Promise<void>[] = [];
 
@@ -438,14 +446,14 @@ export function useBuildingInteractions({
 
       tasks.push(fetchTopLinks(resolvedBuildingId));
 
-      if (user) {
+      if (userId) {
         tasks.push(
           (async () => {
             // Verified architect claims for this user
             const { data: claims } = await supabase
               .from("architect_claims")
               .select("architect_id")
-              .eq("user_id", user.id)
+              .eq("user_id", userId)
               .eq("status", "verified");
             if (claims) setVerifiedClaims(claims.map((c) => c.architect_id));
 
@@ -455,7 +463,7 @@ export function useBuildingInteractions({
               .select(
                 "*, images:review_images(id, storage_path, is_generated, is_official)",
               )
-              .eq("user_id", user.id)
+              .eq("user_id", userId)
               .eq("building_id", resolvedBuildingId)
               .maybeSingle();
 
@@ -472,7 +480,7 @@ export function useBuildingInteractions({
                     collections: { owner_id: string } | null;
                     collection_id: string;
                   },
-                ) => item.collections?.owner_id === user.id,
+                ) => item.collections?.owner_id === userId,
               )
               .map((item) => item.collection_id);
 
@@ -509,11 +517,11 @@ export function useBuildingInteractions({
       tasks.push(
         (async () => {
           let followedIds = new Set<string>();
-          if (user) {
+          if (userId) {
             const { data: followsData } = await supabase
               .from("follows")
               .select("following_id")
-              .eq("follower_id", user.id);
+              .eq("follower_id", userId);
             if (followsData)
               followedIds = new Set<string>(
                 (followsData as { following_id: string }[]).map(
@@ -617,7 +625,7 @@ export function useBuildingInteractions({
           }
 
           // Resolve which images the current user has liked
-          if (user && communityImages.length > 0) {
+          if (userId && communityImages.length > 0) {
             const imageIds = communityImages
               .filter((img) => img.type === "image")
               .map((img) => img.id);
@@ -625,7 +633,7 @@ export function useBuildingInteractions({
               const { data: likesData } = await supabase
                 .from("image_likes")
                 .select("image_id")
-                .eq("user_id", user.id)
+                .eq("user_id", userId)
                 .in("image_id", imageIds);
               setLikedImageIds(
                 new Set<string>(
@@ -644,7 +652,8 @@ export function useBuildingInteractions({
         })(),
       );
 
-      await Promise.all(tasks);
+                await Promise.all(tasks);
+      lastSuccessfulLoadBuildingId.current = b.id;
     } catch (_error: unknown) {
       toast({
         variant: "destructive",
@@ -654,7 +663,7 @@ export function useBuildingInteractions({
     } finally {
       setLoading(false);
     }
-  }, [building?.id, user, buildingCreditsFingerprint, fetchTopLinks]);
+  }, [building?.id, buildingCreditsFingerprint, fetchTopLinks, toast, userId]);
 
   useEffect(() => {
     void fetchUserSpecificData();
