@@ -2,7 +2,7 @@
  * useBuildingInteractions
  *
  * Owns all data-fetching, mutation state, and event handlers for the building
- * detail page. The component keeps only:
+ * detail page (official field edits use `/building/:id/:slug/edit`). The component keeps only:
  *   - loader / router concerns (useLoaderData, useParams)
  *   - buildingCredits query + derived auth values
  *   - pure UI toggles with no async logic (isMapExpanded)
@@ -108,7 +108,7 @@ interface UseBuildingInteractionsInput {
 // ─── Hook return ─────────────────────────────────────────────────────────────
 
 export interface BuildingInteractions {
-  // Building state (hook owns mutations via handleSaveOfficialData / handleSetHeroImage)
+  // Building state (hook owns mutations via handleSetHeroImage / lookbook toggles)
   building: BuildingDetails | null;
   heroImageUrl: string | null;
 
@@ -121,27 +121,6 @@ export interface BuildingInteractions {
   myRating: number;
   hoverRating: number | null;
   setHoverRating: (r: number | null) => void;
-
-  // Official data editing
-  isOfficialEditing: boolean;
-  setIsOfficialEditing: (v: boolean) => void;
-  draftOfficialData: {
-    name: string;
-    year_completed: number;
-    city: string;
-    country: string;
-    architect_statement: string;
-  };
-  setDraftOfficialData: React.Dispatch<
-    React.SetStateAction<{
-      name: string;
-      year_completed: number;
-      city: string;
-      country: string;
-      architect_statement: string;
-    }>
-  >;
-  isSavingOfficial: boolean;
 
   // Community data
   entries: FeedEntry[];
@@ -218,7 +197,6 @@ export interface BuildingInteractions {
   handleSaveNote: () => Promise<void>;
   handleDelete: () => Promise<void>;
   handleSendInvites: () => Promise<void>;
-  handleSaveOfficialData: () => Promise<void>;
   handleSetHeroImage: () => Promise<void>;
   handleToggleOfficial: () => Promise<void>;
   handleLinkLike: (linkId: string) => Promise<void>;
@@ -239,7 +217,7 @@ export function useBuildingInteractions({
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // ── Building state (mutable copy so official edits reflect immediately) ────
+  // ── Building state (mutable copy for hero / lookbook updates on this page) ────
   const [building, setBuilding] = useState<BuildingDetails | null>(
     () => loaderBuilding ?? null,
   );
@@ -261,30 +239,6 @@ export function useBuildingInteractions({
   >(null);
   const [myRating, setMyRating] = useState(0);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
-
-  // ── Official editing ─────────────────────────────────────────────────────
-  const [isOfficialEditing, setIsOfficialEditing] = useState(false);
-  const [draftOfficialData, setDraftOfficialData] = useState({
-    name: "",
-    year_completed: 0,
-    city: "",
-    country: "",
-    architect_statement: "",
-  });
-  const [isSavingOfficial, setIsSavingOfficial] = useState(false);
-
-  // Keep draft in sync when loader building changes
-  useEffect(() => {
-    if (building) {
-      setDraftOfficialData({
-        name: building.name,
-        year_completed: building.year_completed,
-        city: building.city || "",
-        country: building.country || "",
-        architect_statement: building.architect_statement || "",
-      });
-    }
-  }, [building]);
 
   // ── Community data ───────────────────────────────────────────────────────
   const [entries, setEntries] = useState<FeedEntry[]>([]);
@@ -1036,43 +990,6 @@ export function useBuildingInteractions({
     }
   }, [user, building, selectedFriends, toast]);
 
-  const handleSaveOfficialData = useCallback(async () => {
-    if (!building) return;
-    setIsSavingOfficial(true);
-    try {
-      const { error } = await supabase
-        .from("buildings")
-        .update({
-          name: draftOfficialData.name,
-          year_completed: draftOfficialData.year_completed,
-          city: draftOfficialData.city,
-          country: draftOfficialData.country,
-          architect_statement: draftOfficialData.architect_statement,
-        })
-        .eq("id", building.id);
-      if (error) throw error;
-      toast({ title: "Building updated successfully" });
-      setIsOfficialEditing(false);
-      setBuilding((prev) =>
-        prev
-          ? {
-              ...prev,
-              name: draftOfficialData.name,
-              year_completed: draftOfficialData.year_completed,
-              city: draftOfficialData.city || null,
-              country: draftOfficialData.country || null,
-              architect_statement:
-                draftOfficialData.architect_statement || null,
-            }
-          : null,
-      );
-    } catch (_error) {
-      toast({ variant: "destructive", title: "Failed to update building" });
-    } finally {
-      setIsSavingOfficial(false);
-    }
-  }, [building, draftOfficialData, toast]);
-
   const handleSetHeroImage = useCallback(async () => {
     if (!selectedImage || !building) return;
     const newHeroId = selectedImage.id;
@@ -1211,11 +1128,6 @@ export function useBuildingInteractions({
     myRating,
     hoverRating,
     setHoverRating,
-    isOfficialEditing,
-    setIsOfficialEditing,
-    draftOfficialData,
-    setDraftOfficialData,
-    isSavingOfficial,
     entries,
     displayImages,
     selectedImage,
@@ -1266,7 +1178,6 @@ export function useBuildingInteractions({
     handleSaveNote,
     handleDelete,
     handleSendInvites,
-    handleSaveOfficialData,
     handleSetHeroImage,
     handleToggleOfficial,
     handleLinkLike,

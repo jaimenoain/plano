@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -288,11 +287,6 @@ export default function BuildingDetails() {
     myRating,
     hoverRating,
     setHoverRating,
-    isOfficialEditing,
-    setIsOfficialEditing,
-    draftOfficialData,
-    setDraftOfficialData,
-    isSavingOfficial,
     entries,
     displayImages,
     selectedImage,
@@ -343,7 +337,6 @@ export default function BuildingDetails() {
     handleSaveNote,
     handleDelete,
     handleSendInvites,
-    handleSaveOfficialData,
     handleSetHeroImage,
     handleToggleOfficial,
     handleLinkLike,
@@ -752,26 +745,13 @@ export default function BuildingDetails() {
               </span>
             ) : null}
 
-            {isOfficialEditing ? (
-              <Input
-                value={draftOfficialData.name}
-                onChange={(e) =>
-                  setDraftOfficialData((p) => ({ ...p, name: e.target.value }))
-                }
-                className="h-auto w-full border-none bg-transparent px-0 py-2 text-4xl font-bold leading-tight tracking-tight focus-visible:ring-0 md:text-5xl lg:text-6xl"
-                placeholder="Building Name"
-              />
-            ) : (
-              <h1 className="text-4xl font-bold leading-tight tracking-tight text-text-primary md:text-5xl lg:text-6xl">
-                {building.name}
-              </h1>
-            )}
+            <h1 className="text-4xl font-bold leading-tight tracking-tight text-text-primary md:text-5xl lg:text-6xl">
+              {building.name}
+            </h1>
 
-            {building.alt_name &&
-              building.alt_name !== building.name &&
-              !isOfficialEditing ? (
-                <p className="text-lg text-text-secondary">{building.alt_name}</p>
-              ) : null}
+            {building.alt_name && building.alt_name !== building.name ? (
+              <p className="text-lg text-text-secondary">{building.alt_name}</p>
+            ) : null}
 
             {/* Status pill */}
             {(building.status === "Demolished" ||
@@ -796,21 +776,7 @@ export default function BuildingDetails() {
                   <span className="text-text-disabled">·</span>
                 </>
               ) : null}
-              {isOfficialEditing ? (
-                <Input
-                  type="number"
-                  value={draftOfficialData.year_completed}
-                  onChange={(e) =>
-                    setDraftOfficialData((p) => ({
-                      ...p,
-                      year_completed: parseInt(e.target.value),
-                    }))
-                  }
-                  className="h-7 w-20 text-sm"
-                />
-              ) : (
-                <span>{building.year_completed}</span>
-              )}
+              <span>{building.year_completed}</span>
               {(building.city || building.country) ? (
                 <>
                   <span className="text-text-disabled">·</span>
@@ -935,38 +901,16 @@ export default function BuildingDetails() {
             </Link>
 
             {canEditOfficialData ? (
-              isOfficialEditing ? (
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsOfficialEditing(false)}
-                    disabled={isSavingOfficial}
-                    className="text-xs text-text-secondary transition-colors hover:text-text-primary"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSaveOfficialData}
-                    disabled={isSavingOfficial}
-                    className="text-xs font-medium text-text-primary transition-colors hover:text-brand-primary"
-                  >
-                    {isSavingOfficial ? (
-                      <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
-                    ) : null}
-                    Save
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsOfficialEditing(true)}
-                  className="text-text-disabled transition-colors hover:text-text-primary"
-                  aria-label="Edit official data"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-              )
+              <Link
+                to={
+                  getBuildingUrl(building.id, building.slug, building.short_id) +
+                  "/edit"
+                }
+                className="text-text-disabled transition-colors hover:text-text-primary"
+                aria-label="Edit building"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Link>
             ) : null}
           </div>
 
@@ -1059,40 +1003,6 @@ export default function BuildingDetails() {
                     ) : null}
                   </div>
                 ) : null}
-              </div>
-            </div>
-          ) : null}
-
-          {/* ── OFFICIAL EDITING PANEL ── */}
-          {isOfficialEditing ? (
-            <div className="border-b border-border-default py-6">
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.12em] text-text-disabled">
-                Editing official data
-              </p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="space-y-1">
-                  <Label className="text-xs text-text-secondary">City</Label>
-                  <Input
-                    value={draftOfficialData.city}
-                    onChange={(e) =>
-                      setDraftOfficialData((p) => ({ ...p, city: e.target.value }))
-                    }
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-text-secondary">Country</Label>
-                  <Input
-                    value={draftOfficialData.country}
-                    onChange={(e) =>
-                      setDraftOfficialData((p) => ({
-                        ...p,
-                        country: e.target.value,
-                      }))
-                    }
-                    className="h-8 text-sm"
-                  />
-                </div>
               </div>
             </div>
           ) : null}
@@ -1198,33 +1108,12 @@ export default function BuildingDetails() {
                 <div className="mt-2 flex items-center justify-between">
                   <div className="group flex items-center gap-1.5 text-xs text-text-secondary">
                     <MapPin className="h-3.5 w-3.5 shrink-0" />
-                    {isOfficialEditing ? (
-                      <div className="flex gap-2">
-                        <Input
-                          value={draftOfficialData.city}
-                          onChange={(e) =>
-                            setDraftOfficialData((p) => ({ ...p, city: e.target.value }))
-                          }
-                          placeholder="City"
-                          className="h-8 w-28 text-sm"
-                        />
-                        <Input
-                          value={draftOfficialData.country}
-                          onChange={(e) =>
-                            setDraftOfficialData((p) => ({ ...p, country: e.target.value }))
-                          }
-                          placeholder="Country"
-                          className="h-8 w-28 text-sm"
-                        />
-                      </div>
-                    ) : (
-                      <span>
-                        {[building.city, building.country]
-                          .filter(Boolean)
-                          .join(", ") || building.address}
-                      </span>
-                    )}
-                    {user && !isOfficialEditing ? (
+                    <span>
+                      {[building.city, building.country]
+                        .filter(Boolean)
+                        .join(", ") || building.address}
+                    </span>
+                    {user ? (
                       <Link
                         to={
                           getBuildingUrl(
@@ -1267,11 +1156,9 @@ export default function BuildingDetails() {
 
           {/* ── ARCHITECT STATEMENT ── */}
           <ArchitectStatement
-            statement={draftOfficialData.architect_statement}
-            isEditing={isOfficialEditing}
-            onChange={(val) =>
-              setDraftOfficialData((p) => ({ ...p, architect_statement: val }))
-            }
+            statement={building.architect_statement ?? ""}
+            isEditing={false}
+            onChange={() => {}}
             architectName={leadAttributionFromCredits(buildingCredits)}
           />
 

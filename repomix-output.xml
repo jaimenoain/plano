@@ -17800,6 +17800,85 @@ export function FeedClusterCard({
 }
 </file>
 
+<file path="src/features/feed/components/FeedCollectionCard.tsx">
+import { useNavigate } from "react-router";
+import { useState } from "react";
+import { FeedCollection } from "@/types/feed";
+import { getBuildingImageUrl } from "@/utils/image";
+interface FeedCollectionCardProps {
+  collection: FeedCollection;
+}
+function resolvePreviewSrc(pb: FeedCollection["previewBuildings"][number] | undefined) {
+  if (!pb) return undefined;
+  return (
+    getBuildingImageUrl(pb.mainImageUrl) ??
+    getBuildingImageUrl(pb.communityPreviewUrl)
+  );
+}
+function MosaicCell({ imageSrc }: { imageSrc: string | undefined }) {
+  const [errored, setErrored] = useState(false);
+  if (!imageSrc || errored) {
+    return <div className="flex-1 min-w-0 h-full bg-surface-muted" />;
+  }
+  return (
+    <div className="flex-1 min-w-0 h-full overflow-hidden bg-surface-muted">
+      <img
+        src={imageSrc}
+        alt=""
+        className="w-full h-full object-cover"
+        onError={() => setErrored(true)}
+      />
+    </div>
+  );
+}
+export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
+  const navigate = useNavigate();
+  const ownerUsername = collection.owner?.username ?? "user";
+  const handleCardClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("button")) return;
+    navigate(`/${ownerUsername}/map/${collection.slug}`);
+  };
+  const slots = Array.from({ length: 6 }).map((_, i) =>
+    resolvePreviewSrc(collection.previewBuildings?.[i])
+  );
+  return (
+    <article
+      onClick={handleCardClick}
+      className="w-full cursor-pointer"
+    >
+      {/* Horizontal photo strip */}
+      <div className="flex gap-mosaic-gap w-full h-[240px] overflow-hidden">
+        {slots.map((url, i) => (
+          <MosaicCell key={i} imageSrc={url} />
+        ))}
+      </div>
+      {/* Metadata */}
+      <div className="mt-4">
+        {/* Category label */}
+        <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
+          Collection
+        </span>
+        {/* Collection name */}
+        <h3 className="text-2xl font-semibold tracking-tight text-text-primary mt-1">
+          {collection.name}
+        </h3>
+        {/* Details row */}
+        <p className="text-sm text-text-secondary mt-1">
+          {ownerUsername} · {collection.buildingCount ?? 0} buildings
+        </p>
+        {/* Description */}
+        {collection.description && (
+          <p className="text-sm text-text-secondary mt-2 line-clamp-2">
+            {collection.description}
+          </p>
+        )}
+      </div>
+    </article>
+  );
+}
+</file>
+
 <file path="src/features/feed/components/FeedCompactCard.tsx">
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router";
@@ -50934,85 +51013,6 @@ describe('FeedClusterCard', () => {
 });
 </file>
 
-<file path="src/features/feed/components/FeedCollectionCard.tsx">
-import { useNavigate } from "react-router";
-import { useState } from "react";
-import { FeedCollection } from "@/types/feed";
-import { getBuildingImageUrl } from "@/utils/image";
-interface FeedCollectionCardProps {
-  collection: FeedCollection;
-}
-function resolvePreviewSrc(pb: FeedCollection["previewBuildings"][number] | undefined) {
-  if (!pb) return undefined;
-  return (
-    getBuildingImageUrl(pb.mainImageUrl) ??
-    getBuildingImageUrl(pb.communityPreviewUrl)
-  );
-}
-function MosaicCell({ imageSrc }: { imageSrc: string | undefined }) {
-  const [errored, setErrored] = useState(false);
-  if (!imageSrc || errored) {
-    return <div className="flex-1 min-w-0 h-full bg-surface-muted" />;
-  }
-  return (
-    <div className="flex-1 min-w-0 h-full overflow-hidden bg-surface-muted">
-      <img
-        src={imageSrc}
-        alt=""
-        className="w-full h-full object-cover"
-        onError={() => setErrored(true)}
-      />
-    </div>
-  );
-}
-export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
-  const navigate = useNavigate();
-  const ownerUsername = collection.owner?.username ?? "user";
-  const handleCardClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest("button")) return;
-    navigate(`/${ownerUsername}/map/${collection.slug}`);
-  };
-  const slots = Array.from({ length: 6 }).map((_, i) =>
-    resolvePreviewSrc(collection.previewBuildings?.[i])
-  );
-  return (
-    <article
-      onClick={handleCardClick}
-      className="w-full cursor-pointer"
-    >
-      {/* Horizontal photo strip */}
-      <div className="flex gap-mosaic-gap w-full h-[240px] overflow-hidden">
-        {slots.map((url, i) => (
-          <MosaicCell key={i} imageSrc={url} />
-        ))}
-      </div>
-      {/* Metadata */}
-      <div className="mt-4">
-        {/* Category label */}
-        <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
-          Collection
-        </span>
-        {/* Collection name */}
-        <h3 className="text-2xl font-semibold tracking-tight text-text-primary mt-1">
-          {collection.name}
-        </h3>
-        {/* Details row */}
-        <p className="text-sm text-text-secondary mt-1">
-          {ownerUsername} · {collection.buildingCount ?? 0} buildings
-        </p>
-        {/* Description */}
-        {collection.description && (
-          <p className="text-sm text-text-secondary mt-2 line-clamp-2">
-            {collection.description}
-          </p>
-        )}
-      </div>
-    </article>
-  );
-}
-</file>
-
 <file path="src/features/feed/components/FeedCompactCard.test.tsx">
 // @vitest-environment happy-dom
 import { describe, it, expect, vi } from 'vitest';
@@ -77299,7 +77299,7 @@ describe("BuildingCredits flag flow (QA 5.3)", () => {
  * useBuildingInteractions
  *
  * Owns all data-fetching, mutation state, and event handlers for the building
- * detail page. The component keeps only:
+ * detail page (official field edits use `/building/:id/:slug/edit`). The component keeps only:
  *   - loader / router concerns (useLoaderData, useParams)
  *   - buildingCredits query + derived auth values
  *   - pure UI toggles with no async logic (isMapExpanded)
@@ -77394,7 +77394,7 @@ interface UseBuildingInteractionsInput {
 }
 // ─── Hook return ─────────────────────────────────────────────────────────────
 export interface BuildingInteractions {
-  // Building state (hook owns mutations via handleSaveOfficialData / handleSetHeroImage)
+  // Building state (hook owns mutations via handleSetHeroImage / lookbook toggles)
   building: BuildingDetails | null;
   heroImageUrl: string | null;
   // Loading
@@ -77405,26 +77405,6 @@ export interface BuildingInteractions {
   myRating: number;
   hoverRating: number | null;
   setHoverRating: (r: number | null) => void;
-  // Official data editing
-  isOfficialEditing: boolean;
-  setIsOfficialEditing: (v: boolean) => void;
-  draftOfficialData: {
-    name: string;
-    year_completed: number;
-    city: string;
-    country: string;
-    architect_statement: string;
-  };
-  setDraftOfficialData: React.Dispatch<
-    React.SetStateAction<{
-      name: string;
-      year_completed: number;
-      city: string;
-      country: string;
-      architect_statement: string;
-    }>
-  >;
-  isSavingOfficial: boolean;
   // Community data
   entries: FeedEntry[];
   displayImages: DisplayImage[];
@@ -77493,7 +77473,6 @@ export interface BuildingInteractions {
   handleSaveNote: () => Promise<void>;
   handleDelete: () => Promise<void>;
   handleSendInvites: () => Promise<void>;
-  handleSaveOfficialData: () => Promise<void>;
   handleSetHeroImage: () => Promise<void>;
   handleToggleOfficial: () => Promise<void>;
   handleLinkLike: (linkId: string) => Promise<void>;
@@ -77511,7 +77490,7 @@ export function useBuildingInteractions({
 }: UseBuildingInteractionsInput): BuildingInteractions {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  // ── Building state (mutable copy so official edits reflect immediately) ────
+  // ── Building state (mutable copy for hero / lookbook updates on this page) ────
   const [building, setBuilding] = useState<BuildingDetails | null>(
     () => loaderBuilding ?? null,
   );
@@ -77530,28 +77509,6 @@ export function useBuildingInteractions({
   >(null);
   const [myRating, setMyRating] = useState(0);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
-  // ── Official editing ─────────────────────────────────────────────────────
-  const [isOfficialEditing, setIsOfficialEditing] = useState(false);
-  const [draftOfficialData, setDraftOfficialData] = useState({
-    name: "",
-    year_completed: 0,
-    city: "",
-    country: "",
-    architect_statement: "",
-  });
-  const [isSavingOfficial, setIsSavingOfficial] = useState(false);
-  // Keep draft in sync when loader building changes
-  useEffect(() => {
-    if (building) {
-      setDraftOfficialData({
-        name: building.name,
-        year_completed: building.year_completed,
-        city: building.city || "",
-        country: building.country || "",
-        architect_statement: building.architect_statement || "",
-      });
-    }
-  }, [building]);
   // ── Community data ───────────────────────────────────────────────────────
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [displayImages, setDisplayImages] = useState<DisplayImage[]>([]);
@@ -78241,42 +78198,6 @@ export function useBuildingInteractions({
       setSendingInvites(false);
     }
   }, [user, building, selectedFriends, toast]);
-  const handleSaveOfficialData = useCallback(async () => {
-    if (!building) return;
-    setIsSavingOfficial(true);
-    try {
-      const { error } = await supabase
-        .from("buildings")
-        .update({
-          name: draftOfficialData.name,
-          year_completed: draftOfficialData.year_completed,
-          city: draftOfficialData.city,
-          country: draftOfficialData.country,
-          architect_statement: draftOfficialData.architect_statement,
-        })
-        .eq("id", building.id);
-      if (error) throw error;
-      toast({ title: "Building updated successfully" });
-      setIsOfficialEditing(false);
-      setBuilding((prev) =>
-        prev
-          ? {
-              ...prev,
-              name: draftOfficialData.name,
-              year_completed: draftOfficialData.year_completed,
-              city: draftOfficialData.city || null,
-              country: draftOfficialData.country || null,
-              architect_statement:
-                draftOfficialData.architect_statement || null,
-            }
-          : null,
-      );
-    } catch (_error) {
-      toast({ variant: "destructive", title: "Failed to update building" });
-    } finally {
-      setIsSavingOfficial(false);
-    }
-  }, [building, draftOfficialData, toast]);
   const handleSetHeroImage = useCallback(async () => {
     if (!selectedImage || !building) return;
     const newHeroId = selectedImage.id;
@@ -78408,11 +78329,6 @@ export function useBuildingInteractions({
     myRating,
     hoverRating,
     setHoverRating,
-    isOfficialEditing,
-    setIsOfficialEditing,
-    draftOfficialData,
-    setDraftOfficialData,
-    isSavingOfficial,
     entries,
     displayImages,
     selectedImage,
@@ -78463,7 +78379,6 @@ export function useBuildingInteractions({
     handleSaveNote,
     handleDelete,
     handleSendInvites,
-    handleSaveOfficialData,
     handleSetHeroImage,
     handleToggleOfficial,
     handleLinkLike,
@@ -87754,1542 +87669,6 @@ verify_jwt = false
 verify_jwt = false
 </file>
 
-<file path="src/features/buildings/pages/BuildingDetails.tsx">
-import { useEffect, useState, useMemo, useCallback, createElement } from "react";
-import {
-  useParams,
-  Link,
-  useLoaderData,
-  useRouteError,
-  isRouteErrorResponse,
-  useRevalidator,
-  type MetaFunction,
-} from "react-router";
-import {
-  Loader2, MapPin, Send,
-  Check, Bookmark, Image as ImageIcon,
-  Heart, ExternalLink, Circle, AlertTriangle, Search,
-  EyeOff, Plus, Users, X,
-  Pencil, BadgeCheck,
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
-import { useQuery } from "@tanstack/react-query";
-import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
-import { UserPicker } from "@/components/common/UserPicker";
-import { ImageDetailsDialog } from "../components/ImageDetailsDialog";
-import {
-  buildingCreditsQueryKey,
-  getBuildingCredits,
-} from "@/features/credits/api/credits";
-import {
-  leadAttributionFromCredits,
-  visiblePrimaryCredits,
-} from "@/features/credits/buildingCreditDisplay";
-import { getBuildingUrl } from "@/utils/url";
-import { CollectionSelector } from "@/features/collections/components/CollectionSelector";
-import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
-import { BuildingImageCard } from "../components/BuildingImageCard";
-import { PrimaryCreditsLinks } from "../components/PrimaryCreditsLinks";
-import { ArchitectStatement } from "../components/ArchitectStatement";
-import { BuildingHero } from "../components/BuildingHero";
-import { BuildingCredits, BuildingCreditsPreview } from "../components/BuildingCredits";
-import { buildingLoader } from "./BuildingDetails.loader";
-import {
-  buildingAbsoluteUrl,
-  buildingStructuredData,
-  buildingDescription,
-  SITE_URL,
-} from "@/features/buildings/utils/structuredData";
-import { cn } from "@/lib/utils";
-import { useBuildingInteractions } from "@/features/buildings/hooks/useBuildingInteractions";
-export { buildingLoader as loader } from "./BuildingDetails.loader";
-// ─── Static route exports ─────────────────────────────────────────────────────
-export function HydrateFallback() {
-  return (
-    <AppLayout showBack title="Loading...">
-      <Skeleton className="aspect-[21/9] w-full rounded-sm" />
-      <div className="px-4 sm:px-6 lg:px-8 py-10 max-w-4xl mx-auto space-y-6">
-        <Skeleton className="h-12 w-3/5 max-w-lg md:h-14" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-11/12" />
-      </div>
-    </AppLayout>
-  );
-}
-export function ErrorBoundary() {
-  const error = useRouteError();
-  const { id, slug } = useParams();
-  const revalidator = useRevalidator();
-  const pathHint = id && slug ? `${id}/${slug}` : id ?? null;
-  if (isRouteErrorResponse(error) && error.status === 404) {
-    return (
-      <AppLayout showBack>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-8 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">
-            Building not found
-          </h1>
-          <p className="text-text-secondary max-w-md mb-6 text-sm md:text-base leading-relaxed">
-            We couldn&apos;t find a building at this URL
-            {pathHint ? (
-              <> <span className="font-mono text-text-primary">({pathHint})</span></>
-            ) : null}
-            . It may have been removed or the link is incorrect.
-          </p>
-          <Button asChild size="lg" variant="default" className="min-w-[200px]">
-            <Link to="/explore">Browse buildings</Link>
-          </Button>
-        </div>
-      </AppLayout>
-    );
-  }
-  return (
-    <AppLayout showBack>
-      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-8 text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">
-          Something went wrong
-        </h1>
-        <p className="text-text-secondary max-w-md mb-6 text-sm md:text-base leading-relaxed">
-          An unexpected error occurred while loading this building. You can try
-          again or go back to explore.
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Button
-            type="button"
-            size="lg"
-            variant="default"
-            className="min-w-[200px]"
-            onClick={() => revalidator.revalidate()}
-            disabled={revalidator.state === "loading"}
-          >
-            Try again
-          </Button>
-          <Button asChild size="lg" variant="outline" className="min-w-[200px]">
-            <Link to="/explore">Browse buildings</Link>
-          </Button>
-        </div>
-      </div>
-    </AppLayout>
-  );
-}
-// ─── Types ────────────────────────────────────────────────────────────────────
-export interface BuildingDetails {
-  id: string;
-  short_id?: number | null;
-  slug?: string | null;
-  name: string;
-  alt_name?: string | null;
-  aliases?: string[] | null;
-  tier_rank?: string | null;
-  location: unknown;
-  location_precision?: "exact" | "approximate" | string | null;
-  address: string | null;
-  city: string | null;
-  country: string | null;
-  year_completed: number;
-  styles: { id: string; name: string }[];
-  created_by: string;
-  status?: string | null;
-  access_level?: "public" | "private" | "restricted" | "commercial" | null;
-  access_logistics?: "walk-in" | "booking_required" | "tour_only" | "exterior_only" | null;
-  access_cost?: "free" | "paid" | "customers_only" | null;
-  access_notes?: string | null;
-  typology?: string[] | null;
-  materials?: string[] | null;
-  context?: string | null;
-  intervention?: string | null;
-  category?: string | null;
-  architect_statement?: string | null;
-  hero_image_id: string | null;
-}
-/** Kept here because StreamBlock references FeedEntry["user"] and FeedEntry["status"]. */
-interface FeedEntry {
-  id: string;
-  user_id: string;
-  content: string | null;
-  rating: number | null;
-  status: "visited" | "pending";
-  tags: string[] | null;
-  created_at: string;
-  user: {
-    username: string | null;
-    avatar_url: string | null;
-    is_verified_architect?: boolean;
-    is_architect_of_building?: boolean;
-  };
-  images: { id: string; storage_path: string; created_at?: string }[];
-}
-interface DisplayImage {
-  id: string;
-  url: string;
-  poster?: string;
-  type?: "image" | "video";
-  likes_count: number;
-  created_at: string;
-  user: { username: string | null; avatar_url: string | null } | null;
-  is_generated?: boolean;
-  is_official?: boolean;
-}
-/**
- * A single scored, typed unit in the editorial photo + review stream.
- * Derived from entries + displayImages in the streamBlocks useMemo.
- */
-interface StreamBlock {
-  key: string;
-  entryId: string;
-  user: FeedEntry["user"];
-  content: string | null;
-  rating: number | null;
-  status: FeedEntry["status"];
-  images: DisplayImage[];
-  isOfficial: boolean;
-  topLikes: number;
-  blockType: "featured" | "mosaic" | "image-review" | "image-only" | "text-only";
-  score: number;
-}
-// ─── Meta ─────────────────────────────────────────────────────────────────────
-export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
-  if (!data || !data.building) return [{ title: "Plano" }];
-  const { building: rawBuilding, heroImageUrl, buildingCredits = [] } = data;
-  const building = rawBuilding as BuildingDetails;
-  const description = buildingDescription(building, buildingCredits);
-  const image = heroImageUrl ?? `${SITE_URL}/cover.jpg`;
-  const canonical = buildingAbsoluteUrl(building);
-  return [
-    { title: `${building.name} | Plano` },
-    { name: "description", content: description },
-    { property: "og:title", content: `${building.name} | Plano` },
-    { property: "og:description", content: description },
-    { property: "og:image", content: image },
-    { property: "og:url", content: canonical },
-    { property: "og:site_name", content: "Plano" },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary_large_image" },
-    { name: "twitter:title", content: `${building.name} | Plano` },
-    { name: "twitter:description", content: description },
-    { name: "twitter:image", content: image },
-    { tagName: "link", rel: "canonical", href: canonical },
-    { "script:ld+json": buildingStructuredData(building, buildingCredits) },
-  ];
-};
-// ─── Page component ───────────────────────────────────────────────────────────
-export default function BuildingDetails() {
-  const { user } = useAuth();
-  const { profile } = useUserProfile();
-  const {
-    building: loaderBuilding,
-    heroImageUrl: initialHeroImageUrl,
-    buildingCredits: initialBuildingCredits = [],
-  } = useLoaderData<typeof buildingLoader>();
-  const loaderBuildingTyped = loaderBuilding as BuildingDetails | null | undefined;
-  // ── BuildingCredits query — lives here so the queryKey is stable ──────────
-  const { data: buildingCredits = initialBuildingCredits } = useQuery({
-    queryKey: buildingCreditsQueryKey(loaderBuildingTyped?.id ?? ""),
-    queryFn: () => getBuildingCredits(loaderBuildingTyped!.id),
-    enabled: !!loaderBuildingTyped?.id,
-    initialData: initialBuildingCredits,
-    staleTime: 60_000,
-  });
-  const buildingCreditsFingerprint = useMemo(() => {
-    const sorted = [...buildingCredits].sort((a, b) => a.id.localeCompare(b.id));
-    return sorted
-      .map(
-        (c) =>
-          `${c.id}:${c.personId ?? ""}:${c.companyId ?? ""}:${c.status}:${c.isLead ? "1" : "0"}`,
-      )
-      .join("|");
-  }, [buildingCredits]);
-  // ── All data, state and handlers ──────────────────────────────────────────
-  const {
-    building,
-    heroImageUrl,
-    loading,
-    userStatus,
-    myRating,
-    hoverRating,
-    setHoverRating,
-    isOfficialEditing,
-    setIsOfficialEditing,
-    draftOfficialData,
-    setDraftOfficialData,
-    isSavingOfficial,
-    entries,
-    displayImages,
-    selectedImage,
-    setSelectedImage,
-    likedImageIds,
-    selectedIndex,
-    topLinks,
-    likedLinkIds,
-    linksLoading,
-    userLinks,
-    showLinkEditor,
-    setShowLinkEditor,
-    newLinkUrl,
-    setNewLinkUrl,
-    newLinkTitle,
-    setNewLinkTitle,
-    note,
-    setNote,
-    pendingImages,
-    isSavingNote,
-    showCollections,
-    setShowCollections,
-    selectedCollectionIds,
-    setSelectedCollectionIds,
-    initialCollectionIds,
-    showVisitWith,
-    setShowVisitWith,
-    selectedFriends,
-    setSelectedFriends,
-    sendingInvites,
-    showDeleteAlert,
-    setShowDeleteAlert,
-    deleteWarningMessage,
-    totalRatingPoints,
-    visitorCount,
-    coordinates,
-    googleSearchUrl,
-    accessSynthesis,
-    accessBadgeVariant,
-    canEditOfficialData,
-    isCreditsAdmin,
-    handleStatusChange,
-    handleRate,
-    handleImageSelect,
-    removePendingImage,
-    handleAddLink,
-    handleRemoveLink,
-    handleSaveNote,
-    handleDelete,
-    handleSendInvites,
-    handleSaveOfficialData,
-    handleSetHeroImage,
-    handleToggleOfficial,
-    handleLinkLike,
-    handleNextImage,
-    handlePrevImage,
-  } = useBuildingInteractions({
-    loaderBuilding: loaderBuildingTyped ?? null,
-    initialHeroImageUrl,
-    buildingCredits,
-    buildingCreditsFingerprint,
-    user,
-    profile,
-  });
-  // ── Pure UI state (no async, no handler in hook needs these) ─────────────
-  const [isMapExpanded, setIsMapExpanded] = useState(false);
-  const [showDirectionsAlert, setShowDirectionsAlert] = useState(false);
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isMapExpanded) setIsMapExpanded(false);
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isMapExpanded]);
-  // ── Editorial stream ──────────────────────────────────────────────────────
-  const displayImageById = useMemo(
-    () => new Map(displayImages.map((img) => [img.id, img])),
-    [displayImages],
-  );
-  /**
-   * Merges entries and orphaned display images into scored, typed stream blocks.
-   *
-   * Block types (derived from content shape):
-   *   featured    — official image → always first, full-width 16:9
-   *   mosaic      — 2+ images from one review → 3fr/2fr grid
-   *   image-review — 1 image + review text → side-by-side (stacked on mobile)
-   *   image-only  — 1 image, no text → full-width, taller when highly liked
-   *   text-only   — no images, has text → pull-quote
-   *
-   * Score = (is_official × 1000) + (top_likes × 10) + (has_content × 20)
-   *       + (multi_image × 15)
-   */
-  const streamBlocks = useMemo((): StreamBlock[] => {
-    const entryImageIds = new Set(
-      entries.flatMap((e) => e.images.map((img) => img.id)),
-    );
-    const entryBlocks = entries
-      .map((entry): StreamBlock | null => {
-        const images = entry.images
-          .map((img) => displayImageById.get(img.id))
-          .filter((img): img is DisplayImage => img != null);
-        const isOfficial = images.some((img) => img.is_official);
-        const topLikes = images.reduce(
-          (max, img) => Math.max(max, img.likes_count),
-          0,
-        );
-        const hasContent = !!(entry.content?.trim());
-        const imageCount = images.length;
-        if (imageCount === 0 && !hasContent) return null;
-        const score =
-          (isOfficial ? 1000 : 0) +
-          topLikes * 10 +
-          (hasContent ? 20 : 0) +
-          (imageCount > 1 ? 15 : 0);
-        let blockType: StreamBlock["blockType"];
-        if (isOfficial) blockType = "featured";
-        else if (imageCount >= 2) blockType = "mosaic";
-        else if (imageCount === 1 && hasContent) blockType = "image-review";
-        else if (imageCount === 1) blockType = "image-only";
-        else blockType = "text-only";
-        return {
-          key: entry.id,
-          entryId: entry.id,
-          user: entry.user,
-          content: entry.content,
-          rating: entry.rating,
-          status: entry.status,
-          images,
-          isOfficial,
-          topLikes,
-          blockType,
-          score,
-        };
-      })
-      .filter((b): b is StreamBlock => b !== null);
-    // Orphaned display images — official uploads not tied to any review entry
-    const orphanBlocks: StreamBlock[] = displayImages
-      .filter((img) => !entryImageIds.has(img.id))
-      .map((img): StreamBlock => ({
-        key: `img-${img.id}`,
-        entryId: `img-${img.id}`,
-        user: img.user ?? {
-          username: null,
-          avatar_url: null,
-        },
-        content: null,
-        rating: null,
-        status: "visited" as const,
-        images: [img],
-        isOfficial: img.is_official ?? false,
-        topLikes: img.likes_count,
-        blockType: (img.is_official ?? false) ? "featured" : "image-only",
-        score: ((img.is_official ?? false) ? 1000 : 0) + img.likes_count * 10,
-      }));
-    return [...entryBlocks, ...orphanBlocks].sort((a, b) => b.score - a.score);
-  }, [entries, displayImages, displayImageById]);
-  const renderStreamBlock = useCallback(
-    (block: StreamBlock) => {
-      const { images, content, user, rating, isOfficial, topLikes } = block;
-      const preview =
-        content && content.length > 220 ? content.slice(0, 220) + "…" : content;
-      // Shared author + rating attribution line
-      const authorLine = (
-        <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
-          {user?.is_architect_of_building ? (
-            <span
-              className="inline-block h-2 w-2 shrink-0 bg-text-primary"
-              aria-label="Architect of this building"
-            />
-          ) : null}
-          {user?.username ? (
-            <Link
-              to={`/profile/${user.username}`}
-              className="transition-colors hover:text-text-primary"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {user.username}
-            </Link>
-          ) : null}
-          {user?.is_verified_architect ? (
-            <BadgeCheck className="h-3 w-3 shrink-0 text-text-primary" />
-          ) : null}
-          {rating != null ? (
-            <span className="ml-1 flex gap-0.5">
-              {[1, 2, 3].map((i) => (
-                <Circle
-                  key={i}
-                  className={cn(
-                    "h-2.5 w-2.5",
-                    i <= rating
-                      ? "fill-text-primary text-text-primary"
-                      : "fill-transparent text-text-disabled",
-                  )}
-                />
-              ))}
-            </span>
-          ) : null}
-        </div>
-      );
-      switch (block.blockType) {
-        // ── E: Featured — official or highest-signal ──────────────────────────
-        case "featured": {
-          const img = images[0];
-          if (!img) return null;
-          return (
-            <div key={block.key} className="mb-0.5">
-              <div
-                className="group relative aspect-video w-full cursor-pointer overflow-hidden bg-surface-muted"
-                onClick={() => setSelectedImage(img)}
-              >
-                <img
-                  src={img.url}
-                  alt=""
-                  className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-95"
-                />
-                {isOfficial ? (
-                  <span className="absolute left-3 top-3 bg-surface-card/90 px-2 py-1 text-[10px] font-medium uppercase tracking-widest text-text-primary">
-                    Official
-                  </span>
-                ) : null}
-                {img.likes_count > 0 ? (
-                  <span className="absolute bottom-3 right-3 flex items-center gap-1 text-[10px] text-text-inverse/80">
-                    <Heart className="h-3 w-3" aria-hidden />
-                    {img.likes_count}
-                  </span>
-                ) : null}
-              </div>
-              {(preview || user?.username) ? (
-                <div className="pb-1 pt-3">
-                  {preview ? (
-                    <Link to={`/review/${block.entryId}`} className="group/r mb-2 block">
-                      <p className="text-sm italic leading-relaxed text-text-secondary transition-colors group-hover/r:text-text-primary">
-                        &ldquo;{preview}&rdquo;
-                      </p>
-                    </Link>
-                  ) : null}
-                  {authorLine}
-                </div>
-              ) : null}
-            </div>
-          );
-        }
-        // ── B: Image + review text, side by side (stacked on mobile) ─────────
-        case "image-review": {
-          const img = images[0];
-          if (!img) return null;
-          return (
-            <div key={block.key} className="mb-0.5 grid grid-cols-1 sm:grid-cols-2">
-              <div
-                className="group aspect-video cursor-pointer overflow-hidden bg-surface-muted sm:aspect-[4/5]"
-                onClick={() => setSelectedImage(img)}
-              >
-                <img
-                  src={img.url}
-                  alt=""
-                  className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
-                />
-              </div>
-              <div className="flex flex-col justify-center border-border-default px-0 pt-3 sm:border-l sm:px-6 sm:pt-0">
-                {authorLine}
-                <Link to={`/review/${block.entryId}`} className="group/r mt-2 block">
-                  <p className="text-sm italic leading-relaxed text-text-secondary transition-colors group-hover/r:text-text-primary">
-                    &ldquo;{preview}&rdquo;
-                  </p>
-                </Link>
-              </div>
-            </div>
-          );
-        }
-        // ── C: Mosaic — 3fr/2fr hero + stacked secondaries ────────────────────
-        case "mosaic": {
-          const [first, second, third, ...rest] = images;
-          return (
-            <div key={block.key} className="mb-0.5">
-              <div
-                className="grid gap-0.5"
-                style={{ gridTemplateColumns: "3fr 2fr", gridTemplateRows: "280px" }}
-              >
-                <div
-                  className="group cursor-pointer overflow-hidden bg-surface-muted"
-                  onClick={() => setSelectedImage(first)}
-                >
-                  <img
-                    src={first.url}
-                    alt=""
-                    className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
-                  />
-                </div>
-                {(second || third) ? (
-                  <div
-                    className="grid gap-0.5"
-                    style={{ gridTemplateRows: third ? "1fr 1fr" : "1fr" }}
-                  >
-                    {second ? (
-                      <div
-                        className="group cursor-pointer overflow-hidden bg-surface-muted"
-                        onClick={() => setSelectedImage(second)}
-                      >
-                        <img
-                          src={second.url}
-                          alt=""
-                          className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
-                        />
-                      </div>
-                    ) : null}
-                    {third ? (
-                      <div
-                        className="group cursor-pointer overflow-hidden bg-surface-muted"
-                        onClick={() => setSelectedImage(third)}
-                      >
-                        <img
-                          src={third.url}
-                          alt=""
-                          className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
-                        />
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-              {rest.length > 0 ? (
-                <div className="mt-0.5 grid grid-cols-3 gap-0.5">
-                  {rest.map((img) => (
-                    <BuildingImageCard
-                      key={img.id}
-                      image={img}
-                      initialIsLiked={likedImageIds.has(img.id)}
-                      onOpen={() => setSelectedImage(img)}
-                    />
-                  ))}
-                </div>
-              ) : null}
-              {(preview || user?.username) ? (
-                <div className="pb-1 pt-2">
-                  {authorLine}
-                  {preview ? (
-                    <Link to={`/review/${block.entryId}`} className="group/r mt-1.5 block">
-                      <p className="text-sm italic leading-relaxed text-text-secondary transition-colors group-hover/r:text-text-primary">
-                        &ldquo;{preview}&rdquo;
-                      </p>
-                    </Link>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          );
-        }
-        // ── A: Single image, no text — height scales with likes ───────────────
-        case "image-only": {
-          const img = images[0];
-          if (!img) return null;
-          const isTall = topLikes >= 10;
-          return (
-            <div key={block.key} className="group mb-0.5">
-              <div
-                className={cn(
-                  "relative w-full cursor-pointer overflow-hidden bg-surface-muted",
-                  isTall ? "aspect-[4/3]" : "aspect-video",
-                )}
-                onClick={() => setSelectedImage(img)}
-              >
-                <img
-                  src={img.url}
-                  alt=""
-                  className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
-                />
-                {img.likes_count > 0 ? (
-                  <span className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] text-text-inverse/80">
-                    <Heart className="h-3 w-3" aria-hidden />
-                    {img.likes_count}
-                  </span>
-                ) : null}
-              </div>
-              {user?.username ? <div className="mt-2">{authorLine}</div> : null}
-            </div>
-          );
-        }
-        // ── D: Pull quote — text only, architect-of-building gets left border ──
-        case "text-only": {
-          if (!content) return null;
-          const isArchitectOfBuilding = user?.is_architect_of_building;
-          return (
-            <Link
-              key={block.key}
-              to={`/review/${block.entryId}`}
-              className={cn(
-                "group block border-b border-border-default py-6",
-                isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-4",
-              )}
-            >
-              <p className="text-base italic leading-relaxed text-text-primary transition-opacity group-hover:opacity-75">
-                &ldquo;{preview}&rdquo;
-              </p>
-              <div className="mt-3">{authorLine}</div>
-            </Link>
-          );
-        }
-        default:
-          return null;
-      }
-    },
-    [setSelectedImage, likedImageIds],
-  );
-  // ── Loading guard ─────────────────────────────────────────────────────────
-  if (loading || !building) {
-    return (
-      <AppLayout title="Loading...">
-        <div className="flex justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin text-brand-primary" aria-hidden />
-        </div>
-      </AppLayout>
-    );
-  }
-  // ─── MAIN RENDER ─────────────────────────────────────────────────────────
-  return (
-    <AppLayout title={building.name} showBack>
-      {/* ── HERO — full-bleed, no overlay, unchanged ── */}
-      <BuildingHero key={heroImageUrl} src={heroImageUrl} alt={building.name} />
-      <div className="px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl">
-          {/* ── IDENTITY ── */}
-          <div className="space-y-3 py-8">
-            {building.tier_rank ? (
-              <span className="block text-2xs font-medium uppercase tracking-widest text-text-secondary">
-                {building.tier_rank}
-                {building.city ? ` · ${building.city}` : ""}
-              </span>
-            ) : null}
-            {isOfficialEditing ? (
-              <Input
-                value={draftOfficialData.name}
-                onChange={(e) =>
-                  setDraftOfficialData((p) => ({ ...p, name: e.target.value }))
-                }
-                className="h-auto w-full border-none bg-transparent px-0 py-2 text-4xl font-bold leading-tight tracking-tight focus-visible:ring-0 md:text-5xl lg:text-6xl"
-                placeholder="Building Name"
-              />
-            ) : (
-              <h1 className="text-4xl font-bold leading-tight tracking-tight text-text-primary md:text-5xl lg:text-6xl">
-                {building.name}
-              </h1>
-            )}
-            {building.alt_name &&
-              building.alt_name !== building.name &&
-              !isOfficialEditing ? (
-                <p className="text-lg text-text-secondary">{building.alt_name}</p>
-              ) : null}
-            {/* Status pill */}
-            {(building.status === "Demolished" ||
-              building.status === "Lost" ||
-              building.status === "Unbuilt" ||
-              building.status === "Under Construction") ? (
-              <span className="inline-block border border-border-default px-2 py-0.5 text-2xs font-medium uppercase tracking-widest text-text-secondary">
-                {building.status}
-              </span>
-            ) : null}
-            {/* Architect · Year · City */}
-            <div className="flex flex-wrap items-center gap-2 text-sm text-text-secondary">
-              {visiblePrimaryCredits(buildingCredits).length > 0 ? (
-                <>
-                  <div className="flex flex-wrap gap-1">
-                    <PrimaryCreditsLinks
-                      credits={buildingCredits}
-                      linkClassName="font-medium text-text-primary underline-offset-4 hover:underline"
-                    />
-                  </div>
-                  <span className="text-text-disabled">·</span>
-                </>
-              ) : null}
-              {isOfficialEditing ? (
-                <Input
-                  type="number"
-                  value={draftOfficialData.year_completed}
-                  onChange={(e) =>
-                    setDraftOfficialData((p) => ({
-                      ...p,
-                      year_completed: parseInt(e.target.value),
-                    }))
-                  }
-                  className="h-7 w-20 text-sm"
-                />
-              ) : (
-                <span>{building.year_completed}</span>
-              )}
-              {(building.city || building.country) ? (
-                <>
-                  <span className="text-text-disabled">·</span>
-                  <span>
-                    {[building.city, building.country].filter(Boolean).join(", ")}
-                  </span>
-                </>
-              ) : null}
-            </div>
-            {/* Community stats */}
-            {entries.length > 0 ? (
-              <div className="flex items-center gap-4">
-                {totalRatingPoints !== null ? (
-                  <span
-                    className="text-xs text-text-disabled"
-                    title="Sum of all visitor ratings (each 1–3)"
-                  >
-                    {totalRatingPoints}{" "}
-                    {totalRatingPoints === 1 ? "rating point" : "rating points"}
-                  </span>
-                ) : null}
-                <span className="text-xs text-text-disabled">
-                  {visitorCount} {visitorCount === 1 ? "visitor" : "visitors"}
-                </span>
-              </div>
-            ) : null}
-          </div>
-          {/* ── USER ACTIONS ── */}
-          <div
-            className={cn(
-              "flex items-center gap-3 pb-8",
-              !(user && (userStatus === "visited" || userStatus === "pending")) &&
-                "border-b border-border-default",
-            )}
-          >
-            <button
-              type="button"
-              onClick={() => handleStatusChange("visited")}
-              className={`text-xs font-medium uppercase tracking-widest transition-colors ${
-                userStatus === "visited"
-                  ? "text-text-primary"
-                  : "text-text-disabled hover:text-text-primary"
-              }`}
-            >
-              <Check
-                className={cn(
-                  "mr-1 inline h-4 w-4",
-                  userStatus === "visited" && "stroke-[2.5px]",
-                )}
-              />
-              Visited
-            </button>
-            <button
-              type="button"
-              onClick={() => handleStatusChange("pending")}
-              className={`text-xs font-medium uppercase tracking-widest transition-colors ${
-                userStatus === "pending"
-                  ? "text-text-primary"
-                  : "text-text-disabled hover:text-text-primary"
-              }`}
-            >
-              <Bookmark
-                className={cn(
-                  "mr-1 inline h-4 w-4",
-                  userStatus === "pending" && "fill-current",
-                )}
-              />
-              Save
-            </button>
-            <button
-              type="button"
-              onClick={() => handleStatusChange("ignored")}
-              className={`text-xs font-medium uppercase tracking-widest transition-colors ${
-                userStatus === "ignored"
-                  ? "text-text-primary"
-                  : "text-text-disabled hover:text-text-primary"
-              }`}
-            >
-              <EyeOff className="mr-1 inline h-4 w-4" />
-              Hide
-            </button>
-            {(userStatus === "visited" || userStatus === "pending") ? (
-              <div
-                className="ml-2 flex items-center gap-1"
-                onMouseLeave={() => setHoverRating(null)}
-              >
-                {[1, 2, 3].map((i) => {
-                  const filled =
-                    hoverRating !== null ? i <= hoverRating : i <= myRating;
-                  return (
-                    <Circle
-                      key={i}
-                      className={cn(
-                        "h-4 w-4 cursor-pointer transition-opacity hover:opacity-80",
-                        filled
-                          ? "fill-text-primary text-text-primary"
-                          : "fill-transparent text-text-disabled",
-                      )}
-                      onMouseEnter={() => setHoverRating(i)}
-                      onClick={() =>
-                        handleRate(building.id, i === myRating ? 0 : i)
-                      }
-                    />
-                  );
-                })}
-              </div>
-            ) : null}
-            <div className="flex-1" />
-            <Link
-              to={
-                getBuildingUrl(building.id, building.slug, building.short_id) +
-                "/review"
-              }
-              className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary"
-            >
-              Write review →
-            </Link>
-            {canEditOfficialData ? (
-              isOfficialEditing ? (
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsOfficialEditing(false)}
-                    disabled={isSavingOfficial}
-                    className="text-xs text-text-secondary transition-colors hover:text-text-primary"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSaveOfficialData}
-                    disabled={isSavingOfficial}
-                    className="text-xs font-medium text-text-primary transition-colors hover:text-brand-primary"
-                  >
-                    {isSavingOfficial ? (
-                      <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
-                    ) : null}
-                    Save
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsOfficialEditing(true)}
-                  className="text-text-disabled transition-colors hover:text-text-primary"
-                  aria-label="Edit official data"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-              )
-            ) : null}
-          </div>
-          {user && (userStatus === "visited" || userStatus === "pending") ? (
-            <div className="space-y-2 border-b border-border-default pb-8">
-              <Textarea
-                id="building-status-note"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Add a note or review (optional)"
-                aria-label="Add a note or review (optional)"
-                maxLength={10000}
-                rows={4}
-                className="min-h-0 resize-y"
-                disabled={isSavingNote}
-              />
-              <div className="flex flex-wrap items-center justify-end gap-3">
-                <button
-                  type="button"
-                  disabled={isSavingNote}
-                  className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary disabled:opacity-50"
-                  onClick={() => {
-                    void handleSaveNote();
-                  }}
-                >
-                  {isSavingNote ? (
-                    <Loader2 className="mr-1 inline h-3 w-3 animate-spin" aria-hidden />
-                  ) : null}
-                  Save note
-                </button>
-              </div>
-              <div className="space-y-6 border-t border-border-default pt-6">
-                <div className="flex items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowCollections(!showCollections)}
-                    className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-                  >
-                    <Plus className="mr-1 inline h-3.5 w-3.5" />
-                    Add to collection
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowVisitWith(!showVisitWith)}
-                    className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-                  >
-                    <Users className="mr-1 inline h-3.5 w-3.5" />
-                    Plan a visit
-                  </button>
-                </div>
-                {showCollections ? (
-                  <CollectionSelector
-                    userId={user.id}
-                    selectedCollectionIds={selectedCollectionIds}
-                    onChange={setSelectedCollectionIds}
-                  />
-                ) : null}
-                {showVisitWith ? (
-                  <div className="space-y-3">
-                    <UserPicker
-                      selectedIds={selectedFriends}
-                      onSelect={(friendId) =>
-                        setSelectedFriends((prev) =>
-                          prev.includes(friendId) ? prev : [...prev, friendId],
-                        )
-                      }
-                      onRemove={(friendId) =>
-                        setSelectedFriends((prev) =>
-                          prev.filter((x) => x !== friendId),
-                        )
-                      }
-                    />
-                    {selectedFriends.length > 0 ? (
-                      <button
-                        type="button"
-                        onClick={handleSendInvites}
-                        disabled={sendingInvites}
-                        className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary disabled:opacity-50"
-                      >
-                        {sendingInvites ? (
-                          <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
-                        ) : (
-                          <Send className="mr-1 inline h-3.5 w-3.5" />
-                        )}
-                        Send invite →
-                      </button>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
-          {/* ── OFFICIAL EDITING PANEL ── */}
-          {isOfficialEditing ? (
-            <div className="border-b border-border-default py-6">
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.12em] text-text-disabled">
-                Editing official data
-              </p>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="space-y-1">
-                  <Label className="text-xs text-text-secondary">City</Label>
-                  <Input
-                    value={draftOfficialData.city}
-                    onChange={(e) =>
-                      setDraftOfficialData((p) => ({ ...p, city: e.target.value }))
-                    }
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-text-secondary">Country</Label>
-                  <Input
-                    value={draftOfficialData.country}
-                    onChange={(e) =>
-                      setDraftOfficialData((p) => ({
-                        ...p,
-                        country: e.target.value,
-                      }))
-                    }
-                    className="h-8 text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-          ) : null}
-          {/* ── INFO ZONE: Credits preview (left) + Info + Map (right) ── */}
-          <div className="grid grid-cols-1 gap-x-8 gap-y-6 border-b border-border-default py-8 sm:grid-cols-2">
-            {/* Left: compact credits preview */}
-            <div>
-              <h2 className="mb-4 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
-                Credits
-              </h2>
-              <BuildingCreditsPreview
-                credits={buildingCredits}
-                isAuthenticated={Boolean(user)}
-              />
-            </div>
-            {/* Right: info tags + map */}
-            <div>
-              <h2 className="mb-4 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
-                Info
-              </h2>
-              {building.styles && building.styles.length > 0 ? (
-                <div className="mb-2 flex flex-wrap gap-1.5">
-                  {building.styles.map((s) => (
-                    <span
-                      key={s.id}
-                      className="border border-border-default px-2 py-0.5 text-[11px] text-text-secondary"
-                    >
-                      {s.name}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-              {building.typology && building.typology.length > 0 ? (
-                <div className="mb-2 flex flex-wrap gap-1.5">
-                  {building.typology.map((t) => (
-                    <span
-                      key={t}
-                      className="border border-border-default px-2 py-0.5 text-[11px] text-text-secondary"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-              {accessSynthesis ? (
-                <div className="mt-3">
-                  <Badge
-                    variant={accessBadgeVariant()}
-                    className="flex w-fit items-center gap-1.5 text-xs"
-                  >
-                    {createElement(accessSynthesis.icon, { className: "w-3.5 h-3.5" })}
-                    {accessSynthesis.label}
-                  </Badge>
-                </div>
-              ) : null}
-              {building.access_notes ? (
-                <p className="mt-2 border-l-2 border-text-primary/20 py-0.5 pl-3 text-sm text-text-secondary">
-                  {building.access_notes}
-                </p>
-              ) : null}
-              {/* Map */}
-              <div className="mt-4">
-                {building.location_precision === "approximate" ? (
-                  <Alert className="mb-3 border-amber-500/50 bg-amber-500/10 text-amber-500">
-                    <AlertTriangle className="h-4 w-4 stroke-amber-500" />
-                    <AlertDescription className="ml-2 text-xs">
-                      Approximate location — marker shows general area.
-                    </AlertDescription>
-                  </Alert>
-                ) : null}
-                {coordinates ? (
-                  <WidgetErrorBoundary>
-                    <BuildingLocationMap
-                      lat={coordinates.lat}
-                      lng={coordinates.lng}
-                      status={userStatus}
-                      rating={myRating}
-                      tierRank={building.tier_rank}
-                      locationPrecision={building.location_precision}
-                      isExpanded={isMapExpanded}
-                      onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
-                      className={isMapExpanded ? "" : "h-36 w-full"}
-                    />
-                  </WidgetErrorBoundary>
-                ) : (
-                  <div className="flex h-36 w-full flex-col items-center justify-center gap-2 bg-surface-muted/20 text-text-secondary">
-                    <MapPin className="h-5 w-5 opacity-40" />
-                    <span className="text-[10px] uppercase tracking-widest">
-                      Location unavailable
-                    </span>
-                  </div>
-                )}
-                <div className="mt-2 flex items-center justify-between">
-                  <div className="group flex items-center gap-1.5 text-xs text-text-secondary">
-                    <MapPin className="h-3.5 w-3.5 shrink-0" />
-                    {isOfficialEditing ? (
-                      <div className="flex gap-2">
-                        <Input
-                          value={draftOfficialData.city}
-                          onChange={(e) =>
-                            setDraftOfficialData((p) => ({ ...p, city: e.target.value }))
-                          }
-                          placeholder="City"
-                          className="h-8 w-28 text-sm"
-                        />
-                        <Input
-                          value={draftOfficialData.country}
-                          onChange={(e) =>
-                            setDraftOfficialData((p) => ({ ...p, country: e.target.value }))
-                          }
-                          placeholder="Country"
-                          className="h-8 w-28 text-sm"
-                        />
-                      </div>
-                    ) : (
-                      <span>
-                        {[building.city, building.country]
-                          .filter(Boolean)
-                          .join(", ") || building.address}
-                      </span>
-                    )}
-                    {user && !isOfficialEditing ? (
-                      <Link
-                        to={
-                          getBuildingUrl(
-                            building.id,
-                            building.slug,
-                            building.short_id,
-                          ) + "/edit"
-                        }
-                        className="ml-1 hidden p-1 text-text-disabled transition-colors hover:text-text-primary group-hover:inline-flex"
-                        title="Edit building"
-                      >
-                        <Pencil className="h-3 w-3" />
-                      </Link>
-                    ) : null}
-                  </div>
-                  {coordinates ? (
-                    <button
-                      type="button"
-                      className="text-[10px] font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-                      onClick={() => {
-                        if (building.location_precision === "approximate")
-                          setShowDirectionsAlert(true);
-                        else
-                          window.open(
-                            `https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`,
-                            "_blank",
-                          );
-                      }}
-                    >
-                      {building.status === "Lost"
-                        ? "Navigate to site →"
-                        : "Get directions →"}
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* ── ARCHITECT STATEMENT ── */}
-          <ArchitectStatement
-            statement={draftOfficialData.architect_statement}
-            isEditing={isOfficialEditing}
-            onChange={(val) =>
-              setDraftOfficialData((p) => ({ ...p, architect_statement: val }))
-            }
-            architectName={leadAttributionFromCredits(buildingCredits)}
-          />
-          {/* ── BUILDING STATUS ALERT — structural warnings only ── */}
-          {(building.status === "Lost" ||
-            building.status === "Unbuilt" ||
-            building.status === "Under Construction") ? (
-            <Alert className="border-feedback-destructive/50 bg-feedback-destructive/10 text-feedback-destructive">
-              <AlertTriangle className="h-4 w-4 stroke-feedback-destructive" />
-              <AlertDescription className="ml-2 font-medium">
-                {building.status === "Lost"
-                  ? "This building is lost to time. It no longer stands at this location."
-                  : building.status === "Unbuilt"
-                  ? "This project was never built."
-                  : "This building is under construction."}
-              </AlertDescription>
-            </Alert>
-          ) : null}
-        </div>
-      </div>
-      {/* ── EDITORIAL PHOTO + REVIEW STREAM ── */}
-      <div className="px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl">
-          <div className="flex items-center justify-between border-t border-border-default pb-3 pt-8">
-            <h2 className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
-              Photos &amp; reviews
-              {displayImages.length > 0 ? ` · ${displayImages.length}` : ""}
-            </h2>
-            <button
-              type="button"
-              className="text-[10px] font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-              onClick={() => document.getElementById("hidden-file-input")?.click()}
-            >
-              Upload →
-            </button>
-            <input
-              id="hidden-file-input"
-              type="file"
-              multiple
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageSelect}
-              aria-label="Upload photos of this building"
-            />
-          </div>
-          {/* Pending image queue */}
-          {pendingImages.length > 0 && user ? (
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              {pendingImages.map((img) => (
-                <div
-                  key={img.id}
-                  className="relative h-16 w-16 shrink-0 bg-surface-muted"
-                >
-                  <img src={img.preview} alt="" className="h-full w-full object-cover" />
-                  <button
-                    type="button"
-                    className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center bg-surface-overlay text-text-primary hover:bg-surface-muted"
-                    onClick={() => removePendingImage(img.id)}
-                    aria-label="Remove pending photo"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                disabled={isSavingNote}
-                className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary disabled:opacity-50"
-                onClick={() => { void handleSaveNote(); }}
-              >
-                {isSavingNote ? (
-                  <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
-                ) : null}
-                Save photos →
-              </button>
-            </div>
-          ) : null}
-          {/* Stream */}
-          <WidgetErrorBoundary>
-            {streamBlocks.length > 0 ? (
-              <div>{streamBlocks.map((block) => renderStreamBlock(block))}</div>
-            ) : (
-              <div className="flex aspect-video flex-col items-center justify-center bg-surface-muted/20 p-6 text-center text-text-secondary">
-                <ImageIcon className="mb-3 h-10 w-10 text-text-disabled" />
-                <p className="mb-4 text-xs text-text-disabled">
-                  Be the first to add a photo
-                </p>
-                <Link
-                  to={
-                    getBuildingUrl(building.id, building.slug, building.short_id) +
-                    "/review"
-                  }
-                  className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary"
-                >
-                  Upload photo →
-                </Link>
-              </div>
-            )}
-          </WidgetErrorBoundary>
-          <div className="mt-3 text-center">
-            <a
-              href={googleSearchUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-[11px] text-text-disabled transition-colors hover:text-text-primary"
-            >
-              <Search className="h-3 w-3" />
-              Search for photos on Google
-              <ExternalLink className="h-3 w-3 opacity-50" />
-            </a>
-          </div>
-          {/* ── FULL CREDITS — anchor target for "See all credits ↓" ── */}
-          <section
-            id="full-credits"
-            className="mt-12 scroll-mt-4 border-t border-border-default"
-          >
-            <BuildingCredits
-              buildingId={building.id}
-              credits={buildingCredits}
-              isAuthenticated={Boolean(user)}
-              isAdmin={isCreditsAdmin}
-            />
-          </section>
-          {/* ── RESOURCES ── */}
-          {(linksLoading || topLinks.length > 0) ? (
-            <section className="border-t border-border-default pt-10">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">
-                  Resources
-                </h2>
-                {user ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowLinkEditor(!showLinkEditor)}
-                    className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-                  >
-                    Add →
-                  </button>
-                ) : null}
-              </div>
-              {linksLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-9 w-full" />
-                  <Skeleton className="h-9 w-full" />
-                </div>
-              ) : (
-                <div className="space-y-0">
-                  {topLinks.map((link) => {
-                    let domain = "";
-                    try { domain = new URL(link.url).hostname; } catch { /* ignore */ }
-                    const displayDomain = domain || link.url;
-                    const hasTitle = !!link.title;
-                    const isLiked = likedLinkIds.has(link.link_id);
-                    return (
-                      <div
-                        key={link.link_id}
-                        className="group flex items-center justify-between border-b border-border-default py-3"
-                      >
-                        <a
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex min-w-0 flex-1 flex-col gap-0.5 overflow-hidden"
-                        >
-                          <span className="truncate text-sm font-medium text-text-primary transition-colors group-hover:text-brand-primary">
-                            {hasTitle ? link.title : displayDomain}
-                          </span>
-                          <div className="flex items-center gap-1.5 text-xs text-text-disabled">
-                            {hasTitle ? (
-                              <span className="max-w-[150px] truncate">{displayDomain}</span>
-                            ) : null}
-                            {hasTitle && link.user_username ? <span>·</span> : null}
-                            {link.user_username ? (
-                              <span>@{link.user_username}</span>
-                            ) : null}
-                          </div>
-                        </a>
-                        <div className="ml-2 flex shrink-0 items-center gap-2">
-                          <button
-                            type="button"
-                            className={`inline-flex items-center gap-1 text-xs transition-colors ${
-                              isLiked
-                                ? "text-text-primary"
-                                : "text-text-disabled hover:text-text-primary"
-                            }`}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              void handleLinkLike(link.link_id);
-                            }}
-                          >
-                            <Heart className={cn("h-3 w-3", isLiked && "fill-current")} />
-                            <span>{link.like_count}</span>
-                          </button>
-                          <a
-                            href={link.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-text-disabled transition-colors hover:text-text-primary"
-                          >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </a>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {showLinkEditor && user ? (
-                    <div className="space-y-2 pt-4">
-                      {userLinks.length > 0 ? (
-                        <ul className="space-y-1.5 text-sm text-text-secondary">
-                          {userLinks.map((l) => (
-                            <li key={l.id} className="flex items-center gap-2">
-                              <span className="min-w-0 flex-1 truncate">
-                                {l.title || l.url}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveLink(l.id)}
-                                className="text-text-disabled transition-colors hover:text-text-primary"
-                                aria-label="Remove link"
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
-                      <Input
-                        placeholder="URL"
-                        value={newLinkUrl}
-                        onChange={(e) => setNewLinkUrl(e.target.value)}
-                        className="h-8 text-sm"
-                      />
-                      <Input
-                        placeholder="Title (optional)"
-                        value={newLinkTitle}
-                        onChange={(e) => setNewLinkTitle(e.target.value)}
-                        className="h-8 text-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddLink}
-                        className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary"
-                      >
-                        Add link →
-                      </button>
-                      {(userLinks.length > 0 ||
-                        selectedCollectionIds.length !== initialCollectionIds.length) ? (
-                        <button
-                          type="button"
-                          disabled={isSavingNote}
-                          className="mt-2 block text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary disabled:opacity-50"
-                          onClick={() => { void handleSaveNote(); }}
-                        >
-                          {isSavingNote ? (
-                            <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
-                          ) : null}
-                          Save links →
-                        </button>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
-              )}
-            </section>
-          ) : null}
-        </div>
-      </div>
-      {/* ── DIALOGS ── */}
-      <ImageDetailsDialog
-        imageId={selectedImage?.id || null}
-        initialUrl={selectedImage?.url || null}
-        type={selectedImage?.type || "image"}
-        uploadedBy={selectedImage?.user || null}
-        uploadDate={selectedImage?.created_at}
-        isOpen={!!selectedImage}
-        onClose={() => setSelectedImage(null)}
-        onNext={handleNextImage}
-        onPrev={handlePrevImage}
-        hasNext={selectedIndex < displayImages.length - 1}
-        hasPrev={selectedIndex > 0}
-        isGenerated={selectedImage?.is_generated}
-        isOfficial={selectedImage?.is_official}
-        isHero={selectedImage?.id === building?.hero_image_id}
-        canEdit={canEditOfficialData}
-        onToggleOfficial={handleToggleOfficial}
-        onSetHero={handleSetHeroImage}
-      />
-      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Remove from list?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {deleteWarningMessage ||
-                "This will delete your rating, status, and any notes for this building. This action cannot be undone."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-feedback-destructive text-feedback-destructive-foreground hover:opacity-90"
-            >
-              Remove
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <AlertDialog open={showDirectionsAlert} onOpenChange={setShowDirectionsAlert}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Exact Location Unknown</AlertDialogTitle>
-            <AlertDialogDescription>
-              This building&apos;s location is approximate. The directions will
-              guide you to the general vicinity (e.g. village center).
-              <br /><br />
-              Please look around when you arrive.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() =>
-                window.open(
-                  `https://www.google.com/maps/dir/?api=1&destination=${coordinates?.lat},${coordinates?.lng}`,
-                  "_blank",
-                )
-              }
-            >
-              {building.status === "Lost" ? "Navigate to Site" : "Get Directions"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </AppLayout>
-  );
-}
-</file>
-
 <file path="src/features/credits/api/companies.ts">
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -90250,6 +88629,1430 @@ export async function submitCompanyClaimDispute(
   if (!fnJson?.ok) {
     throw new Error(fnJson?.error ?? "Could not notify the team.");
   }
+}
+</file>
+
+<file path="src/features/buildings/pages/BuildingDetails.tsx">
+import { useEffect, useState, useMemo, useCallback, createElement } from "react";
+import {
+  useParams,
+  Link,
+  useLoaderData,
+  useRouteError,
+  isRouteErrorResponse,
+  useRevalidator,
+  type MetaFunction,
+} from "react-router";
+import {
+  Loader2, MapPin, Send,
+  Check, Bookmark, Image as ImageIcon,
+  Heart, ExternalLink, Circle, AlertTriangle, Search,
+  EyeOff, Plus, Users, X,
+  Pencil, BadgeCheck,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
+import { useQuery } from "@tanstack/react-query";
+import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
+import { UserPicker } from "@/components/common/UserPicker";
+import { ImageDetailsDialog } from "../components/ImageDetailsDialog";
+import {
+  buildingCreditsQueryKey,
+  getBuildingCredits,
+} from "@/features/credits/api/credits";
+import {
+  leadAttributionFromCredits,
+  visiblePrimaryCredits,
+} from "@/features/credits/buildingCreditDisplay";
+import { getBuildingUrl } from "@/utils/url";
+import { CollectionSelector } from "@/features/collections/components/CollectionSelector";
+import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
+import { BuildingImageCard } from "../components/BuildingImageCard";
+import { PrimaryCreditsLinks } from "../components/PrimaryCreditsLinks";
+import { ArchitectStatement } from "../components/ArchitectStatement";
+import { BuildingHero } from "../components/BuildingHero";
+import { BuildingCredits, BuildingCreditsPreview } from "../components/BuildingCredits";
+import { buildingLoader } from "./BuildingDetails.loader";
+import {
+  buildingAbsoluteUrl,
+  buildingStructuredData,
+  buildingDescription,
+  SITE_URL,
+} from "@/features/buildings/utils/structuredData";
+import { cn } from "@/lib/utils";
+import { useBuildingInteractions } from "@/features/buildings/hooks/useBuildingInteractions";
+export { buildingLoader as loader } from "./BuildingDetails.loader";
+// ─── Static route exports ─────────────────────────────────────────────────────
+export function HydrateFallback() {
+  return (
+    <AppLayout showBack title="Loading...">
+      <Skeleton className="aspect-[21/9] w-full rounded-sm" />
+      <div className="px-4 sm:px-6 lg:px-8 py-10 max-w-4xl mx-auto space-y-6">
+        <Skeleton className="h-12 w-3/5 max-w-lg md:h-14" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-11/12" />
+      </div>
+    </AppLayout>
+  );
+}
+export function ErrorBoundary() {
+  const error = useRouteError();
+  const { id, slug } = useParams();
+  const revalidator = useRevalidator();
+  const pathHint = id && slug ? `${id}/${slug}` : id ?? null;
+  if (isRouteErrorResponse(error) && error.status === 404) {
+    return (
+      <AppLayout showBack>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-8 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">
+            Building not found
+          </h1>
+          <p className="text-text-secondary max-w-md mb-6 text-sm md:text-base leading-relaxed">
+            We couldn&apos;t find a building at this URL
+            {pathHint ? (
+              <> <span className="font-mono text-text-primary">({pathHint})</span></>
+            ) : null}
+            . It may have been removed or the link is incorrect.
+          </p>
+          <Button asChild size="lg" variant="default" className="min-w-[200px]">
+            <Link to="/explore">Browse buildings</Link>
+          </Button>
+        </div>
+      </AppLayout>
+    );
+  }
+  return (
+    <AppLayout showBack>
+      <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-8 text-center">
+        <h1 className="text-2xl font-bold tracking-tight text-text-primary mb-2">
+          Something went wrong
+        </h1>
+        <p className="text-text-secondary max-w-md mb-6 text-sm md:text-base leading-relaxed">
+          An unexpected error occurred while loading this building. You can try
+          again or go back to explore.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Button
+            type="button"
+            size="lg"
+            variant="default"
+            className="min-w-[200px]"
+            onClick={() => revalidator.revalidate()}
+            disabled={revalidator.state === "loading"}
+          >
+            Try again
+          </Button>
+          <Button asChild size="lg" variant="outline" className="min-w-[200px]">
+            <Link to="/explore">Browse buildings</Link>
+          </Button>
+        </div>
+      </div>
+    </AppLayout>
+  );
+}
+// ─── Types ────────────────────────────────────────────────────────────────────
+export interface BuildingDetails {
+  id: string;
+  short_id?: number | null;
+  slug?: string | null;
+  name: string;
+  alt_name?: string | null;
+  aliases?: string[] | null;
+  tier_rank?: string | null;
+  location: unknown;
+  location_precision?: "exact" | "approximate" | string | null;
+  address: string | null;
+  city: string | null;
+  country: string | null;
+  year_completed: number;
+  styles: { id: string; name: string }[];
+  created_by: string;
+  status?: string | null;
+  access_level?: "public" | "private" | "restricted" | "commercial" | null;
+  access_logistics?: "walk-in" | "booking_required" | "tour_only" | "exterior_only" | null;
+  access_cost?: "free" | "paid" | "customers_only" | null;
+  access_notes?: string | null;
+  typology?: string[] | null;
+  materials?: string[] | null;
+  context?: string | null;
+  intervention?: string | null;
+  category?: string | null;
+  architect_statement?: string | null;
+  hero_image_id: string | null;
+}
+/** Kept here because StreamBlock references FeedEntry["user"] and FeedEntry["status"]. */
+interface FeedEntry {
+  id: string;
+  user_id: string;
+  content: string | null;
+  rating: number | null;
+  status: "visited" | "pending";
+  tags: string[] | null;
+  created_at: string;
+  user: {
+    username: string | null;
+    avatar_url: string | null;
+    is_verified_architect?: boolean;
+    is_architect_of_building?: boolean;
+  };
+  images: { id: string; storage_path: string; created_at?: string }[];
+}
+interface DisplayImage {
+  id: string;
+  url: string;
+  poster?: string;
+  type?: "image" | "video";
+  likes_count: number;
+  created_at: string;
+  user: { username: string | null; avatar_url: string | null } | null;
+  is_generated?: boolean;
+  is_official?: boolean;
+}
+/**
+ * A single scored, typed unit in the editorial photo + review stream.
+ * Derived from entries + displayImages in the streamBlocks useMemo.
+ */
+interface StreamBlock {
+  key: string;
+  entryId: string;
+  user: FeedEntry["user"];
+  content: string | null;
+  rating: number | null;
+  status: FeedEntry["status"];
+  images: DisplayImage[];
+  isOfficial: boolean;
+  topLikes: number;
+  blockType: "featured" | "mosaic" | "image-review" | "image-only" | "text-only";
+  score: number;
+}
+// ─── Meta ─────────────────────────────────────────────────────────────────────
+export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
+  if (!data || !data.building) return [{ title: "Plano" }];
+  const { building: rawBuilding, heroImageUrl, buildingCredits = [] } = data;
+  const building = rawBuilding as BuildingDetails;
+  const description = buildingDescription(building, buildingCredits);
+  const image = heroImageUrl ?? `${SITE_URL}/cover.jpg`;
+  const canonical = buildingAbsoluteUrl(building);
+  return [
+    { title: `${building.name} | Plano` },
+    { name: "description", content: description },
+    { property: "og:title", content: `${building.name} | Plano` },
+    { property: "og:description", content: description },
+    { property: "og:image", content: image },
+    { property: "og:url", content: canonical },
+    { property: "og:site_name", content: "Plano" },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: `${building.name} | Plano` },
+    { name: "twitter:description", content: description },
+    { name: "twitter:image", content: image },
+    { tagName: "link", rel: "canonical", href: canonical },
+    { "script:ld+json": buildingStructuredData(building, buildingCredits) },
+  ];
+};
+// ─── Page component ───────────────────────────────────────────────────────────
+export default function BuildingDetails() {
+  const { user } = useAuth();
+  const { profile } = useUserProfile();
+  const {
+    building: loaderBuilding,
+    heroImageUrl: initialHeroImageUrl,
+    buildingCredits: initialBuildingCredits = [],
+  } = useLoaderData<typeof buildingLoader>();
+  const loaderBuildingTyped = loaderBuilding as BuildingDetails | null | undefined;
+  // ── BuildingCredits query — lives here so the queryKey is stable ──────────
+  const { data: buildingCredits = initialBuildingCredits } = useQuery({
+    queryKey: buildingCreditsQueryKey(loaderBuildingTyped?.id ?? ""),
+    queryFn: () => getBuildingCredits(loaderBuildingTyped!.id),
+    enabled: !!loaderBuildingTyped?.id,
+    initialData: initialBuildingCredits,
+    staleTime: 60_000,
+  });
+  const buildingCreditsFingerprint = useMemo(() => {
+    const sorted = [...buildingCredits].sort((a, b) => a.id.localeCompare(b.id));
+    return sorted
+      .map(
+        (c) =>
+          `${c.id}:${c.personId ?? ""}:${c.companyId ?? ""}:${c.status}:${c.isLead ? "1" : "0"}`,
+      )
+      .join("|");
+  }, [buildingCredits]);
+  // ── All data, state and handlers ──────────────────────────────────────────
+  const {
+    building,
+    heroImageUrl,
+    loading,
+    userStatus,
+    myRating,
+    hoverRating,
+    setHoverRating,
+    entries,
+    displayImages,
+    selectedImage,
+    setSelectedImage,
+    likedImageIds,
+    selectedIndex,
+    topLinks,
+    likedLinkIds,
+    linksLoading,
+    userLinks,
+    showLinkEditor,
+    setShowLinkEditor,
+    newLinkUrl,
+    setNewLinkUrl,
+    newLinkTitle,
+    setNewLinkTitle,
+    note,
+    setNote,
+    pendingImages,
+    isSavingNote,
+    showCollections,
+    setShowCollections,
+    selectedCollectionIds,
+    setSelectedCollectionIds,
+    initialCollectionIds,
+    showVisitWith,
+    setShowVisitWith,
+    selectedFriends,
+    setSelectedFriends,
+    sendingInvites,
+    showDeleteAlert,
+    setShowDeleteAlert,
+    deleteWarningMessage,
+    totalRatingPoints,
+    visitorCount,
+    coordinates,
+    googleSearchUrl,
+    accessSynthesis,
+    accessBadgeVariant,
+    canEditOfficialData,
+    isCreditsAdmin,
+    handleStatusChange,
+    handleRate,
+    handleImageSelect,
+    removePendingImage,
+    handleAddLink,
+    handleRemoveLink,
+    handleSaveNote,
+    handleDelete,
+    handleSendInvites,
+    handleSetHeroImage,
+    handleToggleOfficial,
+    handleLinkLike,
+    handleNextImage,
+    handlePrevImage,
+  } = useBuildingInteractions({
+    loaderBuilding: loaderBuildingTyped ?? null,
+    initialHeroImageUrl,
+    buildingCredits,
+    buildingCreditsFingerprint,
+    user,
+    profile,
+  });
+  // ── Pure UI state (no async, no handler in hook needs these) ─────────────
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
+  const [showDirectionsAlert, setShowDirectionsAlert] = useState(false);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isMapExpanded) setIsMapExpanded(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isMapExpanded]);
+  // ── Editorial stream ──────────────────────────────────────────────────────
+  const displayImageById = useMemo(
+    () => new Map(displayImages.map((img) => [img.id, img])),
+    [displayImages],
+  );
+  /**
+   * Merges entries and orphaned display images into scored, typed stream blocks.
+   *
+   * Block types (derived from content shape):
+   *   featured    — official image → always first, full-width 16:9
+   *   mosaic      — 2+ images from one review → 3fr/2fr grid
+   *   image-review — 1 image + review text → side-by-side (stacked on mobile)
+   *   image-only  — 1 image, no text → full-width, taller when highly liked
+   *   text-only   — no images, has text → pull-quote
+   *
+   * Score = (is_official × 1000) + (top_likes × 10) + (has_content × 20)
+   *       + (multi_image × 15)
+   */
+  const streamBlocks = useMemo((): StreamBlock[] => {
+    const entryImageIds = new Set(
+      entries.flatMap((e) => e.images.map((img) => img.id)),
+    );
+    const entryBlocks = entries
+      .map((entry): StreamBlock | null => {
+        const images = entry.images
+          .map((img) => displayImageById.get(img.id))
+          .filter((img): img is DisplayImage => img != null);
+        const isOfficial = images.some((img) => img.is_official);
+        const topLikes = images.reduce(
+          (max, img) => Math.max(max, img.likes_count),
+          0,
+        );
+        const hasContent = !!(entry.content?.trim());
+        const imageCount = images.length;
+        if (imageCount === 0 && !hasContent) return null;
+        const score =
+          (isOfficial ? 1000 : 0) +
+          topLikes * 10 +
+          (hasContent ? 20 : 0) +
+          (imageCount > 1 ? 15 : 0);
+        let blockType: StreamBlock["blockType"];
+        if (isOfficial) blockType = "featured";
+        else if (imageCount >= 2) blockType = "mosaic";
+        else if (imageCount === 1 && hasContent) blockType = "image-review";
+        else if (imageCount === 1) blockType = "image-only";
+        else blockType = "text-only";
+        return {
+          key: entry.id,
+          entryId: entry.id,
+          user: entry.user,
+          content: entry.content,
+          rating: entry.rating,
+          status: entry.status,
+          images,
+          isOfficial,
+          topLikes,
+          blockType,
+          score,
+        };
+      })
+      .filter((b): b is StreamBlock => b !== null);
+    // Orphaned display images — official uploads not tied to any review entry
+    const orphanBlocks: StreamBlock[] = displayImages
+      .filter((img) => !entryImageIds.has(img.id))
+      .map((img): StreamBlock => ({
+        key: `img-${img.id}`,
+        entryId: `img-${img.id}`,
+        user: img.user ?? {
+          username: null,
+          avatar_url: null,
+        },
+        content: null,
+        rating: null,
+        status: "visited" as const,
+        images: [img],
+        isOfficial: img.is_official ?? false,
+        topLikes: img.likes_count,
+        blockType: (img.is_official ?? false) ? "featured" : "image-only",
+        score: ((img.is_official ?? false) ? 1000 : 0) + img.likes_count * 10,
+      }));
+    return [...entryBlocks, ...orphanBlocks].sort((a, b) => b.score - a.score);
+  }, [entries, displayImages, displayImageById]);
+  const renderStreamBlock = useCallback(
+    (block: StreamBlock) => {
+      const { images, content, user, rating, isOfficial, topLikes } = block;
+      const preview =
+        content && content.length > 220 ? content.slice(0, 220) + "…" : content;
+      // Shared author + rating attribution line
+      const authorLine = (
+        <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+          {user?.is_architect_of_building ? (
+            <span
+              className="inline-block h-2 w-2 shrink-0 bg-text-primary"
+              aria-label="Architect of this building"
+            />
+          ) : null}
+          {user?.username ? (
+            <Link
+              to={`/profile/${user.username}`}
+              className="transition-colors hover:text-text-primary"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {user.username}
+            </Link>
+          ) : null}
+          {user?.is_verified_architect ? (
+            <BadgeCheck className="h-3 w-3 shrink-0 text-text-primary" />
+          ) : null}
+          {rating != null ? (
+            <span className="ml-1 flex gap-0.5">
+              {[1, 2, 3].map((i) => (
+                <Circle
+                  key={i}
+                  className={cn(
+                    "h-2.5 w-2.5",
+                    i <= rating
+                      ? "fill-text-primary text-text-primary"
+                      : "fill-transparent text-text-disabled",
+                  )}
+                />
+              ))}
+            </span>
+          ) : null}
+        </div>
+      );
+      switch (block.blockType) {
+        // ── E: Featured — official or highest-signal ──────────────────────────
+        case "featured": {
+          const img = images[0];
+          if (!img) return null;
+          return (
+            <div key={block.key} className="mb-0.5">
+              <div
+                className="group relative aspect-video w-full cursor-pointer overflow-hidden bg-surface-muted"
+                onClick={() => setSelectedImage(img)}
+              >
+                <img
+                  src={img.url}
+                  alt=""
+                  className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-95"
+                />
+                {isOfficial ? (
+                  <span className="absolute left-3 top-3 bg-surface-card/90 px-2 py-1 text-[10px] font-medium uppercase tracking-widest text-text-primary">
+                    Official
+                  </span>
+                ) : null}
+                {img.likes_count > 0 ? (
+                  <span className="absolute bottom-3 right-3 flex items-center gap-1 text-[10px] text-text-inverse/80">
+                    <Heart className="h-3 w-3" aria-hidden />
+                    {img.likes_count}
+                  </span>
+                ) : null}
+              </div>
+              {(preview || user?.username) ? (
+                <div className="pb-1 pt-3">
+                  {preview ? (
+                    <Link to={`/review/${block.entryId}`} className="group/r mb-2 block">
+                      <p className="text-sm italic leading-relaxed text-text-secondary transition-colors group-hover/r:text-text-primary">
+                        &ldquo;{preview}&rdquo;
+                      </p>
+                    </Link>
+                  ) : null}
+                  {authorLine}
+                </div>
+              ) : null}
+            </div>
+          );
+        }
+        // ── B: Image + review text, side by side (stacked on mobile) ─────────
+        case "image-review": {
+          const img = images[0];
+          if (!img) return null;
+          return (
+            <div key={block.key} className="mb-0.5 grid grid-cols-1 sm:grid-cols-2">
+              <div
+                className="group aspect-video cursor-pointer overflow-hidden bg-surface-muted sm:aspect-[4/5]"
+                onClick={() => setSelectedImage(img)}
+              >
+                <img
+                  src={img.url}
+                  alt=""
+                  className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+                />
+              </div>
+              <div className="flex flex-col justify-center border-border-default px-0 pt-3 sm:border-l sm:px-6 sm:pt-0">
+                {authorLine}
+                <Link to={`/review/${block.entryId}`} className="group/r mt-2 block">
+                  <p className="text-sm italic leading-relaxed text-text-secondary transition-colors group-hover/r:text-text-primary">
+                    &ldquo;{preview}&rdquo;
+                  </p>
+                </Link>
+              </div>
+            </div>
+          );
+        }
+        // ── C: Mosaic — 3fr/2fr hero + stacked secondaries ────────────────────
+        case "mosaic": {
+          const [first, second, third, ...rest] = images;
+          return (
+            <div key={block.key} className="mb-0.5">
+              <div
+                className="grid gap-0.5"
+                style={{ gridTemplateColumns: "3fr 2fr", gridTemplateRows: "280px" }}
+              >
+                <div
+                  className="group cursor-pointer overflow-hidden bg-surface-muted"
+                  onClick={() => setSelectedImage(first)}
+                >
+                  <img
+                    src={first.url}
+                    alt=""
+                    className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+                  />
+                </div>
+                {(second || third) ? (
+                  <div
+                    className="grid gap-0.5"
+                    style={{ gridTemplateRows: third ? "1fr 1fr" : "1fr" }}
+                  >
+                    {second ? (
+                      <div
+                        className="group cursor-pointer overflow-hidden bg-surface-muted"
+                        onClick={() => setSelectedImage(second)}
+                      >
+                        <img
+                          src={second.url}
+                          alt=""
+                          className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+                        />
+                      </div>
+                    ) : null}
+                    {third ? (
+                      <div
+                        className="group cursor-pointer overflow-hidden bg-surface-muted"
+                        onClick={() => setSelectedImage(third)}
+                      >
+                        <img
+                          src={third.url}
+                          alt=""
+                          className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+              {rest.length > 0 ? (
+                <div className="mt-0.5 grid grid-cols-3 gap-0.5">
+                  {rest.map((img) => (
+                    <BuildingImageCard
+                      key={img.id}
+                      image={img}
+                      initialIsLiked={likedImageIds.has(img.id)}
+                      onOpen={() => setSelectedImage(img)}
+                    />
+                  ))}
+                </div>
+              ) : null}
+              {(preview || user?.username) ? (
+                <div className="pb-1 pt-2">
+                  {authorLine}
+                  {preview ? (
+                    <Link to={`/review/${block.entryId}`} className="group/r mt-1.5 block">
+                      <p className="text-sm italic leading-relaxed text-text-secondary transition-colors group-hover/r:text-text-primary">
+                        &ldquo;{preview}&rdquo;
+                      </p>
+                    </Link>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          );
+        }
+        // ── A: Single image, no text — height scales with likes ───────────────
+        case "image-only": {
+          const img = images[0];
+          if (!img) return null;
+          const isTall = topLikes >= 10;
+          return (
+            <div key={block.key} className="group mb-0.5">
+              <div
+                className={cn(
+                  "relative w-full cursor-pointer overflow-hidden bg-surface-muted",
+                  isTall ? "aspect-[4/3]" : "aspect-video",
+                )}
+                onClick={() => setSelectedImage(img)}
+              >
+                <img
+                  src={img.url}
+                  alt=""
+                  className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+                />
+                {img.likes_count > 0 ? (
+                  <span className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] text-text-inverse/80">
+                    <Heart className="h-3 w-3" aria-hidden />
+                    {img.likes_count}
+                  </span>
+                ) : null}
+              </div>
+              {user?.username ? <div className="mt-2">{authorLine}</div> : null}
+            </div>
+          );
+        }
+        // ── D: Pull quote — text only, architect-of-building gets left border ──
+        case "text-only": {
+          if (!content) return null;
+          const isArchitectOfBuilding = user?.is_architect_of_building;
+          return (
+            <Link
+              key={block.key}
+              to={`/review/${block.entryId}`}
+              className={cn(
+                "group block border-b border-border-default py-6",
+                isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-4",
+              )}
+            >
+              <p className="text-base italic leading-relaxed text-text-primary transition-opacity group-hover:opacity-75">
+                &ldquo;{preview}&rdquo;
+              </p>
+              <div className="mt-3">{authorLine}</div>
+            </Link>
+          );
+        }
+        default:
+          return null;
+      }
+    },
+    [setSelectedImage, likedImageIds],
+  );
+  // ── Loading guard ─────────────────────────────────────────────────────────
+  if (loading || !building) {
+    return (
+      <AppLayout title="Loading...">
+        <div className="flex justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-primary" aria-hidden />
+        </div>
+      </AppLayout>
+    );
+  }
+  // ─── MAIN RENDER ─────────────────────────────────────────────────────────
+  return (
+    <AppLayout title={building.name} showBack>
+      {/* ── HERO — full-bleed, no overlay, unchanged ── */}
+      <BuildingHero key={heroImageUrl} src={heroImageUrl} alt={building.name} />
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl">
+          {/* ── IDENTITY ── */}
+          <div className="space-y-3 py-8">
+            {building.tier_rank ? (
+              <span className="block text-2xs font-medium uppercase tracking-widest text-text-secondary">
+                {building.tier_rank}
+                {building.city ? ` · ${building.city}` : ""}
+              </span>
+            ) : null}
+            <h1 className="text-4xl font-bold leading-tight tracking-tight text-text-primary md:text-5xl lg:text-6xl">
+              {building.name}
+            </h1>
+            {building.alt_name && building.alt_name !== building.name ? (
+              <p className="text-lg text-text-secondary">{building.alt_name}</p>
+            ) : null}
+            {/* Status pill */}
+            {(building.status === "Demolished" ||
+              building.status === "Lost" ||
+              building.status === "Unbuilt" ||
+              building.status === "Under Construction") ? (
+              <span className="inline-block border border-border-default px-2 py-0.5 text-2xs font-medium uppercase tracking-widest text-text-secondary">
+                {building.status}
+              </span>
+            ) : null}
+            {/* Architect · Year · City */}
+            <div className="flex flex-wrap items-center gap-2 text-sm text-text-secondary">
+              {visiblePrimaryCredits(buildingCredits).length > 0 ? (
+                <>
+                  <div className="flex flex-wrap gap-1">
+                    <PrimaryCreditsLinks
+                      credits={buildingCredits}
+                      linkClassName="font-medium text-text-primary underline-offset-4 hover:underline"
+                    />
+                  </div>
+                  <span className="text-text-disabled">·</span>
+                </>
+              ) : null}
+              <span>{building.year_completed}</span>
+              {(building.city || building.country) ? (
+                <>
+                  <span className="text-text-disabled">·</span>
+                  <span>
+                    {[building.city, building.country].filter(Boolean).join(", ")}
+                  </span>
+                </>
+              ) : null}
+            </div>
+            {/* Community stats */}
+            {entries.length > 0 ? (
+              <div className="flex items-center gap-4">
+                {totalRatingPoints !== null ? (
+                  <span
+                    className="text-xs text-text-disabled"
+                    title="Sum of all visitor ratings (each 1–3)"
+                  >
+                    {totalRatingPoints}{" "}
+                    {totalRatingPoints === 1 ? "rating point" : "rating points"}
+                  </span>
+                ) : null}
+                <span className="text-xs text-text-disabled">
+                  {visitorCount} {visitorCount === 1 ? "visitor" : "visitors"}
+                </span>
+              </div>
+            ) : null}
+          </div>
+          {/* ── USER ACTIONS ── */}
+          <div
+            className={cn(
+              "flex items-center gap-3 pb-8",
+              !(user && (userStatus === "visited" || userStatus === "pending")) &&
+                "border-b border-border-default",
+            )}
+          >
+            <button
+              type="button"
+              onClick={() => handleStatusChange("visited")}
+              className={`text-xs font-medium uppercase tracking-widest transition-colors ${
+                userStatus === "visited"
+                  ? "text-text-primary"
+                  : "text-text-disabled hover:text-text-primary"
+              }`}
+            >
+              <Check
+                className={cn(
+                  "mr-1 inline h-4 w-4",
+                  userStatus === "visited" && "stroke-[2.5px]",
+                )}
+              />
+              Visited
+            </button>
+            <button
+              type="button"
+              onClick={() => handleStatusChange("pending")}
+              className={`text-xs font-medium uppercase tracking-widest transition-colors ${
+                userStatus === "pending"
+                  ? "text-text-primary"
+                  : "text-text-disabled hover:text-text-primary"
+              }`}
+            >
+              <Bookmark
+                className={cn(
+                  "mr-1 inline h-4 w-4",
+                  userStatus === "pending" && "fill-current",
+                )}
+              />
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => handleStatusChange("ignored")}
+              className={`text-xs font-medium uppercase tracking-widest transition-colors ${
+                userStatus === "ignored"
+                  ? "text-text-primary"
+                  : "text-text-disabled hover:text-text-primary"
+              }`}
+            >
+              <EyeOff className="mr-1 inline h-4 w-4" />
+              Hide
+            </button>
+            {(userStatus === "visited" || userStatus === "pending") ? (
+              <div
+                className="ml-2 flex items-center gap-1"
+                onMouseLeave={() => setHoverRating(null)}
+              >
+                {[1, 2, 3].map((i) => {
+                  const filled =
+                    hoverRating !== null ? i <= hoverRating : i <= myRating;
+                  return (
+                    <Circle
+                      key={i}
+                      className={cn(
+                        "h-4 w-4 cursor-pointer transition-opacity hover:opacity-80",
+                        filled
+                          ? "fill-text-primary text-text-primary"
+                          : "fill-transparent text-text-disabled",
+                      )}
+                      onMouseEnter={() => setHoverRating(i)}
+                      onClick={() =>
+                        handleRate(building.id, i === myRating ? 0 : i)
+                      }
+                    />
+                  );
+                })}
+              </div>
+            ) : null}
+            <div className="flex-1" />
+            <Link
+              to={
+                getBuildingUrl(building.id, building.slug, building.short_id) +
+                "/review"
+              }
+              className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary"
+            >
+              Write review →
+            </Link>
+            {canEditOfficialData ? (
+              <Link
+                to={
+                  getBuildingUrl(building.id, building.slug, building.short_id) +
+                  "/edit"
+                }
+                className="text-text-disabled transition-colors hover:text-text-primary"
+                aria-label="Edit building"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Link>
+            ) : null}
+          </div>
+          {user && (userStatus === "visited" || userStatus === "pending") ? (
+            <div className="space-y-2 border-b border-border-default pb-8">
+              <Textarea
+                id="building-status-note"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Add a note or review (optional)"
+                aria-label="Add a note or review (optional)"
+                maxLength={10000}
+                rows={4}
+                className="min-h-0 resize-y"
+                disabled={isSavingNote}
+              />
+              <div className="flex flex-wrap items-center justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={isSavingNote}
+                  className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary disabled:opacity-50"
+                  onClick={() => {
+                    void handleSaveNote();
+                  }}
+                >
+                  {isSavingNote ? (
+                    <Loader2 className="mr-1 inline h-3 w-3 animate-spin" aria-hidden />
+                  ) : null}
+                  Save note
+                </button>
+              </div>
+              <div className="space-y-6 border-t border-border-default pt-6">
+                <div className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowCollections(!showCollections)}
+                    className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                  >
+                    <Plus className="mr-1 inline h-3.5 w-3.5" />
+                    Add to collection
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowVisitWith(!showVisitWith)}
+                    className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                  >
+                    <Users className="mr-1 inline h-3.5 w-3.5" />
+                    Plan a visit
+                  </button>
+                </div>
+                {showCollections ? (
+                  <CollectionSelector
+                    userId={user.id}
+                    selectedCollectionIds={selectedCollectionIds}
+                    onChange={setSelectedCollectionIds}
+                  />
+                ) : null}
+                {showVisitWith ? (
+                  <div className="space-y-3">
+                    <UserPicker
+                      selectedIds={selectedFriends}
+                      onSelect={(friendId) =>
+                        setSelectedFriends((prev) =>
+                          prev.includes(friendId) ? prev : [...prev, friendId],
+                        )
+                      }
+                      onRemove={(friendId) =>
+                        setSelectedFriends((prev) =>
+                          prev.filter((x) => x !== friendId),
+                        )
+                      }
+                    />
+                    {selectedFriends.length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={handleSendInvites}
+                        disabled={sendingInvites}
+                        className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary disabled:opacity-50"
+                      >
+                        {sendingInvites ? (
+                          <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
+                        ) : (
+                          <Send className="mr-1 inline h-3.5 w-3.5" />
+                        )}
+                        Send invite →
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+          {/* ── INFO ZONE: Credits preview (left) + Info + Map (right) ── */}
+          <div className="grid grid-cols-1 gap-x-8 gap-y-6 border-b border-border-default py-8 sm:grid-cols-2">
+            {/* Left: compact credits preview */}
+            <div>
+              <h2 className="mb-4 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+                Credits
+              </h2>
+              <BuildingCreditsPreview
+                credits={buildingCredits}
+                isAuthenticated={Boolean(user)}
+              />
+            </div>
+            {/* Right: info tags + map */}
+            <div>
+              <h2 className="mb-4 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+                Info
+              </h2>
+              {building.styles && building.styles.length > 0 ? (
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  {building.styles.map((s) => (
+                    <span
+                      key={s.id}
+                      className="border border-border-default px-2 py-0.5 text-[11px] text-text-secondary"
+                    >
+                      {s.name}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+              {building.typology && building.typology.length > 0 ? (
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  {building.typology.map((t) => (
+                    <span
+                      key={t}
+                      className="border border-border-default px-2 py-0.5 text-[11px] text-text-secondary"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+              {accessSynthesis ? (
+                <div className="mt-3">
+                  <Badge
+                    variant={accessBadgeVariant()}
+                    className="flex w-fit items-center gap-1.5 text-xs"
+                  >
+                    {createElement(accessSynthesis.icon, { className: "w-3.5 h-3.5" })}
+                    {accessSynthesis.label}
+                  </Badge>
+                </div>
+              ) : null}
+              {building.access_notes ? (
+                <p className="mt-2 border-l-2 border-text-primary/20 py-0.5 pl-3 text-sm text-text-secondary">
+                  {building.access_notes}
+                </p>
+              ) : null}
+              {/* Map */}
+              <div className="mt-4">
+                {building.location_precision === "approximate" ? (
+                  <Alert className="mb-3 border-amber-500/50 bg-amber-500/10 text-amber-500">
+                    <AlertTriangle className="h-4 w-4 stroke-amber-500" />
+                    <AlertDescription className="ml-2 text-xs">
+                      Approximate location — marker shows general area.
+                    </AlertDescription>
+                  </Alert>
+                ) : null}
+                {coordinates ? (
+                  <WidgetErrorBoundary>
+                    <BuildingLocationMap
+                      lat={coordinates.lat}
+                      lng={coordinates.lng}
+                      status={userStatus}
+                      rating={myRating}
+                      tierRank={building.tier_rank}
+                      locationPrecision={building.location_precision}
+                      isExpanded={isMapExpanded}
+                      onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
+                      className={isMapExpanded ? "" : "h-36 w-full"}
+                    />
+                  </WidgetErrorBoundary>
+                ) : (
+                  <div className="flex h-36 w-full flex-col items-center justify-center gap-2 bg-surface-muted/20 text-text-secondary">
+                    <MapPin className="h-5 w-5 opacity-40" />
+                    <span className="text-[10px] uppercase tracking-widest">
+                      Location unavailable
+                    </span>
+                  </div>
+                )}
+                <div className="mt-2 flex items-center justify-between">
+                  <div className="group flex items-center gap-1.5 text-xs text-text-secondary">
+                    <MapPin className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {[building.city, building.country]
+                        .filter(Boolean)
+                        .join(", ") || building.address}
+                    </span>
+                    {user ? (
+                      <Link
+                        to={
+                          getBuildingUrl(
+                            building.id,
+                            building.slug,
+                            building.short_id,
+                          ) + "/edit"
+                        }
+                        className="ml-1 hidden p-1 text-text-disabled transition-colors hover:text-text-primary group-hover:inline-flex"
+                        title="Edit building"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Link>
+                    ) : null}
+                  </div>
+                  {coordinates ? (
+                    <button
+                      type="button"
+                      className="text-[10px] font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                      onClick={() => {
+                        if (building.location_precision === "approximate")
+                          setShowDirectionsAlert(true);
+                        else
+                          window.open(
+                            `https://www.google.com/maps/dir/?api=1&destination=${coordinates.lat},${coordinates.lng}`,
+                            "_blank",
+                          );
+                      }}
+                    >
+                      {building.status === "Lost"
+                        ? "Navigate to site →"
+                        : "Get directions →"}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* ── ARCHITECT STATEMENT ── */}
+          <ArchitectStatement
+            statement={building.architect_statement ?? ""}
+            isEditing={false}
+            onChange={() => {}}
+            architectName={leadAttributionFromCredits(buildingCredits)}
+          />
+          {/* ── BUILDING STATUS ALERT — structural warnings only ── */}
+          {(building.status === "Lost" ||
+            building.status === "Unbuilt" ||
+            building.status === "Under Construction") ? (
+            <Alert className="border-feedback-destructive/50 bg-feedback-destructive/10 text-feedback-destructive">
+              <AlertTriangle className="h-4 w-4 stroke-feedback-destructive" />
+              <AlertDescription className="ml-2 font-medium">
+                {building.status === "Lost"
+                  ? "This building is lost to time. It no longer stands at this location."
+                  : building.status === "Unbuilt"
+                  ? "This project was never built."
+                  : "This building is under construction."}
+              </AlertDescription>
+            </Alert>
+          ) : null}
+        </div>
+      </div>
+      {/* ── EDITORIAL PHOTO + REVIEW STREAM ── */}
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl">
+          <div className="flex items-center justify-between border-t border-border-default pb-3 pt-8">
+            <h2 className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+              Photos &amp; reviews
+              {displayImages.length > 0 ? ` · ${displayImages.length}` : ""}
+            </h2>
+            <button
+              type="button"
+              className="text-[10px] font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+              onClick={() => document.getElementById("hidden-file-input")?.click()}
+            >
+              Upload →
+            </button>
+            <input
+              id="hidden-file-input"
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageSelect}
+              aria-label="Upload photos of this building"
+            />
+          </div>
+          {/* Pending image queue */}
+          {pendingImages.length > 0 && user ? (
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              {pendingImages.map((img) => (
+                <div
+                  key={img.id}
+                  className="relative h-16 w-16 shrink-0 bg-surface-muted"
+                >
+                  <img src={img.preview} alt="" className="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center bg-surface-overlay text-text-primary hover:bg-surface-muted"
+                    onClick={() => removePendingImage(img.id)}
+                    aria-label="Remove pending photo"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                disabled={isSavingNote}
+                className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary disabled:opacity-50"
+                onClick={() => { void handleSaveNote(); }}
+              >
+                {isSavingNote ? (
+                  <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
+                ) : null}
+                Save photos →
+              </button>
+            </div>
+          ) : null}
+          {/* Stream */}
+          <WidgetErrorBoundary>
+            {streamBlocks.length > 0 ? (
+              <div>{streamBlocks.map((block) => renderStreamBlock(block))}</div>
+            ) : (
+              <div className="flex aspect-video flex-col items-center justify-center bg-surface-muted/20 p-6 text-center text-text-secondary">
+                <ImageIcon className="mb-3 h-10 w-10 text-text-disabled" />
+                <p className="mb-4 text-xs text-text-disabled">
+                  Be the first to add a photo
+                </p>
+                <Link
+                  to={
+                    getBuildingUrl(building.id, building.slug, building.short_id) +
+                    "/review"
+                  }
+                  className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary"
+                >
+                  Upload photo →
+                </Link>
+              </div>
+            )}
+          </WidgetErrorBoundary>
+          <div className="mt-3 text-center">
+            <a
+              href={googleSearchUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-[11px] text-text-disabled transition-colors hover:text-text-primary"
+            >
+              <Search className="h-3 w-3" />
+              Search for photos on Google
+              <ExternalLink className="h-3 w-3 opacity-50" />
+            </a>
+          </div>
+          {/* ── FULL CREDITS — anchor target for "See all credits ↓" ── */}
+          <section
+            id="full-credits"
+            className="mt-12 scroll-mt-4 border-t border-border-default"
+          >
+            <BuildingCredits
+              buildingId={building.id}
+              credits={buildingCredits}
+              isAuthenticated={Boolean(user)}
+              isAdmin={isCreditsAdmin}
+            />
+          </section>
+          {/* ── RESOURCES ── */}
+          {(linksLoading || topLinks.length > 0) ? (
+            <section className="border-t border-border-default pt-10">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">
+                  Resources
+                </h2>
+                {user ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowLinkEditor(!showLinkEditor)}
+                    className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                  >
+                    Add →
+                  </button>
+                ) : null}
+              </div>
+              {linksLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-9 w-full" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+              ) : (
+                <div className="space-y-0">
+                  {topLinks.map((link) => {
+                    let domain = "";
+                    try { domain = new URL(link.url).hostname; } catch { /* ignore */ }
+                    const displayDomain = domain || link.url;
+                    const hasTitle = !!link.title;
+                    const isLiked = likedLinkIds.has(link.link_id);
+                    return (
+                      <div
+                        key={link.link_id}
+                        className="group flex items-center justify-between border-b border-border-default py-3"
+                      >
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex min-w-0 flex-1 flex-col gap-0.5 overflow-hidden"
+                        >
+                          <span className="truncate text-sm font-medium text-text-primary transition-colors group-hover:text-brand-primary">
+                            {hasTitle ? link.title : displayDomain}
+                          </span>
+                          <div className="flex items-center gap-1.5 text-xs text-text-disabled">
+                            {hasTitle ? (
+                              <span className="max-w-[150px] truncate">{displayDomain}</span>
+                            ) : null}
+                            {hasTitle && link.user_username ? <span>·</span> : null}
+                            {link.user_username ? (
+                              <span>@{link.user_username}</span>
+                            ) : null}
+                          </div>
+                        </a>
+                        <div className="ml-2 flex shrink-0 items-center gap-2">
+                          <button
+                            type="button"
+                            className={`inline-flex items-center gap-1 text-xs transition-colors ${
+                              isLiked
+                                ? "text-text-primary"
+                                : "text-text-disabled hover:text-text-primary"
+                            }`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              void handleLinkLike(link.link_id);
+                            }}
+                          >
+                            <Heart className={cn("h-3 w-3", isLiked && "fill-current")} />
+                            <span>{link.like_count}</span>
+                          </button>
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-text-disabled transition-colors hover:text-text-primary"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" />
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {showLinkEditor && user ? (
+                    <div className="space-y-2 pt-4">
+                      {userLinks.length > 0 ? (
+                        <ul className="space-y-1.5 text-sm text-text-secondary">
+                          {userLinks.map((l) => (
+                            <li key={l.id} className="flex items-center gap-2">
+                              <span className="min-w-0 flex-1 truncate">
+                                {l.title || l.url}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveLink(l.id)}
+                                className="text-text-disabled transition-colors hover:text-text-primary"
+                                aria-label="Remove link"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      <Input
+                        placeholder="URL"
+                        value={newLinkUrl}
+                        onChange={(e) => setNewLinkUrl(e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                      <Input
+                        placeholder="Title (optional)"
+                        value={newLinkTitle}
+                        onChange={(e) => setNewLinkTitle(e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddLink}
+                        className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary"
+                      >
+                        Add link →
+                      </button>
+                      {(userLinks.length > 0 ||
+                        selectedCollectionIds.length !== initialCollectionIds.length) ? (
+                        <button
+                          type="button"
+                          disabled={isSavingNote}
+                          className="mt-2 block text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary disabled:opacity-50"
+                          onClick={() => { void handleSaveNote(); }}
+                        >
+                          {isSavingNote ? (
+                            <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
+                          ) : null}
+                          Save links →
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </section>
+          ) : null}
+        </div>
+      </div>
+      {/* ── DIALOGS ── */}
+      <ImageDetailsDialog
+        imageId={selectedImage?.id || null}
+        initialUrl={selectedImage?.url || null}
+        type={selectedImage?.type || "image"}
+        uploadedBy={selectedImage?.user || null}
+        uploadDate={selectedImage?.created_at}
+        isOpen={!!selectedImage}
+        onClose={() => setSelectedImage(null)}
+        onNext={handleNextImage}
+        onPrev={handlePrevImage}
+        hasNext={selectedIndex < displayImages.length - 1}
+        hasPrev={selectedIndex > 0}
+        isGenerated={selectedImage?.is_generated}
+        isOfficial={selectedImage?.is_official}
+        isHero={selectedImage?.id === building?.hero_image_id}
+        canEdit={canEditOfficialData}
+        onToggleOfficial={handleToggleOfficial}
+        onSetHero={handleSetHeroImage}
+      />
+      <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove from list?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteWarningMessage ||
+                "This will delete your rating, status, and any notes for this building. This action cannot be undone."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-feedback-destructive text-feedback-destructive-foreground hover:opacity-90"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={showDirectionsAlert} onOpenChange={setShowDirectionsAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exact Location Unknown</AlertDialogTitle>
+            <AlertDialogDescription>
+              This building&apos;s location is approximate. The directions will
+              guide you to the general vicinity (e.g. village center).
+              <br /><br />
+              Please look around when you arrive.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() =>
+                window.open(
+                  `https://www.google.com/maps/dir/?api=1&destination=${coordinates?.lat},${coordinates?.lng}`,
+                  "_blank",
+                )
+              }
+            >
+              {building.status === "Lost" ? "Navigate to Site" : "Get Directions"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </AppLayout>
+  );
 }
 </file>
 
@@ -95925,7 +95728,7 @@ STORAGE_PUBLIC_URL
 ## CURRENT_ARCHITECTURE_SNAPSHOT
 Package `plano@0.1.0`. **Map credit filters (Phase 10.2):** Filter drawer **Credits** — company combobox (`searchCompanies`) + multi-select roles (`CREDIT_ROLES`); URL `creditCompany` / `creditRoles`; `get_map_clusters_v2` + `get_buildings_list` + legacy `get_map_clusters` filter JSON keys `credit_company_id` / `credit_roles` (migration `20270836000000_map_credit_filters.sql`). **Buildings image column:** Queries and embeds use **`hero_image_url`**; client layers that still expose **`main_image_url`** (feed, discovery, search DTOs) map from hero or RPC **`main_image_url`** where the function still returns that key.
 
-**Building detail:** **`BuildingDetails`** no longer swaps from a **`BuildingHeader`‑based preview to the editorial layout after mount; enrichment fetches no longer replace the page with a spinner. Signed-in **Visited** / **Save** (`pending`): optional **Note or review** textarea + **Save note** (persists **`user_buildings.content`** via existing **`handleSaveNote`**), then **Add to collection** / **Plan a visit** in the same card (not when the note UI is hidden); **`useBuildingInteractions`** exposes **`setNote`**; **`BuildingInteractions.accessSynthesis`** typed **`| null`**. Community line uses **`totalRatingPoints`** (sum of visitor **`rating`** 1–3) instead of average when any ratings exist.
+**Building detail:** **`BuildingDetails`** no longer swaps from a **`BuildingHeader`‑based preview to the editorial layout after mount; enrichment fetches no longer replace the page with a spinner. Users who may edit official data see a pencil **`Link`** to **`/building/:id/:slug/edit`** (no inline official-field editing on the detail page). Signed-in **Visited** / **Save** (`pending`): optional **Note or review** textarea + **Save note** (persists **`user_buildings.content`** via existing **`handleSaveNote`**), then **Add to collection** / **Plan a visit** in the same card (not when the note UI is hidden); **`useBuildingInteractions`** exposes **`setNote`**; **`BuildingInteractions.accessSynthesis`** typed **`| null`**. Community line uses **`totalRatingPoints`** (sum of visitor **`rating`** 1–3) instead of average when any ratings exist.
 
 **Places suggestions:** **`useAutocompleteSuggestions`** calls **`google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions`** (new Places Data API); geocoding via **`@/lib/googleMapsGeocoding`**. **Search `/search` SERP (`BuildingSidebar` buildings tab):** building rows show credit names + **`city`** only (no country/year in the meta line); row **`pr-3`** insets the thumbnail from the column edge. **Global map search (Phase 10.1):** `/search` sidebar tabs for buildings vs people vs companies; `searchPeople` returns nationality, avatar, credit count for list UI; filter drawer **People** multi-select uses `PersonFilterSelect` (no `architects` table reads in that path). **Company steward portfolio (Phase 9.2):** **`/company-portfolio`** for users with **`company_stewards`** rows; role-grouped credits + owner pending-request queue; sidebar / account menu links; **`?edit=1`** on **`/company/:slug`** opens steward edit sheet when allowed. **Person portfolio dashboard (Phase 9.1):** Authenticated **`/portfolio`** (`PersonDashboard`) for users who have claimed a **`people`** row; **`getPersonPortfolio`** + tier sections + year/role sort; **`/architect/dashboard`** redirects to **`/portfolio`**. Sidebar + account menu **My portfolio** when applicable. **Profile** portfolio tab uses claimed-person detection (not **`verified_architect_id`**). **Entity audit (Phase 8.3):** **`admin_audit_logs`** records **`credit_added`**, **`credit_status_changed`**, **`steward_removed`** (client, actor RLS), **`person_claimed`**, **`company_claimed`**, **`steward_added`** (RPCs). **`BuildingAudit`** (`/admin/audit`) optional **`?building=<uuid>`** merges **`building_audit_logs`** with credit audit rows for that building. **Admin people/companies + entity claims (Phase 8.2):** **`/admin/credits/people`** and **`/admin/credits/companies`** for search, **`claim_status`** edits, merge tool calling **`admin_merge_people`** / **`admin_merge_companies`**; **`/admin/claims`** **`EntityClaims`** (architect claims tab + company dispute queue with resolve). **Admin flagged credits (Phase 8.1):** **`/admin/credits/flagged`** lists **`status = flagged`** credits with building/entity/added-by links; informational **30-day auto-hide** countdown when all linked entities remain **`unclaimed`** and the flag did not originate from **`verified`**; warning when **`flagged_from_status = verified`**. **Company claim disputes (Phase 7.4):** Claimed **`/company/:slug`** — non-stewards see **Dispute this claim** (or log-in link) under the steward-request banner; **`/company/:slug/dispute`** collects reason + optional evidence URL; insert + **`notify-admin-dispute`**; submitter sees **Dispute under review** while status is **`open`**. **Steward access requests (Phase 7.3):** Claimed **`/company/:slug`** for non-stewards — **Request access** (optional message) → DB row + owner emails with **`/approve-steward-request/:token`**; owner signs in → RPC adds **steward** + **`notify-steward-request-approved`** → redirect **`?stewardApproved=1`** + toast + Edit sheet. **Company first claim (Phase 7.2):** Unclaimed **`/company/:slug`** — **Claim this company** / **Log in to claim** → work email → email link **`/verify-company-claim/:token`** redeems RPC (owner steward + **`claimed`** + **`verified_domain`**); already-claimed + domain mismatch → **`/company/:slug/dispute`**. **Person claim (Phase 7.1):** Unclaimed **`/person/:slug`** shows claim CTA; signed-in users open **`ClaimPersonDialog`** (This is me / I represent); **`claim_person`** RPC sets owner + **`claimed`**; **`notify-entity-claimed`** emails distinct **`added_by_user_id`** on visible credits (excludes the claimant). **Building credits:** Phase 1 DB + Phase 2 APIs; **`BuildingCredits`** on building detail (tier/role groups, lead labels, verified tooltip, ancillary collapsible, **report credit** popover/sheet + session hide, authenticated **Add a credit** opens **`AddCreditForm`** sheet (multi-row submission + optional email notify via **`notify-credited-entities`**); email **Remove this credit** opens **`/remove-credit/:token`** (loader redeems RPC, success/error UI, building link when RPC returns building fields). **`CreditEntityPicker`** (Phase 6.1) for merged person/company search + create with similarity gate; **`searchCompanies`** includes per-company **`creditCount`**. **`flag_building_credit`** RPC (apply migration `20270826…`) for public flagging without steward UPDATE RLS. **Phase 4:** public company profile at `/company/:slug` (unclaimed banner, credits by tier with sub-headings per role, client-side role filter, ancillary collapsible; Schema.org `Organization` JSON-LD). Stewards: edit sheet, steward list + owner invite/remove, accept-invite route; **`getCompanyStewardsWithProfiles`**, **`inviteCompanySteward`**, **`redeemCompanyStewardInvite`**, **`companyStewardsQueryKey`**. **`getCompanyWithClient(client, slug)`** for SSR loaders; **`companyQueryKey`**. **Phase 3:** public person profile at `/person/:slug` (unclaimed banner, credits by tier with collapsible ancillary, company links to `/company/:slug` when present); claim owner sees Edit sheet + verified badge when `claim_status = verified`. Legacy **`/architect/:uuid`** redirects to `/person/:slug` or `/company/:slug` (same UUID as migrated `architects`); `ArchitectDetails` UI no longer mounted on that path (Phase 11 removal). **`getPersonWithClient(client, slug)`** for SSR loaders; **`getPerson`** delegates to it with browser client; **`personQueryKey`**, **`getClaimedPersonSummaryForProfile`** in `people.ts`. Own **`/profile/:username`** surfaces linked `/person/:slug` + credit count when `people.claimed_by_user_id` matches. **Feed (Phase 7):** Home `Index.tsx` interleaves social (`useFeed` + `aggregateFeed` / `collapseIntoRows` with `'activity'` and `'row'` / `RowCell`), collections (`useCollectionsFeed` → `get_collections_feed` RPC), and discovery (`useSuggestedFeed`). **Components:** `FeedActivityCard` (visited / bucket list — image from `main_image_url` then `community_preview_url` via `getBuildingImageUrl`), `FeedCollectionCard` (mosaic — same URL resolution + RPC `community_preview_url` when migration applied), `FeedCompactCard` / `FeedClusterCard` (cluster list capped at 3 lines + “and N more”) / `FeedHeroCard` unchanged in role, `SectionDivider` (optional `/explore` link), `ColdStartFeed` replaces `EmptyFeed` on the index for empty social (`EmptyFeed.tsx` file retained). **Types:** `FeedCollection`, `RawCollectionFeedRow`, `CollectionPreviewBuilding` in `src/types/feed.ts`; `ReviewBuilding` includes `community_preview_url`; activity Rule 0 uses main or community path. **Theme:** Tailwind `extend.fontSize` (`2xs`, `2xs-plus`) and `extend.spacing` (`collection-mosaic`, `mosaic-gap`) documented in `docs/DESIGN_TOKENS.md`. Google Fonts (Inter, Space Mono) linked from `src/root.tsx` for SSR and client. **Contract:** `docs/DATA_CONTRACT.md` includes `get_collections_feed` and collection-feed DTOs; `BuildingSummaryDTO.mainImageUrl` optional for feed joins. **Brand icons:** `public/favicon-16x16.png`, `favicon-32x32.png`, `apple-touch-icon.png`, `android-chrome-192x192.png`, `android-chrome-512x512.png` (white “P” on black); document head in `src/root.tsx` and `index.html`; PWA manifest in `vite.config.ts` uses `theme_color` / `background_color` `#000000` and precaches the icon set via `includeAssets`. **PWA Workbox:** `navigateFallback: null` so the service worker does not register a NavigationRoute for `index.html` (not in the SSR client precache — avoids workbox `non-precached-url`). **`vite-plugin-pwa`:** `registerType: "autoUpdate"`; build injects `__APP_VERSION__` from `package.json`; `useVersionNotification` in `AppShell` shows a Sonner toast on major/minor bumps or if 14+ days since last toast (`localStorage` keys `plano_last_notified_*`). **`usePwaInstall`** no longer exposes SW prompt refresh APIs. **Feed RPCs:** `get_feed` / `get_suggested_posts` `building_data` uses `public.main_image_url(b)` (migration `20270839000000` + corrected `20270837000000`); **`company_stewards`** SELECT uses `plano_auth_is_company_steward` to avoid RLS recursion. **`ColdStartFeed`** featured building: `creditedEntities` credit line + `getBuildingUrl(id, slug, short_id)`.
 
@@ -95967,6 +95770,7 @@ Package `plano@0.1.0`. **Map credit filters (Phase 10.2):** Filter drawer **Cred
 - **`npm run test` (full Vitest, 2026-04-09):** Suite **green** (**597** tests). QA 11.5 extends **`AppSidebar.test`** + **`profile-nav-qa115`**. QA 11.4 adds **`building-detail-pages-qa114`**. QA 11.3 adds **`seo-sitemap-qa113`**. QA 11.2 adds **`deprecated-artifacts-qa112`**. QA 11.1 adds **`routes-canonical-qa111`**. QA 10.2 adds **`useURLMapState.qa102`**, **`useMapData`** credit-omit case, **`FilterDrawer`** QA credits block. QA 10.1 adds **`no-architect-select-files-qa101`**, **`BuildingSidebar.qa101`**, **`DiscoverySearchInput.qa101`**, **`ArchitectSearchNudge.qa101`**. QA 9.2 adds **`CompanyDashboard.qa92`**, **`AppSidebar.qa92`**. QA 9.1 adds **`PersonDashboard.qa91`**, **`AppSidebar.qa91`**, **`Profile.qa91`**. QA 8.3 adds **`entity-audit-log-insert-qa83`**, **`admin-audit-logs-schema-qa83`**, **`BuildingAudit.qa83`**. Prior fixes: stable **`useAuth` user** reference + **`useParams`** + head-count **`select` chain** + **`maybeSingle`** for profiles in **`Profile.test`** / **`Profile.likes`**; **`AppSidebar`** credit-nav hook mocks; feed card / hero tests aligned with editorial layout; **`BuildingSidebar`** rating label + **`data.pages`** infinite-query mock.
 
 ## Completed Tasks
+- **Building detail — pencil → edit route (2026-04-11):** Removed inline official-data editing on **`BuildingDetails`**; **`canEditOfficialData`** pencil is a **`Link`** to **`getBuildingUrl(…) + "/edit"`**; dropped **`isOfficialEditing`** / **`draftOfficialData`** / **`handleSaveOfficialData`** from **`useBuildingInteractions`**. **`npm run`** typecheck, lint, targeted **`BuildingDetails`** Vitest, build green.
 - **Building detail — collections & visit under note block (2026-04-11):** **`BuildingDetails`** — **Add to collection** / **Plan a visit** (and expanded **`CollectionSelector`** / **`UserPicker`**) moved from below Resources into the signed-in **Visited** / **Save** note card, directly under **Save note**, with a divider; removed duplicate lower section. **`npm run`** typecheck, lint, **`BuildingDetails.test`**, build green.
 - **Building detail — community stat: rating points sum (2026-04-11):** Replaced average rating (stars + “X.X avg”) with **sum of non-null `rating` values** per building (`totalRatingPoints` in **`useBuildingInteractions`**); **`BuildingDetails`** shows count + singular/plural **rating point(s)** and a **`title`** explaining the sum. **`npm run`** typecheck, lint, **`BuildingDetails.test`**, build green.
 - **Building details — note on Visited / Save (2026-04-11):** **`BuildingDetails`** optional note **`Textarea`** when signed in and **`userStatus`** is **`visited`** or **`pending`**; **`setNote`** on **`useBuildingInteractions`** return; type fixes (**`accessSynthesis`**, orphan stream **`user`**). **`npm run`** typecheck, lint, **`BuildingDetails.test`**, build green.
