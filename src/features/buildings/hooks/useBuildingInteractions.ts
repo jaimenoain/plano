@@ -169,6 +169,10 @@ export interface BuildingInteractions {
   setSelectedFriends: React.Dispatch<React.SetStateAction<string[]>>;
   sendingInvites: boolean;
 
+  /** When true, the optional note textarea is shown (auto-opened after status/rating updates; otherwise via "Add note"). */
+  noteEditorOpen: boolean;
+  setNoteEditorOpen: React.Dispatch<React.SetStateAction<boolean>>;
+
   // Delete confirmation
   showDeleteAlert: boolean;
   setShowDeleteAlert: (v: boolean) => void;
@@ -284,6 +288,7 @@ export function useBuildingInteractions({
     }>
   >([]);
   const [isSavingNote, setIsSavingNote] = useState(false);
+  const [noteEditorOpen, setNoteEditorOpen] = useState(false);
 
   // ── Collections ──────────────────────────────────────────────────────────
   const [showCollections, setShowCollections] = useState(false);
@@ -481,7 +486,6 @@ export function useBuildingInteractions({
               else setUserStatus(null);
               setMyRating(userEntry.rating || 0);
               setNote(userEntry.content || "");
-              if (myCollectionIds.length > 0) setShowCollections(true);
 
               const { data: userLinksData } = await supabase
                 .from("review_links")
@@ -656,6 +660,10 @@ export function useBuildingInteractions({
     void fetchUserSpecificData();
   }, [fetchUserSpecificData]);
 
+  useEffect(() => {
+    setNoteEditorOpen(false);
+  }, [building?.id, user?.id]);
+
   // ── Handlers ─────────────────────────────────────────────────────────────
 
   const handleStatusChange = useCallback(
@@ -697,6 +705,7 @@ export function useBuildingInteractions({
           { onConflict: "user_id, building_id" },
         );
         if (error) throw error;
+        setNoteEditorOpen(true);
         const title =
           newStatus === "visited"
             ? "Marked as Visited"
@@ -744,6 +753,7 @@ export function useBuildingInteractions({
           { onConflict: "user_id, building_id" },
         );
         if (error) throw error;
+        setNoteEditorOpen(true);
         queryClient.invalidateQueries({
           queryKey: ["user-building-statuses"],
         });
@@ -948,6 +958,7 @@ export function useBuildingInteractions({
       setUserStatus(null);
       setMyRating(0);
       setNote("");
+      setNoteEditorOpen(false);
       setSelectedCollectionIds([]);
       setInitialCollectionIds([]);
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
@@ -1158,6 +1169,8 @@ export function useBuildingInteractions({
     selectedFriends,
     setSelectedFriends,
     sendingInvites,
+    noteEditorOpen,
+    setNoteEditorOpen,
     showDeleteAlert,
     setShowDeleteAlert,
     deleteWarningMessage,

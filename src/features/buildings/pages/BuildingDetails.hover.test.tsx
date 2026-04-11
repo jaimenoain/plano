@@ -203,7 +203,7 @@ describe('BuildingDetails Rating Hover', () => {
 
     // Wait for content to load
     await waitFor(() => {
-      expect(screen.getByText('Visited')).toBeTruthy();
+      expect(screen.getByRole("button", { name: /visited/i })).toBeTruthy();
     });
 
     // Find the 3 circles. We can look for the SVG circles or the wrapper div.

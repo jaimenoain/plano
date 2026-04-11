@@ -29,9 +29,12 @@ interface FeedPhotoCarouselProps {
  * Design decisions (aligned with DESIGN_TOKENS.md):
  * - aspect-[4/5] — matches FeedHeroSingleImage so the card height is consistent
  * - Counter uses font-mono (Space Mono) — camera/film numbering feel
- * - Active dot extends to a pill in brand-primary (#BEFF00) — the one neon use per card
+ * - Active dot extends to a white pill; inactive dots are semi-transparent white —
+ *   both sit on photography so white is the only readable colour; no brand-primary
+ *   on content pages per monochromatic content-surface rule
  * - Nav chevrons appear on hover only — photo is hero at rest
- * - Per-image like button top-left, always visible so interaction is discoverable
+ * - Per-image like button top-left; liked state uses white fill (not red) to stay
+ *   monochromatic within the photo overlay context
  */
 export function FeedPhotoCarousel({
   images,
@@ -116,6 +119,11 @@ export function FeedPhotoCarousel({
       )}
 
       {/* ── Per-image like — top left ── */}
+      {/*
+        Liked state uses fill-white rather than fill-feedback-destructive:
+        the button sits on a dark photo overlay so white fill is readable,
+        and content pages are strictly monochromatic — no red on photography.
+      */}
       <button
         type="button"
         onClick={handleLike}
@@ -125,9 +133,7 @@ export function FeedPhotoCarousel({
         <Heart
           className={cn(
             "w-3.5 h-3.5 transition-colors",
-            current.is_liked
-              ? "fill-feedback-destructive text-feedback-destructive"
-              : "text-white"
+            current.is_liked ? "fill-white text-white" : "text-white"
           )}
         />
         {current.likes_count > 0 && (
@@ -170,6 +176,12 @@ export function FeedPhotoCarousel({
       )}
 
       {/* ── Dot strip — bottom centre ── */}
+      {/*
+        Active dot: fully opaque white pill.
+        Inactive dots: semi-transparent white circles.
+        Both sit on photography — white is the only readable choice here,
+        and brand-primary (#BEFF00) must not appear on content pages.
+      */}
       {total > 1 && (
         <div
           className="absolute bottom-3 left-0 right-0 flex justify-center items-center gap-1.5 pointer-events-none"
@@ -184,12 +196,10 @@ export function FeedPhotoCarousel({
               className="rounded-full transition-all duration-200 ease-out"
               style={{
                 height: 5,
-                // Active dot stretches to pill; inactive stays a circle
                 width: i === safeIndex ? 20 : 5,
-                // brand-primary (#BEFF00) for active — the one neon use per card
                 background:
                   i === safeIndex
-                    ? "var(--brand-primary)"
+                    ? "rgba(255,255,255,1)"
                     : "rgba(255,255,255,0.4)",
               }}
             />

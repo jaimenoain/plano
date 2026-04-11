@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import BuildingDetails from './BuildingDetails';
 import { BrowserRouter } from 'react-router';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -206,6 +207,7 @@ describe('BuildingDetails Interaction', () => {
   });
 
   it('toggles status from Visited to Saved when badge is clicked', async () => {
+    const user = userEvent.setup();
     render(
       <TooltipProvider>
         <QueryClientProvider client={queryClient}>
@@ -228,8 +230,9 @@ describe('BuildingDetails Interaction', () => {
         expect(screen.getByRole("button", { name: /visited/i })).toBeTruthy();
     });
 
-    const saveButton = screen.getByRole("button", { name: /^save$/i });
-    fireEvent.click(saveButton);
+    await user.click(screen.getByRole("button", { name: /visited/i }));
+    const saveItem = await screen.findByRole("menuitem", { name: /^save$/i });
+    await user.click(saveItem);
 
     // Verify Supabase upsert call
     await waitFor(() => {
@@ -245,8 +248,8 @@ describe('BuildingDetails Interaction', () => {
 
     // Optimistic Update: Should see "Saved" now (in place of Visited badge)
     await waitFor(() => {
-        const save = screen.getByRole("button", { name: /^save$/i });
-        expect(save.className).toContain("text-text-primary");
+        const saveTrigger = screen.getByRole("button", { name: /^save$/i });
+        expect(saveTrigger.className).toContain("text-text-primary");
     });
   });
 

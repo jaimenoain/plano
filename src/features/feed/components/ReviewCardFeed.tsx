@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Heart, MessageCircle, Circle, Image as ImageIcon, Bookmark, BadgeCheck } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Image as ImageIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -16,18 +15,20 @@ import { FeedPhotoCarousel } from "./FeedPhotoCarousel";
 import { useReviewCardData, type ReviewCardMediaItem } from "@/features/feed/hooks/useReviewCardData";
 import { resolveCardSpec } from "@/features/feed/utils/resolveCardSpec";
 
-const RatingCircles = ({ rating }: { rating: number }) => {
+/**
+ * Award points badge. Renders filled lime dots only — no empty placeholders.
+ * Shows nothing when points === 0. Points are an award (like Michelin stars),
+ * not a score, so absence is neutral and should not be visualised.
+ */
+const PointsBadge = ({ points }: { points: number }) => {
+  if (!points || points <= 0) return null;
   return (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <Circle
-          key={i}
-          className={`w-3 h-3 ${
-            i < rating
-              ? "fill-brand-primary text-text-primary"
-              : "fill-transparent text-text-secondary/20"
-          }`}
-        />
+    <div
+      className="flex items-center gap-1.5"
+      title={`${points} ${points === 1 ? "point" : "points"}`}
+    >
+      {Array.from({ length: points }).map((_, i) => (
+        <div key={i} className="w-3 h-3 rounded-full bg-brand-primary" />
       ))}
     </div>
   );
@@ -118,8 +119,6 @@ export function ReviewCardFeed({
 
   const {
     username,
-    avatarUrl,
-    userInitial,
     isVerifiedArchitect,
     isArchitectOfBuilding,
     mainTitle,
@@ -129,7 +128,6 @@ export function ReviewCardFeed({
     carouselImages,
     hasVideo,
     city,
-    action,
   } = data;
 
   const imageOnlyItems = mediaItems.filter((m) => m.type === "image");
@@ -146,7 +144,11 @@ export function ReviewCardFeed({
     effectiveSpec.imageWeight === "pair" &&
     imageOnlyItems.length >= 2;
   const bodyClampClass = reviewBodyClampClass(effectiveSpec.textWeight, essayExpanded);
-  const showReadMore = !isCompact && effectiveSpec.textWeight === "essay" && !essayExpanded && Boolean(entry.content?.trim());
+  const showReadMore =
+    !isCompact &&
+    effectiveSpec.textWeight === "essay" &&
+    !essayExpanded &&
+    Boolean(entry.content?.trim());
   const useCompactStackLayout = !isCompact && effectiveSpec.layout === "compact-stack";
   const useMdSideBySide =
     !isCompact && hasMedia && !showCarousel && !useCompactStackLayout;
@@ -202,7 +204,11 @@ export function ReviewCardFeed({
   const aspectToken =
     !showCarousel && !showPairGrid ? mediaAspectClass(effectiveSpec.layout, showCarousel) : "";
 
-  const renderMediaItem = (item: ReviewCardMediaItem, className?: string, overlay?: React.ReactNode) => (
+  const renderMediaItem = (
+    item: ReviewCardMediaItem,
+    className?: string,
+    overlay?: React.ReactNode,
+  ) => (
     <div key={item.id} className={`relative w-full h-full min-w-0 overflow-hidden ${className || ""}`}>
       <div className="absolute inset-0 w-full h-full">
         {item.type === "video" ? (
@@ -233,56 +239,56 @@ export function ReviewCardFeed({
     </div>
   );
 
-  const Header = !hideUser && (
-    <div className="p-3 md:p-4 flex items-center gap-3 border-b border-border-default/40">
-      <Avatar className="h-10 w-10 border border-border-default/50 shrink-0">
-        <AvatarImage src={avatarUrl} />
-        <AvatarFallback>{userInitial}</AvatarFallback>
-      </Avatar>
-      <div className="text-sm md:text-base text-text-primary leading-snug min-w-0 max-w-full flex-1 break-words">
-        <div className="flex flex-col gap-0.5 md:block min-w-0">
-          <div className="flex items-center gap-2 min-w-0 md:inline md:gap-0">
-            <span className="font-semibold truncate md:text-clip min-w-0">{username}</span>
-            {isVerifiedArchitect && (
-              <div className="inline-flex items-center text-text-primary ml-1 align-middle" title="Verified Architect">
-                <BadgeCheck className="w-4 h-4" />
-              </div>
-            )}
-            {entry.is_suggested && entry.user_id && (
-              <span className="md:inline-block md:ml-2 min-w-0">
-                <FollowButton userId={entry.user_id} hideIfFollowing className="h-5 text-[10px] px-2" />
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-1 min-w-0 md:inline md:gap-0">
-            <span className="text-text-secondary/60 font-normal md:ml-1 shrink-0"> {action} </span>
-            <span
-              className={`truncate block md:inline md:w-auto md:max-w-none min-w-0 flex-1 md:flex-none ${
-                !isCompact && effectiveSpec.prominence === "elevated"
-                  ? "font-bold text-text-primary"
-                  : "font-semibold text-text-primary"
-              }`}
-            >
-              {mainTitle}
-            </span>
-            {city && <span className="text-text-secondary hidden md:inline"> in {city}</span>}
-          </div>
-          <div className="flex items-center gap-1 min-w-0 md:inline md:gap-0">
-            {entry.rating && entry.rating > 0 && (
-              <span className="inline-flex items-center gap-0.5 align-middle md:ml-2 shrink-0">
-                <RatingCircles rating={entry.rating} />
-              </span>
-            )}
-            <span className="text-text-secondary text-xs md:ml-2 shrink min-w-0 truncate">
-              {!(entry.rating && entry.rating > 0) && <span className="hidden md:inline">• </span>}
-              {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
-            </span>
-          </div>
-        </div>
-      </div>
+  // ── Byline ──────────────────────────────────────────────────────────────────
+  // Space Mono strip: NAME · [ARCHITECT badge] · [Follow] · timestamp.
+  // Replaces the old avatar + "username reviewed Building" sentence header.
+  const Byline = !hideUser && (
+    <div className="flex items-center gap-2 min-w-0">
+      <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
+        {username}
+      </span>
+      {isVerifiedArchitect && (
+        <span className="font-mono text-[9px] tracking-[0.1em] uppercase bg-brand-primary text-brand-primary-foreground px-1.5 py-0.5 font-bold shrink-0 leading-none">
+          Architect
+        </span>
+      )}
+      {entry.is_suggested && entry.user_id && (
+        <span className="shrink-0">
+          <FollowButton userId={entry.user_id} hideIfFollowing className="h-5 text-[10px] px-2" />
+        </span>
+      )}
+      <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary/40 ml-auto shrink-0">
+        {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
+      </span>
     </div>
   );
 
+  // ── Building headline ───────────────────────────────────────────────────────
+  // Only rendered when !hideBuildingInfo (e.g. suppressed on building detail page).
+  // Scales with prominence: elevated → editorial hero size; standard → display size.
+  const BuildingHeadline = !hideBuildingInfo && (
+    <div>
+      <h2
+        className={`font-black tracking-tight leading-none text-text-primary ${
+          isCompact
+            ? "text-base leading-tight"
+            : effectiveSpec.prominence === "elevated"
+            ? "text-5xl md:text-6xl mb-1.5"
+            : "text-2xl md:text-3xl mb-1"
+        }`}
+      >
+        {mainTitle}
+      </h2>
+      {(subTitle || city) && (
+        <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-1">
+          {[subTitle, city].filter(Boolean).join(" · ")}
+        </p>
+      )}
+    </div>
+  );
+
+  // ── Media ───────────────────────────────────────────────────────────────────
+  // Pair grid: border-l divider replaced with a 2px gap (contact-sheet style).
   const Media = !hideBuildingInfo && (
     mediaItems.length > 0 ? (
       showCarousel ? (
@@ -294,14 +300,14 @@ export function ReviewCardFeed({
         />
       ) : showPairGrid ? (
         <div
-          className={`grid grid-cols-2 w-full max-w-full min-w-0 overflow-hidden bg-surface-muted ${
+          className={`grid grid-cols-2 gap-[2px] w-full max-w-full min-w-0 overflow-hidden bg-surface-muted ${
             !isCompact ? "md:w-[280px] md:shrink-0" : ""
           }`}
         >
           <div className="relative aspect-card-compact min-w-0 overflow-hidden">
             {renderMediaItem(imageOnlyItems[0], "h-full")}
           </div>
-          <div className="relative aspect-card-compact min-w-0 overflow-hidden border-l border-border-default/30">
+          <div className="relative aspect-card-compact min-w-0 overflow-hidden">
             {renderMediaItem(imageOnlyItems[1], "h-full")}
           </div>
         </div>
@@ -335,24 +341,12 @@ export function ReviewCardFeed({
     ) : null
   );
 
+  // ── Content body ─────────────────────────────────────────────────────────────
   const ContentBody = isCompact ? (
     <>
-      {!hideBuildingInfo && (
-        <div className="mb-1">
-          <h3 className="text-base font-bold text-text-primary line-clamp-2 leading-tight">{mainTitle}</h3>
-          {subTitle && <p className="text-xs text-text-secondary line-clamp-1 truncate">{subTitle}</p>}
-          {hideUser && entry.rating && entry.rating > 0 && (
-            <div className="flex items-center gap-1 mt-1">
-              <RatingCircles rating={entry.rating} />
-            </div>
-          )}
-        </div>
-      )}
       {entry.content && (
         <div className="min-w-0">
-          <p
-            className={`text-sm font-medium text-text-primary leading-relaxed break-words ${bodyClampClass}`}
-          >
+          <p className={`text-sm font-medium text-text-primary leading-relaxed break-words ${bodyClampClass}`}>
             "{entry.content}"
           </p>
           {effectiveSpec.textWeight === "essay" && !essayExpanded && entry.content.trim() && (
@@ -362,7 +356,7 @@ export function ReviewCardFeed({
                 e.stopPropagation();
                 setEssayExpanded(true);
               }}
-              className="mt-1 text-xs font-medium uppercase tracking-widest text-text-primary hover:text-text-secondary"
+              className="mt-1.5 font-mono text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
             >
               Read more →
             </button>
@@ -373,8 +367,10 @@ export function ReviewCardFeed({
   ) : (
     <>
       {entry.content && (
-        <div className="mb-2 min-w-0">
-          <p className={`text-sm text-text-primary leading-relaxed break-words ${bodyClampClass}`}>{entry.content}</p>
+        <div className="min-w-0">
+          <p className={`text-sm text-text-primary leading-relaxed break-words ${bodyClampClass}`}>
+            {entry.content}
+          </p>
           {showReadMore && (
             <button
               type="button"
@@ -382,7 +378,7 @@ export function ReviewCardFeed({
                 e.stopPropagation();
                 setEssayExpanded(true);
               }}
-              className="mt-1 text-xs font-medium uppercase tracking-widest text-text-primary hover:text-text-secondary"
+              className="mt-1.5 font-mono text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
             >
               Read more →
             </button>
@@ -392,10 +388,12 @@ export function ReviewCardFeed({
     </>
   );
 
+  // ── Footer ───────────────────────────────────────────────────────────────────
+  // Text-only actions in Space Mono — no icons.
   const Footer = (
     <div
-      className={`flex w-full max-w-full min-w-0 items-center gap-2 md:gap-4 flex-wrap ${
-        isCompact ? "p-2.5 md:p-4 pt-3 mt-auto border-t border-border-default/50" : "mt-auto pt-3 border-t border-border-default/50"
+      className={`flex w-full max-w-full min-w-0 items-center gap-3 flex-wrap mt-auto ${
+        isCompact ? "pt-3" : "pt-4"
       }`}
     >
       <button
@@ -404,59 +402,70 @@ export function ReviewCardFeed({
           onLike?.(entry.id);
           window.dispatchEvent(new CustomEvent("pwa-interaction"));
         }}
-        className="flex items-center gap-1.5 text-text-secondary hover:text-brand-primary transition-colors group/like"
+        className={`font-mono text-[10px] tracking-[0.12em] uppercase transition-colors ${
+          entry.is_liked
+            ? "text-brand-primary"
+            : "text-text-secondary hover:text-text-primary"
+        }`}
       >
-        <Heart
-          className={`h-4 w-4 transition-transform group-hover/like:scale-110 ${entry.is_liked ? "fill-brand-primary text-brand-primary" : ""}`}
-        />
-        <span className="text-xs font-medium">{entry.likes_count}</span>
+        {entry.likes_count} {entry.likes_count === 1 ? "note" : "notes"}
       </button>
+      <span className="text-text-secondary/30 select-none text-xs">·</span>
       <button
         onClick={handleCommentClick}
-        className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors group/comment"
+        className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors"
       >
-        <MessageCircle className="h-4 w-4 transition-transform group-hover/comment:scale-110" />
-        <span className="text-xs font-medium">{entry.comments_count}</span>
+        {entry.comments_count} {entry.comments_count === 1 ? "comment" : "comments"}
       </button>
       {!isCompact && (
         <button
           onClick={handleSave}
-          className={`flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors ml-auto ${isSaving ? "opacity-50" : ""}`}
+          className={`font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors ml-auto ${
+            isSaving ? "opacity-50" : ""
+          }`}
           disabled={isSaving}
         >
-          <Bookmark className="h-4 w-4" />
-          <span className="text-xs font-medium">Save</span>
+          Save
         </button>
       )}
     </div>
   );
 
   const cardLayoutClass = useMdSideBySide ? `${flexDirection} md:min-h-[220px]` : "";
-  const prominenceElevated = !isCompact && effectiveSpec.prominence === "elevated";
 
   return (
     <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
       <article
         data-testid={`review-card-feed-${entry.id}`}
         onClick={handleCardClick}
-        className={`group/card relative flex flex-col ${cardLayoutClass} h-full bg-surface-card border border-border-default rounded-sm overflow-hidden hover:border-border-strong transition-colors cursor-pointer min-w-0 w-full max-w-full ${
-          isArchitectOfBuilding ? "border-l-2 border-l-brand-primary" : ""
-        } ${prominenceElevated ? "shadow-card-elevated" : "shadow-none"}`}
+        className={`group/card relative flex flex-col ${cardLayoutClass} h-full cursor-pointer min-w-0 w-full max-w-full ${
+          isArchitectOfBuilding ? "border-l-2 border-l-brand-primary pl-3 md:pl-4" : ""
+        }`}
       >
         {isCompact ? (
           <>
             {Media}
-            {Header}
-            <div className="flex flex-col flex-1 min-w-0 p-2.5 md:p-4 md:pt-3 gap-2">
+            <div className="flex flex-col flex-1 min-w-0 p-2.5 md:p-4 gap-2">
+              {Byline}
+              {BuildingHeadline}
+              {entry.rating != null && entry.rating > 0 && (
+                <PointsBadge points={entry.rating} />
+              )}
               {ContentBody}
+              {Footer}
             </div>
-            {Footer}
           </>
         ) : useCompactStackLayout ? (
           <>
-            {Header}
+            <div className="flex flex-col gap-3">
+              {Byline}
+              {BuildingHeadline}
+              {entry.rating != null && entry.rating > 0 && (
+                <PointsBadge points={entry.rating} />
+              )}
+            </div>
             {Media}
-            <div className="flex flex-col flex-1 min-w-0 p-2.5 md:p-4 md:pt-3 gap-2">
+            <div className="flex flex-col flex-1 min-w-0 pt-3 gap-2">
               {ContentBody}
               {Footer}
             </div>
@@ -464,8 +473,12 @@ export function ReviewCardFeed({
         ) : (
           <>
             <div className="flex flex-col flex-1 min-w-0">
-              {Header}
-              <div className="flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2">
+              <div className="flex flex-col flex-1 gap-3">
+                {Byline}
+                {BuildingHeadline}
+                {entry.rating != null && entry.rating > 0 && (
+                  <PointsBadge points={entry.rating} />
+                )}
                 {ContentBody}
                 {Footer}
               </div>

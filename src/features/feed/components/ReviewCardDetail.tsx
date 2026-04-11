@@ -1,5 +1,3 @@
-import { Heart, MessageCircle, Circle } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router";
 import { FeedReview } from "@/types/feed";
@@ -7,18 +5,20 @@ import { getBuildingUrl } from "@/utils/url";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
 
-const RatingCircles = ({ rating }: { rating: number }) => {
+/**
+ * Award points badge. Renders filled black dots only — no empty placeholders.
+ * Shows nothing when points === 0. Points are an award, not a score.
+ * Uses text-primary (monochromatic) per editorial content-page colour rules.
+ */
+const PointsBadge = ({ points }: { points: number }) => {
+  if (!points || points <= 0) return null;
   return (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <Circle
-          key={i}
-          className={`w-3 h-3 ${
-            i < rating
-              ? "fill-brand-primary text-text-primary"
-              : "fill-transparent text-text-secondary/20"
-          }`}
-        />
+    <div
+      className="flex items-center gap-1.5"
+      title={`${points} ${points === 1 ? "point" : "points"}`}
+    >
+      {Array.from({ length: points }).map((_, i) => (
+        <div key={i} className="w-3 h-3 rounded-full bg-text-primary" />
       ))}
     </div>
   );
@@ -36,7 +36,7 @@ export interface ReviewCardDetailProps {
 }
 
 /**
- * Building / review detail layout: user header (optional), thumbnail + copy, like/comment actions.
+ * Building / review detail layout: byline, thumbnail + copy, text actions.
  * Fixed horizontal media + text row (no `imagePosition`).
  */
 export function ReviewCardDetail({
@@ -53,7 +53,7 @@ export function ReviewCardDetail({
 
   if (!data) return null;
 
-  const { username, avatarUrl, userInitial, mainTitle, subTitle, posterUrl, mediaItems } = data;
+  const { username, isVerifiedArchitect, mainTitle, subTitle, posterUrl, mediaItems, city } = data;
 
   const handleCommentClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -68,93 +68,126 @@ export function ReviewCardDetail({
     }
   };
 
+  // ── Byline ──────────────────────────────────────────────────────────────────
+  // Space Mono strip — no avatar.
+  const timestamp = formatDistanceToNow(
+    new Date(entry.edited_at || entry.created_at),
+    { addSuffix: true },
+  ).replace("about ", "");
+
+  const Byline = !hideUser ? (
+    <div className="flex items-center gap-2 min-w-0 mb-3">
+      <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
+        {username}
+      </span>
+      {isVerifiedArchitect && (
+        <span className="font-mono text-[9px] tracking-[0.1em] uppercase border border-text-primary text-text-primary px-1.5 py-0.5 font-bold shrink-0 leading-none">
+          Architect
+        </span>
+      )}
+      <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary/40 ml-auto shrink-0">
+        {timestamp}
+      </span>
+    </div>
+  ) : (
+    <div className="mb-3">
+      <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary/40">
+        {timestamp}
+      </span>
+    </div>
+  );
+
+  // ── Thumbnail ───────────────────────────────────────────────────────────────
+  // Sharp edges — no rounded corners.
+  const Thumbnail = !hideBuildingInfo && (
+    mediaItems.length > 0 && mediaItems[0].type === "video" ? (
+      <div className="w-32 h-24 bg-black shrink-0 overflow-hidden video-container">
+        <VideoPlayer
+          src={mediaItems[0].url}
+          poster={mediaItems[0].poster}
+          className="w-full h-full"
+          autoPlayOnVisible={false}
+          muted={true}
+          objectFit="cover"
+        />
+      </div>
+    ) : mediaItems.length > 0 ? (
+      <img
+        src={mediaItems[0].url}
+        alt={entry.building.name}
+        className="w-32 h-24 object-cover shrink-0"
+      />
+    ) : posterUrl ? (
+      <img
+        src={posterUrl}
+        alt={entry.building.name}
+        className="w-32 h-24 object-cover shrink-0"
+      />
+    ) : (
+      <div className="w-32 h-24 bg-surface-muted shrink-0" />
+    )
+  );
+
   return (
     <article className="px-4 py-4 hairline">
-      {!hideUser ? (
-        <div className="flex items-center gap-3 mb-3">
-          <Avatar className="h-9 w-9">
-            <AvatarImage src={avatarUrl} />
-            <AvatarFallback className="bg-surface-muted text-text-primary text-sm">{userInitial}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-text-primary truncate">{username}</p>
-            <p className="text-xs text-text-secondary">
-              {formatDistanceToNow(new Date(entry.edited_at || entry.created_at), { addSuffix: true }).replace(
-                "about ",
-                "",
-              )}
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="mb-3">
-          <p className="text-xs text-text-secondary">
-            {formatDistanceToNow(new Date(entry.edited_at || entry.created_at), { addSuffix: true }).replace(
-              "about ",
-              "",
-            )}
-          </p>
-        </div>
-      )}
+      {Byline}
+
       <div className="flex gap-3">
-        {!hideBuildingInfo &&
-          (mediaItems.length > 0 && mediaItems[0].type === "video" ? (
-            <div className="w-32 h-24 bg-black rounded-sm flex-shrink-0 video-container">
-              <VideoPlayer
-                src={mediaItems[0].url}
-                poster={mediaItems[0].poster}
-                className="w-full h-full"
-                autoPlayOnVisible={false}
-                muted={true}
-                objectFit="cover"
-              />
-            </div>
-          ) : mediaItems.length > 0 ? (
-            <img
-              src={mediaItems[0].url}
-              alt={entry.building.name}
-              className="w-32 h-24 object-cover rounded-sm flex-shrink-0"
-            />
-          ) : posterUrl ? (
-            <img src={posterUrl} alt={entry.building.name} className="w-32 h-24 object-cover rounded-sm flex-shrink-0" />
-          ) : (
-            <div className="w-32 h-24 bg-surface-muted rounded-sm flex-shrink-0 flex items-center justify-center">
-              <span className="text-xs text-text-secondary">No image</span>
-            </div>
-          ))}
+        {Thumbnail}
+
         <div className="flex-1 min-w-0">
+          {/* Building headline — suppressed on building detail page */}
           {!hideBuildingInfo && (
             <div className="mb-2">
-              <h3 className="text-base font-semibold text-text-primary truncate">{mainTitle}</h3>
-              {subTitle && <p className="text-xs text-text-secondary truncate">{subTitle}</p>}
+              <h3 className="text-base font-bold tracking-tight text-text-primary leading-tight">
+                {mainTitle}
+              </h3>
+              {(subTitle || city) && (
+                <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-0.5">
+                  {[subTitle, city].filter(Boolean).join(" · ")}
+                </p>
+              )}
             </div>
           )}
-          {entry.rating && entry.rating > 0 && (
-            <div className="flex items-center gap-1 mb-2">
-              <RatingCircles rating={entry.rating} />
+
+          {/* Points */}
+          {entry.rating != null && entry.rating > 0 && (
+            <div className="mb-2">
+              <PointsBadge points={entry.rating} />
             </div>
           )}
-          {entry.content && <p className="text-sm text-text-secondary mb-2 break-words">{entry.content}</p>}
+
+          {/* Review body */}
+          {entry.content && (
+            <p className="text-sm text-text-secondary leading-relaxed break-words mb-2">
+              {entry.content}
+            </p>
+          )}
         </div>
       </div>
-      <div className="flex items-center gap-6 mt-3 pt-2">
+
+      {/* Footer — text actions, no icons */}
+      <div className="flex items-center gap-3 mt-3 pt-2">
         <button
           onClick={(e) => {
             e.stopPropagation();
             onLike?.(entry.id);
             window.dispatchEvent(new CustomEvent("pwa-interaction"));
           }}
-          className="flex items-center gap-1.5 text-text-secondary hover:text-brand-primary transition-colors"
+          className={`font-mono text-[10px] tracking-[0.12em] uppercase transition-colors ${
+            entry.is_liked
+              ? "text-text-primary"
+              : "text-text-secondary hover:text-text-primary"
+          }`}
         >
-          <Heart className={`h-4 w-4 ${entry.is_liked ? "fill-brand-primary text-brand-primary" : ""}`} />
-          <span className="text-xs">{entry.likes_count}</span>
+          {entry.likes_count} {entry.likes_count === 1 ? "note" : "notes"}
         </button>
+        <span className="text-text-secondary/30 select-none text-xs">·</span>
         <button
           onClick={handleCommentClick}
-          className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors"
+          className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors"
         >
-          <MessageCircle className="h-4 w-4" />
-          <span className="text-xs">{entry.comments_count}</span>
+          {entry.comments_count} {entry.comments_count === 1 ? "comment" : "comments"}
         </button>
       </div>
     </article>
