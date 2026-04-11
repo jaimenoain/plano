@@ -998,6 +998,68 @@ export default function BuildingDetails() {
                   Save note
                 </button>
               </div>
+
+              <div className="space-y-6 border-t border-border-default pt-6">
+                <div className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowCollections(!showCollections)}
+                    className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                  >
+                    <Plus className="mr-1 inline h-3.5 w-3.5" />
+                    Add to collection
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowVisitWith(!showVisitWith)}
+                    className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                  >
+                    <Users className="mr-1 inline h-3.5 w-3.5" />
+                    Plan a visit
+                  </button>
+                </div>
+
+                {showCollections ? (
+                  <CollectionSelector
+                    userId={user.id}
+                    selectedCollectionIds={selectedCollectionIds}
+                    onChange={setSelectedCollectionIds}
+                  />
+                ) : null}
+
+                {showVisitWith ? (
+                  <div className="space-y-3">
+                    <UserPicker
+                      selectedIds={selectedFriends}
+                      onSelect={(friendId) =>
+                        setSelectedFriends((prev) =>
+                          prev.includes(friendId) ? prev : [...prev, friendId],
+                        )
+                      }
+                      onRemove={(friendId) =>
+                        setSelectedFriends((prev) =>
+                          prev.filter((x) => x !== friendId),
+                        )
+                      }
+                    />
+                    {selectedFriends.length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={handleSendInvites}
+                        disabled={sendingInvites}
+                        className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary disabled:opacity-50"
+                      >
+                        {sendingInvites ? (
+                          <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
+                        ) : (
+                          <Send className="mr-1 inline h-3.5 w-3.5" />
+                        )}
+                        Send invite →
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
             </div>
           ) : null}
 
@@ -1483,71 +1545,6 @@ export default function BuildingDetails() {
                   ) : null}
                 </div>
               )}
-            </section>
-          ) : null}
-
-          {/* ── ADD TO COLLECTION / PLAN A VISIT ── */}
-          {user ? (
-            <section className="space-y-6 border-t border-border-default pt-10">
-              <div className="flex items-center gap-4">
-                <button
-                  type="button"
-                  onClick={() => setShowCollections(!showCollections)}
-                  className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-                >
-                  <Plus className="mr-1 inline h-3.5 w-3.5" />
-                  Add to collection
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowVisitWith(!showVisitWith)}
-                  className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-                >
-                  <Users className="mr-1 inline h-3.5 w-3.5" />
-                  Plan a visit
-                </button>
-              </div>
-
-              {showCollections ? (
-                <CollectionSelector
-                  userId={user.id}
-                  selectedCollectionIds={selectedCollectionIds}
-                  onChange={setSelectedCollectionIds}
-                />
-              ) : null}
-
-              {showVisitWith ? (
-                <div className="space-y-3">
-                  <UserPicker
-                    selectedIds={selectedFriends}
-                    onSelect={(friendId) =>
-                      setSelectedFriends((prev) =>
-                        prev.includes(friendId) ? prev : [...prev, friendId],
-                      )
-                    }
-                    onRemove={(friendId) =>
-                      setSelectedFriends((prev) =>
-                        prev.filter((x) => x !== friendId),
-                      )
-                    }
-                  />
-                  {selectedFriends.length > 0 ? (
-                    <button
-                      type="button"
-                      onClick={handleSendInvites}
-                      disabled={sendingInvites}
-                      className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary disabled:opacity-50"
-                    >
-                      {sendingInvites ? (
-                        <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
-                      ) : (
-                        <Send className="mr-1 inline h-3.5 w-3.5" />
-                      )}
-                      Send invite →
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
             </section>
           ) : null}
 
