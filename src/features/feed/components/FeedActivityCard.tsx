@@ -43,7 +43,9 @@ export function FeedActivityCard({
     const target = e.target as HTMLElement;
     if (target.closest("button")) return;
     if (entry.building.id) {
-      navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
+      navigate(
+        getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id),
+      );
     } else {
       navigate(`/review/${entry.id}`);
     }
@@ -59,12 +61,14 @@ export function FeedActivityCard({
       onClick={handleCardClick}
       className="flex items-start gap-4 w-full cursor-pointer pb-6 border-b border-border-default"
     >
-      {/* Thumbnail — larger sizes */}
+      {/* Thumbnail — sharp edges, no radius */}
       {cardImageSrc && imageVisible && (
-        <div className={cn(
-          "shrink-0 overflow-hidden bg-surface-muted rounded-none",
-          isHero ? "w-28 h-28" : "w-24 h-24"
-        )}>
+        <div
+          className={cn(
+            "shrink-0 overflow-hidden bg-surface-muted",
+            isHero ? "w-28 h-28" : "w-20 h-20",
+          )}
+        >
           <img
             src={cardImageSrc}
             alt={mainTitle}
@@ -76,24 +80,36 @@ export function FeedActivityCard({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        {/* Category label */}
-        <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
+        {/* Category label — micro uppercase */}
+        <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-text-secondary">
           {activityStatus === "visited" ? "Visited" : "Bucket list"}
         </span>
 
-        {/* Building name */}
-        <h3 className={cn(
-          "font-semibold text-text-primary leading-tight mt-1",
-          isHero ? "text-xl" : "text-base"
-        )}>
+        {/*
+         * Building name — editorial scale.
+         * font-black + leading-none matches the BuildingHeadline treatment in
+         * ReviewCardFeed. The hierarchy here is: tiny label → massive title,
+         * same A24 poster contrast.
+         */}
+        <h3
+          className={cn(
+            "font-black tracking-tight text-text-primary mt-0.5",
+            isHero
+              ? "text-2xl md:text-3xl leading-none"
+              : "text-xl leading-tight",
+          )}
+        >
           {mainTitle}
         </h3>
 
-        {/* Location */}
+        {/* Location — mono meta, consistent with byline treatment */}
         {city && (
-          <p className="text-xs text-text-secondary mt-1">{city}</p>
+          <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-1.5">
+            {city}
+          </p>
         )}
 
+        {/* Byline row */}
         <div className="flex items-center gap-2 min-w-0 mt-2">
           <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
             {username}
