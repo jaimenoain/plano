@@ -1,9 +1,10 @@
 import { formatDistanceToNow } from "date-fns";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { FeedReview } from "@/types/feed";
 import { getBuildingUrl } from "@/utils/url";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 /**
  * Award points badge. Renders filled black dots only — no empty placeholders.
@@ -53,7 +54,16 @@ export function ReviewCardDetail({
 
   if (!data) return null;
 
-  const { username, isVerifiedArchitect, mainTitle, subTitle, posterUrl, mediaItems, city } = data;
+  const {
+    username,
+    avatarUrl,
+    isVerifiedArchitect,
+    mainTitle,
+    subTitle,
+    posterUrl,
+    mediaItems,
+    city,
+  } = data;
 
   const handleCommentClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -68,26 +78,38 @@ export function ReviewCardDetail({
     }
   };
 
-  // ── Byline ──────────────────────────────────────────────────────────────────
-  // Space Mono strip — no avatar.
+  // ── Byline — magazine columnist: visible avatar + prominent author name
   const timestamp = formatDistanceToNow(
     new Date(entry.edited_at || entry.created_at),
     { addSuffix: true },
   ).replace("about ", "");
 
   const Byline = !hideUser ? (
-    <div className="flex items-center gap-2 min-w-0 mb-3">
-      <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
-        {username}
-      </span>
-      {isVerifiedArchitect && (
-        <span className="font-mono text-[9px] tracking-[0.1em] uppercase border border-text-primary text-text-primary px-1.5 py-0.5 font-bold shrink-0 leading-none">
-          Architect
+    <div className="flex gap-3 items-start min-w-0 mb-3">
+      <Avatar className="h-12 w-12 shrink-0 rounded-full border border-border-default bg-surface-muted">
+        <AvatarImage src={avatarUrl || undefined} alt="" />
+        <AvatarFallback className="text-sm font-semibold text-text-secondary">
+          {username.charAt(0).toUpperCase()}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1 flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+        <div className="min-w-0">
+          <Link
+            to={`/profile/${username}`}
+            className="text-base md:text-lg font-semibold tracking-tight text-text-primary transition-colors hover:opacity-80"
+          >
+            {username}
+          </Link>
+          {isVerifiedArchitect ? (
+            <span className="mt-1 block font-mono text-[9px] tracking-[0.1em] uppercase border border-text-primary text-text-primary px-1.5 py-0.5 font-bold leading-none w-fit">
+              Architect
+            </span>
+          ) : null}
+        </div>
+        <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary/40 shrink-0">
+          {timestamp}
         </span>
-      )}
-      <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary/40 ml-auto shrink-0">
-        {timestamp}
-      </span>
+      </div>
     </div>
   ) : (
     <div className="mb-3">
@@ -180,7 +202,7 @@ export function ReviewCardDetail({
               : "text-text-secondary hover:text-text-primary"
           }`}
         >
-          {entry.likes_count} {entry.likes_count === 1 ? "note" : "notes"}
+          {entry.likes_count} {entry.likes_count === 1 ? "like" : "likes"}
         </button>
         <span className="text-text-secondary/30 select-none text-xs">·</span>
         <button

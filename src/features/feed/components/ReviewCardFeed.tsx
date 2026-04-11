@@ -467,7 +467,7 @@ export function ReviewCardFeed({
             : "text-text-secondary hover:text-text-primary"
         }`}
       >
-        {entry.likes_count} {entry.likes_count === 1 ? "note" : "notes"}
+        {entry.likes_count} {entry.likes_count === 1 ? "like" : "likes"}
       </button>
       <span className="text-text-secondary/30 select-none text-xs">·</span>
       <button

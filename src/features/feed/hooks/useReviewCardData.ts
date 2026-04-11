@@ -27,6 +27,7 @@ export type ReviewCardCarouselImage = {
 
 export type ReviewCardData = {
   username: string;
+  avatarUrl: string | null;
   isVerifiedArchitect: boolean;
   isArchitectOfBuilding: boolean;
   mainTitle: string;
@@ -57,6 +58,7 @@ export function useReviewCardData(
     const posterUrl = getBuildingImageUrl(entry.building.main_image_url);
 
     const username = entry.user?.username || "Unknown User";
+    const avatarUrl = entry.user?.avatar_url ?? null;
     const isVerifiedArchitect = entry.user?.is_verified_architect || false;
     const isArchitectOfBuilding = entry.user?.is_architect_of_building || false;
 
@@ -115,6 +117,7 @@ export function useReviewCardData(
 
     return {
       username,
+      avatarUrl,
       isVerifiedArchitect,
       isArchitectOfBuilding,
       mainTitle,
