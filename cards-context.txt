@@ -1,0 +1,2398 @@
+import { useEffect, useMemo, useState } from "react";
+import { Heart, MessageCircle, Circle, Image as ImageIcon, Bookmark, BadgeCheck } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatDistanceToNow } from "date-fns";
+import { useNavigate } from "react-router";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { FeedReview } from "@/types/feed";
+import type { CardLayout, CardProminence, CardSpec, CardTextWeight } from "@/types/cards";
+import { getBuildingUrl } from "@/utils/url";
+import { VideoPlayer } from "@/components/ui/VideoPlayer";
+import { SuggestedContentBlock } from "./SuggestedContentBlock";
+import { FollowButton } from "@/features/profile/components/FollowButton";
+import { FeedPhotoCarousel } from "./FeedPhotoCarousel";
+import { useReviewCardData, type ReviewCardMediaItem } from "@/features/feed/hooks/useReviewCardData";
+import { resolveCardSpec } from "@/features/feed/utils/resolveCardSpec";
+
+const RatingCircles = ({ rating }: { rating: number }) => {
+  return (
+    <div className="flex items-center gap-0.5">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <Circle
+          key={i}
+          className={`w-3 h-3 ${
+            i < rating
+              ? "fill-brand-primary text-text-primary"
+              : "fill-transparent text-text-secondary/20"
+          }`}
+        />
+      ))}
+    </div>
+  );
+};
+
+function mediaAspectClass(layout: CardLayout, isCarouselLayout: boolean): string {
+  if (isCarouselLayout) return "";
+  switch (layout) {
+    case "media-forward":
+      return "aspect-card-hero";
+    case "compact-stack":
+      return "aspect-card-compact";
+    default:
+      return "aspect-card-standard";
+  }
+}
+
+function reviewBodyClampClass(textWeight: CardTextWeight, essayExpanded: boolean): string {
+  switch (textWeight) {
+    case "none":
+      return "";
+    case "snippet":
+      return "line-clamp-card-snippet";
+    case "body":
+      return "line-clamp-card-body";
+    case "essay":
+      return essayExpanded ? "" : "line-clamp-card-body";
+    default:
+      return "";
+  }
+}
+
+export interface ReviewCardFeedProps {
+  entry: FeedReview;
+  onLike?: (reviewId: string) => void;
+  onImageLike?: (reviewId: string, imageId: string) => void;
+  onComment?: (reviewId: string) => void;
+  variant?: "default" | "compact";
+  hideUser?: boolean;
+  hideBuildingInfo?: boolean;
+  imagePosition?: "left" | "right";
+  showCommunityImages?: boolean;
+  /** When omitted, layout is derived via {@link resolveCardSpec}(entry). */
+  spec?: CardSpec;
+  /** When set, replaces `spec.prominence` / resolver prominence — for playground / forced treatments. */
+  prominenceOverride?: CardProminence;
+}
+
+/**
+ * Feed / discovery / profile-grid review card (non-detail). Default variant layout uses {@link resolveCardSpec}.
+ */
+export function ReviewCardFeed({
+  entry,
+  onLike,
+  onImageLike,
+  onComment,
+  variant = "default",
+  hideUser = false,
+  hideBuildingInfo = false,
+  imagePosition = "left",
+  showCommunityImages = true,
+  spec: specProp,
+  prominenceOverride,
+}: ReviewCardFeedProps) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const isCompact = variant === "compact";
+  const effectiveSpec = useMemo((): CardSpec => {
+    const base = specProp ?? resolveCardSpec(entry);
+    if (prominenceOverride != null) {
+      return { ...base, prominence: prominenceOverride };
+    }
+    return base;
+  }, [entry, specProp, prominenceOverride]);
+  const { data, failedImages, setFailedImages } = useReviewCardData(entry, {
+    variant,
+    showCommunityImages,
+  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [essayExpanded, setEssayExpanded] = useState(false);
+
+  useEffect(() => {
+    setEssayExpanded(false);
+  }, [entry.id]);
+
+  if (!data) return null;
+
+  const {
+    username,
+    avatarUrl,
+    userInitial,
+    isVerifiedArchitect,
+    isArchitectOfBuilding,
+    mainTitle,
+    subTitle,
+    posterUrl,
+    mediaItems,
+    carouselImages,
+    hasVideo,
+    city,
+    action,
+  } = data;
+
+  const imageOnlyItems = mediaItems.filter((m) => m.type === "image");
+  const hasMedia =
+    !hideBuildingInfo && (mediaItems.length > 0 || (!!posterUrl && showCommunityImages));
+  const showCarousel =
+    !hideBuildingInfo &&
+    !hasVideo &&
+    effectiveSpec.imageWeight === "gallery" &&
+    imageOnlyItems.length > 2;
+  const showPairGrid =
+    !hideBuildingInfo &&
+    !hasVideo &&
+    effectiveSpec.imageWeight === "pair" &&
+    imageOnlyItems.length >= 2;
+  const bodyClampClass = reviewBodyClampClass(effectiveSpec.textWeight, essayExpanded);
+  const showReadMore = !isCompact && effectiveSpec.textWeight === "essay" && !essayExpanded && Boolean(entry.content?.trim());
+  const useCompactStackLayout = !isCompact && effectiveSpec.layout === "compact-stack";
+  const useMdSideBySide =
+    !isCompact && hasMedia && !showCarousel && !useCompactStackLayout;
+
+  const handleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+    if (!entry.building?.id) return;
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from("user_buildings").upsert(
+        {
+          user_id: user.id,
+          building_id: entry.building.id,
+          status: "pending",
+          edited_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,building_id" },
+      );
+      if (error) throw error;
+      toast({ title: "Saved to your list" });
+    } catch (_error) {
+      toast({ variant: "destructive", title: "Failed to save" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("button") || target.closest(".video-container")) return;
+    if (entry.building.id) {
+      navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
+    } else {
+      navigate(`/review/${entry.id}`);
+    }
+  };
+
+  const handleCommentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onComment) {
+      onComment(entry.id);
+    } else {
+      if (entry.building.id) {
+        navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
+      } else {
+        navigate(`/review/${entry.id}`);
+      }
+    }
+  };
+
+  const flexDirection = imagePosition === "right" ? "md:flex-row" : "md:flex-row-reverse";
+  const aspectToken =
+    !showCarousel && !showPairGrid ? mediaAspectClass(effectiveSpec.layout, showCarousel) : "";
+
+  const renderMediaItem = (item: ReviewCardMediaItem, className?: string, overlay?: React.ReactNode) => (
+    <div key={item.id} className={`relative w-full h-full min-w-0 overflow-hidden ${className || ""}`}>
+      <div className="absolute inset-0 w-full h-full">
+        {item.type === "video" ? (
+          <div className="w-full h-full video-container overflow-hidden">
+            <VideoPlayer
+              src={item.url}
+              poster={item.poster}
+              className="w-full h-full transition-transform duration-500 hover:scale-105"
+              autoPlayOnVisible={true}
+              muted={true}
+              objectFit="cover"
+            />
+          </div>
+        ) : !failedImages.has(item.id) ? (
+          <img
+            src={item.url}
+            alt="Review photo"
+            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+            onError={() => setFailedImages((prev) => new Set(prev).add(item.id))}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-text-secondary bg-surface-muted/50">
+            <ImageIcon className="w-4 h-4 opacity-50" />
+          </div>
+        )}
+      </div>
+      {overlay && <div className="absolute inset-0 z-10">{overlay}</div>}
+    </div>
+  );
+
+  const Header = !hideUser && (
+    <div className="p-3 md:p-4 flex items-center gap-3 border-b border-border-default/40">
+      <Avatar className="h-10 w-10 border border-border-default/50 shrink-0">
+        <AvatarImage src={avatarUrl} />
+        <AvatarFallback>{userInitial}</AvatarFallback>
+      </Avatar>
+      <div className="text-sm md:text-base text-text-primary leading-snug min-w-0 max-w-full flex-1 break-words">
+        <div className="flex flex-col gap-0.5 md:block min-w-0">
+          <div className="flex items-center gap-2 min-w-0 md:inline md:gap-0">
+            <span className="font-semibold truncate md:text-clip min-w-0">{username}</span>
+            {isVerifiedArchitect && (
+              <div className="inline-flex items-center text-text-primary ml-1 align-middle" title="Verified Architect">
+                <BadgeCheck className="w-4 h-4" />
+              </div>
+            )}
+            {entry.is_suggested && entry.user_id && (
+              <span className="md:inline-block md:ml-2 min-w-0">
+                <FollowButton userId={entry.user_id} hideIfFollowing className="h-5 text-[10px] px-2" />
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1 min-w-0 md:inline md:gap-0">
+            <span className="text-text-secondary/60 font-normal md:ml-1 shrink-0"> {action} </span>
+            <span
+              className={`truncate block md:inline md:w-auto md:max-w-none min-w-0 flex-1 md:flex-none ${
+                !isCompact && effectiveSpec.prominence === "elevated"
+                  ? "font-bold text-text-primary"
+                  : "font-semibold text-text-primary"
+              }`}
+            >
+              {mainTitle}
+            </span>
+            {city && <span className="text-text-secondary hidden md:inline"> in {city}</span>}
+          </div>
+          <div className="flex items-center gap-1 min-w-0 md:inline md:gap-0">
+            {entry.rating && entry.rating > 0 && (
+              <span className="inline-flex items-center gap-0.5 align-middle md:ml-2 shrink-0">
+                <RatingCircles rating={entry.rating} />
+              </span>
+            )}
+            <span className="text-text-secondary text-xs md:ml-2 shrink min-w-0 truncate">
+              {!(entry.rating && entry.rating > 0) && <span className="hidden md:inline">• </span>}
+              {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const Media = !hideBuildingInfo && (
+    mediaItems.length > 0 ? (
+      showCarousel ? (
+        <FeedPhotoCarousel
+          images={carouselImages}
+          reviewId={entry.id}
+          onImageLike={onImageLike}
+          className="w-full"
+        />
+      ) : showPairGrid ? (
+        <div
+          className={`grid grid-cols-2 w-full max-w-full min-w-0 overflow-hidden bg-surface-muted ${
+            !isCompact ? "md:w-[280px] md:shrink-0" : ""
+          }`}
+        >
+          <div className="relative aspect-card-compact min-w-0 overflow-hidden">
+            {renderMediaItem(imageOnlyItems[0], "h-full")}
+          </div>
+          <div className="relative aspect-card-compact min-w-0 overflow-hidden border-l border-border-default/30">
+            {renderMediaItem(imageOnlyItems[1], "h-full")}
+          </div>
+        </div>
+      ) : (
+        <div
+          className={`relative w-full max-w-full min-w-0 overflow-hidden bg-surface-muted ${
+            !isCompact
+              ? `md:w-[280px] md:shrink-0 ${aspectToken} md:aspect-auto`
+              : "aspect-[4/3]"
+          }`}
+        >
+          <div className="absolute inset-0 w-full h-full">{renderMediaItem(mediaItems[0])}</div>
+        </div>
+      )
+    ) : posterUrl && showCommunityImages ? (
+      <div
+        className={
+          !isCompact
+            ? `relative w-full max-w-full min-w-0 bg-surface-muted overflow-hidden md:w-[280px] md:shrink-0 ${aspectToken} md:aspect-auto`
+            : "relative w-full max-w-full min-w-0 bg-surface-muted overflow-hidden aspect-[4/3]"
+        }
+      >
+        <img
+          src={posterUrl}
+          alt={mainTitle || ""}
+          className={`w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105 ${
+            !isCompact ? "md:absolute md:inset-0" : ""
+          }`}
+        />
+      </div>
+    ) : null
+  );
+
+  const ContentBody = isCompact ? (
+    <>
+      {!hideBuildingInfo && (
+        <div className="mb-1">
+          <h3 className="text-base font-bold text-text-primary line-clamp-2 leading-tight">{mainTitle}</h3>
+          {subTitle && <p className="text-xs text-text-secondary line-clamp-1 truncate">{subTitle}</p>}
+          {hideUser && entry.rating && entry.rating > 0 && (
+            <div className="flex items-center gap-1 mt-1">
+              <RatingCircles rating={entry.rating} />
+            </div>
+          )}
+        </div>
+      )}
+      {entry.content && (
+        <div className="min-w-0">
+          <p
+            className={`text-sm font-medium text-text-primary leading-relaxed break-words ${bodyClampClass}`}
+          >
+            "{entry.content}"
+          </p>
+          {effectiveSpec.textWeight === "essay" && !essayExpanded && entry.content.trim() && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEssayExpanded(true);
+              }}
+              className="mt-1 text-xs font-medium uppercase tracking-widest text-text-primary hover:text-text-secondary"
+            >
+              Read more →
+            </button>
+          )}
+        </div>
+      )}
+    </>
+  ) : (
+    <>
+      {entry.content && (
+        <div className="mb-2 min-w-0">
+          <p className={`text-sm text-text-primary leading-relaxed break-words ${bodyClampClass}`}>{entry.content}</p>
+          {showReadMore && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEssayExpanded(true);
+              }}
+              className="mt-1 text-xs font-medium uppercase tracking-widest text-text-primary hover:text-text-secondary"
+            >
+              Read more →
+            </button>
+          )}
+        </div>
+      )}
+    </>
+  );
+
+  const Footer = (
+    <div
+      className={`flex w-full max-w-full min-w-0 items-center gap-2 md:gap-4 flex-wrap ${
+        isCompact ? "p-2.5 md:p-4 pt-3 mt-auto border-t border-border-default/50" : "mt-auto pt-3 border-t border-border-default/50"
+      }`}
+    >
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onLike?.(entry.id);
+          window.dispatchEvent(new CustomEvent("pwa-interaction"));
+        }}
+        className="flex items-center gap-1.5 text-text-secondary hover:text-brand-primary transition-colors group/like"
+      >
+        <Heart
+          className={`h-4 w-4 transition-transform group-hover/like:scale-110 ${entry.is_liked ? "fill-brand-primary text-brand-primary" : ""}`}
+        />
+        <span className="text-xs font-medium">{entry.likes_count}</span>
+      </button>
+      <button
+        onClick={handleCommentClick}
+        className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors group/comment"
+      >
+        <MessageCircle className="h-4 w-4 transition-transform group-hover/comment:scale-110" />
+        <span className="text-xs font-medium">{entry.comments_count}</span>
+      </button>
+      {!isCompact && (
+        <button
+          onClick={handleSave}
+          className={`flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors ml-auto ${isSaving ? "opacity-50" : ""}`}
+          disabled={isSaving}
+        >
+          <Bookmark className="h-4 w-4" />
+          <span className="text-xs font-medium">Save</span>
+        </button>
+      )}
+    </div>
+  );
+
+  const cardLayoutClass = useMdSideBySide ? `${flexDirection} md:min-h-[220px]` : "";
+  const prominenceElevated = !isCompact && effectiveSpec.prominence === "elevated";
+
+  return (
+    <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
+      <article
+        data-testid={`review-card-feed-${entry.id}`}
+        onClick={handleCardClick}
+        className={`group/card relative flex flex-col ${cardLayoutClass} h-full bg-surface-card border border-border-default rounded-sm overflow-hidden hover:border-border-strong transition-colors cursor-pointer min-w-0 w-full max-w-full ${
+          isArchitectOfBuilding ? "border-l-2 border-l-brand-primary" : ""
+        } ${prominenceElevated ? "shadow-card-elevated" : "shadow-none"}`}
+      >
+        {isCompact ? (
+          <>
+            {Media}
+            {Header}
+            <div className="flex flex-col flex-1 min-w-0 p-2.5 md:p-4 md:pt-3 gap-2">
+              {ContentBody}
+            </div>
+            {Footer}
+          </>
+        ) : useCompactStackLayout ? (
+          <>
+            {Header}
+            {Media}
+            <div className="flex flex-col flex-1 min-w-0 p-2.5 md:p-4 md:pt-3 gap-2">
+              {ContentBody}
+              {Footer}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex flex-col flex-1 min-w-0">
+              {Header}
+              <div className="flex flex-col flex-1 p-2.5 md:p-4 md:pt-3 gap-2">
+                {ContentBody}
+                {Footer}
+              </div>
+            </div>
+            {Media}
+          </>
+        )}
+      </article>
+    </SuggestedContentBlock>
+  );
+}
+import { Heart, MessageCircle, Circle } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { formatDistanceToNow } from "date-fns";
+import { useNavigate } from "react-router";
+import { FeedReview } from "@/types/feed";
+import { getBuildingUrl } from "@/utils/url";
+import { VideoPlayer } from "@/components/ui/VideoPlayer";
+import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
+
+const RatingCircles = ({ rating }: { rating: number }) => {
+  return (
+    <div className="flex items-center gap-0.5">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <Circle
+          key={i}
+          className={`w-3 h-3 ${
+            i < rating
+              ? "fill-brand-primary text-text-primary"
+              : "fill-transparent text-text-secondary/20"
+          }`}
+        />
+      ))}
+    </div>
+  );
+};
+
+export interface ReviewCardDetailProps {
+  entry: FeedReview;
+  hideUser?: boolean;
+  hideBuildingInfo?: boolean;
+  onLike?: (reviewId: string) => void;
+  onComment?: (reviewId: string) => void;
+  /** Passed through to {@link useReviewCardData} (subtitle / media); default matches feed detail usage. */
+  variant?: "default" | "compact";
+  showCommunityImages?: boolean;
+}
+
+/**
+ * Building / review detail layout: user header (optional), thumbnail + copy, like/comment actions.
+ * Fixed horizontal media + text row (no `imagePosition`).
+ */
+export function ReviewCardDetail({
+  entry,
+  hideUser = false,
+  hideBuildingInfo = false,
+  onLike,
+  onComment,
+  variant = "default",
+  showCommunityImages = true,
+}: ReviewCardDetailProps) {
+  const navigate = useNavigate();
+  const { data } = useReviewCardData(entry, { variant, showCommunityImages });
+
+  if (!data) return null;
+
+  const { username, avatarUrl, userInitial, mainTitle, subTitle, posterUrl, mediaItems } = data;
+
+  const handleCommentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onComment) {
+      onComment(entry.id);
+    } else {
+      if (entry.building.id) {
+        navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
+      } else {
+        navigate(`/review/${entry.id}`);
+      }
+    }
+  };
+
+  return (
+    <article className="px-4 py-4 hairline">
+      {!hideUser ? (
+        <div className="flex items-center gap-3 mb-3">
+          <Avatar className="h-9 w-9">
+            <AvatarImage src={avatarUrl} />
+            <AvatarFallback className="bg-surface-muted text-text-primary text-sm">{userInitial}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-text-primary truncate">{username}</p>
+            <p className="text-xs text-text-secondary">
+              {formatDistanceToNow(new Date(entry.edited_at || entry.created_at), { addSuffix: true }).replace(
+                "about ",
+                "",
+              )}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="mb-3">
+          <p className="text-xs text-text-secondary">
+            {formatDistanceToNow(new Date(entry.edited_at || entry.created_at), { addSuffix: true }).replace(
+              "about ",
+              "",
+            )}
+          </p>
+        </div>
+      )}
+      <div className="flex gap-3">
+        {!hideBuildingInfo &&
+          (mediaItems.length > 0 && mediaItems[0].type === "video" ? (
+            <div className="w-32 h-24 bg-black rounded-sm flex-shrink-0 video-container">
+              <VideoPlayer
+                src={mediaItems[0].url}
+                poster={mediaItems[0].poster}
+                className="w-full h-full"
+                autoPlayOnVisible={false}
+                muted={true}
+                objectFit="cover"
+              />
+            </div>
+          ) : mediaItems.length > 0 ? (
+            <img
+              src={mediaItems[0].url}
+              alt={entry.building.name}
+              className="w-32 h-24 object-cover rounded-sm flex-shrink-0"
+            />
+          ) : posterUrl ? (
+            <img src={posterUrl} alt={entry.building.name} className="w-32 h-24 object-cover rounded-sm flex-shrink-0" />
+          ) : (
+            <div className="w-32 h-24 bg-surface-muted rounded-sm flex-shrink-0 flex items-center justify-center">
+              <span className="text-xs text-text-secondary">No image</span>
+            </div>
+          ))}
+        <div className="flex-1 min-w-0">
+          {!hideBuildingInfo && (
+            <div className="mb-2">
+              <h3 className="text-base font-semibold text-text-primary truncate">{mainTitle}</h3>
+              {subTitle && <p className="text-xs text-text-secondary truncate">{subTitle}</p>}
+            </div>
+          )}
+          {entry.rating && entry.rating > 0 && (
+            <div className="flex items-center gap-1 mb-2">
+              <RatingCircles rating={entry.rating} />
+            </div>
+          )}
+          {entry.content && <p className="text-sm text-text-secondary mb-2 break-words">{entry.content}</p>}
+        </div>
+      </div>
+      <div className="flex items-center gap-6 mt-3 pt-2">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onLike?.(entry.id);
+            window.dispatchEvent(new CustomEvent("pwa-interaction"));
+          }}
+          className="flex items-center gap-1.5 text-text-secondary hover:text-brand-primary transition-colors"
+        >
+          <Heart className={`h-4 w-4 ${entry.is_liked ? "fill-brand-primary text-brand-primary" : ""}`} />
+          <span className="text-xs">{entry.likes_count}</span>
+        </button>
+        <button
+          onClick={handleCommentClick}
+          className="flex items-center gap-1.5 text-text-secondary hover:text-text-primary transition-colors"
+        >
+          <MessageCircle className="h-4 w-4" />
+          <span className="text-xs">{entry.comments_count}</span>
+        </button>
+      </div>
+    </article>
+  );
+}
+import { Bookmark } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useNavigate } from "react-router";
+import { useState } from "react";
+import { FeedReview } from "@/types/feed";
+import { getBuildingImageUrl } from "@/utils/image";
+import { getBuildingUrl } from "@/utils/url";
+import { cn } from "@/lib/utils";
+
+interface FeedActivityCardProps {
+  entry: FeedReview;
+  activityStatus: "visited" | "pending";
+  onLike?: (reviewId: string) => void;
+  size?: "hero" | "compact";
+}
+
+export function FeedActivityCard({
+  entry,
+  activityStatus,
+  onLike: _onLike,
+  size = "hero",
+}: FeedActivityCardProps) {
+  const navigate = useNavigate();
+  const [imageVisible, setImageVisible] = useState(true);
+  const [saved, setSaved] = useState(false);
+
+  if (!entry.building) return null;
+
+  const isHero = size === "hero";
+  const username = entry.user?.username ?? "Unknown User";
+  const avatarUrl = entry.user?.avatar_url ?? undefined;
+  const userInitial = username.charAt(0).toUpperCase();
+  const mainTitle = entry.building.name;
+  const city =
+    entry.building.city ||
+    entry.building.address?.split(",").pop()?.trim() ||
+    "";
+
+  const cardImageSrc =
+    getBuildingImageUrl(entry.building.main_image_url) ??
+    getBuildingImageUrl(entry.building.community_preview_url);
+
+  const actionCopy =
+    activityStatus === "visited" ? "visited" : "wants to visit";
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("button")) return;
+    if (entry.building.id) {
+      navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
+    } else {
+      navigate(`/review/${entry.id}`);
+    }
+  };
+
+  const handleSave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSaved((s) => !s);
+  };
+
+  return (
+    <article
+      onClick={handleCardClick}
+      className="flex items-start gap-4 w-full cursor-pointer pb-6 border-b border-border-default"
+    >
+      {/* Thumbnail — larger sizes */}
+      {cardImageSrc && imageVisible && (
+        <div className={cn(
+          "shrink-0 overflow-hidden bg-surface-muted rounded-none",
+          isHero ? "w-28 h-28" : "w-24 h-24"
+        )}>
+          <img
+            src={cardImageSrc}
+            alt={mainTitle}
+            className="w-full h-full object-cover"
+            onError={() => setImageVisible(false)}
+          />
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        {/* Category label */}
+        <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
+          {activityStatus === "visited" ? "Visited" : "Bucket list"}
+        </span>
+
+        {/* Building name */}
+        <h3 className={cn(
+          "font-semibold text-text-primary leading-tight mt-1",
+          isHero ? "text-xl" : "text-base"
+        )}>
+          {mainTitle}
+        </h3>
+
+        {/* Location */}
+        {city && (
+          <p className="text-xs text-text-secondary mt-1">{city}</p>
+        )}
+
+        {/* Attribution + bookmark */}
+        <div className="flex items-center gap-3 mt-2">
+          <div className="flex items-center gap-1.5">
+            <Avatar className={cn("shrink-0", isHero ? "h-5 w-5" : "h-4 w-4")}>
+              <AvatarImage src={avatarUrl} />
+              <AvatarFallback className="text-[8px]">{userInitial}</AvatarFallback>
+            </Avatar>
+            <span className="text-xs text-text-secondary">
+              <span className="font-medium text-text-primary">{username}</span>
+              {" "}{actionCopy}
+            </span>
+          </div>
+
+          <div className="flex-1" />
+
+          {/* Bookmark */}
+          <button
+            type="button"
+            onClick={handleSave}
+            className="text-text-secondary hover:text-text-primary transition-colors"
+            title={saved ? "Saved" : "Save"}
+          >
+            <Bookmark
+              className={cn("h-4 w-4", saved ? "fill-text-primary text-text-primary" : "")}
+              strokeWidth={1.8}
+            />
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+import { Circle, Bookmark } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useNavigate } from "react-router";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { FeedReview } from "@/types/feed";
+import type { CardSpec, CardTextWeight } from "@/types/cards";
+import { getBuildingUrl } from "@/utils/url";
+import { useEffect, useMemo, useState } from "react";
+import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
+import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
+import { FeedPhotoCarousel } from "./FeedPhotoCarousel";
+import { resolveCardSpec } from "@/features/feed/utils/resolveCardSpec";
+
+function heroBodyClampClass(textWeight: CardTextWeight, essayExpanded: boolean): string {
+  switch (textWeight) {
+    case "none":
+      return "";
+    case "snippet":
+      return "line-clamp-card-snippet";
+    case "body":
+      return "line-clamp-card-body";
+    case "essay":
+      return essayExpanded ? "" : "line-clamp-card-body";
+    default:
+      return "";
+  }
+}
+
+// ─── Single-image subcomponent ───────────────────────────────────────────────
+
+interface FeedHeroSingleImageProps {
+  image: { id: string; url: string };
+  onError: (id: string) => void;
+}
+
+function FeedHeroSingleImage({ image, onError }: FeedHeroSingleImageProps) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div className="relative w-full h-full min-h-[300px] md:min-h-0 bg-surface-muted">
+      {!loaded && <div className="absolute inset-0 bg-surface-muted animate-pulse" />}
+      <img
+        src={image.url}
+        onLoad={() => setLoaded(true)}
+        onError={() => onError(image.id)}
+        className={cn(
+          "w-full h-full object-cover rounded-none transition-opacity duration-300",
+          loaded ? "opacity-100" : "opacity-0"
+        )}
+        alt="Building"
+      />
+    </div>
+  );
+}
+
+// ─── Card props ──────────────────────────────────────────────────────────────
+
+interface FeedHeroCardProps {
+  entry: FeedReview;
+  index?: number;
+  /** When omitted, derived via {@link resolveCardSpec}(entry). */
+  spec?: CardSpec;
+  onLike?: (reviewId: string) => void;
+  onImageLike?: (reviewId: string, imageId: string) => void;
+  onComment?: (reviewId: string) => void;
+}
+
+// ─── Main card ───────────────────────────────────────────────────────────────
+
+export function FeedHeroCard({
+  entry,
+  index = 0,
+  spec: specProp,
+  onLike: _onLike,
+  onImageLike,
+  onComment: _onComment,
+}: FeedHeroCardProps) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { statuses } = useUserBuildingStatuses();
+  const queryClient = useQueryClient();
+  const [isSaving, setIsSaving] = useState(false);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const [essayExpanded, setEssayExpanded] = useState(false);
+  const effectiveSpec = useMemo(() => specProp ?? resolveCardSpec(entry), [entry, specProp]);
+
+  useEffect(() => {
+    setEssayExpanded(false);
+  }, [entry.id]);
+
+  if (!entry.building) return null;
+
+  const viewerStatus = entry.building ? statuses[entry.building.id] : undefined;
+  const isSaved = viewerStatus === "pending";
+  const isReversed = index % 2 !== 0;
+
+  const handleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+    if (!entry.building?.id) return;
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from("user_buildings").upsert(
+        { user_id: user.id, building_id: entry.building.id, status: "pending", edited_at: new Date().toISOString() },
+        { onConflict: "user_id, building_id" }
+      );
+      if (error) throw error;
+      toast({ title: "Saved to your list" });
+      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+    } catch {
+      toast({ variant: "destructive", title: "Failed to update status" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("button")) return;
+    if (entry.building.id) {
+      navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
+    } else {
+      navigate(`/review/${entry.id}`);
+    }
+  };
+
+  const username = entry.user?.username || "Unknown User";
+  const avatarUrl = entry.user?.avatar_url || undefined;
+  const userInitial = username.charAt(0).toUpperCase();
+  const mainTitle = entry.building.name;
+  const credits = entry.building.creditedEntities;
+  const primaryCreditLine =
+    credits && credits.length > 0 ? credits.map((c) => c.name).join(", ") : null;
+  const city = entry.building.city || entry.building.address?.split(",").pop()?.trim() || "";
+
+  const handleImageError = (imageId: string) => {
+    setFailedImages((prev) => {
+      const next = new Set(prev);
+      next.add(imageId);
+      return next;
+    });
+  };
+
+  // ── Image rendering ─────────────────────────────────────────────────────────
+  const allImages = entry.images || [];
+  const singleImages = allImages.filter((img) => !failedImages.has(img.id));
+
+  const renderImages = () => {
+    if (allImages.length === 0) return null;
+
+    if (allImages.length > 2 || effectiveSpec.imageWeight === "gallery") {
+      return (
+        <FeedPhotoCarousel
+          images={allImages}
+          reviewId={entry.id}
+          onImageLike={onImageLike}
+          className="w-full h-full"
+        />
+      );
+    }
+
+    if (
+      effectiveSpec.imageWeight === "pair" &&
+      singleImages.length >= 2
+    ) {
+      return (
+        <div className="grid grid-cols-2 w-full h-full min-h-[280px] md:min-h-[400px]">
+          <div className="relative h-full min-h-[280px] min-w-0 overflow-hidden bg-surface-muted md:min-h-0">
+            <FeedHeroSingleImage
+              image={singleImages[0]}
+              onError={handleImageError}
+            />
+          </div>
+          <div className="relative h-full min-h-[280px] min-w-0 overflow-hidden bg-surface-muted border-l border-border-default/30 md:min-h-0">
+            <FeedHeroSingleImage
+              image={singleImages[1]}
+              onError={handleImageError}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    if (singleImages.length === 1) {
+      return (
+        <FeedHeroSingleImage
+          image={singleImages[0]}
+          onError={handleImageError}
+        />
+      );
+    }
+
+    return (
+      <FeedPhotoCarousel
+        images={allImages}
+        reviewId={entry.id}
+        onImageLike={onImageLike}
+        className="w-full h-full"
+      />
+    );
+  };
+
+  const hasImages = allImages.length > 0;
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+  const bodyClamp = heroBodyClampClass(effectiveSpec.textWeight, essayExpanded);
+  const showReadMore =
+    effectiveSpec.textWeight === "essay" && !essayExpanded && Boolean(entry.content?.trim());
+
+  return (
+    <article
+      onClick={handleCardClick}
+      className={cn(
+        "group relative w-full cursor-pointer",
+        effectiveSpec.prominence === "elevated" && "shadow-card-elevated",
+      )}
+    >
+      {/* Magazine spread: two-column on desktop, stacked on mobile */}
+      <div className={cn(
+        "grid grid-cols-1 gap-0 items-stretch",
+        hasImages && "md:grid-cols-2"
+      )}>
+        {/* Image column */}
+        {hasImages && (
+          <div className={cn(
+            "relative overflow-hidden min-h-[280px] md:min-h-[400px]",
+            isReversed ? "md:order-2" : "md:order-1"
+          )}>
+            {renderImages()}
+          </div>
+        )}
+
+        {/* Text column */}
+        <div className={cn(
+          "flex flex-col justify-center py-6 md:py-10",
+          hasImages && (isReversed ? "md:order-1 md:pr-10" : "md:order-2 md:pl-10"),
+          !hasImages && "max-w-xl"
+        )}>
+          {/* Category label */}
+          <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-3">
+            {entry.status === "visited" ? "Review" : "Building"}
+          </span>
+
+          {/* Building name — editorial scale */}
+          <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight text-text-primary mb-3">
+            {mainTitle}
+          </h2>
+
+          {/* Architect + location */}
+          {(primaryCreditLine || city) && (
+            <p className="text-sm text-text-secondary mb-4">
+              {primaryCreditLine}{primaryCreditLine && city ? " · " : ""}{city}
+            </p>
+          )}
+
+          {/* Rating */}
+          {entry.rating && entry.rating > 0 && (
+            <div className="flex items-center gap-1 mb-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Circle
+                  key={i}
+                  className={cn(
+                    "w-3.5 h-3.5",
+                    i < entry.rating!
+                      ? "fill-text-primary text-text-primary"
+                      : "fill-transparent text-text-disabled"
+                  )}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Review excerpt */}
+          {entry.content && (
+            <div className="max-w-md mb-6">
+              <p
+                className={cn(
+                  "text-base leading-relaxed text-text-secondary",
+                  bodyClamp,
+                )}
+              >
+                {entry.content}
+              </p>
+              {showReadMore && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEssayExpanded(true);
+                  }}
+                  className="mt-2 text-xs font-medium uppercase tracking-widest text-text-primary hover:text-text-secondary"
+                >
+                  Read more →
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* User attribution + bookmark */}
+          <div className="flex items-center gap-2.5">
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={avatarUrl} />
+              <AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium text-text-primary">{username}</span>
+
+            <div className="flex-1" />
+
+            {/* Save */}
+            <button
+              type="button"
+              onClick={handleSave}
+              className="text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
+              disabled={isSaving}
+              title={isSaved ? "Saved" : "Save"}
+            >
+              <Bookmark className={cn("h-5 w-5", isSaved ? "fill-text-primary text-text-primary" : "")} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useNavigate } from "react-router";
+import { useState } from "react";
+import { FeedReview } from "@/types/feed";
+import { getBuildingUrl } from "@/utils/url";
+import { getBuildingImageUrl } from "@/utils/image";
+import { Bookmark, Circle } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface FeedCompactCardProps {
+  entry: FeedReview;
+  onLike?: (reviewId: string) => void;
+  onComment?: (reviewId: string) => void;
+}
+
+export function FeedCompactCard({
+  entry,
+  onLike: _onLike,
+  onComment: _onComment,
+}: FeedCompactCardProps) {
+  const navigate = useNavigate();
+  const [imageVisible, setImageVisible] = useState(true);
+  const [saved, setSaved] = useState(false);
+
+  if (!entry.building) return null;
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("button")) return;
+    if (entry.building.id) {
+      navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
+    } else {
+      navigate(`/review/${entry.id}`);
+    }
+  };
+
+  const handleSave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSaved((s) => !s);
+  };
+
+  const username = entry.user?.username || "Unknown User";
+  const avatarUrl = entry.user?.avatar_url || undefined;
+  const userInitial = username.charAt(0).toUpperCase();
+  const mainTitle = entry.building.name;
+  const actionText = entry.status === "pending" ? "saved" : "visited";
+
+  const cardImageSrc =
+    getBuildingImageUrl(entry.building.main_image_url) ??
+    getBuildingImageUrl(entry.building.community_preview_url);
+
+  return (
+    <div
+      onClick={handleCardClick}
+      className="flex items-start gap-4 w-full cursor-pointer pb-6 border-b border-border-default"
+    >
+      {/* Thumbnail */}
+      {cardImageSrc && imageVisible && (
+        <div className="w-24 h-24 shrink-0 overflow-hidden bg-surface-muted rounded-none">
+          <img
+            src={cardImageSrc}
+            alt={mainTitle}
+            className="w-full h-full object-cover"
+            onError={() => setImageVisible(false)}
+          />
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        {/* Category label */}
+        <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
+          {actionText}
+        </span>
+
+        {/* Building name — editorial scale */}
+        <h3 className="text-2xl font-semibold tracking-tight leading-tight text-text-primary mt-1">
+          {mainTitle}
+        </h3>
+
+        {/* Rating */}
+        {entry.rating && entry.rating > 0 && (
+          <div className="flex items-center gap-0.5 mt-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Circle
+                key={i}
+                className={cn(
+                  "w-3 h-3",
+                  i < entry.rating!
+                    ? "fill-text-primary text-text-primary"
+                    : "fill-transparent text-text-disabled"
+                )}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Review excerpt */}
+        {entry.content && (
+          <p className="text-sm leading-relaxed text-text-secondary mt-2 line-clamp-2">
+            {entry.content}
+          </p>
+        )}
+
+        {/* Attribution + bookmark */}
+        <div className="flex items-center gap-2 mt-3">
+          <Avatar className="h-5 w-5 shrink-0">
+            <AvatarImage src={avatarUrl} />
+            <AvatarFallback className="text-[8px]">{userInitial}</AvatarFallback>
+          </Avatar>
+          <span className="text-xs font-medium text-text-primary">{username}</span>
+
+          <div className="flex-1" />
+
+          <button
+            type="button"
+            onClick={handleSave}
+            className="text-text-secondary hover:text-text-primary transition-colors"
+            title={saved ? "Saved" : "Save"}
+          >
+            <Bookmark
+              className={cn("h-4 w-4", saved ? "fill-text-primary text-text-primary" : "")}
+              strokeWidth={1.8}
+            />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+import { useMemo, useState } from "react";
+import { FeedReview } from "@/types/feed";
+import { getBuildingImageUrl } from "@/utils/image";
+
+function getCityFromAddress(address: string | null | undefined): string {
+  if (!address) return "";
+  const parts = address.split(",").map((p) => p.trim());
+  if (parts.length >= 2) {
+    return parts[parts.length - 2];
+  }
+  return parts[0];
+}
+
+export type ReviewCardMediaItem = {
+  id: string;
+  type: "video" | "image";
+  url: string;
+  poster?: string;
+};
+
+export type ReviewCardCarouselImage = {
+  id: string;
+  url: string;
+  likes_count: number;
+  is_liked: boolean;
+};
+
+export type ReviewCardData = {
+  username: string;
+  avatarUrl: string | undefined;
+  userInitial: string;
+  isVerifiedArchitect: boolean;
+  isArchitectOfBuilding: boolean;
+  mainTitle: string;
+  subTitle: string | null | undefined;
+  posterUrl: string | undefined;
+  mediaItems: ReviewCardMediaItem[];
+  carouselImages: ReviewCardCarouselImage[];
+  hasVideo: boolean;
+  city: string;
+  action: "saved" | "visited";
+};
+
+export function useReviewCardData(
+  entry: FeedReview,
+  options: {
+    variant: "default" | "compact";
+    showCommunityImages: boolean;
+  },
+): {
+  data: ReviewCardData | null;
+  failedImages: Set<string>;
+  setFailedImages: React.Dispatch<React.SetStateAction<Set<string>>>;
+} {
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+
+  const data = useMemo((): ReviewCardData | null => {
+    if (!entry.building) return null;
+
+    const posterUrl = getBuildingImageUrl(entry.building.main_image_url);
+
+    const username = entry.user?.username || "Unknown User";
+    const avatarUrl = entry.user?.avatar_url || undefined;
+    const isVerifiedArchitect = entry.user?.is_verified_architect || false;
+    const isArchitectOfBuilding = entry.user?.is_architect_of_building || false;
+    const userInitial = username.charAt(0).toUpperCase();
+
+    const mainTitle = entry.building.name;
+    const credits = entry.building.creditedEntities;
+    const year_completed = entry.building.year_completed;
+    const creditNames = credits ? credits.map((c) => c.name).filter(Boolean) : [];
+
+    let subTitle: string | null | undefined = entry.building.address;
+    if (options.variant === "compact") {
+      const parts: (string | number)[] = [];
+      if (creditNames.length > 0) parts.push(creditNames.slice(0, 2).join(", "));
+      if (year_completed) parts.push(year_completed);
+      subTitle = parts.length > 0 ? parts.join(" • ") : entry.building.address;
+    } else {
+      const creditsList = creditNames.slice(0, 2).join(", ");
+      if (creditsList) {
+        subTitle = creditsList;
+        if (year_completed) subTitle += ` • ${year_completed}`;
+      } else if (year_completed) {
+        subTitle = `${year_completed}`;
+        if (entry.building.address) subTitle += ` • ${entry.building.address}`;
+      }
+    }
+
+    const mediaItems: ReviewCardMediaItem[] = [];
+    if (entry.video_url) {
+      mediaItems.push({
+        id: `video-${entry.id}`,
+        type: "video",
+        url: entry.video_url,
+        poster:
+          entry.images && entry.images.length > 0
+            ? entry.images[0].url
+            : options.showCommunityImages
+              ? posterUrl || undefined
+              : undefined,
+      });
+    }
+    if (entry.images && entry.images.length > 0) {
+      entry.images.forEach((img) => {
+        mediaItems.push({ id: img.id, type: "image", url: img.url });
+      });
+    }
+
+    const hasVideo = mediaItems.some((m) => m.type === "video");
+
+    const carouselImages: ReviewCardCarouselImage[] = (entry.images || []).map((img) => ({
+      id: img.id,
+      url: img.url,
+      likes_count: img.likes_count,
+      is_liked: img.is_liked,
+    }));
+
+    const city = getCityFromAddress(entry.building.address);
+    const action: "saved" | "visited" = entry.status === "pending" ? "saved" : "visited";
+
+    return {
+      username,
+      avatarUrl,
+      userInitial,
+      isVerifiedArchitect,
+      isArchitectOfBuilding,
+      mainTitle,
+      subTitle,
+      posterUrl,
+      mediaItems,
+      carouselImages,
+      hasVideo,
+      city,
+      action,
+    };
+  }, [entry, options.variant, options.showCommunityImages]);
+
+  return { data, failedImages, setFailedImages };
+}
+import type { CardImageWeight, CardLayout, CardProminence, CardSpec, CardTextWeight } from "@/types/cards";
+import type { FeedReview, ReviewImage } from "@/types/feed";
+
+function countWords(content: string | null | undefined): number {
+  if (content == null) return 0;
+  const trimmed = content.trim();
+  if (!trimmed) return 0;
+  return trimmed.split(/\s+/).filter(Boolean).length;
+}
+
+export function resolveTextWeightFromWordCount(wordCount: number): CardTextWeight {
+  if (wordCount < 1) return "none";
+  if (wordCount < 20) return "snippet";
+  if (wordCount < 150) return "body";
+  return "essay";
+}
+
+function countUsableReviewImages(images: ReviewImage[] | null | undefined): number {
+  if (images == null || images.length === 0) return 0;
+  return images.filter((img) => typeof img.url === "string" && img.url.trim().length > 0).length;
+}
+
+export function resolveImageWeightFromCount(count: number): CardImageWeight {
+  if (count < 1) return "none";
+  if (count === 1) return "single";
+  if (count === 2) return "pair";
+  return "gallery";
+}
+
+const LAYOUT_MATRIX: Record<`${CardImageWeight}:${CardTextWeight}`, CardLayout> = {
+  "none:none": "compact-stack",
+  "none:snippet": "compact-stack",
+  "none:body": "text-forward",
+  "none:essay": "text-forward",
+  "single:none": "media-forward",
+  "single:snippet": "balanced",
+  "single:body": "balanced",
+  "single:essay": "text-forward",
+  "pair:none": "media-forward",
+  "pair:snippet": "balanced",
+  "pair:body": "balanced",
+  "pair:essay": "balanced",
+  "gallery:none": "media-forward",
+  "gallery:snippet": "media-forward",
+  "gallery:body": "balanced",
+  "gallery:essay": "balanced",
+};
+
+export function resolveLayoutFromWeights(
+  imageWeight: CardImageWeight,
+  textWeight: CardTextWeight,
+): CardLayout {
+  const key = `${imageWeight}:${textWeight}` as keyof typeof LAYOUT_MATRIX;
+  return LAYOUT_MATRIX[key];
+}
+
+function resolveProminence(entry: FeedReview): CardProminence {
+  const likes = entry.likes_count ?? 0;
+  const followers = entry.user?.followers_count;
+  const followersHigh = typeof followers === "number" && followers > 500;
+  const verified = Boolean(entry.user?.is_verified_architect);
+  const architectOfBuilding = Boolean(entry.user?.is_architect_of_building);
+
+  if (likes > 50 || followersHigh || verified || architectOfBuilding) {
+    return "elevated";
+  }
+  return "standard";
+}
+
+/**
+ * Pure resolver: derives {@link CardSpec} from review metrics (word count, images, engagement, author signals).
+ * Safe with null/undefined content, missing `images`, empty URLs, and partial `user` flags.
+ */
+export function resolveCardSpec(entry: FeedReview): CardSpec {
+  const wc = countWords(entry.content);
+  const textWeight = resolveTextWeightFromWordCount(wc);
+  const usableImages = countUsableReviewImages(entry.images);
+  const imageWeight = resolveImageWeightFromCount(usableImages);
+  const layout = resolveLayoutFromWeights(imageWeight, textWeight);
+  const prominence = resolveProminence(entry);
+
+  return { layout, imageWeight, textWeight, prominence };
+}
+/**
+ * Card system types for feed / review cards (see `docs/ROADMAP.md` Card System Overhaul).
+ * `CardSpec` is produced by `resolveCardSpec()` (Phase 1 Task 1.2) from a `FeedReview` and
+ * drives layout, imagery, and prominence without coupling components to raw metrics.
+ */
+
+/**
+ * How many user-attached review images should influence layout density.
+ * - `none` — no user images (building-only or text cards).
+ * - `single` — one image (hero or single column).
+ * - `pair` — two images (side-by-side or small carousel).
+ * - `gallery` — three or more images (carousel / mosaic forward).
+ */
+export type CardImageWeight = "none" | "single" | "pair" | "gallery";
+
+/**
+ * Text volume bucket for review body, derived from word-count bands in `resolveCardSpec`.
+ * - `none` — empty or whitespace-only body.
+ * - `snippet` — short copy (under ~20 words).
+ * - `body` — medium copy (under ~150 words).
+ * - `essay` — long-form copy (~150+ words).
+ */
+export type CardTextWeight = "none" | "snippet" | "body" | "essay";
+
+/**
+ * Primary arrangement of media vs copy inside the card chrome.
+ * - `media-forward` — imagery leads; text is secondary.
+ * - `balanced` — media and copy share visual weight.
+ * - `text-forward` — copy leads; imagery supports.
+ * - `compact-stack` — dense stack for small surfaces or minimal media + text.
+ */
+export type CardLayout =
+  | "media-forward"
+  | "balanced"
+  | "text-forward"
+  | "compact-stack";
+
+/**
+ * Whether the card uses baseline feed chrome or an elevated treatment (e.g. high engagement
+ * or notable author), used for subtle emphasis in feed surfaces.
+ */
+export type CardProminence = "standard" | "elevated";
+
+/**
+ * Resolved layout contract for a single review card instance. All fields are intended to be
+ * pure outputs of `resolveCardSpec(entry)` so UI stays declarative.
+ */
+export interface CardSpec {
+  /** Row / column / stack strategy for this card. */
+  layout: CardLayout;
+  /** Image count tier from user review images (and optionally video) only. */
+  imageWeight: CardImageWeight;
+  /** Body length tier from tokenized word count of `entry.content`. */
+  textWeight: CardTextWeight;
+  /** Standard vs elevated emphasis in the feed grid. */
+  prominence: CardProminence;
+}
+export interface ReviewImage {
+  id: string;
+  url: string;
+  likes_count: number;
+  is_liked: boolean;
+}
+
+export interface ReviewUser {
+  username: string | null;
+  avatar_url: string | null;
+  is_verified_architect?: boolean;
+  is_architect_of_building?: boolean;
+  /**
+   * Follower count for the review author at fetch time (`follows.following_id` = profile id).
+   * Null when unknown or not loaded (e.g. legacy RPC payloads before migration).
+   */
+  followers_count: number | null;
+}
+
+export interface ReviewBuilding {
+  id: string;
+  short_id?: number | null;
+  slug?: string | null;
+  name: string;
+  address?: string | null;
+  main_image_url?: string | null;
+  /** Mapped: community_preview_url — top community review image path; feed fallback when no hero/main. */
+  community_preview_url?: string | null;
+  /** From feed RPCs `building_data.credited_entities` or embedded `building_credits`. */
+  creditedEntities?: { id: string; name: string }[] | null;
+  year_completed?: number | null;
+  city?: string | null;
+  country?: string | null;
+}
+
+export interface WatchWithUser {
+  id: string;
+  avatar_url: string | null;
+  username: string | null;
+}
+
+export interface FeedReview {
+  id: string;
+  content: string | null;
+  rating: number | null;
+  tags?: string[] | null;
+  created_at: string;
+  edited_at?: string | null;
+  status?: string; // Made optional for feed card usage, though usually present
+  user_id?: string; // Optional on the type; Index and loaders still provide it when available
+  user: ReviewUser;
+  building: ReviewBuilding;
+  likes_count: number;
+  comments_count: number;
+  is_liked: boolean;
+  images?: ReviewImage[];
+  video_url?: string | null;
+  watch_with_users?: WatchWithUser[];
+  is_suggested?: boolean;
+  suggestion_reason?: string;
+}
+
+/** JSON payload from `get_feed` / `get_suggested_posts` RPCs. */
+export interface RawFeedUserData {
+  username?: string | null;
+  avatar_url?: string | null;
+  is_verified_architect?: boolean;
+  is_architect_of_building?: boolean;
+  /** Integer count from feed RPCs when `followers_count` is included in `user_data`. */
+  followers_count?: number | null;
+}
+
+export interface RawFeedBuildingData {
+  id?: string;
+  short_id?: number | null;
+  slug?: string | null;
+  name?: string | null;
+  address?: string | null;
+  city?: string | null;
+  country?: string | null;
+  main_image_url?: string | null;
+  community_preview_url?: string | null;
+  credited_entities?: unknown;
+  year_completed?: number | null;
+}
+
+/** Normalize `get_feed` / `get_suggested_posts` `building_data.credited_entities` JSON. */
+export function creditedEntitiesFromRpcJson(
+  raw: unknown,
+): { id: string; name: string }[] | null {
+  if (raw == null) return null;
+  if (!Array.isArray(raw)) return null;
+  if (raw.length === 0) return [];
+  const out: { id: string; name: string }[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const rec = item as Record<string, unknown>;
+    const id = rec.id != null ? String(rec.id) : "";
+    const name = rec.name != null ? String(rec.name) : "";
+    if (name) out.push({ id, name });
+  }
+  return out;
+}
+
+export interface RawFeedReviewImageRow {
+  id: string;
+  storage_path: string;
+  likes_count?: number | null;
+  is_liked?: boolean;
+}
+
+export interface RawFeedRow {
+  id: string;
+  content: string | null;
+  rating: number | null;
+  tags?: string[] | null;
+  created_at: string;
+  edited_at?: string | null;
+  status?: string | null;
+  user_id?: string;
+  user_data?: RawFeedUserData | null;
+  building_data?: RawFeedBuildingData | null;
+  likes_count?: number | null;
+  comments_count?: number | null;
+  is_liked: boolean;
+  review_images?: RawFeedReviewImageRow[] | null;
+  is_suggested?: boolean;
+  suggestion_reason?: string | null;
+  group_id?: string | null;
+}
+
+/** Preview row from `get_collections_feed` buildings subquery (snake_case). */
+export interface CollectionPreviewBuilding {
+  building_id: string;
+  name: string;
+  main_image_url: string | null;
+  community_preview_url?: string | null;
+}
+
+/** Raw JSON row from `get_collections_feed` RPC (snake_case). */
+export interface RawCollectionFeedRow {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  updated_at: string;
+  owner_id: string;
+  primary_tag: string | null;
+  owner: {
+    username: string | null;
+    avatar_url: string | null;
+  };
+  preview_buildings: CollectionPreviewBuilding[];
+  building_count: number;
+}
+
+/** CamelCase DTO for collection feed cards and `useCollectionsFeed`. */
+export interface FeedCollection {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  updatedAt: string;
+  ownerId: string;
+  primaryTag: string | null;
+  owner: {
+    id: string;
+    username: string | null;
+    avatarUrl: string | null;
+  };
+  previewBuildings: Array<{
+    buildingId: string;
+    name: string;
+    mainImageUrl: string | null;
+    communityPreviewUrl: string | null;
+  }>;
+  buildingCount: number;
+  isLiked?: boolean;
+  likesCount?: number;
+}
+# Plano: Design Tokens
+
+> **Authoritative source for all visual design decisions.**
+> Cursor reads this file during the Walking Skeleton (Task 0.1–0.2) and injects
+> these values into `apps/web/tailwind.config.ts`. Do not edit `tailwind.config.ts`
+> token values manually — edit this file and re-run the injection task.
+
+---
+
+## 1. Design Intent
+
+**Personality:** Editorial, modern, minimalist, sharp, photographic, architectural
+
+**Reference products:** A24 Films (a24films.com) — aggressive sans-serif typography at extreme scale, monochromatic palette (black/gray/white), zero UI chrome, generous whitespace as structure, content floats directly on white canvas. Contemporary architecture studio websites (OMA, BIG, Zaha Hadid Architects) — photography-first layouts, sharp geometry, zero ornamentation.
+
+**Editorial direction:** The feed, content detail pages (building, profile, architect), and all primary-surface pages follow an editorial magazine aesthetic. Typography weight and scale create hierarchy — not borders, not shadows, not card containers. Content sits directly on the white surface. The contrast between tiny uppercase category labels and massive bold headlines *is* the design. Whitespace is not empty space — it is editorial pause. Images are presented raw, with sharp edges and no decorative chrome.
+
+**Monochromatic content surfaces:** All content and feed pages are strictly monochromatic. Rating dots, active tab indicators, section accent bars, verified badges, icon fills, filter toggles, and interactive icon states all use `text-primary` (`#171717`) — not `brand-primary`. The neon accent (`#BEFF00`) is reserved exclusively for: primary button backgrounds in app UI (forms, modals, admin), focus rings, and very occasional hover punctuation on CTA arrows. If `brand-primary` appears on a content page outside those contexts, it is an error.
+
+**Single-column editorial layout:** Content detail pages (building detail, profile, architect profile) use a single-column `max-w-4xl` layout. No right sidebars on content pages. The sidebar pattern is restricted to admin and settings contexts.
+
+**CTA pattern:** In editorial contexts, calls to action are rendered as uppercase tracked text with a `→` arrow — never a filled button. Format: `text-xs font-medium uppercase tracking-widest`. This applies to all in-page action links (review, save, follow, directions, etc.) outside of modal and form contexts.
+
+**Mode:** Light only
+
+---
+
+## 2. Colour Palette
+
+### Raw Palette (never use these directly in components — use semantic aliases below)
+
+| Token | Hex | Usage |
+|---|---|---|
+| `palette-brand-50` | `#F7FFE0` | Barely-there neon tint — hover surfaces |
+| `palette-brand-100` | `#EEFFB8` | Light neon wash — selected rows, active states |
+| `palette-brand-200` | `#DEFF82` | Soft neon — secondary badges, tag backgrounds |
+| `palette-brand-300` | `#CFFF4A` | Medium neon — progress indicators |
+| `palette-brand-400` | `#C5FF1E` | Strong neon — active focus rings |
+| `palette-brand-500` | `#BEFF00` | **Primary neon accent — the one colour** |
+| `palette-brand-600` | `#9ACC00` | Hover state for primary actions |
+| `palette-brand-700` | `#739900` | Pressed state, high-contrast contexts |
+| `palette-brand-800` | `#4D6600` | Dark neon — foreground on light brand surfaces |
+| `palette-brand-900` | `#2B3A00` | Darkest neon shade — rarely used |
+| | | |
+| `palette-neutral-50` | `#FAFAFA` | Page background |
+| `palette-neutral-100` | `#F5F5F5` | Muted surfaces — sidebars, code blocks |
+| `palette-neutral-200` | `#E5E5E5` | Default borders, dividers |
+| `palette-neutral-300` | `#D4D4D4` | Subtle borders, separator lines |
+| `palette-neutral-400` | `#A3A3A3` | Disabled text, placeholder text |
+| `palette-neutral-500` | `#737373` | Mid-gray — icons, metadata |
+| `palette-neutral-600` | `#525252` | Secondary body text |
+| `palette-neutral-700` | `#404040` | Strong secondary text |
+| `palette-neutral-800` | `#262626` | Near-black — headings, emphasis |
+| `palette-neutral-900` | `#171717` | Primary text — body copy |
+| `palette-neutral-950` | `#0A0A0A` | Maximum contrast — hero text |
+| | | |
+| `palette-success-500` | `#16A34A` | Success states (differentiated from brand lime by hue: true green) |
+| `palette-warning-500` | `#F59E0B` | Warning states — amber |
+| `palette-destructive-500` | `#EF4444` | Error and destructive actions — red |
+
+### Semantic Aliases — Light Mode
+
+These are the only colour tokens Cursor and components are permitted to use.
+
+| Alias | Resolves to | Purpose |
+|---|---|---|
+| `brand-primary` | `palette-brand-500` · `#BEFF00` | Primary actions, accent blocks, active indicators |
+| `brand-primary-hover` | `palette-brand-600` · `#9ACC00` | Hover state for primary actions |
+| `brand-primary-foreground` | `palette-neutral-900` · `#171717` | Text/icons on brand-primary background (dark on neon) |
+| `brand-secondary` | `palette-brand-50` · `#F7FFE0` | Secondary surfaces — selected rows, subtle highlights |
+| `brand-secondary-foreground` | `palette-brand-800` · `#4D6600` | Text on brand-secondary background |
+| `surface-default` | `palette-neutral-50` · `#FAFAFA` | Page background |
+| `surface-card` | `#FFFFFF` | Card and panel background |
+| `surface-overlay` | `#FFFFFF` | Modal and popover background |
+| `surface-muted` | `palette-neutral-100` · `#F5F5F5` | Muted/subdued surface — sidebar, code blocks |
+| `--sidebar-background` (CSS, HSL components) | `0 0% 96.1%` (default) · matches `surface-muted` | `Sidebar` panel fill via `hsl(var(--sidebar-background))`; override per instance (e.g. pitch-black menu: `0 0% 0%`) |
+| `border-default` | `palette-neutral-200` · `#E5E5E5` | Default border — cards, inputs, dividers |
+| `border-strong` | `palette-neutral-400` · `#A3A3A3` | Emphasis border — focus, selected states |
+| `text-primary` | `palette-neutral-900` · `#171717` | Primary body text |
+| `text-secondary` | `palette-neutral-600` · `#525252` | Secondary/supporting text |
+| `text-disabled` | `palette-neutral-400` · `#A3A3A3` | Disabled and placeholder text |
+| `text-inverse` | `#FFFFFF` | Text on dark backgrounds |
+| `feedback-success` | `palette-success-500` · `#16A34A` | Success states |
+| `feedback-success-foreground` | `#FFFFFF` | Text on success background |
+| `feedback-warning` | `palette-warning-500` · `#F59E0B` | Warning states |
+| `feedback-warning-foreground` | `palette-neutral-900` · `#171717` | Text on warning background (dark on amber) |
+| `feedback-destructive` | `palette-destructive-500` · `#EF4444` | Error and destructive actions |
+| `feedback-destructive-foreground` | `#FFFFFF` | Text on destructive background |
+
+### Semantic Aliases — Dark Mode
+
+Dark mode: not configured.
+
+---
+
+## 3. Typography
+
+| Token | Value | Notes |
+|---|---|---|
+| `font-sans` | `'Inter', sans-serif` | Neutral grotesk — excellent legibility at UI sizes, clean at editorial display sizes. Optical sizing via Google Fonts. |
+| `font-mono` | `'Space Mono', monospace` | Technical contrast to Inter — building IDs, coordinates, metadata codes. Google Fonts. |
+| `font-size-2xs` | `0.625rem` | 10px — micro labels (avatar fallbacks, section dividers); Tailwind `text-2xs` |
+| `font-size-2xs-plus` | `0.6875rem` | 11px — uppercase meta / status chips; Tailwind `text-2xs-plus` |
+| `font-size-xs` | `0.75rem` | 12px — captions, timestamps, badge labels |
+| `font-size-sm` | `0.875rem` | 14px — secondary text, table cells, form labels |
+| `font-size-base` | `1rem` | 16px — body copy |
+| `font-size-lg` | `1.125rem` | 18px — lead text, card descriptions |
+| `font-size-xl` | `1.25rem` | 20px — card titles |
+| `font-size-2xl` | `1.5rem` | 24px — section headings |
+| `font-size-3xl` | `2rem` | 32px — page headings (spacious density: larger than default) |
+| `font-size-4xl` | `2.5rem` | 40px — page headings (spacious density) |
+| `font-size-5xl` | `3rem` | 48px — editorial feed building names (hero cards) |
+| `font-size-6xl` | `3.75rem` | 60px — editorial hero headlines, landing hero |
+| `font-size-7xl` | `4.5rem` | 72px — editorial maximum, landing page hero text |
+| `font-weight-normal` | `400` | Body text |
+| `font-weight-medium` | `500` | Labels, nav items, form labels |
+| `font-weight-semibold` | `600` | Headings, emphasis |
+| `font-weight-bold` | `700` | Hero text, strong emphasis |
+| `line-height-tight` | `1.2` | Headings — tighter than default for editorial lockup |
+| `line-height-normal` | `1.5` | Body copy |
+| `line-height-relaxed` | `1.75` | Long-form text — reviews, descriptions |
+| `letter-spacing-tight` | `-0.03em` | Large headings — slight negative tracking for tight display type |
+| `letter-spacing-normal` | `0em` | Body |
+| `letter-spacing-wide` | `0.08em` | All-caps labels, badges, table headers |
+
+**Font loading — two options (this project uses Vite/React SPA — use Option B):**
+
+**Option A — `next/font/google` (Next.js only):** If the project migrates to Next.js, add the following to `apps/web/app/layout.tsx`:
+
+```typescript
+import { Inter, Space_Mono } from 'next/font/google';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+});
+
+const spaceMono = Space_Mono({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-mono',
+  display: 'swap',
+});
+
+// Apply to <html> element: className={`${inter.variable} ${spaceMono.variable}`}
+```
+
+**Option B — `<link>` tag (recommended for Vite/React SPA):** Add this inside the document `<head>` (e.g. `index.html` in a vanilla Vite app):
+
+```html
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+```
+
+**This repository (React Router 7 + SSR):** the same tags are in `src/root.tsx` — `Layout` component `<head>` — not in the minimal root `index.html`.
+
+---
+
+## 4. Spacing Scale
+
+Base unit: 4px (`0.25rem`). All spacing tokens are multiples of this base.
+
+The spacious density directive means Cursor should default to the higher end of the scale for component padding, section gaps, and page margins. Typical defaults: card padding `spacing-6` to `spacing-8`, section gap `spacing-12` to `spacing-16`, page margin `spacing-8` to `spacing-12`.
+
+| Token | Value | Pixels |
+|---|---|---|
+| `spacing-0` | `0` | 0px |
+| `spacing-1` | `0.25rem` | 4px |
+| `spacing-2` | `0.5rem` | 8px |
+| `spacing-3` | `0.75rem` | 12px |
+| `spacing-4` | `1rem` | 16px |
+| `spacing-5` | `1.25rem` | 20px |
+| `spacing-6` | `1.5rem` | 24px |
+| `spacing-8` | `2rem` | 32px |
+| `spacing-10` | `2.5rem` | 40px |
+| `spacing-12` | `3rem` | 48px |
+| `spacing-16` | `4rem` | 64px |
+| `spacing-20` | `5rem` | 80px |
+| `spacing-24` | `6rem` | 96px |
+| `spacing-32` | `8rem` | 128px |
+
+Named layout tokens (exact measures, not constrained to the 4px grid):
+
+| Token | Value | Pixels | Usage |
+|---|---|---|---|
+| `collection-mosaic` | `10.5rem` | 168px | Feed collection card 2×2 preview (`w-collection-mosaic` / `h-collection-mosaic`) |
+| `mosaic-gap` | `1.5px` | 1.5px | Gutter between mosaic cells (`gap-mosaic-gap`) |
+| `search-serp` | `25rem` | 400px | Search map results column width (`w-search-serp`, `ml-search-serp`, etc.) |
+| `search-serp-alt` (max-width) | `12.5rem` | 200px | Secondary building name line clamp in SERP list rows (`max-w-search-serp-alt`) |
+
+---
+
+## 5. Border Radius
+
+| Token | Value | Usage |
+|---|---|---|
+| `radius-none` | `0px` | Flat elements — images, hero sections |
+| `radius-sm` | `2px` | **Default** — inputs, buttons, badges, cards |
+| `radius-md` | `4px` | Slightly softer — dropdowns, tooltips |
+| `radius-lg` | `6px` | Panels, modals |
+| `radius-xl` | `8px` | Large cards, sheets (use sparingly) |
+| `radius-full` | `9999px` | Avatars only — everything else stays sharp |
+
+**Default component radius:** `radius-sm` (`2px`). The sharp directive means almost no rounding. Elements should feel cut, not moulded. Only avatars use `radius-full`.
+
+---
+
+## 6. Shadows
+
+Shadows are intentionally flat and minimal. The design relies on borders and whitespace for hierarchy, not elevation. Use shadows only when layering is semantically necessary (overlays, dropdowns).
+
+| Token | Value | Usage |
+|---|---|---|
+| `shadow-sm` | `0 1px 2px 0 rgb(0 0 0 / 0.04)` | Subtle lift — inputs on hover |
+| `shadow-md` | `0 2px 8px 0 rgb(0 0 0 / 0.06)` | Cards (optional — prefer border-only cards) |
+| `shadow-lg` | `0 8px 24px 0 rgb(0 0 0 / 0.10)` | Modals, dropdowns, popovers |
+| `shadow-none` | `none` | Default — most elements have no shadow |
+
+---
+
+## 6b. Card Tokens (feed / review cards)
+
+Semantic tokens for the card system (`CardSpec` / `resolveCardSpec`). Values live in `src/index.css` (`:root`); Tailwind utilities reference the CSS variables.
+
+| Token (CSS variable) | Value | Tailwind utility | Archetypes / usage |
+|---|---|---|---|
+| `--card-image-ratio-hero` | `16 / 9` | `aspect-card-hero` | `media-forward`, hero imagery, gallery-led layouts |
+| `--card-image-ratio-standard` | `4 / 3` | `aspect-card-standard` | `balanced` feed imagery, default building/photo frame |
+| `--card-image-ratio-compact` | `1 / 1` | `aspect-card-compact` | `compact-stack`, dense thumbnails, small surfaces |
+| `--card-text-clamp-snippet` | `2` (lines) | `line-clamp-card-snippet` | `CardTextWeight.snippet` — short review copy |
+| `--card-text-clamp-body` | `4` (lines) | `line-clamp-card-body` | `CardTextWeight.body` — medium review copy |
+| `--card-elevation-elevated` | `0 2px 8px 0 rgb(0 0 0 / 0.06)` (same as §6 `shadow-md`) | `shadow-card-elevated` | `CardProminence.elevated` — subtle lift vs standard feed chrome |
+
+**Essay** (`CardTextWeight.essay`) is not clamped by these tokens — full body display. **None** text uses no line-clamp utilities.
+
+---
+
+## 7. Tailwind Config Block
+
+This is the exact object to merge into `apps/web/tailwind.config.ts`. Cursor reads
+this block verbatim during Task 0.2 of the Scaffold Prompt.
+
+```typescript
+// Paste into the `theme.extend` section of tailwind.config.ts
+theme: {
+  extend: {
+    colors: {
+      // --- Raw palette (for reference only — use semantic aliases in components) ---
+      palette: {
+        brand: {
+          50:  '#F7FFE0',
+          100: '#EEFFB8',
+          200: '#DEFF82',
+          300: '#CFFF4A',
+          400: '#C5FF1E',
+          500: '#BEFF00',
+          600: '#9ACC00',
+          700: '#739900',
+          800: '#4D6600',
+          900: '#2B3A00',
+        },
+        neutral: {
+          50:  '#FAFAFA',
+          100: '#F5F5F5',
+          200: '#E5E5E5',
+          300: '#D4D4D4',
+          400: '#A3A3A3',
+          500: '#737373',
+          600: '#525252',
+          700: '#404040',
+          800: '#262626',
+          900: '#171717',
+          950: '#0A0A0A',
+        },
+      },
+      // --- Semantic aliases (use ONLY these in components) ---
+      'brand-primary':              '#BEFF00',
+      'brand-primary-hover':        '#9ACC00',
+      'brand-primary-foreground':   '#171717',
+      'brand-secondary':            '#F7FFE0',
+      'brand-secondary-foreground': '#4D6600',
+      'surface-default':            '#FAFAFA',
+      'surface-card':               '#FFFFFF',
+      'surface-overlay':            '#FFFFFF',
+      'surface-muted':              '#F5F5F5',
+      'border-default':             '#E5E5E5',
+      'border-strong':              '#A3A3A3',
+      'text-primary':               '#171717',
+      'text-secondary':             '#525252',
+      'text-disabled':              '#A3A3A3',
+      'text-inverse':               '#FFFFFF',
+      'feedback-success':           '#16A34A',
+      'feedback-success-foreground':'#FFFFFF',
+      'feedback-warning':           '#F59E0B',
+      'feedback-warning-foreground':'#171717',
+      'feedback-destructive':       '#EF4444',
+      'feedback-destructive-foreground': '#FFFFFF',
+    },
+    fontFamily: {
+      sans: ['Inter', 'system-ui', 'sans-serif'],
+      mono: ['Space Mono', 'monospace'],
+    },
+    fontSize: {
+      '2xs':      ['0.625rem',  { lineHeight: '0.875rem' }],
+      '2xs-plus': ['0.6875rem', { lineHeight: '0.875rem' }],
+      'xs':   ['0.75rem',  { lineHeight: '1rem' }],
+      'sm':   ['0.875rem', { lineHeight: '1.25rem' }],
+      'base': ['1rem',     { lineHeight: '1.5rem' }],
+      'lg':   ['1.125rem', { lineHeight: '1.75rem' }],
+      'xl':   ['1.25rem',  { lineHeight: '1.75rem' }],
+      '2xl':  ['1.5rem',   { lineHeight: '2rem' }],
+      '3xl':  ['2rem',     { lineHeight: '2.4rem' }],
+      '4xl':  ['2.5rem',   { lineHeight: '3rem' }],
+      '5xl':  ['3rem',     { lineHeight: '3.25rem' }],
+      '6xl':  ['3.75rem',  { lineHeight: '4rem' }],
+      '7xl':  ['4.5rem',   { lineHeight: '4.75rem' }],
+    },
+    spacing: {
+      'collection-mosaic': '10.5rem',
+      'mosaic-gap': '1.5px',
+      'search-serp': '25rem',
+    },
+    maxWidth: {
+      'search-serp-alt': '12.5rem',
+    },
+    aspectRatio: {
+      'card-hero':     'var(--card-image-ratio-hero)',
+      'card-standard': 'var(--card-image-ratio-standard)',
+      'card-compact':  'var(--card-image-ratio-compact)',
+    },
+    lineClamp: {
+      'card-snippet': 'var(--card-text-clamp-snippet)',
+      'card-body':    'var(--card-text-clamp-body)',
+    },
+    borderRadius: {
+      'none': '0px',
+      'sm':   '2px',
+      'md':   '4px',
+      'lg':   '6px',
+      'xl':   '8px',
+      'full': '9999px',
+      DEFAULT: '2px',
+    },
+    boxShadow: {
+      'sm':   '0 1px 2px 0 rgb(0 0 0 / 0.04)',
+      'md':   '0 2px 8px 0 rgb(0 0 0 / 0.06)',
+      'lg':   '0 8px 24px 0 rgb(0 0 0 / 0.10)',
+      'none': 'none',
+      'card-elevated': 'var(--card-elevation-elevated)',
+    },
+  },
+},
+```
+
+> **Note:** Since this project uses Vite (not Next.js), `fontFamily` references
+> literal font names loaded via `<link>` tag — not CSS variable references. If the
+> project migrates to Next.js with `next/font`, update to:
+> `sans: ['var(--font-sans)', 'sans-serif']` and
+> `mono: ['var(--font-mono)', 'monospace']`.
+
+---
+
+## 8. Shadcn/UI Theme Variables
+
+Shadcn/UI uses CSS custom properties mapped to HSL values. These must be set in
+`apps/web/app/globals.css` (or `src/index.css` for Vite projects) to align Shadcn
+primitives with the project's tokens.
+
+```css
+@layer base {
+  :root {
+    --background:             0 0% 98%;           /* surface-default #FAFAFA */
+    --foreground:             0 0% 9%;            /* text-primary #171717 */
+    --card:                   0 0% 100%;          /* surface-card #FFFFFF */
+    --card-foreground:        0 0% 9%;            /* text-primary #171717 */
+    --popover:                0 0% 100%;          /* surface-overlay #FFFFFF */
+    --popover-foreground:     0 0% 9%;            /* text-primary #171717 */
+    --primary:                75 100% 50%;        /* brand-primary #BEFF00 */
+    --primary-foreground:     0 0% 9%;            /* brand-primary-foreground #171717 */
+    --secondary:              75 100% 94%;        /* brand-secondary #F7FFE0 */
+    --secondary-foreground:   75 100% 20%;        /* brand-secondary-foreground #4D6600 */
+    --muted:                  0 0% 96%;           /* surface-muted #F5F5F5 */
+    --muted-foreground:       0 0% 32%;           /* text-secondary #525252 */
+    --accent:                 75 100% 94%;        /* brand-secondary #F7FFE0 */
+    --accent-foreground:      75 100% 20%;        /* brand-secondary-foreground #4D6600 */
+    --destructive:            0 86% 60%;          /* feedback-destructive #EF4444 */
+    --destructive-foreground: 0 0% 100%;          /* feedback-destructive-foreground #FFFFFF */
+    --border:                 0 0% 90%;           /* border-default #E5E5E5 */
+    --input:                  0 0% 90%;           /* border-default #E5E5E5 */
+    --ring:                   75 100% 50%;        /* brand-primary #BEFF00 — focus ring */
+    --radius:                 0.125rem;           /* radius-sm 2px — sharp default */
+
+    /* Extended semantic tokens for Plano-specific components */
+    --success:                142 76% 36%;        /* feedback-success #16A34A */
+    --success-foreground:     0 0% 100%;          /* #FFFFFF */
+    --warning:                38 92% 50%;         /* feedback-warning #F59E0B */
+    --warning-foreground:     0 0% 9%;            /* #171717 */
+  }
+
+  /* Dark mode: not configured. Remove .dark block entirely. */
+}
+```
+
+---
+
+## 9. Typography Application Matrix
+
+**This section is the authoritative guide for how typography tokens are applied
+to UI contexts. Cursor must follow this matrix exactly. Do not invent type
+pairings that are not listed here.**
+
+The spacious density directive pushes h1 to `font-size-4xl` and increases
+breathing room between heading levels. Letter spacing is tighter on large
+headings to keep display type tight and editorial. Table headers and badges
+use `letter-spacing-wide` with uppercase text — a deliberate architectural
+convention.
+
+| UI context | Font size | Font weight | Letter spacing | Line height | Colour alias |
+|---|---|---|---|---|---|
+| Page title (h1) | `font-size-4xl` | `font-weight-bold` | `letter-spacing-tight` | `line-height-tight` | `text-primary` |
+| Section heading (h2) | `font-size-3xl` | `font-weight-semibold` | `letter-spacing-tight` | `line-height-tight` | `text-primary` |
+| Card title (h3) | `font-size-xl` | `font-weight-semibold` | `letter-spacing-normal` | `line-height-tight` | `text-primary` |
+| Subsection heading (h4) | `font-size-base` | `font-weight-semibold` | `letter-spacing-normal` | `line-height-tight` | `text-primary` |
+| Body copy | `font-size-base` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-primary` |
+| Supporting / secondary text | `font-size-sm` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-secondary` |
+| Table header | `font-size-xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
+| Table cell | `font-size-sm` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-primary` |
+| Form label | `font-size-sm` | `font-weight-medium` | `letter-spacing-normal` | `line-height-normal` | `text-primary` |
+| Input placeholder | `font-size-sm` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-disabled` |
+| Helper / hint text | `font-size-xs` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-secondary` |
+| Button (primary) | `font-size-sm` | `font-weight-medium` | `letter-spacing-normal` | `line-height-tight` | `brand-primary-foreground` |
+| Button (secondary) | `font-size-sm` | `font-weight-medium` | `letter-spacing-normal` | `line-height-tight` | `brand-secondary-foreground` |
+| Button (destructive) | `font-size-sm` | `font-weight-medium` | `letter-spacing-normal` | `line-height-tight` | `feedback-destructive-foreground` |
+| Badge / tag | `font-size-xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-tight` | *(foreground alias of badge colour)* |
+| Navigation item | `font-size-sm` | `font-weight-medium` | `letter-spacing-normal` | `line-height-normal` | `text-primary` |
+| Caption / timestamp | `font-size-xs` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-secondary` |
+| Code / monospace | `font-size-sm` (font-mono) | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-primary` |
+| Building ID / short_id | `font-size-xs` (font-mono) | `font-weight-normal` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
+| Map pin label | `font-size-xs` | `font-weight-medium` | `letter-spacing-normal` | `line-height-tight` | `text-primary` |
+| Empty state heading | `font-size-lg` | `font-weight-semibold` | `letter-spacing-normal` | `line-height-tight` | `text-primary` |
+| Empty state body | `font-size-sm` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-secondary` |
+| | | | | | |
+| **Feed editorial contexts** | | | | | |
+| Feed category label | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
+| Feed building name (hero) | `font-size-5xl` / `font-size-6xl` | `font-weight-bold` | `letter-spacing-tight` | `line-height-tight` | `text-primary` |
+| Feed building name (compact) | `font-size-2xl` | `font-weight-semibold` | `letter-spacing-tight` | `line-height-tight` | `text-primary` |
+| Feed review excerpt | `font-size-base` | `font-weight-normal` | `letter-spacing-normal` | `line-height-relaxed` | `text-secondary` |
+| Feed user name | `font-size-sm` | `font-weight-medium` | `letter-spacing-normal` | `line-height-normal` | `text-primary` |
+| Feed timestamp | `font-size-xs` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-disabled` |
+| Feed CTA link | `font-size-xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-tight` | `text-primary` |
+| Feed section divider | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
+| Feed sidebar widget title | `font-size-xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
+| Feed sidebar item name | `font-size-base` | `font-weight-semibold` | `letter-spacing-normal` | `line-height-tight` | `text-primary` |
+| Feed sidebar item meta | `font-size-xs` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-secondary` |
+| | | | | | |
+| **Content detail pages (building, profile, architect)** | | | | | |
+| Page hero title (building/person name) | `font-size-4xl` / `font-size-5xl` / `font-size-6xl` | `font-weight-bold` | `letter-spacing-tight` | `line-height-tight` | `text-primary` |
+| Page section label (divider header) | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
+| Page section body | `font-size-base` | `font-weight-normal` | `letter-spacing-normal` | `line-height-relaxed` | `text-secondary` |
+| Tier / category rank label | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
+| Inline CTA (text link with arrow) | `font-size-xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-tight` | `text-primary` |
+| Profile stat value | `font-size-2xl` | `font-weight-bold` | `letter-spacing-tight` | `line-height-tight` | `text-primary` |
+| Profile stat label | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
+| Tab strip item (active) | `font-size-xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-primary` |
+| Tab strip item (inactive) | `font-size-xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-disabled` |
+| Portfolio card title | `font-size-sm` | `font-weight-semibold` | `letter-spacing-normal` | `line-height-tight` | `text-primary` |
+| Portfolio card meta | `font-size-2xs` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-secondary` |
+| Highlights sub-section label | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-disabled` |
+| Quote blockquote text | `font-size-sm` | `font-weight-medium` | `letter-spacing-normal` | `line-height-relaxed` | `text-secondary` |
+
+**Feed editorial typography notes:** The extreme scale contrast between category labels (`font-size-2xs`, uppercase, tracked) and building names (`font-size-5xl`+, bold, tight) is the defining visual signature of the editorial feed. This mirrors A24's approach where a tiny "PODCAST" label sits above a massive 5-line headline. The contrast *is* the design — do not flatten it by making labels larger or headlines smaller. Feed CTA links use uppercase tracked text with a `→` arrow, never a filled button — editorial navigation, not app UI. All feed category labels and CTA links must use `uppercase` text-transform.
+
+---
+
+## 10. Semantic Colour Usage Guide
+
+**This section defines exactly when each surface, border, and text alias from
+Section 2 is applied. Cursor must not deviate from these rules. If a component
+does not map cleanly to a rule below, it must use the nearest named ancestor
+context — never a raw palette value.**
+
+### Surface aliases
+
+**`surface-default`** (`#FAFAFA`) is the page background only. It is applied once, to the root layout element. It must never appear on cards, panels, sidebar sections, or any component that sits on top of the page. Using it on a component makes that component invisible against the page — treat any such usage as a bug.
+
+**`surface-card`** (`#FFFFFF`) is applied to any contained element that sits directly on `surface-default`: building cards, data panels, stat blocks, review cards, collection tiles, and table containers. In non-editorial contexts (admin, settings, tables), it is always paired with `border-default` — shadow is optional (prefer borderless or border-only cards; use `shadow-md` only when explicit lift is needed for visual hierarchy). If a non-editorial element uses `surface-card` but has no border, it will be invisible in light mode — add a border.
+
+**Editorial feed exception:** Feed content (hero cards, activity cards, compact cards, collection cards, sidebar widgets) does *not* use `surface-card` with `border-default`. Feed content sits directly on the page surface without card containers, borders, or backgrounds. Structure in the feed comes from typography scale, whitespace, and content grouping — not from boxes. This is the core editorial principle: content floats on the canvas. The only visual separation between feed items is generous vertical spacing.
+
+**`surface-muted`** (`#F5F5F5`) is applied to secondary or structural areas that must read as visually quieter than the main content: the sidebar background, secondary navigation panels, input field backgrounds, code blocks, building taxonomy chips, and empty-state containers. It communicates "this area is supporting, not primary." It is never used on action-bearing components (buttons, badges, primary CTAs).
+
+**`surface-overlay`** (`#FFFFFF`) is applied exclusively to modals and popovers. It must always be accompanied by a backdrop overlay (`bg-black/50`) and `shadow-lg`. It is never used for inline components.
+
+### Border aliases
+
+**`border-default`** (`#E5E5E5`) is the standard border for all components: cards, inputs, table cells, dividers, and section separators. In this minimal design system, borders are the primary hierarchy mechanism — they replace shadows in most contexts. Apply consistently to every card and container.
+
+**`border-strong`** (`#A3A3A3`) is used to communicate active or focused state: the focused border on an active input, the selected state of a sidebar item, or a highlighted table row. It should appear in exactly those three contexts and no others. Do not use it for decorative emphasis.
+
+### Text aliases
+
+**`text-primary`** (`#171717`) is used for all content the user must read to complete a task: body copy, building names, form labels, table cell values, modal headings, and navigation items. This is near-black, providing maximum contrast against the light palette. When in doubt, default to `text-primary`.
+
+**`text-secondary`** (`#525252`) is used for supporting information that provides context but is not the primary action target: timestamps, visit counts, review metadata, helper text, table column headers, architect bios, and empty-state descriptions. It should never be used for interactive labels (buttons, links) or required form labels.
+
+**`text-disabled`** (`#A3A3A3`) is used exclusively for placeholder text in inputs and for labels or values on disabled interactive elements. It must not be used to de-emphasise content that is merely less important — use `text-secondary` for that. If content is worth showing, it is either primary or secondary; if it is truly inert, it is disabled.
+
+**`text-inverse`** (`#FFFFFF`) is used for text that sits on a dark background: text inside dark panels, text on `feedback-destructive` banners, footer text, or any context where the surface colour is `palette-neutral-800` or darker. Never use `text-primary` on a dark background.
+
+### Brand accent usage
+
+**`brand-primary`** (`#BEFF00`) is the single neon accent. In **app UI contexts** (admin, settings, forms, modals) it is used for: primary button backgrounds, focus rings, and progress bars. In **all content/feed/detail pages** it is essentially absent — these surfaces are strictly monochromatic. The neon must not appear as: section accent bars, verified badge text, active tab underlines, rating dot fill, bookmark/save icon fill, filter toggle backgrounds, or avatar borders in any content page context. Those elements all use `text-primary` (`#171717`). If the neon appears in more than two places on any given screen, it is overused.
+
+**Editorial and content page accent rule:** Feed, building detail, profile, and architect profile pages are monochromatic. `brand-primary` may appear only as: the `→` arrow of a CTA text link on hover, the focus ring on a focused interactive element, or the background of a primary button inside a modal/dialog opened from these pages. All other accents use `text-primary` or `text-secondary`. The surface is a white canvas — photography provides the colour.
+
+**`brand-primary-foreground`** (`#171717`) is always used for text and icons placed on `brand-primary` surfaces. The neon is a light colour — it requires dark foreground, not white.
+
+**`brand-secondary`** (`#F7FFE0`) is a barely-there neon tint used for: hovered table rows, selected filter chips, active tab backgrounds, and subtle highlight surfaces. It provides a whisper of the accent without the full neon intensity.
+
+### Feedback aliases
+
+**`feedback-success`** (`#16A34A`), **`feedback-warning`** (`#F59E0B`), and **`feedback-destructive`** (`#EF4444`) are used exclusively for system-generated status communication: toast notifications, inline validation messages, status badges, and alert banners. They must not be used for decorative colour or brand expression. Note that `feedback-success` is a true green (hue ≈142°), intentionally differentiated from the brand lime (hue ≈75°) so that "success" and "brand" are never conflated. Each feedback alias has a corresponding `*-foreground` alias — always pair them; never place `text-primary` on a feedback-coloured background. `feedback-warning-foreground` is dark (`#171717`) because amber is a light background colour.
+
+---
+
+## 11. Designer Notes
+
+The entire system is built on one principle: **let the architecture be the colour.** Plano is a photography-first platform — every building photo will be the most colourful element on screen. The strictly grayscale palette ensures photos sing without competing against brand colours. The single neon accent (#BEFF00 electric lime) provides just enough tension to feel alive — it functions like a fluorescent tube in a concrete gallery, marking where to look and what to press.
+
+**Inter** is the primary sans: highly legible in dense UI, neutral enough to let photography dominate, and strong at editorial sizes when paired with existing scale and weight rules (tight line height and slight negative letter-spacing on large headings preserve the poster-like feed hierarchy). **Space Mono** remains the monospace — it supplies technical contrast for metadata, coordinates, and building IDs without competing with the sans. Together they keep the catalogue/editorial split: neutral sans for body and display, monospace for machine-readable detail.
+
+The **sharp radius** (2px default) is the single most important spatial decision. Rounded corners signal friendliness and consumer softness — Plano is neither. Sharp edges communicate precision, intentionality, and respect for the subject matter. The 2px value is not 0px (which can feel unfinished in a web context) but it is close enough to read as deliberately sharp. In the editorial feed, images and content blocks use 0px radius — true sharp edges, like printed photographs in a magazine.
+
+**Spacious density** with **flat shadows** means hierarchy comes from whitespace and typography, not from elevation stacking. This mirrors the way architecture photography is presented in galleries and monographs — generous margins, clear separation, nothing competing for attention. The result should feel closer to a curated exhibition catalogue than a typical SaaS dashboard.
+
+**Editorial feed philosophy:** The feed follows A24 Films' design language — white canvas, aggressive typographic hierarchy, zero decorative chrome. Content does not live inside card containers. Structure comes from the contrast between tiny uppercase labels and massive bold headlines, from generous whitespace between items, and from raw photography presented without borders or rounded corners. The feed should feel like flipping through an architecture magazine, not scrolling through a social media app. Every feed item earns its space through the quality of its typography and imagery, not through a containing box that says "I am a card."
+import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
+
+export default {
+  darkMode: ["class"],
+  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
+  prefix: "",
+  theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
+    extend: {
+      fontSize: {
+        /** 10px — micro labels (avatar fallbacks, section dividers) */
+        "2xs": ["0.625rem", { lineHeight: "0.875rem" }],
+        /** 11px — uppercase status / meta beside tokens */
+        "2xs-plus": ["0.6875rem", { lineHeight: "0.875rem" }],
+        /** 48px — editorial feed building names (hero cards) */
+        "5xl": ["3rem", { lineHeight: "3.25rem" }],
+        /** 60px — editorial hero headlines, landing hero */
+        "6xl": ["3.75rem", { lineHeight: "4rem" }],
+        /** 72px — editorial maximum, landing page hero text */
+        "7xl": ["4.5rem", { lineHeight: "4.75rem" }],
+      },
+      spacing: {
+        /** 168px — collection feed mosaic tile (2×2 preview grid) */
+        "collection-mosaic": "10.5rem",
+        /** 1.5px — hairline gutter between mosaic cells */
+        "mosaic-gap": "1.5px",
+        /** 400px — Search map SERP (results) column */
+        "search-serp": "25rem",
+      },
+      maxWidth: {
+        /** 200px — secondary name line clamp in SERP building rows */
+        "search-serp-alt": "12.5rem",
+      },
+      aspectRatio: {
+        /** 16:9 — hero / media-forward card imagery (`--card-image-ratio-hero`) */
+        "card-hero": "var(--card-image-ratio-hero)",
+        /** 4:3 — standard feed image blocks (`--card-image-ratio-standard`) */
+        "card-standard": "var(--card-image-ratio-standard)",
+        /** 1:1 — compact / thumbnail grid (`--card-image-ratio-compact`) */
+        "card-compact": "var(--card-image-ratio-compact)",
+      },
+      lineClamp: {
+        /** Snippet-tier body — `CardSpec.textWeight` snippet */
+        "card-snippet": "var(--card-text-clamp-snippet)",
+        /** Body-tier copy — `CardSpec.textWeight` body */
+        "card-body": "var(--card-text-clamp-body)",
+      },
+      boxShadow: {
+        /** `CardSpec.prominence` elevated — uses `--card-elevation-elevated` */
+        "card-elevated": "var(--card-elevation-elevated)",
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['Space Mono', 'monospace'],
+      },
+      colors: {
+        border: "var(--border-default)",
+        input: "var(--border-default)",
+        ring: "var(--brand-primary)",
+        background: "var(--surface-default)",
+        foreground: "var(--text-primary)",
+        primary: {
+          DEFAULT: "var(--brand-primary)",
+          foreground: "var(--brand-primary-foreground)",
+        },
+        secondary: {
+          DEFAULT: "var(--surface-muted)",
+          foreground: "var(--text-primary)",
+        },
+        destructive: {
+          DEFAULT: "var(--feedback-destructive)",
+          foreground: "var(--feedback-destructive-foreground)",
+        },
+        muted: {
+          DEFAULT: "var(--surface-muted)",
+          foreground: "var(--text-secondary)",
+        },
+        accent: {
+          DEFAULT: "var(--brand-secondary)",
+          foreground: "var(--brand-secondary-foreground)",
+        },
+        popover: {
+          DEFAULT: "var(--surface-overlay)",
+          foreground: "var(--text-primary)",
+        },
+        card: {
+          DEFAULT: "var(--surface-card)",
+          foreground: "var(--text-primary)",
+        },
+        sidebar: {
+          DEFAULT:              "var(--surface-muted)",
+          foreground:           "var(--text-primary)",
+          primary:              "var(--brand-primary)",
+          "primary-foreground": "var(--brand-primary-foreground)",
+          accent:               "var(--brand-secondary)",
+          "accent-foreground":  "var(--brand-secondary-foreground)",
+          border:               "var(--border-default)",
+          ring:                 "var(--brand-primary)",
+        },
+        lime: {
+          high: "#eeff41",
+          DEFAULT: "#eeff41",
+        },
+        /* Plano semantic tokens */
+        'brand-primary':              'var(--brand-primary)',
+        'brand-primary-hover':        'var(--brand-primary-hover)',
+        'brand-primary-foreground':   'var(--brand-primary-foreground)',
+        'brand-secondary':            'var(--brand-secondary)',
+        'brand-secondary-foreground': 'var(--brand-secondary-foreground)',
+        'surface-default':            'var(--surface-default)',
+        'surface-card':               'var(--surface-card)',
+        'surface-overlay':            'var(--surface-overlay)',
+        'surface-muted':              'var(--surface-muted)',
+        'border-default':             'var(--border-default)',
+        'border-strong':              'var(--border-strong)',
+        'text-primary':               'var(--text-primary)',
+        'text-secondary':             'var(--text-secondary)',
+        'text-disabled':              'var(--text-disabled)',
+        'text-inverse':               'var(--text-inverse)',
+        'feedback-success':           'var(--feedback-success)',
+        'feedback-warning':           'var(--feedback-warning)',
+        'feedback-destructive':            'var(--feedback-destructive)',
+        'feedback-destructive-foreground': 'var(--feedback-destructive-foreground)',
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        "accordion-down": {
+          from: {
+            height: "0",
+          },
+          to: {
+            height: "var(--radix-accordion-content-height)",
+          },
+        },
+        "accordion-up": {
+          from: {
+            height: "var(--radix-accordion-content-height)",
+          },
+          to: {
+            height: "0",
+          },
+        },
+        "ping-large-slow": {
+          "75%, 100%": {
+            transform: "scale(1.5)",
+            opacity: "0",
+          },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+        "ping-large-slow": "ping-large-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite",
+      },
+    },
+  },
+  plugins: [tailwindcssAnimate],
+} satisfies Config;
