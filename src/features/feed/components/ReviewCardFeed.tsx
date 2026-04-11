@@ -16,9 +16,10 @@ import { useReviewCardData, type ReviewCardMediaItem } from "@/features/feed/hoo
 import { resolveCardSpec } from "@/features/feed/utils/resolveCardSpec";
 
 /**
- * Award points badge. Renders filled lime dots only — no empty placeholders.
+ * Award points badge. Renders filled black dots only — no empty placeholders.
  * Shows nothing when points === 0. Points are an award (like Michelin stars),
- * not a score, so absence is neutral and should not be visualised.
+ * not a score, so absence is neutral and must not be visualised.
+ * Uses bg-text-primary (monochromatic) — brand-primary is forbidden on content pages.
  */
 const PointsBadge = ({ points }: { points: number }) => {
   if (!points || points <= 0) return null;
@@ -28,7 +29,7 @@ const PointsBadge = ({ points }: { points: number }) => {
       title={`${points} ${points === 1 ? "point" : "points"}`}
     >
       {Array.from({ length: points }).map((_, i) => (
-        <div key={i} className="w-3 h-3 rounded-full bg-brand-primary" />
+        <div key={i} className="w-3 h-3 rounded-full bg-text-primary" />
       ))}
     </div>
   );
@@ -248,7 +249,7 @@ export function ReviewCardFeed({
         {username}
       </span>
       {isVerifiedArchitect && (
-        <span className="font-mono text-[9px] tracking-[0.1em] uppercase bg-brand-primary text-brand-primary-foreground px-1.5 py-0.5 font-bold shrink-0 leading-none">
+        <span className="font-mono text-[9px] tracking-[0.1em] uppercase border border-text-primary text-text-primary px-1.5 py-0.5 font-bold shrink-0 leading-none">
           Architect
         </span>
       )}
@@ -404,7 +405,7 @@ export function ReviewCardFeed({
         }}
         className={`font-mono text-[10px] tracking-[0.12em] uppercase transition-colors ${
           entry.is_liked
-            ? "text-brand-primary"
+            ? "text-text-primary"
             : "text-text-secondary hover:text-text-primary"
         }`}
       >
@@ -439,8 +440,8 @@ export function ReviewCardFeed({
         data-testid={`review-card-feed-${entry.id}`}
         onClick={handleCardClick}
         className={`group/card relative flex flex-col ${cardLayoutClass} h-full cursor-pointer min-w-0 w-full max-w-full ${
-          isArchitectOfBuilding ? "border-l-2 border-l-brand-primary pl-3 md:pl-4" : ""
-        }`}
+          effectiveSpec.prominence === "elevated" ? "shadow-card-elevated" : ""
+        } ${isArchitectOfBuilding ? "border-l-2 border-l-text-primary pl-3 md:pl-4" : ""}`}
       >
         {isCompact ? (
           <>

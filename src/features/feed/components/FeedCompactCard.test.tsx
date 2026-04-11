@@ -1,19 +1,8 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { FeedCompactCard } from './FeedCompactCard';
 import { BrowserRouter } from 'react-router';
-
-// Mock dependencies
-vi.mock('@/components/ui/avatar', () => ({
-  Avatar: ({ children, className }: any) => <div className={className} data-testid="avatar">{children}</div>,
-  AvatarImage: ({ src }: any) => <img src={src} data-testid="avatar-image" />,
-  AvatarFallback: ({ children }: any) => <div>{children}</div>,
-}));
-
-vi.mock('date-fns', () => ({
-  formatDistanceToNow: () => '5 mins ago',
-}));
 
 describe('FeedCompactCard', () => {
   const mockUser = {
@@ -28,7 +17,7 @@ describe('FeedCompactCard', () => {
     user: mockUser,
   } as any; // Partial mock
 
-  it('renders with min-w-0 class for text container', () => {
+  it('renders with min-w-0 class for text container and Space Mono username', () => {
     render(
       <BrowserRouter>
         <FeedCompactCard
@@ -38,9 +27,9 @@ describe('FeedCompactCard', () => {
     );
 
     const usernameElement = screen.getByText('testuser');
-    expect(usernameElement.className).toContain('text-xs');
-    expect(usernameElement.className).toContain('font-medium');
-    const container = usernameElement.closest('div.min-w-0');
+    expect(usernameElement.className).toContain('font-mono');
+    expect(usernameElement.className).toContain('uppercase');
+    const container = usernameElement.closest('div.flex-1.min-w-0');
     expect(container).not.toBeNull();
     expect(container?.className).toContain('flex-1');
   });

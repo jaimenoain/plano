@@ -27,8 +27,6 @@ export type ReviewCardCarouselImage = {
 
 export type ReviewCardData = {
   username: string;
-  avatarUrl: string | undefined;
-  userInitial: string;
   isVerifiedArchitect: boolean;
   isArchitectOfBuilding: boolean;
   mainTitle: string;
@@ -38,7 +36,6 @@ export type ReviewCardData = {
   carouselImages: ReviewCardCarouselImage[];
   hasVideo: boolean;
   city: string;
-  action: "saved" | "visited";
 };
 
 export function useReviewCardData(
@@ -60,10 +57,8 @@ export function useReviewCardData(
     const posterUrl = getBuildingImageUrl(entry.building.main_image_url);
 
     const username = entry.user?.username || "Unknown User";
-    const avatarUrl = entry.user?.avatar_url || undefined;
     const isVerifiedArchitect = entry.user?.is_verified_architect || false;
     const isArchitectOfBuilding = entry.user?.is_architect_of_building || false;
-    const userInitial = username.charAt(0).toUpperCase();
 
     const mainTitle = entry.building.name;
     const credits = entry.building.creditedEntities;
@@ -117,12 +112,9 @@ export function useReviewCardData(
     }));
 
     const city = getCityFromAddress(entry.building.address);
-    const action: "saved" | "visited" = entry.status === "pending" ? "saved" : "visited";
 
     return {
       username,
-      avatarUrl,
-      userInitial,
       isVerifiedArchitect,
       isArchitectOfBuilding,
       mainTitle,
@@ -132,7 +124,6 @@ export function useReviewCardData(
       carouselImages,
       hasVideo,
       city,
-      action,
     };
   }, [entry, options.variant, options.showCommunityImages]);
 

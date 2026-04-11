@@ -103,6 +103,9 @@ describe('FeedHeroCard layout', () => {
     images.forEach((img) => {
       expect(img.className).toContain('object-cover');
     });
+    const grid = images[0].closest('.grid');
+    expect(grid?.className).toContain('gap-[2px]');
+    expect(images[1].parentElement?.className).not.toContain('border-l');
   });
 
   it('renders FeedPhotoCarousel for three or more images', () => {

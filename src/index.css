@@ -133,6 +133,10 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  .hairline {
+    border-bottom: 0.5px solid var(--border-default);
+  }
 }
 
 /* Fix for map controls being covered by high z-index map pins */

@@ -1,5 +1,3 @@
-import { Bookmark } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { FeedReview } from "@/types/feed";
@@ -28,8 +26,6 @@ export function FeedActivityCard({
 
   const isHero = size === "hero";
   const username = entry.user?.username ?? "Unknown User";
-  const avatarUrl = entry.user?.avatar_url ?? undefined;
-  const userInitial = username.charAt(0).toUpperCase();
   const mainTitle = entry.building.name;
   const city =
     entry.building.city ||
@@ -98,32 +94,19 @@ export function FeedActivityCard({
           <p className="text-xs text-text-secondary mt-1">{city}</p>
         )}
 
-        {/* Attribution + bookmark */}
-        <div className="flex items-center gap-3 mt-2">
-          <div className="flex items-center gap-1.5">
-            <Avatar className={cn("shrink-0", isHero ? "h-5 w-5" : "h-4 w-4")}>
-              <AvatarImage src={avatarUrl} />
-              <AvatarFallback className="text-[8px]">{userInitial}</AvatarFallback>
-            </Avatar>
-            <span className="text-xs text-text-secondary">
-              <span className="font-medium text-text-primary">{username}</span>
-              {" "}{actionCopy}
-            </span>
-          </div>
-
-          <div className="flex-1" />
-
-          {/* Bookmark */}
+        <div className="flex items-center gap-2 min-w-0 mt-2">
+          <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
+            {username}
+          </span>
+          <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary/50 shrink-0">
+            {actionCopy}
+          </span>
           <button
             type="button"
             onClick={handleSave}
-            className="text-text-secondary hover:text-text-primary transition-colors"
-            title={saved ? "Saved" : "Save"}
+            className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors ml-auto shrink-0"
           >
-            <Bookmark
-              className={cn("h-4 w-4", saved ? "fill-text-primary text-text-primary" : "")}
-              strokeWidth={1.8}
-            />
+            {saved ? "Saved" : "Save"}
           </button>
         </div>
       </div>

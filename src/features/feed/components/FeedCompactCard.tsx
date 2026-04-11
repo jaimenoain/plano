@@ -1,11 +1,28 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { FeedReview } from "@/types/feed";
 import { getBuildingUrl } from "@/utils/url";
 import { getBuildingImageUrl } from "@/utils/image";
-import { Bookmark, Circle } from "lucide-react";
-import { cn } from "@/lib/utils";
+
+/**
+ * Award points badge. Renders filled black dots only — no empty placeholders.
+ * Shows nothing when points === 0. Points are an award (like Michelin stars),
+ * not a score, so absence is neutral and must not be visualised.
+ * Uses bg-text-primary (monochromatic) — brand-primary is forbidden on content pages.
+ */
+const PointsBadge = ({ points }: { points: number }) => {
+  if (!points || points <= 0) return null;
+  return (
+    <div
+      className="flex items-center gap-1.5"
+      title={`${points} ${points === 1 ? "point" : "points"}`}
+    >
+      {Array.from({ length: points }).map((_, i) => (
+        <div key={i} className="w-3 h-3 rounded-full bg-text-primary" />
+      ))}
+    </div>
+  );
+};
 
 interface FeedCompactCardProps {
   entry: FeedReview;
@@ -40,8 +57,6 @@ export function FeedCompactCard({
   };
 
   const username = entry.user?.username || "Unknown User";
-  const avatarUrl = entry.user?.avatar_url || undefined;
-  const userInitial = username.charAt(0).toUpperCase();
   const mainTitle = entry.building.name;
   const actionText = entry.status === "pending" ? "saved" : "visited";
 
@@ -78,20 +93,9 @@ export function FeedCompactCard({
           {mainTitle}
         </h3>
 
-        {/* Rating */}
-        {entry.rating && entry.rating > 0 && (
-          <div className="flex items-center gap-0.5 mt-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Circle
-                key={i}
-                className={cn(
-                  "w-3 h-3",
-                  i < entry.rating!
-                    ? "fill-text-primary text-text-primary"
-                    : "fill-transparent text-text-disabled"
-                )}
-              />
-            ))}
+        {entry.rating != null && entry.rating > 0 && (
+          <div className="mt-2">
+            <PointsBadge points={entry.rating} />
           </div>
         )}
 
@@ -102,26 +106,16 @@ export function FeedCompactCard({
           </p>
         )}
 
-        {/* Attribution + bookmark */}
-        <div className="flex items-center gap-2 mt-3">
-          <Avatar className="h-5 w-5 shrink-0">
-            <AvatarImage src={avatarUrl} />
-            <AvatarFallback className="text-[8px]">{userInitial}</AvatarFallback>
-          </Avatar>
-          <span className="text-xs font-medium text-text-primary">{username}</span>
-
-          <div className="flex-1" />
-
+        <div className="flex items-center gap-2 min-w-0 mt-3">
+          <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
+            {username}
+          </span>
           <button
             type="button"
             onClick={handleSave}
-            className="text-text-secondary hover:text-text-primary transition-colors"
-            title={saved ? "Saved" : "Save"}
+            className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors ml-auto shrink-0"
           >
-            <Bookmark
-              className={cn("h-4 w-4", saved ? "fill-text-primary text-text-primary" : "")}
-              strokeWidth={1.8}
-            />
+            {saved ? "Saved" : "Save"}
           </button>
         </div>
       </div>

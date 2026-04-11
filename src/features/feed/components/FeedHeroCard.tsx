@@ -1,5 +1,3 @@
-import { Circle, Bookmark } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -13,6 +11,26 @@ import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { FeedPhotoCarousel } from "./FeedPhotoCarousel";
 import { resolveCardSpec } from "@/features/feed/utils/resolveCardSpec";
+
+/**
+ * Award points badge. Renders filled black dots only — no empty placeholders.
+ * Shows nothing when points === 0. Points are an award (like Michelin stars),
+ * not a score, so absence is neutral and must not be visualised.
+ * Uses bg-text-primary (monochromatic) — brand-primary is forbidden on content pages.
+ */
+const PointsBadge = ({ points }: { points: number }) => {
+  if (!points || points <= 0) return null;
+  return (
+    <div
+      className="flex items-center gap-1.5"
+      title={`${points} ${points === 1 ? "point" : "points"}`}
+    >
+      {Array.from({ length: points }).map((_, i) => (
+        <div key={i} className="w-3 h-3 rounded-full bg-text-primary" />
+      ))}
+    </div>
+  );
+};
 
 function heroBodyClampClass(textWeight: CardTextWeight, essayExpanded: boolean): string {
   switch (textWeight) {
@@ -129,8 +147,6 @@ export function FeedHeroCard({
   };
 
   const username = entry.user?.username || "Unknown User";
-  const avatarUrl = entry.user?.avatar_url || undefined;
-  const userInitial = username.charAt(0).toUpperCase();
   const mainTitle = entry.building.name;
   const credits = entry.building.creditedEntities;
   const primaryCreditLine =
@@ -168,14 +184,14 @@ export function FeedHeroCard({
       singleImages.length >= 2
     ) {
       return (
-        <div className="grid grid-cols-2 w-full h-full min-h-[280px] md:min-h-[400px]">
+        <div className="grid grid-cols-2 gap-[2px] w-full h-full min-h-[280px] md:min-h-[400px]">
           <div className="relative h-full min-h-[280px] min-w-0 overflow-hidden bg-surface-muted md:min-h-0">
             <FeedHeroSingleImage
               image={singleImages[0]}
               onError={handleImageError}
             />
           </div>
-          <div className="relative h-full min-h-[280px] min-w-0 overflow-hidden bg-surface-muted border-l border-border-default/30 md:min-h-0">
+          <div className="relative h-full min-h-[280px] min-w-0 overflow-hidden bg-surface-muted md:min-h-0">
             <FeedHeroSingleImage
               image={singleImages[1]}
               onError={handleImageError}
@@ -212,13 +228,7 @@ export function FeedHeroCard({
     effectiveSpec.textWeight === "essay" && !essayExpanded && Boolean(entry.content?.trim());
 
   return (
-    <article
-      onClick={handleCardClick}
-      className={cn(
-        "group relative w-full cursor-pointer",
-        effectiveSpec.prominence === "elevated" && "shadow-card-elevated",
-      )}
-    >
+    <article onClick={handleCardClick} className="group relative w-full cursor-pointer">
       {/* Magazine spread: two-column on desktop, stacked on mobile */}
       <div className={cn(
         "grid grid-cols-1 gap-0 items-stretch",
@@ -257,20 +267,9 @@ export function FeedHeroCard({
             </p>
           )}
 
-          {/* Rating */}
-          {entry.rating && entry.rating > 0 && (
-            <div className="flex items-center gap-1 mb-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Circle
-                  key={i}
-                  className={cn(
-                    "w-3.5 h-3.5",
-                    i < entry.rating!
-                      ? "fill-text-primary text-text-primary"
-                      : "fill-transparent text-text-disabled"
-                  )}
-                />
-              ))}
+          {entry.rating != null && entry.rating > 0 && (
+            <div className="mb-3">
+              <PointsBadge points={entry.rating} />
             </div>
           )}
 
@@ -292,7 +291,7 @@ export function FeedHeroCard({
                     e.stopPropagation();
                     setEssayExpanded(true);
                   }}
-                  className="mt-2 text-xs font-medium uppercase tracking-widest text-text-primary hover:text-text-secondary"
+                  className="mt-1.5 font-mono text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
                 >
                   Read more →
                 </button>
@@ -300,25 +299,17 @@ export function FeedHeroCard({
             </div>
           )}
 
-          {/* User attribution + bookmark */}
-          <div className="flex items-center gap-2.5">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={avatarUrl} />
-              <AvatarFallback className="text-[10px]">{userInitial}</AvatarFallback>
-            </Avatar>
-            <span className="text-sm font-medium text-text-primary">{username}</span>
-
-            <div className="flex-1" />
-
-            {/* Save */}
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
+              {username}
+            </span>
             <button
               type="button"
               onClick={handleSave}
-              className="text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
               disabled={isSaving}
-              title={isSaved ? "Saved" : "Save"}
+              className={`font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors ml-auto shrink-0 ${isSaving ? "opacity-50" : ""}`}
             >
-              <Bookmark className={cn("h-5 w-5", isSaved ? "fill-text-primary text-text-primary" : "")} />
+              {isSaved ? "Saved" : "Save"}
             </button>
           </div>
         </div>
