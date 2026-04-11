@@ -58,7 +58,7 @@ function FeedHeroSingleImage({ image, onError }: FeedHeroSingleImageProps) {
   const [loaded, setLoaded] = useState(false);
 
   return (
-    <div className="relative w-full h-full min-h-[300px] md:min-h-0 bg-surface-muted">
+    <div className="relative w-full h-full min-h-[300px] md:min-h-0 bg-surface-muted rounded-none">
       {!loaded && <div className="absolute inset-0 bg-surface-muted animate-pulse" />}
       <img
         src={image.url}

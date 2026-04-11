@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Image as ImageIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +36,8 @@ const PointsBadge = ({ points }: { points: number }) => {
   );
 };
 
+// aspectToken is only applied for compact/stack layouts — the hero grid fills
+// the column by height naturally, so no explicit aspect ratio is needed there.
 function mediaAspectClass(layout: CardLayout, isCarouselLayout: boolean): string {
   if (isCarouselLayout) return "";
   switch (layout) {
@@ -80,6 +83,10 @@ export interface ReviewCardFeedProps {
 
 /**
  * Feed / discovery / profile-grid review card (non-detail). Default variant layout uses {@link resolveCardSpec}.
+ *
+ * Design: A24 editorial — white canvas, aggressive typographic hierarchy, zero decorative chrome.
+ * Hero (default) cards use a true 50/50 CSS grid split so photography fills half the viewport,
+ * not a narrow 280px sidebar. No box shadows. Sharp image edges. Generous text column padding.
  */
 export function ReviewCardFeed({
   entry,
@@ -151,8 +158,12 @@ export function ReviewCardFeed({
     !essayExpanded &&
     Boolean(entry.content?.trim());
   const useCompactStackLayout = !isCompact && effectiveSpec.layout === "compact-stack";
-  const useMdSideBySide =
-    !isCompact && hasMedia && !showCarousel && !useCompactStackLayout;
+
+  // aspectToken only used for compact/stack layouts — hero grid fills column height naturally.
+  const aspectToken =
+    (useCompactStackLayout || isCompact) && !showCarousel && !showPairGrid
+      ? mediaAspectClass(effectiveSpec.layout, showCarousel)
+      : "";
 
   const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -201,16 +212,14 @@ export function ReviewCardFeed({
     }
   };
 
-  const flexDirection = imagePosition === "right" ? "md:flex-row" : "md:flex-row-reverse";
-  const aspectToken =
-    !showCarousel && !showPairGrid ? mediaAspectClass(effectiveSpec.layout, showCarousel) : "";
-
+  // ── renderMediaItem ─────────────────────────────────────────────────────────
+  // rounded-none on images: sharp edges like printed photographs in a magazine.
   const renderMediaItem = (
     item: ReviewCardMediaItem,
     className?: string,
     overlay?: React.ReactNode,
   ) => (
-    <div key={item.id} className={`relative w-full h-full min-w-0 overflow-hidden ${className || ""}`}>
+    <div key={item.id} className={`relative w-full h-full min-w-0 overflow-hidden rounded-none ${className || ""}`}>
       <div className="absolute inset-0 w-full h-full">
         {item.type === "video" ? (
           <div className="w-full h-full video-container overflow-hidden">
@@ -227,7 +236,7 @@ export function ReviewCardFeed({
           <img
             src={item.url}
             alt="Review photo"
-            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+            className="w-full h-full object-cover rounded-none transition-transform duration-500 hover:scale-105"
             onError={() => setFailedImages((prev) => new Set(prev).add(item.id))}
           />
         ) : (
@@ -242,7 +251,6 @@ export function ReviewCardFeed({
 
   // ── Byline ──────────────────────────────────────────────────────────────────
   // Space Mono strip: NAME · [ARCHITECT badge] · [Follow] · timestamp.
-  // Replaces the old avatar + "username reviewed Building" sentence header.
   const Byline = !hideUser && (
     <div className="flex items-center gap-2 min-w-0">
       <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
@@ -267,8 +275,14 @@ export function ReviewCardFeed({
   // ── Building headline ───────────────────────────────────────────────────────
   // Only rendered when !hideBuildingInfo (e.g. suppressed on building detail page).
   // Scales with prominence: elevated → editorial hero size; standard → display size.
+  // Category label ("Review" / "Building") restored above headline for editorial context.
   const BuildingHeadline = !hideBuildingInfo && (
     <div>
+      {!isCompact && (
+        <span className="font-mono text-[10px] tracking-widest uppercase text-text-secondary block mb-2">
+          {entry.status === "visited" ? "Review" : "Building"}
+        </span>
+      )}
       <h2
         className={`font-display font-black tracking-tight leading-none text-text-primary ${
           isCompact
@@ -288,9 +302,11 @@ export function ReviewCardFeed({
     </div>
   );
 
-  // ── Media ───────────────────────────────────────────────────────────────────
-  // Pair grid: border-l divider replaced with a 2px gap (contact-sheet style).
-  const Media = !hideBuildingInfo && (
+  // ── Media (compact / stack variants) ────────────────────────────────────────
+  // Used by the compact variant and compact-stack layout only.
+  // For the hero grid, media is rendered inline in the image column below.
+  // Pair grid: 2px gap between cells (contact-sheet style, no rounded corners).
+  const MediaCompact = !hideBuildingInfo && (
     mediaItems.length > 0 ? (
       showCarousel ? (
         <FeedPhotoCarousel
@@ -300,49 +316,91 @@ export function ReviewCardFeed({
           className="w-full"
         />
       ) : showPairGrid ? (
-        <div
-          className={`grid grid-cols-2 gap-[2px] w-full max-w-full min-w-0 overflow-hidden bg-surface-muted ${
-            !isCompact ? "md:w-[280px] md:shrink-0" : ""
-          }`}
-        >
-          <div className="relative aspect-card-compact min-w-0 overflow-hidden">
+        <div className="grid grid-cols-2 gap-[2px] w-full max-w-full min-w-0 overflow-hidden rounded-none bg-surface-muted">
+          <div className="relative aspect-card-compact min-w-0 overflow-hidden rounded-none">
             {renderMediaItem(imageOnlyItems[0], "h-full")}
           </div>
-          <div className="relative aspect-card-compact min-w-0 overflow-hidden">
+          <div className="relative aspect-card-compact min-w-0 overflow-hidden rounded-none">
             {renderMediaItem(imageOnlyItems[1], "h-full")}
           </div>
         </div>
       ) : (
         <div
-          className={`relative w-full max-w-full min-w-0 overflow-hidden bg-surface-muted ${
-            !isCompact
-              ? `md:w-[280px] md:shrink-0 ${aspectToken} md:aspect-auto`
-              : "aspect-[4/3]"
-          }`}
+          className={cn(
+            "relative w-full max-w-full min-w-0 overflow-hidden rounded-none bg-surface-muted",
+            aspectToken,
+          )}
         >
           <div className="absolute inset-0 w-full h-full">{renderMediaItem(mediaItems[0])}</div>
         </div>
       )
     ) : posterUrl && showCommunityImages ? (
       <div
-        className={
-          !isCompact
-            ? `relative w-full max-w-full min-w-0 bg-surface-muted overflow-hidden md:w-[280px] md:shrink-0 ${aspectToken} md:aspect-auto`
-            : "relative w-full max-w-full min-w-0 bg-surface-muted overflow-hidden aspect-[4/3]"
-        }
+        className={cn(
+          "relative w-full max-w-full min-w-0 bg-surface-muted overflow-hidden rounded-none",
+          aspectToken || "aspect-[4/3]",
+        )}
       >
         <img
           src={posterUrl}
           alt={mainTitle || ""}
-          className={`w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105 ${
-            !isCompact ? "md:absolute md:inset-0" : ""
-          }`}
+          className="w-full h-full object-cover rounded-none transition-transform duration-500 group-hover/card:scale-105"
         />
       </div>
     ) : null
   );
 
+  // ── Media (hero grid) ────────────────────────────────────────────────────────
+  // Rendered directly inside the image column of the 50/50 grid.
+  // No fixed width, no aspect token — fills the grid cell height naturally.
+  const renderHeroMedia = () => {
+    if (!hasMedia) return null;
+    if (showCarousel) {
+      return (
+        <FeedPhotoCarousel
+          images={carouselImages}
+          reviewId={entry.id}
+          onImageLike={onImageLike}
+          className="w-full h-full"
+        />
+      );
+    }
+    if (showPairGrid) {
+      return (
+        <div className="grid grid-cols-2 gap-[2px] w-full h-full min-h-[300px] md:min-h-[460px] bg-surface-muted rounded-none">
+          <div className="relative min-w-0 overflow-hidden rounded-none">
+            {renderMediaItem(imageOnlyItems[0], "h-full")}
+          </div>
+          <div className="relative min-w-0 overflow-hidden rounded-none">
+            {renderMediaItem(imageOnlyItems[1], "h-full")}
+          </div>
+        </div>
+      );
+    }
+    if (mediaItems.length > 0) {
+      return (
+        <div className="relative w-full h-full min-h-[300px] md:min-h-[460px] bg-surface-muted rounded-none">
+          <div className="absolute inset-0 w-full h-full">{renderMediaItem(mediaItems[0])}</div>
+        </div>
+      );
+    }
+    if (posterUrl && showCommunityImages) {
+      return (
+        <div className="relative w-full h-full min-h-[300px] md:min-h-[460px] bg-surface-muted rounded-none">
+          <img
+            src={posterUrl}
+            alt={mainTitle || ""}
+            className="absolute inset-0 w-full h-full object-cover rounded-none transition-transform duration-500 group-hover/card:scale-105"
+          />
+        </div>
+      );
+    }
+    return null;
+  };
+
   // ── Content body ─────────────────────────────────────────────────────────────
+  // Compact variant: quoted excerpt in medium weight.
+  // Default variant: text-base (16px) for editorial readability — not text-sm.
   const ContentBody = isCompact ? (
     <>
       {entry.content && (
@@ -369,7 +427,7 @@ export function ReviewCardFeed({
     <>
       {entry.content && (
         <div className="min-w-0">
-          <p className={`text-sm text-text-primary leading-relaxed break-words ${bodyClampClass}`}>
+          <p className={`text-base text-text-primary leading-relaxed break-words ${bodyClampClass}`}>
             {entry.content}
           </p>
           {showReadMore && (
@@ -432,21 +490,24 @@ export function ReviewCardFeed({
     </div>
   );
 
-  const cardLayoutClass = useMdSideBySide ? `${flexDirection} md:min-h-[220px]` : "";
-
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
       <article
         data-testid={`review-card-feed-${entry.id}`}
         onClick={handleCardClick}
-        className={`group/card relative flex flex-col ${cardLayoutClass} h-full cursor-pointer min-w-0 w-full max-w-full ${
-          effectiveSpec.prominence === "elevated" ? "shadow-card-elevated" : ""
-        } ${isArchitectOfBuilding ? "border-l-2 border-l-text-primary pl-3 md:pl-4" : ""}`}
+        className={cn(
+          "group/card relative w-full cursor-pointer min-w-0",
+          // Architect-of-building indicator: left rule, no padding bleed into image column.
+          isArchitectOfBuilding && "border-l-2 border-l-text-primary",
+        )}
       >
+        {/* ── Compact variant ── */}
         {isCompact ? (
-          <>
-            {Media}
-            <div className="flex flex-col flex-1 min-w-0 p-2.5 md:p-4 gap-2">
+          <div className={cn("flex flex-col h-full", isArchitectOfBuilding && "pl-3 md:pl-4")}>
+            {MediaCompact}
+            {/* Text lives in its own padded sub-div — image is flush to card edges. */}
+            <div className="flex flex-col flex-1 min-w-0 px-3 py-2.5 gap-2">
               {Byline}
               {BuildingHeadline}
               {entry.rating != null && entry.rating > 0 && (
@@ -455,9 +516,11 @@ export function ReviewCardFeed({
               {ContentBody}
               {Footer}
             </div>
-          </>
+          </div>
+
+        /* ── Compact-stack layout ── */
         ) : useCompactStackLayout ? (
-          <>
+          <div className={cn("flex flex-col", isArchitectOfBuilding && "pl-3 md:pl-4")}>
             <div className="flex flex-col gap-3">
               {Byline}
               {BuildingHeadline}
@@ -465,27 +528,55 @@ export function ReviewCardFeed({
                 <PointsBadge points={entry.rating} />
               )}
             </div>
-            {Media}
+            {MediaCompact}
             <div className="flex flex-col flex-1 min-w-0 pt-3 gap-2">
               {ContentBody}
               {Footer}
             </div>
-          </>
+          </div>
+
+        /* ── Hero grid (default, non-compact) ── */
+        /* True 50/50 CSS grid — magazine spread. No box shadow, no fixed image width. */
         ) : (
-          <>
-            <div className="flex flex-col flex-1 min-w-0">
-              <div className="flex flex-col flex-1 gap-3">
-                {Byline}
-                {BuildingHeadline}
-                {entry.rating != null && entry.rating > 0 && (
-                  <PointsBadge points={entry.rating} />
+          <div
+            className={cn(
+              "grid grid-cols-1 gap-0 items-stretch",
+              hasMedia && "md:grid-cols-2",
+              isArchitectOfBuilding && "pl-3 md:pl-4",
+            )}
+          >
+            {/* Image column — full 50% width, generous min-height for photography */}
+            {hasMedia && (
+              <div
+                className={cn(
+                  "relative overflow-hidden rounded-none",
+                  imagePosition === "right" ? "md:order-2" : "md:order-1",
                 )}
-                {ContentBody}
-                {Footer}
+              >
+                {renderHeroMedia()}
               </div>
+            )}
+
+            {/* Text column — generous padding mirrors FeedHeroCard's editorial rhythm */}
+            <div
+              className={cn(
+                "flex flex-col justify-center gap-3",
+                hasMedia
+                  ? imagePosition === "right"
+                    ? "md:order-1 px-0 py-6 md:py-10 md:pr-10"
+                    : "md:order-2 px-0 py-6 md:py-10 md:pl-10"
+                  : "max-w-xl",
+              )}
+            >
+              {Byline}
+              {BuildingHeadline}
+              {entry.rating != null && entry.rating > 0 && (
+                <PointsBadge points={entry.rating} />
+              )}
+              {ContentBody}
+              {Footer}
             </div>
-            {Media}
-          </>
+          </div>
         )}
       </article>
     </SuggestedContentBlock>

@@ -95,7 +95,12 @@ export function FeedPhotoCarousel({
       onMouseLeave={() => setHovered(false)}
     >
       {/* ── Photo ── */}
-      <div className="relative w-full aspect-[4/5] bg-surface-muted">
+      <div
+        className={cn(
+          "relative w-full bg-surface-muted",
+          className?.includes("h-full") ? "h-full" : "aspect-[4/5]",
+        )}
+      >
         <img
           key={current.id}
           src={current.url}
