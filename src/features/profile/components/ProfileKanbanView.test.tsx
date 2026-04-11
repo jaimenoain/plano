@@ -33,7 +33,7 @@ describe('ProfileKanbanView', () => {
     const mockItem = (id: string, rating: number | null): FeedReview => ({
         id, rating,
         content: null, created_at: '', likes_count: 0, comments_count: 0, is_liked: false,
-        user: { username: 'u', avatar_url: null },
+        user: { username: 'u', avatar_url: null, followers_count: null },
         building: { id: 'b', name: 'B', creditedEntities: [] }
     });
 

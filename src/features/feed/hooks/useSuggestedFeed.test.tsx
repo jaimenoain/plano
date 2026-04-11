@@ -47,7 +47,7 @@ describe('useSuggestedFeed', () => {
         is_suggested: true,
         suggestion_reason: 'Popular',
         building_data: { id: 'b1', name: 'Building 1' },
-        user_data: { username: 'user1' },
+        user_data: { username: 'user1', avatar_url: null, followers_count: 12 },
       },
     ];
 
@@ -96,6 +96,7 @@ describe('useSuggestedFeed', () => {
     expect(review?.images).toHaveLength(1);
     expect(review?.images?.[0].url).toBe('https://example.com/path/to/image.jpg');
     expect(review?.images?.[0].is_liked).toBe(true);
+    expect(review?.user.followers_count).toBe(12);
 
     // Verify RPC call
     expect(supabase.rpc).toHaveBeenCalledWith('get_suggested_posts', {

@@ -31,6 +31,7 @@ const mockEntry = {
   user: {
     username: 'tester',
     avatar_url: 'http://example.com/avatar.jpg',
+    followers_count: null,
   },
   images: [
     { id: 'img1', url: 'http://example.com/img1.jpg' }

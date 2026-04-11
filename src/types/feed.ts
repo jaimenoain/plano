@@ -10,6 +10,11 @@ export interface ReviewUser {
   avatar_url: string | null;
   is_verified_architect?: boolean;
   is_architect_of_building?: boolean;
+  /**
+   * Follower count for the review author at fetch time (`follows.following_id` = profile id).
+   * Null when unknown or not loaded (e.g. legacy RPC payloads before migration).
+   */
+  followers_count: number | null;
 }
 
 export interface ReviewBuilding {
@@ -61,6 +66,8 @@ export interface RawFeedUserData {
   avatar_url?: string | null;
   is_verified_architect?: boolean;
   is_architect_of_building?: boolean;
+  /** Integer count from feed RPCs when `followers_count` is included in `user_data`. */
+  followers_count?: number | null;
 }
 
 export interface RawFeedBuildingData {

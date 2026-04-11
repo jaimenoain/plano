@@ -51,6 +51,10 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
           avatar_url: review.user_data?.avatar_url || null,
           is_verified_architect: review.user_data?.is_verified_architect || false,
           is_architect_of_building: review.user_data?.is_architect_of_building || false,
+          followers_count:
+            typeof review.user_data?.followers_count === "number"
+              ? review.user_data.followers_count
+              : null,
         },
         building: {
           id: review.building_data?.id,

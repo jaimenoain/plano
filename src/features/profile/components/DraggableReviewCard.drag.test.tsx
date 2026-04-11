@@ -17,6 +17,7 @@ const mockReview: FeedReview = {
   user: {
     username: 'testuser',
     avatar_url: null,
+    followers_count: null,
   },
   building: {
     id: 'b-1',

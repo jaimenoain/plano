@@ -45,7 +45,7 @@ const minimalFeedReview = {
   rating: 4,
   created_at: new Date().toISOString(),
   status: "published",
-  user: { username: "archfan", avatar_url: null },
+  user: { username: "archfan", avatar_url: null, followers_count: null },
   building: { id: "b1", name: "Test Building", main_image_url: null as string | null },
   likes_count: 0,
   comments_count: 0,

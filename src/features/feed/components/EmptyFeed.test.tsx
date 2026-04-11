@@ -88,7 +88,7 @@ describe("EmptyFeed", () => {
             {
               id: "1",
               building: { name: "Test Building 1", id: "b1", slug: "test", short_id: "t1" },
-              user: { username: "tester", avatar_url: null },
+              user: { username: "tester", avatar_url: null, followers_count: null },
               likes_count: 5,
               comments_count: 2,
               is_liked: false,
@@ -97,7 +97,7 @@ describe("EmptyFeed", () => {
             {
               id: "2",
               building: { name: "Test Building 2", id: "b2", slug: "test2", short_id: "t2" },
-              user: { username: "tester2", avatar_url: null },
+              user: { username: "tester2", avatar_url: null, followers_count: null },
               likes_count: 5,
               comments_count: 2,
               is_liked: false,
@@ -106,7 +106,7 @@ describe("EmptyFeed", () => {
             {
               id: "3",
               building: { name: "Test Building 3", id: "b3", slug: "test3", short_id: "t3" },
-              user: { username: "tester3", avatar_url: null },
+              user: { username: "tester3", avatar_url: null, followers_count: null },
               likes_count: 5,
               comments_count: 2,
               is_liked: false,

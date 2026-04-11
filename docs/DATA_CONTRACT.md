@@ -1113,9 +1113,9 @@ CREATE POLICY "comment_likes_delete" ON comment_likes
 | POST | /review/:id/like | Like a review | supabase (client-side) |
 | DELETE | /review/:id/like | Unlike a review | supabase (client-side) |
 | POST | /review/:id/comment | Add comment | supabase (client-side) |
-| GET | (RPC) get_feed | Home feed | supabase (RPC) |
+| GET | (RPC) get_feed | Home feed; `user_data` JSON includes `followers_count` (author follower total), `is_verified_architect`, `is_architect_of_building` | supabase (RPC) |
 | GET | (RPC) get_discovery_feed | Explore feed | supabase (RPC) |
-| GET | (RPC) get_suggested_posts | Suggested content | supabase (RPC) |
+| GET | (RPC) get_suggested_posts | Suggested content; `user_data` JSON includes the same `followers_count` and credit flags as `get_feed` | supabase (RPC) |
 | GET | (RPC) get_building_reviews | All `user_buildings` rows for a building (with `user_data` / review images JSON); `user_data` flags match `get_feed` (claimed person, credits/stewards) | supabase (RPC; migration `20270841000000_get_building_reviews_restore.sql`) |
 
 ```typescript

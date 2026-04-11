@@ -103,6 +103,12 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
           user: {
             username: userData?.username || null,
             avatar_url: userData?.avatar_url || null,
+            is_verified_architect: userData?.is_verified_architect || false,
+            is_architect_of_building: userData?.is_architect_of_building || false,
+            followers_count:
+              typeof userData?.followers_count === "number"
+                ? userData.followers_count
+                : null,
           },
           building: {
             id: buildingData?.id,

@@ -1,4 +1,5 @@
 import { FeedReview } from "@/types/feed";
+import type { CardSpec } from "@/types/cards";
 import { differenceInHours } from "date-fns";
 
 export type RowCell =
@@ -9,22 +10,28 @@ export type RowCell =
       activityStatus: "visited" | "pending";
     };
 
+/**
+ * Feed row after `aggregateFeed` / `collapseIntoRows`. Optional `spec` is reserved for
+ * attaching a resolved `CardSpec` when the pipeline computes it (non-breaking until wired).
+ */
 export type AggregatedFeedItem =
-  | { type: "hero"; entry: FeedReview }
-  | { type: "compact"; entry: FeedReview }
+  | { type: "hero"; entry: FeedReview; spec?: CardSpec }
+  | { type: "compact"; entry: FeedReview; spec?: CardSpec }
   | {
       type: "cluster";
       entries: FeedReview[];
       user: FeedReview["user"];
       location?: string;
       timestamp: string;
+      spec?: CardSpec;
     }
   | {
       type: "activity";
       entry: FeedReview;
       activityStatus: "visited" | "pending";
+      spec?: CardSpec;
     }
-  | { type: "row"; left: RowCell; right: RowCell };
+  | { type: "row"; left: RowCell; right: RowCell; spec?: CardSpec };
 
 const getReviewDate = (review: FeedReview) => {
   return review.edited_at ? new Date(review.edited_at) : new Date(review.created_at);

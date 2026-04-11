@@ -36,6 +36,7 @@ const mockData: FeedReview[] = [
     user: {
       username: 'user1',
       avatar_url: null,
+      followers_count: null,
     },
     images: []
   }

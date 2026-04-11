@@ -20,6 +20,7 @@ const building = (
 const user = (seed: string) => ({
   username: `user-${seed}`,
   avatar_url: null as string | null,
+  followers_count: null as number | null,
 });
 
 function makeReview(
