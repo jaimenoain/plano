@@ -570,3 +570,157 @@ export function BuildingCredits({
     </section>
   );
 }
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// APPEND THIS BLOCK to the bottom of:
+//   src/features/buildings/components/BuildingCredits.tsx
+//
+// No changes needed to the existing BuildingCredits component.
+// BuildingCredits stays exactly as-is and becomes the anchor target (#full-credits)
+// rendered below the photo stream in BuildingDetails.tsx.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+export interface BuildingCreditsPreviewProps {
+  credits: BuildingCreditWithEntities[];
+  /** Shows an "Add credit →" anchor when the user is signed in. */
+  isAuthenticated?: boolean;
+}
+
+// ── Single compact row ────────────────────────────────────────────────────────
+
+function PreviewCreditRow({ credit }: { credit: BuildingCreditWithEntities }) {
+  const roleLabel = formatCreditRoleLabel(credit.role, credit.roleCustom);
+  const { person, company } = credit;
+
+  return (
+    <div className="flex items-baseline gap-3 border-b border-border-default py-1.5 last:border-b-0">
+      <dt className="w-[68px] shrink-0 pt-px font-mono text-[9px] font-medium uppercase leading-none tracking-widest text-text-secondary">
+        {roleLabel}
+      </dt>
+      <dd className="flex min-w-0 flex-wrap items-baseline gap-x-1">
+        {person ? (
+          <Link
+            to={`/person/${person.slug}`}
+            className="text-sm font-medium text-text-primary underline-offset-4 hover:underline"
+          >
+            {person.name}
+          </Link>
+        ) : company ? (
+          <Link
+            to={`/company/${company.slug}`}
+            className="text-sm font-medium text-text-primary underline-offset-4 hover:underline"
+          >
+            {company.name}
+          </Link>
+        ) : (
+          <span className="text-sm text-text-secondary">Unknown</span>
+        )}
+        {person && company ? (
+          <>
+            <span className="text-xs text-text-secondary">@</span>
+            <Link
+              to={`/company/${company.slug}`}
+              className="text-sm font-medium text-text-primary underline-offset-4 hover:underline"
+            >
+              {company.name}
+            </Link>
+          </>
+        ) : null}
+        {credit.isLead ? (
+          <span className="ml-1 text-2xs font-medium uppercase tracking-widest text-text-disabled">
+            Lead
+          </span>
+        ) : null}
+        {credit.status === "verified" ? (
+          <BadgeCheck
+            className="ml-0.5 h-3 w-3 shrink-0 text-text-primary"
+            aria-label="Verified"
+          />
+        ) : null}
+      </dd>
+    </div>
+  );
+}
+
+// ── Preview component ─────────────────────────────────────────────────────────
+
+export function BuildingCreditsPreview({
+  credits,
+  isAuthenticated = false,
+}: BuildingCreditsPreviewProps) {
+  const visibleCredits = useMemo(
+    () => credits.filter((c) => c.status !== "flagged" && c.status !== "hidden"),
+    [credits],
+  );
+
+  const { primary, contributor } = useMemo(
+    () => groupByTier(visibleCredits),
+    [visibleCredits],
+  );
+
+  const primaryFlat = useMemo(
+    () => [...groupTierByRole(primary).values()].flat(),
+    [primary],
+  );
+  const contributorFlat = useMemo(
+    () => [...groupTierByRole(contributor).values()].flat(),
+    [contributor],
+  );
+
+  // Show all primary credits + enough contributors to reach 4 rows (cap at 6).
+  // Primary credits are never truncated — the lead architect must always be visible.
+  const MAX_ROWS = 4;
+  const primarySlice = primaryFlat.slice(0, MAX_ROWS);
+  const contributorSlots = Math.max(0, MAX_ROWS - primarySlice.length);
+  const contributorSlice = contributorFlat.slice(0, contributorSlots);
+  const previewRows = [...primarySlice, ...contributorSlice];
+
+  const totalCount = visibleCredits.length;
+  const hiddenCount = totalCount - previewRows.length;
+
+  if (totalCount === 0) {
+    return (
+      <div>
+        <p className="text-sm text-text-secondary">No credits listed yet.</p>
+        {isAuthenticated ? (
+          <a
+            href="#full-credits"
+            className="mt-3 block text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
+          >
+            Add credit →
+          </a>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <dl>
+        {previewRows.map((credit) => (
+          <PreviewCreditRow key={credit.id} credit={credit} />
+        ))}
+      </dl>
+
+      <div className="mt-3 flex items-center gap-4">
+        <a
+          href="#full-credits"
+          className="text-[10px] font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+        >
+          {hiddenCount > 0 ? `See all ${totalCount} credits ↓` : "View credits ↓"}
+        </a>
+        {isAuthenticated ? (
+          <a
+            href="#full-credits"
+            className="text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
+          >
+            Add credit →
+          </a>
+        ) : null}
+      </div>
+    </div>
+  );
+}
