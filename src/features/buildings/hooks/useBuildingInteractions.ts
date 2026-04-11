@@ -165,6 +165,7 @@ export interface BuildingInteractions {
 
   // Notes / images
   note: string;
+  setNote: React.Dispatch<React.SetStateAction<string>>;
   pendingImages: Array<{
     id: string;
     file: File;
@@ -195,11 +196,12 @@ export interface BuildingInteractions {
   deleteWarningMessage: string;
 
   // Derived / computed
-  avgRating: number | null;
+  /** Sum of `rating` across entries that have a rating (1–3); null if none rated. */
+  totalRatingPoints: number | null;
   visitorCount: number;
   coordinates: { lat: number; lng: number } | null;
   googleSearchUrl: string;
-  accessSynthesis: ReturnType<typeof synthesizeAccess>;
+  accessSynthesis: ReturnType<typeof synthesizeAccess> | null;
   accessBadgeVariant: () => "default" | "success" | "warning" | "brand";
   /** True when the current user may edit official building data. */
   canEditOfficialData: boolean;
@@ -357,10 +359,10 @@ export function useBuildingInteractions({
     [entries],
   );
 
-  const avgRating = useMemo(() => {
+  const totalRatingPoints = useMemo(() => {
     const rated = entries.filter((e) => e.rating != null);
     if (rated.length === 0) return null;
-    return rated.reduce((sum, e) => sum + e.rating!, 0) / rated.length;
+    return rated.reduce((sum, e) => sum + e.rating!, 0);
   }, [entries]);
 
   const coordinates = useMemo(
@@ -694,9 +696,6 @@ export function useBuildingInteractions({
     } finally {
       setLoading(false);
     }
-  // fetchTopLinks is stable (wrapped in useCallback). buildingCreditsFingerprint
-  // is a scalar string — safe as a dep.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [building?.id, user, buildingCreditsFingerprint, fetchTopLinks]);
 
   useEffect(() => {
@@ -1234,6 +1233,7 @@ export function useBuildingInteractions({
     newLinkTitle,
     setNewLinkTitle,
     note,
+    setNote,
     pendingImages,
     isSavingNote,
     showCollections,
@@ -1249,7 +1249,7 @@ export function useBuildingInteractions({
     showDeleteAlert,
     setShowDeleteAlert,
     deleteWarningMessage,
-    avgRating,
+    totalRatingPoints,
     visitorCount,
     coordinates,
     googleSearchUrl,

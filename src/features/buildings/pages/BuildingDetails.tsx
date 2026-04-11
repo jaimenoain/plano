@@ -16,6 +16,7 @@ import {
   Pencil, BadgeCheck,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   AlertDialog,
@@ -308,6 +309,8 @@ export default function BuildingDetails() {
     setNewLinkUrl,
     newLinkTitle,
     setNewLinkTitle,
+    note,
+    setNote,
     pendingImages,
     isSavingNote,
     showCollections,
@@ -323,7 +326,7 @@ export default function BuildingDetails() {
     showDeleteAlert,
     setShowDeleteAlert,
     deleteWarningMessage,
-    avgRating,
+    totalRatingPoints,
     visitorCount,
     coordinates,
     googleSearchUrl,
@@ -443,7 +446,10 @@ export default function BuildingDetails() {
       .map((img): StreamBlock => ({
         key: `img-${img.id}`,
         entryId: `img-${img.id}`,
-        user: img.user,
+        user: img.user ?? {
+          username: null,
+          avatar_url: null,
+        },
         content: null,
         rating: null,
         status: "visited" as const,
@@ -818,25 +824,14 @@ export default function BuildingDetails() {
             {/* Community stats */}
             {entries.length > 0 ? (
               <div className="flex items-center gap-4">
-                {avgRating !== null ? (
-                  <div className="flex items-center gap-1.5">
-                    <div className="flex gap-0.5">
-                      {[1, 2, 3].map((i) => (
-                        <Circle
-                          key={i}
-                          className={cn(
-                            "h-3 w-3",
-                            i <= Math.round(avgRating)
-                              ? "fill-text-primary text-text-primary"
-                              : "fill-transparent text-text-disabled",
-                          )}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-xs text-text-disabled">
-                      {avgRating.toFixed(1)} avg
-                    </span>
-                  </div>
+                {totalRatingPoints !== null ? (
+                  <span
+                    className="text-xs text-text-disabled"
+                    title="Sum of all visitor ratings (each 1–3)"
+                  >
+                    {totalRatingPoints}{" "}
+                    {totalRatingPoints === 1 ? "rating point" : "rating points"}
+                  </span>
                 ) : null}
                 <span className="text-xs text-text-disabled">
                   {visitorCount} {visitorCount === 1 ? "visitor" : "visitors"}
@@ -968,6 +963,42 @@ export default function BuildingDetails() {
               )
             ) : null}
           </div>
+
+          {user && (userStatus === "visited" || userStatus === "pending") ? (
+            <div className="space-y-2 border-b border-border-default pb-8">
+              <Label
+                htmlFor="building-status-note"
+                className="text-xs font-medium text-text-secondary"
+              >
+                Note or review (optional)
+              </Label>
+              <Textarea
+                id="building-status-note"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Add a short note or review…"
+                maxLength={10000}
+                rows={4}
+                className="min-h-0 resize-y"
+                disabled={isSavingNote}
+              />
+              <div className="flex flex-wrap items-center justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={isSavingNote}
+                  className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary disabled:opacity-50"
+                  onClick={() => {
+                    void handleSaveNote();
+                  }}
+                >
+                  {isSavingNote ? (
+                    <Loader2 className="mr-1 inline h-3 w-3 animate-spin" aria-hidden />
+                  ) : null}
+                  Save note
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           {/* ── OFFICIAL EDITING PANEL ── */}
           {isOfficialEditing ? (
