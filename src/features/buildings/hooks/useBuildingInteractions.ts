@@ -25,6 +25,9 @@ import type { BuildingCreditWithEntities } from "@/features/credits/types";
 import type { BuildingDetails } from "@/features/buildings/pages/BuildingDetails";
 import type { User } from "@supabase/supabase-js";
 
+/** Minimal profile shape the hook needs — avoids importing the full Profile type. */
+type ProfileForHook = { role?: string | null } | null | undefined;
+
 // ─── Types (local to hook, mirrored from BuildingDetails) ────────────────────
 
 interface TopLink {
@@ -98,6 +101,8 @@ interface UseBuildingInteractionsInput {
    */
   buildingCreditsFingerprint: string;
   user: User | null;
+  /** Used to derive canEditOfficialData and isCreditsAdmin. */
+  profile: ProfileForHook;
 }
 
 // ─── Hook return ─────────────────────────────────────────────────────────────
@@ -196,6 +201,10 @@ export interface BuildingInteractions {
   googleSearchUrl: string;
   accessSynthesis: ReturnType<typeof synthesizeAccess>;
   accessBadgeVariant: () => "default" | "success" | "warning" | "brand";
+  /** True when the current user may edit official building data. */
+  canEditOfficialData: boolean;
+  /** True when the current user has admin/app_admin role. */
+  isCreditsAdmin: boolean;
 
   // Handlers
   handleStatusChange: (status: "visited" | "pending" | "ignored") => Promise<void>;
@@ -223,6 +232,7 @@ export function useBuildingInteractions({
   buildingCredits,
   buildingCreditsFingerprint,
   user,
+  profile,
 }: UseBuildingInteractionsInput): BuildingInteractions {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -1171,6 +1181,26 @@ export function useBuildingInteractions({
     [user, likedLinkIds, toast],
   );
 
+  // ── Auth-derived flags ────────────────────────────────────────────────────
+  //
+  // isVerifiedArchitect: true when the signed-in user has a verified architect
+  // claim for one of the primary credited persons on this building.
+  const isVerifiedArchitect = useMemo(() => {
+    if (verifiedClaims.length === 0) return false;
+    const primaryPersonIds = visiblePrimaryCredits(buildingCredits)
+      .map((c) => c.personId)
+      .filter((pid): pid is string => pid != null);
+    return primaryPersonIds.some((pid) => verifiedClaims.includes(pid));
+  }, [verifiedClaims, buildingCredits]);
+
+  const canEditOfficialData =
+    profile?.role === "admin" ||
+    isVerifiedArchitect ||
+    (isCreator && !hasVerifiedArchitect);
+
+  const isCreditsAdmin =
+    profile?.role === "admin" || profile?.role === "app_admin";
+
   // ── Return ────────────────────────────────────────────────────────────────
 
   return {
@@ -1225,6 +1255,8 @@ export function useBuildingInteractions({
     googleSearchUrl,
     accessSynthesis,
     accessBadgeVariant,
+    canEditOfficialData,
+    isCreditsAdmin,
     handleStatusChange,
     handleRate,
     handleImageSelect,
