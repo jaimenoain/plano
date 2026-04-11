@@ -841,7 +841,7 @@ export default function BuildingDetails() {
           </div>
 
           {/* ── USER ACTIONS ── */}
-          <div className="flex items-center gap-3 border-b border-border-default pb-8">
+          <div className="flex items-center gap-3 pb-8">
             <button
               type="button"
               onClick={() => handleStatusChange("visited")}
@@ -966,17 +966,12 @@ export default function BuildingDetails() {
 
           {user && (userStatus === "visited" || userStatus === "pending") ? (
             <div className="space-y-2 border-b border-border-default pb-8">
-              <Label
-                htmlFor="building-status-note"
-                className="text-xs font-medium text-text-secondary"
-              >
-                Note or review (optional)
-              </Label>
               <Textarea
                 id="building-status-note"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                placeholder="Add a short note or review…"
+                placeholder="Add a note or review (optional)"
+                aria-label="Add a note or review (optional)"
                 maxLength={10000}
                 rows={4}
                 className="min-h-0 resize-y"
