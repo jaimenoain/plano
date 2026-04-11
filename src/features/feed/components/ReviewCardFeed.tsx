@@ -284,7 +284,7 @@ export function ReviewCardFeed({
         </span>
       )}
       <h2
-        className={`font-display font-black tracking-tight leading-none text-text-primary ${
+        className={`font-sans font-black tracking-tight leading-none text-text-primary ${
           isCompact
             ? "text-lg leading-tight"
             : effectiveSpec.prominence === "elevated"
