@@ -46,13 +46,13 @@ export function CollectionCard({ collection, username, className, isDragEnabled 
       >
           <Card
             className={cn(
-              "h-[100px] bg-surface-card border border-border-default rounded-sm shadow-none hover:border-border-strong transition-colors overflow-hidden relative",
-              collection.isFavorite && "border-dashed border-brand-primary/40"
+              "h-[100px] bg-surface-card overflow-hidden relative",
+              collection.isFavorite && "border-b-2 border-text-primary"
             )}
           >
               <CardContent className="p-4 h-full flex flex-col justify-between pointer-events-none">
             <div className="flex justify-between items-start">
-                <h4 className="font-medium text-sm line-clamp-2 leading-tight group-hover:text-brand-primary transition-colors pr-4 whitespace-normal text-text-primary">
+                <h4 className="font-medium text-sm line-clamp-2 leading-tight pr-4 whitespace-normal text-text-primary">
                     {collection.name}
                 </h4>
                 {collection.isFavorite ? (

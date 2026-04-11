@@ -270,12 +270,12 @@ export function ReviewCardFeed({
   const BuildingHeadline = !hideBuildingInfo && (
     <div>
       <h2
-        className={`font-black tracking-tight leading-none text-text-primary ${
+        className={`font-display font-black tracking-tight leading-none text-text-primary ${
           isCompact
             ? "text-base leading-tight"
             : effectiveSpec.prominence === "elevated"
             ? "text-5xl md:text-6xl mb-1.5"
-            : "text-2xl md:text-3xl mb-1"
+            : "text-3xl md:text-4xl mb-1"
         }`}
       >
         {mainTitle}

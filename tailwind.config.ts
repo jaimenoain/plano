@@ -58,6 +58,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Barlow', 'system-ui', 'sans-serif'],
         mono: ['Space Mono', 'monospace'],
       },
       colors: {
