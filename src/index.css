@@ -52,6 +52,15 @@
        At 6px: rounded-lg=6px (modals), rounded-md=4px, rounded-sm=2px (cards/buttons/inputs).
        DO NOT set this to 2px — it would make rounded-sm negative. */
     --radius: 6px;
+
+    /* --- Card tokens (feed / review cards — see docs/DESIGN_TOKENS.md) --- */
+    --card-image-ratio-hero: 16 / 9;
+    --card-image-ratio-standard: 4 / 3;
+    --card-image-ratio-compact: 1 / 1;
+    --card-text-clamp-snippet: 2;
+    --card-text-clamp-body: 4;
+    /* Matches §6 shadow-md — optional lift for CardSpec.prominence elevated */
+    --card-elevation-elevated: 0 2px 8px 0 rgb(0 0 0 / 0.06);
   }
 }
 

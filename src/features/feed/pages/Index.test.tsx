@@ -103,6 +103,7 @@ describe("Index Page", () => {
     );
 
     expect(screen.getByTestId("app-layout")).toBeTruthy();
-    expect(screen.getByText("Test Building")).toBeTruthy();
+    expect(screen.getByTestId("review-card-feed-r1")).toBeTruthy();
+    expect(screen.getAllByText("Test Building").length).toBeGreaterThanOrEqual(1);
   });
 });

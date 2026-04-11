@@ -12,7 +12,7 @@ import { Loader2 } from "lucide-react";
 import { Link } from "react-router";
 import { useSuggestedFeed } from "../hooks/useSuggestedFeed";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { ReviewCard } from "./ReviewCard";
+import { ReviewCardFeed } from "./ReviewCardFeed";
 import { PeopleYouMayKnow } from "./PeopleYouMayKnow";
 import React from "react";
 
@@ -73,7 +73,7 @@ export function EmptyFeed() {
       <div className="flex flex-col gap-6">
         {posts.map((post, index) => (
           <React.Fragment key={post.id}>
-            <ReviewCard
+            <ReviewCardFeed
               entry={post}
               onLike={toggleLike}
               onImageLike={toggleImageLike}

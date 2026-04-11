@@ -2,7 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { ReviewCard } from "@/features/feed/components/ReviewCard";
+import { ReviewCardFeed } from "@/features/feed/components/ReviewCardFeed";
 import { FeedReview } from "@/types/feed";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +46,7 @@ export function DraggableReviewCard({ review, className, showCommunityImages, is
         className
       )}
     >
-      <ReviewCard
+      <ReviewCardFeed
         entry={review}
         variant="compact"
         hideUser

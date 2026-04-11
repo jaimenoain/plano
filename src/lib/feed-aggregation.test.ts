@@ -4,6 +4,7 @@ import {
   collapseIntoRows,
   type AggregatedFeedItem,
 } from "@/lib/feed-aggregation";
+import { resolveCardSpec } from "@/features/feed/utils/resolveCardSpec";
 import type { FeedReview, ReviewBuilding } from "@/types/feed";
 
 const building = (
@@ -84,15 +85,17 @@ describe("collapseIntoRows", () => {
       building: building("y"),
       content: "note",
     });
+    const sa = resolveCardSpec(a);
+    const sb = resolveCardSpec(b);
     const out = collapseIntoRows([
-      { type: "compact", entry: a },
-      { type: "compact", entry: b },
+      { type: "compact", entry: a, spec: sa },
+      { type: "compact", entry: b, spec: sb },
     ]);
     expect(out).toEqual([
       {
         type: "row",
-        left: { type: "compact", entry: a },
-        right: { type: "compact", entry: b },
+        left: { type: "compact", entry: a, spec: sa },
+        right: { type: "compact", entry: b, spec: sb },
       },
     ]);
   });
@@ -119,18 +122,21 @@ describe("collapseIntoRows", () => {
       building: building("z"),
       content: "n",
     });
+    const s1 = resolveCardSpec(r1);
+    const s2 = resolveCardSpec(r2);
+    const s3 = resolveCardSpec(r3);
     const out = collapseIntoRows([
-      { type: "compact", entry: r1 },
-      { type: "compact", entry: r2 },
-      { type: "compact", entry: r3 },
+      { type: "compact", entry: r1, spec: s1 },
+      { type: "compact", entry: r2, spec: s2 },
+      { type: "compact", entry: r3, spec: s3 },
     ]);
     expect(out.length).toBe(2);
     expect(out[0]).toEqual({
       type: "row",
-      left: { type: "compact", entry: r1 },
-      right: { type: "compact", entry: r2 },
+      left: { type: "compact", entry: r1, spec: s1 },
+      right: { type: "compact", entry: r2, spec: s2 },
     });
-    expect(out[1]).toEqual({ type: "compact", entry: r3 });
+    expect(out[1]).toEqual({ type: "compact", entry: r3, spec: s3 });
   });
 
   it("does not pair compact next to activity", () => {
@@ -228,7 +234,7 @@ describe("aggregateFeed", () => {
     });
     const out = aggregateFeed([r]);
     expect(out).toEqual([
-      { type: "activity", entry: r, activityStatus: "visited" },
+      { type: "activity", entry: r, activityStatus: "visited", spec: resolveCardSpec(r) },
     ]);
   });
 
@@ -244,7 +250,7 @@ describe("aggregateFeed", () => {
       status: "pending",
     });
     const out = aggregateFeed([r]);
-    expect(out).toEqual([{ type: "compact", entry: r }]);
+    expect(out).toEqual([{ type: "compact", entry: r, spec: resolveCardSpec(r) }]);
   });
 
   it("emits activity when Rule 0 matches with community_preview_url only", () => {
@@ -260,7 +266,7 @@ describe("aggregateFeed", () => {
     });
     const out = aggregateFeed([r]);
     expect(out).toEqual([
-      { type: "activity", entry: r, activityStatus: "visited" },
+      { type: "activity", entry: r, activityStatus: "visited", spec: resolveCardSpec(r) },
     ]);
   });
 
@@ -283,8 +289,16 @@ describe("aggregateFeed", () => {
     expect(out.length).toBe(1);
     expect(out[0]?.type).toBe("row");
     if (out[0]?.type === "row") {
-      expect(out[0].left).toEqual({ type: "compact", entry: r1 });
-      expect(out[0].right).toEqual({ type: "compact", entry: r2 });
+      expect(out[0].left).toEqual({
+        type: "compact",
+        entry: r1,
+        spec: resolveCardSpec(r1),
+      });
+      expect(out[0].right).toEqual({
+        type: "compact",
+        entry: r2,
+        spec: resolveCardSpec(r2),
+      });
     }
   });
 
@@ -313,7 +327,19 @@ describe("aggregateFeed", () => {
     const out = aggregateFeed([r1, r2, r3]);
     expect(out.length).toBe(2);
     expect(out[0]?.type).toBe("row");
-    expect(out[1]).toEqual({ type: "compact", entry: r3 });
+    if (out[0]?.type === "row") {
+      expect(out[0].left).toEqual({
+        type: "compact",
+        entry: r1,
+        spec: resolveCardSpec(r1),
+      });
+      expect(out[0].right).toEqual({
+        type: "compact",
+        entry: r2,
+        spec: resolveCardSpec(r2),
+      });
+    }
+    expect(out[1]).toEqual({ type: "compact", entry: r3, spec: resolveCardSpec(r3) });
   });
 
   it("keeps compact and activity as separate full-width items", () => {
@@ -336,8 +362,8 @@ describe("aggregateFeed", () => {
     });
     const out = aggregateFeed([compact, act]);
     expect(out).toEqual([
-      { type: "compact", entry: compact },
-      { type: "activity", entry: act, activityStatus: "visited" },
+      { type: "compact", entry: compact, spec: resolveCardSpec(compact) },
+      { type: "activity", entry: act, activityStatus: "visited", spec: resolveCardSpec(act) },
     ]);
   });
 
@@ -372,8 +398,8 @@ describe("aggregateFeed", () => {
     });
     const out = aggregateFeed([r1, r2, r3, r4]);
     expect(out.length).toBe(3);
-    expect(out[0]).toEqual({ type: "compact", entry: r1 });
+    expect(out[0]).toEqual({ type: "compact", entry: r1, spec: resolveCardSpec(r1) });
     expect(out[1]?.type).toBe("cluster");
-    expect(out[2]).toEqual({ type: "compact", entry: r4 });
+    expect(out[2]).toEqual({ type: "compact", entry: r4, spec: resolveCardSpec(r4) });
   });
 });

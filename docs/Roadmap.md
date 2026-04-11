@@ -18,7 +18,7 @@
 
 ---
 
-**[ ] Task 1.2 — Implement `resolveCardSpec()` pure function with full test coverage**
+**[x] Task 1.2 — Implement `resolveCardSpec()` pure function with full test coverage**
 
 - Create `src/features/feed/utils/resolveCardSpec.ts`
 - Implement logic: `imageWeight` from `images.length` (0 / 1 / 2 / 3+); `textWeight` from `content` word count (none <1 / snippet <20 / body <150 / essay 150+); `layout` derived from combination of imageWeight + textWeight; `prominence` from `likes_count > 50 || followers_count > 500 || is_verified_architect || is_architect_of_building`
@@ -30,7 +30,7 @@
 
 ---
 
-**[ ] Task 1.3 — Add card design tokens to `tailwind.config.ts` and `DESIGN_TOKENS.md`**
+**[x] Task 1.3 — Add card design tokens to `tailwind.config.ts` and `DESIGN_TOKENS.md`**
 
 - Add to `tailwind.config.ts` theme extension: `cardImageRatio` (hero `16/9`, standard `4/3`, compact `1/1`), `cardTextClamp` utility values, `cardElevation` box-shadow tokens
 - Add semantic CSS custom properties to the global stylesheet (`src/index.css` or equivalent) under a `/* Card tokens */` section: `--card-image-ratio-hero`, `--card-image-ratio-standard`, `--card-image-ratio-compact`, `--card-text-clamp-snippet` (2), `--card-text-clamp-body` (4), `--card-elevation-elevated`
@@ -47,7 +47,7 @@
 
 ---
 
-**[ ] Task 2.1 — Extract `useReviewCardData()` hook**
+**[x] Task 2.1 — Extract `useReviewCardData()` hook**
 
 - Create `src/features/feed/hooks/useReviewCardData.ts`
 - Move all data-preparation logic out of `ReviewCard`: media item construction (video + images), `subTitle` assembly (credits + year + address), `city` extraction, `username`/`avatarUrl`/`userInitial` derivation, `action` label, carousel vs. single-image decision
@@ -59,7 +59,7 @@
 
 ---
 
-**[ ] Task 2.2 — Create `ReviewCardFeed` component**
+**[x] Task 2.2 — Create `ReviewCardFeed` component**
 
 - Create `src/features/feed/components/ReviewCardFeed.tsx`
 - Accepts `entry: FeedReview` and `onLike`, `onImageLike`, `onComment` callbacks — no `isDetailView`, no `hideBuildingInfo`, no `imagePosition` prop
@@ -72,7 +72,7 @@
 
 ---
 
-**[ ] Task 2.3 — Create `ReviewCardDetail` component**
+**[x] Task 2.3 — Create `ReviewCardDetail` component**
 
 - Create `src/features/feed/components/ReviewCardDetail.tsx`
 - Accepts `entry: FeedReview`, `hideUser?: boolean`, `hideBuildingInfo?: boolean`, `onLike`, `onComment`
@@ -84,7 +84,7 @@
 
 ---
 
-**[ ] Task 2.4 — Migrate call sites and deprecate legacy `ReviewCard`**
+**[x] Task 2.4 — Migrate call sites and deprecate legacy `ReviewCard`**
 
 - Update `src/features/buildings/pages/BuildingDetails.tsx` to import `ReviewCardDetail`
 - Update `src/features/profile/components/DraggableReviewCard.tsx` to import `ReviewCardFeed`
@@ -102,7 +102,7 @@
 
 ---
 
-**[ ] Task 3.1 — Create card fixture data**
+**[x] Task 3.1 — Create card fixture data**
 
 - Create `src/features/superadmin/fixtures/cardFixtures.ts`
 - Define a `CardFixture` type: `{ id: string, label: string, description: string, entry: FeedReview }`
@@ -129,7 +129,7 @@
 
 ---
 
-**[ ] Task 3.2 — Build the superadmin card playground page**
+**[x] Task 3.2 — Build the superadmin card playground page**
 
 - Create route `/superadmin/cards` in the router, guarded by a simple `is_superadmin` check on the user profile (or a `VITE_SUPERADMIN_EMAILS` env list for now)
 - Create `src/features/superadmin/pages/CardPlayground.tsx`
@@ -142,7 +142,7 @@
 
 ---
 
-**[ ] Task 3.3 — Add interactive controls to the playground**
+**[x] Task 3.3 — Add interactive controls to the playground**
 
 - Add a control panel (collapsible) above the card preview with sliders/inputs:
   - `imageCount`: 0–8 (dynamically splices/adds images to the fixture)
@@ -158,7 +158,7 @@
 
 ---
 
-**[ ] Task 3.4 — Add background and viewport controls to the playground**
+**[x] Task 3.4 — Add background and viewport controls to the playground**
 
 - Add a toolbar with background presets matching actual page contexts: Feed (white/dark), BuildingDetail panel, Profile page background
 - Add viewport size presets: Mobile (375px), Tablet (768px), Desktop (1280px) — the card preview area resizes accordingly
@@ -175,7 +175,7 @@
 
 ---
 
-**[ ] Task 4.1 — Attach `spec` to `AggregatedFeedItem` in `aggregateFeed`**
+**[x] Task 4.1 — Attach `spec` to `AggregatedFeedItem` in `aggregateFeed`**
 
 - Update `AggregatedFeedItem` union in `src/features/feed/utils/aggregateFeed.ts` — add optional `spec?: CardSpec` to `hero`, `compact`, and `activity` variants
 - Call `resolveCardSpec(entry)` inside `aggregateFeed` when creating each item and attach the result
@@ -186,7 +186,7 @@
 
 ---
 
-**[ ] Task 4.2 — Drive `ReviewCardFeed` layout from `CardSpec`**
+**[x] Task 4.2 — Drive `ReviewCardFeed` layout from `CardSpec`**
 
 - Update `ReviewCardFeed` to accept an optional `spec?: CardSpec` prop (falls back to calling `resolveCardSpec` internally if not provided)
 - Use `spec.imageWeight` to choose between single-image, two-up grid, and carousel layouts (replace current `useCarousel` boolean logic)
@@ -198,7 +198,7 @@
 
 ---
 
-**[ ] Task 4.3 — Pass `spec` from feed page down to card components**
+**[x] Task 4.3 — Pass `spec` from feed page down to card components**
 
 - In `Index.tsx` `renderSocialCard`, pass `item.spec` to `ReviewCardFeed` for `hero` and `compact` items
 - Update `FeedHeroCard` to receive and use `spec` (or call `resolveCardSpec` internally — whichever is cleaner given its current structure)
@@ -214,7 +214,7 @@
 
 ---
 
-**[ ] Task 5.1 — Delete legacy `ReviewCard` and remove deprecated usages**
+**[x] Task 5.1 — Delete legacy `ReviewCard` and remove deprecated usages**
 
 - Confirm zero non-test imports of `ReviewCard` via `grep`
 - Delete `src/features/feed/components/ReviewCard.tsx`
@@ -225,7 +225,7 @@
 
 ---
 
-**[ ] Task 5.2 — Update `COMPONENT_SPEC.md` with card archetype documentation**
+**[x] Task 5.2 — Update `COMPONENT_SPEC.md` with card archetype documentation**
 
 - Add a **Card System** section to `docs/COMPONENT_SPEC.md`
 - Document each of the 5 archetypes (hero-gallery, hero-text, standard, minimal, elevated) with: trigger conditions, layout description, which component renders it, and the `CardSpec` values that correspond to it
@@ -236,7 +236,7 @@
 
 ---
 
-**[ ] Task 5.3 — Add `resolveCardSpec` to the superadmin playground's "all fixtures" grid with spec labels**
+**[x] Task 5.3 — Add `resolveCardSpec` to the superadmin playground's "all fixtures" grid with spec labels**
 
 - In the "Show all" grid mode, render a badge under each card showing its archetype name (derived from `CardSpec` fields)
 - Highlight any fixture where the computed spec differs from the fixture's intended archetype (i.e. a fixture labelled "essay+gallery" that resolves to `layout: 'compact'` would show a warning)

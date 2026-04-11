@@ -115,6 +115,7 @@ export default [
     }),
     route("/portfolio", "features/credits/pages/PersonDashboard.tsx"),
     route("/company-portfolio", "features/credits/pages/CompanyDashboard.tsx"),
+    route("/superadmin/cards", "features/superadmin/pages/CardPlayground.tsx"),
     route("/architect/dashboard", "features/credits/pages/ArchitectDashboardRedirect.tsx"),
     route("/architect/:id", "features/credits/pages/ArchitectIdRedirect.tsx"),
     route(

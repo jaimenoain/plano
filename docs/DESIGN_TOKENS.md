@@ -220,6 +220,23 @@ Shadows are intentionally flat and minimal. The design relies on borders and whi
 
 ---
 
+## 6b. Card Tokens (feed / review cards)
+
+Semantic tokens for the card system (`CardSpec` / `resolveCardSpec`). Values live in `src/index.css` (`:root`); Tailwind utilities reference the CSS variables.
+
+| Token (CSS variable) | Value | Tailwind utility | Archetypes / usage |
+|---|---|---|---|
+| `--card-image-ratio-hero` | `16 / 9` | `aspect-card-hero` | `media-forward`, hero imagery, gallery-led layouts |
+| `--card-image-ratio-standard` | `4 / 3` | `aspect-card-standard` | `balanced` feed imagery, default building/photo frame |
+| `--card-image-ratio-compact` | `1 / 1` | `aspect-card-compact` | `compact-stack`, dense thumbnails, small surfaces |
+| `--card-text-clamp-snippet` | `2` (lines) | `line-clamp-card-snippet` | `CardTextWeight.snippet` — short review copy |
+| `--card-text-clamp-body` | `4` (lines) | `line-clamp-card-body` | `CardTextWeight.body` — medium review copy |
+| `--card-elevation-elevated` | `0 2px 8px 0 rgb(0 0 0 / 0.06)` (same as §6 `shadow-md`) | `shadow-card-elevated` | `CardProminence.elevated` — subtle lift vs standard feed chrome |
+
+**Essay** (`CardTextWeight.essay`) is not clamped by these tokens — full body display. **None** text uses no line-clamp utilities.
+
+---
+
 ## 7. Tailwind Config Block
 
 This is the exact object to merge into `apps/web/tailwind.config.ts`. Cursor reads
@@ -308,6 +325,15 @@ theme: {
     maxWidth: {
       'search-serp-alt': '12.5rem',
     },
+    aspectRatio: {
+      'card-hero':     'var(--card-image-ratio-hero)',
+      'card-standard': 'var(--card-image-ratio-standard)',
+      'card-compact':  'var(--card-image-ratio-compact)',
+    },
+    lineClamp: {
+      'card-snippet': 'var(--card-text-clamp-snippet)',
+      'card-body':    'var(--card-text-clamp-body)',
+    },
     borderRadius: {
       'none': '0px',
       'sm':   '2px',
@@ -322,6 +348,7 @@ theme: {
       'md':   '0 2px 8px 0 rgb(0 0 0 / 0.06)',
       'lg':   '0 8px 24px 0 rgb(0 0 0 / 0.10)',
       'none': 'none',
+      'card-elevated': 'var(--card-elevation-elevated)',
     },
   },
 },

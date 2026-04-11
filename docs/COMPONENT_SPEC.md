@@ -25,7 +25,7 @@ representation, width discipline, action hierarchy, and spacing rhythm.
 Read these before building anything. They apply to every component and
 every page in this product, whether listed here or not.
 
-**Component entries** (sections 1–12) — for each listed component:
+**Component entries** (sections 1–12, plus Card System in §14) — for each listed component:
 layout composition (structural arrangement), token assembly (visual
 properties), interaction design notes (behavioural decisions), and
 constraints (Always/Default rules with reasons).
@@ -888,7 +888,89 @@ No other action icons appear in the feed. No date or timestamp is shown on any f
 
 ---
 
-## 14. Content Detail Pages (Building / Profile / Architect)
+## 14. Card System — Spec-Driven Review Cards
+
+This section documents how **review cards** are chosen and laid out in the product. The feed aggregation layer (`aggregateFeed`) still decides **which feed row type** runs (`hero`, `compact`, `activity`, etc.). **`CardSpec`** (from `resolveCardSpec`) decides **how the review chrome behaves** inside **`ReviewCardFeed`** (used for both **`hero`** and **`compact`** rows on the main social feed) and **`FeedHeroCard`** (e.g. the community discovery list in **`ColdStartFeed`**). Detail surfaces use **`ReviewCardDetail`**.
+
+### 14.1. Types and resolver
+
+**`CardSpec`** (see `src/types/cards.ts`) has four fields, all outputs of `resolveCardSpec(entry)`:
+
+| Field | Values | Meaning |
+| --- | --- | --- |
+| `layout` | `media-forward`, `balanced`, `text-forward`, `compact-stack` | Media vs copy arrangement inside the card. |
+| `imageWeight` | `none`, `single`, `pair`, `gallery` | Tier from **usable** user review image URLs (0 / 1 / 2 / 3+). |
+| `textWeight` | `none`, `snippet`, `body`, `essay` | Tier from **word count** of `entry.content` (0 words / under 20 / under 150 / 150+). |
+| `prominence` | `standard`, `elevated` | Emphasis tier from engagement and author signals. |
+
+**`resolveCardSpec`** (`src/features/feed/utils/resolveCardSpec.ts`) is pure: it does not import React or Supabase. **`layout`** comes from a fixed matrix keyed by `imageWeight` + `textWeight`. **`prominence`** is `elevated` when any of: `likes_count > 50`, `user.followers_count > 500`, `user.is_verified_architect`, `user.is_architect_of_building`.
+
+Feed aggregation attaches `spec: resolveCardSpec(entry)` on items that carry a review; the feed page passes `item.spec` into **`ReviewCardFeed`** for **`hero`** and **`compact`** items. Pass **`spec`** into **`FeedHeroCard`** wherever that component is wired for layout (e.g. cold-start discovery).
+
+### 14.2. Decision flow
+
+```mermaid
+flowchart TD
+  FR[FeedReview entry]
+  FR --> R[resolveCardSpec]
+  R --> CS[CardSpec]
+  CS --> L[layout]
+  CS --> IW[imageWeight]
+  CS --> TW[textWeight]
+  CS --> P[prominence]
+  CS --> UI[ReviewCardFeed / FeedHeroCard / ReviewCardDetail]
+  L --> UI
+  IW --> UI
+  TW --> UI
+  P --> UI
+```
+
+ASCII equivalent (read top to bottom):
+
+```
+FeedReview
+  |-- content ----> word count ----> textWeight
+  |-- images[] (valid URLs) ----> imageWeight
+  +-- likes, followers, author flags ----> prominence
+
+resolveCardSpec ----> layout = matrix[imageWeight + textWeight]
+
+CardSpec { layout, imageWeight, textWeight, prominence }
+  |
+  v
+Aspect ratios, carousel vs grid, side-by-side vs stack, line-clamps, elevated chrome
+```
+
+### 14.3. Product archetypes (five named patterns)
+
+These names are how designers and engineers talk about cards; they map to **`CardSpec` combinations** and **which component renders them**, not to separate React components.
+
+| Archetype | Typical triggers (conceptual) | Layout / media behaviour | Component(s) | Representative `CardSpec` notes |
+| --- | --- | --- | --- | --- |
+| **hero-gallery** | Feed row type **`hero`** (user images present); **`imageWeight`** `pair` or `gallery` | Carousel when gallery + enough stills; two-up grid for `pair`; strong photo lead; alternating image side on main feed | **`ReviewCardFeed`** (main feed **`hero`** slot); **`FeedHeroCard`** (e.g. **`ColdStartFeed`** discovery) | `imageWeight`: `pair` / `gallery`; `layout` often `media-forward` or `balanced` |
+| **hero-text** | **`hero`** row with long or medium copy | Copy-led: **`text-forward`** layout; image supports text; clamps from `textWeight` | **`ReviewCardFeed`** / **`FeedHeroCard`** (same split as above) | `textWeight`: `body` / `essay`; `layout`: `text-forward` when matrix yields it (e.g. essay + single image) |
+| **standard** | Default prominence; no special author/engagement tier | Baseline chrome: building title `font-semibold`; standard aspect tokens | **`ReviewCardFeed`**, **`FeedHeroCard`**, **`ReviewCardDetail`** | `prominence`: `standard` |
+| **minimal** | Little or no body + low image tier | **`compact-stack`** layout; compact aspect; no side-by-side media on md+ (default variant) | **`ReviewCardFeed`** (default variant) | `layout`: `compact-stack`; often `textWeight` `none`/`snippet` and/or `imageWeight` `none` |
+| **elevated** | High likes, high followers, verified architect, or architect of building | Subtle emphasis (e.g. bolder building name in feed header); same structural layout as otherwise | **`ReviewCardFeed`** (and other spec-aware surfaces) | `prominence`: `elevated` (orthogonal to `layout`) |
+
+**Feed row type vs `CardSpec`:** `aggregateFeed` promotes reviews with **user-attached images** to a **`hero`** item. On **`Index`**, **`hero`** renders as **`ReviewCardFeed`** (default variant, alternating `imagePosition`). Reviews without user images are clustered and emitted as **`compact`** — **`ReviewCardFeed`** with `variant="compact"`. **`activity`** rows use **`FeedActivityCard`**; they may carry a `spec` for consistency, but the activity layout is not driven by `CardSpec` the same way. **`ReviewCardDetail`** uses **`useReviewCardData`** and the detail layout.
+
+### 14.4. Implementation hooks (for new archetypes)
+
+To add or change a card presentation:
+
+1. **Adjust the contract** in `src/types/cards.ts` only if you need new enum values.
+2. **Change scoring** in `resolveCardSpec.ts` (matrix, word bands, image counting, prominence rules) and extend **`resolveCardSpec.test.ts`**.
+3. **Update UI** in **`ReviewCardFeed`** (primary feed), **`FeedHeroCard`** (where still used, e.g. cold-start), and/or **`ReviewCardDetail`** to branch on the new `CardSpec` fields.
+4. **Add or edit fixtures** in `src/features/superadmin/fixtures/cardFixtures.ts` and validate in the playground.
+
+### 14.5. Superadmin card playground
+
+Route **`/superadmin/cards`** (`CardPlayground.tsx`) renders fixtures with **`ReviewCardFeed`** and **`ReviewCardDetail`**, shows the computed **`CardSpec`**, and provides sliders/toggles to mutate a local copy of the entry. Use it to iterate on layout and elevated treatment without touching production feed data. Access is restricted (superadmin profile or configured allowlist — see app routing/guard).
+
+---
+
+## 15. Content Detail Pages (Building / Profile / Architect)
 
 ### Design Philosophy
 

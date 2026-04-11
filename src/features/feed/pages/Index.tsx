@@ -13,9 +13,9 @@ import {
   type AggregatedFeedItem,
   type RowCell,
 } from "@/lib/feed-aggregation";
-import { FeedHeroCard } from "../components/FeedHeroCard";
+import { ReviewCardFeed } from "../components/ReviewCardFeed";
+import { resolveCardSpec } from "../utils/resolveCardSpec";
 import { FeedClusterCard } from "../components/FeedClusterCard";
-import { FeedCompactCard } from "../components/FeedCompactCard";
 import { FeedActivityCard } from "../components/FeedActivityCard";
 import { SectionDivider } from "../components/SectionDivider";
 import { LandingHero } from "../components/landing/LandingHero";
@@ -155,7 +155,14 @@ export default function Index() {
 
   const renderRowCell = (cell: RowCell) => {
     if (cell.type === "compact") {
-      return <FeedCompactCard entry={cell.entry} onLike={socialFeed.toggleLike} />;
+      return (
+        <ReviewCardFeed
+          variant="compact"
+          entry={cell.entry}
+          spec={cell.spec}
+          onLike={socialFeed.toggleLike}
+        />
+      );
     }
     return (
       <FeedActivityCard
@@ -172,11 +179,12 @@ export default function Index() {
     switch (item.type) {
       case "hero":
         return (
-          <FeedHeroCard
+          <ReviewCardFeed
             entry={item.entry}
-            index={heroCounter++}
+            spec={item.spec}
             onLike={socialFeed.toggleLike}
             onImageLike={socialFeed.toggleImageLike}
+            imagePosition={heroCounter++ % 2 === 0 ? "left" : "right"}
           />
         );
       case "activity":
@@ -189,7 +197,14 @@ export default function Index() {
           />
         );
       case "compact":
-        return <FeedCompactCard entry={item.entry} onLike={socialFeed.toggleLike} />;
+        return (
+          <ReviewCardFeed
+            variant="compact"
+            entry={item.entry}
+            spec={item.spec}
+            onLike={socialFeed.toggleLike}
+          />
+        );
       case "cluster":
         return (
           <FeedClusterCard
@@ -320,12 +335,13 @@ export default function Index() {
                         const post = discoveryReviews[discoveryCursor];
                         discoveryCursor += 1;
                         feedNodes.push(
-                          <FeedHeroCard
+                          <ReviewCardFeed
                             key={`discovery-inject-${post.id}-${n}`}
                             entry={post}
-                            index={discoveryCursor}
+                            spec={resolveCardSpec(post)}
                             onLike={discoveryFeed.toggleLike}
                             onImageLike={discoveryFeed.toggleImageLike}
+                            imagePosition={discoveryCursor % 2 === 1 ? "right" : "left"}
                           />
                         );
                       }

@@ -37,9 +37,8 @@ const mockReview: FeedReview = {
   images: [],
 };
 
-// Mock the ReviewCard component since it's complex and has internal navigation/images
-vi.mock('@/features/feed/components/ReviewCard', () => ({
-  ReviewCard: ({ entry, variant }: { entry: FeedReview, variant: string }) => (
+vi.mock('@/features/feed/components/ReviewCardFeed', () => ({
+  ReviewCardFeed: ({ entry, variant }: { entry: FeedReview, variant: string }) => (
     <div data-testid="review-card">
       <span>{entry.building.name}</span>
       <span>{variant}</span>

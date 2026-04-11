@@ -38,6 +38,24 @@ export default {
         /** 200px — secondary name line clamp in SERP building rows */
         "search-serp-alt": "12.5rem",
       },
+      aspectRatio: {
+        /** 16:9 — hero / media-forward card imagery (`--card-image-ratio-hero`) */
+        "card-hero": "var(--card-image-ratio-hero)",
+        /** 4:3 — standard feed image blocks (`--card-image-ratio-standard`) */
+        "card-standard": "var(--card-image-ratio-standard)",
+        /** 1:1 — compact / thumbnail grid (`--card-image-ratio-compact`) */
+        "card-compact": "var(--card-image-ratio-compact)",
+      },
+      lineClamp: {
+        /** Snippet-tier body — `CardSpec.textWeight` snippet */
+        "card-snippet": "var(--card-text-clamp-snippet)",
+        /** Body-tier copy — `CardSpec.textWeight` body */
+        "card-body": "var(--card-text-clamp-body)",
+      },
+      boxShadow: {
+        /** `CardSpec.prominence` elevated — uses `--card-elevation-elevated` */
+        "card-elevated": "var(--card-elevation-elevated)",
+      },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['Space Mono', 'monospace'],

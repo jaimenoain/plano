@@ -74,7 +74,7 @@ describe('FeedHeroCard Overflow Protection', () => {
     );
 
     const [content] = screen.getAllByText('Some content here');
-    expect(content.className).toContain('line-clamp-4');
-    expect(content.className).toContain('max-w-md');
+    expect(content.className).toContain('line-clamp-card-snippet');
+    expect(content.parentElement?.className).toContain('max-w-md');
   });
 });

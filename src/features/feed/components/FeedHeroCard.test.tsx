@@ -80,7 +80,7 @@ describe('FeedHeroCard layout', () => {
     expect(imgElement.className).toContain('h-full');
   });
 
-  it('renders FeedPhotoCarousel for multi-image entries (one slide visible, 4/5 frame)', () => {
+  it('renders a two-up grid for pair imageWeight (two visible frames)', () => {
     const mockEntryTwoImages = {
       ...mockEntry,
       id: 'test-entry-2',
@@ -99,12 +99,34 @@ describe('FeedHeroCard layout', () => {
     );
 
     const images = screen.getAllByAltText('Building') as HTMLImageElement[];
+    expect(images.length).toBe(2);
+    images.forEach((img) => {
+      expect(img.className).toContain('object-cover');
+    });
+  });
+
+  it('renders FeedPhotoCarousel for three or more images', () => {
+    const mockEntryThree = {
+      ...mockEntry,
+      id: 'test-entry-3',
+      images: [
+        { id: 'img1', url: 'http://example.com/img1.jpg', likes_count: 0, is_liked: false },
+        { id: 'img2', url: 'http://example.com/img2.jpg', likes_count: 0, is_liked: false },
+        { id: 'img3', url: 'http://example.com/img3.jpg', likes_count: 0, is_liked: false },
+      ],
+    };
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <FeedHeroCard entry={mockEntryThree as any} />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+
+    const images = screen.getAllByAltText('Building') as HTMLImageElement[];
     expect(images.length).toBe(1);
-
-    const imgContainer = images[0].parentElement;
-    expect(imgContainer?.className).toContain('aspect-[4/5]');
     expect(images[0].className).toContain('object-cover');
-
-    expect(screen.getByLabelText('Photo 1 of 2')).toBeInTheDocument();
+    expect(screen.getByLabelText('Photo 1 of 3')).toBeInTheDocument();
   });
 });

@@ -5,12 +5,29 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { FeedReview } from "@/types/feed";
+import type { CardSpec, CardTextWeight } from "@/types/cards";
 import { getBuildingUrl } from "@/utils/url";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { FeedPhotoCarousel } from "./FeedPhotoCarousel";
+import { resolveCardSpec } from "@/features/feed/utils/resolveCardSpec";
+
+function heroBodyClampClass(textWeight: CardTextWeight, essayExpanded: boolean): string {
+  switch (textWeight) {
+    case "none":
+      return "";
+    case "snippet":
+      return "line-clamp-card-snippet";
+    case "body":
+      return "line-clamp-card-body";
+    case "essay":
+      return essayExpanded ? "" : "line-clamp-card-body";
+    default:
+      return "";
+  }
+}
 
 // ─── Single-image subcomponent ───────────────────────────────────────────────
 
@@ -44,6 +61,8 @@ function FeedHeroSingleImage({ image, onError }: FeedHeroSingleImageProps) {
 interface FeedHeroCardProps {
   entry: FeedReview;
   index?: number;
+  /** When omitted, derived via {@link resolveCardSpec}(entry). */
+  spec?: CardSpec;
   onLike?: (reviewId: string) => void;
   onImageLike?: (reviewId: string, imageId: string) => void;
   onComment?: (reviewId: string) => void;
@@ -54,6 +73,7 @@ interface FeedHeroCardProps {
 export function FeedHeroCard({
   entry,
   index = 0,
+  spec: specProp,
   onLike: _onLike,
   onImageLike,
   onComment: _onComment,
@@ -65,6 +85,12 @@ export function FeedHeroCard({
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const [essayExpanded, setEssayExpanded] = useState(false);
+  const effectiveSpec = useMemo(() => specProp ?? resolveCardSpec(entry), [entry, specProp]);
+
+  useEffect(() => {
+    setEssayExpanded(false);
+  }, [entry.id]);
 
   if (!entry.building) return null;
 
@@ -126,7 +152,7 @@ export function FeedHeroCard({
   const renderImages = () => {
     if (allImages.length === 0) return null;
 
-    if (allImages.length > 1) {
+    if (allImages.length > 2 || effectiveSpec.imageWeight === "gallery") {
       return (
         <FeedPhotoCarousel
           images={allImages}
@@ -134,6 +160,28 @@ export function FeedHeroCard({
           onImageLike={onImageLike}
           className="w-full h-full"
         />
+      );
+    }
+
+    if (
+      effectiveSpec.imageWeight === "pair" &&
+      singleImages.length >= 2
+    ) {
+      return (
+        <div className="grid grid-cols-2 w-full h-full min-h-[280px] md:min-h-[400px]">
+          <div className="relative h-full min-h-[280px] min-w-0 overflow-hidden bg-surface-muted md:min-h-0">
+            <FeedHeroSingleImage
+              image={singleImages[0]}
+              onError={handleImageError}
+            />
+          </div>
+          <div className="relative h-full min-h-[280px] min-w-0 overflow-hidden bg-surface-muted border-l border-border-default/30 md:min-h-0">
+            <FeedHeroSingleImage
+              image={singleImages[1]}
+              onError={handleImageError}
+            />
+          </div>
+        </div>
       );
     }
 
@@ -146,16 +194,30 @@ export function FeedHeroCard({
       );
     }
 
-    return null;
+    return (
+      <FeedPhotoCarousel
+        images={allImages}
+        reviewId={entry.id}
+        onImageLike={onImageLike}
+        className="w-full h-full"
+      />
+    );
   };
 
   const hasImages = allImages.length > 0;
 
   // ── Render ──────────────────────────────────────────────────────────────────
+  const bodyClamp = heroBodyClampClass(effectiveSpec.textWeight, essayExpanded);
+  const showReadMore =
+    effectiveSpec.textWeight === "essay" && !essayExpanded && Boolean(entry.content?.trim());
+
   return (
     <article
       onClick={handleCardClick}
-      className="group relative w-full cursor-pointer"
+      className={cn(
+        "group relative w-full cursor-pointer",
+        effectiveSpec.prominence === "elevated" && "shadow-card-elevated",
+      )}
     >
       {/* Magazine spread: two-column on desktop, stacked on mobile */}
       <div className={cn(
@@ -214,9 +276,28 @@ export function FeedHeroCard({
 
           {/* Review excerpt */}
           {entry.content && (
-            <p className="text-base leading-relaxed text-text-secondary max-w-md mb-6 line-clamp-4">
-              {entry.content}
-            </p>
+            <div className="max-w-md mb-6">
+              <p
+                className={cn(
+                  "text-base leading-relaxed text-text-secondary",
+                  bodyClamp,
+                )}
+              >
+                {entry.content}
+              </p>
+              {showReadMore && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEssayExpanded(true);
+                  }}
+                  className="mt-2 text-xs font-medium uppercase tracking-widest text-text-primary hover:text-text-secondary"
+                >
+                  Read more →
+                </button>
+              )}
+            </div>
           )}
 
           {/* User attribution + bookmark */}

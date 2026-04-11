@@ -10,6 +10,8 @@ interface Window {
 interface ImportMetaEnv {
   readonly VITE_GA_MEASUREMENT_ID?: string;
   readonly VITE_SENTRY_DSN?: string;
+  /** Comma-separated emails allowed to open `/superadmin/cards` without `admin` / `app_admin` role. */
+  readonly VITE_SUPERADMIN_EMAILS?: string;
 }
 
 declare const __APP_VERSION__: string;

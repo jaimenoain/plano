@@ -83,6 +83,7 @@ const FlaggedCredits = lazyWithRetry(() => import("@/features/admin/pages/Flagge
 const AdminPeople = lazyWithRetry(() => import("@/features/admin/pages/AdminPeople"));
 const AdminCompanies = lazyWithRetry(() => import("@/features/admin/pages/AdminCompanies"));
 const Unauthorized = lazyWithRetry(() => import("@/features/admin/pages/Unauthorized"));
+const CardPlayground = lazyWithRetry(() => import("@/features/superadmin/pages/CardPlayground"));
 
 import { AdminGuard } from "@/features/admin/components/AdminGuard";
 import AdminLayout from "@/features/admin/components/AdminLayout";
@@ -207,6 +208,7 @@ const router = createBrowserRouter(
 
         <Route path="/portfolio" element={<PersonDashboard />} />
         <Route path="/company-portfolio" element={<CompanyDashboard />} />
+        <Route path="/superadmin/cards" element={<CardPlayground />} />
         <Route path="/architect/dashboard" element={<ArchitectDashboardRedirect />} />
         <Route
           path="/architect/:id"

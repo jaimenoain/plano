@@ -1,13 +1,15 @@
+import { resolveCardSpec } from "@/features/feed/utils/resolveCardSpec";
 import { FeedReview } from "@/types/feed";
 import type { CardSpec } from "@/types/cards";
 import { differenceInHours } from "date-fns";
 
 export type RowCell =
-  | { type: "compact"; entry: FeedReview }
+  | { type: "compact"; entry: FeedReview; spec?: CardSpec }
   | {
       type: "activity";
       entry: FeedReview;
       activityStatus: "visited" | "pending";
+      spec?: CardSpec;
     };
 
 /**
@@ -55,8 +57,16 @@ export function collapseIntoRows(items: AggregatedFeedItem[]): AggregatedFeedIte
       if (next?.type === "compact") {
         out.push({
           type: "row",
-          left: { type: "compact", entry: cur.entry },
-          right: { type: "compact", entry: next.entry },
+          left: {
+            type: "compact",
+            entry: cur.entry,
+            ...(cur.spec !== undefined ? { spec: cur.spec } : {}),
+          },
+          right: {
+            type: "compact",
+            entry: next.entry,
+            ...(next.spec !== undefined ? { spec: next.spec } : {}),
+          },
         });
         i += 2;
       } else {
@@ -75,11 +85,13 @@ export function collapseIntoRows(items: AggregatedFeedItem[]): AggregatedFeedIte
             type: "activity",
             entry: cur.entry,
             activityStatus: cur.activityStatus,
+            ...(cur.spec !== undefined ? { spec: cur.spec } : {}),
           },
           right: {
             type: "activity",
             entry: next.entry,
             activityStatus: next.activityStatus,
+            ...(next.spec !== undefined ? { spec: next.spec } : {}),
           },
         });
         i += 2;
@@ -102,7 +114,7 @@ export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[] {
 
     if (pendingCluster.length < 2) {
       pendingCluster.forEach((entry) => {
-        aggregated.push({ type: "compact", entry });
+        aggregated.push({ type: "compact", entry, spec: resolveCardSpec(entry) });
       });
     } else {
       const cities = new Set(
@@ -152,6 +164,7 @@ export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[] {
         type: "activity",
         entry: review,
         activityStatus: review.status === "visited" ? "visited" : "pending",
+        spec: resolveCardSpec(review),
       });
       continue;
     }
@@ -160,7 +173,7 @@ export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[] {
 
     if (hasUserImages) {
       flushCluster();
-      aggregated.push({ type: "hero", entry: review });
+      aggregated.push({ type: "hero", entry: review, spec: resolveCardSpec(review) });
       continue;
     }
 
