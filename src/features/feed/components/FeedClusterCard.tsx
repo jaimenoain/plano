@@ -60,7 +60,7 @@ export function FeedClusterCard({
             <span className="text-xs text-text-disabled">
               {entry.status === "pending" ? "saved" : "visited"}
             </span>
-            <span className="text-base font-semibold text-text-primary leading-tight">
+            <span className="text-lg font-semibold text-text-primary leading-tight">
               {entry.building.name}
             </span>
           </div>

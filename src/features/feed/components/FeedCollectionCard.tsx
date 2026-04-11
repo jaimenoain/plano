@@ -69,7 +69,7 @@ export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
         </span>
 
         {/* Collection name */}
-        <h3 className="text-2xl font-semibold tracking-tight text-text-primary mt-1">
+        <h3 className="text-3xl font-semibold tracking-tight text-text-primary mt-1">
           {collection.name}
         </h3>
 

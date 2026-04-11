@@ -66,7 +66,7 @@ export function DiscoveryBuildingCard({
         {/* Content */}
         <div className="flex flex-col flex-1 p-3 justify-center min-w-0">
           <div className="flex flex-col pr-6">
-            <h3 className="font-black text-xl leading-tight tracking-tight line-clamp-2 group-hover:opacity-75 transition-opacity">
+            <h3 className="font-black text-2xl leading-tight tracking-tight line-clamp-2 group-hover:opacity-75 transition-opacity">
               {building.name}
             </h3>
             {building.alt_name && building.alt_name !== building.name && (

@@ -286,10 +286,10 @@ export function ReviewCardFeed({
       <h2
         className={`font-display font-black tracking-tight leading-none text-text-primary ${
           isCompact
-            ? "text-base leading-tight"
+            ? "text-lg leading-tight"
             : effectiveSpec.prominence === "elevated"
-            ? "text-5xl md:text-6xl mb-1.5"
-            : "text-3xl md:text-4xl mb-1"
+            ? "text-6xl md:text-7xl mb-1.5"
+            : "text-4xl md:text-5xl mb-1"
         }`}
       >
         {mainTitle}

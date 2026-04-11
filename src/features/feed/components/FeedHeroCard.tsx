@@ -256,7 +256,7 @@ export function FeedHeroCard({
           </span>
 
           {/* Building name — editorial scale */}
-          <h2 className="font-display text-3xl md:text-5xl lg:text-6xl font-black tracking-tight leading-none text-text-primary mb-3">
+          <h2 className="font-display text-4xl md:text-6xl lg:text-7xl font-black tracking-tight leading-none text-text-primary mb-3">
             {mainTitle}
           </h2>
 

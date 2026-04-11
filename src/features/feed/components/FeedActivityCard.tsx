@@ -95,8 +95,8 @@ export function FeedActivityCard({
           className={cn(
             "font-black tracking-tight text-text-primary mt-0.5",
             isHero
-              ? "text-2xl md:text-3xl leading-none"
-              : "text-xl leading-tight",
+              ? "text-3xl md:text-4xl leading-none"
+              : "text-2xl leading-tight",
           )}
         >
           {mainTitle}

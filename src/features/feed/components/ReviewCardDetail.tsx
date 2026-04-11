@@ -139,7 +139,7 @@ export function ReviewCardDetail({
           {/* Building headline — suppressed on building detail page */}
           {!hideBuildingInfo && (
             <div className="mb-2">
-              <h3 className="text-base font-bold tracking-tight text-text-primary leading-tight">
+              <h3 className="text-lg font-bold tracking-tight text-text-primary leading-tight">
                 {mainTitle}
               </h3>
               {(subTitle || city) && (

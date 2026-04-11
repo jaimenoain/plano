@@ -89,7 +89,7 @@ export function FeedCompactCard({
         </span>
 
         {/* Building name — editorial scale */}
-        <h3 className="text-2xl font-semibold tracking-tight leading-tight text-text-primary mt-1">
+        <h3 className="text-3xl font-semibold tracking-tight leading-tight text-text-primary mt-1">
           {mainTitle}
         </h3>
 

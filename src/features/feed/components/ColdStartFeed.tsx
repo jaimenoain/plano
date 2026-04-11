@@ -70,7 +70,7 @@ function FeaturedBuildingCard({ review }: { review: FeedReview }) {
               {building.country ? `, ${building.country}` : ""}
             </p>
           )}
-          <h3 className="text-lg font-bold leading-tight text-text-primary group-hover:underline underline-offset-2">
+          <h3 className="text-xl font-bold leading-tight text-text-primary group-hover:underline underline-offset-2">
             {building.name}
           </h3>
           {creditLine && (
