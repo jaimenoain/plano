@@ -1,14 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
-import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
 import { SuggestedContentBlock } from "@/features/feed/components/SuggestedContentBlock";
 import {
   ActivityLead,
@@ -26,45 +21,34 @@ function countWords(text: string | null | undefined): number {
   return t.split(/\s+/).length;
 }
 
-export interface CardTypeAProps {
+export interface FeedCardAProps {
   entry: FeedReview;
-  /** Hide stream attribution when the author is shown elsewhere (e.g. profile). */
   hideUser?: boolean;
-  /** Hide building title block when the page is already building-scoped. */
   hideBuildingInfo?: boolean;
-  /** Passed through to {@link useReviewCardData} for hero/community thumbnail fallback. */
   showCommunityImages?: boolean;
   onLike?: (reviewId: string) => void;
   onComment?: (reviewId: string) => void;
 }
 
 /**
- * Text-only feed card: attribution, building lockup, points, excerpt with optional expand, actions.
+ * Feed — review without photo (Type A).
  */
-export function CardTypeA({
+export function FeedCardA({
   entry,
   hideUser = false,
   hideBuildingInfo = false,
   showCommunityImages = true,
   onLike,
   onComment,
-}: CardTypeAProps) {
+}: FeedCardAProps) {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const { statuses } = useUserBuildingStatuses();
-  const queryClient = useQueryClient();
   const [essayExpanded, setEssayExpanded] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [showReadMore, setShowReadMore] = useState(false);
   const [isNarrowViewport, setIsNarrowViewport] = useState(false);
   const bodyRef = useRef<HTMLParagraphElement>(null);
   const contentWordCount = countWords(entry.content);
 
-  const { data } = useReviewCardData(entry, {
-    variant: "default",
-    showCommunityImages,
-  });
+  const { data } = useReviewCardData(entry, { showCommunityImages });
 
   useEffect(() => {
     setEssayExpanded(false);
@@ -106,30 +90,6 @@ export function CardTypeA({
 
   const { username, isArchitectOfBuilding, mainTitle, subTitle, city } = data;
   const userActionVerb = entry.status === "pending" ? "wants to visit" : "visited";
-  const isSavedToList = statuses[entry.building.id] === "pending";
-
-  const handleSave = async () => {
-    if (!user || !entry.building?.id) return;
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from("user_buildings").upsert(
-        {
-          user_id: user.id,
-          building_id: entry.building.id,
-          status: "pending",
-          edited_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,building_id" },
-      );
-      if (error) throw error;
-      toast({ title: "Saved to your list" });
-      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-    } catch {
-      toast({ variant: "destructive", title: "Failed to save" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -154,7 +114,7 @@ export function CardTypeA({
   return (
     <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
       <article
-        data-testid={`card-type-a-${entry.id}`}
+        data-testid={`feed-card-a-${entry.id}`}
         onClick={handleCardClick}
         className={cn(
           "group/card relative w-full cursor-pointer min-w-0 max-w-full",
@@ -164,7 +124,7 @@ export function CardTypeA({
         <div className="flex max-w-xl flex-col gap-3">
           <ActivityLead username={username} verb={userActionVerb} hideUser={hideUser} />
 
-          {!hideBuildingInfo && <BuildingHeadline name={mainTitle} size="xl" />}
+          {!hideBuildingInfo && <BuildingHeadline name={mainTitle} size="hero" />}
 
           {!hideBuildingInfo && (
             <BuildingSubtitle subTitle={subTitle ?? undefined} city={city} />
@@ -207,14 +167,12 @@ export function CardTypeA({
             likesCount={entry.likes_count}
             commentsCount={entry.comments_count}
             isLiked={Boolean(entry.is_liked)}
-            isSaved={isSavedToList}
+            buildingId={entry.building.id}
             onLike={() => {
               onLike?.(entry.id);
               window.dispatchEvent(new CustomEvent("pwa-interaction"));
             }}
             onComment={handleComment}
-            onSave={() => void handleSave()}
-            isSaving={isSaving}
           />
         </div>
       </article>

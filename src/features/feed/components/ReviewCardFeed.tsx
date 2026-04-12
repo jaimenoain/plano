@@ -1,8 +1,8 @@
 import type { FeedReview } from "@/types/feed";
 import { resolveCardType } from "@/features/feed/utils/resolveCardType";
-import { CardTypeA } from "./CardTypeA";
-import { CardTypeB } from "./CardTypeB";
-import { CardTypeC } from "./CardTypeC";
+import { FeedCardA } from "./FeedCardA";
+import { FeedCardB } from "./FeedCardB";
+import { FeedCardC } from "./FeedCardC";
 import { ActivityStreamGroup } from "./ActivityStream";
 
 export interface ReviewCardFeedProps {
@@ -34,7 +34,7 @@ export function ReviewCardFeed({
     t === "activity" ? (
       <ActivityStreamGroup entries={[entry]} />
     ) : t === "A" ? (
-      <CardTypeA
+      <FeedCardA
         entry={entry}
         hideUser={hideUser}
         hideBuildingInfo={hideBuildingInfo}
@@ -42,7 +42,7 @@ export function ReviewCardFeed({
         onComment={onComment}
       />
     ) : t === "B" ? (
-      <CardTypeB
+      <FeedCardB
         entry={entry}
         index={index}
         hideUser={hideUser}
@@ -52,7 +52,7 @@ export function ReviewCardFeed({
         onImageLike={onImageLike}
       />
     ) : (
-      <CardTypeC
+      <FeedCardC
         entry={entry}
         hideUser={hideUser}
         hideBuildingInfo={hideBuildingInfo}

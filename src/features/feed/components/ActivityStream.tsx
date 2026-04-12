@@ -1,12 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { Bookmark } from "lucide-react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { ActivityLead } from "@/features/feed/components/card-parts/ActivityLead";
-import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
+import { CardBookmark } from "@/features/feed/components/card-primitives";
 import { cn } from "@/lib/utils";
 import type { FeedReview } from "@/types/feed";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -15,6 +10,9 @@ import { getBuildingUrl } from "@/utils/url";
 export interface ActivityStreamRowProps {
   entry: FeedReview;
 }
+
+/** Legacy alias for `ActivityStreamRow` props; prefer naming new code `FeedActivityRow`. */
+export type FeedActivityRowProps = ActivityStreamRowProps;
 
 function buildingThumbSrc(entry: FeedReview): string | undefined {
   const b = entry.building;
@@ -29,43 +27,14 @@ function buildingThumbSrc(entry: FeedReview): string | undefined {
  */
 export function ActivityStreamRow({ entry }: ActivityStreamRowProps) {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const { statuses } = useUserBuildingStatuses();
-  const queryClient = useQueryClient();
-  const [isSaving, setIsSaving] = useState(false);
   const [thumbFailed, setThumbFailed] = useState(false);
 
   if (!entry.building) return null;
 
   const username = entry.user?.username?.trim() || "Unknown User";
   const verb = entry.status === "pending" ? "wants to visit" : "visited";
-  const isSavedToList = statuses[entry.building.id] === "pending";
   const thumbUrl = buildingThumbSrc(entry);
   const showPlaceholder = !thumbUrl || thumbFailed;
-
-  const handleSave = async () => {
-    if (!user || !entry.building?.id) return;
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from("user_buildings").upsert(
-        {
-          user_id: user.id,
-          building_id: entry.building.id,
-          status: "pending",
-          edited_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,building_id" },
-      );
-      if (error) throw error;
-      toast({ title: "Saved to your list" });
-      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-    } catch {
-      toast({ variant: "destructive", title: "Failed to save" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const goBuilding = () => {
     navigate(getBuildingUrl(entry.building!.id, entry.building!.slug, entry.building!.short_id));
@@ -88,9 +57,9 @@ export function ActivityStreamRow({ entry }: ActivityStreamRowProps) {
           goBuilding();
         }
       }}
-      className={cn("group/activity-row flex cursor-pointer items-center gap-3 py-3 md:gap-4")}
+      className={cn("group/activity-row flex cursor-pointer items-center gap-4 py-3")}
     >
-      <div className="h-10 w-10 shrink-0 overflow-hidden bg-surface-muted md:h-12 md:w-12">
+      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-none bg-surface-muted">
         {showPlaceholder ? null : (
           <img
             src={thumbUrl}
@@ -102,47 +71,31 @@ export function ActivityStreamRow({ entry }: ActivityStreamRowProps) {
       </div>
       <div className="min-w-0 flex-1">
         <ActivityLead username={username} verb={verb} className="mb-1" />
-        <p className="truncate font-sans text-lg font-black leading-none tracking-tight text-text-primary md:text-[1.3125rem]">
+        <p className="line-clamp-1 font-sans text-2xl font-black leading-none tracking-tight text-text-primary">
           {entry.building.name}
         </p>
       </div>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          void handleSave();
-        }}
-        disabled={isSaving}
-        aria-label={isSavedToList ? "Saved to your list" : "Save building to your list"}
-        title={isSavedToList ? "Saved to your list" : "Save to your list"}
-        className={cn(
-          "ml-auto shrink-0 rounded-sm p-1 text-text-secondary transition-colors hover:text-text-primary",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1",
-          "opacity-100 md:opacity-0 md:transition-opacity md:group-hover/activity-row:opacity-100 md:focus-visible:opacity-100",
-          isSaving && "pointer-events-none opacity-50",
-        )}
-      >
-        <Bookmark
-          className={cn("h-4 w-4", isSavedToList && "fill-text-primary text-text-primary")}
-          strokeWidth={1.75}
-          aria-hidden
-        />
-      </button>
+      <CardBookmark buildingId={entry.building.id} hoverGroup="activity-row" />
     </div>
   );
 }
 
+/** Plan name for activity stream row */
+export const FeedActivityRow = ActivityStreamRow;
+
 export interface ActivityStreamGroupProps {
   entries: FeedReview[];
+  /** When true, never render the small "Activity" group label (parent supplies section title). */
+  hideGroupLabel?: boolean;
 }
 
 /**
  * Consecutive activity entries: optional "Activity" label + hairline-separated rows.
  */
-export function ActivityStreamGroup({ entries }: ActivityStreamGroupProps) {
+export function ActivityStreamGroup({ entries, hideGroupLabel = false }: ActivityStreamGroupProps) {
   if (entries.length === 0) return null;
 
-  const showLabel = entries.length > 1;
+  const showLabel = !hideGroupLabel && entries.length > 1;
 
   return (
     <div className="w-full min-w-0">

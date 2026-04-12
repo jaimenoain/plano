@@ -1,14 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
 import { useNavigate } from "react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
-import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
 import { SuggestedContentBlock } from "@/features/feed/components/SuggestedContentBlock";
 import {
   ActivityLead,
@@ -22,9 +17,8 @@ import { CARD_B_HEIGHT, CARD_C_IMAGE_HEIGHT } from "@/features/feed/utils/resolv
 
 const MD_MEDIA_QUERY = "(min-width: 768px)";
 
-export interface CardTypeBProps {
+export interface FeedCardBProps {
   entry: FeedReview;
-  /** Feed position for alternating image left/right when `imagePosition` is omitted. */
   index?: number;
   imagePosition?: "left" | "right";
   hideUser?: boolean;
@@ -36,9 +30,9 @@ export interface CardTypeBProps {
 }
 
 /**
- * Review + media: two-column 320px grid on md+, stacked image strip on small screens.
+ * Feed — review with photo(s) / video (Type B). Fixed 320px row height on md+.
  */
-export function CardTypeB({
+export function FeedCardB({
   entry,
   index = 0,
   imagePosition,
@@ -48,22 +42,14 @@ export function CardTypeB({
   onLike,
   onComment,
   onImageLike,
-}: CardTypeBProps) {
+}: FeedCardBProps) {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const { statuses } = useUserBuildingStatuses();
-  const queryClient = useQueryClient();
   const [essayExpanded, setEssayExpanded] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [showReadMore, setShowReadMore] = useState(false);
   const [cardImageHeight, setCardImageHeight] = useState(CARD_C_IMAGE_HEIGHT);
   const bodyRef = useRef<HTMLParagraphElement>(null);
 
-  const { data } = useReviewCardData(entry, {
-    variant: "default",
-    showCommunityImages,
-  });
+  const { data } = useReviewCardData(entry, { showCommunityImages });
 
   useLayoutEffect(() => {
     const mq = window.matchMedia(MD_MEDIA_QUERY);
@@ -107,30 +93,6 @@ export function CardTypeB({
 
   const { username, isArchitectOfBuilding, mainTitle, subTitle, city, mediaItems } = data;
   const userActionVerb = entry.status === "pending" ? "wants to visit" : "visited";
-  const isSavedToList = statuses[entry.building.id] === "pending";
-
-  const handleSave = async () => {
-    if (!user || !entry.building?.id) return;
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from("user_buildings").upsert(
-        {
-          user_id: user.id,
-          building_id: entry.building.id,
-          status: "pending",
-          edited_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,building_id" },
-      );
-      if (error) throw error;
-      toast({ title: "Saved to your list" });
-      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-    } catch {
-      toast({ variant: "destructive", title: "Failed to save" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleCardClick = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -155,7 +117,7 @@ export function CardTypeB({
   return (
     <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
       <article
-        data-testid={`card-type-b-${entry.id}`}
+        data-testid={`feed-card-b-${entry.id}`}
         onClick={handleCardClick}
         className={cn(
           "group/card relative w-full cursor-pointer min-w-0 max-w-full",
@@ -183,8 +145,8 @@ export function CardTypeB({
           </div>
           <div
             className={cn(
-              "order-2 flex min-h-0 min-w-0 flex-col gap-3 overflow-hidden py-5 px-0 md:h-full md:min-h-0 md:py-7",
-              imageOnLeft ? "md:order-2 md:pl-10" : "md:order-1 md:pr-10",
+              "order-2 flex min-h-0 min-w-0 flex-col gap-3 overflow-hidden py-5 px-0 md:h-full md:min-h-0 md:py-8",
+              imageOnLeft ? "md:order-2 md:pl-10 md:pr-10" : "md:order-1 md:pl-10 md:pr-10",
             )}
           >
             <div className="flex shrink-0 flex-col gap-3">
@@ -229,14 +191,12 @@ export function CardTypeB({
               likesCount={entry.likes_count}
               commentsCount={entry.comments_count}
               isLiked={Boolean(entry.is_liked)}
-              isSaved={isSavedToList}
+              buildingId={entry.building.id}
               onLike={() => {
                 onLike?.(entry.id);
                 window.dispatchEvent(new CustomEvent("pwa-interaction"));
               }}
               onComment={handleComment}
-              onSave={() => void handleSave()}
-              isSaving={isSaving}
             />
           </div>
         </div>

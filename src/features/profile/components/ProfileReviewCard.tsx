@@ -1,6 +1,6 @@
-import { CardTypeA } from "@/features/feed/components/CardTypeA";
-import { CardTypeB } from "@/features/feed/components/CardTypeB";
-import { CardTypeC } from "@/features/feed/components/CardTypeC";
+import { FeedCardA } from "@/features/feed/components/FeedCardA";
+import { FeedCardB } from "@/features/feed/components/FeedCardB";
+import { FeedCardC } from "@/features/feed/components/FeedCardC";
 import { ActivityStreamGroup } from "@/features/feed/components/ActivityStream";
 import { resolveCardType } from "@/features/feed/utils/resolveCardType";
 import type { FeedReview } from "@/types/feed";
@@ -38,10 +38,10 @@ export function ProfileReviewCard({
   };
   switch (t) {
     case "A":
-      return <CardTypeA entry={entry} {...shared} />;
+      return <FeedCardA entry={entry} {...shared} />;
     case "B":
       return (
-        <CardTypeB
+        <FeedCardB
           entry={entry}
           {...shared}
           index={index}
@@ -50,7 +50,7 @@ export function ProfileReviewCard({
         />
       );
     case "C":
-      return <CardTypeC entry={entry} {...shared} onImageLike={onImageLike} />;
+      return <FeedCardC entry={entry} {...shared} onImageLike={onImageLike} />;
     default: {
       const _u: never = t;
       return _u;

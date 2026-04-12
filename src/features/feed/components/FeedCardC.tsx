@@ -1,14 +1,9 @@
-import { useState, type MouseEvent } from "react";
+import { type MouseEvent } from "react";
 import { useNavigate } from "react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
-import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
 import { SuggestedContentBlock } from "@/features/feed/components/SuggestedContentBlock";
 import {
   ActivityLead,
@@ -19,7 +14,7 @@ import {
 } from "@/features/feed/components/card-parts";
 import { CARD_C_IMAGE_HEIGHT } from "@/features/feed/utils/resolveCardType";
 
-export interface CardTypeCProps {
+export interface FeedCardCProps {
   entry: FeedReview;
   hideUser?: boolean;
   hideBuildingInfo?: boolean;
@@ -30,9 +25,9 @@ export interface CardTypeCProps {
 }
 
 /**
- * Media-only feed card: fixed-height strip, building lockup, actions — no rating chip or body.
+ * Feed — photos only (Type C).
  */
-export function CardTypeC({
+export function FeedCardC({
   entry,
   hideUser = false,
   hideBuildingInfo = false,
@@ -40,47 +35,15 @@ export function CardTypeC({
   onLike,
   onComment,
   onImageLike,
-}: CardTypeCProps) {
+}: FeedCardCProps) {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const { statuses } = useUserBuildingStatuses();
-  const queryClient = useQueryClient();
-  const [isSaving, setIsSaving] = useState(false);
 
-  const { data } = useReviewCardData(entry, {
-    variant: "default",
-    showCommunityImages,
-  });
+  const { data } = useReviewCardData(entry, { showCommunityImages });
 
   if (!data || !entry.building) return null;
 
   const { username, isArchitectOfBuilding, mainTitle, subTitle, city, mediaItems } = data;
   const userActionVerb = entry.status === "pending" ? "wants to visit" : "visited";
-  const isSavedToList = statuses[entry.building.id] === "pending";
-
-  const handleSave = async () => {
-    if (!user || !entry.building?.id) return;
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from("user_buildings").upsert(
-        {
-          user_id: user.id,
-          building_id: entry.building.id,
-          status: "pending",
-          edited_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,building_id" },
-      );
-      if (error) throw error;
-      toast({ title: "Saved to your list" });
-      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-    } catch {
-      toast({ variant: "destructive", title: "Failed to save" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   const handleCardClick = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -105,7 +68,7 @@ export function CardTypeC({
   return (
     <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
       <article
-        data-testid={`card-type-c-${entry.id}`}
+        data-testid={`feed-card-c-${entry.id}`}
         onClick={handleCardClick}
         className={cn(
           "group/card relative w-full cursor-pointer min-w-0 max-w-full",
@@ -120,7 +83,7 @@ export function CardTypeC({
         />
         <div className="flex max-w-xl flex-col gap-3 pt-4">
           <ActivityLead username={username} verb={userActionVerb} hideUser={hideUser} />
-          {!hideBuildingInfo && <BuildingHeadline name={mainTitle} size="md" />}
+          {!hideBuildingInfo && <BuildingHeadline name={mainTitle} size="feedC" />}
           {!hideBuildingInfo && (
             <BuildingSubtitle subTitle={subTitle ?? undefined} city={city} />
           )}
@@ -129,14 +92,12 @@ export function CardTypeC({
             likesCount={entry.likes_count}
             commentsCount={entry.comments_count}
             isLiked={Boolean(entry.is_liked)}
-            isSaved={isSavedToList}
+            buildingId={entry.building.id}
             onLike={() => {
               onLike?.(entry.id);
               window.dispatchEvent(new CustomEvent("pwa-interaction"));
             }}
             onComment={handleComment}
-            onSave={() => void handleSave()}
-            isSaving={isSaving}
           />
         </div>
       </article>

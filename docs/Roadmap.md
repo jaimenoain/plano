@@ -1,165 +1,193 @@
-## Phase 1 — Foundation
+## Phase 1 — Foundation: type system and shared primitives
 
 ---
 
-**[x] Task 1 — Replace card type system with `CardType` discriminator and `resolveCardType`**
+**[ ] Task 1 — Replace card type resolver**
 
-- Delete `CardLayout`, `CardProminence`, `CardTextWeight`, `CardImageWeight`, and `CardSpec` from `src/types/cards.ts`; replace with `export type CardType = 'A' | 'B' | 'C' | 'activity'`
-- Create `src/features/feed/utils/resolveCardType.ts` exporting `resolveCardType(entry: FeedReview): CardType` with the four branches: no content + no images → `'activity'`; images + no content → `'C'`; content + no images → `'A'`; content + images → `'B'`
-- Include null-safe guards for missing `entry.images`, empty `entry.content`, and `video_url` (a video with no review text resolves to `'C'`, with review text resolves to `'B'`)
-- Export two helper constants used by card components: `CARD_B_HEIGHT = 320` (px, the fixed grid height) and `CARD_C_IMAGE_HEIGHT = 185` (px, the fixed image crop height)
-- Write a `resolveCardType.test.ts` covering all four branches plus edge cases (empty string content, images array present but empty)
+- Add `CardType = 'A' | 'B' | 'C' | 'activity'` to `@/types/cards.ts`
+- Write `resolveCardType(entry: FeedReview): CardType` in `@/features/feed/utils/resolveCardType.ts`
+- Logic: `'activity'` if no `content` AND no `images`; `'A'` if `content` but no images; `'B'` if `content` AND images (or video); `'C'` if images but no `content`
+- Add unit tests covering all four branches, including edge cases (empty string content, zero-length images array)
+- **Shipped in repo:** `resolveCardType` + tests live in `src/features/feed/utils/resolveCardType.ts`; `resolveCardSpec` was removed in favor of `deriveLegacyFeedCardLayout` (fixtures only). No further action unless logic diverges from the four branches above.
 
-**Verify:** `resolveCardType` unit tests pass; TypeScript compiler reports no remaining references to the deleted types.
-
-**Dependencies:** None.
+**Verify:** Tests pass; calling `resolveCardType` on representative fixture entries returns expected values for all four types.
 
 ---
 
-**[x] Task 2 — Extract shared card sub-components**
+**[ ] Task 2 — Extract shared card primitives**
 
-- Create `src/features/feed/components/card-parts/` directory with an `index.ts` barrel
-- `ActivityLead.tsx` — renders `username reviewed / visited / wants to visit` at `10px` uppercase tracking with `font-medium` on the username; accepts `username: string`, `verb: string`, `hideUser?: boolean`
-- `BuildingHeadline.tsx` — renders building name with size variant prop `'xl' | 'lg' | 'md'` mapping to `52px / 36px / 28px font-black tracking-tight leading-none`; hard line-clamp: xl = 2, lg = 2, md = 1; accepts `name: string`, `size: 'xl' | 'lg' | 'md'`
-- `BuildingSubtitle.tsx` — renders architect credits, year, city joined with `·` at `10px` uppercase; accepts `subTitle`, `city`, both optional
-- `CardFooter.tsx` — renders likes button, separator, comments button, bookmark; accepts `likesCount`, `commentsCount`, `isLiked`, `isSaved`, `onLike`, `onComment`, `onSave`; bookmark uses `opacity-0 group-hover:opacity-100` on desktop, always visible on mobile
-- Keep `PointsBadge` in place but move it into `card-parts/` and re-export from the barrel
+- Create `@/features/feed/components/card-primitives/PointsBadge.tsx` — lifted directly from any one of the four existing duplicates; no logic changes
+- Create `CardFooter.tsx` in same folder — accepts `likesCount`, `commentsCount`, `isLiked`, `onLike`, `onComment`, optional `onSave` / `isSaved`; renders the `10px uppercase` footer row with bookmark icon
+- Create `CardBookmark.tsx` — the save/unsave button with Supabase write and `useQueryClient` invalidation, extracted from `ReviewCardFeed`; accepts `buildingId`
+- Export all three from `@/features/feed/components/card-primitives/index.ts`
+- Do not modify any existing card components yet
 
-**Verify:** All five components render in isolation with no TypeScript errors; existing components that import `PointsBadge` still compile after the move.
-
-**Dependencies:** Task 1.
+**Verify:** Each primitive renders in isolation (Storybook or a throwaway test page); `CardBookmark` correctly writes to `user_buildings` and invalidates `user-building-statuses`.
 
 ---
 
-**[x] Task 3 — Build `CardImage` — fixed-dimension image/video component**
-
-- Create `src/features/feed/components/card-parts/CardImage.tsx`
-- Accepts `items: ReviewCardMediaItem[]`, `height: number`, `className?: string`, `reviewId: string`, `onImageLike?`
-- If `items` is empty, renders a `bg-surface-muted` placeholder at the specified height
-- Single image: `<img>` at `w-full h-full object-cover rounded-none` inside a `div` styled to `height` px; `onError` falls back to the placeholder
-- Video: renders `<VideoPlayer>` inside a fixed-height container with `overflow-hidden`
-- Two images: `grid grid-cols-2 gap-[2px]` contact sheet, each cell at `height` px, both `object-cover`
-- Three or more images: renders `<FeedPhotoCarousel>` constrained to `height` px
-- Animate image load: starts `opacity-0`, transitions to `opacity-100` on `onLoad` to prevent flash
-
-**Verify:** Renders all four states (empty, single, pair, carousel) at the exact pixel height passed in; `object-cover` confirmed visually by passing a portrait and landscape image.
-
-**Dependencies:** Task 1 (for `ReviewCardMediaItem` type).
+## Phase 2 — Feed cards
 
 ---
 
-## Phase 2 — Card Components
+**[ ] Task 3 — Build `FeedCardA` (review, no photo)**
+
+- Create `@/features/feed/components/FeedCardA.tsx`
+- `article` wrapper: `group/card`, cursor-pointer, left border rule when `isArchitectOfBuilding`
+- ActivityLead: `10px uppercase`, `font-medium` username + lowercase verb
+- Building name: `font-black`, `text-5xl`, `tracking-tight`, `leading-none`, `-webkit-line-clamp: 2`, hard max — never grows beyond 2 lines regardless of content
+- Subtitle line (`architect · year`): `10px uppercase`, `text-secondary`
+- `PointsBadge` from primitives
+- Review body: `text-base`, `leading-relaxed`, hard `-webkit-line-clamp: 3`; "Read more →" button at `9px uppercase` when content exceeds clamp
+- `CardFooter` from primitives; `CardBookmark` wired to `entry.building.id`
+- `onClick` navigates to building or review; stops propagation on all buttons
+
+**Verify:** Renders correctly with 2-word, 50-word, and 400-word review content — card height never changes; clamp and "Read more" appear correctly on long copy.
+
+**Depends on:** Tasks 1, 2
 
 ---
 
-**[x] Task 4 — Build `CardTypeA` — review without photo**
+**[ ] Task 4 — Build `FeedCardB` (review + photos)**
 
-- Create `src/features/feed/components/CardTypeA.tsx`
-- Layout: single full-width column, no grid; `cursor-pointer group/card`
-- Slot order: `ActivityLead` → `BuildingHeadline size="xl"` → `BuildingSubtitle` → `PointsBadge` → review body (`text-base leading-relaxed text-text-secondary`, hard `line-clamp-3`) → "Read more →" button (shown only when content exceeds 3 lines and essay is not expanded) → `CardFooter`
-- Expand-in-place on "Read more →": local `essayExpanded` state removes the clamp; `useEffect` resets it on `entry.id` change
-- Architect-of-building indicator: `border-l-2 border-l-text-primary pl-4` on the root article when `isArchitectOfBuilding` is true
-- Wrap in `<SuggestedContentBlock>` for suggested entry treatment
-- Click handler navigates to building or review; suppresses navigation when a child button is clicked
+- Create `@/features/feed/components/FeedCardB.tsx`
+- Outer layout: `grid grid-cols-2 gap-0 items-stretch` with fixed `height: 320px` — never grows
+- Image column (left or right via `imagePosition` prop): renders one of three sub-layouts based on image count — single image (`object-cover`, fills cell), pair grid (two cells, `gap-[2px]`, each `object-cover`), or `FeedPhotoCarousel` (3+ images); all via `object-cover`, no aspect token needed since height is fixed
+- Text column: `flex flex-col`, `overflow: hidden`, padding `py-8 px-10`; ActivityLead → building name `text-4xl font-black line-clamp-2` → subtitle → `PointsBadge` → body `line-clamp-4` → `CardFooter` pinned to bottom via `mt-auto`
+- Video entries: video fills image column via existing `VideoPlayer`; text column unchanged
+- `isArchitectOfBuilding` left border on the article wrapper
 
-**Verify:** Card renders at roughly 170–200px natural height with three sample entries of varying content length; "Read more →" only appears when content exceeds three lines.
+**Verify:** Renders at exactly 320px with 1, 2, and 3+ images; text column never overflows; pair grid shows 2px gap; footer always sits at bottom of text column.
 
-**Dependencies:** Tasks 1, 2, 3.
-
----
-
-**[x] Task 5 — Build `CardTypeB` — review with photo(s)**
-
-- Create `src/features/feed/components/CardTypeB.tsx`
-- Layout: `grid grid-cols-2 gap-0 items-stretch` with explicit `height={CARD_B_HEIGHT}` (320px) on the grid container; on mobile (`< md`) falls back to single-column stacked layout
-- Image column: `<CardImage items={mediaItems} height={CARD_B_HEIGHT} />` filling the column; `order-1` or `order-2` driven by `index % 2` for feed alternation
-- Text column: flex column with `py-7 pl-10` (image-left) or `pr-10` (image-right); slot order matches Type A minus the xl headline — use `size="lg"`; body clamped to 4 lines; `CardFooter` with `mt-auto` to pin it to the bottom
-- Mobile stacked: image renders at `CARD_C_IMAGE_HEIGHT` (185px) on top, full-width; text below with `py-5 px-0`
-- Accepts `imagePosition?: 'left' | 'right'` as an explicit override (for profile/building detail usage), otherwise derives from index
-- Wrap in `<SuggestedContentBlock>`
-
-**Verify:** At 320px height the text column never overflows or collapses; long building names clamp at 2 lines; footer always aligns to the bottom of the text column; mobile stacks cleanly.
-
-**Dependencies:** Tasks 1, 2, 3.
+**Depends on:** Tasks 1, 2
 
 ---
 
-**[x] Task 6 — Build `CardTypeC` — photos only, no review**
+**[ ] Task 5 — Build `FeedCardC` (photos only, no review)**
 
-- Create `src/features/feed/components/CardTypeC.tsx`
-- Layout: full-width `<CardImage items={mediaItems} height={CARD_C_IMAGE_HEIGHT} />` (185px); text block below with `pt-4`
-- Text slot order: `ActivityLead` → `BuildingHeadline size="md"` (single-line clamp) → `BuildingSubtitle` → `CardFooter`
-- No `PointsBadge`, no body text, no "Read more →"
-- Total natural height ~260–270px
-- Same architect indicator, `SuggestedContentBlock` wrap, and click handler as the other types
+- Create `@/features/feed/components/FeedCardC.tsx`
+- Image block: fixed `height: 185px`, `width: 100%`, `object-cover`, `overflow: hidden`, `rounded-none`; single image, pair grid (`gap-[2px]`), or carousel depending on image count — same sub-layout logic as Task 4 image column
+- Below image: ActivityLead at `10px uppercase`, building name `text-3xl font-black line-clamp-1`, subtitle `10px uppercase`
+- `CardFooter` with bookmark; no body text, no "Read more", no `PointsBadge`
+- Card total height controlled: image 185px + text block ~85px ≈ 270px fixed feel
 
-**Verify:** Image always 185px regardless of photo dimensions; building name never wraps to a second line; card height is consistent across multiple entries.
+**Verify:** Card never grows beyond ~270px regardless of building name length (line-clamp-1 enforces this); renders cleanly with 1, 2, and 3+ images.
 
-**Dependencies:** Tasks 1, 2, 3.
-
----
-
-**[x] Task 7 — Build `ActivityStreamRow` and `ActivityStreamGroup`**
-
-- Create `src/features/feed/components/ActivityStream.tsx` exporting both components
-- `ActivityStreamRow`: `flex items-center gap-4` row; 48×48 building thumbnail (`object-cover`, `bg-surface-muted` fallback); text block with `stream-meta` line (`10px` uppercase — `@username visited`) and building name (`21px font-black tracking-tight`, single-line truncated); bookmark icon right-aligned; `border-b border-border-default`; click navigates to building
-- `ActivityStreamGroup`: accepts `entries: FeedReview[]`; renders a `9px` uppercase `font-mono` section label ("Activity") above the rows; no outer card chrome — just rows separated by hairlines
-- Group label should suppress when the group contains only one entry (single "visited" feels less like a stream)
-- Bookmark in rows wires to the same `user_buildings` upsert as other cards
-
-**Verify:** Three activity entries render as a group at roughly 72px per row; label appears only for groups of two or more; thumbnail falls back to placeholder cleanly.
-
-**Dependencies:** Tasks 1, 2.
+**Depends on:** Tasks 1, 2
 
 ---
 
-## Phase 3 — Feed Integration
+**[ ] Task 6 — Build `FeedActivityRow` (grouped activity stream)**
+
+- Create `@/features/feed/components/FeedActivityRow.tsx`
+- Accepts a single `entry: FeedReview` (caller groups multiples externally for now)
+- Layout: `flex items-center gap-4`, `border-b border-border-default`, `py-3`
+- Thumbnail: `48×48`, `object-cover`, `rounded-none`, building image fallback to `surface-muted`
+- Meta line: `10px uppercase` — bold usernames, normal-case verb ("visited" / "wants to visit")
+- Building name: `text-2xl font-black tracking-tight line-clamp-1`
+- `CardBookmark` at far right; no likes/comments footer (not a content contribution)
+- `onClick` navigates to building
+
+**Verify:** Renders without overflow at any building name length; bookmark wires correctly; clicking navigates.
+
+**Depends on:** Tasks 1, 2
 
 ---
 
-**[x] Task 8 — Wire new card components into the main feed renderer**
-
-- Locate the feed render loop (likely in `FeedList.tsx` or similar) that currently maps entries to `ReviewCardFeed` or `FeedHeroCard`
-- Replace with a `renderFeedEntry(entry, index)` function that calls `resolveCardType(entry)` and switches to `CardTypeA`, `CardTypeB`, `CardTypeC`, or queues the entry for grouping
-- Implement activity grouping: accumulate consecutive `'activity'` entries into a buffer; flush the buffer as an `<ActivityStreamGroup>` whenever a non-activity entry is encountered or the list ends
-- Pass `index` to `CardTypeB` so alternating image position works across the full feed
-- Preserve the `onLike`, `onImageLike`, `onComment` callbacks, passing them through to whichever card component is rendered
-- Wrap each rendered card in a `<div key={entry.id}>` with a bottom hairline `border-b border-border-default` and `pb-10 mb-10` spacing; activity groups get the same outer spacing
-
-**Verify:** Load the main feed — all card types render correctly; consecutive activity entries collapse into a single group; no layout shifts or double-borders between cards.
-
-**Dependencies:** Tasks 4, 5, 6, 7.
+## Phase 3 — Detail page cards
 
 ---
 
-**[x] Task 9 — Update profile grid and building detail to use new card components**
+**[ ] Task 7 — Build shared `DetailByline` component**
 
-- Profile grid: currently uses `ReviewCardFeed variant="compact"` — replace with the appropriate resolved card type but pass `hideUser={true}` to suppress `ActivityLead` (the profile context makes the author implicit); pass `hideBuildingInfo={false}`
-- Building detail review list: currently uses `ReviewCardDetail` — keep `ReviewCardDetail` for now but pass the new `CardTypeA` / `CardTypeB` / `CardTypeC` depending on `resolveCardType`; pass `hideBuildingInfo={true}` so the building headline is suppressed (it's already the page context)
-- Add `hideUser?: boolean` and `hideBuildingInfo?: boolean` props to all three new card components; when `hideBuildingInfo` is true, suppress `BuildingHeadline` and `BuildingSubtitle`; when `hideUser` is true, suppress `ActivityLead`
-- Confirm `FeedActivityCard` (the old activity card used in some profile surfaces) is replaced or wired to `ActivityStreamRow`
+- Create `@/features/feed/components/detail/DetailByline.tsx`
+- Props: `username`, `avatarUrl`, `isVerifiedArchitect`, `isArchitectOfBuilding`, `timestamp`, `followersCount`, `userId`, `showFollow?: boolean`
+- Avatar: `44px` circle, `border border-border-default`, initials fallback (first char of username, `text-sm font-semibold text-secondary`)
+- Username: `text-xl font-black tracking-tight leading-none`
+- Badge logic: if `isArchitectOfBuilding` → filled black `"Designed this"` badge; else if `isVerifiedArchitect` → outlined `"Architect"` badge; never both
+- Meta row below name: `10px uppercase text-tertiary` — timestamp + follower count when available
+- `FollowButton` (existing component) at far right when `showFollow` is true and viewer is not the author
+- Hairline `<hr>` (`border-t border-border-default`) rendered below the byline block as part of this component
 
-**Verify:** Profile page renders cards without username labels and without double-building-name; building detail review list suppresses the redundant building headline; no prop-drilling TypeScript errors.
+**Verify:** Renders all four variants — plain reviewer, verified architect, architect-of-building, self (no follow button); hairline always present below.
 
-**Dependencies:** Tasks 4, 5, 6, 7, 8.
+**Depends on:** Task 2
 
 ---
 
-## Phase 4 — Responsive & Polish
+**[ ] Task 8 — Build `DetailCardA` (reviewer-forward, no photo)**
+
+- Create `@/features/feed/components/detail/DetailCardA.tsx`
+- `article` wrapper: left border `border-l-2 border-l-text-primary pl-4` when `isArchitectOfBuilding`
+- `DetailByline` at top (Task 7)
+- `PointsBadge` from primitives
+- Review body: `text-base leading-relaxed`, hard `line-clamp-5`; "Read more →" at `9px uppercase`
+- `CardFooter` from primitives; no bookmark (viewer is on building page already, save is contextually available elsewhere)
+- `onClick` navigates to `/review/:id` for full review
+
+**Verify:** Left border appears only for architect-of-building; body clamps at 5 lines; "Read more" appears on long content.
+
+**Depends on:** Tasks 2, 7
 
 ---
 
-**[x] Task 10 — Mobile responsive treatment for Type B and hover states across all types**
+**[ ] Task 9 — Build `DetailCardB` (reviewer-forward, with photos)**
 
-- Type B mobile: confirm the `md:grid-cols-2` breakpoint collapses to single column; verify image stacks above text at `CARD_C_IMAGE_HEIGHT`; verify text column padding resets to `py-5 px-0` (no left/right indent in stacked mode)
-- All types: image `hover:scale-105 transition-transform duration-500` on the `<img>` inside `CardImage` (already in existing code, carry forward)
-- Bookmark: `opacity-0 md:group-hover/card:opacity-100 transition-opacity` on desktop; always `opacity-100` on mobile (touch devices have no hover)
-- "Read more →" should not appear on mobile for Type A if the entry has < 120 words — the 3-line clamp is already generous on a narrow viewport; add a word-count threshold guard to the expanded state logic
-- Activity stream rows: on mobile, reduce thumbnail to 40×40 and building name to `18px` to prevent overflow on narrow screens
+- Create `@/features/feed/components/detail/DetailCardB.tsx`
+- Fixed `height: 320px`, `grid grid-cols-2 gap-0`
+- Left column (image): same single / pair / carousel logic as `FeedCardB` — `object-cover` fills the column
+- Right column (text): `flex flex-col overflow-hidden py-6 pl-9`; `DetailByline` (Task 7) → `PointsBadge` → body `line-clamp-4` → "Read more →" → `CardFooter` pinned via `mt-auto`
+- Left border rule on article wrapper when `isArchitectOfBuilding`
 
-**Verify:** Resize to 375px — Type B stacks correctly, no horizontal overflow; bookmark is always visible on mobile; activity stream rows don't overflow on narrow viewports.
+**Verify:** Fixed 320px height holds with all image counts; byline fits within text column without overflow; footer always at bottom.
 
-**Dependencies:** Tasks 4, 5, 6, 7.
+**Depends on:** Tasks 2, 7
+
+---
+
+**[ ] Task 10 — Build `DetailCardC` (photos only, light attribution)**
+
+- Create `@/features/feed/components/detail/DetailCardC.tsx`
+- Image block: fixed `height: 185px`, `object-cover`, single / pair / carousel as per Task 5
+- Attribution row below image: `28px` avatar circle + `font-bold text-sm` username + `10px uppercase` action verb + timestamp — all inline, no featured byline, no Follow button, no hairline rule
+- No `PointsBadge`, no body, no "Read more"
+- Minimal `CardFooter` (likes + comments only, no bookmark — photo-only contributions don't save the building)
+
+**Verify:** Visual weight is clearly lighter than `DetailCardA`/`B`; attribution row fits on one line at all username lengths via truncation.
+
+**Depends on:** Tasks 2, 7
+
+---
+
+## Phase 4 — Integration
+
+---
+
+**[ ] Task 11 — Wire new cards into the feed renderer**
+
+- Locate all feed render sites (main feed page, discovery/explore, profile grid where `variant="default"`)
+- Replace each `FeedHeroCard`, `ReviewCardFeed`, and `FeedCompactCard` call with a switch on `resolveCardType(entry)` → render `FeedCardA`, `FeedCardB`, `FeedCardC`, or `FeedActivityRow`
+- Pass `imagePosition` alternation to `FeedCardB` (even/odd index) to preserve the left/right magazine rhythm
+- `FeedActivityRow` entries are rendered below the main card list as a grouped secondary section, not interleaved
+- Do not delete old components yet
+
+**Verify:** Feed renders all four card types with correct content; no visual regressions on the main feed; activity entries appear in their own section.
+
+**Depends on:** Tasks 3, 4, 5, 6
+
+---
+
+**[ ] Task 12 — Wire new cards into the building detail page**
+
+- Locate the reviews list on the building detail page (currently uses `ReviewCardDetail`)
+- Replace with a switch on `resolveCardType(entry)` → render `DetailCardA`, `DetailCardB`, or `DetailCardC`
+- Ensure `useReviewCardData` is called within each detail card (already the pattern); no `hideBuildingInfo` prop needed — detail cards never show building info by design
+- Sort order: architect-of-building reviews float to top (already a backend concern, but verify the `isArchitectOfBuilding` flag is available in the `FeedReview` payload at this render site; add to RPC select if missing)
+- Activity entries (visited/wants to visit) on the detail page: render as `FeedActivityRow` in a separate "Also visited" section below the reviews list
+
+**Verify:** Building detail page shows reviewer-forward cards; architect-of-building card gets left border and filled badge; photo-only entries show light attribution; no building name appears on any card.
+
+**Depends on:** Tasks 8, 9, 10, 11
 
 ---
 
@@ -167,29 +195,28 @@
 
 ---
 
-**[x] Task 11 — Delete old type definitions, resolver, and layout matrix**
+**[ ] Task 13 — Delete old feed card components**
 
-- Delete `resolveCardSpec.ts` (entire file: `resolveCardSpec`, `resolveTextWeightFromWordCount`, `resolveImageWeightFromCount`, `resolveLayoutFromWeights`, `LAYOUT_MATRIX`, `resolveProminence`)
-- Remove deleted types from `src/types/cards.ts`: `CardLayout`, `CardProminence`, `CardTextWeight`, `CardImageWeight`, `CardSpec`; file now exports only `CardType`
-- Find all remaining imports of the deleted exports across the codebase (`grep -r "resolveCardSpec\|CardLayout\|CardProminence\|CardTextWeight\|CardImageWeight\|CardSpec"`) and remove or replace each one
-- If a card playground / storybook uses `prominenceOverride` or `spec` props, remove those controls and replace with a `cardTypeOverride?: CardType` control that routes to the correct new component
-- Run `tsc --noEmit` to confirm zero type errors
+- Delete `FeedHeroCard.tsx`, `FeedCompactCard.tsx`, `FeedActivityCard.tsx`
+- Delete `ReviewCardFeed.tsx`, `ReviewCardDetail.tsx`
+- Remove all their imports across the codebase (TypeScript compiler will surface every remaining reference)
+- Delete `resolveCardSpec.ts` and `resolveCardSpec` references
+- Remove `CardSpec`, `CardLayout`, `CardProminence`, `CardTextWeight`, `CardImageWeight` from `@/types/cards.ts` — keep only `CardType`
 
-**Verify:** TypeScript reports no errors; `grep` finds no remaining references to the deleted identifiers; `resolveCardSpec.ts` file no longer exists.
+**Verify:** `tsc --noEmit` passes with zero errors; no dead imports remain; bundle size reduced.
 
-**Dependencies:** Tasks 8, 9.
+**Depends on:** Tasks 11, 12
 
 ---
 
-**[x] Task 12 — Remove deprecated card components**
+**[ ] Task 14 — Simplify `useReviewCardData`**
 
-- Delete `FeedHeroCard.tsx` — fully replaced by `CardTypeB` (and `CardTypeA` for text-only hero entries)
-- Delete `FeedCompactCard.tsx` — replaced by the new card types with `hideUser` / `hideBuildingInfo` props
-- Delete `FeedActivityCard.tsx` — replaced by `ActivityStreamRow` / `ActivityStreamGroup`
-- Simplify `ReviewCardFeed.tsx`: remove the `spec`, `prominenceOverride`, `variant`, `imagePosition`, and `showCommunityImages` props; remove the `useCompactStackLayout`, `showCarousel`, `showPairGrid`, `aspectToken` logic; the component either becomes a thin wrapper that calls `resolveCardType` and delegates to the correct new component, or is deleted entirely if Task 8 already fully replaced it in all call sites
-- Confirm `ReviewCardDetail.tsx` is still in use (building detail page); if Task 9 fully replaced it, delete it; otherwise leave it unchanged
-- Run the full TypeScript build and fix any residual import errors
+- Remove `variant` param and the `compact` branch (compact variant no longer exists)
+- Remove `showCommunityImages` param — detail cards never show community images by design; feed cards use `posterUrl` only as a last-resort fallback, hardcode that behaviour internally
+- Remove `carouselImages` from return type — carousel now receives `entry.images` directly via `FeedPhotoCarousel`'s existing interface
+- Update all call sites (Tasks 3–10 components) to the simplified signature
+- Verify no `imageWeight` / `textWeight` logic remains in the hook
 
-**Verify:** Build passes with zero errors; no orphaned imports; bundle size reduced (can be confirmed via `vite build --report` or equivalent); feed, profile, and building detail pages all render correctly in the browser.
+**Verify:** `tsc --noEmit` clean; all card components pass their data correctly; no unused fields in `ReviewCardData`.
 
-**Dependencies:** Tasks 9, 11.
+**Depends on:** Task 13

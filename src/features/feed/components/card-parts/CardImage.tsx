@@ -53,8 +53,8 @@ function toCarouselImages(images: ReviewCardMediaItem[]): CarouselImage[] {
   return images.map((img) => ({
     id: img.id,
     url: img.url,
-    likes_count: 0,
-    is_liked: false,
+    likes_count: img.likes_count ?? 0,
+    is_liked: img.is_liked ?? false,
   }));
 }
 

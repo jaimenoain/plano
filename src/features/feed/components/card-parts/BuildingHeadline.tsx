@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 export interface BuildingHeadlineProps {
   name: string;
-  size: "xl" | "lg" | "md";
+  size: "xl" | "lg" | "md" | "hero" | "feedC";
   className?: string;
 }
 
@@ -13,6 +13,10 @@ const sizeClass: Record<BuildingHeadlineProps["size"], string> = {
   lg: "text-[2.25rem] line-clamp-2",
   /** 28px — single-line clamp */
   md: "text-[1.75rem] line-clamp-1",
+  /** FeedCardA — token `5xl` from tailwind.config */
+  hero: "text-5xl line-clamp-2",
+  /** FeedCardC — `text-3xl` from default scale */
+  feedC: "text-3xl line-clamp-1",
 };
 
 /**

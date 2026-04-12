@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/button";
 import { SITE_URL } from "@/features/buildings/utils/structuredData";
 import { aggregateFeed, type AggregatedFeedItem } from "@/lib/feed-aggregation";
 import { FeedClusterCard } from "../components/FeedClusterCard";
-import { CardTypeA } from "../components/CardTypeA";
-import { CardTypeB } from "../components/CardTypeB";
-import { CardTypeC } from "../components/CardTypeC";
+import { FeedCardA } from "../components/FeedCardA";
+import { FeedCardB } from "../components/FeedCardB";
+import { FeedCardC } from "../components/FeedCardC";
 import { ActivityStreamGroup } from "../components/ActivityStream";
 import { resolveCardType } from "../utils/resolveCardType";
 import type { FeedReview } from "@/types/feed";
@@ -219,20 +219,11 @@ export default function Index() {
               <div className="flex flex-col">
                 {(() => {
                   const feedNodes: React.ReactNode[] = [];
-                  const activityBuffer: FeedReview[] = [];
+                  const activityAccumulator: FeedReview[] = [];
                   let cardBIndex = 0;
 
-                  const flushActivity = () => {
-                    if (activityBuffer.length === 0) return;
-                    const entries = activityBuffer.splice(0, activityBuffer.length);
-                    feedNodes.push(
-                      <div
-                        key={`activity-${entries.map((e) => e.id).join("-")}`}
-                        className="border-b border-border-default pb-10 mb-10"
-                      >
-                        <ActivityStreamGroup entries={entries} />
-                      </div>,
-                    );
+                  const pushActivity = (entry: FeedReview) => {
+                    activityAccumulator.push(entry);
                   };
 
                   const renderGridCell = (
@@ -242,14 +233,15 @@ export default function Index() {
                   ): React.ReactNode => {
                     const t = resolveCardType(entry);
                     if (t === "activity") {
-                      return <ActivityStreamGroup entries={[entry]} />;
+                      pushActivity(entry);
+                      return null;
                     }
                     switch (t) {
                       case "A":
-                        return <CardTypeA entry={entry} onLike={onLike} />;
+                        return <FeedCardA entry={entry} onLike={onLike} />;
                       case "B":
                         return (
-                          <CardTypeB
+                          <FeedCardB
                             entry={entry}
                             index={cardBIndex++}
                             onLike={onLike}
@@ -258,7 +250,7 @@ export default function Index() {
                         );
                       case "C":
                         return (
-                          <CardTypeC entry={entry} onLike={onLike} onImageLike={onImageLike} />
+                          <FeedCardC entry={entry} onLike={onLike} onImageLike={onImageLike} />
                         );
                       default: {
                         const _n: never = t;
@@ -274,11 +266,11 @@ export default function Index() {
                   ) => {
                     const t = resolveCardType(entry);
                     if (t === "activity") {
-                      activityBuffer.push(entry);
+                      pushActivity(entry);
                       return;
                     }
-                    flushActivity();
                     const inner = renderGridCell(entry, onLike, onImageLike);
+                    if (inner == null) return;
                     feedNodes.push(
                       <div
                         key={entry.id}
@@ -292,7 +284,6 @@ export default function Index() {
                   const processAggregatedItem = (item: AggregatedFeedItem) => {
                     switch (item.type) {
                       case "cluster": {
-                        flushActivity();
                         const key = `cluster-${item.entries[0]?.id ?? "unknown"}`;
                         feedNodes.push(
                           <div
@@ -310,28 +301,27 @@ export default function Index() {
                         break;
                       }
                       case "row": {
-                        flushActivity();
                         const key = `row-${item.left.entry.id}-${item.right.entry.id}`;
-                        feedNodes.push(
-                          <div key={key} className="border-b border-border-default pb-10 mb-10">
-                            <div className="grid grid-cols-2 gap-8 w-full">
-                              <div className="min-w-0">
-                                {renderGridCell(
-                                  item.left.entry,
-                                  socialFeed.toggleLike,
-                                  socialFeed.toggleImageLike,
-                                )}
-                              </div>
-                              <div className="min-w-0">
-                                {renderGridCell(
-                                  item.right.entry,
-                                  socialFeed.toggleLike,
-                                  socialFeed.toggleImageLike,
-                                )}
-                              </div>
-                            </div>
-                          </div>,
+                        const leftCell = renderGridCell(
+                          item.left.entry,
+                          socialFeed.toggleLike,
+                          socialFeed.toggleImageLike,
                         );
+                        const rightCell = renderGridCell(
+                          item.right.entry,
+                          socialFeed.toggleLike,
+                          socialFeed.toggleImageLike,
+                        );
+                        if (leftCell != null || rightCell != null) {
+                          feedNodes.push(
+                            <div key={key} className="border-b border-border-default pb-10 mb-10">
+                              <div className="grid w-full grid-cols-2 gap-8">
+                                <div className="min-w-0">{leftCell}</div>
+                                <div className="min-w-0">{rightCell}</div>
+                              </div>
+                            </div>,
+                          );
+                        }
                         break;
                       }
                       case "hero":
@@ -358,7 +348,6 @@ export default function Index() {
                     processAggregatedItem(item);
                     const n = index + 1;
                     if (n % 4 === 0 && collectionCursor < collectionItems.length) {
-                      flushActivity();
                       const col = collectionItems[collectionCursor];
                       collectionCursor += 1;
                       feedNodes.push(
@@ -391,7 +380,19 @@ export default function Index() {
                       }
                     }
                   });
-                  flushActivity();
+                  if (activityAccumulator.length > 0) {
+                    feedNodes.push(
+                      <div
+                        key={`activity-trailing-${activityAccumulator.map((e) => e.id).join("-")}`}
+                        className="border-b border-border-default pb-10 mb-10"
+                      >
+                        <p className="mb-4 font-mono text-[0.5625rem] font-normal uppercase tracking-[0.12em] text-text-secondary">
+                          Activity
+                        </p>
+                        <ActivityStreamGroup entries={activityAccumulator} hideGroupLabel />
+                      </div>,
+                    );
+                  }
                   return feedNodes;
                 })()}
                 {loadMoreActive && (

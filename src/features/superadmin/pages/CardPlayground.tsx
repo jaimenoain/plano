@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { ChevronDown, Copy } from "lucide-react";
 import { ReviewCardFeed } from "@/features/feed/components/ReviewCardFeed";
-import { ReviewCardDetail } from "@/features/feed/components/ReviewCardDetail";
-import { CardTypeA } from "@/features/feed/components/CardTypeA";
-import { CardTypeB } from "@/features/feed/components/CardTypeB";
-import { CardTypeC } from "@/features/feed/components/CardTypeC";
+import { FeedCardA } from "@/features/feed/components/FeedCardA";
+import { FeedCardB } from "@/features/feed/components/FeedCardB";
+import { FeedCardC } from "@/features/feed/components/FeedCardC";
 import { ActivityStreamGroup } from "@/features/feed/components/ActivityStream";
+import { DetailCardA } from "@/features/feed/components/detail/DetailCardA";
+import { DetailCardB } from "@/features/feed/components/detail/DetailCardB";
+import { DetailCardC } from "@/features/feed/components/detail/DetailCardC";
 import {
   deriveLegacyFeedCardLayout,
   type LegacyFeedCardUi,
@@ -146,6 +148,25 @@ function isBrokenImageMode(images: ReviewImage[] | undefined): boolean {
 
 function noop() {}
 
+function renderPlaygroundDetailCard(entry: FeedReview) {
+  const t = resolveCardType(entry);
+  if (t === "activity") {
+    return <ActivityStreamGroup entries={[entry]} hideGroupLabel />;
+  }
+  switch (t) {
+    case "A":
+      return <DetailCardA entry={entry} onLike={noop} onComment={noop} showFollow />;
+    case "B":
+      return <DetailCardB entry={entry} onLike={noop} onComment={noop} onImageLike={noop} showFollow />;
+    case "C":
+      return <DetailCardC entry={entry} onLike={noop} onComment={noop} onImageLike={noop} />;
+    default: {
+      const _n: never = t;
+      return _n;
+    }
+  }
+}
+
 /** Single-line label derived from legacy layout fields (playground “Show all” badges). */
 function legacyLayoutArchetypeLabel(layout: LegacyFeedCardUi): string {
   return `${layout.layout} · ${layout.imageWeight} · ${layout.textWeight} · ${layout.prominence}`;
@@ -172,13 +193,13 @@ function renderFeedCardForPlayground(entry: FeedReview, override: CardType | nul
   }
   switch (override) {
     case "A":
-      return <CardTypeA entry={entry} onLike={noop} onComment={noop} showCommunityImages />;
+      return <FeedCardA entry={entry} onLike={noop} onComment={noop} showCommunityImages />;
     case "B":
       return (
-        <CardTypeB entry={entry} index={cardBIndex} onLike={noop} onImageLike={noop} onComment={noop} showCommunityImages />
+        <FeedCardB entry={entry} index={cardBIndex} onLike={noop} onImageLike={noop} onComment={noop} showCommunityImages />
       );
     case "C":
-      return <CardTypeC entry={entry} onLike={noop} onImageLike={noop} onComment={noop} showCommunityImages />;
+      return <FeedCardC entry={entry} onLike={noop} onImageLike={noop} onComment={noop} showCommunityImages />;
     case "activity":
       return <ActivityStreamGroup entries={[entry]} />;
     default: {
@@ -328,7 +349,7 @@ function PlaygroundToolbar({
       <div className="space-y-2 border-t border-border-default pt-3">
         <p className="text-2xs font-semibold uppercase tracking-wide text-text-secondary">Feed card override</p>
         <p className="text-2xs text-text-secondary">
-          Auto uses ReviewCardFeed (resolveCardType + CardType A/B/C or activity). Other options force a card type for the edited fixture.
+          Auto uses ReviewCardFeed (resolveCardType + FeedCard A/B/C or activity). Other options force a card type for the edited fixture.
         </p>
         <div className="flex flex-wrap gap-1.5">
           {CARD_TYPE_OVERRIDE_OPTIONS.map((opt) => {
@@ -367,9 +388,9 @@ function FixtureShowAllPreview({ entry }: { entry: FeedReview }) {
         <ResolvedCardTypePanel entry={entry} title="resolveCardType" />
       </div>
       <div className="w-full min-w-0 max-w-md shrink-0 space-y-2 xl:max-w-none xl:flex-1">
-        <p className="text-2xs font-medium uppercase tracking-wide text-text-secondary">ReviewCardDetail</p>
+        <p className="text-2xs font-medium uppercase tracking-wide text-text-secondary">DetailCard (A / B / C)</p>
         <div className="hairline overflow-hidden rounded-lg border border-border-default">
-          <ReviewCardDetail entry={entry} onLike={noop} onComment={noop} showCommunityImages />
+          {renderPlaygroundDetailCard(entry)}
         </div>
         <LegacyLayoutDebugPanel layout={legacy} title="Legacy layout (same entry)" />
       </div>
@@ -393,7 +414,7 @@ function FixtureSinglePreview({
         {viewMode === "feed" ? (
           renderFeedCardForPlayground(entry, cardTypeOverride, 0)
         ) : (
-          <ReviewCardDetail entry={entry} onLike={noop} onComment={noop} showCommunityImages />
+          renderPlaygroundDetailCard(entry)
         )}
       </div>
       <LegacyLayoutDebugPanel layout={legacy} title="Legacy layout (edited entry)" />

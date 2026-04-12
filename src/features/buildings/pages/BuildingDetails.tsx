@@ -1,4 +1,11 @@
-import { useEffect, useState, useMemo, useCallback, createElement } from "react";
+import {
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  createElement,
+  type ReactNode,
+} from "react";
 import {
   useParams,
   Link,
@@ -69,6 +76,13 @@ import {
 } from "@/features/buildings/utils/structuredData";
 import { cn } from "@/lib/utils";
 import { useBuildingInteractions } from "@/features/buildings/hooks/useBuildingInteractions";
+import {
+  buildingEntryToFeedReview,
+  type BuildingSummaryForFeed,
+} from "@/features/buildings/utils/buildingReviewFeedAdapter";
+import { resolveCardType } from "@/features/feed/utils/resolveCardType";
+import { DetailCardA, DetailCardB, DetailCardC } from "@/features/feed/components/detail";
+import { ActivityStreamGroup } from "@/features/feed/components/ActivityStream";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export { buildingLoader as loader } from "./BuildingDetails.loader";
@@ -491,6 +505,28 @@ export default function BuildingDetails() {
     [displayImages],
   );
 
+  const buildingSummaryForFeed = useMemo((): BuildingSummaryForFeed | null => {
+    if (!building) return null;
+    return {
+      id: building.id,
+      name: building.name,
+      slug: building.slug ?? null,
+      short_id: building.short_id ?? null,
+      address: building.address,
+      main_image_url: heroImageUrl,
+      community_preview_url: null,
+    };
+  }, [building, heroImageUrl]);
+
+  const activityOnlyFeedReviews = useMemo(() => {
+    if (!buildingSummaryForFeed) return [];
+    return entries
+      .filter((e) => !e.content?.trim() && e.images.length === 0)
+      .map((e) =>
+        buildingEntryToFeedReview(e, buildingSummaryForFeed, displayImageById, likedImageIds),
+      );
+  }, [entries, buildingSummaryForFeed, displayImageById, likedImageIds]);
+
   /**
    * Merges entries and orphaned display images into scored, typed stream blocks.
    *
@@ -588,6 +624,38 @@ export default function BuildingDetails() {
         user && user.username?.trim() ? (
           <StreamAuthorAttribution user={user} rating={rating} />
         ) : null;
+
+      const tryDetailLayout =
+        !block.entryId.startsWith("img-") &&
+        (block.blockType === "image-review" ||
+          block.blockType === "image-only" ||
+          block.blockType === "text-only");
+
+      if (tryDetailLayout && buildingSummaryForFeed) {
+        const source = entries.find((e) => e.id === block.entryId);
+        if (source) {
+          const feedReview = buildingEntryToFeedReview(
+            source,
+            buildingSummaryForFeed,
+            displayImageById,
+            likedImageIds,
+          );
+          const t = resolveCardType(feedReview);
+          const wrap = (node: ReactNode) => <div key={block.key}>{node}</div>;
+          if (t === "activity") {
+            return wrap(<ActivityStreamGroup entries={[feedReview]} hideGroupLabel />);
+          }
+          if (t === "A") {
+            return wrap(<DetailCardA entry={feedReview} showFollow />);
+          }
+          if (t === "B") {
+            return wrap(<DetailCardB entry={feedReview} showFollow />);
+          }
+          if (t === "C") {
+            return wrap(<DetailCardC entry={feedReview} />);
+          }
+        }
+      }
 
       switch (block.blockType) {
 
@@ -800,7 +868,13 @@ export default function BuildingDetails() {
           return null;
       }
     },
-    [setSelectedImage, likedImageIds],
+    [
+      setSelectedImage,
+      likedImageIds,
+      entries,
+      buildingSummaryForFeed,
+      displayImageById,
+    ],
   );
 
   // ── Loading guard ─────────────────────────────────────────────────────────
@@ -1500,7 +1574,7 @@ export default function BuildingDetails() {
               <div className="space-y-10">
                 {streamBlocks.map((block) => renderStreamBlock(block))}
               </div>
-            ) : (
+            ) : activityOnlyFeedReviews.length === 0 ? (
               <div className="flex aspect-video flex-col items-center justify-center bg-surface-muted/20 p-6 text-center text-text-secondary">
                 <ImageIcon className="mb-3 h-10 w-10 text-text-disabled" />
                 <p className="mb-4 text-xs text-text-disabled">
@@ -1516,7 +1590,21 @@ export default function BuildingDetails() {
                   Upload photo →
                 </Link>
               </div>
-            )}
+            ) : null}
+            {activityOnlyFeedReviews.length > 0 ? (
+              <div
+                className={
+                  streamBlocks.length > 0
+                    ? "mt-10 border-t border-border-default pt-8"
+                    : "mt-6 border-t border-border-default pt-8"
+                }
+              >
+                <h3 className="mb-4 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+                  Also visited
+                </h3>
+                <ActivityStreamGroup entries={activityOnlyFeedReviews} hideGroupLabel />
+              </div>
+            ) : null}
           </WidgetErrorBoundary>
 
           <div className="mt-3 text-center">

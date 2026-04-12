@@ -16,13 +16,9 @@ export type ReviewCardMediaItem = {
   type: "video" | "image";
   url: string;
   poster?: string;
-};
-
-export type ReviewCardCarouselImage = {
-  id: string;
-  url: string;
-  likes_count: number;
-  is_liked: boolean;
+  /** Present for stills from `entry.images`; used by carousels for like state. */
+  likes_count?: number;
+  is_liked?: boolean;
 };
 
 export type ReviewCardData = {
@@ -34,28 +30,26 @@ export type ReviewCardData = {
   subTitle: string | null | undefined;
   posterUrl: string | undefined;
   mediaItems: ReviewCardMediaItem[];
-  carouselImages: ReviewCardCarouselImage[];
   hasVideo: boolean;
   city: string;
 };
 
 export function useReviewCardData(
   entry: FeedReview,
-  options: {
-    variant: "default" | "compact";
-    showCommunityImages: boolean;
-  },
+  options: { showCommunityImages?: boolean } = {},
 ): {
   data: ReviewCardData | null;
   failedImages: Set<string>;
   setFailedImages: React.Dispatch<React.SetStateAction<Set<string>>>;
 } {
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const showCommunityImages = options.showCommunityImages ?? true;
 
   const data = useMemo((): ReviewCardData | null => {
     if (!entry.building) return null;
 
     const posterUrl = getBuildingImageUrl(entry.building.main_image_url);
+    const communityPoster = getBuildingImageUrl(entry.building.community_preview_url);
 
     const username = entry.user?.username || "Unknown User";
     const avatarUrl = entry.user?.avatar_url ?? null;
@@ -68,20 +62,13 @@ export function useReviewCardData(
     const creditNames = credits ? credits.map((c) => c.name).filter(Boolean) : [];
 
     let subTitle: string | null | undefined = entry.building.address;
-    if (options.variant === "compact") {
-      const parts: (string | number)[] = [];
-      if (creditNames.length > 0) parts.push(creditNames.slice(0, 2).join(", "));
-      if (year_completed) parts.push(year_completed);
-      subTitle = parts.length > 0 ? parts.join(" • ") : entry.building.address;
-    } else {
-      const creditsList = creditNames.slice(0, 2).join(", ");
-      if (creditsList) {
-        subTitle = creditsList;
-        if (year_completed) subTitle += ` • ${year_completed}`;
-      } else if (year_completed) {
-        subTitle = `${year_completed}`;
-        if (entry.building.address) subTitle += ` • ${entry.building.address}`;
-      }
+    const creditsList = creditNames.slice(0, 2).join(", ");
+    if (creditsList) {
+      subTitle = creditsList;
+      if (year_completed) subTitle += ` • ${year_completed}`;
+    } else if (year_completed) {
+      subTitle = `${year_completed}`;
+      if (entry.building.address) subTitle += ` • ${entry.building.address}`;
     }
 
     const mediaItems: ReviewCardMediaItem[] = [];
@@ -93,25 +80,24 @@ export function useReviewCardData(
         poster:
           entry.images && entry.images.length > 0
             ? entry.images[0].url
-            : options.showCommunityImages
-              ? posterUrl || undefined
+            : showCommunityImages
+              ? posterUrl || communityPoster || undefined
               : undefined,
       });
     }
     if (entry.images && entry.images.length > 0) {
       entry.images.forEach((img) => {
-        mediaItems.push({ id: img.id, type: "image", url: img.url });
+        mediaItems.push({
+          id: img.id,
+          type: "image",
+          url: img.url,
+          likes_count: img.likes_count,
+          is_liked: img.is_liked,
+        });
       });
     }
 
     const hasVideo = mediaItems.some((m) => m.type === "video");
-
-    const carouselImages: ReviewCardCarouselImage[] = (entry.images || []).map((img) => ({
-      id: img.id,
-      url: img.url,
-      likes_count: img.likes_count,
-      is_liked: img.is_liked,
-    }));
 
     const city = getCityFromAddress(entry.building.address);
 
@@ -124,11 +110,10 @@ export function useReviewCardData(
       subTitle,
       posterUrl,
       mediaItems,
-      carouselImages,
       hasVideo,
       city,
     };
-  }, [entry, options.variant, options.showCommunityImages]);
+  }, [entry, showCommunityImages]);
 
   return { data, failedImages, setFailedImages };
 }
