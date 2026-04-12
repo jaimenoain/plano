@@ -51,7 +51,7 @@ const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <p ref={ref} className={cn("font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary", className)} {...props} />
+  <p ref={ref} className={cn("font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary", className)} {...props} />
 ));
 CardDescription.displayName = "CardDescription";
 

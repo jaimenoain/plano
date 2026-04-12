@@ -17,7 +17,7 @@ describe('FeedCompactCard', () => {
     user: mockUser,
   } as any; // Partial mock
 
-  it('renders with min-w-0 class for text container and Space Mono username', () => {
+  it('renders with min-w-0 class for text container and Inter (font-sans) activity lead', () => {
     render(
       <BrowserRouter>
         <FeedCompactCard
@@ -27,8 +27,9 @@ describe('FeedCompactCard', () => {
     );
 
     const usernameElement = screen.getByText('testuser');
-    expect(usernameElement.className).toContain('font-mono');
-    expect(usernameElement.className).toContain('uppercase');
+    const activityLead = usernameElement.closest("p");
+    expect(activityLead?.className).toContain("font-sans");
+    expect(activityLead?.className).toContain("uppercase");
     const container = usernameElement.closest('div.flex-1.min-w-0');
     expect(container).not.toBeNull();
     expect(container?.className).toContain('flex-1');

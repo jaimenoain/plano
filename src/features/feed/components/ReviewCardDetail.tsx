@@ -101,19 +101,19 @@ export function ReviewCardDetail({
             {username}
           </Link>
           {isVerifiedArchitect ? (
-            <span className="mt-1 block font-mono text-[9px] tracking-[0.1em] uppercase border border-text-primary text-text-primary px-1.5 py-0.5 font-bold leading-none w-fit">
+            <span className="mt-1 block font-sans text-[9px] tracking-[0.1em] uppercase border border-text-primary text-text-primary px-1.5 py-0.5 font-bold leading-none w-fit">
               Architect
             </span>
           ) : null}
         </div>
-        <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary/40 shrink-0">
+        <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-text-secondary/40 shrink-0">
           {timestamp}
         </span>
       </div>
     </div>
   ) : (
     <div className="mb-3">
-      <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary/40">
+      <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-text-secondary/40">
         {timestamp}
       </span>
     </div>
@@ -165,7 +165,7 @@ export function ReviewCardDetail({
                 {mainTitle}
               </h3>
               {(subTitle || city) && (
-                <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-0.5">
+                <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-0.5">
                   {[subTitle, city].filter(Boolean).join(" · ")}
                 </p>
               )}
@@ -196,7 +196,7 @@ export function ReviewCardDetail({
             onLike?.(entry.id);
             window.dispatchEvent(new CustomEvent("pwa-interaction"));
           }}
-          className={`font-mono text-[10px] tracking-[0.12em] uppercase transition-colors ${
+          className={`font-sans text-[10px] tracking-[0.12em] uppercase transition-colors ${
             entry.is_liked
               ? "text-text-primary"
               : "text-text-secondary hover:text-text-primary"
@@ -207,7 +207,7 @@ export function ReviewCardDetail({
         <span className="text-text-secondary/30 select-none text-xs">·</span>
         <button
           onClick={handleCommentClick}
-          className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors"
+          className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors"
         >
           {entry.comments_count} {entry.comments_count === 1 ? "comment" : "comments"}
         </button>

@@ -254,7 +254,7 @@ export function FeedHeroCard({
             !hasImages && "max-w-xl",
           )}
         >
-          <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary mb-3">
+          <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary mb-3">
             <span className="font-medium text-text-primary">{username}</span>
             <span className="text-text-secondary normal-case"> {userActionVerb}</span>
           </p>
@@ -295,7 +295,7 @@ export function FeedHeroCard({
                     e.stopPropagation();
                     setEssayExpanded(true);
                   }}
-                  className="mt-1.5 font-mono text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
+                  className="mt-1.5 font-sans text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
                 >
                   Read more →
                 </button>

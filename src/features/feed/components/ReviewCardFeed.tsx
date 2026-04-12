@@ -264,7 +264,7 @@ export function ReviewCardFeed({
   const ActivityLead = !hideUser && (
     <p
       className={cn(
-        "font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary min-w-0",
+        "font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary min-w-0",
         !isCompact ? "mb-2" : "mb-1",
       )}
     >
@@ -278,7 +278,7 @@ export function ReviewCardFeed({
   const Byline = !hideUser && (
     <div className="flex items-center gap-2 min-w-0">
       {isVerifiedArchitect && (
-        <span className="font-mono text-[9px] tracking-[0.1em] uppercase border border-text-primary text-text-primary px-1.5 py-0.5 font-bold shrink-0 leading-none">
+        <span className="font-sans text-[9px] tracking-[0.1em] uppercase border border-text-primary text-text-primary px-1.5 py-0.5 font-bold shrink-0 leading-none">
           Architect
         </span>
       )}
@@ -287,7 +287,7 @@ export function ReviewCardFeed({
           <FollowButton userId={entry.user_id} hideIfFollowing className="h-5 text-[10px] px-2" />
         </span>
       )}
-      <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary/40 ml-auto shrink-0">
+      <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-text-secondary/40 ml-auto shrink-0">
         {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
       </span>
     </div>
@@ -310,7 +310,7 @@ export function ReviewCardFeed({
         {mainTitle}
       </h2>
       {(subTitle || city) && (
-        <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-1">
+        <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-1">
           {[subTitle, city].filter(Boolean).join(" · ")}
         </p>
       )}
@@ -430,7 +430,7 @@ export function ReviewCardFeed({
                 e.stopPropagation();
                 setEssayExpanded(true);
               }}
-              className="mt-1.5 font-mono text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
+              className="mt-1.5 font-sans text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
             >
               Read more →
             </button>
@@ -452,7 +452,7 @@ export function ReviewCardFeed({
                 e.stopPropagation();
                 setEssayExpanded(true);
               }}
-              className="mt-1.5 font-mono text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
+              className="mt-1.5 font-sans text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
             >
               Read more →
             </button>
@@ -476,7 +476,7 @@ export function ReviewCardFeed({
           onLike?.(entry.id);
           window.dispatchEvent(new CustomEvent("pwa-interaction"));
         }}
-        className={`font-mono text-[10px] tracking-[0.12em] uppercase transition-colors ${
+        className={`font-sans text-[10px] tracking-[0.12em] uppercase transition-colors ${
           entry.is_liked
             ? "text-text-primary"
             : "text-text-secondary hover:text-text-primary"
@@ -487,7 +487,7 @@ export function ReviewCardFeed({
       <span className="text-text-secondary/30 select-none text-xs">·</span>
       <button
         onClick={handleCommentClick}
-        className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors"
+        className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors"
       >
         {entry.comments_count} {entry.comments_count === 1 ? "comment" : "comments"}
       </button>

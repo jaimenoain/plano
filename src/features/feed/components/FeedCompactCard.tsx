@@ -85,7 +85,7 @@ export function FeedCompactCard({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary">
+        <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary">
           <span className="font-medium text-text-primary">{username}</span>
           <span className="text-text-secondary normal-case"> {userActionVerb}</span>
         </p>

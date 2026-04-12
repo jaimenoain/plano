@@ -28,7 +28,7 @@ interface FeedPhotoCarouselProps {
  *
  * Design decisions (aligned with DESIGN_TOKENS.md):
  * - aspect-[4/5] — matches FeedHeroSingleImage so the card height is consistent
- * - Counter uses font-mono (Space Mono) — camera/film numbering feel
+ * - Counter uses tabular-nums for stable digit width
  * - Active dot extends to a white pill; inactive dots are semi-transparent white —
  *   both sit on photography so white is the only readable colour; no brand-primary
  *   on content pages per monochromatic content-surface rule
@@ -117,7 +117,7 @@ export function FeedPhotoCarousel({
           className="absolute top-3 right-3 pointer-events-none"
           aria-label={`Photo ${safeIndex + 1} of ${total}`}
         >
-          <span className="font-mono text-[11px] leading-none text-white bg-black/55 px-2.5 py-1 rounded-sm tabular-nums">
+          <span className="font-sans text-[11px] leading-none text-white bg-black/55 px-2.5 py-1 rounded-sm tabular-nums">
             {safeIndex + 1} / {total}
           </span>
         </div>

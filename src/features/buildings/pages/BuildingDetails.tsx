@@ -104,7 +104,7 @@ export function ErrorBoundary() {
           <p className="text-text-secondary max-w-md mb-6 text-sm md:text-base leading-relaxed">
             We couldn&apos;t find a building at this URL
             {pathHint ? (
-              <> <span className="font-mono text-text-primary">({pathHint})</span></>
+              <> <span className="font-sans text-text-primary">({pathHint})</span></>
             ) : null}
             . It may have been removed or the link is incorrect.
           </p>
