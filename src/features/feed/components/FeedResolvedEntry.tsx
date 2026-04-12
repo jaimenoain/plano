@@ -3,9 +3,9 @@ import { resolveCardType } from "@/features/feed/utils/resolveCardType";
 import { FeedCardA } from "./FeedCardA";
 import { FeedCardB } from "./FeedCardB";
 import { FeedCardC } from "./FeedCardC";
-import { ActivityStreamGroup } from "./ActivityStream";
+import { FeedActivityRow } from "./FeedActivityRow";
 
-export interface ReviewCardFeedProps {
+export interface FeedResolvedEntryProps {
   entry: FeedReview;
   onLike?: (reviewId: string) => void;
   onImageLike?: (reviewId: string, imageId: string) => void;
@@ -17,9 +17,9 @@ export interface ReviewCardFeedProps {
 }
 
 /**
- * Feed / discovery review card: resolves {@link resolveCardType} and delegates to CardType A/B/C or activity stream.
+ * Resolves {@link resolveCardType} and renders {@link FeedCardA} / {@link FeedCardB} / {@link FeedCardC} / {@link FeedActivityRow}.
  */
-export function ReviewCardFeed({
+export function FeedResolvedEntry({
   entry,
   onLike,
   onImageLike,
@@ -27,13 +27,19 @@ export function ReviewCardFeed({
   hideUser = false,
   hideBuildingInfo = false,
   index = 0,
-}: ReviewCardFeedProps) {
+}: FeedResolvedEntryProps) {
   const t = resolveCardType(entry);
 
+  if (t === "activity") {
+    return (
+      <div className="contents" data-testid={`review-card-feed-${entry.id}`}>
+        <FeedActivityRow entry={entry} hideUser={hideUser} />
+      </div>
+    );
+  }
+
   const inner =
-    t === "activity" ? (
-      <ActivityStreamGroup entries={[entry]} />
-    ) : t === "A" ? (
+    t === "A" ? (
       <FeedCardA
         entry={entry}
         hideUser={hideUser}

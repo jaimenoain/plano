@@ -62,7 +62,6 @@ import {
 import { getBuildingUrl } from "@/utils/url";
 import { CollectionSelector } from "@/features/collections/components/CollectionSelector";
 import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
-import { BuildingImageCard } from "../components/BuildingImageCard";
 import { PrimaryCreditsLinks } from "../components/PrimaryCreditsLinks";
 import { ArchitectStatement } from "../components/ArchitectStatement";
 import { BuildingHero } from "../components/BuildingHero";
@@ -542,7 +541,12 @@ export default function BuildingDetails() {
    */
   const streamBlocks = useMemo((): StreamBlock[] => {
     const entryImageIds = new Set(
-      entries.flatMap((e) => e.images.map((img) => img.id)),
+      entries.flatMap((e) => {
+        const ids = e.images.map((img) => img.id);
+        const videoKey = `video-${e.id}`;
+        if (displayImageById.get(videoKey)?.type === "video") ids.push(videoKey);
+        return ids;
+      }),
     );
 
     const entryBlocks = entries
@@ -550,6 +554,9 @@ export default function BuildingDetails() {
         const images = entry.images
           .map((img) => displayImageById.get(img.id))
           .filter((img): img is DisplayImage => img != null);
+
+        const videoDisplay = displayImageById.get(`video-${entry.id}`);
+        const hasVideo = videoDisplay?.type === "video";
 
         const isOfficial = images.some((img) => img.is_official);
         const topLikes = images.reduce(
@@ -559,19 +566,22 @@ export default function BuildingDetails() {
         const hasContent = !!(entry.content?.trim());
         const imageCount = images.length;
 
-        if (imageCount === 0 && !hasContent) return null;
+        if (imageCount === 0 && !hasContent && !hasVideo) return null;
 
+        const architectBoost = entry.user?.is_architect_of_building ? 800 : 0;
         const score =
+          architectBoost +
           (isOfficial ? 1000 : 0) +
           topLikes * 10 +
           (hasContent ? 20 : 0) +
-          (imageCount > 1 ? 15 : 0);
+          (imageCount > 1 ? 15 : 0) +
+          (hasVideo && imageCount === 0 ? 10 : 0);
 
         let blockType: StreamBlock["blockType"];
         if (isOfficial) blockType = "featured";
         else if (imageCount >= 2) blockType = "mosaic";
-        else if (imageCount === 1 && hasContent) blockType = "image-review";
-        else if (imageCount === 1) blockType = "image-only";
+        else if ((imageCount === 1 || hasVideo) && hasContent) blockType = "image-review";
+        else if (imageCount === 1 || hasVideo) blockType = "image-only";
         else blockType = "text-only";
 
         return {
@@ -625,13 +635,9 @@ export default function BuildingDetails() {
           <StreamAuthorAttribution user={user} rating={rating} />
         ) : null;
 
-      const tryDetailLayout =
-        !block.entryId.startsWith("img-") &&
-        (block.blockType === "image-review" ||
-          block.blockType === "image-only" ||
-          block.blockType === "text-only");
+      const isOrphanImage = block.entryId.startsWith("img-");
 
-      if (tryDetailLayout && buildingSummaryForFeed) {
+      if (!isOrphanImage && buildingSummaryForFeed) {
         const source = entries.find((e) => e.id === block.entryId);
         if (source) {
           const feedReview = buildingEntryToFeedReview(
@@ -642,19 +648,12 @@ export default function BuildingDetails() {
           );
           const t = resolveCardType(feedReview);
           const wrap = (node: ReactNode) => <div key={block.key}>{node}</div>;
-          if (t === "activity") {
-            return wrap(<ActivityStreamGroup entries={[feedReview]} hideGroupLabel />);
-          }
-          if (t === "A") {
-            return wrap(<DetailCardA entry={feedReview} showFollow />);
-          }
-          if (t === "B") {
-            return wrap(<DetailCardB entry={feedReview} showFollow />);
-          }
-          if (t === "C") {
-            return wrap(<DetailCardC entry={feedReview} />);
-          }
+          if (t === "activity") return null;
+          if (t === "A") return wrap(<DetailCardA entry={feedReview} showFollow />);
+          if (t === "B") return wrap(<DetailCardB entry={feedReview} showFollow />);
+          if (t === "C") return wrap(<DetailCardC entry={feedReview} />);
         }
+        return null;
       }
 
       switch (block.blockType) {
@@ -705,112 +704,7 @@ export default function BuildingDetails() {
           );
         }
 
-        // ── B: Image + review text, side by side (stacked on mobile) ─────────
-        case "image-review": {
-          const img = images[0];
-          if (!img) return null;
-          return (
-            <div key={block.key} className="grid grid-cols-1 sm:grid-cols-2">
-              <div
-                className="group aspect-video cursor-pointer overflow-hidden bg-surface-muted sm:aspect-[4/5]"
-                onClick={() => setSelectedImage(img)}
-              >
-                <img
-                  src={img.url}
-                  alt=""
-                  className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
-                />
-              </div>
-              <div className="flex flex-col justify-center border-border-default px-0 pt-3 sm:border-l sm:px-6 sm:pt-0">
-                {authorAttribution}
-                <Link to={`/review/${block.entryId}`} className="group/r mt-2 block">
-                  <p className="text-sm italic leading-relaxed text-text-secondary transition-colors group-hover/r:text-text-primary">
-                    &ldquo;{preview}&rdquo;
-                  </p>
-                </Link>
-              </div>
-            </div>
-          );
-        }
-
-        // ── C: Mosaic — 3fr/2fr hero + stacked secondaries ────────────────────
-        case "mosaic": {
-          const [first, second, third, ...rest] = images;
-          return (
-            <div key={block.key}>
-              <div
-                className="grid gap-0.5"
-                style={{ gridTemplateColumns: "3fr 2fr", gridTemplateRows: "280px" }}
-              >
-                <div
-                  className="group cursor-pointer overflow-hidden bg-surface-muted"
-                  onClick={() => setSelectedImage(first)}
-                >
-                  <img
-                    src={first.url}
-                    alt=""
-                    className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
-                  />
-                </div>
-                {(second || third) ? (
-                  <div
-                    className="grid gap-0.5"
-                    style={{ gridTemplateRows: third ? "1fr 1fr" : "1fr" }}
-                  >
-                    {second ? (
-                      <div
-                        className="group cursor-pointer overflow-hidden bg-surface-muted"
-                        onClick={() => setSelectedImage(second)}
-                      >
-                        <img
-                          src={second.url}
-                          alt=""
-                          className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
-                        />
-                      </div>
-                    ) : null}
-                    {third ? (
-                      <div
-                        className="group cursor-pointer overflow-hidden bg-surface-muted"
-                        onClick={() => setSelectedImage(third)}
-                      >
-                        <img
-                          src={third.url}
-                          alt=""
-                          className="h-full w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
-                        />
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-              {rest.length > 0 ? (
-                <div className="mt-0.5 grid grid-cols-3 gap-0.5">
-                  {rest.map((img) => (
-                    <BuildingImageCard
-                      key={img.id}
-                      image={img}
-                      initialIsLiked={likedImageIds.has(img.id)}
-                      onOpen={() => setSelectedImage(img)}
-                    />
-                  ))}
-                </div>
-              ) : null}
-              {(preview || authorAttribution) ? (
-                <div className="pb-1 pt-2">
-                  {authorAttribution}
-                  {preview ? (
-                    <Link to={`/review/${block.entryId}`} className="group/r mt-1.5 block">
-                      <p className="text-sm italic leading-relaxed text-text-secondary transition-colors group-hover/r:text-text-primary">
-                        &ldquo;{preview}&rdquo;
-                      </p>
-                    </Link>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          );
-        }
+        // ── Orphans only below: entry-backed reviews use DetailCard A/B/C ─────
 
         // ── A: Single image, no text — height scales with likes ───────────────
         case "image-only": {
@@ -840,27 +734,6 @@ export default function BuildingDetails() {
               </div>
               {authorAttribution ? <div className="mt-2">{authorAttribution}</div> : null}
             </div>
-          );
-        }
-
-        // ── D: Pull quote — text only, architect-of-building gets left border ──
-        case "text-only": {
-          if (!content) return null;
-          const isArchitectOfBuilding = user?.is_architect_of_building;
-          return (
-            <Link
-              key={block.key}
-              to={`/review/${block.entryId}`}
-              className={cn(
-                "group block border-b border-border-default py-6",
-                isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-4",
-              )}
-            >
-              <p className="text-base italic leading-relaxed text-text-primary transition-opacity group-hover:opacity-75">
-                &ldquo;{preview}&rdquo;
-              </p>
-              <div className="mt-3">{authorAttribution}</div>
-            </Link>
           );
         }
 

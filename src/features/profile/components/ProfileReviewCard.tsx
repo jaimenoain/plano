@@ -1,7 +1,7 @@
 import { FeedCardA } from "@/features/feed/components/FeedCardA";
 import { FeedCardB } from "@/features/feed/components/FeedCardB";
 import { FeedCardC } from "@/features/feed/components/FeedCardC";
-import { ActivityStreamGroup } from "@/features/feed/components/ActivityStream";
+import { FeedActivityRow } from "@/features/feed/components/FeedActivityRow";
 import { resolveCardType } from "@/features/feed/utils/resolveCardType";
 import type { FeedReview } from "@/types/feed";
 
@@ -16,7 +16,7 @@ export interface ProfileReviewCardProps {
 }
 
 /**
- * Profile surfaces: resolved A/B/C with implicit author; single-line activity uses `ActivityStreamGroup`.
+ * Profile surfaces: resolved A/B/C with implicit author; activity uses {@link FeedActivityRow}.
  */
 export function ProfileReviewCard({
   entry,
@@ -28,12 +28,13 @@ export function ProfileReviewCard({
 }: ProfileReviewCardProps) {
   const t = resolveCardType(entry);
   if (t === "activity") {
-    return <ActivityStreamGroup entries={[entry]} />;
+    return (
+      <FeedActivityRow entry={entry} hideUser showCommunityImages={showCommunityImages} />
+    );
   }
   const shared = {
     hideUser: true,
     hideBuildingInfo: false,
-    showCommunityImages,
     onLike,
   };
   switch (t) {

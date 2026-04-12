@@ -14,7 +14,6 @@ export interface DetailCardBProps {
   onLike?: (reviewId: string) => void;
   onComment?: (reviewId: string) => void;
   onImageLike?: (reviewId: string, imageId: string) => void;
-  showCommunityImages?: boolean;
   showFollow?: boolean;
 }
 
@@ -26,7 +25,6 @@ export function DetailCardB({
   onLike,
   onComment,
   onImageLike,
-  showCommunityImages = true,
   showFollow = true,
 }: DetailCardBProps) {
   const navigate = useNavigate();
@@ -35,7 +33,7 @@ export function DetailCardB({
   const [showReadMore, setShowReadMore] = useState(false);
   const bodyRef = useRef<HTMLParagraphElement>(null);
 
-  const { data } = useReviewCardData(entry, { showCommunityImages });
+  const { data } = useReviewCardData(entry);
 
   useEffect(() => {
     setEssayExpanded(false);
@@ -117,7 +115,6 @@ export function DetailCardB({
             userId={entry.user_id}
             showFollow={showFollow}
             viewerUserId={user?.id ?? null}
-            className="[&_hr]:hidden"
           />
           {entry.rating != null && entry.rating > 0 ? (
             <PointsBadge points={entry.rating} />

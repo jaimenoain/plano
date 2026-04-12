@@ -1,1427 +1,70 @@
-import { useEffect, useMemo, useState } from "react";
-import { Bookmark, Image as ImageIcon } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { useNavigate } from "react-router";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { FeedReview } from "@/types/feed";
-import type { CardLayout, CardProminence, CardSpec, CardTextWeight } from "@/types/cards";
-import { getBuildingUrl } from "@/utils/url";
-import { VideoPlayer } from "@/components/ui/VideoPlayer";
-import { SuggestedContentBlock } from "./SuggestedContentBlock";
-import { FollowButton } from "@/features/profile/components/FollowButton";
-import { FeedPhotoCarousel } from "./FeedPhotoCarousel";
-import { useReviewCardData, type ReviewCardMediaItem } from "@/features/feed/hooks/useReviewCardData";
-import { resolveCardSpec } from "@/features/feed/utils/resolveCardSpec";
-import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
-import { useQueryClient } from "@tanstack/react-query";
-
-/**
- * Award points badge. Renders filled black dots only — no empty placeholders.
- * Shows nothing when points === 0. Points are an award (like Michelin stars),
- * not a score, so absence is neutral and must not be visualised.
- * Uses bg-text-primary (monochromatic) — brand-primary is forbidden on content pages.
- */
-const PointsBadge = ({ points }: { points: number }) => {
-  if (!points || points <= 0) return null;
-  return (
-    <div
-      className="flex items-center gap-1.5"
-      title={`${points} ${points === 1 ? "point" : "points"}`}
-    >
-      {Array.from({ length: points }).map((_, i) => (
-        <div key={i} className="w-3 h-3 rounded-full bg-text-primary" />
-      ))}
-    </div>
-  );
-};
-
-// aspectToken is only applied for compact/stack layouts — the hero grid fills
-// the column by height naturally, so no explicit aspect ratio is needed there.
-function mediaAspectClass(layout: CardLayout, isCarouselLayout: boolean): string {
-  if (isCarouselLayout) return "";
-  switch (layout) {
-    case "media-forward":
-      return "aspect-card-hero";
-    case "compact-stack":
-      return "aspect-card-compact";
-    default:
-      return "aspect-card-standard";
-  }
-}
-
-function reviewBodyClampClass(textWeight: CardTextWeight, essayExpanded: boolean): string {
-  switch (textWeight) {
-    case "none":
-      return "";
-    case "snippet":
-      return "line-clamp-card-snippet";
-    case "body":
-      return "line-clamp-card-body";
-    case "essay":
-      return essayExpanded ? "" : "line-clamp-card-body";
-    default:
-      return "";
-  }
-}
+import type { FeedReview } from "@/types/feed";
+import { resolveCardType } from "@/features/feed/utils/resolveCardType";
+import { FeedCardA } from "./FeedCardA";
+import { FeedCardB } from "./FeedCardB";
+import { FeedCardC } from "./FeedCardC";
+import { ActivityStreamGroup } from "./ActivityStream";
 
 export interface ReviewCardFeedProps {
   entry: FeedReview;
   onLike?: (reviewId: string) => void;
   onImageLike?: (reviewId: string, imageId: string) => void;
   onComment?: (reviewId: string) => void;
-  variant?: "default" | "compact";
   hideUser?: boolean;
   hideBuildingInfo?: boolean;
-  imagePosition?: "left" | "right";
-  showCommunityImages?: boolean;
-  /** When omitted, layout is derived via {@link resolveCardSpec}(entry). */
-  spec?: CardSpec;
-  /** When set, replaces `spec.prominence` / resolver prominence — for playground / forced treatments. */
-  prominenceOverride?: CardProminence;
+  /** Feed position for alternating Type B image column. */
+  index?: number;
 }
 
 /**
- * Feed / discovery / profile-grid review card (non-detail). Default variant layout uses {@link resolveCardSpec}.
- *
- * Design: A24 editorial — white canvas, aggressive typographic hierarchy, zero decorative chrome.
- * Hero (default) cards use a true 50/50 CSS grid split so photography fills half the viewport,
- * not a narrow 280px sidebar. No box shadows. Sharp image edges. Generous text column padding.
+ * Feed / discovery review card: resolves {@link resolveCardType} and delegates to CardType A/B/C or activity stream.
  */
 export function ReviewCardFeed({
   entry,
   onLike,
   onImageLike,
   onComment,
-  variant = "default",
   hideUser = false,
   hideBuildingInfo = false,
-  imagePosition = "left",
-  showCommunityImages = true,
-  spec: specProp,
-  prominenceOverride,
+  index = 0,
 }: ReviewCardFeedProps) {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const { statuses } = useUserBuildingStatuses();
-  const queryClient = useQueryClient();
-  const isCompact = variant === "compact";
-  const effectiveSpec = useMemo((): CardSpec => {
-    const base = specProp ?? resolveCardSpec(entry);
-    if (prominenceOverride != null) {
-      return { ...base, prominence: prominenceOverride };
-    }
-    return base;
-  }, [entry, specProp, prominenceOverride]);
-  const { data, failedImages, setFailedImages } = useReviewCardData(entry, {
-    variant,
-    showCommunityImages,
-  });
-  const [isSaving, setIsSaving] = useState(false);
-  const [essayExpanded, setEssayExpanded] = useState(false);
+  const t = resolveCardType(entry);
 
-  useEffect(() => {
-    setEssayExpanded(false);
-  }, [entry.id]);
-
-  if (!data) return null;
-
-  const isSavedToList =
-    entry.building?.id != null && statuses[entry.building.id] === "pending";
-
-  const {
-    username,
-    isVerifiedArchitect,
-    isArchitectOfBuilding,
-    mainTitle,
-    subTitle,
-    posterUrl,
-    mediaItems,
-    carouselImages,
-    hasVideo,
-    city,
-  } = data;
-
-  const imageOnlyItems = mediaItems.filter((m) => m.type === "image");
-  const hasMedia =
-    !hideBuildingInfo && (mediaItems.length > 0 || (!!posterUrl && showCommunityImages));
-  const showCarousel =
-    !hideBuildingInfo &&
-    !hasVideo &&
-    effectiveSpec.imageWeight === "gallery" &&
-    imageOnlyItems.length > 2;
-  const showPairGrid =
-    !hideBuildingInfo &&
-    !hasVideo &&
-    effectiveSpec.imageWeight === "pair" &&
-    imageOnlyItems.length >= 2;
-  const bodyClampClass = reviewBodyClampClass(effectiveSpec.textWeight, essayExpanded);
-  const showReadMore =
-    !isCompact &&
-    effectiveSpec.textWeight === "essay" &&
-    !essayExpanded &&
-    Boolean(entry.content?.trim());
-  const useCompactStackLayout = !isCompact && effectiveSpec.layout === "compact-stack";
-
-  // aspectToken only used for compact/stack layouts — hero grid fills column height naturally.
-  const aspectToken =
-    (useCompactStackLayout || isCompact) && !showCarousel && !showPairGrid
-      ? mediaAspectClass(effectiveSpec.layout, showCarousel)
-      : "";
-
-  const handleSave = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!user) return;
-    if (!entry.building?.id) return;
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from("user_buildings").upsert(
-        {
-          user_id: user.id,
-          building_id: entry.building.id,
-          status: "pending",
-          edited_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,building_id" },
-      );
-      if (error) throw error;
-      toast({ title: "Saved to your list" });
-      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-    } catch (_error) {
-      toast({ variant: "destructive", title: "Failed to save" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest("button") || target.closest(".video-container")) return;
-    if (entry.building.id) {
-      navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
-    } else {
-      navigate(`/review/${entry.id}`);
-    }
-  };
-
-  const handleCommentClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onComment) {
-      onComment(entry.id);
-    } else {
-      if (entry.building.id) {
-        navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
-      } else {
-        navigate(`/review/${entry.id}`);
-      }
-    }
-  };
-
-  // ── renderMediaItem ─────────────────────────────────────────────────────────
-  // rounded-none on images: sharp edges like printed photographs in a magazine.
-  const renderMediaItem = (
-    item: ReviewCardMediaItem,
-    className?: string,
-    overlay?: React.ReactNode,
-  ) => (
-    <div key={item.id} className={`relative w-full h-full min-w-0 overflow-hidden rounded-none ${className || ""}`}>
-      <div className="absolute inset-0 w-full h-full">
-        {item.type === "video" ? (
-          <div className="w-full h-full video-container overflow-hidden">
-            <VideoPlayer
-              src={item.url}
-              poster={item.poster}
-              className="w-full h-full transition-transform duration-500 hover:scale-105"
-              autoPlayOnVisible={true}
-              muted={true}
-              objectFit="cover"
-            />
-          </div>
-        ) : !failedImages.has(item.id) ? (
-          <img
-            src={item.url}
-            alt="Review photo"
-            className="w-full h-full object-cover rounded-none transition-transform duration-500 hover:scale-105"
-            onError={() => setFailedImages((prev) => new Set(prev).add(item.id))}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-text-secondary bg-surface-muted/50">
-            <ImageIcon className="w-4 h-4 opacity-50" />
-          </div>
-        )}
-      </div>
-      {overlay && <div className="absolute inset-0 z-10">{overlay}</div>}
-    </div>
-  );
-
-  const userActionVerb = entry.status === "pending" ? "wants to visit" : "visited";
-
-  // ── Activity lead ───────────────────────────────────────────────────────────
-  // Replaces category labels ("Review" / "Building"): who did what, above the title.
-  const ActivityLead = !hideUser && (
-    <p
-      className={cn(
-        "font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary min-w-0",
-        !isCompact ? "mb-2" : "mb-1",
-      )}
-    >
-      <span className="font-medium text-text-primary">{username}</span>
-      <span className="text-text-secondary normal-case"> {userActionVerb}</span>
-    </p>
-  );
-
-  // ── Byline ──────────────────────────────────────────────────────────────────
-  // Architect badge, follow CTA, timestamp — username lives on ActivityLead only.
-  const Byline = !hideUser && (
-    <div className="flex items-center gap-2 min-w-0">
-      {isVerifiedArchitect && (
-        <span className="font-sans text-[9px] tracking-[0.1em] uppercase border border-text-primary text-text-primary px-1.5 py-0.5 font-bold shrink-0 leading-none">
-          Architect
-        </span>
-      )}
-      {entry.is_suggested && entry.user_id && (
-        <span className="shrink-0">
-          <FollowButton userId={entry.user_id} hideIfFollowing className="h-5 text-[10px] px-2" />
-        </span>
-      )}
-      <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-text-secondary/40 ml-auto shrink-0">
-        {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
-      </span>
-    </div>
-  );
-
-  // ── Building headline ───────────────────────────────────────────────────────
-  // Only rendered when !hideBuildingInfo (e.g. suppressed on building detail page).
-  // Scales with prominence: elevated → editorial hero size; standard → display size.
-  const BuildingHeadline = !hideBuildingInfo && (
-    <div>
-      <h2
-        className={`font-sans font-black tracking-tight leading-none text-text-primary ${
-          isCompact
-            ? "text-lg leading-tight"
-            : effectiveSpec.prominence === "elevated"
-            ? "text-6xl md:text-7xl mb-1.5"
-            : "text-4xl md:text-5xl mb-1"
-        }`}
-      >
-        {mainTitle}
-      </h2>
-      {(subTitle || city) && (
-        <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-1">
-          {[subTitle, city].filter(Boolean).join(" · ")}
-        </p>
-      )}
-    </div>
-  );
-
-  // ── Media (compact / stack variants) ────────────────────────────────────────
-  // Used by the compact variant and compact-stack layout only.
-  // For the hero grid, media is rendered inline in the image column below.
-  // Pair grid: 2px gap between cells (contact-sheet style, no rounded corners).
-  const MediaCompact = !hideBuildingInfo && (
-    mediaItems.length > 0 ? (
-      showCarousel ? (
-        <FeedPhotoCarousel
-          images={carouselImages}
-          reviewId={entry.id}
-          onImageLike={onImageLike}
-          className="w-full"
-        />
-      ) : showPairGrid ? (
-        <div className="grid grid-cols-2 gap-[2px] w-full max-w-full min-w-0 overflow-hidden rounded-none bg-surface-muted">
-          <div className="relative aspect-card-compact min-w-0 overflow-hidden rounded-none">
-            {renderMediaItem(imageOnlyItems[0], "h-full")}
-          </div>
-          <div className="relative aspect-card-compact min-w-0 overflow-hidden rounded-none">
-            {renderMediaItem(imageOnlyItems[1], "h-full")}
-          </div>
-        </div>
-      ) : (
-        <div
-          className={cn(
-            "relative w-full max-w-full min-w-0 overflow-hidden rounded-none bg-surface-muted",
-            aspectToken,
-          )}
-        >
-          <div className="absolute inset-0 w-full h-full">{renderMediaItem(mediaItems[0])}</div>
-        </div>
-      )
-    ) : posterUrl && showCommunityImages ? (
-      <div
-        className={cn(
-          "relative w-full max-w-full min-w-0 bg-surface-muted overflow-hidden rounded-none",
-          aspectToken || "aspect-[4/3]",
-        )}
-      >
-        <img
-          src={posterUrl}
-          alt={mainTitle || ""}
-          className="w-full h-full object-cover rounded-none transition-transform duration-500 group-hover/card:scale-105"
-        />
-      </div>
-    ) : null
-  );
-
-  // ── Media (hero grid) ────────────────────────────────────────────────────────
-  // Rendered directly inside the image column of the 50/50 grid.
-  // No fixed width, no aspect token — fills the grid cell height naturally.
-  const renderHeroMedia = () => {
-    if (!hasMedia) return null;
-    if (showCarousel) {
-      return (
-        <FeedPhotoCarousel
-          images={carouselImages}
-          reviewId={entry.id}
-          onImageLike={onImageLike}
-          className="w-full h-full"
-        />
-      );
-    }
-    if (showPairGrid) {
-      return (
-        <div className="grid grid-cols-2 gap-[2px] w-full h-full min-h-[300px] md:min-h-[460px] bg-surface-muted rounded-none">
-          <div className="relative min-w-0 overflow-hidden rounded-none">
-            {renderMediaItem(imageOnlyItems[0], "h-full")}
-          </div>
-          <div className="relative min-w-0 overflow-hidden rounded-none">
-            {renderMediaItem(imageOnlyItems[1], "h-full")}
-          </div>
-        </div>
-      );
-    }
-    if (mediaItems.length > 0) {
-      return (
-        <div className="relative w-full h-full min-h-[300px] md:min-h-[460px] bg-surface-muted rounded-none">
-          <div className="absolute inset-0 w-full h-full">{renderMediaItem(mediaItems[0])}</div>
-        </div>
-      );
-    }
-    if (posterUrl && showCommunityImages) {
-      return (
-        <div className="relative w-full h-full min-h-[300px] md:min-h-[460px] bg-surface-muted rounded-none">
-          <img
-            src={posterUrl}
-            alt={mainTitle || ""}
-            className="absolute inset-0 w-full h-full object-cover rounded-none transition-transform duration-500 group-hover/card:scale-105"
-          />
-        </div>
-      );
-    }
-    return null;
-  };
-
-  // ── Content body ─────────────────────────────────────────────────────────────
-  // Compact variant: quoted excerpt in medium weight.
-  // Default variant: text-base (16px) for editorial readability — not text-sm.
-  const ContentBody = isCompact ? (
-    <>
-      {entry.content && (
-        <div className="min-w-0">
-          <p className={`text-sm font-medium text-text-primary leading-relaxed break-words ${bodyClampClass}`}>
-            "{entry.content}"
-          </p>
-          {effectiveSpec.textWeight === "essay" && !essayExpanded && entry.content.trim() && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setEssayExpanded(true);
-              }}
-              className="mt-1.5 font-sans text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
-            >
-              Read more →
-            </button>
-          )}
-        </div>
-      )}
-    </>
-  ) : (
-    <>
-      {entry.content && (
-        <div className="min-w-0">
-          <p className={`text-base text-text-primary leading-relaxed break-words ${bodyClampClass}`}>
-            {entry.content}
-          </p>
-          {showReadMore && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setEssayExpanded(true);
-              }}
-              className="mt-1.5 font-sans text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
-            >
-              Read more →
-            </button>
-          )}
-        </div>
-      )}
-    </>
-  );
-
-  // ── Footer ───────────────────────────────────────────────────────────────────
-  // Likes / comments in mono; save is a bookmark (desktop: show on card hover).
-  const Footer = (
-    <div
-      className={`flex w-full max-w-full min-w-0 items-center gap-3 flex-wrap mt-auto ${
-        isCompact ? "pt-3" : "pt-4"
-      }`}
-    >
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onLike?.(entry.id);
-          window.dispatchEvent(new CustomEvent("pwa-interaction"));
-        }}
-        className={`font-sans text-[10px] tracking-[0.12em] uppercase transition-colors ${
-          entry.is_liked
-            ? "text-text-primary"
-            : "text-text-secondary hover:text-text-primary"
-        }`}
-      >
-        {entry.likes_count} {entry.likes_count === 1 ? "like" : "likes"}
-      </button>
-      <span className="text-text-secondary/30 select-none text-xs">·</span>
-      <button
-        onClick={handleCommentClick}
-        className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors"
-      >
-        {entry.comments_count} {entry.comments_count === 1 ? "comment" : "comments"}
-      </button>
-      {!isCompact && (
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={isSaving}
-          aria-label={isSavedToList ? "Saved to your list" : "Save building to your list"}
-          title={isSavedToList ? "Saved to your list" : "Save to your list"}
-          className={cn(
-            "ml-auto shrink-0 rounded-sm p-1 text-text-secondary transition-colors hover:text-text-primary",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1",
-            "opacity-100 md:opacity-0 md:transition-opacity md:group-hover/card:opacity-100 md:focus-visible:opacity-100",
-            isSaving && "pointer-events-none opacity-50",
-          )}
-        >
-          <Bookmark
-            className={cn(
-              "h-4 w-4",
-              isSavedToList && "fill-text-primary text-text-primary",
-            )}
-            strokeWidth={1.75}
-            aria-hidden
-          />
-        </button>
-      )}
-    </div>
-  );
-
-  // ── Render ───────────────────────────────────────────────────────────────────
-  return (
-    <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
-      <article
-        data-testid={`review-card-feed-${entry.id}`}
-        onClick={handleCardClick}
-        className={cn(
-          "group/card relative w-full cursor-pointer min-w-0",
-          // Architect-of-building indicator: left rule, no padding bleed into image column.
-          isArchitectOfBuilding && "border-l-2 border-l-text-primary",
-        )}
-      >
-        {/* ── Compact variant ── */}
-        {isCompact ? (
-          <div className={cn("flex flex-col h-full", isArchitectOfBuilding && "pl-3 md:pl-4")}>
-            {MediaCompact}
-            {/* Text lives in its own padded sub-div — image is flush to card edges. */}
-            <div className="flex flex-col flex-1 min-w-0 px-3 py-2.5 gap-2">
-              {ActivityLead}
-              {Byline}
-              {BuildingHeadline}
-              {entry.rating != null && entry.rating > 0 && (
-                <PointsBadge points={entry.rating} />
-              )}
-              {ContentBody}
-              {Footer}
-            </div>
-          </div>
-
-        /* ── Compact-stack layout ── */
-        ) : useCompactStackLayout ? (
-          <div className={cn("flex flex-col", isArchitectOfBuilding && "pl-3 md:pl-4")}>
-            <div className="flex flex-col gap-3">
-              {ActivityLead}
-              {Byline}
-              {BuildingHeadline}
-              {entry.rating != null && entry.rating > 0 && (
-                <PointsBadge points={entry.rating} />
-              )}
-            </div>
-            {MediaCompact}
-            <div className="flex flex-col flex-1 min-w-0 pt-3 gap-2">
-              {ContentBody}
-              {Footer}
-            </div>
-          </div>
-
-        /* ── Hero grid (default, non-compact) ── */
-        /* True 50/50 CSS grid — magazine spread. No box shadow, no fixed image width. */
-        ) : (
-          <div
-            className={cn(
-              "grid grid-cols-1 gap-0 items-stretch",
-              hasMedia && "md:grid-cols-2",
-              isArchitectOfBuilding && "pl-3 md:pl-4",
-            )}
-          >
-            {/* Image column — full 50% width, generous min-height for photography */}
-            {hasMedia && (
-              <div
-                className={cn(
-                  "relative overflow-hidden rounded-none",
-                  imagePosition === "right" ? "md:order-2" : "md:order-1",
-                )}
-              >
-                {renderHeroMedia()}
-              </div>
-            )}
-
-            {/* Text column — generous padding mirrors FeedHeroCard's editorial rhythm */}
-            <div
-              className={cn(
-                "flex flex-col justify-center gap-3",
-                hasMedia
-                  ? imagePosition === "right"
-                    ? "md:order-1 px-0 py-6 md:py-10 md:pr-10"
-                    : "md:order-2 px-0 py-6 md:py-10 md:pl-10"
-                  : "max-w-xl",
-              )}
-            >
-              {ActivityLead}
-              {Byline}
-              {BuildingHeadline}
-              {entry.rating != null && entry.rating > 0 && (
-                <PointsBadge points={entry.rating} />
-              )}
-              {ContentBody}
-              {Footer}
-            </div>
-          </div>
-        )}
-      </article>
-    </SuggestedContentBlock>
-  );
-}import { formatDistanceToNow } from "date-fns";
-import { Link, useNavigate } from "react-router";
-import { FeedReview } from "@/types/feed";
-import { getBuildingUrl } from "@/utils/url";
-import { VideoPlayer } from "@/components/ui/VideoPlayer";
-import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-/**
- * Award points badge. Renders filled black dots only — no empty placeholders.
- * Shows nothing when points === 0. Points are an award, not a score.
- * Uses text-primary (monochromatic) per editorial content-page colour rules.
- */
-const PointsBadge = ({ points }: { points: number }) => {
-  if (!points || points <= 0) return null;
-  return (
-    <div
-      className="flex items-center gap-1.5"
-      title={`${points} ${points === 1 ? "point" : "points"}`}
-    >
-      {Array.from({ length: points }).map((_, i) => (
-        <div key={i} className="w-3 h-3 rounded-full bg-text-primary" />
-      ))}
-    </div>
-  );
-};
-
-export interface ReviewCardDetailProps {
-  entry: FeedReview;
-  hideUser?: boolean;
-  hideBuildingInfo?: boolean;
-  onLike?: (reviewId: string) => void;
-  onComment?: (reviewId: string) => void;
-  /** Passed through to {@link useReviewCardData} (subtitle / media); default matches feed detail usage. */
-  variant?: "default" | "compact";
-  showCommunityImages?: boolean;
-}
-
-/**
- * Building / review detail layout: byline, thumbnail + copy, text actions.
- * Fixed horizontal media + text row (no `imagePosition`).
- */
-export function ReviewCardDetail({
-  entry,
-  hideUser = false,
-  hideBuildingInfo = false,
-  onLike,
-  onComment,
-  variant = "default",
-  showCommunityImages = true,
-}: ReviewCardDetailProps) {
-  const navigate = useNavigate();
-  const { data } = useReviewCardData(entry, { variant, showCommunityImages });
-
-  if (!data) return null;
-
-  const {
-    username,
-    avatarUrl,
-    isVerifiedArchitect,
-    mainTitle,
-    subTitle,
-    posterUrl,
-    mediaItems,
-    city,
-  } = data;
-
-  const handleCommentClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onComment) {
-      onComment(entry.id);
-    } else {
-      if (entry.building.id) {
-        navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
-      } else {
-        navigate(`/review/${entry.id}`);
-      }
-    }
-  };
-
-  // ── Byline — magazine columnist: visible avatar + prominent author name
-  const timestamp = formatDistanceToNow(
-    new Date(entry.edited_at || entry.created_at),
-    { addSuffix: true },
-  ).replace("about ", "");
-
-  const Byline = !hideUser ? (
-    <div className="flex gap-3 items-start min-w-0 mb-3">
-      <Avatar className="h-12 w-12 shrink-0 rounded-full border border-border-default bg-surface-muted">
-        <AvatarImage src={avatarUrl || undefined} alt="" />
-        <AvatarFallback className="text-sm font-semibold text-text-secondary">
-          {username.charAt(0).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
-      <div className="min-w-0 flex-1 flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-        <div className="min-w-0">
-          <Link
-            to={`/profile/${username}`}
-            className="text-base md:text-lg font-semibold tracking-tight text-text-primary transition-colors hover:opacity-80"
-          >
-            {username}
-          </Link>
-          {isVerifiedArchitect ? (
-            <span className="mt-1 block font-sans text-[9px] tracking-[0.1em] uppercase border border-text-primary text-text-primary px-1.5 py-0.5 font-bold leading-none w-fit">
-              Architect
-            </span>
-          ) : null}
-        </div>
-        <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-text-secondary/40 shrink-0">
-          {timestamp}
-        </span>
-      </div>
-    </div>
-  ) : (
-    <div className="mb-3">
-      <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-text-secondary/40">
-        {timestamp}
-      </span>
-    </div>
-  );
-
-  // ── Thumbnail ───────────────────────────────────────────────────────────────
-  // Sharp edges — no rounded corners.
-  const Thumbnail = !hideBuildingInfo && (
-    mediaItems.length > 0 && mediaItems[0].type === "video" ? (
-      <div className="w-32 h-24 bg-black shrink-0 overflow-hidden video-container">
-        <VideoPlayer
-          src={mediaItems[0].url}
-          poster={mediaItems[0].poster}
-          className="w-full h-full"
-          autoPlayOnVisible={false}
-          muted={true}
-          objectFit="cover"
-        />
-      </div>
-    ) : mediaItems.length > 0 ? (
-      <img
-        src={mediaItems[0].url}
-        alt={entry.building.name}
-        className="w-32 h-24 object-cover shrink-0"
+  const inner =
+    t === "activity" ? (
+      <ActivityStreamGroup entries={[entry]} />
+    ) : t === "A" ? (
+      <FeedCardA
+        entry={entry}
+        hideUser={hideUser}
+        hideBuildingInfo={hideBuildingInfo}
+        onLike={onLike}
+        onComment={onComment}
       />
-    ) : posterUrl ? (
-      <img
-        src={posterUrl}
-        alt={entry.building.name}
-        className="w-32 h-24 object-cover shrink-0"
+    ) : t === "B" ? (
+      <FeedCardB
+        entry={entry}
+        index={index}
+        hideUser={hideUser}
+        hideBuildingInfo={hideBuildingInfo}
+        onLike={onLike}
+        onComment={onComment}
+        onImageLike={onImageLike}
       />
     ) : (
-      <div className="w-32 h-24 bg-surface-muted shrink-0" />
-    )
-  );
-
-  return (
-    <article className="px-4 py-4 hairline">
-      {Byline}
-
-      <div className="flex gap-3">
-        {Thumbnail}
-
-        <div className="flex-1 min-w-0">
-          {/* Building headline — suppressed on building detail page */}
-          {!hideBuildingInfo && (
-            <div className="mb-2">
-              <h3 className="text-lg font-bold tracking-tight text-text-primary leading-tight">
-                {mainTitle}
-              </h3>
-              {(subTitle || city) && (
-                <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-0.5">
-                  {[subTitle, city].filter(Boolean).join(" · ")}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Points */}
-          {entry.rating != null && entry.rating > 0 && (
-            <div className="mb-2">
-              <PointsBadge points={entry.rating} />
-            </div>
-          )}
-
-          {/* Review body */}
-          {entry.content && (
-            <p className="text-sm text-text-secondary leading-relaxed break-words mb-2">
-              {entry.content}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Footer — text actions, no icons */}
-      <div className="flex items-center gap-3 mt-3 pt-2">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onLike?.(entry.id);
-            window.dispatchEvent(new CustomEvent("pwa-interaction"));
-          }}
-          className={`font-sans text-[10px] tracking-[0.12em] uppercase transition-colors ${
-            entry.is_liked
-              ? "text-text-primary"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          {entry.likes_count} {entry.likes_count === 1 ? "like" : "likes"}
-        </button>
-        <span className="text-text-secondary/30 select-none text-xs">·</span>
-        <button
-          onClick={handleCommentClick}
-          className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors"
-        >
-          {entry.comments_count} {entry.comments_count === 1 ? "comment" : "comments"}
-        </button>
-      </div>
-    </article>
-  );
-}import { Bookmark } from "lucide-react";
-import { useNavigate } from "react-router";
-import { useState } from "react";
-import { FeedReview } from "@/types/feed";
-import { getBuildingImageUrl } from "@/utils/image";
-import { getBuildingUrl } from "@/utils/url";
-import { cn } from "@/lib/utils";
-
-interface FeedActivityCardProps {
-  entry: FeedReview;
-  activityStatus: "visited" | "pending";
-  onLike?: (reviewId: string) => void;
-  size?: "hero" | "compact";
-}
-
-export function FeedActivityCard({
-  entry,
-  activityStatus,
-  onLike: _onLike,
-  size = "hero",
-}: FeedActivityCardProps) {
-  const navigate = useNavigate();
-  const [imageVisible, setImageVisible] = useState(true);
-  const [saved, setSaved] = useState(false);
-
-  if (!entry.building) return null;
-
-  const isHero = size === "hero";
-  const username = entry.user?.username ?? "Unknown User";
-  const mainTitle = entry.building.name;
-  const city =
-    entry.building.city ||
-    entry.building.address?.split(",").pop()?.trim() ||
-    "";
-
-  const cardImageSrc =
-    getBuildingImageUrl(entry.building.main_image_url) ??
-    getBuildingImageUrl(entry.building.community_preview_url);
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest("button")) return;
-    if (entry.building.id) {
-      navigate(
-        getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id),
-      );
-    } else {
-      navigate(`/review/${entry.id}`);
-    }
-  };
-
-  const handleSave = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSaved((s) => !s);
-  };
-
-  return (
-    <article
-      onClick={handleCardClick}
-      className="group/card flex items-start gap-4 w-full cursor-pointer pb-6 border-b border-border-default"
-    >
-      {/* Thumbnail — sharp edges, no radius */}
-      {cardImageSrc && imageVisible && (
-        <div
-          className={cn(
-            "shrink-0 overflow-hidden bg-surface-muted",
-            isHero ? "w-28 h-28" : "w-20 h-20",
-          )}
-        >
-          <img
-            src={cardImageSrc}
-            alt={mainTitle}
-            className="w-full h-full object-cover"
-            onError={() => setImageVisible(false)}
-          />
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary">
-          <span className="font-medium text-text-primary">{username}</span>
-          <span className="text-text-secondary normal-case">
-            {activityStatus === "visited" ? " visited" : " wants to visit"}
-          </span>
-        </p>
-
-        {/*
-         * Building name — editorial scale.
-         * font-black + leading-none matches the BuildingHeadline treatment in
-         * ReviewCardFeed. The hierarchy here is: tiny label → massive title,
-         * same A24 poster contrast.
-         */}
-        <h3
-          className={cn(
-            "font-black tracking-tight text-text-primary mt-0.5",
-            isHero
-              ? "text-3xl md:text-4xl leading-none"
-              : "text-2xl leading-tight",
-          )}
-        >
-          {mainTitle}
-        </h3>
-
-        {/* Location — mono meta, consistent with byline treatment */}
-        {city && (
-          <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-1.5">
-            {city}
-          </p>
-        )}
-
-        <div className="flex items-center gap-2 min-w-0 mt-2 justify-end">
-          <button
-            type="button"
-            onClick={handleSave}
-            aria-label={saved ? "Saved (demo)" : "Save (demo)"}
-            title={saved ? "Saved" : "Save"}
-            className={cn(
-              "shrink-0 rounded-sm p-1 text-text-secondary transition-colors hover:text-text-primary",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1",
-              "opacity-100 md:opacity-0 md:transition-opacity md:group-hover/card:opacity-100 md:focus-visible:opacity-100",
-            )}
-          >
-            <Bookmark
-              className={cn("h-4 w-4", saved && "fill-text-primary text-text-primary")}
-              strokeWidth={1.75}
-              aria-hidden
-            />
-          </button>
-        </div>
-      </div>
-    </article>
-  );
-}import { Bookmark } from "lucide-react";
-import { useNavigate } from "react-router";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { FeedReview } from "@/types/feed";
-import type { CardSpec, CardTextWeight } from "@/types/cards";
-import { getBuildingUrl } from "@/utils/url";
-import { useEffect, useMemo, useState } from "react";
-import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
-import { useQueryClient } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
-import { FeedPhotoCarousel } from "./FeedPhotoCarousel";
-import { resolveCardSpec } from "@/features/feed/utils/resolveCardSpec";
-
-/**
- * Award points badge. Renders filled black dots only — no empty placeholders.
- * Shows nothing when points === 0. Points are an award (like Michelin stars),
- * not a score, so absence is neutral and must not be visualised.
- * Uses bg-text-primary (monochromatic) — brand-primary is forbidden on content pages.
- */
-const PointsBadge = ({ points }: { points: number }) => {
-  if (!points || points <= 0) return null;
-  return (
-    <div
-      className="flex items-center gap-1.5"
-      title={`${points} ${points === 1 ? "point" : "points"}`}
-    >
-      {Array.from({ length: points }).map((_, i) => (
-        <div key={i} className="w-3 h-3 rounded-full bg-text-primary" />
-      ))}
-    </div>
-  );
-};
-
-function heroBodyClampClass(textWeight: CardTextWeight, essayExpanded: boolean): string {
-  switch (textWeight) {
-    case "none":
-      return "";
-    case "snippet":
-      return "line-clamp-card-snippet";
-    case "body":
-      return "line-clamp-card-body";
-    case "essay":
-      return essayExpanded ? "" : "line-clamp-card-body";
-    default:
-      return "";
-  }
-}
-
-// ─── Single-image subcomponent ───────────────────────────────────────────────
-
-interface FeedHeroSingleImageProps {
-  image: { id: string; url: string };
-  onError: (id: string) => void;
-}
-
-function FeedHeroSingleImage({ image, onError }: FeedHeroSingleImageProps) {
-  const [loaded, setLoaded] = useState(false);
-
-  return (
-    <div className="relative w-full h-full min-h-[300px] md:min-h-0 bg-surface-muted rounded-none">
-      {!loaded && <div className="absolute inset-0 bg-surface-muted animate-pulse" />}
-      <img
-        src={image.url}
-        onLoad={() => setLoaded(true)}
-        onError={() => onError(image.id)}
-        className={cn(
-          "w-full h-full object-cover rounded-none transition-opacity duration-300",
-          loaded ? "opacity-100" : "opacity-0"
-        )}
-        alt="Building"
-      />
-    </div>
-  );
-}
-
-// ─── Card props ──────────────────────────────────────────────────────────────
-
-interface FeedHeroCardProps {
-  entry: FeedReview;
-  index?: number;
-  /** When omitted, derived via {@link resolveCardSpec}(entry). */
-  spec?: CardSpec;
-  onLike?: (reviewId: string) => void;
-  onImageLike?: (reviewId: string, imageId: string) => void;
-  onComment?: (reviewId: string) => void;
-}
-
-// ─── Main card ───────────────────────────────────────────────────────────────
-
-export function FeedHeroCard({
-  entry,
-  index = 0,
-  spec: specProp,
-  onLike: _onLike,
-  onImageLike,
-  onComment: _onComment,
-}: FeedHeroCardProps) {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const { statuses } = useUserBuildingStatuses();
-  const queryClient = useQueryClient();
-  const [isSaving, setIsSaving] = useState(false);
-  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
-  const [essayExpanded, setEssayExpanded] = useState(false);
-  const effectiveSpec = useMemo(() => specProp ?? resolveCardSpec(entry), [entry, specProp]);
-
-  useEffect(() => {
-    setEssayExpanded(false);
-  }, [entry.id]);
-
-  if (!entry.building) return null;
-
-  const viewerStatus = entry.building ? statuses[entry.building.id] : undefined;
-  const isSaved = viewerStatus === "pending";
-  const isReversed = index % 2 !== 0;
-
-  const handleSave = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!user) return;
-    if (!entry.building?.id) return;
-    setIsSaving(true);
-    try {
-      const { error } = await supabase.from("user_buildings").upsert(
-        { user_id: user.id, building_id: entry.building.id, status: "pending", edited_at: new Date().toISOString() },
-        { onConflict: "user_id, building_id" }
-      );
-      if (error) throw error;
-      toast({ title: "Saved to your list" });
-      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-    } catch {
-      toast({ variant: "destructive", title: "Failed to update status" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest("button")) return;
-    if (entry.building.id) {
-      navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
-    } else {
-      navigate(`/review/${entry.id}`);
-    }
-  };
-
-  const username = entry.user?.username || "Unknown User";
-  const userActionVerb = entry.status === "pending" ? "wants to visit" : "visited";
-  const mainTitle = entry.building.name;
-  const credits = entry.building.creditedEntities;
-  const primaryCreditLine =
-    credits && credits.length > 0 ? credits.map((c) => c.name).join(", ") : null;
-  const city = entry.building.city || entry.building.address?.split(",").pop()?.trim() || "";
-
-  const handleImageError = (imageId: string) => {
-    setFailedImages((prev) => {
-      const next = new Set(prev);
-      next.add(imageId);
-      return next;
-    });
-  };
-
-  // ── Image rendering ─────────────────────────────────────────────────────────
-  const allImages = entry.images || [];
-  const singleImages = allImages.filter((img) => !failedImages.has(img.id));
-
-  const renderImages = () => {
-    if (allImages.length === 0) return null;
-
-    if (allImages.length > 2 || effectiveSpec.imageWeight === "gallery") {
-      return (
-        <FeedPhotoCarousel
-          images={allImages}
-          reviewId={entry.id}
-          onImageLike={onImageLike}
-          className="w-full h-full"
-        />
-      );
-    }
-
-    if (
-      effectiveSpec.imageWeight === "pair" &&
-      singleImages.length >= 2
-    ) {
-      return (
-        <div className="grid grid-cols-2 gap-[2px] w-full h-full min-h-[280px] md:min-h-[400px]">
-          <div className="relative h-full min-h-[280px] min-w-0 overflow-hidden bg-surface-muted md:min-h-0">
-            <FeedHeroSingleImage
-              image={singleImages[0]}
-              onError={handleImageError}
-            />
-          </div>
-          <div className="relative h-full min-h-[280px] min-w-0 overflow-hidden bg-surface-muted md:min-h-0">
-            <FeedHeroSingleImage
-              image={singleImages[1]}
-              onError={handleImageError}
-            />
-          </div>
-        </div>
-      );
-    }
-
-    if (singleImages.length === 1) {
-      return (
-        <FeedHeroSingleImage
-          image={singleImages[0]}
-          onError={handleImageError}
-        />
-      );
-    }
-
-    return (
-      <FeedPhotoCarousel
-        images={allImages}
-        reviewId={entry.id}
+      <FeedCardC
+        entry={entry}
+        hideUser={hideUser}
+        hideBuildingInfo={hideBuildingInfo}
+        onLike={onLike}
+        onComment={onComment}
         onImageLike={onImageLike}
-        className="w-full h-full"
       />
     );
-  };
-
-  const hasImages = allImages.length > 0;
-
-  // ── Render ──────────────────────────────────────────────────────────────────
-  const bodyClamp = heroBodyClampClass(effectiveSpec.textWeight, essayExpanded);
-  const showReadMore =
-    effectiveSpec.textWeight === "essay" && !essayExpanded && Boolean(entry.content?.trim());
 
   return (
-    <article onClick={handleCardClick} className="group/card relative w-full cursor-pointer">
-      {/* Magazine spread: two-column on desktop, stacked on mobile */}
-      <div className={cn(
-        "grid grid-cols-1 gap-0 items-stretch",
-        hasImages && "md:grid-cols-2"
-      )}>
-        {/* Image column */}
-        {hasImages && (
-          <div className={cn(
-            "relative overflow-hidden min-h-[280px] md:min-h-[400px]",
-            isReversed ? "md:order-2" : "md:order-1"
-          )}>
-            {renderImages()}
-          </div>
-        )}
-
-        {/* Text column */}
-        <div
-          className={cn(
-            "flex flex-col justify-center py-6 md:py-10",
-            hasImages && (isReversed ? "md:order-1 md:pr-10" : "md:order-2 md:pl-10"),
-            !hasImages && "max-w-xl",
-          )}
-        >
-          <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary mb-3">
-            <span className="font-medium text-text-primary">{username}</span>
-            <span className="text-text-secondary normal-case"> {userActionVerb}</span>
-          </p>
-
-          {/* Building name — editorial scale */}
-          <h2 className="font-sans text-4xl md:text-6xl lg:text-7xl font-black tracking-tight leading-none text-text-primary mb-3">
-            {mainTitle}
-          </h2>
-
-          {/* Architect + location */}
-          {(primaryCreditLine || city) && (
-            <p className="text-sm text-text-secondary mb-4">
-              {primaryCreditLine}{primaryCreditLine && city ? " · " : ""}{city}
-            </p>
-          )}
-
-          {entry.rating != null && entry.rating > 0 && (
-            <div className="mb-3">
-              <PointsBadge points={entry.rating} />
-            </div>
-          )}
-
-          {/* Review excerpt */}
-          {entry.content && (
-            <div className="max-w-md mb-6">
-              <p
-                className={cn(
-                  "text-base leading-relaxed text-text-secondary",
-                  bodyClamp,
-                )}
-              >
-                {entry.content}
-              </p>
-              {showReadMore && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEssayExpanded(true);
-                  }}
-                  className="mt-1.5 font-sans text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
-                >
-                  Read more →
-                </button>
-              )}
-            </div>
-          )}
-
-          <div className="flex items-center gap-2 min-w-0 justify-end">
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={isSaving}
-              aria-label={isSaved ? "Saved to your list" : "Save building to your list"}
-              title={isSaved ? "Saved to your list" : "Save to your list"}
-              className={cn(
-                "shrink-0 rounded-sm p-1 text-text-secondary transition-colors hover:text-text-primary",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1",
-                "opacity-100 md:opacity-0 md:transition-opacity md:group-hover/card:opacity-100 md:focus-visible:opacity-100",
-                isSaving && "pointer-events-none opacity-50",
-              )}
-            >
-              <Bookmark
-                className={cn("h-4 w-4", isSaved && "fill-text-primary text-text-primary")}
-                strokeWidth={1.75}
-                aria-hidden
-              />
-            </button>
-          </div>
-        </div>
-      </div>
-    </article>
-  );
-}
-import { Bookmark } from "lucide-react";
-import { useNavigate } from "react-router";
-import { useState } from "react";
-import { FeedReview } from "@/types/feed";
-import { getBuildingUrl } from "@/utils/url";
-import { getBuildingImageUrl } from "@/utils/image";
-import { cn } from "@/lib/utils";
-
-/**
- * Award points badge. Renders filled black dots only — no empty placeholders.
- * Shows nothing when points === 0. Points are an award (like Michelin stars),
- * not a score, so absence is neutral and must not be visualised.
- * Uses bg-text-primary (monochromatic) — brand-primary is forbidden on content pages.
- */
-const PointsBadge = ({ points }: { points: number }) => {
-  if (!points || points <= 0) return null;
-  return (
-    <div
-      className="flex items-center gap-1.5"
-      title={`${points} ${points === 1 ? "point" : "points"}`}
-    >
-      {Array.from({ length: points }).map((_, i) => (
-        <div key={i} className="w-3 h-3 rounded-full bg-text-primary" />
-      ))}
-    </div>
-  );
-};
-
-interface FeedCompactCardProps {
-  entry: FeedReview;
-  onLike?: (reviewId: string) => void;
-  onComment?: (reviewId: string) => void;
-}
-
-export function FeedCompactCard({
-  entry,
-  onLike: _onLike,
-  onComment: _onComment,
-}: FeedCompactCardProps) {
-  const navigate = useNavigate();
-  const [imageVisible, setImageVisible] = useState(true);
-  const [saved, setSaved] = useState(false);
-
-  if (!entry.building) return null;
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest("button")) return;
-    if (entry.building.id) {
-      navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
-    } else {
-      navigate(`/review/${entry.id}`);
-    }
-  };
-
-  const handleSave = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setSaved((s) => !s);
-  };
-
-  const username = entry.user?.username || "Unknown User";
-  const mainTitle = entry.building.name;
-  const userActionVerb = entry.status === "pending" ? "wants to visit" : "visited";
-
-  const cardImageSrc =
-    getBuildingImageUrl(entry.building.main_image_url) ??
-    getBuildingImageUrl(entry.building.community_preview_url);
-
-  return (
-    <div
-      onClick={handleCardClick}
-      className="group/card flex items-start gap-4 w-full cursor-pointer pb-6 border-b border-border-default"
-    >
-      {/* Thumbnail */}
-      {cardImageSrc && imageVisible && (
-        <div className="w-24 h-24 shrink-0 overflow-hidden bg-surface-muted rounded-none">
-          <img
-            src={cardImageSrc}
-            alt={mainTitle}
-            className="w-full h-full object-cover"
-            onError={() => setImageVisible(false)}
-          />
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary">
-          <span className="font-medium text-text-primary">{username}</span>
-          <span className="text-text-secondary normal-case"> {userActionVerb}</span>
-        </p>
-
-        {/* Building name — editorial scale */}
-        <h3 className="text-3xl font-semibold tracking-tight leading-tight text-text-primary mt-1">
-          {mainTitle}
-        </h3>
-
-        {entry.rating != null && entry.rating > 0 && (
-          <div className="mt-2">
-            <PointsBadge points={entry.rating} />
-          </div>
-        )}
-
-        {/* Review excerpt */}
-        {entry.content && (
-          <p className="text-sm leading-relaxed text-text-secondary mt-2 line-clamp-2">
-            {entry.content}
-          </p>
-        )}
-
-        <div className="flex items-center gap-2 min-w-0 mt-3 justify-end">
-          <button
-            type="button"
-            onClick={handleSave}
-            aria-label={saved ? "Saved (demo)" : "Save (demo)"}
-            title={saved ? "Saved" : "Save"}
-            className={cn(
-              "shrink-0 rounded-sm p-1 text-text-secondary transition-colors hover:text-text-primary",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1",
-              "opacity-100 md:opacity-0 md:transition-opacity md:group-hover/card:opacity-100 md:focus-visible:opacity-100",
-            )}
-          >
-            <Bookmark
-              className={cn("h-4 w-4", saved && "fill-text-primary text-text-primary")}
-              strokeWidth={1.75}
-              aria-hidden
-            />
-          </button>
-        </div>
-      </div>
+    <div className="contents" data-testid={`review-card-feed-${entry.id}`}>
+      {inner}
     </div>
   );
 }
@@ -1443,13 +86,9 @@ export type ReviewCardMediaItem = {
   type: "video" | "image";
   url: string;
   poster?: string;
-};
-
-export type ReviewCardCarouselImage = {
-  id: string;
-  url: string;
-  likes_count: number;
-  is_liked: boolean;
+  /** Present for stills from `entry.images`; used by carousels for like state. */
+  likes_count?: number;
+  is_liked?: boolean;
 };
 
 export type ReviewCardData = {
@@ -1461,28 +100,26 @@ export type ReviewCardData = {
   subTitle: string | null | undefined;
   posterUrl: string | undefined;
   mediaItems: ReviewCardMediaItem[];
-  carouselImages: ReviewCardCarouselImage[];
   hasVideo: boolean;
   city: string;
 };
 
 export function useReviewCardData(
   entry: FeedReview,
-  options: {
-    variant: "default" | "compact";
-    showCommunityImages: boolean;
-  },
+  options: { showCommunityImages?: boolean } = {},
 ): {
   data: ReviewCardData | null;
   failedImages: Set<string>;
   setFailedImages: React.Dispatch<React.SetStateAction<Set<string>>>;
 } {
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const showCommunityImages = options.showCommunityImages ?? true;
 
   const data = useMemo((): ReviewCardData | null => {
     if (!entry.building) return null;
 
     const posterUrl = getBuildingImageUrl(entry.building.main_image_url);
+    const communityPoster = getBuildingImageUrl(entry.building.community_preview_url);
 
     const username = entry.user?.username || "Unknown User";
     const avatarUrl = entry.user?.avatar_url ?? null;
@@ -1495,20 +132,13 @@ export function useReviewCardData(
     const creditNames = credits ? credits.map((c) => c.name).filter(Boolean) : [];
 
     let subTitle: string | null | undefined = entry.building.address;
-    if (options.variant === "compact") {
-      const parts: (string | number)[] = [];
-      if (creditNames.length > 0) parts.push(creditNames.slice(0, 2).join(", "));
-      if (year_completed) parts.push(year_completed);
-      subTitle = parts.length > 0 ? parts.join(" • ") : entry.building.address;
-    } else {
-      const creditsList = creditNames.slice(0, 2).join(", ");
-      if (creditsList) {
-        subTitle = creditsList;
-        if (year_completed) subTitle += ` • ${year_completed}`;
-      } else if (year_completed) {
-        subTitle = `${year_completed}`;
-        if (entry.building.address) subTitle += ` • ${entry.building.address}`;
-      }
+    const creditsList = creditNames.slice(0, 2).join(", ");
+    if (creditsList) {
+      subTitle = creditsList;
+      if (year_completed) subTitle += ` • ${year_completed}`;
+    } else if (year_completed) {
+      subTitle = `${year_completed}`;
+      if (entry.building.address) subTitle += ` • ${entry.building.address}`;
     }
 
     const mediaItems: ReviewCardMediaItem[] = [];
@@ -1520,25 +150,24 @@ export function useReviewCardData(
         poster:
           entry.images && entry.images.length > 0
             ? entry.images[0].url
-            : options.showCommunityImages
-              ? posterUrl || undefined
+            : showCommunityImages
+              ? posterUrl || communityPoster || undefined
               : undefined,
       });
     }
     if (entry.images && entry.images.length > 0) {
       entry.images.forEach((img) => {
-        mediaItems.push({ id: img.id, type: "image", url: img.url });
+        mediaItems.push({
+          id: img.id,
+          type: "image",
+          url: img.url,
+          likes_count: img.likes_count,
+          is_liked: img.is_liked,
+        });
       });
     }
 
     const hasVideo = mediaItems.some((m) => m.type === "video");
-
-    const carouselImages: ReviewCardCarouselImage[] = (entry.images || []).map((img) => ({
-      id: img.id,
-      url: img.url,
-      likes_count: img.likes_count,
-      is_liked: img.is_liked,
-    }));
 
     const city = getCityFromAddress(entry.building.address);
 
@@ -1551,154 +180,19 @@ export function useReviewCardData(
       subTitle,
       posterUrl,
       mediaItems,
-      carouselImages,
       hasVideo,
       city,
     };
-  }, [entry, options.variant, options.showCommunityImages]);
+  }, [entry, showCommunityImages]);
 
   return { data, failedImages, setFailedImages };
 }
-import type { CardImageWeight, CardLayout, CardProminence, CardSpec, CardTextWeight } from "@/types/cards";
-import type { FeedReview, ReviewImage } from "@/types/feed";
-
-function countWords(content: string | null | undefined): number {
-  if (content == null) return 0;
-  const trimmed = content.trim();
-  if (!trimmed) return 0;
-  return trimmed.split(/\s+/).filter(Boolean).length;
-}
-
-export function resolveTextWeightFromWordCount(wordCount: number): CardTextWeight {
-  if (wordCount < 1) return "none";
-  if (wordCount < 20) return "snippet";
-  if (wordCount < 150) return "body";
-  return "essay";
-}
-
-function countUsableReviewImages(images: ReviewImage[] | null | undefined): number {
-  if (images == null || images.length === 0) return 0;
-  return images.filter((img) => typeof img.url === "string" && img.url.trim().length > 0).length;
-}
-
-export function resolveImageWeightFromCount(count: number): CardImageWeight {
-  if (count < 1) return "none";
-  if (count === 1) return "single";
-  if (count === 2) return "pair";
-  return "gallery";
-}
-
-const LAYOUT_MATRIX: Record<`${CardImageWeight}:${CardTextWeight}`, CardLayout> = {
-  "none:none": "compact-stack",
-  "none:snippet": "compact-stack",
-  "none:body": "text-forward",
-  "none:essay": "text-forward",
-  "single:none": "media-forward",
-  "single:snippet": "balanced",
-  "single:body": "balanced",
-  "single:essay": "text-forward",
-  "pair:none": "media-forward",
-  "pair:snippet": "balanced",
-  "pair:body": "balanced",
-  "pair:essay": "balanced",
-  "gallery:none": "media-forward",
-  "gallery:snippet": "media-forward",
-  "gallery:body": "balanced",
-  "gallery:essay": "balanced",
-};
-
-export function resolveLayoutFromWeights(
-  imageWeight: CardImageWeight,
-  textWeight: CardTextWeight,
-): CardLayout {
-  const key = `${imageWeight}:${textWeight}` as keyof typeof LAYOUT_MATRIX;
-  return LAYOUT_MATRIX[key];
-}
-
-function resolveProminence(entry: FeedReview): CardProminence {
-  const likes = entry.likes_count ?? 0;
-  const followers = entry.user?.followers_count;
-  const followersHigh = typeof followers === "number" && followers > 500;
-  const verified = Boolean(entry.user?.is_verified_architect);
-  const architectOfBuilding = Boolean(entry.user?.is_architect_of_building);
-
-  if (likes > 50 || followersHigh || verified || architectOfBuilding) {
-    return "elevated";
-  }
-  return "standard";
-}
-
 /**
- * Pure resolver: derives {@link CardSpec} from review metrics (word count, images, engagement, author signals).
- * Safe with null/undefined content, missing `images`, empty URLs, and partial `user` flags.
- */
-export function resolveCardSpec(entry: FeedReview): CardSpec {
-  const wc = countWords(entry.content);
-  const textWeight = resolveTextWeightFromWordCount(wc);
-  const usableImages = countUsableReviewImages(entry.images);
-  const imageWeight = resolveImageWeightFromCount(usableImages);
-  const layout = resolveLayoutFromWeights(imageWeight, textWeight);
-  const prominence = resolveProminence(entry);
-
-  return { layout, imageWeight, textWeight, prominence };
-}
-/**
- * Card system types for feed / review cards (see `docs/ROADMAP.md` Card System Overhaul).
- * `CardSpec` is produced by `resolveCardSpec()` (Phase 1 Task 1.2) from a `FeedReview` and
- * drives layout, imagery, and prominence without coupling components to raw metrics.
+ * High-level feed card taxonomy (see `docs/Roadmap.md` Card System Overhaul).
+ * Resolved via {@link resolveCardType} in `src/features/feed/utils/resolveCardType.ts`.
  */
 
-/**
- * How many user-attached review images should influence layout density.
- * - `none` — no user images (building-only or text cards).
- * - `single` — one image (hero or single column).
- * - `pair` — two images (side-by-side or small carousel).
- * - `gallery` — three or more images (carousel / mosaic forward).
- */
-export type CardImageWeight = "none" | "single" | "pair" | "gallery";
-
-/**
- * Text volume bucket for review body, derived from word-count bands in `resolveCardSpec`.
- * - `none` — empty or whitespace-only body.
- * - `snippet` — short copy (under ~20 words).
- * - `body` — medium copy (under ~150 words).
- * - `essay` — long-form copy (~150+ words).
- */
-export type CardTextWeight = "none" | "snippet" | "body" | "essay";
-
-/**
- * Primary arrangement of media vs copy inside the card chrome.
- * - `media-forward` — imagery leads; text is secondary.
- * - `balanced` — media and copy share visual weight.
- * - `text-forward` — copy leads; imagery supports.
- * - `compact-stack` — dense stack for small surfaces or minimal media + text.
- */
-export type CardLayout =
-  | "media-forward"
-  | "balanced"
-  | "text-forward"
-  | "compact-stack";
-
-/**
- * Whether the card uses baseline feed chrome or an elevated treatment (e.g. high engagement
- * or notable author), used for subtle emphasis in feed surfaces.
- */
-export type CardProminence = "standard" | "elevated";
-
-/**
- * Resolved layout contract for a single review card instance. All fields are intended to be
- * pure outputs of `resolveCardSpec(entry)` so UI stays declarative.
- */
-export interface CardSpec {
-  /** Row / column / stack strategy for this card. */
-  layout: CardLayout;
-  /** Image count tier from user review images (and optionally video) only. */
-  imageWeight: CardImageWeight;
-  /** Body length tier from tokenized word count of `entry.content`. */
-  textWeight: CardTextWeight;
-  /** Standard vs elevated emphasis in the feed grid. */
-  prominence: CardProminence;
-}
+export type CardType = "A" | "B" | "C" | "activity";
 export interface ReviewImage {
   id: string;
   url: string;
@@ -2466,13 +960,13 @@ export default {
         "card-compact": "var(--card-image-ratio-compact)",
       },
       lineClamp: {
-        /** Snippet-tier body — `CardSpec.textWeight` snippet */
+        /** Snippet-tier body — legacy feed card text tier “snippet” */
         "card-snippet": "var(--card-text-clamp-snippet)",
-        /** Body-tier copy — `CardSpec.textWeight` body */
+        /** Body-tier copy — legacy feed card text tier “body” */
         "card-body": "var(--card-text-clamp-body)",
       },
       boxShadow: {
-        /** `CardSpec.prominence` elevated — uses `--card-elevation-elevated` */
+        /** Legacy feed card elevated prominence — uses `--card-elevation-elevated` */
         "card-elevated": "var(--card-elevation-elevated)",
       },
       fontFamily: {

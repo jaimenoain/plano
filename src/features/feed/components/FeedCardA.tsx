@@ -25,7 +25,6 @@ export interface FeedCardAProps {
   entry: FeedReview;
   hideUser?: boolean;
   hideBuildingInfo?: boolean;
-  showCommunityImages?: boolean;
   onLike?: (reviewId: string) => void;
   onComment?: (reviewId: string) => void;
 }
@@ -37,7 +36,6 @@ export function FeedCardA({
   entry,
   hideUser = false,
   hideBuildingInfo = false,
-  showCommunityImages = true,
   onLike,
   onComment,
 }: FeedCardAProps) {
@@ -48,7 +46,7 @@ export function FeedCardA({
   const bodyRef = useRef<HTMLParagraphElement>(null);
   const contentWordCount = countWords(entry.content);
 
-  const { data } = useReviewCardData(entry, { showCommunityImages });
+  const { data } = useReviewCardData(entry);
 
   useEffect(() => {
     setEssayExpanded(false);

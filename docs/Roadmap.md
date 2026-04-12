@@ -2,7 +2,7 @@
 
 ---
 
-**[ ] Task 1 — Replace card type resolver**
+**[x] Task 1 — Replace card type resolver**
 
 - Add `CardType = 'A' | 'B' | 'C' | 'activity'` to `@/types/cards.ts`
 - Write `resolveCardType(entry: FeedReview): CardType` in `@/features/feed/utils/resolveCardType.ts`
@@ -14,7 +14,7 @@
 
 ---
 
-**[ ] Task 2 — Extract shared card primitives**
+**[x] Task 2 — Extract shared card primitives**
 
 - Create `@/features/feed/components/card-primitives/PointsBadge.tsx` — lifted directly from any one of the four existing duplicates; no logic changes
 - Create `CardFooter.tsx` in same folder — accepts `likesCount`, `commentsCount`, `isLiked`, `onLike`, `onComment`, optional `onSave` / `isSaved`; renders the `10px uppercase` footer row with bookmark icon
@@ -30,7 +30,7 @@
 
 ---
 
-**[ ] Task 3 — Build `FeedCardA` (review, no photo)**
+**[x] Task 3 — Build `FeedCardA` (review, no photo)**
 
 - Create `@/features/feed/components/FeedCardA.tsx`
 - `article` wrapper: `group/card`, cursor-pointer, left border rule when `isArchitectOfBuilding`
@@ -48,7 +48,7 @@
 
 ---
 
-**[ ] Task 4 — Build `FeedCardB` (review + photos)**
+**[x] Task 4 — Build `FeedCardB` (review + photos)**
 
 - Create `@/features/feed/components/FeedCardB.tsx`
 - Outer layout: `grid grid-cols-2 gap-0 items-stretch` with fixed `height: 320px` — never grows
@@ -63,7 +63,7 @@
 
 ---
 
-**[ ] Task 5 — Build `FeedCardC` (photos only, no review)**
+**[x] Task 5 — Build `FeedCardC` (photos only, no review)**
 
 - Create `@/features/feed/components/FeedCardC.tsx`
 - Image block: fixed `height: 185px`, `width: 100%`, `object-cover`, `overflow: hidden`, `rounded-none`; single image, pair grid (`gap-[2px]`), or carousel depending on image count — same sub-layout logic as Task 4 image column
@@ -75,9 +75,11 @@
 
 **Depends on:** Tasks 1, 2
 
+- **Shipped in repo:** `FeedCardC` in `src/features/feed/components/FeedCardC.tsx` — `CardImage` at `CARD_C_IMAGE_HEIGHT` (185px), `ActivityLead` + `BuildingHeadline` (`feedC`) + `BuildingSubtitle`, `CardFooter` with `buildingId` (bookmark); wired from `ReviewCardFeed` for type `C`.
+
 ---
 
-**[ ] Task 6 — Build `FeedActivityRow` (grouped activity stream)**
+**[x] Task 6 — Build `FeedActivityRow` (grouped activity stream)**
 
 - Create `@/features/feed/components/FeedActivityRow.tsx`
 - Accepts a single `entry: FeedReview` (caller groups multiples externally for now)
@@ -98,7 +100,7 @@
 
 ---
 
-**[ ] Task 7 — Build shared `DetailByline` component**
+**[x] Task 7 — Build shared `DetailByline` component**
 
 - Create `@/features/feed/components/detail/DetailByline.tsx`
 - Props: `username`, `avatarUrl`, `isVerifiedArchitect`, `isArchitectOfBuilding`, `timestamp`, `followersCount`, `userId`, `showFollow?: boolean`
@@ -113,9 +115,11 @@
 
 **Depends on:** Task 2
 
+- **Shipped in repo:** `DetailByline` in `src/features/feed/components/detail/DetailByline.tsx` — optional `viewerUserId` + `showFollow` gate self-view; meta line uses design-token `text-text-secondary` (roadmap `text-tertiary` is not a separate token in `DESIGN_TOKENS.md`).
+
 ---
 
-**[ ] Task 8 — Build `DetailCardA` (reviewer-forward, no photo)**
+**[x] Task 8 — Build `DetailCardA` (reviewer-forward, no photo)**
 
 - Create `@/features/feed/components/detail/DetailCardA.tsx`
 - `article` wrapper: left border `border-l-2 border-l-text-primary pl-4` when `isArchitectOfBuilding`
@@ -129,9 +133,11 @@
 
 **Depends on:** Tasks 2, 7
 
+- **Shipped in repo:** `DetailCardA` in `src/features/feed/components/detail/DetailCardA.tsx` — `PointsBadge` / `CardFooter` via `card-parts` barrel (re-export from `card-primitives`); **Read more** uses token `text-2xs` (10px in `DESIGN_TOKENS.md`), same pattern as `FeedCardA`.
+
 ---
 
-**[ ] Task 9 — Build `DetailCardB` (reviewer-forward, with photos)**
+**[x] Task 9 — Build `DetailCardB` (reviewer-forward, with photos)**
 
 - Create `@/features/feed/components/detail/DetailCardB.tsx`
 - Fixed `height: 320px`, `grid grid-cols-2 gap-0`
@@ -143,9 +149,11 @@
 
 **Depends on:** Tasks 2, 7
 
+- **Shipped in repo:** `DetailCardB` in `src/features/feed/components/detail/DetailCardB.tsx` — `CardImage` + `CARD_B_HEIGHT` on a `md:h-80` two-column grid; text column `py-6 pl-9`; full `DetailByline` (Task 7 hairline); `CardFooter` without bookmark.
+
 ---
 
-**[ ] Task 10 — Build `DetailCardC` (photos only, light attribution)**
+**[x] Task 10 — Build `DetailCardC` (photos only, light attribution)**
 
 - Create `@/features/feed/components/detail/DetailCardC.tsx`
 - Image block: fixed `height: 185px`, `object-cover`, single / pair / carousel as per Task 5
@@ -157,13 +165,15 @@
 
 **Depends on:** Tasks 2, 7
 
+- **Shipped in repo:** `DetailCardC` in `src/features/feed/components/detail/DetailCardC.tsx` — `CardImage` at `CARD_C_IMAGE_HEIGHT`; inline `h-7` avatar + `text-sm` username (`min-w-0 flex-1 truncate`) + `text-2xs` uppercase verb/timestamp; `CardFooter` without `buildingId`.
+
 ---
 
 ## Phase 4 — Integration
 
 ---
 
-**[ ] Task 11 — Wire new cards into the feed renderer**
+**[x] Task 11 — Wire new cards into the feed renderer**
 
 - Locate all feed render sites (main feed page, discovery/explore, profile grid where `variant="default"`)
 - Replace each `FeedHeroCard`, `ReviewCardFeed`, and `FeedCompactCard` call with a switch on `resolveCardType(entry)` → render `FeedCardA`, `FeedCardB`, `FeedCardC`, or `FeedActivityRow`
@@ -175,9 +185,11 @@
 
 **Depends on:** Tasks 3, 4, 5, 6
 
+- **Shipped in repo:** `FeedResolvedEntry` (`resolveCardType` → `FeedCardA`/`B`/`C` or `FeedActivityRow`); `ColdStartFeed` / `EmptyFeed` / `CardPlayground` use it; `ReviewCardFeed` re-exports `FeedResolvedEntry`; `ActivityStreamGroup` renders `FeedActivityRow` rows (divide-y); home `Index` unchanged (direct A/B/C + trailing activity group); `ProfileReviewCard` activity → `FeedActivityRow`; Explore stays on `DiscoveryCard`.
+
 ---
 
-**[ ] Task 12 — Wire new cards into the building detail page**
+**[x] Task 12 — Wire new cards into the building detail page**
 
 - Locate the reviews list on the building detail page (currently uses `ReviewCardDetail`)
 - Replace with a switch on `resolveCardType(entry)` → render `DetailCardA`, `DetailCardB`, or `DetailCardC`
@@ -189,13 +201,15 @@
 
 **Depends on:** Tasks 8, 9, 10, 11
 
+- **Shipped in repo:** `BuildingDetails` renders every entry-backed stream row via `resolveCardType` → `DetailCardA`/`B`/`C`; activity-only rows stay under **Also visited** (`ActivityStreamGroup`); orphan photos keep the legacy featured / image-only tiles; video rows are tied to entries (not duplicated as orphans) and participate in detail cards; architect-of-building entries get a client-side score boost so they sort higher.
+
 ---
 
 ## Phase 5 — Cleanup
 
 ---
 
-**[ ] Task 13 — Delete old feed card components**
+**[x] Task 13 — Delete old feed card components**
 
 - Delete `FeedHeroCard.tsx`, `FeedCompactCard.tsx`, `FeedActivityCard.tsx`
 - Delete `ReviewCardFeed.tsx`, `ReviewCardDetail.tsx`
@@ -207,9 +221,11 @@
 
 **Depends on:** Tasks 11, 12
 
+- **Shipped in repo:** `FeedHeroCard` / `FeedCompactCard` / `FeedActivityCard` / `ReviewCardDetail` / `resolveCardSpec` already removed in prior tasks; `ReviewCardFeed.tsx` alias removed — consumers use `FeedResolvedEntry`; tests → `FeedResolvedEntry.test.tsx`; `src/types/cards.ts` retains `CardType` only.
+
 ---
 
-**[ ] Task 14 — Simplify `useReviewCardData`**
+**[x] Task 14 — Simplify `useReviewCardData`**
 
 - Remove `variant` param and the `compact` branch (compact variant no longer exists)
 - Remove `showCommunityImages` param — detail cards never show community images by design; feed cards use `posterUrl` only as a last-resort fallback, hardcode that behaviour internally
@@ -220,3 +236,5 @@
 **Verify:** `tsc --noEmit` clean; all card components pass their data correctly; no unused fields in `ReviewCardData`.
 
 **Depends on:** Task 13
+
+- **Shipped in repo:** `useReviewCardData(entry)` only; video poster = first user image or building `main_image_url` (no `community_preview_url`); dropped `posterUrl` from `ReviewCardData`; `FeedCard*` / `DetailCard*` / `FeedResolvedEntry` no longer take `showCommunityImages`; `FeedActivityRow` + profile surfaces keep the toggle for row thumbnail / list only.

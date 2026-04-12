@@ -3,7 +3,7 @@ import { render, screen, cleanup } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { MemoryRouter } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReviewCardFeed } from "./ReviewCardFeed";
+import { FeedResolvedEntry } from "./FeedResolvedEntry";
 import type { FeedReview } from "@/types/feed";
 // @vitest-environment happy-dom
 
@@ -73,9 +73,9 @@ const baseEntry: FeedReview = {
   is_liked: false,
 };
 
-describe("ReviewCardFeed", () => {
+describe("FeedResolvedEntry", () => {
   it("renders building title and author for a standard feed entry", () => {
-    renderWithProviders(<ReviewCardFeed entry={baseEntry} />);
+    renderWithProviders(<FeedResolvedEntry entry={baseEntry} />);
 
     expect(screen.getByTestId("review-card-feed-rev-1")).toBeTruthy();
     expect(screen.getByText("Test Tower")).toBeTruthy();
@@ -83,7 +83,7 @@ describe("ReviewCardFeed", () => {
   });
 
   it("renders save as bookmark control with accessible name on non-compact card", () => {
-    renderWithProviders(<ReviewCardFeed entry={baseEntry} />);
+    renderWithProviders(<FeedResolvedEntry entry={baseEntry} />);
     expect(
       screen.getByRole("button", { name: /save building to your list/i }),
     ).toBeTruthy();

@@ -13,7 +13,6 @@ export interface DetailCardCProps {
   onLike?: (reviewId: string) => void;
   onComment?: (reviewId: string) => void;
   onImageLike?: (reviewId: string, imageId: string) => void;
-  showCommunityImages?: boolean;
 }
 
 /**
@@ -24,11 +23,10 @@ export function DetailCardC({
   onLike,
   onComment,
   onImageLike,
-  showCommunityImages = true,
 }: DetailCardCProps) {
   const navigate = useNavigate();
 
-  const { data } = useReviewCardData(entry, { showCommunityImages });
+  const { data } = useReviewCardData(entry);
 
   if (!data) return null;
 
@@ -65,13 +63,13 @@ export function DetailCardC({
       />
       <div className="mt-3 flex min-w-0 items-center gap-2">
         <Avatar className="h-7 w-7 shrink-0 rounded-full border border-border-default bg-surface-muted">
-          <AvatarImage src={avatarUrl || undefined} alt="" />
+          <AvatarImage src={avatarUrl || undefined} alt="" className="h-7 w-7" />
           <AvatarFallback className="text-2xs font-semibold text-text-secondary">{initial}</AvatarFallback>
         </Avatar>
-        <div className="flex min-w-0 flex-1 items-baseline gap-2 truncate">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <Link
             to={`/profile/${username}`}
-            className="truncate text-sm font-bold text-text-primary hover:opacity-80"
+            className="min-w-0 flex-1 truncate text-sm font-bold text-text-primary hover:opacity-80"
             onClick={(e) => e.stopPropagation()}
           >
             {username}
@@ -79,7 +77,7 @@ export function DetailCardC({
           <span className="shrink-0 font-sans text-2xs uppercase tracking-[0.1em] text-text-secondary">
             {verb}
           </span>
-          <span className="ml-auto shrink-0 font-sans text-2xs uppercase tracking-[0.1em] text-text-secondary">
+          <span className="shrink-0 font-sans text-2xs uppercase tracking-[0.1em] text-text-secondary">
             {timestamp}
           </span>
         </div>

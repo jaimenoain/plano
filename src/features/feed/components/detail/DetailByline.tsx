@@ -40,7 +40,7 @@ export function DetailByline({
   return (
     <div className={cn("min-w-0", className)}>
       <div className="flex min-w-0 items-start gap-3">
-        <Avatar className="h-11 w-11 shrink-0 rounded-full border border-border-default bg-surface-muted md:h-11 md:w-11">
+        <Avatar className="h-11 w-11 shrink-0 rounded-full border border-border-default bg-surface-muted">
           <AvatarImage src={avatarUrl || undefined} alt="" className="h-11 w-11" />
           <AvatarFallback className="text-sm font-semibold text-text-secondary">{initial}</AvatarFallback>
         </Avatar>
@@ -70,10 +70,10 @@ export function DetailByline({
               </div>
             ) : null}
           </div>
-          <p className="mt-2 font-sans text-2xs uppercase tracking-[0.1em] text-text-secondary">
+          <p className="mt-2 font-sans text-2xs uppercase tracking-[0.12em] text-text-secondary">
             {timestamp}
             {followersCount != null && followersCount > 0 ? (
-              <span className="text-text-secondary"> · {followersCount} followers</span>
+              <span> · {followersCount} followers</span>
             ) : null}
           </p>
         </div>

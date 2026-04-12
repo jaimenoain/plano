@@ -13,7 +13,7 @@ import { Loader2 } from "lucide-react";
 import { Link } from "react-router";
 import { useState } from "react";
 import { FeedReview } from "@/types/feed";
-import { ReviewCardFeed } from "./ReviewCardFeed";
+import { FeedResolvedEntry } from "./FeedResolvedEntry";
 import { PeopleYouMayKnow } from "./PeopleYouMayKnow";
 import { SectionDivider } from "./SectionDivider";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -143,7 +143,7 @@ export function ColdStartFeed({
       ) : (
         <div className="flex flex-col gap-6">
           {remainingReviews.map((review, index) => (
-            <ReviewCardFeed
+            <FeedResolvedEntry
               key={review.id}
               entry={review}
               index={index}

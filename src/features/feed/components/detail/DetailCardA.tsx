@@ -12,7 +12,6 @@ export interface DetailCardAProps {
   entry: FeedReview;
   onLike?: (reviewId: string) => void;
   onComment?: (reviewId: string) => void;
-  showCommunityImages?: boolean;
   showFollow?: boolean;
 }
 
@@ -23,7 +22,6 @@ export function DetailCardA({
   entry,
   onLike,
   onComment,
-  showCommunityImages = true,
   showFollow = true,
 }: DetailCardAProps) {
   const navigate = useNavigate();
@@ -32,7 +30,7 @@ export function DetailCardA({
   const [showReadMore, setShowReadMore] = useState(false);
   const bodyRef = useRef<HTMLParagraphElement>(null);
 
-  const { data } = useReviewCardData(entry, { showCommunityImages });
+  const { data } = useReviewCardData(entry);
 
   useEffect(() => {
     setEssayExpanded(false);

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { ChevronDown, Copy } from "lucide-react";
-import { ReviewCardFeed } from "@/features/feed/components/ReviewCardFeed";
+import { FeedResolvedEntry } from "@/features/feed/components/FeedResolvedEntry";
+import { FeedActivityRow } from "@/features/feed/components/FeedActivityRow";
 import { FeedCardA } from "@/features/feed/components/FeedCardA";
 import { FeedCardB } from "@/features/feed/components/FeedCardB";
 import { FeedCardC } from "@/features/feed/components/FeedCardC";
-import { ActivityStreamGroup } from "@/features/feed/components/ActivityStream";
 import { DetailCardA } from "@/features/feed/components/detail/DetailCardA";
 import { DetailCardB } from "@/features/feed/components/detail/DetailCardB";
 import { DetailCardC } from "@/features/feed/components/detail/DetailCardC";
@@ -151,7 +151,7 @@ function noop() {}
 function renderPlaygroundDetailCard(entry: FeedReview) {
   const t = resolveCardType(entry);
   if (t === "activity") {
-    return <ActivityStreamGroup entries={[entry]} hideGroupLabel />;
+    return <FeedActivityRow entry={entry} />;
   }
   switch (t) {
     case "A":
@@ -182,7 +182,7 @@ function legacyLayoutMismatchLines(expected: LegacyFeedCardUi, actual: LegacyFee
 function renderFeedCardForPlayground(entry: FeedReview, override: CardType | null, cardBIndex: number) {
   if (override == null) {
     return (
-      <ReviewCardFeed
+      <FeedResolvedEntry
         entry={entry}
         index={cardBIndex}
         onLike={noop}
@@ -193,15 +193,15 @@ function renderFeedCardForPlayground(entry: FeedReview, override: CardType | nul
   }
   switch (override) {
     case "A":
-      return <FeedCardA entry={entry} onLike={noop} onComment={noop} showCommunityImages />;
+      return <FeedCardA entry={entry} onLike={noop} onComment={noop} />;
     case "B":
       return (
-        <FeedCardB entry={entry} index={cardBIndex} onLike={noop} onImageLike={noop} onComment={noop} showCommunityImages />
+        <FeedCardB entry={entry} index={cardBIndex} onLike={noop} onImageLike={noop} onComment={noop} />
       );
     case "C":
-      return <FeedCardC entry={entry} onLike={noop} onImageLike={noop} onComment={noop} showCommunityImages />;
+      return <FeedCardC entry={entry} onLike={noop} onImageLike={noop} onComment={noop} />;
     case "activity":
-      return <ActivityStreamGroup entries={[entry]} />;
+      return <FeedActivityRow entry={entry} />;
     default: {
       const _x: never = override;
       return _x;
@@ -349,7 +349,7 @@ function PlaygroundToolbar({
       <div className="space-y-2 border-t border-border-default pt-3">
         <p className="text-2xs font-semibold uppercase tracking-wide text-text-secondary">Feed card override</p>
         <p className="text-2xs text-text-secondary">
-          Auto uses ReviewCardFeed (resolveCardType + FeedCard A/B/C or activity). Other options force a card type for the edited fixture.
+          Auto uses FeedResolvedEntry (resolveCardType + FeedCard A/B/C or FeedActivityRow). Other options force a card type for the edited fixture.
         </p>
         <div className="flex flex-wrap gap-1.5">
           {CARD_TYPE_OVERRIDE_OPTIONS.map((opt) => {
@@ -380,9 +380,9 @@ function FixtureShowAllPreview({ entry }: { entry: FeedReview }) {
   return (
     <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:gap-10">
       <div className="w-full min-w-0 max-w-md shrink-0 space-y-2 xl:max-w-none xl:flex-1">
-        <p className="text-2xs font-medium uppercase tracking-wide text-text-secondary">ReviewCardFeed</p>
+        <p className="text-2xs font-medium uppercase tracking-wide text-text-secondary">FeedResolvedEntry</p>
         <div className="hairline overflow-hidden rounded-lg border border-border-default">
-          <ReviewCardFeed entry={entry} onLike={noop} onImageLike={noop} onComment={noop} />
+          <FeedResolvedEntry entry={entry} onLike={noop} onImageLike={noop} onComment={noop} />
         </div>
         <LegacyLayoutDebugPanel layout={legacy} title="deriveLegacyFeedCardLayout (fixture)" />
         <ResolvedCardTypePanel entry={entry} title="resolveCardType" />

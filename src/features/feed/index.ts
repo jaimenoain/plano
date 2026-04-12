@@ -1,4 +1,4 @@
-export { ReviewCardFeed } from "./components/ReviewCardFeed";
+export { FeedResolvedEntry } from "./components/FeedResolvedEntry";
 export { DetailCardA } from "./components/detail/DetailCardA";
 export { DetailCardB } from "./components/detail/DetailCardB";
 export { DetailCardC } from "./components/detail/DetailCardC";

@@ -28,7 +28,6 @@ export type ReviewCardData = {
   isArchitectOfBuilding: boolean;
   mainTitle: string;
   subTitle: string | null | undefined;
-  posterUrl: string | undefined;
   mediaItems: ReviewCardMediaItem[];
   hasVideo: boolean;
   city: string;
@@ -36,20 +35,18 @@ export type ReviewCardData = {
 
 export function useReviewCardData(
   entry: FeedReview,
-  options: { showCommunityImages?: boolean } = {},
 ): {
   data: ReviewCardData | null;
   failedImages: Set<string>;
   setFailedImages: React.Dispatch<React.SetStateAction<Set<string>>>;
 } {
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
-  const showCommunityImages = options.showCommunityImages ?? true;
 
   const data = useMemo((): ReviewCardData | null => {
     if (!entry.building) return null;
 
-    const posterUrl = getBuildingImageUrl(entry.building.main_image_url);
-    const communityPoster = getBuildingImageUrl(entry.building.community_preview_url);
+    /** Building hero only — used as video poster fallback; community preview is not mixed in. */
+    const buildingPosterFallback = getBuildingImageUrl(entry.building.main_image_url);
 
     const username = entry.user?.username || "Unknown User";
     const avatarUrl = entry.user?.avatar_url ?? null;
@@ -80,9 +77,7 @@ export function useReviewCardData(
         poster:
           entry.images && entry.images.length > 0
             ? entry.images[0].url
-            : showCommunityImages
-              ? posterUrl || communityPoster || undefined
-              : undefined,
+            : buildingPosterFallback || undefined,
       });
     }
     if (entry.images && entry.images.length > 0) {
@@ -108,12 +103,11 @@ export function useReviewCardData(
       isArchitectOfBuilding,
       mainTitle,
       subTitle,
-      posterUrl,
       mediaItems,
       hasVideo,
       city,
     };
-  }, [entry, showCommunityImages]);
+  }, [entry]);
 
   return { data, failedImages, setFailedImages };
 }

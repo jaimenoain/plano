@@ -18,7 +18,6 @@ export interface FeedCardCProps {
   entry: FeedReview;
   hideUser?: boolean;
   hideBuildingInfo?: boolean;
-  showCommunityImages?: boolean;
   onLike?: (reviewId: string) => void;
   onComment?: (reviewId: string) => void;
   onImageLike?: (reviewId: string, imageId: string) => void;
@@ -31,14 +30,13 @@ export function FeedCardC({
   entry,
   hideUser = false,
   hideBuildingInfo = false,
-  showCommunityImages = true,
   onLike,
   onComment,
   onImageLike,
 }: FeedCardCProps) {
   const navigate = useNavigate();
 
-  const { data } = useReviewCardData(entry, { showCommunityImages });
+  const { data } = useReviewCardData(entry);
 
   if (!data || !entry.building) return null;
 

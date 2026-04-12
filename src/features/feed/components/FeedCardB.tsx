@@ -23,7 +23,6 @@ export interface FeedCardBProps {
   imagePosition?: "left" | "right";
   hideUser?: boolean;
   hideBuildingInfo?: boolean;
-  showCommunityImages?: boolean;
   onLike?: (reviewId: string) => void;
   onComment?: (reviewId: string) => void;
   onImageLike?: (reviewId: string, imageId: string) => void;
@@ -38,7 +37,6 @@ export function FeedCardB({
   imagePosition,
   hideUser = false,
   hideBuildingInfo = false,
-  showCommunityImages = true,
   onLike,
   onComment,
   onImageLike,
@@ -49,7 +47,7 @@ export function FeedCardB({
   const [cardImageHeight, setCardImageHeight] = useState(CARD_C_IMAGE_HEIGHT);
   const bodyRef = useRef<HTMLParagraphElement>(null);
 
-  const { data } = useReviewCardData(entry, { showCommunityImages });
+  const { data } = useReviewCardData(entry);
 
   useLayoutEffect(() => {
     const mq = window.matchMedia(MD_MEDIA_QUERY);
