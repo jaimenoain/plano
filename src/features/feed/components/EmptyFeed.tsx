@@ -75,9 +75,9 @@ export function EmptyFeed() {
           <React.Fragment key={post.id}>
             <ReviewCardFeed
               entry={post}
+              index={index}
               onLike={toggleLike}
               onImageLike={toggleImageLike}
-              showCommunityImages={true}
             />
             {/* Inject PeopleYouMayKnow after 3rd post as a contained section */}
             {index === 2 && (

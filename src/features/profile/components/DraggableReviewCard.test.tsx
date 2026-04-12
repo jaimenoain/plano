@@ -37,11 +37,10 @@ const mockReview: FeedReview = {
   images: [],
 };
 
-vi.mock('@/features/feed/components/ReviewCardFeed', () => ({
-  ReviewCardFeed: ({ entry, variant }: { entry: FeedReview, variant: string }) => (
+vi.mock('@/features/profile/components/ProfileReviewCard', () => ({
+  ProfileReviewCard: ({ entry }: { entry: FeedReview }) => (
     <div data-testid="review-card">
       <span>{entry.building.name}</span>
-      <span>{variant}</span>
     </div>
   ),
 }));
@@ -61,6 +60,5 @@ describe('DraggableReviewCard', () => {
     );
     expect(screen.getByTestId('review-card')).toBeTruthy();
     expect(screen.getByText('Test Building')).toBeTruthy();
-    expect(screen.getByText('compact')).toBeTruthy(); // check variant passed
   });
 });

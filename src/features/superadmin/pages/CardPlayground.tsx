@@ -2,8 +2,16 @@ import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from
 import { ChevronDown, Copy } from "lucide-react";
 import { ReviewCardFeed } from "@/features/feed/components/ReviewCardFeed";
 import { ReviewCardDetail } from "@/features/feed/components/ReviewCardDetail";
-import { resolveCardSpec } from "@/features/feed/utils/resolveCardSpec";
-import type { CardProminence, CardSpec } from "@/types/cards";
+import { CardTypeA } from "@/features/feed/components/CardTypeA";
+import { CardTypeB } from "@/features/feed/components/CardTypeB";
+import { CardTypeC } from "@/features/feed/components/CardTypeC";
+import { ActivityStreamGroup } from "@/features/feed/components/ActivityStream";
+import {
+  deriveLegacyFeedCardLayout,
+  type LegacyFeedCardUi,
+} from "@/features/feed/utils/deriveLegacyFeedCardLayout";
+import { resolveCardType } from "@/features/feed/utils/resolveCardType";
+import type { CardType } from "@/types/cards";
 import type { FeedReview, ReviewImage } from "@/types/feed";
 import { cardFixtures, type CardFixture } from "@/features/superadmin/fixtures/cardFixtures";
 import { SuperadminGuard } from "@/features/superadmin/components/SuperadminGuard";
@@ -72,20 +80,29 @@ function orderedGroupEntries(map: Map<string, CardFixture[]>): [string, CardFixt
   return out;
 }
 
-function CardSpecDebugPanel({ spec, title }: { spec: CardSpec; title: string }) {
+function LegacyLayoutDebugPanel({ layout, title }: { layout: LegacyFeedCardUi; title: string }) {
   return (
     <div className="rounded-md border border-border-default bg-surface-muted/50 px-3 py-2">
       <p className="text-2xs-plus font-mono font-semibold text-text-primary mb-1.5">{title}</p>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 font-mono text-2xs text-text-secondary">
         <dt className="text-text-secondary">layout</dt>
-        <dd className="text-text-primary">{spec.layout}</dd>
+        <dd className="text-text-primary">{layout.layout}</dd>
         <dt className="text-text-secondary">imageWeight</dt>
-        <dd className="text-text-primary">{spec.imageWeight}</dd>
+        <dd className="text-text-primary">{layout.imageWeight}</dd>
         <dt className="text-text-secondary">textWeight</dt>
-        <dd className="text-text-primary">{spec.textWeight}</dd>
+        <dd className="text-text-primary">{layout.textWeight}</dd>
         <dt className="text-text-secondary">prominence</dt>
-        <dd className="text-text-primary">{spec.prominence}</dd>
+        <dd className="text-text-primary">{layout.prominence}</dd>
       </dl>
+    </div>
+  );
+}
+
+function ResolvedCardTypePanel({ entry, title }: { entry: FeedReview; title: string }) {
+  return (
+    <div className="rounded-md border border-border-default bg-surface-muted/50 px-3 py-2">
+      <p className="text-2xs-plus font-mono font-semibold text-text-primary mb-1.5">{title}</p>
+      <p className="font-mono text-2xs text-text-primary">{resolveCardType(entry)}</p>
     </div>
   );
 }
@@ -129,25 +146,51 @@ function isBrokenImageMode(images: ReviewImage[] | undefined): boolean {
 
 function noop() {}
 
-function cardSpecWithProminence(spec: CardSpec, prominence: CardProminence): CardSpec {
-  return { ...spec, prominence };
+/** Single-line label derived from legacy layout fields (playground “Show all” badges). */
+function legacyLayoutArchetypeLabel(layout: LegacyFeedCardUi): string {
+  return `${layout.layout} · ${layout.imageWeight} · ${layout.textWeight} · ${layout.prominence}`;
 }
 
-/** Single-line label derived from all `CardSpec` fields (playground “Show all” badges). */
-function cardSpecArchetypeLabel(spec: CardSpec): string {
-  return `${spec.layout} · ${spec.imageWeight} · ${spec.textWeight} · ${spec.prominence}`;
-}
-
-function cardSpecMismatchLines(expected: CardSpec, actual: CardSpec): string[] {
+function legacyLayoutMismatchLines(expected: LegacyFeedCardUi, actual: LegacyFeedCardUi): string[] {
   const keys = ["layout", "imageWeight", "textWeight", "prominence"] as const;
   return keys
     .filter((k) => expected[k] !== actual[k])
     .map((k) => `${k}: expected ${expected[k]} · resolved ${actual[k]}`);
 }
 
+function renderFeedCardForPlayground(entry: FeedReview, override: CardType | null, cardBIndex: number) {
+  if (override == null) {
+    return (
+      <ReviewCardFeed
+        entry={entry}
+        index={cardBIndex}
+        onLike={noop}
+        onImageLike={noop}
+        onComment={noop}
+      />
+    );
+  }
+  switch (override) {
+    case "A":
+      return <CardTypeA entry={entry} onLike={noop} onComment={noop} showCommunityImages />;
+    case "B":
+      return (
+        <CardTypeB entry={entry} index={cardBIndex} onLike={noop} onImageLike={noop} onComment={noop} showCommunityImages />
+      );
+    case "C":
+      return <CardTypeC entry={entry} onLike={noop} onImageLike={noop} onComment={noop} showCommunityImages />;
+    case "activity":
+      return <ActivityStreamGroup entries={[entry]} />;
+    default: {
+      const _x: never = override;
+      return _x;
+    }
+  }
+}
+
 function ShowAllGridArchetypeFooter({ fixture }: { fixture: CardFixture }) {
-  const resolved = resolveCardSpec(fixture.entry);
-  const mismatches = cardSpecMismatchLines(fixture.expectedSpec, resolved);
+  const resolved = deriveLegacyFeedCardLayout(fixture.entry);
+  const mismatches = legacyLayoutMismatchLines(fixture.expectedLayout, resolved);
   return (
     <div className="space-y-2 border-t border-border-default pt-3">
       {mismatches.length > 0 ? (
@@ -155,7 +198,7 @@ function ShowAllGridArchetypeFooter({ fixture }: { fixture: CardFixture }) {
           role="alert"
           className="rounded-md border border-feedback-warning bg-feedback-warning/10 px-3 py-2 text-2xs text-feedback-warning"
         >
-          <p className="font-semibold text-text-primary">CardSpec mismatch</p>
+          <p className="font-semibold text-text-primary">Legacy layout mismatch</p>
           <ul className="mt-1 list-disc space-y-0.5 pl-4 font-mono leading-snug">
             {mismatches.map((line) => (
               <li key={line}>{line}</li>
@@ -164,10 +207,12 @@ function ShowAllGridArchetypeFooter({ fixture }: { fixture: CardFixture }) {
         </div>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-2xs font-semibold uppercase tracking-wide text-text-secondary">Resolved CardSpec</span>
+        <span className="text-2xs font-semibold uppercase tracking-wide text-text-secondary">Resolved legacy layout</span>
         <span className="inline-flex max-w-full items-center rounded-md border border-border-default bg-surface-muted px-2 py-1 font-mono text-2xs text-text-primary break-all">
-          {cardSpecArchetypeLabel(resolved)}
+          {legacyLayoutArchetypeLabel(resolved)}
         </span>
+        <span className="text-2xs font-mono text-text-secondary">·</span>
+        <span className="text-2xs font-mono text-text-primary">cardType {resolveCardType(fixture.entry)}</span>
       </div>
     </div>
   );
@@ -219,20 +264,28 @@ function PlaygroundViewportFrame({
   );
 }
 
+const CARD_TYPE_OVERRIDE_OPTIONS: { id: CardType | "auto"; label: string }[] = [
+  { id: "auto", label: "Auto (resolveCardType)" },
+  { id: "A", label: "Type A" },
+  { id: "B", label: "Type B" },
+  { id: "C", label: "Type C" },
+  { id: "activity", label: "Activity" },
+];
+
 function PlaygroundToolbar({
   backgroundId,
   setBackgroundId,
   viewportId,
   setViewportId,
-  prominenceDiff,
-  setProminenceDiff,
+  cardTypeOverride,
+  setCardTypeOverride,
 }: {
   backgroundId: PlaygroundBackgroundId;
   setBackgroundId: (id: PlaygroundBackgroundId) => void;
   viewportId: PlaygroundViewportId;
   setViewportId: (id: PlaygroundViewportId) => void;
-  prominenceDiff: boolean;
-  setProminenceDiff: (v: boolean) => void;
+  cardTypeOverride: CardType | null;
+  setCardTypeOverride: (v: CardType | null) => void;
 }) {
   return (
     <div className="space-y-4 rounded-lg border border-border-default bg-surface-muted/20 p-3">
@@ -272,42 +325,53 @@ function PlaygroundToolbar({
           </div>
         </div>
       </div>
-      <div className="flex flex-col gap-2 border-t border-border-default pt-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <Switch id="playground-prominence-diff" checked={prominenceDiff} onCheckedChange={setProminenceDiff} />
-          <Label htmlFor="playground-prominence-diff" className="text-2xs text-text-primary cursor-pointer leading-snug">
-            Prominence diff — two cards (forced standard vs forced elevated)
-          </Label>
+      <div className="space-y-2 border-t border-border-default pt-3">
+        <p className="text-2xs font-semibold uppercase tracking-wide text-text-secondary">Feed card override</p>
+        <p className="text-2xs text-text-secondary">
+          Auto uses ReviewCardFeed (resolveCardType + CardType A/B/C or activity). Other options force a card type for the edited fixture.
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {CARD_TYPE_OVERRIDE_OPTIONS.map((opt) => {
+            const active =
+              opt.id === "auto" ? cardTypeOverride === null : cardTypeOverride === opt.id;
+            return (
+              <Button
+                key={opt.id}
+                type="button"
+                size="sm"
+                variant={active ? "default" : "outline"}
+                className="text-2xs h-8"
+                onClick={() => setCardTypeOverride(opt.id === "auto" ? null : opt.id)}
+              >
+                {opt.label}
+              </Button>
+            );
+          })}
         </div>
       </div>
     </div>
   );
 }
 
-/** Show-all grid: unchanged side-by-side feed + detail per fixture. */
+/** Show-all grid: side-by-side feed + detail per fixture. */
 function FixtureShowAllPreview({ entry }: { entry: FeedReview }) {
-  const spec = resolveCardSpec(entry);
+  const legacy = deriveLegacyFeedCardLayout(entry);
   return (
     <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:gap-10">
       <div className="w-full min-w-0 max-w-md shrink-0 space-y-2 xl:max-w-none xl:flex-1">
         <p className="text-2xs font-medium uppercase tracking-wide text-text-secondary">ReviewCardFeed</p>
         <div className="hairline overflow-hidden rounded-lg border border-border-default">
-          <ReviewCardFeed
-            entry={entry}
-            onLike={noop}
-            onImageLike={noop}
-            onComment={noop}
-            showCommunityImages
-          />
+          <ReviewCardFeed entry={entry} onLike={noop} onImageLike={noop} onComment={noop} />
         </div>
-        <CardSpecDebugPanel spec={spec} title="CardSpec (from entry)" />
+        <LegacyLayoutDebugPanel layout={legacy} title="deriveLegacyFeedCardLayout (fixture)" />
+        <ResolvedCardTypePanel entry={entry} title="resolveCardType" />
       </div>
       <div className="w-full min-w-0 max-w-md shrink-0 space-y-2 xl:max-w-none xl:flex-1">
         <p className="text-2xs font-medium uppercase tracking-wide text-text-secondary">ReviewCardDetail</p>
         <div className="hairline overflow-hidden rounded-lg border border-border-default">
           <ReviewCardDetail entry={entry} onLike={noop} onComment={noop} showCommunityImages />
         </div>
-        <CardSpecDebugPanel spec={spec} title="CardSpec (same entry)" />
+        <LegacyLayoutDebugPanel layout={legacy} title="Legacy layout (same entry)" />
       </div>
     </div>
   );
@@ -316,71 +380,24 @@ function FixtureShowAllPreview({ entry }: { entry: FeedReview }) {
 function FixtureSinglePreview({
   entry,
   viewMode,
-  prominenceDiff,
+  cardTypeOverride,
 }: {
   entry: FeedReview;
   viewMode: PlaygroundCardViewMode;
-  prominenceDiff: boolean;
+  cardTypeOverride: CardType | null;
 }) {
-  const spec = resolveCardSpec(entry);
-  if (prominenceDiff) {
-    return (
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <div className="min-w-0 space-y-2">
-          <p className="text-2xs font-medium uppercase tracking-wide text-text-secondary">Forced standard</p>
-          <div className="hairline overflow-hidden rounded-lg border border-border-default">
-            {viewMode === "feed" ? (
-              <ReviewCardFeed
-                entry={entry}
-                onLike={noop}
-                onImageLike={noop}
-                onComment={noop}
-                showCommunityImages
-                prominenceOverride="standard"
-              />
-            ) : (
-              <ReviewCardDetail entry={entry} onLike={noop} onComment={noop} showCommunityImages />
-            )}
-          </div>
-          <CardSpecDebugPanel spec={cardSpecWithProminence(spec, "standard")} title="CardSpec (prominence: standard)" />
-        </div>
-        <div className="min-w-0 space-y-2">
-          <p className="text-2xs font-medium uppercase tracking-wide text-text-secondary">Forced elevated</p>
-          <div className="hairline overflow-hidden rounded-lg border border-border-default">
-            {viewMode === "feed" ? (
-              <ReviewCardFeed
-                entry={entry}
-                onLike={noop}
-                onImageLike={noop}
-                onComment={noop}
-                showCommunityImages
-                prominenceOverride="elevated"
-              />
-            ) : (
-              <ReviewCardDetail entry={entry} onLike={noop} onComment={noop} showCommunityImages />
-            )}
-          </div>
-          <CardSpecDebugPanel spec={cardSpecWithProminence(spec, "elevated")} title="CardSpec (prominence: elevated)" />
-        </div>
-      </div>
-    );
-  }
+  const legacy = deriveLegacyFeedCardLayout(entry);
   return (
     <div className="min-w-0 space-y-2">
       <div className="hairline overflow-hidden rounded-lg border border-border-default">
         {viewMode === "feed" ? (
-          <ReviewCardFeed
-            entry={entry}
-            onLike={noop}
-            onImageLike={noop}
-            onComment={noop}
-            showCommunityImages
-          />
+          renderFeedCardForPlayground(entry, cardTypeOverride, 0)
         ) : (
           <ReviewCardDetail entry={entry} onLike={noop} onComment={noop} showCommunityImages />
         )}
       </div>
-      <CardSpecDebugPanel spec={spec} title="CardSpec (from entry)" />
+      <LegacyLayoutDebugPanel layout={legacy} title="Legacy layout (edited entry)" />
+      <ResolvedCardTypePanel entry={entry} title="resolveCardType" />
     </div>
   );
 }
@@ -578,7 +595,7 @@ function CardPlaygroundInner() {
   const [showAll, setShowAll] = useState(false);
   const [backgroundId, setBackgroundId] = useState<PlaygroundBackgroundId>("feed-light");
   const [viewportId, setViewportId] = useState<PlaygroundViewportId>("mobile");
-  const [prominenceDiff, setProminenceDiff] = useState(false);
+  const [cardTypeOverride, setCardTypeOverride] = useState<CardType | null>(null);
   const [viewModeByFixtureId, setViewModeByFixtureId] = useState<Map<string, PlaygroundCardViewMode>>(() => new Map());
 
   const setFixtureViewMode = (fixtureId: string, mode: PlaygroundCardViewMode) => {
@@ -610,7 +627,7 @@ function CardPlaygroundInner() {
       <aside className="flex w-full shrink-0 flex-col border-b border-border-default md:h-full md:w-72 md:border-b-0 md:border-r">
         <div className="border-b border-border-default px-4 py-3">
           <h1 className="text-sm font-semibold text-text-primary">Card playground</h1>
-          <p className="text-2xs text-text-secondary mt-0.5">Superadmin · fixtures + CardSpec</p>
+          <p className="text-2xs text-text-secondary mt-0.5">Superadmin · fixtures + card types</p>
         </div>
         <div className="flex gap-2 border-b border-border-default px-3 py-2">
           <Button
@@ -627,10 +644,7 @@ function CardPlaygroundInner() {
             variant={showAll ? "default" : "secondary"}
             size="sm"
             className="flex-1 text-2xs"
-            disabled={prominenceDiff}
-            title={prominenceDiff ? "Turn off prominence diff to scan all fixtures" : undefined}
             onClick={() => {
-              setProminenceDiff(false);
               setShowAll(true);
             }}
           >
@@ -677,8 +691,8 @@ function CardPlaygroundInner() {
             setBackgroundId={setBackgroundId}
             viewportId={viewportId}
             setViewportId={setViewportId}
-            prominenceDiff={prominenceDiff}
-            setProminenceDiff={setProminenceDiff}
+            cardTypeOverride={cardTypeOverride}
+            setCardTypeOverride={setCardTypeOverride}
           />
           {showAll ? (
             <div className="grid grid-cols-1 gap-10 xl:grid-cols-2">
@@ -740,7 +754,7 @@ function CardPlaygroundInner() {
                 <FixtureSinglePreview
                   entry={editedEntry}
                   viewMode={activeViewMode}
-                  prominenceDiff={prominenceDiff}
+                  cardTypeOverride={cardTypeOverride}
                 />
               </PlaygroundViewportFrame>
             </div>

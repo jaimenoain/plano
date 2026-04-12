@@ -60,7 +60,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
-import { ReviewCardFeed } from "@/features/feed/components/ReviewCardFeed";
+import { ProfileReviewCard } from "@/features/profile/components/ProfileReviewCard";
 import {
   Dialog,
   DialogContent,
@@ -1094,7 +1094,17 @@ export default function Profile() {
                                 <DragOverlay dropAnimation={null}>
                                   {activeId ? (
                                     <div className="w-[280px] scale-105 shadow-lg z-50 cursor-grabbing bg-surface-card border border-border-default overflow-hidden opacity-90">
-                                      {(() => { const activeItem = content.find(i => i.id === activeId); return activeItem ? <ReviewCardFeed entry={activeItem} variant="compact" hideUser imagePosition="left" showCommunityImages={showCommunityImages} /> : null; })()}
+                                      {(() => {
+                                      const activeItem = content.find((i) => i.id === activeId);
+                                      return activeItem ? (
+                                        <ProfileReviewCard
+                                          entry={activeItem}
+                                          index={0}
+                                          imagePosition="left"
+                                          showCommunityImages={showCommunityImages}
+                                        />
+                                      ) : null;
+                                    })()}
                                     </div>
                                   ) : null}
                                 </DragOverlay>

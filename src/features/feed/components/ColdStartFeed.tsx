@@ -13,7 +13,7 @@ import { Loader2 } from "lucide-react";
 import { Link } from "react-router";
 import { useState } from "react";
 import { FeedReview } from "@/types/feed";
-import { FeedHeroCard } from "./FeedHeroCard";
+import { ReviewCardFeed } from "./ReviewCardFeed";
 import { PeopleYouMayKnow } from "./PeopleYouMayKnow";
 import { SectionDivider } from "./SectionDivider";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -142,10 +142,11 @@ export function ColdStartFeed({
         </div>
       ) : (
         <div className="flex flex-col gap-6">
-          {remainingReviews.map((review) => (
-            <FeedHeroCard
+          {remainingReviews.map((review, index) => (
+            <ReviewCardFeed
               key={review.id}
               entry={review}
+              index={index}
               onLike={onLike}
               onImageLike={onImageLike}
             />

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Image as ImageIcon } from "lucide-react";
+import { Bookmark, Image as ImageIcon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,8 @@ import { FollowButton } from "@/features/profile/components/FollowButton";
 import { FeedPhotoCarousel } from "./FeedPhotoCarousel";
 import { useReviewCardData, type ReviewCardMediaItem } from "@/features/feed/hooks/useReviewCardData";
 import { resolveCardSpec } from "@/features/feed/utils/resolveCardSpec";
+import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
+import { useQueryClient } from "@tanstack/react-query";
 
 /**
  * Award points badge. Renders filled black dots only — no empty placeholders.
@@ -35,6 +38,8 @@ const PointsBadge = ({ points }: { points: number }) => {
   );
 };
 
+// aspectToken is only applied for compact/stack layouts — the hero grid fills
+// the column by height naturally, so no explicit aspect ratio is needed there.
 function mediaAspectClass(layout: CardLayout, isCarouselLayout: boolean): string {
   if (isCarouselLayout) return "";
   switch (layout) {
@@ -80,6 +85,10 @@ export interface ReviewCardFeedProps {
 
 /**
  * Feed / discovery / profile-grid review card (non-detail). Default variant layout uses {@link resolveCardSpec}.
+ *
+ * Design: A24 editorial — white canvas, aggressive typographic hierarchy, zero decorative chrome.
+ * Hero (default) cards use a true 50/50 CSS grid split so photography fills half the viewport,
+ * not a narrow 280px sidebar. No box shadows. Sharp image edges. Generous text column padding.
  */
 export function ReviewCardFeed({
   entry,
@@ -97,6 +106,8 @@ export function ReviewCardFeed({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { statuses } = useUserBuildingStatuses();
+  const queryClient = useQueryClient();
   const isCompact = variant === "compact";
   const effectiveSpec = useMemo((): CardSpec => {
     const base = specProp ?? resolveCardSpec(entry);
@@ -117,6 +128,9 @@ export function ReviewCardFeed({
   }, [entry.id]);
 
   if (!data) return null;
+
+  const isSavedToList =
+    entry.building?.id != null && statuses[entry.building.id] === "pending";
 
   const {
     username,
@@ -151,8 +165,12 @@ export function ReviewCardFeed({
     !essayExpanded &&
     Boolean(entry.content?.trim());
   const useCompactStackLayout = !isCompact && effectiveSpec.layout === "compact-stack";
-  const useMdSideBySide =
-    !isCompact && hasMedia && !showCarousel && !useCompactStackLayout;
+
+  // aspectToken only used for compact/stack layouts — hero grid fills column height naturally.
+  const aspectToken =
+    (useCompactStackLayout || isCompact) && !showCarousel && !showPairGrid
+      ? mediaAspectClass(effectiveSpec.layout, showCarousel)
+      : "";
 
   const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -171,6 +189,7 @@ export function ReviewCardFeed({
       );
       if (error) throw error;
       toast({ title: "Saved to your list" });
+      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
     } catch (_error) {
       toast({ variant: "destructive", title: "Failed to save" });
     } finally {
@@ -201,16 +220,14 @@ export function ReviewCardFeed({
     }
   };
 
-  const flexDirection = imagePosition === "right" ? "md:flex-row" : "md:flex-row-reverse";
-  const aspectToken =
-    !showCarousel && !showPairGrid ? mediaAspectClass(effectiveSpec.layout, showCarousel) : "";
-
+  // ── renderMediaItem ─────────────────────────────────────────────────────────
+  // rounded-none on images: sharp edges like printed photographs in a magazine.
   const renderMediaItem = (
     item: ReviewCardMediaItem,
     className?: string,
     overlay?: React.ReactNode,
   ) => (
-    <div key={item.id} className={`relative w-full h-full min-w-0 overflow-hidden ${className || ""}`}>
+    <div key={item.id} className={`relative w-full h-full min-w-0 overflow-hidden rounded-none ${className || ""}`}>
       <div className="absolute inset-0 w-full h-full">
         {item.type === "video" ? (
           <div className="w-full h-full video-container overflow-hidden">
@@ -227,7 +244,7 @@ export function ReviewCardFeed({
           <img
             src={item.url}
             alt="Review photo"
-            className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+            className="w-full h-full object-cover rounded-none transition-transform duration-500 hover:scale-105"
             onError={() => setFailedImages((prev) => new Set(prev).add(item.id))}
           />
         ) : (
@@ -240,16 +257,28 @@ export function ReviewCardFeed({
     </div>
   );
 
+  const userActionVerb = entry.status === "pending" ? "wants to visit" : "visited";
+
+  // ── Activity lead ───────────────────────────────────────────────────────────
+  // Replaces category labels ("Review" / "Building"): who did what, above the title.
+  const ActivityLead = !hideUser && (
+    <p
+      className={cn(
+        "font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary min-w-0",
+        !isCompact ? "mb-2" : "mb-1",
+      )}
+    >
+      <span className="font-medium text-text-primary">{username}</span>
+      <span className="text-text-secondary normal-case"> {userActionVerb}</span>
+    </p>
+  );
+
   // ── Byline ──────────────────────────────────────────────────────────────────
-  // Space Mono strip: NAME · [ARCHITECT badge] · [Follow] · timestamp.
-  // Replaces the old avatar + "username reviewed Building" sentence header.
+  // Architect badge, follow CTA, timestamp — username lives on ActivityLead only.
   const Byline = !hideUser && (
     <div className="flex items-center gap-2 min-w-0">
-      <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
-        {username}
-      </span>
       {isVerifiedArchitect && (
-        <span className="font-mono text-[9px] tracking-[0.1em] uppercase border border-text-primary text-text-primary px-1.5 py-0.5 font-bold shrink-0 leading-none">
+        <span className="font-sans text-[9px] tracking-[0.1em] uppercase border border-text-primary text-text-primary px-1.5 py-0.5 font-bold shrink-0 leading-none">
           Architect
         </span>
       )}
@@ -258,7 +287,7 @@ export function ReviewCardFeed({
           <FollowButton userId={entry.user_id} hideIfFollowing className="h-5 text-[10px] px-2" />
         </span>
       )}
-      <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary/40 ml-auto shrink-0">
+      <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-text-secondary/40 ml-auto shrink-0">
         {formatDistanceToNow(new Date(entry.edited_at || entry.created_at)).replace("about ", "")} ago
       </span>
     </div>
@@ -270,27 +299,29 @@ export function ReviewCardFeed({
   const BuildingHeadline = !hideBuildingInfo && (
     <div>
       <h2
-        className={`font-display font-black tracking-tight leading-none text-text-primary ${
+        className={`font-sans font-black tracking-tight leading-none text-text-primary ${
           isCompact
-            ? "text-base leading-tight"
+            ? "text-lg leading-tight"
             : effectiveSpec.prominence === "elevated"
-            ? "text-5xl md:text-6xl mb-1.5"
-            : "text-3xl md:text-4xl mb-1"
+            ? "text-6xl md:text-7xl mb-1.5"
+            : "text-4xl md:text-5xl mb-1"
         }`}
       >
         {mainTitle}
       </h2>
       {(subTitle || city) && (
-        <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-1">
+        <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-1">
           {[subTitle, city].filter(Boolean).join(" · ")}
         </p>
       )}
     </div>
   );
 
-  // ── Media ───────────────────────────────────────────────────────────────────
-  // Pair grid: border-l divider replaced with a 2px gap (contact-sheet style).
-  const Media = !hideBuildingInfo && (
+  // ── Media (compact / stack variants) ────────────────────────────────────────
+  // Used by the compact variant and compact-stack layout only.
+  // For the hero grid, media is rendered inline in the image column below.
+  // Pair grid: 2px gap between cells (contact-sheet style, no rounded corners).
+  const MediaCompact = !hideBuildingInfo && (
     mediaItems.length > 0 ? (
       showCarousel ? (
         <FeedPhotoCarousel
@@ -300,49 +331,91 @@ export function ReviewCardFeed({
           className="w-full"
         />
       ) : showPairGrid ? (
-        <div
-          className={`grid grid-cols-2 gap-[2px] w-full max-w-full min-w-0 overflow-hidden bg-surface-muted ${
-            !isCompact ? "md:w-[280px] md:shrink-0" : ""
-          }`}
-        >
-          <div className="relative aspect-card-compact min-w-0 overflow-hidden">
+        <div className="grid grid-cols-2 gap-[2px] w-full max-w-full min-w-0 overflow-hidden rounded-none bg-surface-muted">
+          <div className="relative aspect-card-compact min-w-0 overflow-hidden rounded-none">
             {renderMediaItem(imageOnlyItems[0], "h-full")}
           </div>
-          <div className="relative aspect-card-compact min-w-0 overflow-hidden">
+          <div className="relative aspect-card-compact min-w-0 overflow-hidden rounded-none">
             {renderMediaItem(imageOnlyItems[1], "h-full")}
           </div>
         </div>
       ) : (
         <div
-          className={`relative w-full max-w-full min-w-0 overflow-hidden bg-surface-muted ${
-            !isCompact
-              ? `md:w-[280px] md:shrink-0 ${aspectToken} md:aspect-auto`
-              : "aspect-[4/3]"
-          }`}
+          className={cn(
+            "relative w-full max-w-full min-w-0 overflow-hidden rounded-none bg-surface-muted",
+            aspectToken,
+          )}
         >
           <div className="absolute inset-0 w-full h-full">{renderMediaItem(mediaItems[0])}</div>
         </div>
       )
     ) : posterUrl && showCommunityImages ? (
       <div
-        className={
-          !isCompact
-            ? `relative w-full max-w-full min-w-0 bg-surface-muted overflow-hidden md:w-[280px] md:shrink-0 ${aspectToken} md:aspect-auto`
-            : "relative w-full max-w-full min-w-0 bg-surface-muted overflow-hidden aspect-[4/3]"
-        }
+        className={cn(
+          "relative w-full max-w-full min-w-0 bg-surface-muted overflow-hidden rounded-none",
+          aspectToken || "aspect-[4/3]",
+        )}
       >
         <img
           src={posterUrl}
           alt={mainTitle || ""}
-          className={`w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105 ${
-            !isCompact ? "md:absolute md:inset-0" : ""
-          }`}
+          className="w-full h-full object-cover rounded-none transition-transform duration-500 group-hover/card:scale-105"
         />
       </div>
     ) : null
   );
 
+  // ── Media (hero grid) ────────────────────────────────────────────────────────
+  // Rendered directly inside the image column of the 50/50 grid.
+  // No fixed width, no aspect token — fills the grid cell height naturally.
+  const renderHeroMedia = () => {
+    if (!hasMedia) return null;
+    if (showCarousel) {
+      return (
+        <FeedPhotoCarousel
+          images={carouselImages}
+          reviewId={entry.id}
+          onImageLike={onImageLike}
+          className="w-full h-full"
+        />
+      );
+    }
+    if (showPairGrid) {
+      return (
+        <div className="grid grid-cols-2 gap-[2px] w-full h-full min-h-[300px] md:min-h-[460px] bg-surface-muted rounded-none">
+          <div className="relative min-w-0 overflow-hidden rounded-none">
+            {renderMediaItem(imageOnlyItems[0], "h-full")}
+          </div>
+          <div className="relative min-w-0 overflow-hidden rounded-none">
+            {renderMediaItem(imageOnlyItems[1], "h-full")}
+          </div>
+        </div>
+      );
+    }
+    if (mediaItems.length > 0) {
+      return (
+        <div className="relative w-full h-full min-h-[300px] md:min-h-[460px] bg-surface-muted rounded-none">
+          <div className="absolute inset-0 w-full h-full">{renderMediaItem(mediaItems[0])}</div>
+        </div>
+      );
+    }
+    if (posterUrl && showCommunityImages) {
+      return (
+        <div className="relative w-full h-full min-h-[300px] md:min-h-[460px] bg-surface-muted rounded-none">
+          <img
+            src={posterUrl}
+            alt={mainTitle || ""}
+            className="absolute inset-0 w-full h-full object-cover rounded-none transition-transform duration-500 group-hover/card:scale-105"
+          />
+        </div>
+      );
+    }
+    return null;
+  };
+
   // ── Content body ─────────────────────────────────────────────────────────────
+  // Compact variant: quoted excerpt in medium weight.
+  // Default variant: text-base (16px) for editorial readability — not text-sm.
   const ContentBody = isCompact ? (
     <>
       {entry.content && (
@@ -357,7 +430,7 @@ export function ReviewCardFeed({
                 e.stopPropagation();
                 setEssayExpanded(true);
               }}
-              className="mt-1.5 font-mono text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
+              className="mt-1.5 font-sans text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
             >
               Read more →
             </button>
@@ -369,7 +442,7 @@ export function ReviewCardFeed({
     <>
       {entry.content && (
         <div className="min-w-0">
-          <p className={`text-sm text-text-primary leading-relaxed break-words ${bodyClampClass}`}>
+          <p className={`text-base text-text-primary leading-relaxed break-words ${bodyClampClass}`}>
             {entry.content}
           </p>
           {showReadMore && (
@@ -379,7 +452,7 @@ export function ReviewCardFeed({
                 e.stopPropagation();
                 setEssayExpanded(true);
               }}
-              className="mt-1.5 font-mono text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
+              className="mt-1.5 font-sans text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
             >
               Read more →
             </button>
@@ -390,7 +463,7 @@ export function ReviewCardFeed({
   );
 
   // ── Footer ───────────────────────────────────────────────────────────────────
-  // Text-only actions in Space Mono — no icons.
+  // Likes / comments in mono; save is a bookmark (desktop: show on card hover).
   const Footer = (
     <div
       className={`flex w-full max-w-full min-w-0 items-center gap-3 flex-wrap mt-auto ${
@@ -403,50 +476,67 @@ export function ReviewCardFeed({
           onLike?.(entry.id);
           window.dispatchEvent(new CustomEvent("pwa-interaction"));
         }}
-        className={`font-mono text-[10px] tracking-[0.12em] uppercase transition-colors ${
+        className={`font-sans text-[10px] tracking-[0.12em] uppercase transition-colors ${
           entry.is_liked
             ? "text-text-primary"
             : "text-text-secondary hover:text-text-primary"
         }`}
       >
-        {entry.likes_count} {entry.likes_count === 1 ? "note" : "notes"}
+        {entry.likes_count} {entry.likes_count === 1 ? "like" : "likes"}
       </button>
       <span className="text-text-secondary/30 select-none text-xs">·</span>
       <button
         onClick={handleCommentClick}
-        className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors"
+        className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors"
       >
         {entry.comments_count} {entry.comments_count === 1 ? "comment" : "comments"}
       </button>
       {!isCompact && (
         <button
+          type="button"
           onClick={handleSave}
-          className={`font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors ml-auto ${
-            isSaving ? "opacity-50" : ""
-          }`}
           disabled={isSaving}
+          aria-label={isSavedToList ? "Saved to your list" : "Save building to your list"}
+          title={isSavedToList ? "Saved to your list" : "Save to your list"}
+          className={cn(
+            "ml-auto shrink-0 rounded-sm p-1 text-text-secondary transition-colors hover:text-text-primary",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1",
+            "opacity-100 md:opacity-0 md:transition-opacity md:group-hover/card:opacity-100 md:focus-visible:opacity-100",
+            isSaving && "pointer-events-none opacity-50",
+          )}
         >
-          Save
+          <Bookmark
+            className={cn(
+              "h-4 w-4",
+              isSavedToList && "fill-text-primary text-text-primary",
+            )}
+            strokeWidth={1.75}
+            aria-hidden
+          />
         </button>
       )}
     </div>
   );
 
-  const cardLayoutClass = useMdSideBySide ? `${flexDirection} md:min-h-[220px]` : "";
-
+  // ── Render ───────────────────────────────────────────────────────────────────
   return (
     <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
       <article
         data-testid={`review-card-feed-${entry.id}`}
         onClick={handleCardClick}
-        className={`group/card relative flex flex-col ${cardLayoutClass} h-full cursor-pointer min-w-0 w-full max-w-full ${
-          effectiveSpec.prominence === "elevated" ? "shadow-card-elevated" : ""
-        } ${isArchitectOfBuilding ? "border-l-2 border-l-text-primary pl-3 md:pl-4" : ""}`}
+        className={cn(
+          "group/card relative w-full cursor-pointer min-w-0",
+          // Architect-of-building indicator: left rule, no padding bleed into image column.
+          isArchitectOfBuilding && "border-l-2 border-l-text-primary",
+        )}
       >
+        {/* ── Compact variant ── */}
         {isCompact ? (
-          <>
-            {Media}
-            <div className="flex flex-col flex-1 min-w-0 p-2.5 md:p-4 gap-2">
+          <div className={cn("flex flex-col h-full", isArchitectOfBuilding && "pl-3 md:pl-4")}>
+            {MediaCompact}
+            {/* Text lives in its own padded sub-div — image is flush to card edges. */}
+            <div className="flex flex-col flex-1 min-w-0 px-3 py-2.5 gap-2">
+              {ActivityLead}
               {Byline}
               {BuildingHeadline}
               {entry.rating != null && entry.rating > 0 && (
@@ -455,47 +545,80 @@ export function ReviewCardFeed({
               {ContentBody}
               {Footer}
             </div>
-          </>
+          </div>
+
+        /* ── Compact-stack layout ── */
         ) : useCompactStackLayout ? (
-          <>
+          <div className={cn("flex flex-col", isArchitectOfBuilding && "pl-3 md:pl-4")}>
             <div className="flex flex-col gap-3">
+              {ActivityLead}
               {Byline}
               {BuildingHeadline}
               {entry.rating != null && entry.rating > 0 && (
                 <PointsBadge points={entry.rating} />
               )}
             </div>
-            {Media}
+            {MediaCompact}
             <div className="flex flex-col flex-1 min-w-0 pt-3 gap-2">
               {ContentBody}
               {Footer}
             </div>
-          </>
+          </div>
+
+        /* ── Hero grid (default, non-compact) ── */
+        /* True 50/50 CSS grid — magazine spread. No box shadow, no fixed image width. */
         ) : (
-          <>
-            <div className="flex flex-col flex-1 min-w-0">
-              <div className="flex flex-col flex-1 gap-3">
-                {Byline}
-                {BuildingHeadline}
-                {entry.rating != null && entry.rating > 0 && (
-                  <PointsBadge points={entry.rating} />
+          <div
+            className={cn(
+              "grid grid-cols-1 gap-0 items-stretch",
+              hasMedia && "md:grid-cols-2",
+              isArchitectOfBuilding && "pl-3 md:pl-4",
+            )}
+          >
+            {/* Image column — full 50% width, generous min-height for photography */}
+            {hasMedia && (
+              <div
+                className={cn(
+                  "relative overflow-hidden rounded-none",
+                  imagePosition === "right" ? "md:order-2" : "md:order-1",
                 )}
-                {ContentBody}
-                {Footer}
+              >
+                {renderHeroMedia()}
               </div>
+            )}
+
+            {/* Text column — generous padding mirrors FeedHeroCard's editorial rhythm */}
+            <div
+              className={cn(
+                "flex flex-col justify-center gap-3",
+                hasMedia
+                  ? imagePosition === "right"
+                    ? "md:order-1 px-0 py-6 md:py-10 md:pr-10"
+                    : "md:order-2 px-0 py-6 md:py-10 md:pl-10"
+                  : "max-w-xl",
+              )}
+            >
+              {ActivityLead}
+              {Byline}
+              {BuildingHeadline}
+              {entry.rating != null && entry.rating > 0 && (
+                <PointsBadge points={entry.rating} />
+              )}
+              {ContentBody}
+              {Footer}
             </div>
-            {Media}
-          </>
+          </div>
         )}
       </article>
     </SuggestedContentBlock>
   );
 }import { formatDistanceToNow } from "date-fns";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { FeedReview } from "@/types/feed";
 import { getBuildingUrl } from "@/utils/url";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 /**
  * Award points badge. Renders filled black dots only — no empty placeholders.
@@ -545,7 +668,16 @@ export function ReviewCardDetail({
 
   if (!data) return null;
 
-  const { username, isVerifiedArchitect, mainTitle, subTitle, posterUrl, mediaItems, city } = data;
+  const {
+    username,
+    avatarUrl,
+    isVerifiedArchitect,
+    mainTitle,
+    subTitle,
+    posterUrl,
+    mediaItems,
+    city,
+  } = data;
 
   const handleCommentClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -560,30 +692,42 @@ export function ReviewCardDetail({
     }
   };
 
-  // ── Byline ──────────────────────────────────────────────────────────────────
-  // Space Mono strip — no avatar.
+  // ── Byline — magazine columnist: visible avatar + prominent author name
   const timestamp = formatDistanceToNow(
     new Date(entry.edited_at || entry.created_at),
     { addSuffix: true },
   ).replace("about ", "");
 
   const Byline = !hideUser ? (
-    <div className="flex items-center gap-2 min-w-0 mb-3">
-      <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
-        {username}
-      </span>
-      {isVerifiedArchitect && (
-        <span className="font-mono text-[9px] tracking-[0.1em] uppercase border border-text-primary text-text-primary px-1.5 py-0.5 font-bold shrink-0 leading-none">
-          Architect
+    <div className="flex gap-3 items-start min-w-0 mb-3">
+      <Avatar className="h-12 w-12 shrink-0 rounded-full border border-border-default bg-surface-muted">
+        <AvatarImage src={avatarUrl || undefined} alt="" />
+        <AvatarFallback className="text-sm font-semibold text-text-secondary">
+          {username.charAt(0).toUpperCase()}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1 flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+        <div className="min-w-0">
+          <Link
+            to={`/profile/${username}`}
+            className="text-base md:text-lg font-semibold tracking-tight text-text-primary transition-colors hover:opacity-80"
+          >
+            {username}
+          </Link>
+          {isVerifiedArchitect ? (
+            <span className="mt-1 block font-sans text-[9px] tracking-[0.1em] uppercase border border-text-primary text-text-primary px-1.5 py-0.5 font-bold leading-none w-fit">
+              Architect
+            </span>
+          ) : null}
+        </div>
+        <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-text-secondary/40 shrink-0">
+          {timestamp}
         </span>
-      )}
-      <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary/40 ml-auto shrink-0">
-        {timestamp}
-      </span>
+      </div>
     </div>
   ) : (
     <div className="mb-3">
-      <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary/40">
+      <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-text-secondary/40">
         {timestamp}
       </span>
     </div>
@@ -631,11 +775,11 @@ export function ReviewCardDetail({
           {/* Building headline — suppressed on building detail page */}
           {!hideBuildingInfo && (
             <div className="mb-2">
-              <h3 className="text-base font-bold tracking-tight text-text-primary leading-tight">
+              <h3 className="text-lg font-bold tracking-tight text-text-primary leading-tight">
                 {mainTitle}
               </h3>
               {(subTitle || city) && (
-                <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-0.5">
+                <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-0.5">
                   {[subTitle, city].filter(Boolean).join(" · ")}
                 </p>
               )}
@@ -666,25 +810,26 @@ export function ReviewCardDetail({
             onLike?.(entry.id);
             window.dispatchEvent(new CustomEvent("pwa-interaction"));
           }}
-          className={`font-mono text-[10px] tracking-[0.12em] uppercase transition-colors ${
+          className={`font-sans text-[10px] tracking-[0.12em] uppercase transition-colors ${
             entry.is_liked
               ? "text-text-primary"
               : "text-text-secondary hover:text-text-primary"
           }`}
         >
-          {entry.likes_count} {entry.likes_count === 1 ? "note" : "notes"}
+          {entry.likes_count} {entry.likes_count === 1 ? "like" : "likes"}
         </button>
         <span className="text-text-secondary/30 select-none text-xs">·</span>
         <button
           onClick={handleCommentClick}
-          className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors"
+          className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors"
         >
           {entry.comments_count} {entry.comments_count === 1 ? "comment" : "comments"}
         </button>
       </div>
     </article>
   );
-}import { useNavigate } from "react-router";
+}import { Bookmark } from "lucide-react";
+import { useNavigate } from "react-router";
 import { useState } from "react";
 import { FeedReview } from "@/types/feed";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -722,9 +867,6 @@ export function FeedActivityCard({
     getBuildingImageUrl(entry.building.main_image_url) ??
     getBuildingImageUrl(entry.building.community_preview_url);
 
-  const actionCopy =
-    activityStatus === "visited" ? "visited" : "wants to visit";
-
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest("button")) return;
@@ -745,7 +887,7 @@ export function FeedActivityCard({
   return (
     <article
       onClick={handleCardClick}
-      className="flex items-start gap-4 w-full cursor-pointer pb-6 border-b border-border-default"
+      className="group/card flex items-start gap-4 w-full cursor-pointer pb-6 border-b border-border-default"
     >
       {/* Thumbnail — sharp edges, no radius */}
       {cardImageSrc && imageVisible && (
@@ -766,10 +908,12 @@ export function FeedActivityCard({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        {/* Category label — micro uppercase */}
-        <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-text-secondary">
-          {activityStatus === "visited" ? "Visited" : "Bucket list"}
-        </span>
+        <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary">
+          <span className="font-medium text-text-primary">{username}</span>
+          <span className="text-text-secondary normal-case">
+            {activityStatus === "visited" ? " visited" : " wants to visit"}
+          </span>
+        </p>
 
         {/*
          * Building name — editorial scale.
@@ -781,8 +925,8 @@ export function FeedActivityCard({
           className={cn(
             "font-black tracking-tight text-text-primary mt-0.5",
             isHero
-              ? "text-2xl md:text-3xl leading-none"
-              : "text-xl leading-tight",
+              ? "text-3xl md:text-4xl leading-none"
+              : "text-2xl leading-tight",
           )}
         >
           {mainTitle}
@@ -790,31 +934,35 @@ export function FeedActivityCard({
 
         {/* Location — mono meta, consistent with byline treatment */}
         {city && (
-          <p className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-1.5">
+          <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-1.5">
             {city}
           </p>
         )}
 
-        {/* Byline row */}
-        <div className="flex items-center gap-2 min-w-0 mt-2">
-          <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
-            {username}
-          </span>
-          <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-text-secondary/50 shrink-0">
-            {actionCopy}
-          </span>
+        <div className="flex items-center gap-2 min-w-0 mt-2 justify-end">
           <button
             type="button"
             onClick={handleSave}
-            className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors ml-auto shrink-0"
+            aria-label={saved ? "Saved (demo)" : "Save (demo)"}
+            title={saved ? "Saved" : "Save"}
+            className={cn(
+              "shrink-0 rounded-sm p-1 text-text-secondary transition-colors hover:text-text-primary",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1",
+              "opacity-100 md:opacity-0 md:transition-opacity md:group-hover/card:opacity-100 md:focus-visible:opacity-100",
+            )}
           >
-            {saved ? "Saved" : "Save"}
+            <Bookmark
+              className={cn("h-4 w-4", saved && "fill-text-primary text-text-primary")}
+              strokeWidth={1.75}
+              aria-hidden
+            />
           </button>
         </div>
       </div>
     </article>
   );
-}import { useNavigate } from "react-router";
+}import { Bookmark } from "lucide-react";
+import { useNavigate } from "react-router";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -874,7 +1022,7 @@ function FeedHeroSingleImage({ image, onError }: FeedHeroSingleImageProps) {
   const [loaded, setLoaded] = useState(false);
 
   return (
-    <div className="relative w-full h-full min-h-[300px] md:min-h-0 bg-surface-muted">
+    <div className="relative w-full h-full min-h-[300px] md:min-h-0 bg-surface-muted rounded-none">
       {!loaded && <div className="absolute inset-0 bg-surface-muted animate-pulse" />}
       <img
         src={image.url}
@@ -963,6 +1111,7 @@ export function FeedHeroCard({
   };
 
   const username = entry.user?.username || "Unknown User";
+  const userActionVerb = entry.status === "pending" ? "wants to visit" : "visited";
   const mainTitle = entry.building.name;
   const credits = entry.building.creditedEntities;
   const primaryCreditLine =
@@ -1044,7 +1193,7 @@ export function FeedHeroCard({
     effectiveSpec.textWeight === "essay" && !essayExpanded && Boolean(entry.content?.trim());
 
   return (
-    <article onClick={handleCardClick} className="group relative w-full cursor-pointer">
+    <article onClick={handleCardClick} className="group/card relative w-full cursor-pointer">
       {/* Magazine spread: two-column on desktop, stacked on mobile */}
       <div className={cn(
         "grid grid-cols-1 gap-0 items-stretch",
@@ -1061,18 +1210,20 @@ export function FeedHeroCard({
         )}
 
         {/* Text column */}
-        <div className={cn(
-          "flex flex-col justify-center py-6 md:py-10",
-          hasImages && (isReversed ? "md:order-1 md:pr-10" : "md:order-2 md:pl-10"),
-          !hasImages && "max-w-xl"
-        )}>
-          {/* Category label */}
-          <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-3">
-            {entry.status === "visited" ? "Review" : "Building"}
-          </span>
+        <div
+          className={cn(
+            "flex flex-col justify-center py-6 md:py-10",
+            hasImages && (isReversed ? "md:order-1 md:pr-10" : "md:order-2 md:pl-10"),
+            !hasImages && "max-w-xl",
+          )}
+        >
+          <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary mb-3">
+            <span className="font-medium text-text-primary">{username}</span>
+            <span className="text-text-secondary normal-case"> {userActionVerb}</span>
+          </p>
 
           {/* Building name — editorial scale */}
-          <h2 className="font-display text-3xl md:text-5xl lg:text-6xl font-black tracking-tight leading-none text-text-primary mb-3">
+          <h2 className="font-sans text-4xl md:text-6xl lg:text-7xl font-black tracking-tight leading-none text-text-primary mb-3">
             {mainTitle}
           </h2>
 
@@ -1107,7 +1258,7 @@ export function FeedHeroCard({
                     e.stopPropagation();
                     setEssayExpanded(true);
                   }}
-                  className="mt-1.5 font-mono text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
+                  className="mt-1.5 font-sans text-[10px] tracking-[0.15em] uppercase text-text-primary hover:text-text-secondary transition-colors"
                 >
                   Read more →
                 </button>
@@ -1115,17 +1266,25 @@ export function FeedHeroCard({
             </div>
           )}
 
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
-              {username}
-            </span>
+          <div className="flex items-center gap-2 min-w-0 justify-end">
             <button
               type="button"
               onClick={handleSave}
               disabled={isSaving}
-              className={`font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors ml-auto shrink-0 ${isSaving ? "opacity-50" : ""}`}
+              aria-label={isSaved ? "Saved to your list" : "Save building to your list"}
+              title={isSaved ? "Saved to your list" : "Save to your list"}
+              className={cn(
+                "shrink-0 rounded-sm p-1 text-text-secondary transition-colors hover:text-text-primary",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1",
+                "opacity-100 md:opacity-0 md:transition-opacity md:group-hover/card:opacity-100 md:focus-visible:opacity-100",
+                isSaving && "pointer-events-none opacity-50",
+              )}
             >
-              {isSaved ? "Saved" : "Save"}
+              <Bookmark
+                className={cn("h-4 w-4", isSaved && "fill-text-primary text-text-primary")}
+                strokeWidth={1.75}
+                aria-hidden
+              />
             </button>
           </div>
         </div>
@@ -1133,11 +1292,13 @@ export function FeedHeroCard({
     </article>
   );
 }
+import { Bookmark } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useState } from "react";
 import { FeedReview } from "@/types/feed";
 import { getBuildingUrl } from "@/utils/url";
 import { getBuildingImageUrl } from "@/utils/image";
+import { cn } from "@/lib/utils";
 
 /**
  * Award points badge. Renders filled black dots only — no empty placeholders.
@@ -1193,7 +1354,7 @@ export function FeedCompactCard({
 
   const username = entry.user?.username || "Unknown User";
   const mainTitle = entry.building.name;
-  const actionText = entry.status === "pending" ? "saved" : "visited";
+  const userActionVerb = entry.status === "pending" ? "wants to visit" : "visited";
 
   const cardImageSrc =
     getBuildingImageUrl(entry.building.main_image_url) ??
@@ -1202,7 +1363,7 @@ export function FeedCompactCard({
   return (
     <div
       onClick={handleCardClick}
-      className="flex items-start gap-4 w-full cursor-pointer pb-6 border-b border-border-default"
+      className="group/card flex items-start gap-4 w-full cursor-pointer pb-6 border-b border-border-default"
     >
       {/* Thumbnail */}
       {cardImageSrc && imageVisible && (
@@ -1218,13 +1379,13 @@ export function FeedCompactCard({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        {/* Category label */}
-        <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
-          {actionText}
-        </span>
+        <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary">
+          <span className="font-medium text-text-primary">{username}</span>
+          <span className="text-text-secondary normal-case"> {userActionVerb}</span>
+        </p>
 
         {/* Building name — editorial scale */}
-        <h3 className="text-2xl font-semibold tracking-tight leading-tight text-text-primary mt-1">
+        <h3 className="text-3xl font-semibold tracking-tight leading-tight text-text-primary mt-1">
           {mainTitle}
         </h3>
 
@@ -1241,16 +1402,23 @@ export function FeedCompactCard({
           </p>
         )}
 
-        <div className="flex items-center gap-2 min-w-0 mt-3">
-          <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary font-medium truncate">
-            {username}
-          </span>
+        <div className="flex items-center gap-2 min-w-0 mt-3 justify-end">
           <button
             type="button"
             onClick={handleSave}
-            className="font-mono text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors ml-auto shrink-0"
+            aria-label={saved ? "Saved (demo)" : "Save (demo)"}
+            title={saved ? "Saved" : "Save"}
+            className={cn(
+              "shrink-0 rounded-sm p-1 text-text-secondary transition-colors hover:text-text-primary",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1",
+              "opacity-100 md:opacity-0 md:transition-opacity md:group-hover/card:opacity-100 md:focus-visible:opacity-100",
+            )}
           >
-            {saved ? "Saved" : "Save"}
+            <Bookmark
+              className={cn("h-4 w-4", saved && "fill-text-primary text-text-primary")}
+              strokeWidth={1.75}
+              aria-hidden
+            />
           </button>
         </div>
       </div>
@@ -1286,6 +1454,7 @@ export type ReviewCardCarouselImage = {
 
 export type ReviewCardData = {
   username: string;
+  avatarUrl: string | null;
   isVerifiedArchitect: boolean;
   isArchitectOfBuilding: boolean;
   mainTitle: string;
@@ -1316,6 +1485,7 @@ export function useReviewCardData(
     const posterUrl = getBuildingImageUrl(entry.building.main_image_url);
 
     const username = entry.user?.username || "Unknown User";
+    const avatarUrl = entry.user?.avatar_url ?? null;
     const isVerifiedArchitect = entry.user?.is_verified_architect || false;
     const isArchitectOfBuilding = entry.user?.is_architect_of_building || false;
 
@@ -1374,6 +1544,7 @@ export function useReviewCardData(
 
     return {
       username,
+      avatarUrl,
       isVerifiedArchitect,
       isArchitectOfBuilding,
       mainTitle,

@@ -1,4 +1,4 @@
-import type { CardSpec } from "@/types/cards";
+import type { LegacyFeedCardUi } from "@/features/feed/utils/deriveLegacyFeedCardLayout";
 import type { FeedReview, ReviewBuilding, ReviewImage, ReviewUser } from "@/types/feed";
 
 export type CardFixture = {
@@ -8,8 +8,8 @@ export type CardFixture = {
   label: string;
   description: string;
   entry: FeedReview;
-  /** Frozen expectation for `resolveCardSpec(entry)` — playground Task 5.3 regression scan. */
-  expectedSpec: CardSpec;
+  /** Frozen expectation for `deriveLegacyFeedCardLayout(entry)` — playground regression scan. */
+  expectedLayout: LegacyFeedCardUi;
 };
 
 const FIXTURE_CREATED_AT = "2026-01-15T12:00:00.000Z";
@@ -94,7 +94,7 @@ export const cardFixtures: readonly CardFixture[] = [
       images: undefined,
       status: "visited",
     }),
-    expectedSpec: {
+    expectedLayout: {
       layout: "compact-stack",
       imageWeight: "none",
       textWeight: "none",
@@ -112,7 +112,7 @@ export const cardFixtures: readonly CardFixture[] = [
       images: undefined,
       status: "pending",
     }),
-    expectedSpec: {
+    expectedLayout: {
       layout: "compact-stack",
       imageWeight: "none",
       textWeight: "none",
@@ -129,7 +129,7 @@ export const cardFixtures: readonly CardFixture[] = [
       content: SNIPPET_TEXT,
       images: undefined,
     }),
-    expectedSpec: {
+    expectedLayout: {
       layout: "compact-stack",
       imageWeight: "none",
       textWeight: "snippet",
@@ -146,7 +146,7 @@ export const cardFixtures: readonly CardFixture[] = [
       content: ESSAY_TEXT,
       images: undefined,
     }),
-    expectedSpec: {
+    expectedLayout: {
       layout: "text-forward",
       imageWeight: "none",
       textWeight: "essay",
@@ -163,7 +163,7 @@ export const cardFixtures: readonly CardFixture[] = [
       content: null,
       images: [mkImage("img-1", IMG_A)],
     }),
-    expectedSpec: {
+    expectedLayout: {
       layout: "media-forward",
       imageWeight: "single",
       textWeight: "none",
@@ -180,7 +180,7 @@ export const cardFixtures: readonly CardFixture[] = [
       content: SNIPPET_TEXT,
       images: [mkImage("img-1", IMG_A)],
     }),
-    expectedSpec: {
+    expectedLayout: {
       layout: "balanced",
       imageWeight: "single",
       textWeight: "snippet",
@@ -197,7 +197,7 @@ export const cardFixtures: readonly CardFixture[] = [
       content: ESSAY_TEXT,
       images: [mkImage("img-1", IMG_A)],
     }),
-    expectedSpec: {
+    expectedLayout: {
       layout: "text-forward",
       imageWeight: "single",
       textWeight: "essay",
@@ -214,7 +214,7 @@ export const cardFixtures: readonly CardFixture[] = [
       content: null,
       images: [mkImage("img-1", IMG_A), mkImage("img-2", IMG_B), mkImage("img-3", IMG_C)],
     }),
-    expectedSpec: {
+    expectedLayout: {
       layout: "media-forward",
       imageWeight: "gallery",
       textWeight: "none",
@@ -231,7 +231,7 @@ export const cardFixtures: readonly CardFixture[] = [
       content: ESSAY_TEXT,
       images: [mkImage("img-1", IMG_A), mkImage("img-2", IMG_B), mkImage("img-3", IMG_C)],
     }),
-    expectedSpec: {
+    expectedLayout: {
       layout: "balanced",
       imageWeight: "gallery",
       textWeight: "essay",
@@ -249,7 +249,7 @@ export const cardFixtures: readonly CardFixture[] = [
       video_url: "https://example.com/plano-fixture-video/sample.mp4",
       images: undefined,
     }),
-    expectedSpec: {
+    expectedLayout: {
       layout: "compact-stack",
       imageWeight: "none",
       textWeight: "none",
@@ -267,7 +267,7 @@ export const cardFixtures: readonly CardFixture[] = [
       images: [mkImage("img-1", IMG_A), mkImage("img-2", IMG_B), mkImage("img-3", IMG_C)],
       user: mkUser({ is_verified_architect: true }),
     }),
-    expectedSpec: {
+    expectedLayout: {
       layout: "balanced",
       imageWeight: "gallery",
       textWeight: "essay",
@@ -285,7 +285,7 @@ export const cardFixtures: readonly CardFixture[] = [
       likes_count: 72,
       images: undefined,
     }),
-    expectedSpec: {
+    expectedLayout: {
       layout: "compact-stack",
       imageWeight: "none",
       textWeight: "snippet",
@@ -303,7 +303,7 @@ export const cardFixtures: readonly CardFixture[] = [
       images: undefined,
       user: mkUser({ is_architect_of_building: true }),
     }),
-    expectedSpec: {
+    expectedLayout: {
       layout: "compact-stack",
       imageWeight: "none",
       textWeight: "none",
@@ -320,7 +320,7 @@ export const cardFixtures: readonly CardFixture[] = [
       content: null,
       images: [mkImage("img-broken", "https://plano-fixture.invalid/broken-image.png")],
     }),
-    expectedSpec: {
+    expectedLayout: {
       layout: "media-forward",
       imageWeight: "single",
       textWeight: "none",
@@ -339,7 +339,7 @@ export const cardFixtures: readonly CardFixture[] = [
         name: "National Centre for Experimental Timber Architecture and Long-Span Public Atria Research Wing",
       }),
     }),
-    expectedSpec: {
+    expectedLayout: {
       layout: "compact-stack",
       imageWeight: "none",
       textWeight: "snippet",
@@ -359,7 +359,7 @@ export const cardFixtures: readonly CardFixture[] = [
         city: null,
       }),
     }),
-    expectedSpec: {
+    expectedLayout: {
       layout: "compact-stack",
       imageWeight: "none",
       textWeight: "snippet",

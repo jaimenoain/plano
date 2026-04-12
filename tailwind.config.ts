@@ -47,13 +47,13 @@ export default {
         "card-compact": "var(--card-image-ratio-compact)",
       },
       lineClamp: {
-        /** Snippet-tier body — `CardSpec.textWeight` snippet */
+        /** Snippet-tier body — legacy feed card text tier “snippet” */
         "card-snippet": "var(--card-text-clamp-snippet)",
-        /** Body-tier copy — `CardSpec.textWeight` body */
+        /** Body-tier copy — legacy feed card text tier “body” */
         "card-body": "var(--card-text-clamp-body)",
       },
       boxShadow: {
-        /** `CardSpec.prominence` elevated — uses `--card-elevation-elevated` */
+        /** Legacy feed card elevated prominence — uses `--card-elevation-elevated` */
         "card-elevated": "var(--card-elevation-elevated)",
       },
       fontFamily: {

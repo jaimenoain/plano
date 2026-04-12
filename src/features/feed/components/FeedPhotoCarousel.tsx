@@ -106,7 +106,7 @@ export function FeedPhotoCarousel({
           src={current.url}
           alt="Building"
           onError={() => handleError(current.id)}
-          className="w-full h-full object-cover"
+          className="h-full w-full origin-center object-cover transition-transform duration-500 ease-out hover:scale-105"
           loading="lazy"
         />
       </div>

@@ -55,10 +55,11 @@ export function ProfileKanbanView({ kanbanData, showCommunityImages, updatingIte
             items={col.items.map(i => i.id)}
           >
               <div className="space-y-3">
-               {col.items.map((item) => (
+               {col.items.map((item, itemIndex) => (
                  <DraggableReviewCard
                     key={item.id}
                     review={item}
+                    cardIndex={itemIndex}
                     showCommunityImages={showCommunityImages}
                     isUpdating={item.id === updatingItemId}
                     isDragEnabled={isDragEnabled}

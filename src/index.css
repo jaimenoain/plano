@@ -59,7 +59,7 @@
     --card-image-ratio-compact: 1 / 1;
     --card-text-clamp-snippet: 2;
     --card-text-clamp-body: 4;
-    /* Matches §6 shadow-md — optional lift for CardSpec.prominence elevated */
+    /* Matches §6 shadow-md — optional lift for legacy feed card elevated prominence */
     --card-elevation-elevated: 0 2px 8px 0 rgb(0 0 0 / 0.06);
   }
 }

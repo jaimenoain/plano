@@ -5,4 +5,3 @@ export { useFeed } from './hooks/useFeed';
 export { useDiscoveryFeed } from './hooks/useDiscoveryFeed';
 export { useSuggestedFeed } from './hooks/useSuggestedFeed';
 export { useCollectionsFeed } from './hooks/useCollectionsFeed';
-export { resolveCardSpec } from './utils/resolveCardSpec';

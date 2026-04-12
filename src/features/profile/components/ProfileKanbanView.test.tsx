@@ -6,6 +6,7 @@ import { describe, it, expect, afterEach, vi } from 'vitest';
 import React from 'react';
 import { FeedReview } from '@/types/feed';
 import { MemoryRouter } from 'react-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Mock hooks
 vi.mock('@/features/auth/hooks/useAuth', () => ({
@@ -24,8 +25,24 @@ vi.mock('@/hooks/use-toast', () => ({
   })
 }));
 
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      upsert: vi.fn().mockResolvedValue({ error: null }),
+      select: vi.fn(() => ({
+        eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+      })),
+    })),
+  },
+}));
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false } },
+});
+
 afterEach(() => {
   cleanup();
+  queryClient.clear();
 });
 
 describe('ProfileKanbanView', () => {
@@ -45,11 +62,13 @@ describe('ProfileKanbanView', () => {
     };
 
     render(
-      <MemoryRouter>
-        <DndContext>
-          <ProfileKanbanView kanbanData={kanbanData} />
-        </DndContext>
-      </MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <DndContext>
+            <ProfileKanbanView kanbanData={kanbanData} />
+          </DndContext>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     expect(screen.getByText('Saved')).toBeTruthy();
@@ -74,11 +93,13 @@ describe('ProfileKanbanView', () => {
     };
 
     render(
-      <MemoryRouter>
-        <DndContext>
-          <ProfileKanbanView kanbanData={kanbanData} />
-        </DndContext>
-      </MemoryRouter>
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <DndContext>
+            <ProfileKanbanView kanbanData={kanbanData} />
+          </DndContext>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     expect(screen.getByText('Saved')).toBeTruthy();

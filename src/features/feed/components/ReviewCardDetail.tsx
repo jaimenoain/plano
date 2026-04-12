@@ -1,29 +1,13 @@
 import { formatDistanceToNow } from "date-fns";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { FeedReview } from "@/types/feed";
-import { getBuildingUrl } from "@/utils/url";
-import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-/**
- * Award points badge. Renders filled black dots only — no empty placeholders.
- * Shows nothing when points === 0. Points are an award, not a score.
- * Uses text-primary (monochromatic) per editorial content-page colour rules.
- */
-const PointsBadge = ({ points }: { points: number }) => {
-  if (!points || points <= 0) return null;
-  return (
-    <div
-      className="flex items-center gap-1.5"
-      title={`${points} ${points === 1 ? "point" : "points"}`}
-    >
-      {Array.from({ length: points }).map((_, i) => (
-        <div key={i} className="w-3 h-3 rounded-full bg-text-primary" />
-      ))}
-    </div>
-  );
-};
+import { CardTypeA } from "@/features/feed/components/CardTypeA";
+import { CardTypeB } from "@/features/feed/components/CardTypeB";
+import { CardTypeC } from "@/features/feed/components/CardTypeC";
+import { ActivityStreamGroup } from "@/features/feed/components/ActivityStream";
+import { resolveCardType } from "@/features/feed/utils/resolveCardType";
 
 export interface ReviewCardDetailProps {
   entry: FeedReview;
@@ -31,14 +15,14 @@ export interface ReviewCardDetailProps {
   hideBuildingInfo?: boolean;
   onLike?: (reviewId: string) => void;
   onComment?: (reviewId: string) => void;
-  /** Passed through to {@link useReviewCardData} (subtitle / media); default matches feed detail usage. */
+  onImageLike?: (reviewId: string, imageId: string) => void;
+  /** Passed through to {@link useReviewCardData} (byline avatar only); card bodies use the same flag. */
   variant?: "default" | "compact";
   showCommunityImages?: boolean;
 }
 
 /**
- * Building / review detail layout: byline, thumbnail + copy, text actions.
- * Fixed horizontal media + text row (no `imagePosition`).
+ * Detail / playground layout: columnist byline + resolved feed card (building line optional).
  */
 export function ReviewCardDetail({
   entry,
@@ -46,43 +30,19 @@ export function ReviewCardDetail({
   hideBuildingInfo = false,
   onLike,
   onComment,
+  onImageLike,
   variant = "default",
   showCommunityImages = true,
 }: ReviewCardDetailProps) {
-  const navigate = useNavigate();
   const { data } = useReviewCardData(entry, { variant, showCommunityImages });
 
   if (!data) return null;
 
-  const {
-    username,
-    avatarUrl,
-    isVerifiedArchitect,
-    mainTitle,
-    subTitle,
-    posterUrl,
-    mediaItems,
-    city,
-  } = data;
+  const { username, avatarUrl, isVerifiedArchitect } = data;
 
-  const handleCommentClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onComment) {
-      onComment(entry.id);
-    } else {
-      if (entry.building.id) {
-        navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
-      } else {
-        navigate(`/review/${entry.id}`);
-      }
-    }
-  };
-
-  // ── Byline — magazine columnist: visible avatar + prominent author name
-  const timestamp = formatDistanceToNow(
-    new Date(entry.edited_at || entry.created_at),
-    { addSuffix: true },
-  ).replace("about ", "");
+  const timestamp = formatDistanceToNow(new Date(entry.edited_at || entry.created_at), {
+    addSuffix: true,
+  }).replace("about ", "");
 
   const Byline = !hideUser ? (
     <div className="flex gap-3 items-start min-w-0 mb-3">
@@ -119,99 +79,49 @@ export function ReviewCardDetail({
     </div>
   );
 
-  // ── Thumbnail ───────────────────────────────────────────────────────────────
-  // Sharp edges — no rounded corners.
-  const Thumbnail = !hideBuildingInfo && (
-    mediaItems.length > 0 && mediaItems[0].type === "video" ? (
-      <div className="w-32 h-24 bg-black shrink-0 overflow-hidden video-container">
-        <VideoPlayer
-          src={mediaItems[0].url}
-          poster={mediaItems[0].poster}
-          className="w-full h-full"
-          autoPlayOnVisible={false}
-          muted={true}
-          objectFit="cover"
-        />
-      </div>
-    ) : mediaItems.length > 0 ? (
-      <img
-        src={mediaItems[0].url}
-        alt={entry.building.name}
-        className="w-32 h-24 object-cover shrink-0"
+  const streamHideUser = !hideUser;
+  const t = resolveCardType(entry);
+
+  const cardBody =
+    t === "activity" ? (
+      <ActivityStreamGroup entries={[entry]} />
+    ) : t === "A" ? (
+      <CardTypeA
+        entry={entry}
+        hideUser={streamHideUser}
+        hideBuildingInfo={hideBuildingInfo}
+        showCommunityImages={showCommunityImages}
+        onLike={onLike}
+        onComment={onComment}
       />
-    ) : posterUrl ? (
-      <img
-        src={posterUrl}
-        alt={entry.building.name}
-        className="w-32 h-24 object-cover shrink-0"
+    ) : t === "B" ? (
+      <CardTypeB
+        entry={entry}
+        index={0}
+        hideUser={streamHideUser}
+        hideBuildingInfo={hideBuildingInfo}
+        showCommunityImages={showCommunityImages}
+        imagePosition="left"
+        onLike={onLike}
+        onComment={onComment}
+        onImageLike={onImageLike}
       />
     ) : (
-      <div className="w-32 h-24 bg-surface-muted shrink-0" />
-    )
-  );
+      <CardTypeC
+        entry={entry}
+        hideUser={streamHideUser}
+        hideBuildingInfo={hideBuildingInfo}
+        showCommunityImages={showCommunityImages}
+        onLike={onLike}
+        onComment={onComment}
+        onImageLike={onImageLike}
+      />
+    );
 
   return (
-    <article className="px-4 py-4 hairline">
+    <div className="px-4 py-4 hairline">
       {Byline}
-
-      <div className="flex gap-3">
-        {Thumbnail}
-
-        <div className="flex-1 min-w-0">
-          {/* Building headline — suppressed on building detail page */}
-          {!hideBuildingInfo && (
-            <div className="mb-2">
-              <h3 className="text-lg font-bold tracking-tight text-text-primary leading-tight">
-                {mainTitle}
-              </h3>
-              {(subTitle || city) && (
-                <p className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary mt-0.5">
-                  {[subTitle, city].filter(Boolean).join(" · ")}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Points */}
-          {entry.rating != null && entry.rating > 0 && (
-            <div className="mb-2">
-              <PointsBadge points={entry.rating} />
-            </div>
-          )}
-
-          {/* Review body */}
-          {entry.content && (
-            <p className="text-sm text-text-secondary leading-relaxed break-words mb-2">
-              {entry.content}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Footer — text actions, no icons */}
-      <div className="flex items-center gap-3 mt-3 pt-2">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onLike?.(entry.id);
-            window.dispatchEvent(new CustomEvent("pwa-interaction"));
-          }}
-          className={`font-sans text-[10px] tracking-[0.12em] uppercase transition-colors ${
-            entry.is_liked
-              ? "text-text-primary"
-              : "text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          {entry.likes_count} {entry.likes_count === 1 ? "like" : "likes"}
-        </button>
-        <span className="text-text-secondary/30 select-none text-xs">·</span>
-        <button
-          onClick={handleCommentClick}
-          className="font-sans text-[10px] tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors"
-        >
-          {entry.comments_count} {entry.comments_count === 1 ? "comment" : "comments"}
-        </button>
-      </div>
-    </article>
+      {cardBody}
+    </div>
   );
 }

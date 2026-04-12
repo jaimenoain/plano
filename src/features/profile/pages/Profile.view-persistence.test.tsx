@@ -158,8 +158,8 @@ vi.mock('@/features/profile/components/FavoriteCollectionsGrid', () => ({
     FavoriteCollectionsGrid: () => <div data-testid="fav-collections-grid">Fav Collections</div>
 }));
 
-vi.mock('@/features/feed/components/ReviewCardFeed', () => ({
-    ReviewCardFeed: ({ entry }: any) => (
+vi.mock('@/features/profile/components/ProfileReviewCard', () => ({
+    ProfileReviewCard: ({ entry }: any) => (
         <div data-testid={`review-card-${entry.id}`}>
             {entry.building.name}
         </div>

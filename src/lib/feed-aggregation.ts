@@ -1,45 +1,44 @@
-import { resolveCardSpec } from "@/features/feed/utils/resolveCardSpec";
+import { resolveCardType } from "@/features/feed/utils/resolveCardType";
+import type { CardType } from "@/types/cards";
 import { FeedReview } from "@/types/feed";
-import type { CardSpec } from "@/types/cards";
 import { differenceInHours } from "date-fns";
 
 export type RowCell =
-  | { type: "compact"; entry: FeedReview; spec?: CardSpec }
+  | { type: "compact"; entry: FeedReview; cardType?: CardType }
   | {
       type: "activity";
       entry: FeedReview;
       activityStatus: "visited" | "pending";
-      spec?: CardSpec;
+      cardType?: CardType;
     };
 
 /**
- * Feed row after `aggregateFeed` / `collapseIntoRows`. Optional `spec` is reserved for
- * attaching a resolved `CardSpec` when the pipeline computes it (non-breaking until wired).
+ * Feed row after `aggregateFeed` / `collapseIntoRows`. Optional `cardType` from {@link resolveCardType}.
  */
 export type AggregatedFeedItem =
-  | { type: "hero"; entry: FeedReview; spec?: CardSpec }
-  | { type: "compact"; entry: FeedReview; spec?: CardSpec }
+  | { type: "hero"; entry: FeedReview; cardType?: CardType }
+  | { type: "compact"; entry: FeedReview; cardType?: CardType }
   | {
       type: "cluster";
       entries: FeedReview[];
       user: FeedReview["user"];
       location?: string;
       timestamp: string;
-      spec?: CardSpec;
+      cardType?: CardType;
     }
   | {
       type: "activity";
       entry: FeedReview;
       activityStatus: "visited" | "pending";
-      spec?: CardSpec;
+      cardType?: CardType;
     }
-  | { type: "row"; left: RowCell; right: RowCell; spec?: CardSpec };
+  | { type: "row"; left: RowCell; right: RowCell; cardType?: CardType };
 
 const getReviewDate = (review: FeedReview) => {
   return review.edited_at ? new Date(review.edited_at) : new Date(review.created_at);
 };
 
-/** Pairs adjacent `compact+compact` or `activity+activity` into `row` items; never pairs across other types. */
+/** Pairs adjacent `compact+compact` into `row` items; activity items stay separate for stream grouping. */
 export function collapseIntoRows(items: AggregatedFeedItem[]): AggregatedFeedItem[] {
   const out: AggregatedFeedItem[] = [];
   let i = 0;
@@ -60,12 +59,12 @@ export function collapseIntoRows(items: AggregatedFeedItem[]): AggregatedFeedIte
           left: {
             type: "compact",
             entry: cur.entry,
-            ...(cur.spec !== undefined ? { spec: cur.spec } : {}),
+            ...(cur.cardType !== undefined ? { cardType: cur.cardType } : {}),
           },
           right: {
             type: "compact",
             entry: next.entry,
-            ...(next.spec !== undefined ? { spec: next.spec } : {}),
+            ...(next.cardType !== undefined ? { cardType: next.cardType } : {}),
           },
         });
         i += 2;
@@ -77,28 +76,10 @@ export function collapseIntoRows(items: AggregatedFeedItem[]): AggregatedFeedIte
     }
 
     if (cur.type === "activity") {
-      const next = items[i + 1];
-      if (next?.type === "activity") {
-        out.push({
-          type: "row",
-          left: {
-            type: "activity",
-            entry: cur.entry,
-            activityStatus: cur.activityStatus,
-            ...(cur.spec !== undefined ? { spec: cur.spec } : {}),
-          },
-          right: {
-            type: "activity",
-            entry: next.entry,
-            activityStatus: next.activityStatus,
-            ...(next.spec !== undefined ? { spec: next.spec } : {}),
-          },
-        });
-        i += 2;
-      } else {
-        out.push(cur);
-        i += 1;
-      }
+      // Keep each activity item separate so the feed renderer can group consecutive
+      // `resolveCardType === "activity"` rows into one `ActivityStreamGroup`.
+      out.push(cur);
+      i += 1;
       continue;
     }
   }
@@ -114,7 +95,7 @@ export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[] {
 
     if (pendingCluster.length < 2) {
       pendingCluster.forEach((entry) => {
-        aggregated.push({ type: "compact", entry, spec: resolveCardSpec(entry) });
+        aggregated.push({ type: "compact", entry, cardType: resolveCardType(entry) });
       });
     } else {
       const cities = new Set(
@@ -164,7 +145,7 @@ export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[] {
         type: "activity",
         entry: review,
         activityStatus: review.status === "visited" ? "visited" : "pending",
-        spec: resolveCardSpec(review),
+        cardType: resolveCardType(review),
       });
       continue;
     }
@@ -173,7 +154,7 @@ export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[] {
 
     if (hasUserImages) {
       flushCluster();
-      aggregated.push({ type: "hero", entry: review, spec: resolveCardSpec(review) });
+      aggregated.push({ type: "hero", entry: review, cardType: resolveCardType(review) });
       continue;
     }
 

@@ -2,19 +2,28 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { ReviewCardFeed } from "@/features/feed/components/ReviewCardFeed";
+import { ProfileReviewCard } from "@/features/profile/components/ProfileReviewCard";
 import { FeedReview } from "@/types/feed";
 import { cn } from "@/lib/utils";
 
 interface DraggableReviewCardProps {
   review: FeedReview;
+  /** Position within the column for Type B alternation. */
+  cardIndex?: number;
   className?: string;
   showCommunityImages?: boolean;
   isUpdating?: boolean;
   isDragEnabled?: boolean;
 }
 
-export function DraggableReviewCard({ review, className, showCommunityImages, isUpdating, isDragEnabled = true }: DraggableReviewCardProps) {
+export function DraggableReviewCard({
+  review,
+  cardIndex = 0,
+  className,
+  showCommunityImages,
+  isUpdating,
+  isDragEnabled = true,
+}: DraggableReviewCardProps) {
   const {
     attributes,
     listeners,
@@ -46,10 +55,9 @@ export function DraggableReviewCard({ review, className, showCommunityImages, is
         className
       )}
     >
-      <ReviewCardFeed
+      <ProfileReviewCard
         entry={review}
-        variant="compact"
-        hideUser
+        index={cardIndex}
         imagePosition="left"
         showCommunityImages={showCommunityImages}
       />
