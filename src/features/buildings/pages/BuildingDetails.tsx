@@ -1272,31 +1272,39 @@ export default function BuildingDetails() {
             </div>
           ) : null}
 
-          {/* ── INFO ZONE: Info + Credits (left) · Location (right) ── */}
+          {/* ── INFO ZONE: Info + Credits (left) · map (right) ── */}
           <div className="grid grid-cols-1 gap-x-8 gap-y-8 border-b border-border-default py-8 sm:grid-cols-2">
 
             <div className="flex flex-col gap-8">
               <div>
-                <div className="group/info mb-4 flex items-center justify-between gap-2">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                   <h2 className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
                     Info
                   </h2>
-                  {canEditOfficialData ? (
-                    <Link
-                      to={
-                        getBuildingUrl(
-                          building.id,
-                          building.slug,
-                          building.short_id,
-                        ) + "/edit"
-                      }
-                      className="inline-flex shrink-0 opacity-0 transition-opacity focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-default group-hover/info:opacity-100"
-                      aria-label="Edit building"
-                      title="Edit building"
-                    >
-                      <Pencil className="h-3.5 w-3.5 text-text-disabled transition-colors hover:text-text-primary" />
-                    </Link>
-                  ) : null}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {showBuildingInfoExtended ? (
+                      <a
+                        href="#building-info-extended"
+                        className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                      >
+                        View info →
+                      </a>
+                    ) : null}
+                    {canEditOfficialData ? (
+                      <Link
+                        to={
+                          getBuildingUrl(
+                            building.id,
+                            building.slug,
+                            building.short_id,
+                          ) + "/edit"
+                        }
+                        className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                      >
+                        Edit info →
+                      </Link>
+                    ) : null}
+                  </div>
                 </div>
 
                 {building.styles && building.styles.length > 0 ? (
@@ -1356,10 +1364,6 @@ export default function BuildingDetails() {
             </div>
 
             <div>
-              <h2 className="mb-4 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
-                Location
-              </h2>
-
               <div className="group/location">
                 {building.location_precision === "approximate" ? (
                   <Alert className="mb-3 border-amber-500/50 bg-amber-500/10 text-amber-500">
@@ -1381,11 +1385,11 @@ export default function BuildingDetails() {
                       locationPrecision={building.location_precision}
                       isExpanded={isMapExpanded}
                       onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
-                      className={isMapExpanded ? "" : "h-36 w-full"}
+                      className={isMapExpanded ? "" : "h-48 w-full"}
                     />
                   </WidgetErrorBoundary>
                 ) : (
-                  <div className="flex h-36 w-full flex-col items-center justify-center gap-2 bg-surface-muted/20 text-text-secondary">
+                  <div className="flex h-48 w-full flex-col items-center justify-center gap-2 bg-surface-muted/20 text-text-secondary">
                     <MapPin className="h-5 w-5 opacity-40" />
                     <span className="text-[10px] uppercase tracking-widest">
                       Location unavailable
