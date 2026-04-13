@@ -13,18 +13,18 @@ export function BuildingHero({ src, alt, className, children }: BuildingHeroProp
   const [imgError, setImgError] = useState(false);
   const showImg = !!src && !imgError;
 
+  if (!showImg) {
+    return null;
+  }
+
   return (
     <div className={cn("relative w-full overflow-hidden", className)}>
-      {showImg ? (
-        <img
-          src={src}
-          alt={alt}
-          className="w-full h-[clamp(260px,48vh,500px)] object-cover animate-in fade-in duration-700"
-          onError={() => setImgError(true)}
-        />
-      ) : (
-        <div className="w-full h-[clamp(200px,30vh,320px)] bg-surface-muted" />
-      )}
+      <img
+        src={src}
+        alt={alt}
+        className="w-full h-[clamp(260px,48vh,500px)] object-cover animate-in fade-in duration-700"
+        onError={() => setImgError(true)}
+      />
       {children}
     </div>
   );

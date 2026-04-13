@@ -782,8 +782,10 @@ export default function BuildingDetails() {
   return (
     <AppLayout title={building.name} showBack>
 
-      {/* ── HERO — full-bleed, no overlay, unchanged ── */}
-      <BuildingHero key={heroImageUrl} src={heroImageUrl} alt={building.name} />
+      {/* ── HERO — full-bleed; omitted when there is no hero URL ── */}
+      {heroImageUrl ? (
+        <BuildingHero key={heroImageUrl} src={heroImageUrl} alt={building.name} />
+      ) : null}
 
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
