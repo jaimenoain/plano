@@ -1,4 +1,4 @@
-import type { LegacyFeedCardUi } from "@/features/feed/utils/deriveLegacyFeedCardLayout";
+import type { LegacyFeedCardUi } from "@/features/feed/utils/deriveLegacyFeedUi";
 import type { FeedReview, ReviewBuilding, ReviewImage, ReviewUser } from "@/types/feed";
 
 export type CardFixture = {
@@ -8,7 +8,7 @@ export type CardFixture = {
   label: string;
   description: string;
   entry: FeedReview;
-  /** Frozen expectation for `deriveLegacyFeedCardLayout(entry)` — playground regression scan. */
+  /** Frozen expectation for `deriveLegacyFeedUi(entry)` — playground regression scan. */
   expectedLayout: LegacyFeedCardUi;
 };
 

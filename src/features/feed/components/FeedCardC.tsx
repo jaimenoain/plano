@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
-import { SuggestedContentBlock } from "@/features/feed/components/SuggestedContentBlock";
 import {
   ActivityLead,
   BuildingHeadline,
@@ -18,6 +17,7 @@ export interface FeedCardCProps {
   entry: FeedReview;
   hideUser?: boolean;
   hideBuildingInfo?: boolean;
+  showCommunityImages?: boolean;
   onLike?: (reviewId: string) => void;
   onComment?: (reviewId: string) => void;
   onImageLike?: (reviewId: string, imageId: string) => void;
@@ -30,13 +30,14 @@ export function FeedCardC({
   entry,
   hideUser = false,
   hideBuildingInfo = false,
+  showCommunityImages = true,
   onLike,
   onComment,
   onImageLike,
 }: FeedCardCProps) {
   const navigate = useNavigate();
 
-  const { data } = useReviewCardData(entry);
+  const { data } = useReviewCardData(entry, { showCommunityImages });
 
   if (!data || !entry.building) return null;
 
@@ -64,24 +65,24 @@ export function FeedCardC({
   };
 
   return (
-    <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
-      <article
-        data-testid={`feed-card-c-${entry.id}`}
-        onClick={handleCardClick}
-        className={cn(
-          "group/card relative w-full cursor-pointer min-w-0 max-w-full",
-          isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-4",
-        )}
-      >
+    <article
+      data-testid={`feed-card-c-${entry.id}`}
+      onClick={handleCardClick}
+      className={cn(
+        "group/card relative w-full cursor-pointer min-w-0 max-w-full",
+        isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-4",
+      )}
+    >
         <CardImage
           items={mediaItems}
           height={CARD_C_IMAGE_HEIGHT}
           reviewId={entry.id}
           onImageLike={onImageLike}
+          firstMediaOnly
         />
-        <div className="flex max-w-xl flex-col gap-3 pt-4">
+        <div className="mt-4 flex max-w-xl flex-col gap-3">
           <ActivityLead username={username} verb={userActionVerb} hideUser={hideUser} />
-          {!hideBuildingInfo && <BuildingHeadline name={mainTitle} size="feedC" />}
+          {!hideBuildingInfo && <BuildingHeadline name={mainTitle} size="md" />}
           {!hideBuildingInfo && (
             <BuildingSubtitle subTitle={subTitle ?? undefined} city={city} />
           )}
@@ -98,7 +99,6 @@ export function FeedCardC({
             onComment={handleComment}
           />
         </div>
-      </article>
-    </SuggestedContentBlock>
+    </article>
   );
 }

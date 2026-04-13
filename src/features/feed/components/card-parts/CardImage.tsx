@@ -10,6 +10,10 @@ export interface CardImageProps {
   className?: string;
   reviewId: string;
   onImageLike?: (reviewId: string, imageId: string) => void;
+  /**
+   * Type B feed: only the first media item fills the column (no carousel / multi-tile).
+   */
+  firstMediaOnly?: boolean;
 }
 
 function PlaceholderBlock({ className }: { className?: string }) {
@@ -67,10 +71,18 @@ export function CardImage({
   className,
   reviewId,
   onImageLike,
+  firstMediaOnly = false,
 }: CardImageProps) {
-  const allImages = useMemo(() => items.filter((i) => i.type === "image"), [items]);
-  const hasVideo = items.some((i) => i.type === "video");
-  const videoItem = items.find((i) => i.type === "video");
+  const effectiveItems = useMemo(() => {
+    if (firstMediaOnly && items.length > 0) return [items[0]];
+    return items;
+  }, [firstMediaOnly, items]);
+  const allImages = useMemo(
+    () => effectiveItems.filter((i) => i.type === "image"),
+    [effectiveItems],
+  );
+  const hasVideo = effectiveItems.some((i) => i.type === "video");
+  const videoItem = effectiveItems.find((i) => i.type === "video");
 
   const containerStyle = { height: `${height}px` } as const;
 
@@ -83,7 +95,7 @@ export function CardImage({
     </div>
   );
 
-  if (items.length === 0) {
+  if (effectiveItems.length === 0) {
     return outer(<PlaceholderBlock className="h-full w-full" />);
   }
 
@@ -129,7 +141,7 @@ export function CardImage({
   }
 
   // Video + exactly two images: stacked video then pair.
-  if (hasVideo && videoItem && items.length === 3 && allImages.length === 2) {
+  if (hasVideo && videoItem && effectiveItems.length === 3 && allImages.length === 2) {
     return (
       <div
         className={cn("grid h-full w-full grid-rows-2 overflow-hidden rounded-none bg-surface-muted", className)}
@@ -158,15 +170,15 @@ export function CardImage({
   }
 
   // Two tiles: contact sheet (video and/or image).
-  if (items.length === 2) {
+  if (effectiveItems.length === 2) {
     return outer(
       <div className="grid h-full w-full grid-cols-2 gap-[2px]">
         <div className="relative min-h-0 min-w-0 overflow-hidden">
-          {items[0].type === "video" ? (
+          {effectiveItems[0].type === "video" ? (
             <div className="relative h-full w-full overflow-hidden">
               <VideoPlayer
-                src={items[0].url}
-                poster={items[0].poster}
+                src={effectiveItems[0].url}
+                poster={effectiveItems[0].poster}
                 className="h-full w-full"
                 autoPlayOnVisible={true}
                 muted={true}
@@ -174,15 +186,15 @@ export function CardImage({
               />
             </div>
           ) : (
-            <FadeInImg src={items[0].url} alt="Building" className="h-full" />
+            <FadeInImg src={effectiveItems[0].url} alt="Building" className="h-full" />
           )}
         </div>
         <div className="relative min-h-0 min-w-0 overflow-hidden">
-          {items[1].type === "video" ? (
+          {effectiveItems[1].type === "video" ? (
             <div className="relative h-full w-full overflow-hidden">
               <VideoPlayer
-                src={items[1].url}
-                poster={items[1].poster}
+                src={effectiveItems[1].url}
+                poster={effectiveItems[1].poster}
                 className="h-full w-full"
                 autoPlayOnVisible={true}
                 muted={true}
@@ -190,7 +202,7 @@ export function CardImage({
               />
             </div>
           ) : (
-            <FadeInImg src={items[1].url} alt="Building" className="h-full" />
+            <FadeInImg src={effectiveItems[1].url} alt="Building" className="h-full" />
           )}
         </div>
       </div>,
@@ -198,7 +210,7 @@ export function CardImage({
   }
 
   // Single item
-  const only = items[0];
+  const only = effectiveItems[0];
   return outer(
     only.type === "video" ? (
       <div className="relative h-full w-full overflow-hidden">

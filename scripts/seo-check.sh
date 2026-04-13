@@ -92,6 +92,7 @@ assert_building_slugless_redirect() {
 echo "SEO smoke: BASE_URL=$BASE_URL"
 
 assert_public "/"
+assert_public "/connect"
 assert_public "/building/${BID}/${BSLUG}"
 assert_public "/architect/${AID}"
 assert_public "/profile/${PROFILE}"

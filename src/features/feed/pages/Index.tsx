@@ -10,9 +10,7 @@ import { Button } from "@/components/ui/button";
 import { SITE_URL } from "@/features/buildings/utils/structuredData";
 import { aggregateFeed, type AggregatedFeedItem } from "@/lib/feed-aggregation";
 import { FeedClusterCard } from "../components/FeedClusterCard";
-import { FeedCardA } from "../components/FeedCardA";
-import { FeedCardB } from "../components/FeedCardB";
-import { FeedCardC } from "../components/FeedCardC";
+import { ReviewCardFeed } from "../components/ReviewCardFeed";
 import { ActivityStreamGroup } from "../components/ActivityStream";
 import { resolveCardType } from "../utils/resolveCardType";
 import type { FeedReview } from "@/types/feed";
@@ -236,27 +234,14 @@ export default function Index() {
                       pushActivity(entry);
                       return null;
                     }
-                    switch (t) {
-                      case "A":
-                        return <FeedCardA entry={entry} onLike={onLike} />;
-                      case "B":
-                        return (
-                          <FeedCardB
-                            entry={entry}
-                            index={cardBIndex++}
-                            onLike={onLike}
-                            onImageLike={onImageLike}
-                          />
-                        );
-                      case "C":
-                        return (
-                          <FeedCardC entry={entry} onLike={onLike} onImageLike={onImageLike} />
-                        );
-                      default: {
-                        const _n: never = t;
-                        return _n;
-                      }
-                    }
+                    return (
+                      <ReviewCardFeed
+                        entry={entry}
+                        onLike={onLike}
+                        onImageLike={onImageLike}
+                        typeBAlternateIndex={t === "B" ? cardBIndex++ : 0}
+                      />
+                    );
                   };
 
                   const processEntry = (

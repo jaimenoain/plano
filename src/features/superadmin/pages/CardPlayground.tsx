@@ -9,9 +9,9 @@ import { DetailCardA } from "@/features/feed/components/detail/DetailCardA";
 import { DetailCardB } from "@/features/feed/components/detail/DetailCardB";
 import { DetailCardC } from "@/features/feed/components/detail/DetailCardC";
 import {
-  deriveLegacyFeedCardLayout,
+  deriveLegacyFeedUi,
   type LegacyFeedCardUi,
-} from "@/features/feed/utils/deriveLegacyFeedCardLayout";
+} from "@/features/feed/utils/deriveLegacyFeedUi";
 import { resolveCardType } from "@/features/feed/utils/resolveCardType";
 import type { CardType } from "@/types/cards";
 import type { FeedReview, ReviewImage } from "@/types/feed";
@@ -210,7 +210,7 @@ function renderFeedCardForPlayground(entry: FeedReview, override: CardType | nul
 }
 
 function ShowAllGridArchetypeFooter({ fixture }: { fixture: CardFixture }) {
-  const resolved = deriveLegacyFeedCardLayout(fixture.entry);
+  const resolved = deriveLegacyFeedUi(fixture.entry);
   const mismatches = legacyLayoutMismatchLines(fixture.expectedLayout, resolved);
   return (
     <div className="space-y-2 border-t border-border-default pt-3">
@@ -376,7 +376,7 @@ function PlaygroundToolbar({
 
 /** Show-all grid: side-by-side feed + detail per fixture. */
 function FixtureShowAllPreview({ entry }: { entry: FeedReview }) {
-  const legacy = deriveLegacyFeedCardLayout(entry);
+  const legacy = deriveLegacyFeedUi(entry);
   return (
     <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:gap-10">
       <div className="w-full min-w-0 max-w-md shrink-0 space-y-2 xl:max-w-none xl:flex-1">
@@ -384,7 +384,7 @@ function FixtureShowAllPreview({ entry }: { entry: FeedReview }) {
         <div className="hairline overflow-hidden rounded-lg border border-border-default">
           <FeedResolvedEntry entry={entry} onLike={noop} onImageLike={noop} onComment={noop} />
         </div>
-        <LegacyLayoutDebugPanel layout={legacy} title="deriveLegacyFeedCardLayout (fixture)" />
+        <LegacyLayoutDebugPanel layout={legacy} title="deriveLegacyFeedUi (fixture)" />
         <ResolvedCardTypePanel entry={entry} title="resolveCardType" />
       </div>
       <div className="w-full min-w-0 max-w-md shrink-0 space-y-2 xl:max-w-none xl:flex-1">
@@ -407,7 +407,7 @@ function FixtureSinglePreview({
   viewMode: PlaygroundCardViewMode;
   cardTypeOverride: CardType | null;
 }) {
-  const legacy = deriveLegacyFeedCardLayout(entry);
+  const legacy = deriveLegacyFeedUi(entry);
   return (
     <div className="min-w-0 space-y-2">
       <div className="hairline overflow-hidden rounded-lg border border-border-default">

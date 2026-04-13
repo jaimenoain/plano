@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
-import { SuggestedContentBlock } from "@/features/feed/components/SuggestedContentBlock";
+import { countWords } from "@/features/feed/utils/resolveCardType";
 import {
   ActivityLead,
   BuildingHeadline,
@@ -15,16 +15,11 @@ import {
 
 const MOBILE_MAX_WIDTH_PX = 767;
 
-function countWords(text: string | null | undefined): number {
-  const t = (text ?? "").trim();
-  if (!t) return 0;
-  return t.split(/\s+/).length;
-}
-
 export interface FeedCardAProps {
   entry: FeedReview;
   hideUser?: boolean;
   hideBuildingInfo?: boolean;
+  showCommunityImages?: boolean;
   onLike?: (reviewId: string) => void;
   onComment?: (reviewId: string) => void;
 }
@@ -36,6 +31,7 @@ export function FeedCardA({
   entry,
   hideUser = false,
   hideBuildingInfo = false,
+  showCommunityImages = true,
   onLike,
   onComment,
 }: FeedCardAProps) {
@@ -46,7 +42,7 @@ export function FeedCardA({
   const bodyRef = useRef<HTMLParagraphElement>(null);
   const contentWordCount = countWords(entry.content);
 
-  const { data } = useReviewCardData(entry);
+  const { data } = useReviewCardData(entry, { showCommunityImages });
 
   useEffect(() => {
     setEssayExpanded(false);
@@ -110,70 +106,66 @@ export function FeedCardA({
   };
 
   return (
-    <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
-      <article
-        data-testid={`feed-card-a-${entry.id}`}
-        onClick={handleCardClick}
-        className={cn(
-          "group/card relative w-full cursor-pointer min-w-0 max-w-full",
-          isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-4",
+    <article
+      data-testid={`feed-card-a-${entry.id}`}
+      onClick={handleCardClick}
+      className={cn(
+        "group/card relative w-full cursor-pointer min-w-0 max-w-full",
+        isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-4",
+      )}
+    >
+      <div className="flex max-w-xl flex-col gap-3">
+        <ActivityLead username={username} verb={userActionVerb} hideUser={hideUser} />
+
+        {!hideBuildingInfo && <BuildingHeadline name={mainTitle} size="xl" />}
+
+        {!hideBuildingInfo && <BuildingSubtitle subTitle={subTitle ?? undefined} city={city} />}
+
+        {entry.rating != null && entry.rating > 0 && (
+          <div>
+            <PointsBadge points={entry.rating} />
+          </div>
         )}
-      >
-        <div className="flex max-w-xl flex-col gap-3">
-          <ActivityLead username={username} verb={userActionVerb} hideUser={hideUser} />
 
-          {!hideBuildingInfo && <BuildingHeadline name={mainTitle} size="hero" />}
-
-          {!hideBuildingInfo && (
-            <BuildingSubtitle subTitle={subTitle ?? undefined} city={city} />
-          )}
-
-          {entry.rating != null && entry.rating > 0 && (
-            <div>
-              <PointsBadge points={entry.rating} />
-            </div>
-          )}
-
-          {entry.content?.trim() && (
-            <div className="min-w-0">
-              <p
-                ref={bodyRef}
-                className={cn(
-                  "text-base leading-relaxed text-text-secondary",
-                  !essayExpanded && "line-clamp-3",
-                )}
-              >
-                {entry.content}
-              </p>
-              {showReadMore && !essayExpanded && !suppressReadMoreOnMobileShortCopy && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEssayExpanded(true);
-                  }}
-                  className="mt-1.5 font-sans text-2xs tracking-[0.15em] uppercase text-text-primary transition-colors hover:text-text-secondary"
-                >
-                  Read more →
-                </button>
+        {entry.content?.trim() && (
+          <div className="min-w-0">
+            <p
+              ref={bodyRef}
+              className={cn(
+                "text-base leading-relaxed text-text-secondary",
+                !essayExpanded && "line-clamp-3",
               )}
-            </div>
-          )}
+            >
+              {entry.content}
+            </p>
+            {showReadMore && !essayExpanded && !suppressReadMoreOnMobileShortCopy && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEssayExpanded(true);
+                }}
+                className="mt-1.5 font-sans text-2xs tracking-[0.15em] uppercase text-text-primary transition-colors hover:text-text-secondary"
+              >
+                Read more →
+              </button>
+            )}
+          </div>
+        )}
 
-          <CardFooter
-            className="pt-1"
-            likesCount={entry.likes_count}
-            commentsCount={entry.comments_count}
-            isLiked={Boolean(entry.is_liked)}
-            buildingId={entry.building.id}
-            onLike={() => {
-              onLike?.(entry.id);
-              window.dispatchEvent(new CustomEvent("pwa-interaction"));
-            }}
-            onComment={handleComment}
-          />
-        </div>
-      </article>
-    </SuggestedContentBlock>
+        <CardFooter
+          className="pt-1"
+          likesCount={entry.likes_count}
+          commentsCount={entry.comments_count}
+          isLiked={Boolean(entry.is_liked)}
+          buildingId={entry.building.id}
+          onLike={() => {
+            onLike?.(entry.id);
+            window.dispatchEvent(new CustomEvent("pwa-interaction"));
+          }}
+          onComment={handleComment}
+        />
+      </div>
+    </article>
   );
 }

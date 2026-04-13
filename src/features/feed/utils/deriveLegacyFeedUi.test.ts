@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { FeedReview } from "@/types/feed";
 import {
-  deriveLegacyFeedCardLayout,
+  deriveLegacyFeedUi,
   legacyFeedArrangementFromWeights,
   legacyFeedImageWeightFromCount,
   legacyFeedTextWeightFromWordCount,
-} from "./deriveLegacyFeedCardLayout";
+} from "./deriveLegacyFeedUi";
 
 function words(n: number): string {
   return Array.from({ length: n }, (_, i) => `w${i}`).join(" ");
@@ -66,9 +66,9 @@ describe("legacyFeedArrangementFromWeights", () => {
   });
 });
 
-describe("deriveLegacyFeedCardLayout", () => {
+describe("deriveLegacyFeedUi", () => {
   it("no content + no images → compact-stack, standard prominence", () => {
-    expect(deriveLegacyFeedCardLayout(baseReview())).toEqual({
+    expect(deriveLegacyFeedUi(baseReview())).toEqual({
       layout: "compact-stack",
       imageWeight: "none",
       textWeight: "none",
@@ -77,11 +77,11 @@ describe("deriveLegacyFeedCardLayout", () => {
   });
 
   it("whitespace-only content counts as no text", () => {
-    expect(deriveLegacyFeedCardLayout(baseReview({ content: " \n\t " })).textWeight).toBe("none");
+    expect(deriveLegacyFeedUi(baseReview({ content: " \n\t " })).textWeight).toBe("none");
   });
 
   it("snippet text, no images", () => {
-    const ui = deriveLegacyFeedCardLayout(baseReview({ content: words(10) }));
+    const ui = deriveLegacyFeedUi(baseReview({ content: words(10) }));
     expect(ui).toMatchObject({
       textWeight: "snippet",
       imageWeight: "none",
@@ -90,28 +90,28 @@ describe("deriveLegacyFeedCardLayout", () => {
   });
 
   it("body text boundary at 20 words", () => {
-    expect(deriveLegacyFeedCardLayout(baseReview({ content: words(20) })).textWeight).toBe("body");
+    expect(deriveLegacyFeedUi(baseReview({ content: words(20) })).textWeight).toBe("body");
   });
 
   it("essay at 150 words", () => {
-    expect(deriveLegacyFeedCardLayout(baseReview({ content: words(150) })).textWeight).toBe("essay");
+    expect(deriveLegacyFeedUi(baseReview({ content: words(150) })).textWeight).toBe("essay");
   });
 
   it("essay + no images → text-forward", () => {
-    expect(deriveLegacyFeedCardLayout(baseReview({ content: words(200) })).layout).toBe("text-forward");
+    expect(deriveLegacyFeedUi(baseReview({ content: words(200) })).layout).toBe("text-forward");
   });
 
   it("likes_count > 50 → elevated", () => {
-    expect(deriveLegacyFeedCardLayout(baseReview({ likes_count: 51 })).prominence).toBe("elevated");
+    expect(deriveLegacyFeedUi(baseReview({ likes_count: 51 })).prominence).toBe("elevated");
   });
 
   it("likes_count 50 is not elevated", () => {
-    expect(deriveLegacyFeedCardLayout(baseReview({ likes_count: 50 })).prominence).toBe("standard");
+    expect(deriveLegacyFeedUi(baseReview({ likes_count: 50 })).prominence).toBe("standard");
   });
 
   it("followers_count > 500 → elevated", () => {
     expect(
-      deriveLegacyFeedCardLayout(
+      deriveLegacyFeedUi(
         baseReview({
           user: { username: "x", avatar_url: null, followers_count: 501 },
         }),
@@ -121,7 +121,7 @@ describe("deriveLegacyFeedCardLayout", () => {
 
   it("followers_count 500 is not elevated", () => {
     expect(
-      deriveLegacyFeedCardLayout(
+      deriveLegacyFeedUi(
         baseReview({
           user: { username: "x", avatar_url: null, followers_count: 500 },
         }),
@@ -131,7 +131,7 @@ describe("deriveLegacyFeedCardLayout", () => {
 
   it("null followers_count does not elevate", () => {
     expect(
-      deriveLegacyFeedCardLayout(
+      deriveLegacyFeedUi(
         baseReview({
           likes_count: 0,
           user: { username: "x", avatar_url: null, followers_count: null },
@@ -142,7 +142,7 @@ describe("deriveLegacyFeedCardLayout", () => {
 
   it("is_verified_architect → elevated", () => {
     expect(
-      deriveLegacyFeedCardLayout(
+      deriveLegacyFeedUi(
         baseReview({
           user: {
             username: "x",
@@ -157,7 +157,7 @@ describe("deriveLegacyFeedCardLayout", () => {
 
   it("is_architect_of_building → elevated", () => {
     expect(
-      deriveLegacyFeedCardLayout(
+      deriveLegacyFeedUi(
         baseReview({
           user: {
             username: "x",
@@ -172,7 +172,7 @@ describe("deriveLegacyFeedCardLayout", () => {
 
   it("single image + no text → media-forward", () => {
     expect(
-      deriveLegacyFeedCardLayout(
+      deriveLegacyFeedUi(
         baseReview({
           images: [{ id: "i1", url: "https://example.com/a.jpg", likes_count: 0, is_liked: false }],
         }),
@@ -186,7 +186,7 @@ describe("deriveLegacyFeedCardLayout", () => {
 
   it("pair images + snippet → balanced", () => {
     expect(
-      deriveLegacyFeedCardLayout(
+      deriveLegacyFeedUi(
         baseReview({
           content: words(5),
           images: [
@@ -200,7 +200,7 @@ describe("deriveLegacyFeedCardLayout", () => {
 
   it("gallery + essay → balanced", () => {
     expect(
-      deriveLegacyFeedCardLayout(
+      deriveLegacyFeedUi(
         baseReview({
           content: words(160),
           images: [
@@ -219,7 +219,7 @@ describe("deriveLegacyFeedCardLayout", () => {
 
   it("gallery + no text → media-forward", () => {
     expect(
-      deriveLegacyFeedCardLayout(
+      deriveLegacyFeedUi(
         baseReview({
           images: [
             { id: "a", url: "/a", likes_count: 0, is_liked: false },
@@ -233,7 +233,7 @@ describe("deriveLegacyFeedCardLayout", () => {
 
   it("single + essay → text-forward", () => {
     expect(
-      deriveLegacyFeedCardLayout(
+      deriveLegacyFeedUi(
         baseReview({
           content: words(200),
           images: [{ id: "a", url: "/a", likes_count: 0, is_liked: false }],
@@ -245,16 +245,16 @@ describe("deriveLegacyFeedCardLayout", () => {
   it("undefined images → none imageWeight", () => {
     const r = baseReview();
     delete (r as Partial<FeedReview>).images;
-    expect(deriveLegacyFeedCardLayout(r).imageWeight).toBe("none");
+    expect(deriveLegacyFeedUi(r).imageWeight).toBe("none");
   });
 
   it("empty images array", () => {
-    expect(deriveLegacyFeedCardLayout(baseReview({ images: [] })).imageWeight).toBe("none");
+    expect(deriveLegacyFeedUi(baseReview({ images: [] })).imageWeight).toBe("none");
   });
 
   it("filters images with empty or whitespace URL", () => {
     expect(
-      deriveLegacyFeedCardLayout(
+      deriveLegacyFeedUi(
         baseReview({
           images: [
             { id: "a", url: "", likes_count: 0, is_liked: false },
@@ -268,7 +268,7 @@ describe("deriveLegacyFeedCardLayout", () => {
 
   it("all broken image URLs → none + text-forward for long body", () => {
     expect(
-      deriveLegacyFeedCardLayout(
+      deriveLegacyFeedUi(
         baseReview({
           content: words(25),
           images: [
@@ -288,6 +288,6 @@ describe("deriveLegacyFeedCardLayout", () => {
     const r = baseReview({
       user: { username: null, avatar_url: null, followers_count: null },
     });
-    expect(deriveLegacyFeedCardLayout(r).prominence).toBe("standard");
+    expect(deriveLegacyFeedUi(r).prominence).toBe("standard");
   });
 });

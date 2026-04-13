@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
 import { useNavigate } from "react-router";
-import { formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { FeedReview } from "@/types/feed";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -70,9 +70,7 @@ export function DetailCardB({
     mediaItems,
   } = data;
 
-  const timestamp = formatDistanceToNow(new Date(entry.edited_at || entry.created_at), {
-    addSuffix: true,
-  }).replace("about ", "");
+  const timestamp = format(new Date(entry.edited_at || entry.created_at), "MMMM yyyy");
 
   const handleCardClick = (e: MouseEvent) => {
     const target = e.target as HTMLElement;

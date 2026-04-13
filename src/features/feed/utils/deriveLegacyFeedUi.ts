@@ -100,7 +100,7 @@ function legacyFeedProminenceFromEntry(entry: FeedReview): LegacyFeedProminence 
 /**
  * Pure layout hints for legacy stacked/hero review cards (word count, images, engagement).
  */
-export function deriveLegacyFeedCardLayout(entry: FeedReview): LegacyFeedCardUi {
+export function deriveLegacyFeedUi(entry: FeedReview): LegacyFeedCardUi {
   const wc = countWords(entry.content);
   const textWeight = legacyFeedTextWeightFromWordCount(wc);
   const usableImages = countUsableReviewImages(entry.images);

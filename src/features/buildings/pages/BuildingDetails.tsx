@@ -80,7 +80,8 @@ import {
   type BuildingSummaryForFeed,
 } from "@/features/buildings/utils/buildingReviewFeedAdapter";
 import { resolveCardType } from "@/features/feed/utils/resolveCardType";
-import { DetailCardA, DetailCardB, DetailCardC } from "@/features/feed/components/detail";
+import { DetailCard } from "@/features/feed/components/DetailCard";
+import { DetailSectionHeader } from "@/features/feed/components/DetailSectionHeader";
 import { ActivityStreamGroup } from "@/features/feed/components/ActivityStream";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -526,6 +527,22 @@ export default function BuildingDetails() {
       );
   }, [entries, buildingSummaryForFeed, displayImageById, likedImageIds]);
 
+  /** Non-activity review rows (text and/or media) — matches DetailCard list; excludes visited-only rows in "Also visited". */
+  const detailSectionContributionCount = useMemo(() => {
+    if (!buildingSummaryForFeed) return 0;
+    let n = 0;
+    for (const e of entries) {
+      const feedReview = buildingEntryToFeedReview(
+        e,
+        buildingSummaryForFeed,
+        displayImageById,
+        likedImageIds,
+      );
+      if (resolveCardType(feedReview) !== "activity") n += 1;
+    }
+    return n;
+  }, [entries, buildingSummaryForFeed, displayImageById, likedImageIds]);
+
   /**
    * Merges entries and orphaned display images into scored, typed stream blocks.
    *
@@ -649,9 +666,7 @@ export default function BuildingDetails() {
           const t = resolveCardType(feedReview);
           const wrap = (node: ReactNode) => <div key={block.key}>{node}</div>;
           if (t === "activity") return null;
-          if (t === "A") return wrap(<DetailCardA entry={feedReview} showFollow />);
-          if (t === "B") return wrap(<DetailCardB entry={feedReview} showFollow />);
-          if (t === "C") return wrap(<DetailCardC entry={feedReview} />);
+          return wrap(<DetailCard entry={feedReview} />);
         }
         return null;
       }
@@ -1418,27 +1433,26 @@ export default function BuildingDetails() {
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl">
 
-          <div className="flex items-center justify-between border-t border-border-default pb-3 pt-8">
-            <h2 className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
-              Photos &amp; reviews
-              {displayImages.length > 0 ? ` · ${displayImages.length}` : ""}
-            </h2>
-            <button
-              type="button"
-              className="text-[10px] font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-              onClick={() => document.getElementById("hidden-file-input")?.click()}
-            >
-              Upload →
-            </button>
-            <input
-              id="hidden-file-input"
-              type="file"
-              multiple
-              accept="image/*"
-              className="hidden"
-              onChange={handleImageSelect}
-              aria-label="Upload photos of this building"
-            />
+          <div className="border-t border-border-default pt-8">
+            <DetailSectionHeader count={detailSectionContributionCount} />
+            <div className="flex justify-end pt-3">
+              <button
+                type="button"
+                className="text-[10px] font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                onClick={() => document.getElementById("hidden-file-input")?.click()}
+              >
+                Upload →
+              </button>
+              <input
+                id="hidden-file-input"
+                type="file"
+                multiple
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageSelect}
+                aria-label="Upload photos of this building"
+              />
+            </div>
           </div>
 
           {/* Stream */}

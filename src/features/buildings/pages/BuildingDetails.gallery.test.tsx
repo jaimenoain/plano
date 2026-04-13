@@ -228,9 +228,7 @@ describe('BuildingDetails Gallery', () => {
 
       await waitFor(
         () => {
-          expect(
-            screen.getByRole("heading", { level: 2, name: /Photos/ }),
-          ).toBeTruthy();
+          expect(screen.getByText(/Reviews & photography/)).toBeTruthy();
         },
         { timeout: 10_000 },
       );

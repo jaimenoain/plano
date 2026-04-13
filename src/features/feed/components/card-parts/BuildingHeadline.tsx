@@ -2,21 +2,17 @@ import { cn } from "@/lib/utils";
 
 export interface BuildingHeadlineProps {
   name: string;
-  size: "xl" | "lg" | "md" | "hero" | "feedC";
+  size: "xl" | "lg" | "md";
   className?: string;
 }
 
 const sizeClass: Record<BuildingHeadlineProps["size"], string> = {
-  /** 52px — editorial maximum */
+  /** 52px (`3.25rem`) — FeedCardA editorial headline */
   xl: "text-[3.25rem] line-clamp-2",
   /** 36px */
   lg: "text-[2.25rem] line-clamp-2",
-  /** 28px — single-line clamp */
+  /** 28px — single-line clamp (e.g. FeedCardC) */
   md: "text-[1.75rem] line-clamp-1",
-  /** FeedCardA — token `5xl` from tailwind.config */
-  hero: "text-5xl line-clamp-2",
-  /** FeedCardC — `text-3xl` from default scale */
-  feedC: "text-3xl line-clamp-1",
 };
 
 /**

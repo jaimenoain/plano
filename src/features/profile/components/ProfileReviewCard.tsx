@@ -2,6 +2,7 @@ import { FeedCardA } from "@/features/feed/components/FeedCardA";
 import { FeedCardB } from "@/features/feed/components/FeedCardB";
 import { FeedCardC } from "@/features/feed/components/FeedCardC";
 import { FeedActivityRow } from "@/features/feed/components/FeedActivityRow";
+import { SuggestedContentBlock } from "@/features/feed/components/SuggestedContentBlock";
 import { resolveCardType } from "@/features/feed/utils/resolveCardType";
 import type { FeedReview } from "@/types/feed";
 
@@ -29,29 +30,45 @@ export function ProfileReviewCard({
   const t = resolveCardType(entry);
   if (t === "activity") {
     return (
-      <FeedActivityRow entry={entry} hideUser showCommunityImages={showCommunityImages} />
+      <FeedActivityRow
+        entry={entry}
+        activityStatus={entry.status === "pending" ? "pending" : "visited"}
+        hideUser
+        showCommunityImages={showCommunityImages}
+      />
     );
   }
   const shared = {
     hideUser: true,
     hideBuildingInfo: false,
+    showCommunityImages,
     onLike,
   };
   switch (t) {
     case "A":
-      return <FeedCardA entry={entry} {...shared} />;
+      return (
+        <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
+          <FeedCardA entry={entry} {...shared} />
+        </SuggestedContentBlock>
+      );
     case "B":
       return (
-        <FeedCardB
-          entry={entry}
-          {...shared}
-          index={index}
-          imagePosition={imagePosition}
-          onImageLike={onImageLike}
-        />
+        <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
+          <FeedCardB
+            entry={entry}
+            {...shared}
+            index={index}
+            imagePosition={imagePosition}
+            onImageLike={onImageLike}
+          />
+        </SuggestedContentBlock>
       );
     case "C":
-      return <FeedCardC entry={entry} {...shared} onImageLike={onImageLike} />;
+      return (
+        <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
+          <FeedCardC entry={entry} {...shared} onImageLike={onImageLike} />
+        </SuggestedContentBlock>
+      );
     default: {
       const _u: never = t;
       return _u;

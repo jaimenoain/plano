@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { deriveLegacyFeedCardLayout } from "@/features/feed/utils/deriveLegacyFeedCardLayout";
+import { deriveLegacyFeedUi } from "@/features/feed/utils/deriveLegacyFeedUi";
 import { cardFixtures } from "./cardFixtures";
 
 describe("cardFixtures expectedLayout", () => {
-  it("matches deriveLegacyFeedCardLayout(entry) for every fixture (regression guard)", () => {
+  it("matches deriveLegacyFeedUi(entry) for every fixture (regression guard)", () => {
     for (const f of cardFixtures) {
-      expect(deriveLegacyFeedCardLayout(f.entry), f.id).toEqual(f.expectedLayout);
+      expect(deriveLegacyFeedUi(f.entry), f.id).toEqual(f.expectedLayout);
     }
   });
 });

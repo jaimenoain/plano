@@ -1,6 +1,6 @@
 import { type MouseEvent } from "react";
 import { Link, useNavigate } from "react-router";
-import { formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { FeedReview } from "@/types/feed";
@@ -34,9 +34,7 @@ export function DetailCardC({
   const verb = entry.status === "pending" ? "wants to visit" : "visited";
   const initial = username.trim().charAt(0).toUpperCase() || "?";
 
-  const timestamp = formatDistanceToNow(new Date(entry.edited_at || entry.created_at), {
-    addSuffix: true,
-  }).replace("about ", "");
+  const timestamp = format(new Date(entry.edited_at || entry.created_at), "MMMM yyyy");
 
   const handleCardClick = (e: MouseEvent) => {
     const target = e.target as HTMLElement;

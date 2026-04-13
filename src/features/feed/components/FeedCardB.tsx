@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
-import { SuggestedContentBlock } from "@/features/feed/components/SuggestedContentBlock";
 import {
   ActivityLead,
   BuildingHeadline,
@@ -23,6 +22,7 @@ export interface FeedCardBProps {
   imagePosition?: "left" | "right";
   hideUser?: boolean;
   hideBuildingInfo?: boolean;
+  showCommunityImages?: boolean;
   onLike?: (reviewId: string) => void;
   onComment?: (reviewId: string) => void;
   onImageLike?: (reviewId: string, imageId: string) => void;
@@ -37,6 +37,7 @@ export function FeedCardB({
   imagePosition,
   hideUser = false,
   hideBuildingInfo = false,
+  showCommunityImages = true,
   onLike,
   onComment,
   onImageLike,
@@ -47,7 +48,7 @@ export function FeedCardB({
   const [cardImageHeight, setCardImageHeight] = useState(CARD_C_IMAGE_HEIGHT);
   const bodyRef = useRef<HTMLParagraphElement>(null);
 
-  const { data } = useReviewCardData(entry);
+  const { data } = useReviewCardData(entry, { showCommunityImages });
 
   useLayoutEffect(() => {
     const mq = window.matchMedia(MD_MEDIA_QUERY);
@@ -113,18 +114,17 @@ export function FeedCardB({
   };
 
   return (
-    <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
-      <article
-        data-testid={`feed-card-b-${entry.id}`}
-        onClick={handleCardClick}
-        className={cn(
-          "group/card relative w-full cursor-pointer min-w-0 max-w-full",
-          isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-4",
-        )}
-      >
+    <article
+      data-testid={`feed-card-b-${entry.id}`}
+      onClick={handleCardClick}
+      className={cn(
+        "group/card relative w-full cursor-pointer min-w-0 max-w-full",
+        isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-4",
+      )}
+    >
         <div
           className={cn(
-            "grid w-full min-w-0 grid-cols-1 gap-0 md:grid-cols-2 md:items-stretch md:h-80",
+            "grid w-full min-w-0 grid-cols-1 gap-0 overflow-hidden md:h-[320px] md:max-h-[320px] md:grid-cols-2 md:items-stretch",
           )}
         >
           <div
@@ -138,13 +138,14 @@ export function FeedCardB({
               height={cardImageHeight}
               reviewId={entry.id}
               onImageLike={onImageLike}
+              firstMediaOnly
               className="h-full"
             />
           </div>
           <div
             className={cn(
-              "order-2 flex min-h-0 min-w-0 flex-col gap-3 overflow-hidden py-5 px-0 md:h-full md:min-h-0 md:py-8",
-              imageOnLeft ? "md:order-2 md:pl-10 md:pr-10" : "md:order-1 md:pl-10 md:pr-10",
+              "order-2 flex min-h-0 min-w-0 flex-col gap-3 overflow-hidden px-0 py-6 md:h-full md:min-h-0 md:py-[28px] md:pl-[40px]",
+              imageOnLeft ? "md:order-2" : "md:order-1",
             )}
           >
             <div className="flex shrink-0 flex-col gap-3">
@@ -198,7 +199,6 @@ export function FeedCardB({
             />
           </div>
         </div>
-      </article>
-    </SuggestedContentBlock>
+    </article>
   );
 }
