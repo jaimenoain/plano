@@ -222,6 +222,20 @@ interface DisplayImage {
   is_official?: boolean;
 }
 
+/** Catalogue / enum strings for display (snake_case → Title Case words). */
+function formatCatalogLabel(value: string | null | undefined): string | null {
+  const v = typeof value === "string" ? value.trim() : "";
+  if (!v) return null;
+  return v
+    .split("_")
+    .map((part) =>
+      part.length === 0
+        ? ""
+        : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
+    )
+    .join(" ");
+}
+
 /**
  * A single scored, typed unit in the editorial photo + review stream.
  * Derived from entries + displayImages in the streamBlocks useMemo.
@@ -639,6 +653,26 @@ export default function BuildingDetails() {
 
     return [...entryBlocks, ...orphanBlocks].sort((a, b) => b.score - a.score);
   }, [entries, displayImages, displayImageById]);
+
+  const hasBuildingInfoDetail = useMemo(() => {
+    if (!building) return false;
+    const aliases = (building.aliases ?? []).filter(
+      (a): a is string => typeof a === "string" && a.trim().length > 0,
+    );
+    return !!(
+      building.category?.trim() ||
+      (building.materials?.length ?? 0) > 0 ||
+      building.context?.trim() ||
+      building.intervention?.trim() ||
+      aliases.length > 0 ||
+      building.address?.trim() ||
+      building.access_level ||
+      building.access_logistics ||
+      building.access_cost
+    );
+  }, [building]);
+
+  const showBuildingInfoExtended = hasBuildingInfoDetail || canEditOfficialData;
 
   const renderStreamBlock = useCallback(
     (block: StreamBlock) => {
@@ -1238,90 +1272,95 @@ export default function BuildingDetails() {
             </div>
           ) : null}
 
-          {/* ── INFO ZONE: Credits preview (left) + Info + Map (right) ── */}
-          <div className="grid grid-cols-1 gap-x-8 gap-y-6 border-b border-border-default py-8 sm:grid-cols-2">
+          {/* ── INFO ZONE: Info + Credits (left) · Location (right) ── */}
+          <div className="grid grid-cols-1 gap-x-8 gap-y-8 border-b border-border-default py-8 sm:grid-cols-2">
 
-            {/* Left: compact credits preview */}
-            <div>
-              <h2 className="mb-4 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
-                Credits
-              </h2>
-              <BuildingCreditsPreview
-                credits={buildingCredits}
-                isAuthenticated={Boolean(user)}
-              />
-            </div>
+            <div className="flex flex-col gap-8">
+              <div>
+                <div className="group/info mb-4 flex items-center justify-between gap-2">
+                  <h2 className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+                    Info
+                  </h2>
+                  {canEditOfficialData ? (
+                    <Link
+                      to={
+                        getBuildingUrl(
+                          building.id,
+                          building.slug,
+                          building.short_id,
+                        ) + "/edit"
+                      }
+                      className="inline-flex shrink-0 opacity-0 transition-opacity focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-default group-hover/info:opacity-100"
+                      aria-label="Edit building"
+                      title="Edit building"
+                    >
+                      <Pencil className="h-3.5 w-3.5 text-text-disabled transition-colors hover:text-text-primary" />
+                    </Link>
+                  ) : null}
+                </div>
 
-            {/* Right: info tags + map */}
-            <div>
-              <div className="group/info mb-4 flex items-center justify-between gap-2">
-                <h2 className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
-                  Info
-                </h2>
-                {canEditOfficialData ? (
-                  <Link
-                    to={
-                      getBuildingUrl(
-                        building.id,
-                        building.slug,
-                        building.short_id,
-                      ) + "/edit"
-                    }
-                    className="inline-flex shrink-0 opacity-0 transition-opacity focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-default group-hover/info:opacity-100"
-                    aria-label="Edit building"
-                    title="Edit building"
-                  >
-                    <Pencil className="h-3.5 w-3.5 text-text-disabled transition-colors hover:text-text-primary" />
-                  </Link>
+                {building.styles && building.styles.length > 0 ? (
+                  <div className="mb-2 flex flex-wrap gap-1.5">
+                    {building.styles.map((s) => (
+                      <span
+                        key={s.id}
+                        className="border border-border-default px-2 py-0.5 text-[11px] text-text-secondary"
+                      >
+                        {s.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+
+                {building.typology && building.typology.length > 0 ? (
+                  <div className="mb-2 flex flex-wrap gap-1.5">
+                    {building.typology.map((t) => (
+                      <span
+                        key={t}
+                        className="border border-border-default px-2 py-0.5 text-[11px] text-text-secondary"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+
+                {accessSynthesis ? (
+                  <div className="mt-3">
+                    <Badge
+                      variant={accessBadgeVariant()}
+                      className="flex w-fit items-center gap-1.5 text-xs"
+                    >
+                      {createElement(accessSynthesis.icon, { className: "w-3.5 h-3.5" })}
+                      {accessSynthesis.label}
+                    </Badge>
+                  </div>
+                ) : null}
+
+                {building.access_notes ? (
+                  <p className="mt-2 border-l-2 border-text-primary/20 py-0.5 pl-3 text-sm text-text-secondary">
+                    {building.access_notes}
+                  </p>
                 ) : null}
               </div>
 
-              {building.styles && building.styles.length > 0 ? (
-                <div className="mb-2 flex flex-wrap gap-1.5">
-                  {building.styles.map((s) => (
-                    <span
-                      key={s.id}
-                      className="border border-border-default px-2 py-0.5 text-[11px] text-text-secondary"
-                    >
-                      {s.name}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
+              <div>
+                <h2 className="mb-4 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+                  Credits
+                </h2>
+                <BuildingCreditsPreview
+                  credits={buildingCredits}
+                  isAuthenticated={Boolean(user)}
+                />
+              </div>
+            </div>
 
-              {building.typology && building.typology.length > 0 ? (
-                <div className="mb-2 flex flex-wrap gap-1.5">
-                  {building.typology.map((t) => (
-                    <span
-                      key={t}
-                      className="border border-border-default px-2 py-0.5 text-[11px] text-text-secondary"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
+            <div>
+              <h2 className="mb-4 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+                Location
+              </h2>
 
-              {accessSynthesis ? (
-                <div className="mt-3">
-                  <Badge
-                    variant={accessBadgeVariant()}
-                    className="flex w-fit items-center gap-1.5 text-xs"
-                  >
-                    {createElement(accessSynthesis.icon, { className: "w-3.5 h-3.5" })}
-                    {accessSynthesis.label}
-                  </Badge>
-                </div>
-              ) : null}
-
-              {building.access_notes ? (
-                <p className="mt-2 border-l-2 border-text-primary/20 py-0.5 pl-3 text-sm text-text-secondary">
-                  {building.access_notes}
-                </p>
-              ) : null}
-
-              {/* Map + location line (shared hover for edit affordance) */}
-              <div className="group/location mt-4">
+              <div className="group/location">
                 {building.location_precision === "approximate" ? (
                   <Alert className="mb-3 border-amber-500/50 bg-amber-500/10 text-amber-500">
                     <AlertTriangle className="h-4 w-4 stroke-amber-500" />
@@ -1664,6 +1703,152 @@ export default function BuildingDetails() {
                   ) : null}
                 </div>
               )}
+            </section>
+          ) : null}
+
+          {showBuildingInfoExtended ? (
+            <section
+              id="building-info-extended"
+              className="mt-12 scroll-mt-4 border-t border-border-default pt-10"
+            >
+              <div className="mb-6 flex items-center justify-between gap-2">
+                <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">
+                  Info
+                </h2>
+                {canEditOfficialData ? (
+                  <Link
+                    to={
+                      getBuildingUrl(
+                        building.id,
+                        building.slug,
+                        building.short_id,
+                      ) + "/edit"
+                    }
+                    className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                  >
+                    Edit catalogue →
+                  </Link>
+                ) : null}
+              </div>
+
+              {hasBuildingInfoDetail ? (
+                <dl className="space-y-6">
+                  {building.category?.trim() ? (
+                    <div key="functional-category">
+                      <dt className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+                        Functional category
+                      </dt>
+                      <dd className="mt-1 text-sm leading-relaxed text-text-primary">
+                        {building.category}
+                      </dd>
+                    </div>
+                  ) : null}
+
+                  {building.materials && building.materials.length > 0 ? (
+                    <div key="materials">
+                      <dt className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+                        Materials
+                      </dt>
+                      <dd className="mt-2 flex flex-wrap gap-1.5">
+                        {building.materials.map((m) => (
+                          <span
+                            key={m}
+                            className="border border-border-default px-2 py-0.5 text-[11px] text-text-secondary"
+                          >
+                            {m}
+                          </span>
+                        ))}
+                      </dd>
+                    </div>
+                  ) : null}
+
+                  {building.context?.trim() ? (
+                    <div key="context">
+                      <dt className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+                        Site context
+                      </dt>
+                      <dd className="mt-1 text-sm leading-relaxed text-text-primary">
+                        {building.context}
+                      </dd>
+                    </div>
+                  ) : null}
+
+                  {building.intervention?.trim() ? (
+                    <div key="intervention">
+                      <dt className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+                        Intervention
+                      </dt>
+                      <dd className="mt-1 text-sm leading-relaxed text-text-primary">
+                        {building.intervention}
+                      </dd>
+                    </div>
+                  ) : null}
+
+                  {(building.aliases ?? []).filter(
+                    (a) => typeof a === "string" && a.trim().length > 0,
+                  ).length > 0 ? (
+                    <div key="aliases">
+                      <dt className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+                        Also known as
+                      </dt>
+                      <dd className="mt-1 text-sm leading-relaxed text-text-primary">
+                        {(building.aliases ?? [])
+                          .filter((a): a is string => typeof a === "string" && a.trim().length > 0)
+                          .join(", ")}
+                      </dd>
+                    </div>
+                  ) : null}
+
+                  {building.address?.trim() ? (
+                    <div key="address">
+                      <dt className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+                        Address
+                      </dt>
+                      <dd className="mt-1 text-sm leading-relaxed text-text-primary">
+                        {building.address}
+                      </dd>
+                    </div>
+                  ) : null}
+
+                  {formatCatalogLabel(building.access_level) ? (
+                    <div key="access-level">
+                      <dt className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+                        Access level
+                      </dt>
+                      <dd className="mt-1 text-sm leading-relaxed text-text-primary">
+                        {formatCatalogLabel(building.access_level)}
+                      </dd>
+                    </div>
+                  ) : null}
+
+                  {formatCatalogLabel(building.access_logistics) ? (
+                    <div key="access-logistics">
+                      <dt className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+                        Access logistics
+                      </dt>
+                      <dd className="mt-1 text-sm leading-relaxed text-text-primary">
+                        {formatCatalogLabel(building.access_logistics)}
+                      </dd>
+                    </div>
+                  ) : null}
+
+                  {formatCatalogLabel(building.access_cost) ? (
+                    <div key="access-cost">
+                      <dt className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+                        Access cost
+                      </dt>
+                      <dd className="mt-1 text-sm leading-relaxed text-text-primary">
+                        {formatCatalogLabel(building.access_cost)}
+                      </dd>
+                    </div>
+                  ) : null}
+                </dl>
+              ) : canEditOfficialData ? (
+                <p className="text-sm leading-relaxed text-text-secondary">
+                  Add typology, materials, site context, and access details in the catalogue
+                  editor so they appear here for visitors.
+                </p>
+              ) : null}
             </section>
           ) : null}
 

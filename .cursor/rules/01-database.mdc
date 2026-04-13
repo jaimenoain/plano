@@ -88,12 +88,18 @@ Note: primary key columns (`id`) are always indexed automatically and do not req
 
 For any table with a `tenant_id` column, the RLS policy predicate MUST include the tenant check. A `user_id` check alone is insufficient for multi-tenant data — it allows a user to access rows belonging to a different tenant.
 
-```sql
--- ❌ INSUFFICIENT for multi-tenant data
-CREATE POLICY "user_select" ON documents
-  FOR SELECT USING (user_id = (SELECT auth.uid()));
+**To determine which tenancy model this project uses**, check these sources in order:
 
--- ✅ REQUIRED for tenant-scoped tables
+1. **`docs/DATA_CONTRACT.md` → RLS Architecture Notes** — this section declares the project-wide tenancy model (single-membership or multi-membership) and is the fastest way to confirm.
+2. **Existing migration files** in `supabase/migrations/` — inspect the tenant-related tables and existing policy predicates.
+3. **`packages/supabase/src/database.types.ts`** — check for a `tenant_memberships` junction table, which indicates multi-membership.
+
+If the model is not clear from any of these sources, stop and ask — do not assume.
+
+**Single-membership model** (each user belongs to exactly one tenant):
+
+```sql
+-- ✅ REQUIRED for single-membership tenant-scoped tables
 CREATE POLICY "tenant_select" ON documents
   FOR SELECT USING (
     tenant_id = (
@@ -102,10 +108,10 @@ CREATE POLICY "tenant_select" ON documents
   );
 ```
 
-The sub-query joining through `public.users` is the canonical pattern and assumes each user belongs to exactly one tenant. **If the data model supports multi-tenant membership** (a user belonging to more than one tenant simultaneously, e.g. via a `tenant_memberships` junction table), this pattern is insufficient — it will only resolve the user's primary tenant and silently deny access to other tenants they are members of. In that case, replace with a membership check:
+**Multi-membership model** (user can belong to more than one tenant, e.g. via a `tenant_memberships` junction table):
 
 ```sql
--- ✅ REQUIRED for multi-tenant membership models
+-- ✅ REQUIRED for multi-membership tenant-scoped tables
 CREATE POLICY "tenant_member_select" ON documents
   FOR SELECT USING (
     tenant_id IN (
@@ -115,17 +121,19 @@ CREATE POLICY "tenant_member_select" ON documents
   );
 ```
 
-Check `docs/DATA_CONTRACT.md` to determine which model this project uses before writing tenant RLS policies. If the contract is silent on this, stop and ask — do not assume.
+The tenant check is never optional regardless of which model applies.
 
-If the tenant relationship is resolved differently in `docs/DATA_CONTRACT.md`, follow the contract — but the tenant check is never optional.
+### 7. Match Existing Migration Patterns — Not Inferred Logic
 
-### 7. Policy Content Must Come From DATA_CONTRACT.md — Not Inference
+When writing RLS policies for a new table, read the existing migration files in `supabase/migrations/` to identify the pattern already in use on tables in the same domain. Match it exactly — predicate structure, helper function usage, and policy naming convention.
 
-When writing RLS policies for a migration, you MUST locate the `### RLS: <table_name>` block in `docs/DATA_CONTRACT.md` for each table and implement the exact predicates defined there. Do NOT infer or construct predicates from the schema alone — a policy that looks reasonable but differs from the contract is a bug.
+Do NOT construct predicates from the schema alone or from reasoning about what "should" work. A policy that looks plausible but differs from the established project pattern is a bug waiting to surface under load or multi-tenant edge cases.
 
-If a table in this migration has no `### RLS:` block in the contract, **STOP** — do not write a placeholder policy. Flag it as a **Contract Gap** and do not proceed with the migration until the contract is updated.
+**Helper function safety check:** Before writing any RLS policy that calls a helper function (e.g. `is_org_member`, `can_access_X`), read the **RLS Architecture Notes** section of `docs/DATA_CONTRACT.md`. If the helper function queries another RLS-protected table, it MUST be marked `SECURITY DEFINER` to avoid infinite recursion. The RLS Architecture Notes lists all helper functions that require this treatment. If your policy calls a helper not listed there, flag it as a potential recursion risk and update the RLS Architecture Notes.
 
-The RLS Completeness Checklist in Rule 4 confirms *that* policies exist. This rule governs *what* they contain. Both checks are required.
+**If no prior migration exists for this domain:** use the tenant isolation template in Rule 6 as the starting point, then apply the RLS Completeness Checklist in Rule 4.
+
+**If no policy pattern is determinable from the codebase:** stop. Flag it explicitly and ask the user before writing any policy.
 
 ### 8. RLS Smoke Test (run after every migration containing new policies)
 
@@ -149,13 +157,24 @@ SELECT * FROM <table> WHERE <owner_column> = '<real-user-uuid>';
 
 A passing `turbo run build` does **NOT** verify RLS. These two tests are the only build-time check that catches silent permission denials for authenticated users.
 
-### 9. RLS Block Navigation in DATA_CONTRACT.md
+## Schema Derivation — Source of Truth Hierarchy
 
-RLS policies in `docs/DATA_CONTRACT.md` are located under headers in the exact format `### RLS: <table_name>`. Navigate directly to these blocks — do not scan the full domain section. If the header format differs, the contract has not been updated to the current standard; flag the discrepancy before proceeding.
+When building a new table or modifying an existing one, consult these sources in this order:
+
+1. **`docs/DATA_CONTRACT.md` → Domain Entity Inventory** — entity names, relationships, tenancy ownership, state machines, and key business constraints. This tells you *what* entities exist and how they relate. It does NOT contain column definitions, field types, or SQL.
+2. **`docs/PRD.md`** — the business rules, validation logic, and display requirements for this feature. Derive column names and types from the PRD's description of what the feature needs to store and display.
+3. **Existing migrations** in `supabase/migrations/` — match naming conventions, column patterns, and enum styles already established in the project.
+4. **`packages/supabase/src/database.types.ts`** — the auto-generated types from the live schema. This is the authoritative TypeScript representation and always wins over any other document.
+
+Do NOT look in `docs/DATA_CONTRACT.md` for column names, field types, SQL definitions, or RLS policy predicates — these are not defined there. The contract provides entity structure and business constraints; the migration you write is where schema details are created.
 
 ## DTO/Entity Separation
 
 Database entities represent raw storage. DTOs represent the exact view model the frontend consumes. They are never the same object.
+
+When constructing a DTO, derive the field list from:
+- **`packages/supabase/src/database.types.ts`** — the generated types define what columns exist and their TypeScript types.
+- **`docs/PRD.md`** — the display rules and user-facing field names determine which fields to expose, which to strip, and which to compute or rename.
 
 ```typescript
 // DB entity — never sent to frontend directly
@@ -184,7 +203,7 @@ npx supabase gen types typescript --project-id YOUR_PROJECT_ID \
   > packages/supabase/src/database.types.ts
 ```
 
-`DATA_CONTRACT.md` is the authoritative schema definition. If regenerated types conflict with the Data Contract, resolve the conflict before proceeding. The Data Contract wins.
+`packages/supabase/src/database.types.ts` is the authoritative TypeScript representation of the schema. It is auto-generated and never hand-edited. If any other document conflicts with the generated types, the generated types win — flag the discrepancy in `.ai-status.md` for resolution in Task X.99.
 
 ## Static Route Collision Guard
 

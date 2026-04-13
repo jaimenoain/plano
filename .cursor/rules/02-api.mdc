@@ -1,27 +1,33 @@
 ---
-description: Client-side Supabase access, Zod validation, DTOs, and Edge Functions. Auto-attached for Supabase client and data hooks.
-globs: ["**/integrations/supabase/**", "**/hooks/**/*.ts", "**/hooks/**/*.tsx"]
+description: API routes, Server Actions, DTOs, and runtime declarations. Auto-attached for any API route or server action file.
+globs: ["**/app/api/**", "**/actions/**", "**/actions.ts", "**/route.ts"]
 alwaysApply: false
 ---
 
-# Data Access & Validation Rules (SPA)
+# API & Server Action Rules
 
-## Client-side data access
+## Runtime Declaration (required on every route)
 
-All primary reads and writes go through the **Supabase JS client** in the browser (see `src/integrations/supabase/client.ts`), subject to **RLS**. There are no Next.js routes, no `runtime` declarations, and no Server Actions in this app. Edge Functions remain the place for server-side logic that must not run in the browser (webhooks, privileged operations, etc.).
+```typescript
+// Every API route and Server Action file must declare runtime at the top.
+export const runtime = 'nodejs'; // Default. Required for any Supabase/DB access.
+export const runtime = 'edge';   // Only when: zero DB I/O, benefits from edge distribution.
+```
+
+A route with database access declared as `edge` is a **blocking error**. Prisma TCP and Supabase direct connections are incompatible with the Edge Runtime.
 
 ## Supabase Edge Function Flag
 
-If a use case requires server-side logic triggered by a database event, or requires Supabase internals (`pg_net`, `pg_cron`, DB webhooks), it MUST be a Supabase Edge Function, not a substitute “API route” in the Vite app. Flag these in the contract:
+If a use case requires server-side logic triggered by a database event, or requires Supabase internals (`pg_net`, `pg_cron`, DB webhooks), it MUST be a Supabase Edge Function, not a Vercel API route. Flag these in the contract:
 
 ```typescript
 // runtime: supabase-edge-function
 // Reason: triggered by INSERT webhook on messages table; requires pg_net.
 ```
 
-## Zod Validation (mandatory on all writes)
+## Zod Validation (mandatory on all write operations)
 
-Every structured payload used in an `.insert()`, `.update()`, `upsert`, RPC arguments, or Edge Function `fetch` body SHOULD be validated with Zod before the call. Forms and mutation helpers must parse with Zod so invalid data never hits Supabase.
+Every `POST`, `PUT`, and `PATCH` request body MUST be validated with Zod before any business logic runs.
 
 ```typescript
 import { z } from 'zod';
@@ -49,81 +55,99 @@ const CloseOpportunitySchema = z.object({
 
 **Cross-field conditional validation MUST use `.superRefine()`** on the parent object. Field-level `.refine()` cannot access sibling values and is FORBIDDEN for cross-field rules.
 
-## Authenticated Guard (mandatory before privileged operations)
+## Unauthenticated Guard (mandatory in every Server Action)
 
-Before any mutation or sensitive read, call `supabase.auth.getUser()` and handle the null case with a typed result — avoid throwing into the UI for expected auth failures.
+Every Server Action MUST call `getUser()` and handle the null case with a typed return — never throw. Throwing an unhandled error from a Server Action surfaces a raw error boundary to the user; the typed result contract must be maintained across all code paths.
 
 ```typescript
 const { data: { user } } = await supabase.auth.getUser();
 if (!user) return { success: false, error: 'Unauthenticated' };
 ```
 
-This guard MUST appear before relying on RLS for user-scoped writes. There is no circumstance in which the app assumes a user without a verified `getUser()` result.
+This guard MUST appear before any database operation or business logic. There is no circumstance in which a Server Action proceeds without a verified user.
 
 ## Never Trust Client-Supplied Identity
 
-Never use a user ID, tenant ID, or any identity value from form state or URL alone to decide **who** is acting — always pair with `getUser()` and let RLS enforce row access. Never pass a service role key to the browser.
+A Server Action MUST NEVER use a user ID, tenant ID, or any identity value sourced from the client payload to identify the acting user. Always derive identity server-side from `getUser()`.
 
 ```typescript
-// ❌ FORBIDDEN — uses client-controlled id as the actor
-async function saveProfile(userIdFromForm: string, name: string) {
-  await supabase.from('profiles').update({ name }).eq('id', userIdFromForm);
+// ❌ FORBIDDEN — trusts a value the client can forge
+export async function updateProfile(payload: { userId: string; name: string }) {
+  await supabase.from('profiles').update({ name: payload.name }).eq('id', payload.userId);
 }
 
-// ✅ REQUIRED — actor is the session from getUser(); RLS matches auth.uid()
-async function saveProfile(name: string) {
+// ✅ REQUIRED — identity derived from the verified session
+export async function updateProfile(payload: { name: string }) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Unauthenticated' };
-  const { error } = await supabase.from('profiles').update({ name }).eq('id', user.id);
-  if (error) return { success: false, error: error.message };
-  return { success: true };
+  await supabase.from('profiles').update({ name: payload.name }).eq('id', user.id);
 }
 ```
 
-This applies equally to `tenant_id`, `org_id`, and any other scoping identity. If the operation requires a tenant context, read it from the verified user’s profile or allowed membership — not from unverified client input alone.
+This applies equally to `tenant_id`, `org_id`, and any other scoping identity. If the operation requires a tenant context, read it from the verified user's domain record — never from the request body.
 
 ## DTO Rules
 
-- Strip all sensitive fields before exposing objects to UI layers: `password_hash`, `stripe_customer_id`, `internal_notes`, service-role tokens.
+Database entities represent raw storage. DTOs represent the exact view model the frontend consumes. They are never the same object.
+
+**Deriving DTO fields — source of truth hierarchy:**
+
+1. **`packages/supabase/src/database.types.ts`** — the auto-generated types define which columns exist and their TypeScript types. This is always authoritative for what the database contains.
+2. **`docs/PRD.md`** — the display rules and user-facing field names determine which fields to expose, which to strip, and which to compute or rename for the frontend.
+3. **`docs/DATA_CONTRACT.md` → Domain Entity Inventory** — entity relationships and business constraints inform join logic and computed fields. This does NOT contain field lists or type definitions.
+
+**DTO construction rules:**
+- Strip all sensitive fields before returning: `password_hash`, `stripe_customer_id`, `internal_notes`, service-role tokens.
 - Flatten nested DB objects where it simplifies the frontend (e.g. combine `first_name` + `last_name` → `fullName`).
 - All DTO field names use `camelCase`.
-- Every DTO field must map 1:1 to a field in `DATA_CONTRACT.md`. No invented fields.
+- Add inline mapping comments for any computed or renamed field.
+- Do NOT invent fields that have no basis in the generated types or the PRD. If you need a field that doesn't exist in the schema, the migration must add it first.
 
 ## Environment Variables
 
-Any secret or env-specific value MUST be provided via **hosting platform environment variables** at build time (Vite `import.meta.env.VITE_*`) or documented in `.env.example` for local dev — never committed. Treat the Data Contract’s env var list as the authoritative checklist.
+Any env var consumed by an API route MUST be declared in Vercel Dashboard → Project Settings → Environment Variables. The Environment Variable Registry in `docs/DATA_CONTRACT.md` is the authoritative checklist — never access `process.env` for a variable not listed there.
 
-## Mutation Protocol (TanStack Query + Supabase)
+## Server Action Mutation Protocol
 
-Every write path SHOULD:
+Every Server Action that writes data MUST:
 
-1. Validate input with Zod before calling Supabase.
-2. Call `getUser()` (or rely on session already validated in the same flow) and return a typed error if unauthenticated.
-3. Rely on `(SELECT auth.uid())` in RLS predicates at the database level.
-4. On success, call `queryClient.invalidateQueries({ queryKey: [...] })` for affected data — do not assume the UI will refresh otherwise.
-5. Return typed results (`{ success: true, data }` / `{ success: false, error }`) from mutation functions where it improves UX; surface errors via toast or inline messaging.
+1. Validate the input payload with Zod before any DB operation.
+2. Call `getUser()` and return `{ success: false, error: 'Unauthenticated' }` if the user is null — never trust client-supplied user IDs.
+3. Derive all identity values (user ID, tenant ID) from the verified session — never from the request payload.
+4. Use `(SELECT auth.uid())` in RLS predicates to identify the requesting user at the database level.
+5. Call `revalidatePath(path)` or `revalidateTag(tag)` after a successful write to invalidate the affected Vercel cache. The path must match the actual route consuming this data, as declared in the **API Route Registry** section of `docs/DATA_CONTRACT.md`.
+6. Return a typed result object (`{ success: true, data }` or `{ success: false, error: string }`) — never throw raw errors to the client.
 
 ```typescript
-// Inside useMutation mutationFn or a dedicated helper:
-const validated = UpdateProfileSchema.safeParse(payload);
-if (!validated.success) {
-  return { success: false, error: validated.error.flatten() };
+'use server';
+
+export async function updateProfile(payload: unknown) {
+  const validated = UpdateProfileSchema.safeParse(payload);
+  if (!validated.success) {
+    return { success: false, error: validated.error.flatten() };
+  }
+
+  const supabase = createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Unauthenticated' };
+
+  // user.id comes from the verified session — never from payload
+  const { error } = await supabase
+    .from('profiles')
+    .update({ name: validated.data.name })
+    .eq('id', user.id);
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath('/settings/profile'); // matches the API Route Registry in DATA_CONTRACT.md
+  return { success: true };
 }
-const { data: { user } } = await supabase.auth.getUser();
-if (!user) return { success: false, error: 'Unauthenticated' };
-const { error } = await supabase
-  .from('profiles')
-  .update({ name: validated.data.name })
-  .eq('id', user.id);
-if (error) return { success: false, error: error.message };
-return { success: true };
-// onSuccess: queryClient.invalidateQueries({ queryKey: ['profile', user.id] })
 ```
 
 ## Secrets Placement
 
 | Secret type | Where it lives |
 |---|---|
-| Consumed by Vite app (build / client) | Hosting platform environment variables + local `.env` (not committed) |
-| Consumed by Supabase Edge Functions or pg functions | Supabase Vault (+ same secrets mirrored on hosting if needed for CI) |
+| Consumed by Next.js Server Actions / API Routes | Vercel Environment Variables |
+| Consumed by Supabase Edge Functions or pg functions | Supabase Vault + Vercel |
 | Never in `.ai-status.md`, never in chat, never committed | All secrets |
