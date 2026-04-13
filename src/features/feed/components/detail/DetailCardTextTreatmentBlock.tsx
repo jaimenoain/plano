@@ -2,7 +2,23 @@ import type { NavigateFunction } from "react-router";
 import { cn } from "@/lib/utils";
 import type { DetailCardTextTreatment } from "@/types/cards";
 import type { FeedReview } from "@/types/feed";
-import { formatDetailMediaMetadataLine } from "@/features/feed/utils/resolveCardType";
+
+/** Strip one pair of wrapping straight or curly double quotes from user-supplied copy. */
+function displayReviewText(raw: string): string {
+  const s = raw.trim();
+  if (s.length >= 2) {
+    const a = s[0];
+    const b = s[s.length - 1];
+    if (
+      (a === '"' && b === '"') ||
+      (a === "\u201c" && b === "\u201d") ||
+      (a === "\u201e" && b === "\u201c")
+    ) {
+      return s.slice(1, -1).trim();
+    }
+  }
+  return s;
+}
 
 export interface DetailCardTextTreatmentBlockProps {
   entry: FeedReview;
@@ -21,42 +37,29 @@ export function DetailCardTextTreatmentBlock({
   narrowColumn,
   navigate,
 }: DetailCardTextTreatmentBlockProps) {
-  const raw = entry.content?.trim() ?? "";
+   const raw = entry.content?.trim() ?? "";
+  const text = displayReviewText(raw);
 
   if (textTreatment === "none") {
-    const line = formatDetailMediaMetadataLine(entry);
-    if (!line) return null;
-    return (
-      <p className="max-w-full text-center font-mono text-[11px] tracking-[0.14em] uppercase text-text-secondary">
-        {line}
-      </p>
-    );
+    return null;
   }
 
   if (textTreatment === "quote") {
     return (
-      <div className="flex min-w-0 items-start gap-1">
-        <span
-          className="select-none font-serif text-[56px] leading-none text-border-default"
-          aria-hidden
-        >
-          &ldquo;
-        </span>
-        <p
-          className={cn(
-            "min-w-0 flex-1 font-black leading-tight tracking-tight text-text-primary",
-            narrowColumn ? "text-2xl line-clamp-3" : "line-clamp-4 text-[32px]",
-          )}
-        >
-          {raw}
-        </p>
-      </div>
+      <p
+        className={cn(
+          "min-w-0 font-black leading-tight tracking-tight text-text-primary",
+          narrowColumn ? "text-2xl line-clamp-3" : "line-clamp-4 text-[32px]",
+        )}
+      >
+        {text}
+      </p>
     );
   }
 
   return (
     <div className="flex min-h-0 flex-col gap-2">
-      <p className="line-clamp-4 text-sm leading-[1.7] text-text-secondary">{raw}</p>
+      <p className="line-clamp-4 text-sm leading-[1.7] text-text-secondary">{text}</p>
       <button
         type="button"
         onClick={(e) => {

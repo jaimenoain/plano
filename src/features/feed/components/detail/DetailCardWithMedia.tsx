@@ -2,7 +2,6 @@ import { type MouseEvent, useLayoutEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { cn } from "@/lib/utils";
 import type { DetailCardVariant } from "@/types/cards";
 import type { FeedReview, ReviewImage } from "@/types/feed";
@@ -53,53 +52,6 @@ function DetailOverflowImageCell({
   );
 }
 
-function DetailFullWidthHeroMedia({
-  entry,
-  failedImages,
-  onImageFail,
-}: {
-  entry: FeedReview;
-  failedImages: Set<string>;
-  onImageFail: (imageId: string) => void;
-}) {
-  const hasVideo = Boolean(entry.video_url?.trim());
-  const firstImage = entry.images?.[0];
-  const imageUrl = firstImage?.url?.trim() ?? "";
-
-  if (hasVideo && entry.video_url) {
-    const poster =
-      firstImage && imageUrl
-        ? firstImage.url
-        : undefined;
-    return (
-      <VideoPlayer
-        src={entry.video_url}
-        poster={poster}
-        className="h-full w-full"
-        autoPlayOnVisible={true}
-        muted={true}
-        objectFit="cover"
-      />
-    );
-  }
-
-  if (firstImage && imageUrl) {
-    if (failedImages.has(firstImage.id)) {
-      return <div className="h-full w-full bg-surface-muted" aria-hidden />;
-    }
-    return (
-      <img
-        src={firstImage.url}
-        alt=""
-        className="h-full w-full object-cover rounded-none"
-        onError={() => onImageFail(firstImage.id)}
-      />
-    );
-  }
-
-  return <div className="h-full w-full bg-surface-muted" aria-hidden />;
-}
-
 /**
  * Building detail — review with media: first row + §4.3 byline + §4.4 copy + footnote; overflow grid §4.5.
  */
@@ -136,7 +88,6 @@ export function DetailCardWithMedia({
   const monthYear = format(reviewDate, "MMMM yyyy");
   const colHeight = variant.photoColHeight;
 
-  const isFullWidthSingle = variant.mediaCount === 1 && variant.textTreatment === "none";
   const overflowImages = (entry.images ?? []).slice(1);
   const overflowRows = partitionDetailOverflowImages(overflowImages);
 
@@ -163,7 +114,7 @@ export function DetailCardWithMedia({
             className="block truncate text-xl font-black leading-none tracking-tight text-text-primary transition-colors hover:opacity-80 md:overflow-visible md:whitespace-normal"
             onClick={(e) => e.stopPropagation()}
           >
-            @{username}
+            {username}
           </Link>
           {isArchitectOfBuilding ? (
             <span className="mt-1.5 block w-fit bg-text-primary px-2 py-0.5 font-sans text-2xs font-bold uppercase tracking-[0.1em] text-text-inverse">
@@ -197,7 +148,7 @@ export function DetailCardWithMedia({
         <DetailCardTextTreatmentBlock
           entry={entry}
           textTreatment={variant.textTreatment}
-          narrowColumn={!isFullWidthSingle}
+          narrowColumn={true}
           navigate={navigate}
         />
       </div>
@@ -211,33 +162,6 @@ export function DetailCardWithMedia({
     </div>
   );
 
-  if (isFullWidthSingle) {
-    return (
-      <article
-        data-testid={`detail-card-with-media-${entry.id}`}
-        onClick={handleCardClick}
-        className={cn(
-          "group/card w-full min-w-0 max-w-full cursor-pointer",
-          isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-4",
-        )}
-      >
-        <div className="flex w-full min-w-0 flex-col gap-1">
-          <div className="relative h-[400px] w-full min-w-0 overflow-hidden bg-surface-muted">
-            <DetailFullWidthHeroMedia
-              entry={entry}
-              failedImages={failedImages}
-              onImageFail={markImageFailed}
-            />
-          </div>
-          <div className="flex min-h-0 min-w-0 flex-col px-0 py-6 md:px-0 md:pb-[32px] md:pl-[44px] md:pr-4 md:pt-[32px]">
-            {bylineBlock}
-            {textAndFootnote}
-          </div>
-        </div>
-      </article>
-    );
-  }
-
   return (
     <article
       data-testid={`detail-card-with-media-${entry.id}`}
@@ -247,7 +171,7 @@ export function DetailCardWithMedia({
         isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-4",
       )}
     >
-      <div className="flex w-full min-w-0 max-w-full flex-col gap-1 overflow-x-hidden">
+      <div className="flex w-full min-w-0 max-w-full flex-col gap-2 overflow-x-hidden">
         <div
           className="grid w-full min-w-0 grid-cols-1 gap-0 md:grid-cols-2 md:items-stretch"
           style={isMd ? { height: colHeight } : undefined}
@@ -275,7 +199,7 @@ export function DetailCardWithMedia({
           <div
             key={`${row.columnCount}-${row.images[0]?.id ?? rowIndex}-${rowIndex}`}
             className={cn(
-              "grid w-full min-w-0 max-w-full gap-1",
+              "grid w-full min-w-0 max-w-full gap-2",
               row.columnCount === 2 && "grid-cols-2",
               row.columnCount === 3 && "grid-cols-3",
             )}

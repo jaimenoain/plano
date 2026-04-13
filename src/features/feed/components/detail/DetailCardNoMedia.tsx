@@ -64,7 +64,7 @@ export function DetailCardNoMedia({
               className="block truncate text-[26px] font-black leading-none tracking-tight text-text-primary transition-colors hover:opacity-80 md:overflow-visible md:whitespace-normal"
               onClick={(e) => e.stopPropagation()}
             >
-              @{username}
+              {username}
             </Link>
             {isArchitectOfBuilding ? (
               <span className="mt-1.5 block w-fit bg-text-primary px-2 py-0.5 font-sans text-2xs font-bold uppercase tracking-[0.1em] text-text-inverse">
