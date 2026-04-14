@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -24,7 +24,10 @@ import type { EventDTO, EventsApiError } from "@/features/events/types";
 import { SubmitEventSchema, type SubmitEventInput } from "@/features/events/schemas";
 import { supabase } from "@/integrations/supabase/client";
 import { useDebounce } from "@/hooks/useDebounce";
+import { resizeImage } from "@/lib/image-compression";
 import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
+import { uploadFile } from "@/utils/upload";
+import { getStorageAssetUrl } from "@/utils/image";
 
 type BuildingSearchRow = {
   id: string;
@@ -114,6 +117,8 @@ export default function SubmitEvent() {
   const debouncedBuildingQuery = useDebounce(buildingQuery, 300);
   const [selectedBuildings, setSelectedBuildings] = useState<SelectedBuilding[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const coverFileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -283,6 +288,32 @@ export default function SubmitEvent() {
     setSelectedBuildings((prev) => prev.filter((b) => b.id !== id));
   };
 
+  const handleCoverFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setFormError("Cover must be an image (JPEG, PNG, or WebP).");
+      return;
+    }
+    setFormError(null);
+    setCoverUploading(true);
+    try {
+      const resized = await resizeImage(file, 1920, 1080, 0.88);
+      const key = await uploadFile(resized, "event-covers");
+      const url = getStorageAssetUrl(key);
+      if (!url) {
+        setFormError("Could not resolve the uploaded image URL.");
+        return;
+      }
+      form.setValue("coverImageUrl", url);
+    } catch {
+      setFormError("Cover upload failed. Try a smaller image or check your connection.");
+    } finally {
+      setCoverUploading(false);
+    }
+  };
+
   const pageTitle = isEditMode ? "Edit event" : "Share an event";
 
   if (authLoading || !user) {
@@ -428,7 +459,7 @@ export default function SubmitEvent() {
                   value={address}
                   onLocationSelected={onLocationPicked}
                   placeholder="Search for a venue or address…"
-                  searchTypes={[]}
+                  searchTypes={["(addresses)"]}
                   className="w-full"
                 />
               </div>
@@ -523,8 +554,49 @@ export default function SubmitEvent() {
                 <Input id="external-link" type="url" placeholder="https://…" {...form.register("externalLink")} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cover-url">Cover image URL</Label>
-                <Input id="cover-url" type="url" placeholder="https://…" {...form.register("coverImageUrl")} />
+                <Label htmlFor="event-cover-file">Cover photo</Label>
+                <p className="text-xs text-text-secondary">
+                  Optional. Upload a wide image (JPEG, PNG, or WebP). It is resized and stored on Plano.
+                </p>
+                <input
+                  ref={coverFileInputRef}
+                  id="event-cover-file"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="sr-only"
+                  onChange={handleCoverFileChange}
+                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={coverUploading}
+                    onClick={() => coverFileInputRef.current?.click()}
+                  >
+                    {coverUploading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                        Uploading…
+                      </>
+                    ) : (
+                      "Choose cover image"
+                    )}
+                  </Button>
+                  {form.watch("coverImageUrl") ? (
+                    <Button type="button" variant="ghost" onClick={() => form.setValue("coverImageUrl", "")}>
+                      Remove cover
+                    </Button>
+                  ) : null}
+                </div>
+                {form.watch("coverImageUrl") ? (
+                  <div className="mt-2 overflow-hidden rounded-sm border border-border-default">
+                    <img
+                      src={form.watch("coverImageUrl")}
+                      alt=""
+                      className="max-h-40 w-full object-cover"
+                    />
+                  </div>
+                ) : null}
               </div>
               <div className="flex items-center justify-between gap-4 rounded-sm border border-border-default bg-surface-muted px-4 py-3">
                 <div>
@@ -550,7 +622,7 @@ export default function SubmitEvent() {
 
           <Button
             type="submit"
-            disabled={submitEvent.isPending || updateEvent.isPending}
+            disabled={submitEvent.isPending || updateEvent.isPending || coverUploading}
             className="w-full sm:w-auto"
           >
             {submitEvent.isPending || updateEvent.isPending ? (

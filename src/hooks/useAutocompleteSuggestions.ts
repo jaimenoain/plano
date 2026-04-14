@@ -25,6 +25,10 @@ function legacyTypesToIncludedPrimary(types: string[] | undefined): string[] | u
   if (types.includes("(cities)")) {
     return ["locality", "postal_code"];
   }
+  /** Venues + street-level components (events “Where”, building address search). */
+  if (types.includes("(addresses)")) {
+    return ["establishment", "point_of_interest", "premise", "street_address", "route"];
+  }
   const flat = types.filter((t) => !t.startsWith("("));
   if (!flat.length) return undefined;
   return flat.slice(0, 5);

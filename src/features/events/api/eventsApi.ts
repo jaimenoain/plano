@@ -152,7 +152,7 @@ function buildOrganiser(
 
 type EventBuildingJoinRow = {
   sort_order: number;
-  buildings: Pick<BuildingRow, "id" | "name" | "slug" | "city" | "hero_image_url"> | null;
+  buildings: Pick<BuildingRow, "id" | "name" | "slug" | "city" | "hero_image_url" | "community_preview_url"> | null;
 };
 
 type EventDetailQueryRow = EventRow & {
@@ -167,12 +167,13 @@ function mapBuildings(rows: EventBuildingJoinRow[] | null | undefined): EventBui
   for (const j of rows) {
     const b = j.buildings;
     if (!b?.id) continue;
+    const imagePath = b.hero_image_url ?? b.community_preview_url;
     out.push({
       buildingId: b.id,
       name: b.name,
       slug: b.slug,
       city: b.city,
-      mainImageUrl: getBuildingImageUrl(b.hero_image_url) ?? null,
+      mainImageUrl: getBuildingImageUrl(imagePath) ?? null,
       sortOrder: j.sort_order,
     });
   }
@@ -275,7 +276,7 @@ export async function getEventBySlug(slug: string): Promise<EventDTO> {
       is_deleted, created_at, updated_at,
       event_buildings (
         sort_order,
-        buildings ( id, name, slug, city, hero_image_url )
+        buildings ( id, name, slug, city, hero_image_url, community_preview_url )
       ),
       organiser_person:people!events_organiser_person_id_fkey ( id, name, slug, avatar_url, claim_status ),
       organiser_company:companies!events_organiser_company_id_fkey ( id, name, slug, logo_url, claim_status )

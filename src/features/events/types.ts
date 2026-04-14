@@ -17,7 +17,7 @@ export type EventBuilding = {
   slug: string | null;
   /** `buildings.city` */
   city: string | null;
-  /** Resolved public URL from `buildings.hero_image_url` */
+  /** Resolved public URL from `buildings.hero_image_url` or `community_preview_url` */
   mainImageUrl: string | null;
   /** `event_buildings.sort_order` */
   sortOrder: number;
