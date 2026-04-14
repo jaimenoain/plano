@@ -1,10 +1,23 @@
-import { Activity, Users, User, Play, Search } from "lucide-react";
+import { Activity, CalendarDays, Users, User, Play, Search, type LucideIcon } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { cn } from "@/lib/utils";
 
-// Core navigation items
-const navItems = [
+type BottomNavItem = {
+  icon: LucideIcon;
+  label: string;
+  path: string;
+  isActive?: (pathname: string) => boolean;
+};
+
+// Core navigation items (Events after Feed, before Explore — matches sidebar)
+const navItems: BottomNavItem[] = [
   { icon: Activity, label: "Feed", path: "/" },
+  {
+    icon: CalendarDays,
+    label: "Events",
+    path: "/events",
+    isActive: (pathname) => pathname === "/events" || pathname.startsWith("/events/"),
+  },
   { icon: Play, label: "Explore", path: "/explore" },
   { icon: Search, label: "Search", path: "/search" },
   { icon: Users, label: "Connect", path: "/connect" },
@@ -25,8 +38,8 @@ export function BottomNav() {
       )}
     >
       <div className="flex items-center justify-around h-20 max-w-lg mx-auto px-2 pb-2">
-        {navItems.map(({ icon: Icon, label, path }) => {
-          const isActive = location.pathname === path;
+        {navItems.map(({ icon: Icon, label, path, isActive: activeFn }) => {
+          const isActive = (activeFn ?? ((p) => p === path))(location.pathname);
 
           return (
             <Link

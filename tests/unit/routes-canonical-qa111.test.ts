@@ -24,6 +24,15 @@ describe("QA 11.1 — canonical routes in app/routes.ts", () => {
     expect(appRoutesSource).toContain("ArchitectIdRedirect");
   });
 
+  it("defines events list, new, edit, and detail routes in app/routes.ts", () => {
+    expect(appRoutesSource).toMatch(/route\s*\(\s*["']\/events["']/);
+    expect(appRoutesSource).toContain('"/events/new"');
+    expect(appRoutesSource).toContain('"/events/:slug/edit"');
+    expect(appRoutesSource).toMatch(/route\s*\(\s*["']\/events\/:slug["']\s*,/);
+    expect(appRoutesSource).toContain("events-submit-new");
+    expect(appRoutesSource).toContain("events-submit-edit");
+  });
+
   it("keeps src/routes.ts as a re-export shim without inline route() definitions", () => {
     expect(srcRoutesSource).toMatch(/from\s+["']\.\.\/app\/routes["']/);
     expect(srcRoutesSource).not.toMatch(/\broute\s*\(/);

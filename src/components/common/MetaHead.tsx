@@ -4,6 +4,8 @@ const SITE_ORIGIN = "https://plano.app";
 const METAHEAD_MARK = "data-plano-metahead";
 
 interface MetaHeadProps {
+  /** When set, used as the full document and OG title (no `| Plano` suffix). */
+  documentTitle?: string;
   title?: string;
   description?: string;
   image?: string;
@@ -92,6 +94,7 @@ function clearManagedHeadNodes(): void {
 }
 
 export function MetaHead({
+  documentTitle,
   title,
   description = "Track your architecture visits, rate buildings, and discover what friends are exploring.",
   image = "/cover.jpg",
@@ -103,7 +106,7 @@ export function MetaHead({
   useEffect(() => {
     if (typeof document === "undefined") return;
 
-    const fullTitle = title ? `${title} | Plano` : "Plano";
+    const fullTitle = documentTitle ?? (title ? `${title} | Plano` : "Plano");
     document.title = fullTitle;
 
     const absoluteImage = absolutizeUrl(image);
@@ -146,7 +149,7 @@ export function MetaHead({
     return () => {
       clearManagedHeadNodes();
     };
-  }, [title, description, image, type, canonicalUrl, structuredData, noIndex]);
+  }, [documentTitle, title, description, image, type, canonicalUrl, structuredData, noIndex]);
 
   return null;
 }

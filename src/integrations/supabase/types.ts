@@ -1373,6 +1373,120 @@ export type Database = {
         }
         Relationships: []
       }
+      event_buildings: {
+        Row: {
+          building_id: string
+          event_id: string
+          sort_order: number
+        }
+        Insert: {
+          building_id: string
+          event_id: string
+          sort_order?: number
+        }
+        Update: {
+          building_id?: string
+          event_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_buildings_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_buildings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          address: string | null
+          claim_status: Database["public"]["Enums"]["event_claim_status"]
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          end_at: string | null
+          external_link: string | null
+          id: string
+          is_deleted: boolean
+          is_self_hosted: boolean
+          location: unknown
+          organiser_company_id: string | null
+          organiser_person_id: string | null
+          organiser_user_id: string | null
+          slug: string
+          start_at: string
+          submitted_by_user_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          claim_status?: Database["public"]["Enums"]["event_claim_status"]
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          end_at?: string | null
+          external_link?: string | null
+          id?: string
+          is_deleted?: boolean
+          is_self_hosted?: boolean
+          location?: unknown
+          organiser_company_id?: string | null
+          organiser_person_id?: string | null
+          organiser_user_id?: string | null
+          slug: string
+          start_at: string
+          submitted_by_user_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          claim_status?: Database["public"]["Enums"]["event_claim_status"]
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          end_at?: string | null
+          external_link?: string | null
+          id?: string
+          is_deleted?: boolean
+          is_self_hosted?: boolean
+          location?: unknown
+          organiser_company_id?: string | null
+          organiser_person_id?: string | null
+          organiser_user_id?: string | null
+          slug?: string
+          start_at?: string
+          submitted_by_user_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_organiser_company_id_fkey"
+            columns: ["organiser_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_organiser_person_id_fkey"
+            columns: ["organiser_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follows: {
         Row: {
           created_at: string
@@ -3983,6 +4097,8 @@ export type Database = {
         | "other"
       credit_status_enum: "active" | "verified" | "flagged" | "hidden"
       credit_tier_enum: "primary" | "contributor" | "ancillary"
+      event_attendance_status: "interested" | "going"
+      event_claim_status: "unclaimed" | "pending" | "claimed"
       location_precision: "exact" | "approximate"
       person_claim_status: "unclaimed" | "claimed" | "verified"
       poll_status:
@@ -4199,6 +4315,8 @@ export const Constants = {
       ],
       credit_status_enum: ["active", "verified", "flagged", "hidden"],
       credit_tier_enum: ["primary", "contributor", "ancillary"],
+      event_attendance_status: ["interested", "going"],
+      event_claim_status: ["unclaimed", "pending", "claimed"],
       location_precision: ["exact", "approximate"],
       person_claim_status: ["unclaimed", "claimed", "verified"],
       poll_status: ["draft", "open", "closed", "archived", "live", "published"],

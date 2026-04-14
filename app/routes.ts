@@ -9,6 +9,10 @@ export default [
   // Public / Standalone
   route("/login", "features/auth/pages/Auth.tsx", { id: "auth-login" }),
   route("/auth", "features/auth/pages/Auth.tsx", { id: "auth-root" }),
+  route("/events/new", "features/events/pages/SubmitEvent.tsx", { id: "events-submit-new" }),
+  route("/events/:slug/edit", "features/events/pages/SubmitEvent.tsx", { id: "events-submit-edit" }),
+  route("/events", "features/events/pages/Events.tsx"),
+  route("/events/:slug", "features/events/pages/EventDetail.tsx"),
   route("/update-password", "features/auth/pages/UpdatePassword.tsx"),
   route("/onboarding", "features/auth/pages/Onboarding.tsx"),
   route("/terms", "pages/Terms.tsx"),

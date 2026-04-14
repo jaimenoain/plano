@@ -3884,59 +3884,6 @@ interface AppLayoutProps {
 }
 </file>
 
-<file path="src/components/layout/AppSidebar.tsx">
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarFooter,
-  useSidebar,
-} from "@/components/ui/sidebar";
-import { PlanoLogo } from "@/components/common/PlanoLogo";
-import {
-  Activity,
-  Users,
-  User as UserIcon,
-  Play,
-  Search,
-  Settings,
-  LogOut,
-  Bell,
-  X,
-  Briefcase,
-  Building2,
-  ChevronDown,
-  type LucideIcon,
-} from "lucide-react";
-import { useLocation, Link, useNavigate } from "react-router";
-import { cn } from "@/lib/utils";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useClaimedPersonForNav } from "@/features/credits/hooks/useClaimedPersonForNav";
-import { useStewardCompaniesForNav } from "@/features/credits/hooks/useStewardCompaniesForNav";
-⋮----
-interface NavItemProps {
-  label: string;
-  path: string;
-  isActive: boolean;
-  icon?: LucideIcon;
-}
-⋮----
-const handleSignOut = async () =>
-</file>
-
 <file path="src/components/layout/BottomNav.tsx">
 import { Activity, Users, User, Play, Search } from "lucide-react";
 import { Link, useLocation } from "react-router";
@@ -25631,6 +25578,59 @@ The **sharp radius** (2px default) is the single most important spatial decision
 **Editorial feed philosophy:** The feed follows A24 Films' design language — white canvas, aggressive typographic hierarchy, zero decorative chrome. Content does not live inside card containers. Structure comes from the contrast between tiny uppercase labels and massive bold headlines, from generous whitespace between items, and from raw photography presented without borders or rounded corners. The feed should feel like flipping through an architecture magazine, not scrolling through a social media app. Every feed item earns its space through the quality of its typography and imagery, not through a containing box that says "I am a card."
 </file>
 
+<file path="src/components/layout/AppSidebar.tsx">
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarHeader,
+  SidebarFooter,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import { PlanoLogo } from "@/components/common/PlanoLogo";
+import {
+  Activity,
+  Users,
+  User as UserIcon,
+  Play,
+  Search,
+  Settings,
+  LogOut,
+  Bell,
+  X,
+  Briefcase,
+  Building2,
+  ChevronDown,
+  type LucideIcon,
+} from "lucide-react";
+import { useLocation, Link, useNavigate } from "react-router";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useClaimedPersonForNav } from "@/features/credits/hooks/useClaimedPersonForNav";
+import { useStewardCompaniesForNav } from "@/features/credits/hooks/useStewardCompaniesForNav";
+⋮----
+interface NavItemProps {
+  label: string;
+  path: string;
+  isActive: boolean;
+  icon?: LucideIcon;
+}
+⋮----
+const handleSignOut = async () =>
+</file>
+
 <file path="src/features/buildings/components/BuildingCredits.tsx">
 import { useCallback, useReducer, useMemo, useState } from "react";
 import { Link } from "react-router";
@@ -26140,6 +26140,181 @@ interface ImportMetaEnv {
 import { cn } from "@/lib/utils";
 </file>
 
+<file path="src/features/buildings/hooks/useBuildingInteractions.ts">
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { uploadFile } from "@/utils/upload";
+import { resizeImageWithDimensions } from "@/lib/image-compression";
+import { getBuildingImageUrl } from "@/utils/image";
+import { parseLocation } from "@/utils/location";
+import { synthesizeAccess } from "@/utils/accessSynthesis";
+import { visiblePrimaryCredits } from "@/features/credits/buildingCreditDisplay";
+import type { BuildingCreditWithEntities } from "@/features/credits/types";
+import type { BuildingDetails } from "@/features/buildings/pages/BuildingDetails";
+import type { User } from "@supabase/supabase-js";
+type ProfileForHook = { role?: string | null } | null | undefined;
+interface TopLink {
+  link_id: string;
+  url: string;
+  title: string | null;
+  like_count: number;
+  user_username: string | null;
+  user_avatar: string | null;
+}
+interface FeedEntry {
+  id: string;
+  user_id: string;
+  content: string | null;
+  rating: number | null;
+  status: "visited" | "pending";
+  tags: string[] | null;
+  created_at: string;
+  user: {
+    username: string | null;
+    avatar_url: string | null;
+    is_verified_architect?: boolean;
+    is_architect_of_building?: boolean;
+  };
+  images: { id: string; storage_path: string; created_at?: string }[];
+}
+interface RpcBuildingReviewRow {
+  id: string;
+  user_id: string;
+  created_at: string;
+  user_data: FeedEntry["user"] | null;
+  images?: Array<{
+    id: string;
+    storage_path: string;
+    likes_count?: number;
+    created_at?: string;
+    is_generated?: boolean;
+    is_official?: boolean;
+  }>;
+  video_url?: string | null;
+  content?: string | null;
+  rating?: number | null;
+  status?: FeedEntry["status"];
+  tags?: string[] | null;
+}
+export interface DisplayImage {
+  id: string;
+  url: string;
+  poster?: string;
+  type?: "image" | "video";
+  likes_count: number;
+  created_at: string;
+  user: { username: string | null; avatar_url: string | null } | null;
+  is_generated?: boolean;
+  is_official?: boolean;
+}
+interface UseBuildingInteractionsInput {
+  loaderBuilding: BuildingDetails | null;
+  initialHeroImageUrl: string | null;
+  buildingCredits: BuildingCreditWithEntities[];
+  buildingCreditsFingerprint: string;
+  user: User | null;
+  profile: ProfileForHook;
+}
+export interface BuildingInteractions {
+  building: BuildingDetails | null;
+  heroImageUrl: string | null;
+  loading: boolean;
+  isCreator: boolean;
+  userStatus: "visited" | "pending" | "ignored" | null;
+  myRating: number;
+  hoverRating: number | null;
+  setHoverRating: (r: number | null) => void;
+  entries: FeedEntry[];
+  displayImages: DisplayImage[];
+  selectedImage: DisplayImage | null;
+  setSelectedImage: (img: DisplayImage | null) => void;
+  likedImageIds: Set<string>;
+  selectedIndex: number;
+  topLinks: TopLink[];
+  likedLinkIds: Set<string>;
+  linksLoading: boolean;
+  userLinks: { id: string; url: string; title: string }[];
+  showLinkEditor: boolean;
+  setShowLinkEditor: (v: boolean) => void;
+  newLinkUrl: string;
+  setNewLinkUrl: (v: string) => void;
+  newLinkTitle: string;
+  setNewLinkTitle: (v: string) => void;
+  note: string;
+  setNote: React.Dispatch<React.SetStateAction<string>>;
+  pendingImages: Array<{
+    id: string;
+    file: File;
+    preview: string;
+    is_generated: boolean;
+    width_px: number | null;
+    height_px: number | null;
+  }>;
+  isSavingNote: boolean;
+  showCollections: boolean;
+  setShowCollections: (v: boolean) => void;
+  selectedCollectionIds: string[];
+  setSelectedCollectionIds: (ids: string[]) => void;
+  initialCollectionIds: string[];
+  showVisitWith: boolean;
+  setShowVisitWith: (v: boolean) => void;
+  selectedFriends: string[];
+  setSelectedFriends: React.Dispatch<React.SetStateAction<string[]>>;
+  sendingInvites: boolean;
+  noteEditorOpen: boolean;
+  setNoteEditorOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  showDeleteAlert: boolean;
+  setShowDeleteAlert: (v: boolean) => void;
+  deleteWarningMessage: string;
+  totalRatingPoints: number | null;
+  visitorCount: number;
+  coordinates: { lat: number; lng: number } | null;
+  googleSearchUrl: string;
+  accessSynthesis: ReturnType<typeof synthesizeAccess> | null;
+  accessBadgeVariant: () => "default" | "success" | "warning" | "brand";
+  canEditOfficialData: boolean;
+  isCreditsAdmin: boolean;
+  handleStatusChange: (status: "visited" | "pending" | "ignored") => Promise<void>;
+  handleRate: (buildingId: string, rating: number) => Promise<void>;
+  handleImageSelect: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  removePendingImage: (id: string) => void;
+  handleAddLink: () => void;
+  handleRemoveLink: (id: string) => void;
+  handleSaveNote: () => Promise<void>;
+  handleDelete: () => Promise<void>;
+  handleSendInvites: () => Promise<void>;
+  handleSetHeroImage: () => Promise<void>;
+  handleToggleOfficial: () => Promise<void>;
+  handleLinkLike: (linkId: string) => Promise<void>;
+  handleNextImage: () => void;
+  handlePrevImage: () => void;
+}
+export function useBuildingInteractions({
+  loaderBuilding,
+  initialHeroImageUrl,
+  buildingCredits,
+  buildingCreditsFingerprint,
+  user,
+  profile,
+}: UseBuildingInteractionsInput): BuildingInteractions
+⋮----
+// ── Notes / images ───────────────────────────────────────────────────────
+⋮----
+// ── Collections ──────────────────────────────────────────────────────────
+⋮----
+// ── Visit-with ───────────────────────────────────────────────────────────
+⋮----
+// ── Delete confirmation ──────────────────────────────────────────────────
+⋮----
+// ── Verified architect detection ─────────────────────────────────────────
+⋮----
+// ── Derived computeds ────────────────────────────────────────────────────
+⋮----
+// Community reviews + images
+</file>
+
 <file path="src/features/feed/components/card-parts/ActivityLead.tsx">
 import { cn } from "@/lib/utils";
 export interface ActivityLeadProps {
@@ -26545,181 +26720,6 @@ export interface FeedCollection {
   isLiked?: boolean;
   likesCount?: number;
 }
-</file>
-
-<file path="src/features/buildings/hooks/useBuildingInteractions.ts">
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { uploadFile } from "@/utils/upload";
-import { resizeImageWithDimensions } from "@/lib/image-compression";
-import { getBuildingImageUrl } from "@/utils/image";
-import { parseLocation } from "@/utils/location";
-import { synthesizeAccess } from "@/utils/accessSynthesis";
-import { visiblePrimaryCredits } from "@/features/credits/buildingCreditDisplay";
-import type { BuildingCreditWithEntities } from "@/features/credits/types";
-import type { BuildingDetails } from "@/features/buildings/pages/BuildingDetails";
-import type { User } from "@supabase/supabase-js";
-type ProfileForHook = { role?: string | null } | null | undefined;
-interface TopLink {
-  link_id: string;
-  url: string;
-  title: string | null;
-  like_count: number;
-  user_username: string | null;
-  user_avatar: string | null;
-}
-interface FeedEntry {
-  id: string;
-  user_id: string;
-  content: string | null;
-  rating: number | null;
-  status: "visited" | "pending";
-  tags: string[] | null;
-  created_at: string;
-  user: {
-    username: string | null;
-    avatar_url: string | null;
-    is_verified_architect?: boolean;
-    is_architect_of_building?: boolean;
-  };
-  images: { id: string; storage_path: string; created_at?: string }[];
-}
-interface RpcBuildingReviewRow {
-  id: string;
-  user_id: string;
-  created_at: string;
-  user_data: FeedEntry["user"] | null;
-  images?: Array<{
-    id: string;
-    storage_path: string;
-    likes_count?: number;
-    created_at?: string;
-    is_generated?: boolean;
-    is_official?: boolean;
-  }>;
-  video_url?: string | null;
-  content?: string | null;
-  rating?: number | null;
-  status?: FeedEntry["status"];
-  tags?: string[] | null;
-}
-export interface DisplayImage {
-  id: string;
-  url: string;
-  poster?: string;
-  type?: "image" | "video";
-  likes_count: number;
-  created_at: string;
-  user: { username: string | null; avatar_url: string | null } | null;
-  is_generated?: boolean;
-  is_official?: boolean;
-}
-interface UseBuildingInteractionsInput {
-  loaderBuilding: BuildingDetails | null;
-  initialHeroImageUrl: string | null;
-  buildingCredits: BuildingCreditWithEntities[];
-  buildingCreditsFingerprint: string;
-  user: User | null;
-  profile: ProfileForHook;
-}
-export interface BuildingInteractions {
-  building: BuildingDetails | null;
-  heroImageUrl: string | null;
-  loading: boolean;
-  isCreator: boolean;
-  userStatus: "visited" | "pending" | "ignored" | null;
-  myRating: number;
-  hoverRating: number | null;
-  setHoverRating: (r: number | null) => void;
-  entries: FeedEntry[];
-  displayImages: DisplayImage[];
-  selectedImage: DisplayImage | null;
-  setSelectedImage: (img: DisplayImage | null) => void;
-  likedImageIds: Set<string>;
-  selectedIndex: number;
-  topLinks: TopLink[];
-  likedLinkIds: Set<string>;
-  linksLoading: boolean;
-  userLinks: { id: string; url: string; title: string }[];
-  showLinkEditor: boolean;
-  setShowLinkEditor: (v: boolean) => void;
-  newLinkUrl: string;
-  setNewLinkUrl: (v: string) => void;
-  newLinkTitle: string;
-  setNewLinkTitle: (v: string) => void;
-  note: string;
-  setNote: React.Dispatch<React.SetStateAction<string>>;
-  pendingImages: Array<{
-    id: string;
-    file: File;
-    preview: string;
-    is_generated: boolean;
-    width_px: number | null;
-    height_px: number | null;
-  }>;
-  isSavingNote: boolean;
-  showCollections: boolean;
-  setShowCollections: (v: boolean) => void;
-  selectedCollectionIds: string[];
-  setSelectedCollectionIds: (ids: string[]) => void;
-  initialCollectionIds: string[];
-  showVisitWith: boolean;
-  setShowVisitWith: (v: boolean) => void;
-  selectedFriends: string[];
-  setSelectedFriends: React.Dispatch<React.SetStateAction<string[]>>;
-  sendingInvites: boolean;
-  noteEditorOpen: boolean;
-  setNoteEditorOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  showDeleteAlert: boolean;
-  setShowDeleteAlert: (v: boolean) => void;
-  deleteWarningMessage: string;
-  totalRatingPoints: number | null;
-  visitorCount: number;
-  coordinates: { lat: number; lng: number } | null;
-  googleSearchUrl: string;
-  accessSynthesis: ReturnType<typeof synthesizeAccess> | null;
-  accessBadgeVariant: () => "default" | "success" | "warning" | "brand";
-  canEditOfficialData: boolean;
-  isCreditsAdmin: boolean;
-  handleStatusChange: (status: "visited" | "pending" | "ignored") => Promise<void>;
-  handleRate: (buildingId: string, rating: number) => Promise<void>;
-  handleImageSelect: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
-  removePendingImage: (id: string) => void;
-  handleAddLink: () => void;
-  handleRemoveLink: (id: string) => void;
-  handleSaveNote: () => Promise<void>;
-  handleDelete: () => Promise<void>;
-  handleSendInvites: () => Promise<void>;
-  handleSetHeroImage: () => Promise<void>;
-  handleToggleOfficial: () => Promise<void>;
-  handleLinkLike: (linkId: string) => Promise<void>;
-  handleNextImage: () => void;
-  handlePrevImage: () => void;
-}
-export function useBuildingInteractions({
-  loaderBuilding,
-  initialHeroImageUrl,
-  buildingCredits,
-  buildingCreditsFingerprint,
-  user,
-  profile,
-}: UseBuildingInteractionsInput): BuildingInteractions
-⋮----
-// ── Notes / images ───────────────────────────────────────────────────────
-⋮----
-// ── Collections ──────────────────────────────────────────────────────────
-⋮----
-// ── Visit-with ───────────────────────────────────────────────────────────
-⋮----
-// ── Delete confirmation ──────────────────────────────────────────────────
-⋮----
-// ── Verified architect detection ─────────────────────────────────────────
-⋮----
-// ── Derived computeds ────────────────────────────────────────────────────
-⋮----
-// Community reviews + images
 </file>
 
 <file path="src/features/feed/components/card-parts/BuildingHeadline.tsx">

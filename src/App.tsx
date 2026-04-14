@@ -56,6 +56,9 @@ const ReviewDetails = lazyWithRetry(() => import("@/features/buildings/pages/Rev
 const Notifications = lazyWithRetry(() => import("@/features/notifications/pages/Notifications"));
 const Connect = lazyWithRetry(() => import("@/features/connect/pages/Connect"));
 const AddBuilding = lazyWithRetry(() => import("@/features/buildings/pages/AddBuilding"));
+const SubmitEvent = lazyWithRetry(() => import("@/features/events/pages/SubmitEvent"));
+const Events = lazyWithRetry(() => import("@/features/events/pages/Events"));
+const EventDetail = lazyWithRetry(() => import("@/features/events/pages/EventDetail"));
 const EditBuilding = lazyWithRetry(() => import("@/features/buildings/pages/EditBuilding"));
 const WriteReview = lazyWithRetry(() => import("@/features/buildings/pages/WriteReview"));
 const CollectionMap = lazyWithRetry(() => import("@/features/collections/components/CollectionMapPage"));
@@ -122,6 +125,7 @@ const router = createBrowserRouter(
     <Route element={<RootLayout />}>
       {/* Public / Standalone Routes */}
       <Route path="/auth" element={<Auth />} />
+      <Route path="/login" element={<Auth />} />
       <Route path="/update-password" element={<UpdatePassword />} />
       <Route path="/onboarding" element={<Onboarding />} />
       <Route path="/terms" element={<Terms />} />
@@ -179,6 +183,11 @@ const router = createBrowserRouter(
         <Route path="/add-building" element={<AddBuilding />} />
 
         <Route path="/connect" element={<Connect />} />
+
+        <Route path="/events/new" element={<SubmitEvent />} />
+        <Route path="/events/:slug/edit" element={<SubmitEvent />} />
+        <Route path="/events" element={<Events />} />
+        <Route path="/events/:slug" element={<EventDetail />} />
 
         {/* Explicit 404: avoid matching /groups/* as /:username/folders/:slug (username = "groups") */}
         <Route path="/groups/*" element={<NotFound />} />

@@ -12,6 +12,7 @@ import {
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import {
   Activity,
+  CalendarDays,
   Users,
   User as UserIcon,
   Play,
@@ -41,11 +42,25 @@ import { useClaimedPersonForNav } from "@/features/credits/hooks/useClaimedPerso
 import { useStewardCompaniesForNav } from "@/features/credits/hooks/useStewardCompaniesForNav";
 
 // ─── Nav data ────────────────────────────────────────────────────────────────
-const mainNavItems = [
-  { icon: Activity, label: "Feed",    path: "/" },
-  { icon: Play,     label: "Explore", path: "/explore" },
-  { icon: Search,   label: "Search",  path: "/search" },
-  { icon: Users,    label: "Connect", path: "/connect" },
+type MainNavItem = {
+  icon: LucideIcon;
+  label: string;
+  path: string;
+  /** Defaults to exact `pathname === path`. */
+  isActive?: (pathname: string) => boolean;
+};
+
+const mainNavItems: MainNavItem[] = [
+  { icon: Activity, label: "Feed", path: "/" },
+  {
+    icon: CalendarDays,
+    label: "Events",
+    path: "/events",
+    isActive: (pathname) => pathname === "/events" || pathname.startsWith("/events/"),
+  },
+  { icon: Play, label: "Explore", path: "/explore" },
+  { icon: Search, label: "Search", path: "/search" },
+  { icon: Users, label: "Connect", path: "/connect" },
 ];
 
 // ─── NavItem ─────────────────────────────────────────────────────────────────
@@ -256,7 +271,7 @@ export function AppSidebar() {
                   key={item.path}
                   label={item.label}
                   path={item.path}
-                  isActive={location.pathname === item.path}
+                  isActive={(item.isActive ?? ((p) => p === item.path))(location.pathname)}
                 />
               ))}
             </SidebarMenu>
