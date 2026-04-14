@@ -94,6 +94,7 @@ import {
 import { getClaimedPersonSummaryForProfile } from "@/features/credits/api/people";
 import { profileHeaderUpdateSchema } from "@/lib/validations/profile";
 import { profileLogCardImageUrl } from "@/features/profile/utils/profileLogCardImageUrl";
+import { ProfileEventsSection } from "@/features/profile/components/ProfileEventsSection";
 
 export { profileLoader as loader } from "./Profile.loader";
 
@@ -1251,6 +1252,13 @@ export default function Profile() {
               </div>
             )}
 
+            {targetUserId ? (
+              <ProfileEventsSection
+                profileUserId={targetUserId}
+                viewingUserId={currentUser?.id ?? null}
+                isOwnProfile={isOwnProfile}
+              />
+            ) : null}
           </div>
         </div>
 

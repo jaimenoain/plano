@@ -3,7 +3,7 @@ import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 interface SegmentedControlProps {
-  options: { label: string; value: string }[]
+  options: { label: React.ReactNode; value: string }[]
   value: string
   onValueChange: (value: string) => void
   className?: string

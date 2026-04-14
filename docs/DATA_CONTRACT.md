@@ -1550,7 +1550,8 @@ CREATE TABLE public.recommendations (
   id              uuid NOT NULL DEFAULT gen_random_uuid(),
   recommender_id  uuid NOT NULL,
   recipient_id    uuid NOT NULL,
-  building_id     uuid NOT NULL,
+  building_id     uuid,
+  event_id        uuid,
   status          text NOT NULL DEFAULT 'pending'
                   CHECK (status IN ('pending', 'accepted', 'ignored', 'visit_with')),
   created_at      timestamptz NOT NULL DEFAULT now(),
@@ -1558,7 +1559,12 @@ CREATE TABLE public.recommendations (
   CONSTRAINT recommendations_pkey PRIMARY KEY (id),
   CONSTRAINT recommendations_recommender_id_fkey FOREIGN KEY (recommender_id) REFERENCES public.profiles(id),
   CONSTRAINT recommendations_recipient_id_fkey FOREIGN KEY (recipient_id) REFERENCES public.profiles(id),
-  CONSTRAINT recommendations_building_id_fkey FOREIGN KEY (building_id) REFERENCES public.buildings(id)
+  CONSTRAINT recommendations_building_id_fkey FOREIGN KEY (building_id) REFERENCES public.buildings(id),
+  CONSTRAINT recommendations_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id) ON DELETE CASCADE,
+  CONSTRAINT recommendations_single_target_check CHECK (
+    (building_id IS NOT NULL AND event_id IS NULL)
+    OR (building_id IS NULL AND event_id IS NOT NULL)
+  )
 );
 
 CREATE TABLE public.blocks (

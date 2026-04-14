@@ -31,7 +31,7 @@
  * Loading: Loader2 h-8 w-8 → h-4 w-4 text-text-disabled.
  */
 import { useEffect, useState } from "react";
-import { useNavigate, type MetaFunction } from "react-router";
+import { useNavigate, Link, type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -81,7 +81,7 @@ interface Notification {
     user?: { username: string | null };
     building?: { name: string };
   };
-  metadata?: { status?: string };
+  metadata?: { status?: string; event_slug?: string; event_title?: string };
   recommendation?: {
     id?: string;
     status?: string | null;
@@ -330,6 +330,22 @@ export default function Notifications() {
               <span className="font-medium">@{actorName}</span> wants to visit{" "}
               <span className="italic">{buildingName || "a building"}</span>{" "}
               with you
+            </span>
+          );
+        }
+        if (n.metadata?.event_slug) {
+          const title = n.metadata.event_title?.trim() || "an event";
+          return (
+            <span>
+              <span className="font-medium">@{actorName}</span> recommended{" "}
+              <Link
+                to={`/events/${n.metadata.event_slug}`}
+                onClick={(e) => e.stopPropagation()}
+                className="font-medium italic text-text-primary underline underline-offset-2 hover:opacity-80"
+              >
+                {title}
+              </Link>{" "}
+              to you
             </span>
           );
         }

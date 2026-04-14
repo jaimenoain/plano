@@ -178,3 +178,25 @@ export interface FeedCollection {
   isLiked?: boolean;
   likesCount?: number;
 }
+
+/** Client-merged home-feed row: followed users RSVPed “going” (clustered by event). */
+export interface FeedEventAttendance {
+  id: string;
+  /** Synthetic: `attendance-{eventId}` */
+  rowType: "event_attendance";
+  eventId: string;
+  title: string;
+  slug: string;
+  startAt: string;
+  endAt: string | null;
+  address: string | null;
+  coverImageUrl: string | null;
+  claimStatus: string;
+  /** Followed users going — merged during aggregation */
+  actors: ReviewUser[];
+  /** Earliest `created_at` among clustered actors */
+  createdAt: string;
+}
+
+/** Union used by the home feed after merging RPC reviews with client-side slices. */
+export type FeedHomeEntry = FeedReview | FeedEventAttendance;

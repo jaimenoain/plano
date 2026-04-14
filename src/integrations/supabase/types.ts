@@ -2022,24 +2022,27 @@ export type Database = {
       }
       recommendations: {
         Row: {
-          building_id: string
+          building_id: string | null
           created_at: string
+          event_id: string | null
           id: string
           recipient_id: string
           recommender_id: string
           status: string
         }
         Insert: {
-          building_id: string
+          building_id?: string | null
           created_at?: string
+          event_id?: string | null
           id?: string
           recipient_id: string
           recommender_id: string
           status?: string
         }
         Update: {
-          building_id?: string
+          building_id?: string | null
           created_at?: string
+          event_id?: string | null
           id?: string
           recipient_id?: string
           recommender_id?: string
@@ -2051,6 +2054,13 @@ export type Database = {
             columns: ["building_id"]
             isOneToOne: false
             referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
           {

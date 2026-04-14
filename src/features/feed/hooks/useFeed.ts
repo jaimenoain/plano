@@ -1,14 +1,189 @@
-import { useInfiniteQuery, useQueryClient, InfiniteData } from "@tanstack/react-query";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { useInfiniteQuery, useQuery, useQueryClient, InfiniteData } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { FeedReview, RawFeedRow, creditedEntitiesFromRpcJson } from "@/types/feed";
+import {
+  creditedEntitiesFromRpcJson,
+  type FeedEventAttendance,
+  type FeedReview,
+  type RawFeedRow,
+  type ReviewUser,
+} from "@/types/feed";
 import { getBuildingImageUrl } from "@/utils/image";
 
 const INITIAL_PAGE_SIZE = 10;
 const SUBSEQUENT_PAGE_SIZE = 36;
 
+/** `event_attendances` may be absent from generated `Database` until `gen-types` is run. */
+const attendanceClient = supabase as unknown as SupabaseClient;
+
 interface UseFeedOptions {
   showGroupActivity: boolean;
+}
+
+type EventJoinRow = {
+  id: string;
+  title: string;
+  slug: string;
+  start_at: string;
+  end_at: string | null;
+  address: string | null;
+  cover_image_url: string | null;
+  claim_status: string;
+  is_deleted: boolean;
+};
+
+type RawAttendanceJoinRow = {
+  user_id: string;
+  created_at: string;
+  events: EventJoinRow | EventJoinRow[] | null;
+};
+
+function unwrapEvent(ev: EventJoinRow | EventJoinRow[] | null): EventJoinRow | null {
+  if (!ev) return null;
+  if (Array.isArray(ev)) return ev[0] ?? null;
+  return ev;
+}
+
+function profileToReviewUser(p: {
+  username: string | null;
+  avatar_url: string | null;
+  followers_count: number | null;
+}): ReviewUser {
+  return {
+    username: p.username,
+    avatar_url: p.avatar_url,
+    is_verified_architect: false,
+    is_architect_of_building: false,
+    followers_count: typeof p.followers_count === "number" ? p.followers_count : null,
+  };
+}
+
+async function loadFeedEventAttendance(viewerId: string): Promise<FeedEventAttendance[]> {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: followsRows, error: followsError } = await supabase
+    .from("follows")
+    .select("following_id")
+    .eq("follower_id", viewerId);
+
+  if (followsError) return [];
+
+  const followedUserIds = (followsRows ?? []).map((r) => r.following_id);
+  if (followedUserIds.length === 0) return [];
+
+  const { data: rawRows, error: rawError } = await attendanceClient
+    .from("event_attendances")
+    .select(
+      `
+      user_id,
+      created_at,
+      events!inner (
+        id,
+        title,
+        slug,
+        start_at,
+        end_at,
+        address,
+        cover_image_url,
+        claim_status,
+        is_deleted
+      )
+    `,
+    )
+    .in("user_id", followedUserIds)
+    .eq("status", "going")
+    .eq("events.is_deleted", false)
+    .gte("created_at", thirtyDaysAgo)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (rawError) return [];
+
+  const rows = (rawRows ?? []) as RawAttendanceJoinRow[];
+  const userIds = [...new Set(rows.map((r) => r.user_id))];
+  if (userIds.length === 0) return [];
+
+  const { data: profRows, error: profError } = await supabase
+    .from("profiles")
+    .select("id, username, avatar_url")
+    .in("id", userIds);
+
+  if (profError) return [];
+
+  const profileMap = new Map(
+    (profRows ?? []).map((p) => [
+      p.id,
+      {
+        username: p.username,
+        avatar_url: p.avatar_url,
+        followers_count: null as number | null,
+      },
+    ]),
+  );
+
+  type Enriched = {
+    userId: string;
+    createdAt: string;
+    event: EventJoinRow;
+    actor: ReviewUser;
+  };
+
+  const enriched: Enriched[] = [];
+  for (const r of rows) {
+    const ev = unwrapEvent(r.events);
+    if (!ev || ev.is_deleted) continue;
+    const prof = profileMap.get(r.user_id);
+    if (!prof) continue;
+    enriched.push({
+      userId: r.user_id,
+      createdAt: r.created_at,
+      event: ev,
+      actor: profileToReviewUser(prof),
+    });
+  }
+
+  const byEventId = new Map<string, Enriched[]>();
+  for (const e of enriched) {
+    const list = byEventId.get(e.event.id) ?? [];
+    list.push(e);
+    byEventId.set(e.event.id, list);
+  }
+
+  const out: FeedEventAttendance[] = [];
+  for (const [, group] of byEventId) {
+    group.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    const actorUserIds = [...new Set(group.map((g) => g.userId))];
+    if (actorUserIds.length > 0 && actorUserIds.every((id) => id === viewerId)) continue;
+
+    const actorsOrdered: ReviewUser[] = [];
+    const seen = new Set<string>();
+    for (const g of group) {
+      if (seen.has(g.userId)) continue;
+      seen.add(g.userId);
+      actorsOrdered.push(g.actor);
+    }
+
+    const earliest = group.reduce((min, g) => (g.createdAt < min ? g.createdAt : min), group[0].createdAt);
+    const ev = group[0].event;
+    out.push({
+      id: `attendance-${ev.id}`,
+      rowType: "event_attendance",
+      eventId: ev.id,
+      title: ev.title,
+      slug: ev.slug,
+      startAt: ev.start_at,
+      endAt: ev.end_at,
+      address: ev.address,
+      coverImageUrl: ev.cover_image_url,
+      claimStatus: ev.claim_status,
+      actors: actorsOrdered,
+      createdAt: earliest,
+    });
+  }
+
+  out.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return out;
 }
 
 export function useFeed({ showGroupActivity }: UseFeedOptions) {
@@ -16,6 +191,17 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
   const queryClient = useQueryClient();
 
   const queryKey = ["feed", user?.id, showGroupActivity];
+  const eventAttendanceQueryKey = ["feed-event-attendance", user?.id] as const;
+
+  const eventAttendanceQuery = useQuery({
+    queryKey: eventAttendanceQueryKey,
+    queryFn: async () => {
+      if (!user) return [];
+      return loadFeedEventAttendance(user.id);
+    },
+    enabled: !!user,
+    staleTime: 0,
+  });
 
   const query = useInfiniteQuery({
     queryKey,
@@ -232,6 +418,8 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
   return {
     ...query,
     toggleLike,
-    toggleImageLike
+    toggleImageLike,
+    eventAttendance: eventAttendanceQuery.data ?? [],
+    isEventAttendancePending: eventAttendanceQuery.isPending,
   };
 }

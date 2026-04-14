@@ -69,6 +69,8 @@ describe("Index Page", () => {
       fetchNextPage: vi.fn(),
       toggleLike: vi.fn(),
       toggleImageLike: vi.fn(),
+      eventAttendance: [],
+      isEventAttendancePending: false,
     });
 
     (useSuggestedFeed as unknown as { mockReturnValue: (v: unknown) => void }).mockReturnValue({

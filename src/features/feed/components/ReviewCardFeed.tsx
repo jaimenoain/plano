@@ -1,13 +1,18 @@
-import type { FeedReview } from "@/types/feed";
+import type { FeedEventAttendance, FeedHomeEntry, FeedReview } from "@/types/feed";
+
+function isEventAttendanceEntry(entry: FeedHomeEntry): entry is FeedEventAttendance {
+  return "rowType" in entry && entry.rowType === "event_attendance";
+}
 import { resolveCardType } from "@/features/feed/utils/resolveCardType";
 import { SuggestedContentBlock } from "@/features/feed/components/SuggestedContentBlock";
 import { FeedCardA } from "./FeedCardA";
 import { FeedCardB } from "./FeedCardB";
 import { FeedCardC } from "./FeedCardC";
 import { FeedActivityRow } from "./FeedActivityRow";
+import { FeedEventAttendanceRow } from "./FeedEventAttendanceRow";
 
 export interface ReviewCardFeedProps {
-  entry: FeedReview;
+  entry: FeedHomeEntry;
   onLike?: (reviewId: string) => void;
   onImageLike?: (reviewId: string, imageId: string) => void;
   onComment?: (reviewId: string) => void;
@@ -35,14 +40,23 @@ export function ReviewCardFeed({
   showCommunityImages = true,
   typeBAlternateIndex = 0,
 }: ReviewCardFeedProps) {
-  const t = resolveCardType(entry);
+  if (isEventAttendanceEntry(entry)) {
+    return (
+      <div className="contents" data-testid={`review-card-feed-${entry.id}`}>
+        <FeedEventAttendanceRow entry={entry} />
+      </div>
+    );
+  }
+
+  const review: FeedReview = entry;
+  const t = resolveCardType(review);
 
   if (t === "activity") {
     return (
-      <div className="contents" data-testid={`review-card-feed-${entry.id}`}>
+      <div className="contents" data-testid={`review-card-feed-${review.id}`}>
         <FeedActivityRow
-          entry={entry}
-          activityStatus={entry.status === "pending" ? "pending" : "visited"}
+          entry={review}
+          activityStatus={review.status === "pending" ? "pending" : "visited"}
           hideUser={hideUser}
           showCommunityImages={showCommunityImages}
         />
@@ -53,7 +67,7 @@ export function ReviewCardFeed({
   const inner =
     t === "A" ? (
       <FeedCardA
-        entry={entry}
+        entry={review}
         hideUser={hideUser}
         hideBuildingInfo={hideBuildingInfo}
         showCommunityImages={showCommunityImages}
@@ -62,7 +76,7 @@ export function ReviewCardFeed({
       />
     ) : t === "B" ? (
       <FeedCardB
-        entry={entry}
+        entry={review}
         index={typeBAlternateIndex}
         hideUser={hideUser}
         hideBuildingInfo={hideBuildingInfo}
@@ -73,7 +87,7 @@ export function ReviewCardFeed({
       />
     ) : (
       <FeedCardC
-        entry={entry}
+        entry={review}
         hideUser={hideUser}
         hideBuildingInfo={hideBuildingInfo}
         showCommunityImages={showCommunityImages}
@@ -84,8 +98,8 @@ export function ReviewCardFeed({
     );
 
   return (
-    <div className="contents" data-testid={`review-card-feed-${entry.id}`}>
-      <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
+    <div className="contents" data-testid={`review-card-feed-${review.id}`}>
+      <SuggestedContentBlock isSuggested={review.is_suggested} suggestionReason={review.suggestion_reason}>
         {inner}
       </SuggestedContentBlock>
     </div>

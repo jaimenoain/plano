@@ -223,27 +223,11 @@ function toCard(dto: EventDTO): EventCardDTO {
   };
 }
 
-export async function getUpcomingEvents(page: number): Promise<EventCardDTO[]> {
-  if (page < 0 || !Number.isFinite(page)) {
-    throwApiError("invalid_page", "Page must be a non-negative number.");
-  }
+export const EVENT_CARD_LIST_COLUMNS =
+  "id, title, description, slug, start_at, end_at, address, location, external_link, cover_image_url, is_self_hosted, claim_status, submitted_by_user_id, organiser_user_id, organiser_person_id, organiser_company_id, is_deleted, created_at, updated_at";
 
-  const from = page * UPCOMING_EVENTS_PAGE_SIZE;
-  const to = from + UPCOMING_EVENTS_PAGE_SIZE - 1;
-
-  const { data: rows, error } = await supabase
-    .from("events")
-    .select(
-      "id, title, description, slug, start_at, end_at, address, location, external_link, cover_image_url, is_self_hosted, claim_status, submitted_by_user_id, organiser_user_id, organiser_person_id, organiser_company_id, is_deleted, created_at, updated_at",
-    )
-    .eq("is_deleted", false)
-    .gte("start_at", new Date().toISOString())
-    .order("start_at", { ascending: true })
-    .range(from, to);
-
-  if (error) throwApiError("events_list_failed", "Could not load upcoming events.");
-
-  const list = rows ?? [];
+/** Hydrates raw `events` rows into card DTOs (no building joins). */
+export async function hydrateEventRowsToCards(list: EventRow[]): Promise<EventCardDTO[]> {
   if (list.length === 0) return [];
 
   const profileIds: string[] = [];
@@ -261,6 +245,27 @@ export async function getUpcomingEvents(page: number): Promise<EventCardDTO[]> {
   ]);
 
   return list.map((r) => toCard(rowToEventDTO(r, profiles, people, companies, [], undefined, undefined)));
+}
+
+export async function getUpcomingEvents(page: number): Promise<EventCardDTO[]> {
+  if (page < 0 || !Number.isFinite(page)) {
+    throwApiError("invalid_page", "Page must be a non-negative number.");
+  }
+
+  const from = page * UPCOMING_EVENTS_PAGE_SIZE;
+  const to = from + UPCOMING_EVENTS_PAGE_SIZE - 1;
+
+  const { data: rows, error } = await supabase
+    .from("events")
+    .select(EVENT_CARD_LIST_COLUMNS)
+    .eq("is_deleted", false)
+    .gte("start_at", new Date().toISOString())
+    .order("start_at", { ascending: true })
+    .range(from, to);
+
+  if (error) throwApiError("events_list_failed", "Could not load upcoming events.");
+
+  return hydrateEventRowsToCards(rows ?? []);
 }
 
 export async function getEventBySlug(slug: string): Promise<EventDTO> {
@@ -320,31 +325,12 @@ export async function getEventsByBuilding(buildingId: string): Promise<EventCard
 
   const { data: rows, error } = await supabase
     .from("events")
-    .select(
-      "id, title, description, slug, start_at, end_at, address, location, external_link, cover_image_url, is_self_hosted, claim_status, submitted_by_user_id, organiser_user_id, organiser_person_id, organiser_company_id, is_deleted, created_at, updated_at",
-    )
+    .select(EVENT_CARD_LIST_COLUMNS)
     .in("id", eventIds)
     .eq("is_deleted", false)
     .order("start_at", { ascending: true });
 
   if (error) throwApiError("events_by_building_failed", "Could not load events for this building.");
 
-  const list = rows ?? [];
-  if (list.length === 0) return [];
-
-  const profileIds: string[] = [];
-  for (const r of list) {
-    profileIds.push(r.submitted_by_user_id);
-    if (r.organiser_user_id) profileIds.push(r.organiser_user_id);
-  }
-  const personIds = list.map((r) => r.organiser_person_id).filter((x): x is string => Boolean(x));
-  const companyIds = list.map((r) => r.organiser_company_id).filter((x): x is string => Boolean(x));
-
-  const [profiles, people, companies] = await Promise.all([
-    fetchProfilesByIds(profileIds),
-    fetchPeopleByIds(personIds),
-    fetchCompaniesByIds(companyIds),
-  ]);
-
-  return list.map((r) => toCard(rowToEventDTO(r, profiles, people, companies, [], undefined, undefined)));
+  return hydrateEventRowsToCards(rows ?? []);
 }

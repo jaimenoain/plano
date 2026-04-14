@@ -8,7 +8,11 @@ import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SITE_URL } from "@/features/buildings/utils/structuredData";
-import { aggregateFeed, type AggregatedFeedItem } from "@/lib/feed-aggregation";
+import {
+  aggregateFeed,
+  mergeAggregatedFeedWithEventAttendance,
+  type AggregatedFeedItem,
+} from "@/lib/feed-aggregation";
 import { FeedClusterCard } from "../components/FeedClusterCard";
 import { ReviewCardFeed } from "../components/ReviewCardFeed";
 import { ActivityStreamGroup } from "../components/ActivityStream";
@@ -138,6 +142,11 @@ export default function Index() {
     [socialFeed.data]
   );
   const aggregatedReviews = useMemo(() => aggregateFeed(socialReviews), [socialReviews]);
+  const eventAttendance = socialFeed.eventAttendance ?? [];
+  const mergedHomeRows = useMemo(
+    () => mergeAggregatedFeedWithEventAttendance(aggregatedReviews, eventAttendance),
+    [aggregatedReviews, eventAttendance],
+  );
   const collectionItems = useMemo(
     () => collectionsFeed.data?.pages.flatMap((p) => p) || [],
     [collectionsFeed.data]
@@ -164,13 +173,13 @@ export default function Index() {
 
   return (
     <AppLayout>
-      {socialFeed.isLoading ? (
+      {socialFeed.isLoading || socialFeed.isEventAttendancePending ? (
         <div className="flex items-center justify-center min-h-[60vh]">
           <Loader2 className="h-10 w-10 animate-spin text-text-secondary" />
         </div>
       ) : (
         <div className="p-4 sm:p-6 lg:p-8 pb-24 mx-auto w-full">
-          {socialReviews.length === 0 ? (
+          {socialReviews.length === 0 && eventAttendance.length === 0 ? (
             // --- Cold-start state: new user with no social feed yet ---
             <div className="max-w-4xl mx-auto">
               <div className="flex flex-col gap-16 lg:gap-20">
@@ -329,8 +338,19 @@ export default function Index() {
                   let discoveryCursor = 0;
                   let hasShownDivider = false;
 
-                  aggregatedReviews.forEach((item, index) => {
-                    processAggregatedItem(item);
+                  mergedHomeRows.forEach((row, index) => {
+                    if (row.kind === "event_attendance") {
+                      feedNodes.push(
+                        <div
+                          key={`feed-attendance-${row.entry.eventId}`}
+                          className="border-b border-border-default pb-10 mb-10"
+                        >
+                          <ReviewCardFeed entry={row.entry} />
+                        </div>,
+                      );
+                    } else {
+                      processAggregatedItem(row.item);
+                    }
                     const n = index + 1;
                     if (n % 4 === 0 && collectionCursor < collectionItems.length) {
                       const col = collectionItems[collectionCursor];

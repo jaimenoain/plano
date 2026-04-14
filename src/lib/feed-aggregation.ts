@@ -1,6 +1,6 @@
 import { resolveCardType } from "@/features/feed/utils/resolveCardType";
 import type { CardType } from "@/types/cards";
-import { FeedReview } from "@/types/feed";
+import type { FeedEventAttendance, FeedReview } from "@/types/feed";
 import { differenceInHours } from "date-fns";
 
 export type RowCell =
@@ -37,6 +37,52 @@ export type AggregatedFeedItem =
 const getReviewDate = (review: FeedReview) => {
   return review.edited_at ? new Date(review.edited_at) : new Date(review.created_at);
 };
+
+/** ISO-ish timestamp for merging attendance rows with aggregated feed order (newest first). */
+export function aggregatedItemTime(item: AggregatedFeedItem): string {
+  switch (item.type) {
+    case "hero":
+    case "compact":
+    case "activity":
+      return item.entry.edited_at ?? item.entry.created_at;
+    case "cluster":
+      return item.timestamp;
+    case "row": {
+      const left = item.left.entry.edited_at ?? item.left.entry.created_at;
+      const right = item.right.entry.edited_at ?? item.right.entry.created_at;
+      return left >= right ? left : right;
+    }
+  }
+}
+
+export type MergedHomeFeedRow =
+  | { kind: "aggregated"; item: AggregatedFeedItem }
+  | { kind: "event_attendance"; entry: FeedEventAttendance };
+
+/**
+ * Interleaves clustered event-attendance cards with aggregated review rows by recency.
+ */
+export function mergeAggregatedFeedWithEventAttendance(
+  items: AggregatedFeedItem[],
+  attendance: FeedEventAttendance[],
+): MergedHomeFeedRow[] {
+  const attSorted = [...attendance].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const out: MergedHomeFeedRow[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < items.length || j < attSorted.length) {
+    const aggTime = i < items.length ? aggregatedItemTime(items[i]) : "";
+    const attTime = j < attSorted.length ? attSorted[j].createdAt : "";
+    if (j >= attSorted.length || (i < items.length && aggTime >= attTime)) {
+      out.push({ kind: "aggregated", item: items[i] });
+      i += 1;
+    } else {
+      out.push({ kind: "event_attendance", entry: attSorted[j] });
+      j += 1;
+    }
+  }
+  return out;
+}
 
 /** Pairs adjacent `compact+compact` into `row` items; activity items stay separate for stream grouping. */
 export function collapseIntoRows(items: AggregatedFeedItem[]): AggregatedFeedItem[] {

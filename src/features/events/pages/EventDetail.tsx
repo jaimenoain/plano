@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useParams } from "react-router";
+import { useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router";
 import { format, isSameDay, parseISO } from "date-fns";
 import { enGB } from "date-fns/locale";
 import { ExternalLink, MapPin, Pencil, BadgeCheck } from "lucide-react";
@@ -10,9 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useEvent } from "@/features/events/hooks/useEvent";
-import type { EventDTO, EventOrganiser, EventsApiError } from "@/features/events/types";
+import type { EventCardDTO, EventDTO, EventOrganiser, EventsApiError } from "@/features/events/types";
 import { getBuildingUrl } from "@/utils/url";
 import { cn } from "@/lib/utils";
+import { RecommendDialog } from "@/components/common/RecommendDialog";
 
 function isEventsApiError(e: unknown): e is EventsApiError {
   return (
@@ -52,6 +53,16 @@ function organiserNameLink(org: EventOrganiser): { href: string; label: string }
   if (org.kind === "company" && org.slug) return { href: `/company/${org.slug}`, label };
   if (org.kind === "user" && org.displayName) return { href: `/profile/${org.displayName}`, label };
   return null;
+}
+
+function eventDtoToCardDto(dto: EventDTO): EventCardDTO {
+  const { buildings, description, ...rest } = dto;
+  void buildings;
+  if (description == null) {
+    return { ...rest, description: null };
+  }
+  const truncated = description.length > 160 ? `${description.slice(0, 157)}...` : description;
+  return { ...rest, description: truncated };
 }
 
 function metaDescription(event: EventDTO): string {
@@ -100,10 +111,18 @@ function NotFoundState({ slug }: { slug: string | undefined }) {
 export default function EventDetail() {
   const { slug: slugParam } = useParams();
   const slug = slugParam ?? "";
+  const navigate = useNavigate();
   const { user } = useAuth();
   const query = useEvent(slug);
   const [coverFailed, setCoverFailed] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
+  const [recommendOpen, setRecommendOpen] = useState(false);
+
+  const eventCard = useMemo(
+    () => (query.data ? eventDtoToCardDto(query.data) : null),
+    [query.data],
+  );
+  const loginRedirectPath = query.data ? `/events/${query.data.slug}` : slug.trim() ? `/events/${slug}` : "/events";
 
   if (!slug.trim()) {
     return <NotFoundState slug={slugParam} />;
@@ -179,6 +198,26 @@ export default function EventDetail() {
               </p>
             ) : null}
           </header>
+
+          <section aria-label="Recommend this event" className="flex flex-wrap items-center gap-3">
+            {eventCard ? (
+              <RecommendDialog mode="event" event={eventCard} open={recommendOpen} onOpenChange={setRecommendOpen} />
+            ) : null}
+            {user ? (
+              <Button type="button" variant="outline" size="sm" onClick={() => setRecommendOpen(true)}>
+                Recommend
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/login?redirect=${encodeURIComponent(loginRedirectPath)}`)}
+              >
+                Recommend
+              </Button>
+            )}
+          </section>
 
           <section aria-label="Organiser" className="border-t border-border-default pt-6">
             {event.claimStatus === "unclaimed" && !event.organiser ? (

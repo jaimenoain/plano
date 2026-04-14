@@ -1,0 +1,103 @@
+import { useState, type ReactNode } from "react";
+import { Link } from "react-router";
+import { format, parseISO } from "date-fns";
+import { enGB } from "date-fns/locale";
+import { CalendarDays } from "lucide-react";
+import type { FeedEventAttendance } from "@/types/feed";
+import { cn } from "@/lib/utils";
+
+function formatWhen(iso: string): string {
+  try {
+    return format(parseISO(iso), "EEE d MMM · HH:mm", { locale: enGB });
+  } catch {
+    return "";
+  }
+}
+
+function actorLine(actors: FeedEventAttendance["actors"]): ReactNode {
+  const withUser = actors.filter((a) => a.username?.trim());
+  if (withUser.length === 0) {
+    return <>Someone is going to </>;
+  }
+  const linkUser = (u: (typeof withUser)[0]) => (
+    <Link
+      key={u.username ?? ""}
+      to={`/profile/${u.username}`}
+      className="font-medium text-text-primary underline-offset-2 hover:underline"
+    >
+      @{u.username}
+    </Link>
+  );
+  if (withUser.length === 1) {
+    return (
+      <>
+        {linkUser(withUser[0])} is going to{" "}
+      </>
+    );
+  }
+  if (withUser.length === 2) {
+    return (
+      <>
+        {linkUser(withUser[0])} and {linkUser(withUser[1])} are going to{" "}
+      </>
+    );
+  }
+  const others = withUser.length - 2;
+  return (
+    <>
+      {linkUser(withUser[0])}, {linkUser(withUser[1])} and {others} other{others === 1 ? "" : "s"} are going to{" "}
+    </>
+  );
+}
+
+export interface FeedEventAttendanceRowProps {
+  entry: FeedEventAttendance;
+  className?: string;
+}
+
+export function FeedEventAttendanceRow({ entry, className }: FeedEventAttendanceRowProps) {
+  const [coverFailed, setCoverFailed] = useState(false);
+  const showCover = Boolean(entry.coverImageUrl) && !coverFailed;
+  const actorNodes = actorLine(entry.actors);
+  const whenLabel = formatWhen(entry.startAt);
+
+  return (
+    <div
+      data-testid={`feed-event-attendance-${entry.eventId}`}
+      className={cn(
+        "flex min-w-0 items-center gap-2 border-b border-border-default py-3 md:gap-4",
+        className,
+      )}
+    >
+      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-surface-muted">
+        {showCover ? (
+          <img
+            src={entry.coverImageUrl!}
+            alt=""
+            className="h-full w-full object-cover"
+            loading="lazy"
+            onError={() => setCoverFailed(true)}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-text-secondary">
+            <CalendarDays className="h-6 w-6" aria-hidden />
+          </div>
+        )}
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <p className="min-w-0 font-sans text-2xs tracking-[0.12em] text-text-secondary">
+          <span className="font-medium text-text-primary">{actorNodes}</span>
+        </p>
+        <Link
+          to={`/events/${entry.slug}`}
+          className="min-w-0 font-sans text-[1.3125rem] font-black tracking-tight leading-none text-text-primary line-clamp-1 hover:opacity-80"
+        >
+          {entry.title}
+        </Link>
+        {whenLabel ? (
+          <p className="font-sans text-2xs tracking-[0.12em] uppercase text-text-secondary">{whenLabel}</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}

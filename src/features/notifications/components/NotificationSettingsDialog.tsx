@@ -22,7 +22,7 @@ const NOTIFICATION_GROUPS = [
       { id: "follow", label: "New followers" },
       { id: "friend_joined", label: "Friend joined Plano" },
       { id: "suggest_follow", label: "Suggested follows" },
-      { id: "recommendation", label: "Building recommendations & Invites" },
+      { id: "recommendation", label: "Recommendations & invites" },
     ],
   },
   {
