@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { ArrowRight, MapPin, Loader2 } from "lucide-react";
 import { useDiscoveryFeed } from "../hooks/useDiscoveryFeed";
 import { getBuildingImageUrl } from "@/utils/image";
+import { getBuildingUrl } from "@/utils/url";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -55,7 +56,7 @@ export function ExploreTeaserBlock({ className }: ExploreTeaserBlockProps) {
         {buildings.map((building) => (
           <Link
             key={building.id}
-            to={`/building/${building.id}/${building.slug || 'details'}`}
+            to={getBuildingUrl(building.id, building.slug, building.short_id)}
             className="snap-start shrink-0 w-[260px] group relative aspect-[4/3] rounded-sm overflow-hidden bg-surface-muted border border-border-default shadow-none transition-all"
           >
              {/* Image */}

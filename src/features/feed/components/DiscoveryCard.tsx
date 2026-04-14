@@ -29,6 +29,7 @@
 import { useState, useRef, useEffect, useMemo, type RefCallback } from "react";
 import { DiscoveryBuilding, type CreditSummary } from "@/features/search/components/types";
 import { getBuildingImageUrl } from "@/utils/image";
+import { getBuildingUrl } from "@/utils/url";
 import { Bookmark } from "lucide-react";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { supabase } from "@/integrations/supabase/client";
@@ -346,7 +347,7 @@ export function DiscoveryCard({
         {/* Building name — full width, no save icon */}
         <div className="mb-0.5">
           <Link
-            to={`/building/${building.id}/${building.slug || "details"}`}
+            to={getBuildingUrl(building.id, building.slug, (building as { short_id?: number | null }).short_id)}
             className="pointer-events-auto hover:opacity-80 transition-opacity block"
           >
             <h2 className="text-4xl sm:text-5xl font-bold tracking-tight leading-none">

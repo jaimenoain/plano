@@ -217,7 +217,7 @@ export function BuildingPopupContent({
     }
   };
 
-  const buildingUrl = cluster.slug ? `/building/${cluster.slug}` : `/building/${cluster.id}`;
+  const buildingUrl = cluster.slug ? `/building/${cluster.slug}` : undefined;
 
   // Custom Marker Logic
   if (cluster.is_custom_marker) {

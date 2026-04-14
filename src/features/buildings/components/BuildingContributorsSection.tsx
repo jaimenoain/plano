@@ -15,9 +15,11 @@ export function BuildingContributorsSection({ buildingId }: BuildingContributors
 
   if (isLoading) {
     return (
-      <section id="contributors" className="mt-12 border-t border-border-default px-4 pt-8 pb-12">
-        <ContributorsSectionHeading />
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-2">
+      <section id="contributors" className="mt-12 border-t border-border-default pt-10 pb-12">
+        <p className="mb-6 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+          Community contributors
+        </p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <ContributorCardSkeleton key={i} />
           ))}
@@ -29,9 +31,11 @@ export function BuildingContributorsSection({ buildingId }: BuildingContributors
   if (!entries || entries.length === 0) return null;
 
   return (
-    <section id="contributors" className="mt-12 border-t border-border-default px-4 pt-8 pb-12">
-      <ContributorsSectionHeading />
-      <div className="mt-4 grid grid-cols-2 gap-3">
+    <section id="contributors" className="mt-12 border-t border-border-default pt-10 pb-12">
+      <p className="mb-6 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+        Community contributors
+      </p>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {entries.map((entry, i) => (
           <ContributorCard
             key={`${entry.role}-${entry.user.id}-${i}`}
@@ -47,14 +51,6 @@ export function BuildingContributorsSection({ buildingId }: BuildingContributors
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-
-function ContributorsSectionHeading() {
-  return (
-    <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-text-tertiary">
-      Community contributors
-    </p>
-  );
-}
 
 interface ContributorCardProps {
   username:  string;
@@ -72,19 +68,19 @@ function ContributorCard({ username, avatarUrl, roleLabel, detail }: Contributor
       to={`/profile/${username}`}
       className="group flex items-center gap-3 rounded-lg border border-border-tertiary bg-background-secondary px-3 py-3 no-underline transition-colors hover:border-border-secondary hover:bg-background-primary"
     >
-      <Avatar className="h-8 w-8 shrink-0">
+      <Avatar className="h-9 w-9 shrink-0 ring-1 ring-border-tertiary transition-shadow group-hover:ring-border-secondary">
         <AvatarImage src={resolvedAvatarUrl} alt={username} />
-        <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+        <AvatarFallback className="text-xs font-medium">{initials}</AvatarFallback>
       </Avatar>
       <div className="min-w-0">
-        <p className="font-mono text-[9px] uppercase tracking-[0.12em] text-text-tertiary">
+        <p className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
           {roleLabel}
         </p>
         <p className="truncate text-sm font-medium text-text-primary">
           @{username}
         </p>
         {detail && (
-          <p className="truncate font-mono text-[9px] uppercase tracking-[0.1em] text-text-tertiary">
+          <p className="truncate text-[10px] text-text-secondary">
             {detail}
           </p>
         )}
@@ -96,10 +92,10 @@ function ContributorCard({ username, avatarUrl, roleLabel, detail }: Contributor
 function ContributorCardSkeleton() {
   return (
     <div className="flex items-center gap-3 rounded-lg border border-border-tertiary bg-background-secondary px-3 py-3">
-      <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+      <Skeleton className="h-9 w-9 shrink-0 rounded-full" />
       <div className="flex-1 space-y-1.5">
-        <Skeleton className="h-2.5 w-20" />
-        <Skeleton className="h-3.5 w-28" />
+        <Skeleton className="h-2.5 w-16" />
+        <Skeleton className="h-3.5 w-24" />
       </div>
     </div>
   );

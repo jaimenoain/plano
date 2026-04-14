@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getBuildingImageUrl } from "@/utils/image";
+import { getBuildingUrl } from "@/utils/url";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface TrendingBuilding {
@@ -120,7 +121,7 @@ export function TrendingBuildings() {
           )
           : buildings.map((building, index) => {
               const imageUrl = getBuildingImageUrl(building.hero_image_url);
-              const href = `/building/${building.id}/${building.slug ?? "details"}`;
+              const href = getBuildingUrl(building.id, building.slug, building.short_id);
               return (
                 <Link
                   key={building.id}

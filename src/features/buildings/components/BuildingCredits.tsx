@@ -23,6 +23,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getStorageAssetUrl } from "@/utils/image";
 import { cn } from "@/lib/utils";
 
 const FLAG_REASON_OPTIONS: { value: FlagReason; label: string }[] = [
@@ -105,6 +107,15 @@ function projectHref(url: string): string {
   const t = url.trim();
   if (!t) return t;
   return t.startsWith("http") ? t : `https://${t}`;
+}
+
+function creditAvatarSrc(credit: BuildingCreditWithEntities): string | undefined {
+  return getStorageAssetUrl(credit.person?.avatarUrl ?? credit.company?.logoUrl);
+}
+
+function creditInitials(credit: BuildingCreditWithEntities): string {
+  const name = credit.person?.name ?? credit.company?.name ?? "?";
+  return name.slice(0, 2).toUpperCase();
 }
 
 function EntityLinks({ credit }: { credit: BuildingCreditWithEntities }) {
@@ -273,10 +284,10 @@ function CreditFlagTrigger({
       type="button"
       variant="ghost"
       size="icon"
-      className="h-8 w-8 shrink-0 text-text-secondary hover:text-text-primary"
+      className="h-7 w-7 shrink-0 text-text-disabled hover:text-text-secondary"
       aria-label="Report issue with this credit"
     >
-      <Flag className="h-4 w-4" aria-hidden />
+      <Flag className="h-3.5 w-3.5" aria-hidden />
     </Button>
   );
 
@@ -287,11 +298,11 @@ function CreditFlagTrigger({
           type="button"
           variant="ghost"
           size="icon"
-          className="h-8 w-8 shrink-0 text-text-secondary hover:text-text-primary"
+          className="h-7 w-7 shrink-0 text-text-disabled hover:text-text-secondary"
           aria-label="Report issue with this credit"
           onClick={() => setOpen(true)}
         >
-          <Flag className="h-4 w-4" aria-hidden />
+          <Flag className="h-3.5 w-3.5" aria-hidden />
         </Button>
         <Sheet
           open={open}
@@ -362,6 +373,9 @@ function BuildingCreditRow({
     credit.status !== "hidden" &&
     !sessionFlaggedIds.has(credit.id);
 
+  const avatarSrc = creditAvatarSrc(credit);
+  const initials = creditInitials(credit);
+
   return (
     <div
       className={cn(
@@ -369,53 +383,66 @@ function BuildingCreditRow({
         className,
       )}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1 space-y-2">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <EntityLinks credit={credit} />
-            {credit.isLead ? (
-              <span className="text-2xs font-medium uppercase tracking-widest text-text-secondary">Lead</span>
-            ) : null}
-            {credit.status === "verified" ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex shrink-0" tabIndex={0}>
-                    <BadgeCheck className="h-4 w-4 text-text-primary" aria-label="Verified credit" />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>Verified credit</TooltipContent>
-              </Tooltip>
-            ) : null}
-            {credit.status === "flagged" ? (
-              <span className="text-2xs font-medium uppercase tracking-widest text-destructive">Flagged</span>
-            ) : null}
+      <div className="flex gap-3">
+        <Avatar className="mt-0.5 h-9 w-9 shrink-0 ring-1 ring-border-tertiary">
+          <AvatarImage src={avatarSrc} alt={initials} />
+          <AvatarFallback className="text-xs font-medium">{initials}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0 flex-1 space-y-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <EntityLinks credit={credit} />
+                {credit.isLead ? (
+                  <span className="text-2xs font-medium uppercase tracking-widest text-text-secondary">Lead</span>
+                ) : null}
+                {credit.status === "verified" ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex shrink-0" tabIndex={0}>
+                        <BadgeCheck className="h-4 w-4 text-text-primary" aria-label="Verified credit" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>Verified credit</TooltipContent>
+                  </Tooltip>
+                ) : null}
+                {credit.status === "flagged" ? (
+                  <span className="text-2xs font-medium uppercase tracking-widest text-destructive">Flagged</span>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <span className="text-xs text-text-secondary">{roleLabel}</span>
+                {years ? (
+                  <>
+                    <span className="text-text-disabled">·</span>
+                    <span className="text-xs text-text-secondary">{years}</span>
+                  </>
+                ) : null}
+              </div>
+              {credit.contributionNotes?.trim() ? (
+                <p className="text-sm leading-relaxed text-text-secondary">{credit.contributionNotes.trim()}</p>
+              ) : null}
+            </div>
+            <div className="flex shrink-0 items-center gap-0.5">
+              {project ? (
+                <a
+                  href={projectHref(project)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center text-text-disabled hover:text-text-secondary"
+                  aria-label="Open project link"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                </a>
+              ) : null}
+              <CreditFlagTrigger
+                creditId={credit.id}
+                buildingId={buildingId}
+                show={showFlag}
+                onReported={() => onFlagSessionMarked(credit.id)}
+              />
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-secondary">
-            <span>{roleLabel}</span>
-            {years ? <span>{years}</span> : null}
-          </div>
-          {credit.contributionNotes?.trim() ? (
-            <p className="text-sm leading-relaxed text-text-secondary">{credit.contributionNotes.trim()}</p>
-          ) : null}
-        </div>
-        <div className="flex shrink-0 items-start gap-1">
-          {project ? (
-            <a
-              href={projectHref(project)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center text-text-secondary hover:text-text-primary"
-              aria-label="Open project link"
-            >
-              <ExternalLink className="h-4 w-4" aria-hidden />
-            </a>
-          ) : null}
-          <CreditFlagTrigger
-            creditId={credit.id}
-            buildingId={buildingId}
-            show={showFlag}
-            onReported={() => onFlagSessionMarked(credit.id)}
-          />
         </div>
       </div>
     </div>
@@ -441,16 +468,16 @@ function TierRoleSections({
   const byRole = groupTierByRole(credits);
   const tierTitle = `${tierHeadingLabel(tier)} credits`;
   return (
-    <section className="mt-10 first:mt-0" aria-label={tierTitle}>
+    <section className="first:mt-0" aria-label={tierTitle}>
       {showTierHeading ? (
-        <h3 className="mb-4 text-xs font-medium uppercase tracking-widest text-text-secondary">
+        <h3 className="mb-5 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
           {tierTitle}
         </h3>
       ) : null}
-      <div className="space-y-8">
+      <div className="space-y-6">
         {[...byRole.entries()].map(([role, rows]) => (
           <div key={role}>
-            <h4 className="mb-3 text-sm font-medium text-text-primary">
+            <h4 className="mb-1 text-xs font-medium uppercase tracking-wider text-text-secondary">
               {formatCreditRoleLabel(role, rows[0]?.roleCustom ?? null)}
             </h4>
             <div>
@@ -474,7 +501,7 @@ function TierRoleSections({
 export interface BuildingCreditsProps {
   credits: BuildingCreditWithEntities[];
   buildingId: string;
-  /** When true, show “Add a credit” and open the submission sheet (`AddCreditForm`). */
+  /** When true, show "Add a credit" and open the submission sheet (`AddCreditForm`). */
   isAuthenticated: boolean;
   /** When true, include `status = flagged` rows and show a Flagged badge (building moderators). */
   isAdmin?: boolean;
@@ -495,9 +522,11 @@ export function BuildingCredits({
   const { primary, contributor, ancillary } = groupByTier(visibleCredits);
   const { sessionIds, markAndBump } = useSessionFlaggedCreditBump();
 
+  const hasBothTiers = primary.length > 0 && contributor.length > 0;
+
   return (
     <section className="border-t border-border-default pt-10" aria-labelledby="building-credits-heading">
-      <h2 id="building-credits-heading" className="text-xs font-medium uppercase tracking-widest text-text-secondary mb-6">
+      <h2 id="building-credits-heading" className="mb-8 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
         Credits
       </h2>
 
@@ -505,22 +534,27 @@ export function BuildingCredits({
         <p className="text-sm text-text-secondary">No credits listed yet.</p>
       ) : (
         <>
-          <TierRoleSections
-            tier="primary"
-            credits={primary}
-            buildingId={buildingId}
-            sessionFlaggedIds={sessionIds}
-            onFlagSessionMarked={markAndBump}
-          />
-          <TierRoleSections
-            tier="contributor"
-            credits={contributor}
-            buildingId={buildingId}
-            sessionFlaggedIds={sessionIds}
-            onFlagSessionMarked={markAndBump}
-          />
+          <div className={cn(
+            "grid grid-cols-1",
+            hasBothTiers && "gap-x-10 lg:grid-cols-2",
+          )}>
+            <TierRoleSections
+              tier="primary"
+              credits={primary}
+              buildingId={buildingId}
+              sessionFlaggedIds={sessionIds}
+              onFlagSessionMarked={markAndBump}
+            />
+            <TierRoleSections
+              tier="contributor"
+              credits={contributor}
+              buildingId={buildingId}
+              sessionFlaggedIds={sessionIds}
+              onFlagSessionMarked={markAndBump}
+            />
+          </div>
           {ancillary.length > 0 ? (
-            <div className="mt-10">
+            <div className="mt-8">
               <Collapsible open={ancillaryOpen} onOpenChange={setAncillaryOpen}>
                 <CollapsibleTrigger
                   type="button"
@@ -579,57 +613,55 @@ export interface BuildingCreditsPreviewProps {
   isAuthenticated?: boolean;
 }
 
-function PrimaryPreviewNameRow({
+function CreditPreviewRow({
   credit,
-  showLeadLabel,
+  showLead,
 }: {
   credit: BuildingCreditWithEntities;
-  showLeadLabel: boolean;
+  showLead: boolean;
 }) {
   const { person, company } = credit;
+  const primaryName = person?.name ?? company?.name ?? "Unknown";
+  const avatarSrc = creditAvatarSrc(credit);
+  const initials = creditInitials(credit);
 
   return (
-    <li className="flex flex-wrap items-baseline gap-x-1 py-0.5">
-      {person ? (
-        <Link
-          to={`/person/${person.slug}`}
-          className="text-sm font-medium text-text-primary underline-offset-4 hover:underline"
-        >
-          {person.name}
-        </Link>
-      ) : company ? (
-        <Link
-          to={`/company/${company.slug}`}
-          className="text-sm font-medium text-text-primary underline-offset-4 hover:underline"
-        >
-          {company.name}
-        </Link>
-      ) : (
-        <span className="text-sm text-text-secondary">Unknown</span>
-      )}
-      {person && company ? (
-        <>
-          <span className="text-xs text-text-secondary">@</span>
+    <div className="flex items-center gap-2.5">
+      <Avatar className="h-7 w-7 shrink-0 ring-1 ring-border-tertiary">
+        <AvatarImage src={avatarSrc} alt={primaryName} />
+        <AvatarFallback className="text-[10px] font-medium">{initials}</AvatarFallback>
+      </Avatar>
+      <div className="flex min-w-0 flex-wrap items-baseline gap-x-1">
+        {person ? (
+          <Link
+            to={`/person/${person.slug}`}
+            className="text-sm font-medium text-text-primary underline-offset-4 hover:underline"
+          >
+            {person.name}
+          </Link>
+        ) : null}
+        {person && company ? <span className="text-xs text-text-secondary">@</span> : null}
+        {company ? (
           <Link
             to={`/company/${company.slug}`}
             className="text-sm font-medium text-text-primary underline-offset-4 hover:underline"
           >
             {company.name}
           </Link>
-        </>
-      ) : null}
-      {showLeadLabel && credit.isLead ? (
-        <span className="ml-1 text-2xs font-medium uppercase tracking-widest text-text-disabled">
-          Lead
-        </span>
-      ) : null}
-      {credit.status === "verified" ? (
-        <BadgeCheck
-          className="ml-0.5 h-3 w-3 shrink-0 text-text-primary"
-          aria-label="Verified"
-        />
-      ) : null}
-    </li>
+        ) : null}
+        {!person && !company ? (
+          <span className="text-sm text-text-secondary">Unknown</span>
+        ) : null}
+        {showLead && credit.isLead ? (
+          <span className="text-2xs font-medium uppercase tracking-widest text-text-disabled">
+            Lead
+          </span>
+        ) : null}
+        {credit.status === "verified" ? (
+          <BadgeCheck className="h-3 w-3 shrink-0 self-center text-text-primary" aria-label="Verified" />
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -642,13 +674,20 @@ export function BuildingCreditsPreview({
     [credits],
   );
 
-  const primaryPreview = useMemo(
-    () => sortRowsInRole(visiblePrimaryCredits(visibleCredits)),
-    [visibleCredits],
-  );
+  // Group primary credits by role (preserving natural sort order)
+  const primaryByRole = useMemo(() => {
+    const primary = sortRowsInRole(visiblePrimaryCredits(visibleCredits));
+    const map = new Map<CreditRole, BuildingCreditWithEntities[]>();
+    for (const c of primary) {
+      const list = map.get(c.role) ?? [];
+      list.push(c);
+      map.set(c.role, list);
+    }
+    return [...map.entries()];
+  }, [visibleCredits]);
 
   const totalCount = visibleCredits.length;
-  const previewCount = primaryPreview.length;
+  const previewCount = primaryByRole.reduce((acc, [, rows]) => acc + rows.length, 0);
   const hiddenCount = Math.max(0, totalCount - previewCount);
 
   if (totalCount === 0) {
@@ -667,40 +706,42 @@ export function BuildingCreditsPreview({
     );
   }
 
-  const showLeadLabel = primaryPreview.length > 1;
-
   return (
-    <div>
-      {primaryPreview.length > 0 ? (
-        <ul className="space-y-1">
-          {primaryPreview.map((credit) => (
-            <PrimaryPreviewNameRow
-              key={credit.id}
-              credit={credit}
-              showLeadLabel={showLeadLabel}
-            />
-          ))}
-        </ul>
-      ) : (
-        <p className="text-sm text-text-secondary">
-          No primary credits listed yet.
-        </p>
-      )}
+    <div className="space-y-4">
+      {primaryByRole.map(([role, roleCredits]) => (
+        <div key={role}>
+          <p className="mb-2 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+            {formatCreditRoleLabel(role, roleCredits[0]?.roleCustom ?? null)}
+          </p>
+          <div className="space-y-2">
+            {roleCredits.map((credit) => (
+              <CreditPreviewRow
+                key={credit.id}
+                credit={credit}
+                showLead={roleCredits.length > 1}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-2">
         <a
           href="#full-credits"
-          className="text-[10px] font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+          className="text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
         >
-          {hiddenCount > 0 ? `See all ${totalCount} credits ↓` : "View credits ↓"}
+          {hiddenCount > 0 ? `All ${totalCount} credits ↓` : "View credits ↓"}
         </a>
         {isAuthenticated ? (
-          <a
-            href="#full-credits"
-            className="text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
-          >
-            Add credit →
-          </a>
+          <>
+            <span className="text-text-disabled" aria-hidden>·</span>
+            <a
+              href="#full-credits"
+              className="text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
+            >
+              Add credit →
+            </a>
+          </>
         ) : null}
       </div>
     </div>

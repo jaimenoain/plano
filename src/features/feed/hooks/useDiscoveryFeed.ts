@@ -29,6 +29,7 @@ interface UserBuildingInteractionRow {
 
 export interface DiscoveryFeedItem {
   id: string;
+  short_id: number | null;
   name: string;
   address: string | null;
   city: string | null;

@@ -3,12 +3,14 @@ import { Link } from "react-router";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getBuildingImageUrl } from "@/utils/image";
+import { getBuildingUrl } from "@/utils/url";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 interface BucketBuilding {
   id: string;
+  short_id: number | null;
   name: string;
   city: string | null;
   country: string | null;
@@ -22,6 +24,7 @@ interface BucketRow {
   building_id: string;
   building: {
     id: string;
+    short_id: number | null;
     name: string;
     city: string | null;
     country: string | null;
@@ -40,7 +43,7 @@ export function BucketListWidget() {
       if (!user) return [];
       const { data, error } = await supabase
         .from("user_buildings")
-        .select("id, building_id, building:buildings(id, name, city, country, slug, hero_image_url)")
+        .select("id, building_id, building:buildings(id, short_id, name, city, country, slug, hero_image_url)")
         .eq("user_id", user.id)
         .eq("status", "pending")
         .order("created_at", { ascending: false })
@@ -115,7 +118,7 @@ export function BucketListWidget() {
             ))
           : items.map((building) => {
               const imageUrl = getBuildingImageUrl(building.hero_image_url);
-              const href = `/building/${building.id}/${building.slug ?? "details"}`;
+              const href = getBuildingUrl(building.id, building.slug, building.short_id);
               return (
                 <div
                   key={building.id}

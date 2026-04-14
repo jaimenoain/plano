@@ -4,6 +4,7 @@ import {
   removeCreditByTokenWithClient,
   type RemoveCreditByTokenError,
 } from "@/features/credits/api/credits";
+import { getBuildingUrl } from "@/utils/url";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 
 export type RemoveCreditLoaderData =
@@ -13,13 +14,11 @@ export type RemoveCreditLoaderData =
 
 function buildingHrefFromRedeem(
   buildingId: string | undefined,
-  buildingSlug: string | null | undefined
+  buildingSlug: string | null | undefined,
+  buildingShortId: number | null | undefined
 ): string | null {
   if (!buildingId) return null;
-  if (buildingSlug && buildingSlug.length > 0) {
-    return `/building/${buildingId}/${buildingSlug}`;
-  }
-  return `/building/${buildingId}`;
+  return getBuildingUrl(buildingId, buildingSlug, buildingShortId);
 }
 
 export async function removeCreditLoader({ request, params }: LoaderFunctionArgs) {
@@ -35,7 +34,7 @@ export async function removeCreditLoader({ request, params }: LoaderFunctionArgs
   const result = await removeCreditByTokenWithClient(supabase, raw);
 
   if (result.ok) {
-    const buildingHref = buildingHrefFromRedeem(result.buildingId, result.buildingSlug);
+    const buildingHref = buildingHrefFromRedeem(result.buildingId, result.buildingSlug, result.buildingShortId);
     const buildingName = result.buildingName?.trim() || "the building";
     return data(
       {

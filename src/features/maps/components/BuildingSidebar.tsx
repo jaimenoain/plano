@@ -285,7 +285,7 @@ export function BuildingSidebar({
                 const imageUrl = getBuildingImageUrl(building.image_url);
                 return (
                   <Link
-                    to={`/building/${building.slug || building.id}`}
+                    to={building.slug ? `/building/${building.slug}` : `/building/${building.id}`}
                     key={building.id}
                     className="group flex pl-4 pr-3 py-3 border-b border-border-default last:border-0 hover:bg-surface-muted/30 transition-colors"
                     onMouseEnter={() => setHighlightedId(building.id)}
@@ -328,8 +328,8 @@ export function BuildingSidebar({
                           {building.rating > 0 && (
                             <div className="flex gap-0.5" aria-label={`Rating: ${building.rating}`}>
                               {Array.from({ length: building.rating }).map((_, i) => (
-                                // Monochromatic, sharp — no rounded-full, no brand-primary
-                                <div key={i} className="h-1.5 w-1.5 bg-text-primary" />
+                                // Monochromatic circles — rounded-full, no brand-primary
+                                <div key={i} className="h-1.5 w-1.5 rounded-full bg-text-primary" />
                               ))}
                             </div>
                           )}

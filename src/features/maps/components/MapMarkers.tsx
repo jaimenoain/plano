@@ -98,7 +98,7 @@ export function MapMarkers({
           : `marker-${cluster.id}`;
 
         const isCluster = cluster.is_cluster;
-        const buildingUrl = !isCluster ? (cluster.slug ? `/building/${cluster.slug}` : `/building/${cluster.id}`) : '#';
+        const buildingUrl = !isCluster ? (cluster.slug ? `/building/${cluster.slug}` : undefined) : '#';
 
         let pinStyle = getPinStyle(cluster);
 

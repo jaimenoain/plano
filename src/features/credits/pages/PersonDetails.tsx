@@ -223,13 +223,7 @@ export default function PersonDetails() {
           />
         ) : null}
         <header className="border-b border-border-default pb-10">
-          <div className="flex flex-col gap-8 sm:flex-row sm:items-start">
-            <Avatar className="h-28 w-28 shrink-0 rounded-full border border-border-default sm:h-32 sm:w-32">
-              {person.avatarUrl ? <AvatarImage src={person.avatarUrl} alt="" /> : null}
-              <AvatarFallback className="rounded-full text-lg font-medium uppercase tracking-wide text-text-primary">
-                {personInitials(person.name)}
-              </AvatarFallback>
-            </Avatar>
+          <div className="flex flex-col-reverse gap-8 sm:flex-row sm:items-start sm:gap-12 lg:gap-20">
             <div className="min-w-0 flex-1 space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex min-w-0 flex-wrap items-center gap-3">
@@ -279,6 +273,14 @@ export default function PersonDetails() {
               {person.bio?.trim() ? (
                 <p className="max-w-2xl text-base leading-relaxed text-text-secondary">{person.bio.trim()}</p>
               ) : null}
+            </div>
+            <div className="shrink-0 self-start">
+              <Avatar className="h-32 w-32 shrink-0 rounded-none border border-border-default sm:h-40 sm:w-40">
+                {person.avatarUrl ? <AvatarImage src={person.avatarUrl} alt="" /> : null}
+                <AvatarFallback className="rounded-none text-lg font-medium uppercase tracking-wide text-text-primary">
+                  {personInitials(person.name)}
+                </AvatarFallback>
+              </Avatar>
             </div>
           </div>
         </header>

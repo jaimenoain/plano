@@ -29,14 +29,22 @@ export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
     typeof building.slug === "string" && building.slug.length > 0
       ? building.slug
       : null;
-  if (
-    canonicalSlug !== null &&
-    params.slug !== canonicalSlug
-  ) {
-    throw redirect(`/building/${params.id}/${canonicalSlug}`, {
-      status: 301,
-      headers,
-    });
+  const canonicalShortId =
+    typeof building.short_id === "number" ? building.short_id : null;
+
+  // Redirect to canonical short_id + slug URL if the current URL doesn't match.
+  // This handles incoming UUID links, slug-only links, and stale slugs.
+  const idMismatch =
+    canonicalShortId !== null &&
+    String(params.id) !== String(canonicalShortId);
+  const slugMismatch = canonicalSlug !== null && params.slug !== canonicalSlug;
+
+  if (idMismatch || slugMismatch) {
+    const idSegment = canonicalShortId ?? params.id;
+    const canonicalPath = canonicalSlug
+      ? `/building/${idSegment}/${canonicalSlug}`
+      : `/building/${idSegment}`;
+    throw redirect(canonicalPath, { status: 301, headers });
   }
 
   const buildingId = building.id as string;

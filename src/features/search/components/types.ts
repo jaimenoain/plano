@@ -76,6 +76,8 @@ export interface ContactInteraction {
 
 export interface LeaderboardBuilding {
   id: string;
+  short_id?: number | null;
+  slug?: string | null;
   name: string;
   city: string | null;
   country: string | null;

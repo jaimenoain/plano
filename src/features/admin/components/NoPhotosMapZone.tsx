@@ -134,10 +134,7 @@ export function NoPhotosMapZone() {
     const feature = event.features?.[0];
     if (feature) {
       const { id, slug } = feature.properties;
-      // Parse JSON if needed? No, mapbox/maplibre returns properties as object.
-      // But ensure slug is handled if it's "null" string or actual null.
-      // GeoJSON properties can sometimes serialize null as null.
-      const url = slug ? `/building/${id}/${slug}` : `/building/${id}`;
+      const url = slug && slug !== "null" ? `/building/${slug}` : `/building/${id}`;
       navigate(url);
     }
   };

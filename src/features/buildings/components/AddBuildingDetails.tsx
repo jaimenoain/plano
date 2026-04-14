@@ -8,6 +8,7 @@ import { useNavigate } from "react-router";
 import { BuildingForm, BuildingFormData } from "./BuildingForm";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { replacePrimaryDesignCredits } from "@/features/credits/api/credits";
+import { getBuildingUrl } from "@/utils/url";
 import type { Database } from "@/integrations/supabase/types";
 
 type BuildingEnums = Database["public"]["Enums"];
@@ -135,7 +136,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
 
       // 7. Success State
       toast.success("Building added successfully!");
-      navigate(`/building/${insertedData.id}`);
+      navigate(getBuildingUrl(insertedData.id, insertedData.slug, insertedData.short_id));
 
     } catch (error: unknown) {
 toast.error(`Failed to save building: ${error instanceof Error ? error.message : "Unknown error"}`);

@@ -64,9 +64,8 @@ const SidebarProvider = React.forwardRef<
   const [_open, _setOpen] = React.useState(() =>
     openProp !== undefined ? openProp : resolvedInitialOpen,
   );
-  const [openMobile, _setOpenMobile] = React.useState(() =>
-    openProp !== undefined ? openProp : resolvedInitialOpen,
-  );
+  // Mobile sidebar always starts closed regardless of saved preference.
+  const [openMobile, _setOpenMobile] = React.useState(false);
   const open = openProp ?? _open;
 
   const setOpenMobile = React.useCallback((value: boolean | ((prev: boolean) => boolean)) => {
@@ -97,7 +96,7 @@ const SidebarProvider = React.forwardRef<
     const saved = readSidebarOpenFromDocument();
     if (saved !== null) {
       _setOpen(saved);
-      _setOpenMobile(saved);
+      // openMobile intentionally not restored — mobile sidebar always starts closed.
     }
   }, [isUncontrolled]);
 

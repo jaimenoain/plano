@@ -317,7 +317,7 @@ toast.error("Unexpected error");
   return (
     <AppLayout title="Edit Building" showBack>
       <div className="min-h-screen bg-surface-default">
-      <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto space-y-6">
+      <div className="w-full min-w-0 p-4 sm:p-6 lg:p-8 space-y-6">
         <h1 className="text-4xl font-bold tracking-tight leading-tight text-text-primary mb-8">
           Edit Building
         </h1>

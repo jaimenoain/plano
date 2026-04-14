@@ -4,6 +4,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Image as ImageIcon, Heart } from "lucide-react";
 import { getBuildingImageUrl } from "@/utils/image";
+import { getBuildingUrl } from "@/utils/url";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
@@ -124,6 +125,7 @@ export default function UserPhotoGallery() {
           user_buildings!review_images_review_id_fkey (
             building:buildings (
               id,
+              short_id,
               name,
               slug
             )
@@ -298,7 +300,7 @@ export default function UserPhotoGallery() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {photos.map((photo) => {
                const imageUrl = getBuildingImageUrl(photo.storage_path);
-               const linkUrl = photo.building ? `/building/${photo.building.id}/${photo.building.slug}` : "#";
+               const linkUrl = photo.building ? getBuildingUrl(photo.building.id, photo.building.slug, photo.building.short_id) : "#";
 
                return (
                  <Link

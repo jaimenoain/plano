@@ -16,6 +16,7 @@ import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import NotFound from "@/pages/NotFound";
 import { getBuildingImageUrl } from "@/utils/image";
+import { getBuildingUrl } from "@/utils/url";
 import { ImageDetailsDialog } from "../components/ImageDetailsDialog";
 import {
   visibleCreditSummariesFromEmbed,
@@ -146,7 +147,7 @@ export default function ReviewDetails() {
                 .select(`
                     id, content, rating, tags, created_at, user_id, building_id, status,
                     user:profiles(username, avatar_url),
-                    building:buildings(id, name, year_completed, address, hero_image_url, building_credits(status, credit_tier, person:people(id, name), company:companies(id, name))),
+                    building:buildings(id, short_id, slug, name, year_completed, address, hero_image_url, building_credits(status, credit_tier, person:people(id, name), company:companies(id, name))),
                     images:review_images(id, storage_path, is_generated)
                 `)
                 .eq("id", paramId)
@@ -852,7 +853,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
             <Card className="overflow-hidden border-border-default/50 shadow-sm">
               <div
                 className="aspect-[4/3] bg-surface-muted relative group cursor-pointer"
-                onClick={() => navigate(`/building/${review.building_id}`)}
+                onClick={() => navigate(getBuildingUrl(review.building_id, review.building?.slug, review.building?.short_id))}
               >
                 {review.building.main_image_url ? (
                   <img
@@ -904,7 +905,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                 <Button
                   className="w-full"
                   variant="outline"
-                  onClick={() => navigate(`/building/${review.building_id}`)}
+                  onClick={() => navigate(getBuildingUrl(review.building_id, review.building?.slug, review.building?.short_id))}
                 >
                   View Building Details
                 </Button>

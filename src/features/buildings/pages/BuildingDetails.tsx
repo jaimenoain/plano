@@ -95,7 +95,7 @@ export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading...">
       <Skeleton className="aspect-[21/9] w-full rounded-sm" />
-      <div className="px-4 sm:px-6 lg:px-8 py-10 max-w-4xl mx-auto space-y-6">
+      <div className="w-full min-w-0 px-4 sm:px-6 lg:px-8 py-10 space-y-6">
         <Skeleton className="h-12 w-3/5 max-w-lg md:h-14" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-11/12" />
@@ -823,8 +823,7 @@ export default function BuildingDetails() {
         <BuildingHero key={heroImageUrl} src={heroImageUrl} alt={building.name} />
       ) : null}
 
-      <div className="px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl">
+      <div className="w-full min-w-0 px-4 sm:px-6 lg:px-8">
 
           {/* ── IDENTITY ── */}
           <div className="space-y-3 py-8">
@@ -1278,35 +1277,25 @@ export default function BuildingDetails() {
           <div className="grid grid-cols-1 gap-x-8 gap-y-8 border-b border-border-default py-8 sm:grid-cols-2">
 
             <div className="flex flex-col gap-8">
-              <div>
-                <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+              <div className="group/info">
+                <div className="mb-4 flex items-center justify-between">
                   <h2 className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
                     Info
                   </h2>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    {showBuildingInfoExtended ? (
-                      <a
-                        href="#building-info-extended"
-                        className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-                      >
-                        View info →
-                      </a>
-                    ) : null}
-                    {canEditOfficialData ? (
-                      <Link
-                        to={
-                          getBuildingUrl(
-                            building.id,
-                            building.slug,
-                            building.short_id,
-                          ) + "/edit"
-                        }
-                        className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-                      >
-                        Edit info →
-                      </Link>
-                    ) : null}
-                  </div>
+                  {canEditOfficialData ? (
+                    <Link
+                      to={
+                        getBuildingUrl(
+                          building.id,
+                          building.slug,
+                          building.short_id,
+                        ) + "/edit"
+                      }
+                      className="text-[10px] font-medium uppercase tracking-widest text-text-disabled opacity-0 transition-all group-hover/info:opacity-100 hover:text-text-primary"
+                    >
+                      Edit →
+                    </Link>
+                  ) : null}
                 </div>
 
                 {building.styles && building.styles.length > 0 ? (
@@ -1351,6 +1340,15 @@ export default function BuildingDetails() {
                   <p className="mt-2 border-l-2 border-text-primary/20 py-0.5 pl-3 text-sm text-text-secondary">
                     {building.access_notes}
                   </p>
+                ) : null}
+
+                {showBuildingInfoExtended ? (
+                  <a
+                    href="#building-info-extended"
+                    className="mt-3 inline-block text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
+                  >
+                    View all info ↓
+                  </a>
                 ) : null}
               </div>
 
@@ -1474,12 +1472,10 @@ export default function BuildingDetails() {
             </Alert>
           ) : null}
 
-        </div>
       </div>
 
       {/* ── EDITORIAL PHOTO + REVIEW STREAM ── */}
-      <div className="px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl">
+      <div className="w-full min-w-0 px-4 sm:px-6 lg:px-8">
 
           <div className="border-t border-border-default pt-8">
             <DetailSectionHeader count={detailSectionContributionCount} />
@@ -1861,7 +1857,6 @@ export default function BuildingDetails() {
 
           <BuildingContributorsSection buildingId={building.id} />
 
-        </div>
       </div>
 
       {/* ── DIALOGS ── */}

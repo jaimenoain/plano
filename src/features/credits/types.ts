@@ -152,8 +152,8 @@ export interface BuildingCredit {
 
 /** Credit row with joined person/company labels for building detail and lists */
 export interface BuildingCreditWithEntities extends BuildingCredit {
-  person: { id: string; name: string; slug: string } | null;
-  company: { id: string; name: string; slug: string } | null;
+  person: { id: string; name: string; slug: string; avatarUrl?: string | null } | null;
+  company: { id: string; name: string; slug: string; logoUrl?: string | null } | null;
 }
 
 /** Flagged-credits admin queue row with claim context for countdown / warnings. */

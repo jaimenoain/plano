@@ -85,8 +85,8 @@ const UpdateCreditStatusSchema = z.object({
 
 export type UpdateCreditStatusInput = z.infer<typeof UpdateCreditStatusSchema>;
 
-type PersonEmbed = { id: string; name: string; slug: string } | null;
-type CompanyEmbed = { id: string; name: string; slug: string } | null;
+type PersonEmbed = { id: string; name: string; slug: string; avatar_url: string | null } | null;
+type CompanyEmbed = { id: string; name: string; slug: string; logo_url: string | null } | null;
 
 type CreditRow = {
   id: string;
@@ -181,8 +181,12 @@ function mapCreditRow(row: CreditRow): BuildingCreditWithEntities {
     displayOrder: row.display_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    person: row.person,
-    company: row.company,
+    person: row.person
+      ? { id: row.person.id, name: row.person.name, slug: row.person.slug, avatarUrl: row.person.avatar_url }
+      : null,
+    company: row.company
+      ? { id: row.company.id, name: row.company.name, slug: row.company.slug, logoUrl: row.company.logo_url }
+      : null,
   };
 }
 
@@ -305,8 +309,8 @@ export async function getBuildingCreditsWithClient(
     .select(
       `
       *,
-      person:people(id, name, slug),
-      company:companies(id, name, slug)
+      person:people(id, name, slug, avatar_url),
+      company:companies(id, name, slug, logo_url)
     `,
     )
     .eq("building_id", buildingId);
@@ -616,6 +620,7 @@ export type RemoveCreditByTokenResult =
       buildingId?: string;
       buildingName?: string;
       buildingSlug?: string | null;
+      buildingShortId?: number | null;
     }
   | { ok: false; error: RemoveCreditByTokenError };
 
@@ -636,10 +641,16 @@ export function parseRedeemCreditRemovalRpcPayload(data: unknown): RemoveCreditB
         : typeof o.building_slug === "string"
           ? o.building_slug
           : undefined;
+    const buildingShortId =
+      o.building_short_id === null
+        ? null
+        : typeof o.building_short_id === "number"
+          ? o.building_short_id
+          : undefined;
     return {
       ok: true,
       creditId: o.credit_id,
-      ...(buildingId !== undefined ? { buildingId, buildingName, buildingSlug } : {}),
+      ...(buildingId !== undefined ? { buildingId, buildingName, buildingSlug, buildingShortId } : {}),
     };
   }
   const err = o.error;
