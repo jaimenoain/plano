@@ -9,11 +9,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import { useEvent } from "@/features/events/hooks/useEvent";
 import type { EventCardDTO, EventDTO, EventOrganiser, EventsApiError } from "@/features/events/types";
 import { getBuildingUrl } from "@/utils/url";
 import { cn } from "@/lib/utils";
 import { RecommendDialog } from "@/components/common/RecommendDialog";
+import { useEventAttendance } from "@/features/events/hooks/useEventAttendance";
 
 function isEventsApiError(e: unknown): e is EventsApiError {
   return (
@@ -113,7 +115,9 @@ export default function EventDetail() {
   const slug = slugParam ?? "";
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
   const query = useEvent(slug);
+  const attendance = useEventAttendance(query.data?.id, query.data?.slug);
   const [coverFailed, setCoverFailed] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
   const [recommendOpen, setRecommendOpen] = useState(false);
@@ -198,6 +202,48 @@ export default function EventDetail() {
               </p>
             ) : null}
           </header>
+
+          <section aria-label="RSVP" className="flex flex-wrap items-center gap-2">
+            {user ? (
+              <>
+                <span className="text-2xs font-medium uppercase tracking-widest text-text-secondary">RSVP</span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={attendance.status === "going" ? "default" : "outline"}
+                  disabled={attendance.isLoading || attendance.isSaving}
+                  onClick={async () => {
+                    try {
+                      await attendance.setAttendance(attendance.status === "going" ? null : "going");
+                    } catch {
+                      toast({ variant: "destructive", description: "Could not update RSVP." });
+                    }
+                  }}
+                >
+                  Going
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={attendance.status === "interested" ? "default" : "outline"}
+                  disabled={attendance.isLoading || attendance.isSaving}
+                  onClick={async () => {
+                    try {
+                      await attendance.setAttendance(attendance.status === "interested" ? null : "interested");
+                    } catch {
+                      toast({ variant: "destructive", description: "Could not update RSVP." });
+                    }
+                  }}
+                >
+                  Interested
+                </Button>
+              </>
+            ) : (
+              <Button asChild variant="outline" size="sm">
+                <Link to={`/login?redirect=${encodeURIComponent(loginRedirectPath)}`}>Log in to RSVP</Link>
+              </Button>
+            )}
+          </section>
 
           <section aria-label="Recommend this event" className="flex flex-wrap items-center gap-3">
             {eventCard ? (

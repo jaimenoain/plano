@@ -1164,6 +1164,14 @@ export default function Profile() {
               </div>
             )}
 
+            {targetUserId ? (
+              <ProfileEventsSection
+                profileUserId={targetUserId}
+                viewingUserId={currentUser?.id ?? null}
+                isOwnProfile={isOwnProfile}
+              />
+            ) : null}
+
             {/* ── PHOTOS — editorial masonry ── */}
             {activeSection === "photos" && (
               <div>
@@ -1251,14 +1259,6 @@ export default function Profile() {
                 )}
               </div>
             )}
-
-            {targetUserId ? (
-              <ProfileEventsSection
-                profileUserId={targetUserId}
-                viewingUserId={currentUser?.id ?? null}
-                isOwnProfile={isOwnProfile}
-              />
-            ) : null}
           </div>
         </div>
 

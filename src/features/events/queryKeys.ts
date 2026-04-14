@@ -7,6 +7,8 @@ export const eventKeys = {
   lists: () => [...eventKeys.all, "list"] as const,
   list: (page: number) => [...eventKeys.lists(), page] as const,
   detail: (slug: string) => [...eventKeys.all, "detail", slug] as const,
+  attendance: (userId: string | undefined, eventId: string) =>
+    [...eventKeys.all, "attendance", userId ?? "anon", eventId] as const,
   byBuilding: (buildingId: string) => [...eventKeys.all, "building", buildingId] as const,
   profile: (userId: string, segment: "organising" | "attending" | "interested") =>
     [...eventKeys.all, "profile", userId, segment] as const,
