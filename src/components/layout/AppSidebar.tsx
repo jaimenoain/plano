@@ -48,12 +48,6 @@ const mainNavItems = [
   { icon: Users,    label: "Connect", path: "/connect" },
 ];
 
-const accountNavItems = [
-  { icon: Bell,     label: "Notifications", path: "/notifications" },
-  { icon: UserIcon, label: "Profile",       path: "/profile" },
-  { icon: Settings, label: "Settings",      path: "/settings" },
-];
-
 // ─── NavItem ─────────────────────────────────────────────────────────────────
 interface NavItemProps {
   label: string;
@@ -143,9 +137,18 @@ function UserMenu() {
             sideOffset={4}
           >
             <DropdownMenuItem asChild>
+              <Link
+                to="/notifications"
+                className="flex items-center gap-2 cursor-pointer text-white/80 hover:text-white focus:text-white focus:bg-white/10"
+              >
+                <Bell className="h-4 w-4" />
+                Notifications
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
               <Link to={ownProfilePath} className="flex items-center gap-2 cursor-pointer text-white/80 hover:text-white focus:text-white focus:bg-white/10">
                 <UserIcon className="h-4 w-4" />
-                Your profile
+                Profile
               </Link>
             </DropdownMenuItem>
             {claimedPersonNav ? (
@@ -221,16 +224,9 @@ function CloseButton() {
 export function AppSidebar() {
   const location = useLocation();
   const { isMobile } = useSidebar();
-  const { profile } = useUserProfile();
   const { data: claimedPersonNav } = useClaimedPersonForNav();
   const { data: stewardCompanies = [] } = useStewardCompaniesForNav();
-  const ownProfilePath = profile?.username
-    ? `/profile/${encodeURIComponent(profile.username)}`
-    : "/profile";
-  const isOwnProfileRoute =
-    location.pathname === "/profile" ||
-    (profile?.username != null &&
-      location.pathname.toLowerCase() === `/profile/${profile.username.toLowerCase()}`);
+  const showAccountExtras = Boolean(claimedPersonNav) || stewardCompanies.length > 0;
 
   return (
     <Sidebar
@@ -267,84 +263,73 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Account — separated by a faint rule */}
-        <SidebarGroup className="!p-0 mt-6 pt-6 border-t border-white/10">
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-0">
-              {accountNavItems.map((item) => (
-                <NavItem
-                  key={item.path}
-                  label={item.label}
-                  path={item.label === "Profile" ? ownProfilePath : item.path}
-                  isActive={
-                    item.label === "Profile"
-                      ? isOwnProfileRoute
-                      : location.pathname === item.path
-                  }
-                />
-              ))}
-              {claimedPersonNav ? (
-                <NavItem
-                  label="My portfolio"
-                  path="/portfolio"
-                  icon={Briefcase}
-                  isActive={location.pathname === "/portfolio"}
-                />
-              ) : null}
-              {stewardCompanies.length === 1 ? (
-                <NavItem
-                  label={stewardCompanies[0].name}
-                  path="/company-portfolio"
-                  icon={Building2}
-                  isActive={location.pathname === "/company-portfolio"}
-                />
-              ) : stewardCompanies.length > 1 ? (
-                <SidebarMenuItem className="list-none">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        type="button"
-                        className={cn(
-                          "group flex w-full items-center gap-3 px-8 py-3 text-left transition-colors duration-150",
-                          "text-2xl font-bold tracking-tight leading-none",
-                          location.pathname === "/company-portfolio"
-                            ? "text-white"
-                            : "text-white/50 hover:text-white"
-                        )}
+        {showAccountExtras ? (
+          <SidebarGroup className="!p-0 mt-6 pt-6 border-t border-white/10">
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-0">
+                {claimedPersonNav ? (
+                  <NavItem
+                    label="My portfolio"
+                    path="/portfolio"
+                    icon={Briefcase}
+                    isActive={location.pathname === "/portfolio"}
+                  />
+                ) : null}
+                {stewardCompanies.length === 1 ? (
+                  <NavItem
+                    label={stewardCompanies[0].name}
+                    path="/company-portfolio"
+                    icon={Building2}
+                    isActive={location.pathname === "/company-portfolio"}
+                  />
+                ) : stewardCompanies.length > 1 ? (
+                  <SidebarMenuItem className="list-none">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className={cn(
+                            "group flex w-full items-center gap-3 px-8 py-3 text-left transition-colors duration-150",
+                            "text-2xl font-bold tracking-tight leading-none",
+                            location.pathname === "/company-portfolio"
+                              ? "text-white"
+                              : "text-white/50 hover:text-white"
+                          )}
+                        >
+                          <Building2 className="h-6 w-6 shrink-0 opacity-80" strokeWidth={1.5} aria-hidden />
+                          <span className="relative min-w-0 flex-1 truncate">
+                            My companies
+                            {location.pathname === "/company-portfolio" ? (
+                              <span className="absolute -bottom-0.5 left-0 h-[2px] w-full max-w-[min(100%,12rem)] bg-white" />
+                            ) : null}
+                          </span>
+                          <ChevronDown className="h-5 w-5 shrink-0 opacity-70" strokeWidth={1.5} aria-hidden />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        className="min-w-56 bg-zinc-900 border border-white/10 text-white"
+                        side={isMobile ? "bottom" : "right"}
+                        align="start"
+                        sideOffset={4}
                       >
-                        <Building2 className="h-6 w-6 shrink-0 opacity-80" strokeWidth={1.5} aria-hidden />
-                        <span className="relative min-w-0 flex-1 truncate">
-                          My companies
-                          {location.pathname === "/company-portfolio" ? (
-                            <span className="absolute -bottom-0.5 left-0 h-[2px] w-full max-w-[min(100%,12rem)] bg-white" />
-                          ) : null}
-                        </span>
-                        <ChevronDown className="h-5 w-5 shrink-0 opacity-70" strokeWidth={1.5} aria-hidden />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      className="min-w-56 bg-zinc-900 border border-white/10 text-white"
-                      side={isMobile ? "bottom" : "right"}
-                      align="start"
-                      sideOffset={4}
-                    >
-                      {stewardCompanies.map((c) => (
-                        <DropdownMenuItem key={c.companyId} asChild>
-                          <Link
-                            to={`/company-portfolio?company=${encodeURIComponent(c.slug)}`}
-                            className="cursor-pointer text-white/80 hover:text-white focus:text-white focus:bg-white/10"
-                          >
-                            {c.name}
-                          </Link>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </SidebarMenuItem>
-              ) : null}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                        {stewardCompanies.map((c) => (
+                          <DropdownMenuItem key={c.companyId} asChild>
+                            <Link
+                              to={`/company-portfolio?company=${encodeURIComponent(c.slug)}`}
+                              className="cursor-pointer text-white/80 hover:text-white focus:text-white focus:bg-white/10"
+                            >
+                              {c.name}
+                            </Link>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </SidebarMenuItem>
+                ) : null}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
       </SidebarContent>
 
       {/* ── User footer ── */}

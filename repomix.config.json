@@ -1,21 +1,31 @@
 {
   "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "input": {
+    "maxFileSize": 1048576
+  },
   "output": {
     "filePath": "repomix-output.xml",
     "style": "xml",
+    "headerText": "Plano — structure-first pack: Tree-sitter compression keeps exports, types, and signatures; comments stripped; Vitest sources and package-lock omitted. Pair with docs/DATA_CONTRACT.md for authoritative schemas.",
     "fileSummary": true,
     "directoryStructure": true,
-    "includeFullDirectoryStructure": false,
+    "includeFullDirectoryStructure": true,
+    "files": true,
+    "compress": true,
+    "removeComments": true,
     "removeEmptyLines": true,
-    "topFilesLength": 8,
+    "truncateBase64": true,
+    "topFilesLength": 12,
+    "tokenCountTree": true,
     "git": {
       "sortByChanges": true,
-      "sortByChangesMaxCommits": 50,
+      "sortByChangesMaxCommits": 25,
       "includeDiffs": false,
       "includeLogs": false
     }
   },
   "include": [
+    "app/**/*",
     "docs/**/*",
     "src/**/*",
     ".cursor/rules/**/*",
@@ -25,12 +35,10 @@
     "AGENTS.md",
     "README.md",
     "CONTRIBUTING.md",
-    ".ai-status.md",
     "components.json",
     "eslint.config.js",
     "index.html",
     "package.json",
-    "package-lock.json",
     "postcss.config.js",
     "tailwind.config.ts",
     "tsconfig.json",
@@ -38,6 +46,7 @@
     "tsconfig.node.json",
     "vite.config.ts",
     "vitest.config.ts",
+    "vercel.json",
     "public/robots.txt"
   ],
   "ignore": {
@@ -48,14 +57,20 @@
       "bun.lockb",
       "coverage/**",
       "dist/**",
+      "build/**",
       "supabase/migrations/**",
       "supabase/.temp/**",
       "tests/**",
       "scripts/**",
-      "docs/**/*.pdf"
+      "docs/**/*.pdf",
+      "**/*.test.ts",
+      "**/*.test.tsx"
     ]
   },
   "security": {
     "enableSecurityCheck": true
+  },
+  "tokenCount": {
+    "encoding": "o200k_base"
   }
 }
