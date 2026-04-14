@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { format, isSameDay, parseISO } from "date-fns";
 import { enGB } from "date-fns/locale";
-import { ExternalLink, MapPin, Pencil, BadgeCheck } from "lucide-react";
+import { ExternalLink, MapPin, Pencil, BadgeCheck, Check, Bookmark } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { MetaHead } from "@/components/common/MetaHead";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -76,12 +76,16 @@ function metaDescription(event: EventDTO): string {
 function EventDetailSkeleton() {
   return (
     <AppLayout title="Event" showBack>
-      <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
-        <Skeleton className="mb-6 h-[260px] w-full rounded-sm" />
-        <Skeleton className="mb-4 h-10 w-3/4 max-w-lg" />
-        <Skeleton className="mb-2 h-5 w-full max-w-md" />
-        <Skeleton className="mb-8 h-5 w-2/3 max-w-sm" />
-        <Skeleton className="mb-4 h-24 w-full" />
+      <div className="w-full">
+        <Skeleton className="h-[clamp(260px,48vh,500px)] w-full rounded-none" />
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <div className="space-y-4 py-8">
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-12 w-3/4 max-w-lg" />
+            <Skeleton className="h-5 w-full max-w-md" />
+          </div>
+          <Skeleton className="mb-8 h-24 w-full" />
+        </div>
       </div>
     </AppLayout>
   );
@@ -143,7 +147,7 @@ export default function EventDetail() {
   if (query.isError || !query.data) {
     return (
       <AppLayout title="Event" showBack>
-        <div className="mx-auto max-w-3xl px-4 py-8">
+        <div className="mx-auto max-w-4xl px-4 py-8">
           <p className="text-sm text-destructive" role="alert">
             {isEventsApiError(query.error) ? query.error.message : "This event could not be loaded."}
           </p>
@@ -169,229 +173,273 @@ export default function EventDetail() {
         description={metaDescription(event)}
         canonicalUrl={`/events/${event.slug}`}
       />
-      <article className="mx-auto max-w-3xl pb-12">
-        <div className="relative h-[260px] w-full overflow-hidden bg-surface-muted">
-          {showCover ? (
+      <article className="pb-12">
+
+        {/* ── HERO — full-bleed ── */}
+        {showCover ? (
+          <div className="relative w-full overflow-hidden bg-surface-muted">
             <img
               src={event.coverImageUrl!}
               alt=""
-              className="h-full w-full object-cover"
+              className="h-[clamp(260px,48vh,500px)] w-full object-cover animate-in fade-in duration-700"
               onError={() => setCoverFailed(true)}
             />
-          ) : null}
-        </div>
+          </div>
+        ) : null}
 
-        <div className="space-y-6 px-4 pt-6 sm:px-6 lg:px-8">
-          <header className="space-y-3">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <h1 className="font-display text-3xl font-black tracking-tight text-text-primary">{event.title}</h1>
-              {canEdit ? (
-                <Button asChild variant="outline" size="sm" className="shrink-0 gap-1.5">
-                  <Link to={`/events/${event.slug}/edit`}>
-                    <Pencil className="h-4 w-4" aria-hidden />
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-4xl">
+
+            {/* ── IDENTITY ── */}
+            <div className="space-y-3 py-8">
+              <span className="block text-2xs font-medium uppercase tracking-widest text-text-secondary">
+                Event{event.address ? ` · ${event.address.split(",").pop()?.trim() ?? ""}` : ""}
+              </span>
+
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <h1 className="text-4xl font-bold leading-tight tracking-tight text-text-primary md:text-5xl">
+                  {event.title}
+                </h1>
+                {canEdit ? (
+                  <Link
+                    to={`/events/${event.slug}/edit`}
+                    className="mt-2 inline-flex shrink-0 items-center gap-1 text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                  >
+                    <Pencil className="h-3 w-3" aria-hidden />
                     Edit
                   </Link>
-                </Button>
-              ) : null}
+                ) : null}
+              </div>
+
+              {/* Date · Location */}
+              <div className="flex flex-wrap items-center gap-2 text-sm text-text-secondary">
+                <span>{formatEventWhenRange(event.startAt, event.endAt)}</span>
+                {event.address ? (
+                  <>
+                    <span className="text-text-disabled">·</span>
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                      {event.address}
+                    </span>
+                  </>
+                ) : null}
+              </div>
             </div>
-            <p className="text-sm text-text-secondary">{formatEventWhenRange(event.startAt, event.endAt)}</p>
-            {event.address ? (
-              <p className="flex items-start gap-2 text-sm text-text-secondary">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-text-secondary" aria-hidden />
-                <span>{event.address}</span>
-              </p>
-            ) : null}
-          </header>
 
-          <section aria-label="RSVP" className="flex flex-wrap items-center gap-2">
-            {user ? (
-              <>
-                <span className="text-2xs font-medium uppercase tracking-widest text-text-secondary">RSVP</span>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={attendance.status === "going" ? "default" : "outline"}
-                  disabled={attendance.isLoading || attendance.isSaving}
-                  onClick={async () => {
-                    try {
-                      await attendance.setAttendance(attendance.status === "going" ? null : "going");
-                    } catch {
-                      toast({ variant: "destructive", description: "Could not update RSVP." });
-                    }
-                  }}
-                >
-                  Going
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={attendance.status === "interested" ? "default" : "outline"}
-                  disabled={attendance.isLoading || attendance.isSaving}
-                  onClick={async () => {
-                    try {
-                      await attendance.setAttendance(attendance.status === "interested" ? null : "interested");
-                    } catch {
-                      toast({ variant: "destructive", description: "Could not update RSVP." });
-                    }
-                  }}
-                >
-                  Interested
-                </Button>
-              </>
-            ) : (
-              <Button asChild variant="outline" size="sm">
-                <Link to={`/login?redirect=${encodeURIComponent(loginRedirectPath)}`}>Log in to RSVP</Link>
-              </Button>
-            )}
-          </section>
-
-          <section aria-label="Recommend this event" className="flex flex-wrap items-center gap-3">
-            {eventCard ? (
-              <RecommendDialog mode="event" event={eventCard} open={recommendOpen} onOpenChange={setRecommendOpen} />
-            ) : null}
-            {user ? (
-              <Button type="button" variant="outline" size="sm" onClick={() => setRecommendOpen(true)}>
-                Recommend
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => navigate(`/login?redirect=${encodeURIComponent(loginRedirectPath)}`)}
-              >
-                Recommend
-              </Button>
-            )}
-          </section>
-
-          <section aria-label="Organiser" className="border-t border-border-default pt-6">
-            {event.claimStatus === "unclaimed" && !event.organiser ? (
-              <div className="flex items-center gap-3">
-                <Avatar className="h-12 w-12">
-                  {event.submittedBy.avatarUrl ? (
-                    <AvatarImage src={event.submittedBy.avatarUrl} alt="" />
-                  ) : null}
-                  <AvatarFallback className="text-sm">{initials(event.submittedBy.username)}</AvatarFallback>
-                </Avatar>
-                <p className="text-sm text-text-secondary">
-                  Shared by{" "}
-                  {event.submittedBy.username ? (
-                    <span className="text-text-primary">@{event.submittedBy.username}</span>
-                  ) : (
-                    <span className="text-text-primary">a community member</span>
-                  )}{" "}
-                  ·{" "}
-                  <span className="cursor-default underline decoration-dotted opacity-80">Claim this event →</span>
-                </p>
-              </div>
-            ) : event.organiser ? (
-              <div className="flex items-center gap-3">
-                <Avatar className="h-12 w-12">
-                  {event.organiser.avatarUrl ? (
-                    <AvatarImage src={event.organiser.avatarUrl} alt="" />
-                  ) : null}
-                  <AvatarFallback className="text-sm">{initials(event.organiser.displayName)}</AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {organiserLink ? (
-                      <Link
-                        to={organiserLink.href}
-                        className="font-medium text-text-primary underline-offset-4 hover:underline"
-                      >
-                        {organiserLink.label}
-                      </Link>
-                    ) : (
-                      <span className="font-medium text-text-primary">
-                        {event.organiser.displayName ?? "Organiser"}
-                      </span>
-                    )}
-                    {event.organiser.isVerified ? (
-                      <BadgeCheck className="h-5 w-5 shrink-0 text-brand-primary" aria-label="Verified" />
-                    ) : null}
-                  </div>
-                  {event.isSelfHosted && event.claimStatus === "claimed" ? (
-                    <p className="mt-1 text-xs text-text-secondary">Host</p>
-                  ) : null}
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <Avatar className="h-12 w-12">
-                  {event.submittedBy.avatarUrl ? (
-                    <AvatarImage src={event.submittedBy.avatarUrl} alt="" />
-                  ) : null}
-                  <AvatarFallback className="text-sm">{initials(event.submittedBy.username)}</AvatarFallback>
-                </Avatar>
-                <p className="text-sm text-text-secondary">
-                  Submitted by{" "}
-                  {event.submittedBy.username ? (
-                    <Link
-                      to={`/profile/${event.submittedBy.username}`}
-                      className="font-medium text-text-primary underline-offset-4 hover:underline"
+            {/* ── RSVP + ACTIONS ── */}
+            <div className="border-b border-border-default pb-6">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                {user ? (
+                  <>
+                    <span className="text-2xs font-medium uppercase tracking-widest text-text-disabled">RSVP</span>
+                    <button
+                      type="button"
+                      disabled={attendance.isLoading || attendance.isSaving}
+                      onClick={async () => {
+                        try {
+                          await attendance.setAttendance(attendance.status === "going" ? null : "going");
+                        } catch {
+                          toast({ variant: "destructive", description: "Could not update RSVP." });
+                        }
+                      }}
+                      className={cn(
+                        "inline-flex items-center gap-1 text-xs font-medium uppercase tracking-widest transition-colors disabled:opacity-50",
+                        attendance.status === "going"
+                          ? "text-text-primary"
+                          : "text-text-secondary hover:text-text-primary",
+                      )}
                     >
-                      @{event.submittedBy.username}
-                    </Link>
-                  ) : (
-                    <span className="text-text-primary">a community member</span>
-                  )}
-                </p>
-              </div>
-            )}
-          </section>
-
-          {event.buildings.length > 0 ? (
-            <section aria-label="Related buildings">
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-text-secondary">Buildings</h2>
-              <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {event.buildings.map((b) => (
-                  <Link
-                    key={b.buildingId}
-                    to={getBuildingUrl(b.buildingId, b.slug, null)}
-                    className="flex w-36 shrink-0 flex-col gap-2 rounded-sm border border-border-default bg-surface-card p-2 transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
-                  >
-                    <div className="aspect-card-compact w-full overflow-hidden rounded-sm bg-surface-muted">
-                      {b.mainImageUrl ? (
-                        <img src={b.mainImageUrl} alt="" className="h-full w-full object-cover" />
+                      {attendance.status === "going" ? (
+                        <Check className="h-3 w-3 stroke-[2.5px]" aria-hidden />
                       ) : null}
-                    </div>
-                    <span className="line-clamp-2 text-xs font-medium text-text-primary">{b.name}</span>
+                      Going →
+                    </button>
+                    <button
+                      type="button"
+                      disabled={attendance.isLoading || attendance.isSaving}
+                      onClick={async () => {
+                        try {
+                          await attendance.setAttendance(attendance.status === "interested" ? null : "interested");
+                        } catch {
+                          toast({ variant: "destructive", description: "Could not update RSVP." });
+                        }
+                      }}
+                      className={cn(
+                        "inline-flex items-center gap-1 text-xs font-medium uppercase tracking-widest transition-colors disabled:opacity-50",
+                        attendance.status === "interested"
+                          ? "text-text-primary"
+                          : "text-text-secondary hover:text-text-primary",
+                      )}
+                    >
+                      {attendance.status === "interested" ? (
+                        <Bookmark className="h-3 w-3 fill-current" aria-hidden />
+                      ) : null}
+                      Interested →
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    to={`/login?redirect=${encodeURIComponent(loginRedirectPath)}`}
+                    className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                  >
+                    Log in to RSVP →
                   </Link>
-                ))}
-              </div>
-            </section>
-          ) : null}
+                )}
 
-          {description ? (
-            <section aria-label="Description" className="space-y-2">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-text-secondary">About</h2>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-text-primary">{descriptionShown}</p>
-              {descLong ? (
+                {eventCard ? (
+                  <RecommendDialog mode="event" event={eventCard} open={recommendOpen} onOpenChange={setRecommendOpen} />
+                ) : null}
                 <button
                   type="button"
-                  onClick={() => setDescExpanded((v) => !v)}
-                  className={cn(
-                    "text-sm font-medium text-brand-primary underline-offset-4 hover:underline",
-                    descExpanded && "text-text-secondary",
-                  )}
+                  onClick={() => {
+                    if (user) {
+                      setRecommendOpen(true);
+                    } else {
+                      navigate(`/login?redirect=${encodeURIComponent(loginRedirectPath)}`);
+                    }
+                  }}
+                  className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
                 >
-                  {descExpanded ? "Show less" : "Read more"}
+                  Recommend →
                 </button>
-              ) : null}
-            </section>
-          ) : null}
-
-          {event.externalLink ? (
-            <div>
-              <Button asChild size="lg" className="gap-2">
-                <a href={event.externalLink} target="_blank" rel="noopener noreferrer">
-                  Get tickets / Register
-                  <ExternalLink className="h-4 w-4" aria-hidden />
-                </a>
-              </Button>
+              </div>
             </div>
-          ) : null}
+
+            {/* ── DESCRIPTION ── */}
+            {description ? (
+              <section aria-label="About" className="border-b border-border-default py-8">
+                <h2 className="mb-4 text-2xs font-medium uppercase tracking-widest text-text-secondary">About</h2>
+                <p className="whitespace-pre-wrap text-base leading-relaxed text-text-primary">{descriptionShown}</p>
+                {descLong ? (
+                  <button
+                    type="button"
+                    onClick={() => setDescExpanded((v) => !v)}
+                    className="mt-4 text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary"
+                  >
+                    {descExpanded ? "Show less" : "Read more →"}
+                  </button>
+                ) : null}
+              </section>
+            ) : null}
+
+            {/* ── ORGANISER ── */}
+            <section aria-label="Organiser" className="border-b border-border-default py-8">
+              <h2 className="mb-4 text-2xs font-medium uppercase tracking-widest text-text-secondary">Organiser</h2>
+              {event.claimStatus === "unclaimed" && !event.organiser ? (
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10 rounded-full border border-border-default">
+                    {event.submittedBy.avatarUrl ? (
+                      <AvatarImage src={event.submittedBy.avatarUrl} alt="" />
+                    ) : null}
+                    <AvatarFallback className="text-sm">{initials(event.submittedBy.username)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="text-sm text-text-secondary">
+                      Shared by{" "}
+                      {event.submittedBy.username ? (
+                        <span className="font-medium text-text-primary">@{event.submittedBy.username}</span>
+                      ) : (
+                        <span className="font-medium text-text-primary">a community member</span>
+                      )}
+                    </p>
+                    <p className="mt-0.5 text-xs text-text-disabled">Claim this event →</p>
+                  </div>
+                </div>
+              ) : event.organiser ? (
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10 rounded-full border border-border-default">
+                    {event.organiser.avatarUrl ? (
+                      <AvatarImage src={event.organiser.avatarUrl} alt="" />
+                    ) : null}
+                    <AvatarFallback className="text-sm">{initials(event.organiser.displayName)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {organiserLink ? (
+                        <Link
+                          to={organiserLink.href}
+                          className="font-medium text-text-primary underline-offset-4 hover:underline"
+                        >
+                          {organiserLink.label}
+                        </Link>
+                      ) : (
+                        <span className="font-medium text-text-primary">
+                          {event.organiser.displayName ?? "Organiser"}
+                        </span>
+                      )}
+                      {event.organiser.isVerified ? (
+                        <BadgeCheck className="h-4 w-4 shrink-0 text-text-primary" aria-label="Verified" />
+                      ) : null}
+                    </div>
+                    {event.isSelfHosted && event.claimStatus === "claimed" ? (
+                      <p className="mt-0.5 text-2xs font-medium uppercase tracking-widest text-text-disabled">Host</p>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10 rounded-full border border-border-default">
+                    {event.submittedBy.avatarUrl ? (
+                      <AvatarImage src={event.submittedBy.avatarUrl} alt="" />
+                    ) : null}
+                    <AvatarFallback className="text-sm">{initials(event.submittedBy.username)}</AvatarFallback>
+                  </Avatar>
+                  <p className="text-sm text-text-secondary">
+                    Submitted by{" "}
+                    {event.submittedBy.username ? (
+                      <Link
+                        to={`/profile/${event.submittedBy.username}`}
+                        className="font-medium text-text-primary underline-offset-4 hover:underline"
+                      >
+                        @{event.submittedBy.username}
+                      </Link>
+                    ) : (
+                      <span className="font-medium text-text-primary">a community member</span>
+                    )}
+                  </p>
+                </div>
+              )}
+            </section>
+
+            {/* ── RELATED BUILDINGS ── */}
+            {event.buildings.length > 0 ? (
+              <section aria-label="Related buildings" className="border-b border-border-default py-8">
+                <h2 className="mb-4 text-2xs font-medium uppercase tracking-widest text-text-secondary">Buildings</h2>
+                <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {event.buildings.map((b) => (
+                    <Link
+                      key={b.buildingId}
+                      to={getBuildingUrl(b.buildingId, b.slug, null)}
+                      className="flex w-36 shrink-0 flex-col gap-2 border border-border-default bg-surface-card p-2 transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
+                    >
+                      <div className="aspect-card-compact w-full overflow-hidden bg-surface-muted">
+                        {b.mainImageUrl ? (
+                          <img src={b.mainImageUrl} alt="" className="h-full w-full object-cover" />
+                        ) : null}
+                      </div>
+                      <span className="line-clamp-2 text-xs font-medium text-text-primary">{b.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {/* ── EXTERNAL LINK ── */}
+            {event.externalLink ? (
+              <div className="py-8">
+                <a
+                  href={event.externalLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary"
+                >
+                  Get tickets / Register
+                  <ExternalLink className="h-3 w-3" aria-hidden />
+                </a>
+              </div>
+            ) : null}
+
+          </div>
         </div>
       </article>
     </AppLayout>
