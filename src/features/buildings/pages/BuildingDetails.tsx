@@ -66,6 +66,8 @@ import { PrimaryCreditsLinks } from "../components/PrimaryCreditsLinks";
 import { ArchitectStatement } from "../components/ArchitectStatement";
 import { BuildingHero } from "../components/BuildingHero";
 import { BuildingCredits, BuildingCreditsPreview } from "../components/BuildingCredits";
+import { BuildingContributorsInline } from "../components/BuildingContributorsInline";
+import { BuildingContributorsSection } from "../components/BuildingContributorsSection";
 import { buildingLoader } from "./BuildingDetails.loader";
 import {
   buildingAbsoluteUrl,
@@ -1454,6 +1456,7 @@ export default function BuildingDetails() {
             onChange={() => {}}
             architectName={leadAttributionFromCredits(buildingCredits)}
           />
+          <BuildingContributorsInline buildingId={building.id} />
 
           {/* ── BUILDING STATUS ALERT — structural warnings only ── */}
           {(building.status === "Lost" ||
@@ -1855,6 +1858,8 @@ export default function BuildingDetails() {
               ) : null}
             </section>
           ) : null}
+
+          <BuildingContributorsSection buildingId={building.id} />
 
         </div>
       </div>
