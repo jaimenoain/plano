@@ -595,14 +595,14 @@ export default function CompanyDetails() {
                 <p className="max-w-2xl text-base leading-relaxed text-text-secondary">{company.bio.trim()}</p>
               ) : null}
             </div>
-            <div className="shrink-0 self-start">
-              <Avatar className="h-32 w-32 shrink-0 rounded-none border border-border-default sm:h-40 sm:w-40">
-                {company.logoUrl ? <AvatarImage src={company.logoUrl} alt="" /> : null}
-                <AvatarFallback className="rounded-none text-lg font-medium uppercase tracking-wide text-text-primary">
-                  {companyInitialLetter(company.name)}
-                </AvatarFallback>
-              </Avatar>
-            </div>
+            {company.logoUrl ? (
+              <div className="shrink-0 self-start">
+                <Avatar className="h-32 w-32 shrink-0 rounded-none border border-border-default sm:h-40 sm:w-40">
+                  <AvatarImage src={company.logoUrl} alt="" />
+                  <AvatarFallback className="rounded-none" />
+                </Avatar>
+              </div>
+            ) : null}
           </div>
         </header>
 

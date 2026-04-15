@@ -274,14 +274,14 @@ export default function PersonDetails() {
                 <p className="max-w-2xl text-base leading-relaxed text-text-secondary">{person.bio.trim()}</p>
               ) : null}
             </div>
-            <div className="shrink-0 self-start">
-              <Avatar className="h-32 w-32 shrink-0 rounded-none border border-border-default sm:h-40 sm:w-40">
-                {person.avatarUrl ? <AvatarImage src={person.avatarUrl} alt="" /> : null}
-                <AvatarFallback className="rounded-none text-lg font-medium uppercase tracking-wide text-text-primary">
-                  {personInitials(person.name)}
-                </AvatarFallback>
-              </Avatar>
-            </div>
+            {person.avatarUrl ? (
+              <div className="shrink-0 self-start">
+                <Avatar className="h-32 w-32 shrink-0 rounded-none border border-border-default sm:h-40 sm:w-40">
+                  <AvatarImage src={person.avatarUrl} alt="" />
+                  <AvatarFallback className="rounded-none" />
+                </Avatar>
+              </div>
+            ) : null}
           </div>
         </header>
 
