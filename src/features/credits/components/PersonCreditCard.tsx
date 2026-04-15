@@ -12,6 +12,7 @@ interface PersonCreditCardProps {
 }
 
 export function PersonCreditCard({ credit, className }: PersonCreditCardProps) {
+  // TODO: enrich DTO with locality fields
   const buildingUrl = getBuildingUrl(credit.building.id, credit.building.slug, credit.building.shortId);
   const thumb =
     getBuildingImageUrl(credit.building.heroImageUrl) ??

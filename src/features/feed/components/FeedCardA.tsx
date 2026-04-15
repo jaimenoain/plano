@@ -89,6 +89,7 @@ export function FeedCardA({
     const target = e.target as HTMLElement;
     if (target.closest("button")) return;
     if (entry.building?.id) {
+      // TODO: enrich DTO with locality fields
       navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
     } else {
       navigate(`/review/${entry.id}`);
@@ -99,6 +100,7 @@ export function FeedCardA({
     if (onComment) {
       onComment(entry.id);
     } else if (entry.building?.id) {
+      // TODO: enrich DTO with locality fields
       navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
     } else {
       navigate(`/review/${entry.id}`);

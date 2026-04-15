@@ -170,6 +170,7 @@ export default function FlaggedCredits() {
                     </TableCell>
                     <TableCell className="align-top">
                       <Link
+                        // TODO: enrich DTO with locality fields
                         to={getBuildingUrl(
                           credit.building.id,
                           credit.building.slug,

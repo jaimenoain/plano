@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import {
   Link,
   useLoaderData,
@@ -69,7 +69,7 @@ export function HydrateFallback() {
 
 export function ErrorBoundary() {
   const error = useRouteError();
-  const { citySlug } = useParams();
+  const { cc, city } = useParams();
 
   if (isRouteErrorResponse(error) && error.status === 404) {
     return (
@@ -80,10 +80,10 @@ export function ErrorBoundary() {
           </h1>
           <p className="mb-6 max-w-md text-sm leading-relaxed text-text-secondary md:text-base">
             We couldn&apos;t find a city page
-            {citySlug ? (
+            {city ? (
               <>
                 {" "}
-                <span className="font-mono text-text-primary">({citySlug})</span>
+                <span className="font-mono text-text-primary">({city}{cc ? `, ${cc.toUpperCase()}` : ""})</span>
               </>
             ) : null}
             . The link may be wrong or the page was removed.
@@ -283,11 +283,19 @@ function LocalityMap({ localityId }: { localityId: string }) {
             </div>
           }
         >
-          <CollectionMapGL
-            buildings={mapBuildings as unknown as DiscoveryBuilding[]}
-            highlightedId={highlightedId}
-            setHighlightedId={setHighlightedId}
-          />
+          <Suspense
+            fallback={
+              <div className="flex h-full w-full items-center justify-center bg-surface-muted">
+                <Skeleton className="h-full w-full" />
+              </div>
+            }
+          >
+            <CollectionMapGL
+              buildings={mapBuildings as unknown as DiscoveryBuilding[]}
+              highlightedId={highlightedId}
+              setHighlightedId={setHighlightedId}
+            />
+          </Suspense>
         </ClientOnly>
       </div>
     </section>

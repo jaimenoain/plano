@@ -966,6 +966,7 @@ toast({
                                                 canEdit={canEdit}
                                                 onUpdateNote={(note) => handleUpdateNote(item.id, note)}
                                                 onNavigate={() => {
+                                                    // TODO: enrich DTO with locality fields
                                                     window.open(getBuildingUrl(item.building.id, item.building.slug, item.building.short_id), '_blank');
                                                 }}
                                                 categorizationMethod={collection.categorization_method}

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ClusterResponse } from '../hooks/useMapData';
 import { getBuildingImageUrl } from '@/utils/image';
+import { getBuildingUrl } from '@/utils/url';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useUserBuildingStatuses } from '@/features/profile/hooks/useUserBuildingStatuses';
 import { supabase } from '@/integrations/supabase/client';
@@ -217,7 +218,7 @@ export function BuildingPopupContent({
     }
   };
 
-  const buildingUrl = cluster.slug ? `/building/${cluster.slug}` : undefined;
+  const buildingUrl = getBuildingUrl(String(cluster.id), cluster.slug);
 
   // Custom Marker Logic
   if (cluster.is_custom_marker) {

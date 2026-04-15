@@ -138,6 +138,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
 
       // 7. Success State
       toast.success("Building added successfully!");
+      // TODO: enrich DTO with locality fields
       navigate(getBuildingUrl(insertedData.id, insertedData.slug, insertedData.short_id));
 
     } catch (error: unknown) {

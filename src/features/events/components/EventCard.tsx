@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { format, parseISO } from "date-fns";
 import { enGB } from "date-fns/locale";
 import type { EventCardDTO } from "@/features/events/types";
+import { getEventUrl } from "@/utils/url";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -47,7 +48,7 @@ export function EventCard({ event }: { event: EventCardDTO }) {
 
   return (
     <Link
-      to={`/events/${event.slug}`}
+      to={getEventUrl(event)}
       className="flex gap-4 rounded-sm border border-border-default bg-surface-card p-4 transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
     >
       <div className="w-[120px] shrink-0">

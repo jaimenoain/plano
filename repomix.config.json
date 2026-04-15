@@ -1,76 +1,47 @@
 {
-  "$schema": "https://repomix.com/schemas/latest/schema.json",
-  "input": {
-    "maxFileSize": 1048576
-  },
   "output": {
     "filePath": "repomix-output.xml",
     "style": "xml",
-    "headerText": "Plano — structure-first pack: Tree-sitter compression keeps exports, types, and signatures; comments stripped; Vitest sources and package-lock omitted. Pair with docs/DATA_CONTRACT.md for authoritative schemas.",
-    "fileSummary": true,
-    "directoryStructure": true,
-    "includeFullDirectoryStructure": true,
-    "files": true,
+    "topFilesLength": 5,
+    "showLineNumbers": true,
     "compress": true,
     "removeComments": true,
-    "removeEmptyLines": true,
-    "truncateBase64": true,
-    "topFilesLength": 12,
-    "tokenCountTree": true,
-    "git": {
-      "sortByChanges": true,
-      "sortByChangesMaxCommits": 25,
-      "includeDiffs": false,
-      "includeLogs": false
-    }
+    "removeEmptyLines": true
+  },
+  "input": {
+    "maxFileSize": 500000
   },
   "include": [
-    "app/**/*",
-    "docs/**/*",
-    "src/**/*",
-    ".cursor/rules/**/*",
-    ".github/workflows/**/*",
-    "supabase/config.toml",
-    "supabase/functions/**/*",
-    "AGENTS.md",
-    "README.md",
-    "CONTRIBUTING.md",
-    "components.json",
-    "eslint.config.js",
-    "index.html",
-    "package.json",
-    "postcss.config.js",
-    "tailwind.config.ts",
-    "tsconfig.json",
-    "tsconfig.app.json",
-    "tsconfig.node.json",
-    "vite.config.ts",
-    "vitest.config.ts",
-    "vercel.json",
-    "public/robots.txt"
+    ".ai-status.md",
+    "apps/**/*.ts",
+    "apps/**/*.tsx",
+    "packages/**/*.ts",
+    "docs/**/*.md"
   ],
   "ignore": {
     "useGitignore": true,
     "useDefaultPatterns": true,
     "customPatterns": [
-      "repomix-output.xml",
-      "bun.lockb",
-      "coverage/**",
+      "node_modules/**",
+      ".next/**",
+      ".expo/**",
       "dist/**",
       "build/**",
-      "supabase/migrations/**",
-      "supabase/.temp/**",
-      "tests/**",
-      "scripts/**",
-      "docs/**/*.pdf",
+      "*.lock",
+      "*.log",
+      "coverage/**",
+      ".turbo/**",
+      "**/__tests__/**",
+      "**/__mocks__/**",
       "**/*.test.ts",
-      "**/*.test.tsx"
+      "**/*.test.tsx",
+      "**/*.spec.ts",
+      "**/*.spec.tsx",
+      "**/fixtures/**",
+      "repomix-output.*"
     ]
   },
   "security": {
     "enableSecurityCheck": true
-  },
-  "tokenCount": {
-    "encoding": "o200k_base"
   }
 }

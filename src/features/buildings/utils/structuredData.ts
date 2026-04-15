@@ -4,7 +4,7 @@ import {
   visiblePrimaryCredits,
   primaryCreditPlainLabel,
 } from "@/features/credits/buildingCreditDisplay";
-import { getBuildingUrl } from "@/utils/url";
+import { getBuildingUrl, getBuildingLocalityUrl, getCountryUrl, getLocalityUrl } from "@/utils/url";
 
 export const SITE_URL = "https://plano.app";
 
@@ -72,6 +72,17 @@ export function buildingAbsoluteUrl(building: BuildingDetails): string {
   return `${SITE_URL}${getBuildingUrl(building.id, building.slug, building.short_id)}`;
 }
 
+/** Returns the canonical absolute URL: locality-scoped when locality data is available, legacy /building/ otherwise. */
+export function buildingCanonicalUrl(
+  building: BuildingDetails,
+  locality?: { country_code: string; city_slug: string } | null,
+): string {
+  if (locality) {
+    return `${SITE_URL}${getBuildingLocalityUrl(locality.country_code, locality.city_slug, building.id, building.slug, building.short_id)}`;
+  }
+  return buildingAbsoluteUrl(building);
+}
+
 export interface BuildingRatingData {
   averageRating: number;
   reviewCount: number;
@@ -81,8 +92,9 @@ export function buildingStructuredData(
   building: BuildingDetails,
   credits?: BuildingCreditWithEntities[],
   ratingData?: BuildingRatingData,
+  locality?: { country_code: string; city_slug: string } | null,
 ) {
-  const url = buildingAbsoluteUrl(building);
+  const url = buildingCanonicalUrl(building, locality);
   const year = building.year_completed;
   const yearIso =
     typeof year === "number" && Number.isFinite(year)
@@ -162,7 +174,10 @@ export function buildingStructuredData(
   };
 }
 
-export function buildingBreadcrumbStructuredData(building: BuildingDetails): object {
+export function buildingBreadcrumbStructuredData(
+  building: BuildingDetails,
+  locality?: { country_code: string; city_slug: string; city: string; country: string } | null,
+): object {
   const items: Array<{
     "@type": "ListItem";
     position: number;
@@ -172,30 +187,40 @@ export function buildingBreadcrumbStructuredData(building: BuildingDetails): obj
     { "@type": "ListItem", position: 1, name: "Plano", item: SITE_URL },
   ];
 
-  if (building.country) {
+  if (locality) {
+    const buildingUrl = `${SITE_URL}${getBuildingLocalityUrl(locality.country_code, locality.city_slug, building.id, building.slug, building.short_id)}`;
     items.push({
       "@type": "ListItem",
       position: 2,
-      name: building.country,
-      item: `${SITE_URL}/search?country=${encodeURIComponent(building.country)}`,
+      name: "Architecture",
+      item: `${SITE_URL}/architecture`,
     });
-  }
-
-  if (building.city) {
     items.push({
       "@type": "ListItem",
-      position: items.length + 1,
-      name: building.city,
-      item: `${SITE_URL}/search?city=${encodeURIComponent(building.city)}`,
+      position: 3,
+      name: locality.country,
+      item: `${SITE_URL}${getCountryUrl(locality.country_code)}`,
+    });
+    items.push({
+      "@type": "ListItem",
+      position: 4,
+      name: locality.city,
+      item: `${SITE_URL}${getLocalityUrl(locality.country_code, locality.city_slug)}`,
+    });
+    items.push({
+      "@type": "ListItem",
+      position: 5,
+      name: building.name,
+      item: buildingUrl,
+    });
+  } else {
+    items.push({
+      "@type": "ListItem",
+      position: 2,
+      name: building.name,
+      item: buildingAbsoluteUrl(building),
     });
   }
-
-  items.push({
-    "@type": "ListItem",
-    position: items.length + 1,
-    name: building.name,
-    item: buildingAbsoluteUrl(building),
-  });
 
   return {
     "@context": "https://schema.org",
@@ -305,13 +330,14 @@ export function companyPageStructuredData(company: {
   };
 }
 
-/** Schema.org ItemList for `/city/:slug` locality pages. */
+/** Schema.org ItemList + BreadcrumbList for `/architecture/:cc/:city` locality pages. */
 export function localityPageStructuredData(
   locality: {
     slug: string;
     city: string;
     country: string;
     country_code: string;
+    city_slug: string;
     buildings_count: number;
     lat: number | null;
     lng: number | null;
@@ -323,13 +349,16 @@ export function localityPageStructuredData(
     slug: string | null;
     short_id: number;
   }>,
+  canonicalUrl: string,
 ): object {
-  return {
-    "@context": "https://schema.org",
+  const countryUrl = `${SITE_URL}${getCountryUrl(locality.country_code)}`;
+  const localityUrl = `${SITE_URL}${getLocalityUrl(locality.country_code, locality.city_slug)}`;
+
+  const itemList = {
     "@type": "ItemList",
     name: `Architecture in ${locality.city}, ${locality.country}`,
     ...(locality.description ? { description: locality.description } : {}),
-    url: `${SITE_URL}/city/${locality.slug}`,
+    url: canonicalUrl,
     numberOfItems: locality.buildings_count,
     itemListElement: buildings.map((b, i) => ({
       "@type": "ListItem",
@@ -349,6 +378,56 @@ export function localityPageStructuredData(
           },
         }
       : {}),
+  };
+
+  const breadcrumb = {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Plano", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Architecture", item: `${SITE_URL}/architecture` },
+      { "@type": "ListItem", position: 3, name: locality.country, item: countryUrl },
+      { "@type": "ListItem", position: 4, name: locality.city, item: localityUrl },
+    ],
+  };
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [itemList, breadcrumb],
+  };
+}
+
+/** Schema.org ItemList + BreadcrumbList for `/architecture/:cc` country pages. */
+export function countryPageStructuredData(
+  countryCode: string,
+  countryName: string,
+  localities: Array<{ city: string; country_code: string; city_slug: string }>,
+  canonicalUrl: string,
+): object {
+  const itemList = {
+    "@type": "ItemList",
+    name: `Architecture in ${countryName}`,
+    url: canonicalUrl,
+    numberOfItems: localities.length,
+    itemListElement: localities.map((loc, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: loc.city,
+      url: `${SITE_URL}${getLocalityUrl(loc.country_code, loc.city_slug)}`,
+    })),
+  };
+
+  const breadcrumb = {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Plano", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Architecture", item: `${SITE_URL}/architecture` },
+      { "@type": "ListItem", position: 3, name: countryName, item: `${SITE_URL}${getCountryUrl(countryCode)}` },
+    ],
+  };
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [itemList, breadcrumb],
   };
 }
 

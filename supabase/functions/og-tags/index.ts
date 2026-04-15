@@ -87,12 +87,14 @@ Deno.serve(async (req) => {
   );
 
   try {
-    const buildingMatch = path.match(/^\/building\/(\d+)(?:\/([^/]+))?/);
-    if (buildingMatch) {
-      const shortId = parseInt(buildingMatch[1], 10);
+    // /architecture/:cc/:city/:id/:slug  (new building path)
+    // /architecture/:cc/:city/:id        (slug-less canonical redirect path)
+    const archBuildingMatch = path.match(/^\/architecture\/([^/]+)\/([^/]+)\/(\d+)(?:\/([^/]+))?/);
+    if (archBuildingMatch) {
+      const shortId = parseInt(archBuildingMatch[3], 10);
       const { data: building } = await supabase
         .from("buildings")
-        .select("name, city, country, year_completed, hero_image_url, slug, short_id")
+        .select("name, city, country, year_completed, hero_image_url, slug, short_id, locality:localities(country_code, city_slug)")
         .eq("short_id", shortId)
         .maybeSingle();
 
@@ -104,8 +106,125 @@ Deno.serve(async (req) => {
           building.city ? ` in ${building.city}` : ""
         }${building.country ? `, ${building.country}` : ""} on Plano.`;
         const image = absoluteHeroImage(building.hero_image_url);
-        const pathSuffix = building.slug ? `/${building.slug}` : "";
-        const canonicalUrl = `${SITE_URL}/building/${building.short_id}${pathSuffix}`;
+        const loc = building.locality as { country_code: string; city_slug: string } | null;
+        const canonicalUrl = loc
+          ? `${SITE_URL}/architecture/${loc.country_code.toLowerCase()}/${loc.city_slug}/${building.short_id}${building.slug ? `/${building.slug}` : ""}`
+          : `${SITE_URL}/building/${building.short_id}${building.slug ? `/${building.slug}` : ""}`;
+
+        return new Response(
+          renderOgHtml({ title, description, image, url: canonicalUrl }),
+          { headers: corsHeaders },
+        );
+      }
+
+      return new Response(
+        renderOgHtml({
+          title: DEFAULT_TITLE,
+          description: DEFAULT_DESCRIPTION,
+          image: DEFAULT_IMAGE,
+          url: `${SITE_URL}/`,
+        }),
+        { headers: corsHeaders },
+      );
+    }
+
+    // /architecture/:cc/:city  (locality page)
+    const archLocalityMatch = path.match(/^\/architecture\/([^/]+)\/([^/]+)$/);
+    if (archLocalityMatch) {
+      const cc = archLocalityMatch[1];
+      const citySlug = archLocalityMatch[2];
+      const { data: locality } = await supabase
+        .from("localities")
+        .select("city, country, country_code, city_slug, buildings_count, hero_image_url, meta_title, meta_description")
+        .eq("country_code", cc.toUpperCase())
+        .eq("city_slug", citySlug)
+        .maybeSingle();
+
+      if (locality) {
+        const title = locality.meta_title || `Architecture in ${locality.city}, ${locality.country} — Plano`;
+        const description = locality.meta_description || `Explore architecture in ${locality.city}. Discover ${locality.buildings_count} buildings on Plano.`;
+        const image = absoluteHeroImage(locality.hero_image_url);
+        const canonicalUrl = `${SITE_URL}/architecture/${locality.country_code.toLowerCase()}/${locality.city_slug}`;
+        return new Response(
+          renderOgHtml({ title, description, image, url: canonicalUrl }),
+          { headers: corsHeaders },
+        );
+      }
+    }
+
+    // /architecture/:cc  (country page)
+    const archCountryMatch = path.match(/^\/architecture\/([^/]+)$/);
+    if (archCountryMatch) {
+      const cc = archCountryMatch[1];
+      const { data: localities } = await supabase
+        .from("localities")
+        .select("city, country, country_code, buildings_count, hero_image_url")
+        .eq("country_code", cc.toUpperCase())
+        .gt("buildings_count", 0)
+        .order("buildings_count", { ascending: false });
+
+      if (localities && localities.length > 0) {
+        const countryName = localities[0].country;
+        const totalBuildings = localities.reduce((sum: number, l: { buildings_count: number }) => sum + (l.buildings_count || 0), 0);
+        const title = `Architecture in ${countryName} — Plano`;
+        const description = `Explore ${totalBuildings} buildings across ${localities.length} cities in ${countryName} on Plano.`;
+        const image = absoluteHeroImage(localities[0].hero_image_url);
+        const canonicalUrl = `${SITE_URL}/architecture/${cc.toLowerCase()}`;
+        return new Response(
+          renderOgHtml({ title, description, image, url: canonicalUrl }),
+          { headers: corsHeaders },
+        );
+      }
+    }
+
+    // /events/:cc/:city/:slug  (location-scoped event)
+    const archEventMatch = path.match(/^\/events\/([^/]+)\/([^/]+)\/([^/]+)$/);
+    if (archEventMatch) {
+      const eventSlug = archEventMatch[3];
+      const { data: event } = await supabase
+        .from("events")
+        .select("title, description, slug, cover_image_url, country_code, city_slug")
+        .eq("slug", eventSlug)
+        .maybeSingle();
+
+      if (event) {
+        const title = `${event.title} — Plano`;
+        const description = event.description
+          ? event.description.slice(0, 160)
+          : `Join ${event.title} on Plano.`;
+        const image = absoluteHeroImage(event.cover_image_url);
+        const canonicalUrl = event.country_code && event.city_slug
+          ? `${SITE_URL}/events/${event.country_code.toLowerCase()}/${event.city_slug}/${event.slug}`
+          : `${SITE_URL}/events/${event.slug}`;
+        return new Response(
+          renderOgHtml({ title, description, image, url: canonicalUrl }),
+          { headers: corsHeaders },
+        );
+      }
+    }
+
+    // Legacy: /building/:id/:slug
+    const buildingMatch = path.match(/^\/building\/(\d+)(?:\/([^/]+))?/);
+    if (buildingMatch) {
+      const shortId = parseInt(buildingMatch[1], 10);
+      const { data: building } = await supabase
+        .from("buildings")
+        .select("name, city, country, year_completed, hero_image_url, slug, short_id, locality:localities(country_code, city_slug)")
+        .eq("short_id", shortId)
+        .maybeSingle();
+
+      if (building) {
+        const title = `${building.name}${building.city ? ` — ${building.city}` : ""}${
+          building.year_completed ? ` (${building.year_completed})` : ""
+        }`;
+        const description = `Discover ${building.name}${
+          building.city ? ` in ${building.city}` : ""
+        }${building.country ? `, ${building.country}` : ""} on Plano.`;
+        const image = absoluteHeroImage(building.hero_image_url);
+        const loc = building.locality as { country_code: string; city_slug: string } | null;
+        const canonicalUrl = loc
+          ? `${SITE_URL}/architecture/${loc.country_code.toLowerCase()}/${loc.city_slug}/${building.short_id}${building.slug ? `/${building.slug}` : ""}`
+          : `${SITE_URL}/building/${building.short_id}${building.slug ? `/${building.slug}` : ""}`;
 
         return new Response(
           renderOgHtml({ title, description, image, url: canonicalUrl }),

@@ -2,6 +2,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { useBuildingImages } from "@/features/buildings";
 import { getBuildingImageUrl } from "@/utils/image";
 import { ExternalLink, MapPin } from "lucide-react";
+import { getBuildingUrl } from "@/utils/url";
 import { Link } from "react-router";
 import { BuildingAttributes } from "@/features/buildings/components/BuildingAttributes";
 
@@ -47,7 +48,7 @@ export function BuildingDetailPanel({ building }: BuildingDetailPanelProps) {
       <div className="p-6 space-y-6 overflow-y-auto h-full">
         <div>
           <Link
-            to={`/building/${building.slug || building.id}`}
+            to={getBuildingUrl(building.id, building.slug)}
             target="_blank"
             className="group flex items-start gap-2 hover:text-brand-primary transition-colors"
           >
@@ -70,7 +71,7 @@ export function BuildingDetailPanel({ building }: BuildingDetailPanelProps) {
               {allImages.map((img) => (
                 <CarouselItem key={img.id}>
                   <Link
-                    to={`/building/${building.slug || building.id}`}
+                    to={getBuildingUrl(building.id, building.slug)}
                     target="_blank"
                     className="block aspect-square relative overflow-hidden rounded-md border bg-surface-muted group cursor-pointer"
                   >

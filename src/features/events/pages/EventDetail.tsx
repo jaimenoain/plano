@@ -13,14 +13,14 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useEvent } from "@/features/events/hooks/useEvent";
 import type { EventCardDTO, EventDTO, EventOrganiser, EventsApiError } from "@/features/events/types";
-import { getBuildingUrl } from "@/utils/url";
+import { getBuildingUrl, getEventUrl } from "@/utils/url";
 import { cn } from "@/lib/utils";
 import { RecommendDialog } from "@/components/common/RecommendDialog";
 import { useEventAttendance } from "@/features/events/hooks/useEventAttendance";
 
-// TODO: add a server-side loader (EventDetail.loader.ts) to make these tags SSR-aware.
-// Without a loader, data is always undefined at render time and the MetaHead component
-// handles dynamic meta updates on the client once the event loads via useEvent().
+export { eventDetailLoader as loader } from "./EventDetail.loader";
+
+// Meta uses static defaults; dynamic updates are applied client-side via MetaHead once useEvent() resolves.
 export const meta: MetaFunction = () => {
   const title = "Event | Plano";
   const description = "Discover and track architecture events on Plano.";
@@ -124,7 +124,7 @@ function buildEventStructuredData(event: EventDTO): Record<string, unknown> {
     ...(description
       ? { description: description.length > 500 ? `${description.slice(0, 497)}...` : description }
       : {}),
-    url: `https://plano.app/events/${event.slug}`,
+    url: `https://plano.app${getEventUrl(event)}`,
     organizer: {
       "@type": "Organization",
       name: "Plano",
@@ -190,7 +190,7 @@ export default function EventDetail() {
     () => (query.data ? eventDtoToCardDto(query.data) : null),
     [query.data],
   );
-  const loginRedirectPath = query.data ? `/events/${query.data.slug}` : slug.trim() ? `/events/${slug}` : "/events";
+  const loginRedirectPath = query.data ? getEventUrl(query.data) : slug.trim() ? `/events/${slug}` : "/events";
 
   if (!slug.trim()) {
     return <NotFoundState slug={slugParam} />;
@@ -231,7 +231,7 @@ export default function EventDetail() {
       <MetaHead
         documentTitle={`${event.title} · Plano`}
         description={metaDescription(event)}
-        canonicalUrl={`/events/${event.slug}`}
+        canonicalUrl={getEventUrl(event)}
         structuredData={buildEventStructuredData(event)}
       />
       <article className="pb-12">
@@ -470,6 +470,7 @@ export default function EventDetail() {
                   {event.buildings.map((b) => (
                     <Link
                       key={b.buildingId}
+                      // TODO: enrich DTO with locality fields
                       to={getBuildingUrl(b.buildingId, b.slug, null)}
                       className="flex w-36 shrink-0 flex-col gap-2 border border-border-default bg-surface-card p-2 transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
                     >

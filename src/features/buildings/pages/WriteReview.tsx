@@ -578,6 +578,7 @@ toast({
 
       toast({ title: "Review deleted" });
       if (!buildingId) return;
+      // TODO: enrich DTO with locality fields
       navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
 
     } catch (error) {
@@ -754,6 +755,7 @@ toast({
       }
 
       toast({ title: "Review published!" });
+      // TODO: enrich DTO with locality fields
       navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
 
     } catch (error) {

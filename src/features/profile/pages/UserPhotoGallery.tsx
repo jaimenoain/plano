@@ -300,6 +300,7 @@ export default function UserPhotoGallery() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {photos.map((photo) => {
                const imageUrl = getBuildingImageUrl(photo.storage_path);
+               // TODO: enrich DTO with locality fields
                const linkUrl = photo.building ? getBuildingUrl(photo.building.id, photo.building.slug, photo.building.short_id) : "#";
 
                return (

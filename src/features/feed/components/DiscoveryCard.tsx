@@ -347,6 +347,7 @@ export function DiscoveryCard({
         {/* Building name — full width, no save icon */}
         <div className="mb-0.5">
           <Link
+            // TODO: enrich DTO with locality fields
             to={getBuildingUrl(building.id, building.slug, (building as { short_id?: number | null }).short_id)}
             className="pointer-events-auto hover:opacity-80 transition-opacity block"
           >

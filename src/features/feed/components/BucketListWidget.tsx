@@ -118,6 +118,7 @@ export function BucketListWidget() {
             ))
           : items.map((building) => {
               const imageUrl = getBuildingImageUrl(building.hero_image_url);
+              // TODO: enrich DTO with locality fields
               const href = getBuildingUrl(building.id, building.slug, building.short_id);
               return (
                 <div

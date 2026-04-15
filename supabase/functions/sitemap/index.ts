@@ -43,6 +43,8 @@ function buildSitemapIndex(today: string): string {
   const sitemaps = [
     { loc: `${SITE_URL}/sitemap-buildings.xml`, lastmod: today },
     { loc: `${SITE_URL}/sitemap-localities.xml`, lastmod: today },
+    { loc: `${SITE_URL}/sitemap-countries.xml`, lastmod: today },
+    { loc: `${SITE_URL}/sitemap-events.xml`, lastmod: today },
     { loc: `${SITE_URL}/sitemap-people.xml`, lastmod: today },
     { loc: `${SITE_URL}/sitemap-companies.xml`, lastmod: today },
     { loc: `${SITE_URL}/sitemap-collections.xml`, lastmod: today },
@@ -72,13 +74,14 @@ async function buildBuildingsSitemap(supabase: ReturnType<typeof createClient>):
     country: string | null;
     building_styles: { architectural_styles: { name: string } | null }[];
     building_credits: { id: string }[];
+    localities: { country_code: string; city_slug: string } | null;
   }[] = [];
 
   try {
     const { data, error } = await supabase
       .from("buildings")
       .select(
-        "short_id, slug, name, updated_at, created_at, hero_image_url, year_completed, city, country, building_styles(architectural_styles(name)), building_credits(id)",
+        "short_id, slug, name, updated_at, created_at, hero_image_url, year_completed, city, country, building_styles(architectural_styles(name)), building_credits(id), localities(country_code, city_slug)",
       )
       .eq("is_deleted", false)
       .not("slug", "is", null)
@@ -109,7 +112,11 @@ async function buildBuildingsSitemap(supabase: ReturnType<typeof createClient>):
 
   for (const b of buildings) {
     const lastmod = formatLastmod(b.updated_at ?? b.created_at);
-    const loc = `${SITE_URL}/building/${b.short_id}/${b.slug}`;
+    const locality = b.localities;
+    const loc =
+      locality?.country_code && locality?.city_slug
+        ? `${SITE_URL}/architecture/${locality.country_code.toLowerCase()}/${locality.city_slug}/${b.short_id}/${b.slug}`
+        : `${SITE_URL}/building/${b.short_id}/${b.slug}`;
     const hasHero = !!b.hero_image_url;
     const hasCredits = Array.isArray(b.building_credits) && b.building_credits.length > 0;
     const priority = hasHero && hasCredits ? "0.9" : "0.7";
@@ -150,11 +157,16 @@ async function buildBuildingsSitemap(supabase: ReturnType<typeof createClient>):
 }
 
 async function buildLocalitiesSitemap(supabase: ReturnType<typeof createClient>): Promise<string> {
-  let localities: { slug: string; updated_at: string | null; created_at: string | null }[] = [];
+  let localities: {
+    country_code: string;
+    city_slug: string;
+    updated_at: string | null;
+    created_at: string | null;
+  }[] = [];
   try {
     const { data, error } = await supabase
       .from("localities")
-      .select("slug, updated_at, created_at")
+      .select("country_code, city_slug, updated_at, created_at")
       .gt("buildings_count", 0)
       .order("buildings_count", { ascending: false })
       .limit(45000);
@@ -170,11 +182,87 @@ async function buildLocalitiesSitemap(supabase: ReturnType<typeof createClient>)
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
   for (const loc of localities) {
     const lastmod = formatLastmod(loc.updated_at ?? loc.created_at);
-    const url = `${SITE_URL}/city/${loc.slug}`;
+    const url = `${SITE_URL}/architecture/${loc.country_code.toLowerCase()}/${loc.city_slug}`;
     xml += `  <url>\n    <loc>${escapeXml(url)}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ""}\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
   }
   xml += `</urlset>`;
   console.log(`sitemap/localities: url_count=${localities.length}`);
+  return xml;
+}
+
+async function buildCountriesSitemap(supabase: ReturnType<typeof createClient>): Promise<string> {
+  let rows: { country_code: string; updated_at: string | null }[] = [];
+  try {
+    const { data, error } = await supabase
+      .from("localities")
+      .select("country_code, updated_at")
+      .gt("buildings_count", 0)
+      .limit(45000);
+    if (error) {
+      console.error("sitemap/countries: query error", error.message);
+    } else {
+      rows = (data as typeof rows) ?? [];
+    }
+  } catch (e) {
+    console.error("sitemap/countries: query exception", e);
+  }
+
+  // Deduplicate by country_code, keeping the most recent updated_at
+  const countryMap = new Map<string, string | null>();
+  for (const row of rows) {
+    const existing = countryMap.get(row.country_code);
+    if (existing === undefined || (row.updated_at && (!existing || row.updated_at > existing))) {
+      countryMap.set(row.country_code, row.updated_at);
+    }
+  }
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+  for (const [cc, updatedAt] of countryMap) {
+    const lastmod = formatLastmod(updatedAt);
+    const url = `${SITE_URL}/architecture/${cc.toLowerCase()}`;
+    xml += `  <url>\n    <loc>${escapeXml(url)}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ""}\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+  }
+  xml += `</urlset>`;
+  console.log(`sitemap/countries: url_count=${countryMap.size}`);
+  return xml;
+}
+
+async function buildEventsSitemap(supabase: ReturnType<typeof createClient>): Promise<string> {
+  let events: {
+    slug: string;
+    country_code: string | null;
+    city_slug: string | null;
+    updated_at: string | null;
+    created_at: string | null;
+  }[] = [];
+  try {
+    const { data, error } = await supabase
+      .from("events")
+      .select("slug, country_code, city_slug, updated_at, created_at")
+      .eq("is_deleted", false)
+      .not("slug", "is", null)
+      .order("updated_at", { ascending: false })
+      .limit(45000);
+    if (error) {
+      console.error("sitemap/events: query error", error.message);
+    } else {
+      events = (data as typeof events) ?? [];
+    }
+  } catch (e) {
+    console.error("sitemap/events: query exception", e);
+  }
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+  for (const ev of events) {
+    const lastmod = formatLastmod(ev.updated_at ?? ev.created_at);
+    const url =
+      ev.country_code && ev.city_slug
+        ? `${SITE_URL}/events/${ev.country_code.toLowerCase()}/${ev.city_slug}/${ev.slug}`
+        : `${SITE_URL}/events/${ev.slug}`;
+    xml += `  <url>\n    <loc>${escapeXml(url)}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ""}\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+  }
+  xml += `</urlset>`;
+  console.log(`sitemap/events: url_count=${events.length}`);
   return xml;
 }
 
@@ -299,6 +387,12 @@ Deno.serve(async (req) => {
         break;
       case "localities":
         xml = await buildLocalitiesSitemap(supabase);
+        break;
+      case "countries":
+        xml = await buildCountriesSitemap(supabase);
+        break;
+      case "events":
+        xml = await buildEventsSitemap(supabase);
         break;
       case "people":
         xml = await buildPeopleSitemap(supabase);

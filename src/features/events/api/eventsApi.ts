@@ -211,6 +211,12 @@ function rowToEventDTO(
     isDeleted: row.is_deleted,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    localityId: (row as any).locality_id ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    countryCode: (row as any).country_code ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    citySlug: (row as any).city_slug ?? null,
   };
 }
 
@@ -224,7 +230,7 @@ function toCard(dto: EventDTO): EventCardDTO {
 }
 
 export const EVENT_CARD_LIST_COLUMNS =
-  "id, title, description, slug, start_at, end_at, address, location, external_link, cover_image_url, is_self_hosted, claim_status, submitted_by_user_id, organiser_user_id, organiser_person_id, organiser_company_id, is_deleted, created_at, updated_at";
+  "id, title, description, slug, start_at, end_at, address, location, external_link, cover_image_url, is_self_hosted, claim_status, submitted_by_user_id, organiser_user_id, organiser_person_id, organiser_company_id, is_deleted, created_at, updated_at, locality_id, country_code, city_slug";
 
 /** Hydrates raw `events` rows into card DTOs (no building joins). */
 export async function hydrateEventRowsToCards(list: EventRow[]): Promise<EventCardDTO[]> {
@@ -278,7 +284,7 @@ export async function getEventBySlug(slug: string): Promise<EventDTO> {
       `
       id, title, description, slug, start_at, end_at, address, location, external_link, cover_image_url,
       is_self_hosted, claim_status, submitted_by_user_id, organiser_user_id, organiser_person_id, organiser_company_id,
-      is_deleted, created_at, updated_at,
+      is_deleted, created_at, updated_at, locality_id, country_code, city_slug,
       event_buildings (
         sort_order,
         buildings ( id, name, slug, city, hero_image_url, community_preview_url )

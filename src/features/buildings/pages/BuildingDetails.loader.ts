@@ -7,6 +7,7 @@ import {
   isBuildingHeroEligibleSize,
   pickFirstHeroEligibleStoragePath,
 } from "@/lib/building-hero-image";
+import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 
 export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
   const headers = new Headers();
@@ -15,6 +16,7 @@ export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
     "Cache-Control",
     "public, s-maxage=300, stale-while-revalidate=3600",
   );
+
   let building: Awaited<ReturnType<typeof fetchBuildingDetails>>;
   try {
     building = await fetchBuildingDetails(params.id!, supabase);
@@ -32,19 +34,68 @@ export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
   const canonicalShortId =
     typeof building.short_id === "number" ? building.short_id : null;
 
-  // Redirect to canonical short_id + slug URL if the current URL doesn't match.
-  // This handles incoming UUID links, slug-only links, and stale slugs.
+  // -------------------------------------------------------------------------
+  // Locality consistency check (new /architecture/:cc/:city/:id/:slug routes)
+  // -------------------------------------------------------------------------
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const buildingAny = building as any;
+  const localityId: string | null = buildingAny.locality_id ?? null;
+
+  // Fetch locality data when we have a locality_id (one extra round-trip, cached at CDN level).
+  let locality: { country_code: string; city_slug: string } | null = null;
+  if (localityId) {
+    const { data: loc } = await supabase
+      .from("localities")
+      .select("country_code, city_slug")
+      .eq("id", localityId)
+      .maybeSingle();
+    if (loc) locality = loc;
+  }
+
+  // Helper: build the canonical URL for this building.
+  function canonicalUrl(): string {
+    const id = String(canonicalShortId ?? params.id);
+    if (locality) {
+      return getBuildingLocalityUrl(
+        locality.country_code,
+        locality.city_slug,
+        id,
+        canonicalSlug,
+        canonicalShortId,
+      );
+    }
+    return getBuildingUrl(id, canonicalSlug, canonicalShortId);
+  }
+
+  // If the route carries :cc and :city params, validate locality consistency.
+  if (params.cc && params.city) {
+    const ccMismatch =
+      locality &&
+      locality.country_code.toLowerCase() !== params.cc.toLowerCase();
+    const cityMismatch =
+      locality && locality.city_slug !== params.city;
+
+    if (!locality) {
+      // Building has no locality — redirect to legacy /building/ URL.
+      throw redirect(getBuildingUrl(String(canonicalShortId ?? params.id), canonicalSlug, canonicalShortId), { status: 301, headers });
+    }
+
+    if (ccMismatch || cityMismatch) {
+      throw redirect(canonicalUrl(), { status: 301, headers });
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Slug / id canonicalization (same logic as before, updated redirect target)
+  // -------------------------------------------------------------------------
   const idMismatch =
     canonicalShortId !== null &&
     String(params.id) !== String(canonicalShortId);
+  const slugMissing = canonicalSlug !== null && !params.slug;
   const slugMismatch = canonicalSlug !== null && params.slug !== canonicalSlug;
 
-  if (idMismatch || slugMismatch) {
-    const idSegment = canonicalShortId ?? params.id;
-    const canonicalPath = canonicalSlug
-      ? `/building/${idSegment}/${canonicalSlug}`
-      : `/building/${idSegment}`;
-    throw redirect(canonicalPath, { status: 301, headers });
+  if (idMismatch || slugMissing || slugMismatch) {
+    throw redirect(canonicalUrl(), { status: 301, headers });
   }
 
   const buildingId = building.id as string;
@@ -129,5 +180,5 @@ export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
 
   const buildingCredits = await getBuildingCreditsWithClient(supabase, buildingId);
 
-  return data({ building, heroImageUrl, buildingCredits }, { headers });
+  return data({ building, heroImageUrl, buildingCredits, locality }, { headers });
 }

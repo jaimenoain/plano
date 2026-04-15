@@ -61,7 +61,14 @@ export default [
       id: "events-submit-edit",
     }),
     route("/events", "features/events/pages/Events.tsx"),
-    route("/events/:slug", "features/events/pages/EventDetail.tsx"),
+    // /events/:cc/:city/:slug — locality-scoped physical event URL (T13)
+    route("/events/:cc/:city/:slug", "features/events/pages/EventDetail.tsx", {
+      id: "event-detail-locality",
+    }),
+    // /events/:slug — fallback for virtual/online events or legacy links
+    route("/events/:slug", "features/events/pages/EventDetail.tsx", {
+      id: "event-detail-slug",
+    }),
     route("/groups/*", "pages/NotFound.tsx", { id: "groups-not-found" }),
     route("/profile", "features/profile/pages/Profile.tsx", {
       id: "profile-root",
@@ -132,6 +139,20 @@ export default [
     ),
     route("/review/:id", "features/buildings/pages/ReviewDetails.tsx"),
     route("/city/:citySlug", "features/localities/pages/LocalityPage.tsx"),
+    // Architecture routes (new URL structure — Phases 3–6)
+    route("/architecture/:cc", "features/localities/pages/CountryPage.tsx"),
+    route("/architecture/:cc/:city", "features/localities/pages/LocalityPage.tsx", {
+      id: "locality-architecture",
+    }),
+    // /architecture/:cc/:city/:id — slug-less canonical; loader issues 301 to add slug (T9)
+    route("/architecture/:cc/:city/:id", "features/buildings/pages/BuildingDetails.tsx", {
+      id: "building-details-architecture-id",
+    }),
+    route("/architecture/:cc/:city/:id/:slug", "features/buildings/pages/BuildingDetails.tsx", {
+      id: "building-details-architecture-slug",
+    }),
+    // Legacy redirect stubs — logic filled in T7 / T10
+    route("/locality/:slug", "features/localities/pages/LocalityRedirect.tsx"),
     route("*", "pages/NotFound.tsx", { id: "root-not-found" }),
   ]),
 ] satisfies RouteConfig;

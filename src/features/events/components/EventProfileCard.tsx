@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { format, parseISO } from "date-fns";
 import { enGB } from "date-fns/locale";
 import type { EventCardDTO } from "@/features/events/types";
+import { getEventUrl } from "@/utils/url";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -53,7 +54,7 @@ export function EventProfileCard({
 
   return (
     <Link
-      to={`/events/${event.slug}`}
+      to={getEventUrl(event)}
       className={cn(
         "flex gap-3 py-3 transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2",
         className,

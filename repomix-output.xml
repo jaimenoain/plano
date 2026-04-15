@@ -8120,14 +8120,6 @@ import { FunctionalCategory, FunctionalTypology, AttributeGroup, Attribute } fro
 export function useBuildingMetadata()
 </file>
 
-<file path="src/features/buildings/pages/ReviewDetails.loader.ts">
-import { data, type LoaderFunctionArgs } from "react-router";
-import { createSupabaseServerClient } from "~/lib/supabase.server";
-import { getBuildingImageUrl } from "@/utils/image";
-import { SITE_URL } from "@/features/buildings/utils/structuredData";
-export async function reviewLoader(
-</file>
-
 <file path="src/features/buildings/pages/WriteReview.tsx">
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, type MetaFunction } from "react-router";
@@ -15740,19 +15732,6 @@ This project is a Single Page Application (SPA) built with the following core te
 }
 </file>
 
-<file path="vercel.json">
-{
-  "framework": "react-router",
-  "regions": ["lhr1"],
-  "rewrites": [
-    {
-      "source": "/sitemap.xml",
-      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap"
-    }
-  ]
-}
-</file>
-
 <file path="vite.config.ts">
 import { defineConfig } from "vite";
 import { reactRouter } from "@react-router/dev/vite";
@@ -16141,37 +16120,6 @@ export async function updateProfile(payload: unknown) {
 | Consumed by Next.js Server Actions / API Routes | Vercel Environment Variables |
 | Consumed by Supabase Edge Functions or pg functions | Supabase Vault + Vercel |
 | Never in `.ai-status.md`, never in chat, never committed | All secrets |
-</file>
-
-<file path="app/root.tsx">
-import {
-  Links,
-  Meta,
-  Outlet,
-  Scripts,
-  ScrollRestoration,
-  useLoaderData,
-  type LoaderFunctionArgs,
-} from "react-router";
-import { useState } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "@/features/auth/hooks/useAuth";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { PwaProvider } from "@/hooks/usePwaInstall";
-import { GoogleAnalytics } from "@/components/GoogleAnalytics";
-import { CookieConsent } from "@/components/common/CookieConsent";
-import { PwaPrompt } from "@/components/pwa/PwaPrompt";
-import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
-import {
-  createSupabaseServerClient,
-  getSessionForClientHydration,
-} from "~/lib/supabase.server";
-export async function loader(
-export function Layout(
-function makeQueryClient()
-export default function Root()
 </file>
 
 <file path="public/robots.txt">
@@ -16665,122 +16613,12 @@ type ImageRow = {
   };
 </file>
 
-<file path="src/features/buildings/pages/ReviewDetails.tsx">
-import { useEffect, useState } from "react";
-import { useParams, useNavigate, Link, type MetaFunction } from "react-router";
-import { Loader2, Trash2, Heart, Circle, MessageCircle, Pencil, MapPin, Send, ExternalLink, Calendar, Building2 } from "lucide-react";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { formatDistanceToNow } from "date-fns";
-import { cn } from "@/lib/utils";
-import NotFound from "@/pages/NotFound";
+<file path="src/features/buildings/pages/ReviewDetails.loader.ts">
+import { data, type LoaderFunctionArgs } from "react-router";
+import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { getBuildingImageUrl } from "@/utils/image";
-import { getBuildingUrl } from "@/utils/url";
-import { ImageDetailsDialog } from "../components/ImageDetailsDialog";
-import {
-  visibleCreditSummariesFromEmbed,
-  type BuildingCreditEmbed,
-} from "@/features/credits/api/credits";
-import { reviewLoader } from "./ReviewDetails.loader";
-⋮----
-export const meta: MetaFunction<typeof reviewLoader> = (
-interface FeedReview {
-  id: string;
-  content: string | null;
-  rating: number | null;
-  tags: string[] | null;
-  created_at: string;
-  user_id: string;
-  building_id: string;
-  status: string;
-  user: {
-    username: string | null;
-    avatar_url: string | null;
-  };
-  building: {
-    id: string;
-    name: string;
-    year_completed: number | null;
-    address: string | null;
-    main_image_url: string | null;
-    creditedEntities: { id: string; name: string }[] | null;
-  };
-  images: { id: string; url: string; is_generated?: boolean }[];
-  likes_count: number;
-  comments_count: number;
-  is_liked: boolean;
-}
-interface Comment {
-  id: string;
-  content: string;
-  created_at: string;
-  user_id: string;
-  user: {
-    username: string | null;
-    avatar_url: string | null;
-  };
-  likes_count: number;
-  is_liked: boolean;
-}
-interface RelatedReview {
-  id: string;
-  rating: number | null;
-  user: {
-    username: string | null;
-    avatar_url: string | null;
-  };
-}
-interface Liker {
-  user_id: string;
-  user: {
-    username: string | null;
-    avatar_url: string | null;
-  };
-}
-interface ReviewLink {
-  id: string;
-  url: string;
-  title: string | null;
-  likes_count: number;
-  is_liked: boolean;
-}
-⋮----
-async function loadData()
-⋮----
-// 1. Fetch Log Data
-⋮----
-// Related Reviews Logic (Same Building)
-⋮----
-const handleLikeReview = async () =>
-const handleLikeLink = async (linkId: string) =>
-const handleLikeComment = async (commentId: string) =>
-const handlePostComment = async () =>
-⋮----
-// Refresh comments and counts
-⋮----
-const handleDeleteComment = async (commentId: string) =>
-const handleDeleteReview = async () =>
-⋮----
-const formatDate = (date: string)
-⋮----
-className=
-⋮----
-onClick=
-⋮----
-{/* Comments Section */}
-⋮----
-src=
-⋮----
-onClose=
+import { SITE_URL } from "@/features/buildings/utils/structuredData";
+export async function reviewLoader(
 </file>
 
 <file path="src/features/buildings/utils/buildingReviewFeedAdapter.ts">
@@ -18042,40 +17880,6 @@ function absoluteHeroUrl(url: string | null | undefined): string | null
 export async function localityPageLoader(
 </file>
 
-<file path="src/features/localities/pages/LocalityPage.tsx">
-import { useEffect, useMemo, useState } from "react";
-import {
-  Link,
-  useLoaderData,
-  useParams,
-  useRouteError,
-  isRouteErrorResponse,
-  type MetaFunction,
-} from "react-router";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { Building2, MapPin } from "lucide-react";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ClientOnly } from "@/components/common/ClientOnly";
-import { BuildingHero } from "@/features/buildings/components/BuildingHero";
-import { DiscoveryBuildingCard } from "@/features/search/components/DiscoveryBuildingCard";
-import { getBuildingImageUrl } from "@/utils/image";
-import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
-import type { DiscoveryBuilding } from "@/features/search/components/types";
-import {
-  getLocalityBuildingsClient,
-  getLocalityMapBuildings,
-  LOCALITY_BUILDINGS_PAGE_SIZE,
-} from "@/features/localities/api/localitiesApi";
-import { localityPageLoader, type LocalityPageLoaderData } from "./LocalityPage.loader";
-⋮----
-export const meta: MetaFunction<typeof localityPageLoader> = (
-export function HydrateFallback()
-⋮----
-</file>
-
 <file path="src/features/localities/types.ts">
 import type { Tables } from "@/integrations/supabase/types";
 import type { CreditSummary, StyleSummary } from "@/features/search/components/types";
@@ -18112,67 +17916,6 @@ export interface LocalityBuildingDTO {
   credits: CreditSummary[] | null;
   styles: StyleSummary[] | null;
 }
-</file>
-
-<file path="src/features/maps/components/BuildingPopupContent.tsx">
-import React, { useState } from 'react';
-import { Bookmark, Check, EyeOff, Trash2, Plus, MapPin, Map, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { ClusterResponse } from '../hooks/useMapData';
-import { getBuildingImageUrl } from '@/utils/image';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useUserBuildingStatuses } from '@/features/profile/hooks/useUserBuildingStatuses';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { useQueryClient } from '@tanstack/react-query';
-interface BuildingPopupContentProps {
-  cluster: ClusterResponse;
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
-  onRemoveFromCollection?: (id: string) => void;
-  onAddCandidate?: (id: string) => void;
-}
-⋮----
-// Convert cluster ID to string for status lookup
-⋮----
-const performUpdate = async (
-    status: 'pending' | 'visited' | 'ignored',
-    successMessage: string,
-    removeMessage: string
-) =>
-⋮----
-// Toggle off (delete)
-⋮----
-const handleAction = async (
-    status: 'pending' | 'visited' | 'ignored',
-    successMessage: string,
-    removeMessage: string
-) =>
-const handleSave = (e: React.MouseEvent) =>
-const handleVisit = (e: React.MouseEvent) =>
-const handleHide = (e: React.MouseEvent) =>
-const handleRemove = (e: React.MouseEvent) =>
-const handleAdd = (e: React.MouseEvent) =>
-const handleRate = async (rating: number) =>
-⋮----
-src=
-⋮----
-onTouchStart=
-⋮----
-e.stopPropagation();
-handleRate(rating);
-⋮----
-onMouseEnter=
 </file>
 
 <file path="src/features/maps/components/BuildingSidebar.tsx">
@@ -18450,45 +18193,6 @@ const handleLike = async (e: React.MouseEvent, photoId: string) =>
 className=
 </file>
 
-<file path="src/features/search/components/DiscoveryBuildingCard.tsx">
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {  EyeOff, Circle } from "lucide-react";
-import { Link } from "react-router";
-import { DiscoveryBuilding, ContactInteraction } from "./types";
-import { cn } from "@/lib/utils";
-import { getBuildingImageUrl } from "@/utils/image";
-import { getBuildingUrl } from "@/utils/url";
-import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
-interface DiscoveryBuildingCardProps {
-  building: DiscoveryBuilding;
-  socialContext?: string;
-  distance?: number;
-  action?: React.ReactNode;
-  onClick?: (e: React.MouseEvent) => void;
-  imagePosition?: 'left' | 'right';
-  target?: string;
-}
-⋮----
-className=
-⋮----
-e.preventDefault();
-e.stopPropagation();
-⋮----
-<div className=
-⋮----
-return (
-      <div onClick={onClick} className="block cursor-pointer">
-        {Content}
-      </div>
-    );
-⋮----
-to=
-⋮----
-const getAction = (i: ContactInteraction) =>
-</file>
-
 <file path="src/features/search/components/LeaderboardCard.tsx">
 import { LeaderboardBuilding } from "./types";
 import { cn } from "@/lib/utils";
@@ -18624,22 +18328,6 @@ export function useAutocompleteSuggestions(options: {
   initOnMount?: boolean;
   defaultValue?: string;
 })
-</file>
-
-<file path="src/lib/location-utils.ts">
-type GeocoderAddressComponent = {
-  long_name: string;
-  short_name: string;
-  types: string[];
-};
-type GeocoderResultLike = {
-  address_components?: GeocoderAddressComponent[];
-};
-export const extractLocationDetails = (
-  result: GeocoderResultLike | null | undefined,
-):
-⋮----
-const findComponent = (types: string[]): GeocoderAddressComponent | undefined
 </file>
 
 <file path="src/test/setup.ts">
@@ -18903,17 +18591,75 @@ input, textarea, select {
 .maplibregl-ctrl-top-left,
 </file>
 
-<file path="supabase/functions/sitemap/index.ts">
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-⋮----
-function escapeXml(s: string): string
-function formatLastmod(iso: string | null | undefined): string
-function truncate(s: string, max: number): string
-</file>
-
 <file path="tailwind.config.ts">
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
+</file>
+
+<file path="vercel.json">
+{
+  "framework": "react-router",
+  "regions": ["lhr1"],
+  "rewrites": [
+    {
+      "source": "/sitemap.xml",
+      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap"
+    },
+    {
+      "source": "/sitemap-buildings.xml",
+      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=buildings"
+    },
+    {
+      "source": "/sitemap-localities.xml",
+      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=localities"
+    },
+    {
+      "source": "/sitemap-people.xml",
+      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=people"
+    },
+    {
+      "source": "/sitemap-companies.xml",
+      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=companies"
+    },
+    {
+      "source": "/sitemap-collections.xml",
+      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=collections"
+    }
+  ]
+}
+</file>
+
+<file path="app/root.tsx">
+import {
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useLoaderData,
+  type LoaderFunctionArgs,
+  type MetaFunction,
+} from "react-router";
+import { useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "@/features/auth/hooks/useAuth";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { PwaProvider } from "@/hooks/usePwaInstall";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
+import { CookieConsent } from "@/components/common/CookieConsent";
+import { PwaPrompt } from "@/components/pwa/PwaPrompt";
+import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
+import {
+  createSupabaseServerClient,
+  getSessionForClientHydration,
+} from "~/lib/supabase.server";
+export const meta: MetaFunction = ()
+export async function loader(
+export function Layout(
+function makeQueryClient()
+export default function Root()
 </file>
 
 <file path="docs/DATA_CONTRACT.md">
@@ -22987,121 +22733,6 @@ export function BuildingHero(
 <div className=
 </file>
 
-<file path="src/features/buildings/pages/AddBuilding.tsx">
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LocationInput } from "@/components/ui/LocationInput";
-import { supabase } from "@/integrations/supabase/client";
-import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
-import { importLibrary } from "@googlemaps/js-api-loader";
-import { config } from "@/config";
-import { Loader2, MapPin, ArrowRight, Building2, Layers } from "lucide-react";
-import MapGL, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl/maplibre";
-import maplibregl from "maplibre-gl";
-⋮----
-import { useNavigate, useSearchParams, type MetaFunction } from "react-router";
-import { toast } from "sonner";
-import { AddBuildingDetails } from "../components/AddBuildingDetails";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
-import { getBuildingImageUrl } from "@/utils/image";
-import { getBuildingUrl } from "@/utils/url";
-import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
-import { AppLayout } from "@/components/layout/AppLayout";
-⋮----
-interface GoogleAddressComponent {
-  long_name: string;
-  short_name: string;
-  types: string[];
-}
-interface GoogleGeocoderResult {
-  address_components: GoogleAddressComponent[];
-}
-const extractLocationDetails = (result: GoogleGeocoderResult) =>
-interface NearbyBuilding {
-  id: string;
-  name: string;
-  address: string | null;
-  location_lat: number;
-  location_lng: number;
-  dist_meters: number;
-  similarity_score?: number;
-  location_precision?: 'exact' | 'approximate';
-  main_image_url?: string | null;
-}
-export const meta: MetaFunction = ()
-⋮----
-// Handle name param for pre-filling
-⋮----
-const loadMaps = async () =>
-⋮----
-const checkDuplicates = async () =>
-⋮----
-// Run two concurrent checks:
-// 1. Strict Location Check: 50m radius, ANY name (ensure collisions are caught)
-// 2. Fuzzy Name Check: 5km radius, matching name (catch duplicates placed slightly off)
-// Wrap RPC calls in try-catch
-⋮----
-// Only run name check if we have a name to check and it's not a generic stop word
-⋮----
-radius_meters: 50000, // Wider 50km radius
-⋮----
-// Filter name results to ensure relevance
-// search_buildings handles relevance sorting, so we assume top results are relevant if they match query
-// We filter client-side:
-// 1. If very close (<= 50m), keep it.
-// 2. If far (> 50m), enforce stricter similarity threshold (e.g., > 0.6) to avoid showing irrelevant results.
-⋮----
-// For far buildings, require higher similarity
-⋮----
-// Filter location results: keep if <= 50m OR if approximate (within 2km)
-⋮----
-// Merge and deduplicate by ID
-⋮----
-// Sort: Exact location matches (<= 50m) first, then high-confidence name matches
-⋮----
-// If both are exact location matches, sort by distance
-⋮----
-// If both are fuzzy matches (> 50m), sort by similarity score (descending)
-⋮----
-const handleLocationSelected = async (address: string, countryCode: string, placeName?: string) =>
-⋮----
-// Only move map if this seems like a genuine selection (has country code or place name)
-// or if the address is long enough to be specific.
-⋮----
-const handleMapClick = async (event: MapMouseEvent) =>
-⋮----
-// We don't block the user if reverse geocoding fails, they just won't get an auto-filled address
-⋮----
-const proceedToStep2 = (): void =>
-const forceProceedToStep2 = () =>
-⋮----
-onCheckedChange=
-⋮----
-onMove=
-⋮----
-onDragEnd=
-⋮----
-e.originalEvent.stopPropagation();
-navigate(getBuildingUrl(building.id, building.slug, building.short_id));
-⋮----
-<AvatarImage src=
-</file>
-
 <file path="src/features/buildings/pages/EditBuilding.tsx">
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, type MetaFunction } from "react-router";
@@ -23148,6 +22779,124 @@ const fetchBuilding = async () =>
 const checkDuplicates = async (): Promise<void> =>
 ⋮----
 const handleSubmit = async (formData: BuildingFormData): Promise<void> =>
+</file>
+
+<file path="src/features/buildings/pages/ReviewDetails.tsx">
+import { useEffect, useState } from "react";
+import { useParams, useNavigate, Link, type MetaFunction } from "react-router";
+import { Loader2, Trash2, Heart, Circle, MessageCircle, Pencil, MapPin, Send, ExternalLink, Calendar, Building2 } from "lucide-react";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
+import NotFound from "@/pages/NotFound";
+import { getBuildingImageUrl } from "@/utils/image";
+import { getBuildingUrl } from "@/utils/url";
+import { ImageDetailsDialog } from "../components/ImageDetailsDialog";
+import {
+  visibleCreditSummariesFromEmbed,
+  type BuildingCreditEmbed,
+} from "@/features/credits/api/credits";
+import { reviewLoader } from "./ReviewDetails.loader";
+⋮----
+export const meta: MetaFunction<typeof reviewLoader> = (
+interface FeedReview {
+  id: string;
+  content: string | null;
+  rating: number | null;
+  tags: string[] | null;
+  created_at: string;
+  user_id: string;
+  building_id: string;
+  status: string;
+  user: {
+    username: string | null;
+    avatar_url: string | null;
+  };
+  building: {
+    id: string;
+    name: string;
+    year_completed: number | null;
+    address: string | null;
+    main_image_url: string | null;
+    creditedEntities: { id: string; name: string }[] | null;
+  };
+  images: { id: string; url: string; is_generated?: boolean }[];
+  likes_count: number;
+  comments_count: number;
+  is_liked: boolean;
+}
+interface Comment {
+  id: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+  user: {
+    username: string | null;
+    avatar_url: string | null;
+  };
+  likes_count: number;
+  is_liked: boolean;
+}
+interface RelatedReview {
+  id: string;
+  rating: number | null;
+  user: {
+    username: string | null;
+    avatar_url: string | null;
+  };
+}
+interface Liker {
+  user_id: string;
+  user: {
+    username: string | null;
+    avatar_url: string | null;
+  };
+}
+interface ReviewLink {
+  id: string;
+  url: string;
+  title: string | null;
+  likes_count: number;
+  is_liked: boolean;
+}
+⋮----
+async function loadData()
+⋮----
+// 1. Fetch Log Data
+⋮----
+// Related Reviews Logic (Same Building)
+⋮----
+const handleLikeReview = async () =>
+const handleLikeLink = async (linkId: string) =>
+const handleLikeComment = async (commentId: string) =>
+const handlePostComment = async () =>
+⋮----
+// Refresh comments and counts
+⋮----
+const handleDeleteComment = async (commentId: string) =>
+const handleDeleteReview = async () =>
+⋮----
+const formatDate = (date: string)
+⋮----
+className=
+⋮----
+onClick=
+⋮----
+{/* Comments Section */}
+⋮----
+src=
+⋮----
+onClose=
 </file>
 
 <file path="src/features/connect/pages/Connect.tsx">
@@ -23573,6 +23322,140 @@ export function formatDetailMediaMetadataLine(entry: FeedReview): string
 export function resolveDetailVariant(entry: FeedReview): DetailCardVariant
 </file>
 
+<file path="src/features/localities/pages/LocalityPage.tsx">
+import { useEffect, useMemo, useState, Suspense } from "react";
+import {
+  Link,
+  useLoaderData,
+  useParams,
+  useRouteError,
+  isRouteErrorResponse,
+  type MetaFunction,
+} from "react-router";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { Building2, MapPin } from "lucide-react";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ClientOnly } from "@/components/common/ClientOnly";
+import { BuildingHero } from "@/features/buildings/components/BuildingHero";
+import { DiscoveryBuildingCard } from "@/features/search/components/DiscoveryBuildingCard";
+import { getBuildingImageUrl } from "@/utils/image";
+import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import type { DiscoveryBuilding } from "@/features/search/components/types";
+import {
+  getLocalityBuildingsClient,
+  getLocalityMapBuildings,
+  LOCALITY_BUILDINGS_PAGE_SIZE,
+} from "@/features/localities/api/localitiesApi";
+import { localityPageLoader, type LocalityPageLoaderData } from "./LocalityPage.loader";
+⋮----
+export const meta: MetaFunction<typeof localityPageLoader> = (
+export function HydrateFallback()
+⋮----
+</file>
+
+<file path="src/features/maps/components/BuildingPopupContent.tsx">
+import React, { useState } from 'react';
+import { Bookmark, Check, EyeOff, Trash2, Plus, MapPin, Map, ExternalLink } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ClusterResponse } from '../hooks/useMapData';
+import { getBuildingImageUrl } from '@/utils/image';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useUserBuildingStatuses } from '@/features/profile/hooks/useUserBuildingStatuses';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
+interface BuildingPopupContentProps {
+  cluster: ClusterResponse;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+  onRemoveFromCollection?: (id: string) => void;
+  onAddCandidate?: (id: string) => void;
+}
+⋮----
+// Convert cluster ID to string for status lookup
+⋮----
+const performUpdate = async (
+    status: 'pending' | 'visited' | 'ignored',
+    successMessage: string,
+    removeMessage: string
+) =>
+⋮----
+// Toggle off (delete)
+⋮----
+const handleAction = async (
+    status: 'pending' | 'visited' | 'ignored',
+    successMessage: string,
+    removeMessage: string
+) =>
+const handleSave = (e: React.MouseEvent) =>
+const handleVisit = (e: React.MouseEvent) =>
+const handleHide = (e: React.MouseEvent) =>
+const handleRemove = (e: React.MouseEvent) =>
+const handleAdd = (e: React.MouseEvent) =>
+const handleRate = async (rating: number) =>
+⋮----
+src=
+⋮----
+onTouchStart=
+⋮----
+e.stopPropagation();
+handleRate(rating);
+⋮----
+onMouseEnter=
+</file>
+
+<file path="src/features/search/components/DiscoveryBuildingCard.tsx">
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {  EyeOff, Circle } from "lucide-react";
+import { Link } from "react-router";
+import { DiscoveryBuilding, ContactInteraction } from "./types";
+import { cn } from "@/lib/utils";
+import { getBuildingImageUrl } from "@/utils/image";
+import { getBuildingUrl } from "@/utils/url";
+import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
+interface DiscoveryBuildingCardProps {
+  building: DiscoveryBuilding;
+  socialContext?: string;
+  distance?: number;
+  action?: React.ReactNode;
+  onClick?: (e: React.MouseEvent) => void;
+  imagePosition?: 'left' | 'right';
+  target?: string;
+}
+⋮----
+className=
+⋮----
+e.preventDefault();
+e.stopPropagation();
+⋮----
+<div className=
+⋮----
+return (
+      <div onClick={onClick} className="block cursor-pointer">
+        {Content}
+      </div>
+    );
+⋮----
+to=
+⋮----
+const getAction = (i: ContactInteraction) =>
+</file>
+
 <file path="src/features/superadmin/fixtures/cardFixtures.ts">
 import type { LegacyFeedCardUi } from "@/features/feed/utils/deriveLegacyFeedUi";
 import type { FeedReview, ReviewBuilding, ReviewImage, ReviewUser } from "@/types/feed";
@@ -23637,6 +23520,22 @@ export function aggregateFeed(reviews: FeedReview[]): AggregatedFeedItem[]
 const flushCluster = () =>
 </file>
 
+<file path="src/lib/location-utils.ts">
+type GeocoderAddressComponent = {
+  long_name: string;
+  short_name: string;
+  types: string[];
+};
+type GeocoderResultLike = {
+  address_components?: GeocoderAddressComponent[];
+};
+export const extractLocationDetails = (
+  result: GeocoderResultLike | null | undefined,
+):
+⋮----
+const find = (types: string[]): GeocoderAddressComponent | undefined
+</file>
+
 <file path="src/types/cards.ts">
 export type CardType = "A" | "B" | "C" | "activity";
 export type FeedCardType = CardType;
@@ -23649,6 +23548,25 @@ export interface DetailCardVariant {
 }
 </file>
 
+<file path="supabase/functions/sitemap/index.ts">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+⋮----
+function escapeXml(s: string): string
+function formatLastmod(iso: string | null | undefined): string
+function truncate(s: string, max: number): string
+⋮----
+function buildSitemapIndex(today: string): string
+async function buildBuildingsSitemap(supabase: ReturnType<typeof createClient>): Promise<string>
+async function buildLocalitiesSitemap(supabase: ReturnType<typeof createClient>): Promise<string>
+async function buildPeopleSitemap(supabase: ReturnType<typeof createClient>): Promise<string>
+async function buildCompaniesSitemap(supabase: ReturnType<typeof createClient>): Promise<string>
+async function buildCollectionsSitemap(supabase: ReturnType<typeof createClient>): Promise<string>
+⋮----
+// No type → return sitemap index
+⋮----
+// Dispatch to per-type builder
+</file>
+
 <file path="app/routes.ts">
 import {
   type RouteConfig,
@@ -23658,143 +23576,111 @@ import {
 } from "@react-router/dev/routes";
 </file>
 
-<file path="src/features/credits/pages/CompanyDetails.tsx">
-import { useEffect, useMemo, useState } from "react";
-import {
-  Link,
-  useLoaderData,
-  useParams,
-  useRevalidator,
-  useRouteError,
-  useSearchParams,
-  isRouteErrorResponse,
-  type MetaFunction,
-} from "react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, ChevronDown, Pencil, BadgeCheck, UserPlus } from "lucide-react";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+<file path="src/features/buildings/pages/AddBuilding.tsx">
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LocationInput } from "@/components/ui/LocationInput";
+import { supabase } from "@/integrations/supabase/client";
+import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
+import { importLibrary } from "@googlemaps/js-api-loader";
+import { config } from "@/config";
+import { Loader2, MapPin, ArrowRight, Building2, Layers } from "lucide-react";
+import MapGL, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl/maplibre";
+import maplibregl from "maplibre-gl";
+⋮----
+import { useNavigate, useSearchParams, type MetaFunction } from "react-router";
+import { toast } from "sonner";
+import { AddBuildingDetails } from "../components/AddBuildingDetails";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
-import type {
-  Company,
-  CompanyCreditWithBuilding,
-  CompanyWithCredits,
-  CreditRole,
-  CreditTier,
-} from "@/features/credits/types";
-import { CompanyCreditCard } from "@/features/credits/components/CompanyCreditCard";
-import { EditCompanyForm } from "@/features/credits/components/EditCompanyForm";
-import { ClaimCompanyDialog } from "@/features/credits/components/ClaimCompanyDialog";
-import { RequestStewardAccessDialog } from "@/features/credits/components/RequestStewardAccessDialog";
-import {
-  companyClaimDisputeOpenQueryKey,
-  companyQueryKey,
-  companyStewardRequestPendingQueryKey,
-  companyStewardsQueryKey,
-  getCompany,
-  getCompanyStewardsWithProfiles,
-  getMyOpenCompanyClaimDisputeId,
-  getMyPendingCompanyStewardRequestId,
-  inviteCompanySteward,
-  removeCompanySteward,
-} from "@/features/credits/api/companies";
-import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
-import { companyDetailsLoader, type CompanyDetailsLoaderData } from "./CompanyDetails.loader";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-⋮----
-export const meta: MetaFunction<typeof companyDetailsLoader> = (
-⋮----
-type RoleFilter = typeof ALL_ROLES | CreditRole;
-function tierLabel(tier: CreditTier): string
-⋮----
-function companyInitialLetter(name: string): string
-function stewardRoleLabel(role: string): string
-function groupTierByRole(credits: CompanyCreditWithBuilding[]): Map<CreditRole, CompanyCreditWithBuilding[]>
-export function HydrateFallback()
-⋮----
-const handleCompanySaved = (updated: Company) =>
-⋮----
-const confirmRemoveSteward = async () =>
-const handleSendInvite = async (e: React.FormEvent) =>
-⋮----
-<AlertDialog open=
-⋮----
-<Button type="button" variant="ghost" onClick=
-⋮----
-company.website.trim().startsWith("http")
-⋮----
-onValueChange=
-</file>
-
-<file path="src/features/credits/pages/PersonDetails.tsx">
-import { useEffect, useMemo, useState } from "react";
-import {
-  Link,
-  useLoaderData,
-  useParams,
-  useRevalidator,
-  useRouteError,
-  isRouteErrorResponse,
-  useSearchParams,
-  type MetaFunction,
-} from "react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, ChevronDown, Pencil, BadgeCheck } from "lucide-react";
-import { AppLayout } from "@/components/layout/AppLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { cn } from "@/lib/utils";
-import type { Person, PersonCreditWithBuilding } from "@/features/credits/types";
-import { PersonCreditCard } from "@/features/credits/components/PersonCreditCard";
-import { EditPersonForm } from "@/features/credits/components/EditPersonForm";
-import { getPerson, personQueryKey } from "@/features/credits/api/people";
-import { ClaimPersonDialog } from "@/features/credits/components/ClaimPersonDialog";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { personDetailsLoader, type PersonDetailsLoaderData } from "./PersonDetails.loader";
+import { useQuery } from "@tanstack/react-query";
+import { getBuildingImageUrl } from "@/utils/image";
+import { getBuildingUrl } from "@/utils/url";
+import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { extractLocationDetails } from "@/lib/location-utils";
 ⋮----
-export const meta: MetaFunction<typeof personDetailsLoader> = (
-function tierLabel(tier: "primary" | "contributor" | "ancillary"): string
-function groupByTier(credits: PersonCreditWithBuilding[])
-function personInitials(name: string): string
-export function HydrateFallback()
+interface NearbyBuilding {
+  id: string;
+  name: string;
+  address: string | null;
+  location_lat: number;
+  location_lng: number;
+  dist_meters: number;
+  similarity_score?: number;
+  location_precision?: 'exact' | 'approximate';
+  main_image_url?: string | null;
+}
+export const meta: MetaFunction = ()
 ⋮----
-const handlePersonSaved = (updated: Person) =>
-const handlePersonClaimed = (updated: Person) =>
+// Handle name param for pre-filling
+⋮----
+const loadMaps = async () =>
+⋮----
+const checkDuplicates = async () =>
+⋮----
+// Run two concurrent checks:
+// 1. Strict Location Check: 50m radius, ANY name (ensure collisions are caught)
+// 2. Fuzzy Name Check: 5km radius, matching name (catch duplicates placed slightly off)
+// Wrap RPC calls in try-catch
+⋮----
+// Only run name check if we have a name to check and it's not a generic stop word
+⋮----
+radius_meters: 50000, // Wider 50km radius
+⋮----
+// Filter name results to ensure relevance
+// search_buildings handles relevance sorting, so we assume top results are relevant if they match query
+// We filter client-side:
+// 1. If very close (<= 50m), keep it.
+// 2. If far (> 50m), enforce stricter similarity threshold (e.g., > 0.6) to avoid showing irrelevant results.
+⋮----
+// For far buildings, require higher similarity
+⋮----
+// Filter location results: keep if <= 50m OR if approximate (within 2km)
+⋮----
+// Merge and deduplicate by ID
+⋮----
+// Sort: Exact location matches (<= 50m) first, then high-confidence name matches
+⋮----
+// If both are exact location matches, sort by distance
+⋮----
+// If both are fuzzy matches (> 50m), sort by similarity score (descending)
+⋮----
+const handleLocationSelected = async (address: string, countryCode: string, placeName?: string) =>
+⋮----
+// Only move map if this seems like a genuine selection (has country code or place name)
+// or if the address is long enough to be specific.
+⋮----
+const handleMapClick = async (event: MapMouseEvent) =>
+⋮----
+// We don't block the user if reverse geocoding fails, they just won't get an auto-filled address
+⋮----
+const proceedToStep2 = (): void =>
+const forceProceedToStep2 = () =>
+⋮----
+onCheckedChange=
+⋮----
+onMove=
+⋮----
+onDragEnd=
+⋮----
+e.originalEvent.stopPropagation();
+navigate(getBuildingUrl(building.id, building.slug, building.short_id));
+⋮----
+<AvatarImage src=
 </file>
 
 <file path="src/features/events/api/eventsApi.ts">
@@ -28653,6 +28539,145 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+</file>
+
+<file path="src/features/credits/pages/CompanyDetails.tsx">
+import { useEffect, useMemo, useState } from "react";
+import {
+  Link,
+  useLoaderData,
+  useParams,
+  useRevalidator,
+  useRouteError,
+  useSearchParams,
+  isRouteErrorResponse,
+  type MetaFunction,
+} from "react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ExternalLink, ChevronDown, Pencil, BadgeCheck, UserPlus } from "lucide-react";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+import type {
+  Company,
+  CompanyCreditWithBuilding,
+  CompanyWithCredits,
+  CreditRole,
+  CreditTier,
+} from "@/features/credits/types";
+import { CompanyCreditCard } from "@/features/credits/components/CompanyCreditCard";
+import { EditCompanyForm } from "@/features/credits/components/EditCompanyForm";
+import { ClaimCompanyDialog } from "@/features/credits/components/ClaimCompanyDialog";
+import { RequestStewardAccessDialog } from "@/features/credits/components/RequestStewardAccessDialog";
+import {
+  companyClaimDisputeOpenQueryKey,
+  companyQueryKey,
+  companyStewardRequestPendingQueryKey,
+  companyStewardsQueryKey,
+  getCompany,
+  getCompanyStewardsWithProfiles,
+  getMyOpenCompanyClaimDisputeId,
+  getMyPendingCompanyStewardRequestId,
+  inviteCompanySteward,
+  removeCompanySteward,
+} from "@/features/credits/api/companies";
+import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
+import { companyDetailsLoader, type CompanyDetailsLoaderData } from "./CompanyDetails.loader";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+⋮----
+export const meta: MetaFunction<typeof companyDetailsLoader> = (
+⋮----
+type RoleFilter = typeof ALL_ROLES | CreditRole;
+function tierLabel(tier: CreditTier): string
+⋮----
+function companyInitialLetter(name: string): string
+function stewardRoleLabel(role: string): string
+function groupTierByRole(credits: CompanyCreditWithBuilding[]): Map<CreditRole, CompanyCreditWithBuilding[]>
+export function HydrateFallback()
+⋮----
+const handleCompanySaved = (updated: Company) =>
+⋮----
+const confirmRemoveSteward = async () =>
+const handleSendInvite = async (e: React.FormEvent) =>
+⋮----
+<AlertDialog open=
+⋮----
+<Button type="button" variant="ghost" onClick=
+⋮----
+company.website.trim().startsWith("http")
+⋮----
+onValueChange=
+</file>
+
+<file path="src/features/credits/pages/PersonDetails.tsx">
+import { useEffect, useMemo, useState } from "react";
+import {
+  Link,
+  useLoaderData,
+  useParams,
+  useRevalidator,
+  useRouteError,
+  isRouteErrorResponse,
+  useSearchParams,
+  type MetaFunction,
+} from "react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ExternalLink, ChevronDown, Pencil, BadgeCheck } from "lucide-react";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
+import type { Person, PersonCreditWithBuilding } from "@/features/credits/types";
+import { PersonCreditCard } from "@/features/credits/components/PersonCreditCard";
+import { EditPersonForm } from "@/features/credits/components/EditPersonForm";
+import { getPerson, personQueryKey } from "@/features/credits/api/people";
+import { ClaimPersonDialog } from "@/features/credits/components/ClaimPersonDialog";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { personDetailsLoader, type PersonDetailsLoaderData } from "./PersonDetails.loader";
+⋮----
+export const meta: MetaFunction<typeof personDetailsLoader> = (
+function tierLabel(tier: "primary" | "contributor" | "ancillary"): string
+function groupByTier(credits: PersonCreditWithBuilding[])
+function personInitials(name: string): string
+export function HydrateFallback()
+⋮----
+const handlePersonSaved = (updated: Person) =>
+const handlePersonClaimed = (updated: Person) =>
 </file>
 
 <file path="src/features/feed/hooks/useReviewCardData.ts">

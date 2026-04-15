@@ -25,6 +25,14 @@
     {
       "source": "/sitemap-collections.xml",
       "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=collections"
+    },
+    {
+      "source": "/sitemap-countries.xml",
+      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=countries"
+    },
+    {
+      "source": "/sitemap-events.xml",
+      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=events"
     }
   ]
 }

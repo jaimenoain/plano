@@ -89,6 +89,7 @@ export function FeedEventAttendanceRow({ entry, className }: FeedEventAttendance
           <span className="font-medium text-text-primary">{actorNodes}</span>
         </p>
         <Link
+          // TODO: enrich FeedEventAttendance with countryCode + citySlug to emit locality-scoped URL
           to={`/events/${entry.slug}`}
           className="min-w-0 font-sans text-[1.3125rem] font-black tracking-tight leading-none text-text-primary line-clamp-1 hover:opacity-80"
         >

@@ -39,6 +39,7 @@ function FeaturedBuildingCard({ review }: { review: FeedReview }) {
 
   return (
     <Link
+      // TODO: enrich DTO with locality fields
       to={getBuildingUrl(building.id, building.slug, building.short_id ?? null)}
       className="group block h-full"
     >

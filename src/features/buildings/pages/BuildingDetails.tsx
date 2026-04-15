@@ -70,7 +70,7 @@ import { BuildingContributorsInline } from "../components/BuildingContributorsIn
 import { BuildingContributorsSection } from "../components/BuildingContributorsSection";
 import { buildingLoader } from "./BuildingDetails.loader";
 import {
-  buildingAbsoluteUrl,
+  buildingCanonicalUrl,
   buildingStructuredData,
   buildingBreadcrumbStructuredData,
   buildingDescription,
@@ -469,11 +469,14 @@ function StreamAuthorAttribution({
 
 export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
   if (!data || !data.building) return [{ title: "Plano" }];
-  const { building: rawBuilding, heroImageUrl, buildingCredits = [] } = data;
+  const { building: rawBuilding, heroImageUrl, buildingCredits = [], locality } = data;
   const building = rawBuilding as BuildingDetails;
   const description = buildingDescription(building, buildingCredits);
   const image = heroImageUrl ?? `${SITE_URL}/cover.jpg`;
-  const canonical = buildingAbsoluteUrl(building);
+  const localityForBreadcrumb = locality && building.city && building.country
+    ? { country_code: locality.country_code, city_slug: locality.city_slug, city: building.city, country: building.country }
+    : null;
+  const canonical = buildingCanonicalUrl(building, localityForBreadcrumb);
   return [
     { title: `${building.name} | Plano` },
     { name: "description", content: description },
@@ -491,8 +494,8 @@ export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
     { name: "twitter:image", content: image },
     { tagName: "link", rel: "canonical", href: canonical },
     // TODO: pass ratingData once review count is available from loader
-    { "script:ld+json": buildingStructuredData(building, buildingCredits) },
-    { "script:ld+json": buildingBreadcrumbStructuredData(building) },
+    { "script:ld+json": buildingStructuredData(building, buildingCredits, undefined, localityForBreadcrumb) },
+    { "script:ld+json": buildingBreadcrumbStructuredData(building, localityForBreadcrumb) },
     ...(heroImageUrl
       ? [{ tagName: "link", rel: "preload", as: "image", href: heroImageUrl, fetchpriority: "high" }]
       : []),

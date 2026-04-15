@@ -18,6 +18,7 @@ function buildingHrefFromRedeem(
   buildingShortId: number | null | undefined
 ): string | null {
   if (!buildingId) return null;
+  // TODO: enrich DTO with locality fields
   return getBuildingUrl(buildingId, buildingSlug, buildingShortId);
 }
 

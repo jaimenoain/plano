@@ -48,6 +48,7 @@ import { Suggestion } from '@/features/search/components/DiscoverySearchInput';
 import type { CompanySummary, PersonSummary } from '@/features/credits/types';
 import { getBoundsFromBuildings } from '@/utils/map';
 import { cn } from '@/lib/utils';
+import { getBuildingUrl } from '@/utils/url';
 
 interface Building {
   id: string;
@@ -285,7 +286,7 @@ export function BuildingSidebar({
                 const imageUrl = getBuildingImageUrl(building.image_url);
                 return (
                   <Link
-                    to={building.slug ? `/building/${building.slug}` : `/building/${building.id}`}
+                    to={getBuildingUrl(building.id, building.slug)}
                     key={building.id}
                     className="group flex pl-4 pr-3 py-3 border-b border-border-default last:border-0 hover:bg-surface-muted/30 transition-colors"
                     onMouseEnter={() => setHighlightedId(building.id)}

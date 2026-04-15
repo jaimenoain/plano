@@ -11,6 +11,7 @@ Disallow: /notifications
 Disallow: /connect
 Disallow: /write-review/
 Disallow: /building/*/edit
+Disallow: /architecture/*/edit
 Disallow: /person/*/edit
 Disallow: /company/*/edit
 Disallow: /superadmin/

@@ -6,7 +6,7 @@ import { Link } from "react-router";
 import { DiscoveryBuilding, ContactInteraction } from "./types";
 import { cn } from "@/lib/utils";
 import { getBuildingImageUrl } from "@/utils/image";
-import { getBuildingUrl } from "@/utils/url";
+import { getBuildingUrl, getBuildingLocalityUrl } from "@/utils/url";
 import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
 
 interface DiscoveryBuildingCardProps {
@@ -165,7 +165,11 @@ export function DiscoveryBuildingCard({
 
   return (
     <Link
-      to={getBuildingUrl(building.id, building.slug, building.short_id)}
+      to={
+        building.locality_country_code && building.locality_city_slug
+          ? getBuildingLocalityUrl(building.locality_country_code, building.locality_city_slug, building.id, building.slug, building.short_id)
+          : getBuildingUrl(building.id, building.slug, building.short_id)
+      }
       className="block"
       target={target}
     >

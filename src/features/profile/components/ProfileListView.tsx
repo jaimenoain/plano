@@ -43,6 +43,7 @@ export function ProfileListView({
 
   const handleRowClick = (review: FeedReview) => {
     if (review.building.id) {
+      // TODO: enrich DTO with locality fields
       navigate(getBuildingUrl(review.building.id, review.building.slug, review.building.short_id));
     }
   };

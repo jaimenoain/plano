@@ -1319,6 +1319,7 @@ function EditorialBuildingCard({ entry, showCommunityImages }: { entry: FeedRevi
   const imageUrl = profileLogCardImageUrl(entry, showCommunityImages);
   const topCredit = entry.building.creditedEntities?.[0];
   const meta = [topCredit?.name, entry.building.year_completed].filter(Boolean).join(" · ");
+  // TODO: enrich DTO with locality fields
   const url = getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id);
 
   return (

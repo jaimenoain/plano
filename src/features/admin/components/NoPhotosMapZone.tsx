@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { parseLocation } from "@/utils/location";
 import { Loader2 } from "lucide-react";
 import { useNavigate } from 'react-router';
+import { getBuildingUrl } from '@/utils/url';
 
 export interface NoPhotoBuilding {
   id: string;
@@ -134,8 +135,7 @@ export function NoPhotosMapZone() {
     const feature = event.features?.[0];
     if (feature) {
       const { id, slug } = feature.properties;
-      const url = slug && slug !== "null" ? `/building/${slug}` : `/building/${id}`;
-      navigate(url);
+      navigate(getBuildingUrl(id, slug !== "null" ? slug : undefined));
     }
   };
 

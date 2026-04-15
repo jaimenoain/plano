@@ -8,6 +8,7 @@ import { DAY_COLORS } from '@/features/maps/constants';
 import { MAP_MARKER_FILL } from '@/features/maps/constants/mapMarkerFills';
 import { Bed, Utensils, Bus, Camera, MapPin as MapPinIcon } from 'lucide-react';
 import '../../../App.css';
+import { getBuildingUrl } from '@/utils/url';
 
 interface MapMarkersProps {
   clusters: ClusterResponse[];
@@ -98,7 +99,7 @@ export function MapMarkers({
           : `marker-${cluster.id}`;
 
         const isCluster = cluster.is_cluster;
-        const buildingUrl = !isCluster ? (cluster.slug ? `/building/${cluster.slug}` : undefined) : '#';
+        const buildingUrl = !isCluster ? getBuildingUrl(String(cluster.id), cluster.slug) : '#';
 
         let pinStyle = getPinStyle(cluster);
 

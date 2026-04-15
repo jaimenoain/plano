@@ -339,6 +339,7 @@ export default function Notifications() {
             <span>
               <span className="font-medium">@{actorName}</span> recommended{" "}
               <Link
+                // TODO: enrich notification metadata with country_code + city_slug to emit locality-scoped URL
                 to={`/events/${n.metadata.event_slug}`}
                 onClick={(e) => e.stopPropagation()}
                 className="font-medium italic text-text-primary underline underline-offset-2 hover:opacity-80"

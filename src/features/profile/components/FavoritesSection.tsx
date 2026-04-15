@@ -1,6 +1,7 @@
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router";
 import { FavoriteItem } from "./types";
+import { getBuildingUrl } from "@/utils/url";
 import { cn } from "@/lib/utils";
 
 interface FavoritesSectionProps {
@@ -71,7 +72,7 @@ export function FavoritesSection({ favorites, isOwnProfile, onManage }: Favorite
     if (fav.reviewId) {
       navigate(`/review/${fav.reviewId}`);
     } else {
-      navigate(`/building/${fav.id}`);
+      navigate(getBuildingUrl(String(fav.id)));
     }
   };
 

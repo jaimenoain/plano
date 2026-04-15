@@ -1,8 +1,9 @@
 import { data, type LoaderFunctionArgs } from "react-router";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SITE_URL, localityPageStructuredData } from "@/features/buildings/utils/structuredData";
-import { getLocalityBySlug, getLocalityBuildings } from "@/features/localities/api/localitiesApi";
+import { getLocalityByCountryCity, getLocalityBuildings } from "@/features/localities/api/localitiesApi";
 import type { LocalityDTO, LocalityBuildingDTO } from "@/features/localities/types";
+import { getCountryUrl, getLocalityUrl } from "@/utils/url";
 import { config } from "@/config";
 
 export type LocalityPageLoaderData = {
@@ -30,18 +31,18 @@ export async function localityPageLoader({ request, params }: LoaderFunctionArgs
   const supabase = createSupabaseServerClient(request, headers);
   headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
 
-  const citySlug = params.citySlug?.trim();
-  if (!citySlug) throw new Response("Not found", { status: 404 });
+  const { cc, city } = params;
+  if (!cc?.trim() || !city?.trim()) throw new Response("Not found", { status: 404 });
 
-  const locality = await getLocalityBySlug(supabase, citySlug);
+  const locality = await getLocalityByCountryCity(supabase, cc, city);
   if (!locality) throw new Response("Not found", { status: 404 });
 
   const initialBuildings = await getLocalityBuildings(supabase, locality.id, 0, 24);
 
-  const canonical = `${SITE_URL}/city/${locality.slug}`;
+  const canonical = `${SITE_URL}${getLocalityUrl(locality.country_code, locality.city_slug)}`;
   const metaTitle =
     locality.meta_title ??
-    `${locality.city} Architecture — ${locality.buildings_count} Buildings on Plano`;
+    `Architecture in ${locality.city}, ${locality.country} — ${locality.buildings_count} Buildings on Plano`;
   const metaDescription =
     locality.meta_description ??
     locality.description ??
@@ -56,7 +57,7 @@ export async function localityPageLoader({ request, params }: LoaderFunctionArgs
     metaTitle,
     metaDescription,
     ogImage,
-    structuredData: localityPageStructuredData(locality, initialBuildings) as Record<
+    structuredData: localityPageStructuredData(locality, initialBuildings, canonical) as Record<
       string,
       unknown
     >,

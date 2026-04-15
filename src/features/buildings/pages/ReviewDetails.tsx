@@ -866,6 +866,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
             <Card className="overflow-hidden border-border-default/50 shadow-sm">
               <div
                 className="aspect-[4/3] bg-surface-muted relative group cursor-pointer"
+                // TODO: enrich DTO with locality fields
                 onClick={() => navigate(getBuildingUrl(review.building_id, review.building?.slug, review.building?.short_id))}
               >
                 {review.building.main_image_url ? (
@@ -918,6 +919,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                 <Button
                   className="w-full"
                   variant="outline"
+                  // TODO: enrich DTO with locality fields
                   onClick={() => navigate(getBuildingUrl(review.building_id, review.building?.slug, review.building?.short_id))}
                 >
                   View Building Details

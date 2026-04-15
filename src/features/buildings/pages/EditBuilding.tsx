@@ -296,6 +296,7 @@ toast.error("Failed to update building");
           }
 
       toast.success("Building updated successfully");
+      // TODO: enrich DTO with locality fields
       navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
 
     } catch (_error) {

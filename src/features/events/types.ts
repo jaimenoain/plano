@@ -84,6 +84,12 @@ export type EventDTO = {
   createdAt: string;
   /** `events.updated_at` */
   updatedAt: string;
+  /** `events.locality_id` — null for virtual/online events. */
+  localityId: string | null;
+  /** `events.country_code` — ISO 3166-1 alpha-2. null for virtual events. */
+  countryCode: string | null;
+  /** `events.city_slug` — for URL construction. null for virtual events. */
+  citySlug: string | null;
 };
 
 /** Listing card shape: no building list; description capped for cards. */

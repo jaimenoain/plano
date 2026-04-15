@@ -44,6 +44,7 @@ function mapBuildingRow(row: BuildingRow): RelatedBuilding {
     country: row.country,
     year_completed: row.year_completed,
     imageUrl,
+    // TODO: enrich DTO with locality fields
     buildingUrl: getBuildingUrl(row.id, row.slug, row.short_id),
   };
 }

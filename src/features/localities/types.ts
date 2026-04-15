@@ -9,6 +9,7 @@ export interface LocalityDTO {
   city: string;
   country: string;
   country_code: string;
+  city_slug: string;
   buildings_count: number;
   hero_image_url: string | null;
   description: string | null;
@@ -18,6 +19,8 @@ export interface LocalityDTO {
   lng: number | null;
   created_at: string;
   updated_at: string;
+  region: string | null;
+  region_slug: string | null;
 }
 
 /**

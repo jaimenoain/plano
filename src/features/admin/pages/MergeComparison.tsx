@@ -288,6 +288,7 @@ export default function MergeComparison() {
 
             // Redirect to survivor
             const target = buildings.find(b => b.id === targetPointer);
+            // TODO: enrich DTO with locality fields
             navigate(getBuildingUrl(targetPointer!, target?.slug, target?.short_id != null ? Number(target.short_id) : null));
 
         } catch (error) {
