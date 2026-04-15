@@ -241,7 +241,7 @@ Confirm that the URL restructure has not accidentally changed the `noindex` beha
 
 ---
 
-### [ ] QA13 — Cross-browser and SSR hydration smoke test
+### [x] QA13 — Cross-browser and SSR hydration smoke test
 
 - Open the following URLs in both Chrome and Firefox (or Safari) with DevTools Network tab open. Confirm:
   - `/architecture/fr` — no hydration errors in console; page content visible before JS executes (check by disabling JS and reloading).
@@ -254,7 +254,7 @@ Confirm that the URL restructure has not accidentally changed the `noindex` beha
 
 ---
 
-### [ ] QA14 — Final regression: pre-existing routes still work
+### [x] QA14 — Final regression: pre-existing routes still work
 
 Confirm that nothing in T1–T18 accidentally broke any route that was not part of this feature.
 

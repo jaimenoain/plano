@@ -59,7 +59,7 @@ import {
   leadAttributionFromCredits,
   visiblePrimaryCredits,
 } from "@/features/credits/buildingCreditDisplay";
-import { getBuildingUrl } from "@/utils/url";
+import { getBuildingUrl, getLocalityUrl } from "@/utils/url";
 import { CollectionSelector } from "@/features/collections/components/CollectionSelector";
 import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
 import { PrimaryCreditsLinks } from "../components/PrimaryCreditsLinks";
@@ -217,7 +217,7 @@ function RelatedByArchitectSection({
   );
 }
 
-function RelatedByCitySection({ building }: { building: BuildingDetails }) {
+function RelatedByCitySection({ building, locality }: { building: BuildingDetails; locality: { country_code: string; city_slug: string } | null }) {
   const city = building.city;
 
   const { data: buildings = [], isLoading } = useQuery({
@@ -229,10 +229,14 @@ function RelatedByCitySection({ building }: { building: BuildingDetails }) {
 
   if (!city) return null;
 
+  const viewAllHref = locality
+    ? getLocalityUrl(locality.country_code, locality.city_slug)
+    : `/search?q=${encodeURIComponent(city)}`;
+
   return (
     <RelatedBuildingRow
       title={`More architecture in ${city}`}
-      viewAllHref={`/search?q=${encodeURIComponent(city)}`}
+      viewAllHref={viewAllHref}
       viewAllLabel={`Explore ${city}`}
       buildings={buildings}
       isLoading={isLoading}
@@ -561,6 +565,7 @@ export default function BuildingDetails() {
     building: loaderBuilding,
     heroImageUrl: initialHeroImageUrl,
     buildingCredits: initialBuildingCredits = [],
+    locality,
   } = useLoaderData<typeof buildingLoader>();
 
   const loaderBuildingTyped = loaderBuilding as BuildingDetails | null | undefined;
@@ -2038,7 +2043,7 @@ export default function BuildingDetails() {
           {/* ── MORE IN CITY ── */}
           {building.city ? (
             <ClientOnly>
-              <RelatedByCitySection building={building} />
+              <RelatedByCitySection building={building} locality={locality} />
             </ClientOnly>
           ) : null}
 
