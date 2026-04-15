@@ -25,6 +25,7 @@ interface BuildingLocationPickerProps {
     address: string;
     city: string | null;
     country: string | null;
+    countryCode: string | null;
     precision: 'exact' | 'approximate';
   }) => void;
 }
@@ -42,9 +43,10 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
   );
 
   // Store details to re-emit when precision changes
-  const [locationDetails, setLocationDetails] = useState<{city: string | null, country: string | null}>({
+  const [locationDetails, setLocationDetails] = useState<{city: string | null, country: string | null, countryCode: string | null}>({
       city: initialLocation.city || null,
-      country: initialLocation.country || null
+      country: initialLocation.country || null,
+      countryCode: null
   });
 
   const [viewState, setViewState] = useState({
@@ -70,7 +72,8 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
     if (initialLocation.city !== undefined) {
         setLocationDetails({
             city: initialLocation.city || null,
-            country: initialLocation.country || null
+            country: initialLocation.country || null,
+            countryCode: null
         });
     }
 
@@ -93,6 +96,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
                      address: results[0].formatted_address,
                      city: details.city,
                      country: details.country,
+                     countryCode: details.countryCode,
                      precision: locationPrecision
                  });
              }
@@ -116,6 +120,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
               address: selectedAddress,
               city: locationDetails.city,
               country: locationDetails.country,
+              countryCode: locationDetails.countryCode,
               precision: newPrecision
           });
       }
@@ -125,7 +130,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
       lat: number,
       lng: number,
       address: string,
-      details: {city: string | null, country: string | null}
+      details: {city: string | null, country: string | null, countryCode: string | null}
   ) => {
       setMarkerPosition({ lat, lng });
       setSelectedAddress(address);
@@ -137,6 +142,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
           address,
           city: details.city,
           country: details.country,
+          countryCode: details.countryCode,
           precision: locationPrecision
       });
   };
@@ -179,7 +185,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
       }
     } catch (_error) {
 // Fallback with existing address or empty
-       updateLocation(lat, lng, selectedAddress, { city: null, country: null });
+       updateLocation(lat, lng, selectedAddress, { city: null, country: null, countryCode: null });
     }
   };
 
@@ -195,7 +201,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
             updateLocation(lat, lng, address, details);
         }
       } catch (_error) {
-updateLocation(lat, lng, selectedAddress, { city: null, country: null });
+updateLocation(lat, lng, selectedAddress, { city: null, country: null, countryCode: null });
       }
   };
 

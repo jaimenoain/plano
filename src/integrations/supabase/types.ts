@@ -330,7 +330,7 @@ export type Database = {
           contribution_notes?: string | null
           created_at?: string
           credit_tier?: Database["public"]["Enums"]["credit_tier_enum"]
-          display_order: number
+          display_order?: number
           flag_notes?: string | null
           flag_reason?:
             | Database["public"]["Enums"]["credit_flag_reason_enum"]
@@ -500,6 +500,7 @@ export type Database = {
           city: string | null
           community_preview_url: string | null
           country: string | null
+          country_code: string | null
           created_at: string | null
           created_by: string | null
           functional_category_id: string | null
@@ -509,6 +510,7 @@ export type Database = {
           import_id: string | null
           is_deleted: boolean | null
           is_verified: boolean | null
+          locality_id: string | null
           location: unknown
           location_precision: Database["public"]["Enums"]["location_precision"]
           merged_into_id: string | null
@@ -541,6 +543,7 @@ export type Database = {
           city?: string | null
           community_preview_url?: string | null
           country?: string | null
+          country_code?: string | null
           created_at?: string | null
           created_by?: string | null
           functional_category_id?: string | null
@@ -550,6 +553,7 @@ export type Database = {
           import_id?: string | null
           is_deleted?: boolean | null
           is_verified?: boolean | null
+          locality_id?: string | null
           location: unknown
           location_precision?: Database["public"]["Enums"]["location_precision"]
           merged_into_id?: string | null
@@ -582,6 +586,7 @@ export type Database = {
           city?: string | null
           community_preview_url?: string | null
           country?: string | null
+          country_code?: string | null
           created_at?: string | null
           created_by?: string | null
           functional_category_id?: string | null
@@ -591,6 +596,7 @@ export type Database = {
           import_id?: string | null
           is_deleted?: boolean | null
           is_verified?: boolean | null
+          locality_id?: string | null
           location?: unknown
           location_precision?: Database["public"]["Enums"]["location_precision"]
           merged_into_id?: string | null
@@ -624,6 +630,13 @@ export type Database = {
             columns: ["hero_image_id"]
             isOneToOne: false
             referencedRelation: "review_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buildings_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
             referencedColumns: ["id"]
           },
           {
@@ -1373,6 +1386,38 @@ export type Database = {
         }
         Relationships: []
       }
+      event_attendances: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          status: Database["public"]["Enums"]["event_attendance_status"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          status: Database["public"]["Enums"]["event_attendance_status"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          status?: Database["public"]["Enums"]["event_attendance_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_attendances_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_buildings: {
         Row: {
           building_id: string
@@ -1758,6 +1803,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      localities: {
+        Row: {
+          buildings_count: number
+          city: string
+          country: string
+          country_code: string
+          created_at: string
+          description: string | null
+          hero_image_url: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          meta_description: string | null
+          meta_title: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          buildings_count?: number
+          city: string
+          country: string
+          country_code: string
+          created_at?: string
+          description?: string | null
+          hero_image_url?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          meta_description?: string | null
+          meta_title?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          buildings_count?: number
+          city?: string
+          country?: string
+          country_code?: string
+          created_at?: string
+          description?: string | null
+          hero_image_url?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          meta_description?: string | null
+          meta_title?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       login_logs: {
         Row: {
@@ -2669,6 +2765,7 @@ export type Database = {
         Returns: boolean
       }
       claim_person: { Args: { p_person_id: string }; Returns: Json }
+      country_name_to_code: { Args: { p_country: string }; Returns: string }
       disablelongtransactions: { Args: never; Returns: string }
       dropgeometrycolumn:
         | {
@@ -2996,6 +3093,7 @@ export type Database = {
               main_image_url: string
               name: string
               save_count: number
+              short_id: number
               slug: string
               year_completed: number
             }[]
@@ -3281,11 +3379,19 @@ export type Database = {
         Args: { b: Database["public"]["Tables"]["buildings"]["Row"] }
         Returns: string
       }
+      make_locality_slug: {
+        Args: { p_city: string; p_country_code: string }
+        Returns: string
+      }
       merge_buildings: {
         Args: { source_id: string; target_id: string }
         Returns: undefined
       }
       migrate_tags_to_collections: { Args: never; Returns: undefined }
+      plano_auth_is_company_steward: {
+        Args: { p_company_id: string }
+        Returns: boolean
+      }
       populate_geometry_columns:
         | { Args: { tbl_oid: unknown; use_typmod?: boolean }; Returns: number }
         | { Args: { use_typmod?: boolean }; Returns: string }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams, type MetaFunction } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -70,6 +70,11 @@ function pickCompany(
   }
   return list[0];
 }
+
+export const meta: MetaFunction = () => [
+  { title: "Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 export default function CompanyDashboard() {
   const { user, loading: authLoading } = useAuth();

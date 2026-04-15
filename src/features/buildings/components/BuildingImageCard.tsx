@@ -20,9 +20,11 @@ interface BuildingImageCardProps {
   };
   initialIsLiked: boolean;
   onOpen: () => void;
+  /** Building name used to generate a descriptive alt text for the image. */
+  buildingName?: string;
 }
 
-export function BuildingImageCard({ image, initialIsLiked, onOpen }: BuildingImageCardProps) {
+export function BuildingImageCard({ image, initialIsLiked, onOpen, buildingName }: BuildingImageCardProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(initialIsLiked);
@@ -31,6 +33,12 @@ export function BuildingImageCard({ image, initialIsLiked, onOpen }: BuildingIma
 
   const isVideo = image.type === 'video';
   const isVideoPlaceholder = isVideo && !image.poster;
+
+  const imageAlt = buildingName
+    ? (image.user?.username
+        ? `${buildingName} — photo by ${image.user.username} on Plano`
+        : `${buildingName} — community photo on Plano`)
+    : "";
 
   // Sync state if initialIsLiked changes (e.g. parent refetch)
   useEffect(() => {
@@ -89,7 +97,7 @@ setIsLiked(previousIsLiked);
       <img
         src={isVideo && image.poster ? image.poster : image.url}
         className={`w-full h-full object-cover transition-transform duration-200 group-hover:scale-105 ${isVideoPlaceholder ? "opacity-50" : ""}`}
-        alt="Building visual"
+        alt={imageAlt}
       />
 
       {isVideo && (

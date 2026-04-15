@@ -310,6 +310,8 @@ CREATE TABLE public.buildings (
   address               text,
   city                  text,
   country               text,
+  country_code          text,          -- ISO 3166-1 alpha-2, e.g. 'GB'. Set by sync_building_locality trigger; callers should also pass it directly from Google's short_name.
+  locality_id           uuid           REFERENCES public.localities(id) ON DELETE SET NULL,  -- FK set automatically by sync_building_locality trigger
   year_completed        integer,
   status                building_status,
   access                building_access,                       -- Legacy; deprecated
@@ -337,9 +339,61 @@ CREATE TABLE public.buildings (
   CONSTRAINT buildings_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id),
   CONSTRAINT buildings_functional_category_id_fkey FOREIGN KEY (functional_category_id) REFERENCES public.functional_categories(id),
   CONSTRAINT buildings_merged_into_id_fkey FOREIGN KEY (merged_into_id) REFERENCES public.buildings(id),
-  CONSTRAINT buildings_hero_image_id_fkey FOREIGN KEY (hero_image_id) REFERENCES public.review_images(id)
+  CONSTRAINT buildings_hero_image_id_fkey FOREIGN KEY (hero_image_id) REFERENCES public.review_images(id),
+  CONSTRAINT buildings_locality_id_fkey FOREIGN KEY (locality_id) REFERENCES public.localities(id) ON DELETE SET NULL
 );
 ```
+
+### Localities table
+
+One row per distinct city/country combination that has at least one building. Auto-created by the `sync_building_locality` trigger on buildings insert/update. Enriched manually with `description`, `hero_image_url`, and SEO fields.
+
+```sql
+CREATE TABLE public.localities (
+  id               uuid          NOT NULL DEFAULT gen_random_uuid(),
+  city             text          NOT NULL,
+  country          text          NOT NULL,  -- Canonical full English name, e.g. 'United Kingdom'
+  country_code     text          NOT NULL,  -- ISO 3166-1 alpha-2, e.g. 'GB'
+  slug             text          NOT NULL UNIQUE,  -- URL-safe, e.g. 'london-gb'. Never auto-updated after creation.
+  description      text,          -- Null on auto-created rows; enriched manually
+  hero_image_url   text,
+  meta_title       text,          -- SEO override; null falls back to generated defaults
+  meta_description text,
+  lat              double precision,  -- Geographic centre for map viewport; populated manually
+  lng              double precision,
+  buildings_count  integer       NOT NULL DEFAULT 0,  -- Cached count; kept in sync by sync_building_locality trigger
+  created_at       timestamptz   NOT NULL DEFAULT now(),
+  updated_at       timestamptz   NOT NULL DEFAULT now(),
+
+  CONSTRAINT localities_pkey PRIMARY KEY (id),
+  CONSTRAINT localities_slug_unique UNIQUE (slug),
+  CONSTRAINT localities_city_country_code_unique UNIQUE (city, country_code)
+);
+```
+
+**RLS:** publicly readable (`SELECT` for all). `INSERT` and `UPDATE` restricted to admins. No `DELETE` policy — empty localities are acceptable.
+
+### Helper functions
+
+```sql
+-- Maps a country name (any common form) to ISO 3166-1 alpha-2 code. Returns NULL for unknown values.
+-- IMMUTABLE + SECURITY DEFINER.
+CREATE OR REPLACE FUNCTION public.country_name_to_code(p_country text) RETURNS text ...;
+
+-- Generates a URL-safe slug from city + country_code.
+-- Example: make_locality_slug('New York', 'US') → 'new-york-us'
+-- IMMUTABLE + SECURITY DEFINER.
+CREATE OR REPLACE FUNCTION public.make_locality_slug(p_city text, p_country_code text) RETURNS text ...;
+```
+
+### Trigger: sync_building_locality
+
+`BEFORE INSERT OR UPDATE OF city, country, country_code, is_deleted ON buildings FOR EACH ROW`.
+
+- Normalises `city`/`country` (trim + initcap) and derives `country_code` via `country_name_to_code` if not already set.
+- Looks up or auto-creates the matching `localities` row.
+- Sets `buildings.locality_id`.
+- Recalculates `localities.buildings_count` for both the new and old locality (on city change).
 
 **Building ↔ credited entities:** The only junction from `buildings` to professionals is **`building_credits`** (§9d), referencing **`people`** and/or **`companies`** (§9a / §9b). Map filters, discovery, and `is_verified_architect_for_building` use those rows.
 
@@ -661,6 +715,27 @@ Example payload:
   ]
 }
 */
+```
+
+```typescript
+// STUB — locality page feature is not yet implemented.
+// Shape will be refined when the /locality/:slug route is built.
+interface LocalityDTO {
+  id: string;
+  city: string;
+  country: string;
+  countryCode: string;            // Mapped: country_code (ISO 3166-1 alpha-2)
+  slug: string;
+  description: string | null;
+  heroImageUrl: string | null;    // Mapped: hero_image_url
+  metaTitle: string | null;       // Mapped: meta_title
+  metaDescription: string | null; // Mapped: meta_description
+  lat: number | null;
+  lng: number | null;
+  buildingsCount: number;         // Mapped: buildings_count (cached; approximate)
+  createdAt: string;
+  updatedAt: string;
+}
 ```
 
 ### Component 4: Input Validation (Zod Schemas) & Environment Variables

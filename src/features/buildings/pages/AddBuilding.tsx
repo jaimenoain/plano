@@ -47,6 +47,7 @@ const STOP_WORDS = [
 
 interface GoogleAddressComponent {
   long_name: string;
+  short_name: string;
   types: string[];
 }
 
@@ -57,8 +58,9 @@ interface GoogleGeocoderResult {
 const extractLocationDetails = (result: GoogleGeocoderResult) => {
   let city: string | null = null;
   let country: string | null = null;
+  let countryCode: string | null = null;
 
-  if (!result || !result.address_components) return { city, country };
+  if (!result || !result.address_components) return { city, country, countryCode };
 
   for (const component of result.address_components) {
     if (component.types.includes('locality')) {
@@ -66,6 +68,7 @@ const extractLocationDetails = (result: GoogleGeocoderResult) => {
     }
     if (component.types.includes('country')) {
       country = component.long_name;
+      countryCode = component.short_name;
     }
   }
 
@@ -79,7 +82,7 @@ const extractLocationDetails = (result: GoogleGeocoderResult) => {
      }
   }
 
-  return { city, country };
+  return { city, country, countryCode };
 };
 
 interface NearbyBuilding {
@@ -109,7 +112,7 @@ export default function AddBuilding() {
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
   const [duplicates, setDuplicates] = useState<NearbyBuilding[]>([]);
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null);
-  const [extractedLocation, setExtractedLocation] = useState<{ city: string | null; country: string | null }>({ city: null, country: null });
+  const [extractedLocation, setExtractedLocation] = useState<{ city: string | null; country: string | null; countryCode: string | null }>({ city: null, country: null, countryCode: null });
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [isSatellite, setIsSatellite] = useState(true);
 
@@ -228,6 +231,7 @@ return new Map();
     name?: string;
     city?: string | null;
     country?: string | null;
+    countryCode?: string | null;
     precision: 'exact' | 'approximate';
   } | null>(null);
 
@@ -409,6 +413,7 @@ toast.error("Location search failed. Please click on the map to set the location
             name: nameInput ?? "",
             city: extractedLocation.city,
             country: extractedLocation.country,
+            countryCode: extractedLocation.countryCode,
             precision: locationPrecision
         });
         setStep(2);

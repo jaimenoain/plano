@@ -46,6 +46,23 @@ export const meta: MetaFunction = () => [
   { name: "twitter:description", content: INDEX_DESCRIPTION },
   { name: "twitter:image", content: INDEX_OG_IMAGE },
   { tagName: "link", rel: "canonical", href: INDEX_CANONICAL },
+  {
+    "script:ld+json": {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "url": SITE_URL,
+      "name": "Plano",
+      "description": "The world's architecture, cataloged.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": `${SITE_URL}/search?q={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
+      },
+    },
+  },
 ];
 
 // --- Landing page (logged-out) ---

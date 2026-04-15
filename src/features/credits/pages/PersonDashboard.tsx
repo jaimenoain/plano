@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, type MetaFunction } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -71,6 +71,11 @@ function DashboardTierSection({
     </section>
   );
 }
+
+export const meta: MetaFunction = () => [
+  { title: "Plano" },
+  { name: "robots", content: "noindex, nofollow" },
+];
 
 export default function PersonDashboard() {
   const { user, loading: authLoading } = useAuth();

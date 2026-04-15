@@ -72,9 +72,15 @@ export function buildingAbsoluteUrl(building: BuildingDetails): string {
   return `${SITE_URL}${getBuildingUrl(building.id, building.slug, building.short_id)}`;
 }
 
+export interface BuildingRatingData {
+  averageRating: number;
+  reviewCount: number;
+}
+
 export function buildingStructuredData(
   building: BuildingDetails,
   credits?: BuildingCreditWithEntities[],
+  ratingData?: BuildingRatingData,
 ) {
   const url = buildingAbsoluteUrl(building);
   const year = building.year_completed;
@@ -131,6 +137,17 @@ export function buildingStructuredData(
         }))
       : undefined;
 
+  const aggregateRating =
+    ratingData && ratingData.reviewCount > 0
+      ? {
+          "@type": "AggregateRating" as const,
+          ratingValue: ratingData.averageRating,
+          reviewCount: ratingData.reviewCount,
+          bestRating: 5,
+          worstRating: 1,
+        }
+      : undefined;
+
   return {
     "@context": "https://schema.org",
     "@type": "LandmarkOrBuilding",
@@ -141,6 +158,71 @@ export function buildingStructuredData(
     ...(yearIso ? { dateCreated: yearIso } : {}),
     ...(architect ? { architect } : {}),
     ...(styleProperties ? { additionalProperty: styleProperties } : {}),
+    ...(aggregateRating ? { aggregateRating } : {}),
+  };
+}
+
+export function buildingBreadcrumbStructuredData(building: BuildingDetails): object {
+  const items: Array<{
+    "@type": "ListItem";
+    position: number;
+    name: string;
+    item: string;
+  }> = [
+    { "@type": "ListItem", position: 1, name: "Plano", item: SITE_URL },
+  ];
+
+  if (building.country) {
+    items.push({
+      "@type": "ListItem",
+      position: 2,
+      name: building.country,
+      item: `${SITE_URL}/search?country=${encodeURIComponent(building.country)}`,
+    });
+  }
+
+  if (building.city) {
+    items.push({
+      "@type": "ListItem",
+      position: items.length + 1,
+      name: building.city,
+      item: `${SITE_URL}/search?city=${encodeURIComponent(building.city)}`,
+    });
+  }
+
+  items.push({
+    "@type": "ListItem",
+    position: items.length + 1,
+    name: building.name,
+    item: buildingAbsoluteUrl(building),
+  });
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items,
+  };
+}
+
+export function collectionStructuredData(collection: {
+  name: string;
+  description: string | null;
+  slug: string;
+  buildings: Array<{ id: string; name: string; slug: string | null; short_id: number | null }>;
+}): object {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: collection.name,
+    ...(collection.description ? { description: collection.description } : {}),
+    url: `${SITE_URL}/collection/${collection.slug}`,
+    numberOfItems: collection.buildings.length,
+    itemListElement: collection.buildings.map((b, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: b.name,
+      url: `${SITE_URL}${getBuildingUrl(b.id, b.slug, b.short_id)}`,
+    })),
   };
 }
 
@@ -220,6 +302,53 @@ export function companyPageStructuredData(company: {
       ? { logo: company.logoAbsoluteUrl, image: company.logoAbsoluteUrl }
       : {}),
     ...(sameAs ? { sameAs } : {}),
+  };
+}
+
+/** Schema.org ItemList for `/city/:slug` locality pages. */
+export function localityPageStructuredData(
+  locality: {
+    slug: string;
+    city: string;
+    country: string;
+    country_code: string;
+    buildings_count: number;
+    lat: number | null;
+    lng: number | null;
+    description: string | null;
+  },
+  buildings: Array<{
+    id: string;
+    name: string;
+    slug: string | null;
+    short_id: number;
+  }>,
+): object {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: `Architecture in ${locality.city}, ${locality.country}`,
+    ...(locality.description ? { description: locality.description } : {}),
+    url: `${SITE_URL}/city/${locality.slug}`,
+    numberOfItems: locality.buildings_count,
+    itemListElement: buildings.map((b, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: b.name,
+      url: `${SITE_URL}${getBuildingUrl(b.id, b.slug, b.short_id)}`,
+    })),
+    ...(locality.lat && locality.lng
+      ? {
+          spatialCoverage: {
+            "@type": "Place",
+            geo: {
+              "@type": "GeoCoordinates",
+              latitude: locality.lat,
+              longitude: locality.lng,
+            },
+          },
+        }
+      : {}),
   };
 }
 

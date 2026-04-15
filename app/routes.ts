@@ -131,6 +131,7 @@ export default [
       "features/credits/pages/ArchitectEditRedirect.tsx",
     ),
     route("/review/:id", "features/buildings/pages/ReviewDetails.tsx"),
+    route("/city/:citySlug", "features/localities/pages/LocalityPage.tsx"),
     route("*", "pages/NotFound.tsx", { id: "root-not-found" }),
   ]),
 ] satisfies RouteConfig;

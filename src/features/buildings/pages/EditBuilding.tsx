@@ -24,6 +24,7 @@ interface LocationData {
     address: string;
     city: string | null;
     country: string | null;
+    countryCode: string | null;
     precision: 'exact' | 'approximate';
 }
 
@@ -187,6 +188,7 @@ export default function EditBuilding() {
           address: data.address || "",
           city: data.city,
           country: data.country,
+          countryCode: data.country_code,
           precision,
       });
 
@@ -261,6 +263,7 @@ toast.error("Error loading building");
           address: locationData.address,
           city: locationData.city,
           country: locationData.country,
+          country_code: locationData.countryCode,
           location: `POINT(${locationData.lng} ${locationData.lat})` as unknown,
           location_precision: locationData.precision
         })
@@ -338,7 +341,8 @@ toast.error("Unexpected error");
                     }}
                     initialPrecision={locationData.precision}
                     onLocationChange={(newLoc) => setLocationData({
-                        ...newLoc
+                        ...newLoc,
+                        countryCode: newLoc.countryCode
                     })}
                 />
 

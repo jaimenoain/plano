@@ -1,4 +1,18 @@
 User-agent: *
 Allow: /
 
+# Private / management routes — no indexing value
+Disallow: /admin/
+Disallow: /settings
+Disallow: /onboarding
+Disallow: /auth
+Disallow: /update-password
+Disallow: /notifications
+Disallow: /connect
+Disallow: /write-review/
+Disallow: /building/*/edit
+Disallow: /person/*/edit
+Disallow: /company/*/edit
+Disallow: /superadmin/
+
 Sitemap: https://plano.app/sitemap.xml

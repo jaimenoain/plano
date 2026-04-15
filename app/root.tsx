@@ -38,6 +38,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="theme-color" content="#ffffff" />
         <Links />
+        <meta name="description" content="Discover, document and share the world's most remarkable architecture. Plano is the community-maintained catalogue of notable buildings, architects and studios worldwide." />
+        <meta property="og:site_name" content="Plano" />
+        <meta property="og:locale" content="en_US" />
+        <meta property="og:type" content="website" />
+        <meta name="twitter:site" content="@planoapp" />
+        <meta name="twitter:card" content="summary_large_image" />
         <Meta />
       </head>
       <body>

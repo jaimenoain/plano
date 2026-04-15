@@ -598,7 +598,7 @@ export default function CompanyDetails() {
             {company.logoUrl ? (
               <div className="shrink-0 self-start">
                 <Avatar className="h-32 w-32 shrink-0 rounded-none border border-border-default sm:h-40 sm:w-40">
-                  <AvatarImage src={company.logoUrl} alt="" />
+                  <AvatarImage src={company.logoUrl} alt={`${company.name} logo`} />
                   <AvatarFallback className="rounded-none" />
                 </Avatar>
               </div>

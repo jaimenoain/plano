@@ -1,14 +1,26 @@
 import { useEffect, useMemo } from "react";
 import { Link } from "react-router";
+import type { MetaFunction } from "react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { CalendarDays } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { MetaHead } from "@/components/common/MetaHead";
 import { Button } from "@/components/ui/button";
 import { EventCard, EventCardSkeleton } from "@/features/events/components/EventCard";
 import { getUpcomingEvents, UPCOMING_EVENTS_PAGE_SIZE } from "@/features/events/api/eventsApi";
 import { eventKeys } from "@/features/events/queryKeys";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+
+export const meta: MetaFunction = () => [
+  { title: "Architecture Events — Exhibitions, Tours & Talks | Plano" },
+  { name: "description", content: "Discover architecture events worldwide: guided tours, exhibitions, lectures and open houses. Browse upcoming events on Plano." },
+  { property: "og:title", content: "Architecture Events | Plano" },
+  { property: "og:description", content: "Discover architecture events worldwide: guided tours, exhibitions, lectures and open houses." },
+  { property: "og:type", content: "website" },
+  { name: "twitter:card", content: "summary_large_image" },
+  { name: "twitter:title", content: "Architecture Events | Plano" },
+  { name: "twitter:description", content: "Discover architecture events worldwide: guided tours, exhibitions, lectures and open houses." },
+  { tagName: "link", rel: "canonical", href: "https://plano.app/events" },
+];
 
 export default function Events() {
   const { containerRef: loadMoreRef, isVisible: loadMoreVisible } = useIntersectionObserver({
@@ -39,11 +51,6 @@ export default function Events() {
 
   return (
     <AppLayout title="Events" showBack={false}>
-      <MetaHead
-        documentTitle="Events · Plano"
-        description="Upcoming architecture events shared by the Plano community."
-        canonicalUrl="/events"
-      />
       <div className="mx-auto max-w-3xl px-4 py-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-3xl font-bold tracking-tight text-text-primary">Upcoming events</h1>

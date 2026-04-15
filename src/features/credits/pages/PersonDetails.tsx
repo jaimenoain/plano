@@ -277,7 +277,7 @@ export default function PersonDetails() {
             {person.avatarUrl ? (
               <div className="shrink-0 self-start">
                 <Avatar className="h-32 w-32 shrink-0 rounded-none border border-border-default sm:h-40 sm:w-40">
-                  <AvatarImage src={person.avatarUrl} alt="" />
+                  <AvatarImage src={person.avatarUrl} alt={person.name} />
                   <AvatarFallback className="rounded-none" />
                 </Avatar>
               </div>

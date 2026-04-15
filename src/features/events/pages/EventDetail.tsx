@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
+import type { MetaFunction } from "react-router";
 import { format, isSameDay, parseISO } from "date-fns";
 import { enGB } from "date-fns/locale";
 import { ExternalLink, MapPin, Pencil, BadgeCheck, Check, Bookmark } from "lucide-react";
@@ -16,6 +17,28 @@ import { getBuildingUrl } from "@/utils/url";
 import { cn } from "@/lib/utils";
 import { RecommendDialog } from "@/components/common/RecommendDialog";
 import { useEventAttendance } from "@/features/events/hooks/useEventAttendance";
+
+// TODO: add a server-side loader (EventDetail.loader.ts) to make these tags SSR-aware.
+// Without a loader, data is always undefined at render time and the MetaHead component
+// handles dynamic meta updates on the client once the event loads via useEvent().
+export const meta: MetaFunction = () => {
+  const title = "Event | Plano";
+  const description = "Discover and track architecture events on Plano.";
+  const ogImage = "https://plano.app/og-default.jpg";
+
+  return [
+    { title },
+    { name: "description", content: description },
+    { property: "og:title", content: title },
+    { property: "og:description", content: description },
+    { property: "og:image", content: ogImage },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: title },
+    { name: "twitter:description", content: description },
+    { name: "twitter:image", content: ogImage },
+  ];
+};
 
 function isEventsApiError(e: unknown): e is EventsApiError {
   return (
@@ -71,6 +94,43 @@ function metaDescription(event: EventDTO): string {
   const raw = event.description?.trim() ?? "";
   if (raw.length <= 160) return raw || `${event.title} on Plano.`;
   return `${raw.slice(0, 157)}...`;
+}
+
+function buildEventStructuredData(event: EventDTO): Record<string, unknown> {
+  const firstBuilding = event.buildings[0] ?? null;
+  const locationName = event.address ?? firstBuilding?.name ?? "Plano Event";
+  const description = event.description?.trim() ?? "";
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: event.title,
+    startDate: event.startAt,
+    endDate: event.endAt ?? event.startAt,
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    location: {
+      "@type": "Place",
+      name: locationName,
+      ...(firstBuilding?.city || firstBuilding
+        ? {
+            address: {
+              "@type": "PostalAddress",
+              ...(firstBuilding?.city ? { addressLocality: firstBuilding.city } : {}),
+            },
+          }
+        : {}),
+    },
+    ...(description
+      ? { description: description.length > 500 ? `${description.slice(0, 497)}...` : description }
+      : {}),
+    url: `https://plano.app/events/${event.slug}`,
+    organizer: {
+      "@type": "Organization",
+      name: "Plano",
+      url: "https://plano.app",
+    },
+  };
 }
 
 function EventDetailSkeleton() {
@@ -172,6 +232,7 @@ export default function EventDetail() {
         documentTitle={`${event.title} · Plano`}
         description={metaDescription(event)}
         canonicalUrl={`/events/${event.slug}`}
+        structuredData={buildEventStructuredData(event)}
       />
       <article className="pb-12">
 

@@ -24,6 +24,8 @@ export function BuildingHero({ src, alt, className, children }: BuildingHeroProp
         alt={alt}
         className="w-full h-[clamp(260px,48vh,500px)] object-cover animate-in fade-in duration-700"
         onError={() => setImgError(true)}
+        fetchPriority="high"
+        loading="eager"
       />
       {children}
     </div>

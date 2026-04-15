@@ -8,6 +8,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings, type Bounds } from "@/utils/map";
 import { getBuildingUrl } from "@/utils/url";
+import { collectionStructuredData } from "@/features/buildings/utils/structuredData";
 import { Loader2, Settings, Plus, ExternalLink, Star, ListFilter } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -121,6 +122,7 @@ export default function CollectionMap() {
   useEffect(() => {
     if (showPlanRoute) setHasPlanRouteOpened(true);
   }, [showPlanRoute]);
+
 
   // 1. Resolve User (Owner)
   const { data: ownerProfile, isLoading: loadingProfile } = useQuery({
@@ -278,6 +280,30 @@ export default function CollectionMap() {
           // For now, let's keep it manual or based on URL logic (not implemented)
       }
   }, [collection, items, markers, initializeItinerary]);
+
+  // Inject ItemList JSON-LD for public collections
+  useEffect(() => {
+    if (!collection || !collection.is_public || items.length === 0) return;
+    const ldData = collectionStructuredData({
+      name: collection.name,
+      description: collection.description,
+      slug: collection.slug,
+      buildings: items.map((item) => ({
+        id: item.building.id,
+        name: item.building.name,
+        slug: item.building.slug ?? null,
+        short_id: item.building.short_id ?? null,
+      })),
+    });
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.setAttribute("data-collection-ld", "");
+    script.textContent = JSON.stringify(ldData);
+    document.head.appendChild(script);
+    return () => {
+      script.remove();
+    };
+  }, [collection, items]);
 
   const existingBuildingIds = useMemo<Set<string>>(() => {
     return new Set<string>(items.map((item) => item.building.id));
