@@ -39,7 +39,7 @@ function FeaturedBuildingCard({ review }: { review: FeedReview }) {
 
   return (
     <Link
-      // TODO: enrich DTO with locality fields
+      // Locality URL not available: ReviewBuilding (FeedReview) does not include locality_country_code/city_slug — requires get_feed RPC to include locality fields in building_data
       to={getBuildingUrl(building.id, building.slug, building.short_id ?? null)}
       className="group block h-full"
     >

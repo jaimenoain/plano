@@ -63,7 +63,7 @@ export function FeedActivityRow({
     const target = e.target as HTMLElement;
     if (target.closest("button")) return;
     if (entry.building?.id) {
-      // TODO: enrich DTO with locality fields
+      // Locality URL not available: ReviewBuilding (FeedReview) does not include locality_country_code/city_slug — requires get_feed RPC to include locality fields in building_data
       navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
     }
   };

@@ -578,7 +578,7 @@ toast({
 
       toast({ title: "Review deleted" });
       if (!buildingId) return;
-      // TODO: enrich DTO with locality fields
+      // Locality URL not available: buildingSlug/buildingShortId state does not include locality_country_code/city_slug — requires building fetch to also load locality fields
       navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
 
     } catch (error) {
@@ -755,7 +755,7 @@ toast({
       }
 
       toast({ title: "Review published!" });
-      // TODO: enrich DTO with locality fields
+      // Locality URL not available: buildingSlug/buildingShortId state does not include locality_country_code/city_slug — requires building fetch to also load locality fields
       navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
 
     } catch (error) {

@@ -296,7 +296,7 @@ toast.error("Failed to update building");
           }
 
       toast.success("Building updated successfully");
-      // TODO: enrich DTO with locality fields
+      // Locality URL not available: buildingSlug/buildingShortId state does not include locality_country_code/city_slug — requires initial building fetch to also load locality fields
       navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
 
     } catch (_error) {

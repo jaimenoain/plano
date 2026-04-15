@@ -170,7 +170,7 @@ export default function FlaggedCredits() {
                     </TableCell>
                     <TableCell className="align-top">
                       <Link
-                        // TODO: enrich DTO with locality fields
+                        // Locality URL not available: FlaggedCreditModerationItem.building does not include locality_country_code/city_slug — requires flagged credits query to join localities table
                         to={getBuildingUrl(
                           credit.building.id,
                           credit.building.slug,

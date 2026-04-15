@@ -203,6 +203,32 @@ Deno.serve(async (req) => {
       }
     }
 
+    // /events/:slug  (virtual/online event — no location params)
+    const virtualEventMatch = path.match(/^\/events\/([^/]+)$/);
+    if (virtualEventMatch) {
+      const eventSlug = virtualEventMatch[1];
+      const { data: event } = await supabase
+        .from("events")
+        .select("title, description, slug, cover_image_url, country_code, city_slug")
+        .eq("slug", eventSlug)
+        .maybeSingle();
+
+      if (event) {
+        const title = `${event.title} — Plano`;
+        const description = event.description
+          ? event.description.slice(0, 160)
+          : `Join ${event.title} on Plano.`;
+        const image = absoluteHeroImage(event.cover_image_url);
+        const canonicalUrl = event.country_code && event.city_slug
+          ? `${SITE_URL}/events/${event.country_code.toLowerCase()}/${event.city_slug}/${event.slug}`
+          : `${SITE_URL}/events/${event.slug}`;
+        return new Response(
+          renderOgHtml({ title, description, image, url: canonicalUrl }),
+          { headers: corsHeaders },
+        );
+      }
+    }
+
     // Legacy: /building/:id/:slug
     const buildingMatch = path.match(/^\/building\/(\d+)(?:\/([^/]+))?/);
     if (buildingMatch) {

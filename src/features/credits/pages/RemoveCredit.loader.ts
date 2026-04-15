@@ -18,7 +18,7 @@ function buildingHrefFromRedeem(
   buildingShortId: number | null | undefined
 ): string | null {
   if (!buildingId) return null;
-  // TODO: enrich DTO with locality fields
+  // Locality URL not available: removeCreditByToken result does not include locality_country_code/city_slug — requires token redemption RPC to join localities table
   return getBuildingUrl(buildingId, buildingSlug, buildingShortId);
 }
 

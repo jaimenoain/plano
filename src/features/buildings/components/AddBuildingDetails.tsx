@@ -138,7 +138,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
 
       // 7. Success State
       toast.success("Building added successfully!");
-      // TODO: enrich DTO with locality fields
+      // Locality URL not available: insert response does not include locality_country_code/city_slug — requires buildings INSERT to return locality join or a separate lookup
       navigate(getBuildingUrl(insertedData.id, insertedData.slug, insertedData.short_id));
 
     } catch (error: unknown) {

@@ -118,7 +118,7 @@ export function BucketListWidget() {
             ))
           : items.map((building) => {
               const imageUrl = getBuildingImageUrl(building.hero_image_url);
-              // TODO: enrich DTO with locality fields
+              // Locality URL not available: BucketBuilding does not include locality_country_code/city_slug — requires bucket list query to join localities table
               const href = getBuildingUrl(building.id, building.slug, building.short_id);
               return (
                 <div

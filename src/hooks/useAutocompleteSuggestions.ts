@@ -39,6 +39,81 @@ function canUseNewAutocomplete(): boolean {
   return typeof places?.AutocompleteSuggestion?.fetchAutocompleteSuggestions === "function";
 }
 
+// Tracks whether the new Places API has been confirmed working.
+// Starts as true (optimistic), gets flipped to false on first failure so
+// subsequent requests go directly to the legacy AutocompleteService.
+let newApiConfirmed = true;
+
+async function fetchSuggestionsNew(
+  input: string,
+  types: string[] | undefined,
+): Promise<PlaceAutocompletePrediction[]> {
+  const includedPrimaryTypes = legacyTypesToIncludedPrimary(types);
+  const request: google.maps.places.AutocompleteRequest = {
+    input,
+    ...(includedPrimaryTypes?.length ? { includedPrimaryTypes } : {}),
+  };
+  const { suggestions: raw } =
+    await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
+  const data: PlaceAutocompletePrediction[] = [];
+  for (const s of raw) {
+    const pp = s.placePrediction;
+    if (!pp) continue;
+    data.push({
+      place_id: pp.placeId,
+      description: pp.text.text,
+      structured_formatting: { main_text: pp.mainText?.text ?? pp.text.text },
+    });
+  }
+  return data;
+}
+
+function fetchSuggestionsLegacy(
+  input: string,
+  types: string[] | undefined,
+): Promise<PlaceAutocompletePrediction[]> {
+  return new Promise((resolve, reject) => {
+    const service = new google.maps.places.AutocompleteService();
+    service.getPlacePredictions({ input, types }, (predictions, status) => {
+      const S = google.maps.places.PlacesServiceStatus;
+      if (status === S.ZERO_RESULTS || !predictions) {
+        resolve([]);
+        return;
+      }
+      if (status !== S.OK) {
+        reject(new Error(status));
+        return;
+      }
+      resolve(
+        predictions.map((p) => ({
+          place_id: p.place_id,
+          description: p.description,
+          structured_formatting: p.structured_formatting
+            ? { main_text: p.structured_formatting.main_text }
+            : undefined,
+        })),
+      );
+    });
+  });
+}
+
+async function fetchSuggestions(
+  input: string,
+  types: string[] | undefined,
+): Promise<PlaceAutocompletePrediction[]> {
+  if (newApiConfirmed && canUseNewAutocomplete()) {
+    try {
+      const result = await fetchSuggestionsNew(input, types);
+      return result;
+    } catch {
+      // New API unavailable (e.g. 403 — "Places API (New)" not enabled on this key).
+      // Fall back to the legacy AutocompleteService for the rest of the session.
+      newApiConfirmed = false;
+    }
+  }
+  return fetchSuggestionsLegacy(input, types);
+}
+
 export function useAutocompleteSuggestions(options: {
   types?: string[];
   debounce?: number;
@@ -61,7 +136,8 @@ export function useAutocompleteSuggestions(options: {
 
   const init = useCallback(() => {
     if (typeof window === "undefined") return;
-    if (canUseNewAutocomplete()) setReady(true);
+    const hasLegacy = typeof window.google?.maps?.places?.AutocompleteService === "function";
+    if (canUseNewAutocomplete() || hasLegacy) setReady(true);
   }, []);
 
   useEffect(() => {
@@ -89,34 +165,15 @@ export function useAutocompleteSuggestions(options: {
         setSuggestions({ loading: false, status: "", data: [] });
         return;
       }
-      if (!canUseNewAutocomplete()) return;
+      const hasLegacy = typeof window.google?.maps?.places?.AutocompleteService === "function";
+      if (!canUseNewAutocomplete() && !hasLegacy) return;
 
       const seq = ++requestSeqRef.current;
       setSuggestions((s) => ({ ...s, loading: true }));
 
-      const includedPrimaryTypes = legacyTypesToIncludedPrimary(typesRef.current);
-      const request: google.maps.places.AutocompleteRequest = {
-        input,
-        ...(includedPrimaryTypes?.length ? { includedPrimaryTypes } : {}),
-      };
-
       try {
-        const { suggestions: raw } =
-          await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
+        const data = await fetchSuggestions(input, typesRef.current);
         if (seq !== requestSeqRef.current) return;
-
-        const data: PlaceAutocompletePrediction[] = [];
-        for (const s of raw) {
-          const pp = s.placePrediction;
-          if (!pp) continue;
-          data.push({
-            place_id: pp.placeId,
-            description: pp.text.text,
-            structured_formatting: {
-              main_text: pp.mainText?.text ?? pp.text.text,
-            },
-          });
-        }
         setSuggestions({
           loading: false,
           status: data.length > 0 ? "OK" : "ZERO_RESULTS",

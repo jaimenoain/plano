@@ -132,7 +132,7 @@ For each of the three new page tiers, copy the JSON-LD from page source and past
 
 ---
 
-### [ ] QA7 — OG tags edge function: path-parsing correctness
+### [x] QA7 — OG tags edge function: path-parsing correctness
 
 Test each path shape against the deployed `og-tags` edge function using `curl`. Confirm `og:title`, `og:description`, and `og:image` are all populated and not `undefined` or empty.
 
@@ -163,7 +163,7 @@ curl "https://<project>.supabase.co/functions/v1/og-tags?path=%2Fbuilding%2F1%2F
 
 ---
 
-### [ ] QA8 — Internal link hygiene: no hardcoded legacy URLs in source
+### [x] QA8 — Internal link hygiene: no hardcoded legacy URLs in source
 
 Run each of the following `grep` commands from the repo root. Each must return **zero hits** outside of the explicitly permitted files (redirect loaders and the URL utility itself).
 
@@ -192,7 +192,7 @@ grep -rn 'href="/events/' src/ --include="*.tsx" | grep -v getEventUrl
 
 ---
 
-### [ ] QA9 — `TODO` locality enrichment audit
+### [x] QA9 — `TODO` locality enrichment audit
 
 - Run `grep -rn 'TODO: enrich DTO with locality' src/` — collect every call site flagged during T11.
 - For each hit, open the file and check whether the DTO it uses could reasonably be enriched without a separate query (i.e. the parent query already joins the locality table). If so, fix it now — add `locality_country_code` and `locality_city_slug` to the SELECT and switch the call to `getBuildingLocalityUrl`.
@@ -202,7 +202,7 @@ grep -rn 'href="/events/' src/ --include="*.tsx" | grep -v getEventUrl
 
 ---
 
-### [ ] QA10 — Redirect chain length: confirm single-hop resolution
+### [x] QA10 — Redirect chain length: confirm single-hop resolution
 
 A user arriving from an old indexed URL must reach the final page in at most **one redirect hop**. Two or more hops (e.g. `/building/1` → `/building/1/slug` → `/architecture/fr/paris/1/slug`) waste crawl budget and slow users.
 
@@ -215,7 +215,7 @@ A user arriving from an old indexed URL must reach the final page in at most **o
 
 ---
 
-### [ ] QA11 — `noindex` guard: private routes must not be crawlable
+### [x] QA11 — `noindex` guard: private routes must not be crawlable
 
 Confirm that the URL restructure has not accidentally changed the `noindex` behaviour of private routes.
 
@@ -229,7 +229,7 @@ Confirm that the URL restructure has not accidentally changed the `noindex` beha
 
 ---
 
-### [ ] QA12 — TypeScript build and type coverage: final clean build
+### [x] QA12 — TypeScript build and type coverage: final clean build
 
 - Run `bun run build` from the repo root — must exit with code `0`, zero errors, zero warnings that were not present before this feature branch.
 - Run `bun run typecheck` (or `tsc --noEmit`) — zero type errors.

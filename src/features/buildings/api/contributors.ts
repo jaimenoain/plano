@@ -79,13 +79,13 @@ export async function getBuildingContributors(
 
     supabase
       .from('review_images')
-      .select('id, user_id, likes_count, created_at, profiles!user_id(id, username, avatar_url)')
-      .eq('building_id', buildingId)
+      .select('id, user_id, likes_count, created_at, profiles!review_images_user_id_fkey(id, username, avatar_url), user_buildings!review_images_review_id_fkey!inner(building_id)')
+      .eq('user_buildings.building_id', buildingId)
       .order('created_at', { ascending: true }),
 
     supabase
       .from('building_credits')
-      .select('added_by_user_id, profiles!added_by_user_id(id, username, avatar_url)')
+      .select('added_by_user_id, profiles!building_credits_added_by_user_id_fkey(id, username, avatar_url)')
       .eq('building_id', buildingId)
       .eq('status', 'approved')
       .not('added_by_user_id', 'is', null),

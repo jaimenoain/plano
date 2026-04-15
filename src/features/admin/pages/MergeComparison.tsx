@@ -288,7 +288,7 @@ export default function MergeComparison() {
 
             // Redirect to survivor
             const target = buildings.find(b => b.id === targetPointer);
-            // TODO: enrich DTO with locality fields
+            // Locality URL not available: AdminBuilding does not include locality_country_code/city_slug — requires admin building query to join localities table
             navigate(getBuildingUrl(targetPointer!, target?.slug, target?.short_id != null ? Number(target.short_id) : null));
 
         } catch (error) {

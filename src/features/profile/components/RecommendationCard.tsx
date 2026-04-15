@@ -62,7 +62,7 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
   return (
     <div className="bg-surface-card border border-border-default rounded-sm overflow-hidden flex flex-col h-full shadow-none animate-in fade-in zoom-in-95 duration-300">
       <div className="relative aspect-[4/3] group cursor-pointer overflow-hidden">
-        {/* TODO: enrich DTO with locality fields */}
+        {/* Locality URL not available: Recommendation.building does not include locality_country_code/city_slug — requires recommendations query to join localities table */}
         <Link to={getBuildingUrl(building.id, building.slug, building.short_id)}>
             {imageUrl ? (
             <img
@@ -80,7 +80,7 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
 
       <div className="p-3 flex flex-col flex-1 gap-2">
         <div>
-            {/* TODO: enrich DTO with locality fields */}
+            {/* Locality URL not available: Recommendation.building does not include locality_country_code/city_slug — requires recommendations query to join localities table */}
             <Link to={getBuildingUrl(building.id, building.slug, building.short_id)} className="hover:underline">
                  <h3 className="font-semibold leading-tight line-clamp-1" title={building.name}>{building.name}</h3>
             </Link>

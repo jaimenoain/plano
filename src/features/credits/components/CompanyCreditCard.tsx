@@ -12,7 +12,7 @@ interface CompanyCreditCardProps {
 }
 
 export function CompanyCreditCard({ credit, className }: CompanyCreditCardProps) {
-  // TODO: enrich DTO with locality fields
+  // Locality URL not available: BuildingSummaryForPersonCredit does not include locality_country_code/city_slug — requires credits query to join localities table
   const buildingUrl = getBuildingUrl(credit.building.id, credit.building.slug, credit.building.shortId);
   const thumb =
     getBuildingImageUrl(credit.building.heroImageUrl) ??

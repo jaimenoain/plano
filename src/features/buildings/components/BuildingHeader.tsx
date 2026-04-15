@@ -152,7 +152,7 @@ export const BuildingHeader = ({
             {showEditLink && !isEditing && (
                 <div className="mt-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-200">
                     <Link
-                        // TODO: enrich DTO with locality fields
+                        // Locality URL not available: BuildingDetails does not include locality_country_code/city_slug — requires BuildingHeader props update to include locality fields
                         to={getBuildingUrl(building.id, building.slug, building.short_id) + "/edit"}
                         className="text-xs text-text-secondary hover:underline"
                     >

@@ -44,7 +44,7 @@ function mapBuildingRow(row: BuildingRow): RelatedBuilding {
     country: row.country,
     year_completed: row.year_completed,
     imageUrl,
-    // TODO: enrich DTO with locality fields
+    // Locality URL not available: RelatedBuilding DTO does not include locality_country_code/city_slug — requires BUILDING_SELECT and BuildingRow to join the localities table
     buildingUrl: getBuildingUrl(row.id, row.slug, row.short_id),
   };
 }

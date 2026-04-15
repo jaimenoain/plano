@@ -470,7 +470,7 @@ export default function EventDetail() {
                   {event.buildings.map((b) => (
                     <Link
                       key={b.buildingId}
-                      // TODO: enrich DTO with locality fields
+                      // Locality URL not available: EventBuilding does not include locality_country_code/city_slug — requires event buildings query to join localities table
                       to={getBuildingUrl(b.buildingId, b.slug, null)}
                       className="flex w-36 shrink-0 flex-col gap-2 border border-border-default bg-surface-card p-2 transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
                     >

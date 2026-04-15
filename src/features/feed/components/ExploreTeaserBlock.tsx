@@ -56,7 +56,7 @@ export function ExploreTeaserBlock({ className }: ExploreTeaserBlockProps) {
         {buildings.map((building) => (
           <Link
             key={building.id}
-            // TODO: enrich DTO with locality fields
+            // Locality URL not available: DiscoveryFeedItem does not include locality_country_code/city_slug — requires discovery feed RPC to join localities table
             to={getBuildingUrl(building.id, building.slug, building.short_id)}
             className="snap-start shrink-0 w-[260px] group relative aspect-[4/3] rounded-sm overflow-hidden bg-surface-muted border border-border-default shadow-none transition-all"
           >

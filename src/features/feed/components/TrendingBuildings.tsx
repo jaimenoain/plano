@@ -121,7 +121,7 @@ export function TrendingBuildings() {
           )
           : buildings.map((building, index) => {
               const imageUrl = getBuildingImageUrl(building.hero_image_url);
-              // TODO: enrich DTO with locality fields
+              // Locality URL not available: TrendingBuilding does not include locality_country_code/city_slug — requires trending buildings query to join localities table
               const href = getBuildingUrl(building.id, building.slug, building.short_id);
               return (
                 <Link

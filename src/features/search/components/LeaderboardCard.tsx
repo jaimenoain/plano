@@ -18,7 +18,7 @@ export function LeaderboardCard({ building, rank, type }: LeaderboardCardProps) 
   return (
     <div
       className="group flex items-center gap-4 p-4 border-b border-border-default hover:bg-brand-secondary transition-colors cursor-pointer"
-      // TODO: enrich DTO with locality fields
+      // Locality URL not available: LeaderboardBuilding does not include locality_country_code/city_slug — requires leaderboard RPC to join localities table
       onClick={() => navigate(getBuildingUrl(building.id, building.slug, building.short_id))}
     >
       <div className={cn(

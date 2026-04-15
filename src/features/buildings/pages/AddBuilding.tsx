@@ -505,8 +505,8 @@ toast.error("Location search failed. Please click on the map to set the location
                               >
                                 <div
                                   className="cursor-pointer flex gap-3"
-                                  // TODO: enrich DTO with locality fields
-                                  onClick={() => navigate(getBuildingUrl(building.id, building.slug, building.short_id))}
+                                  // Locality URL not available: NearbyBuilding does not include locality_country_code/city_slug — requires duplicate-check RPC to join localities table
+                                  onClick={() => navigate(getBuildingUrl(building.id))}
                                 >
                                   <Avatar className="h-10 w-10 rounded-md">
                                     <AvatarFallback className="rounded-md">
@@ -544,8 +544,8 @@ toast.error("Location search failed. Please click on the map to set the location
                               >
                                 <div
                                   className="cursor-pointer flex gap-3"
-                                  // TODO: enrich DTO with locality fields
-                                  onClick={() => navigate(getBuildingUrl(building.id, building.slug, building.short_id))}
+                                  // Locality URL not available: NearbyBuilding does not include locality_country_code/city_slug — requires duplicate-check RPC to join localities table
+                                  onClick={() => navigate(getBuildingUrl(building.id))}
                                 >
                                   <Avatar className="h-10 w-10 rounded-md">
                                     <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
@@ -640,8 +640,8 @@ toast.error("Location search failed. Please click on the map to set the location
                     anchor="bottom"
                     onClick={(e) => {
                         e.originalEvent.stopPropagation();
-                        // TODO: enrich DTO with locality fields
-                        navigate(getBuildingUrl(building.id, building.slug, building.short_id));
+                        // Locality URL not available: NearbyBuilding does not include locality_country_code/city_slug — requires duplicate-check RPC to join localities table
+                        navigate(getBuildingUrl(building.id));
                     }}
                     className="cursor-pointer hover:z-10"
                   >
@@ -721,8 +721,8 @@ toast.error("Location search failed. Please click on the map to set the location
                             >
                                 <div
                                     className="cursor-pointer flex gap-3"
-                                    // TODO: enrich DTO with locality fields
-                                    onClick={() => navigate(getBuildingUrl(building.id, building.slug, building.short_id))}
+                                    // Locality URL not available: NearbyBuilding does not include locality_country_code/city_slug — requires duplicate-check RPC to join localities table
+                                    onClick={() => navigate(getBuildingUrl(building.id))}
                                 >
                                     <Avatar className="h-10 w-10 rounded-md">
                                         <AvatarFallback className="rounded-md">
@@ -758,8 +758,8 @@ toast.error("Location search failed. Please click on the map to set the location
                             >
                                 <div
                                     className="cursor-pointer flex gap-3"
-                                    // TODO: enrich DTO with locality fields
-                                    onClick={() => navigate(getBuildingUrl(building.id, building.slug, building.short_id))}
+                                    // Locality URL not available: NearbyBuilding does not include locality_country_code/city_slug — requires duplicate-check RPC to join localities table
+                                    onClick={() => navigate(getBuildingUrl(building.id))}
                                 >
                                     <Avatar className="h-10 w-10 rounded-md">
                                       <AvatarImage src={getBuildingImageUrl(building.main_image_url) || undefined} alt={building.name} className="object-cover" />

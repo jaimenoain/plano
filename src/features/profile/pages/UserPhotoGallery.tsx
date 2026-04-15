@@ -300,8 +300,8 @@ export default function UserPhotoGallery() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {photos.map((photo) => {
                const imageUrl = getBuildingImageUrl(photo.storage_path);
-               // TODO: enrich DTO with locality fields
-               const linkUrl = photo.building ? getBuildingUrl(photo.building.id, photo.building.slug, photo.building.short_id) : "#";
+               // Locality URL not available: Photo.building does not include locality_country_code/city_slug or short_id — requires photo gallery query to join localities table
+               const linkUrl = photo.building ? getBuildingUrl(photo.building.id, photo.building.slug) : "#";
 
                return (
                  <Link

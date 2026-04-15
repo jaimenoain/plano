@@ -43,7 +43,7 @@ export function ProfileListView({
 
   const handleRowClick = (review: FeedReview) => {
     if (review.building.id) {
-      // TODO: enrich DTO with locality fields
+      // Locality URL not available: ReviewBuilding (FeedReview) does not include locality_country_code/city_slug — requires get_feed RPC to include locality fields in building_data
       navigate(getBuildingUrl(review.building.id, review.building.slug, review.building.short_id));
     }
   };

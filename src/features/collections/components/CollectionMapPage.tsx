@@ -966,7 +966,7 @@ toast({
                                                 canEdit={canEdit}
                                                 onUpdateNote={(note) => handleUpdateNote(item.id, note)}
                                                 onNavigate={() => {
-                                                    // TODO: enrich DTO with locality fields
+                                                    // Locality URL not available: CollectionItemWithBuilding.building does not include locality_country_code/city_slug — requires collection items query to join localities table
                                                     window.open(getBuildingUrl(item.building.id, item.building.slug, item.building.short_id), '_blank');
                                                 }}
                                                 categorizationMethod={collection.categorization_method}
