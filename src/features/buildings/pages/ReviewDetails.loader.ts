@@ -22,6 +22,7 @@ export async function reviewLoader({ request, params }: LoaderFunctionArgs) {
       `
       id,
       content,
+      created_at,
       user:profiles(username),
       building:buildings(id, name, short_id, slug, hero_image_url),
       images:review_images(id, storage_path)
@@ -77,6 +78,10 @@ export async function reviewLoader({ request, params }: LoaderFunctionArgs) {
     `Check out ${user?.username ?? "Someone"}'s visit to ${buildingName}`;
 
   const canonical = `${SITE_URL}/review/${row.id}`;
+  const contentLength = content?.length ?? 0;
+  const imageCount = (row.images ?? []).length;
+  const createdAt: string | null =
+    typeof row.created_at === "string" ? row.created_at : null;
 
   return data(
     {
@@ -86,6 +91,9 @@ export async function reviewLoader({ request, params }: LoaderFunctionArgs) {
       description,
       ogImage,
       canonical,
+      contentLength,
+      imageCount,
+      createdAt,
     },
     { headers },
   );

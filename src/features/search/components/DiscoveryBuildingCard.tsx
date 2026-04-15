@@ -38,7 +38,7 @@ export function DiscoveryBuildingCard({
     <div className="relative w-32 shrink-0 aspect-[4/3] overflow-hidden">
       <img
         src={imageUrl}
-        alt={building.name}
+        alt={[building.name, building.city].filter(Boolean).join(", ")}
         className="absolute inset-0 w-full h-full object-cover"
         loading="lazy"
       />

@@ -84,6 +84,8 @@ export const meta: MetaFunction<typeof companyDetailsLoader> = ({ data }) => {
     { property: "og:title", content: d.metaTitle },
     { property: "og:description", content: d.description },
     { property: "og:image", content: d.ogImage },
+    { property: "og:image:width", content: "1200" },
+    { property: "og:image:height", content: "630" },
     { property: "og:url", content: d.canonical },
     { property: "og:type", content: "website" },
     { name: "twitter:card", content: "summary_large_image" },

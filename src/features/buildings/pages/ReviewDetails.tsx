@@ -29,21 +29,34 @@ export { reviewLoader as loader };
 export const meta: MetaFunction<typeof reviewLoader> = ({ data }) => {
   if (!data) return [{ title: "Plano" }];
   const title = `${data.username} - ${data.buildingName}`;
-  const { description, ogImage, canonical } = data;
-  return [
+  const { description, ogImage, canonical, contentLength, imageCount, createdAt, username } = data;
+
+  const isThinContent = contentLength < 50 && imageCount === 0;
+
+  const tags: ReturnType<MetaFunction> = [
     { title },
     { name: "description", content: description },
     { property: "og:title", content: title },
     { property: "og:description", content: description },
     { property: "og:image", content: ogImage },
-    { property: "og:type", content: "website" },
+    { property: "og:image:width", content: "1200" },
+    { property: "og:image:height", content: "630" },
+    { property: "og:type", content: "article" },
     { property: "og:url", content: canonical },
+    ...(createdAt ? [{ property: "article:published_time", content: createdAt }] : []),
+    { property: "article:author", content: `https://plano.app/profile/${username}` },
     { name: "twitter:card", content: "summary_large_image" },
     { name: "twitter:title", content: title },
     { name: "twitter:description", content: description },
     { name: "twitter:image", content: ogImage },
     { tagName: "link", rel: "canonical", href: canonical },
   ];
+
+  if (isThinContent) {
+    tags.push({ name: "robots", content: "noindex, follow" });
+  }
+
+  return tags;
 };
 
 interface FeedReview {

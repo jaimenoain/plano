@@ -22,15 +22,15 @@ type GeocoderResultLike = {
 };
 
 /**
- * Extracts city, country name, and ISO country code from a Google Maps
- * GeocoderResult (or any object with address_components in the same shape).
+ * Extracts city, country name, and ISO 3166-1 alpha-2 country code from a
+ * Google Maps GeocoderResult (or any object with address_components).
  *
- * Returns:
- *   city        — long_name of the locality/postal_town/administrative_area_level_2 component
- *   country     — long_name of the country component (e.g. "United Kingdom")
- *   countryCode — short_name of the country component (e.g. "GB")
+ * City resolution is country-aware:
+ * - GB: postal_town → locality  (avoids borough-level granularity)
+ * - All others: locality → postal_town
  *
- * All three fields may be null if the relevant component is absent.
+ * administrative_area_level_2 is intentionally excluded — it returns counties
+ * and districts, not cities.
  */
 export const extractLocationDetails = (
   result: GeocoderResultLike | null | undefined,
@@ -41,22 +41,22 @@ export const extractLocationDetails = (
 
   const components = result.address_components;
 
-  const findComponent = (types: string[]): GeocoderAddressComponent | undefined =>
+  const find = (types: string[]): GeocoderAddressComponent | undefined =>
     components.find((c) => types.some((t) => c.types.includes(t)));
 
-  // City: prefer "locality", fall back to "postal_town" (common in the UK),
-  // then "administrative_area_level_2" for rural areas.
-  const cityComponent = findComponent([
-    "locality",
-    "postal_town",
-    "administrative_area_level_2",
-  ]);
+  const countryComponent = find(["country"]);
+  const countryCode = countryComponent?.short_name ?? null;
 
-  const countryComponent = findComponent(["country"]);
+  let cityComponent: GeocoderAddressComponent | undefined;
+  if (countryCode === "GB") {
+    cityComponent = find(["postal_town"]) ?? find(["locality"]);
+  } else {
+    cityComponent = find(["locality"]) ?? find(["postal_town"]);
+  }
 
   return {
-    city:        cityComponent?.long_name  ?? null,
-    country:     countryComponent?.long_name  ?? null,   // e.g. "United Kingdom"
-    countryCode: countryComponent?.short_name ?? null,   // e.g. "GB"
+    city:        cityComponent?.long_name    ?? null,
+    country:     countryComponent?.long_name ?? null,
+    countryCode: countryCode,
   };
 };

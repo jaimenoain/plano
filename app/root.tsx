@@ -6,6 +6,7 @@ import {
   ScrollRestoration,
   useLoaderData,
   type LoaderFunctionArgs,
+  type MetaFunction,
 } from "react-router";
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -22,6 +23,20 @@ import {
   createSupabaseServerClient,
   getSessionForClientHydration,
 } from "~/lib/supabase.server";
+
+export const meta: MetaFunction = () => [
+  { title: "Plano — Architectural Discovery" },
+  { name: "description", content: "Discover and review remarkable architecture from around the world." },
+  { property: "og:site_name", content: "Plano" },
+  { property: "og:type", content: "website" },
+  { property: "og:title", content: "Plano — Architectural Discovery" },
+  { property: "og:description", content: "Discover and review remarkable architecture from around the world." },
+  { property: "og:image", content: "https://plano.app/og-default.jpg" },
+  { property: "og:image:width", content: "1200" },
+  { property: "og:image:height", content: "630" },
+  { name: "twitter:card", content: "summary_large_image" },
+  { name: "twitter:site", content: "@planoapp" },
+];
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const headers = new Headers();

@@ -5,6 +5,26 @@
     {
       "source": "/sitemap.xml",
       "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap"
+    },
+    {
+      "source": "/sitemap-buildings.xml",
+      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=buildings"
+    },
+    {
+      "source": "/sitemap-localities.xml",
+      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=localities"
+    },
+    {
+      "source": "/sitemap-people.xml",
+      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=people"
+    },
+    {
+      "source": "/sitemap-companies.xml",
+      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=companies"
+    },
+    {
+      "source": "/sitemap-collections.xml",
+      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=collections"
     }
   ]
 }

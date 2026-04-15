@@ -233,7 +233,7 @@ export function BuildingPopupContent({
                 <>
                     <img
                         src={getBuildingImageUrl(cluster.image_url)}
-                        alt={cluster.name || 'Marker'}
+                        alt={cluster.name ?? ""}
                         className="h-full w-full object-cover"
                     />
                 </>
@@ -332,7 +332,7 @@ export function BuildingPopupContent({
                 {cluster.image_url ? (
                 <img
                     src={getBuildingImageUrl(cluster.image_url)}
-                    alt={cluster.name || 'Building'}
+                    alt={cluster.name ?? ""}
                     className="h-full w-full object-cover"
                 />
                 ) : (

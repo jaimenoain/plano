@@ -32,6 +32,7 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
 import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { extractLocationDetails } from "@/lib/location-utils";
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
@@ -44,46 +45,6 @@ const STOP_WORDS = [
   'library', 'hospital', 'terminal', 'airport', 'mall', 'market', 'store',
   'shop', 'block', 'street', 'avenue', 'road'
 ];
-
-interface GoogleAddressComponent {
-  long_name: string;
-  short_name: string;
-  types: string[];
-}
-
-interface GoogleGeocoderResult {
-  address_components: GoogleAddressComponent[];
-}
-
-const extractLocationDetails = (result: GoogleGeocoderResult) => {
-  let city: string | null = null;
-  let country: string | null = null;
-  let countryCode: string | null = null;
-
-  if (!result || !result.address_components) return { city, country, countryCode };
-
-  for (const component of result.address_components) {
-    if (component.types.includes('locality')) {
-      city = component.long_name;
-    }
-    if (component.types.includes('country')) {
-      country = component.long_name;
-      countryCode = component.short_name;
-    }
-  }
-
-  // Fallback for city if locality is missing
-  if (!city) {
-     for (const component of result.address_components) {
-        if (component.types.includes('administrative_area_level_2')) {
-            city = component.long_name;
-            break;
-        }
-     }
-  }
-
-  return { city, country, countryCode };
-};
 
 interface NearbyBuilding {
   id: string;

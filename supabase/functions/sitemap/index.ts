@@ -25,15 +25,257 @@ function truncate(s: string, max: number): string {
   return s.slice(0, max - 1) + "…";
 }
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const XML_HEADERS = {
+  "Content-Type": "application/xml; charset=utf-8",
+  "Cache-Control": "public, max-age=3600, s-maxage=3600",
+  "Access-Control-Allow-Origin": "*",
+};
+
+// ---------------------------------------------------------------------------
+// Sitemap index
+// ---------------------------------------------------------------------------
+function buildSitemapIndex(today: string): string {
+  const sitemaps = [
+    { loc: `${SITE_URL}/sitemap-buildings.xml`, lastmod: today },
+    { loc: `${SITE_URL}/sitemap-localities.xml`, lastmod: today },
+    { loc: `${SITE_URL}/sitemap-people.xml`, lastmod: today },
+    { loc: `${SITE_URL}/sitemap-companies.xml`, lastmod: today },
+    { loc: `${SITE_URL}/sitemap-collections.xml`, lastmod: today },
+  ];
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+  for (const s of sitemaps) {
+    xml += `  <sitemap>\n    <loc>${escapeXml(s.loc)}</loc>\n    <lastmod>${s.lastmod}</lastmod>\n  </sitemap>\n`;
+  }
+  xml += `</sitemapindex>`;
+  return xml;
+}
+
+// ---------------------------------------------------------------------------
+// Per-type child sitemaps
+// ---------------------------------------------------------------------------
+async function buildBuildingsSitemap(supabase: ReturnType<typeof createClient>): Promise<string> {
+  let buildings: {
+    short_id: number;
+    slug: string;
+    name: string;
+    updated_at: string | null;
+    created_at: string | null;
+    hero_image_url: string | null;
+    year_completed: number | null;
+    city: string | null;
+    country: string | null;
+    building_styles: { architectural_styles: { name: string } | null }[];
+    building_credits: { id: string }[];
+  }[] = [];
+
+  try {
+    const { data, error } = await supabase
+      .from("buildings")
+      .select(
+        "short_id, slug, name, updated_at, created_at, hero_image_url, year_completed, city, country, building_styles(architectural_styles(name)), building_credits(id)",
+      )
+      .eq("is_deleted", false)
+      .not("slug", "is", null)
+      .not("short_id", "is", null)
+      .order("updated_at", { ascending: false })
+      .limit(45000);
+    if (error) {
+      console.error("sitemap/buildings: query error", error.message);
+    } else {
+      buildings = (data as typeof buildings) ?? [];
+    }
+  } catch (e) {
+    console.error("sitemap/buildings: query exception", e);
+  }
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset\n  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n  xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n`;
+
+  // Static pages live in the buildings sitemap as the most prominent type
+  const staticPages = [
+    { loc: "/", priority: "1.0", changefreq: "daily" },
+    { loc: "/explore", priority: "0.9", changefreq: "daily" },
+    { loc: "/search", priority: "0.8", changefreq: "daily" },
+    { loc: "/terms", priority: "0.2", changefreq: "yearly" },
+  ];
+  for (const page of staticPages) {
+    xml += `  <url>\n    <loc>${escapeXml(`${SITE_URL}${page.loc}`)}</loc>\n    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n  </url>\n`;
+  }
+
+  for (const b of buildings) {
+    const lastmod = formatLastmod(b.updated_at ?? b.created_at);
+    const loc = `${SITE_URL}/building/${b.short_id}/${b.slug}`;
+    const hasHero = !!b.hero_image_url;
+    const hasCredits = Array.isArray(b.building_credits) && b.building_credits.length > 0;
+    const priority = hasHero && hasCredits ? "0.9" : "0.7";
+
+    let imageBlock = "";
+    if (hasHero && b.hero_image_url) {
+      const rawUrl = b.hero_image_url;
+      const imgUrl = rawUrl.startsWith("https://") ? rawUrl : `${S3_BASE}${rawUrl}`;
+
+      const styleNames = Array.isArray(b.building_styles)
+        ? b.building_styles
+            .map((bs) => bs.architectural_styles?.name)
+            .filter(Boolean)
+        : [];
+      const firstStyle = styleNames[0] ?? null;
+
+      const titleRaw = `${b.name} — ${[b.city, b.country].filter(Boolean).join(", ")}`;
+      const title = truncate(titleRaw, 100);
+
+      const captionParts: string[] = [b.name];
+      if (b.year_completed) captionParts[0] += ` (${b.year_completed})`;
+      captionParts[0] += ".";
+      if (firstStyle) captionParts.push(`${firstStyle} architecture`);
+      const locationStr = [b.city, b.country].filter(Boolean).join(", ");
+      if (locationStr) captionParts.push(`in ${locationStr}`);
+      const captionRaw = captionParts.join(" ");
+      const caption = truncate(captionRaw, 200);
+
+      imageBlock = `\n    <image:image>\n      <image:loc>${escapeXml(imgUrl)}</image:loc>\n      <image:title>${escapeXml(title)}</image:title>\n      <image:caption>${escapeXml(caption)}</image:caption>\n    </image:image>`;
+    }
+
+    xml += `  <url>\n    <loc>${escapeXml(loc)}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ""}\n    <changefreq>weekly</changefreq>\n    <priority>${priority}</priority>${imageBlock}\n  </url>\n`;
+  }
+
+  xml += `</urlset>`;
+  console.log(`sitemap/buildings: url_count=${buildings.length}`);
+  return xml;
+}
+
+async function buildLocalitiesSitemap(supabase: ReturnType<typeof createClient>): Promise<string> {
+  let localities: { slug: string; updated_at: string | null; created_at: string | null }[] = [];
+  try {
+    const { data, error } = await supabase
+      .from("localities")
+      .select("slug, updated_at, created_at")
+      .gt("buildings_count", 0)
+      .order("buildings_count", { ascending: false })
+      .limit(45000);
+    if (error) {
+      console.error("sitemap/localities: query error", error.message);
+    } else {
+      localities = (data as typeof localities) ?? [];
+    }
+  } catch (e) {
+    console.error("sitemap/localities: query exception", e);
+  }
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+  for (const loc of localities) {
+    const lastmod = formatLastmod(loc.updated_at ?? loc.created_at);
+    const url = `${SITE_URL}/city/${loc.slug}`;
+    xml += `  <url>\n    <loc>${escapeXml(url)}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ""}\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+  }
+  xml += `</urlset>`;
+  console.log(`sitemap/localities: url_count=${localities.length}`);
+  return xml;
+}
+
+async function buildPeopleSitemap(supabase: ReturnType<typeof createClient>): Promise<string> {
+  let people: { slug: string; updated_at: string | null; created_at: string | null }[] = [];
+  try {
+    const { data, error } = await supabase
+      .from("people")
+      .select("slug, updated_at, created_at")
+      .not("slug", "is", null)
+      .order("updated_at", { ascending: false })
+      .limit(45000);
+    if (error) {
+      console.error("sitemap/people: query error", error.message);
+    } else {
+      people = (data as typeof people) ?? [];
+    }
+  } catch (e) {
+    console.error("sitemap/people: query exception", e);
+  }
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+  for (const row of people) {
+    const lastmod = formatLastmod(row.updated_at ?? row.created_at);
+    const loc = `${SITE_URL}/person/${row.slug}`;
+    xml += `  <url>\n    <loc>${escapeXml(loc)}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ""}\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+  }
+  xml += `</urlset>`;
+  console.log(`sitemap/people: url_count=${people.length}`);
+  return xml;
+}
+
+async function buildCompaniesSitemap(supabase: ReturnType<typeof createClient>): Promise<string> {
+  let companies: { slug: string; updated_at: string | null; created_at: string | null }[] = [];
+  try {
+    const { data, error } = await supabase
+      .from("companies")
+      .select("slug, updated_at, created_at")
+      .not("slug", "is", null)
+      .order("updated_at", { ascending: false })
+      .limit(45000);
+    if (error) {
+      console.error("sitemap/companies: query error", error.message);
+    } else {
+      companies = (data as typeof companies) ?? [];
+    }
+  } catch (e) {
+    console.error("sitemap/companies: query exception", e);
+  }
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+  for (const row of companies) {
+    const lastmod = formatLastmod(row.updated_at ?? row.created_at);
+    const loc = `${SITE_URL}/company/${row.slug}`;
+    xml += `  <url>\n    <loc>${escapeXml(loc)}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ""}\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+  }
+  xml += `</urlset>`;
+  console.log(`sitemap/companies: url_count=${companies.length}`);
+  return xml;
+}
+
+async function buildCollectionsSitemap(supabase: ReturnType<typeof createClient>): Promise<string> {
+  let collections: { slug: string; updated_at: string | null; created_at: string | null }[] = [];
+  try {
+    const { data, error } = await supabase
+      .from("collections")
+      .select("slug, updated_at, created_at")
+      .eq("is_public", true)
+      .not("slug", "is", null)
+      .order("updated_at", { ascending: false })
+      .limit(45000);
+    if (error) {
+      console.error("sitemap/collections: query error", error.message);
+    } else {
+      collections = (data as typeof collections) ?? [];
+    }
+  } catch (e) {
+    console.error("sitemap/collections: query exception", e);
+  }
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+  for (const c of collections) {
+    const lastmod = formatLastmod(c.updated_at ?? c.created_at);
+    const loc = `${SITE_URL}/collection/${c.slug}`;
+    xml += `  <url>\n    <loc>${escapeXml(loc)}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ""}\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
+  }
+  xml += `</urlset>`;
+  console.log(`sitemap/collections: url_count=${collections.length}`);
+  return xml;
+}
+
+// ---------------------------------------------------------------------------
+// Entry point
+// ---------------------------------------------------------------------------
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-      },
-    });
+    return new Response(null, { headers: CORS_HEADERS });
   }
+
+  const url = new URL(req.url);
+  const type = url.searchParams.get("type");
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
@@ -41,348 +283,48 @@ Deno.serve(async (req) => {
     { auth: { persistSession: false } },
   );
 
-  let buildings: {
-    short_id: number;
-    slug: string;
-    name: string;
-    updated_at: string | null;
-    hero_image_url: string | null;
-    year_completed: number | null;
-    city: string | null;
-    country: string | null;
-    building_styles: { architectural_styles: { name: string } | null }[];
-    building_credits: { id: string }[];
-  }[] | null = null;
   try {
-    const { data, error } = await supabase
-      .from("buildings")
-      .select(
-        "short_id, slug, name, updated_at, hero_image_url, year_completed, city, country, building_styles(architectural_styles(name)), building_credits(id)",
-      )
-      .eq("is_deleted", false)
-      .not("slug", "is", null)
-      .not("short_id", "is", null)
-      .order("updated_at", { ascending: false })
-      .limit(10000);
-    if (error) {
-      console.error("sitemap: buildings query error", error.message);
-    } else {
-      buildings = data as typeof buildings;
-    }
-  } catch (e) {
-    console.error("sitemap: buildings query exception", e);
-  }
-
-  let people: { slug: string; updated_at: string | null }[] | null = null;
-  try {
-    const { data, error } = await supabase
-      .from("people")
-      .select("slug, updated_at")
-      .not("slug", "is", null)
-      .order("updated_at", { ascending: false })
-      .limit(5000);
-    if (error) {
-      console.error("sitemap: people query error", error.message);
-    } else {
-      people = data;
-    }
-  } catch (e) {
-    console.error("sitemap: people query exception", e);
-  }
-
-  let companies: { slug: string; updated_at: string | null }[] | null = null;
-  try {
-    const { data, error } = await supabase
-      .from("companies")
-      .select("slug, updated_at")
-      .not("slug", "is", null)
-      .order("updated_at", { ascending: false })
-      .limit(5000);
-    if (error) {
-      console.error("sitemap: companies query error", error.message);
-    } else {
-      companies = data;
-    }
-  } catch (e) {
-    console.error("sitemap: companies query exception", e);
-  }
-
-  // Public profile URLs — canonical /profile/:username.
-  // No public.banned_users table: exclude banned usernames here if that table is added later.
-  let profiles: { username: string; updated_at: string | null }[] | null = null;
-  try {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("username, updated_at")
-      .not("username", "is", null)
-      .order("updated_at", { ascending: false })
-      .limit(10000);
-    if (error) {
-      console.error("sitemap: profiles query error", error.message);
-    } else {
-      profiles = data;
-    }
-  } catch (e) {
-    console.error("sitemap: profiles query exception", e);
-  }
-
-  let collections: { slug: string; updated_at: string }[] | null = null;
-  try {
-    const { data, error } = await supabase
-      .from("collections")
-      .select("slug, updated_at")
-      .eq("is_public", true)
-      .not("slug", "is", null)
-      .order("updated_at", { ascending: false })
-      .limit(5000);
-    if (error) {
-      console.error("sitemap: collections query error", error.message);
-    } else {
-      collections = data;
-    }
-  } catch (e) {
-    console.error("sitemap: collections query exception", e);
-  }
-
-  let events: {
-    slug: string;
-    updated_at: string;
-    start_at: string;
-    end_at: string | null;
-  }[] | null = null;
-  try {
-    const { data, error } = await supabase
-      .from("events")
-      .select("slug, updated_at, start_at, end_at")
-      .eq("is_deleted", false)
-      .not("slug", "is", null)
-      .order("start_at", { ascending: false })
-      .limit(5000);
-    if (error) {
-      console.error("sitemap: events query error", error.message);
-    } else {
-      events = data;
-    }
-  } catch (e) {
-    console.error("sitemap: events query exception", e);
-  }
-
-  let localities: { slug: string; updated_at: string | null }[] | null = null;
-  try {
-    const { data, error } = await supabase
-      .from("localities")
-      .select("slug, updated_at")
-      .gt("buildings_count", 0)
-      .order("buildings_count", { ascending: false })
-      .limit(5000);
-    if (error) {
-      console.error("sitemap: localities query error", error.message);
-    } else {
-      localities = data;
-    }
-  } catch (e) {
-    console.error("sitemap: localities query exception", e);
-  }
-
-  // TODO: If the total URL count (buildings + people + companies + collections + events + profiles + localities)
-  // exceeds 45,000, switch to a sitemap index that references separate per-entity sitemaps:
-  //   /sitemap-buildings.xml, /sitemap-people.xml, /sitemap-companies.xml,
-  //   /sitemap-collections.xml, /sitemap-events.xml
-
-  try {
-    const staticPages = [
-      { loc: "/", priority: "1.0", changefreq: "daily" },
-      { loc: "/explore", priority: "0.9", changefreq: "daily" },
-      { loc: "/search", priority: "0.8", changefreq: "daily" },
-      { loc: "/terms", priority: "0.2", changefreq: "yearly" },
-    ];
-
-    const now = new Date();
-
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset
-  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-  xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-`;
-
-    for (const page of staticPages) {
-      xml += `  <url>
-    <loc>${escapeXml(`${SITE_URL}${page.loc}`)}</loc>
-    <changefreq>${page.changefreq}</changefreq>
-    <priority>${page.priority}</priority>
-  </url>
-`;
+    // No type → return sitemap index
+    if (!type) {
+      const today = new Date().toISOString().split("T")[0] ?? "";
+      const xml = buildSitemapIndex(today);
+      return new Response(xml, { headers: XML_HEADERS });
     }
 
-    if (buildings) {
-      for (const b of buildings) {
-        const lastmod = formatLastmod(b.updated_at);
-        const loc = `${SITE_URL}/building/${b.short_id}/${b.slug}`;
-        const hasHero = !!b.hero_image_url;
-        const hasCredits = Array.isArray(b.building_credits) && b.building_credits.length > 0;
-        const priority = hasHero && hasCredits ? "0.9" : "0.7";
-
-        let imageBlock = "";
-        if (hasHero && b.hero_image_url) {
-          const rawUrl = b.hero_image_url;
-          const imgUrl = rawUrl.startsWith("https://") ? rawUrl : `${S3_BASE}${rawUrl}`;
-
-          const styleNames = Array.isArray(b.building_styles)
-            ? b.building_styles
-                .map((bs) => bs.architectural_styles?.name)
-                .filter(Boolean)
-            : [];
-          const firstStyle = styleNames[0] ?? null;
-
-          const titleRaw = `${b.name} — ${[b.city, b.country].filter(Boolean).join(", ")}`;
-          const title = truncate(titleRaw, 100);
-
-          const captionParts: string[] = [b.name];
-          if (b.year_completed) captionParts[0] += ` (${b.year_completed})`;
-          captionParts[0] += ".";
-          if (firstStyle) captionParts.push(`${firstStyle} architecture`);
-          const locationStr = [b.city, b.country].filter(Boolean).join(", ");
-          if (locationStr) captionParts.push(`in ${locationStr}`);
-          const captionRaw = captionParts.join(" ");
-          const caption = truncate(captionRaw, 200);
-
-          imageBlock = `
-    <image:image>
-      <image:loc>${escapeXml(imgUrl)}</image:loc>
-      <image:title>${escapeXml(title)}</image:title>
-      <image:caption>${escapeXml(caption)}</image:caption>
-    </image:image>`;
-        }
-
-        xml += `  <url>
-    <loc>${escapeXml(loc)}</loc>${lastmod ? `
-    <lastmod>${lastmod}</lastmod>` : ""}
-    <changefreq>weekly</changefreq>
-    <priority>${priority}</priority>${imageBlock}
-  </url>
-`;
-      }
+    // Dispatch to per-type builder
+    let xml: string;
+    switch (type) {
+      case "buildings":
+        xml = await buildBuildingsSitemap(supabase);
+        break;
+      case "localities":
+        xml = await buildLocalitiesSitemap(supabase);
+        break;
+      case "people":
+        xml = await buildPeopleSitemap(supabase);
+        break;
+      case "companies":
+        xml = await buildCompaniesSitemap(supabase);
+        break;
+      case "collections":
+        xml = await buildCollectionsSitemap(supabase);
+        break;
+      default:
+        return new Response("Unknown sitemap type", {
+          status: 400,
+          headers: { "Content-Type": "text/plain; charset=utf-8" },
+        });
     }
-
-    if (people) {
-      for (const row of people) {
-        const lastmod = formatLastmod(row.updated_at ?? undefined);
-        const loc = `${SITE_URL}/person/${row.slug}`;
-        xml += `  <url>
-    <loc>${escapeXml(loc)}</loc>${lastmod ? `
-    <lastmod>${lastmod}</lastmod>` : ""}
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-`;
-      }
-    }
-
-    if (companies) {
-      for (const row of companies) {
-        const lastmod = formatLastmod(row.updated_at ?? undefined);
-        const loc = `${SITE_URL}/company/${row.slug}`;
-        xml += `  <url>
-    <loc>${escapeXml(loc)}</loc>${lastmod ? `
-    <lastmod>${lastmod}</lastmod>` : ""}
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-`;
-      }
-    }
-
-    if (profiles) {
-      for (const p of profiles) {
-        const lastmod = formatLastmod(p.updated_at ?? undefined);
-        const loc = `${SITE_URL}/profile/${p.username}`;
-        xml += `  <url>
-    <loc>${escapeXml(loc)}</loc>${lastmod ? `
-    <lastmod>${lastmod}</lastmod>` : ""}
-    <changefreq>weekly</changefreq>
-    <priority>0.4</priority>
-  </url>
-`;
-      }
-    }
-
-    if (collections) {
-      for (const c of collections) {
-        const lastmod = formatLastmod(c.updated_at);
-        const loc = `${SITE_URL}/collection/${c.slug}`;
-        xml += `  <url>
-    <loc>${escapeXml(loc)}</loc>${lastmod ? `
-    <lastmod>${lastmod}</lastmod>` : ""}
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-`;
-      }
-    }
-
-    if (events) {
-      for (const e of events) {
-        const lastmod = formatLastmod(e.updated_at);
-        const loc = `${SITE_URL}/events/${e.slug}`;
-        const endAt = e.end_at ? new Date(e.end_at) : null;
-        const startAt = new Date(e.start_at);
-        const isUpcoming = startAt > now || (endAt !== null && endAt > now);
-        const changefreq = isUpcoming ? "daily" : "never";
-        const priority = isUpcoming ? "0.8" : "0.4";
-        xml += `  <url>
-    <loc>${escapeXml(loc)}</loc>${lastmod ? `
-    <lastmod>${lastmod}</lastmod>` : ""}
-    <changefreq>${changefreq}</changefreq>
-    <priority>${priority}</priority>
-  </url>
-`;
-      }
-    }
-
-    if (localities) {
-      for (const loc of localities) {
-        const lastmod = formatLastmod(loc.updated_at);
-        const url = `${SITE_URL}/city/${loc.slug}`;
-        xml += `  <url>
-    <loc>${escapeXml(url)}</loc>${lastmod ? `
-    <lastmod>${lastmod}</lastmod>` : ""}
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-`;
-      }
-    }
-
-    xml += `</urlset>`;
 
     const body = new TextEncoder().encode(xml);
-    const totalUrls =
-      staticPages.length +
-      (buildings?.length ?? 0) +
-      (people?.length ?? 0) +
-      (companies?.length ?? 0) +
-      (profiles?.length ?? 0) +
-      (collections?.length ?? 0) +
-      (events?.length ?? 0) +
-      (localities?.length ?? 0);
-    console.log(`sitemap: total_urls=${totalUrls} xml_bytes=${body.length}`);
-
     return new Response(xml, {
-      headers: {
-        "Content-Type": "application/xml; charset=utf-8",
-        "Content-Length": String(body.length),
-        "Cache-Control": "public, max-age=3600, s-maxage=3600",
-        "Access-Control-Allow-Origin": "*",
-      },
+      headers: { ...XML_HEADERS, "Content-Length": String(body.length) },
     });
   } catch (e) {
     console.error("sitemap: response assembly failed", e);
     return new Response("Internal Server Error", {
       status: 500,
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-store",
-      },
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" },
     });
   }
 });
