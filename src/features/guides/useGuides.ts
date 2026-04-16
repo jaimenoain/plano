@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getGuidesLocalities, getPopularCollections } from '../api/guidesApi';
+import { getGuidesLocalities, getPopularCollections } from './guidesApi';
 
 export const guidesKeys = {
   all: ['guides'] as const,

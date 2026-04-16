@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { Heart, MapPin } from 'lucide-react';
-import type { PopularCollection } from '../api/guidesApi';
+import type { PopularCollection } from './guidesApi';
 
 interface CollectionGuideCardProps {
   collection: PopularCollection;

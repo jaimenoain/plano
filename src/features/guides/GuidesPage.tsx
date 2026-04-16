@@ -1,16 +1,16 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { MapPin, Compass } from 'lucide-react';
-import { MetaHead } from '@/components/MetaHead';
+import { MetaHead } from '@/components/common/MetaHead';
 import { DiscoverySearchInput } from '@/features/search/components/DiscoverySearchInput';
-import { useGuidesLocalities, usePopularCollections } from './hooks/useGuides';
-import { LocalityCard } from './components/LocalityCard';
-import { CollectionGuideCard } from './components/CollectionGuideCard';
+import { useGuidesLocalities, usePopularCollections } from './useGuides';
+import { LocalityCard } from './LocalityCard';
+import { CollectionGuideCard } from './CollectionGuideCard';
 import {
   CONTINENTS,
   getContinent,
   type Continent,
-} from './utils/continents';
+} from './continents';
 import { getCountryUrl } from '@/utils/url';
 
 // ─── Skeleton helpers ─────────────────────────────────────────────────────────
@@ -49,8 +49,14 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function GuidesPage() {
+  const navigate = useNavigate();
+  const [searchValue, setSearchValue] = useState('');
   const [activeContinent, setActiveContinent] = useState<Continent>('Europe');
   const [showAllLocalities, setShowAllLocalities] = useState(false);
+
+  const handleLocationSelect = (location: { lat: number; lng: number }) => {
+    navigate(`/search?lat=${location.lat}&lng=${location.lng}`);
+  };
 
   const { data: localities = [], isLoading: localitiesLoading } = useGuidesLocalities();
   const { data: collections = [], isLoading: collectionsLoading } = usePopularCollections();
@@ -100,7 +106,7 @@ export default function GuidesPage() {
       <MetaHead
         title="Architecture guides"
         description={`Discover the world's best architecture by city. ${totalBuildings.toLocaleString()} buildings across ${totalCities} cities, curated by the Plano community.`}
-        canonicalPath="/guides"
+        canonicalUrl="/guides"
       />
 
       <div className="min-h-screen bg-surface-default">
@@ -118,7 +124,17 @@ export default function GuidesPage() {
               </p>
             )}
             <div className="mt-8 max-w-md">
-              <DiscoverySearchInput placeholder="Search a city, building or architect…" />
+              <DiscoverySearchInput
+                value={searchValue}
+                onSearchChange={setSearchValue}
+                onLocationSelect={handleLocationSelect}
+                placeholder="Search a city, building or architect…"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchValue.trim()) {
+                    navigate(`/search?q=${encodeURIComponent(searchValue.trim())}`);
+                  }
+                }}
+              />
             </div>
           </div>
         </section>

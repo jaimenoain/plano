@@ -3,7 +3,7 @@ import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SITE_URL, localityPageStructuredData } from "@/features/buildings/utils/structuredData";
 import { getLocalityByCountryCity, getLocalityBuildings } from "@/features/localities/api/localitiesApi";
 import type { LocalityDTO, LocalityBuildingDTO } from "@/features/localities/types";
-import { getCountryUrl, getLocalityUrl } from "@/utils/url";
+import { getLocalityUrl } from "@/utils/url";
 import { config } from "@/config";
 
 export type LocalityPageLoaderData = {

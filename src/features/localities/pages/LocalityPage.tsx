@@ -10,7 +10,6 @@ import {
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import {
   Building2,
-  MapPin,
   Users,
   Camera,
   BookOpen,
@@ -21,7 +20,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,6 +35,7 @@ import {
   getLocalityMapBuildings,
   LOCALITY_BUILDINGS_PAGE_SIZE,
 } from "@/features/localities/api/localitiesApi";
+import type { LocalityBuildingDTO } from "@/features/localities/types";
 import { localityPageLoader, type LocalityPageLoaderData } from "./LocalityPage.loader";
 
 export { localityPageLoader as loader } from "./LocalityPage.loader";
@@ -194,17 +193,6 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <h2 className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
       {children}
     </h2>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// SectionDivider — border-t + label, matches BuildingDetails editorial pattern
-// ---------------------------------------------------------------------------
-function SectionDivider({ label }: { label: string }) {
-  return (
-    <div className="border-t border-border-default pt-10">
-      <SectionLabel>{label}</SectionLabel>
-    </div>
   );
 }
 
@@ -424,13 +412,12 @@ function LocalityMap({ localityId }: { localityId: string }) {
     staleTime: 300_000,
   });
 
+  type LocalityMapBuildingRow = LocalityBuildingDTO & { access_level?: string | null };
+
   const filteredBuildings = useMemo(() => {
-    return mapBuildings.filter((b: any) => {
-      if (
-        styleFilter &&
-        !b.styles?.some((s: any) => s.name === styleFilter)
-      )
-        return false;
+    return mapBuildings.filter((raw) => {
+      const b = raw as LocalityMapBuildingRow;
+      if (styleFilter && !b.styles?.some((s) => s.name === styleFilter)) return false;
       if (accessFilter && b.access_level !== accessFilter) return false;
       if (statusFilter && b.status !== statusFilter) return false;
       return true;
@@ -729,7 +716,7 @@ function CollectionPreviewMosaic({
       <div className="overflow-hidden">
         <img
           src={getBuildingImageUrl(main) ?? ""}
-          alt=""
+          alt={name}
           className="h-full w-full object-cover"
         />
       </div>
@@ -763,10 +750,8 @@ function CollectionPreviewMosaic({
 
 function LocalityCityGuides({
   collections,
-  city,
 }: {
   collections: LocalityCollection[];
-  city: string;
 }) {
   if (collections.length === 0) return null;
 
@@ -840,6 +825,21 @@ interface ActivityItem {
   thumbnailUrl: string | null;
   createdAt: string;
 }
+
+/** Loader may gain these fields incrementally; optional until the loader implements them. */
+type LocalityPageLoaderResolved = LocalityPageLoaderData & {
+  collectionsCount?: number;
+  contributorsCount?: number;
+  photosCount?: number;
+  stewards?: LocalitySteward[];
+  events?: LocalityEvent[];
+  cityGuideCollections?: LocalityCollection[];
+  recentActivity?: ActivityItem[];
+  heroCreditUsername?: string | null;
+  heroSourceBuilding?: string | null;
+  citySlug?: string;
+  countryCode?: string;
+};
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -1097,7 +1097,7 @@ function LocalityBuildingsGrid({
 // Page
 // ---------------------------------------------------------------------------
 export default function LocalityPage() {
-  const loaderData = useLoaderData() as LocalityPageLoaderData;
+  const loaderData = useLoaderData() as LocalityPageLoaderResolved;
   const { locality, initialBuildings } = loaderData;
 
   // ---------------------------------------------------------------------------
@@ -1107,23 +1107,22 @@ export default function LocalityPage() {
   // ---------------------------------------------------------------------------
   const stats: LocalityStats = {
     buildingsCount: locality.buildings_count,
-    collectionsCount: (loaderData as any).collectionsCount ?? 0,
-    contributorsCount: (loaderData as any).contributorsCount ?? 0,
-    photosCount: (loaderData as any).photosCount ?? 0,
+    collectionsCount: loaderData.collectionsCount ?? 0,
+    contributorsCount: loaderData.contributorsCount ?? 0,
+    photosCount: loaderData.photosCount ?? 0,
   };
 
-  const stewards: LocalitySteward[] = (loaderData as any).stewards ?? [];
-  const events: LocalityEvent[] = (loaderData as any).events ?? [];
-  const collections: LocalityCollection[] = (loaderData as any).cityGuideCollections ?? [];
-  const activityItems: ActivityItem[] = (loaderData as any).recentActivity ?? [];
+  const stewards: LocalitySteward[] = loaderData.stewards ?? [];
+  const events: LocalityEvent[] = loaderData.events ?? [];
+  const collections: LocalityCollection[] = loaderData.cityGuideCollections ?? [];
+  const activityItems: ActivityItem[] = loaderData.recentActivity ?? [];
 
-  const heroCreditUsername: string | null =
-    (loaderData as any).heroCreditUsername ?? null;
-  const heroSourceBuilding: string | null =
-    (loaderData as any).heroSourceBuilding ?? null;
+  const heroCreditUsername: string | null = loaderData.heroCreditUsername ?? null;
+  const heroSourceBuilding: string | null = loaderData.heroSourceBuilding ?? null;
 
-  const citySlug: string = (loaderData as any).citySlug ?? locality.city.toLowerCase().replace(/\s+/g, "-");
-  const countryCode: string = (loaderData as any).countryCode ?? "";
+  const citySlug: string =
+    loaderData.citySlug ?? locality.city.toLowerCase().replace(/\s+/g, "-");
+  const countryCode: string = loaderData.countryCode ?? "";
 
   return (
     <AppLayout showBack>
@@ -1172,7 +1171,7 @@ export default function LocalityPage() {
         </section>
 
         {/* ── City Guides ── */}
-        <LocalityCityGuides collections={collections} city={locality.city} />
+        <LocalityCityGuides collections={collections} />
 
         {/* ── Events ── */}
         <LocalityEvents

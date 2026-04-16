@@ -32,7 +32,7 @@ interface BucketRow {
     country: string | null;
     slug: string | null;
     hero_image_url: string | null;
-    locality: { country_code: string; city_slug: string } | null;
+    locality: { country_code: string; slug: string } | null;
   } | null;
 }
 
@@ -46,7 +46,7 @@ export function BucketListWidget() {
       if (!user) return [];
       const { data, error } = await supabase
         .from("user_buildings")
-        .select("id, building_id, building:buildings(id, short_id, name, city, country, slug, hero_image_url, locality:localities(country_code, city_slug))")
+        .select("id, building_id, building:buildings(id, short_id, name, city, country, slug, hero_image_url, locality:localities(country_code, slug))")
         .eq("user_id", user.id)
         .eq("status", "pending")
         .order("created_at", { ascending: false })
@@ -61,7 +61,7 @@ export function BucketListWidget() {
             ...b,
             userBuildingId: r.id,
             locality_country_code: b.locality?.country_code ?? null,
-            locality_city_slug: b.locality?.city_slug ?? null,
+            locality_city_slug: b.locality?.slug ?? null,
           };
         });
     },

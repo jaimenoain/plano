@@ -15,8 +15,8 @@ interface TrendingBuilding {
   short_id: number | null;
   hero_image_url: string | null;
   visitCount: number;
-  locality_country_code?: string | null;
-  locality_city_slug?: string | null;
+  locality_country_code: string | null;
+  locality_city_slug: string | null;
 }
 
 interface UserBuildingRow {
@@ -31,7 +31,7 @@ interface BuildingRow {
   slug: string | null;
   short_id: number | null;
   hero_image_url: string | null;
-  locality: { country_code: string; city_slug: string } | null;
+  locality: { country_code: string; slug: string } | null;
 }
 
 async function fetchTrendingBuildings(): Promise<TrendingBuilding[]> {
@@ -64,26 +64,26 @@ async function fetchTrendingBuildings(): Promise<TrendingBuilding[]> {
   // Step 3: fetch building details for the top IDs
   const { data: buildingRows, error: buildingError } = await supabase
     .from("buildings")
-    .select("id, name, city, country, slug, short_id, hero_image_url, locality:localities(country_code, city_slug)")
+    .select("id, name, city, country, slug, short_id, hero_image_url, locality:localities(country_code, slug)")
     .in("id", topIds);
 
   if (buildingError) throw buildingError;
 
   const buildings = (buildingRows ?? []) as unknown as BuildingRow[];
 
-  // Preserve the ranking order from countMap
-  return topIds
-    .map((id) => {
-      const b = buildings.find((bld) => bld.id === id);
-      if (!b) return null;
-      return {
-        ...b,
-        visitCount: countMap[id] ?? 0,
-        locality_country_code: b.locality?.country_code ?? null,
-        locality_city_slug: b.locality?.city_slug ?? null,
-      };
-    })
-    .filter((b): b is TrendingBuilding => b !== null);
+  const out: TrendingBuilding[] = [];
+  for (const id of topIds) {
+    const b = buildings.find((bld) => bld.id === id);
+    if (!b) continue;
+    const { locality, ...rest } = b;
+    out.push({
+      ...rest,
+      visitCount: countMap[id] ?? 0,
+      locality_country_code: locality?.country_code ?? null,
+      locality_city_slug: locality?.slug ?? null,
+    });
+  }
+  return out;
 }
 
 export function TrendingBuildings() {

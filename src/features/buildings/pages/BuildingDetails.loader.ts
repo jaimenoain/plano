@@ -46,10 +46,12 @@ export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
   if (localityId) {
     const { data: loc } = await supabase
       .from("localities")
-      .select("country_code, city_slug")
+      .select("country_code, slug")
       .eq("id", localityId)
       .maybeSingle();
-    if (loc) locality = loc;
+    if (loc) {
+      locality = { country_code: loc.country_code, city_slug: loc.slug };
+    }
   }
 
   // Helper: build the canonical URL for this building.

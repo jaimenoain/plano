@@ -108,12 +108,6 @@ function tierLabel(tier: CreditTier): string {
 
 const TIER_ORDER: CreditTier[] = ["primary", "contributor", "ancillary"];
 
-function companyInitialLetter(name: string): string {
-  const t = name.trim();
-  if (!t) return "?";
-  return t[0].toUpperCase();
-}
-
 function stewardRoleLabel(role: string): string {
   if (role === "owner") return "Owner";
   if (role === "steward") return "Steward";

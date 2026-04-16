@@ -1,6 +1,4 @@
-import { createClient } from '@/integrations/supabase/client';
-import type { LocalityDTO } from '@/features/localities/types';
-import type { FeedCollection } from '@/types/feed';
+import { supabase } from '@/integrations/supabase/client';
 
 // ─── Localities ──────────────────────────────────────────────────────────────
 
@@ -16,10 +14,9 @@ export interface GuidesLocalityRow {
 }
 
 export async function getGuidesLocalities(): Promise<GuidesLocalityRow[]> {
-  const supabase = createClient();
   const { data, error } = await supabase
     .from('localities')
-    .select('id, city, country, country_code, slug, city_slug, hero_image_url, buildings_count')
+    .select('id, city, country, country_code, slug, hero_image_url, buildings_count')
     .gt('buildings_count', 0)
     .order('buildings_count', { ascending: false })
     .limit(120);
@@ -32,7 +29,7 @@ export async function getGuidesLocalities(): Promise<GuidesLocalityRow[]> {
     country: row.country,
     countryCode: row.country_code,
     slug: row.slug,
-    citySlug: row.city_slug,
+    citySlug: row.slug,
     heroImageUrl: row.hero_image_url ?? null,
     buildingsCount: row.buildings_count,
   }));
@@ -54,8 +51,6 @@ export interface PopularCollection {
 }
 
 export async function getPopularCollections(limit = 12): Promise<PopularCollection[]> {
-  const supabase = createClient();
-
   // Fetch public collections with favourite counts via a join
   const { data, error } = await supabase
     .from('collections')
@@ -81,13 +76,34 @@ export async function getPopularCollections(limit = 12): Promise<PopularCollecti
 
   if (error) throw error;
 
-  const rows = (data ?? []).map((row: any) => {
+  type CollectionItemRow = {
+    buildings?: {
+      hero_image_url: string | null;
+      community_preview_url: string | null;
+    } | null;
+  };
+
+  type PopularCollectionQueryRow = {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    owner_id: string;
+    itinerary: unknown;
+    profiles?: { username: string } | null;
+    collection_favorites?: { count: number }[];
+    collection_items?: CollectionItemRow[] | null;
+  };
+
+  const rows = ((data ?? []) as PopularCollectionQueryRow[]).map((row) => {
     const favouritesCount: number = row.collection_favorites?.[0]?.count ?? 0;
-    const items: any[] = row.collection_items ?? [];
+    const items: CollectionItemRow[] = row.collection_items ?? [];
     const previewImages: string[] = items
       .slice(0, 4)
-      .map((item: any) => item.buildings?.hero_image_url ?? item.buildings?.community_preview_url)
-      .filter(Boolean) as string[];
+      .map(
+        (item) => item.buildings?.hero_image_url ?? item.buildings?.community_preview_url,
+      )
+      .filter((url): url is string => Boolean(url));
 
     return {
       id: row.id,
@@ -95,7 +111,7 @@ export async function getPopularCollections(limit = 12): Promise<PopularCollecti
       slug: row.slug,
       description: row.description ?? null,
       ownerId: row.owner_id,
-      ownerUsername: (row.profiles as any)?.username ?? '',
+      ownerUsername: row.profiles?.username ?? "",
       itemCount: items.length,
       favouritesCount,
       hasItinerary: row.itinerary !== null,

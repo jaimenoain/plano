@@ -184,7 +184,7 @@ export const getBuildingsByIds = async (ids: string[]) => {
       functional_category_id,
       typologies:building_functional_typologies(typology_id),
       attributes:building_attributes(attribute_id),
-      locality:localities(country_code, city_slug)
+      locality:localities(country_code, slug)
     `)
     .in('id', ids);
 
@@ -201,7 +201,7 @@ export const getBuildingsByIds = async (ids: string[]) => {
     const row = b as Record<string, unknown> & {
       building_credits?: CreditEmbed[] | null;
       hero_image_url?: string | null;
-      locality?: { country_code: string; city_slug: string } | null;
+      locality?: { country_code: string; slug: string } | null;
     };
     const rawCredits = row.building_credits ?? [];
     const primaryVisible = rawCredits.filter(
@@ -225,7 +225,7 @@ export const getBuildingsByIds = async (ids: string[]) => {
       main_image_url: hero_image_url ?? null,
       credits,
       locality_country_code: locality?.country_code ?? null,
-      locality_city_slug: locality?.city_slug ?? null,
+      locality_city_slug: locality?.slug ?? null,
     };
   });
 };

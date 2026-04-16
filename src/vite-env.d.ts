@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 /// <reference types="vite-plugin-pwa/client" />
+/// <reference types="vitest/import-meta" />
 
 interface Window {
   /** Set by `loadAnalytics()` in `@/lib/consent` after GA script loads. */

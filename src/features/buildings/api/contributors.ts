@@ -87,7 +87,7 @@ export async function getBuildingContributors(
       .from('building_credits')
       .select('added_by_user_id, profiles!building_credits_added_by_user_id_fkey(id, username, avatar_url)')
       .eq('building_id', buildingId)
-      .eq('status', 'approved')
+      .in('status', ['active', 'verified'])
       .not('added_by_user_id', 'is', null),
   ]);
 

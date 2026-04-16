@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { Link } from "react-router";
-import type { MetaFunction } from "react-router";
+import { Link, type MetaFunction } from "react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { CalendarDays } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";

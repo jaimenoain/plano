@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
-import type { MetaFunction } from "react-router";
+import { Link, useNavigate, useParams, type MetaFunction } from "react-router";
 import { format, isSameDay, parseISO } from "date-fns";
 import { enGB } from "date-fns/locale";
 import { ExternalLink, MapPin, Pencil, BadgeCheck, Check, Bookmark } from "lucide-react";

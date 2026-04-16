@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { getLocalityUrl } from '@/utils/url';
-import type { GuidesLocalityRow } from '../api/guidesApi';
+import type { GuidesLocalityRow } from './guidesApi';
 
 interface LocalityCardProps {
   locality: GuidesLocalityRow;

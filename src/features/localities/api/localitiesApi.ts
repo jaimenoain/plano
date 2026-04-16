@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import type { Database, Tables } from "@/integrations/supabase/types";
 import type { LocalityDTO, LocalityBuildingDTO } from "../types";
 import { parseLocation } from "@/utils/location";
 
@@ -48,6 +48,16 @@ function mapBuildingRow(row: BuildingSelectRow): LocalityBuildingDTO {
   };
 }
 
+/** Maps DB row (`slug` is the city URL segment) to `LocalityDTO` (`city_slug` alias). */
+function mapLocalityRowToDto(row: Tables<"localities">): LocalityDTO {
+  return {
+    ...row,
+    city_slug: row.slug,
+    region: null,
+    region_slug: null,
+  };
+}
+
 /** Server-side: fetch a locality by country code + city slug. Returns null if not found. */
 export async function getLocalityByCountryCity(
   supabaseClient: AppSupabaseClient,
@@ -58,11 +68,11 @@ export async function getLocalityByCountryCity(
     .from("localities")
     .select("*")
     .eq("country_code", countryCode.toUpperCase())
-    .eq("city_slug", citySlug)
+    .eq("slug", citySlug)
     .maybeSingle();
 
   if (error || !data) return null;
-  return data as LocalityDTO;
+  return mapLocalityRowToDto(data);
 }
 
 /** Server-side: fetch all localities for a country, ordered by buildings_count desc. */
@@ -77,7 +87,7 @@ export async function getCountryLocalities(
     .order("buildings_count", { ascending: false });
 
   if (error || !data) return [];
-  return data as LocalityDTO[];
+  return data.map(mapLocalityRowToDto);
 }
 
 /** Server-side: aggregate stats for a country — total buildings, locality count, country name. */
@@ -114,7 +124,7 @@ export async function getLocalityBySlug(
     .maybeSingle();
 
   if (error || !data) return null;
-  return data as LocalityDTO;
+  return mapLocalityRowToDto(data);
 }
 
 /** Server-side OR client-side: fetch a paginated list of buildings for a locality. */
