@@ -31,6 +31,8 @@ export interface ReviewBuilding {
   year_completed?: number | null;
   city?: string | null;
   country?: string | null;
+  locality_country_code?: string | null;
+  locality_city_slug?: string | null;
 }
 
 export interface WatchWithUser {
@@ -82,6 +84,8 @@ export interface RawFeedBuildingData {
   community_preview_url?: string | null;
   credited_entities?: unknown;
   year_completed?: number | null;
+  locality_country_code?: string | null;
+  locality_city_slug?: string | null;
 }
 
 /** Normalize `get_feed` / `get_suggested_posts` `building_data.credited_entities` JSON. */

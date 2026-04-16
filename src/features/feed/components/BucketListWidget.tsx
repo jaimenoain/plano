@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { CheckCircle2, ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getBuildingImageUrl } from "@/utils/image";
-import { getBuildingUrl } from "@/utils/url";
+import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -17,6 +17,8 @@ interface BucketBuilding {
   slug: string | null;
   hero_image_url: string | null;
   userBuildingId?: string;
+  locality_country_code?: string | null;
+  locality_city_slug?: string | null;
 }
 
 interface BucketRow {
@@ -30,6 +32,7 @@ interface BucketRow {
     country: string | null;
     slug: string | null;
     hero_image_url: string | null;
+    locality: { country_code: string; city_slug: string } | null;
   } | null;
 }
 
@@ -43,7 +46,7 @@ export function BucketListWidget() {
       if (!user) return [];
       const { data, error } = await supabase
         .from("user_buildings")
-        .select("id, building_id, building:buildings(id, short_id, name, city, country, slug, hero_image_url)")
+        .select("id, building_id, building:buildings(id, short_id, name, city, country, slug, hero_image_url, locality:localities(country_code, city_slug))")
         .eq("user_id", user.id)
         .eq("status", "pending")
         .order("created_at", { ascending: false })
@@ -52,10 +55,15 @@ export function BucketListWidget() {
       const rows = (data ?? []) as unknown as BucketRow[];
       return rows
         .filter((r) => r.building !== null)
-        .map((r) => ({
-          ...(r.building as NonNullable<BucketRow["building"]>),
-          userBuildingId: r.id,
-        }));
+        .map((r) => {
+          const b = r.building as NonNullable<BucketRow["building"]>;
+          return {
+            ...b,
+            userBuildingId: r.id,
+            locality_country_code: b.locality?.country_code ?? null,
+            locality_city_slug: b.locality?.city_slug ?? null,
+          };
+        });
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
@@ -118,8 +126,10 @@ export function BucketListWidget() {
             ))
           : items.map((building) => {
               const imageUrl = getBuildingImageUrl(building.hero_image_url);
-              // Locality URL not available: BucketBuilding does not include locality_country_code/city_slug — requires bucket list query to join localities table
-              const href = getBuildingUrl(building.id, building.slug, building.short_id);
+              const href =
+                building.locality_country_code && building.locality_city_slug
+                  ? getBuildingLocalityUrl(building.locality_country_code, building.locality_city_slug, building.id, building.slug, building.short_id)
+                  : getBuildingUrl(building.id, building.slug, building.short_id);
               return (
                 <div
                   key={building.id}

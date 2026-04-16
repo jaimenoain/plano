@@ -72,6 +72,8 @@ interface HydratedBuildingFromIdsRow {
   country?: string | null;
   status?: DiscoveryBuilding["status"];
   credits?: DiscoveryBuilding["credits"];
+  locality_country_code?: string | null;
+  locality_city_slug?: string | null;
 }
 
 // Constants
@@ -1179,6 +1181,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
                     location_lng: location_lng,
                     distance: distance,
                     status: b.status,
+                    locality_country_code: b.locality_country_code ?? null,
+                    locality_city_slug: b.locality_city_slug ?? null,
                   } as DiscoveryBuilding;
               });
 

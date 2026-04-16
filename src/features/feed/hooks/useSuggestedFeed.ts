@@ -129,6 +129,8 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
               buildingData?.credited_entities,
             ),
             year_completed: buildingData?.year_completed || null,
+            locality_country_code: buildingData?.locality_country_code ?? null,
+            locality_city_slug: buildingData?.locality_city_slug ?? null,
           },
           likes_count: post.likes_count || 0,
           comments_count: post.comments_count || 0,

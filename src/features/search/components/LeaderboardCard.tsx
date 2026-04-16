@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { Eye, Star, MapPin } from "lucide-react";
 import { useNavigate } from "react-router";
 import { getBuildingImageUrl } from "@/utils/image";
-import { getBuildingUrl } from "@/utils/url";
+import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 
 interface LeaderboardCardProps {
   building: LeaderboardBuilding;
@@ -18,8 +18,11 @@ export function LeaderboardCard({ building, rank, type }: LeaderboardCardProps) 
   return (
     <div
       className="group flex items-center gap-4 p-4 border-b border-border-default hover:bg-brand-secondary transition-colors cursor-pointer"
-      // Locality URL not available: LeaderboardBuilding does not include locality_country_code/city_slug — requires leaderboard RPC to join localities table
-      onClick={() => navigate(getBuildingUrl(building.id, building.slug, building.short_id))}
+      onClick={() => navigate(
+        building.locality_country_code && building.locality_city_slug
+          ? getBuildingLocalityUrl(building.locality_country_code, building.locality_city_slug, building.id, building.slug, building.short_id)
+          : getBuildingUrl(building.id, building.slug, building.short_id)
+      )}
     >
       <div className={cn(
         "flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm shrink-0",

@@ -1,7 +1,7 @@
 import { type MouseEvent } from "react";
 import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
-import { getBuildingUrl } from "@/utils/url";
+import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
 import {
@@ -48,8 +48,12 @@ export function FeedCardC({
     const target = e.target as HTMLElement;
     if (target.closest("button")) return;
     if (entry.building?.id) {
-      // Locality URL not available: ReviewBuilding (FeedReview) does not include locality_country_code/city_slug — requires get_feed RPC to include locality fields in building_data
-      navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
+      const b = entry.building;
+      navigate(
+        b.locality_country_code && b.locality_city_slug
+          ? getBuildingLocalityUrl(b.locality_country_code, b.locality_city_slug, b.id, b.slug, b.short_id)
+          : getBuildingUrl(b.id, b.slug, b.short_id)
+      );
     } else {
       navigate(`/review/${entry.id}`);
     }
@@ -59,8 +63,12 @@ export function FeedCardC({
     if (onComment) {
       onComment(entry.id);
     } else if (entry.building?.id) {
-      // Locality URL not available: ReviewBuilding (FeedReview) does not include locality_country_code/city_slug — requires get_feed RPC to include locality fields in building_data
-      navigate(getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id));
+      const b = entry.building;
+      navigate(
+        b.locality_country_code && b.locality_city_slug
+          ? getBuildingLocalityUrl(b.locality_country_code, b.locality_city_slug, b.id, b.slug, b.short_id)
+          : getBuildingUrl(b.id, b.slug, b.short_id)
+      );
     } else {
       navigate(`/review/${entry.id}`);
     }

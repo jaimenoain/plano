@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getBuildingImageUrl } from "@/utils/image";
-import { getBuildingUrl } from "@/utils/url";
+import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface TrendingBuilding {
@@ -15,6 +15,8 @@ interface TrendingBuilding {
   short_id: number | null;
   hero_image_url: string | null;
   visitCount: number;
+  locality_country_code?: string | null;
+  locality_city_slug?: string | null;
 }
 
 interface UserBuildingRow {
@@ -29,6 +31,7 @@ interface BuildingRow {
   slug: string | null;
   short_id: number | null;
   hero_image_url: string | null;
+  locality: { country_code: string; city_slug: string } | null;
 }
 
 async function fetchTrendingBuildings(): Promise<TrendingBuilding[]> {
@@ -61,7 +64,7 @@ async function fetchTrendingBuildings(): Promise<TrendingBuilding[]> {
   // Step 3: fetch building details for the top IDs
   const { data: buildingRows, error: buildingError } = await supabase
     .from("buildings")
-    .select("id, name, city, country, slug, short_id, hero_image_url")
+    .select("id, name, city, country, slug, short_id, hero_image_url, locality:localities(country_code, city_slug)")
     .in("id", topIds);
 
   if (buildingError) throw buildingError;
@@ -73,7 +76,12 @@ async function fetchTrendingBuildings(): Promise<TrendingBuilding[]> {
     .map((id) => {
       const b = buildings.find((bld) => bld.id === id);
       if (!b) return null;
-      return { ...b, visitCount: countMap[id] ?? 0 };
+      return {
+        ...b,
+        visitCount: countMap[id] ?? 0,
+        locality_country_code: b.locality?.country_code ?? null,
+        locality_city_slug: b.locality?.city_slug ?? null,
+      };
     })
     .filter((b): b is TrendingBuilding => b !== null);
 }
@@ -121,8 +129,10 @@ export function TrendingBuildings() {
           )
           : buildings.map((building, index) => {
               const imageUrl = getBuildingImageUrl(building.hero_image_url);
-              // Locality URL not available: TrendingBuilding does not include locality_country_code/city_slug — requires trending buildings query to join localities table
-              const href = getBuildingUrl(building.id, building.slug, building.short_id);
+              const href =
+                building.locality_country_code && building.locality_city_slug
+                  ? getBuildingLocalityUrl(building.locality_country_code, building.locality_city_slug, building.id, building.slug, building.short_id)
+                  : getBuildingUrl(building.id, building.slug, building.short_id);
               return (
                 <Link
                   key={building.id}

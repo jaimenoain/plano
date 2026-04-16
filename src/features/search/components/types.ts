@@ -87,6 +87,8 @@ export interface LeaderboardBuilding {
   avg_rating?: number;
   rating_count?: number;
   main_image_url?: string | null;
+  locality_country_code?: string | null;
+  locality_city_slug?: string | null;
 }
 
 export interface LeaderboardData {

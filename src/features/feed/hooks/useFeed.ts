@@ -257,6 +257,8 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
             review.building_data?.credited_entities,
           ),
           year_completed: review.building_data?.year_completed || null,
+          locality_country_code: review.building_data?.locality_country_code ?? null,
+          locality_city_slug: review.building_data?.locality_city_slug ?? null,
         },
         likes_count: review.likes_count || 0,
         comments_count: review.comments_count || 0,

@@ -17,7 +17,7 @@ import { FeedResolvedEntry } from "./FeedResolvedEntry";
 import { PeopleYouMayKnow } from "./PeopleYouMayKnow";
 import { SectionDivider } from "./SectionDivider";
 import { getBuildingImageUrl } from "@/utils/image";
-import { getBuildingUrl } from "@/utils/url";
+import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 
 // ─── Featured building card (right column) ───────────────────────────────────
 
@@ -39,8 +39,11 @@ function FeaturedBuildingCard({ review }: { review: FeedReview }) {
 
   return (
     <Link
-      // Locality URL not available: ReviewBuilding (FeedReview) does not include locality_country_code/city_slug — requires get_feed RPC to include locality fields in building_data
-      to={getBuildingUrl(building.id, building.slug, building.short_id ?? null)}
+      to={
+        building.locality_country_code && building.locality_city_slug
+          ? getBuildingLocalityUrl(building.locality_country_code, building.locality_city_slug, building.id, building.slug, building.short_id ?? null)
+          : getBuildingUrl(building.id, building.slug, building.short_id ?? null)
+      }
       className="group block h-full"
     >
       <div className="flex flex-col h-full">

@@ -1,4 +1,4 @@
-1. Read `ROADMAP.md`. Find the first unchecked `[ ]` task. Execute it. Do not skip or batch tasks.
+1. Read `docs/ROADMAP.md`. Find the first unchecked `[ ]` task. Execute it. Do not skip or batch tasks.
 
 2. If the task references other files, read them. Do not add work the task doesn't ask for.
 
