@@ -1191,7 +1191,11 @@ export default function LocalityPage() {
           countryCode={countryCode}
         />
 
-        <div className="h-16" />
+        <div className="border-t border-border-default mt-12 pt-6 pb-10 flex items-center justify-between">
+          <Link to="/guides" className="text-xs text-text-secondary hover:text-text-primary transition-colors">
+            ← Back to guides
+          </Link>
+        </div>
       </div>
     </AppLayout>
   );

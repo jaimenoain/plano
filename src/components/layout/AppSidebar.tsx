@@ -12,6 +12,7 @@ import {
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import {
   Activity,
+  BookOpen,
   CalendarDays,
   Users,
   User as UserIcon,
@@ -59,6 +60,7 @@ const mainNavItems: MainNavItem[] = [
     isActive: (pathname) => pathname === "/events" || pathname.startsWith("/events/"),
   },
   { icon: Play, label: "Explore", path: "/explore" },
+  { icon: BookOpen, label: "Guides", path: "/guides" },
   { icon: Search, label: "Search", path: "/search" },
   { icon: Users, label: "Connect", path: "/connect" },
 ];

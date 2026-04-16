@@ -152,6 +152,7 @@ export default [
       id: "building-details-architecture-slug",
     }),
     // Legacy redirect stubs — logic filled in T7 / T10
+    route("/guides", "features/guides/GuidesPage.tsx"),
     route("/locality/:slug", "features/localities/pages/LocalityRedirect.tsx"),
     route("*", "pages/NotFound.tsx", { id: "root-not-found" }),
   ]),

@@ -307,6 +307,18 @@ Deno.serve(async (req) => {
       }
     }
 
+    if (path === "/guides") {
+      return new Response(
+        renderOgHtml({
+          title: "Architecture guides · Plano",
+          description: "Discover the world's best architecture by city. Buildings and curated collections from the Plano community.",
+          image: DEFAULT_IMAGE,
+          url: `${SITE_URL}/guides`,
+        }),
+        { headers: corsHeaders },
+      );
+    }
+
     const profileMatch = path.match(/^\/profile\/([^/]+)/);
     if (profileMatch) {
       const username = profileMatch[1];
