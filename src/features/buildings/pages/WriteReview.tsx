@@ -1,5 +1,6 @@
 // Implements "Write Review" page with rating, text, and image upload
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useHoneypot } from "@/hooks/useHoneypot";
 import { useParams, useNavigate, type MetaFunction } from "react-router";
 import {
   Circle,
@@ -73,6 +74,7 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function WriteReview() {
+  const { honeypotProps, isBot } = useHoneypot();
   const { id } = useParams(); // buildingId
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -593,6 +595,7 @@ toast({
   };
 
   const handleSubmit = async () => {
+    if (isBot()) return;
     if (!user || !buildingId) return;
 
     const parsed = reviewSubmitSchema.safeParse({
@@ -1136,6 +1139,7 @@ toast({
           <Button variant="ghost" onClick={() => navigate(-1)} disabled={submitting}>
             Cancel
           </Button>
+          <input {...honeypotProps} />
           <Button onClick={handleSubmit} disabled={submitting || isProcessingVideo}>
             {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             {submitting ? "Publishing..." : (isProcessingVideo ? "Processing Video..." : "Publish Review")}

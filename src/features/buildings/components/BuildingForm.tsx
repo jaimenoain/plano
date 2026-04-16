@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useHoneypot } from "@/hooks/useHoneypot";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -80,6 +81,7 @@ import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { ArchitectStatement } from "./ArchitectStatement";
 
 export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode = 'create', buildingId, shortId }: BuildingFormProps) {
+  const { honeypotProps, isBot } = useHoneypot();
   const { profile } = useUserProfile();
 
   const [name, setName] = useState(initialValues.name);
@@ -298,6 +300,8 @@ toast.error("Failed to add attribute");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isBot()) return;
 
     try {
       const rawData = {
@@ -775,6 +779,8 @@ toast.error("Failed to add attribute");
           </div>
         )}
       </div>
+
+      <input {...honeypotProps} />
 
       <div className="flex items-center justify-end gap-3 pt-6 border-t border-border-default mt-6">
         <Button type="submit" variant="default" disabled={isSubmitting}>

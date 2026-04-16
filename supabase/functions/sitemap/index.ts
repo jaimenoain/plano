@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, rateLimitExceededResponse } from "../_shared/rate-limit.ts";
 
 const SITE_URL = "https://plano.app";
 const S3_BASE = "https://s3.eu-west-2.amazonaws.com/plano.app";
@@ -360,6 +361,40 @@ async function buildCollectionsSitemap(supabase: ReturnType<typeof createClient>
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: CORS_HEADERS });
+  }
+
+  // Rate limit by caller IP
+  const ip =
+    (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() ||
+    req.headers.get("x-real-ip") ||
+    "unknown";
+
+  const { limited, retryAfter } = checkRateLimit(ip, { max: 20, windowMs: 60_000 });
+  if (limited) {
+    return rateLimitExceededResponse(retryAfter);
+  }
+
+  // Internal token verification — prevents direct calls to the Supabase URL
+  // bypassing the Vercel proxy. Returns 404 to avoid revealing the mechanism.
+  const internalToken = Deno.env.get("SITEMAP_INTERNAL_TOKEN");
+  if (internalToken) {
+    const requestToken = req.headers.get("x-sitemap-token") ?? "";
+    const encoder = new TextEncoder();
+    const a = encoder.encode(internalToken);
+    const b = encoder.encode(requestToken);
+    // Pad shorter buffer so timingSafeEqual can compare equal-length arrays
+    const aFull = new Uint8Array(Math.max(a.length, b.length));
+    const bFull = new Uint8Array(aFull.length);
+    aFull.set(a);
+    bFull.set(b);
+    let match = a.length === b.length;
+    // Always run the comparison to avoid short-circuit timing leaks
+    const equal = crypto.subtle.timingSafeEqual(aFull, bFull);
+    if (!match || !equal) {
+      return new Response(null, { status: 404 });
+    }
+  } else {
+    console.warn("sitemap: SITEMAP_INTERNAL_TOKEN is not set — token check skipped (local dev / CI)");
   }
 
   const url = new URL(req.url);

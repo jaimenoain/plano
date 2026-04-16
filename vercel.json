@@ -1,38 +1,51 @@
 {
   "framework": "react-router",
   "regions": ["lhr1"],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Robots-Tag", "value": "noai, noimageai" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(self)" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/sitemap.xml",
-      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap"
+      "destination": "/api/sitemap-proxy"
     },
     {
       "source": "/sitemap-buildings.xml",
-      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=buildings"
+      "destination": "/api/sitemap-proxy?type=buildings"
     },
     {
       "source": "/sitemap-localities.xml",
-      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=localities"
+      "destination": "/api/sitemap-proxy?type=localities"
     },
     {
       "source": "/sitemap-people.xml",
-      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=people"
+      "destination": "/api/sitemap-proxy?type=people"
     },
     {
       "source": "/sitemap-companies.xml",
-      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=companies"
+      "destination": "/api/sitemap-proxy?type=companies"
     },
     {
       "source": "/sitemap-collections.xml",
-      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=collections"
+      "destination": "/api/sitemap-proxy?type=collections"
     },
     {
       "source": "/sitemap-countries.xml",
-      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=countries"
+      "destination": "/api/sitemap-proxy?type=countries"
     },
     {
       "source": "/sitemap-events.xml",
-      "destination": "https://lnqxtomyucnnrgeapnzt.supabase.co/functions/v1/sitemap?type=events"
+      "destination": "/api/sitemap-proxy?type=events"
     }
   ]
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -105,9 +105,11 @@ export default function SubmitEvent() {
   const isEditMode = editSlug.length > 0;
   const loginRedirectPath = isEditMode ? `/events/${editSlug}/edit` : "/events/new";
 
-  const hydratedEventIdRef = useRef<string | null>(null);
+  /** Prevents one paint of the edit form with empty local state while `event` is already loaded (avoids LocationInput/cmdk churn). */
+  const [editHydratedKey, setEditHydratedKey] = useState("");
+
   useEffect(() => {
-    hydratedEventIdRef.current = null;
+    setEditHydratedKey("");
   }, [editSlug]);
 
   const [startDay, setStartDay] = useState<Date>(() => new Date());
@@ -157,10 +159,11 @@ export default function SubmitEvent() {
     }
   }, [isEditMode, event, user, navigate]);
 
-  useEffect(() => {
-    if (!isEditMode || !event || !user || user.id !== event.submittedBy.userId) return;
-    if (hydratedEventIdRef.current === event.id) return;
-    hydratedEventIdRef.current = event.id;
+  useLayoutEffect(() => {
+    if (!isEditMode) return;
+    if (!event || !user || user.id !== event.submittedBy.userId) return;
+    const nextKey = `${editSlug}:${event.id}`;
+    if (editHydratedKey === nextKey) return;
 
     form.reset({
       title: event.title,
@@ -177,7 +180,8 @@ export default function SubmitEvent() {
     setEndDay(event.endAt ? parseISO(event.endAt) : undefined);
     setAddress(event.address ?? "");
     setSelectedBuildings(event.buildings.map((b) => ({ id: b.buildingId, name: b.name })));
-  }, [isEditMode, event, user, form]);
+    setEditHydratedKey(nextKey);
+  }, [isEditMode, editSlug, event, user, form, editHydratedKey]);
 
   const { data: buildingHits = [], isFetching: buildingsLoading } = useQuery({
     queryKey: ["submit-event-search-buildings", debouncedBuildingQuery],
@@ -362,6 +366,16 @@ export default function SubmitEvent() {
         </AppLayout>
       );
     }
+    const editReadyKey = `${editSlug}:${event.id}`;
+    if (editHydratedKey !== editReadyKey) {
+      return (
+        <AppLayout title={pageTitle} showBack>
+          <div className="flex min-h-[40vh] items-center justify-center text-text-secondary">
+            <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
+          </div>
+        </AppLayout>
+      );
+    }
   }
 
   return (
@@ -456,6 +470,7 @@ export default function SubmitEvent() {
               <div className="space-y-2">
                 <Label>Address</Label>
                 <LocationInput
+                  key={isEditMode ? editSlug : "new-event"}
                   value={address}
                   onLocationSelected={onLocationPicked}
                   placeholder="Search for a venue or address…"

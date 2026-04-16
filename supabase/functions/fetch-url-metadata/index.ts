@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit, rateLimitExceededResponse } from "../_shared/rate-limit.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,6 +10,41 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
+  }
+
+  // Rate limit by caller IP
+  const ip =
+    (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() ||
+    req.headers.get('x-real-ip') ||
+    'unknown';
+
+  const { limited, retryAfter } = checkRateLimit(ip, { max: 15, windowMs: 60_000 });
+  if (limited) {
+    return rateLimitExceededResponse(retryAfter);
+  }
+
+  // Require Authorization header
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader) {
+    return new Response(
+      JSON.stringify({ error: 'Missing Authorization header' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+    );
+  }
+
+  // Validate JWT
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+    { global: { headers: { Authorization: authHeader } } }
+  );
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+    );
   }
 
   try {
@@ -20,11 +57,20 @@ serve(async (req) => {
       );
     }
 
+    let parsed: URL;
     try {
-      new URL(url);
+      parsed = new URL(url);
     } catch {
       return new Response(
         JSON.stringify({ error: 'Invalid URL format' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    // Only allow http and https — block file:, data:, etc.
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return new Response(
+        JSON.stringify({ error: 'Only http and https URLs are allowed' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }

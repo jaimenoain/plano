@@ -8,16 +8,29 @@ import {
   type MetaFunction,
 } from "react-router";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { Building2, MapPin } from "lucide-react";
+import {
+  Building2,
+  MapPin,
+  Users,
+  Camera,
+  BookOpen,
+  Map,
+  Plus,
+  Star,
+  CalendarDays,
+  ArrowRight,
+} from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ClientOnly } from "@/components/common/ClientOnly";
 import { BuildingHero } from "@/features/buildings/components/BuildingHero";
 import { DiscoveryBuildingCard } from "@/features/search/components/DiscoveryBuildingCard";
 import { getBuildingImageUrl } from "@/utils/image";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import { cn } from "@/lib/utils";
 import type { DiscoveryBuilding } from "@/features/search/components/types";
 import {
   getLocalityBuildingsClient,
@@ -83,7 +96,10 @@ export function ErrorBoundary() {
             {city ? (
               <>
                 {" "}
-                <span className="font-mono text-text-primary">({city}{cc ? `, ${cc.toUpperCase()}` : ""})</span>
+                <span className="font-mono text-text-primary">
+                  ({city}
+                  {cc ? `, ${cc.toUpperCase()}` : ""})
+                </span>
               </>
             ) : null}
             . The link may be wrong or the page was removed.
@@ -114,7 +130,7 @@ export function ErrorBoundary() {
 }
 
 // ---------------------------------------------------------------------------
-// Lazy map import — avoids loading MapLibre GL on the server
+// Lazy map import
 // ---------------------------------------------------------------------------
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
 
@@ -126,45 +142,122 @@ const CollectionMapGL = lazyWithRetry(
 );
 
 // ---------------------------------------------------------------------------
-// LocalityHero
+// Types for new sections
+// NOTE: These extend LocalityPageLoaderData — add fields to the loader as needed.
+// ---------------------------------------------------------------------------
+
+interface LocalitySteward {
+  userId: string;
+  username: string;
+  avatarUrl: string | null;
+  buildingsLogged: number;
+  photosUploaded: number;
+  reviewsWritten: number;
+  isAmbassador?: boolean;
+  /** Ambassador display label, set manually via admin */
+  ambassadorTitle?: string;
+}
+
+interface LocalityEvent {
+  id: string;
+  name: string;
+  slug: string;
+  startDate: string; // ISO
+  locationLabel: string | null;
+  isFree: boolean;
+  tag: string | null;
+}
+
+interface LocalityCollection {
+  id: string;
+  slug: string;
+  name: string;
+  ownerUsername: string;
+  buildingCount: number;
+  previewImageUrls: (string | null)[];
+  contributorAvatarUrls: (string | null)[];
+}
+
+interface LocalityStats {
+  buildingsCount: number;
+  collectionsCount: number;
+  contributorsCount: number;
+  photosCount: number;
+}
+
+// ---------------------------------------------------------------------------
+// Shared section label — mirrors `text-[10px] font-medium uppercase tracking-widest`
+// pattern used throughout BuildingDetails.
+// ---------------------------------------------------------------------------
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+      {children}
+    </h2>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SectionDivider — border-t + label, matches BuildingDetails editorial pattern
+// ---------------------------------------------------------------------------
+function SectionDivider({ label }: { label: string }) {
+  return (
+    <div className="border-t border-border-default pt-10">
+      <SectionLabel>{label}</SectionLabel>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// LocalityHero — community-sourced hero image + dramatic editorial title
 // ---------------------------------------------------------------------------
 function LocalityHero({
   city,
   country,
-  buildingsCount,
   heroImageUrl,
+  heroCreditUsername,
+  heroSourceBuilding,
 }: {
   city: string;
   country: string;
-  buildingsCount: number;
   heroImageUrl: string | null;
+  heroCreditUsername?: string | null;
+  heroSourceBuilding?: string | null;
 }) {
   const absoluteUrl = getBuildingImageUrl(heroImageUrl) ?? null;
 
   return (
     <>
       {absoluteUrl ? (
-        <BuildingHero src={absoluteUrl} alt={`${city}, ${country}`} />
+        <div className="relative">
+          <BuildingHero src={absoluteUrl} alt={`${city}, ${country}`} />
+          {/* Community photo credit — bottom-right overlay */}
+          {heroCreditUsername ? (
+            <div className="absolute bottom-3 right-4 flex items-center gap-1.5 text-[10px] text-text-inverse/70">
+              <Camera className="h-3 w-3" aria-hidden />
+              {heroSourceBuilding ? (
+                <span>
+                  {heroSourceBuilding} · @{heroCreditUsername}
+                </span>
+              ) : (
+                <span>@{heroCreditUsername}</span>
+              )}
+            </div>
+          ) : null}
+        </div>
       ) : null}
+
       <header className="border-b border-border-default pb-10">
         <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-2">
-              <h1 className="text-4xl font-bold tracking-tight text-text-primary md:text-5xl lg:text-6xl">
-                {city}
-              </h1>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-text-secondary">
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-4 w-4" aria-hidden />
-                  {country}
-                </span>
-                <Badge variant="secondary" className="font-normal">
-                  <Building2 className="mr-1 h-3 w-3" aria-hidden />
-                  {buildingsCount.toLocaleString()}{" "}
-                  {buildingsCount === 1 ? "building" : "buildings"}
-                </Badge>
-              </div>
-            </div>
+          <div className="space-y-3">
+            {/* Eyebrow — country name */}
+            <span className="block text-2xs font-medium uppercase tracking-widest text-text-secondary">
+              {country}
+            </span>
+
+            <h1 className="text-4xl font-bold leading-tight tracking-tight text-text-primary md:text-5xl lg:text-6xl">
+              {city}
+            </h1>
           </div>
         </div>
       </header>
@@ -173,19 +266,752 @@ function LocalityHero({
 }
 
 // ---------------------------------------------------------------------------
-// LocalityBuildingsGrid
+// LocalityStats — four-up stat strip
+// ---------------------------------------------------------------------------
+function LocalityStats({ stats }: { stats: LocalityStats }) {
+  const items = [
+    {
+      icon: Building2,
+      value: stats.buildingsCount.toLocaleString(),
+      label: stats.buildingsCount === 1 ? "Building" : "Buildings",
+    },
+    {
+      icon: BookOpen,
+      value: stats.collectionsCount.toLocaleString(),
+      label: stats.collectionsCount === 1 ? "Collection" : "Collections",
+    },
+    {
+      icon: Users,
+      value: stats.contributorsCount.toLocaleString(),
+      label: stats.contributorsCount === 1 ? "Contributor" : "Contributors",
+    },
+    {
+      icon: Camera,
+      value: stats.photosCount.toLocaleString(),
+      label: stats.photosCount === 1 ? "Photo" : "Photos",
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 border border-border-default sm:grid-cols-4">
+      {items.map((item, i) => (
+        <div
+          key={item.label}
+          className={cn(
+            "flex flex-col gap-1 px-5 py-4",
+            i < items.length - 1 && "border-r border-border-default",
+          )}
+        >
+          <span className="text-2xl font-bold tracking-tight text-text-primary">
+            {item.value}
+          </span>
+          <span className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+            <item.icon className="h-3 w-3" aria-hidden />
+            {item.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// QuickActions — primary CTAs
+// ---------------------------------------------------------------------------
+function QuickActions({
+  city,
+  citySlug,
+  countryCode,
+}: {
+  city: string;
+  citySlug: string;
+  countryCode: string;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-3 border-b border-border-default pb-8 pt-6">
+      <Link
+        to={`/map?locality=${citySlug}&cc=${countryCode}`}
+        className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary"
+      >
+        <Map className="mr-1.5 inline h-3.5 w-3.5" aria-hidden />
+        Explore map →
+      </Link>
+      <span className="text-text-disabled" aria-hidden>
+        ·
+      </span>
+      <Link
+        to={`/collections/new?locality=${citySlug}`}
+        className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+      >
+        <BookOpen className="mr-1.5 inline h-3.5 w-3.5" aria-hidden />
+        Create itinerary →
+      </Link>
+      <span className="text-text-disabled" aria-hidden>
+        ·
+      </span>
+      <Link
+        to={`/buildings/new?city=${encodeURIComponent(city)}`}
+        className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+      >
+        <Plus className="mr-1.5 inline h-3.5 w-3.5" aria-hidden />
+        Add a building →
+      </Link>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// LocalityMap with Smart Filters
+// ---------------------------------------------------------------------------
+
+const STYLE_FILTERS = [
+  { label: "Brutalist", value: "Brutalism" },
+  { label: "Modernist", value: "Modernism" },
+  { label: "Art Deco", value: "Art Deco" },
+  { label: "Gothic", value: "Gothic" },
+  { label: "High-Tech", value: "High-Tech" },
+] as const;
+
+const ACCESS_FILTERS = [
+  { label: "Public", value: "public" },
+  { label: "Private", value: "private" },
+] as const;
+
+const STATUS_FILTERS = [
+  { label: "Existing", value: "Built" },
+  { label: "Under construction", value: "Under Construction" },
+  { label: "Demolished", value: "Lost" },
+] as const;
+
+type StyleFilter = (typeof STYLE_FILTERS)[number]["value"] | null;
+type AccessFilter = (typeof ACCESS_FILTERS)[number]["value"] | null;
+type StatusFilter = (typeof STATUS_FILTERS)[number]["value"] | null;
+
+function FilterChip({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "border px-2.5 py-1 text-[10px] font-medium uppercase tracking-widest transition-colors",
+        active
+          ? "border-text-primary bg-text-primary text-text-inverse"
+          : "border-border-default text-text-secondary hover:border-text-primary hover:text-text-primary",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function LocalityMap({ localityId }: { localityId: string }) {
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [styleFilter, setStyleFilter] = useState<StyleFilter>(null);
+  const [accessFilter, setAccessFilter] = useState<AccessFilter>(null);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(null);
+
+  const { data: mapBuildings = [] } = useQuery({
+    queryKey: ["localities", localityId, "map-buildings"],
+    queryFn: () => getLocalityMapBuildings(localityId),
+    staleTime: 300_000,
+  });
+
+  const filteredBuildings = useMemo(() => {
+    return mapBuildings.filter((b: any) => {
+      if (
+        styleFilter &&
+        !b.styles?.some((s: any) => s.name === styleFilter)
+      )
+        return false;
+      if (accessFilter && b.access_level !== accessFilter) return false;
+      if (statusFilter && b.status !== statusFilter) return false;
+      return true;
+    });
+  }, [mapBuildings, styleFilter, accessFilter, statusFilter]);
+
+  if (mapBuildings.length === 0) return null;
+
+  const hasActiveFilter = styleFilter || accessFilter || statusFilter;
+
+  return (
+    <section className="mt-12 border-t border-border-default pt-10">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <SectionLabel>Map</SectionLabel>
+        {hasActiveFilter ? (
+          <button
+            type="button"
+            onClick={() => {
+              setStyleFilter(null);
+              setAccessFilter(null);
+              setStatusFilter(null);
+            }}
+            className="text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
+          >
+            Clear filters
+          </button>
+        ) : null}
+      </div>
+
+      {/* Smart Filters */}
+      <div className="mb-4 space-y-2">
+        <div className="flex flex-wrap gap-1.5">
+          {STYLE_FILTERS.map((f) => (
+            <FilterChip
+              key={f.value}
+              active={styleFilter === f.value}
+              onClick={() =>
+                setStyleFilter(styleFilter === f.value ? null : f.value)
+              }
+            >
+              {f.label}
+            </FilterChip>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {ACCESS_FILTERS.map((f) => (
+            <FilterChip
+              key={f.value}
+              active={accessFilter === f.value}
+              onClick={() =>
+                setAccessFilter(accessFilter === f.value ? null : f.value)
+              }
+            >
+              {f.label}
+            </FilterChip>
+          ))}
+          {STATUS_FILTERS.map((f) => (
+            <FilterChip
+              key={f.value}
+              active={statusFilter === f.value}
+              onClick={() =>
+                setStatusFilter(statusFilter === f.value ? null : f.value)
+              }
+            >
+              {f.label}
+            </FilterChip>
+          ))}
+        </div>
+      </div>
+
+      {/* Map */}
+      <div className="h-[480px] overflow-hidden border border-border-default">
+        <ClientOnly
+          fallback={
+            <div className="flex h-full w-full items-center justify-center bg-surface-muted">
+              <Skeleton className="h-full w-full" />
+            </div>
+          }
+        >
+          <Suspense
+            fallback={
+              <div className="flex h-full w-full items-center justify-center bg-surface-muted">
+                <Skeleton className="h-full w-full" />
+              </div>
+            }
+          >
+            <CollectionMapGL
+              buildings={filteredBuildings as unknown as DiscoveryBuilding[]}
+              highlightedId={highlightedId}
+              setHighlightedId={setHighlightedId}
+            />
+          </Suspense>
+        </ClientOnly>
+      </div>
+
+      {hasActiveFilter ? (
+        <p className="mt-2 text-[10px] text-text-disabled">
+          Showing {filteredBuildings.length.toLocaleString()} of{" "}
+          {mapBuildings.length.toLocaleString()} buildings
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// LocalityStewards — ambassador + top contributors
+// ---------------------------------------------------------------------------
+function StewardCard({
+  steward,
+  rank,
+}: {
+  steward: LocalitySteward;
+  rank: number;
+}) {
+  const initials = steward.username.slice(0, 2).toUpperCase();
+
+  const stats = [
+    steward.buildingsLogged > 0
+      ? `${steward.buildingsLogged} buildings`
+      : null,
+    steward.photosUploaded > 0 ? `${steward.photosUploaded} photos` : null,
+    steward.reviewsWritten > 0 ? `${steward.reviewsWritten} reviews` : null,
+  ]
+    .filter(Boolean)
+    .slice(0, 2)
+    .join(" · ");
+
+  return (
+    <Link
+      to={`/profile/${steward.username}`}
+      className="group flex items-center gap-3 border-b border-border-default py-3 last:border-b-0"
+    >
+      <span className="w-4 shrink-0 text-right text-[10px] tabular-nums text-text-disabled">
+        {rank}
+      </span>
+      <Avatar className="h-8 w-8 shrink-0 border border-border-default bg-surface-muted">
+        <AvatarImage src={steward.avatarUrl ?? undefined} alt="" />
+        <AvatarFallback className="text-xs font-medium text-text-secondary">
+          {initials}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          <span className="text-sm font-medium text-text-primary transition-colors group-hover:text-brand-primary">
+            {steward.username}
+          </span>
+          {steward.isAmbassador ? (
+            <span className="inline-flex items-center gap-1 border border-text-primary/30 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-text-secondary">
+              <Star className="h-2.5 w-2.5" aria-hidden />
+              {steward.ambassadorTitle ?? "Ambassador"}
+            </span>
+          ) : null}
+        </div>
+        {stats ? (
+          <p className="mt-0.5 text-[11px] text-text-disabled">{stats}</p>
+        ) : null}
+      </div>
+      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-text-disabled opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
+    </Link>
+  );
+}
+
+function LocalityStewards({ stewards }: { stewards: LocalitySteward[] }) {
+  if (stewards.length === 0) return null;
+
+  // Ambassador always first, then by contribution volume
+  const sorted = [...stewards].sort((a, b) => {
+    if (a.isAmbassador && !b.isAmbassador) return -1;
+    if (!a.isAmbassador && b.isAmbassador) return 1;
+    return b.buildingsLogged - a.buildingsLogged;
+  });
+
+  return (
+    <section className="mt-12 border-t border-border-default pt-10">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <SectionLabel>Local experts &amp; stewards</SectionLabel>
+      </div>
+      <p className="mb-4 text-[11px] text-text-disabled">
+        Community members who contribute most to this city on Plano.
+      </p>
+      <div>
+        {sorted.map((s, i) => (
+          <StewardCard key={s.userId} steward={s} rank={i + 1} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// LocalityEvents
+// ---------------------------------------------------------------------------
+function LocalityEvents({
+  events,
+  citySlug,
+  countryCode,
+}: {
+  events: LocalityEvent[];
+  citySlug: string;
+  countryCode: string;
+}) {
+  if (events.length === 0) return null;
+
+  return (
+    <section className="mt-12 border-t border-border-default pt-10">
+      <div className="mb-6 flex items-center justify-between gap-2">
+        <SectionLabel>Events</SectionLabel>
+        <Link
+          to={`/events/${countryCode.toLowerCase()}/${citySlug}`}
+          className="text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
+        >
+          All events →
+        </Link>
+      </div>
+
+      <div className="space-y-0">
+        {events.map((event) => {
+          const date = new Date(event.startDate);
+          const month = date
+            .toLocaleString("en", { month: "short" })
+            .toUpperCase();
+          const day = date.getDate();
+
+          return (
+            <Link
+              key={event.id}
+              to={`/events/${countryCode.toLowerCase()}/${citySlug}/${event.slug}`}
+              className="group flex items-start gap-4 border-b border-border-default py-4 first:border-t first:border-border-default"
+            >
+              {/* Date block */}
+              <div className="w-10 shrink-0 text-center">
+                <span className="block text-[9px] font-medium uppercase tracking-widest text-text-disabled">
+                  {month}
+                </span>
+                <span className="block text-xl font-bold leading-none tracking-tight text-text-primary">
+                  {day}
+                </span>
+              </div>
+
+              {/* Event info */}
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-text-primary transition-colors group-hover:text-brand-primary">
+                  {event.name}
+                </p>
+                <div className="mt-1 flex flex-wrap items-center gap-2">
+                  {event.locationLabel ? (
+                    <span className="text-[11px] text-text-disabled">
+                      {event.locationLabel}
+                    </span>
+                  ) : null}
+                  {event.tag ? (
+                    <span className="border border-border-default px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-text-disabled">
+                      {event.tag}
+                    </span>
+                  ) : null}
+                  {event.isFree ? (
+                    <span className="border border-border-default px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-text-disabled">
+                      Free
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+
+              <CalendarDays className="mt-1 h-3.5 w-3.5 shrink-0 text-text-disabled opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// LocalityCityGuides — curated collections with majority of pins in this city
+// ---------------------------------------------------------------------------
+function CollectionPreviewMosaic({
+  urls,
+  name,
+}: {
+  urls: (string | null)[];
+  name: string;
+}) {
+  const [main, second, third] = urls;
+
+  if (!main) {
+    return (
+      <div className="flex aspect-[4/3] w-full items-center justify-center bg-surface-muted text-[10px] uppercase tracking-widest text-text-disabled">
+        No images
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid aspect-[4/3] w-full grid-cols-[2fr_1fr] gap-0.5 overflow-hidden bg-surface-muted">
+      <div className="overflow-hidden">
+        <img
+          src={getBuildingImageUrl(main) ?? ""}
+          alt=""
+          className="h-full w-full object-cover"
+        />
+      </div>
+      <div className="grid grid-rows-2 gap-0.5">
+        {second ? (
+          <div className="overflow-hidden">
+            <img
+              src={getBuildingImageUrl(second) ?? ""}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="bg-surface-muted" />
+        )}
+        {third ? (
+          <div className="overflow-hidden">
+            <img
+              src={getBuildingImageUrl(third) ?? ""}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="bg-surface-muted" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LocalityCityGuides({
+  collections,
+  city,
+}: {
+  collections: LocalityCollection[];
+  city: string;
+}) {
+  if (collections.length === 0) return null;
+
+  return (
+    <section className="mt-12 border-t border-border-default pt-10">
+      <div className="mb-6 flex items-center justify-between gap-2">
+        <SectionLabel>City guides</SectionLabel>
+        <Link
+          to={`/explore`}
+          className="text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
+        >
+          Browse collections →
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3">
+        {collections.map((col) => (
+          <Link
+            key={col.id}
+            to={`/${col.ownerUsername}/collections/${col.slug}`}
+            className="group block"
+          >
+            <div className="overflow-hidden">
+              <CollectionPreviewMosaic
+                urls={col.previewImageUrls}
+                name={col.name}
+              />
+            </div>
+            <div className="mt-3 space-y-1">
+              <p className="text-sm font-medium leading-snug text-text-primary transition-colors group-hover:text-brand-primary">
+                {col.name}
+              </p>
+              <p className="text-[11px] text-text-disabled">
+                {col.buildingCount} buildings
+                {col.ownerUsername ? ` · ${col.ownerUsername}` : ""}
+              </p>
+              {/* Contributor facepile */}
+              {col.contributorAvatarUrls.length > 0 ? (
+                <div className="flex -space-x-1 pt-1">
+                  {col.contributorAvatarUrls.slice(0, 4).map((url, i) => (
+                    <Avatar
+                      key={i}
+                      className="h-5 w-5 border border-surface-card bg-surface-muted"
+                    >
+                      <AvatarImage src={getBuildingImageUrl(url) ?? undefined} alt="" />
+                      <AvatarFallback className="text-[8px]">·</AvatarFallback>
+                    </Avatar>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// LocalityActivityStream — localized discovery feed
+// ---------------------------------------------------------------------------
+
+interface ActivityItem {
+  id: string;
+  type: "review" | "photo" | "building_added" | "collection_created";
+  username: string;
+  avatarUrl: string | null;
+  buildingName: string | null;
+  buildingUrl: string | null;
+  collectionName: string | null;
+  thumbnailUrl: string | null;
+  createdAt: string;
+}
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+function ActivityItemRow({ item }: { item: ActivityItem }) {
+  const initials = item.username.slice(0, 2).toUpperCase();
+
+  const label = (() => {
+    switch (item.type) {
+      case "review":
+        return (
+          <>
+            reviewed{" "}
+            {item.buildingUrl ? (
+              <Link
+                to={item.buildingUrl}
+                className="font-medium text-text-primary underline-offset-2 hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {item.buildingName}
+              </Link>
+            ) : (
+              <span className="font-medium text-text-primary">
+                {item.buildingName}
+              </span>
+            )}
+          </>
+        );
+      case "photo":
+        return (
+          <>
+            added photos to{" "}
+            {item.buildingUrl ? (
+              <Link
+                to={item.buildingUrl}
+                className="font-medium text-text-primary underline-offset-2 hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {item.buildingName}
+              </Link>
+            ) : (
+              <span className="font-medium text-text-primary">
+                {item.buildingName}
+              </span>
+            )}
+          </>
+        );
+      case "building_added":
+        return (
+          <>
+            added{" "}
+            {item.buildingUrl ? (
+              <Link
+                to={item.buildingUrl}
+                className="font-medium text-text-primary underline-offset-2 hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {item.buildingName}
+              </Link>
+            ) : (
+              <span className="font-medium text-text-primary">
+                {item.buildingName}
+              </span>
+            )}{" "}
+            to the catalogue
+          </>
+        );
+      case "collection_created":
+        return (
+          <>
+            created{" "}
+            <span className="font-medium text-text-primary">
+              &ldquo;{item.collectionName}&rdquo;
+            </span>
+          </>
+        );
+      default:
+        return null;
+    }
+  })();
+
+  return (
+    <div className="flex items-start gap-3 border-b border-border-default py-3.5 last:border-b-0">
+      <Link to={`/profile/${item.username}`} className="shrink-0">
+        <Avatar className="h-7 w-7 border border-border-default bg-surface-muted">
+          <AvatarImage src={item.avatarUrl ?? undefined} alt="" />
+          <AvatarFallback className="text-[10px] font-medium text-text-secondary">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+      </Link>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm leading-snug text-text-secondary">
+          <Link
+            to={`/profile/${item.username}`}
+            className="font-medium text-text-primary transition-colors hover:text-brand-primary"
+          >
+            {item.username}
+          </Link>{" "}
+          {label}
+        </p>
+        <p className="mt-0.5 text-[10px] text-text-disabled">
+          {timeAgo(item.createdAt)}
+        </p>
+      </div>
+      {item.thumbnailUrl ? (
+        <div className="h-10 w-10 shrink-0 overflow-hidden bg-surface-muted">
+          <img
+            src={getBuildingImageUrl(item.thumbnailUrl) ?? ""}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function LocalityActivityStream({
+  items,
+  citySlug,
+  countryCode,
+}: {
+  items: ActivityItem[];
+  citySlug: string;
+  countryCode: string;
+}) {
+  if (items.length === 0) return null;
+
+  return (
+    <section className="mt-12 border-t border-border-default pt-10">
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <SectionLabel>Recent activity</SectionLabel>
+        <Link
+          to={`/explore?cc=${countryCode}&city=${citySlug}`}
+          className="text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
+        >
+          View all →
+        </Link>
+      </div>
+      <div>
+        {items.map((item) => (
+          <ActivityItemRow key={item.id} item={item} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// LocalityBuildingsGrid — existing, unchanged
 // ---------------------------------------------------------------------------
 function BuildingCardSkeleton() {
   return <Skeleton className="h-24 w-full" />;
 }
 
-function LocalityBuildingsGrid({ localityId, initialBuildings }: {
+function LocalityBuildingsGrid({
+  localityId,
+  initialBuildings,
+}: {
   localityId: string;
   initialBuildings: LocalityPageLoaderData["initialBuildings"];
 }) {
-  const { containerRef: loadMoreRef, isVisible: loadMoreVisible } = useIntersectionObserver({
-    rootMargin: "200px",
-  });
+  const { containerRef: loadMoreRef, isVisible: loadMoreVisible } =
+    useIntersectionObserver({ rootMargin: "200px" });
 
   const query = useInfiniteQuery({
     queryKey: ["localities", localityId, "buildings"],
@@ -202,14 +1028,23 @@ function LocalityBuildingsGrid({ localityId, initialBuildings }: {
     },
   });
 
-  const items = useMemo(() => query.data?.pages.flatMap((p) => p) ?? [], [query.data]);
+  const items = useMemo(
+    () => query.data?.pages.flatMap((p) => p) ?? [],
+    [query.data],
+  );
 
   useEffect(() => {
     if (!loadMoreVisible) return;
     if (query.hasNextPage && !query.isFetchingNextPage && !query.isError) {
       void query.fetchNextPage();
     }
-  }, [loadMoreVisible, query.hasNextPage, query.isFetchingNextPage, query.isError, query.fetchNextPage]);
+  }, [
+    loadMoreVisible,
+    query.hasNextPage,
+    query.isFetchingNextPage,
+    query.isError,
+    query.fetchNextPage,
+  ]);
 
   if (query.isError) {
     return (
@@ -223,12 +1058,14 @@ function LocalityBuildingsGrid({ localityId, initialBuildings }: {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <div
-          className="mb-6 flex h-24 w-24 items-center justify-center rounded-full border border-border-default bg-surface-muted text-text-secondary"
+          className="mb-6 flex h-24 w-24 items-center justify-center border border-border-default bg-surface-muted text-text-secondary"
           aria-hidden
         >
           <Building2 className="h-12 w-12" />
         </div>
-        <p className="max-w-sm text-text-secondary">No buildings yet for this city.</p>
+        <p className="max-w-sm text-text-secondary">
+          No buildings yet for this city.
+        </p>
       </div>
     );
   }
@@ -257,87 +1094,104 @@ function LocalityBuildingsGrid({ localityId, initialBuildings }: {
 }
 
 // ---------------------------------------------------------------------------
-// LocalityMap
-// ---------------------------------------------------------------------------
-function LocalityMap({ localityId }: { localityId: string }) {
-  const [highlightedId, setHighlightedId] = useState<string | null>(null);
-
-  const { data: mapBuildings = [] } = useQuery({
-    queryKey: ["localities", localityId, "map-buildings"],
-    queryFn: () => getLocalityMapBuildings(localityId),
-    staleTime: 300_000,
-  });
-
-  if (mapBuildings.length === 0) return null;
-
-  return (
-    <section className="mt-12">
-      <h2 className="mb-4 text-xs font-medium uppercase tracking-widest text-text-secondary">
-        Map
-      </h2>
-      <div className="h-[480px] overflow-hidden rounded-sm border border-border-default">
-        <ClientOnly
-          fallback={
-            <div className="flex h-full w-full items-center justify-center bg-surface-muted">
-              <Skeleton className="h-full w-full" />
-            </div>
-          }
-        >
-          <Suspense
-            fallback={
-              <div className="flex h-full w-full items-center justify-center bg-surface-muted">
-                <Skeleton className="h-full w-full" />
-              </div>
-            }
-          >
-            <CollectionMapGL
-              buildings={mapBuildings as unknown as DiscoveryBuilding[]}
-              highlightedId={highlightedId}
-              setHighlightedId={setHighlightedId}
-            />
-          </Suspense>
-        </ClientOnly>
-      </div>
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 export default function LocalityPage() {
   const loaderData = useLoaderData() as LocalityPageLoaderData;
   const { locality, initialBuildings } = loaderData;
 
+  // ---------------------------------------------------------------------------
+  // New section data — sourced from loader extensions.
+  // These fields are typed as optional so the page degrades gracefully while
+  // the loader is being extended. Each section checks for presence before render.
+  // ---------------------------------------------------------------------------
+  const stats: LocalityStats = {
+    buildingsCount: locality.buildings_count,
+    collectionsCount: (loaderData as any).collectionsCount ?? 0,
+    contributorsCount: (loaderData as any).contributorsCount ?? 0,
+    photosCount: (loaderData as any).photosCount ?? 0,
+  };
+
+  const stewards: LocalitySteward[] = (loaderData as any).stewards ?? [];
+  const events: LocalityEvent[] = (loaderData as any).events ?? [];
+  const collections: LocalityCollection[] = (loaderData as any).cityGuideCollections ?? [];
+  const activityItems: ActivityItem[] = (loaderData as any).recentActivity ?? [];
+
+  const heroCreditUsername: string | null =
+    (loaderData as any).heroCreditUsername ?? null;
+  const heroSourceBuilding: string | null =
+    (loaderData as any).heroSourceBuilding ?? null;
+
+  const citySlug: string = (loaderData as any).citySlug ?? locality.city.toLowerCase().replace(/\s+/g, "-");
+  const countryCode: string = (loaderData as any).countryCode ?? "";
+
   return (
     <AppLayout showBack>
+      {/* ── Hero — full-bleed ── */}
       <LocalityHero
         city={locality.city}
         country={locality.country}
-        buildingsCount={locality.buildings_count}
         heroImageUrl={locality.hero_image_url}
+        heroCreditUsername={heroCreditUsername}
+        heroSourceBuilding={heroSourceBuilding}
       />
 
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+
+        {/* ── Stats ── */}
+        <div className="mt-8">
+          <LocalityStats stats={stats} />
+        </div>
+
+        {/* ── Quick Actions ── */}
+        <QuickActions
+          city={locality.city}
+          citySlug={citySlug}
+          countryCode={countryCode}
+        />
+
+        {/* ── Description ── */}
         {locality.description ? (
           <p className="mt-8 max-w-2xl text-base leading-relaxed text-text-secondary">
             {locality.description}
           </p>
         ) : null}
 
-        <section className="mt-10">
-          <h2 className="mb-6 text-xs font-medium uppercase tracking-widest text-text-secondary">
-            Buildings
-          </h2>
+        {/* ── Map with smart filters ── */}
+        <LocalityMap localityId={locality.id} />
+
+        {/* ── Buildings ── */}
+        <section className="mt-12 border-t border-border-default pt-10">
+          <div className="mb-6 flex items-center justify-between gap-2">
+            <SectionLabel>Buildings</SectionLabel>
+          </div>
           <LocalityBuildingsGrid
             localityId={locality.id}
             initialBuildings={initialBuildings}
           />
         </section>
 
-        <LocalityMap localityId={locality.id} />
+        {/* ── City Guides ── */}
+        <LocalityCityGuides collections={collections} city={locality.city} />
 
-        <div className="h-12" />
+        {/* ── Events ── */}
+        <LocalityEvents
+          events={events}
+          citySlug={citySlug}
+          countryCode={countryCode}
+        />
+
+        {/* ── Local Experts & Stewards ── */}
+        <LocalityStewards stewards={stewards} />
+
+        {/* ── Activity Stream ── */}
+        <LocalityActivityStream
+          items={activityItems}
+          citySlug={citySlug}
+          countryCode={countryCode}
+        />
+
+        <div className="h-16" />
       </div>
     </AppLayout>
   );
