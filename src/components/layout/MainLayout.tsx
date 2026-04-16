@@ -14,6 +14,7 @@ import { usePresenceTracker } from "@/features/auth/hooks/usePresenceTracker";
 import { logDiagnosticError } from "@/features/admin/api/diagnostics";
 import { setSentryUser } from "@/lib/sentry";
 import { cn } from "@/lib/utils";
+import { PlanoLogo } from "@/components/common/PlanoLogo";
 
 function FloatingTrigger() {
   const { open } = useSidebar();
@@ -22,9 +23,9 @@ function FloatingTrigger() {
       <div className="pointer-events-auto flex flex-col items-center gap-1">
         <SidebarTrigger className="h-auto min-h-11 min-w-14 w-auto border-0 bg-transparent p-2 shadow-none hover:bg-transparent active:scale-100 [&_svg]:!size-6" />
         {!open && (
-          <span className="text-black font-bold text-[10px] tracking-widest leading-none select-none">
-            PLANO
-          </span>
+          <div className="w-14 h-16 flex items-center justify-center overflow-hidden">
+            <PlanoLogo className="text-black -rotate-90 text-[12px]" />
+          </div>
         )}
       </div>
     </div>

@@ -38,9 +38,9 @@ function setOrCreate(
     el.setAttribute(attrKey, attrVal);
     el.setAttribute(METAHEAD_MARK, "");
     document.head.appendChild(el);
-  } else if (!el.hasAttribute(METAHEAD_MARK)) {
-    el.setAttribute(METAHEAD_MARK, "");
   }
+  // Never mark pre-existing nodes — they may be React Router-managed and
+  // removing them in cleanup would cause React's removeChild to throw.
   el.setAttribute("content", content);
 }
 
@@ -52,8 +52,6 @@ function upsertCanonical(href: string): void {
     el.setAttribute("rel", "canonical");
     el.setAttribute(METAHEAD_MARK, "");
     document.head.appendChild(el);
-  } else if (!el.hasAttribute(METAHEAD_MARK)) {
-    el.setAttribute(METAHEAD_MARK, "");
   }
   el.setAttribute("href", href);
 }
@@ -74,8 +72,6 @@ function upsertJsonLd(data: Record<string, unknown>): void {
     el.setAttribute("data-meta", "ld");
     el.setAttribute(METAHEAD_MARK, "");
     document.head.appendChild(el);
-  } else if (!el.hasAttribute(METAHEAD_MARK)) {
-    el.setAttribute(METAHEAD_MARK, "");
   }
   el.textContent = JSON.stringify(data);
 }

@@ -10,14 +10,14 @@ type UserLeaderboardZoneProps = {
 
 export function UserLeaderboardZone({ data }: UserLeaderboardZoneProps) {
   const categories = [
-    { title: "Most Reviews", data: data.most_reviews, metric: "reviews" },
-    { title: "Most Ratings", data: data.most_ratings, metric: "ratings" },
-    { title: "Most Likes", data: data.most_likes, metric: "likes" },
-    { title: "Most Comments", data: data.most_comments, metric: "comments" },
-    { title: "Most Votes", data: data.most_votes, metric: "votes" },
-    { title: "Recently Online", data: data.most_recently_online, metric: "time" },
-    { title: "Most Follows", data: data.most_follows_given, metric: "follows" },
-    { title: "Most Followers", data: data.most_followers_gained, metric: "followers" },
+    { title: "Most Reviews", data: data.most_reviews ?? [], metric: "reviews" },
+    { title: "Most Ratings", data: data.most_ratings ?? [], metric: "ratings" },
+    { title: "Most Likes", data: data.most_likes ?? [], metric: "likes" },
+    { title: "Most Comments", data: data.most_comments ?? [], metric: "comments" },
+    { title: "Most Votes", data: data.most_votes ?? [], metric: "votes" },
+    { title: "Recently Online", data: data.most_recently_online ?? [], metric: "time" },
+    { title: "Most Follows", data: data.most_follows_given ?? [], metric: "follows" },
+    { title: "Most Followers", data: data.most_followers_gained ?? [], metric: "followers" },
   ];
 
   return (

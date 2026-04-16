@@ -707,13 +707,13 @@ export function BuildingCreditsPreview({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {primaryByRole.map(([role, roleCredits]) => (
         <div key={role}>
-          <p className="mb-2 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
             {formatCreditRoleLabel(role, roleCredits[0]?.roleCustom ?? null)}
           </p>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {roleCredits.map((credit) => (
               <CreditPreviewRow
                 key={credit.id}
@@ -725,7 +725,7 @@ export function BuildingCreditsPreview({
         </div>
       ))}
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-2">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <a
           href="#full-credits"
           className="text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"

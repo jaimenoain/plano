@@ -1448,12 +1448,13 @@ export default function BuildingDetails() {
             </div>
           ) : null}
 
-          {/* ── INFO ZONE: Info + Credits (left) · map (right) ── */}
+          {/* ── INFO ZONE: Info + Credits + Contributors (left) · map (right) ── */}
           <div className="grid grid-cols-1 gap-x-8 gap-y-8 border-b border-border-default py-8 sm:grid-cols-2">
 
-            <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-5">
+              {/* ── Info ── */}
               <div className="group/info">
-                <div className="mb-4 flex items-center justify-between">
+                <div className="mb-2 flex items-center justify-between">
                   <h2 className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
                     Info
                   </h2>
@@ -1473,34 +1474,28 @@ export default function BuildingDetails() {
                   ) : null}
                 </div>
 
-                {building.styles && building.styles.length > 0 ? (
-                  <div className="mb-2 flex flex-wrap gap-1.5">
-                    {building.styles.map((s) => (
-                      <span
-                        key={s.id}
-                        className="border border-border-default px-2 py-0.5 text-[11px] text-text-secondary"
-                      >
-                        {s.name}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-
-                {building.typology && building.typology.length > 0 ? (
-                  <div className="mb-2 flex flex-wrap gap-1.5">
-                    {building.typology.map((t) => (
-                      <span
-                        key={t}
-                        className="border border-border-default px-2 py-0.5 text-[11px] text-text-secondary"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-
-                {accessSynthesis ? (
-                  <div className="mt-3">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {building.styles && building.styles.length > 0
+                    ? building.styles.map((s) => (
+                        <span
+                          key={s.id}
+                          className="border border-border-default px-2 py-0.5 text-[11px] text-text-secondary"
+                        >
+                          {s.name}
+                        </span>
+                      ))
+                    : null}
+                  {building.typology && building.typology.length > 0
+                    ? building.typology.map((t) => (
+                        <span
+                          key={t}
+                          className="border border-border-default px-2 py-0.5 text-[11px] text-text-secondary"
+                        >
+                          {t}
+                        </span>
+                      ))
+                    : null}
+                  {accessSynthesis ? (
                     <Badge
                       variant={accessBadgeVariant()}
                       className="flex w-fit items-center gap-1.5 text-xs"
@@ -1508,8 +1503,8 @@ export default function BuildingDetails() {
                       {createElement(accessSynthesis.icon, { className: "w-3.5 h-3.5" })}
                       {accessSynthesis.label}
                     </Badge>
-                  </div>
-                ) : null}
+                  ) : null}
+                </div>
 
                 {building.access_notes ? (
                   <p className="mt-2 border-l-2 border-text-primary/20 py-0.5 pl-3 text-sm text-text-secondary">
@@ -1520,22 +1515,23 @@ export default function BuildingDetails() {
                 {showBuildingInfoExtended ? (
                   <a
                     href="#building-info-extended"
-                    className="mt-3 inline-block text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
+                    className="mt-2 inline-block text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
                   >
                     View all info ↓
                   </a>
                 ) : null}
               </div>
 
+              {/* ── Credits ── */}
               <div>
-                <h2 className="mb-4 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
-                  Credits
-                </h2>
                 <BuildingCreditsPreview
                   credits={buildingCredits}
                   isAuthenticated={Boolean(user)}
                 />
               </div>
+
+              {/* ── Contributors ── */}
+              <BuildingContributorsInline buildingId={building.id} />
             </div>
 
             <div>
@@ -1629,8 +1625,6 @@ export default function BuildingDetails() {
             onChange={() => {}}
             architectName={leadAttributionFromCredits(buildingCredits)}
           />
-          <BuildingContributorsInline buildingId={building.id} />
-
           {/* ── BUILDING STATUS ALERT — structural warnings only ── */}
           {(building.status === "Lost" ||
             building.status === "Unbuilt" ||
