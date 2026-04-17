@@ -90,15 +90,17 @@ export default function GuidesPage() {
     return Array.from(map.values()).sort((a, b) => b.count - a.count);
   }, [continentLocalities]);
 
-  // Total stats
-  const totalBuildings = localities.reduce((n, l) => n + l.buildingsCount, 0);
-  const totalCities = localities.length;
+  // Hardcoded headline stats — update periodically to match real DB counts.
+  // Dynamic sum from the locality query is unreliable due to Supabase's default
+  // row limit (1000), which silently truncates results for large datasets.
+  const TOTAL_BUILDINGS = 18_236;
+  const TOTAL_LOCALITIES = 6_619;
 
   return (
     <>
       <MetaHead
         title="Architecture guides"
-        description={`Discover the world's best architecture by city. ${totalBuildings.toLocaleString()} buildings across ${totalCities} localities, curated by the Plano community.`}
+        description={`Discover the world's best architecture by city. ${TOTAL_BUILDINGS.toLocaleString()} buildings across ${TOTAL_LOCALITIES.toLocaleString()} localities, curated by the Plano community.`}
         canonicalUrl="/guides"
       />
 
@@ -111,11 +113,9 @@ export default function GuidesPage() {
             <h1 className="text-4xl sm:text-5xl font-bold text-text-primary mt-3 leading-tight tracking-tight">
               The world's architecture,<br />city by city.
             </h1>
-            {!localitiesLoading && totalBuildings > 0 && (
-              <p className="text-text-secondary text-sm mt-4">
-                {totalBuildings.toLocaleString()} buildings across {totalCities} localities
-              </p>
-            )}
+            <p className="text-text-secondary text-sm mt-4">
+              {TOTAL_BUILDINGS.toLocaleString()} buildings across {TOTAL_LOCALITIES.toLocaleString()} localities
+            </p>
             <div className="mt-8 max-w-md">
               <LocalitySearchInput localities={localities} />
             </div>

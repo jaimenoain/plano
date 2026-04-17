@@ -24,7 +24,7 @@ function FloatingTrigger() {
         <SidebarTrigger className="h-auto min-h-11 min-w-14 w-auto border-0 bg-transparent p-2 shadow-none hover:bg-transparent active:scale-100 [&_svg]:!size-6" />
         {!open && (
           <div className="relative w-14 h-[203px] overflow-hidden">
-            <PlanoLogo className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-90 text-[2.8rem] text-black" />
+            <PlanoLogo className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-90 text-[2rem] text-black" />
           </div>
         )}
       </div>

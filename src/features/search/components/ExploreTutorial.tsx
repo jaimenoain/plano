@@ -101,7 +101,7 @@ export function ExploreTutorial({ onComplete, isSidebarOpen }: ExploreTutorialPr
             onClick={handleComplete}
             className="group flex items-center gap-5 hover:opacity-60 transition-opacity"
           >
-            <span className="text-2xl font-bold uppercase tracking-[0.12em] text-white leading-none">
+            <span className="text-2xl font-bold uppercase tracking-[0.12em] text-white leading-none whitespace-nowrap">
               Begin exploring
             </span>
             <span

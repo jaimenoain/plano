@@ -1,7 +1,9 @@
 import { ReactNode } from "react";
 import { Header } from "./Header";
 import { BottomNav } from "./BottomNav";
+import { SiteFooter } from "./SiteFooter";
 import { cn } from "@/lib/utils";
+
 interface AppLayoutProps {
   children: ReactNode;
   title?: string;
@@ -17,6 +19,7 @@ interface AppLayoutProps {
   showHeader?: boolean;
   fullWidth?: boolean;
 }
+
 export function AppLayout({ 
   children, 
   title, 
@@ -33,6 +36,11 @@ export function AppLayout({
   fullWidth = false
 }: AppLayoutProps) {
   void fullWidth;
+
+  // Footer is hidden on map and full-screen variants — those are immersive
+  // surfaces where a footer would be obscured or intrusive.
+  const showFooter = variant !== 'map' && !isFullScreen;
+
   return (
     <>
       {showHeader && (
@@ -55,6 +63,7 @@ export function AppLayout({
       )}>
         {children}
       </div>
+      {showFooter && <SiteFooter />}
       {showNav && (
         <div className="md:hidden">
           <BottomNav />
