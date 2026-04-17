@@ -19,8 +19,7 @@ export async function getGuidesLocalities(): Promise<GuidesLocalityRow[]> {
     .from('localities')
     .select('id, city, country, country_code, slug, hero_image_url, buildings_count')
     .gt('buildings_count', 0)
-    .order('buildings_count', { ascending: false })
-    .limit(120);
+    .order('buildings_count', { ascending: false });
 
   if (error) throw error;
 

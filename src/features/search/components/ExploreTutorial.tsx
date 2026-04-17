@@ -91,11 +91,33 @@ export function ExploreTutorial({ onComplete, isSidebarOpen }: ExploreTutorialPr
 
         {/* ── BOTTOM: CTA + don't show again ── */}
         <div className="space-y-6">
+          <style>{`
+            @keyframes arrowGrow {
+              from { transform: scaleX(0.08); opacity: 0; }
+              to   { transform: scaleX(1);    opacity: 1; }
+            }
+          `}</style>
           <button
             onClick={handleComplete}
-            className="text-sm font-medium uppercase tracking-[0.15em] text-white hover:opacity-60 transition-opacity"
+            className="group flex items-center gap-5 hover:opacity-60 transition-opacity"
           >
-            Begin exploring →
+            <span className="text-2xl font-bold uppercase tracking-[0.12em] text-white leading-none">
+              Begin exploring
+            </span>
+            <span
+              className="inline-flex items-center origin-left"
+              style={{ animation: "arrowGrow 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both" }}
+            >
+              <svg
+                viewBox="0 0 96 14"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-24 h-3.5 text-white"
+              >
+                <line x1="0" y1="7" x2="82" y2="7" stroke="currentColor" strokeWidth="1.5" />
+                <polyline points="75,1 82,7 75,13" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinejoin="round" strokeLinecap="round" />
+              </svg>
+            </span>
           </button>
 
           <div className="flex items-center gap-3">

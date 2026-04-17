@@ -140,6 +140,7 @@ export default [
     route("/review/:id", "features/buildings/pages/ReviewDetails.tsx"),
     route("/city/:citySlug", "features/localities/pages/LocalityPage.tsx"),
     // Architecture routes (new URL structure — Phases 3–6)
+    route("/architecture", "pages/ArchitectureHub.tsx"),
     route("/architecture/:cc", "features/localities/pages/CountryPage.tsx"),
     route("/architecture/:cc/:city", "features/localities/pages/LocalityPage.tsx", {
       id: "locality-architecture",

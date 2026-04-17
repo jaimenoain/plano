@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { MetaHead } from '@/components/common/MetaHead';
-import { DiscoverySearchInput } from '@/features/search/components/DiscoverySearchInput';
+import { LocalitySearchInput } from './LocalitySearchInput';
 import { useGuidesLocalities, usePopularCollections } from './useGuides';
 import { LocalityCard } from './LocalityCard';
 import { CollectionGuideCard } from './CollectionGuideCard';
@@ -48,14 +48,8 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function GuidesPage() {
-  const navigate = useNavigate();
-  const [searchValue, setSearchValue] = useState('');
   const [activeContinent, setActiveContinent] = useState<Continent>('Europe');
   const [showAllLocalities, setShowAllLocalities] = useState(false);
-
-  const handleLocationSelect = (location: { lat: number; lng: number }) => {
-    navigate(`/search?lat=${location.lat}&lng=${location.lng}`);
-  };
 
   const { data: localities = [], isLoading: localitiesLoading } = useGuidesLocalities();
   const { data: collections = [], isLoading: collectionsLoading } = usePopularCollections();
@@ -104,7 +98,7 @@ export default function GuidesPage() {
     <>
       <MetaHead
         title="Architecture guides"
-        description={`Discover the world's best architecture by city. ${totalBuildings.toLocaleString()} buildings across ${totalCities} cities, curated by the Plano community.`}
+        description={`Discover the world's best architecture by city. ${totalBuildings.toLocaleString()} buildings across ${totalCities} localities, curated by the Plano community.`}
         canonicalUrl="/guides"
       />
 
@@ -119,21 +113,11 @@ export default function GuidesPage() {
             </h1>
             {!localitiesLoading && totalBuildings > 0 && (
               <p className="text-text-secondary text-sm mt-4">
-                {totalBuildings.toLocaleString()} buildings across {totalCities} cities
+                {totalBuildings.toLocaleString()} buildings across {totalCities} localities
               </p>
             )}
             <div className="mt-8 max-w-md">
-              <DiscoverySearchInput
-                value={searchValue}
-                onSearchChange={setSearchValue}
-                onLocationSelect={handleLocationSelect}
-                placeholder="Search a city, building or architect…"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && searchValue.trim()) {
-                    navigate(`/search?q=${encodeURIComponent(searchValue.trim())}`);
-                  }
-                }}
-              />
+              <LocalitySearchInput localities={localities} />
             </div>
           </div>
         </section>
@@ -202,7 +186,7 @@ export default function GuidesPage() {
                 onClick={() => setShowAllLocalities(true)}
                 className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
               >
-                Show all {continentLocalities.length} cities →
+                Show all {continentLocalities.length} localities →
               </button>
             )}
             {!hasMore && countries.length > 0 && (
