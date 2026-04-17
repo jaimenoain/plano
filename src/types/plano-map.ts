@@ -1,7 +1,7 @@
 
 export type MichelinRating = 0 | 1 | 2 | 3;
 
-export type MapMode = 'discover' | 'library';
+export type MapMode = 'discover' | 'library' | null;
 
 // RPC Types for get_map_clusters
 export interface ClusterPoint {

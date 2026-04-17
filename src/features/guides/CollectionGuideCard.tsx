@@ -56,7 +56,7 @@ export function CollectionGuideCard({ collection }: CollectionGuideCardProps) {
       {/* Metadata */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-display font-black text-base text-text-primary leading-snug line-clamp-2 group-hover:text-brand-primary transition-colors">
+          <p className="text-base font-semibold text-text-primary leading-snug line-clamp-2 group-hover:underline underline-offset-2 transition-all">
             {collection.name}
           </p>
           <p className="text-xs text-text-secondary mt-1">

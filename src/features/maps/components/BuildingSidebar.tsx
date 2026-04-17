@@ -74,6 +74,7 @@ interface BuildingSidebarProps {
   suggestions?: Suggestion[];
   people?: PersonSummary[];
   companies?: CompanySummary[];
+  isDiscovery?: boolean;
   className?: string;
 }
 
@@ -85,6 +86,7 @@ export function BuildingSidebar({
   suggestions,
   people = [],
   companies = [],
+  isDiscovery = false,
   className,
 }: BuildingSidebarProps = {}) {
   const {
@@ -211,13 +213,13 @@ export function BuildingSidebar({
             value="people"
             className="rounded-sm px-3 py-1.5 text-2xs font-medium uppercase tracking-widest data-[state=active]:bg-surface-muted data-[state=inactive]:text-text-secondary"
           >
-            People ({peopleCount})
+            {isDiscovery ? "People" : `People (${peopleCount})`}
           </TabsTrigger>
           <TabsTrigger
             value="companies"
             className="rounded-sm px-3 py-1.5 text-2xs font-medium uppercase tracking-widest data-[state=active]:bg-surface-muted data-[state=inactive]:text-text-secondary"
           >
-            Companies ({companiesCount})
+            {isDiscovery ? "Companies" : `Companies (${companiesCount})`}
           </TabsTrigger>
         </TabsList>
 
@@ -385,7 +387,9 @@ export function BuildingSidebar({
             <div className="pt-2 pb-6">
               {peopleCount === 0 ? (
                 <div className="px-4 py-12 text-center">
-                  <p className="text-sm text-text-disabled">No people match this search yet.</p>
+                  <p className="text-sm text-text-disabled">
+                    {isDiscovery ? "No architects credited in this area yet." : "No people match this search yet."}
+                  </p>
                 </div>
               ) : (
                 people.map((person) => {
@@ -431,7 +435,9 @@ export function BuildingSidebar({
             <div className="pt-2 pb-6">
               {companiesCount === 0 ? (
                 <div className="px-4 py-12 text-center">
-                  <p className="text-sm text-text-disabled">No companies match this search yet.</p>
+                  <p className="text-sm text-text-disabled">
+                    {isDiscovery ? "No companies credited in this area yet." : "No companies match this search yet."}
+                  </p>
                 </div>
               ) : (
                 companies.map((company) => {

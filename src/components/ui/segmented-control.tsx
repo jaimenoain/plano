@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils"
 
 interface SegmentedControlProps {
   options: { label: React.ReactNode; value: string }[]
-  value: string
+  value: string | null
   onValueChange: (value: string) => void
   className?: string
   name?: string

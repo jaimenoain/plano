@@ -21,6 +21,7 @@ import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildin
 import { Bounds } from "@/utils/map";
 import { CREDIT_ROLES } from "@/features/credits/api/credits";
 import type { CreditRole } from "@/features/credits/types";
+import type { MapMode } from "@/types/plano-map";
 
 // Type definitions for better type safety
 interface BuildingDataItem {
@@ -454,7 +455,10 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     getIdListParam(searchParams.get("folders"))
   );
   const [viewMode, setViewMode] = useState<'list' | 'map'>((searchParams.get("view") as 'list' | 'map') || 'map');
-  const [mode, setMode] = useState<'discover' | 'library'>((searchParams.get("mode") as 'discover' | 'library') || 'discover');
+  const [mode, setMode] = useState<MapMode>(() => {
+    const m = searchParams.get("mode");
+    return m === 'discover' || m === 'library' ? m : null;
+  });
 
   // New Filters
   const [selectedCategory, setSelectedCategory] = useState<string | null>(searchParams.get("category") || null);
@@ -637,7 +641,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       else params.delete("view");
 
       // Map Mode
-      if (mode !== 'discover') params.set("mode", mode);
+      if (mode !== null) params.set("mode", mode);
       else params.delete("mode");
 
       // Filters

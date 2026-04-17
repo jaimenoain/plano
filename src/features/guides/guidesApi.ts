@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { getBuildingImageUrl, getStorageAssetUrl } from '@/utils/image';
 
 // ─── Localities ──────────────────────────────────────────────────────────────
 
@@ -30,7 +31,7 @@ export async function getGuidesLocalities(): Promise<GuidesLocalityRow[]> {
     countryCode: row.country_code,
     slug: row.slug,
     citySlug: row.slug,
-    heroImageUrl: row.hero_image_url ?? null,
+    heroImageUrl: getStorageAssetUrl(row.hero_image_url) ?? null,
     buildingsCount: row.buildings_count,
   }));
 }
@@ -100,8 +101,9 @@ export async function getPopularCollections(limit = 12): Promise<PopularCollecti
     const items: CollectionItemRow[] = row.collection_items ?? [];
     const previewImages: string[] = items
       .slice(0, 4)
-      .map(
-        (item) => item.buildings?.hero_image_url ?? item.buildings?.community_preview_url,
+      .map((item) =>
+        getBuildingImageUrl(item.buildings?.hero_image_url) ??
+        getBuildingImageUrl(item.buildings?.community_preview_url),
       )
       .filter((url): url is string => Boolean(url));
 

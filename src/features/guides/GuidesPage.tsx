@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { MapPin, Compass } from 'lucide-react';
 import { MetaHead } from '@/components/common/MetaHead';
 import { DiscoverySearchInput } from '@/features/search/components/DiscoverySearchInput';
 import { useGuidesLocalities, usePopularCollections } from './useGuides';
@@ -115,7 +114,7 @@ export default function GuidesPage() {
         <section className="border-b border-border-default px-4 sm:px-8 py-16 sm:py-20">
           <div className="max-w-2xl">
             <SectionLabel>Guides</SectionLabel>
-            <h1 className="font-display font-black text-4xl sm:text-5xl text-text-primary mt-3 leading-none tracking-tight">
+            <h1 className="text-4xl sm:text-5xl font-bold text-text-primary mt-3 leading-tight tracking-tight">
               The world's architecture,<br />city by city.
             </h1>
             {!localitiesLoading && totalBuildings > 0 && (
@@ -144,7 +143,7 @@ export default function GuidesPage() {
           <div className="flex items-center justify-between mb-6">
             <div>
               <SectionLabel>Browse by destination</SectionLabel>
-              <h2 className="font-display font-black text-2xl text-text-primary mt-1">
+              <h2 className="text-2xl font-semibold tracking-tight leading-tight text-text-primary mt-1">
                 Cities
               </h2>
             </div>
@@ -233,7 +232,7 @@ export default function GuidesPage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <SectionLabel>Curated by the community</SectionLabel>
-              <h2 className="font-display font-black text-2xl text-text-primary mt-1">
+              <h2 className="text-2xl font-semibold tracking-tight leading-tight text-text-primary mt-1">
                 Popular collections
               </h2>
             </div>
@@ -279,27 +278,25 @@ export default function GuidesPage() {
           <div className="flex flex-col sm:flex-row sm:items-center gap-6">
             <div className="flex-1">
               <SectionLabel>Start exploring</SectionLabel>
-              <h2 className="font-display font-black text-xl text-text-primary mt-1">
+              <h2 className="text-xl font-semibold tracking-tight leading-tight text-text-primary mt-1">
                 Create your own guide
               </h2>
               <p className="text-sm text-text-secondary mt-1">
                 Build a collection, generate an itinerary, and share it with the world.
               </p>
             </div>
-            <div className="flex gap-3 shrink-0">
+            <div className="flex gap-6 shrink-0">
               <Link
                 to="/collections/new"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-text-primary text-surface-default text-sm font-medium rounded-sm hover:opacity-90 transition-opacity"
+                className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-text-secondary"
               >
-                <Compass size={14} />
-                New collection
+                New collection →
               </Link>
               <Link
                 to="/explore"
-                className="inline-flex items-center gap-2 px-4 py-2 border border-border-default text-text-primary text-sm font-medium rounded-sm hover:border-border-strong transition-colors"
+                className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
               >
-                <MapPin size={14} />
-                Explore map
+                Explore map →
               </Link>
             </div>
           </div>

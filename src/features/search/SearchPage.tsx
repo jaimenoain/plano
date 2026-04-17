@@ -62,13 +62,13 @@ function SearchPageContent() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const {
-    state: { filters },
+    state: { bounds, filters },
     methods: { setFilter, moveMap, fitMapBounds },
   } = useMapContext();
 
   const [searchValue, setSearchValue] = useState(filters.query || "");
   const debouncedSearchValue = useDebounce(searchValue, 300);
-  const { people, companies } = useGlobalEntitySearch({ searchQuery: searchValue });
+  const { people, companies, isDiscovery } = useGlobalEntitySearch({ searchQuery: searchValue, bounds });
   const [viewMode, setViewMode] = useState<"list" | "map">("map");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
@@ -207,6 +207,7 @@ function SearchPageContent() {
               onLocationClick={handleLocationResultClick}
               people={people}
               companies={companies}
+              isDiscovery={isDiscovery}
             />
           </div>
         </div>
@@ -262,6 +263,7 @@ function SearchPageContent() {
                 onLocationClick={handleLocationResultClick}
                 people={people}
                 companies={companies}
+                isDiscovery={isDiscovery}
                 className="pb-24"
               />
             </div>

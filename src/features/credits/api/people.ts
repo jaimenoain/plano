@@ -484,6 +484,93 @@ export async function searchPeople(query: string): Promise<PersonSummary[]> {
 }
 
 /**
+ * Discovery browse — returns people relevant to the given map bounds (or globally),
+ * sorted by credit count descending. Used when there is no active search query.
+ */
+export async function discoverPeople(
+  bounds?: { south: number; north: number; west: number; east: number } | null,
+  limit = 30
+): Promise<PersonSummary[]> {
+  let personIds: string[] | null = null;
+
+  if (bounds) {
+    const { data: buildingRows, error: bErr } = await supabase
+      .from("buildings")
+      .select("id")
+      .gte("location_lat", bounds.south)
+      .lte("location_lat", bounds.north)
+      .gte("location_lng", bounds.west)
+      .lte("location_lng", bounds.east)
+      .limit(300);
+
+    if (bErr) throw bErr;
+    if (!buildingRows?.length) return [];
+
+    const buildingIds = buildingRows.map((r) => r.id as string);
+    const { data: creditRows, error: cErr } = await supabase
+      .from("building_credits")
+      .select("person_id")
+      .in("building_id", buildingIds)
+      .not("person_id", "is", null);
+
+    if (cErr) throw cErr;
+    personIds = [...new Set((creditRows || []).map((r) => r.person_id as string))];
+    if (personIds.length === 0) return [];
+  }
+
+  let baseQuery = supabase
+    .from("people")
+    .select("id, name, slug, claim_status, nationality, avatar_url");
+
+  if (personIds !== null) {
+    baseQuery = baseQuery.in("id", personIds);
+  }
+
+  const { data: peopleRows, error: pErr } = await baseQuery.limit(limit * 3);
+  if (pErr) throw pErr;
+  if (!peopleRows?.length) return [];
+
+  const ids = (peopleRows as Array<{ id: string }>).map((r) => r.id);
+
+  // Fetch all credit counts in a single query and tally client-side
+  const { data: countRows, error: cntErr } = await supabase
+    .from("building_credits")
+    .select("person_id")
+    .in("person_id", ids)
+    .not("person_id", "is", null);
+
+  if (cntErr) throw cntErr;
+
+  const countById = new Map<string, number>();
+  for (const row of countRows || []) {
+    const pid = row.person_id as string;
+    countById.set(pid, (countById.get(pid) ?? 0) + 1);
+  }
+
+  return (peopleRows as Array<{
+    id: string;
+    name: string;
+    slug: string;
+    claim_status: PersonSummary["claimStatus"];
+    nationality: string | null;
+    avatar_url: string | null;
+  }>)
+    .map((r) => ({
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      claimStatus: r.claim_status,
+      nationality: r.nationality,
+      avatarUrl: r.avatar_url,
+      creditCount: countById.get(r.id) ?? 0,
+      associatedCompanies: [],
+      knownBuilding: null,
+    }))
+    .sort((a, b) => (b.creditCount ?? 0) - (a.creditCount ?? 0))
+    .slice(0, limit);
+}
+
+/**
  * Insert a person; slug is generated with `-2`, `-3`, … suffixes on collision.
  */
 export async function createPerson(input: CreatePersonInput): Promise<Person> {

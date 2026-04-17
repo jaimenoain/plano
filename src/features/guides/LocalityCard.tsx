@@ -31,7 +31,7 @@ export function LocalityCard({ locality, featured = false }: LocalityCardProps) 
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         {/* Text */}
         <div className="absolute bottom-0 left-0 right-0 p-4">
-          <p className="font-display font-black text-white text-xl leading-tight">
+          <p className="text-xl font-bold text-white leading-tight tracking-tight">
             {locality.city}
           </p>
           <p className="text-white/70 text-xs font-medium uppercase tracking-widest mt-0.5">
@@ -45,9 +45,9 @@ export function LocalityCard({ locality, featured = false }: LocalityCardProps) 
   return (
     <Link
       to={href}
-      className="group flex items-center justify-between py-2.5 border-b border-border-default last:border-0 hover:text-brand-primary transition-colors duration-150"
+      className="group flex items-center justify-between py-2.5 border-b border-border-default last:border-0 transition-colors duration-150"
     >
-      <span className="text-sm font-medium text-text-primary group-hover:text-brand-primary transition-colors">
+      <span className="text-sm font-medium text-text-primary group-hover:underline underline-offset-2 transition-all">
         {locality.city}
       </span>
       <span className="text-xs text-text-secondary tabular-nums">

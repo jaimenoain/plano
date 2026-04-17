@@ -7,7 +7,7 @@ import { MapMode, MapFilters, type MichelinRating } from '@/types/plano-map';
 export const DEFAULT_LAT = 20;
 export const DEFAULT_LNG = 0;
 export const DEFAULT_ZOOM = 2;
-const DEFAULT_MODE: MapMode = 'discover';
+const DEFAULT_MODE: MapMode = null;
 
 // Schemas
 
@@ -18,7 +18,7 @@ const preprocessNumber = (val: unknown) => {
 };
 
 // 1. Map Mode Schema
-export const MapModeSchema = z.enum(['discover', 'library']).catch(DEFAULT_MODE);
+export const MapModeSchema = z.enum(['discover', 'library']).nullable().catch(DEFAULT_MODE);
 
 // 2. Filters Schema (Validation logic for the parsed object)
 export const MapFiltersObjectSchema = z.object({
@@ -180,7 +180,10 @@ export const useURLMapState = () => {
       // But map map update actions (like map move) might trigger setMapURL.
       // Since map moves don't include mode, this is generally safe.
       // If someone explicitly calls setMapURL({ mode }), we still handle it.
-      if (updates.mode !== undefined) newParams.set('mode', updates.mode);
+      if (updates.mode !== undefined) {
+        if (updates.mode === null) newParams.delete('mode');
+        else newParams.set('mode', updates.mode);
+      }
 
       // We explicitly ignore updates.filters here to let useBuildingSearch handle it
       // and prevent dual-writes or overwriting flat params.
