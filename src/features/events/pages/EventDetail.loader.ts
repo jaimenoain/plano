@@ -2,6 +2,13 @@ import { redirect, type LoaderFunctionArgs } from "react-router";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { getEventUrl } from "@/utils/url";
 
+interface EventConsistencyRow {
+  slug: string;
+  country_code: string | null;
+  city_slug: string | null;
+  is_deleted: boolean;
+}
+
 export async function eventDetailLoader({ request, params }: LoaderFunctionArgs) {
   const headers = new Headers();
   const supabase = createSupabaseServerClient(request, headers);
@@ -25,8 +32,7 @@ export async function eventDetailLoader({ request, params }: LoaderFunctionArgs)
     return {};
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const eventRow = row as any;
+  const eventRow = row as EventConsistencyRow;
   const target = getEventUrl({
     slug: eventRow.slug,
     countryCode: eventRow.country_code ?? null,
