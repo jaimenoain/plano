@@ -316,36 +316,32 @@ export async function searchCompanies(query: string): Promise<CompanySummary[]> 
 
   const { data: rows, error } = await supabase
     .from("companies")
-    .select("id, name, slug, claim_status, country, logo_url")
+    .select("id, name, slug, claim_status, country, logo_url, building_credits(count)")
     .ilike("name", `%${q}%`)
     .limit(25);
 
   if (error) throw error;
   if (!rows?.length) return [];
 
-  const ids = rows.map((r) => r.id as string);
-  const countResults = await Promise.all(
-    ids.map(async (companyId) => {
-      const { count, error: cErr } = await supabase
-        .from("building_credits")
-        .select("id", { count: "exact", head: true })
-        .eq("company_id", companyId);
-      if (cErr) throw cErr;
-      return [companyId, count ?? 0] as const;
-    }),
-  );
-  const countById = new Map(countResults);
-
   return rows.map((r) => {
     const id = r.id as string;
+    const row = r as {
+      id: string;
+      name: string;
+      slug: string;
+      claim_status: CompanySummary["claimStatus"];
+      country: string | null;
+      logo_url: string | null;
+      building_credits: { count: number }[];
+    };
     return {
       id,
-      name: r.name as string,
-      slug: r.slug as string,
-      claimStatus: r.claim_status as CompanySummary["claimStatus"],
-      country: r.country as string | null,
-      logoUrl: r.logo_url as string | null,
-      creditCount: countById.get(id) ?? 0,
+      name: row.name,
+      slug: row.slug,
+      claimStatus: row.claim_status,
+      country: row.country,
+      logoUrl: row.logo_url,
+      creditCount: row.building_credits?.[0]?.count ?? 0,
     };
   });
 }

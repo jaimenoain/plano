@@ -410,7 +410,7 @@ export async function searchPeople(query: string): Promise<PersonSummary[]> {
 
   const { data: peopleRows, error: pErr } = await supabase
     .from("people")
-    .select("id, name, slug, claim_status, nationality, avatar_url")
+    .select("id, name, slug, claim_status, nationality, avatar_url, building_credits(count)")
     .ilike("name", `%${q}%`)
     .limit(25);
 
@@ -418,18 +418,6 @@ export async function searchPeople(query: string): Promise<PersonSummary[]> {
   if (!peopleRows?.length) return [];
 
   const ids = peopleRows.map((r) => r.id as string);
-
-  const countResults = await Promise.all(
-    ids.map(async (personId) => {
-      const { count, error: cErr } = await supabase
-        .from("building_credits")
-        .select("id", { count: "exact", head: true })
-        .eq("person_id", personId);
-      if (cErr) throw cErr;
-      return [personId, count ?? 0] as const;
-    }),
-  );
-  const countById = new Map(countResults);
 
   const [{ data: affRows, error: aErr }, { data: creditSampleRows, error: crErr }] = await Promise.all([
     supabase
@@ -468,6 +456,7 @@ export async function searchPeople(query: string): Promise<PersonSummary[]> {
       claim_status: PersonSummary["claimStatus"];
       nationality: string | null;
       avatar_url: string | null;
+      building_credits: { count: number }[];
     };
     return {
       id,
@@ -478,7 +467,7 @@ export async function searchPeople(query: string): Promise<PersonSummary[]> {
       knownBuilding: knownBuildingByPerson.get(id) ?? null,
       nationality: row.nationality,
       avatarUrl: row.avatar_url,
-      creditCount: countById.get(id) ?? 0,
+      creditCount: row.building_credits?.[0]?.count ?? 0,
     };
   });
 }
