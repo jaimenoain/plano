@@ -88,17 +88,34 @@ Deno.serve(async (req) => {
       )
     }
 
-    const pathTraversalPattern = /[\\/]/
-    if (pathTraversalPattern.test(fileName) || (folderName && pathTraversalPattern.test(folderName))) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid characters in fileName or folderName' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-      )
+    const validatePath = (name: string) => {
+      // Decode any URI encoding to check for hidden traversal characters
+      let decodedName = name
+      try {
+        decodedName = decodeURIComponent(name)
+      } catch (e) {
+        return false
+      }
+
+      // Block literal slashes and backslashes
+      if (/[\\/]/.test(decodedName)) {
+        return false
+      }
+
+      // Block double dots (path traversal)
+      if (decodedName.includes('..')) {
+        return false
+      }
+
+      // Whitelist approach: only allow alphanumeric, dots, dashes, underscores, and spaces
+      // Note: S3 keys can technically have more characters, but for security we restrict this.
+      const safePattern = /^[a-zA-Z0-9._\- ]+$/
+      return safePattern.test(decodedName)
     }
 
-    if (fileName.includes('..') || (folderName && folderName.includes('..'))) {
+    if (!validatePath(fileName) || (folderName && !validatePath(folderName))) {
       return new Response(
-        JSON.stringify({ error: 'Path traversal detected in fileName or folderName' }),
+        JSON.stringify({ error: 'Invalid characters or path traversal detected in fileName or folderName' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
