@@ -1,17 +1,48 @@
 import { type MouseEvent } from "react";
 import { useNavigate } from "react-router";
+import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
 import {
-  ActivityLead,
   BuildingHeadline,
-  BuildingSubtitle,
   CardFooter,
   CardImage,
+  PointsBadge,
 } from "@/features/feed/components/card-parts";
 import { CARD_C_IMAGE_HEIGHT } from "@/features/feed/utils/resolveCardType";
+
+function FeedAboveLine({ entry }: { entry: FeedReview }) {
+  const parts = [
+    entry.building.city,
+    entry.building.creditedEntities?.[0]?.name,
+    entry.building.year_completed != null ? String(entry.building.year_completed) : null,
+  ].filter(Boolean) as string[];
+  if (parts.length === 0) return null;
+  return (
+    <p className="text-[11px] uppercase tracking-[0.18em] text-text-disabled leading-none">
+      {parts.join(" · ")}
+    </p>
+  );
+}
+
+function FeedAuthorLine({ entry, username }: { entry: FeedReview; username: string }) {
+  const timeAgo = formatDistanceToNow(new Date(entry.created_at), { addSuffix: true });
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-secondary mt-1">
+      <span className="font-medium text-text-primary">{username}</span>
+      <span className="text-text-disabled">·</span>
+      <span>{timeAgo}</span>
+      {entry.rating != null && entry.rating > 0 && (
+        <>
+          <span className="text-text-disabled">·</span>
+          <PointsBadge points={entry.rating} />
+        </>
+      )}
+    </div>
+  );
+}
 
 export interface FeedCardCProps {
   entry: FeedReview;
@@ -41,8 +72,7 @@ export function FeedCardC({
 
   if (!data || !entry.building) return null;
 
-  const { username, isArchitectOfBuilding, mainTitle, subTitle, city, mediaItems } = data;
-  const userActionVerb = entry.status === "pending" ? "wants to visit" : "visited";
+  const { username, isArchitectOfBuilding, mainTitle, mediaItems } = data;
 
   const handleCardClick = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -83,32 +113,32 @@ export function FeedCardC({
         isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-4",
       )}
     >
-        <CardImage
-          items={mediaItems}
-          height={CARD_C_IMAGE_HEIGHT}
-          reviewId={entry.id}
-          onImageLike={onImageLike}
-          firstMediaOnly
-        />
-        <div className="mt-4 flex max-w-xl flex-col gap-3">
-          <ActivityLead username={username} verb={userActionVerb} hideUser={hideUser} />
-          {!hideBuildingInfo && <BuildingHeadline name={mainTitle} size="md" />}
-          {!hideBuildingInfo && (
-            <BuildingSubtitle subTitle={subTitle ?? undefined} city={city} />
-          )}
-          <CardFooter
-            className="pt-1"
-            likesCount={entry.likes_count}
-            commentsCount={entry.comments_count}
-            isLiked={Boolean(entry.is_liked)}
-            buildingId={entry.building.id}
-            onLike={() => {
-              onLike?.(entry.id);
-              window.dispatchEvent(new CustomEvent("pwa-interaction"));
-            }}
-            onComment={handleComment}
-          />
-        </div>
+      <div className="flex max-w-xl flex-col gap-2 mb-4">
+        {!hideBuildingInfo && <FeedAboveLine entry={entry} />}
+        {!hideBuildingInfo && <BuildingHeadline name={mainTitle} size="lg" />}
+        {!hideUser && <FeedAuthorLine entry={entry} username={username} />}
+      </div>
+
+      <CardImage
+        items={mediaItems}
+        height={CARD_C_IMAGE_HEIGHT}
+        reviewId={entry.id}
+        onImageLike={onImageLike}
+        firstMediaOnly
+      />
+
+      <CardFooter
+        className="pt-3 max-w-xl"
+        likesCount={entry.likes_count}
+        commentsCount={entry.comments_count}
+        isLiked={Boolean(entry.is_liked)}
+        buildingId={entry.building.id}
+        onLike={() => {
+          onLike?.(entry.id);
+          window.dispatchEvent(new CustomEvent("pwa-interaction"));
+        }}
+        onComment={handleComment}
+      />
     </article>
   );
 }

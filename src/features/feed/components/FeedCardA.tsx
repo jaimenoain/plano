@@ -1,19 +1,50 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
+import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
 import { countWords } from "@/features/feed/utils/resolveCardType";
 import {
-  ActivityLead,
   BuildingHeadline,
-  BuildingSubtitle,
   CardFooter,
   PointsBadge,
 } from "@/features/feed/components/card-parts";
 
 const MOBILE_MAX_WIDTH_PX = 767;
+const PULL_QUOTE_WORD_THRESHOLD = 15;
+
+function FeedAboveLine({ entry }: { entry: FeedReview }) {
+  const parts = [
+    entry.building.city,
+    entry.building.creditedEntities?.[0]?.name,
+    entry.building.year_completed != null ? String(entry.building.year_completed) : null,
+  ].filter(Boolean) as string[];
+  if (parts.length === 0) return null;
+  return (
+    <p className="text-[11px] uppercase tracking-[0.18em] text-text-disabled leading-none">
+      {parts.join(" · ")}
+    </p>
+  );
+}
+
+function FeedAuthorLine({ entry, username }: { entry: FeedReview; username: string }) {
+  const timeAgo = formatDistanceToNow(new Date(entry.created_at), { addSuffix: true });
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-secondary mt-1">
+      <span className="font-medium text-text-primary">{username}</span>
+      <span className="text-text-disabled">·</span>
+      <span>{timeAgo}</span>
+      {entry.rating != null && entry.rating > 0 && (
+        <>
+          <span className="text-text-disabled">·</span>
+          <PointsBadge points={entry.rating} />
+        </>
+      )}
+    </div>
+  );
+}
 
 export interface FeedCardAProps {
   entry: FeedReview;
@@ -82,8 +113,9 @@ export function FeedCardA({
   const suppressReadMoreOnMobileShortCopy =
     isNarrowViewport && contentWordCount > 0 && contentWordCount < 120;
 
-  const { username, isArchitectOfBuilding, mainTitle, subTitle, city } = data;
-  const userActionVerb = entry.status === "pending" ? "wants to visit" : "visited";
+  const { username, isArchitectOfBuilding, mainTitle } = data;
+  const isPullQuote =
+    entry.content?.trim() && contentWordCount > 0 && contentWordCount <= PULL_QUOTE_WORD_THRESHOLD;
 
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -124,21 +156,19 @@ export function FeedCardA({
         isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-4",
       )}
     >
-      <div className="flex max-w-xl flex-col gap-3">
-        <ActivityLead username={username} verb={userActionVerb} hideUser={hideUser} />
+      <div className="flex max-w-xl flex-col gap-2">
+        {!hideBuildingInfo && <FeedAboveLine entry={entry} />}
 
         {!hideBuildingInfo && <BuildingHeadline name={mainTitle} size="xl" />}
 
-        {!hideBuildingInfo && <BuildingSubtitle subTitle={subTitle ?? undefined} city={city} />}
+        {!hideUser && <FeedAuthorLine entry={entry} username={username} />}
 
-        {entry.rating != null && entry.rating > 0 && (
-          <div>
-            <PointsBadge points={entry.rating} />
-          </div>
-        )}
-
-        {entry.content?.trim() && (
-          <div className="min-w-0">
+        {isPullQuote ? (
+          <blockquote className="mt-3 text-[clamp(1.6rem,3vw,2.25rem)] font-bold leading-tight text-text-primary before:content-['\u201C']">
+            {entry.content}
+          </blockquote>
+        ) : entry.content?.trim() ? (
+          <div className="mt-2 min-w-0">
             <p
               ref={bodyRef}
               className={cn(
@@ -161,10 +191,10 @@ export function FeedCardA({
               </button>
             )}
           </div>
-        )}
+        ) : null}
 
         <CardFooter
-          className="pt-1"
+          className="pt-2"
           likesCount={entry.likes_count}
           commentsCount={entry.comments_count}
           isLiked={Boolean(entry.is_liked)}
