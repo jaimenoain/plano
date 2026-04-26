@@ -15,11 +15,13 @@
 
 **Editorial direction:** The feed, content detail pages (building, profile, architect), and all primary-surface pages follow an editorial magazine aesthetic. Typography weight and scale create hierarchy — not borders, not shadows, not card containers. Content sits directly on the white surface. The contrast between tiny uppercase category labels and massive bold headlines *is* the design. Whitespace is not empty space — it is editorial pause. Images are presented raw, with sharp edges and no decorative chrome.
 
-**Monochromatic content surfaces:** All content and feed pages are strictly monochromatic. Rating dots, active tab indicators, section accent bars, verified badges, icon fills, filter toggles, and interactive icon states all use `text-primary` (`#171717`) — not `brand-primary`. The neon accent (`#BEFF00`) is reserved exclusively for: primary button backgrounds in app UI (forms, modals, admin), focus rings, and very occasional hover punctuation on CTA arrows. If `brand-primary` appears on a content page outside those contexts, it is an error.
+**Monochromatic content surfaces:** All content and feed pages are strictly monochromatic. Rating dots, active tab indicators, section accent bars, verified badges, icon fills, filter toggles, and interactive icon states all use `text-primary` (`#171717`). **`brand-primary` is now near-black (`#171717`) — the primary action colour is black, not lime.** The lime (`#BEFF00`) lives in a separate `brand-accent` token and is reserved for: notification dots, focus rings, the `→` arrow on CTA hover, and the active chip in overlaid dark panels (tweaks, menus). If `brand-accent` appears anywhere on a content or feed page outside those four contexts, it is an error.
 
 **Single-column editorial layout:** Content detail pages (building detail, profile, architect profile) use a single-column `max-w-4xl` layout. No right sidebars on content pages. The sidebar pattern is restricted to admin and settings contexts.
 
-**CTA pattern:** In editorial contexts, calls to action are rendered as uppercase tracked text with a `→` arrow — never a filled button. Format: `text-xs font-medium uppercase tracking-widest`. This applies to all in-page action links (review, save, follow, directions, etc.) outside of modal and form contexts.
+**CTA pattern:** In editorial contexts, calls to action are rendered as uppercase tracked text with a `→` arrow — never a filled button. Format: `text-xs font-medium uppercase tracking-widest`. On hover, the label text dims to `text-secondary` and the `→` arrow shifts to `brand-accent` (lime). This applies to all in-page action links (review, save, follow, directions, etc.) outside of modal and form contexts.
+
+**App shell:** The application uses a **horizontal sticky top navigation bar** (logo + nav links + search + primary CTA + bell + avatar), not a left sidebar. The body is a two-column grid: a fluid center feed column and a 320px sticky right rail.
 
 **Mode:** Light only
 
@@ -64,18 +66,22 @@ These are the only colour tokens Cursor and components are permitted to use.
 
 | Alias | Resolves to | Purpose |
 |---|---|---|
-| `brand-primary` | `palette-brand-500` · `#BEFF00` | Primary actions, accent blocks, active indicators |
-| `brand-primary-hover` | `palette-brand-600` · `#9ACC00` | Hover state for primary actions |
-| `brand-primary-foreground` | `palette-neutral-900` · `#171717` | Text/icons on brand-primary background (dark on neon) |
-| `brand-secondary` | `palette-brand-50` · `#F7FFE0` | Secondary surfaces — selected rows, subtle highlights |
-| `brand-secondary-foreground` | `palette-brand-800` · `#4D6600` | Text on brand-secondary background |
+| `brand-primary` | `palette-neutral-900` · `#171717` | **Primary actions — near-black. This is the button colour, not lime.** |
+| `brand-primary-hover` | `#000000` | Hover state for primary actions (pure black) |
+| `brand-primary-foreground` | `#FFFFFF` | Text/icons on brand-primary background (white on black) |
+| `brand-accent` | `palette-brand-500` · `#BEFF00` | The lime accent — used sparingly (notification dot, focus ring, CTA arrow hover, active panel chip) |
+| `brand-accent-hover` | `palette-brand-600` · `#9ACC00` | Hover state for accent elements |
+| `brand-accent-foreground` | `palette-neutral-900` · `#171717` | Text/icons on brand-accent background (dark on lime) |
+| `brand-secondary` | `palette-neutral-100` · `#F5F5F5` | Secondary surfaces — muted tonal background |
+| `brand-secondary-foreground` | `palette-neutral-900` · `#171717` | Text on brand-secondary background |
 | `surface-default` | `palette-neutral-50` · `#FAFAFA` | Page background |
 | `surface-card` | `#FFFFFF` | Card and panel background |
 | `surface-overlay` | `#FFFFFF` | Modal and popover background |
-| `surface-muted` | `palette-neutral-100` · `#F5F5F5` | Muted/subdued surface — sidebar, code blocks |
-| `--sidebar-background` (CSS, HSL components) | `0 0% 96.1%` (default) · matches `surface-muted` | `Sidebar` panel fill via `hsl(var(--sidebar-background))`; override per instance (e.g. pitch-black menu: `0 0% 0%`) |
+| `surface-muted` | `palette-neutral-100` · `#F5F5F5` | Muted/subdued surface — code blocks, input backgrounds, skeletons |
+| `surface-inverse` | `#000000` | Pitch-black surface — overlaid menus, dark panels, tweaks panel |
 | `border-default` | `palette-neutral-200` · `#E5E5E5` | Default border — cards, inputs, dividers |
 | `border-strong` | `palette-neutral-400` · `#A3A3A3` | Emphasis border — focus, selected states |
+| `border-hairline` | `rgba(0,0,0,0.08)` | Softest separator — lighter than `border-default`, for density contexts |
 | `text-primary` | `palette-neutral-900` · `#171717` | Primary body text |
 | `text-secondary` | `palette-neutral-600` · `#525252` | Secondary/supporting text |
 | `text-disabled` | `palette-neutral-400` · `#A3A3A3` | Disabled and placeholder text |
@@ -116,45 +122,41 @@ Dark mode: not configured.
 | `font-weight-medium` | `500` | Labels, nav items, form labels |
 | `font-weight-semibold` | `600` | Headings, emphasis |
 | `font-weight-bold` | `700` | Hero text, strong emphasis |
-| `line-height-tight` | `1.2` | Headings — tighter than default for editorial lockup |
+| `line-height-tight` | `1.0` | Massive display headlines — editorial maximum compression |
+| `line-height-snug` | `1.2` | Standard headings — tighter than default for editorial lockup |
 | `line-height-normal` | `1.5` | Body copy |
 | `line-height-relaxed` | `1.75` | Long-form text — reviews, descriptions |
 | `letter-spacing-tight` | `-0.03em` | Large headings — slight negative tracking for tight display type |
 | `letter-spacing-normal` | `0em` | Body |
 | `letter-spacing-wide` | `0.08em` | All-caps labels, badges, table headers |
+| `letter-spacing-widest` | `0.15em` | Section labels, CTA text, right-rail labels — maximum tracking |
 
-**Font loading — two options (this project uses Vite/React SPA — use Option B):**
+**Font loading:**
 
-**Option A — `next/font/google` (Next.js only):** If the project migrates to Next.js, add the following to `apps/web/app/layout.tsx`:
+**Inter — local variable font (preferred):** Self-host the Inter variable font (`Inter-VariableFont_opsz_wght.ttf`) and declare it with `@font-face`. This eliminates the Google Fonts round-trip, enables optical sizing (`opsz`), and gives access to the full 100–900 weight range:
 
-```typescript
-import { Inter, Space_Mono } from 'next/font/google';
-
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-sans',
-  display: 'swap',
-});
-
-const spaceMono = Space_Mono({
-  subsets: ['latin'],
-  weight: ['400', '700'],
-  variable: '--font-mono',
-  display: 'swap',
-});
-
-// Apply to <html> element: className={`${inter.variable} ${spaceMono.variable}`}
+```css
+@font-face {
+  font-family: 'Inter';
+  src: url('fonts/Inter-VariableFont_opsz_wght.ttf') format('truetype-variations'),
+       url('fonts/Inter-VariableFont_opsz_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 ```
 
-**Option B — `<link>` tag (recommended for Vite/React SPA):** Add this inside the document `<head>` (e.g. `index.html` in a vanilla Vite app):
+**Space Mono — Google Fonts:** Space Mono remains loaded via Google Fonts `<link>`:
 
 ```html
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 ```
 
-**This repository (React Router 7 + SSR):** the same tags are in `src/root.tsx` — `Layout` component `<head>` — not in the minimal root `index.html`.
+**This repository (React Router 7 + SSR):** font declarations live in `src/root.tsx` — `Layout` component `<head>`. Inter font files are served from `public/fonts/`.
+
+**Option — `next/font/google` (Next.js only):** If the project migrates to Next.js, replace the `@font-face` block with `next/font/google` for Inter and update `tailwind.config.ts` `fontFamily.sans` to `['var(--font-sans)', 'sans-serif']`.
 
 ---
 
@@ -276,17 +278,22 @@ theme: {
         },
       },
       // --- Semantic aliases (use ONLY these in components) ---
-      'brand-primary':              '#BEFF00',
-      'brand-primary-hover':        '#9ACC00',
-      'brand-primary-foreground':   '#171717',
-      'brand-secondary':            '#F7FFE0',
-      'brand-secondary-foreground': '#4D6600',
+      'brand-primary':              '#171717',  // Near-black — primary button bg
+      'brand-primary-hover':        '#000000',
+      'brand-primary-foreground':   '#FFFFFF',  // White text on black button
+      'brand-accent':               '#BEFF00',  // Lime — notification dot, focus ring, CTA arrow hover
+      'brand-accent-hover':         '#9ACC00',
+      'brand-accent-foreground':    '#171717',
+      'brand-secondary':            '#F5F5F5',
+      'brand-secondary-foreground': '#171717',
       'surface-default':            '#FAFAFA',
       'surface-card':               '#FFFFFF',
       'surface-overlay':            '#FFFFFF',
       'surface-muted':              '#F5F5F5',
+      'surface-inverse':            '#000000',  // Pitch-black surface — menus, overlaid panels
       'border-default':             '#E5E5E5',
       'border-strong':              '#A3A3A3',
+      'border-hairline':            'rgba(0,0,0,0.08)',
       'text-primary':               '#171717',
       'text-secondary':             '#525252',
       'text-disabled':              '#A3A3A3',
@@ -350,6 +357,18 @@ theme: {
       'none': 'none',
       'card-elevated': 'var(--card-elevation-elevated)',
     },
+    lineHeight: {
+      'tight':   '1.0',   // Massive display headlines
+      'snug':    '1.2',   // Standard editorial headings (was "tight" previously)
+      'normal':  '1.5',
+      'relaxed': '1.75',
+    },
+    letterSpacing: {
+      'tight':   '-0.03em',
+      'normal':  '0em',
+      'wide':    '0.08em',
+      'widest':  '0.15em',  // Section labels, CTA text, right-rail labels
+    },
   },
 },
 ```
@@ -377,20 +396,22 @@ primitives with the project's tokens.
     --card-foreground:        0 0% 9%;            /* text-primary #171717 */
     --popover:                0 0% 100%;          /* surface-overlay #FFFFFF */
     --popover-foreground:     0 0% 9%;            /* text-primary #171717 */
-    --primary:                75 100% 50%;        /* brand-primary #BEFF00 */
-    --primary-foreground:     0 0% 9%;            /* brand-primary-foreground #171717 */
-    --secondary:              75 100% 94%;        /* brand-secondary #F7FFE0 */
-    --secondary-foreground:   75 100% 20%;        /* brand-secondary-foreground #4D6600 */
+    --primary:                0 0% 9%;             /* brand-primary #171717 — near-black buttons */
+    --primary-foreground:     0 0% 100%;          /* brand-primary-foreground #FFFFFF — white on black */
+    --secondary:              0 0% 96%;           /* brand-secondary #F5F5F5 */
+    --secondary-foreground:   0 0% 9%;            /* brand-secondary-foreground #171717 */
     --muted:                  0 0% 96%;           /* surface-muted #F5F5F5 */
     --muted-foreground:       0 0% 32%;           /* text-secondary #525252 */
-    --accent:                 75 100% 94%;        /* brand-secondary #F7FFE0 */
-    --accent-foreground:      75 100% 20%;        /* brand-secondary-foreground #4D6600 */
+    --accent:                 0 0% 96%;           /* surface-muted #F5F5F5 */
+    --accent-foreground:      0 0% 9%;            /* text-primary #171717 */
     --destructive:            0 86% 60%;          /* feedback-destructive #EF4444 */
     --destructive-foreground: 0 0% 100%;          /* feedback-destructive-foreground #FFFFFF */
     --border:                 0 0% 90%;           /* border-default #E5E5E5 */
     --input:                  0 0% 90%;           /* border-default #E5E5E5 */
-    --ring:                   75 100% 50%;        /* brand-primary #BEFF00 — focus ring */
+    --ring:                   75 100% 50%;        /* brand-accent #BEFF00 — focus ring (lime) */
     --radius:                 0.125rem;           /* radius-sm 2px — sharp default */
+    --brand-accent:           75 100% 50%;        /* brand-accent #BEFF00 — lime, notification dot, CTA arrow */
+    --brand-accent-foreground: 0 0% 9%;           /* brand-accent-foreground #171717 */
 
     /* Extended semantic tokens for Plano-specific components */
     --success:                142 76% 36%;        /* feedback-success #16A34A */
@@ -419,10 +440,10 @@ convention.
 
 | UI context | Font size | Font weight | Letter spacing | Line height | Colour alias |
 |---|---|---|---|---|---|
-| Page title (h1) | `font-size-4xl` | `font-weight-bold` | `letter-spacing-tight` | `line-height-tight` | `text-primary` |
-| Section heading (h2) | `font-size-3xl` | `font-weight-semibold` | `letter-spacing-tight` | `line-height-tight` | `text-primary` |
-| Card title (h3) | `font-size-xl` | `font-weight-semibold` | `letter-spacing-normal` | `line-height-tight` | `text-primary` |
-| Subsection heading (h4) | `font-size-base` | `font-weight-semibold` | `letter-spacing-normal` | `line-height-tight` | `text-primary` |
+| Page title (h1) | `font-size-4xl` | `font-weight-bold` | `letter-spacing-tight` | `line-height-snug` | `text-primary` |
+| Section heading (h2) | `font-size-3xl` | `font-weight-semibold` | `letter-spacing-tight` | `line-height-snug` | `text-primary` |
+| Card title (h3) | `font-size-xl` | `font-weight-semibold` | `letter-spacing-normal` | `line-height-snug` | `text-primary` |
+| Subsection heading (h4) | `font-size-base` | `font-weight-semibold` | `letter-spacing-normal` | `line-height-snug` | `text-primary` |
 | Body copy | `font-size-base` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-primary` |
 | Supporting / secondary text | `font-size-sm` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-secondary` |
 | Table header | `font-size-xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
@@ -444,16 +465,25 @@ convention.
 | | | | | | |
 | **Feed editorial contexts** | | | | | |
 | Feed category label | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
-| Feed building name (hero) | `font-size-5xl` / `font-size-6xl` | `font-weight-bold` | `letter-spacing-tight` | `line-height-tight` | `text-primary` |
-| Feed building name (compact) | `font-size-2xl` | `font-weight-semibold` | `letter-spacing-tight` | `line-height-tight` | `text-primary` |
+| Feed building name (hero) | `clamp(48px, 6vw, 72px)` | `font-weight-bold` | `-0.035em` | `0.95` | `text-primary` |
+| Feed building name (compact / sm) | `clamp(36px, 4vw, 48px)` | `font-weight-bold` | `-0.035em` | `1.0` | `text-primary` |
 | Feed review excerpt | `font-size-base` | `font-weight-normal` | `letter-spacing-normal` | `line-height-relaxed` | `text-secondary` |
 | Feed user name | `font-size-sm` | `font-weight-medium` | `letter-spacing-normal` | `line-height-normal` | `text-primary` |
 | Feed timestamp | `font-size-xs` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-disabled` |
-| Feed CTA link | `font-size-xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-tight` | `text-primary` |
-| Feed section divider | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
-| Feed sidebar widget title | `font-size-xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
-| Feed sidebar item name | `font-size-base` | `font-weight-semibold` | `letter-spacing-normal` | `line-height-tight` | `text-primary` |
-| Feed sidebar item meta | `font-size-xs` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-secondary` |
+| Feed CTA link | `font-size-xs` | `font-weight-medium` | `letter-spacing-widest` | `line-height-tight` | `text-primary` (arrow → `brand-accent` on hover) |
+| Feed section divider label | `11px` | `font-weight-medium` | `letter-spacing-widest` | `line-height-normal` | `text-primary` |
+| Feed section divider § prefix | `font-size-xs` (mono) | `font-weight-normal` | `letter-spacing-wide` | `line-height-normal` | `text-disabled` |
+| Feed above-title line | `13px` | `font-weight-normal` | `-0.005em` | `line-height-normal` | `text-secondary` |
+| Feed pull-quote (short review) | `clamp(28px, 3vw, 40px)` | `font-weight-medium` | `-0.025em` | `1.15` | `text-primary` |
+| Feed photo caption (mono) | `font-size-xs` (mono) | `font-weight-normal` | `0.04em` | `line-height-normal` | `text-disabled` |
+| Feed footer action | `10px` | `font-weight-medium` | `letter-spacing-widest` | `line-height-normal` | `text-secondary` |
+| Feed activity row timestamp | `11px` (mono) | `font-weight-normal` | `0.04em` | `line-height-normal` | `text-disabled` |
+| Right rail section label | `11px` | `font-weight-medium` | `letter-spacing-widest` | `line-height-normal` | `text-disabled` |
+| Right rail stat value | `24px` | `font-weight-semibold` | `-0.025em` | `1.0` | `text-primary` |
+| Right rail stat label | `10px` | `font-weight-medium` | `0.14em` | `line-height-normal` | `text-disabled` |
+| Right rail trending rank | `font-size-xs` (mono) | `font-weight-normal` | `0.04em` | `line-height-normal` | `text-disabled` |
+| Top nav link (default) | `14px` | `font-weight-medium` | `-0.01em` | `line-height-normal` | `text-secondary` |
+| Top nav link (active) | `14px` | `font-weight-medium` | `-0.01em` | `line-height-normal` | `text-primary` |
 | | | | | | |
 | **Content detail pages (building, profile, architect)** | | | | | |
 | Page hero title (building/person name) | `font-size-4xl` / `font-size-5xl` / `font-size-6xl` | `font-weight-bold` | `letter-spacing-tight` | `line-height-tight` | `text-primary` |
@@ -470,7 +500,7 @@ convention.
 | Highlights sub-section label | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-disabled` |
 | Quote blockquote text | `font-size-sm` | `font-weight-medium` | `letter-spacing-normal` | `line-height-relaxed` | `text-secondary` |
 
-**Feed editorial typography notes:** The extreme scale contrast between category labels (`font-size-2xs`, uppercase, tracked) and building names (`font-size-5xl`+, bold, tight) is the defining visual signature of the editorial feed. This mirrors A24's approach where a tiny "PODCAST" label sits above a massive 5-line headline. The contrast *is* the design — do not flatten it by making labels larger or headlines smaller. Feed CTA links use uppercase tracked text with a `→` arrow, never a filled button — editorial navigation, not app UI. All feed category labels and CTA links must use `uppercase` text-transform.
+**Feed editorial typography notes:** The extreme scale contrast between the `feed-above` building metadata line (13px, gray) and the massive feed title (`clamp(48px, 6vw, 72px)`, bold, near-zero line-height) is the defining visual signature of the editorial feed. The contrast *is* the design — do not flatten it. Feed CTA links use uppercase tracked text (`letter-spacing-widest`) with a `→` arrow: on hover, the text dims to `text-secondary` and the arrow shifts to `brand-accent` (lime). This is the only context where `brand-accent` appears in the feed. Feed section dividers use `text-primary` (not secondary) for their labels, paired with a black `1px solid text-primary` bottom border — not the default gray hairline.
 
 ---
 
@@ -511,13 +541,13 @@ context — never a raw palette value.**
 
 ### Brand accent usage
 
-**`brand-primary`** (`#BEFF00`) is the single neon accent. In **app UI contexts** (admin, settings, forms, modals) it is used for: primary button backgrounds, focus rings, and progress bars. In **all content/feed/detail pages** it is essentially absent — these surfaces are strictly monochromatic. The neon must not appear as: section accent bars, verified badge text, active tab underlines, rating dot fill, bookmark/save icon fill, filter toggle backgrounds, or avatar borders in any content page context. Those elements all use `text-primary` (`#171717`). If the neon appears in more than two places on any given screen, it is overused.
+**`brand-primary`** (`#171717`) is the primary action colour — near-black. It is used for: primary button backgrounds everywhere (forms, modals, admin, CTA buttons in the top nav). It is the button colour. It is not the lime. `brand-primary-foreground` is `#FFFFFF` (white text on a black button).
 
-**Editorial and content page accent rule:** Feed, building detail, profile, and architect profile pages are monochromatic. `brand-primary` may appear only as: the `→` arrow of a CTA text link on hover, the focus ring on a focused interactive element, or the background of a primary button inside a modal/dialog opened from these pages. All other accents use `text-primary` or `text-secondary`. The surface is a white canvas — photography provides the colour.
+**`brand-accent`** (`#BEFF00`) is the lime accent — the one bright colour in the system. It appears in exactly four places: the notification dot on the bell icon, the `→` arrow of a CTA text link on hover, focus rings (`outline-color: brand-accent`), and the active state chip inside overlaid dark panels (tweaks panel, dark dropdown menus). If `brand-accent` appears anywhere outside these four contexts it is an error. It must not appear as: button backgrounds, section accent bars, tab indicators, bookmark fills, verified badge colours, or any fill state on content or feed pages.
 
-**`brand-primary-foreground`** (`#171717`) is always used for text and icons placed on `brand-primary` surfaces. The neon is a light colour — it requires dark foreground, not white.
+**`brand-accent-foreground`** (`#171717`) is always used for text placed on `brand-accent` surfaces. The lime is a light colour — it requires dark foreground, not white.
 
-**`brand-secondary`** (`#F7FFE0`) is a barely-there neon tint used for: hovered table rows, selected filter chips, active tab backgrounds, and subtle highlight surfaces. It provides a whisper of the accent without the full neon intensity.
+**`brand-secondary`** (`#F5F5F5`) is a neutral muted surface used for: secondary button backgrounds and subdued highlight surfaces. It no longer carries any neon tint.
 
 ### Feedback aliases
 

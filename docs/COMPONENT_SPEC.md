@@ -43,7 +43,7 @@ in the entries above.
 
 ## Interaction Design Principles
 
-Plano is an architectural portfolio platform with an **editorial** personality inspired by A24 Films (a24films.com) and contemporary architecture studios (OMA, BIG, Zaha Hadid Architects). Its personality is **editorial, modern, minimalist, sharp, and photographic**. The density setting is **spacious** — generous whitespace creates editorial breathing room. The radius direction is **sharp** — 2px default for app UI, 0px for editorial feed content. In the feed, hierarchy comes from **typography scale and whitespace alone** — not from borders, not from card containers, not from shadows. Tiny uppercase labels contrasted against massive bold headlines create structure. Content floats directly on the white canvas. These five principles are calibrated to that identity, with editorial feed exceptions noted where applicable.
+Plano is an architectural portfolio platform with an **editorial** personality inspired by A24 Films (a24films.com) and contemporary architecture studios (OMA, BIG, Zaha Hadid Architects). Its personality is **editorial, modern, minimalist, sharp, and photographic**. The density setting is **spacious** — generous whitespace creates editorial breathing room. The radius direction is **sharp** — 2px default for app UI, 0px for editorial feed content. In the feed, hierarchy comes from **typography scale and whitespace alone** — not from borders, not from card containers, not from shadows. Tiny metadata lines contrasted against massive bold headlines create structure. Content floats directly on the white canvas. The app shell uses a **horizontal sticky top navigation bar** — not a left sidebar. The body is a two-column grid: fluid center feed + 320px sticky right rail. These five principles are calibrated to that identity, with editorial feed exceptions noted where applicable.
 
 ### 1. Progressive Disclosure
 
@@ -122,43 +122,63 @@ Plano is an architectural portfolio platform with an **editorial** personality i
 ## 1. Page Layout
 
 ### Purpose
-The outermost structural shell that establishes page background, sidebar placement, header bar, content max-width, and content area padding. Every page in Plano is composed inside this layout.
+The outermost structural shell that establishes the page background, top navigation, center feed column, and right rail. Every page in Plano is composed inside this layout.
 
 ### Layout Composition
-The root element is a full-viewport flex row: `flex min-h-screen`. The sidebar is a fixed-width column on the left (`w-64 flex-shrink-0`). The main area is a flex column filling the remaining space (`flex-1 flex flex-col min-w-0`).
+The app root is a flex column: `flex flex-col min-h-screen max-w-[1440px] mx-auto border-x border-border-default`. It contains:
 
-The header bar sits at the top of the main area: `flex items-center justify-between h-16 px-8 border-b border-border-default`. It holds the page title on the left and page-level actions on the right.
+1. **Top header** (sticky) — logo + nav links + search + primary CTA + bell + avatar
+2. **App body** — a CSS grid: `grid-template-columns: minmax(0, 1fr) 320px`
+   - **Center column** — the main feed/content area with `border-r border-border-default`
+   - **Right rail** — 320px sticky secondary column (trending, people, activity)
 
-The content area fills below the header: `flex-1 overflow-y-auto`. Content inside it is padded with `p-8`. For pages that should not stretch to the full width (settings, forms, single-record views), the inner content block uses `max-w-2xl`. For data tables and grids, content fills the available width — no inner max-width constraint.
+The **top header** is `sticky top-0 z-50` with a frosted-glass background (`rgba(250,250,250,0.92)` + `backdrop-filter: blur(12px)`). Inner layout: `flex items-center justify-between px-10 py-[18px]`. Left side: logo + nav links. Right side: search field + primary CTA + bell + avatar.
 
-Responsive behaviour: below `lg` (1024px), the sidebar collapses to a hamburger-triggered overlay. The content padding reduces to `p-6` at `md` and `p-4` at `sm`.
+Nav links are `text-sm font-medium text-text-secondary`, active link `text-text-primary` with a `1px` underline injected via `::after` that sits flush with the header's bottom border.
+
+The **center column** has `padding: 0 64px 120px` (horizontal) for the feed. The **page head** within it uses `padding: 48px 64px 36px` with a large bold date/title.
+
+The **right rail** is `position: sticky; top: 73px; height: calc(100vh - 73px); overflow-y: auto; padding: 36px 32px`. It holds stat widgets, trending lists, people-to-follow, and recent activity.
+
+Responsive: below 900px the rail collapses and horizontal padding reduces to 24px.
 
 ### Token Assembly
 
-| Part | Property | Token | Tailwind class |
+| Part | Property | Token | Tailwind |
 |---|---|---|---|
-| Root | background | surface-default | bg-surface-default |
-| Sidebar | background | surface-muted | bg-surface-muted |
-| Sidebar | border-right | border-default | border-r border-border-default |
-| Sidebar | width | — | w-64 |
-| Header bar | background | surface-card | bg-surface-card |
-| Header bar | border-bottom | border-default | border-b border-border-default |
-| Header bar | height | spacing-16 | h-16 |
-| Header bar | padding-x | spacing-8 | px-8 |
-| Content area | padding | spacing-8 | p-8 |
-| Content area | background | surface-default | bg-surface-default |
+| App root | background | surface-default | bg-surface-default |
+| App root | max-width | — | max-w-[1440px] mx-auto |
+| App root | side borders | border-default | border-x border-border-default |
+| Top header | background | surface-default (92% opacity + blur) | bg-surface-default/95 backdrop-blur-md |
+| Top header | border-bottom | border-default | border-b border-border-default |
+| Top header | padding-x | — | px-10 |
+| Top header | padding-y | — | py-[18px] |
+| Nav link (default) | color | text-secondary | text-text-secondary |
+| Nav link (active) | color | text-primary | text-text-primary |
+| Nav link active underline | — | text-primary | 1px `::after` flush with header bottom |
+| Primary CTA ("Log a visit") | background | brand-primary | bg-brand-primary text-text-inverse |
+| Bell icon | color | text-secondary → text-primary | hover:text-text-primary |
+| Bell notification dot | color | brand-accent | bg-brand-accent |
+| Avatar | background | brand-primary | bg-brand-primary text-text-inverse |
+| Center column | border-right | border-default | border-r border-border-default |
+| Right rail | background | surface-default | bg-surface-default |
+| Right rail | padding | — | px-8 pt-9 pb-8 |
 
 ### Interaction Design Notes
 
-**Width constraints:** The content area itself has no max-width — it fills the space right of the sidebar. Pages that need a narrower column (settings, forms) apply `max-w-2xl mx-auto` to their own root wrapper inside the content area. Data-heavy pages (building tables, collection grids) intentionally use the full width.
+**Width constraints:** The center column has no inner max-width for the feed. Pages that need a narrower column (settings, forms, single-record views) apply `max-w-2xl mx-auto` inside the center column. Data-heavy pages use the full column width.
+
+**Right rail sticky behaviour:** The right rail scrolls independently of the center column. `top: 73px` matches the header height. It auto-hides the scrollbar (`scrollbar-width: none`).
 
 ### Constraints
 
-**Always:** `surface-default` is applied only to the root page background — never to cards, panels, or components that sit on it. A component using `surface-default` becomes invisible against the page.
+**Always:** `surface-default` is applied only to the root page background and the right rail — never to cards or panels sitting on it. A component using `surface-default` becomes invisible against the page.
 
-**Always:** The sidebar uses `surface-muted`, not `surface-card`. The sidebar is a supporting structural element; giving it the same surface as content cards destroys the visual hierarchy.
+**Always:** The primary CTA and avatar both use `brand-primary` (black) background with `text-inverse` (white) text. Do not use `brand-accent` (lime) for button or avatar backgrounds.
 
-**Default:** Content area padding is `spacing-8`. Legitimate exception: a full-bleed photo gallery or map view that intentionally extends to the edges of the content region.
+**Always:** The bell notification dot uses `brand-accent` (lime). This is one of the four permitted uses of the lime accent.
+
+**Default:** Center column horizontal padding is `px-16` (64px). Legitimate exception: a full-bleed photo or map view that intentionally bleeds to the column edge.
 
 ---
 
@@ -190,7 +210,7 @@ For text-only cards (stat blocks, review cards), the entire card is padded with 
 | State | Part | Property | Tailwind class |
 |---|---|---|---|
 | hover | Container | border | hover:border-border-strong |
-| focus-visible | Container | ring | focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 |
+| focus-visible | Container | ring | focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 |
 
 ### Interaction Design Notes
 
@@ -222,9 +242,10 @@ Buttons use `inline-flex items-center justify-center gap-2`. Button groups (e.g.
 
 | Part | Property | Token | Tailwind class |
 |---|---|---|---|
-| Container | background | brand-primary | bg-brand-primary |
+| Container | background | brand-primary (`#171717`) | bg-brand-primary |
 | Container | border-radius | radius-sm | rounded-sm |
 | Container | shadow | shadow-none | shadow-none |
+| Label | color | brand-primary-foreground (`#FFFFFF`) | text-text-inverse |
 
 ### Variants
 
@@ -253,7 +274,7 @@ Buttons use `inline-flex items-center justify-center gap-2`. Button groups (e.g.
 | hover (primary) | Container | background | hover:bg-brand-primary-hover |
 | hover (ghost) | Container | background | hover:bg-surface-muted |
 | hover (destructive) | Container | opacity | hover:opacity-90 |
-| focus-visible | Container | ring | focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 |
+| focus-visible | Container | ring | focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 |
 | active (primary) | Container | scale | active:scale-[0.98] |
 | disabled | Container | opacity + cursor | disabled:opacity-50 disabled:cursor-not-allowed |
 
@@ -269,8 +290,10 @@ In editorial contexts (feed, building detail, profile, architect profile), actio
 
 | Part | Property | Tailwind class |
 |---|---|---|
-| Text | — | `text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors` |
-| Arrow | — | `→` character (inline after the label text) |
+| Text (rest) | — | `text-xs font-medium uppercase tracking-widest text-text-primary transition-colors` |
+| Text (hover) | — | `hover:text-text-secondary` (dims on hover — does not brighten) |
+| Arrow (rest) | — | `→` character, inherits text colour |
+| Arrow (hover) | — | shifts to `brand-accent` (lime) — the only lime in the editorial CTA |
 
 Examples: `VIEW BUILDING →`, `WRITE REVIEW →`, `CLAIM PROFILE →`, `ADD FAVOURITES →`, `DIRECTIONS →`, `EDIT →`.
 
@@ -280,9 +303,9 @@ Examples: `VIEW BUILDING →`, `WRITE REVIEW →`, `CLAIM PROFILE →`, `ADD FAV
 
 ### Constraints
 
-**Always:** `brand-primary-foreground` (dark, `#171717`) is used for text on `brand-primary` buttons. The neon is a light colour — white text on it fails contrast. This is a WCAG violation if reversed.
+**Always:** `brand-primary-foreground` (white, `#FFFFFF`) is used for text on `brand-primary` buttons. `brand-primary` is now near-black — it requires white foreground, not dark. Using `text-primary` on a `brand-primary` button is a contrast failure.
 
-**Always:** Focus ring uses `brand-primary` at 2px offset across all button variants. No exceptions.
+**Always:** Focus ring uses `brand-accent` (lime, `#BEFF00`) at 2px offset across all button variants. This is one of the four permitted uses of the lime accent. No exceptions.
 
 **Default:** Button size is `md`. Use `sm` for table row actions and tight toolbar contexts. Use `lg` for page-level hero CTAs. Legitimate exception: a landing page may use a custom larger size, but it must still use `radius-sm`.
 
@@ -314,11 +337,11 @@ Inputs are block-level: `flex w-full`. Textareas add `min-h-[120px] resize-y`. S
 |---|---|---|---|
 | hover | Input | shadow | hover:shadow-sm |
 | hover | Input | border | hover:border-border-strong |
-| focus-visible | Input | border | focus-visible:border-brand-primary |
-| focus-visible | Input | ring | focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-0 |
+| focus-visible | Input | border | focus-visible:border-brand-accent |
+| focus-visible | Input | ring | focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-0 |
 | disabled | Input | opacity + cursor | disabled:opacity-50 disabled:cursor-not-allowed |
 | error | Input | border | border-feedback-destructive |
-| error + focus | Input | ring | focus-visible:ring-2 focus-visible:ring-feedback-destructive |
+| error + focus | Input | ring | focus-visible:ring-2 focus-visible:ring-feedback-destructive focus-visible:ring-offset-0 |
 
 ### Interaction Design Notes
 
@@ -465,7 +488,7 @@ For tables with row actions, the last column is right-aligned (`text-right`) and
 
 **Always:** Table header text uses `uppercase tracking-wide text-xs font-medium text-text-secondary`. This is the architectural drafting convention — column headers are labelling, not content.
 
-**Always:** Row hover uses `brand-secondary` (the barely-there neon tint), not `surface-muted`. This is the only place the brand accent appears in the table — it must be consistent.
+**Always:** Row hover uses `brand-secondary` (`#F5F5F5`, a neutral muted tint), not `surface-default`. This is a subtle but consistent hover signal.
 
 **Default:** Tables use `shadow-none` and rely on the border for containment. Legitimate exception: a table that sits on `surface-muted` (e.g. inside a sidebar panel) may use `shadow-md` to lift it from the muted surface.
 
@@ -523,52 +546,66 @@ For modals containing forms, the body scrolls independently if content exceeds `
 
 ---
 
-## 9. Sidebar Navigation
+## 9. Top Navigation
 
 ### Purpose
-The persistent vertical navigation panel on the left side of the layout. It provides access to all top-level sections of the application.
+The persistent horizontal navigation bar at the top of every page. Provides access to all primary sections of the application, plus the search command, primary CTA, notifications, and the user avatar.
 
 ### Layout Composition
-The sidebar is `flex flex-col h-full`. It contains a logo/brand area at the top (`p-6`), a navigation list in the middle (`flex-1 flex flex-col gap-1 px-3 py-4 overflow-y-auto`), and an optional footer area at the bottom (`p-4 border-t border-border-default`).
+The top nav is a full-width sticky bar: `sticky top-0 z-50`. Its inner wrapper is `flex items-center justify-between px-10 py-[18px] gap-8`.
 
-Each nav item is `flex items-center gap-3 px-3 py-2 rounded-sm w-full text-left`. Items contain an icon (20×20, from lucide-react) and a text label.
+**Left side:** Plano logo (`h-[22px]`) + horizontal nav links with `gap-1`.
+
+**Right side:** Search field (`w-[320px]`) + primary CTA button + bell icon + avatar.
+
+Each nav link is `text-sm font-medium px-[14px] py-2 rounded-sm`. The active link appends a `::after` pseudo-element: `content: ""; display: block; height: 1px; background: text-primary; margin: 6px -14px -19px` — this underline is flush with the header's bottom border.
 
 ### Token Assembly
 
 | Part | Property | Token | Tailwind class |
 |---|---|---|---|
-| Sidebar container | background | surface-muted | bg-surface-muted |
-| Sidebar container | border-right | border-default | border-r border-border-default |
-| Nav item (default) | background | transparent | bg-transparent |
-| Nav item (default) | border-radius | radius-sm | rounded-sm |
-| Nav item (default) | padding | spacing-3 x, spacing-2 y | px-3 py-2 |
-| Nav item (active) | background | surface-card | bg-surface-card |
-| Nav item (active) | border | border-default | border border-border-default |
-| Active indicator | border-left | text-primary | border-l-2 border-text-primary |
-| Footer | border-top | border-default | border-t border-border-default |
-| Footer | padding | spacing-4 | p-4 |
-
-### Interactive States
-
-| State | Part | Property | Tailwind class |
-|---|---|---|---|
-| hover | Nav item | background | hover:bg-surface-card |
-| focus-visible | Nav item | ring | focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 |
-| active | Nav item | background + border | bg-surface-card border border-border-default |
+| Header bar | background | surface-default/95 + blur | bg-[rgba(250,250,250,0.92)] backdrop-blur-md |
+| Header bar | border-bottom | border-default | border-b border-border-default |
+| Header bar | z-index | — | z-50 |
+| Header bar | padding-x | — | px-10 |
+| Header bar | padding-y | — | py-[18px] |
+| Nav link (default) | color | text-secondary | text-text-secondary |
+| Nav link (hover) | color | text-primary | hover:text-text-primary |
+| Nav link (active) | color | text-primary | text-text-primary |
+| Nav link active underline | — | text-primary | 1px pseudo-element (see above) |
+| Search field | border | border-default | border border-border-default |
+| Search field | background | surface-default | bg-surface-default |
+| Search field text | color | text-disabled | text-text-disabled |
+| Search field (hover) | border | border-strong | hover:border-border-strong |
+| Primary CTA ("Log a visit") | background | brand-primary | bg-brand-primary |
+| Primary CTA | color | text-inverse | text-text-inverse |
+| Primary CTA (hover) | background | brand-primary-hover | hover:bg-brand-primary-hover |
+| Bell icon | color | text-secondary | text-text-secondary |
+| Bell icon (hover) | color | text-primary | hover:text-text-primary |
+| Bell notification dot | color | brand-accent | bg-brand-accent |
+| Bell notification dot | border | surface-default | border-[1.5px] border-surface-default |
+| Avatar | background | brand-primary | bg-brand-primary |
+| Avatar | color | text-inverse | text-text-inverse |
+| Avatar | border-radius | radius-full | rounded-full |
+| Avatar | size | — | w-8 h-8 |
 
 ### Interaction Design Notes
 
-**Action representation:** Nav items always use icon + text label. The icon aids scannability; the text label is required for accessibility and for distinguishing sections with similar iconography. Icon-only collapsed sidebar is not part of Plano's design — the spacious density directive allocates room for the full sidebar.
+**Action representation:** Nav links use text labels only — no icons in the top nav. The logo is on the far left, separated from nav links by the gap.
 
-**Progressive disclosure:** All navigation items are visible at rest. No hover-revealed nav items — the sidebar is the primary wayfinding mechanism and must not hide destinations.
+**Search field:** Renders as a `<button>` (not an actual `<input>`). Clicking it opens the command palette (⌘K). The `kbd` shortcut hint uses `font-mono text-[10px]`.
+
+**Progressive disclosure:** All top nav items are always visible. No dropdowns or hidden items at desktop width.
 
 ### Constraints
 
-**Always:** The active nav item uses a `text-primary` (`#171717`) left border accent (2px) — monochromatic, not neon. The sidebar is a structural element, not a brand expression surface. Neon does not appear in navigation.
+**Always:** The bell notification dot uses `brand-accent` (lime) — this is one of the four permitted uses of the lime accent. It must not be any other colour.
 
-**Always:** Nav item text uses `text-primary` for all states (default and active). Active vs default is distinguished by background surface and the left border accent, not by text colour. See the Typography Matrix for weight distinction (`font-weight-medium` default, `font-weight-semibold` active).
+**Always:** The primary CTA button (`brand-primary`, black) and avatar use `brand-primary-foreground` (`#FFFFFF`, white) text. No dark text on the black button.
 
-**Default:** The sidebar is 256px wide (`w-64`). Legitimate exception: none — varying sidebar width across pages creates layout instability.
+**Always:** Active nav underline is monochromatic (`text-primary` / `#171717`). The top nav is a structural element — `brand-accent` does not appear here.
+
+**Default:** Nav links are `px-[14px] py-2`. The negative bottom margin on the active `::after` pseudo-element (`-19px`) ensures the underline touches the header's bottom border — adjust if header padding changes.
 
 ---
 
@@ -659,7 +696,7 @@ Toasts are positioned `fixed bottom-6 right-6 z-50` (or in a toast stack contain
 | warning | Icon | colour | feedback-warning | text-feedback-warning |
 | destructive | Left border | border-left | feedback-destructive | border-l-4 border-feedback-destructive |
 | destructive | Icon | colour | feedback-destructive | text-feedback-destructive |
-| info | Left border | border-left | brand-primary | border-l-4 border-brand-primary |
+| info | Left border | border-left | brand-accent | border-l-4 border-brand-accent |
 | info | Icon | colour | text-secondary | text-text-secondary |
 
 ### Interactive States
@@ -667,7 +704,7 @@ Toasts are positioned `fixed bottom-6 right-6 z-50` (or in a toast stack contain
 | State | Part | Property | Tailwind class |
 |---|---|---|---|
 | hover (dismiss) | Button | background | hover:bg-surface-muted |
-| focus-visible (dismiss) | Button | ring | focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 |
+| focus-visible (dismiss) | Button | ring | focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 |
 
 ### Interaction Design Notes
 
@@ -702,189 +739,372 @@ The feed follows an editorial magazine aesthetic inspired by A24 Films. The defi
 
 ---
 
-### 13a. Feed Hero Card
+### 13a. Feed Hero (editorial opening header)
 
 #### Purpose
-The primary editorial unit — a full-width magazine-spread layout showcasing a building review with photography. This is the most visually impactful feed item and sets the editorial tone.
+The editorial opening of the feed page — a large primary photo with caption alongside a ranked queue of recent activity. It sets the tone before the social feed begins. This is a `<header>` element, not a review card.
 
 #### Layout Composition
-Two-column layout on desktop: text block on one side, image on the other. The text block contains (top to bottom): category label, building name (massive), architect name, review excerpt, user attribution, and CTA link. The image fills its column edge-to-edge with no padding, border, or radius.
+The `feed-hero` wrapper bleeds past the feed column's horizontal padding (`margin: 0 -64px; padding: 56px 64px 64px`). It has a `border-bottom: 1px solid var(--text-primary)` (black hairline, not default gray).
 
-On mobile, the layout stacks vertically: image first (full-width, edge-to-edge), text block below.
+Desktop grid: `grid-template-columns: 1.6fr 1fr; gap: 40px; align-items: start`.
 
-The text-image position alternates between feed items (text-left/image-right, then text-right/image-left) to create visual rhythm, like magazine page spreads.
+**Left — primary photo:** `<figure>` with a full-width image (`aspect-ratio: 16/10; object-fit: cover; filter: contrast(1.02) saturate(0.95)`) and a `<figcaption>` below it:
+- Building name: `font-size: 22px; font-weight: 600; letter-spacing: -0.02em; color: text-primary`
+- Architect: italic serif style, `color: text-secondary` (uses `font-family: var(--font-serif, Georgia, serif)`)
+- Byline: monospace, 10px, `letter-spacing: 0.14em`, uppercase, `text-disabled` — format: `CITY · YEAR · reviewed by NAME`
 
-Desktop structure: `grid grid-cols-2 gap-0 items-stretch`. Mobile: `flex flex-col`.
+**Right — queue:** `<ol>` of 4–5 items. Each item: `grid-template-columns: 64px 1fr auto; gap: 16px; padding: 16px 0; border-bottom: 1px solid border-default`. The last item omits the border.
+- Thumbnail: 64×64 square, `background-size: cover`, no radius
+- Building name: `font-size: 15px; font-weight: 500; letter-spacing: -0.01em; text-primary`
+- Sub-meta: monospace, 10px, uppercase, `text-disabled` — reviewer name (text-secondary) + dot + timestamp
+- Rating: 3-dot scale (filled vs empty open circle), right-aligned
+
+Mobile: stacks vertically, reduced padding (`32px 24px 40px`).
 
 #### Token Assembly
 
-| Part | Property | Token | Tailwind class |
+| Part | Property | Token | Tailwind |
 |---|---|---|---|
-| Container | background | none | — (transparent, sits on page surface) |
-| Container | border | none | — |
-| Container | margin-bottom | spacing-16 to spacing-20 | mb-16 / mb-20 |
-| Category label | — | — | text-2xs font-medium uppercase tracking-widest text-text-secondary |
-| Building name | — | — | text-5xl lg:text-6xl font-bold tracking-tight leading-tight text-text-primary |
-| Architect name | — | — | text-sm font-normal text-text-secondary |
-| Review excerpt | — | — | text-base font-normal leading-relaxed text-text-secondary max-w-md |
-| User attribution | — | — | text-sm font-medium text-text-primary |
-| CTA link | — | — | text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary transition-colors |
-| CTA arrow | — | — | `→` character or ArrowRight icon, inline |
-| Image | border-radius | radius-none | rounded-none |
-| Image | object-fit | — | object-cover w-full h-full |
-
-#### Interaction Design Notes
-
-**CTA pattern:** The primary CTA is a text link reading `VIEW BUILDING →` — uppercase, tracked, with an arrow. On hover, the text or arrow shifts to `brand-primary`. This replaces any filled button in the feed context.
-
-**Image interaction:** Clicking the image navigates to the building detail page. No hover overlay or zoom effect — the editorial aesthetic is static and composed, not animated.
-
-**Like/save actions:** Positioned subtly beneath the review excerpt or in the user attribution row. Icon-only, small (`h-6 w-6`), using `text-text-secondary` at rest, `text-text-primary` on hover, `brand-primary` when active.
+| Wrapper | background | surface-default | — (transparent) |
+| Wrapper | bottom border | text-primary | border-b border-text-primary |
+| Wrapper | bleed | — | -mx-16 px-16 |
+| Primary image | border-radius | radius-none | rounded-none |
+| Primary image | aspect | 16/10 | aspect-[16/10] |
+| Caption building name | — | text-primary | text-[22px] font-semibold tracking-[-0.02em] |
+| Caption architect | — | text-secondary | italic (font-serif) |
+| Caption byline | — | text-disabled | font-mono text-[10px] tracking-[0.14em] uppercase |
+| Queue item | bottom border | border-default | border-b border-border-default |
+| Queue thumbnail | border-radius | radius-none | rounded-none |
+| Queue building name | — | text-primary | text-[15px] font-medium tracking-[-0.01em] |
+| Queue sub-meta | — | text-disabled | font-mono text-[10px] uppercase tracking-[0.08em] |
+| Queue reviewer name | — | text-secondary | (within sub-meta) |
 
 #### Constraints
 
-**Always:** Hero cards have no background, border, or shadow. They are open compositions.
+**Always:** Hero wrapper uses a black `border-text-primary` bottom border, not `border-border-default`. This is the editorial separator between the hero and the social feed below.
 
-**Always:** Building names use `font-size-5xl` minimum on desktop, `font-size-3xl` minimum on mobile. The editorial impact depends on scale — do not shrink the headline to fit.
+**Always:** Primary image has no radius, no border, no scrim. Raw photography.
 
-**Always:** Images use `rounded-none`. Sharp edges are non-negotiable in the editorial feed.
-
-**Default:** Vertical spacing between hero cards and the next feed item is `spacing-16` (64px) minimum. This editorial pause separates compositions.
+**Always:** No category label or review text in the FeedHero — it is a photo + caption + queue, not a review card.
 
 ---
 
-### 13b. Feed Activity Card
+### 13a-ii. BuildingAbove
 
 #### Purpose
-A compact feed item representing a status-only action (visited / wants to visit) without review content or images. Multiple activity cards can sit side-by-side in a grid row.
+The metadata line that appears above the `feed-title` in all review card types. Provides city, architect, and year in a single subdued line — contextual without competing with the headline.
 
 #### Layout Composition
-Horizontal layout: small building thumbnail on the left, text on the right. Text contains: user name + action verb + building name, with timestamp below. When multiple activity cards appear together, they sit in a `grid grid-cols-2 gap-8` row on desktop, single column on mobile.
+`display: flex; align-items: center; gap: 10px; margin-bottom: 10px`.
+
+Content: city, architect, year (any subset). Items are joined by `·` separators (`color: text-disabled`).
 
 #### Token Assembly
 
-| Part | Property | Token | Tailwind class |
-|---|---|---|---|
-| Container | background | none | — |
-| Container | border | none | — |
-| Container | padding-bottom | spacing-8 | pb-8 |
-| Container | border-bottom | border-default | border-b border-border-default (subtle divider between activity rows only) |
-| Building thumbnail | size | hero: 112px, compact: 96px | w-28 h-28 (hero) / w-24 h-24 (compact) |
-| Building thumbnail | border-radius | radius-none | rounded-none |
-| Building thumbnail | object-fit | — | object-cover |
-| User name | — | — | text-sm font-medium text-text-primary |
-| Action verb | — | — | text-sm font-normal text-text-secondary |
-| Building name | — | — | text-sm font-semibold text-text-primary |
-
-#### Constraints
-
-**Always:** Activity cards use no timestamp — dates are removed from the feed in the editorial aesthetic. Metadata is reduced to the essential: who did what to which building.
-
-**Always:** Activity cards are the smallest editorial unit. They use a subtle `border-b` divider between rows — this is the one place a border appears in the feed, to separate adjacent compact items that would otherwise merge visually.
-
-**Default:** Activity cards group in pairs. A single activity card still takes half the grid width on desktop, preserving visual rhythm.
-
----
-
-### 13c. Feed Compact Card
-
-#### Purpose
-A compact review card with a building thumbnail and text — displays building image, building name, review excerpt, and user attribution.
-
-#### Layout Composition
-Horizontal layout: building thumbnail on the left (`w-24 h-24`, sharp edges), text on the right. Text contains: category label, building name, review excerpt, user attribution row with bookmark icon. When compact cards appear together, they sit in a `grid grid-cols-2 gap-8` row, similar to activity cards.
-
-#### Token Assembly
-
-| Part | Property | Token | Tailwind class |
-|---|---|---|---|
-| Container | background | none | — |
-| Container | border | none | — |
-| Container | padding-bottom | spacing-12 | pb-12 |
-| Building thumbnail | size | 96px | w-24 h-24 |
-| Building thumbnail | border-radius | radius-none | rounded-none |
-| Building thumbnail | object-fit | — | object-cover shrink-0 |
-| Category label | — | — | text-2xs font-medium uppercase tracking-widest text-text-secondary |
-| Building name | — | — | text-2xl font-semibold tracking-tight leading-tight text-text-primary |
-| Review excerpt | — | — | text-base font-normal leading-relaxed text-text-secondary |
-| User name | — | — | text-sm font-medium text-text-primary |
-| Bookmark icon | — | — | Bookmark icon, text-text-secondary; fill-text-primary when saved |
-
-#### Constraints
-
-**Always:** Compact cards have no border or background. Structure comes from the building name's typographic weight.
-
-**Always:** No timestamp. Dates are removed from the editorial feed.
-
-**Default:** Review text is truncated at 3 lines with `line-clamp-3`.
-
----
-
-### 13d. Feed Collection Card
-
-#### Purpose
-A horizontal editorial strip showcasing a user's curated collection of buildings.
-
-#### Layout Composition
-Full-width horizontal layout: a row of 4–6 building thumbnails on top (edge-to-edge, tight mosaic), with collection title, owner, and building count below.
-
-#### Token Assembly
-
-| Part | Property | Token | Tailwind class |
-|---|---|---|---|
-| Container | background | none | — |
-| Container | margin-bottom | spacing-16 | mb-16 |
-| Mosaic row | gap | mosaic-gap | gap-mosaic-gap |
-| Mosaic row | layout | — | flex overflow-hidden |
-| Mosaic image | height | 240px | h-[240px] |
-| Mosaic image | border-radius | radius-none | rounded-none |
-| Mosaic image | object-fit | — | object-cover flex-1 min-w-0 |
-| Collection title | — | — | text-2xl font-semibold tracking-tight text-text-primary mt-4 |
-| Owner name | — | — | text-sm font-normal text-text-secondary |
-| Building count | — | — | text-xs font-normal text-text-disabled |
-| CTA link | — | — | text-xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary |
-
-#### Constraints
-
-**Always:** Mosaic images use `rounded-none` and `gap-mosaic-gap` (1.5px hairline). The tight mosaic reads as a single photographic strip, not as individual cards.
-
----
-
-### 13e. Feed Section Divider
-
-#### Purpose
-A typographic separator between feed sections (e.g., between social feed and community discovery content).
-
-#### Layout Composition
-A single line of uppercase tracked text with an optional `→` arrow linking to a discovery page. Centred or left-aligned depending on context. May include a subtle `border-t` above.
-
-#### Token Assembly
-
-| Part | Property | Token | Tailwind class |
-|---|---|---|---|
-| Container | padding-y | spacing-8 | py-8 |
-| Container | border-top | border-default | border-t border-border-default |
-| Label | — | — | text-2xs font-medium uppercase tracking-widest text-text-secondary |
-| Arrow/link | — | — | text-2xs font-medium uppercase tracking-widest text-text-primary hover:text-brand-primary ml-2 |
-
-#### Constraints
-
-**Always:** Section dividers use the tiny uppercase tracked label style. They are architectural marginalia — labelling, not headings.
-
----
-
-### 13f. Feed Hero Card — Actions
-
-The only persistent in-feed action is **bookmark** (save building). All other actions (like, comment, visit, rate, hide) are removed from the feed surface. Users engage more deeply by navigating into the building or review detail page.
-
-**Bookmark token assembly:**
-
-| Part | Property | Tailwind class |
+| Part | Property | Tailwind |
 |---|---|---|
-| Icon at rest | — | `Bookmark`, `text-text-secondary`, `h-5 w-5` |
-| Icon (saved) | — | `fill-text-primary text-text-primary` (monochromatic fill) |
+| Container | — | flex items-center gap-[10px] mb-[10px] |
+| Text items | — | text-[13px] font-normal tracking-[-0.005em] text-text-secondary |
+| Separator `·` | — | text-text-disabled |
 
-No other action icons appear in the feed. No date or timestamp is shown on any feed card type.
+---
+
+### 13a-iii. AuthorBelow
+
+#### Purpose
+The attribution line that appears below the `feed-title`. Displays reviewer name, timestamp, and award dots.
+
+#### Layout Composition
+`display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px`.
+
+Content: author name (linked, underline on hover) + `·` + timestamp + `·` + award dots (if rating ≥ 1).
+
+#### Token Assembly
+
+| Part | Property | Tailwind |
+|---|---|---|
+| Container | — | flex items-center gap-[10px] flex-wrap mt-[14px] |
+| Author name | — | text-[14px] font-medium text-text-primary border-b border-border-default pb-px cursor-pointer hover:border-text-primary |
+| Separator `·` | — | text-text-disabled |
+| Timestamp | — | text-[14px] text-text-disabled |
+| Award dots | — | see Rating below |
+
+---
+
+### 13a-iv. Feed Title (`feed-title`)
+
+#### Purpose
+The building name headline that forms the typographic centrepiece of every review card. Maximum editorial scale.
+
+#### Token Assembly
+
+| Variant | Property | Value |
+|---|---|---|
+| Default (hero scale) | font-size | `clamp(48px, 6vw, 72px)` |
+| `.sm` (split / event) | font-size | `clamp(36px, 4vw, 48px)` |
+| All variants | font-weight | 700 |
+| All variants | letter-spacing | `-0.035em` |
+| All variants | line-height | `0.95` |
+| All variants | text-wrap | `balance` |
+| All variants | color | `text-primary` |
+| Hover | opacity | `0.55` |
+
+#### Constraints
+
+**Always:** `feed-title` must never drop below `clamp(36px, 4vw, 48px)` on desktop. The editorial impact depends on scale.
+
+**Always:** Line-height `0.95` is tighter than any token in the design system — this is deliberate for the display-scale headline. Do not use the `line-height-tight` (1.0) or `line-height-snug` (1.2) Tailwind tokens here; use the raw value.
+
+---
+
+### 13b. FeedReviewHero
+
+#### Purpose
+A full-width review card with a wide photo. The primary social feed review format for reviews with photography.
+
+#### Layout Composition
+`<article class="feed-item">`. Contains (top to bottom):
+1. `BuildingAbove` (city · architect · year)
+2. `feed-title` (default scale)
+3. `AuthorBelow` (author · timestamp · award dots)
+4. Full-width photo: `margin-top: 36px; aspect-ratio: 16/9; object-fit: cover; background: surface-muted`
+5. Photo caption (optional): monospace, 10px, `text-disabled`, space between location (`uppercase, tracking-[0.14em]`) and figure number
+6. Review body: `font-size: 17px; line-height: 1.75; color: text-primary; max-width: 62ch; margin-top: 32px`
+7. "Read the full review →" link (if body exists)
+8. `FeedFooter`
+
+**"Read the full review →"** link: `font-size: 11px; font-weight: 500; letter-spacing: 0.18em; uppercase; text-primary`. On hover: dims to `text-secondary`; arrow translates 3px right and shifts to `brand-accent`.
+
+#### Constraints
+
+**Always:** Photo has no radius (`rounded-none`). Image fills the full column width.
+
+---
+
+### 13c. FeedReviewSplit
+
+#### Purpose
+A two-column review card — text on the left, portrait photo on the right. Used for reviews with a single strong image where the copy deserves equal billing.
+
+#### Layout Composition
+`<article class="feed-item split">`: `display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start`.
+
+Left column: `BuildingAbove`, `feed-title.sm`, `AuthorBelow`, review body, `FeedFooter`.
+Right column: photo `aspect-ratio: 3/4; object-fit: cover; margin-top: 0; rounded-none`.
+
+---
+
+### 13d. FeedReviewText
+
+#### Purpose
+A text-only review card — no photo. Used for long-form written reviews without user photography.
+
+#### Layout Composition
+Same as `FeedReviewHero` without the photo block. Review body uses the same `17px / 1.75 / 62ch` style.
+
+---
+
+### 13e. FeedReviewShort
+
+#### Purpose
+A one-liner review where the body text IS the headline. Used when a review is pithy enough to stand alone as a pull-quote — no photo, no body paragraph.
+
+#### Layout Composition
+`<article class="feed-item short">`. Contains:
+1. `BuildingAbove` (city · architect · year)
+2. `<blockquote class="feed-quote">` — the pull-quote headline
+3. `AuthorBelow`
+4. `FeedFooter`
+
+The `feed-quote` blockquote renders at display scale: `font-size: clamp(28px, 3vw, 40px); font-weight: 500; letter-spacing: -0.025em; line-height: 1.15; max-width: 24ch; color: text-primary`.
+
+A decorative opening `"` is rendered in serif italic at 1.4× size, `text-disabled`, translated slightly to align optically.
+
+The building name appears **inline inside the blockquote** as a small underlined link immediately after the quote text: `font-size: 0.45em; font-weight: 500; color: text-disabled; border-bottom: 1px solid border-default`. On hover: `text-primary; border-bottom-color: text-primary`.
+
+#### Constraints
+
+**Always:** The building name link is embedded in the quote, not placed on a separate line. The visual read is: massive quote text, then the building name recedes as a small inline reference.
+
+---
+
+### 13f. FeedCluster
+
+#### Purpose
+A card showcasing a user's day visiting multiple buildings in one city. The cluster grid is a 3×1 grid of square image cells with gradient overlays.
+
+#### Layout Composition
+`<article class="feed-item">`. Contains:
+1. `feed-above`: city · "{N} buildings"
+2. `feed-title` (default scale): `"A day with {who}."` — the reviewer's name rendered in `text-disabled`
+3. `AuthorBelow` (who + when, no rating)
+4. Cluster grid: `display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5px; background: border-default`
+5. `FeedFooter`
+
+Each cell: `aspect-ratio: 1/1; overflow: hidden; background: surface-muted`. Cell overlay: `position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0) 55%)`. Cell body (bottom-left): building name (`font-size: 15px; font-weight: 600; color: #fff`) + city (`font-size: 10px; uppercase; opacity: 0.7`). Rating dots (top-right): white-filled dots.
+
+#### Constraints
+
+**Always:** Cell images use `rounded-none`. The `1.5px` gap renders as hairline separators between cells — same `mosaic-gap` token used for collection mosaics.
+
+---
+
+### 13g. FeedCollection
+
+#### Purpose
+A card showcasing a user-curated collection of buildings as a 4-up portrait mosaic.
+
+#### Layout Composition
+`<article class="feed-item">`. Contains:
+1. `feed-above`: "Collection · {subtitle} · {N} buildings"
+2. `feed-title` (default scale): collection title
+3. `AuthorBelow`
+4. Collection mosaic: `display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5px; background: border-default; margin-top: 32px`
+5. `FeedFooter`
+
+Each mosaic cell: `aspect-ratio: 4/5; background: surface-muted; overflow: hidden`. Images: `width: 100%; height: 100%; object-fit: cover; rounded-none`.
+
+#### Constraints
+
+**Always:** Mosaic uses `aspect-ratio: 4/5` (portrait), `gap: 1.5px`, and `background: border-default` on the grid container (the gap colour). No radius on cells.
+
+---
+
+### 13h. FeedActivityStream
+
+#### Purpose
+A card aggregating recent actions from a user's network — visits, ratings, saves, follows — into a compact list.
+
+#### Layout Composition
+`<article class="feed-item">`. Contains:
+1. `feed-above`: "Activity · this week"
+2. `feed-title.sm` styled at `clamp(28px, 3vw, 36px)`, `font-weight: 500`, `color: text-disabled` — renders as: "From your network."
+3. Activity rows list
+
+Each activity row: `display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 14px; padding: 18px 0; border-bottom: 1px solid border-default`.
+- Avatar: 28×28, circular, `palette-neutral-800` bg, white initials, `font-size: 10px; font-weight: 600`
+- Text: `font-size: 14px; color: text-secondary; letter-spacing: -0.005em`. User name: `text-primary; font-weight: 600`. Verb: `text-disabled`. Building: `text-primary; font-weight: 500`, underlines on hover. Award dots appended inline if rated.
+- Timestamp: `font-family: font-mono; font-size: 11px; color: text-disabled; letter-spacing: 0.04em`
+
+No `FeedFooter` — activity stream is not a single likeable item.
+
+#### Constraints
+
+**Always:** The section title ("From your network.") uses `text-disabled` (not `text-secondary`) at medium weight — it reads as structural metadata, not content.
+
+---
+
+### 13i. FeedEvent
+
+#### Purpose
+A card promoting an upcoming architectural event (walk, talk, visit) to the user's network.
+
+#### Layout Composition
+`<article class="feed-item">`. Contains:
+1. `feed-above`: "Event · {location}"
+2. `feed-title.sm`: event title
+3. `AuthorBelow`: organiser + attendee count + date
+4. Event card: `display: grid; grid-template-columns: 88px 1fr auto; gap: 24px; align-items: center; padding: 20px 24px; border: 1px solid border-default; background: surface-card; margin-top: 24px`
+5. No `FeedFooter`
+
+Date block: 88px square, `border: 1px solid border-default`, `font-family: font-mono`, centred. Month: `font-size: 10px; uppercase; letter-spacing: 0.12em; text-secondary`. Day: `font-size: 28px; font-weight: 700; letter-spacing: -0.02em; text-primary`.
+
+Body: title (`font-size: 18px; font-weight: 600; text-primary`) + subtitle line (`font-size: 12px; text-secondary`).
+
+RSVP button: `font-size: 10px; font-weight: 500; letter-spacing: 0.18em; uppercase; padding: 8px 14px; border: 1px solid text-primary; background: transparent; color: text-primary`. Hover: inverts to `background: text-primary; color: #fff`.
+
+#### Constraints
+
+**Always:** The event card container (`event-card`) uses `surface-card` + `border-default` — it is the one place a box appears in the feed, justified because an event has a concrete date and needs visual containment.
+
+---
+
+### 13j. Feed Footer (`FeedFooter`)
+
+#### Purpose
+The action row at the bottom of all review cards (Hero, Split, Text, Short, Cluster, Collection).
+
+#### Layout Composition
+`display: flex; justify-content: space-between; align-items: center; margin-top: 32px`.
+
+**Left:** Like button + Discuss button, separated by `border-right: 1px solid border-default`.
+**Right:** Save button.
+
+Each button: `font-size: 10px; font-weight: 500; letter-spacing: 0.18em; uppercase; color: text-secondary; padding: 10px 18px; display: inline-flex; align-items: center; gap: 8px`. First button has `padding-left: 0`.
+
+Like/Discuss icons: `width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.6`.
+
+Count: monospace, `font-size: 10px`, zero-padded to 3 digits (e.g. `017`).
+
+**States:**
+- Liked: `color: text-primary`; heart icon `fill: text-primary`
+- Saved: bookmark icon `fill: text-primary`
+
+#### Constraints
+
+**Always:** "Open" / view-building button is removed from the footer. The only actions are Like, Discuss, and Save.
+
+**Always:** All footer text uses `uppercase tracking-widest`. Icons are 12×12.
+
+---
+
+### 13k. Feed Section Divider
+
+#### Purpose
+A typographic separator between named feed sections (e.g. "Collections · This week", "From the community"). Heavier than the default hairline — it marks a significant editorial break.
+
+#### Layout Composition
+`display: flex; justify-content: space-between; align-items: baseline; padding: 64px 0 40px; border-bottom: 1px solid var(--text-primary)`.
+
+**Left:** `<span class="lbl">` — monospace § prefix + section label.
+**Right:** CTA link ("See all →", "Explore →", etc.)
+
+#### Token Assembly
+
+| Part | Property | Tailwind |
+|---|---|---|
+| Bottom border | text-primary (black) | border-b border-text-primary |
+| Padding | — | py-16 pb-10 |
+| § prefix | — | font-mono text-[10px] text-text-disabled tracking-[0.04em] mr-3 |
+| Label text | — | text-[11px] font-medium tracking-[0.2em] uppercase text-text-primary |
+| CTA text | — | text-[10px] font-medium tracking-[0.18em] uppercase text-text-primary |
+| CTA arrow | — | `→` — shifts to `brand-accent` on hover |
+
+#### Constraints
+
+**Always:** Section divider bottom border uses `text-primary` (black), not `border-default` (gray). This is the editorial signal for a major section break.
+
+**Always:** The § prefix is monospace and `text-disabled`. It is numeric marginalia — not a heading level.
+
+---
+
+---
+
+### 13l. Rating / Award Dots
+
+#### Purpose
+A compact visual indicator of a reviewer's assessment of a building — rendered as filled dots on a `surface-muted` pill. Represents award tier, not a star rating.
+
+#### Layout
+`display: inline-flex; gap: 4px; align-items: center; padding: 3px 8px; background: surface-muted; border-radius: 2px`.
+
+Each dot: `width: 7px; height: 7px; border-radius: 9999px; background: text-primary` (filled).
+
+#### Scale
+| n | Label |
+|---|---|
+| 1 | Impressive |
+| 2 | Essential |
+| 3 | Masterpiece |
+
+**Only render if `n ≥ 1`.** Never show empty dots inline in `AuthorBelow` or `FeedFooter`. In the `FeedHero` queue, a 3-dot scale is shown with unfilled circles for unearned dots (empty: `background: transparent; border: 1px solid border-default; width: 5px; height: 5px`).
+
+#### Constraints
+
+**Always:** Rating dots use `text-primary` fill (monochromatic). `brand-accent` (lime) must not be used for rating dot fill.
+
+**Always:** Dots are circular (`border-radius: 9999px`), not square.
 
 ---
 
@@ -1047,7 +1267,7 @@ The `gap-px bg-border-default` pattern produces 1px hairline dividers between ti
 
 **Always:** All interactive text links on content detail pages use the text CTA pattern (`uppercase tracking-widest text-xs font-medium`). No filled buttons in content page body sections.
 
-**Always:** No `brand-primary` appears on content detail pages outside of focus rings and modal CTAs.
+**Always:** `brand-accent` (lime) does not appear on content detail pages outside of focus rings. Primary buttons inside modals use `brand-primary` (black). The rest of the page is strictly monochromatic.
 
 ---
 
@@ -1086,17 +1306,25 @@ documented reason.
 | Map pin label | font-size-xs | font-weight-medium | text-primary | letter-spacing-normal | line-height-tight |
 | | | | | | |
 | **Feed editorial** | | | | | |
-| Feed category label | font-size-2xs | font-weight-medium | text-secondary | letter-spacing-wide | line-height-normal |
-| Feed building name (hero) | font-size-5xl / 6xl | font-weight-bold | text-primary | letter-spacing-tight | line-height-tight |
-| Feed building name (compact) | font-size-2xl | font-weight-semibold | text-primary | letter-spacing-tight | line-height-tight |
-| Feed review excerpt | font-size-base | font-weight-normal | text-secondary | letter-spacing-normal | line-height-relaxed |
-| Feed user name | font-size-sm | font-weight-medium | text-primary | letter-spacing-normal | line-height-normal |
-| Feed timestamp | font-size-xs | font-weight-normal | text-disabled | letter-spacing-normal | line-height-normal |
-| Feed CTA link | font-size-xs | font-weight-medium | text-primary | letter-spacing-wide | line-height-tight |
-| Feed section divider | font-size-2xs | font-weight-medium | text-secondary | letter-spacing-wide | line-height-normal |
-| Feed sidebar widget title | font-size-xs | font-weight-medium | text-secondary | letter-spacing-wide | line-height-normal |
-| Feed sidebar item name | font-size-base | font-weight-semibold | text-primary | letter-spacing-normal | line-height-tight |
-| Feed sidebar item meta | font-size-xs | font-weight-normal | text-secondary | letter-spacing-normal | line-height-normal |
+| Feed title (hero scale) | clamp(48px, 6vw, 72px) | font-weight-bold | text-primary | -0.035em | 0.95 |
+| Feed title (.sm scale) | clamp(36px, 4vw, 48px) | font-weight-bold | text-primary | -0.035em | 1.0 |
+| Feed above-title line | 13px | font-weight-normal | text-secondary | -0.005em | line-height-normal |
+| Feed pull-quote (short review) | clamp(28px, 3vw, 40px) | font-weight-medium | text-primary | -0.025em | 1.15 |
+| Feed review body | 17px | font-weight-normal | text-primary | letter-spacing-normal | 1.75 |
+| Feed author name | font-size-sm | font-weight-medium | text-primary | -0.005em | line-height-normal |
+| Feed timestamp | font-size-sm | font-weight-normal | text-disabled | -0.005em | line-height-normal |
+| Feed CTA link | font-size-xs | font-weight-medium | text-primary (arrow → brand-accent on hover) | letter-spacing-widest | line-height-tight |
+| Feed section divider label | 11px | font-weight-medium | text-primary | 0.2em | line-height-normal |
+| Feed section divider § prefix | font-size-xs (mono) | font-weight-normal | text-disabled | 0.04em | line-height-normal |
+| Feed photo caption | font-size-xs (mono) | font-weight-normal | text-disabled | 0.04em | line-height-normal |
+| Feed footer action | 10px | font-weight-medium | text-secondary | 0.18em | line-height-normal |
+| Feed activity row timestamp | 11px (mono) | font-weight-normal | text-disabled | 0.04em | line-height-normal |
+| Right rail section label | 11px | font-weight-medium | text-disabled | 0.18em | line-height-normal |
+| Right rail stat value | 24px | font-weight-semibold | text-primary | -0.025em | 1.0 |
+| Right rail stat label | 10px | font-weight-medium | text-disabled | 0.14em | line-height-normal |
+| Right rail trending rank | font-size-xs (mono) | font-weight-normal | text-disabled | 0.04em | line-height-normal |
+| Top nav link (default) | 14px | font-weight-medium | text-secondary | -0.01em | line-height-normal |
+| Top nav link (active) | 14px | font-weight-medium | text-primary | -0.01em | line-height-normal |
 | | | | | | |
 | **Content detail pages** | | | | | |
 | Page hero title | font-size-4xl / 5xl / 6xl | font-weight-bold | text-primary | letter-spacing-tight | line-height-tight |
@@ -1184,15 +1412,13 @@ place `text-primary` on a dark background.
 
 **Brand accent usage**
 
-`brand-primary` is the single neon accent (`#BEFF00`). In **app UI contexts** (admin, settings, forms, modals) use it for: primary button backgrounds, focus rings, and progress bars. In **editorial content pages** (building detail, profile, architect profile) and the **feed**, it is essentially absent — these are monochromatic surfaces. Do not use `brand-primary` for: section accent bars, verified badges, rating dots, active tab underlines, bookmark fills, filter toggle backgrounds, or avatar borders. All of those use `text-primary` (`#171717`) monochromatic instead. If `brand-primary` appears on any content or feed page outside of a focus ring or modal CTA, it is an error.
+`brand-primary` (`#171717`) is the primary action colour — **near-black**. Use it for: primary button backgrounds, avatar backgrounds, and the primary CTA in the top nav. `brand-primary-foreground` is `#FFFFFF` (white) — always white text on a black button. This is the most-used action token.
 
-`brand-primary-foreground` is always dark (`#171717`). The neon is a
-light colour — it requires dark foreground, not white. Using
-`text-inverse` on `brand-primary` is a contrast failure.
+`brand-accent` (`#BEFF00`) is the lime accent. It appears in exactly four places across the entire product: the notification dot on the bell icon, the `→` arrow of a CTA text link on hover, focus rings (`ring-brand-accent`), and the active chip inside overlaid dark panels (tweaks, dark menus). If `brand-accent` appears outside these four contexts it is an error. It must not be used for: button backgrounds, section accent bars, rating dots, bookmark fills, tab indicators, avatar borders, or any fill state on content or feed pages.
 
-`brand-secondary` is a barely-there neon tint (`#F7FFE0`). Use for
-hovered table rows and selected filter chips in **app UI contexts only**.
-It must not appear on content detail pages or the feed.
+`brand-accent-foreground` (`#171717`) is always dark. The lime is a light colour — it requires dark foreground.
+
+`brand-secondary` (`#F5F5F5`) is a neutral muted surface — not a neon tint. Use for secondary button backgrounds and subdued highlights in app UI contexts.
 
 **Feedback tokens**
 
