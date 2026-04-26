@@ -328,7 +328,7 @@ export default function Index() {
                     feedNodes.push(
                       <div
                         key={entry.id}
-                        className="border-b border-border-default pb-10 mb-10"
+                        className="border-b border-border-default pt-12 pb-12 md:pt-[88px] md:pb-[88px]"
                       >
                         {inner}
                       </div>,
@@ -342,7 +342,7 @@ export default function Index() {
                         feedNodes.push(
                           <div
                             key={key}
-                            className="border-b border-border-default pb-10 mb-10"
+                            className="border-b border-border-default pt-12 pb-12 md:pt-[88px] md:pb-[88px]"
                           >
                             <FeedClusterCard
                               entries={item.entries}
@@ -368,7 +368,7 @@ export default function Index() {
                         );
                         if (leftCell != null || rightCell != null) {
                           feedNodes.push(
-                            <div key={key} className="border-b border-border-default pb-10 mb-10">
+                            <div key={key} className="border-b border-border-default pt-12 pb-12 md:pt-[88px] md:pb-[88px]">
                               <div className="grid w-full grid-cols-2 gap-8">
                                 <div className="min-w-0">{leftCell}</div>
                                 <div className="min-w-0">{rightCell}</div>
@@ -403,7 +403,7 @@ export default function Index() {
                       feedNodes.push(
                         <div
                           key={`feed-attendance-${row.entry.eventId}`}
-                          className="border-b border-border-default pb-10 mb-10"
+                          className="border-b border-border-default pt-12 pb-12 md:pt-[88px] md:pb-[88px]"
                         >
                           <ReviewCardFeed entry={row.entry} />
                         </div>,
@@ -417,7 +417,7 @@ export default function Index() {
                       collectionCursor += 1;
                       feedNodes.push(
                         <WidgetErrorBoundary key={`collection-inject-${col.id}-${n}`}>
-                          <div className="border-b border-border-default pb-10 mb-10">
+                          <div className="border-b border-border-default pt-12 pb-12 md:pt-[88px] md:pb-[88px]">
                             <FeedCollectionCard collection={col} />
                           </div>
                         </WidgetErrorBoundary>,
@@ -449,7 +449,7 @@ export default function Index() {
                     feedNodes.push(
                       <div
                         key={`activity-trailing-${activityAccumulator.map((e) => e.id).join("-")}`}
-                        className="border-b border-border-default pb-10 mb-10"
+                        className="border-b border-border-default pt-12 pb-12 md:pt-[88px] md:pb-[88px]"
                       >
                         <p className="mb-4 font-mono text-[0.5625rem] font-normal uppercase tracking-[0.12em] text-text-secondary">
                           Activity

@@ -36,14 +36,14 @@ export function FeedHero({ hero, queue }: FeedHeroProps) {
               style={{ aspectRatio: "16/10" }}
             />
           )}
-          <figcaption className="mt-4 space-y-1">
-            <p className="text-xl font-bold text-text-primary leading-tight tracking-tight">
-              {hero.building.name}
+          <figcaption className="mt-4 flex flex-col gap-1.5">
+            <p className="text-[22px] font-semibold leading-snug tracking-[-0.02em] text-text-primary">
+              <span>{hero.building.name}</span>
+              {architect && (
+                <span className="font-normal italic text-text-secondary"> by {architect}</span>
+              )}
             </p>
-            {architect && (
-              <p className="text-sm text-text-secondary">by {architect}</p>
-            )}
-            <p className="font-mono text-[10px] text-text-disabled uppercase tracking-widest">
+            <p className="font-mono text-[10px] text-text-disabled uppercase tracking-[0.14em]">
               {[hero.building.city, hero.building.year_completed]
                 .filter(Boolean)
                 .join(" · ")}
@@ -81,11 +81,13 @@ export function FeedHero({ hero, queue }: FeedHeroProps) {
                 </div>
                 {/* Building info */}
                 <div className="min-w-0 pt-0.5">
-                  <p className="font-semibold text-sm text-text-primary leading-tight truncate">
+                  <p className="font-medium text-[15px] text-text-primary leading-tight tracking-[-0.01em] truncate">
                     {entry.building.name}
                   </p>
-                  <p className="text-xs text-text-disabled mt-1 truncate">
-                    {entry.user.username} · {timeAgo}
+                  <p className="font-mono text-[10px] text-text-disabled uppercase tracking-[0.08em] mt-1 flex gap-1.5 items-baseline">
+                    <span className="text-text-secondary">{entry.user.username}</span>
+                    <span>·</span>
+                    <span>{timeAgo}</span>
                   </p>
                 </div>
                 {/* Award dots */}

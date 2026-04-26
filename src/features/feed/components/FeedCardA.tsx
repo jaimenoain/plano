@@ -23,7 +23,7 @@ function FeedAboveLine({ entry }: { entry: FeedReview }) {
   ].filter(Boolean) as string[];
   if (parts.length === 0) return null;
   return (
-    <p className="text-[11px] uppercase tracking-[0.18em] text-text-disabled leading-none">
+    <p className="text-[13px] tracking-[-0.005em] text-text-secondary leading-none">
       {parts.join(" · ")}
     </p>
   );
@@ -32,10 +32,10 @@ function FeedAboveLine({ entry }: { entry: FeedReview }) {
 function FeedAuthorLine({ entry, username }: { entry: FeedReview; username: string }) {
   const timeAgo = formatDistanceToNow(new Date(entry.created_at), { addSuffix: true });
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-secondary mt-1">
-      <span className="font-medium text-text-primary">{username}</span>
+    <div className="flex flex-wrap items-center gap-[10px] text-sm text-text-secondary mt-[14px]">
+      <span className="font-medium text-text-primary border-b border-border-default pb-px cursor-pointer hover:border-text-primary transition-colors">{username}</span>
       <span className="text-text-disabled">·</span>
-      <span>{timeAgo}</span>
+      <span className="text-text-disabled">{timeAgo}</span>
       {entry.rating != null && entry.rating > 0 && (
         <>
           <span className="text-text-disabled">·</span>
@@ -159,20 +159,27 @@ export function FeedCardA({
       <div className="flex max-w-xl flex-col gap-2">
         {!hideBuildingInfo && <FeedAboveLine entry={entry} />}
 
-        {!hideBuildingInfo && <BuildingHeadline name={mainTitle} size="xl" />}
+        {!hideBuildingInfo && !isPullQuote && <BuildingHeadline name={mainTitle} size="xl" />}
 
         {!hideUser && <FeedAuthorLine entry={entry} username={username} />}
 
         {isPullQuote ? (
-          <blockquote className="mt-3 text-[clamp(1.6rem,3vw,2.25rem)] font-bold leading-tight text-text-primary before:content-['\u201C']">
+          <blockquote className="mt-1 text-[clamp(1.75rem,3vw,2.5rem)] font-medium leading-[1.15] tracking-[-0.025em] text-text-primary max-w-[24ch]">
+            <span className="text-text-disabled mr-[0.1em]" aria-hidden="true">&#x201C;</span>
             {entry.content}
+            <span
+              onClick={(e) => { e.stopPropagation(); handleCardClick(e as unknown as React.MouseEvent); }}
+              className="ml-[0.3em] text-[0.45em] font-medium tracking-[-0.005em] text-text-disabled border-b border-border-default pb-px cursor-pointer hover:text-text-primary hover:border-text-primary transition-colors align-[0.2em] whitespace-nowrap inline"
+            >
+              {mainTitle}
+            </span>
           </blockquote>
         ) : entry.content?.trim() ? (
           <div className="mt-2 min-w-0">
             <p
               ref={bodyRef}
               className={cn(
-                "text-base leading-relaxed text-text-secondary",
+                "text-base leading-relaxed text-text-primary",
                 !essayExpanded && "line-clamp-3",
               )}
             >

@@ -21,7 +21,7 @@ function FeedAboveLine({ entry }: { entry: FeedReview }) {
   ].filter(Boolean) as string[];
   if (parts.length === 0) return null;
   return (
-    <p className="text-[11px] uppercase tracking-[0.18em] text-text-disabled leading-none">
+    <p className="text-[13px] tracking-[-0.005em] text-text-secondary leading-none">
       {parts.join(" · ")}
     </p>
   );
@@ -30,10 +30,10 @@ function FeedAboveLine({ entry }: { entry: FeedReview }) {
 function FeedAuthorLine({ entry, username }: { entry: FeedReview; username: string }) {
   const timeAgo = formatDistanceToNow(new Date(entry.created_at), { addSuffix: true });
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-secondary mt-1">
-      <span className="font-medium text-text-primary">{username}</span>
+    <div className="flex flex-wrap items-center gap-[10px] text-sm text-text-secondary mt-[14px]">
+      <span className="font-medium text-text-primary border-b border-border-default pb-px cursor-pointer hover:border-text-primary transition-colors">{username}</span>
       <span className="text-text-disabled">·</span>
-      <span>{timeAgo}</span>
+      <span className="text-text-disabled">{timeAgo}</span>
       {entry.rating != null && entry.rating > 0 && (
         <>
           <span className="text-text-disabled">·</span>

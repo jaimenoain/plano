@@ -7,22 +7,22 @@ export interface BuildingHeadlineProps {
 }
 
 const sizeClass: Record<BuildingHeadlineProps["size"], string> = {
-  /** 52px (`3.25rem`) — FeedCardA editorial headline */
-  xl: "text-[3.25rem] line-clamp-2",
-  /** 36px */
-  lg: "text-[2.25rem] line-clamp-2",
+  /** clamp(48px→72px) — FeedCardA editorial headline */
+  xl: "text-[clamp(3rem,6vw,4.5rem)] leading-[0.95] line-clamp-2",
+  /** clamp(36px→48px) — FeedCardB split headline */
+  lg: "text-[clamp(2.25rem,4vw,3rem)] leading-[0.95] line-clamp-2",
   /** 28px — single-line clamp (e.g. FeedCardC) */
   md: "text-[1.75rem] line-clamp-1",
 };
 
 /**
- * Building title at fixed scale steps; aggressive display sans, tight tracking.
+ * Building title at editorial scale steps; bold display sans, tight tracking.
  */
 export function BuildingHeadline({ name, size, className }: BuildingHeadlineProps) {
   return (
     <h2
       className={cn(
-        "font-sans font-black tracking-tight leading-none text-text-primary",
+        "font-sans font-bold tracking-[-0.035em] text-text-primary",
         sizeClass[size],
         className,
       )}

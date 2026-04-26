@@ -23,7 +23,7 @@ function FeedAboveLine({ entry }: { entry: FeedReview }) {
   ].filter(Boolean) as string[];
   if (parts.length === 0) return null;
   return (
-    <p className="text-[11px] uppercase tracking-[0.18em] text-text-disabled leading-none">
+    <p className="text-[13px] tracking-[-0.005em] text-text-secondary leading-none">
       {parts.join(" · ")}
     </p>
   );
@@ -32,10 +32,10 @@ function FeedAboveLine({ entry }: { entry: FeedReview }) {
 function FeedAuthorLine({ entry, username }: { entry: FeedReview; username: string }) {
   const timeAgo = formatDistanceToNow(new Date(entry.created_at), { addSuffix: true });
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-text-secondary mt-1">
-      <span className="font-medium text-text-primary">{username}</span>
+    <div className="flex flex-wrap items-center gap-[10px] text-sm text-text-secondary mt-[14px]">
+      <span className="font-medium text-text-primary border-b border-border-default pb-px cursor-pointer hover:border-text-primary transition-colors">{username}</span>
       <span className="text-text-disabled">·</span>
-      <span>{timeAgo}</span>
+      <span className="text-text-disabled">{timeAgo}</span>
       {entry.rating != null && entry.rating > 0 && (
         <>
           <span className="text-text-disabled">·</span>
@@ -163,30 +163,32 @@ export function FeedCardB({
     >
       <div
         className={cn(
-          "grid w-full min-w-0 grid-cols-1 gap-0 overflow-hidden md:h-[320px] md:max-h-[320px] md:grid-cols-2 md:items-stretch",
+          "grid w-full min-w-0 grid-cols-1 gap-0 md:grid-cols-2 md:gap-16 md:items-start",
         )}
       >
         {/* Photo column */}
         <div
           className={cn(
-            "order-1 min-h-0 min-w-0 overflow-hidden md:h-full",
+            "order-1 min-w-0",
             imageOnLeft ? "md:order-1" : "md:order-2",
           )}
         >
-          <CardImage
-            items={mediaItems}
-            height={cardImageHeight}
-            reviewId={entry.id}
-            onImageLike={onImageLike}
-            firstMediaOnly
-            className="h-full"
-          />
+          <div className="overflow-hidden h-[185px] md:h-auto md:aspect-[3/4]">
+            <CardImage
+              items={mediaItems}
+              height={cardImageHeight}
+              reviewId={entry.id}
+              onImageLike={onImageLike}
+              firstMediaOnly
+              className="h-full w-full object-cover"
+            />
+          </div>
         </div>
 
         {/* Text column */}
         <div
           className={cn(
-            "order-2 flex min-h-0 min-w-0 flex-col gap-2 overflow-hidden px-0 py-6 md:h-full md:min-h-0 md:py-[28px] md:pl-[40px]",
+            "order-2 flex min-w-0 flex-col gap-2 py-6 md:py-0 md:pt-1",
             imageOnLeft ? "md:order-2" : "md:order-1",
           )}
         >
@@ -197,11 +199,11 @@ export function FeedCardB({
           </div>
 
           {entry.content?.trim() && (
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1 overflow-hidden mt-2">
+            <div className="flex min-w-0 flex-col gap-1 mt-2">
               <p
                 ref={bodyRef}
                 className={cn(
-                  "text-base leading-relaxed text-text-secondary",
+                  "text-base leading-relaxed text-text-primary",
                   !essayExpanded && "line-clamp-4",
                 )}
               >
