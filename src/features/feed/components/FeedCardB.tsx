@@ -11,7 +11,7 @@ import {
   CardImage,
   PointsBadge,
 } from "@/features/feed/components/card-parts";
-import { CARD_B_HEIGHT, CARD_C_IMAGE_HEIGHT } from "@/features/feed/utils/resolveCardType";
+import { CARD_C_IMAGE_HEIGHT } from "@/features/feed/utils/resolveCardType";
 
 const MD_MEDIA_QUERY = "(min-width: 768px)";
 
@@ -75,16 +75,14 @@ export function FeedCardB({
   const navigate = useNavigate();
   const [essayExpanded, setEssayExpanded] = useState(false);
   const [showReadMore, setShowReadMore] = useState(false);
-  const [cardImageHeight, setCardImageHeight] = useState(CARD_C_IMAGE_HEIGHT);
+  const [isMdUp, setIsMdUp] = useState(false);
   const bodyRef = useRef<HTMLParagraphElement>(null);
 
   const { data } = useReviewCardData(entry, { showCommunityImages });
 
   useLayoutEffect(() => {
     const mq = window.matchMedia(MD_MEDIA_QUERY);
-    const sync = () => {
-      setCardImageHeight(mq.matches ? CARD_B_HEIGHT : CARD_C_IMAGE_HEIGHT);
-    };
+    const sync = () => setIsMdUp(mq.matches);
     sync();
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
@@ -173,16 +171,14 @@ export function FeedCardB({
             imageOnLeft ? "md:order-1" : "md:order-2",
           )}
         >
-          <div className="overflow-hidden h-[185px] md:h-auto md:aspect-[3/4]">
-            <CardImage
-              items={mediaItems}
-              height={cardImageHeight}
-              reviewId={entry.id}
-              onImageLike={onImageLike}
-              firstMediaOnly
-              className="h-full w-full object-cover"
-            />
-          </div>
+          <CardImage
+            items={mediaItems}
+            height={isMdUp ? undefined : CARD_C_IMAGE_HEIGHT}
+            aspectRatio={isMdUp ? "3/4" : undefined}
+            reviewId={entry.id}
+            onImageLike={onImageLike}
+            firstMediaOnly
+          />
         </div>
 
         {/* Text column */}

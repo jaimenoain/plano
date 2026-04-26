@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { FeedPhotoCarousel, type CarouselImage } from "@/features/feed/components/FeedPhotoCarousel";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
@@ -6,7 +6,10 @@ import type { ReviewCardMediaItem } from "@/features/feed/hooks/useReviewCardDat
 
 export interface CardImageProps {
   items: ReviewCardMediaItem[];
-  height: number;
+  /** Fixed pixel height. Ignored when `aspectRatio` is provided. */
+  height?: number;
+  /** CSS aspect-ratio string (e.g. "16/9", "3/4"). Takes precedence over `height`. */
+  aspectRatio?: string;
   className?: string;
   reviewId: string;
   onImageLike?: (reviewId: string, imageId: string) => void;
@@ -63,11 +66,12 @@ function toCarouselImages(images: ReviewCardMediaItem[]): CarouselImage[] {
 }
 
 /**
- * Fixed-height media block: empty placeholder, single image/video, pair grid, or carousel.
+ * Fixed-height or aspect-ratio media block: empty placeholder, single image/video, pair grid, or carousel.
  */
 export function CardImage({
   items,
   height,
+  aspectRatio,
   className,
   reviewId,
   onImageLike,
@@ -84,7 +88,11 @@ export function CardImage({
   const hasVideo = effectiveItems.some((i) => i.type === "video");
   const videoItem = effectiveItems.find((i) => i.type === "video");
 
-  const containerStyle = { height: `${height}px` } as const;
+  const containerStyle: CSSProperties = aspectRatio
+    ? { aspectRatio }
+    : height != null
+      ? { height: `${height}px` }
+      : {};
 
   const outer = (inner: ReactNode) => (
     <div

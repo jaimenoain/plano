@@ -11,7 +11,7 @@ import {
   CardImage,
   PointsBadge,
 } from "@/features/feed/components/card-parts";
-import { CARD_C_IMAGE_HEIGHT } from "@/features/feed/utils/resolveCardType";
+
 
 function FeedAboveLine({ entry }: { entry: FeedReview }) {
   const parts = [
@@ -121,7 +121,7 @@ export function FeedCardC({
 
       <CardImage
         items={mediaItems}
-        height={CARD_C_IMAGE_HEIGHT}
+        aspectRatio="16/9"
         reviewId={entry.id}
         onImageLike={onImageLike}
         firstMediaOnly
