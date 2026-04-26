@@ -68,6 +68,32 @@ export default defineConfig(() => ({
       },
     }),
   ].filter(Boolean),
+  build: {
+    rollupOptions: {
+      output: {
+        // Stable named chunks for heavy, rarely-changing vendor libraries.
+        // Without this, any dep bump reshuffles the shared chunk hash, busting
+        // browser cache for users who haven't changed the dep at all.
+        manualChunks(id) {
+          if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/")) {
+            return "react-vendor";
+          }
+          if (id.includes("node_modules/@tanstack/")) {
+            return "query-vendor";
+          }
+          if (id.includes("node_modules/@radix-ui/")) {
+            return "radix-vendor";
+          }
+          if (id.includes("node_modules/framer-motion")) {
+            return "motion-vendor";
+          }
+          if (id.includes("node_modules/@supabase/")) {
+            return "supabase-vendor";
+          }
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

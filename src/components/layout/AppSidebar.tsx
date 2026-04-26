@@ -248,7 +248,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="offcanvas"
-      className="border-r-0 text-white"
+      className="md:hidden border-r-0 text-white"
       style={{ "--sidebar-background": "0 0% 0%" } as React.CSSProperties}
     >
       {/* ── Header: logo + close ── */}

@@ -45,7 +45,7 @@ export function PersonCreditCard({ credit, className }: PersonCreditCardProps) {
         className="relative block aspect-[4/3] w-full shrink-0 overflow-hidden bg-surface-muted sm:w-32 md:w-40"
       >
         {thumb ? (
-          <img src={thumb} alt="" className="h-full w-full object-cover" />
+          <img src={thumb} alt="" className="h-full w-full object-cover" loading="lazy" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-widest text-text-secondary">
             No image

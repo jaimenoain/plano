@@ -252,7 +252,7 @@ export default function Explore() {
             else setOpen(true);
           }}
           className={cn(
-            "fixed top-4 left-4 z-[55] p-2 text-white transition-opacity",
+            "md:hidden fixed top-4 left-4 z-[55] p-2 text-white transition-opacity",
             isSidebarOpen
               ? "opacity-0 pointer-events-none"
               : "opacity-100 hover:opacity-60"

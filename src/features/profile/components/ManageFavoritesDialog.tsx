@@ -207,7 +207,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
                             <div key={item.id} className="relative shrink-0 w-12 snap-start">
                                 <div className="aspect-[2/3] rounded-md overflow-hidden bg-surface-muted border shadow-sm">
                                     {item.image_url ? (
-                                        <img src={item.image_url} className="w-full h-full object-cover" />
+                                        <img src={item.image_url} className="w-full h-full object-cover" loading="lazy" />
                                     ) : (
                                         <div className="w-full h-full bg-surface-muted" />
                                     )}
@@ -277,7 +277,7 @@ function ListItem({ item, selected, toggle }: { item: FavoriteItem, selected: Fa
           )}
         >
             <div className="h-12 w-8 shrink-0 bg-surface-muted rounded overflow-hidden shadow-sm">
-                {item.image_url && <img src={item.image_url} className="w-full h-full object-cover" />}
+                {item.image_url && <img src={item.image_url} className="w-full h-full object-cover" loading="lazy" />}
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">

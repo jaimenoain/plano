@@ -475,7 +475,7 @@ export default function EventDetail() {
                     >
                       <div className="aspect-card-compact w-full overflow-hidden bg-surface-muted">
                         {b.mainImageUrl ? (
-                          <img src={b.mainImageUrl} alt="" className="h-full w-full object-cover" />
+                          <img src={b.mainImageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
                         ) : null}
                       </div>
                       <span className="line-clamp-2 text-xs font-medium text-text-primary">{b.name}</span>

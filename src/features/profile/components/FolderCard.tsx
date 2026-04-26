@@ -49,7 +49,7 @@ export function FolderCard({ folder, to, onClick, className, isDroppable = false
           {folder.preview_images && folder.preview_images.length > 0 ? (
             <div className="grid grid-cols-2 gap-0.5 w-8 h-8 rounded-sm overflow-hidden">
               {folder.preview_images.slice(0, 4).map((img, i) => (
-                <img key={i} src={img} alt="" className="w-full h-full object-cover" />
+                <img key={i} src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
               ))}
               {folder.preview_images.length < 4 &&
                 Array.from({ length: 4 - folder.preview_images.length }).map((_, i) => (

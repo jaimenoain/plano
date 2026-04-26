@@ -1,4 +1,4 @@
-// Pages (default exports — re-export as named for lazy loading in App.tsx)
+// Pages (default exports — re-export as named for lazy loading)
 export { default as AddBuilding } from './pages/AddBuilding';
 export { default as BuildingDetails } from './pages/BuildingDetails';
 export { default as EditBuilding } from './pages/EditBuilding';

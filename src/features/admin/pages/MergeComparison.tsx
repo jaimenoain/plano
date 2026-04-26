@@ -477,7 +477,7 @@ export default function MergeComparison() {
                                         {reviewImages[targetBuilding.id].map((url, idx) => (
                                             <CarouselItem key={idx} className="pl-2 basis-1/3 md:basis-1/4">
                                                 <div className="aspect-square relative overflow-hidden rounded-md border bg-surface-muted">
-                                                    <img src={url} alt={`Review ${idx}`} className="object-cover w-full h-full" />
+                                                    <img src={url} alt={`Review ${idx}`} className="object-cover w-full h-full" loading="lazy" />
                                                 </div>
                                             </CarouselItem>
                                         ))}
@@ -577,7 +577,7 @@ export default function MergeComparison() {
                                         {reviewImages[sourceBuilding.id].map((url, idx) => (
                                             <CarouselItem key={idx} className="pl-2 basis-1/3 md:basis-1/4">
                                                 <div className="aspect-square relative overflow-hidden rounded-md border bg-surface-muted">
-                                                    <img src={url} alt={`Review ${idx}`} className="object-cover w-full h-full" />
+                                                    <img src={url} alt={`Review ${idx}`} className="object-cover w-full h-full" loading="lazy" />
                                                 </div>
                                             </CarouselItem>
                                         ))}

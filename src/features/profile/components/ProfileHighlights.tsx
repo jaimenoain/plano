@@ -83,7 +83,7 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
                         <div key={p.id} className="flex flex-col items-center gap-2 w-20 shrink-0 snap-start">
                              <div className="h-20 w-20 overflow-hidden bg-surface-muted">
                                  {p.image_url ? (
-                                     <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" />
+                                     <img src={p.image_url} alt={p.title} className="w-full h-full object-cover" loading="lazy" />
                                  ) : (
                                      <div className="w-full h-full flex items-center justify-center bg-surface-muted"><User className="h-8 w-8 text-text-disabled" /></div>
                                  )}

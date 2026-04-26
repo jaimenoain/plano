@@ -26,6 +26,8 @@ import { useFeed } from "../hooks/useFeed";
 import { useSuggestedFeed } from "../hooks/useSuggestedFeed";
 import { useCollectionsFeed } from "../hooks/useCollectionsFeed";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
+import { FeedHero } from "../components/FeedHero";
+import { FeedRightRail } from "../components/FeedRightRail";
 
 const INDEX_TITLE = "Plano — The world's architecture, cataloged.";
 const INDEX_DESCRIPTION =
@@ -158,6 +160,39 @@ export default function Index() {
     () => socialFeed.data?.pages.flatMap((page) => page) || [],
     [socialFeed.data]
   );
+
+  const heroEntry = useMemo(
+    () =>
+      socialReviews.find(
+        (r) =>
+          Boolean(r.building?.main_image_url) || (r.images?.length ?? 0) > 0,
+      ) ?? null,
+    [socialReviews],
+  );
+
+  const queueEntries = useMemo(
+    () =>
+      heroEntry
+        ? socialReviews
+            .filter(
+              (r) =>
+                r.id !== heroEntry.id &&
+                (Boolean(r.building?.main_image_url) ||
+                  (r.images?.length ?? 0) > 0),
+            )
+            .slice(0, 4)
+        : [],
+    [socialReviews, heroEntry],
+  );
+
+  const activityEntries = useMemo(
+    () =>
+      socialReviews
+        .filter((r) => resolveCardType(r) === "activity")
+        .slice(0, 6),
+    [socialReviews],
+  );
+
   const aggregatedReviews = useMemo(() => aggregateFeed(socialReviews), [socialReviews]);
   const eventAttendance = socialFeed.eventAttendance ?? [];
   const mergedHomeRows = useMemo(
@@ -195,10 +230,10 @@ export default function Index() {
           <Loader2 className="h-10 w-10 animate-spin text-text-secondary" />
         </div>
       ) : (
-        <div className="p-4 sm:p-6 lg:p-8 pb-24 mx-auto w-full">
+        <div className="w-full">
           {socialReviews.length === 0 && eventAttendance.length === 0 ? (
             // --- Cold-start state: new user with no social feed yet ---
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 pb-24">
               <div className="flex flex-col gap-16 lg:gap-20">
                 <ColdStartFeed
                   discoveryReviews={discoveryReviews}
@@ -239,7 +274,13 @@ export default function Index() {
             </div>
           ) : (
             // --- Active feed state ---
-            <div className="max-w-4xl mx-auto">
+            <div className="md:grid md:grid-cols-[minmax(0,1fr)_320px]">
+              <main className="min-w-0 md:border-r md:border-border-default">
+                <div className="p-4 sm:p-6 lg:p-8 pb-24">
+                  {heroEntry && (
+                    <FeedHero hero={heroEntry} queue={queueEntries} />
+                  )}
+                  <div className="max-w-4xl mx-auto">
               <div className="flex flex-col">
                 {(() => {
                   const feedNodes: React.ReactNode[] = [];
@@ -255,6 +296,7 @@ export default function Index() {
                     onLike: (id: string) => void,
                     onImageLike: (reviewId: string, imageId: string) => void,
                   ): React.ReactNode => {
+                    if (entry.id === heroEntry?.id) return null;
                     const t = resolveCardType(entry);
                     if (t === "activity") {
                       pushActivity(entry);
@@ -275,6 +317,7 @@ export default function Index() {
                     onLike: (id: string) => void,
                     onImageLike: (reviewId: string, imageId: string) => void,
                   ) => {
+                    if (entry.id === heroEntry?.id) return;
                     const t = resolveCardType(entry);
                     if (t === "activity") {
                       pushActivity(entry);
@@ -447,6 +490,10 @@ export default function Index() {
                   </div>
                 )}
               </div>
+            </div>
+                </div>
+              </main>
+              <FeedRightRail activities={activityEntries} />
             </div>
           )}
         </div>
