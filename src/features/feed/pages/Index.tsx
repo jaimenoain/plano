@@ -254,31 +254,9 @@ export default function Index() {
                     {(() => {
                       const feedNodes: React.ReactNode[] = [];
                       const activityAccumulator: FeedReview[] = [];
-                      let cardBIndex = 0;
 
                       const pushActivity = (entry: FeedReview) => {
                         activityAccumulator.push(entry);
-                      };
-
-                      const renderGridCell = (
-                        entry: FeedReview,
-                        onLike: (id: string) => void,
-                        onImageLike: (reviewId: string, imageId: string) => void,
-                      ): React.ReactNode => {
-                        if (entry.id === heroEntry?.id) return null;
-                        const t = resolveCardType(entry);
-                        if (t === "activity") {
-                          pushActivity(entry);
-                          return null;
-                        }
-                        return (
-                          <ReviewCardFeed
-                            entry={entry}
-                            onLike={onLike}
-                            onImageLike={onImageLike}
-                            typeBAlternateIndex={t === "B" ? cardBIndex++ : 0}
-                          />
-                        );
                       };
 
                       const processEntry = (
@@ -292,9 +270,15 @@ export default function Index() {
                           pushActivity(entry);
                           return;
                         }
-                        const inner = renderGridCell(entry, onLike, onImageLike);
-                        if (inner == null) return;
-                        feedNodes.push(<div key={entry.id}>{inner}</div>);
+                        feedNodes.push(
+                          <div key={entry.id}>
+                            <ReviewCardFeed
+                              entry={entry}
+                              onLike={onLike}
+                              onImageLike={onImageLike}
+                            />
+                          </div>,
+                        );
                       };
 
                       const processAggregatedItem = (item: AggregatedFeedItem) => {
@@ -311,28 +295,11 @@ export default function Index() {
                               </div>,
                             );
                             break;
-                          case "row": {
-                            const key = `row-${item.left.entry.id}-${item.right.entry.id}`;
-                            const leftCell = renderGridCell(
-                              item.left.entry,
-                              socialFeed.toggleLike,
-                              socialFeed.toggleImageLike,
-                            );
-                            const rightCell = renderGridCell(
-                              item.right.entry,
-                              socialFeed.toggleLike,
-                              socialFeed.toggleImageLike,
-                            );
-                            if (leftCell != null || rightCell != null) {
-                              feedNodes.push(
-                                <div key={key} className="grid w-full grid-cols-2 gap-10">
-                                  <div className="min-w-0">{leftCell}</div>
-                                  <div className="min-w-0">{rightCell}</div>
-                                </div>,
-                              );
-                            }
+                          case "row":
+                            // Single-column: render both entries sequentially
+                            processEntry(item.left.entry, socialFeed.toggleLike, socialFeed.toggleImageLike);
+                            processEntry(item.right.entry, socialFeed.toggleLike, socialFeed.toggleImageLike);
                             break;
-                          }
                           case "hero":
                           case "compact":
                           case "activity":

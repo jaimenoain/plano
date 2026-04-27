@@ -1,29 +1,20 @@
+import { formatDistanceToNow } from "date-fns";
 import type { MouseEvent } from "react";
 import { useNavigate } from "react-router";
-import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
 import { SuggestedContentBlock } from "@/features/feed/components/SuggestedContentBlock";
-import { ActivityLead } from "@/features/feed/components/card-parts";
-import { CardBookmark } from "@/features/feed/components/card-primitives";
 import { cn } from "@/lib/utils";
 
 export type FeedActivityStatus = "visited" | "pending";
 
 export interface FeedActivityRowProps {
   entry: FeedReview;
-  /**
-   * Visited vs bucket-list; when omitted, derived from `entry.status === "pending"`.
-   */
   activityStatus?: FeedActivityStatus;
-  /**
-   * Pre-built actor line when the feed aggregates multiple actors (e.g. `@a, @b, and N others visited`).
-   */
   displayText?: string;
   hideUser?: boolean;
   showCommunityImages?: boolean;
-  /** Merged last; use e.g. `border-0` when parent uses `divide-y`. */
   className?: string;
 }
 
@@ -35,9 +26,6 @@ function resolveActivityStatus(
   return entry.status === "pending" ? "pending" : "visited";
 }
 
-/**
- * Feed — activity-only row (visited / wants to visit), no review body or social footer.
- */
 export function FeedActivityRow({
   entry,
   activityStatus: activityStatusProp,
@@ -51,13 +39,10 @@ export function FeedActivityRow({
 
   if (!data || !entry.building) return null;
 
-  const { username, mainTitle, city } = data;
+  const { username, mainTitle, avatarUrl } = data;
   const activityStatus = resolveActivityStatus(entry, activityStatusProp);
   const verb = activityStatus === "pending" ? "wants to visit" : "visited";
-
-  const thumbUrl =
-    getBuildingImageUrl(entry.building.main_image_url) ??
-    (showCommunityImages ? getBuildingImageUrl(entry.building.community_preview_url) : undefined);
+  const timeAgo = formatDistanceToNow(new Date(entry.created_at), { addSuffix: true });
 
   const handleRowClick = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -67,10 +52,12 @@ export function FeedActivityRow({
       navigate(
         b.locality_country_code && b.locality_city_slug
           ? getBuildingLocalityUrl(b.locality_country_code, b.locality_city_slug, b.id, b.slug, b.short_id)
-          : getBuildingUrl(b.id, b.slug, b.short_id)
+          : getBuildingUrl(b.id, b.slug, b.short_id),
       );
     }
   };
+
+  const actorLine = displayText ?? (hideUser ? null : `@${username} ${verb}`);
 
   return (
     <SuggestedContentBlock isSuggested={entry.is_suggested} suggestionReason={entry.suggestion_reason}>
@@ -78,39 +65,32 @@ export function FeedActivityRow({
         data-testid={`feed-activity-row-${entry.id}`}
         onClick={handleRowClick}
         className={cn(
-          "group/activity-row flex min-w-0 cursor-pointer items-center gap-[18px] border-b border-border-default py-6 transition-colors hover:bg-surface-muted/30",
+          "group/activity flex min-w-0 cursor-pointer items-center gap-3 border-t border-border-default py-4 transition-colors hover:bg-surface-muted/20",
           className,
         )}
       >
-        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-none bg-surface-muted">
-          {thumbUrl ? (
-            <img src={thumbUrl} alt="" className="h-full w-full object-cover grayscale-[0.2] transition-transform duration-500 group-hover/activity-row:scale-105" loading="lazy" />
-          ) : null}
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          {!hideUser && displayText ? (
-            <p className="min-w-0 font-sans text-2xs uppercase tracking-[0.14em] text-text-secondary">
-              <span className="font-medium text-text-primary">{displayText}</span>
-            </p>
-          ) : (
-            <ActivityLead
-              username={username}
-              verb={verb}
-              hideUser={hideUser}
-              usernameWithAt
-              className="tracking-[0.14em]"
-            />
+        {/* Small avatar */}
+        {avatarUrl && !hideUser && (
+          <div className="h-5 w-5 shrink-0 overflow-hidden rounded-full bg-surface-muted">
+            <img src={avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+          </div>
+        )}
+
+        {/* Inline sentence */}
+        <p className="min-w-0 flex-1 truncate font-sans text-[13px] text-text-secondary leading-none">
+          {actorLine && (
+            <span className="font-medium text-text-primary">{actorLine} </span>
           )}
-          <h3 className="min-w-0 font-sans text-[17px] font-semibold tracking-[-0.015em] leading-tight text-text-primary line-clamp-1">
-            {mainTitle}
-          </h3>
-          {city.trim() ? (
-            <p className="font-mono text-[10px] uppercase tracking-normal text-text-disabled">
-              {city}
-            </p>
-          ) : null}
-        </div>
-        <CardBookmark buildingId={entry.building.id} hoverGroup="activity-row" className="mr-2" />
+          <span className="font-medium text-text-primary">{mainTitle}</span>
+          {entry.building.city?.trim() && (
+            <span className="text-text-disabled"> · {entry.building.city}</span>
+          )}
+        </p>
+
+        {/* Time ago */}
+        <span className="ml-2 shrink-0 font-mono text-[10px] uppercase tracking-[0.08em] text-text-disabled">
+          {timeAgo}
+        </span>
       </div>
     </SuggestedContentBlock>
   );
