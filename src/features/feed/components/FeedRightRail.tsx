@@ -53,7 +53,7 @@ export function FeedRightRail({ activities }: FeedRightRailProps) {
         <section>
           <p className={railLabel}>Recent activity</p>
           <div className="flex flex-col">
-            {activities.slice(0, 4).map((entry) => {
+            {activities.slice(0, 6).map((entry) => {
               const timeAgo = formatDistanceToNow(new Date(entry.created_at), { addSuffix: true });
               const initial = (entry.user.username || "U").charAt(0).toUpperCase();
               const verb = entry.status === "pending" ? "wants to visit" : "visited";

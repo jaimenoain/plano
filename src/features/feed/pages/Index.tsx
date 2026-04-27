@@ -15,7 +15,6 @@ import {
 } from "@/lib/feed-aggregation";
 import { FeedClusterCard } from "../components/FeedClusterCard";
 import { ReviewCardFeed } from "../components/ReviewCardFeed";
-import { ActivityStreamGroup } from "../components/ActivityStream";
 import { resolveCardType } from "../utils/resolveCardType";
 import type { FeedReview } from "@/types/feed";
 import { SectionDivider } from "../components/SectionDivider";
@@ -224,7 +223,6 @@ export default function Index() {
                   <div className="flex flex-col gap-20">
                     {(() => {
                       const feedNodes: React.ReactNode[] = [];
-                      const activityAccumulator: FeedReview[] = [];
 
                       const processEntry = (
                         entry: FeedReview,
@@ -232,10 +230,7 @@ export default function Index() {
                         onImageLike: (reviewId: string, imageId: string) => void,
                       ) => {
                         const t = resolveCardType(entry);
-                        if (t === "activity") {
-                          activityAccumulator.push(entry);
-                          return;
-                        }
+                        if (t === "activity") return;
                         feedNodes.push(
                           <div key={entry.id}>
                             <ReviewCardFeed
@@ -331,22 +326,6 @@ export default function Index() {
                           }
                         }
                       });
-
-                      if (activityAccumulator.length > 0) {
-                        feedNodes.push(
-                          <div key={`activity-trailing-${activityAccumulator.map((e) => e.id).join("-")}`}>
-                            <div className="mb-10">
-                              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-disabled">
-                                Activity · this week
-                              </p>
-                              <h2 className="font-sans text-[clamp(1.75rem,3vw,2.25rem)] font-medium leading-[1.1] tracking-[-0.035em] text-text-disabled mt-2">
-                                From your network.
-                              </h2>
-                            </div>
-                            <ActivityStreamGroup entries={activityAccumulator} hideGroupLabel />
-                          </div>,
-                        );
-                      }
 
                       return feedNodes;
                     })()}
