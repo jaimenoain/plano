@@ -25,7 +25,7 @@ representation, width discipline, action hierarchy, and spacing rhythm.
 Read these before building anything. They apply to every component and
 every page in this product, whether listed here or not.
 
-**Component entries** (sections 1–12, plus Card System in §14) — for each listed component:
+**Component entries** (sections 1–12, §13 Feed Editorial Components, §14 Card System) — for each listed component:
 layout composition (structural arrangement), token assembly (visual
 properties), interaction design notes (behavioural decisions), and
 constraints (Always/Default rules with reasons).
@@ -280,9 +280,9 @@ Buttons use `inline-flex items-center justify-center gap-2`. Button groups (e.g.
 
 ### Interaction Design Notes
 
-**Action representation:** Primary and secondary buttons always use text labels. Ghost icon-only buttons are reserved for repeated row/card actions. A primary button should never be icon-only — the neon accent demands a label to justify its visual weight.
+**Action representation:** Primary and secondary buttons always use text labels. Ghost icon-only buttons are reserved for repeated row/card actions. A primary button should never be icon-only — the black fill carries strong visual weight and must be paired with a text label to communicate intent.
 
-**Action hierarchy:** At most one primary (filled neon) button per visible surface. If two actions compete, the less important one is secondary or ghost. Destructive buttons use the destructive variant — never primary, because the neon accent must not be associated with danger.
+**Action hierarchy:** At most one primary (filled black) button per visible surface. If two actions compete, the less important one is secondary or ghost. Destructive buttons use the destructive variant — never primary.
 
 ### Editorial Text CTA (non-button action pattern)
 
@@ -303,7 +303,7 @@ Examples: `VIEW BUILDING →`, `WRITE REVIEW →`, `CLAIM PROFILE →`, `ADD FAV
 
 ### Constraints
 
-**Always:** `brand-primary-foreground` (white, `#FFFFFF`) is used for text on `brand-primary` buttons. `brand-primary` is now near-black — it requires white foreground, not dark. Using `text-primary` on a `brand-primary` button is a contrast failure.
+**Always:** `brand-primary-foreground` (white, `#FFFFFF`) is used for text on `brand-primary` buttons. `brand-primary` is near-black — it requires white foreground. Using `text-primary` on a `brand-primary` button is a contrast failure.
 
 **Always:** Focus ring uses `brand-accent` (lime, `#BEFF00`) at 2px offset across all button variants. This is one of the four permitted uses of the lime accent. No exceptions.
 
@@ -634,7 +634,7 @@ Internal gap: `gap-4` between all children. The icon sits above the heading with
 
 **Always:** The description text is constrained to `max-w-sm` so it does not stretch across wide containers. Centred text wider than ~45 characters becomes difficult to read.
 
-**Default:** The CTA button uses the primary variant. Legitimate exception: if the empty state is inside a secondary context (e.g. a sidebar panel), the CTA may use the secondary variant to avoid neon accent overuse.
+**Default:** The CTA button uses the primary variant. Legitimate exception: if the empty state is inside a secondary context (e.g. a sidebar panel), the CTA may use the secondary variant.
 
 ---
 
@@ -696,7 +696,7 @@ Toasts are positioned `fixed bottom-6 right-6 z-50` (or in a toast stack contain
 | warning | Icon | colour | feedback-warning | text-feedback-warning |
 | destructive | Left border | border-left | feedback-destructive | border-l-4 border-feedback-destructive |
 | destructive | Icon | colour | feedback-destructive | text-feedback-destructive |
-| info | Left border | border-left | brand-accent | border-l-4 border-brand-accent |
+| info | Left border | border-left | text-primary | border-l-4 border-text-primary |
 | info | Icon | colour | text-secondary | text-text-secondary |
 
 ### Interactive States
@@ -745,22 +745,22 @@ The feed follows an editorial magazine aesthetic inspired by A24 Films. The defi
 The editorial opening of the feed page — a large primary photo with caption alongside a ranked queue of recent activity. It sets the tone before the social feed begins. This is a `<header>` element, not a review card.
 
 #### Layout Composition
-The `feed-hero` wrapper bleeds past the feed column's horizontal padding (`margin: 0 -64px; padding: 56px 64px 64px`). It has a `border-bottom: 1px solid var(--text-primary)` (black hairline, not default gray).
+The `feed-hero` wrapper bleeds past the feed column's horizontal padding (`-mx-16 px-16 pt-14 pb-16`). It has a black bottom border (`border-b border-text-primary`), not the default gray hairline.
 
-Desktop grid: `grid-template-columns: 1.6fr 1fr; gap: 40px; align-items: start`.
+Desktop grid: `grid grid-cols-[1.6fr_1fr] gap-10 items-start`.
 
-**Left — primary photo:** `<figure>` with a full-width image (`aspect-ratio: 16/10; object-fit: cover; filter: contrast(1.02) saturate(0.95)`) and a `<figcaption>` below it:
-- Building name: `font-size: 22px; font-weight: 600; letter-spacing: -0.02em; color: text-primary`
-- Architect: italic serif style, `color: text-secondary` (uses `font-family: var(--font-serif, Georgia, serif)`)
-- Byline: monospace, 10px, `letter-spacing: 0.14em`, uppercase, `text-disabled` — format: `CITY · YEAR · reviewed by NAME`
+**Left — primary photo:** `<figure>` with a full-width image (`aspect-[16/10] object-cover` + CSS filter `contrast(1.02) saturate(0.95)`) and a `<figcaption>` below it:
+- Building name: `text-[22px] font-semibold tracking-[-0.02em] text-text-primary`
+- Architect: italic serif (`font-serif`), `text-text-secondary`
+- Byline: `font-mono text-[10px] tracking-[0.14em] uppercase text-text-disabled` — format: `CITY · YEAR · reviewed by NAME`
 
-**Right — queue:** `<ol>` of 4–5 items. Each item: `grid-template-columns: 64px 1fr auto; gap: 16px; padding: 16px 0; border-bottom: 1px solid border-default`. The last item omits the border.
-- Thumbnail: 64×64 square, `background-size: cover`, no radius
-- Building name: `font-size: 15px; font-weight: 500; letter-spacing: -0.01em; text-primary`
-- Sub-meta: monospace, 10px, uppercase, `text-disabled` — reviewer name (text-secondary) + dot + timestamp
+**Right — queue:** `<ol>` of 4–5 items. Each item: `grid grid-cols-[64px_1fr_auto] gap-4 py-4 border-b border-border-default`. The last item omits the border.
+- Thumbnail: `w-16 h-16 bg-cover rounded-none`
+- Building name: `text-[15px] font-medium tracking-[-0.01em] text-text-primary`
+- Sub-meta: `font-mono text-[10px] uppercase tracking-[0.08em] text-text-disabled` — reviewer name (`text-text-secondary`) + dot + timestamp
 - Rating: 3-dot scale (filled vs empty open circle), right-aligned
 
-Mobile: stacks vertically, reduced padding (`32px 24px 40px`).
+Mobile: stacks vertically, reduced padding (`py-8 px-6 pb-10`).
 
 #### Token Assembly
 
@@ -796,9 +796,9 @@ Mobile: stacks vertically, reduced padding (`32px 24px 40px`).
 The metadata line that appears above the `feed-title` in all review card types. Provides city, architect, and year in a single subdued line — contextual without competing with the headline.
 
 #### Layout Composition
-`display: flex; align-items: center; gap: 10px; margin-bottom: 10px`.
+`flex items-center gap-[10px] mb-[10px]`.
 
-Content: city, architect, year (any subset). Items are joined by `·` separators (`color: text-disabled`).
+Content: city, architect, year (any subset). Items are joined by `·` separators (`text-text-disabled`).
 
 #### Token Assembly
 
@@ -816,7 +816,7 @@ Content: city, architect, year (any subset). Items are joined by `·` separators
 The attribution line that appears below the `feed-title`. Displays reviewer name, timestamp, and award dots.
 
 #### Layout Composition
-`display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px`.
+`flex items-center gap-[10px] flex-wrap mt-[14px]`.
 
 Content: author name (linked, underline on hover) + `·` + timestamp + `·` + award dots (if rating ≥ 1).
 
@@ -868,13 +868,13 @@ A full-width review card with a wide photo. The primary social feed review forma
 1. `BuildingAbove` (city · architect · year)
 2. `feed-title` (default scale)
 3. `AuthorBelow` (author · timestamp · award dots)
-4. Full-width photo: `margin-top: 36px; aspect-ratio: 16/9; object-fit: cover; background: surface-muted`
-5. Photo caption (optional): monospace, 10px, `text-disabled`, space between location (`uppercase, tracking-[0.14em]`) and figure number
-6. Review body: `font-size: 17px; line-height: 1.75; color: text-primary; max-width: 62ch; margin-top: 32px`
+4. Full-width photo: `mt-9 aspect-video object-cover bg-surface-muted`
+5. Photo caption (optional): `font-mono text-[10px] text-text-disabled`, space between location (`uppercase tracking-[0.14em]`) and figure number
+6. Review body: `text-[17px] leading-[1.75] text-text-primary max-w-[62ch] mt-8`
 7. "Read the full review →" link (if body exists)
 8. `FeedFooter`
 
-**"Read the full review →"** link: `font-size: 11px; font-weight: 500; letter-spacing: 0.18em; uppercase; text-primary`. On hover: dims to `text-secondary`; arrow translates 3px right and shifts to `brand-accent`.
+**"Read the full review →"** link: `text-[11px] font-medium tracking-[0.18em] uppercase text-text-primary`. On hover: dims to `text-text-secondary`; arrow translates 3px right and shifts to `text-brand-accent`.
 
 #### Constraints
 
@@ -888,10 +888,10 @@ A full-width review card with a wide photo. The primary social feed review forma
 A two-column review card — text on the left, portrait photo on the right. Used for reviews with a single strong image where the copy deserves equal billing.
 
 #### Layout Composition
-`<article class="feed-item split">`: `display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start`.
+`<article class="feed-item split">`: `grid grid-cols-2 gap-16 items-start`.
 
 Left column: `BuildingAbove`, `feed-title.sm`, `AuthorBelow`, review body, `FeedFooter`.
-Right column: photo `aspect-ratio: 3/4; object-fit: cover; margin-top: 0; rounded-none`.
+Right column: photo `aspect-[3/4] object-cover mt-0 rounded-none`.
 
 ---
 
@@ -917,11 +917,11 @@ A one-liner review where the body text IS the headline. Used when a review is pi
 3. `AuthorBelow`
 4. `FeedFooter`
 
-The `feed-quote` blockquote renders at display scale: `font-size: clamp(28px, 3vw, 40px); font-weight: 500; letter-spacing: -0.025em; line-height: 1.15; max-width: 24ch; color: text-primary`.
+The `feed-quote` blockquote renders at display scale: `text-[clamp(28px,3vw,40px)] font-medium tracking-[-0.025em] leading-[1.15] max-w-[24ch] text-text-primary`.
 
-A decorative opening `"` is rendered in serif italic at 1.4× size, `text-disabled`, translated slightly to align optically.
+A decorative opening `"` is rendered in serif italic at 1.4× size, `text-text-disabled`, translated slightly to align optically.
 
-The building name appears **inline inside the blockquote** as a small underlined link immediately after the quote text: `font-size: 0.45em; font-weight: 500; color: text-disabled; border-bottom: 1px solid border-default`. On hover: `text-primary; border-bottom-color: text-primary`.
+The building name appears **inline inside the blockquote** as a small underlined link immediately after the quote text: `text-[0.45em] font-medium text-text-disabled border-b border-border-default`. On hover: `text-text-primary border-text-primary`.
 
 #### Constraints
 
@@ -939,10 +939,10 @@ A card showcasing a user's day visiting multiple buildings in one city. The clus
 1. `feed-above`: city · "{N} buildings"
 2. `feed-title` (default scale): `"A day with {who}."` — the reviewer's name rendered in `text-disabled`
 3. `AuthorBelow` (who + when, no rating)
-4. Cluster grid: `display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5px; background: border-default`
+4. Cluster grid: `grid grid-cols-3 gap-[1.5px] bg-border-default`
 5. `FeedFooter`
 
-Each cell: `aspect-ratio: 1/1; overflow: hidden; background: surface-muted`. Cell overlay: `position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0) 55%)`. Cell body (bottom-left): building name (`font-size: 15px; font-weight: 600; color: #fff`) + city (`font-size: 10px; uppercase; opacity: 0.7`). Rating dots (top-right): white-filled dots.
+Each cell: `aspect-square overflow-hidden bg-surface-muted relative`. Cell overlay: `absolute inset-0 bg-gradient-to-t from-black/72 to-transparent`. Cell body (bottom-left): building name (`text-[15px] font-semibold text-white`) + city (`text-[10px] uppercase opacity-70`). Rating dots (top-right): white-filled dots.
 
 #### Constraints
 
@@ -960,10 +960,10 @@ A card showcasing a user-curated collection of buildings as a 4-up portrait mosa
 1. `feed-above`: "Collection · {subtitle} · {N} buildings"
 2. `feed-title` (default scale): collection title
 3. `AuthorBelow`
-4. Collection mosaic: `display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5px; background: border-default; margin-top: 32px`
+4. Collection mosaic: `grid grid-cols-4 gap-[1.5px] bg-border-default mt-8`
 5. `FeedFooter`
 
-Each mosaic cell: `aspect-ratio: 4/5; background: surface-muted; overflow: hidden`. Images: `width: 100%; height: 100%; object-fit: cover; rounded-none`.
+Each mosaic cell: `aspect-[4/5] bg-surface-muted overflow-hidden`. Images: `w-full h-full object-cover rounded-none`.
 
 #### Constraints
 
@@ -982,10 +982,10 @@ A card aggregating recent actions from a user's network — visits, ratings, sav
 2. `feed-title.sm` styled at `clamp(28px, 3vw, 36px)`, `font-weight: 500`, `color: text-disabled` — renders as: "From your network."
 3. Activity rows list
 
-Each activity row: `display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 14px; padding: 18px 0; border-bottom: 1px solid border-default`.
-- Avatar: 28×28, circular, `palette-neutral-800` bg, white initials, `font-size: 10px; font-weight: 600`
-- Text: `font-size: 14px; color: text-secondary; letter-spacing: -0.005em`. User name: `text-primary; font-weight: 600`. Verb: `text-disabled`. Building: `text-primary; font-weight: 500`, underlines on hover. Award dots appended inline if rated.
-- Timestamp: `font-family: font-mono; font-size: 11px; color: text-disabled; letter-spacing: 0.04em`
+Each activity row: `grid grid-cols-[28px_1fr_auto] items-center gap-[14px] py-[18px] border-b border-border-default`.
+- Avatar: `w-7 h-7 rounded-full bg-[#262626] text-white text-[10px] font-semibold flex items-center justify-center`
+- Text: `text-[14px] text-text-secondary tracking-[-0.005em]`. User name: `text-text-primary font-semibold`. Verb: `text-text-disabled`. Building: `text-text-primary font-medium hover:underline`. Award dots appended inline if rated.
+- Timestamp: `font-mono text-[11px] text-text-disabled tracking-[0.04em]`
 
 No `FeedFooter` — activity stream is not a single likeable item.
 
@@ -1005,14 +1005,14 @@ A card promoting an upcoming architectural event (walk, talk, visit) to the user
 1. `feed-above`: "Event · {location}"
 2. `feed-title.sm`: event title
 3. `AuthorBelow`: organiser + attendee count + date
-4. Event card: `display: grid; grid-template-columns: 88px 1fr auto; gap: 24px; align-items: center; padding: 20px 24px; border: 1px solid border-default; background: surface-card; margin-top: 24px`
+4. Event card: `grid grid-cols-[88px_1fr_auto] gap-6 items-center px-6 py-5 border border-border-default bg-surface-card mt-6`
 5. No `FeedFooter`
 
-Date block: 88px square, `border: 1px solid border-default`, `font-family: font-mono`, centred. Month: `font-size: 10px; uppercase; letter-spacing: 0.12em; text-secondary`. Day: `font-size: 28px; font-weight: 700; letter-spacing: -0.02em; text-primary`.
+Date block: `w-[88px] h-[88px] border border-border-default font-mono flex flex-col items-center justify-center`. Month: `text-[10px] uppercase tracking-[0.12em] text-text-secondary`. Day: `text-[28px] font-bold tracking-[-0.02em] text-text-primary`.
 
-Body: title (`font-size: 18px; font-weight: 600; text-primary`) + subtitle line (`font-size: 12px; text-secondary`).
+Body: title (`text-[18px] font-semibold text-text-primary`) + subtitle line (`text-xs text-text-secondary`).
 
-RSVP button: `font-size: 10px; font-weight: 500; letter-spacing: 0.18em; uppercase; padding: 8px 14px; border: 1px solid text-primary; background: transparent; color: text-primary`. Hover: inverts to `background: text-primary; color: #fff`.
+RSVP button: `text-[10px] font-medium tracking-[0.18em] uppercase px-[14px] py-2 border border-text-primary bg-transparent text-text-primary`. Hover: `hover:bg-text-primary hover:text-white`.
 
 #### Constraints
 
@@ -1026,20 +1026,20 @@ RSVP button: `font-size: 10px; font-weight: 500; letter-spacing: 0.18em; upperca
 The action row at the bottom of all review cards (Hero, Split, Text, Short, Cluster, Collection).
 
 #### Layout Composition
-`display: flex; justify-content: space-between; align-items: center; margin-top: 32px`.
+`flex justify-between items-center mt-8`.
 
-**Left:** Like button + Discuss button, separated by `border-right: 1px solid border-default`.
+**Left:** Like button + Discuss button, separated by `border-r border-border-default`.
 **Right:** Save button.
 
-Each button: `font-size: 10px; font-weight: 500; letter-spacing: 0.18em; uppercase; color: text-secondary; padding: 10px 18px; display: inline-flex; align-items: center; gap: 8px`. First button has `padding-left: 0`.
+Each button: `text-[10px] font-medium tracking-[0.18em] uppercase text-text-secondary px-[18px] py-[10px] inline-flex items-center gap-2`. First button has `pl-0`.
 
-Like/Discuss icons: `width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.6`.
+Like/Discuss icons: `w-3 h-3 stroke-current fill-none` with `stroke-width: 1.6`.
 
-Count: monospace, `font-size: 10px`, zero-padded to 3 digits (e.g. `017`).
+Count: `font-mono text-[10px]`, zero-padded to 3 digits (e.g. `017`).
 
 **States:**
-- Liked: `color: text-primary`; heart icon `fill: text-primary`
-- Saved: bookmark icon `fill: text-primary`
+- Liked: `text-text-primary`; heart icon `fill-current`
+- Saved: bookmark icon `fill-current text-text-primary`
 
 #### Constraints
 
@@ -1055,7 +1055,7 @@ Count: monospace, `font-size: 10px`, zero-padded to 3 digits (e.g. `017`).
 A typographic separator between named feed sections (e.g. "Collections · This week", "From the community"). Heavier than the default hairline — it marks a significant editorial break.
 
 #### Layout Composition
-`display: flex; justify-content: space-between; align-items: baseline; padding: 64px 0 40px; border-bottom: 1px solid var(--text-primary)`.
+`flex justify-between items-baseline pt-16 pb-10 border-b border-text-primary`.
 
 **Left:** `<span class="lbl">` — monospace § prefix + section label.
 **Right:** CTA link ("See all →", "Explore →", etc.)
@@ -1087,9 +1087,9 @@ A typographic separator between named feed sections (e.g. "Collections · This w
 A compact visual indicator of a reviewer's assessment of a building — rendered as filled dots on a `surface-muted` pill. Represents award tier, not a star rating.
 
 #### Layout
-`display: inline-flex; gap: 4px; align-items: center; padding: 3px 8px; background: surface-muted; border-radius: 2px`.
+`inline-flex gap-1 items-center px-2 py-[3px] bg-surface-muted rounded-sm`.
 
-Each dot: `width: 7px; height: 7px; border-radius: 9999px; background: text-primary` (filled).
+Each dot: `w-[7px] h-[7px] rounded-full bg-text-primary` (filled).
 
 #### Scale
 | n | Label |
@@ -1114,7 +1114,7 @@ This section documents how **review cards** are chosen and laid out in the produ
 
 ### 14.1. Types and resolver
 
-**`CardSpec`** (see `src/types/cards.ts`) has four fields, all outputs of `resolveCardSpec(entry)`:
+**`CardSpec`** has four fields, all outputs of `resolveCardSpec(entry)`:
 
 | Field | Values | Meaning |
 | --- | --- | --- |
@@ -1123,29 +1123,11 @@ This section documents how **review cards** are chosen and laid out in the produ
 | `textWeight` | `none`, `snippet`, `body`, `essay` | Tier from **word count** of `entry.content` (0 words / under 20 / under 150 / 150+). |
 | `prominence` | `standard`, `elevated` | Emphasis tier from engagement and author signals. |
 
-**`resolveCardSpec`** (`src/features/feed/utils/resolveCardSpec.ts`) is pure: it does not import React or Supabase. **`layout`** comes from a fixed matrix keyed by `imageWeight` + `textWeight`. **`prominence`** is `elevated` when any of: `likes_count > 50`, `user.followers_count > 500`, `user.is_verified_architect`, `user.is_architect_of_building`.
+**`resolveCardSpec`** is a pure function. **`layout`** comes from a fixed matrix keyed by `imageWeight` + `textWeight`. **`prominence`** is `elevated` when any of: `likes_count > 50`, `user.followers_count > 500`, `user.is_verified_architect`, `user.is_architect_of_building`.
 
 Feed aggregation attaches `spec: resolveCardSpec(entry)` on items that carry a review; the feed page passes `item.spec` into **`ReviewCardFeed`** for **`hero`** and **`compact`** items. Pass **`spec`** into **`FeedHeroCard`** wherever that component is wired for layout (e.g. cold-start discovery).
 
 ### 14.2. Decision flow
-
-```mermaid
-flowchart TD
-  FR[FeedReview entry]
-  FR --> R[resolveCardSpec]
-  R --> CS[CardSpec]
-  CS --> L[layout]
-  CS --> IW[imageWeight]
-  CS --> TW[textWeight]
-  CS --> P[prominence]
-  CS --> UI[ReviewCardFeed / FeedHeroCard / ReviewCardDetail]
-  L --> UI
-  IW --> UI
-  TW --> UI
-  P --> UI
-```
-
-ASCII equivalent (read top to bottom):
 
 ```
 FeedReview
@@ -1179,14 +1161,9 @@ These names are how designers and engineers talk about cards; they map to **`Car
 
 To add or change a card presentation:
 
-1. **Adjust the contract** in `src/types/cards.ts` only if you need new enum values.
-2. **Change scoring** in `resolveCardSpec.ts` (matrix, word bands, image counting, prominence rules) and extend **`resolveCardSpec.test.ts`**.
-3. **Update UI** in **`ReviewCardFeed`** (primary feed), **`FeedHeroCard`** (where still used, e.g. cold-start), and/or **`ReviewCardDetail`** to branch on the new `CardSpec` fields.
-4. **Add or edit fixtures** in `src/features/superadmin/fixtures/cardFixtures.ts` and validate in the playground.
-
-### 14.5. Superadmin card playground
-
-Route **`/superadmin/cards`** (`CardPlayground.tsx`) renders fixtures with **`ReviewCardFeed`** and **`ReviewCardDetail`**, shows the computed **`CardSpec`**, and provides sliders/toggles to mutate a local copy of the entry. Use it to iterate on layout and elevated treatment without touching production feed data. Access is restricted (superadmin profile or configured allowlist — see app routing/guard).
+1. **Adjust the contract** only if you need new enum values on `CardSpec`.
+2. **Change scoring** in `resolveCardSpec` (matrix, word bands, image counting, prominence rules).
+3. **Update UI** in `ReviewCardFeed` (primary feed), `FeedHeroCard` (cold-start), and/or `ReviewCardDetail` to branch on the new `CardSpec` fields.
 
 ---
 

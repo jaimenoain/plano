@@ -8,37 +8,31 @@ export interface CardMetaProps {
 }
 
 /**
- * Editorial metadata line: City · Architect · Year
- * Uses 10px uppercase tracked font-sans for names, and font-mono for technical data.
+ * BuildingAbove — the subdued metadata line that appears above the feed title.
+ * 13px normal weight, slight negative tracking — contextual, never competing with the headline.
  */
 export function CardMeta({ city, architect, year, className }: CardMetaProps) {
-  const hasContent = city || architect || year;
-  if (!hasContent) return null;
+  const parts = [
+    city || null,
+    architect || null,
+    year != null ? String(year) : null,
+  ].filter(Boolean) as string[];
+
+  if (parts.length === 0) return null;
 
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center gap-[10px] text-2xs font-medium uppercase tracking-[0.14em] text-text-secondary leading-none",
-        className
+        "flex flex-wrap items-center gap-[10px] text-[13px] font-normal tracking-[-0.005em] text-text-secondary leading-none",
+        className,
       )}
     >
-      {city && (
-        <span className="flex items-center gap-[10px]">
-          <span>{city}</span>
+      {parts.map((part, i) => (
+        <span key={i} className="flex items-center gap-[10px]">
+          {i > 0 && <span className="text-text-disabled" aria-hidden>·</span>}
+          <span>{part}</span>
         </span>
-      )}
-      {city && architect && <span className="text-text-disabled">·</span>}
-      {architect && (
-        <span className="flex items-center gap-[10px]">
-          <span>{architect}</span>
-        </span>
-      )}
-      {(city || architect) && year && <span className="text-text-disabled">·</span>}
-      {year && (
-        <span className="font-mono tracking-normal text-text-secondary">
-          {year}
-        </span>
-      )}
+      ))}
     </div>
   );
 }

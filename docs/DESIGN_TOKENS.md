@@ -1,9 +1,7 @@
 # Plano: Design Tokens
 
 > **Authoritative source for all visual design decisions.**
-> Cursor reads this file during the Walking Skeleton (Task 0.1–0.2) and injects
-> these values into `apps/web/tailwind.config.ts`. Do not edit `tailwind.config.ts`
-> token values manually — edit this file and re-run the injection task.
+> Token values are reflected in `apps/web/tailwind.config.ts`. Update this file when changing design decisions, then sync `tailwind.config.ts` to match.
 
 ---
 
@@ -15,7 +13,7 @@
 
 **Editorial direction:** The feed, content detail pages (building, profile, architect), and all primary-surface pages follow an editorial magazine aesthetic. Typography weight and scale create hierarchy — not borders, not shadows, not card containers. Content sits directly on the white surface. The contrast between tiny uppercase category labels and massive bold headlines *is* the design. Whitespace is not empty space — it is editorial pause. Images are presented raw, with sharp edges and no decorative chrome.
 
-**Monochromatic content surfaces:** All content and feed pages are strictly monochromatic. Rating dots, active tab indicators, section accent bars, verified badges, icon fills, filter toggles, and interactive icon states all use `text-primary` (`#171717`). **`brand-primary` is now near-black (`#171717`) — the primary action colour is black, not lime.** The lime (`#BEFF00`) lives in a separate `brand-accent` token and is reserved for: notification dots, focus rings, the `→` arrow on CTA hover, and the active chip in overlaid dark panels (tweaks, menus). If `brand-accent` appears anywhere on a content or feed page outside those four contexts, it is an error.
+**Monochromatic content surfaces:** All content and feed pages are strictly monochromatic. Rating dots, active tab indicators, section accent bars, verified badges, icon fills, filter toggles, and interactive icon states all use `text-primary` (`#171717`). **`brand-primary` is near-black (`#171717`) — the primary action colour is black, not lime.** The lime (`#BEFF00`) lives in a separate `brand-accent` token and is reserved for: notification dots, focus rings, the `→` arrow on CTA hover, and the active chip in overlaid dark panels (tweaks, menus). If `brand-accent` appears anywhere on a content or feed page outside those four contexts, it is an error.
 
 **Single-column editorial layout:** Content detail pages (building detail, profile, architect profile) use a single-column `max-w-4xl` layout. No right sidebars on content pages. The sidebar pattern is restricted to admin and settings contexts.
 
@@ -66,7 +64,7 @@ These are the only colour tokens Cursor and components are permitted to use.
 
 | Alias | Resolves to | Purpose |
 |---|---|---|
-| `brand-primary` | `palette-neutral-900` · `#171717` | **Primary actions — near-black. This is the button colour, not lime.** |
+| `brand-primary` | `palette-neutral-900` · `#171717` | **Primary actions — near-black button colour.** |
 | `brand-primary-hover` | `#000000` | Hover state for primary actions (pure black) |
 | `brand-primary-foreground` | `#FFFFFF` | Text/icons on brand-primary background (white on black) |
 | `brand-accent` | `palette-brand-500` · `#BEFF00` | The lime accent — used sparingly (notification dot, focus ring, CTA arrow hover, active panel chip) |
@@ -156,15 +154,13 @@ Dark mode: not configured.
 
 **This repository (React Router 7 + SSR):** font declarations live in `src/root.tsx` — `Layout` component `<head>`. Inter font files are served from `public/fonts/`.
 
-**Option — `next/font/google` (Next.js only):** If the project migrates to Next.js, replace the `@font-face` block with `next/font/google` for Inter and update `tailwind.config.ts` `fontFamily.sans` to `['var(--font-sans)', 'sans-serif']`.
-
 ---
 
 ## 4. Spacing Scale
 
 Base unit: 4px (`0.25rem`). All spacing tokens are multiples of this base.
 
-The spacious density directive means Cursor should default to the higher end of the scale for component padding, section gaps, and page margins. Typical defaults: card padding `spacing-6` to `spacing-8`, section gap `spacing-12` to `spacing-16`, page margin `spacing-8` to `spacing-12`.
+The spacious density directive means defaulting to the higher end of the scale for component padding, section gaps, and page margins. Typical defaults: card padding `spacing-6` to `spacing-8`, section gap `spacing-12` to `spacing-16`, page margin `spacing-8` to `spacing-12`.
 
 | Token | Value | Pixels |
 |---|---|---|
@@ -241,11 +237,9 @@ Semantic tokens for the card system (`CardSpec` / `resolveCardSpec`). Values liv
 
 ## 7. Tailwind Config Block
 
-This is the exact object to merge into `apps/web/tailwind.config.ts`. Cursor reads
-this block verbatim during Task 0.2 of the Scaffold Prompt.
+The `theme.extend` object that reflects these tokens in `apps/web/tailwind.config.ts`.
 
 ```typescript
-// Paste into the `theme.extend` section of tailwind.config.ts
 theme: {
   extend: {
     colors: {
@@ -278,7 +272,7 @@ theme: {
         },
       },
       // --- Semantic aliases (use ONLY these in components) ---
-      'brand-primary':              '#171717',  // Near-black — primary button bg
+      'brand-primary':              '#171717',  // Near-black — primary button background
       'brand-primary-hover':        '#000000',
       'brand-primary-foreground':   '#FFFFFF',  // White text on black button
       'brand-accent':               '#BEFF00',  // Lime — notification dot, focus ring, CTA arrow hover
@@ -373,12 +367,6 @@ theme: {
 },
 ```
 
-> **Note:** Since this project uses Vite (not Next.js), `fontFamily` references
-> literal font names loaded via `<link>` tag — not CSS variable references. If the
-> project migrates to Next.js with `next/font`, update to:
-> `sans: ['var(--font-sans)', 'sans-serif']` and
-> `mono: ['var(--font-mono)', 'monospace']`.
-
 ---
 
 ## 8. Shadcn/UI Theme Variables
@@ -429,8 +417,7 @@ primitives with the project's tokens.
 ## 9. Typography Application Matrix
 
 **This section is the authoritative guide for how typography tokens are applied
-to UI contexts. Cursor must follow this matrix exactly. Do not invent type
-pairings that are not listed here.**
+to UI contexts. Follow this matrix exactly. Do not invent type pairings that are not listed here.**
 
 The spacious density directive pushes h1 to `font-size-4xl` and increases
 breathing room between heading levels. Letter spacing is tighter on large
@@ -507,7 +494,7 @@ convention.
 ## 10. Semantic Colour Usage Guide
 
 **This section defines exactly when each surface, border, and text alias from
-Section 2 is applied. Cursor must not deviate from these rules. If a component
+Section 2 is applied. Do not deviate from these rules. If a component
 does not map cleanly to a rule below, it must use the nearest named ancestor
 context — never a raw palette value.**
 
@@ -547,7 +534,7 @@ context — never a raw palette value.**
 
 **`brand-accent-foreground`** (`#171717`) is always used for text placed on `brand-accent` surfaces. The lime is a light colour — it requires dark foreground, not white.
 
-**`brand-secondary`** (`#F5F5F5`) is a neutral muted surface used for: secondary button backgrounds and subdued highlight surfaces. It no longer carries any neon tint.
+**`brand-secondary`** (`#F5F5F5`) is a neutral muted surface used for: secondary button backgrounds and subdued highlight surfaces.
 
 ### Feedback aliases
 

@@ -15,41 +15,36 @@ export function FeedHero({ hero, queue }: FeedHeroProps) {
   const architect = hero.building.creditedEntities?.[0]?.name ?? null;
 
   return (
-    <section className="-mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 pt-14 pb-14 border-b border-text-primary">
-      {/* Desktop: 2-column hero layout */}
+    <section className="px-6 lg:px-16 pt-14 pb-16 border-b border-text-primary">
+      {/* Desktop: 2-column layout */}
       <div
         className="hidden md:grid gap-10 items-start"
         style={{ gridTemplateColumns: "1.6fr 1fr" }}
       >
-        {/* Left: main photo + caption */}
+        {/* Left: primary photo + caption */}
         <figure className="m-0">
           {heroImageUrl ? (
             <img
               src={heroImageUrl}
               alt={hero.building.name}
-              className="w-full object-cover block"
+              className="w-full object-cover block rounded-none"
               style={{ aspectRatio: "16/10" }}
             />
           ) : (
-            <div
-              className="w-full bg-surface-muted"
-              style={{ aspectRatio: "16/10" }}
-            />
+            <div className="w-full bg-surface-muted rounded-none" style={{ aspectRatio: "16/10" }} />
           )}
           <figcaption className="mt-4 flex flex-col gap-1.5">
             <p className="text-[22px] font-semibold leading-snug tracking-[-0.02em] text-text-primary">
-              <span>{hero.building.name}</span>
+              {hero.building.name}
               {architect && (
-                <span className="font-normal text-text-secondary"> by {architect}</span>
+                <span className="font-normal italic text-text-secondary"> by {architect}</span>
               )}
             </p>
             <p className="font-mono text-[10px] text-text-disabled uppercase tracking-[0.14em]">
               {[hero.building.city, hero.building.year_completed]
                 .filter(Boolean)
                 .join(" · ")}
-              {hero.user.username
-                ? ` · reviewed by ${hero.user.username}`
-                : ""}
+              {hero.user.username ? ` · reviewed by ${hero.user.username}` : ""}
             </p>
           </figcaption>
         </figure>
@@ -60,37 +55,28 @@ export function FeedHero({ hero, queue }: FeedHeroProps) {
             const thumbUrl =
               getBuildingImageUrl(entry.building.main_image_url) ??
               getBuildingImageUrl(entry.images?.[0]?.url);
-            const timeAgo = formatDistanceToNow(new Date(entry.created_at), {
-              addSuffix: true,
-            });
+            const timeAgo = formatDistanceToNow(new Date(entry.created_at), { addSuffix: true });
             return (
               <li
                 key={entry.id}
-                className="grid items-start gap-3 py-4 first:pt-0 last:pb-0"
+                className="grid items-start gap-4 py-4 first:pt-0 last:pb-0"
                 style={{ gridTemplateColumns: "64px 1fr auto" }}
               >
-                {/* Thumbnail */}
-                <div className="w-16 h-16 shrink-0 overflow-hidden bg-surface-muted">
-                  {thumbUrl ? (
-                    <img
-                      src={thumbUrl}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  ) : null}
+                <div className="w-16 h-16 shrink-0 overflow-hidden bg-surface-muted rounded-none">
+                  {thumbUrl && (
+                    <img src={thumbUrl} alt="" className="w-full h-full object-cover" />
+                  )}
                 </div>
-                {/* Building info */}
                 <div className="min-w-0 pt-0.5">
                   <p className="font-medium text-[15px] text-text-primary leading-tight tracking-[-0.01em] truncate">
                     {entry.building.name}
                   </p>
-                  <p className="font-mono text-[10px] text-text-disabled uppercase tracking-[0.08em] mt-1 flex gap-1.5 items-baseline">
-                    <span className="text-text-secondary">{entry.user.username}</span>
+                  <p className="font-mono text-[10px] text-text-disabled uppercase tracking-[0.08em] mt-1.5 flex gap-1.5 items-baseline">
+                    <span className="text-text-secondary not-uppercase normal-case">{entry.user.username}</span>
                     <span>·</span>
                     <span>{timeAgo}</span>
                   </p>
                 </div>
-                {/* Award dots */}
                 <div className="shrink-0 pt-1">
                   <PointsBadge points={entry.rating ?? 0} />
                 </div>
@@ -100,25 +86,28 @@ export function FeedHero({ hero, queue }: FeedHeroProps) {
         </ol>
       </div>
 
-      {/* Mobile: just the main image + caption */}
+      {/* Mobile: hero image + caption only */}
       <div className="md:hidden">
         {heroImageUrl ? (
           <img
             src={heroImageUrl}
             alt={hero.building.name}
-            className="w-full object-cover block"
+            className="w-full object-cover block rounded-none"
             style={{ aspectRatio: "16/10" }}
           />
         ) : (
-          <div className="w-full bg-surface-muted" style={{ aspectRatio: "16/10" }} />
+          <div className="w-full bg-surface-muted rounded-none" style={{ aspectRatio: "16/10" }} />
         )}
-        <div className="mt-3 space-y-1">
-          <p className="text-base font-bold text-text-primary leading-tight">
+        <div className="mt-4 space-y-1">
+          <p className="text-[18px] font-semibold tracking-[-0.02em] text-text-primary leading-snug">
             {hero.building.name}
           </p>
           {architect && (
-            <p className="text-xs text-text-secondary">by {architect}</p>
+            <p className="text-[13px] font-normal italic text-text-secondary">{architect}</p>
           )}
+          <p className="font-mono text-[10px] text-text-disabled uppercase tracking-[0.14em]">
+            {[hero.building.city, hero.building.year_completed].filter(Boolean).join(" · ")}
+          </p>
         </div>
       </div>
     </section>

@@ -27,9 +27,6 @@ export interface FeedCardBProps {
   onImageLike?: (reviewId: string, imageId: string) => void;
 }
 
-/**
- * Feed — review with photo(s) / video (Type B). Fixed 320px row height on md+.
- */
 export function FeedCardB({
   entry,
   index = 0,
@@ -97,7 +94,7 @@ export function FeedCardB({
       navigate(
         b.locality_country_code && b.locality_city_slug
           ? getBuildingLocalityUrl(b.locality_country_code, b.locality_city_slug, b.id, b.slug, b.short_id)
-          : getBuildingUrl(b.id, b.slug, b.short_id)
+          : getBuildingUrl(b.id, b.slug, b.short_id),
       );
     } else {
       navigate(`/review/${entry.id}`);
@@ -112,7 +109,7 @@ export function FeedCardB({
       navigate(
         b.locality_country_code && b.locality_city_slug
           ? getBuildingLocalityUrl(b.locality_country_code, b.locality_city_slug, b.id, b.slug, b.short_id)
-          : getBuildingUrl(b.id, b.slug, b.short_id)
+          : getBuildingUrl(b.id, b.slug, b.short_id),
       );
     } else {
       navigate(`/review/${entry.id}`);
@@ -124,22 +121,13 @@ export function FeedCardB({
       data-testid={`feed-card-b-${entry.id}`}
       onClick={handleCardClick}
       className={cn(
-        "group/card relative w-full cursor-pointer min-w-0 max-w-full transition-opacity hover:opacity-95",
+        "group/card relative w-full cursor-pointer min-w-0",
         isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-6",
       )}
     >
-      <div
-        className={cn(
-          "grid w-full min-w-0 grid-cols-1 gap-0 md:grid-cols-2 md:gap-16 md:items-start",
-        )}
-      >
+      <div className="grid w-full min-w-0 grid-cols-1 gap-0 md:grid-cols-2 md:gap-16 md:items-start">
         {/* Photo column */}
-        <div
-          className={cn(
-            "order-1 min-w-0",
-            imageOnLeft ? "md:order-1" : "md:order-2",
-          )}
-        >
+        <div className={cn("order-1 min-w-0", imageOnLeft ? "md:order-1" : "md:order-2")}>
           <CardImage
             items={mediaItems}
             height={isMdUp ? undefined : CARD_C_IMAGE_HEIGHT}
@@ -147,7 +135,7 @@ export function FeedCardB({
             reviewId={entry.id}
             onImageLike={onImageLike}
             firstMediaOnly
-            className="transition-transform duration-700 group-hover/card:scale-[1.02]"
+            className="transition-transform duration-500 group-hover/card:scale-[1.01]"
           />
         </div>
 
@@ -158,36 +146,34 @@ export function FeedCardB({
             imageOnLeft ? "md:order-2" : "md:order-1",
           )}
         >
-          <div className="flex shrink-0 flex-col gap-0">
-            {!hideBuildingInfo && (
-              <CardMeta
-                city={entry.building.city}
-                architect={entry.building.creditedEntities?.[0]?.name}
-                year={entry.building.year_completed}
-                className="mb-4"
-              />
-            )}
-            {!hideBuildingInfo && (
-              <BuildingHeadline name={mainTitle} size="lg" className="mb-2" />
-            )}
-            {!hideUser && (
-              <CardAuthor
-                username={username}
-                avatarUrl={data.avatarUrl}
-                timestamp={entry.created_at}
-                rating={entry.rating}
-                className="mt-3"
-                onUsernameClick={() => navigate(`/profile/${username}`)}
-              />
-            )}
-          </div>
+          {!hideBuildingInfo && (
+            <CardMeta
+              city={entry.building.city}
+              architect={entry.building.creditedEntities?.[0]?.name}
+              year={entry.building.year_completed}
+              className="mb-[10px]"
+            />
+          )}
+          {!hideBuildingInfo && (
+            <BuildingHeadline name={mainTitle} size="lg" className="mb-2" />
+          )}
+          {!hideUser && (
+            <CardAuthor
+              username={username}
+              avatarUrl={data.avatarUrl}
+              timestamp={entry.created_at}
+              rating={entry.rating}
+              className="mt-[14px]"
+              onUsernameClick={() => navigate(`/profile/${username}`)}
+            />
+          )}
 
           {entry.content?.trim() && (
-            <div className="flex min-w-0 flex-col gap-1 mt-10">
+            <div className="flex min-w-0 flex-col gap-1 mt-9">
               <p
                 ref={bodyRef}
                 className={cn(
-                  "text-[18px] leading-[1.8] text-text-primary max-w-[62ch] font-sans antialiased",
+                  "text-[17px] leading-[1.75] text-text-primary max-w-[62ch] font-sans",
                   !essayExpanded && "line-clamp-4",
                 )}
               >
@@ -200,17 +186,22 @@ export function FeedCardB({
                     e.stopPropagation();
                     setEssayExpanded(true);
                   }}
-                  className="group/readmore mt-5 shrink-0 font-sans text-[11px] font-bold tracking-[0.2em] uppercase text-text-primary transition-colors hover:text-text-secondary"
+                  className="group/readmore mt-5 shrink-0 font-sans text-[11px] font-medium tracking-[0.18em] uppercase text-text-primary"
                 >
-                  Read the full review{" "}
-                  <span className="transition-transform inline-block group-hover/readmore:translate-x-1">→</span>
+                  <span className="transition-colors group-hover/readmore:text-text-secondary">
+                    Read the full review
+                  </span>
+                  {" "}
+                  <span className="transition-colors inline-block group-hover/readmore:translate-x-0.5 group-hover/readmore:text-brand-accent">
+                    →
+                  </span>
                 </button>
               )}
             </div>
           )}
 
           <CardFooter
-            className="pt-10"
+            className="pt-9"
             likesCount={entry.likes_count}
             commentsCount={entry.comments_count}
             isLiked={Boolean(entry.is_liked)}

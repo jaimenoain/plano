@@ -158,14 +158,13 @@ export default function Index() {
 
   const socialReviews = useMemo(
     () => socialFeed.data?.pages.flatMap((page) => page) || [],
-    [socialFeed.data]
+    [socialFeed.data],
   );
 
   const heroEntry = useMemo(
     () =>
       socialReviews.find(
-        (r) =>
-          Boolean(r.building?.main_image_url) || (r.images?.length ?? 0) > 0,
+        (r) => Boolean(r.building?.main_image_url) || (r.images?.length ?? 0) > 0,
       ) ?? null,
     [socialReviews],
   );
@@ -177,8 +176,7 @@ export default function Index() {
             .filter(
               (r) =>
                 r.id !== heroEntry.id &&
-                (Boolean(r.building?.main_image_url) ||
-                  (r.images?.length ?? 0) > 0),
+                (Boolean(r.building?.main_image_url) || (r.images?.length ?? 0) > 0),
             )
             .slice(0, 4)
         : [],
@@ -186,10 +184,7 @@ export default function Index() {
   );
 
   const activityEntries = useMemo(
-    () =>
-      socialReviews
-        .filter((r) => resolveCardType(r) === "activity")
-        .slice(0, 6),
+    () => socialReviews.filter((r) => resolveCardType(r) === "activity").slice(0, 6),
     [socialReviews],
   );
 
@@ -201,11 +196,11 @@ export default function Index() {
   );
   const collectionItems = useMemo(
     () => collectionsFeed.data?.pages.flatMap((p) => p) || [],
-    [collectionsFeed.data]
+    [collectionsFeed.data],
   );
   const discoveryReviews = useMemo(
     () => discoveryFeed.data?.pages.flatMap((page) => page) || [],
-    [discoveryFeed.data]
+    [discoveryFeed.data],
   );
 
   const loadMoreActive =
@@ -232,271 +227,217 @@ export default function Index() {
       ) : (
         <div className="w-full">
           {socialReviews.length === 0 && eventAttendance.length === 0 ? (
-            // --- Cold-start state: new user with no social feed yet ---
-            <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 pb-24">
-              <div className="flex flex-col gap-16 lg:gap-20">
+            // --- Cold-start state ---
+            <div className="px-6 lg:px-16 pb-32">
+              <div className="flex flex-col gap-16 lg:gap-20 mt-16">
                 <ColdStartFeed
                   discoveryReviews={discoveryReviews}
                   onLike={discoveryFeed.toggleLike}
                   onImageLike={discoveryFeed.toggleImageLike}
                   isDiscoveryLoading={discoveryFeed.isLoading}
                 />
-                {loadMoreActive && (
-                  <div ref={loadMoreRef} className="flex justify-center mt-4 py-8">
-                    {socialFeed.isFetchingNextPage ||
-                    collectionsFeed.isFetchingNextPage ||
-                    discoveryFeed.isFetchingNextPage ? (
-                      <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
-                    ) : socialFeed.isError || collectionsFeed.isError || discoveryFeed.isError ? (
-                      <Button
-                        variant="ghost"
-                        onClick={() => {
-                          if (socialFeed.isError && socialFeed.hasNextPage) {
-                            void socialFeed.fetchNextPage();
-                          } else if (collectionsFeed.isError && collectionsFeed.hasNextPage) {
-                            void collectionsFeed.fetchNextPage();
-                          } else if (discoveryFeed.isError && discoveryFeed.hasNextPage) {
-                            void discoveryFeed.fetchNextPage();
-                          }
-                        }}
-                        className="text-text-secondary hover:text-text-primary"
-                      >
-                        Error loading more. Click to retry.
-                      </Button>
-                    ) : (
-                      <Button variant="ghost" className="text-text-secondary hover:text-text-primary opacity-0">
-                        Load More
-                      </Button>
-                    )}
-                  </div>
-                )}
+                {loadMoreActive && <LoadMoreTrigger ref={loadMoreRef} feeds={[socialFeed, collectionsFeed, discoveryFeed]} />}
               </div>
             </div>
           ) : (
             // --- Active feed state ---
             <div className="md:grid md:grid-cols-[minmax(0,1fr)_320px]">
-              <main className="min-w-0 md:border-r md:border-border-default">
-                <div className="p-4 sm:p-6 lg:p-8 pb-24">
-                  {heroEntry && (
-                    <FeedHero hero={heroEntry} queue={queueEntries} />
-                  )}
-                  <div className="max-w-4xl mx-auto">
-              <div className="flex flex-col">
-                {(() => {
-                  const feedNodes: React.ReactNode[] = [];
-                  const activityAccumulator: FeedReview[] = [];
-                  let cardBIndex = 0;
+              <main className="min-w-0 md:border-r md:border-border-default overflow-hidden">
+                {/* Hero — full bleed within its own padding */}
+                {heroEntry && (
+                  <FeedHero hero={heroEntry} queue={queueEntries} />
+                )}
 
-                  const pushActivity = (entry: FeedReview) => {
-                    activityAccumulator.push(entry);
-                  };
+                {/* Feed items — 64px horizontal padding, generous vertical gap */}
+                <div className="px-6 lg:px-16 pb-32">
+                  <div className="flex flex-col gap-20 mt-20">
+                    {(() => {
+                      const feedNodes: React.ReactNode[] = [];
+                      const activityAccumulator: FeedReview[] = [];
+                      let cardBIndex = 0;
 
-                  const renderGridCell = (
-                    entry: FeedReview,
-                    onLike: (id: string) => void,
-                    onImageLike: (reviewId: string, imageId: string) => void,
-                  ): React.ReactNode => {
-                    if (entry.id === heroEntry?.id) return null;
-                    const t = resolveCardType(entry);
-                    if (t === "activity") {
-                      pushActivity(entry);
-                      return null;
-                    }
-                    return (
-                      <ReviewCardFeed
-                        entry={entry}
-                        onLike={onLike}
-                        onImageLike={onImageLike}
-                        typeBAlternateIndex={t === "B" ? cardBIndex++ : 0}
-                      />
-                    );
-                  };
+                      const pushActivity = (entry: FeedReview) => {
+                        activityAccumulator.push(entry);
+                      };
 
-                  const processEntry = (
-                    entry: FeedReview,
-                    onLike: (id: string) => void,
-                    onImageLike: (reviewId: string, imageId: string) => void,
-                  ) => {
-                    if (entry.id === heroEntry?.id) return;
-                    const t = resolveCardType(entry);
-                    if (t === "activity") {
-                      pushActivity(entry);
-                      return;
-                    }
-                    const inner = renderGridCell(entry, onLike, onImageLike);
-                    if (inner == null) return;
-                    feedNodes.push(
-                      <div
-                        key={entry.id}
-                        className="border-b border-border-default pt-12 pb-12 md:pt-[104px] md:pb-[104px]"
-                      >
-                        {inner}
-                      </div>,
-                    );
-                  };
-
-                  const processAggregatedItem = (item: AggregatedFeedItem) => {
-                    switch (item.type) {
-                      case "cluster": {
-                        const key = `cluster-${item.entries[0]?.id ?? "unknown"}`;
-                        feedNodes.push(
-                          <div
-                            key={key}
-                            className="border-b border-border-default pt-12 pb-12 md:pt-[104px] md:pb-[104px]"
-                          >
-                            <FeedClusterCard
-                              entries={item.entries}
-                              user={item.user}
-                              location={item.location}
-                              timestamp={item.timestamp}
-                            />
-                          </div>,
+                      const renderGridCell = (
+                        entry: FeedReview,
+                        onLike: (id: string) => void,
+                        onImageLike: (reviewId: string, imageId: string) => void,
+                      ): React.ReactNode => {
+                        if (entry.id === heroEntry?.id) return null;
+                        const t = resolveCardType(entry);
+                        if (t === "activity") {
+                          pushActivity(entry);
+                          return null;
+                        }
+                        return (
+                          <ReviewCardFeed
+                            entry={entry}
+                            onLike={onLike}
+                            onImageLike={onImageLike}
+                            typeBAlternateIndex={t === "B" ? cardBIndex++ : 0}
+                          />
                         );
-                        break;
-                      }
-                      case "row": {
-                        const key = `row-${item.left.entry.id}-${item.right.entry.id}`;
-                        const leftCell = renderGridCell(
-                          item.left.entry,
-                          socialFeed.toggleLike,
-                          socialFeed.toggleImageLike,
-                        );
-                        const rightCell = renderGridCell(
-                          item.right.entry,
-                          socialFeed.toggleLike,
-                          socialFeed.toggleImageLike,
-                        );
-                        if (leftCell != null || rightCell != null) {
+                      };
+
+                      const processEntry = (
+                        entry: FeedReview,
+                        onLike: (id: string) => void,
+                        onImageLike: (reviewId: string, imageId: string) => void,
+                      ) => {
+                        if (entry.id === heroEntry?.id) return;
+                        const t = resolveCardType(entry);
+                        if (t === "activity") {
+                          pushActivity(entry);
+                          return;
+                        }
+                        const inner = renderGridCell(entry, onLike, onImageLike);
+                        if (inner == null) return;
+                        feedNodes.push(<div key={entry.id}>{inner}</div>);
+                      };
+
+                      const processAggregatedItem = (item: AggregatedFeedItem) => {
+                        switch (item.type) {
+                          case "cluster":
+                            feedNodes.push(
+                              <div key={`cluster-${item.entries[0]?.id ?? "unknown"}`}>
+                                <FeedClusterCard
+                                  entries={item.entries}
+                                  user={item.user}
+                                  location={item.location}
+                                  timestamp={item.timestamp}
+                                />
+                              </div>,
+                            );
+                            break;
+                          case "row": {
+                            const key = `row-${item.left.entry.id}-${item.right.entry.id}`;
+                            const leftCell = renderGridCell(
+                              item.left.entry,
+                              socialFeed.toggleLike,
+                              socialFeed.toggleImageLike,
+                            );
+                            const rightCell = renderGridCell(
+                              item.right.entry,
+                              socialFeed.toggleLike,
+                              socialFeed.toggleImageLike,
+                            );
+                            if (leftCell != null || rightCell != null) {
+                              feedNodes.push(
+                                <div key={key} className="grid w-full grid-cols-2 gap-10">
+                                  <div className="min-w-0">{leftCell}</div>
+                                  <div className="min-w-0">{rightCell}</div>
+                                </div>,
+                              );
+                            }
+                            break;
+                          }
+                          case "hero":
+                          case "compact":
+                          case "activity":
+                            processEntry(
+                              item.entry,
+                              socialFeed.toggleLike,
+                              socialFeed.toggleImageLike,
+                            );
+                            break;
+                          default: {
+                            const _e: never = item;
+                            return _e;
+                          }
+                        }
+                      };
+
+                      let collectionCursor = 0;
+                      let discoveryCursor = 0;
+                      let hasShownDivider = false;
+
+                      mergedHomeRows.forEach((row, index) => {
+                        if (row.kind === "event_attendance") {
                           feedNodes.push(
-                            <div key={key} className="border-b border-border-default pt-12 pb-12 md:pt-[104px] md:pb-[104px]">
-                              <div className="grid w-full grid-cols-2 gap-8">
-                                <div className="min-w-0">{leftCell}</div>
-                                <div className="min-w-0">{rightCell}</div>
-                              </div>
+                            <div key={`feed-attendance-${row.entry.eventId}`}>
+                              <ReviewCardFeed entry={row.entry} />
                             </div>,
                           );
+                        } else {
+                          processAggregatedItem(row.item);
                         }
-                        break;
-                      }
-                      case "hero":
-                      case "compact":
-                      case "activity":
-                        processEntry(
-                          item.entry,
-                          socialFeed.toggleLike,
-                          socialFeed.toggleImageLike,
-                        );
-                        break;
-                      default: {
-                        const _e: never = item;
-                        return _e;
-                      }
-                    }
-                  };
-
-                  let collectionCursor = 0;
-                  let discoveryCursor = 0;
-                  let hasShownDivider = false;
-
-                  mergedHomeRows.forEach((row, index) => {
-                    if (row.kind === "event_attendance") {
-                      feedNodes.push(
-                        <div
-                          key={`feed-attendance-${row.entry.eventId}`}
-                          className="border-b border-border-default pt-12 pb-12 md:pt-[104px] md:pb-[104px]"
-                        >
-                          <ReviewCardFeed entry={row.entry} />
-                        </div>,
-                      );
-                    } else {
-                      processAggregatedItem(row.item);
-                    }
-                    const n = index + 1;
-                    if (n % 4 === 0 && collectionCursor < collectionItems.length) {
-                      const col = collectionItems[collectionCursor];
-                      collectionCursor += 1;
-                      feedNodes.push(
-                        <WidgetErrorBoundary key={`collection-inject-${col.id}-${n}`}>
-                          <div className="border-b border-border-default pt-12 pb-12 md:pt-[104px] md:pb-[104px]">
-                            <FeedCollectionCard collection={col} />
-                          </div>
-                        </WidgetErrorBoundary>,
-                      );
-                    }
-                    if (n % 8 === 0) {
-                      if (!hasShownDivider) {
-                        hasShownDivider = true;
-                        feedNodes.push(
-                          <SectionDivider
-                            key="feed-section-from-community"
-                            label="From the community"
-                            href="/explore"
-                            sectionNumber={1}
-                          />,
-                        );
-                      }
-                      if (discoveryCursor < discoveryReviews.length) {
-                        const post = discoveryReviews[discoveryCursor];
-                        discoveryCursor += 1;
-                        processEntry(
-                          post,
-                          discoveryFeed.toggleLike,
-                          discoveryFeed.toggleImageLike,
-                        );
-                      }
-                    }
-                  });
-                  if (activityAccumulator.length > 0) {
-                    feedNodes.push(
-                      <div
-                        key={`activity-trailing-${activityAccumulator.map((e) => e.id).join("-")}`}
-                        className="border-b border-border-default pt-12 pb-12 md:pt-[104px] md:pb-[104px]"
-                      >
-                        <div className="mb-10">
-                          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-disabled">
-                            Activity · this week
-                          </p>
-                          <h2 className="font-sans text-[clamp(2rem,5vw,3.5rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text-primary mt-2">
-                            From your network.
-                          </h2>
-                        </div>
-                        <ActivityStreamGroup entries={activityAccumulator} hideGroupLabel />
-                      </div>,
-                    );
-                  }
-                  return feedNodes;
-                })()}
-                {loadMoreActive && (
-                  <div ref={loadMoreRef} className="flex justify-center mt-4 py-8">
-                    {socialFeed.isFetchingNextPage ||
-                    collectionsFeed.isFetchingNextPage ||
-                    discoveryFeed.isFetchingNextPage ? (
-                      <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
-                    ) : socialFeed.isError || collectionsFeed.isError || discoveryFeed.isError ? (
-                      <Button
-                        variant="ghost"
-                        onClick={() => {
-                          if (socialFeed.isError && socialFeed.hasNextPage) {
-                            void socialFeed.fetchNextPage();
-                          } else if (collectionsFeed.isError && collectionsFeed.hasNextPage) {
-                            void collectionsFeed.fetchNextPage();
-                          } else if (discoveryFeed.isError && discoveryFeed.hasNextPage) {
-                            void discoveryFeed.fetchNextPage();
+                        const n = index + 1;
+                        if (n % 4 === 0 && collectionCursor < collectionItems.length) {
+                          const col = collectionItems[collectionCursor];
+                          collectionCursor += 1;
+                          feedNodes.push(
+                            <WidgetErrorBoundary key={`collection-inject-${col.id}-${n}`}>
+                              <FeedCollectionCard collection={col} />
+                            </WidgetErrorBoundary>,
+                          );
+                        }
+                        if (n % 8 === 0) {
+                          if (!hasShownDivider) {
+                            hasShownDivider = true;
+                            feedNodes.push(
+                              <SectionDivider
+                                key="feed-section-from-community"
+                                label="From the community"
+                                href="/explore"
+                                sectionNumber={1}
+                              />,
+                            );
                           }
-                        }}
-                        className="text-text-secondary hover:text-text-primary"
-                      >
-                        Error loading more. Click to retry.
-                      </Button>
-                    ) : (
-                      <Button variant="ghost" className="text-text-secondary hover:text-text-primary opacity-0">
-                        Load More
-                      </Button>
-                    )}
+                          if (discoveryCursor < discoveryReviews.length) {
+                            const post = discoveryReviews[discoveryCursor];
+                            discoveryCursor += 1;
+                            processEntry(
+                              post,
+                              discoveryFeed.toggleLike,
+                              discoveryFeed.toggleImageLike,
+                            );
+                          }
+                        }
+                      });
+
+                      if (activityAccumulator.length > 0) {
+                        feedNodes.push(
+                          <div key={`activity-trailing-${activityAccumulator.map((e) => e.id).join("-")}`}>
+                            <div className="mb-10">
+                              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-disabled">
+                                Activity · this week
+                              </p>
+                              <h2 className="font-sans text-[clamp(1.75rem,3vw,2.25rem)] font-medium leading-[1.1] tracking-[-0.035em] text-text-disabled mt-2">
+                                From your network.
+                              </h2>
+                            </div>
+                            <ActivityStreamGroup entries={activityAccumulator} hideGroupLabel />
+                          </div>,
+                        );
+                      }
+
+                      return feedNodes;
+                    })()}
                   </div>
-                )}
-              </div>
-            </div>
+
+                  {loadMoreActive && (
+                    <div ref={loadMoreRef} className="flex justify-center mt-16 py-4">
+                      {socialFeed.isFetchingNextPage ||
+                      collectionsFeed.isFetchingNextPage ||
+                      discoveryFeed.isFetchingNextPage ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
+                      ) : socialFeed.isError || collectionsFeed.isError || discoveryFeed.isError ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (socialFeed.isError && socialFeed.hasNextPage) void socialFeed.fetchNextPage();
+                            else if (collectionsFeed.isError && collectionsFeed.hasNextPage) void collectionsFeed.fetchNextPage();
+                            else if (discoveryFeed.isError && discoveryFeed.hasNextPage) void discoveryFeed.fetchNextPage();
+                          }}
+                          className="text-[11px] font-medium tracking-[0.18em] uppercase text-text-secondary hover:text-text-primary transition-colors"
+                        >
+                          Error loading more. Click to retry.
+                        </button>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
               </main>
               <FeedRightRail activities={activityEntries} />
@@ -505,5 +446,33 @@ export default function Index() {
         </div>
       )}
     </AppLayout>
+  );
+}
+
+// Extracted load-more trigger for cold-start path
+function LoadMoreTrigger({
+  ref,
+  feeds,
+}: {
+  ref: React.RefObject<HTMLDivElement>;
+  feeds: Array<{ isFetchingNextPage: boolean; isError: boolean; hasNextPage: boolean; fetchNextPage: () => void }>;
+}) {
+  const loading = feeds.some((f) => f.isFetchingNextPage);
+  const hasError = feeds.some((f) => f.isError);
+  if (!loading && !hasError) return null;
+  return (
+    <div ref={ref} className="flex justify-center py-4">
+      {loading ? (
+        <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
+      ) : (
+        <button
+          type="button"
+          onClick={() => feeds.find((f) => f.isError && f.hasNextPage)?.fetchNextPage()}
+          className="text-[11px] font-medium tracking-[0.18em] uppercase text-text-secondary hover:text-text-primary transition-colors"
+        >
+          Error loading more. Click to retry.
+        </button>
+      )}
+    </div>
   );
 }

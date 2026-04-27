@@ -24,9 +24,6 @@ export interface FeedCardAProps {
   onComment?: (reviewId: string) => void;
 }
 
-/**
- * Feed — review without photo (Type A).
- */
 export function FeedCardA({
   entry,
   hideUser = false,
@@ -94,7 +91,7 @@ export function FeedCardA({
       navigate(
         b.locality_country_code && b.locality_city_slug
           ? getBuildingLocalityUrl(b.locality_country_code, b.locality_city_slug, b.id, b.slug, b.short_id)
-          : getBuildingUrl(b.id, b.slug, b.short_id)
+          : getBuildingUrl(b.id, b.slug, b.short_id),
       );
     } else {
       navigate(`/review/${entry.id}`);
@@ -109,7 +106,7 @@ export function FeedCardA({
       navigate(
         b.locality_country_code && b.locality_city_slug
           ? getBuildingLocalityUrl(b.locality_country_code, b.locality_city_slug, b.id, b.slug, b.short_id)
-          : getBuildingUrl(b.id, b.slug, b.short_id)
+          : getBuildingUrl(b.id, b.slug, b.short_id),
       );
     } else {
       navigate(`/review/${entry.id}`);
@@ -121,86 +118,106 @@ export function FeedCardA({
       data-testid={`feed-card-a-${entry.id}`}
       onClick={handleCardClick}
       className={cn(
-        "group/card relative w-full cursor-pointer min-w-0 max-w-full transition-opacity hover:opacity-90",
+        "group/card relative w-full cursor-pointer min-w-0",
         isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-6",
       )}
     >
-      <div className="flex flex-col gap-0">
-        {!hideBuildingInfo && (
-          <CardMeta
-            city={entry.building.city}
-            architect={entry.building.creditedEntities?.[0]?.name}
-            year={entry.building.year_completed}
-            className="mb-4"
-          />
-        )}
+      {/* CardMeta always first */}
+      {!hideBuildingInfo && (
+        <CardMeta
+          city={entry.building.city}
+          architect={entry.building.creditedEntities?.[0]?.name}
+          year={entry.building.year_completed}
+          className="mb-[10px]"
+        />
+      )}
 
-        {!hideBuildingInfo && !isPullQuote && (
-          <BuildingHeadline name={mainTitle} size="xl" className="mb-2" />
-        )}
-
-        {!hideUser && (
-          <CardAuthor
-            username={username}
-            avatarUrl={data.avatarUrl}
-            timestamp={entry.created_at}
-            rating={entry.rating}
-            className="mt-3"
-            onUsernameClick={() => navigate(`/profile/${username}`)}
-          />
-        )}
-
-        {isPullQuote ? (
-          <blockquote className="mt-8 text-[clamp(2rem,4vw,3rem)] font-bold leading-[1.1] tracking-[-0.04em] text-text-primary max-w-[20ch]">
-            <span className="text-text-disabled mr-[0.05em]" aria-hidden="true">&#x201C;</span>
+      {isPullQuote ? (
+        /* Pull-quote layout: meta → blockquote → author → footer */
+        <>
+          <blockquote className="mt-6 text-[clamp(1.75rem,3vw,2.5rem)] font-medium leading-[1.15] tracking-[-0.025em] text-text-primary max-w-[24ch]">
+            <span className="text-text-disabled mr-[0.05em]" aria-hidden>&#x201C;</span>
             {entry.content}
             <span
               onClick={(e) => { e.stopPropagation(); handleCardClick(e as unknown as React.MouseEvent); }}
-              className="ml-[0.4em] text-[0.4em] font-bold tracking-[-0.01em] text-text-disabled border-b-2 border-border-default pb-px cursor-pointer hover:text-text-primary hover:border-text-primary transition-colors align-[0.25em] whitespace-nowrap inline uppercase"
+              className="ml-[0.4em] text-[0.45em] font-medium tracking-[-0.01em] text-text-disabled border-b border-border-default pb-px cursor-pointer hover:text-text-primary hover:border-text-primary transition-colors align-[0.25em] whitespace-nowrap inline uppercase"
             >
               {mainTitle}
             </span>
           </blockquote>
-        ) : entry.content?.trim() ? (
-          <div className="mt-10 min-w-0">
-            <p
-              ref={bodyRef}
-              className={cn(
-                "text-[18px] leading-[1.8] text-text-primary max-w-[65ch] font-sans antialiased",
-                !essayExpanded && "line-clamp-3",
-              )}
-            >
-              {entry.content}
-            </p>
-            {showReadMore && !essayExpanded && !suppressReadMoreOnMobileShortCopy && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEssayExpanded(true);
-                }}
-                className="group/readmore mt-5 font-sans text-[11px] font-bold tracking-[0.2em] uppercase text-text-primary transition-colors hover:text-text-secondary"
+          {!hideUser && (
+            <CardAuthor
+              username={username}
+              avatarUrl={data.avatarUrl}
+              timestamp={entry.created_at}
+              rating={entry.rating}
+              className="mt-5"
+              onUsernameClick={() => navigate(`/profile/${username}`)}
+            />
+          )}
+        </>
+      ) : (
+        /* Standard layout: meta → headline → author → body → footer */
+        <>
+          {!hideBuildingInfo && (
+            <BuildingHeadline name={mainTitle} size="xl" className="mb-2" />
+          )}
+          {!hideUser && (
+            <CardAuthor
+              username={username}
+              avatarUrl={data.avatarUrl}
+              timestamp={entry.created_at}
+              rating={entry.rating}
+              className="mt-[14px]"
+              onUsernameClick={() => navigate(`/profile/${username}`)}
+            />
+          )}
+          {entry.content?.trim() && (
+            <div className="mt-9 min-w-0">
+              <p
+                ref={bodyRef}
+                className={cn(
+                  "text-[17px] leading-[1.75] text-text-primary max-w-[62ch] font-sans",
+                  !essayExpanded && "line-clamp-3",
+                )}
               >
-                Read the full review{" "}
-                <span className="transition-transform inline-block group-hover/readmore:translate-x-1">→</span>
-              </button>
-            )}
-          </div>
-        ) : null}
+                {entry.content}
+              </p>
+              {showReadMore && !essayExpanded && !suppressReadMoreOnMobileShortCopy && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEssayExpanded(true);
+                  }}
+                  className="group/readmore mt-5 font-sans text-[11px] font-medium tracking-[0.18em] uppercase text-text-primary transition-colors"
+                >
+                  <span className="transition-colors group-hover/readmore:text-text-secondary">
+                    Read the full review
+                  </span>
+                  {" "}
+                  <span className="transition-colors inline-block group-hover/readmore:translate-x-0.5 group-hover/readmore:text-brand-accent">
+                    →
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
+        </>
+      )}
 
-        <CardFooter
-          className="pt-10"
-          likesCount={entry.likes_count}
-          commentsCount={entry.comments_count}
-          isLiked={Boolean(entry.is_liked)}
-          buildingId={entry.building.id}
-          onLike={() => {
-            onLike?.(entry.id);
-            window.dispatchEvent(new CustomEvent("pwa-interaction"));
-          }}
-          onComment={handleComment}
-        />
-      </div>
+      <CardFooter
+        className="pt-9"
+        likesCount={entry.likes_count}
+        commentsCount={entry.comments_count}
+        isLiked={Boolean(entry.is_liked)}
+        buildingId={entry.building.id}
+        onLike={() => {
+          onLike?.(entry.id);
+          window.dispatchEvent(new CustomEvent("pwa-interaction"));
+        }}
+        onComment={handleComment}
+      />
     </article>
   );
 }
