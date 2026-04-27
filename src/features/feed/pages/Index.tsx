@@ -26,7 +26,6 @@ import { useFeed } from "../hooks/useFeed";
 import { useSuggestedFeed } from "../hooks/useSuggestedFeed";
 import { useCollectionsFeed } from "../hooks/useCollectionsFeed";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
-import { FeedHero } from "../components/FeedHero";
 import { FeedRightRail } from "../components/FeedRightRail";
 
 const INDEX_TITLE = "Plano — The world's architecture, cataloged.";
@@ -161,28 +160,6 @@ export default function Index() {
     [socialFeed.data],
   );
 
-  const heroEntry = useMemo(
-    () =>
-      socialReviews.find(
-        (r) => Boolean(r.building?.main_image_url) || (r.images?.length ?? 0) > 0,
-      ) ?? null,
-    [socialReviews],
-  );
-
-  const queueEntries = useMemo(
-    () =>
-      heroEntry
-        ? socialReviews
-            .filter(
-              (r) =>
-                r.id !== heroEntry.id &&
-                (Boolean(r.building?.main_image_url) || (r.images?.length ?? 0) > 0),
-            )
-            .slice(0, 4)
-        : [],
-    [socialReviews, heroEntry],
-  );
-
   const activityEntries = useMemo(
     () => socialReviews.filter((r) => resolveCardType(r) === "activity").slice(0, 6),
     [socialReviews],
@@ -243,31 +220,20 @@ export default function Index() {
             // --- Active feed state ---
             <div className="md:grid md:grid-cols-[minmax(0,1fr)_320px]">
               <main className="min-w-0 md:border-r md:border-border-default overflow-hidden">
-                {/* Hero — full bleed within its own padding */}
-                {heroEntry && (
-                  <FeedHero hero={heroEntry} queue={queueEntries} />
-                )}
-
-                {/* Feed items — 64px horizontal padding, generous vertical gap */}
-                <div className="px-6 lg:px-16 pb-32">
-                  <div className="flex flex-col gap-20 mt-20">
+                <div className="px-6 lg:px-16 pt-10 pb-32">
+                  <div className="flex flex-col gap-20">
                     {(() => {
                       const feedNodes: React.ReactNode[] = [];
                       const activityAccumulator: FeedReview[] = [];
-
-                      const pushActivity = (entry: FeedReview) => {
-                        activityAccumulator.push(entry);
-                      };
 
                       const processEntry = (
                         entry: FeedReview,
                         onLike: (id: string) => void,
                         onImageLike: (reviewId: string, imageId: string) => void,
                       ) => {
-                        if (entry.id === heroEntry?.id) return;
                         const t = resolveCardType(entry);
                         if (t === "activity") {
-                          pushActivity(entry);
+                          activityAccumulator.push(entry);
                           return;
                         }
                         feedNodes.push(
@@ -296,7 +262,6 @@ export default function Index() {
                             );
                             break;
                           case "row":
-                            // Single-column: render both entries sequentially
                             processEntry(item.left.entry, socialFeed.toggleLike, socialFeed.toggleImageLike);
                             processEntry(item.right.entry, socialFeed.toggleLike, socialFeed.toggleImageLike);
                             break;
