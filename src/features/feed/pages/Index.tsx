@@ -225,7 +225,7 @@ export default function Index() {
           <Loader2 className="h-10 w-10 animate-spin text-text-secondary" />
         </div>
       ) : (
-        <div className="w-full">
+        <div className="w-full max-w-7xl mx-auto bg-surface-default md:border-l md:border-r border-border-default min-h-screen">
           {socialReviews.length === 0 && eventAttendance.length === 0 ? (
             // --- Cold-start state ---
             <div className="px-6 lg:px-16 pb-32">
