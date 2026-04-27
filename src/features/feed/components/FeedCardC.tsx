@@ -113,7 +113,7 @@ export function FeedCardC({
         isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-4",
       )}
     >
-      <div className="flex max-w-xl flex-col gap-2 mb-4">
+      <div className="flex flex-col gap-0 mb-9">
         {!hideBuildingInfo && <FeedAboveLine entry={entry} />}
         {!hideBuildingInfo && <BuildingHeadline name={mainTitle} size="lg" />}
         {!hideUser && <FeedAuthorLine entry={entry} username={username} />}
@@ -128,7 +128,7 @@ export function FeedCardC({
       />
 
       <CardFooter
-        className="pt-3 max-w-xl"
+        className="pt-8"
         likesCount={entry.likes_count}
         commentsCount={entry.comments_count}
         isLiked={Boolean(entry.is_liked)}

@@ -13,18 +13,17 @@ interface SectionDividerProps {
  */
 export function SectionDivider({ label, href }: SectionDividerProps) {
   return (
-    <div className="border-t border-border-default pt-6 w-full">
-      {href ? (
+    <div className="flex justify-between items-baseline pt-16 pb-10 border-b border-text-primary w-full">
+      <span className="text-[11px] font-medium tracking-[0.2em] uppercase text-text-primary">
+        {label}
+      </span>
+      {href && (
         <Link
           to={href}
-          className="text-2xs font-medium tracking-widest uppercase text-text-secondary no-underline transition-colors duration-150 hover:text-text-primary"
+          className="text-[10px] font-medium tracking-[0.18em] uppercase text-text-secondary no-underline transition-colors duration-150 hover:text-text-primary"
         >
-          {label} →
+          See all →
         </Link>
-      ) : (
-        <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
-          {label}
-        </span>
       )}
     </div>
   );

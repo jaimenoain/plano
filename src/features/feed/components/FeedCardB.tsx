@@ -23,8 +23,13 @@ function FeedAboveLine({ entry }: { entry: FeedReview }) {
   ].filter(Boolean) as string[];
   if (parts.length === 0) return null;
   return (
-    <p className="text-[13px] tracking-[-0.005em] text-text-secondary leading-none">
-      {parts.join(" · ")}
+    <p className="text-[13px] tracking-[-0.005em] text-text-secondary leading-none mb-[10px] flex items-center gap-[10px]">
+      {parts.map((p, i) => (
+        <span key={i} className="flex items-center gap-[10px]">
+          {i > 0 && <span className="text-text-disabled">·</span>}
+          <span>{p}</span>
+        </span>
+      ))}
     </p>
   );
 }
@@ -184,22 +189,22 @@ export function FeedCardB({
         {/* Text column */}
         <div
           className={cn(
-            "order-2 flex min-w-0 flex-col gap-2 py-6 md:py-0 md:pt-1",
+            "order-2 flex min-w-0 flex-col gap-0 py-6 md:py-0",
             imageOnLeft ? "md:order-2" : "md:order-1",
           )}
         >
-          <div className="flex shrink-0 flex-col gap-2">
+          <div className="flex shrink-0 flex-col gap-0">
             {!hideBuildingInfo && <FeedAboveLine entry={entry} />}
             {!hideBuildingInfo && <BuildingHeadline name={mainTitle} size="lg" />}
             {!hideUser && <FeedAuthorLine entry={entry} username={username} />}
           </div>
 
           {entry.content?.trim() && (
-            <div className="flex min-w-0 flex-col gap-1 mt-2">
+            <div className="flex min-w-0 flex-col gap-1 mt-8">
               <p
                 ref={bodyRef}
                 className={cn(
-                  "text-base leading-relaxed text-text-primary",
+                  "text-[17px] leading-[1.75] text-text-primary max-w-[62ch]",
                   !essayExpanded && "line-clamp-4",
                 )}
               >
@@ -212,16 +217,16 @@ export function FeedCardB({
                     e.stopPropagation();
                     setEssayExpanded(true);
                   }}
-                  className="mt-1.5 shrink-0 font-sans text-2xs tracking-[0.15em] uppercase text-text-primary transition-colors hover:text-text-secondary"
+                  className="mt-3.5 shrink-0 font-sans text-[11px] tracking-[0.18em] uppercase text-text-primary transition-colors hover:text-text-secondary"
                 >
-                  Read more →
+                  Read the full review →
                 </button>
               )}
             </div>
           )}
 
           <CardFooter
-            className="mt-auto shrink-0 pt-2"
+            className="pt-8"
             likesCount={entry.likes_count}
             commentsCount={entry.comments_count}
             isLiked={Boolean(entry.is_liked)}

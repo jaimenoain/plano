@@ -23,8 +23,13 @@ function FeedAboveLine({ entry }: { entry: FeedReview }) {
   ].filter(Boolean) as string[];
   if (parts.length === 0) return null;
   return (
-    <p className="text-[13px] tracking-[-0.005em] text-text-secondary leading-none">
-      {parts.join(" · ")}
+    <p className="text-[13px] tracking-[-0.005em] text-text-secondary leading-none mb-[10px] flex items-center gap-[10px]">
+      {parts.map((p, i) => (
+        <span key={i} className="flex items-center gap-[10px]">
+          {i > 0 && <span className="text-text-disabled">·</span>}
+          <span>{p}</span>
+        </span>
+      ))}
     </p>
   );
 }
@@ -156,7 +161,7 @@ export function FeedCardA({
         isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-4",
       )}
     >
-      <div className="flex max-w-xl flex-col gap-2">
+      <div className="flex flex-col gap-0">
         {!hideBuildingInfo && <FeedAboveLine entry={entry} />}
 
         {!hideBuildingInfo && !isPullQuote && <BuildingHeadline name={mainTitle} size="xl" />}
@@ -175,11 +180,11 @@ export function FeedCardA({
             </span>
           </blockquote>
         ) : entry.content?.trim() ? (
-          <div className="mt-2 min-w-0">
+          <div className="mt-8 min-w-0">
             <p
               ref={bodyRef}
               className={cn(
-                "text-base leading-relaxed text-text-primary",
+                "text-[17px] leading-[1.75] text-text-primary max-w-[62ch]",
                 !essayExpanded && "line-clamp-3",
               )}
             >
@@ -192,16 +197,16 @@ export function FeedCardA({
                   e.stopPropagation();
                   setEssayExpanded(true);
                 }}
-                className="mt-1.5 font-sans text-2xs tracking-[0.15em] uppercase text-text-primary transition-colors hover:text-text-secondary"
+                className="mt-3.5 font-sans text-[11px] tracking-[0.18em] uppercase text-text-primary transition-colors hover:text-text-secondary"
               >
-                Read more →
+                Read the full review →
               </button>
             )}
           </div>
         ) : null}
 
         <CardFooter
-          className="pt-2"
+          className="pt-8"
           likesCount={entry.likes_count}
           commentsCount={entry.comments_count}
           isLiked={Boolean(entry.is_liked)}
