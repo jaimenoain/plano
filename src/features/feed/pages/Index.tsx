@@ -431,6 +431,7 @@ export default function Index() {
                             key="feed-section-from-community"
                             label="From the community"
                             href="/explore"
+                            sectionNumber={1}
                           />,
                         );
                       }
@@ -451,9 +452,14 @@ export default function Index() {
                         key={`activity-trailing-${activityAccumulator.map((e) => e.id).join("-")}`}
                         className="border-b border-border-default pt-12 pb-12 md:pt-[88px] md:pb-[88px]"
                       >
-                        <p className="mb-4 font-mono text-[0.5625rem] font-normal uppercase tracking-[0.12em] text-text-secondary">
-                          Activity
-                        </p>
+                        <div className="mb-6">
+                          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-disabled">
+                            Activity · this week
+                          </p>
+                          <p className="font-sans text-[clamp(1.75rem,3vw,2.25rem)] font-medium leading-[1.15] tracking-[-0.025em] text-text-disabled mt-1">
+                            From your network.
+                          </p>
+                        </div>
                         <ActivityStreamGroup entries={activityAccumulator} hideGroupLabel />
                       </div>,
                     );

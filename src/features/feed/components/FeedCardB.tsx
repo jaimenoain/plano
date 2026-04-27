@@ -179,7 +179,7 @@ export function FeedCardB({
           <CardImage
             items={mediaItems}
             height={isMdUp ? undefined : CARD_C_IMAGE_HEIGHT}
-            aspectRatio={isMdUp ? "3/4" : undefined}
+            aspectRatio={isMdUp ? "4/5" : undefined}
             reviewId={entry.id}
             onImageLike={onImageLike}
             firstMediaOnly

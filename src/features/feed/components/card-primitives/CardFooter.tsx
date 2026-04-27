@@ -1,5 +1,12 @@
+import { useState } from "react";
+import { Heart, MessageCircle, Bookmark } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CardBookmark, type CardBookmarkHoverGroup } from "./CardBookmark";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
+import type { CardBookmarkHoverGroup } from "./CardBookmark";
 
 export interface CardFooterProps {
   likesCount: number;
@@ -7,15 +14,12 @@ export interface CardFooterProps {
   isLiked: boolean;
   onLike: () => void;
   onComment: () => void;
-  /** When set, renders bookmark with Supabase save. Omit to hide bookmark (e.g. building detail cards). */
+  /** When set, renders Save button with Supabase save. Omit to hide (e.g. building detail cards). */
   buildingId?: string | null;
   bookmarkHoverGroup?: CardBookmarkHoverGroup;
   className?: string;
 }
 
-/**
- * Likes / comments (uppercase) + optional bookmark; bookmark fades in on desktop group hover.
- */
 export function CardFooter({
   likesCount,
   commentsCount,
@@ -23,39 +27,101 @@ export function CardFooter({
   onLike,
   onComment,
   buildingId,
-  bookmarkHoverGroup = "card",
   className,
 }: CardFooterProps) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { statuses } = useUserBuildingStatuses();
+  const queryClient = useQueryClient();
+  const [isSaving, setIsSaving] = useState(false);
+
+  const isSaved = buildingId ? statuses[buildingId] === "pending" : false;
+
+  const handleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user || !buildingId) return;
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from("user_buildings").upsert(
+        {
+          user_id: user.id,
+          building_id: buildingId,
+          status: "pending",
+          edited_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id,building_id" },
+      );
+      if (error) throw error;
+      toast({ title: "Saved to your list" });
+      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
+    } catch {
+      toast({ variant: "destructive", title: "Failed to save" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const btnBase =
+    "flex items-center gap-2 font-sans text-[10px] tracking-[0.18em] uppercase transition-colors";
+
   return (
-    <div className={cn("flex w-full max-w-full min-w-0 items-center gap-3 flex-wrap", className)}>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onLike();
-        }}
-        className={cn(
-          "font-sans text-2xs tracking-[0.12em] uppercase transition-colors",
-          isLiked ? "text-text-primary" : "text-text-secondary hover:text-text-primary",
-        )}
-      >
-        {likesCount} {likesCount === 1 ? "like" : "likes"}
-      </button>
-      <span className="text-text-secondary/30 select-none text-xs" aria-hidden>
-        ·
-      </span>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onComment();
-        }}
-        className="font-sans text-2xs tracking-[0.12em] uppercase text-text-secondary hover:text-text-primary transition-colors"
-      >
-        {commentsCount} {commentsCount === 1 ? "comment" : "comments"}
-      </button>
+    <div className={cn("flex w-full items-center justify-between", className)}>
+      {/* Left: Like + Discuss */}
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onLike();
+          }}
+          className={cn(
+            btnBase,
+            "pr-4 border-r border-border-default",
+            isLiked ? "text-text-primary" : "text-text-secondary hover:text-text-primary",
+          )}
+        >
+          <Heart
+            className={cn("h-3 w-3", isLiked && "fill-current")}
+            strokeWidth={1.75}
+            aria-hidden
+          />
+          <span className="font-mono">{String(likesCount).padStart(3, "0")}</span>
+          <span>Like</span>
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onComment();
+          }}
+          className={cn(btnBase, "pl-4 text-text-secondary hover:text-text-primary")}
+        >
+          <MessageCircle className="h-3 w-3" strokeWidth={1.75} aria-hidden />
+          <span className="font-mono">{String(commentsCount).padStart(3, "0")}</span>
+          <span>Discuss</span>
+        </button>
+      </div>
+
+      {/* Right: Save */}
       {buildingId ? (
-        <CardBookmark buildingId={buildingId} hoverGroup={bookmarkHoverGroup} />
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={isSaving}
+          aria-label={isSaved ? "Saved to your list" : "Save building to your list"}
+          className={cn(
+            btnBase,
+            "text-text-primary hover:text-text-secondary",
+            isSaving && "pointer-events-none opacity-50",
+          )}
+        >
+          <Bookmark
+            className={cn("h-3 w-3", isSaved && "fill-current")}
+            strokeWidth={1.75}
+            aria-hidden
+          />
+          <span>{isSaved ? "Saved" : "Save"}</span>
+        </button>
       ) : null}
     </div>
   );

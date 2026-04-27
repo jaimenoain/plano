@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { FeedReview } from "@/types/feed";
 import { TrendingBuildings } from "./TrendingBuildings";
 import { PeopleYouMayKnow } from "./PeopleYouMayKnow";
+import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
 
 interface FeedRightRailProps {
   activities: FeedReview[];
@@ -11,8 +12,31 @@ interface FeedRightRailProps {
 const sectionLabel = "text-[11px] font-medium tracking-[0.18em] uppercase text-text-disabled mb-3.5";
 
 export function FeedRightRail({ activities }: FeedRightRailProps) {
+  const { statuses } = useUserBuildingStatuses();
+  const visits = Object.values(statuses).filter((s) => s === "visited").length;
+  const saved = Object.values(statuses).filter((s) => s === "pending").length;
+
   return (
     <aside className="hidden md:flex sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto flex-col gap-9 px-8 py-9 [&::-webkit-scrollbar]:hidden">
+      {/* Stats */}
+      <section>
+        <div className="grid grid-cols-2 border border-border-default divide-x divide-border-default">
+          {[
+            { label: "Visits", value: visits },
+            { label: "Saved", value: saved },
+          ].map(({ label, value }) => (
+            <div key={label} className="flex flex-col items-center py-4 gap-1">
+              <span className="text-2xl font-bold text-text-primary font-variant-numeric-tabular">
+                {value}
+              </span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-disabled">
+                {label}
+              </span>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Trending this week */}
       <section>
         <TrendingBuildings />

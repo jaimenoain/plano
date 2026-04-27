@@ -40,7 +40,7 @@ export function FeedHero({ hero, queue }: FeedHeroProps) {
             <p className="text-[22px] font-semibold leading-snug tracking-[-0.02em] text-text-primary">
               <span>{hero.building.name}</span>
               {architect && (
-                <span className="font-normal italic text-text-secondary"> by {architect}</span>
+                <span className="font-normal text-text-secondary"> by {architect}</span>
               )}
             </p>
             <p className="font-mono text-[10px] text-text-disabled uppercase tracking-[0.14em]">
