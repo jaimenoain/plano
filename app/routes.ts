@@ -31,6 +31,9 @@ export default [
   // Feedback API resource route
   route("/api/feedback", "features/feedback/api/feedback.route.ts"),
 
+  // Admin API resource routes
+  route("/api/admin/events-discover", "features/admin/api/events-discover.route.ts"),
+
   // Admin (AdminGuard remains as a wrapper component inside AdminLayout)
   layout("features/admin/components/AdminLayout.tsx", [
     route("/admin", "features/admin/pages/Dashboard.tsx"),
@@ -47,6 +50,7 @@ export default [
     route("/admin/storage-jobs", "features/admin/pages/StorageJobs.tsx"),
     route("/admin/system", "pages/AdminSystemPlaceholder.tsx"),
     route("/admin/feedback", "features/admin/pages/Feedback.tsx"),
+    route("/admin/events", "features/admin/pages/AdminEvents.tsx"),
   ]),
 
   // Main app (MainLayout wraps all user-facing routes)

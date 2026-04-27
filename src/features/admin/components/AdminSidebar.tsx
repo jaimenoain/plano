@@ -16,6 +16,7 @@ import {
   Factory,
   Home,
   MessageSquare,
+  CalendarDays,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
@@ -88,6 +89,11 @@ const managementItems = [
     title: "Feedback",
     url: "/admin/feedback",
     icon: MessageSquare,
+  },
+  {
+    title: "Events",
+    url: "/admin/events",
+    icon: CalendarDays,
   },
 ];
 
