@@ -176,7 +176,7 @@ Responsive: below 900px the rail collapses and horizontal padding reduces to 24p
 
 **Always:** The primary CTA and avatar both use `brand-primary` (black) background with `text-inverse` (white) text. Do not use `brand-accent` (lime) for button or avatar backgrounds.
 
-**Always:** The bell notification dot uses `brand-accent` (lime). This is one of the four permitted uses of the lime accent.
+**Always:** The bell notification dot uses `brand-accent` (lime). This is one of the two permitted uses of the lime accent.
 
 **Default:** Center column horizontal padding is `px-16` (64px). Legitimate exception: a full-bleed photo or map view that intentionally bleeds to the column edge.
 
@@ -210,7 +210,7 @@ For text-only cards (stat blocks, review cards), the entire card is padded with 
 | State | Part | Property | Tailwind class |
 |---|---|---|---|
 | hover | Container | border | hover:border-border-strong |
-| focus-visible | Container | ring | focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 |
+| focus-visible | Container | ring | focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 |
 
 ### Interaction Design Notes
 
@@ -274,7 +274,7 @@ Buttons use `inline-flex items-center justify-center gap-2`. Button groups (e.g.
 | hover (primary) | Container | background | hover:bg-brand-primary-hover |
 | hover (ghost) | Container | background | hover:bg-surface-muted |
 | hover (destructive) | Container | opacity | hover:opacity-90 |
-| focus-visible | Container | ring | focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 |
+| focus-visible | Container | ring | focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 |
 | active (primary) | Container | scale | active:scale-[0.98] |
 | disabled | Container | opacity + cursor | disabled:opacity-50 disabled:cursor-not-allowed |
 
@@ -293,7 +293,7 @@ In editorial contexts (feed, building detail, profile, architect profile), actio
 | Text (rest) | — | `text-xs font-medium uppercase tracking-widest text-text-primary transition-colors` |
 | Text (hover) | — | `hover:text-text-secondary` (dims on hover — does not brighten) |
 | Arrow (rest) | — | `→` character, inherits text colour |
-| Arrow (hover) | — | shifts to `brand-accent` (lime) — the only lime in the editorial CTA |
+| Arrow (hover) | — | remains `text-primary` — editorial CTAs are strictly monochromatic |
 
 Examples: `VIEW BUILDING →`, `WRITE REVIEW →`, `CLAIM PROFILE →`, `ADD FAVOURITES →`, `DIRECTIONS →`, `EDIT →`.
 
@@ -305,7 +305,7 @@ Examples: `VIEW BUILDING →`, `WRITE REVIEW →`, `CLAIM PROFILE →`, `ADD FAV
 
 **Always:** `brand-primary-foreground` (white, `#FFFFFF`) is used for text on `brand-primary` buttons. `brand-primary` is near-black — it requires white foreground. Using `text-primary` on a `brand-primary` button is a contrast failure.
 
-**Always:** Focus ring uses `brand-accent` (lime, `#BEFF00`) at 2px offset across all button variants. This is one of the four permitted uses of the lime accent. No exceptions.
+**Always:** Focus ring uses `brand-primary` (black, `#171717`) at 2px offset across all button variants. No exceptions. `brand-accent` (lime) is reserved for text selection and notifications.
 
 **Default:** Button size is `md`. Use `sm` for table row actions and tight toolbar contexts. Use `lg` for page-level hero CTAs. Legitimate exception: a landing page may use a custom larger size, but it must still use `radius-sm`.
 
@@ -337,8 +337,8 @@ Inputs are block-level: `flex w-full`. Textareas add `min-h-[120px] resize-y`. S
 |---|---|---|---|
 | hover | Input | shadow | hover:shadow-sm |
 | hover | Input | border | hover:border-border-strong |
-| focus-visible | Input | border | focus-visible:border-brand-accent |
-| focus-visible | Input | ring | focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-0 |
+| focus-visible | Input | border | focus-visible:border-brand-primary |
+| focus-visible | Input | ring | focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-0 |
 | disabled | Input | opacity + cursor | disabled:opacity-50 disabled:cursor-not-allowed |
 | error | Input | border | border-feedback-destructive |
 | error + focus | Input | ring | focus-visible:ring-2 focus-visible:ring-feedback-destructive focus-visible:ring-offset-0 |
@@ -599,7 +599,7 @@ Each nav link is `text-sm font-medium px-[14px] py-2 rounded-sm`. The active lin
 
 ### Constraints
 
-**Always:** The bell notification dot uses `brand-accent` (lime) — this is one of the four permitted uses of the lime accent. It must not be any other colour.
+**Always:** The bell notification dot uses `brand-accent` (lime) — this is one of the two permitted uses of the lime accent. It must not be any other colour.
 
 **Always:** The primary CTA button (`brand-primary`, black) and avatar use `brand-primary-foreground` (`#FFFFFF`, white) text. No dark text on the black button.
 
@@ -704,7 +704,7 @@ Toasts are positioned `fixed bottom-6 right-6 z-50` (or in a toast stack contain
 | State | Part | Property | Tailwind class |
 |---|---|---|---|
 | hover (dismiss) | Button | background | hover:bg-surface-muted |
-| focus-visible (dismiss) | Button | ring | focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 |
+| focus-visible (dismiss) | Button | ring | focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 |
 
 ### Interaction Design Notes
 
@@ -874,7 +874,7 @@ A full-width review card with a wide photo. The primary social feed review forma
 7. "Read the full review →" link (if body exists)
 8. `FeedFooter`
 
-**"Read the full review →"** link: `text-[11px] font-medium tracking-[0.18em] uppercase text-text-primary`. On hover: dims to `text-text-secondary`; arrow translates 3px right and shifts to `text-brand-accent`.
+**"Read the full review →"** link: `text-[11px] font-medium tracking-[0.18em] uppercase text-text-primary`. On hover: dims to `text-text-secondary`; arrow translates 3px right and remains `text-text-primary`.
 
 #### Constraints
 
@@ -1069,7 +1069,7 @@ A typographic separator between named feed sections (e.g. "Collections · This w
 | § prefix | — | font-mono text-[10px] text-text-disabled tracking-[0.04em] mr-3 |
 | Label text | — | text-[11px] font-medium tracking-[0.2em] uppercase text-text-primary |
 | CTA text | — | text-[10px] font-medium tracking-[0.18em] uppercase text-text-primary |
-| CTA arrow | — | `→` — shifts to `brand-accent` on hover |
+| CTA arrow | — | `→` — remains `text-primary` on hover |
 
 #### Constraints
 
@@ -1244,7 +1244,7 @@ The `gap-px bg-border-default` pattern produces 1px hairline dividers between ti
 
 **Always:** All interactive text links on content detail pages use the text CTA pattern (`uppercase tracking-widest text-xs font-medium`). No filled buttons in content page body sections.
 
-**Always:** `brand-accent` (lime) does not appear on content detail pages outside of focus rings. Primary buttons inside modals use `brand-primary` (black). The rest of the page is strictly monochromatic.
+**Always:** `brand-accent` (lime) does not appear on content detail pages. Focus rings use `brand-primary` (black). The rest of the page is strictly monochromatic. Primary buttons inside modals use `brand-primary` (black).
 
 ---
 
@@ -1290,7 +1290,7 @@ documented reason.
 | Feed review body | 17px | font-weight-normal | text-primary | letter-spacing-normal | 1.75 |
 | Feed author name | font-size-sm | font-weight-medium | text-primary | -0.005em | line-height-normal |
 | Feed timestamp | font-size-sm | font-weight-normal | text-disabled | -0.005em | line-height-normal |
-| Feed CTA link | font-size-xs | font-weight-medium | text-primary (arrow → brand-accent on hover) | letter-spacing-widest | line-height-tight |
+| Feed CTA link | font-size-xs | font-weight-medium | text-primary | letter-spacing-widest | line-height-tight |
 | Feed section divider label | 11px | font-weight-medium | text-primary | 0.2em | line-height-normal |
 | Feed section divider § prefix | font-size-xs (mono) | font-weight-normal | text-disabled | 0.04em | line-height-normal |
 | Feed photo caption | font-size-xs (mono) | font-weight-normal | text-disabled | 0.04em | line-height-normal |
@@ -1391,7 +1391,7 @@ place `text-primary` on a dark background.
 
 `brand-primary` (`#171717`) is the primary action colour — **near-black**. Use it for: primary button backgrounds, avatar backgrounds, and the primary CTA in the top nav. `brand-primary-foreground` is `#FFFFFF` (white) — always white text on a black button. This is the most-used action token.
 
-`brand-accent` (`#BEFF00`) is the lime accent. It appears in exactly four places across the entire product: the notification dot on the bell icon, the `→` arrow of a CTA text link on hover, focus rings (`ring-brand-accent`), and the active chip inside overlaid dark panels (tweaks, dark menus). If `brand-accent` appears outside these four contexts it is an error. It must not be used for: button backgrounds, section accent bars, rating dots, bookmark fills, tab indicators, avatar borders, or any fill state on content or feed pages.
+`brand-accent` (`#BEFF00`) is the lime accent. It appears in exactly two places across the entire product: the notification dot on the bell icon and the text selection highlight (`::selection`). If `brand-accent` appears outside these two contexts it is an error. It must not be used for: button backgrounds, section accent bars, rating dots, bookmark fills, tab indicators, avatar borders, focus rings, CTA arrows, or any fill state on content or feed pages. Focus rings use `brand-primary` (black).
 
 `brand-accent-foreground` (`#171717`) is always dark. The lime is a light colour — it requires dark foreground.
 

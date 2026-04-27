@@ -13,11 +13,11 @@
 
 **Editorial direction:** The feed, content detail pages (building, profile, architect), and all primary-surface pages follow an editorial magazine aesthetic. Typography weight and scale create hierarchy — not borders, not shadows, not card containers. Content sits directly on the white surface. The contrast between tiny uppercase category labels and massive bold headlines *is* the design. Whitespace is not empty space — it is editorial pause. Images are presented raw, with sharp edges and no decorative chrome.
 
-**Monochromatic content surfaces:** All content and feed pages are strictly monochromatic. Rating dots, active tab indicators, section accent bars, verified badges, icon fills, filter toggles, and interactive icon states all use `text-primary` (`#171717`). **`brand-primary` is near-black (`#171717`) — the primary action colour is black, not lime.** The lime (`#BEFF00`) lives in a separate `brand-accent` token and is reserved for: notification dots, focus rings, the `→` arrow on CTA hover, and the active chip in overlaid dark panels (tweaks, menus). If `brand-accent` appears anywhere on a content or feed page outside those four contexts, it is an error.
+**Monochromatic content surfaces:** All content and feed pages are strictly monochromatic. Rating dots, active tab indicators, section accent bars, verified badges, icon fills, filter toggles, and interactive icon states all use `text-primary` (`#171717`). **`brand-primary` is near-black (`#171717`) — the primary action colour is black, not lime.** The lime (`#BEFF00`) lives in a separate `brand-accent` token and is reserved for: text selection highlight (`::selection`) and the notification dot on the bell icon. Focus rings and CTA arrows now use monochromatic signals. If `brand-accent` appears anywhere on a content or feed page outside those two contexts, it is an error.
 
 **Single-column editorial layout:** Content detail pages (building detail, profile, architect profile) use a single-column `max-w-4xl` layout. No right sidebars on content pages. The sidebar pattern is restricted to admin and settings contexts.
 
-**CTA pattern:** In editorial contexts, calls to action are rendered as uppercase tracked text with a `→` arrow — never a filled button. Format: `text-xs font-medium uppercase tracking-widest`. On hover, the label text dims to `text-secondary` and the `→` arrow shifts to `brand-accent` (lime). This applies to all in-page action links (review, save, follow, directions, etc.) outside of modal and form contexts.
+**CTA pattern:** In editorial contexts, calls to action are rendered as uppercase tracked text with a `→` arrow — never a filled button. Format: `text-xs font-medium uppercase tracking-widest`. On hover, the label text dims to `text-secondary` and the `→` arrow remains `text-primary`. This applies to all in-page action links (review, save, follow, directions, etc.) outside of modal and form contexts.
 
 **App shell:** The application uses a **horizontal sticky top navigation bar** (logo + nav links + search + primary CTA + bell + avatar), not a left sidebar. The body is a two-column grid: a fluid center feed column and a 320px sticky right rail.
 
@@ -67,7 +67,7 @@ These are the only colour tokens Cursor and components are permitted to use.
 | `brand-primary` | `palette-neutral-900` · `#171717` | **Primary actions — near-black button colour.** |
 | `brand-primary-hover` | `#000000` | Hover state for primary actions (pure black) |
 | `brand-primary-foreground` | `#FFFFFF` | Text/icons on brand-primary background (white on black) |
-| `brand-accent` | `palette-brand-500` · `#BEFF00` | The lime accent — used sparingly (notification dot, focus ring, CTA arrow hover, active panel chip) |
+| `brand-accent` | `palette-brand-500` · `#BEFF00` | The lime accent — used sparingly (text selection highlight, notification dot) |
 | `brand-accent-hover` | `palette-brand-600` · `#9ACC00` | Hover state for accent elements |
 | `brand-accent-foreground` | `palette-neutral-900` · `#171717` | Text/icons on brand-accent background (dark on lime) |
 | `brand-secondary` | `palette-neutral-100` · `#F5F5F5` | Secondary surfaces — muted tonal background |
@@ -275,7 +275,7 @@ theme: {
       'brand-primary':              '#171717',  // Near-black — primary button background
       'brand-primary-hover':        '#000000',
       'brand-primary-foreground':   '#FFFFFF',  // White text on black button
-      'brand-accent':               '#BEFF00',  // Lime — notification dot, focus ring, CTA arrow hover
+      'brand-accent':               '#BEFF00',  // Lime — text selection, notification dot
       'brand-accent-hover':         '#9ACC00',
       'brand-accent-foreground':    '#171717',
       'brand-secondary':            '#F5F5F5',
@@ -396,7 +396,8 @@ primitives with the project's tokens.
     --destructive-foreground: 0 0% 100%;          /* feedback-destructive-foreground #FFFFFF */
     --border:                 0 0% 90%;           /* border-default #E5E5E5 */
     --input:                  0 0% 90%;           /* border-default #E5E5E5 */
-    --ring:                   75 100% 50%;        /* brand-accent #BEFF00 — focus ring (lime) */
+    --ring:                   0 0% 9%;            /* brand-primary #171717 — focus ring (monochromatic) */
+    --selection:              75 100% 50%;        /* brand-accent #BEFF00 — text selection */
     --radius:                 0.125rem;           /* radius-sm 2px — sharp default */
     --brand-accent:           75 100% 50%;        /* brand-accent #BEFF00 — lime, notification dot, CTA arrow */
     --brand-accent-foreground: 0 0% 9%;           /* brand-accent-foreground #171717 */
@@ -457,7 +458,7 @@ convention.
 | Feed review excerpt | `font-size-base` | `font-weight-normal` | `letter-spacing-normal` | `line-height-relaxed` | `text-secondary` |
 | Feed user name | `font-size-sm` | `font-weight-medium` | `letter-spacing-normal` | `line-height-normal` | `text-primary` |
 | Feed timestamp | `font-size-xs` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-disabled` |
-| Feed CTA link | `font-size-xs` | `font-weight-medium` | `letter-spacing-widest` | `line-height-tight` | `text-primary` (arrow → `brand-accent` on hover) |
+| Feed CTA link | `font-size-xs` | `font-weight-medium` | `letter-spacing-widest` | `line-height-tight` | `text-primary` (stays black on hover) |
 | Feed section divider label | `11px` | `font-weight-medium` | `letter-spacing-widest` | `line-height-normal` | `text-primary` |
 | Feed section divider § prefix | `font-size-xs` (mono) | `font-weight-normal` | `letter-spacing-wide` | `line-height-normal` | `text-disabled` |
 | Feed above-title line | `13px` | `font-weight-normal` | `-0.005em` | `line-height-normal` | `text-secondary` |
@@ -487,7 +488,7 @@ convention.
 | Highlights sub-section label | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-disabled` |
 | Quote blockquote text | `font-size-sm` | `font-weight-medium` | `letter-spacing-normal` | `line-height-relaxed` | `text-secondary` |
 
-**Feed editorial typography notes:** The extreme scale contrast between the `feed-above` building metadata line (13px, gray) and the massive feed title (`clamp(48px, 6vw, 72px)`, bold, near-zero line-height) is the defining visual signature of the editorial feed. The contrast *is* the design — do not flatten it. Feed CTA links use uppercase tracked text (`letter-spacing-widest`) with a `→` arrow: on hover, the text dims to `text-secondary` and the arrow shifts to `brand-accent` (lime). This is the only context where `brand-accent` appears in the feed. Feed section dividers use `text-primary` (not secondary) for their labels, paired with a black `1px solid text-primary` bottom border — not the default gray hairline.
+**Feed editorial typography notes:** The extreme scale contrast between the `feed-above` building metadata line (13px, gray) and the massive feed title (`clamp(48px, 6vw, 72px)`, bold, near-zero line-height) is the defining visual signature of the editorial feed. The contrast *is* the design — do not flatten it. Feed CTA links use uppercase tracked text (`letter-spacing-widest`) with a `→` arrow: on hover, the text dims to `text-secondary` and the arrow remains sharp black (`text-primary`). This preserves the strictly monochromatic editorial feel. Feed section dividers use `text-primary` (not secondary) for their labels, paired with a black `1px solid text-primary` bottom border — not the default gray hairline.
 
 ---
 
@@ -530,7 +531,7 @@ context — never a raw palette value.**
 
 **`brand-primary`** (`#171717`) is the primary action colour — near-black. It is used for: primary button backgrounds everywhere (forms, modals, admin, CTA buttons in the top nav). It is the button colour. It is not the lime. `brand-primary-foreground` is `#FFFFFF` (white text on a black button).
 
-**`brand-accent`** (`#BEFF00`) is the lime accent — the one bright colour in the system. It appears in exactly four places: the notification dot on the bell icon, the `→` arrow of a CTA text link on hover, focus rings (`outline-color: brand-accent`), and the active state chip inside overlaid dark panels (tweaks panel, dark dropdown menus). If `brand-accent` appears anywhere outside these four contexts it is an error. It must not appear as: button backgrounds, section accent bars, tab indicators, bookmark fills, verified badge colours, or any fill state on content or feed pages.
+**`brand-accent`** (`#BEFF00`) is the lime accent — the one bright colour in the system. It appears in exactly two places: text selection highlight (`::selection`) and the notification dot on the bell icon. If `brand-accent` appears anywhere outside these two contexts it is an error. It must not appear as: button backgrounds, section accent bars, tab indicators, bookmark fills, verified badge colours, focus rings, CTA arrows, or any fill state on content or feed pages. Focus rings now use `brand-primary` (black).
 
 **`brand-accent-foreground`** (`#171717`) is always used for text placed on `brand-accent` surfaces. The lime is a light colour — it requires dark foreground, not white.
 
@@ -544,7 +545,7 @@ context — never a raw palette value.**
 
 ## 11. Designer Notes
 
-The entire system is built on one principle: **let the architecture be the colour.** Plano is a photography-first platform — every building photo will be the most colourful element on screen. The strictly grayscale palette ensures photos sing without competing against brand colours. The single neon accent (#BEFF00 electric lime) provides just enough tension to feel alive — it functions like a fluorescent tube in a concrete gallery, marking where to look and what to press.
+The entire system is built on one principle: **let the architecture be the colour.** Plano is a photography-first platform — every building photo will be the most colourful element on screen. The strictly grayscale palette ensures photos sing without competing against brand colours. The single neon accent (#BEFF00 electric lime) provides just enough tension to feel alive — it functions like a highlighter pen in a concrete gallery, marking selected text and exactly one high-priority system signal (notifications).
 
 **Inter** is the primary sans: highly legible in dense UI, neutral enough to let photography dominate, and strong at editorial sizes when paired with existing scale and weight rules (tight line height and slight negative letter-spacing on large headings preserve the poster-like feed hierarchy). **Space Mono** remains the monospace — it supplies technical contrast for metadata, coordinates, and building IDs without competing with the sans. Together they keep the catalogue/editorial split: neutral sans for body and display, monospace for machine-readable detail.
 
