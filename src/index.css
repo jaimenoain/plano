@@ -12,11 +12,14 @@
        ============================================================ */
 
     /* --- Brand --- */
-    --brand-primary:              #BEFF00;
-    --brand-primary-hover:        #9ACC00;
-    --brand-primary-foreground:   #171717;
-    --brand-secondary:            #F7FFE0;
-    --brand-secondary-foreground: #4D6600;
+    --brand-primary:              #171717;
+    --brand-primary-hover:        #000000;
+    --brand-primary-foreground:   #FFFFFF;
+    --brand-secondary:            #F5F5F5;
+    --brand-secondary-foreground: #171717;
+    --brand-accent:               #BEFF00;
+    --brand-accent-hover:         #9ACC00;
+    --brand-accent-foreground:    #171717;
 
     /* --- Surfaces --- */
     --surface-default:  #FAFAFA;

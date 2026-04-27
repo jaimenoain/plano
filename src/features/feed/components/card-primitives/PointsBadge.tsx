@@ -8,11 +8,11 @@ export function PointsBadge({ points }: { points: number }) {
   if (!points || points <= 0) return null;
   return (
     <div
-      className="flex items-center gap-1.5"
+      className="inline-flex items-center gap-1 py-[3px] px-2 bg-surface-muted rounded-sm"
       title={`${points} ${points === 1 ? "point" : "points"}`}
     >
       {Array.from({ length: points }).map((_, i) => (
-        <div key={i} className="w-3 h-3 rounded-full bg-text-primary" />
+        <div key={i} className="w-[7px] h-[7px] rounded-full bg-text-primary" />
       ))}
     </div>
   );

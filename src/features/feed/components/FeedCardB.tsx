@@ -217,9 +217,10 @@ export function FeedCardB({
                     e.stopPropagation();
                     setEssayExpanded(true);
                   }}
-                  className="mt-3.5 shrink-0 font-sans text-[11px] tracking-[0.18em] uppercase text-text-primary transition-colors hover:text-text-secondary"
+                  className="group/readmore mt-3.5 shrink-0 font-sans text-[11px] tracking-[0.18em] uppercase text-text-primary transition-colors hover:text-text-secondary"
                 >
-                  Read the full review →
+                  Read the full review{" "}
+                  <span className="transition-colors group-hover/readmore:text-brand-accent">→</span>
                 </button>
               )}
             </div>

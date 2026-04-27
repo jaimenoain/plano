@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { DashboardStats, HeatmapPoint } from "@/features/admin/types/admin";
+import { DashboardStats, PhotoCoverageStats, TopPhotoBuilding, ZeroPhotoBuilding } from "@/features/admin/types/admin";
 
 export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
   // Parallel RPC calls to avoid single transaction timeout
@@ -102,12 +102,25 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
   return stats;
 }
 
-export async function fetchPhotoHeatmapData(): Promise<HeatmapPoint[]> {
-  const { data, error } = await supabase.rpc("get_photo_heatmap_data");
-
-  if (error) {
-    return [];
+export async function fetchPhotoCoverageStats(): Promise<PhotoCoverageStats> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_photo_coverage_stats");
+  if (error || !data?.[0]) {
+    return { total_photos: 0, buildings_with_photos: 0, buildings_without_photos: 0, total_buildings: 0 };
   }
+  return data[0] as PhotoCoverageStats;
+}
 
-  return (data as unknown as HeatmapPoint[]) || [];
+export async function fetchTopPhotoBuildings(limit = 50): Promise<TopPhotoBuilding[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_top_photo_buildings", { p_limit: limit });
+  if (error) return [];
+  return (data as unknown as TopPhotoBuilding[]) || [];
+}
+
+export async function fetchZeroPhotoBuildings(limit = 500): Promise<ZeroPhotoBuilding[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_zero_photo_buildings", { p_limit: limit });
+  if (error) return [];
+  return (data as unknown as ZeroPhotoBuilding[]) || [];
 }

@@ -15,6 +15,7 @@ import {
   UserCircle,
   Factory,
   Home,
+  MessageSquare,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
@@ -82,6 +83,11 @@ const managementItems = [
     title: "System",
     url: "/admin/system",
     icon: Settings,
+  },
+  {
+    title: "Feedback",
+    url: "/admin/feedback",
+    icon: MessageSquare,
   },
 ];
 

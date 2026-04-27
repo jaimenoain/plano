@@ -78,7 +78,7 @@ export function FeedActivityRow({
         data-testid={`feed-activity-row-${entry.id}`}
         onClick={handleRowClick}
         className={cn(
-          "group/activity-row flex min-w-0 cursor-pointer items-center gap-2 border-b border-border-default py-3 md:gap-4",
+          "group/activity-row flex min-w-0 cursor-pointer items-center gap-[14px] border-b border-border-default py-[18px]",
           className,
         )}
       >
@@ -100,7 +100,7 @@ export function FeedActivityRow({
               usernameWithAt
             />
           )}
-          <p className="min-w-0 font-sans text-[1.3125rem] font-black tracking-tight leading-none text-text-primary line-clamp-1">
+          <p className="min-w-0 font-sans text-[14px] font-medium tracking-[-0.005em] leading-snug text-text-primary line-clamp-1">
             {mainTitle}
           </p>
           {city.trim() ? (

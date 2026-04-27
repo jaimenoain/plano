@@ -28,6 +28,9 @@ export default [
     "features/admin/pages/MergeComparison.tsx",
   ),
 
+  // Feedback API resource route
+  route("/api/feedback", "features/feedback/api/feedback.route.ts"),
+
   // Admin (AdminGuard remains as a wrapper component inside AdminLayout)
   layout("features/admin/components/AdminLayout.tsx", [
     route("/admin", "features/admin/pages/Dashboard.tsx"),
@@ -43,6 +46,7 @@ export default [
     route("/admin/credits/companies", "features/admin/pages/AdminCompanies.tsx"),
     route("/admin/storage-jobs", "features/admin/pages/StorageJobs.tsx"),
     route("/admin/system", "pages/AdminSystemPlaceholder.tsx"),
+    route("/admin/feedback", "features/admin/pages/Feedback.tsx"),
   ]),
 
   // Main app (MainLayout wraps all user-facing routes)

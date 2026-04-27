@@ -21,8 +21,13 @@ function FeedAboveLine({ entry }: { entry: FeedReview }) {
   ].filter(Boolean) as string[];
   if (parts.length === 0) return null;
   return (
-    <p className="text-[13px] tracking-[-0.005em] text-text-secondary leading-none">
-      {parts.join(" · ")}
+    <p className="text-[13px] tracking-[-0.005em] text-text-secondary leading-none mb-[10px] flex items-center gap-[10px]">
+      {parts.map((p, i) => (
+        <span key={i} className="flex items-center gap-[10px]">
+          {i > 0 && <span className="text-text-disabled">·</span>}
+          <span>{p}</span>
+        </span>
+      ))}
     </p>
   );
 }

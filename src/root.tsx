@@ -31,6 +31,8 @@ import { useLoginTracker } from "@/features/auth/hooks/useLoginTracker";
 import { usePresenceTracker } from "@/features/auth/hooks/usePresenceTracker";
 import { logDiagnosticError } from "@/features/admin/api/diagnostics";
 import { setSentryUser } from "@/lib/sentry";
+import { ConsoleErrorInterceptor } from "@/components/providers/ConsoleErrorInterceptor";
+import { FeedbackWidget } from "@/features/feedback/components/FeedbackWidget";
 import {
   createSupabaseServerClient,
   getSessionForClientHydration,
@@ -176,6 +178,8 @@ function AppShell({ initialSidebarOpen }: { initialSidebarOpen: boolean | null }
           <PwaPrompt />
           <Toaster />
           <Sonner />
+          <ConsoleErrorInterceptor />
+          <FeedbackWidget />
           <Outlet />
         </PwaProvider>
       </TooltipProvider>

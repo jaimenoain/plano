@@ -1,7 +1,29 @@
-export type HeatmapPoint = {
+export type PhotoCoverageStats = {
+  total_photos: number;
+  buildings_with_photos: number;
+  buildings_without_photos: number;
+  total_buildings: number;
+};
+
+export type TopPhotoBuilding = {
+  id: string;
+  name: string;
+  slug: string | null;
+  city: string | null;
+  country_code: string | null;
   lat: number;
   lng: number;
-  weight: number;
+  photo_count: number;
+};
+
+export type ZeroPhotoBuilding = {
+  id: string;
+  name: string;
+  slug: string | null;
+  city: string | null;
+  country_code: string | null;
+  lat: number;
+  lng: number;
 };
 
 export type DashboardStats = {

@@ -64,7 +64,7 @@ export default {
       colors: {
         border: "var(--border-default)",
         input: "var(--border-default)",
-        ring: "var(--brand-primary)",
+        ring: "var(--brand-accent)",
         background: "var(--surface-default)",
         foreground: "var(--text-primary)",
         primary: {
@@ -115,6 +115,9 @@ export default {
         'brand-primary-foreground':   'var(--brand-primary-foreground)',
         'brand-secondary':            'var(--brand-secondary)',
         'brand-secondary-foreground': 'var(--brand-secondary-foreground)',
+        'brand-accent':               'var(--brand-accent)',
+        'brand-accent-hover':         'var(--brand-accent-hover)',
+        'brand-accent-foreground':    'var(--brand-accent-foreground)',
         'surface-default':            'var(--surface-default)',
         'surface-card':               'var(--surface-card)',
         'surface-overlay':            'var(--surface-overlay)',
@@ -158,11 +161,17 @@ export default {
             opacity: "0",
           },
         },
+        shake: {
+          "0%, 100%": { transform: "translateX(0)" },
+          "25%": { transform: "translateX(-4px)" },
+          "75%": { transform: "translateX(4px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "ping-large-slow": "ping-large-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite",
+        shake: "shake 0.3s ease-in-out",
       },
     },
   },
