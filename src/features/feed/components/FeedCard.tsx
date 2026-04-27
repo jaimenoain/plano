@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
 import { useNavigate } from "react-router";
+import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
@@ -7,10 +8,11 @@ import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
 import { countWords } from "@/features/feed/utils/resolveCardType";
 import { CardImage } from "@/features/feed/components/card-parts/CardImage";
 import { CardFooter } from "@/features/feed/components/card-primitives/CardFooter";
-import { CardAuthor } from "@/features/feed/components/card-parts/CardAuthor";
-import { CardMeta } from "@/features/feed/components/card-parts/CardMeta";
+import { PointsBadge } from "@/features/feed/components/card-primitives/PointsBadge";
 
 const MOBILE_MAX_WIDTH_PX = 767;
+
+const DOT = <span className="text-text-disabled mx-[6px]" aria-hidden>·</span>;
 
 export interface FeedCardProps {
   entry: FeedReview;
@@ -75,7 +77,11 @@ export function FeedCard({
 
   if (!data || !entry.building) return null;
 
-  const { username, isArchitectOfBuilding, mainTitle, mediaItems } = data;
+  const { username, isArchitectOfBuilding, mainTitle, mediaItems, avatarUrl } = data;
+  const architect = entry.building.creditedEntities?.[0]?.name;
+  const city = entry.building.city;
+  const year = entry.building.year_completed;
+  const timeAgo = formatDistanceToNow(new Date(entry.created_at), { addSuffix: true });
 
   const hasMedia = mediaItems.length > 0;
   const extraCount = mediaItems.length - 1;
@@ -142,14 +148,32 @@ export function FeedCard({
         </h2>
       )}
 
-      {/* 3. Architect · city · year */}
-      {!hideBuildingInfo && (
-        <CardMeta
-          city={entry.building.city}
-          architect={entry.building.creditedEntities?.[0]?.name}
-          year={entry.building.year_completed}
-          className="mt-3"
-        />
+      {/* 3. Merged meta row: @username · city · architect · year · time ago · rating */}
+      {(!hideBuildingInfo || !hideUser) && (
+        <div className="mt-3 flex flex-wrap items-center gap-y-1 font-sans text-[13px] text-text-secondary leading-none">
+          {!hideUser && (
+            <>
+              {avatarUrl && (
+                <div className="mr-2 h-4 w-4 shrink-0 overflow-hidden rounded-full bg-surface-muted inline-block align-middle">
+                  <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+                </div>
+              )}
+              <span
+                onClick={(e) => { e.stopPropagation(); navigate(`/profile/${username}`); }}
+                className="cursor-pointer hover:text-text-primary transition-colors"
+              >
+                {username}
+              </span>
+            </>
+          )}
+          {!hideBuildingInfo && city?.trim() && <>{!hideUser && DOT}<span>{city}</span></>}
+          {!hideBuildingInfo && architect && <>{DOT}<span>{architect}</span></>}
+          {!hideBuildingInfo && year != null && <>{DOT}<span>{year}</span></>}
+          {!hideUser && <>{DOT}<span>{timeAgo}</span></>}
+          {!hideUser && entry.rating != null && entry.rating > 0 && (
+            <>{DOT}<PointsBadge points={entry.rating} /></>
+          )}
+        </div>
       )}
 
       {/* 4. Review text */}
@@ -184,19 +208,7 @@ export function FeedCard({
         </div>
       )}
 
-      {/* 5. Author + rating */}
-      {!hideUser && (
-        <CardAuthor
-          username={username}
-          avatarUrl={data.avatarUrl}
-          timestamp={entry.created_at}
-          rating={entry.rating}
-          className="mt-5"
-          onUsernameClick={() => navigate(`/profile/${username}`)}
-        />
-      )}
-
-      {/* 6. Actions */}
+      {/* 5. Actions */}
       <CardFooter
         className="mt-5"
         likesCount={entry.likes_count}

@@ -250,15 +250,9 @@ export default function Index() {
                       const processAggregatedItem = (item: AggregatedFeedItem) => {
                         switch (item.type) {
                           case "cluster":
-                            feedNodes.push(
-                              <div key={`cluster-${item.entries[0]?.id ?? "unknown"}`}>
-                                <FeedClusterCard
-                                  entries={item.entries}
-                                  user={item.user}
-                                  location={item.location}
-                                  timestamp={item.timestamp}
-                                />
-                              </div>,
+                            // Render individual entries from the cluster instead
+                            item.entries.forEach((e) =>
+                              processEntry(e, socialFeed.toggleLike, socialFeed.toggleImageLike),
                             );
                             break;
                           case "row":
