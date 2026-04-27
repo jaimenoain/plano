@@ -80,8 +80,6 @@ import {
   buildingEntryToFeedReview,
   type BuildingSummaryForFeed,
 } from "@/features/buildings/utils/buildingReviewFeedAdapter";
-import { resolveCardType } from "@/features/feed/utils/resolveCardType";
-import { DetailCard } from "@/features/feed/components/DetailCard";
 import { ActivityStreamGroup } from "@/features/feed/components/ActivityStream";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ClientOnly } from "@/components/common/ClientOnly";
@@ -266,11 +264,7 @@ function RelatedByCitySection({
 export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading..." showHeader>
-      <div className="bg-surface-default">
-        <div className="max-w-screen-xl mx-auto lg:px-8 lg:pt-8">
-          <Skeleton className="aspect-[16/9] w-full lg:rounded-xl" />
-        </div>
-      </div>
+      <Skeleton className="h-56 sm:h-64 lg:h-80 w-full rounded-none" />
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-8 space-y-8">
@@ -685,6 +679,8 @@ function BuildingInfoSection({
 // ─── Technical tab placeholder ────────────────────────────────────────────────
 
 function TechnicalSection({ canEdit }: { canEdit: boolean }) {
+  const [pendingSection, setPendingSection] = useState<string | null>(null);
+
   const sections = [
     {
       id: "drawings",
@@ -707,37 +703,59 @@ function TechnicalSection({ canEdit }: { canEdit: boolean }) {
   ] as const;
 
   return (
-    <div className="space-y-10">
-      {sections.map(({ id, icon: Icon, label, description }) => (
-        <section key={id}>
-          <div className="flex items-start justify-between gap-4 border-b border-border-default pb-4 mb-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-muted">
-                <Icon className="h-4 w-4 text-text-secondary" />
+    <>
+      <div className="space-y-10">
+        {sections.map(({ id, icon: Icon, label, description }) => (
+          <section key={id}>
+            <div className="flex items-start justify-between gap-4 border-b border-border-default pb-4 mb-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-muted">
+                  <Icon className="h-4 w-4 text-text-secondary" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-sm text-text-primary">{label}</h3>
+                  <p className="text-xs text-text-secondary mt-0.5">{description}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-medium text-sm text-text-primary">{label}</h3>
-                <p className="text-xs text-text-secondary mt-0.5">{description}</p>
-              </div>
+              {canEdit && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0 h-8 text-xs"
+                  onClick={() => setPendingSection(label)}
+                >
+                  <Plus className="h-3 w-3 mr-1.5" /> Add
+                </Button>
+              )}
             </div>
-            {canEdit && (
-              <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs">
-                <Plus className="h-3 w-3 mr-1.5" /> Add
-              </Button>
-            )}
-          </div>
-          <div className="flex flex-col items-center justify-center py-12 bg-surface-muted/40 rounded-xl border border-dashed border-border-strong/30 text-center">
-            <Icon className="h-8 w-8 text-text-disabled opacity-30 mb-3" />
-            <p className="text-sm font-medium text-text-primary mb-1">No {label.toLowerCase()} yet</p>
-            <p className="text-xs text-text-secondary max-w-xs">
-              {canEdit
-                ? "You can add content to this section using the button above."
-                : "Be the first to contribute to this section."}
-            </p>
-          </div>
-        </section>
-      ))}
-    </div>
+            <div className="flex flex-col items-center justify-center py-12 bg-surface-muted/40 rounded-xl border border-dashed border-border-strong/30 text-center">
+              <Icon className="h-8 w-8 text-text-disabled opacity-30 mb-3" />
+              <p className="text-sm font-medium text-text-primary mb-1">No {label.toLowerCase()} yet</p>
+              <p className="text-xs text-text-secondary max-w-xs">
+                {canEdit
+                  ? "You can add content to this section using the button above."
+                  : "Be the first to contribute to this section."}
+              </p>
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <AlertDialog open={!!pendingSection} onOpenChange={(open) => { if (!open) setPendingSection(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Coming Soon</AlertDialogTitle>
+            <AlertDialogDescription>
+              Uploading {pendingSection?.toLowerCase()} is not yet available. This feature is
+              actively being developed — check back soon.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setPendingSection(null)}>Got it</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
@@ -864,6 +882,7 @@ export default function BuildingDetails() {
   // ── Pure UI state ─────────────────────────────────────────────────────────
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [showDirectionsAlert, setShowDirectionsAlert] = useState(false);
+  const [mediaFilter, setMediaFilter] = useState<"all" | "photos" | "videos">("all");
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -879,6 +898,17 @@ export default function BuildingDetails() {
     () => new Map(displayImages.map((img) => [img.id, img])),
     [displayImages],
   );
+
+  const sortedDisplayImages = useMemo(
+    () => [...displayImages].sort((a, b) => b.likes_count - a.likes_count),
+    [displayImages],
+  );
+
+  const filteredMediaImages = useMemo(() => {
+    if (mediaFilter === "photos") return sortedDisplayImages.filter((img) => img.type !== "video");
+    if (mediaFilter === "videos") return sortedDisplayImages.filter((img) => img.type === "video");
+    return sortedDisplayImages;
+  }, [sortedDisplayImages, mediaFilter]);
 
   const buildingSummaryForFeed = useMemo((): BuildingSummaryForFeed | null => {
     if (!building) return null;
@@ -980,113 +1010,166 @@ export default function BuildingDetails() {
 
   const renderStreamBlock = useCallback(
     (block: StreamBlock) => {
-      const { images, content, user, rating, isOfficial, topLikes } = block;
+      const { images, content, user, rating, isOfficial, topLikes, blockType } = block;
       const preview = content && content.length > 220 ? content.slice(0, 220) + "…" : content;
       const authorAttribution =
-        user && user.username?.trim() ? (
+        user?.username?.trim() ? (
           <StreamAuthorAttribution user={user} rating={rating} />
         ) : null;
-      const isOrphanImage = block.entryId.startsWith("img-");
 
-      if (!isOrphanImage && buildingSummaryForFeed) {
-        const source = entries.find((e) => e.id === block.entryId);
-        if (source) {
-          const feedReview = buildingEntryToFeedReview(
-            source,
-            buildingSummaryForFeed,
-            displayImageById,
-            likedImageIds,
-          );
-          const t = resolveCardType(feedReview);
-          if (t === "activity") return null;
-          return <div key={block.key}><DetailCard entry={feedReview} /></div>;
-        }
-        return null;
-      }
-
-      switch (block.blockType) {
-        case "featured": {
-          const img = images[0];
-          if (!img) return null;
-          return (
-            <div key={block.key} className="space-y-4">
-              <div
-                className="group relative aspect-[16/10] w-full cursor-pointer overflow-hidden rounded-xl bg-surface-muted shadow-sm ring-1 ring-border-default/50"
-                onClick={() => setSelectedImage(img)}
-              >
-                <img
-                  src={img.url}
-                  alt=""
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                {isOfficial ? (
-                  <span className="absolute left-4 top-4 bg-brand-accent px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-brand-accent-foreground rounded-sm shadow-lg">
-                    Official
-                  </span>
-                ) : null}
-                {img.likes_count > 0 ? (
-                  <span className="absolute bottom-4 right-4 flex items-center gap-1.5 text-[11px] font-bold text-white drop-shadow-md">
-                    <Heart className="h-3.5 w-3.5 fill-brand-accent text-brand-accent" aria-hidden />
-                    {img.likes_count}
-                  </span>
-                ) : null}
-              </div>
-              {(preview || authorAttribution) ? (
-                <div className="px-1">
-                  {authorAttribution}
-                  {preview ? (
-                    <Link
-                      to={`/review/${block.entryId}`}
-                      className={cn("group/r block", authorAttribution ? "mt-4" : "mb-2")}
-                    >
-                      <p className="text-base font-serif italic leading-relaxed text-text-secondary transition-colors group-hover/r:text-text-primary">
-                        &ldquo;{preview}&rdquo;
-                      </p>
-                    </Link>
-                  ) : null}
-                </div>
-              ) : null}
+      if (blockType === "featured") {
+        const img = images[0];
+        if (!img) return null;
+        return (
+          <div key={block.key} className="rounded-xl border border-border-default overflow-hidden bg-surface-card shadow-sm">
+            <div
+              className="group relative aspect-[16/10] cursor-pointer overflow-hidden bg-surface-muted"
+              onClick={() => setSelectedImage(img)}
+            >
+              <img src={img.url} alt="" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              {isOfficial && (
+                <span className="absolute left-4 top-4 bg-brand-accent px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-brand-accent-foreground rounded-sm">
+                  Official
+                </span>
+              )}
+              {img.likes_count > 0 && (
+                <span className="absolute bottom-4 right-4 flex items-center gap-1.5 text-[11px] font-bold text-white drop-shadow-md">
+                  <Heart className="h-3.5 w-3.5 fill-brand-accent text-brand-accent" aria-hidden />
+                  {img.likes_count}
+                </span>
+              )}
             </div>
-          );
-        }
-
-        case "image-only": {
-          const img = images[0];
-          if (!img) return null;
-          const isTall = topLikes >= 10;
-          return (
-            <div key={block.key} className="group space-y-3">
-              <div
-                className={cn(
-                  "relative w-full cursor-pointer overflow-hidden rounded-xl bg-surface-muted shadow-sm ring-1 ring-border-default/50",
-                  isTall ? "aspect-[4/5]" : "aspect-[3/2]",
+            {(preview || authorAttribution) && (
+              <div className="p-4 space-y-3">
+                {authorAttribution}
+                {preview && (
+                  <Link to={`/review/${block.entryId}`} className="group/r block">
+                    <p className="text-sm leading-relaxed text-text-secondary italic group-hover/r:text-text-primary">
+                      &ldquo;{preview}&rdquo;
+                    </p>
+                  </Link>
                 )}
-                onClick={() => setSelectedImage(img)}
-              >
-                <img
-                  src={img.url}
-                  alt=""
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                {img.likes_count > 0 ? (
-                  <span className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[10px] font-bold text-white">
-                    <Heart className="h-3 w-3 fill-white" aria-hidden />
-                    {img.likes_count}
-                  </span>
-                ) : null}
               </div>
-              {authorAttribution ? <div className="px-1">{authorAttribution}</div> : null}
-            </div>
-          );
-        }
-
-        default:
-          return null;
+            )}
+          </div>
+        );
       }
+
+      if (blockType === "mosaic") {
+        return (
+          <div key={block.key} className="rounded-xl border border-border-default overflow-hidden bg-surface-card shadow-sm">
+            <div className={cn("grid gap-px bg-border-default", images.length >= 4 ? "grid-cols-2" : "grid-cols-2")}>
+              {images.slice(0, 4).map((img, i) => (
+                <div
+                  key={img.id}
+                  className={cn(
+                    "group relative cursor-pointer overflow-hidden bg-surface-muted",
+                    images.length === 3 && i === 0 ? "col-span-2 aspect-[2/1]" : "aspect-square",
+                  )}
+                  onClick={() => setSelectedImage(img)}
+                >
+                  <img src={img.url} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  {img.likes_count > 0 && (
+                    <span className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow">
+                      <Heart className="h-2.5 w-2.5 fill-white" aria-hidden />
+                      {img.likes_count}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+            {(preview || authorAttribution) && (
+              <div className="p-4 space-y-3">
+                {authorAttribution}
+                {preview && (
+                  <Link to={`/review/${block.entryId}`} className="group/r block">
+                    <p className="text-sm leading-relaxed text-text-secondary italic group-hover/r:text-text-primary">
+                      &ldquo;{preview}&rdquo;
+                    </p>
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      if (blockType === "image-review") {
+        const img = images[0];
+        if (!img) return null;
+        return (
+          <div key={block.key} className="rounded-xl border border-border-default overflow-hidden bg-surface-card shadow-sm">
+            <div
+              className="group relative aspect-[4/3] cursor-pointer overflow-hidden bg-surface-muted"
+              onClick={() => setSelectedImage(img)}
+            >
+              <img src={img.url} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              {img.likes_count > 0 && (
+                <span className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[10px] font-bold text-white drop-shadow">
+                  <Heart className="h-3 w-3 fill-white" aria-hidden />
+                  {img.likes_count}
+                </span>
+              )}
+            </div>
+            <div className="p-4 space-y-3">
+              {authorAttribution}
+              {preview && (
+                <Link to={`/review/${block.entryId}`} className="group/r block">
+                  <p className="text-sm leading-relaxed text-text-secondary italic group-hover/r:text-text-primary">
+                    &ldquo;{preview}&rdquo;
+                  </p>
+                </Link>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      if (blockType === "image-only") {
+        const img = images[0];
+        if (!img) return null;
+        const isTall = topLikes >= 10;
+        return (
+          <div key={block.key} className="group rounded-xl border border-border-default overflow-hidden bg-surface-card shadow-sm">
+            <div
+              className={cn(
+                "relative cursor-pointer overflow-hidden bg-surface-muted",
+                isTall ? "aspect-[4/5]" : "aspect-[4/3]",
+              )}
+              onClick={() => setSelectedImage(img)}
+            >
+              <img src={img.url} alt="" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              {img.likes_count > 0 && (
+                <span className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[10px] font-bold text-white">
+                  <Heart className="h-3 w-3 fill-white" aria-hidden />
+                  {img.likes_count}
+                </span>
+              )}
+            </div>
+            {authorAttribution && <div className="p-4">{authorAttribution}</div>}
+          </div>
+        );
+      }
+
+      if (blockType === "text-only") {
+        if (!preview) return null;
+        return (
+          <div key={block.key} className="rounded-xl border border-border-default bg-surface-card shadow-sm p-5 space-y-3">
+            {authorAttribution}
+            <Link to={`/review/${block.entryId}`} className="group/r block">
+              <p className="text-sm leading-relaxed text-text-secondary italic group-hover/r:text-text-primary">
+                &ldquo;{preview}&rdquo;
+              </p>
+            </Link>
+          </div>
+        );
+      }
+
+      return null;
     },
-    [setSelectedImage, likedImageIds, entries, buildingSummaryForFeed, displayImageById],
+    [setSelectedImage],
   );
 
   // ── Loading guard ─────────────────────────────────────────────────────────
@@ -1131,30 +1214,22 @@ export default function BuildingDetails() {
         transition={{ duration: 0.5 }}
         className="min-h-screen bg-surface-default"
       >
-        {/* ── HERO — contained 16:9, no text overlay ── */}
-        <div className="bg-surface-default">
-          <div className="max-w-screen-xl mx-auto lg:px-8 lg:pt-8">
-            <div className="aspect-[16/9] w-full overflow-hidden bg-surface-muted lg:rounded-xl">
-              {heroImageUrl ? (
-                <motion.img
-                  key={heroImageUrl}
-                  initial={{ opacity: 0, scale: 1.03 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.8 }}
-                  src={heroImageUrl}
-                  alt={heroAlt}
-                  className="h-full w-full object-cover"
-                  // @ts-expect-error fetchPriority is valid but not yet in React types
-                  fetchPriority="high"
-                  loading="eager"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <ImageIcon className="h-16 w-16 text-text-disabled opacity-20" />
-                </div>
-              )}
-            </div>
-          </div>
+        {/* ── HERO — full-bleed, fixed height, no rounding ── */}
+        <div className="h-56 sm:h-64 lg:h-80 w-full overflow-hidden bg-surface-muted">
+          {heroImageUrl ? (
+            <motion.img
+              key={heroImageUrl}
+              initial={{ opacity: 0, scale: 1.03 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8 }}
+              src={heroImageUrl}
+              alt={heroAlt}
+              className="h-full w-full object-cover"
+              // @ts-expect-error fetchPriority is valid but not yet in React types
+              fetchPriority="high"
+              loading="eager"
+            />
+          ) : null}
         </div>
 
         {/* ── BUILDING HEADER — title, metadata row, stats ── */}
@@ -1313,9 +1388,6 @@ export default function BuildingDetails() {
                     </div>
                   )}
 
-                  {/* Building info — definition list */}
-                  <BuildingInfoSection building={building} buildingCredits={buildingCredits} />
-
                   {/* Architect statement */}
                   {building.architect_statement && (
                     <ArchitectStatement
@@ -1390,9 +1462,10 @@ export default function BuildingDetails() {
 
               {/* ════ MEDIA TAB ════ */}
               {activeTab === "media" && (
-                <div className="space-y-8">
-                  <div className="flex items-center justify-between border-b border-border-default pb-4">
-                    <h3 className="font-display text-xl font-bold tracking-tight">Community</h3>
+                <div className="space-y-6">
+                  {/* Header */}
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-display text-xl font-bold tracking-tight">Media</h3>
                     <div className="flex items-center gap-3">
                       <button
                         type="button"
@@ -1411,32 +1484,79 @@ export default function BuildingDetails() {
                       />
                       <Link
                         to={`${buildingUrl}/review`}
-                        className="text-[10px] font-bold uppercase tracking-widest bg-text-primary text-white px-3 py-1.5 rounded-sm hover:bg-brand-primary-hover transition-colors"
+                        className="text-[10px] font-bold uppercase tracking-widest bg-text-primary text-white px-3 py-1.5 rounded-sm hover:opacity-80 transition-opacity"
                       >
                         Add Review
                       </Link>
                     </div>
                   </div>
 
+                  {/* Filter strip */}
+                  <div className="flex gap-1 border-b border-border-default -mb-px">
+                    {(["all", "photos", "videos"] as const).map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => setMediaFilter(f)}
+                        className={cn(
+                          "px-4 py-2.5 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors capitalize",
+                          mediaFilter === f
+                            ? "border-text-primary text-text-primary"
+                            : "border-transparent text-text-secondary hover:text-text-primary",
+                        )}
+                      >
+                        {f}
+                        {f === "all" && sortedDisplayImages.length > 0 && (
+                          <span className="ml-1.5 text-text-disabled font-normal normal-case tracking-normal">
+                            {sortedDisplayImages.length}
+                          </span>
+                        )}
+                        {f === "videos" && sortedDisplayImages.filter((i) => i.type === "video").length > 0 && (
+                          <span className="ml-1.5 text-text-disabled font-normal normal-case tracking-normal">
+                            {sortedDisplayImages.filter((i) => i.type === "video").length}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
                   <WidgetErrorBoundary>
-                    {streamBlocks.length > 0 ? (
-                      <div className="space-y-12">
-                        {streamBlocks.map((block) => (
-                          <motion.div
-                            key={block.key}
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true, margin: "-50px" }}
-                            transition={{ duration: 0.5 }}
+                    {filteredMediaImages.length > 0 ? (
+                      <div className="columns-2 gap-3">
+                        {filteredMediaImages.map((img) => (
+                          <div
+                            key={img.id}
+                            className="group relative break-inside-avoid mb-3 cursor-pointer overflow-hidden rounded-xl bg-surface-muted shadow-sm"
+                            onClick={() => setSelectedImage(img)}
                           >
-                            {renderStreamBlock(block)}
-                          </motion.div>
+                            {img.type === "video" ? (
+                              <div className="aspect-video flex items-center justify-center bg-surface-muted">
+                                <div className="h-10 w-10 flex items-center justify-center rounded-full bg-black/50">
+                                  <div className="border-l-[14px] border-l-white border-y-8 border-y-transparent ml-1" />
+                                </div>
+                              </div>
+                            ) : (
+                              <img
+                                src={img.url}
+                                alt=""
+                                className="block w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              />
+                            )}
+                            {img.likes_count > 0 && (
+                              <span className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow">
+                                <Heart className="h-2.5 w-2.5 fill-white" aria-hidden />
+                                {img.likes_count}
+                              </span>
+                            )}
+                          </div>
                         ))}
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-24 bg-surface-muted/30 rounded-xl border border-dashed border-border-strong/30 text-center">
                         <ImageIcon className="h-12 w-12 text-text-disabled opacity-25 mb-4" />
-                        <h4 className="text-lg font-medium text-text-primary mb-2">No photos yet</h4>
+                        <h4 className="text-lg font-medium text-text-primary mb-2">
+                          {mediaFilter === "all" ? "No photos yet" : `No ${mediaFilter} yet`}
+                        </h4>
                         <p className="text-sm text-text-secondary max-w-xs mb-6">
                           Be the first to capture this building and share it with the community.
                         </p>
@@ -1455,9 +1575,23 @@ export default function BuildingDetails() {
                       </div>
                     )}
 
+                    {/* Text-only reviews */}
+                    {streamBlocks.filter((b) => b.blockType === "text-only").length > 0 && (
+                      <div className="mt-8 space-y-4">
+                        <h4 className="text-xs font-bold uppercase tracking-widest text-text-secondary pt-6 border-t border-border-default">
+                          Reviews
+                        </h4>
+                        {streamBlocks
+                          .filter((b) => b.blockType === "text-only")
+                          .map((block) => renderStreamBlock(block))}
+                      </div>
+                    )}
+
                     {activityOnlyFeedReviews.length > 0 && (
-                      <div className="mt-16 pt-8 border-t border-border-default">
-                        <h4 className="font-display text-lg font-bold mb-6">Recent Activity</h4>
+                      <div className="mt-8 pt-6 border-t border-border-default">
+                        <h4 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-5">
+                          Recent Activity
+                        </h4>
                         <ActivityStreamGroup entries={activityOnlyFeedReviews} hideGroupLabel />
                       </div>
                     )}
@@ -1586,6 +1720,13 @@ export default function BuildingDetails() {
 
             {/* ── SIDEBAR — Right Column ── */}
             <div className="lg:col-span-4">
+              <div className="space-y-5">
+
+                {/* Building info — always visible */}
+                <div className="bg-surface-card border border-border-default rounded-xl p-5 shadow-sm">
+                  <BuildingInfoSection building={building} buildingCredits={buildingCredits} />
+                </div>
+
               <div className="lg:sticky lg:top-14 space-y-5">
 
                 {/* Action card */}
@@ -1876,6 +2017,7 @@ export default function BuildingDetails() {
                   </div>
                 )}
 
+              </div>
               </div>
             </div>
 
