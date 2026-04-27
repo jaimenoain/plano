@@ -17,7 +17,7 @@ export function FeedRightRail({ activities }: FeedRightRailProps) {
   const saved = Object.values(statuses).filter((s) => s === "pending").length;
 
   return (
-    <aside className="hidden md:flex sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto flex-col gap-10 px-8 pt-10 pb-8 [&::-webkit-scrollbar]:hidden">
+    <aside className="hidden md:flex flex-col gap-10 px-8 pt-10 pb-8">
       {/* Stats */}
       <section>
         <div className="grid grid-cols-2 border border-border-default divide-x divide-border-default">

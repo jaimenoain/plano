@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { FeedCollection } from "@/types/feed";
+import { getBuildingImageUrl } from "@/utils/image";
 
 interface FeedCollectionCardProps {
   collection: FeedCollection;
@@ -7,52 +9,47 @@ interface FeedCollectionCardProps {
 
 export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
   const navigate = useNavigate();
-  const ownerUsername = collection.owner?.username ?? "user";
+  const [imgError, setImgError] = useState(false);
 
-  const handleClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest("button")) return;
-    navigate(`/${ownerUsername}/map/${collection.slug}`);
-  };
+  const ownerUsername = collection.owner?.username ?? "user";
+  const firstBuilding = collection.previewBuildings?.[0];
+  const imageSrc = imgError
+    ? undefined
+    : (getBuildingImageUrl(firstBuilding?.mainImageUrl) ??
+       getBuildingImageUrl(firstBuilding?.communityPreviewUrl));
+
+  const handleClick = () => navigate(`/${ownerUsername}/map/${collection.slug}`);
 
   return (
     <article
       onClick={handleClick}
-      className="group/collection relative w-full cursor-pointer flex gap-0"
+      className="group/collection relative aspect-[3/4] cursor-pointer overflow-hidden bg-[#1a1a1a]"
     >
-      {/* Lime accent bar */}
-      <div className="w-[3px] shrink-0 bg-brand-accent self-stretch" aria-hidden />
+      {/* Background image — grayscaled and slightly darkened */}
+      {imageSrc && (
+        <img
+          src={imageSrc}
+          alt=""
+          loading="lazy"
+          onError={() => setImgError(true)}
+          className="absolute inset-0 h-full w-full object-cover grayscale opacity-60 transition-transform duration-700 group-hover/collection:scale-105"
+        />
+      )}
 
-      {/* Content */}
-      <div className="flex-1 min-w-0 bg-surface-muted px-6 py-7">
-        {/* Label row */}
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-text-disabled mb-4">
-          Collection
-          {ownerUsername && (
-            <span className="text-text-disabled"> · @{ownerUsername}</span>
-          )}
+      {/* Gradient: transparent top → near-black bottom */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+
+      {/* Text — anchored to bottom */}
+      <div className="absolute inset-x-0 bottom-0 flex flex-col gap-1.5 p-3 md:p-4">
+        <p className="font-mono text-[8px] md:text-[9px] uppercase tracking-[0.15em] text-white/45 leading-none">
+          @{ownerUsername}
           {collection.buildingCount != null && collection.buildingCount > 0 && (
-            <span className="text-text-disabled"> · {collection.buildingCount} buildings</span>
+            <> · {collection.buildingCount}</>
           )}
         </p>
-
-        {/* Collection name */}
-        <h3 className="font-sans font-bold tracking-[-0.03em] text-text-primary leading-[0.95] text-[clamp(1.75rem,3.5vw,2.5rem)] line-clamp-3 mb-4">
+        <h3 className="font-sans font-bold text-white tracking-[-0.02em] leading-[1.05] line-clamp-3 text-[0.7rem] md:text-[0.875rem]">
           {collection.name}
         </h3>
-
-        {/* Description */}
-        {collection.description && (
-          <p className="font-sans text-[15px] leading-[1.6] text-text-secondary line-clamp-2 mb-6">
-            {collection.description}
-          </p>
-        )}
-
-        {/* CTA */}
-        <span className="group/cta inline-flex items-center gap-1.5 font-sans text-[11px] font-medium tracking-[0.18em] uppercase text-text-primary transition-colors group-hover/collection:text-text-secondary">
-          View collection
-          <span className="transition-transform group-hover/collection:translate-x-0.5 text-brand-accent">→</span>
-        </span>
       </div>
     </article>
   );

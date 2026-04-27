@@ -297,12 +297,21 @@ export default function Index() {
                         }
                         const n = index + 1;
                         if (n % 4 === 0 && collectionCursor < collectionItems.length) {
-                          const col = collectionItems[collectionCursor];
-                          collectionCursor += 1;
+                          const batch = collectionItems.slice(collectionCursor, collectionCursor + 3);
+                          collectionCursor += batch.length;
                           feedNodes.push(
-                            <WidgetErrorBoundary key={`collection-inject-${col.id}-${n}`}>
-                              <FeedCollectionCard collection={col} />
-                            </WidgetErrorBoundary>,
+                            <div key={`collections-${n}`} className="flex flex-col gap-3">
+                              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-text-disabled">
+                                Collections
+                              </p>
+                              <div className="grid grid-cols-3 gap-2">
+                                {batch.map((col) => (
+                                  <WidgetErrorBoundary key={col.id}>
+                                    <FeedCollectionCard collection={col} />
+                                  </WidgetErrorBoundary>
+                                ))}
+                              </div>
+                            </div>,
                           );
                         }
                         if (n % 8 === 0) {
