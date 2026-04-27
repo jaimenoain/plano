@@ -85,7 +85,7 @@ export function CardFooter({
             strokeWidth={1.75}
             aria-hidden
           />
-          <span className="font-mono">{String(likesCount).padStart(3, "0")}</span>
+          {likesCount > 0 && <span className="font-mono">{likesCount}</span>}
           <span>Like</span>
         </button>
         <button
@@ -97,7 +97,7 @@ export function CardFooter({
           className={cn(btnBase, "pl-4 text-text-secondary hover:text-text-primary")}
         >
           <MessageCircle className="h-3 w-3" strokeWidth={1.75} aria-hidden />
-          <span className="font-mono">{String(commentsCount).padStart(3, "0")}</span>
+          {commentsCount > 0 && <span className="font-mono">{commentsCount}</span>}
           <span>Discuss</span>
         </button>
       </div>

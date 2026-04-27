@@ -120,7 +120,7 @@ export function FeedCard({
         <div className="relative mb-5">
           <CardImage
             items={mediaItems}
-            aspectRatio="3/2"
+            aspectRatio="16/9"
             reviewId={entry.id}
             onImageLike={onImageLike}
             firstMediaOnly
