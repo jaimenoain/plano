@@ -1,6 +1,5 @@
 import { type MouseEvent } from "react";
 import { useNavigate } from "react-router";
-import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
@@ -9,45 +8,9 @@ import {
   BuildingHeadline,
   CardFooter,
   CardImage,
-  PointsBadge,
+  CardMeta,
+  CardAuthor,
 } from "@/features/feed/components/card-parts";
-
-
-function FeedAboveLine({ entry }: { entry: FeedReview }) {
-  const parts = [
-    entry.building.city,
-    entry.building.creditedEntities?.[0]?.name,
-    entry.building.year_completed != null ? String(entry.building.year_completed) : null,
-  ].filter(Boolean) as string[];
-  if (parts.length === 0) return null;
-  return (
-    <p className="text-[13px] tracking-[-0.005em] text-text-secondary leading-none mb-[10px] flex items-center gap-[10px]">
-      {parts.map((p, i) => (
-        <span key={i} className="flex items-center gap-[10px]">
-          {i > 0 && <span className="text-text-disabled">·</span>}
-          <span>{p}</span>
-        </span>
-      ))}
-    </p>
-  );
-}
-
-function FeedAuthorLine({ entry, username }: { entry: FeedReview; username: string }) {
-  const timeAgo = formatDistanceToNow(new Date(entry.created_at), { addSuffix: true });
-  return (
-    <div className="flex flex-wrap items-center gap-[10px] text-sm text-text-secondary mt-[14px]">
-      <span className="font-medium text-text-primary border-b border-border-default pb-px cursor-pointer hover:border-text-primary transition-colors">{username}</span>
-      <span className="text-text-disabled">·</span>
-      <span className="text-text-disabled">{timeAgo}</span>
-      {entry.rating != null && entry.rating > 0 && (
-        <>
-          <span className="text-text-disabled">·</span>
-          <PointsBadge points={entry.rating} />
-        </>
-      )}
-    </div>
-  );
-}
 
 export interface FeedCardCProps {
   entry: FeedReview;
@@ -114,14 +77,32 @@ export function FeedCardC({
       data-testid={`feed-card-c-${entry.id}`}
       onClick={handleCardClick}
       className={cn(
-        "group/card relative w-full cursor-pointer min-w-0 max-w-full",
-        isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-4",
+        "group/card relative w-full cursor-pointer min-w-0 max-w-full transition-opacity hover:opacity-95",
+        isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-6",
       )}
     >
-      <div className="flex flex-col gap-0 mb-9">
-        {!hideBuildingInfo && <FeedAboveLine entry={entry} />}
-        {!hideBuildingInfo && <BuildingHeadline name={mainTitle} size="lg" />}
-        {!hideUser && <FeedAuthorLine entry={entry} username={username} />}
+      <div className="flex flex-col gap-0 mb-10">
+        {!hideBuildingInfo && (
+          <CardMeta
+            city={entry.building.city}
+            architect={entry.building.creditedEntities?.[0]?.name}
+            year={entry.building.year_completed}
+            className="mb-4"
+          />
+        )}
+        {!hideBuildingInfo && (
+          <BuildingHeadline name={mainTitle} size="lg" className="mb-2" />
+        )}
+        {!hideUser && (
+          <CardAuthor
+            username={username}
+            avatarUrl={data.avatarUrl}
+            timestamp={entry.created_at}
+            rating={entry.rating}
+            className="mt-3"
+            onUsernameClick={() => navigate(`/profile/${username}`)}
+          />
+        )}
       </div>
 
       <CardImage
@@ -130,10 +111,11 @@ export function FeedCardC({
         reviewId={entry.id}
         onImageLike={onImageLike}
         firstMediaOnly
+        className="transition-transform duration-700 group-hover/card:scale-[1.01]"
       />
 
       <CardFooter
-        className="pt-8"
+        className="pt-10"
         likesCount={entry.likes_count}
         commentsCount={entry.comments_count}
         isLiked={Boolean(entry.is_liked)}

@@ -328,7 +328,7 @@ export default function Index() {
                     feedNodes.push(
                       <div
                         key={entry.id}
-                        className="border-b border-border-default pt-12 pb-12 md:pt-[88px] md:pb-[88px]"
+                        className="border-b border-border-default pt-12 pb-12 md:pt-[104px] md:pb-[104px]"
                       >
                         {inner}
                       </div>,
@@ -342,7 +342,7 @@ export default function Index() {
                         feedNodes.push(
                           <div
                             key={key}
-                            className="border-b border-border-default pt-12 pb-12 md:pt-[88px] md:pb-[88px]"
+                            className="border-b border-border-default pt-12 pb-12 md:pt-[104px] md:pb-[104px]"
                           >
                             <FeedClusterCard
                               entries={item.entries}
@@ -368,7 +368,7 @@ export default function Index() {
                         );
                         if (leftCell != null || rightCell != null) {
                           feedNodes.push(
-                            <div key={key} className="border-b border-border-default pt-12 pb-12 md:pt-[88px] md:pb-[88px]">
+                            <div key={key} className="border-b border-border-default pt-12 pb-12 md:pt-[104px] md:pb-[104px]">
                               <div className="grid w-full grid-cols-2 gap-8">
                                 <div className="min-w-0">{leftCell}</div>
                                 <div className="min-w-0">{rightCell}</div>
@@ -403,7 +403,7 @@ export default function Index() {
                       feedNodes.push(
                         <div
                           key={`feed-attendance-${row.entry.eventId}`}
-                          className="border-b border-border-default pt-12 pb-12 md:pt-[88px] md:pb-[88px]"
+                          className="border-b border-border-default pt-12 pb-12 md:pt-[104px] md:pb-[104px]"
                         >
                           <ReviewCardFeed entry={row.entry} />
                         </div>,
@@ -417,7 +417,7 @@ export default function Index() {
                       collectionCursor += 1;
                       feedNodes.push(
                         <WidgetErrorBoundary key={`collection-inject-${col.id}-${n}`}>
-                          <div className="border-b border-border-default pt-12 pb-12 md:pt-[88px] md:pb-[88px]">
+                          <div className="border-b border-border-default pt-12 pb-12 md:pt-[104px] md:pb-[104px]">
                             <FeedCollectionCard collection={col} />
                           </div>
                         </WidgetErrorBoundary>,
@@ -450,15 +450,15 @@ export default function Index() {
                     feedNodes.push(
                       <div
                         key={`activity-trailing-${activityAccumulator.map((e) => e.id).join("-")}`}
-                        className="border-b border-border-default pt-12 pb-12 md:pt-[88px] md:pb-[88px]"
+                        className="border-b border-border-default pt-12 pb-12 md:pt-[104px] md:pb-[104px]"
                       >
-                        <div className="mb-6">
-                          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-text-disabled">
+                        <div className="mb-10">
+                          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-text-disabled">
                             Activity · this week
                           </p>
-                          <p className="font-sans text-[clamp(1.75rem,3vw,2.25rem)] font-medium leading-[1.15] tracking-[-0.025em] text-text-disabled mt-1">
+                          <h2 className="font-sans text-[clamp(2rem,5vw,3.5rem)] font-bold leading-[1.1] tracking-[-0.035em] text-text-primary mt-2">
                             From your network.
-                          </p>
+                          </h2>
                         </div>
                         <ActivityStreamGroup entries={activityAccumulator} hideGroupLabel />
                       </div>,

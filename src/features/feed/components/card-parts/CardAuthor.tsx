@@ -1,0 +1,59 @@
+import { formatDistanceToNow } from "date-fns";
+import { PointsBadge } from "@/features/feed/components/card-primitives";
+import { cn } from "@/lib/utils";
+
+export interface CardAuthorProps {
+  username: string;
+  avatarUrl?: string | null;
+  timestamp: string | Date;
+  rating?: number | null;
+  className?: string;
+  onUsernameClick?: () => void;
+}
+
+/**
+ * Editorial author line: Avatar (optional) · Username · Timestamp · Rating
+ * Follows the high-contrast editorial style.
+ */
+export function CardAuthor({
+  username,
+  avatarUrl,
+  timestamp,
+  rating,
+  className,
+  onUsernameClick,
+}: CardAuthorProps) {
+  const timeAgo = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+
+  return (
+    <div className={cn("flex flex-wrap items-center gap-[10px] text-sm text-text-secondary", className)}>
+      {avatarUrl && (
+        <div className="h-5 w-5 shrink-0 overflow-hidden rounded-full bg-surface-muted">
+          <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+        </div>
+      )}
+      <span
+        onClick={(e) => {
+          if (onUsernameClick) {
+            e.stopPropagation();
+            onUsernameClick();
+          }
+        }}
+        className={cn(
+          "font-medium text-text-primary border-b border-border-default pb-px transition-colors",
+          onUsernameClick && "cursor-pointer hover:border-text-primary"
+        )}
+      >
+        {username}
+      </span>
+      <span className="text-text-disabled">·</span>
+      <span className="text-text-disabled">{timeAgo}</span>
+      {rating != null && rating > 0 && (
+        <>
+          <span className="text-text-disabled">·</span>
+          <PointsBadge points={rating} />
+        </>
+      )}
+    </div>
+  );
+}

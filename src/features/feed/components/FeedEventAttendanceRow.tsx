@@ -65,16 +65,16 @@ export function FeedEventAttendanceRow({ entry, className }: FeedEventAttendance
     <div
       data-testid={`feed-event-attendance-${entry.eventId}`}
       className={cn(
-        "flex min-w-0 items-center gap-2 border-b border-border-default py-3 md:gap-4",
+        "group/event-row flex min-w-0 cursor-pointer items-center gap-[18px] border-b border-border-default py-6 transition-colors hover:bg-surface-muted/30",
         className,
       )}
     >
-      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-surface-muted">
+      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-none bg-surface-muted">
         {showCover ? (
           <img
             src={entry.coverImageUrl!}
             alt=""
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover grayscale-[0.2] transition-transform duration-500 group-hover/event-row:scale-105"
             loading="lazy"
             onError={() => setCoverFailed(true)}
           />
@@ -84,19 +84,21 @@ export function FeedEventAttendanceRow({ entry, className }: FeedEventAttendance
           </div>
         )}
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="min-w-0 font-sans text-2xs tracking-[0.12em] text-text-secondary">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <p className="min-w-0 font-sans text-2xs uppercase tracking-[0.14em] text-text-secondary">
           <span className="font-medium text-text-primary">{actorNodes}</span>
         </p>
         <Link
           // TODO: enrich FeedEventAttendance with countryCode + citySlug to emit locality-scoped URL
           to={`/events/${entry.slug}`}
-          className="min-w-0 font-sans text-[1.3125rem] font-black tracking-tight leading-none text-text-primary line-clamp-1 hover:opacity-80"
+          className="min-w-0 font-sans text-[17px] font-semibold tracking-[-0.015em] leading-tight text-text-primary line-clamp-1 transition-opacity hover:opacity-80"
         >
           {entry.title}
         </Link>
         {whenLabel ? (
-          <p className="font-sans text-2xs tracking-[0.12em] uppercase text-text-secondary">{whenLabel}</p>
+          <p className="font-mono text-[10px] uppercase tracking-normal text-text-disabled">
+            {whenLabel}
+          </p>
         ) : null}
       </div>
     </div>

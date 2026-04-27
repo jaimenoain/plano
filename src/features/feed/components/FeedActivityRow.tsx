@@ -78,18 +78,18 @@ export function FeedActivityRow({
         data-testid={`feed-activity-row-${entry.id}`}
         onClick={handleRowClick}
         className={cn(
-          "group/activity-row flex min-w-0 cursor-pointer items-center gap-[14px] border-b border-border-default py-[18px]",
+          "group/activity-row flex min-w-0 cursor-pointer items-center gap-[18px] border-b border-border-default py-6 transition-colors hover:bg-surface-muted/30",
           className,
         )}
       >
-        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-none bg-surface-muted">
+        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-none bg-surface-muted">
           {thumbUrl ? (
-            <img src={thumbUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+            <img src={thumbUrl} alt="" className="h-full w-full object-cover grayscale-[0.2] transition-transform duration-500 group-hover/activity-row:scale-105" loading="lazy" />
           ) : null}
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           {!hideUser && displayText ? (
-            <p className="min-w-0 font-sans text-2xs tracking-[0.12em] text-text-secondary">
+            <p className="min-w-0 font-sans text-2xs uppercase tracking-[0.14em] text-text-secondary">
               <span className="font-medium text-text-primary">{displayText}</span>
             </p>
           ) : (
@@ -98,18 +98,19 @@ export function FeedActivityRow({
               verb={verb}
               hideUser={hideUser}
               usernameWithAt
+              className="tracking-[0.14em]"
             />
           )}
-          <p className="min-w-0 font-sans text-[14px] font-medium tracking-[-0.005em] leading-snug text-text-primary line-clamp-1">
+          <h3 className="min-w-0 font-sans text-[17px] font-semibold tracking-[-0.015em] leading-tight text-text-primary line-clamp-1">
             {mainTitle}
-          </p>
+          </h3>
           {city.trim() ? (
-            <p className="font-sans text-2xs tracking-[0.12em] uppercase text-text-secondary">
+            <p className="font-mono text-[10px] uppercase tracking-normal text-text-disabled">
               {city}
             </p>
           ) : null}
         </div>
-        <CardBookmark buildingId={entry.building.id} hoverGroup="activity-row" />
+        <CardBookmark buildingId={entry.building.id} hoverGroup="activity-row" className="mr-2" />
       </div>
     </SuggestedContentBlock>
   );
