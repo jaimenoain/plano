@@ -4,7 +4,6 @@ import { fetchPhotoHeatmapData } from "@/features/admin/api/admin";
 import { HeatmapPoint } from "@/features/admin/types/admin";
 import { PhotoHeatmapZone } from "@/features/admin/components/PhotoHeatmapZone";
 import { NoPhotosMapZone } from "@/features/admin/components/NoPhotosMapZone";
-import { BottomNav } from "@/components/layout/BottomNav";
 
 export const meta: MetaFunction = () => [{ title: "Photo Analytics | Plano" }];
 
@@ -35,7 +34,7 @@ export default function PhotoAnalytics() {
   }
 
   return (
-    <div className="pb-20">
+    <div>
       <div className="space-y-8 p-8">
         <div className="flex items-center justify-between">
           <h1 className="text-4xl font-bold tracking-tight text-text-primary">Photo Analytics</h1>
@@ -51,7 +50,6 @@ export default function PhotoAnalytics() {
           </section>
         </div>
       </div>
-      <BottomNav />
     </div>
   );
 }

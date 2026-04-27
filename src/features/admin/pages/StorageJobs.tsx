@@ -116,7 +116,7 @@ toast.error(`Failed to queue job: ${error instanceof Error ? error.message : "Un
   };
 
   return (
-    <div className="space-y-6 p-8 pb-20">
+    <div className="space-y-6 p-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-4xl font-bold tracking-tight text-text-primary">Storage Management</h1>
         <p className="text-sm text-text-secondary">

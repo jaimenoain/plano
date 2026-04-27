@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import type { MetaFunction } from "react-router";
 import { fetchAdminDashboardStats } from "@/features/admin/api/admin";
 import { DashboardStats } from "@/features/admin/types/admin";
-import { BottomNav } from "@/components/layout/BottomNav";
 import { PulseZone } from "@/features/admin/components/PulseZone";
 import { ActivityTrendsZone } from "@/features/admin/components/ActivityTrendsZone";
 import { ContentIntelligenceZone } from "@/features/admin/components/ContentIntelligenceZone";
@@ -52,7 +51,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="pb-20">
+    <div>
       <div className="space-y-8 p-4 sm:p-6 lg:p-8">
         <div className="flex items-center justify-between">
           <h1 className="text-4xl font-bold tracking-tight text-text-primary">Admin Dashboard</h1>
@@ -108,7 +107,6 @@ export default function AdminDashboard() {
           </TabsContent>
         </Tabs>
       </div>
-      <BottomNav />
     </div>
   );
 }
