@@ -1,83 +1,58 @@
 import { useNavigate } from "react-router";
-import { useState } from "react";
 import { FeedCollection } from "@/types/feed";
-import { getBuildingImageUrl } from "@/utils/image";
 
 interface FeedCollectionCardProps {
   collection: FeedCollection;
 }
 
-function resolvePreviewSrc(pb: FeedCollection["previewBuildings"][number] | undefined) {
-  if (!pb) return undefined;
-  return (
-    getBuildingImageUrl(pb.mainImageUrl) ??
-    getBuildingImageUrl(pb.communityPreviewUrl)
-  );
-}
-
-function MosaicCell({ imageSrc }: { imageSrc: string | undefined }) {
-  const [errored, setErrored] = useState(false);
-
-  if (!imageSrc || errored) {
-    return <div className="flex-1 min-w-0 h-full bg-surface-muted" />;
-  }
-
-  return (
-    <div className="flex-1 min-w-0 h-full overflow-hidden bg-surface-muted">
-      <img
-        src={imageSrc}
-        alt=""
-        className="w-full h-full object-cover"
-        onError={() => setErrored(true)}
-      />
-    </div>
-  );
-}
-
 export function FeedCollectionCard({ collection }: FeedCollectionCardProps) {
   const navigate = useNavigate();
-
   const ownerUsername = collection.owner?.username ?? "user";
 
-  const handleCardClick = (e: React.MouseEvent) => {
+  const handleClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest("button")) return;
     navigate(`/${ownerUsername}/map/${collection.slug}`);
   };
 
-  const slots = Array.from({ length: 6 }).map((_, i) =>
-    resolvePreviewSrc(collection.previewBuildings?.[i])
-  );
-
   return (
     <article
-      onClick={handleCardClick}
-      className="w-full cursor-pointer"
+      onClick={handleClick}
+      className="group/collection relative w-full cursor-pointer flex gap-0"
     >
-      {/* Horizontal photo strip */}
-      <div className="flex gap-mosaic-gap w-full h-[240px] overflow-hidden">
-        {slots.map((url, i) => (
-          <MosaicCell key={i} imageSrc={url} />
-        ))}
-      </div>
+      {/* Lime accent bar */}
+      <div className="w-[3px] shrink-0 bg-brand-accent self-stretch" aria-hidden />
 
-      {/* Metadata */}
-      <div className="mt-4">
-        <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
-          {ownerUsername} · {collection.buildingCount ?? 0} buildings
+      {/* Content */}
+      <div className="flex-1 min-w-0 bg-surface-muted px-6 py-7">
+        {/* Label row */}
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-text-disabled mb-4">
+          Collection
+          {ownerUsername && (
+            <span className="text-text-disabled"> · @{ownerUsername}</span>
+          )}
+          {collection.buildingCount != null && collection.buildingCount > 0 && (
+            <span className="text-text-disabled"> · {collection.buildingCount} buildings</span>
+          )}
         </p>
 
         {/* Collection name */}
-        <h3 className="text-3xl font-semibold tracking-tight text-text-primary mt-1">
+        <h3 className="font-sans font-bold tracking-[-0.03em] text-text-primary leading-[0.95] text-[clamp(1.75rem,3.5vw,2.5rem)] line-clamp-3 mb-4">
           {collection.name}
         </h3>
 
         {/* Description */}
         {collection.description && (
-          <p className="text-sm text-text-secondary mt-2 line-clamp-2">
+          <p className="font-sans text-[15px] leading-[1.6] text-text-secondary line-clamp-2 mb-6">
             {collection.description}
           </p>
         )}
+
+        {/* CTA */}
+        <span className="group/cta inline-flex items-center gap-1.5 font-sans text-[11px] font-medium tracking-[0.18em] uppercase text-text-primary transition-colors group-hover/collection:text-text-secondary">
+          View collection
+          <span className="transition-transform group-hover/collection:translate-x-0.5 text-brand-accent">→</span>
+        </span>
       </div>
     </article>
   );
