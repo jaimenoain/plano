@@ -3,7 +3,7 @@ import {
   useState,
   useMemo,
   useCallback,
-  createElement,
+  useRef,
   type ReactNode,
 } from "react";
 import {
@@ -13,16 +13,18 @@ import {
   useRouteError,
   isRouteErrorResponse,
   useRevalidator,
+  useSearchParams,
   type MetaFunction,
 } from "react-router";
 import {
-  Loader2, MapPin, Send,
+  Loader2, MapPin,
   Check, Bookmark, Image as ImageIcon,
-  Heart, ExternalLink, Circle, AlertTriangle, Search,
-  EyeOff, Plus, Users, X,
+  Heart, ExternalLink, Circle, AlertTriangle,
+  EyeOff, Plus, X,
   Pencil, BadgeCheck, ChevronDown, Share2, Navigation,
+  FileText, Box, Hammer,
 } from "lucide-react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -43,14 +45,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { useQuery } from "@tanstack/react-query";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
-import { UserPicker } from "@/components/common/UserPicker";
 import { ImageDetailsDialog } from "../components/ImageDetailsDialog";
 import {
   buildingCreditsQueryKey,
@@ -65,10 +64,8 @@ import { CollectionSelector } from "@/features/collections/components/Collection
 import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
 import { PrimaryCreditsLinks } from "../components/PrimaryCreditsLinks";
 import { ArchitectStatement } from "../components/ArchitectStatement";
-import { BuildingHero } from "../components/BuildingHero";
 import { BuildingCredits, BuildingCreditsPreview } from "../components/BuildingCredits";
 import { BuildingContributorsInline } from "../components/BuildingContributorsInline";
-import { BuildingContributorsSection } from "../components/BuildingContributorsSection";
 import { buildingLoader } from "./BuildingDetails.loader";
 import {
   buildingCanonicalUrl,
@@ -85,7 +82,6 @@ import {
 } from "@/features/buildings/utils/buildingReviewFeedAdapter";
 import { resolveCardType } from "@/features/feed/utils/resolveCardType";
 import { DetailCard } from "@/features/feed/components/DetailCard";
-import { DetailSectionHeader } from "@/features/feed/components/DetailSectionHeader";
 import { ActivityStreamGroup } from "@/features/feed/components/ActivityStream";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ClientOnly } from "@/components/common/ClientOnly";
@@ -98,14 +94,22 @@ import {
 
 export { buildingLoader as loader } from "./BuildingDetails.loader";
 
+// ─── Tab config ───────────────────────────────────────────────────────────────
+
+type TabId = "overview" | "media" | "technical" | "credits";
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: "overview", label: "Overview" },
+  { id: "media", label: "Media" },
+  { id: "technical", label: "Technical" },
+  { id: "credits", label: "Credits" },
+];
+
 // ─── Related buildings sub-components ────────────────────────────────────────
 
 function RelatedBuildingCard({ b }: { b: RelatedBuilding }) {
   return (
-    <Link
-      to={b.buildingUrl}
-      className="flex-shrink-0 w-40 sm:w-48 group"
-    >
+    <Link to={b.buildingUrl} className="flex-shrink-0 w-40 sm:w-48 group">
       <div className="aspect-[4/3] w-full overflow-hidden bg-surface-muted">
         {b.imageUrl ? (
           <img
@@ -133,7 +137,13 @@ function RelatedBuildingCard({ b }: { b: RelatedBuilding }) {
   );
 }
 
-function RelatedBuildingRow({ title, viewAllHref, viewAllLabel, buildings, isLoading }: {
+function RelatedBuildingRow({
+  title,
+  viewAllHref,
+  viewAllLabel,
+  buildings,
+  isLoading,
+}: {
   title: string;
   viewAllHref: string;
   viewAllLabel: string;
@@ -218,7 +228,13 @@ function RelatedByArchitectSection({
   );
 }
 
-function RelatedByCitySection({ building, locality }: { building: BuildingDetails; locality: { country_code: string; city_slug: string } | null }) {
+function RelatedByCitySection({
+  building,
+  locality,
+}: {
+  building: BuildingDetails;
+  locality: { country_code: string; city_slug: string } | null;
+}) {
   const city = building.city;
 
   const { data: buildings = [], isLoading } = useQuery({
@@ -250,19 +266,25 @@ function RelatedByCitySection({ building, locality }: { building: BuildingDetail
 export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading..." showHeader>
-      <div className="w-full bg-surface-muted animate-pulse h-[50vh]" />
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="bg-surface-default">
+        <div className="max-w-screen-xl mx-auto lg:px-8 lg:pt-8">
+          <Skeleton className="aspect-[16/9] w-full lg:rounded-xl" />
+        </div>
+      </div>
+      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          <div className="lg:col-span-8 space-y-12">
-            <Skeleton className="h-20 w-3/4" />
-            <Skeleton className="h-40 w-full" />
-            <div className="space-y-4">
+          <div className="lg:col-span-8 space-y-8">
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-3/4" />
+              <Skeleton className="h-5 w-1/2" />
+            </div>
+            <div className="space-y-3">
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-4 w-2/3" />
             </div>
           </div>
-          <div className="lg:col-span-4 space-y-8">
+          <div className="lg:col-span-4 space-y-6">
             <Skeleton className="h-64 w-full rounded-xl" />
             <Skeleton className="h-48 w-full rounded-xl" />
           </div>
@@ -362,7 +384,6 @@ export interface BuildingDetails {
   hero_image_id: string | null;
 }
 
-/** Kept here because StreamBlock references FeedEntry["user"] and FeedEntry["status"]. */
 interface FeedEntry {
   id: string;
   user_id: string;
@@ -392,7 +413,6 @@ interface DisplayImage {
   is_official?: boolean;
 }
 
-/** Catalogue / enum strings for display (snake_case → Title Case words). */
 function formatCatalogLabel(value: string | null | undefined): string | null {
   const v = typeof value === "string" ? value.trim() : "";
   if (!v) return null;
@@ -406,10 +426,6 @@ function formatCatalogLabel(value: string | null | undefined): string | null {
     .join(" ");
 }
 
-/**
- * A single scored, typed unit in the editorial photo + review stream.
- * Derived from entries + displayImages in the streamBlocks useMemo.
- */
 interface StreamBlock {
   key: string;
   entryId: string;
@@ -424,7 +440,6 @@ interface StreamBlock {
   score: number;
 }
 
-/** Magazine-style byline for the editorial stream — avatar + prominent author name. */
 function StreamAuthorAttribution({
   user,
   rating,
@@ -510,7 +525,6 @@ export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
     { name: "twitter:description", content: description },
     { name: "twitter:image", content: image },
     { tagName: "link", rel: "canonical", href: canonical },
-    // TODO: pass ratingData once review count is available from loader
     { "script:ld+json": buildingStructuredData(building, buildingCredits, undefined, localityForBreadcrumb) },
     { "script:ld+json": buildingBreadcrumbStructuredData(building, localityForBreadcrumb) },
     ...(heroImageUrl
@@ -518,6 +532,8 @@ export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
       : []),
   ];
 };
+
+// ─── Pending photos queue ─────────────────────────────────────────────────────
 
 interface PendingPhotoPreview {
   id: string;
@@ -539,10 +555,7 @@ function PendingPhotosQueue({
   return (
     <div className="flex flex-wrap items-center gap-2">
       {pendingImages.map((img) => (
-        <div
-          key={img.id}
-          className="relative h-16 w-16 shrink-0 bg-surface-muted"
-        >
+        <div key={img.id} className="relative h-16 w-16 shrink-0 bg-surface-muted">
           <img src={img.preview} alt="" className="h-full w-full object-cover" />
           <button
             type="button"
@@ -569,6 +582,165 @@ function PendingPhotosQueue({
   );
 }
 
+// ─── Building info definition list ───────────────────────────────────────────
+
+function BuildingInfoSection({
+  building,
+  buildingCredits,
+}: {
+  building: BuildingDetails;
+  buildingCredits: import("@/features/credits/types").BuildingCreditWithEntities[];
+}) {
+  const primaryCredits = visiblePrimaryCredits(buildingCredits);
+
+  const rows = useMemo(() => {
+    const items: { label: string; value: ReactNode; key: string }[] = [];
+
+    if (primaryCredits.length > 0) {
+      items.push({
+        key: "architect",
+        label: "Architect",
+        value: (
+          <PrimaryCreditsLinks
+            credits={buildingCredits}
+            linkClassName="text-text-primary font-medium hover:underline underline-offset-2"
+          />
+        ),
+      });
+    }
+
+    if (building.year_completed) {
+      items.push({ key: "year", label: "Year", value: building.year_completed });
+    }
+
+    const locationParts = [building.address, building.city, building.country].filter(Boolean);
+    if (locationParts.length > 0) {
+      items.push({ key: "location", label: "Location", value: locationParts.join(", ") });
+    }
+
+    if (building.typology?.length) {
+      items.push({ key: "typology", label: "Typology", value: building.typology.join(", ") });
+    }
+
+    if (building.styles?.length) {
+      items.push({ key: "style", label: "Style", value: building.styles.map((s) => s.name).join(", ") });
+    }
+
+    if (building.materials?.length) {
+      items.push({ key: "materials", label: "Materials", value: building.materials.join(", ") });
+    }
+
+    if (building.category?.trim()) {
+      items.push({ key: "category", label: "Category", value: building.category });
+    }
+
+    if (building.context?.trim()) {
+      items.push({ key: "context", label: "Context", value: formatCatalogLabel(building.context) });
+    }
+
+    if (building.intervention?.trim()) {
+      items.push({ key: "intervention", label: "Intervention", value: formatCatalogLabel(building.intervention) });
+    }
+
+    if (building.access_level) {
+      const accessParts = [
+        formatCatalogLabel(building.access_level),
+        formatCatalogLabel(building.access_logistics),
+        formatCatalogLabel(building.access_cost),
+      ].filter(Boolean);
+      items.push({ key: "access", label: "Access", value: accessParts.join(" · ") });
+    }
+
+    if (building.access_notes?.trim()) {
+      items.push({ key: "access-notes", label: "Access Notes", value: building.access_notes });
+    }
+
+    const aliases = (building.aliases ?? []).filter((a): a is string => typeof a === "string" && a.trim().length > 0);
+    if (aliases.length > 0) {
+      items.push({ key: "aliases", label: "Also known as", value: aliases.join(", ") });
+    }
+
+    return items;
+  }, [building, buildingCredits, primaryCredits.length]);
+
+  if (rows.length === 0) return null;
+
+  return (
+    <section>
+      <h3 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+        Building Info
+      </h3>
+      <dl className="mt-3 divide-y divide-border-default">
+        {rows.map(({ key, label, value }) => (
+          <div key={key} className="flex items-baseline gap-6 py-3">
+            <dt className="text-xs text-text-secondary shrink-0 w-28">{label}</dt>
+            <dd className="text-sm text-text-primary flex-1 min-w-0">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
+// ─── Technical tab placeholder ────────────────────────────────────────────────
+
+function TechnicalSection({ canEdit }: { canEdit: boolean }) {
+  const sections = [
+    {
+      id: "drawings",
+      icon: FileText,
+      label: "Technical Drawings",
+      description: "Floor plans, sections, elevations, and construction documents.",
+    },
+    {
+      id: "renders",
+      icon: Box,
+      label: "3D Renders & Visualizations",
+      description: "Renderings, models, and digital visualizations.",
+    },
+    {
+      id: "construction",
+      icon: Hammer,
+      label: "Construction Details",
+      description: "Construction process photos, material close-ups, and assembly details.",
+    },
+  ] as const;
+
+  return (
+    <div className="space-y-10">
+      {sections.map(({ id, icon: Icon, label, description }) => (
+        <section key={id}>
+          <div className="flex items-start justify-between gap-4 border-b border-border-default pb-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-muted">
+                <Icon className="h-4 w-4 text-text-secondary" />
+              </div>
+              <div>
+                <h3 className="font-medium text-sm text-text-primary">{label}</h3>
+                <p className="text-xs text-text-secondary mt-0.5">{description}</p>
+              </div>
+            </div>
+            {canEdit && (
+              <Button size="sm" variant="outline" className="shrink-0 h-8 text-xs">
+                <Plus className="h-3 w-3 mr-1.5" /> Add
+              </Button>
+            )}
+          </div>
+          <div className="flex flex-col items-center justify-center py-12 bg-surface-muted/40 rounded-xl border border-dashed border-border-strong/30 text-center">
+            <Icon className="h-8 w-8 text-text-disabled opacity-30 mb-3" />
+            <p className="text-sm font-medium text-text-primary mb-1">No {label.toLowerCase()} yet</p>
+            <p className="text-xs text-text-secondary max-w-xs">
+              {canEdit
+                ? "You can add content to this section using the button above."
+                : "Be the first to contribute to this section."}
+            </p>
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
 // ─── Page component ───────────────────────────────────────────────────────────
 
 export default function BuildingDetails() {
@@ -583,7 +755,6 @@ export default function BuildingDetails() {
 
   const loaderBuildingTyped = loaderBuilding as BuildingDetails | null | undefined;
 
-  // ── BuildingCredits query — lives here so the queryKey is stable ──────────
   const { data: buildingCredits = initialBuildingCredits } = useQuery({
     queryKey: buildingCreditsQueryKey(loaderBuildingTyped?.id ?? ""),
     queryFn: () => getBuildingCredits(loaderBuildingTyped!.id),
@@ -595,14 +766,10 @@ export default function BuildingDetails() {
   const buildingCreditsFingerprint = useMemo(() => {
     const sorted = [...buildingCredits].sort((a, b) => a.id.localeCompare(b.id));
     return sorted
-      .map(
-        (c) =>
-          `${c.id}:${c.personId ?? ""}:${c.companyId ?? ""}:${c.status}:${c.isLead ? "1" : "0"}`,
-      )
+      .map((c) => `${c.id}:${c.personId ?? ""}:${c.companyId ?? ""}:${c.status}:${c.isLead ? "1" : "0"}`)
       .join("|");
   }, [buildingCredits]);
 
-  // ── All data, state and handlers ──────────────────────────────────────────
   const {
     building,
     heroImageUrl,
@@ -619,7 +786,6 @@ export default function BuildingDetails() {
     selectedIndex,
     topLinks,
     likedLinkIds,
-    linksLoading,
     userLinks,
     showLinkEditor,
     setShowLinkEditor,
@@ -636,11 +802,6 @@ export default function BuildingDetails() {
     selectedCollectionIds,
     setSelectedCollectionIds,
     initialCollectionIds,
-    showVisitWith,
-    setShowVisitWith,
-    selectedFriends,
-    setSelectedFriends,
-    sendingInvites,
     noteEditorOpen,
     setNoteEditorOpen,
     showDeleteAlert,
@@ -649,7 +810,6 @@ export default function BuildingDetails() {
     totalRatingPoints,
     visitorCount,
     coordinates,
-    googleSearchUrl,
     accessSynthesis,
     accessBadgeVariant,
     canEditOfficialData,
@@ -662,7 +822,6 @@ export default function BuildingDetails() {
     handleRemoveLink,
     handleSaveNote,
     handleDelete,
-    handleSendInvites,
     handleSetHeroImage,
     handleToggleOfficial,
     handleLinkLike,
@@ -677,13 +836,34 @@ export default function BuildingDetails() {
     profile,
   });
 
-  // ── Pure UI state (no async, no handler in hook needs these) ─────────────
+  // ── Tab state (URL-based) ─────────────────────────────────────────────────
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get("tab") as TabId | null) ?? "overview";
+  const setTab = useCallback(
+    (id: TabId) => {
+      setSearchParams(id === "overview" ? {} : { tab: id }, { replace: true });
+    },
+    [setSearchParams],
+  );
+
+  // ── Sticky tab bar detection ──────────────────────────────────────────────
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [isTabBarSticky, setIsTabBarSticky] = useState(false);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsTabBarSticky(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // ── Pure UI state ─────────────────────────────────────────────────────────
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [showDirectionsAlert, setShowDirectionsAlert] = useState(false);
-  const [ratingAreaHovered, setRatingAreaHovered] = useState(false);
-
-  const buildingInteractionsExpanded =
-    noteEditorOpen || showCollections || showVisitWith;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -722,35 +902,6 @@ export default function BuildingDetails() {
       );
   }, [entries, buildingSummaryForFeed, displayImageById, likedImageIds]);
 
-  /** Non-activity review rows (text and/or media) — matches DetailCard list; excludes visited-only rows in "Also visited". */
-  const detailSectionContributionCount = useMemo(() => {
-    if (!buildingSummaryForFeed) return 0;
-    let n = 0;
-    for (const e of entries) {
-      const feedReview = buildingEntryToFeedReview(
-        e,
-        buildingSummaryForFeed,
-        displayImageById,
-        likedImageIds,
-      );
-      if (resolveCardType(feedReview) !== "activity") n += 1;
-    }
-    return n;
-  }, [entries, buildingSummaryForFeed, displayImageById, likedImageIds]);
-
-  /**
-   * Merges entries and orphaned display images into scored, typed stream blocks.
-   *
-   * Block types (derived from content shape):
-   *   featured    — official image → always first, full-width 16:9
-   *   mosaic      — 2+ images from one review → 3fr/2fr grid
-   *   image-review — 1 image + review text → side-by-side (stacked on mobile)
-   *   image-only  — 1 image, no text → full-width, taller when highly liked
-   *   text-only   — no images, has text → pull-quote
-   *
-   * Score = (is_official × 1000) + (top_likes × 10) + (has_content × 20)
-   *       + (multi_image × 15)
-   */
   const streamBlocks = useMemo((): StreamBlock[] => {
     const entryImageIds = new Set(
       entries.flatMap((e) => {
@@ -769,12 +920,8 @@ export default function BuildingDetails() {
 
         const videoDisplay = displayImageById.get(`video-${entry.id}`);
         const hasVideo = videoDisplay?.type === "video";
-
         const isOfficial = images.some((img) => img.is_official);
-        const topLikes = images.reduce(
-          (max, img) => Math.max(max, img.likes_count),
-          0,
-        );
+        const topLikes = images.reduce((max, img) => Math.max(max, img.likes_count), 0);
         const hasContent = !!(entry.content?.trim());
         const imageCount = images.length;
 
@@ -812,16 +959,12 @@ export default function BuildingDetails() {
       })
       .filter((b): b is StreamBlock => b !== null);
 
-    // Orphaned display images — official uploads not tied to any review entry
     const orphanBlocks: StreamBlock[] = displayImages
       .filter((img) => !entryImageIds.has(img.id))
       .map((img): StreamBlock => ({
         key: `img-${img.id}`,
         entryId: `img-${img.id}`,
-        user: img.user ?? {
-          username: null,
-          avatar_url: null,
-        },
+        user: img.user ?? { username: null, avatar_url: null },
         content: null,
         rating: null,
         status: "visited" as const,
@@ -835,38 +978,14 @@ export default function BuildingDetails() {
     return [...entryBlocks, ...orphanBlocks].sort((a, b) => b.score - a.score);
   }, [entries, displayImages, displayImageById]);
 
-  const hasBuildingInfoDetail = useMemo(() => {
-    if (!building) return false;
-    const aliases = (building.aliases ?? []).filter(
-      (a): a is string => typeof a === "string" && a.trim().length > 0,
-    );
-    return !!(
-      building.category?.trim() ||
-      (building.materials?.length ?? 0) > 0 ||
-      building.context?.trim() ||
-      building.intervention?.trim() ||
-      aliases.length > 0 ||
-      building.address?.trim() ||
-      building.access_level ||
-      building.access_logistics ||
-      building.access_cost
-    );
-  }, [building]);
-
-  const showBuildingInfoExtended = hasBuildingInfoDetail || canEditOfficialData;
-
   const renderStreamBlock = useCallback(
     (block: StreamBlock) => {
       const { images, content, user, rating, isOfficial, topLikes } = block;
-
-      const preview =
-        content && content.length > 220 ? content.slice(0, 220) + "…" : content;
-
+      const preview = content && content.length > 220 ? content.slice(0, 220) + "…" : content;
       const authorAttribution =
         user && user.username?.trim() ? (
           <StreamAuthorAttribution user={user} rating={rating} />
         ) : null;
-
       const isOrphanImage = block.entryId.startsWith("img-");
 
       if (!isOrphanImage && buildingSummaryForFeed) {
@@ -879,16 +998,13 @@ export default function BuildingDetails() {
             likedImageIds,
           );
           const t = resolveCardType(feedReview);
-          const wrap = (node: ReactNode) => <div key={block.key}>{node}</div>;
           if (t === "activity") return null;
-          return wrap(<DetailCard entry={feedReview} />);
+          return <div key={block.key}><DetailCard entry={feedReview} /></div>;
         }
         return null;
       }
 
       switch (block.blockType) {
-
-        // ── E: Featured — official or highest-signal ──────────────────────────
         case "featured": {
           const img = images[0];
           if (!img) return null;
@@ -935,9 +1051,6 @@ export default function BuildingDetails() {
           );
         }
 
-        // ── Orphans only below: entry-backed reviews use DetailCard A/B/C ─────
-
-        // ── A: Single image, no text — height scales with likes ───────────────
         case "image-only": {
           const img = images[0];
           if (!img) return null;
@@ -973,13 +1086,7 @@ export default function BuildingDetails() {
           return null;
       }
     },
-    [
-      setSelectedImage,
-      likedImageIds,
-      entries,
-      buildingSummaryForFeed,
-      displayImageById,
-    ],
+    [setSelectedImage, likedImageIds, entries, buildingSummaryForFeed, displayImageById],
   );
 
   // ── Loading guard ─────────────────────────────────────────────────────────
@@ -994,7 +1101,7 @@ export default function BuildingDetails() {
     );
   }
 
-  // ─── MAIN RENDER ─────────────────────────────────────────────────────────
+  // ─── Derived values ───────────────────────────────────────────────────────
 
   const primaryCredit = visiblePrimaryCredits(buildingCredits)[0] ?? null;
   const primaryName = primaryCredit?.person?.name ?? primaryCredit?.company?.name ?? null;
@@ -1003,453 +1110,778 @@ export default function BuildingDetails() {
     primaryName ? `by ${primaryName}` : null,
     building.year_completed ? `(${building.year_completed})` : null,
     building.city && building.country ? `— ${building.city}, ${building.country}` : null,
-  ].filter(Boolean).join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const isStatusBuilding =
+    building.status === "Lost" ||
+    building.status === "Unbuilt" ||
+    building.status === "Under Construction";
+
+  const buildingUrl = getBuildingUrl(building.id, building.slug, building.short_id);
+
+  // ─── MAIN RENDER ─────────────────────────────────────────────────────────
 
   return (
     <AppLayout title={building.name} showBack showHeader>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="relative min-h-screen bg-surface-default"
+        transition={{ duration: 0.5 }}
+        className="min-h-screen bg-surface-default"
       >
-        {/* ── HERO SECTION ── */}
-        <div className="relative">
-          <BuildingHero key={heroImageUrl} src={heroImageUrl} alt={heroAlt}>
-            <div className="max-w-screen-xl mx-auto w-full">
-              <motion.div 
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6, duration: 0.8 }}
-                className="space-y-4 pb-4 sm:pb-8"
-              >
-                {building.tier_rank && (
-                  <span className="inline-block px-2 py-0.5 bg-brand-accent text-brand-accent-foreground text-[10px] font-bold uppercase tracking-[0.2em] rounded-sm shadow-sm">
-                    {building.tier_rank}
-                  </span>
-                )}
-                <h1 className="font-display text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white drop-shadow-sm max-w-4xl leading-[1.1]">
-                  {building.name}
-                </h1>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-white/90 text-sm sm:text-base font-medium">
-                  {primaryName && (
-                    <div className="flex items-center gap-2">
-                      <span className="opacity-60 font-normal">by</span>
-                      <PrimaryCreditsLinks
-                        credits={buildingCredits}
-                        linkClassName="text-white hover:text-brand-accent transition-colors underline-offset-4 hover:underline decoration-white/30"
-                      />
-                    </div>
-                  )}
-                  {building.year_completed && (
-                    <div className="flex items-center gap-2">
-                      <span className="w-1 h-1 rounded-full bg-white/40" />
-                      <span>{building.year_completed}</span>
-                    </div>
-                  )}
-                  {building.city && (
-                    <div className="flex items-center gap-2">
-                      <span className="w-1 h-1 rounded-full bg-white/40" />
-                      <span>{building.city}</span>
-                    </div>
-                  )}
+        {/* ── HERO — contained 16:9, no text overlay ── */}
+        <div className="bg-surface-default">
+          <div className="max-w-screen-xl mx-auto lg:px-8 lg:pt-8">
+            <div className="aspect-[16/9] w-full overflow-hidden bg-surface-muted lg:rounded-xl">
+              {heroImageUrl ? (
+                <motion.img
+                  key={heroImageUrl}
+                  initial={{ opacity: 0, scale: 1.03 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.8 }}
+                  src={heroImageUrl}
+                  alt={heroAlt}
+                  className="h-full w-full object-cover"
+                  // @ts-expect-error fetchPriority is valid but not yet in React types
+                  fetchPriority="high"
+                  loading="eager"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <ImageIcon className="h-16 w-16 text-text-disabled opacity-20" />
                 </div>
-              </motion.div>
+              )}
             </div>
-          </BuildingHero>
+          </div>
         </div>
 
-        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-            
-            {/* ── LEFT COLUMN: Content & Stream ── */}
-            <div className="lg:col-span-8 space-y-16">
-              
-              {/* Architect Statement */}
-              {building.architect_statement && (
-                <section className="relative">
-                  <div className="absolute -left-6 top-0 bottom-0 w-1 bg-brand-accent/30 rounded-full hidden md:block" />
-                  <ArchitectStatement
-                    statement={building.architect_statement}
-                    isEditing={false}
-                    onChange={() => {}}
-                    architectName={leadAttributionFromCredits(buildingCredits)}
-                  />
-                </section>
-              )}
+        {/* ── BUILDING HEADER — title, metadata row, stats ── */}
+        <div className="border-b border-border-default">
+          <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
 
-              {/* Status Alert */}
-              {(building.status === "Lost" ||
-                building.status === "Unbuilt" ||
-                building.status === "Under Construction") ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="p-6 rounded-lg bg-feedback-destructive/5 border border-feedback-destructive/20 flex items-start gap-4"
-                >
-                  <div className="mt-1 p-2 bg-feedback-destructive/10 rounded-full">
-                    <AlertTriangle className="h-5 w-5 text-feedback-destructive" />
+              {/* Title & metadata */}
+              <div className="lg:col-span-8 space-y-2">
+                {(building.tier_rank || isStatusBuilding) && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {building.tier_rank && (
+                      <span className="inline-block px-2 py-0.5 bg-brand-accent text-brand-accent-foreground text-[10px] font-bold uppercase tracking-[0.2em] rounded-sm">
+                        {building.tier_rank}
+                      </span>
+                    )}
+                    {isStatusBuilding && (
+                      <span className="inline-block px-2 py-0.5 bg-feedback-destructive/10 text-feedback-destructive text-[10px] font-bold uppercase tracking-[0.2em] rounded-sm border border-feedback-destructive/20">
+                        {building.status}
+                      </span>
+                    )}
                   </div>
-                  <div>
-                    <h4 className="font-bold text-feedback-destructive uppercase tracking-wider text-xs mb-1">
-                      {building.status}
-                    </h4>
-                    <p className="text-sm text-text-secondary leading-relaxed">
-                      {building.status === "Lost"
-                        ? "This building is lost to time. It no longer stands at this location."
-                        : building.status === "Unbuilt"
-                        ? "This project was never built and exists only in records."
-                        : "This building is currently under construction."}
-                    </p>
-                  </div>
-                </motion.div>
-              ) : null}
+                )}
 
-              {/* ── EDITORIAL PHOTO + REVIEW STREAM ── */}
-              <div className="space-y-8">
-                <div className="flex items-center justify-between border-b border-border-default pb-4">
-                  <h3 className="font-display text-2xl font-bold tracking-tight">Community</h3>
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      className="text-[10px] font-bold uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1.5"
-                      onClick={() => document.getElementById("hidden-file-input")?.click()}
-                    >
-                      <Plus className="h-3 w-3" /> Upload
-                    </button>
-                    <input
-                      id="hidden-file-input"
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageSelect}
-                    />
-                    <Link
-                      to={getBuildingUrl(building.id, building.slug, building.short_id) + "/review"}
-                      className="text-[10px] font-bold uppercase tracking-widest bg-text-primary text-white px-3 py-1.5 rounded-sm hover:bg-brand-primary-hover transition-colors"
-                    >
-                      Add Review
-                    </Link>
-                  </div>
-                </div>
+                <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-text-primary leading-tight">
+                  {building.name}
+                </h1>
 
-                <WidgetErrorBoundary>
-                  {streamBlocks.length > 0 ? (
-                    <div className="space-y-12">
-                      {streamBlocks.map((block) => (
-                        <motion.div
-                          key={block.key}
-                          initial={{ opacity: 0, y: 20 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true, margin: "-50px" }}
-                          transition={{ duration: 0.5 }}
-                        >
-                          {renderStreamBlock(block)}
-                        </motion.div>
-                      ))}
-                    </div>
-                  ) : activityOnlyFeedReviews.length === 0 ? (
-                    <div className="flex aspect-video flex-col items-center justify-center bg-surface-muted/30 rounded-xl border border-dashed border-border-strong/30 p-12 text-center">
-                      <ImageIcon className="mb-4 h-12 w-12 text-text-disabled opacity-30" />
-                      <h4 className="text-lg font-medium text-text-primary mb-2">No photos yet</h4>
-                      <p className="text-sm text-text-secondary max-w-xs mb-6">
-                        Be the first to capture this architectural masterpiece and share it with the community.
-                      </p>
-                    </div>
-                  ) : null}
+                {building.alt_name && (
+                  <p className="text-base text-text-secondary">{building.alt_name}</p>
+                )}
 
-                  {activityOnlyFeedReviews.length > 0 && (
-                    <div className="mt-16 pt-8 border-t border-border-default">
-                      <h4 className="font-display text-xl font-bold mb-6">Recent Activity</h4>
-                      <ActivityStreamGroup entries={activityOnlyFeedReviews} hideGroupLabel />
-                    </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-secondary pt-1">
+                  {primaryName && (
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-text-disabled">by</span>
+                      <PrimaryCreditsLinks
+                        credits={buildingCredits}
+                        linkClassName="text-text-primary font-medium hover:underline underline-offset-2"
+                      />
+                    </span>
                   )}
-                </WidgetErrorBoundary>
+                  {building.year_completed && (
+                    <>
+                      <span className="text-border-strong" aria-hidden>·</span>
+                      <span>{building.year_completed}</span>
+                    </>
+                  )}
+                  {(building.city || building.country) && (
+                    <>
+                      <span className="text-border-strong" aria-hidden>·</span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3 text-text-disabled shrink-0" />
+                        {[building.city, building.country].filter(Boolean).join(", ")}
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
 
-              {/* Resources & Info Extended */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-16 border-t border-border-default">
-                 {/* Resources */}
-                 <section className="space-y-6">
-                    <div className="flex items-center justify-between">
-                       <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary">Resources</h4>
-                       {user && (
-                         <button onClick={() => setShowLinkEditor(!showLinkEditor)} className="text-[10px] font-bold uppercase tracking-widest hover:text-text-primary transition-colors">
-                            {showLinkEditor ? "Close" : "Add"}
-                         </button>
-                       )}
+              {/* Stats & actions */}
+              <div className="lg:col-span-4 flex items-center gap-4 justify-start lg:justify-end">
+                <div className="flex items-center gap-5 pr-5 border-r border-border-default">
+                  <div>
+                    <div className="text-xl font-bold font-display tabular-nums">{visitorCount}</div>
+                    <div className="text-[10px] uppercase tracking-widest text-text-secondary">Visits</div>
+                  </div>
+                  {totalRatingPoints !== null && totalRatingPoints > 0 && (
+                    <div>
+                      <div className="text-xl font-bold font-display tabular-nums">{totalRatingPoints}</div>
+                      <div className="text-[10px] uppercase tracking-widest text-text-secondary">Points</div>
                     </div>
-                    {topLinks.length > 0 ? (
-                      <div className="divide-y divide-border-default">
-                         {topLinks.map((link) => {
-                           let domain = "";
-                           try { domain = new URL(link.url).hostname; } catch { /* ignore */ }
-                           return (
-                             <div key={link.link_id} className="group py-4 flex items-center justify-between gap-4">
-                                <a href={link.url} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1">
-                                   <div className="text-sm font-semibold truncate group-hover:text-brand-accent transition-colors">{link.title || domain}</div>
-                                   <div className="text-[10px] text-text-secondary uppercase tracking-wider mt-0.5">{domain}</div>
-                                </a>
-                                <div className="flex items-center gap-3">
-                                   <button 
-                                     onClick={(e) => { e.preventDefault(); void handleLinkLike(link.link_id); }}
-                                     className={cn("flex items-center gap-1 text-[10px] font-bold", likedLinkIds.has(link.link_id) ? "text-text-primary" : "text-text-disabled")}
-                                   >
-                                      <Heart className={cn("h-3 w-3", likedLinkIds.has(link.link_id) && "fill-current")} />
-                                      {link.like_count}
-                                   </button>
-                                   <ExternalLink className="h-3.5 w-3.5 text-text-disabled group-hover:text-text-primary" />
-                                </div>
-                             </div>
-                           );
-                         })}
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="h-9 gap-1.5">
+                    <Share2 className="h-3.5 w-3.5" /> Share
+                  </Button>
+                  {canEditOfficialData && (
+                    <Button variant="outline" size="sm" className="h-9 gap-1.5" asChild>
+                      <Link to={`${buildingUrl}/edit`}>
+                        <Pencil className="h-3.5 w-3.5" /> Edit
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        {/* Sentinel — sticky tab bar triggers when this leaves viewport */}
+        <div ref={sentinelRef} aria-hidden className="h-0" />
+
+        {/* ── TAB BAR ── */}
+        <div
+          className={cn(
+            "border-b border-border-default bg-surface-default transition-shadow duration-200",
+            isTabBarSticky && "sticky top-0 z-30 shadow-sm",
+          )}
+        >
+          <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center -mb-px overflow-x-auto scrollbar-none">
+              {isTabBarSticky && (
+                <span className="hidden sm:block text-sm font-medium text-text-secondary pr-5 mr-1 border-r border-border-default shrink-0 truncate max-w-[180px] py-3.5">
+                  {building.name}
+                </span>
+              )}
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setTab(tab.id)}
+                  className={cn(
+                    "px-5 py-3.5 text-sm font-medium border-b-2 shrink-0 transition-colors duration-150 whitespace-nowrap",
+                    activeTab === tab.id
+                      ? "border-text-primary text-text-primary"
+                      : "border-transparent text-text-secondary hover:text-text-primary",
+                  )}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── TAB CONTENT ── */}
+        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+
+            {/* ── MAIN CONTENT COLUMN ── */}
+            <div className="lg:col-span-8 min-w-0">
+
+              {/* ════ OVERVIEW TAB ════ */}
+              {activeTab === "overview" && (
+                <div className="space-y-12">
+
+                  {/* Status alert */}
+                  {isStatusBuilding && (
+                    <div className="flex items-start gap-4 p-5 rounded-lg bg-feedback-destructive/5 border border-feedback-destructive/20">
+                      <AlertTriangle className="h-5 w-5 text-feedback-destructive shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-bold text-feedback-destructive uppercase tracking-wider mb-1">
+                          {building.status}
+                        </p>
+                        <p className="text-sm text-text-secondary">
+                          {building.status === "Lost"
+                            ? "This building no longer stands at this location."
+                            : building.status === "Unbuilt"
+                              ? "This project was never built and exists only in records."
+                              : "This building is currently under construction."}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Building info — definition list */}
+                  <BuildingInfoSection building={building} buildingCredits={buildingCredits} />
+
+                  {/* Architect statement */}
+                  {building.architect_statement && (
+                    <ArchitectStatement
+                      statement={building.architect_statement}
+                      isEditing={false}
+                      onChange={() => {}}
+                      architectName={leadAttributionFromCredits(buildingCredits)}
+                    />
+                  )}
+
+                  {/* Community highlights — top 4 scored blocks */}
+                  <section className="space-y-8">
+                    <div className="flex items-center justify-between border-b border-border-default pb-4">
+                      <h3 className="font-display text-xl font-bold tracking-tight">
+                        Community Highlights
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setTab("media")}
+                        className="text-[10px] font-bold uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
+                      >
+                        View all →
+                      </button>
+                    </div>
+
+                    {streamBlocks.length > 0 ? (
+                      <div className="space-y-10">
+                        {streamBlocks.slice(0, 4).map((block) => (
+                          <motion.div
+                            key={block.key}
+                            initial={{ opacity: 0, y: 16 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true, margin: "-40px" }}
+                            transition={{ duration: 0.4 }}
+                          >
+                            {renderStreamBlock(block)}
+                          </motion.div>
+                        ))}
+                        {streamBlocks.length > 4 && (
+                          <button
+                            type="button"
+                            onClick={() => setTab("media")}
+                            className="w-full py-4 rounded-xl border border-dashed border-border-strong/40 text-sm text-text-secondary hover:text-text-primary hover:border-border-strong transition-all"
+                          >
+                            + {streamBlocks.length - 4} more in Media tab
+                          </button>
+                        )}
                       </div>
                     ) : (
-                      <div className="text-sm text-text-secondary italic">No external resources added.</div>
+                      <div className="flex flex-col items-center justify-center py-16 bg-surface-muted/30 rounded-xl border border-dashed border-border-strong/30 text-center">
+                        <ImageIcon className="h-10 w-10 text-text-disabled opacity-25 mb-3" />
+                        <p className="text-sm font-medium text-text-primary mb-1">No photos yet</p>
+                        <p className="text-xs text-text-secondary max-w-xs mb-5">
+                          Be the first to share this building with the community.
+                        </p>
+                        <Button size="sm" variant="outline" asChild>
+                          <Link to={`${buildingUrl}/review`}>Add Review</Link>
+                        </Button>
+                      </div>
                     )}
-                 </section>
+                  </section>
 
-                 {/* Credits & Contributors Full */}
-                 <section className="space-y-6">
-                    <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary">Full Credits</h4>
+                  {/* Related buildings */}
+                  <ClientOnly>
+                    <RelatedByArchitectSection building={building} primaryCredit={primaryCredit} />
+                    {building.city && (
+                      <RelatedByCitySection building={building} locality={locality} />
+                    )}
+                  </ClientOnly>
+                </div>
+              )}
+
+              {/* ════ MEDIA TAB ════ */}
+              {activeTab === "media" && (
+                <div className="space-y-8">
+                  <div className="flex items-center justify-between border-b border-border-default pb-4">
+                    <h3 className="font-display text-xl font-bold tracking-tight">Community</h3>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        className="text-[10px] font-bold uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1.5"
+                        onClick={() => document.getElementById("building-file-input")?.click()}
+                      >
+                        <Plus className="h-3 w-3" /> Upload
+                      </button>
+                      <input
+                        id="building-file-input"
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageSelect}
+                      />
+                      <Link
+                        to={`${buildingUrl}/review`}
+                        className="text-[10px] font-bold uppercase tracking-widest bg-text-primary text-white px-3 py-1.5 rounded-sm hover:bg-brand-primary-hover transition-colors"
+                      >
+                        Add Review
+                      </Link>
+                    </div>
+                  </div>
+
+                  <WidgetErrorBoundary>
+                    {streamBlocks.length > 0 ? (
+                      <div className="space-y-12">
+                        {streamBlocks.map((block) => (
+                          <motion.div
+                            key={block.key}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true, margin: "-50px" }}
+                            transition={{ duration: 0.5 }}
+                          >
+                            {renderStreamBlock(block)}
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-24 bg-surface-muted/30 rounded-xl border border-dashed border-border-strong/30 text-center">
+                        <ImageIcon className="h-12 w-12 text-text-disabled opacity-25 mb-4" />
+                        <h4 className="text-lg font-medium text-text-primary mb-2">No photos yet</h4>
+                        <p className="text-sm text-text-secondary max-w-xs mb-6">
+                          Be the first to capture this building and share it with the community.
+                        </p>
+                        <div className="flex gap-3">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => document.getElementById("building-file-input")?.click()}
+                          >
+                            Upload Photo
+                          </Button>
+                          <Button size="sm" asChild>
+                            <Link to={`${buildingUrl}/review`}>Write Review</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {activityOnlyFeedReviews.length > 0 && (
+                      <div className="mt-16 pt-8 border-t border-border-default">
+                        <h4 className="font-display text-lg font-bold mb-6">Recent Activity</h4>
+                        <ActivityStreamGroup entries={activityOnlyFeedReviews} hideGroupLabel />
+                      </div>
+                    )}
+                  </WidgetErrorBoundary>
+                </div>
+              )}
+
+              {/* ════ TECHNICAL TAB ════ */}
+              {activeTab === "technical" && (
+                <TechnicalSection canEdit={canEditOfficialData} />
+              )}
+
+              {/* ════ CREDITS TAB ════ */}
+              {activeTab === "credits" && (
+                <div className="space-y-12">
+
+                  {/* Full credits */}
+                  <section>
+                    <h3 className="font-display text-xl font-bold tracking-tight border-b border-border-default pb-4 mb-6">
+                      Credits
+                    </h3>
                     <BuildingCredits
                       buildingId={building.id}
                       credits={buildingCredits}
                       isAuthenticated={Boolean(user)}
                       isAdmin={isCreditsAdmin}
                     />
-                 </section>
-              </div>
+                  </section>
 
-              {/* Related Buildings */}
-              <div className="space-y-16 pt-16 border-t border-border-default">
-                 <ClientOnly>
-                    <RelatedByArchitectSection building={building} primaryCredit={primaryCredit} />
-                    {building.city && <RelatedByCitySection building={building} locality={locality} />}
-                 </ClientOnly>
-              </div>
+                  {/* Resources */}
+                  <section className="border-t border-border-default pt-12 space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary">
+                        Resources
+                      </h4>
+                      {user && (
+                        <button
+                          type="button"
+                          onClick={() => setShowLinkEditor(!showLinkEditor)}
+                          className="text-[10px] font-bold uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
+                        >
+                          {showLinkEditor ? "Close" : "Add link"}
+                        </button>
+                      )}
+                    </div>
+
+                    {showLinkEditor && user && (
+                      <div className="flex flex-col sm:flex-row gap-2 p-4 bg-surface-muted rounded-lg">
+                        <Input
+                          value={newLinkUrl}
+                          onChange={(e) => setNewLinkUrl(e.target.value)}
+                          placeholder="https://"
+                          className="flex-1 h-9 text-sm"
+                        />
+                        <Input
+                          value={newLinkTitle}
+                          onChange={(e) => setNewLinkTitle(e.target.value)}
+                          placeholder="Title (optional)"
+                          className="flex-1 h-9 text-sm"
+                        />
+                        <Button
+                          size="sm"
+                          className="h-9"
+                          onClick={() => void handleAddLink()}
+                          disabled={!newLinkUrl.trim()}
+                        >
+                          Add
+                        </Button>
+                      </div>
+                    )}
+
+                    {topLinks.length > 0 ? (
+                      <div className="divide-y divide-border-default">
+                        {topLinks.map((link) => {
+                          let domain = "";
+                          try { domain = new URL(link.url).hostname; } catch { /* ignore */ }
+                          return (
+                            <div key={link.link_id} className="group py-4 flex items-center justify-between gap-4">
+                              <a
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="min-w-0 flex-1"
+                              >
+                                <div className="text-sm font-semibold truncate group-hover:underline underline-offset-2">
+                                  {link.title || domain}
+                                </div>
+                                <div className="text-[10px] text-text-secondary uppercase tracking-wider mt-0.5">
+                                  {domain}
+                                </div>
+                              </a>
+                              <div className="flex items-center gap-3 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.preventDefault(); void handleLinkLike(link.link_id); }}
+                                  className={cn(
+                                    "flex items-center gap-1 text-[10px] font-bold transition-colors",
+                                    likedLinkIds.has(link.link_id)
+                                      ? "text-text-primary"
+                                      : "text-text-disabled hover:text-text-primary",
+                                  )}
+                                >
+                                  <Heart
+                                    className={cn(
+                                      "h-3 w-3",
+                                      likedLinkIds.has(link.link_id) && "fill-current",
+                                    )}
+                                  />
+                                  {link.like_count}
+                                </button>
+                                <ExternalLink className="h-3.5 w-3.5 text-text-disabled group-hover:text-text-primary transition-colors" />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-text-secondary italic">No external resources added yet.</p>
+                    )}
+                  </section>
+
+                </div>
+              )}
 
             </div>
 
-            {/* ── RIGHT COLUMN: Actions & Info Bento ── */}
-            <div className="lg:col-span-4 space-y-8">
-              
-              {/* Sticky Action Card */}
-              <div className="lg:sticky lg:top-24 space-y-8">
-                
-                {/* Community Stats Quick View */}
-                <div className="flex items-center justify-between px-2">
-                   <div className="flex items-center gap-6">
-                      <div className="text-center">
-                        <div className="text-xl font-bold font-display">{visitorCount}</div>
-                        <div className="text-[10px] uppercase tracking-widest text-text-secondary">Visitors</div>
-                      </div>
-                      {totalRatingPoints !== null && (
-                        <div className="text-center">
-                          <div className="text-xl font-bold font-display">{totalRatingPoints}</div>
-                          <div className="text-[10px] uppercase tracking-widest text-text-secondary">Points</div>
-                        </div>
-                      )}
-                   </div>
-                   <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
-                        <Share2 className="h-4 w-4" />
-                      </Button>
-                      {canEditOfficialData && (
-                        <Button variant="ghost" size="icon" className="rounded-full h-8 w-8" asChild>
-                           <Link to={getBuildingUrl(building.id, building.slug, building.short_id) + "/edit"}>
-                              <Pencil className="h-4 w-4" />
-                           </Link>
-                        </Button>
-                      )}
-                   </div>
-                </div>
+            {/* ── SIDEBAR — Right Column ── */}
+            <div className="lg:col-span-4">
+              <div className="lg:sticky lg:top-14 space-y-5">
 
-                {/* Main Action Card */}
-                <div className="bg-white border border-border-default rounded-xl p-6 shadow-sm space-y-6">
-                   {/* Status Selector */}
-                   <div className="space-y-3">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">My Status</label>
-                      <div className="flex items-center justify-between">
-                         <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                               <Button variant="outline" className="w-full justify-between h-11 px-4 text-sm font-medium hover:bg-surface-muted transition-colors">
-                                  <div className="flex items-center gap-2">
-                                     {userStatus === "visited" ? <Check className="h-4 w-4 text-feedback-success" /> : userStatus === "pending" ? <Bookmark className="h-4 w-4 text-brand-accent fill-current" /> : <Circle className="h-4 w-4 text-text-disabled" />}
-                                     {userStatus === "visited" ? "Visited" : userStatus === "pending" ? "Saved" : "Add to list"}
-                                  </div>
-                                  <ChevronDown className="h-4 w-4 opacity-50" />
-                               </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-[240px] p-2">
-                               <DropdownMenuItem className="rounded-md py-3" onSelect={() => void handleStatusChange("visited")}>
-                                  <Check className="mr-3 h-4 w-4" /> 
-                                  <div className="flex flex-col">
-                                    <span className="font-bold text-xs uppercase tracking-wider">Visited</span>
-                                    <span className="text-[10px] text-text-secondary">I've seen this in person</span>
-                                  </div>
-                                </DropdownMenuItem>
-                               <DropdownMenuItem className="rounded-md py-3" onSelect={() => void handleStatusChange("pending")}>
-                                  <Bookmark className="mr-3 h-4 w-4" /> 
-                                  <div className="flex flex-col">
-                                    <span className="font-bold text-xs uppercase tracking-wider">Wishlist</span>
-                                    <span className="text-[10px] text-text-secondary">I want to visit this</span>
-                                  </div>
-                                </DropdownMenuItem>
-                               <DropdownMenuItem className="rounded-md py-3" onSelect={() => void handleStatusChange("ignored")}>
-                                  <EyeOff className="mr-3 h-4 w-4" /> 
-                                  <div className="flex flex-col">
-                                    <span className="font-bold text-xs uppercase tracking-wider">Hide</span>
-                                    <span className="text-[10px] text-text-secondary">Don't show in my feed</span>
-                                  </div>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                         </DropdownMenu>
-                      </div>
-                   </div>
+                {/* Action card */}
+                <div className="bg-surface-card border border-border-default rounded-xl p-5 shadow-sm space-y-5">
 
-                   {/* Rating */}
-                   <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">My Rating</label>
-                        {myRating > 0 && <span className="text-[10px] font-bold uppercase tracking-widest text-brand-accent">{myRating} / 3</span>}
-                      </div>
-                      <div 
-                        className="flex items-center gap-4 p-4 bg-surface-muted rounded-lg justify-center border border-transparent hover:border-border-default transition-all"
-                        onMouseEnter={() => setRatingAreaHovered(true)}
-                        onMouseLeave={() => { setRatingAreaHovered(false); setHoverRating(null); }}
-                      >
-                         {[1, 2, 3].map((i) => {
-                            const filled = hoverRating !== null ? i <= hoverRating : i <= myRating;
-                            return (
-                               <motion.div
-                                 key={i}
-                                 whileHover={{ scale: 1.25 }}
-                                 whileTap={{ scale: 0.9 }}
-                                 onClick={() => void handleRate(building.id, i === myRating ? 0 : i)}
-                                 onMouseEnter={() => setHoverRating(i)}
-                                 className="cursor-pointer"
-                               >
-                                  <Circle
-                                    className={cn(
-                                      "h-8 w-8 transition-all duration-300",
-                                      filled ? "fill-brand-accent text-brand-accent drop-shadow-[0_0_8px_rgba(190,255,0,0.3)]" : "fill-transparent text-text-disabled opacity-40 hover:opacity-100"
-                                    )}
-                                  />
-                               </motion.div>
-                            );
-                         })}
-                      </div>
-                   </div>
-
-                   {/* Secondary Actions */}
-                   <div className="grid grid-cols-2 gap-3 pt-2">
-                      <Button variant="secondary" size="sm" onClick={() => setNoteEditorOpen(!noteEditorOpen)} className="h-10 text-[10px] font-bold uppercase tracking-[0.1em] bg-surface-muted hover:bg-border-default border-none">
-                         <Plus className="h-3.5 w-3.5 mr-2" /> Note
-                      </Button>
-                      <Button variant="secondary" size="sm" onClick={() => setShowCollections(!showCollections)} className="h-10 text-[10px] font-bold uppercase tracking-[0.1em] bg-surface-muted hover:bg-border-default border-none">
-                         <Plus className="h-3.5 w-3.5 mr-2" /> Collection
-                      </Button>
-                   </div>
-
-                   {/* Editors */}
-                   <AnimatePresence>
-                     {noteEditorOpen && (
-                        <motion.div 
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="overflow-hidden space-y-3 pt-4 border-t border-border-default"
+                  {/* Status */}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+                      My Status
+                    </label>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-between h-10 px-3 text-sm font-medium"
                         >
-                           <Textarea
-                             value={note}
-                             onChange={(e) => setNote(e.target.value)}
-                             placeholder="Add a note or review..."
-                             className="min-h-[120px] text-sm resize-none"
-                           />
-                           <div className="flex justify-end gap-2">
-                             <Button size="sm" variant="ghost" onClick={() => setNoteEditorOpen(false)}>Cancel</Button>
-                             <Button size="sm" onClick={() => void handleSaveNote()} disabled={isSavingNote}>
-                                {isSavingNote && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-                                Save Note
-                             </Button>
-                           </div>
-                        </motion.div>
-                     )}
-                   </AnimatePresence>
-                </div>
+                          <div className="flex items-center gap-2">
+                            {userStatus === "visited" ? (
+                              <Check className="h-4 w-4 text-feedback-success" />
+                            ) : userStatus === "pending" ? (
+                              <Bookmark className="h-4 w-4 text-brand-accent fill-current" />
+                            ) : (
+                              <Circle className="h-4 w-4 text-text-disabled" />
+                            )}
+                            {userStatus === "visited"
+                              ? "Visited"
+                              : userStatus === "pending"
+                                ? "Saved"
+                                : "Add to list"}
+                          </div>
+                          <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-[220px] p-2">
+                        <DropdownMenuItem
+                          className="rounded-md py-2.5"
+                          onSelect={() => void handleStatusChange("visited")}
+                        >
+                          <Check className="mr-3 h-4 w-4 shrink-0" />
+                          <div>
+                            <p className="font-bold text-xs uppercase tracking-wider">Visited</p>
+                            <p className="text-[10px] text-text-secondary">I've seen this in person</p>
+                          </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="rounded-md py-2.5"
+                          onSelect={() => void handleStatusChange("pending")}
+                        >
+                          <Bookmark className="mr-3 h-4 w-4 shrink-0" />
+                          <div>
+                            <p className="font-bold text-xs uppercase tracking-wider">Wishlist</p>
+                            <p className="text-[10px] text-text-secondary">I want to visit this</p>
+                          </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="rounded-md py-2.5"
+                          onSelect={() => void handleStatusChange("ignored")}
+                        >
+                          <EyeOff className="mr-3 h-4 w-4 shrink-0" />
+                          <div>
+                            <p className="font-bold text-xs uppercase tracking-wider">Hide</p>
+                            <p className="text-[10px] text-text-secondary">Don&apos;t show in my feed</p>
+                          </div>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
 
-                {/* Map Preview Card */}
-                <div className="bg-white border border-border-default rounded-xl overflow-hidden shadow-sm group/map">
-                   <div className="h-48 relative overflow-hidden">
-                      {coordinates ? (
-                        <div className="h-full w-full grayscale-[0.5] hover:grayscale-0 transition-all duration-700">
-                          <BuildingLocationMap
-                            lat={coordinates.lat}
-                            lng={coordinates.lng}
-                            isExpanded={isMapExpanded}
-                            onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
-                            className="h-full w-full"
-                          />
-                        </div>
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center bg-surface-muted text-text-disabled text-[10px] font-bold uppercase tracking-widest">
-                           Location Unavailable
-                        </div>
+                  {/* Rating */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+                        My Rating
+                      </label>
+                      {myRating > 0 && (
+                        <span className="text-[10px] font-bold text-text-secondary">
+                          {myRating}/3
+                        </span>
                       )}
-                   </div>
-                   <div className="p-4 flex items-center justify-between bg-white border-t border-border-default">
-                      <div className="flex items-center gap-2 text-xs text-text-secondary font-medium min-w-0">
-                         <MapPin className="h-3.5 w-3.5 text-brand-accent shrink-0" />
-                         <span className="truncate">{building.city}, {building.country}</span>
-                      </div>
-                      <Button variant="ghost" size="sm" className="h-8 px-2 text-[10px] font-bold uppercase tracking-widest hover:text-brand-accent transition-colors shrink-0" onClick={() => {
-                        if (building.location_precision === "approximate") setShowDirectionsAlert(true);
-                        else window.open(`https://www.google.com/maps/dir/?api=1&destination=${coordinates?.lat},${coordinates?.lng}`, "_blank");
-                      }}>
-                         Directions <Navigation className="h-3 w-3 ml-1" />
-                      </Button>
-                   </div>
+                    </div>
+                    <div
+                      className="flex items-center justify-center gap-5 p-3 bg-surface-muted rounded-lg"
+                      onMouseLeave={() => setHoverRating(null)}
+                    >
+                      {[1, 2, 3].map((i) => {
+                        const filled = hoverRating !== null ? i <= hoverRating : i <= myRating;
+                        return (
+                          <motion.button
+                            key={i}
+                            type="button"
+                            whileHover={{ scale: 1.2 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => void handleRate(building.id, i === myRating ? 0 : i)}
+                            onMouseEnter={() => setHoverRating(i)}
+                            className="cursor-pointer"
+                          >
+                            <Circle
+                              className={cn(
+                                "h-7 w-7 transition-all duration-200",
+                                filled
+                                  ? "fill-brand-accent text-brand-accent"
+                                  : "fill-transparent text-text-disabled opacity-50",
+                              )}
+                            />
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Secondary actions */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setNoteEditorOpen(!noteEditorOpen)}
+                      className="h-9 text-[10px] font-bold uppercase tracking-wider bg-surface-muted hover:bg-border-default border-none"
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1.5" /> Note
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setShowCollections(!showCollections)}
+                      className="h-9 text-[10px] font-bold uppercase tracking-wider bg-surface-muted hover:bg-border-default border-none"
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1.5" /> Collection
+                    </Button>
+                  </div>
+
+                  {/* Note editor */}
+                  <AnimatePresence>
+                    {noteEditorOpen && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden space-y-3 pt-4 border-t border-border-default"
+                      >
+                        <Textarea
+                          value={note}
+                          onChange={(e) => setNote(e.target.value)}
+                          placeholder="Add a note or review..."
+                          className="min-h-[100px] text-sm resize-none"
+                        />
+                        <PendingPhotosQueue
+                          pendingImages={pendingImages}
+                          isSavingNote={isSavingNote}
+                          onRemove={removePendingImage}
+                          onSave={() => void handleSaveNote()}
+                        />
+                        <div className="flex justify-end gap-2">
+                          <Button size="sm" variant="ghost" onClick={() => setNoteEditorOpen(false)}>
+                            Cancel
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => void handleSaveNote()}
+                            disabled={isSavingNote}
+                          >
+                            {isSavingNote && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+                            Save
+                          </Button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Collection selector */}
+                  <AnimatePresence>
+                    {showCollections && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden border-t border-border-default pt-4"
+                      >
+                        <CollectionSelector
+                          buildingId={building.id}
+                          selectedIds={selectedCollectionIds}
+                          initialIds={initialCollectionIds}
+                          onChange={setSelectedCollectionIds}
+                          onClose={() => setShowCollections(false)}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                 </div>
 
-                {/* Info Bento Grid */}
-                <div className="grid grid-cols-2 gap-4">
-                   <div className="bg-white border border-border-default rounded-xl p-4 flex flex-col justify-between min-h-[100px] hover:border-border-strong transition-colors">
-                      <label className="text-[9px] font-bold uppercase tracking-widest text-text-secondary">Typology</label>
-                      <div className="space-y-1.5">
-                        {building.typology?.slice(0, 2).map(t => (
-                          <div key={t} className="text-xs font-bold truncate leading-none">{t}</div>
-                        )) || <div className="text-xs text-text-disabled">None</div>}
+                {/* Map card */}
+                <div className="bg-surface-card border border-border-default rounded-xl overflow-hidden shadow-sm">
+                  <div className="h-44 relative">
+                    {coordinates ? (
+                      <div className="h-full w-full grayscale-[0.4] hover:grayscale-0 transition-all duration-700">
+                        <BuildingLocationMap
+                          lat={coordinates.lat}
+                          lng={coordinates.lng}
+                          isExpanded={isMapExpanded}
+                          onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
+                          className="h-full w-full"
+                        />
                       </div>
-                   </div>
-                   <div className="bg-white border border-border-default rounded-xl p-4 flex flex-col justify-between min-h-[100px] hover:border-border-strong transition-colors">
-                      <label className="text-[9px] font-bold uppercase tracking-widest text-text-secondary">Materials</label>
-                      <div className="space-y-1.5">
-                        {building.materials?.slice(0, 2).map(m => (
-                          <div key={m} className="text-xs font-bold truncate leading-none">{m}</div>
-                        )) || <div className="text-xs text-text-disabled">None</div>}
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center bg-surface-muted">
+                        <MapPin className="h-6 w-6 text-text-disabled" />
                       </div>
-                   </div>
-                   <div className="bg-white border border-border-default rounded-xl p-4 flex flex-col justify-between min-h-[100px] hover:border-border-strong transition-colors">
-                      <label className="text-[9px] font-bold uppercase tracking-widest text-text-secondary">Style</label>
-                      <div className="space-y-1.5">
-                        {building.styles?.slice(0, 2).map(s => (
-                          <div key={s.id} className="text-xs font-bold truncate leading-none">{s.name}</div>
-                        )) || <div className="text-xs text-text-disabled">None</div>}
-                      </div>
-                   </div>
-                   <div className="bg-white border border-border-default rounded-xl p-4 flex flex-col justify-between min-h-[100px] hover:border-border-strong transition-colors">
-                      <label className="text-[9px] font-bold uppercase tracking-widest text-text-secondary">Access</label>
-                      <div className="text-xs font-bold truncate leading-none">{formatCatalogLabel(building.access_level) || "Public"}</div>
-                   </div>
+                    )}
+                  </div>
+                  <div className="p-3.5 flex items-center justify-between border-t border-border-default">
+                    <div className="flex items-center gap-1.5 text-xs text-text-secondary min-w-0">
+                      <MapPin className="h-3 w-3 text-text-disabled shrink-0" />
+                      <span className="truncate">
+                        {[building.city, building.country].filter(Boolean).join(", ")}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-[10px] font-bold uppercase tracking-widest shrink-0"
+                      onClick={() => {
+                        if (building.location_precision === "approximate") {
+                          setShowDirectionsAlert(true);
+                        } else {
+                          window.open(
+                            `https://www.google.com/maps/dir/?api=1&destination=${coordinates?.lat},${coordinates?.lng}`,
+                            "_blank",
+                          );
+                        }
+                      }}
+                    >
+                      Directions <Navigation className="h-3 w-3 ml-1" />
+                    </Button>
+                  </div>
                 </div>
+
+                {/* Overview sidebar: credits preview */}
+                {activeTab === "overview" && buildingCredits.length > 0 && (
+                  <div className="bg-surface-card border border-border-default rounded-xl p-5 shadow-sm">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+                        Credits
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => setTab("credits")}
+                        className="text-[10px] font-bold uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
+                      >
+                        All →
+                      </button>
+                    </div>
+                    <BuildingCreditsPreview
+                      credits={buildingCredits}
+                      buildingId={building.id}
+                      isAuthenticated={Boolean(user)}
+                    />
+                  </div>
+                )}
+
+                {/* Credits tab sidebar: contributors */}
+                {activeTab === "credits" && (
+                  <div className="bg-surface-card border border-border-default rounded-xl p-5 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-4">
+                      Contributors
+                    </h4>
+                    <BuildingContributorsInline buildingId={building.id} />
+                  </div>
+                )}
+
+                {/* Technical tab sidebar: contribution guide */}
+                {activeTab === "technical" && (
+                  <div className="bg-surface-card border border-border-default rounded-xl p-5 shadow-sm space-y-3">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+                      Contribute
+                    </h4>
+                    <p className="text-xs text-text-secondary leading-relaxed">
+                      Help build the world&apos;s most complete architecture database by contributing technical drawings, renders, and construction documentation.
+                    </p>
+                    {user ? (
+                      <Button size="sm" variant="outline" className="w-full h-9 text-xs" disabled>
+                        Upload Technical Content
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline" className="w-full h-9 text-xs" asChild>
+                        <Link to="/login">Sign in to contribute</Link>
+                      </Button>
+                    )}
+                  </div>
+                )}
 
               </div>
             </div>
 
           </div>
         </div>
+
       </motion.div>
 
       {/* ── DIALOGS ── */}
@@ -1499,10 +1931,8 @@ export default function BuildingDetails() {
           <AlertDialogHeader>
             <AlertDialogTitle>Exact Location Unknown</AlertDialogTitle>
             <AlertDialogDescription>
-              This building&apos;s location is approximate. The directions will
-              guide you to the general vicinity (e.g. village center).
-              <br /><br />
-              Please look around when you arrive.
+              This building&apos;s location is approximate. The directions will guide you to the
+              general vicinity. Please look around when you arrive.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
