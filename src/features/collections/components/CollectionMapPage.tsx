@@ -37,6 +37,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
 import { useGooglePlacePhotos } from "@/hooks/useGooglePlacePhotos";
@@ -231,6 +232,8 @@ export default function CollectionMap() {
   /** Geographic bounds of the map viewport (for “add visible saved places”). */
   const [viewportBounds, setViewportBounds] = useState<Bounds | null>(null);
   const [isAddingVisibleCandidates, setIsAddingVisibleCandidates] = useState(false);
+  const [showAddVisibleConfirm, setShowAddVisibleConfirm] = useState(false);
+  const [bulkAddPreviewBuildings, setBulkAddPreviewBuildings] = useState<DiscoveryBuilding[]>([]);
 
   const initializeItinerary = useItineraryStore((state) => state.initializeItinerary);
   const lastItineraryInitFingerprint = useRef<string | null>(null);
@@ -893,12 +896,18 @@ export default function CollectionMap() {
     }
   };
 
-  const handleAddVisibleSavedCandidatesToCollection = async () => {
-    if (!collection?.id || visibleSavedCandidatesToAdd.length === 0) return;
+  const handleOpenAddVisibleConfirm = useCallback(() => {
+    if (visibleSavedCandidatesToAdd.length === 0) return;
+    setBulkAddPreviewBuildings([...visibleSavedCandidatesToAdd]);
+    setShowAddVisibleConfirm(true);
+  }, [visibleSavedCandidatesToAdd]);
+
+  const handleConfirmAddVisibleSavedCandidates = async () => {
+    if (!collection?.id || bulkAddPreviewBuildings.length === 0) return;
 
     setIsAddingVisibleCandidates(true);
     try {
-      const rows = visibleSavedCandidatesToAdd.map((b) => ({
+      const rows = bulkAddPreviewBuildings.map((b) => ({
         collection_id: collection.id,
         building_id: b.id,
       }));
@@ -906,16 +915,18 @@ export default function CollectionMap() {
 
       if (error) throw error;
 
-      const n = visibleSavedCandidatesToAdd.length;
+      const n = bulkAddPreviewBuildings.length;
       toast({
         title: "Added to collection",
         description:
           n === 1
-            ? `${visibleSavedCandidatesToAdd[0].name} was added.`
+            ? `${bulkAddPreviewBuildings[0].name} was added.`
             : `${n} saved places in view were added.`,
       });
       refetchItems();
       queryClient.invalidateQueries({ queryKey: ["saved_candidates"] });
+      setShowAddVisibleConfirm(false);
+      setBulkAddPreviewBuildings([]);
     } catch {
       toast({
         title: "Error",
@@ -1316,7 +1327,7 @@ onUpdateNote={handleUpdateNote}
                             !viewportBounds ||
                             isAddingVisibleCandidates
                           }
-                          onClick={() => void handleAddVisibleSavedCandidatesToCollection()}
+                          onClick={handleOpenAddVisibleConfirm}
                         >
                           {isAddingVisibleCandidates ? (
                             <>
@@ -1488,6 +1499,68 @@ onUpdateNote={handleUpdateNote}
                     ) : "Save All"}
                 </AlertDialogAction>
             </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={showAddVisibleConfirm}
+        onOpenChange={(open) => {
+          setShowAddVisibleConfirm(open);
+          if (!open) setBulkAddPreviewBuildings([]);
+        }}
+      >
+        <AlertDialogContent className="max-h-[min(90vh,36rem)] gap-0 overflow-hidden p-0 sm:max-w-lg">
+          <div className="p-6 pb-4">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Add saved places to collection</AlertDialogTitle>
+              <AlertDialogDescription>
+                Add{" "}
+                <span className="font-semibold text-text-primary">{bulkAddPreviewBuildings.length}</span>{" "}
+                {bulkAddPreviewBuildings.length === 1 ? "building" : "buildings"} from your current map
+                view to{" "}
+                <span className="font-semibold text-text-primary">{collection.name}</span>?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+          </div>
+          <div className="border-t border-border-default px-6 pb-4">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-text-secondary">
+              Buildings to add
+            </p>
+            <ScrollArea className="h-52 rounded-sm border border-border-default">
+              <ul className="divide-y divide-border-default" role="list">
+                {[...bulkAddPreviewBuildings]
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((b) => (
+                    <li
+                      key={b.id}
+                      className="px-3 py-2 text-sm text-text-primary"
+                      role="listitem"
+                    >
+                      {b.name}
+                    </li>
+                  ))}
+              </ul>
+            </ScrollArea>
+          </div>
+          <AlertDialogFooter className="border-t border-border-default bg-surface-muted/40 p-6">
+            <AlertDialogCancel disabled={isAddingVisibleCandidates}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void handleConfirmAddVisibleSavedCandidates();
+              }}
+              disabled={isAddingVisibleCandidates || bulkAddPreviewBuildings.length === 0}
+            >
+              {isAddingVisibleCandidates ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Adding…
+                </>
+              ) : (
+                `Add ${bulkAddPreviewBuildings.length}`
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </AppLayout>

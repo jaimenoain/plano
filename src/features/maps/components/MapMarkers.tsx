@@ -121,8 +121,13 @@ export function MapMarkers({
 
         const isHovered = String(highlightedId) === String(cluster.id);
 
-        // Boost Z-Index if hovered
-        const finalZIndex = isHovered ? 999 : pinStyle.zIndex;
+        // Keep markers below map chrome (e.g. CollectionMapGL / PlanoMap overlays at z-40–z-60)
+        // while preserving tier ordering (5 < 20 < 100 → capped relative ranks).
+        const MAP_MARKER_Z_MAX = 38;
+        const MAP_MARKER_Z_HOVER = 39;
+        const finalZIndex = isHovered
+          ? MAP_MARKER_Z_HOVER
+          : Math.min(pinStyle.zIndex, MAP_MARKER_Z_MAX);
 
         // Icon logic for custom markers
         let MarkerIcon: React.ComponentType<{ className?: string }> | null = null;
