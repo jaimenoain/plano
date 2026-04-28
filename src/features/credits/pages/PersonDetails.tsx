@@ -290,7 +290,7 @@ export default function PersonDetails() {
               <Button
                 type="button"
                 variant="default"
-                size="sm"
+                size="default"
                 className="text-xs font-medium uppercase tracking-widest"
                 onClick={() => setClaimOpen(true)}
               >
@@ -320,7 +320,7 @@ export default function PersonDetails() {
                   <Collapsible open={ancillaryOpen} onOpenChange={setAncillaryOpen}>
                     <CollapsibleTrigger
                       type="button"
-                      className="flex w-full items-center justify-between border-b border-border-default py-3 text-left text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary"
+                      className="flex min-h-[44px] w-full items-center justify-between border-b border-border-default py-3 text-left text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary"
                     >
                       <span>
                         Additional credits ({ancillary.length})

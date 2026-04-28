@@ -171,7 +171,7 @@ function SearchPageContent() {
 
         {/* ── Mobile: floating search bar ── */}
         {isMobile && (
-          <div className="fixed left-14 right-4 top-4 z-40 safe-area-pt md:hidden">
+          <div className="fixed left-4 right-4 top-4 z-40 safe-area-pt md:hidden">
             {/* No shadow — frosted glass border is sufficient over the map */}
             <div className="border border-border-default bg-surface-card/95 p-1 backdrop-blur supports-[backdrop-filter]:bg-surface-card/90">
               {mobileSearchBar}
@@ -226,11 +226,11 @@ function SearchPageContent() {
           No shadow. Sharp 0-radius edges. Uppercase tracked label.
         */}
         {isMobile && (
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50">
+          <div className="absolute left-1/2 z-50 -translate-x-1/2 bottom-[calc(2rem+env(safe-area-inset-bottom,0px))]">
             <button
               type="button"
               onClick={toggleViewMode}
-              className="inline-flex items-center gap-2 h-9 px-5 bg-surface-card/95 backdrop-blur-md border border-border-default text-xs font-medium uppercase tracking-widest text-text-primary hover:bg-surface-muted transition-colors"
+              className="inline-flex items-center gap-2 h-11 px-5 bg-surface-card/95 backdrop-blur-md border border-border-default text-xs font-medium uppercase tracking-widest text-text-primary hover:bg-surface-muted transition-colors"
               aria-label={
                 viewMode === "map" ? "Show list view" : "Show map view"
               }

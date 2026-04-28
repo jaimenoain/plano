@@ -136,7 +136,7 @@ function EventDetailSkeleton() {
   return (
     <AppLayout title="Event" showBack>
       <div className="w-full">
-        <Skeleton className="h-[clamp(260px,48vh,500px)] w-full rounded-none" />
+        <Skeleton className="h-[240px] w-full rounded-none md:h-[clamp(260px,48vh,500px)]" />
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="space-y-4 py-8">
             <Skeleton className="h-3 w-20" />
@@ -233,7 +233,7 @@ export default function EventDetail() {
         canonicalUrl={getEventUrl(event)}
         structuredData={buildEventStructuredData(event)}
       />
-      <article className="pb-12">
+      <article className="pb-20 md:pb-12">
 
         {/* ── HERO — full-bleed ── */}
         {showCover ? (
@@ -241,7 +241,7 @@ export default function EventDetail() {
             <img
               src={event.coverImageUrl!}
               alt=""
-              className="h-[clamp(260px,48vh,500px)] w-full object-cover animate-in fade-in duration-700"
+              className="h-[240px] w-full object-cover animate-in fade-in duration-700 md:h-[clamp(260px,48vh,500px)]"
               onError={() => setCoverFailed(true)}
             />
           </div>
@@ -263,7 +263,7 @@ export default function EventDetail() {
                 {canEdit ? (
                   <Link
                     to={`/events/${event.slug}/edit`}
-                    className="mt-2 inline-flex shrink-0 items-center gap-1 text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                    className="mt-2 inline-flex shrink-0 items-center gap-1 text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary active:text-text-primary"
                   >
                     <Pencil className="h-3 w-3" aria-hidden />
                     Edit
@@ -303,10 +303,10 @@ export default function EventDetail() {
                         }
                       }}
                       className={cn(
-                        "inline-flex items-center gap-1 text-xs font-medium uppercase tracking-widest transition-colors disabled:opacity-50",
+                        "inline-flex min-h-[44px] items-center gap-1 px-1 text-xs font-medium uppercase tracking-widest transition-colors disabled:opacity-50",
                         attendance.status === "going"
                           ? "text-text-primary"
-                          : "text-text-secondary hover:text-text-primary",
+                          : "text-text-secondary hover:text-text-primary active:text-text-primary",
                       )}
                     >
                       {attendance.status === "going" ? (
@@ -325,10 +325,10 @@ export default function EventDetail() {
                         }
                       }}
                       className={cn(
-                        "inline-flex items-center gap-1 text-xs font-medium uppercase tracking-widest transition-colors disabled:opacity-50",
+                        "inline-flex min-h-[44px] items-center gap-1 px-1 text-xs font-medium uppercase tracking-widest transition-colors disabled:opacity-50",
                         attendance.status === "interested"
                           ? "text-text-primary"
-                          : "text-text-secondary hover:text-text-primary",
+                          : "text-text-secondary hover:text-text-primary active:text-text-primary",
                       )}
                     >
                       {attendance.status === "interested" ? (
@@ -340,7 +340,7 @@ export default function EventDetail() {
                 ) : (
                   <Link
                     to={`/login?redirect=${encodeURIComponent(loginRedirectPath)}`}
-                    className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                    className="inline-flex min-h-[44px] items-center text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary active:text-text-primary"
                   >
                     Log in to RSVP →
                   </Link>
@@ -358,7 +358,7 @@ export default function EventDetail() {
                       navigate(`/login?redirect=${encodeURIComponent(loginRedirectPath)}`);
                     }
                   }}
-                  className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                  className="inline-flex min-h-[44px] items-center text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary active:text-text-primary"
                 >
                   Recommend →
                 </button>
@@ -374,7 +374,7 @@ export default function EventDetail() {
                   <button
                     type="button"
                     onClick={() => setDescExpanded((v) => !v)}
-                    className="mt-4 text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary"
+                    className="mt-4 inline-flex min-h-[44px] items-center text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary active:text-brand-primary"
                   >
                     {descExpanded ? "Show less" : "Read more →"}
                   </button>
@@ -418,7 +418,7 @@ export default function EventDetail() {
                       {organiserLink ? (
                         <Link
                           to={organiserLink.href}
-                          className="font-medium text-text-primary underline-offset-4 hover:underline"
+                          className="font-medium text-text-primary underline-offset-4 hover:underline active:underline"
                         >
                           {organiserLink.label}
                         </Link>
@@ -449,7 +449,7 @@ export default function EventDetail() {
                     {event.submittedBy.username ? (
                       <Link
                         to={`/profile/${event.submittedBy.username}`}
-                        className="font-medium text-text-primary underline-offset-4 hover:underline"
+                        className="font-medium text-text-primary underline-offset-4 hover:underline active:underline"
                       >
                         @{event.submittedBy.username}
                       </Link>
@@ -471,7 +471,7 @@ export default function EventDetail() {
                       key={b.buildingId}
                       // Locality URL not available: EventBuilding does not include locality_country_code/city_slug — requires event buildings query to join localities table
                       to={getBuildingUrl(b.buildingId, b.slug, null)}
-                      className="flex w-36 shrink-0 flex-col gap-2 border border-border-default bg-surface-card p-2 transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
+                      className="flex w-36 shrink-0 flex-col gap-2 border border-border-default bg-surface-card p-2 transition-colors hover:bg-surface-muted active:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
                     >
                       <div className="aspect-card-compact w-full overflow-hidden bg-surface-muted">
                         {b.mainImageUrl ? (
@@ -492,7 +492,7 @@ export default function EventDetail() {
                   href={event.externalLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary active:text-brand-primary"
                 >
                   Get tickets / Register
                   <ExternalLink className="h-3 w-3" aria-hidden />

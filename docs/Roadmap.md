@@ -106,7 +106,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### [ ] 2.5 Search — [`src/features/search/SearchPage.tsx`](src/features/search/SearchPage.tsx)
+### [x] 2.5 Search — [`src/features/search/SearchPage.tsx`](src/features/search/SearchPage.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -116,7 +116,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### [ ] 2.6 Events List — [`src/features/events/pages/Events.tsx`](src/features/events/pages/Events.tsx)
+### [x] 2.6 Events List — [`src/features/events/pages/Events.tsx`](src/features/events/pages/Events.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -125,7 +125,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### [ ] 2.7 Event Detail — [`src/features/events/pages/EventDetail.tsx`](src/features/events/pages/EventDetail.tsx)
+### [x] 2.7 Event Detail — [`src/features/events/pages/EventDetail.tsx`](src/features/events/pages/EventDetail.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -136,7 +136,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### [ ] 2.8 Person Details — [`src/features/credits/pages/PersonDetails.tsx`](src/features/credits/pages/PersonDetails.tsx)
+### [x] 2.8 Person Details — [`src/features/credits/pages/PersonDetails.tsx`](src/features/credits/pages/PersonDetails.tsx)
 
 | Issue | Fix |
 |---|---|
