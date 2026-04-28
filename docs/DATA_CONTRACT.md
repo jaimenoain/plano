@@ -1210,7 +1210,8 @@ CREATE POLICY "comment_likes_delete" ON comment_likes
 | DELETE | /review/:id/like | Unlike a review | supabase (client-side) |
 | POST | /review/:id/comment | Add comment | supabase (client-side) |
 | GET | (RPC) get_feed | Home feed; `user_data` JSON includes `followers_count` (author follower total), `is_verified_architect`, `is_architect_of_building` | supabase (RPC) |
-| GET | (RPC) get_discovery_feed | Explore feed; optional `p_city_filter` / `p_country_filter` / `p_country_code_filter` (ISO alpha-2; preferred for country match) / `p_region_filter` (substring in `buildings.address` or `buildings.city`, case-insensitive). Migration `20270866000000_discovery_feed_location_filter_fix.sql`. | supabase (RPC) |
+| GET | (RPC) get_discovery_feed | Explore feed; **tiered location:** (1) `p_locality_id` → `buildings.locality_id`; (2) else `p_min_lat`/`p_max_lat`/`p_min_lng`/`p_max_lng` (Google viewport, caps ≤25° per axis) → PostGIS `buildings.location` ∩ envelope; (3) else `p_city_filter` / `p_country_filter` / `p_country_code_filter` / `p_region_filter` (substring, case-insensitive). Migration `20270867000000_discovery_feed_tiered_location.sql`. | supabase (RPC) |
+| GET | (RPC) resolve_locality_for_explore | `p_city` + `p_country_code` → `localities.id` via `make_locality_slug`; Explore tier-1 resolution. Same migration as `get_discovery_feed` tiered location. | supabase (RPC) |
 | GET | (RPC) get_suggested_posts | Suggested content; `user_data` JSON includes the same `followers_count` and credit flags as `get_feed` | supabase (RPC) |
 | GET | (RPC) get_building_reviews | All `user_buildings` rows for a building (with `user_data` / review images JSON); `user_data` flags match `get_feed` (claimed person, credits/stewards) | supabase (RPC; migration `20270841000000_get_building_reviews_restore.sql`) |
 

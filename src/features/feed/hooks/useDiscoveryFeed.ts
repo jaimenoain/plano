@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { ContactInteraction, ContactRater } from "@/features/search/components/types";
 import type { CreditRole } from "@/features/credits/types";
+import type { ExploreViewportBounds } from "@/features/explore/exploreLocationFilter";
 
 export interface DiscoveryFeedImageRow {
   id: string;
@@ -50,6 +51,10 @@ export interface DiscoveryFilters {
   /** ISO 3166-1 alpha-2 from geocoder; preferred over free-text `country` for RPC matching. */
   countryCode?: string | null;
   region?: string | null;
+  /** Tier 1: catalog locality from resolve_locality_for_explore + localities row. */
+  localityId?: string | null;
+  /** Tier 2: Google viewport when tier 1 did not match; omitted when localityId is set. */
+  viewportBounds?: ExploreViewportBounds | null;
   categoryId?: string | null;
   typologyIds?: string[];
   attributeIds?: string[];
@@ -69,6 +74,8 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
     country,
     countryCode,
     region,
+    localityId,
+    viewportBounds,
     categoryId,
     typologyIds,
     attributeIds,
@@ -86,6 +93,8 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
       country,
       countryCode,
       region,
+      localityId,
+      viewportBounds,
       categoryId,
       typologyIds,
       attributeIds,
@@ -108,6 +117,15 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
         ...(country ? { p_country_filter: country } : {}),
         ...(countryCode ? { p_country_code_filter: countryCode } : {}),
         ...(region ? { p_region_filter: region } : {}),
+        ...(localityId ? { p_locality_id: localityId } : {}),
+        ...(!localityId && viewportBounds
+          ? {
+              p_min_lat: viewportBounds.minLat,
+              p_max_lat: viewportBounds.maxLat,
+              p_min_lng: viewportBounds.minLng,
+              p_max_lng: viewportBounds.maxLng,
+            }
+          : {}),
         ...(categoryId ? { p_category_id: categoryId } : {}),
         p_typology_ids: typologyIds && typologyIds.length > 0 ? typologyIds : [],
         p_attribute_ids:

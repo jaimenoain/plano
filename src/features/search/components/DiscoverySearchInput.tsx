@@ -60,7 +60,7 @@ interface DiscoverySearchInputProps {
   onTopLocationChange?: (location: { description: string; place_id: string } | null) => void;
   disableDropdown?: boolean;
   onSuggestionsChange?: (suggestions: Suggestion[]) => void;
-  onPlaceDetails?: (details: google.maps.GeocoderResult) => void;
+  onPlaceDetails?: (details: google.maps.GeocoderResult) => void | Promise<void>;
   /** When true (and dropdown enabled), show buildings, people, and companies under Places. */
   showMixedEntitySuggestions?: boolean;
   onBuildingPick?: (building: BuildingSearchRow) => void;
@@ -227,7 +227,7 @@ function DiscoverySearchInputInner({
         };
       }
       onLocationSelect({ lat, lng }, bounds);
-      onPlaceDetails?.(results[0]);
+      await onPlaceDetails?.(results[0]);
     } catch {}
   };
 

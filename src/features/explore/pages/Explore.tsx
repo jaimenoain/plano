@@ -34,6 +34,11 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { extractLocationDetails } from "@/lib/location-utils";
 import {
+  extractGeocodeViewportBounds,
+  isExploreViewportWithinRpcLimits,
+  type ExploreViewportBounds,
+} from "@/features/explore/exploreLocationFilter";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -66,12 +71,22 @@ export default function Explore() {
   }, [isMobile, setOpen, setOpenMobile]);
 
   const [locationFilter, setLocationFilter] = useState<{
+    localityId: string | null;
+    viewportBounds: ExploreViewportBounds | null;
     city: string | null;
     country: string | null;
     countryCode: string | null;
     region: string | null;
     label: string | null;
-  }>({ city: null, country: null, countryCode: null, region: null, label: null });
+  }>({
+    localityId: null,
+    viewportBounds: null,
+    city: null,
+    country: null,
+    countryCode: null,
+    region: null,
+    label: null,
+  });
   const [selectedPeople, setSelectedPeople] = useState<{ id: string; name: string }[]>(
     []
   );
@@ -157,6 +172,8 @@ export default function Explore() {
     refetch,
     isFetching,
   } = useDiscoveryFeed({
+      localityId: locationFilter.localityId,
+      viewportBounds: locationFilter.viewportBounds,
       city: locationFilter.city,
       country: locationFilter.country,
       countryCode: locationFilter.countryCode,
@@ -184,6 +201,8 @@ export default function Explore() {
   useEffect(() => {
     scrollContainerRef.current?.scrollTo({ top: 0 });
   }, [
+    locationFilter.localityId,
+    locationFilter.viewportBounds,
     locationFilter.city,
     locationFilter.country,
     locationFilter.countryCode,
@@ -212,7 +231,7 @@ export default function Explore() {
     });
   };
 
-  const handlePlaceDetails = (details: google.maps.GeocoderResult) => {
+  const handlePlaceDetails = async (details: google.maps.GeocoderResult) => {
     const { city, country, countryCode } = extractLocationDetails(details);
     let region: string | null = null;
     details.address_components?.forEach((comp) => {
@@ -226,7 +245,38 @@ export default function Explore() {
     else if (region) label = region;
     else if (country) label = country;
 
-    setLocationFilter({ city, country, countryCode, region, label });
+    const rawViewport = extractGeocodeViewportBounds(details);
+    const viewportWithinLimits =
+      rawViewport && isExploreViewportWithinRpcLimits(rawViewport)
+        ? rawViewport
+        : null;
+
+    let localityId: string | null = null;
+    if (city && countryCode) {
+      try {
+        const { data, error } = await supabase.rpc("resolve_locality_for_explore", {
+          p_city: city,
+          p_country_code: countryCode,
+        });
+        if (!error && data != null && typeof data === "string") {
+          localityId = data;
+        }
+      } catch {
+        /* RPC unavailable or network — fall back to viewport / text tiers */
+      }
+    }
+
+    const viewportBounds = localityId ? null : viewportWithinLimits;
+
+    setLocationFilter({
+      localityId,
+      viewportBounds,
+      city,
+      country,
+      countryCode,
+      region,
+      label,
+    });
     setIsLocationSheetOpen(false);
     setSearchValue("");
 
@@ -238,6 +288,8 @@ export default function Explore() {
   const clearFilter = (e: React.MouseEvent) => {
     e.stopPropagation();
     setLocationFilter({
+      localityId: null,
+      viewportBounds: null,
       city: null,
       country: null,
       countryCode: null,

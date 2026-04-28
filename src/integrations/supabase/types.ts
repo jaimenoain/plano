@@ -3108,6 +3108,11 @@ export type Database = {
               p_country_filter?: string
               p_credit_roles?: string[]
               p_limit: number
+              p_locality_id?: string
+              p_max_lat?: number
+              p_max_lng?: number
+              p_min_lat?: number
+              p_min_lng?: number
               p_offset: number
               p_region_filter?: string
               p_typology_ids?: string[]
@@ -3475,6 +3480,10 @@ export type Database = {
       reject_company_steward_request_by_id: {
         Args: { p_request_id: string }
         Returns: Json
+      }
+      resolve_locality_for_explore: {
+        Args: { p_city: string; p_country_code: string }
+        Returns: string | null
       }
       revert_building_change: { Args: { log_id: string }; Returns: undefined }
       search_buildings:
