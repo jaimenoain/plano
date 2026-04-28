@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { useInfiniteQuery, useQueryClient, InfiniteData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -149,7 +150,7 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
     initialPageParam: 0,
   });
 
-  const toggleLike = async (reviewId: string) => {
+  const toggleLike = useCallback(async (reviewId: string) => {
     if (!user) return;
 
     const currentData = queryClient.getQueryData<InfiniteData<FeedReview[]>>(queryKey);
@@ -203,9 +204,9 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
           }
       });
     }
-  };
+  }, [user, queryClient, queryKey]);
 
-  const toggleImageLike = async (reviewId: string, imageId: string) => {
+  const toggleImageLike = useCallback(async (reviewId: string, imageId: string) => {
     if (!user) return;
 
     const currentData = queryClient.getQueryData<InfiniteData<FeedReview[]>>(queryKey);
@@ -280,7 +281,7 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
             };
         });
     }
-  };
+  }, [user, queryClient, queryKey]);
 
   return {
     ...query,

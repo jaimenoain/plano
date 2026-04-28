@@ -12,10 +12,11 @@ import {
   aggregateFeed,
   mergeAggregatedFeedWithEventAttendance,
   type AggregatedFeedItem,
+  type MergedHomeFeedRow,
 } from "@/lib/feed-aggregation";
 import { ReviewCardFeed } from "../components/ReviewCardFeed";
 import { resolveCardType } from "../utils/resolveCardType";
-import type { FeedReview } from "@/types/feed";
+import type { FeedCollection, FeedReview } from "@/types/feed";
 import { LandingHero } from "../components/landing/LandingHero";
 import { LandingMarquee } from "../components/landing/LandingMarquee";
 import { LandingFeatureGrid } from "../components/landing/LandingFeatureGrid";
@@ -113,8 +114,10 @@ export default function Index() {
   }, [user, authLoading, navigate]);
 
   const socialFeed = useFeed({ showGroupActivity: true });
-  const collectionsFeed = useCollectionsFeed({ enabled: !!user });
-  const discoveryFeed = useSuggestedFeed({ enabled: !!user });
+  /** Defer secondary RPCs until the primary feed returns — cuts parallel contention on first paint. */
+  const primaryFeedReady = !socialFeed.isLoading;
+  const collectionsFeed = useCollectionsFeed({ enabled: !!user && primaryFeedReady });
+  const discoveryFeed = useSuggestedFeed({ enabled: !!user && primaryFeedReady });
 
   useEffect(() => {
     if (!isLoadMoreVisible) return;
@@ -180,6 +183,33 @@ export default function Index() {
   const loadMoreActive =
     socialFeed.hasNextPage || collectionsFeed.hasNextPage || discoveryFeed.hasNextPage;
 
+  /** When the social feed has rows, render immediately and merge event attendance when it arrives. When it is empty, wait for attendance so we do not flash cold-start before switching to an attendance-only stream. */
+  const showFeedLoader =
+    socialFeed.isLoading ||
+    (socialReviews.length === 0 && socialFeed.isEventAttendancePending);
+
+  const feedStreamNodes = useMemo(
+    () =>
+      buildActiveFeedNodes(
+        mergedHomeRows,
+        collectionItems,
+        discoveryReviews,
+        socialFeed.toggleLike,
+        socialFeed.toggleImageLike,
+        discoveryFeed.toggleLike,
+        discoveryFeed.toggleImageLike,
+      ),
+    [
+      mergedHomeRows,
+      collectionItems,
+      discoveryReviews,
+      socialFeed.toggleLike,
+      socialFeed.toggleImageLike,
+      discoveryFeed.toggleLike,
+      discoveryFeed.toggleImageLike,
+    ],
+  );
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center">
@@ -194,7 +224,7 @@ export default function Index() {
 
   return (
     <AppLayout>
-      {socialFeed.isLoading || socialFeed.isEventAttendancePending ? (
+      {showFeedLoader ? (
         <div className="flex items-center justify-center min-h-[60vh]">
           <Loader2 className="h-10 w-10 animate-spin text-text-secondary" />
         </div>
@@ -223,114 +253,7 @@ export default function Index() {
             <div className="md:grid md:grid-cols-[minmax(0,1fr)_320px]">
               <main className="min-w-0 md:border-r md:border-border-default overflow-hidden">
                 <div className="px-4 md:px-6 lg:px-16 pt-10 pb-32">
-                  <div className="flex flex-col gap-20">
-                    {(() => {
-                      const feedNodes: React.ReactNode[] = [];
-                      /** Cards actually rendered (activity rows are skipped — row count alone can hit n % 4 before any card). */
-                      let feedCardsRendered = 0;
-
-                      const processEntry = (
-                        entry: FeedReview,
-                        onLike: (id: string) => void,
-                        onImageLike: (reviewId: string, imageId: string) => void,
-                      ) => {
-                        const t = resolveCardType(entry);
-                        if (t === "activity") return;
-                        feedCardsRendered += 1;
-                        feedNodes.push(
-                          <div key={entry.id}>
-                            <ReviewCardFeed
-                              entry={entry}
-                              onLike={onLike}
-                              onImageLike={onImageLike}
-                            />
-                          </div>,
-                        );
-                      };
-
-                      const processAggregatedItem = (item: AggregatedFeedItem) => {
-                        switch (item.type) {
-                          case "cluster":
-                            // Render individual entries from the cluster instead
-                            item.entries.forEach((e) =>
-                              processEntry(e, socialFeed.toggleLike, socialFeed.toggleImageLike),
-                            );
-                            break;
-                          case "row":
-                            processEntry(item.left.entry, socialFeed.toggleLike, socialFeed.toggleImageLike);
-                            processEntry(item.right.entry, socialFeed.toggleLike, socialFeed.toggleImageLike);
-                            break;
-                          case "hero":
-                          case "compact":
-                          case "activity":
-                            processEntry(
-                              item.entry,
-                              socialFeed.toggleLike,
-                              socialFeed.toggleImageLike,
-                            );
-                            break;
-                          default: {
-                            const _e: never = item;
-                            return _e;
-                          }
-                        }
-                      };
-
-                      let collectionCursor = 0;
-                      let discoveryCursor = 0;
-
-                      mergedHomeRows.forEach((row, index) => {
-                        if (row.kind === "event_attendance") {
-                          feedCardsRendered += 1;
-                          feedNodes.push(
-                            <div key={`feed-attendance-${row.entry.eventId}`}>
-                              <ReviewCardFeed entry={row.entry} />
-                            </div>,
-                          );
-                        } else {
-                          processAggregatedItem(row.item);
-                        }
-                        const n = index + 1;
-                        // First collections strip after 8 merged rows (not 4), and never before at least one visible card.
-                        if (
-                          n % 4 === 0 &&
-                          n >= 8 &&
-                          feedCardsRendered >= 1 &&
-                          collectionCursor < collectionItems.length
-                        ) {
-                          const batch = collectionItems.slice(collectionCursor, collectionCursor + 3);
-                          collectionCursor += batch.length;
-                          feedNodes.push(
-                            <div key={`collections-${n}`} className="flex flex-col gap-3">
-                              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-text-disabled">
-                                Collections
-                              </p>
-                              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                                {batch.map((col) => (
-                                  <WidgetErrorBoundary key={col.id}>
-                                    <FeedCollectionCard collection={col} />
-                                  </WidgetErrorBoundary>
-                                ))}
-                              </div>
-                            </div>,
-                          );
-                        }
-                        if (n % 8 === 0) {
-                          if (discoveryCursor < discoveryReviews.length) {
-                            const post = discoveryReviews[discoveryCursor];
-                            discoveryCursor += 1;
-                            processEntry(
-                              post,
-                              discoveryFeed.toggleLike,
-                              discoveryFeed.toggleImageLike,
-                            );
-                          }
-                        }
-                      });
-
-                      return feedNodes;
-                    })()}
-                  </div>
+                  <div className="flex flex-col gap-20">{feedStreamNodes}</div>
 
                   {loadMoreActive && (
                     <div ref={loadMoreRef} className="flex justify-center mt-16 py-4">
@@ -362,6 +285,105 @@ export default function Index() {
       )}
     </AppLayout>
   );
+}
+
+function buildActiveFeedNodes(
+  mergedHomeRows: MergedHomeFeedRow[],
+  collectionItems: FeedCollection[],
+  discoveryReviews: FeedReview[],
+  socialToggleLike: (id: string) => void,
+  socialToggleImageLike: (reviewId: string, imageId: string) => void,
+  discoveryToggleLike: (id: string) => void,
+  discoveryToggleImageLike: (reviewId: string, imageId: string) => void,
+): React.ReactNode[] {
+  const feedNodes: React.ReactNode[] = [];
+  /** Cards actually rendered (activity rows are skipped — row count alone can hit n % 4 before any card). */
+  let feedCardsRendered = 0;
+
+  const processEntry = (
+    entry: FeedReview,
+    onLike: (id: string) => void,
+    onImageLike: (reviewId: string, imageId: string) => void,
+  ) => {
+    const t = resolveCardType(entry);
+    if (t === "activity") return;
+    feedCardsRendered += 1;
+    feedNodes.push(
+      <div key={entry.id}>
+        <ReviewCardFeed entry={entry} onLike={onLike} onImageLike={onImageLike} />
+      </div>,
+    );
+  };
+
+  const processAggregatedItem = (item: AggregatedFeedItem) => {
+    switch (item.type) {
+      case "cluster":
+        item.entries.forEach((e) => processEntry(e, socialToggleLike, socialToggleImageLike));
+        break;
+      case "row":
+        processEntry(item.left.entry, socialToggleLike, socialToggleImageLike);
+        processEntry(item.right.entry, socialToggleLike, socialToggleImageLike);
+        break;
+      case "hero":
+      case "compact":
+      case "activity":
+        processEntry(item.entry, socialToggleLike, socialToggleImageLike);
+        break;
+      default: {
+        const _e: never = item;
+        return _e;
+      }
+    }
+  };
+
+  let collectionCursor = 0;
+  let discoveryCursor = 0;
+
+  mergedHomeRows.forEach((row, index) => {
+    if (row.kind === "event_attendance") {
+      feedCardsRendered += 1;
+      feedNodes.push(
+        <div key={`feed-attendance-${row.entry.eventId}`}>
+          <ReviewCardFeed entry={row.entry} />
+        </div>,
+      );
+    } else {
+      processAggregatedItem(row.item);
+    }
+    const n = index + 1;
+    if (
+      n % 4 === 0 &&
+      n >= 8 &&
+      feedCardsRendered >= 1 &&
+      collectionCursor < collectionItems.length
+    ) {
+      const batch = collectionItems.slice(collectionCursor, collectionCursor + 3);
+      collectionCursor += batch.length;
+      feedNodes.push(
+        <div key={`collections-${n}`} className="flex flex-col gap-3">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-text-disabled">
+            Collections
+          </p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {batch.map((col) => (
+              <WidgetErrorBoundary key={col.id}>
+                <FeedCollectionCard collection={col} />
+              </WidgetErrorBoundary>
+            ))}
+          </div>
+        </div>,
+      );
+    }
+    if (n % 8 === 0) {
+      if (discoveryCursor < discoveryReviews.length) {
+        const post = discoveryReviews[discoveryCursor];
+        discoveryCursor += 1;
+        processEntry(post, discoveryToggleLike, discoveryToggleImageLike);
+      }
+    }
+  });
+
+  return feedNodes;
 }
 
 // Extracted load-more trigger for cold-start path

@@ -1274,42 +1274,41 @@ onUpdateNote={handleUpdateNote}
                     showSavedCandidates={showSavedCandidates}
                     showItinerary={activeTab === 'itinerary'}
                     onViewportBoundsChange={setViewportBounds}
+                    bottomLeftOverlay={
+                      showSavedCandidates && canEdit ? (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="w-full shadow-none border border-border-default bg-surface-card/95 backdrop-blur-sm"
+                          disabled={
+                            visibleSavedCandidatesToAdd.length === 0 ||
+                            !viewportBounds ||
+                            isAddingVisibleCandidates
+                          }
+                          onClick={() => void handleAddVisibleSavedCandidatesToCollection()}
+                        >
+                          {isAddingVisibleCandidates ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 shrink-0 animate-spin" />
+                              Adding…
+                            </>
+                          ) : (
+                            <>
+                              <MapPinPlus className="h-4 w-4 mr-2 shrink-0" />
+                              <span className="truncate">
+                                Add in view
+                                {visibleSavedCandidatesToAdd.length > 0
+                                  ? ` (${visibleSavedCandidatesToAdd.length})`
+                                  : ""}
+                              </span>
+                            </>
+                          )}
+                        </Button>
+                      ) : undefined
+                    }
                 />
             </Suspense>
-
-            {showSavedCandidates && canEdit && (
-              <div className="absolute bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-3 z-[50] md:bottom-8 md:left-4">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  className="shadow-none border border-border-default bg-surface-card/95 backdrop-blur-sm max-w-[min(100vw-2rem,20rem)]"
-                  disabled={
-                    visibleSavedCandidatesToAdd.length === 0 ||
-                    !viewportBounds ||
-                    isAddingVisibleCandidates
-                  }
-                  onClick={() => void handleAddVisibleSavedCandidatesToCollection()}
-                >
-                  {isAddingVisibleCandidates ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 shrink-0 animate-spin" />
-                      Adding…
-                    </>
-                  ) : (
-                    <>
-                      <MapPinPlus className="h-4 w-4 mr-2 shrink-0" />
-                      <span className="truncate">
-                        Add in view
-                        {visibleSavedCandidatesToAdd.length > 0
-                          ? ` (${visibleSavedCandidatesToAdd.length})`
-                          : ""}
-                      </span>
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
 
             {/* Mobile Itinerary Toggle */}
             {collection.itinerary && (

@@ -105,7 +105,7 @@ describe("Index Page", () => {
     );
 
     expect(screen.getByTestId("app-layout")).toBeTruthy();
-    expect(screen.getByTestId("feed-card-a-r1")).toBeTruthy();
+    expect(screen.getByTestId("feed-card-r1")).toBeTruthy();
     expect(screen.getAllByText("Test Building").length).toBeGreaterThanOrEqual(1);
   });
 });

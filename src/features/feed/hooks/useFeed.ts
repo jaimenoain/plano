@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { useCallback } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient, InfiniteData } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -200,7 +201,8 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
       return loadFeedEventAttendance(user.id);
     },
     enabled: !!user,
-    staleTime: 0,
+    /** Align with app default (5m); avoids refetch on every feed mount while staying reasonably fresh. */
+    staleTime: 60 * 1000,
   });
 
   const query = useInfiniteQuery({
@@ -284,7 +286,7 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
     enabled: !!user,
   });
 
-  const toggleLike = async (reviewId: string) => {
+  const toggleLike = useCallback(async (reviewId: string) => {
     if (!user) return;
 
     const currentData = queryClient.getQueryData<InfiniteData<FeedReview[]>>(queryKey);
@@ -338,9 +340,9 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
           }
       });
     }
-  };
+  }, [user, queryClient, queryKey]);
 
-  const toggleImageLike = async (reviewId: string, imageId: string) => {
+  const toggleImageLike = useCallback(async (reviewId: string, imageId: string) => {
     if (!user) return;
 
     const currentData = queryClient.getQueryData<InfiniteData<FeedReview[]>>(queryKey);
@@ -415,7 +417,7 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
             };
         });
     }
-  };
+  }, [user, queryClient, queryKey]);
 
   return {
     ...query,

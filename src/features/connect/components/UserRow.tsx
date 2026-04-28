@@ -40,31 +40,41 @@ export function UserRow({
         : supabase.storage.from("avatars").getPublicUrl(user.avatar_url).data.publicUrl)
     : undefined;
 
+  const displayName = user.username || "Unknown User";
+
   return (
     <div
-      className="flex items-center justify-between p-4 border-b border-border-default hover:bg-brand-secondary transition-colors cursor-pointer relative group"
+      className="flex min-w-0 items-center justify-between gap-3 p-4 border-b border-border-default hover:bg-brand-secondary transition-colors cursor-pointer relative group"
       onClick={() => navigate(`/profile/${user.username?.toLowerCase() || user.id}`)}
     >
-    <div className="flex items-center gap-3 min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <Avatar>
           <AvatarImage src={avatarUrl} />
           <AvatarFallback>{user.username?.charAt(0).toUpperCase() || "?"}</AvatarFallback>
         </Avatar>
-        <div className="flex flex-col min-w-0">
-          <span className="font-medium text-sm truncate">{user.username || "Unknown User"}</span>
-          {mutualFollows && <MutualFacepile users={mutualFollows} />}
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 overflow-hidden">
+          <span className="block truncate font-medium text-sm" title={displayName}>
+            {displayName}
+          </span>
+          {mutualFollows && mutualFollows.length > 0 ? (
+            <MutualFacepile users={mutualFollows} />
+          ) : null}
         </div>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0 ml-2" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="flex shrink-0 items-center gap-3"
+        onClick={(e) => e.stopPropagation()}
+      >
         {onHide && (
-            <button
-                onClick={onHide}
-                className="p-1.5 hover:bg-surface-muted rounded-sm transition-colors focus:outline-none text-text-secondary hover:text-text-primary"
-                title="Hide suggestion"
-            >
-                <X className="h-4 w-4" />
-            </button>
+          <button
+            type="button"
+            onClick={onHide}
+            className="-m-1 shrink-0 rounded-sm p-2 hover:bg-surface-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-border-strong text-text-secondary hover:text-text-primary"
+            title="Hide suggestion"
+          >
+            <X className="h-4 w-4" aria-hidden />
+          </button>
         )}
 
         {onToggleCloseFriend && (
@@ -82,7 +92,7 @@ export function UserRow({
         )}
 
         {showFollowButton && (
-          <div>
+          <div className="shrink-0">
             <FollowButton
               userId={user.id}
               isFollower={isFollower}

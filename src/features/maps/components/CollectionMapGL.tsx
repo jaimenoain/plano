@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo, type ReactNode } from 'react';
 import { createPortal } from "react-dom";
 import { useSearchParams } from 'react-router';
 import MapGL, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef } from 'react-map-gl/maplibre';
@@ -35,6 +35,8 @@ interface CollectionMapGLProps {
   showItinerary?: boolean;
   /** Fired when the visible geographic viewport changes (initial load, pan, zoom). */
   onViewportBoundsChange?: (bounds: Bounds) => void;
+  /** Rendered bottom-left above map canvas (included when map is expanded to fullscreen portal). */
+  bottomLeftOverlay?: ReactNode;
 }
 
 function CollectionMapGLContent({
@@ -48,6 +50,7 @@ function CollectionMapGLContent({
   showSavedCandidates: _showSavedCandidates,
   showItinerary,
   onViewportBoundsChange,
+  bottomLeftOverlay,
 }: CollectionMapGLProps) {
   const { lat, lng, zoom, setMapURL } = useURLMapState();
   const { updateMapState } = useStableMapUpdate(setMapURL);
@@ -317,6 +320,15 @@ function CollectionMapGLContent({
         >
             {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
         </button>
+
+        {bottomLeftOverlay ? (
+          <div
+            className="pointer-events-auto absolute bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-3 z-[80] max-w-[min(100vw-2rem,20rem)] md:bottom-8 md:left-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {bottomLeftOverlay}
+          </div>
+        ) : null}
     </div>
   );
 
