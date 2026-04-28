@@ -295,7 +295,7 @@ function CollectionMapGLContent({
         </MapGL>
 
         {/* Top Left: Satellite + optional collection actions (avoid bottom nav / mobile map-list toggle). */}
-        <div className="absolute top-2 left-2 z-[80] flex max-w-[min(100vw-5rem,20rem)] flex-col gap-2">
+        <div className="absolute top-2 left-2 z-40 flex max-w-[min(100vw-5rem,20rem)] flex-col gap-2">
           <button
             type="button"
             onClick={(e) => {
@@ -322,7 +322,7 @@ function CollectionMapGLContent({
                 e.stopPropagation();
                 setIsExpanded(!isExpanded);
             }}
-            className="absolute top-2 right-2 z-[80] rounded-sm border border-border-default bg-surface-card/90 p-2 shadow-md backdrop-blur-sm transition-colors hover:bg-surface-muted"
+            className="absolute top-2 right-2 z-40 rounded-sm border border-border-default bg-surface-card/90 p-2 shadow-md backdrop-blur-sm transition-colors hover:bg-surface-muted"
             title={isExpanded ? "Collapse Map" : "Expand Map"}
         >
             {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}

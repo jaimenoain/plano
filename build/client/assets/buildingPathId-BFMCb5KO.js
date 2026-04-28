@@ -1,1 +1,0 @@
-const e=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;function a(t){return e.test(t)?{kind:"uuid",value:t}:/^\d+$/.test(t)?{kind:"shortId",value:Number.parseInt(t,10)}:{kind:"slug",value:t}}export{a as c};

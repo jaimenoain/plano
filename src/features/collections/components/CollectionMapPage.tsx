@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState, Suspense } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -143,6 +143,33 @@ function matchesSavedPlacesStatusFilter(
 // it for developers working with the underlying SQL/selects.
 // type CollectionItemResponse = { ... }
 
+/**
+ * Only re-run itinerary store initialization when collection/items/markers meaningfully change.
+ * TanStack Query refetches often return new array references with identical data; without this,
+ * `initializeItinerary` wipes client state and feels like an unsolicited refresh.
+ */
+function itinerarySourceFingerprint(
+  collection: Collection,
+  items: CollectionItemWithBuilding[],
+  markers: CollectionMarker[],
+): string {
+  const itemPart = [...items]
+    .map(
+      (i) =>
+        `${i.id}:${i.note ?? ""}:${i.custom_category_id ?? ""}:${i.is_hidden ? "1" : "0"}:${i.building.location_lat}:${i.building.location_lng}:${i.building.name}`,
+    )
+    .sort()
+    .join("|");
+  const markerPart = [...markers]
+    .map(
+      (m) =>
+        `${m.id}:${m.lat}:${m.lng}:${m.name}:${m.notes ?? ""}:${m.category}`,
+    )
+    .sort()
+    .join("|");
+  return `${collection.id}:${JSON.stringify(collection.itinerary)}:${itemPart}:${markerPart}`;
+}
+
 interface SavedCandidateResponse {
   building_id: string;
   status: string;
@@ -206,6 +233,7 @@ export default function CollectionMap() {
   const [isAddingVisibleCandidates, setIsAddingVisibleCandidates] = useState(false);
 
   const initializeItinerary = useItineraryStore((state) => state.initializeItinerary);
+  const lastItineraryInitFingerprint = useRef<string | null>(null);
 
   useEffect(() => {
     if (showSettings) setHasSettingsOpened(true);
@@ -407,11 +435,13 @@ export default function CollectionMap() {
   const { photos } = useGooglePlacePhotos(markers);
 
   useEffect(() => {
-      if (collection && items) {
-          initializeItinerary(collection.itinerary, items, markers);
-          // If itinerary exists, maybe default to itinerary tab?
-          // For now, let's keep it manual or based on URL logic (not implemented)
-      }
+    if (!collection || items === undefined) return;
+
+    const fingerprint = itinerarySourceFingerprint(collection, items, markers);
+    if (lastItineraryInitFingerprint.current === fingerprint) return;
+    lastItineraryInitFingerprint.current = fingerprint;
+
+    initializeItinerary(collection.itinerary, items, markers);
   }, [collection, items, markers, initializeItinerary]);
 
   // Inject ItemList JSON-LD for public collections
@@ -1074,7 +1104,7 @@ toast({
 
   return (
     <AppLayout title={collection.name} showBack isFullScreen>
-      <div className="flex flex-col lg:flex-row-reverse h-[calc(100dvh_-_9rem_-_env(safe-area-inset-bottom))] md:h-[100dvh] overflow-hidden relative">
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row-reverse h-[calc(100dvh_-_9rem_-_env(safe-area-inset-bottom))] md:h-full">
         <div className="lg:hidden">
           <SearchModeToggle
             mode={viewMode}
@@ -1314,7 +1344,7 @@ onUpdateNote={handleUpdateNote}
             {collection.itinerary && (
             <div className="lg:hidden">
                  {activeTab !== 'itinerary' && viewMode === 'map' && (
-                    <div className="absolute top-4 right-4 z-[50]">
+                    <div className="absolute top-4 right-4 z-40">
                         <Button
                             variant="secondary"
                             className="shadow-none rounded-full"

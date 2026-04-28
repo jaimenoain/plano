@@ -61,7 +61,7 @@ export function AppLayout({
       <div className={cn(
         showHeader && !shellProvidesTopInset && "pt-16",
         "w-full min-w-0",
-        isFullScreen && "h-full flex flex-col flex-1",
+        isFullScreen && "min-h-0 h-full flex flex-col flex-1",
         showNav && "pb-20 md:pb-0"
       )}>
         {children}
