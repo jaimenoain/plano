@@ -42,6 +42,8 @@ export interface DiscoveryBuilding extends DiscoveryBuildingMapPin {
   // This can be a full URL (legacy/external) or a storage path (user uploads).
   // Use getBuildingImageUrl() utility to display it.
   main_image_url?: string | null;
+  /** DB `hero_image_url` when present on embedded building rows; fallback if main_image_url unset */
+  hero_image_url?: string | null;
   credits: CreditSummary[] | null;
   styles: StyleSummary[] | null;
   year_completed: number | null;

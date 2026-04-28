@@ -15,6 +15,8 @@ interface DiscoveryListProps {
   emptyState?: React.ReactNode;
   className?: string;
   imagePosition?: 'left' | 'right';
+  /** Narrow sidebar / modal lists: smaller title and thumbnail */
+  variant?: 'default' | 'compact';
   itemTarget?: string;
   searchQuery?: string;
   footer?: React.ReactNode;
@@ -29,23 +31,28 @@ export function DiscoveryList({
   emptyState,
   className,
   imagePosition,
+  variant = 'default',
   itemTarget,
   searchQuery,
   footer,
 }: DiscoveryListProps) {
+  const compact = variant === 'compact';
+
   if (isLoading) {
     return (
-      <div className="space-y-4 p-4">
+      <div className={cn("space-y-4 p-4", compact && "space-y-2 p-2")}>
         {[...Array(5)].map((_, i) => (
           <div key={i} className="flex flex-row h-auto overflow-hidden rounded-none border border-border-default bg-surface-card text-text-primary shadow-none">
-            <Skeleton className="w-32 h-32 shrink-0 rounded-none" />
-            <div className="flex-1 p-4 space-y-2">
-              <Skeleton className="h-5 w-3/4" />
+            <Skeleton className={cn("shrink-0 rounded-none", compact ? "w-14 h-14" : "w-32 h-32")} />
+            <div className={cn("flex-1 space-y-2", compact ? "p-2" : "p-4")}>
+              <Skeleton className={cn(compact ? "h-4 w-3/4" : "h-5 w-3/4")} />
               <Skeleton className="h-3 w-1/2" />
-              <div className="flex gap-2 pt-2">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-4 w-20" />
-              </div>
+              {!compact && (
+                <div className="flex gap-2 pt-2">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -81,7 +88,7 @@ export function DiscoveryList({
   }
 
   return (
-    <div className={cn("space-y-4 p-4 pb-20 md:pb-4", className)}>
+    <div className={cn("space-y-4 p-4 pb-20 md:pb-4", compact && "space-y-2 p-2 pb-4", className)}>
       {buildings.map((building) => (
         <DiscoveryBuildingCard
           key={building.id}
@@ -91,6 +98,7 @@ export function DiscoveryList({
           action={renderAction?.(building)}
           onClick={onBuildingClick ? () => onBuildingClick(building) : undefined}
           imagePosition={imagePosition}
+          variant={variant}
           target={itemTarget}
         />
       ))}

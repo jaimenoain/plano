@@ -510,6 +510,7 @@ toast.error("Failed to add building");
                 <DiscoveryList
                   buildings={filteredBuildings}
                   isLoading={isLoading}
+                  variant="compact"
                   className="p-2"
                   emptyState={
                     <div className="flex flex-col items-center justify-center py-8 gap-4">
@@ -576,7 +577,8 @@ toast.error("Failed to add building");
                 building={{
                   ...selectedBuilding,
                   slug: selectedBuilding.slug ?? selectedBuilding.id,
-                  hero_image_url: selectedBuilding.main_image_url ?? null,
+                  hero_image_url:
+                    selectedBuilding.main_image_url ?? selectedBuilding.hero_image_url ?? null,
                 }}
               />
             ) : (

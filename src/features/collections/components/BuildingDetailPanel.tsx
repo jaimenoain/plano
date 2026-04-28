@@ -30,14 +30,15 @@ export function BuildingDetailPanel({ building }: BuildingDetailPanelProps) {
 
   const allImages: { id: string; url: string }[] = [];
 
-  if (building.hero_image_url) {
-    allImages.push({ id: 'hero', url: building.hero_image_url });
+  const heroResolved = getBuildingImageUrl(building.hero_image_url);
+  if (heroResolved) {
+    allImages.push({ id: "hero", url: heroResolved });
   }
 
   if (images) {
     images.forEach((img) => {
       const url = getBuildingImageUrl(img.storage_path);
-      if (url && url !== building.hero_image_url) {
+      if (url && url !== heroResolved) {
         allImages.push({ id: img.id, url });
       }
     });

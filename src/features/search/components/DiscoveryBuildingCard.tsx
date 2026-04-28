@@ -16,6 +16,8 @@ interface DiscoveryBuildingCardProps {
   action?: React.ReactNode;
   onClick?: (e: React.MouseEvent) => void;
   imagePosition?: 'left' | 'right';
+  /** Narrow lists / modals: smaller title and thumbnail */
+  variant?: 'default' | 'compact';
   target?: string;
 }
 
@@ -26,16 +28,24 @@ export function DiscoveryBuildingCard({
   action,
   onClick,
   imagePosition = 'right',
+  variant = 'default',
   target,
 }: DiscoveryBuildingCardProps) {
-  const imageUrl = getBuildingImageUrl(building.main_image_url);
+  const compact = variant === 'compact';
+  const rawThumb = building.main_image_url ?? building.hero_image_url ?? null;
+  const imageUrl = getBuildingImageUrl(rawThumb);
   const { statuses, ratings } = useUserBuildingStatuses();
   const userStatus = statuses[building.id];
   const userRating = ratings[building.id];
   const isHidden = userStatus === 'ignored';
 
   const ImageComponent = imageUrl && (
-    <div className="relative w-32 shrink-0 aspect-[4/3] overflow-hidden">
+    <div
+      className={cn(
+        "relative shrink-0 overflow-hidden bg-surface-muted",
+        compact ? "w-14 h-14 rounded-md" : "w-32 aspect-[4/3]",
+      )}
+    >
       <img
         src={imageUrl}
         alt={[building.name, building.city].filter(Boolean).join(", ")}
@@ -64,9 +74,21 @@ export function DiscoveryBuildingCard({
         {imagePosition === 'left' && ImageComponent}
 
         {/* Content */}
-        <div className="flex flex-col flex-1 p-3 justify-center min-w-0">
-          <div className="flex flex-col pr-6">
-            <h3 className="font-black text-2xl leading-tight tracking-tight line-clamp-2 group-hover:opacity-75 transition-opacity">
+        <div
+          className={cn(
+            "flex flex-col flex-1 justify-center min-w-0",
+            compact ? "p-2 pr-8" : "p-3 pr-6",
+          )}
+        >
+          <div className="flex flex-col">
+            <h3
+              className={cn(
+                "line-clamp-2 group-hover:opacity-75 transition-opacity",
+                compact
+                  ? "text-sm font-semibold leading-snug text-text-primary"
+                  : "font-black text-2xl leading-tight tracking-tight",
+              )}
+            >
               {building.name}
             </h3>
             {building.alt_name && building.alt_name !== building.name && (
@@ -76,7 +98,13 @@ export function DiscoveryBuildingCard({
             )}
           </div>
 
-          <div className={cn("text-xs text-text-secondary mt-1", imageUrl ? "line-clamp-2" : "line-clamp-1")}>
+          <div
+            className={cn(
+              "text-text-secondary mt-1",
+              compact ? "text-2xs-plus leading-relaxed line-clamp-2" : "text-xs",
+              !compact && (imageUrl ? "line-clamp-2" : "line-clamp-1"),
+            )}
+          >
             {building.city && (
               <>
                 <span>{building.city}</span>
@@ -93,7 +121,7 @@ export function DiscoveryBuildingCard({
           </div>
 
           {/* Badges — status words removed; optional points-only chip when rated */}
-          <div className="flex flex-wrap gap-2 mt-2">
+          <div className={cn("flex flex-wrap gap-2", compact ? "mt-1.5" : "mt-2")}>
             {(userStatus === 'visited' || userStatus === 'pending') &&
               userRating != null &&
               userRating > 0 && (
