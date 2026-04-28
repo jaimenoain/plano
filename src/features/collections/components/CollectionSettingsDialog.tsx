@@ -14,7 +14,8 @@ import { toast } from "sonner";
 import { UserSearch } from "@/features/profile/components/UserSearch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Collection } from "@/features/collections/types";
+import { Collection, type SavedPlacesDotFilter } from "@/features/collections/types";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { parseLocation } from "@/utils/location";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -39,6 +40,8 @@ interface CollectionSettingsDialogProps {
   onUpdate: () => void;
   showSavedCandidates?: boolean;
   onShowSavedCandidatesChange?: (show: boolean) => void;
+  savedPlacesDotFilter?: SavedPlacesDotFilter;
+  onSavedPlacesDotFilterChange?: (filter: SavedPlacesDotFilter) => void;
   isOwner?: boolean;
   canEdit?: boolean;
   onSaveAll?: () => void;
@@ -90,7 +93,61 @@ const METHOD_DESCRIPTIONS = {
   custom: "Create custom categories with your own colors to organize locations."
 };
 
-export function CollectionSettingsDialog({ collection, open, onOpenChange, onUpdate, showSavedCandidates, onShowSavedCandidatesChange, isOwner = false, canEdit = true, onSaveAll, currentUserId, onPlanRoute }: CollectionSettingsDialogProps) {
+function SavedPlacesDotToggle({
+  value,
+  onChange,
+}: {
+  value: SavedPlacesDotFilter;
+  onChange: (filter: SavedPlacesDotFilter) => void;
+}) {
+  return (
+    <ToggleGroup
+      type="single"
+      value={value}
+      onValueChange={(v) => {
+        if (v === 'all' || v === '1' || v === '2' || v === '3') onChange(v);
+      }}
+      variant="outline"
+      size="sm"
+      className="flex-wrap justify-start gap-1"
+      aria-label="Filter saved places by dot rating"
+    >
+      <ToggleGroupItem value="all" className="min-w-12 px-2">
+        All
+      </ToggleGroupItem>
+      {[1, 2, 3].map((n) => (
+        <ToggleGroupItem
+          key={n}
+          value={String(n) as SavedPlacesDotFilter}
+          className="min-w-11 px-2 gap-0.5"
+          aria-label={n === 1 ? "Show only 1-dot rated places" : `Show only ${n}-dot rated places`}
+        >
+          <span className="flex items-center gap-0.5" aria-hidden>
+            {Array.from({ length: n }).map((_, i) => (
+              <span key={i} className="h-1.5 w-1.5 rounded-full bg-text-primary" />
+            ))}
+          </span>
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
+  );
+}
+
+export function CollectionSettingsDialog({
+  collection,
+  open,
+  onOpenChange,
+  onUpdate,
+  showSavedCandidates,
+  onShowSavedCandidatesChange,
+  savedPlacesDotFilter = 'all',
+  onSavedPlacesDotFilterChange,
+  isOwner = false,
+  canEdit = true,
+  onSaveAll,
+  currentUserId,
+  onPlanRoute,
+}: CollectionSettingsDialogProps) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<{
     name: string;
@@ -464,16 +521,27 @@ toast.error("Failed to export data");
             )}
 
             {onShowSavedCandidatesChange && (
-              <div className="flex items-center justify-between space-x-2">
-                <Label htmlFor="show-saved-candidates" className="flex flex-col space-y-1">
-                  <span>Show Saved Places</span>
-                  <span className="font-normal text-xs text-text-secondary">Show your saved places as suggestions on the map</span>
-                </Label>
-                <Switch
-                  id="show-saved-candidates"
-                  checked={showSavedCandidates}
-                  onCheckedChange={onShowSavedCandidatesChange}
-                />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between space-x-2">
+                  <Label htmlFor="show-saved-candidates" className="flex flex-col space-y-1">
+                    <span>Show Saved Places</span>
+                    <span className="font-normal text-xs text-text-secondary">Show your saved places as suggestions on the map</span>
+                  </Label>
+                  <Switch
+                    id="show-saved-candidates"
+                    checked={!!showSavedCandidates}
+                    onCheckedChange={onShowSavedCandidatesChange}
+                  />
+                </div>
+                {showSavedCandidates && onSavedPlacesDotFilterChange && (
+                  <div className="rounded-md border border-border-default bg-surface-muted/40 p-3 space-y-2">
+                    <Label className="text-sm font-medium text-text-primary">Show by rating</Label>
+                    <p className="text-xs text-text-secondary">
+                      All includes saves without a dot rating. Choose a column to only show places you rated with that many dots.
+                    </p>
+                    <SavedPlacesDotToggle value={savedPlacesDotFilter} onChange={onSavedPlacesDotFilterChange} />
+                  </div>
+                )}
               </div>
             )}
 

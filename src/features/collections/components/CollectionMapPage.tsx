@@ -19,6 +19,7 @@ import {
   CollectionItemWithBuilding,
   CollectionMarker,
   Itinerary,
+  type SavedPlacesDotFilter,
 } from "@/features/collections/types";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ItineraryList } from "@/features/collections/components/ItineraryList";
@@ -48,6 +49,9 @@ const CollectionBuildingCard = lazyWithRetry(() => import("@/features/collection
 const CollectionMarkerCard = lazyWithRetry(() => import("@/features/collections/components/CollectionMarkerCard").then(module => ({ default: module.CollectionMarkerCard })));
 
 const SHOW_SAVED_CANDIDATES_STORAGE = "plano:collection-map:showSavedPlaces" as const;
+const SAVED_PLACES_DOT_FILTER_STORAGE = "plano:collection-map:savedPlacesDotFilter" as const;
+
+const SAVED_PLACES_DOT_FILTERS: SavedPlacesDotFilter[] = ['all', '1', '2', '3'];
 
 function readShowSavedCandidatesFromStorage(userId: string, collectionId: string): boolean {
   try {
@@ -65,6 +69,39 @@ function writeShowSavedCandidatesToStorage(userId: string, collectionId: string,
   }
 }
 
+function readSavedPlacesDotFilterFromStorage(userId: string, collectionId: string): SavedPlacesDotFilter {
+  try {
+    const raw = localStorage.getItem(`${SAVED_PLACES_DOT_FILTER_STORAGE}:${userId}:${collectionId}`);
+    if (raw && (SAVED_PLACES_DOT_FILTERS as readonly string[]).includes(raw)) {
+      return raw as SavedPlacesDotFilter;
+    }
+  } catch {
+    /* ignore */
+  }
+  return 'all';
+}
+
+function writeSavedPlacesDotFilterToStorage(
+  userId: string,
+  collectionId: string,
+  value: SavedPlacesDotFilter,
+): void {
+  try {
+    localStorage.setItem(`${SAVED_PLACES_DOT_FILTER_STORAGE}:${userId}:${collectionId}`, value);
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+function matchesSavedPlacesDotFilter(
+  rating: number | null | undefined,
+  filter: SavedPlacesDotFilter,
+): boolean {
+  if (filter === 'all') return true;
+  const n = filter === '1' ? 1 : filter === '2' ? 2 : 3;
+  return rating === n;
+}
+
 // Note: The shape returned from Supabase for collection items is documented here
 // for reference only. We no longer use this interface directly in code, but keep
 // it for developers working with the underlying SQL/selects.
@@ -73,6 +110,7 @@ function writeShowSavedCandidatesToStorage(userId: string, collectionId: string,
 interface SavedCandidateResponse {
   building_id: string;
   status: string;
+  rating: number | null;
   building: {
     id: string;
     name: string;
@@ -112,6 +150,7 @@ export default function CollectionMap() {
   const [activeTab, setActiveTab] = useState<'items' | 'itinerary'>('items');
 
   const [showSavedCandidates, setShowSavedCandidates] = useState(false);
+  const [savedPlacesDotFilter, setSavedPlacesDotFilter] = useState<SavedPlacesDotFilter>('all');
 
   // New States for Removal
   const [itemToRemove, setItemToRemove] = useState<CollectionItemWithBuilding | null>(null);
@@ -178,6 +217,7 @@ export default function CollectionMap() {
   useLayoutEffect(() => {
     if (!user?.id || !collection?.id) return;
     setShowSavedCandidates(readShowSavedCandidatesFromStorage(user.id, collection.id));
+    setSavedPlacesDotFilter(readSavedPlacesDotFilterFromStorage(user.id, collection.id));
   }, [user?.id, collection?.id]);
 
   const handleShowSavedCandidatesChange = useCallback(
@@ -185,6 +225,16 @@ export default function CollectionMap() {
       setShowSavedCandidates(show);
       if (user?.id && collection?.id) {
         writeShowSavedCandidatesToStorage(user.id, collection.id, show);
+      }
+    },
+    [user?.id, collection?.id],
+  );
+
+  const handleSavedPlacesDotFilterChange = useCallback(
+    (filter: SavedPlacesDotFilter) => {
+      setSavedPlacesDotFilter(filter);
+      if (user?.id && collection?.id) {
+        writeSavedPlacesDotFilterToStorage(user.id, collection.id, filter);
       }
     },
     [user?.id, collection?.id],
@@ -358,6 +408,7 @@ export default function CollectionMap() {
         .select(`
           building_id,
           status,
+          rating,
           building:buildings(
             id,
             name,
@@ -403,7 +454,8 @@ export default function CollectionMap() {
                 location_precision: b.location_precision,
                 credits: primaryBuildingCreditsToSummaries(b.building_credits ?? []),
                 styles: [],
-                color: null // Let BuildingDiscoveryMap use status color
+                color: null, // Let BuildingDiscoveryMap use status color
+                personal_rating: row.rating ?? null,
             } as DiscoveryBuilding;
         })
         .filter(b => b.location_lat !== 0 && b.location_lng !== 0);
@@ -643,12 +695,16 @@ export default function CollectionMap() {
 
   const allMapBuildings = useMemo(() => {
     if (showSavedCandidates && savedCandidates) {
-      const filteredCandidates = savedCandidates.filter(c => !existingBuildingIds.has(c.id));
+      const filteredCandidates = savedCandidates.filter(
+        (c) =>
+          !existingBuildingIds.has(c.id) &&
+          matchesSavedPlacesDotFilter(c.personal_rating ?? null, savedPlacesDotFilter),
+      );
       const dimmedExisting = mapBuildings.map(b => ({ ...b, isDimmed: true }));
       return [...dimmedExisting, ...filteredCandidates.map(c => ({ ...c, isCandidate: true }))];
     }
     return mapBuildings;
-  }, [mapBuildings, savedCandidates, showSavedCandidates, existingBuildingIds]);
+  }, [mapBuildings, savedCandidates, showSavedCandidates, existingBuildingIds, savedPlacesDotFilter]);
 
   // Calculate bounds only once when buildings are loaded to prevent map movement on updates
   useEffect(() => {
@@ -1161,6 +1217,8 @@ onUpdateNote={handleUpdateNote}
                 }}
                 showSavedCandidates={showSavedCandidates}
                 onShowSavedCandidatesChange={handleShowSavedCandidatesChange}
+                savedPlacesDotFilter={savedPlacesDotFilter}
+                onSavedPlacesDotFilterChange={handleSavedPlacesDotFilterChange}
                 isOwner={isOwner}
                 canEdit={canEdit}
                 currentUserId={user?.id}

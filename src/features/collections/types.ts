@@ -13,6 +13,9 @@ export interface Collection {
   itinerary: Itinerary | null;
 }
 
+/** Which saved-place suggestions appear on the collection map (by personal dot rating on user_buildings). */
+export type SavedPlacesDotFilter = 'all' | '1' | '2' | '3';
+
 export type TransportMode = 'walking' | 'driving' | 'cycling' | 'transit';
 
 export interface ItineraryRoute {
