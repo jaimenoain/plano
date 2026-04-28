@@ -45,7 +45,7 @@ export function BuildingDetailPanel({ building }: BuildingDetailPanelProps) {
   }
 
   return (
-    <div className="flex-1 border-l border-border-default h-full flex flex-col bg-surface-card min-w-0">
+    <div className="flex-1 h-full flex flex-col bg-surface-card min-w-0">
       <div className="p-6 space-y-6 overflow-y-auto h-full">
         <div>
           <Link

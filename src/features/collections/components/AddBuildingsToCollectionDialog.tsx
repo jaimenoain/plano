@@ -6,7 +6,21 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Plus, Check, Search, X, MapPin, PlusCircle } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  Check,
+  Search,
+  X,
+  MapPin,
+  PlusCircle,
+  Trash2,
+  Bed,
+  Bus,
+  Camera,
+  Utensils,
+  type LucideIcon,
+} from "lucide-react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { primaryBuildingCreditsToSummaries } from "@/features/credits/api/credits";
@@ -31,6 +45,7 @@ import {
 } from "@/components/ui/command";
 import { Command as CommandPrimitive } from "cmdk";
 import { cn } from "@/lib/utils";
+import type { CollectionMarker, CollectionMarkerCategory } from "@/features/collections/types";
 
 interface AddBuildingsToCollectionDialogProps {
   collectionId: string;
@@ -58,60 +73,43 @@ const mapGoogleTypeToCategory = (types: string[] = []): "accommodation" | "dinin
   return "other";
 };
 
-function OtherMarkersSearch({ collectionId, userId }: { collectionId: string, userId: string }) {
-  const [scriptLoaded, setScriptLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
-
-  useEffect(() => {
-    const initMap = async () => {
-      if (window.google?.maps?.places) {
-        setScriptLoaded(true);
-        return;
-      }
-
-      const apiKey = config.googleMaps.apiKey;
-      if (!apiKey) {
-setHasError(true);
-        return;
-      }
-
-      try {
-        setOptions({
-          key: apiKey,
-          v: "weekly",
-        });
-
-        await importLibrary("places");
-
-        setScriptLoaded(true);
-      } catch (_error) {
-setHasError(true);
-      }
-    };
-
-    initMap();
-  }, []);
-
-  if (hasError) {
-    return (
-      <div className="p-4 text-center text-red-500">
-        Error loading Google Maps. Please try again later.
-      </div>
-    );
+function displayMarkerSecondaryLine(marker: CollectionMarker): string | null {
+  let displayAddress = marker.address;
+  if (displayAddress && marker.name) {
+    if (displayAddress.startsWith(`${marker.name}, `)) {
+      displayAddress = displayAddress.substring(marker.name.length + 2);
+    } else if (displayAddress.startsWith(`${marker.name},`)) {
+      displayAddress = displayAddress.substring(marker.name.length + 1).trim();
+    }
   }
-
-  if (!scriptLoaded) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
-      </div>
-    );
-  }
-
-  return <PlacesAutocomplete collectionId={collectionId} userId={userId} />;
+  return displayAddress?.trim() || null;
 }
 
-function PlacesAutocomplete({ collectionId, userId }: { collectionId: string, userId: string }) {
+function markerCategoryIcon(category: CollectionMarkerCategory): LucideIcon {
+  switch (category) {
+    case "accommodation":
+      return Bed;
+    case "dining":
+      return Utensils;
+    case "transport":
+      return Bus;
+    case "attraction":
+      return Camera;
+    default:
+      return MapPin;
+  }
+}
+
+/** Search field + suggestion list; mounts only after Google Places script is ready (see parent). */
+function PlacesAutocompleteFields({
+  collectionId,
+  userId,
+  markersCount,
+}: {
+  collectionId: string;
+  userId: string;
+  markersCount: number;
+}) {
   const {
     ready,
     value,
@@ -138,87 +136,231 @@ function PlacesAutocomplete({ collectionId, userId }: { collectionId: string, us
     try {
       const details = await fetchPlaceDetailsNew(placeId);
       const category = mapGoogleTypeToCategory(details.types);
-      const name =
-        details.displayName?.trim() ||
-        mainText;
+      const name = details.displayName?.trim() || mainText;
 
-      const { error } = await supabase
-        .from("collection_markers")
-        .insert({
-          collection_id: collectionId,
-          google_place_id: placeId,
-          name,
-          category: category,
-          lat: details.lat,
-          lng: details.lng,
-          address: details.formattedAddress || address,
-          created_by: userId
-        });
+      const { error } = await supabase.from("collection_markers").insert({
+        collection_id: collectionId,
+        google_place_id: placeId,
+        name,
+        category,
+        lat: details.lat,
+        lng: details.lng,
+        address: details.formattedAddress || address,
+        created_by: userId,
+      });
 
       if (error) throw error;
 
-      toast.success("Marker added to collection");
-      setValue("", false); // Clear input after successful add
+      toast.success("Place added to collection");
+      setValue("", false);
+      queryClient.invalidateQueries({ queryKey: ["collection_markers", collectionId] });
       queryClient.invalidateQueries({ queryKey: ["collection_items", collectionId] });
     } catch (_error) {
-toast.error("Failed to add marker");
+      toast.error("Failed to add place");
     }
   };
 
+  const showIdleHint = status !== "OK" && status !== "ZERO_RESULTS" && status !== "ERROR" && markersCount === 0;
+
   return (
-    <Command shouldFilter={false} className="h-full flex flex-col overflow-hidden bg-transparent">
-      <div className="p-4 shrink-0 bg-surface-muted/60">
+    <Command shouldFilter={false} className="flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent shadow-none rounded-none border-0">
+      <div className="shrink-0 px-4 pb-3 pt-1">
         <div className="relative">
-          <MapPin className="absolute left-3 top-3 h-4 w-4 text-text-secondary z-10" />
+          <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-text-secondary z-10 pointer-events-none" />
           <CommandPrimitive.Input
             value={value}
             onValueChange={(val) => {
               setValue(val);
             }}
             disabled={!ready}
-            placeholder="Search for a place (e.g. 'Central Station')..."
+            placeholder="Search for a place to add…"
             autoComplete="off"
             className={cn(
-              "flex h-10 w-full rounded-md border-none bg-transparent pl-9 pr-3 py-2 text-sm outline-none placeholder:text-text-secondary disabled:cursor-not-allowed disabled:opacity-50"
+              "flex h-10 w-full rounded-sm border-0 bg-brand-secondary pl-9 pr-3 py-2 text-sm shadow-none outline-none ring-0",
+              "placeholder:text-text-secondary focus-visible:ring-1 focus-visible:ring-brand-primary focus-visible:ring-offset-0",
+              "disabled:cursor-not-allowed disabled:opacity-50",
             )}
           />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0">
-        {(status === "OK" || status === "ZERO_RESULTS") ? (
-          <CommandList className="max-h-full overflow-visible p-2">
-            <CommandGroup heading="Suggestions">
-              {status === "OK" &&
-                data.map(({ place_id, description, structured_formatting }) => (
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
+        {status === "OK" || status === "ZERO_RESULTS" ? (
+          <CommandList className="max-h-none overflow-visible p-0">
+            {status === "OK" && data.length > 0 ? (
+              <CommandGroup heading="Suggestions" className="[&_[cmdk-group-heading]]:px-0 [&_[cmdk-group-heading]]:pb-2">
+                {data.map(({ place_id, description, structured_formatting }) => (
                   <CommandItem
                     key={place_id}
                     value={description}
-                    onSelect={() => handleSelect(description, place_id, structured_formatting?.main_text || description)}
-                    className="cursor-pointer"
+                    onSelect={() =>
+                      handleSelect(description, place_id, structured_formatting?.main_text || description)
+                    }
+                    className="cursor-pointer rounded-none px-2 aria-selected:bg-brand-secondary"
                   >
-                    <MapPin className="mr-2 h-4 w-4 shrink-0" />
-                    <span>{description}</span>
+                    <MapPin className="mr-2 h-4 w-4 shrink-0 text-text-secondary" />
+                    <span className="text-sm">{description}</span>
                   </CommandItem>
                 ))}
-            </CommandGroup>
-            {status === "ZERO_RESULTS" && (
-              <CommandEmpty>No results found.</CommandEmpty>
-            )}
+              </CommandGroup>
+            ) : null}
+            {status === "ZERO_RESULTS" && <CommandEmpty className="py-6 text-sm">No results found.</CommandEmpty>}
           </CommandList>
         ) : status === "ERROR" ? (
-          <div className="flex flex-col items-center justify-center h-full text-text-secondary p-8 text-center text-sm">
-            <p>Could not load place suggestions.</p>
-            <p className="mt-2">Confirm Places API (New) is enabled for this project&apos;s API key.</p>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full text-text-secondary p-8 text-center">
-            <p>Search for real-world locations like restaurants, hotels, or transit stations to add them to your collection map.</p>
-            <p className="mt-2">Places API (New) powers suggestions; selected places are saved immediately.</p>
-          </div>
-        )}
+          <p className="py-6 text-center text-sm text-text-secondary">
+            Could not load suggestions. Confirm Places is enabled for this project&apos;s API key.
+          </p>
+        ) : showIdleHint ? (
+          <p className="py-4 text-center text-sm leading-relaxed text-text-secondary">
+            Search above to add restaurants, hotels, transit stops, and other places. New picks appear on your map straight away.
+          </p>
+        ) : null}
       </div>
     </Command>
+  );
+}
+
+function OtherMarkersTabPanel({
+  collectionId,
+  userId,
+  dialogOpen,
+}: {
+  collectionId: string;
+  userId: string;
+  dialogOpen: boolean;
+}) {
+  const queryClient = useQueryClient();
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const initMap = async () => {
+      if (window.google?.maps?.places) {
+        setScriptLoaded(true);
+        return;
+      }
+
+      const apiKey = config.googleMaps.apiKey;
+      if (!apiKey) {
+        setHasError(true);
+        return;
+      }
+
+      try {
+        setOptions({
+          key: apiKey,
+          v: "weekly",
+        });
+
+        await importLibrary("places");
+
+        setScriptLoaded(true);
+      } catch (_error) {
+        setHasError(true);
+      }
+    };
+
+    initMap();
+  }, []);
+
+  const { data: markers = [], isLoading: markersLoading } = useQuery({
+    queryKey: ["collection_markers", collectionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("collection_markers")
+        .select("*")
+        .eq("collection_id", collectionId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data as CollectionMarker[];
+    },
+    enabled: !!collectionId && dialogOpen,
+  });
+
+  const removeMarkerMutation = useMutation({
+    mutationFn: async (markerId: string) => {
+      const { error } = await supabase.from("collection_markers").delete().eq("id", markerId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Place removed from collection");
+      queryClient.invalidateQueries({ queryKey: ["collection_markers", collectionId] });
+      queryClient.invalidateQueries({ queryKey: ["collection_items", collectionId] });
+    },
+    onError: () => {
+      toast.error("Could not remove place");
+    },
+  });
+
+  const handleRemoveMarker = (markerId: string) => {
+    setRemovingId(markerId);
+    removeMarkerMutation.mutate(markerId, {
+      onSettled: () => setRemovingId(null),
+    });
+  };
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="shrink-0 px-4 pb-2 pt-4">
+        {markersLoading ? (
+          <div className="space-y-2">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-11 rounded-sm bg-brand-secondary/80 animate-pulse" />
+            ))}
+          </div>
+        ) : markers.length > 0 ? (
+          <>
+            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-text-secondary">Places on this map</p>
+            <ul className="space-y-0.5">
+              {markers.map((marker) => {
+                const Icon = markerCategoryIcon(marker.category);
+                const line2 = displayMarkerSecondaryLine(marker);
+                const busy = removingId === marker.id;
+                return (
+                  <li key={marker.id}>
+                    <div className="flex items-start gap-2 rounded-sm px-2 py-2 transition-colors hover:bg-brand-secondary/60">
+                      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-text-secondary" aria-hidden />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium leading-snug text-text-primary">{marker.name}</p>
+                        {line2 ? (
+                          <p className="mt-0.5 line-clamp-2 text-xs text-text-secondary">{line2}</p>
+                        ) : null}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 text-text-secondary hover:text-text-primary"
+                        disabled={busy}
+                        onClick={() => handleRemoveMarker(marker.id)}
+                        title="Remove from collection"
+                      >
+                        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        ) : null}
+      </div>
+
+      {hasError ? (
+        <div className="flex flex-1 flex-col justify-center px-4 pb-8 text-center text-sm text-feedback-destructive">
+          Could not load Google Places. Try again later.
+        </div>
+      ) : !scriptLoaded ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 py-12 text-text-secondary">
+          <Loader2 className="h-7 w-7 animate-spin" />
+          <p className="text-xs">Loading place search…</p>
+        </div>
+      ) : (
+        <PlacesAutocompleteFields collectionId={collectionId} userId={userId} markersCount={markers.length} />
+      )}
+    </div>
   );
 }
 
@@ -484,45 +626,46 @@ toast.error("Failed to add building");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[80vh] flex flex-col p-0 gap-0 overflow-hidden bg-surface-overlay rounded-lg shadow-lg">
-        <DialogHeader className="p-4 pb-3 shrink-0">
+      <DialogContent className="max-w-5xl h-[80vh] flex flex-col gap-0 overflow-hidden border-0 bg-surface-overlay p-0 shadow-xl rounded-lg">
+        <DialogHeader className="shrink-0 px-5 pb-2 pt-5">
           <DialogTitle>Add to Collection</DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="architecture" className="flex flex-col flex-1 h-full min-h-0 overflow-hidden">
-          <div className="px-4 border-b border-border-default">
-            <TabsList className="justify-start w-full h-12 p-0 bg-transparent rounded-none">
+        <Tabs defaultValue="architecture" className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="shrink-0 px-5">
+            <TabsList className="h-11 w-full justify-start gap-6 rounded-none border-0 bg-transparent p-0 shadow-none ring-0">
               <TabsTrigger
                 value="architecture"
-                className="relative h-12 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-text-secondary shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none"
+                className="relative h-11 rounded-none border-0 border-b-2 border-b-transparent bg-transparent px-0 pb-2 pt-1 text-sm font-semibold text-text-secondary shadow-none ring-0 transition-none data-[state=active]:border-b-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none"
               >
                 Architecture
               </TabsTrigger>
               <TabsTrigger
                 value="other-markers"
-                className="relative h-12 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold text-text-secondary shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none"
+                className="relative h-11 rounded-none border-0 border-b-2 border-b-transparent bg-transparent px-0 pb-2 pt-1 text-sm font-semibold text-text-secondary shadow-none ring-0 transition-none data-[state=active]:border-b-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none"
               >
-                Other Markers
+                Other markers
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="architecture" className="flex flex-1 h-full min-h-0 m-0 mt-0 border-none p-0 data-[state=inactive]:hidden">
+          <TabsContent value="architecture" className="m-0 mt-0 flex min-h-0 flex-1 border-none p-0 data-[state=inactive]:hidden">
+            <div className="flex min-h-0 flex-1 divide-x divide-border-default">
             {/* Left Column: List */}
-            <div className="w-[350px] shrink-0 flex flex-col min-h-0">
-              <div className="p-4 pb-3 space-y-2 bg-surface-muted/60">
+            <div className="flex w-[350px] shrink-0 flex-col min-h-0">
+              <div className="space-y-2 px-4 pb-3 pt-3">
                 <div className="relative">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-text-secondary" />
+                  <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-text-secondary" />
                   <Input
                     placeholder="Search by name, city, country, or address..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
+                    className="border-0 bg-brand-secondary pl-9 shadow-none ring-0 focus-visible:border-0 focus-visible:ring-1 focus-visible:ring-brand-primary focus-visible:ring-offset-0"
                   />
                 </div>
               </div>
 
-              <ScrollArea className="flex-1">
+              <ScrollArea className="min-h-0 flex-1">
                 <DiscoveryList
                   buildings={filteredBuildings}
                   isLoading={isLoading}
@@ -601,17 +744,20 @@ toast.error("Failed to add building");
                 }}
               />
             ) : (
-              <div className="flex-1 border-l border-border-default hidden lg:flex items-center justify-center text-text-secondary bg-surface-muted/20">
+              <div className="hidden min-h-0 flex-1 flex-col items-center justify-center bg-surface-muted/15 px-6 text-center text-sm text-text-secondary lg:flex">
                 Select a building to view details
               </div>
             )}
+            </div>
           </TabsContent>
 
           <TabsContent
             value="other-markers"
-            className="flex flex-col flex-1 h-full min-h-0 overflow-hidden p-0 m-0 mt-0 border-none data-[state=inactive]:hidden"
+            className="m-0 mt-0 flex min-h-0 flex-1 flex-col overflow-hidden border-none p-0 data-[state=inactive]:hidden"
           >
-            {user && <OtherMarkersSearch collectionId={collectionId} userId={user.id} />}
+            {user && (
+              <OtherMarkersTabPanel collectionId={collectionId} userId={user.id} dialogOpen={open} />
+            )}
           </TabsContent>
         </Tabs>
       </DialogContent>
