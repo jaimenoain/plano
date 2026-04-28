@@ -358,9 +358,9 @@ export function DiscoveryCard({
                   )
                 : getBuildingUrl(building.id, building.slug, (building as { short_id?: number | null }).short_id)
             }
-            className="pointer-events-auto hover:opacity-80 transition-opacity block"
+            className="pointer-events-auto hover:opacity-80 active:opacity-80 transition-opacity block"
           >
-            <h2 className="text-4xl sm:text-5xl font-bold tracking-tight leading-none">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-none">
               {building.name}
             </h2>
           </Link>

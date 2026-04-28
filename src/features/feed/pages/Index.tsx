@@ -202,7 +202,7 @@ export default function Index() {
         <div className="w-full max-w-7xl mx-auto bg-surface-default md:border-l md:border-r border-border-default min-h-screen">
           {socialReviews.length === 0 && eventAttendance.length === 0 ? (
             // --- Cold-start state ---
-            <div className="px-6 lg:px-16 pb-32">
+            <div className="px-4 md:px-6 lg:px-16 pb-32">
               <div className="flex flex-col gap-16 lg:gap-20 mt-16">
                 <ColdStartFeed
                   discoveryReviews={discoveryReviews}
@@ -222,7 +222,7 @@ export default function Index() {
             // --- Active feed state ---
             <div className="md:grid md:grid-cols-[minmax(0,1fr)_320px]">
               <main className="min-w-0 md:border-r md:border-border-default overflow-hidden">
-                <div className="px-6 lg:px-16 pt-10 pb-32">
+                <div className="px-4 md:px-6 lg:px-16 pt-10 pb-32">
                   <div className="flex flex-col gap-20">
                     {(() => {
                       const feedNodes: React.ReactNode[] = [];
@@ -305,7 +305,7 @@ export default function Index() {
                               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-text-disabled">
                                 Collections
                               </p>
-                              <div className="grid grid-cols-3 gap-2">
+                              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                                 {batch.map((col) => (
                                   <WidgetErrorBoundary key={col.id}>
                                     <FeedCollectionCard collection={col} />
@@ -346,7 +346,7 @@ export default function Index() {
                             else if (collectionsFeed.isError && collectionsFeed.hasNextPage) void collectionsFeed.fetchNextPage();
                             else if (discoveryFeed.isError && discoveryFeed.hasNextPage) void discoveryFeed.fetchNextPage();
                           }}
-                          className="text-[11px] font-medium tracking-[0.18em] uppercase text-text-secondary hover:text-text-primary transition-colors"
+                          className="text-xs font-medium tracking-[0.18em] uppercase text-text-secondary hover:text-text-primary transition-colors"
                         >
                           Error loading more. Click to retry.
                         </button>
@@ -383,7 +383,7 @@ function LoadMoreTrigger({
         <button
           type="button"
           onClick={() => feeds.find((f) => f.isError && f.hasNextPage)?.fetchNextPage()}
-          className="text-[11px] font-medium tracking-[0.18em] uppercase text-text-secondary hover:text-text-primary transition-colors"
+          className="text-xs font-medium tracking-[0.18em] uppercase text-text-secondary hover:text-text-primary transition-colors"
         >
           Error loading more. Click to retry.
         </button>

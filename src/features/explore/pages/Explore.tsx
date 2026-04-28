@@ -182,10 +182,19 @@ export default function Explore() {
     constructionStatuses,
   ]);
 
+  /** Hysteresis avoids flicker when snap/elastic scroll oscillates near the threshold (touch). */
+  const FILTER_BAR_SHOW_BELOW_PX = 28;
+  const FILTER_BAR_HIDE_ABOVE_PX = 80;
+
   const handleScroll = () => {
-    if (scrollContainerRef.current) {
-      setIsFilterVisible(scrollContainerRef.current.scrollTop <= 50);
-    }
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const top = el.scrollTop;
+    setIsFilterVisible((prev) => {
+      if (top <= FILTER_BAR_SHOW_BELOW_PX) return true;
+      if (top >= FILTER_BAR_HIDE_ABOVE_PX) return false;
+      return prev;
+    });
   };
 
   const handlePlaceDetails = (details: google.maps.GeocoderResult) => {
@@ -346,7 +355,7 @@ export default function Explore() {
                 type="button"
                 onClick={() => setIsLocationSheetOpen(true)}
                 className={cn(
-                  "inline-flex items-center gap-2 h-9 px-4 text-xs font-medium uppercase tracking-widest transition-all",
+                  "inline-flex items-center gap-2 min-h-11 px-3 text-xs font-medium uppercase tracking-widest transition-all sm:px-4",
                   locationFilter.label
                     ? "bg-brand-primary text-brand-primary-foreground"
                     : "bg-black/70 backdrop-blur-md text-white/70 border border-white/15 hover:bg-black/90 hover:text-white/90"
@@ -361,7 +370,7 @@ export default function Explore() {
                   )}
                   strokeWidth={1.5}
                 />
-                <span className="max-w-[140px] truncate">
+                <span className="max-w-[120px] sm:max-w-[140px] truncate">
                   {locationFilter.label || "World"}
                 </span>
                 {extraFilterCount > 0 && (
@@ -386,9 +395,9 @@ export default function Explore() {
                         clearFilter(e as unknown as React.MouseEvent);
                       }
                     }}
-                    className="ml-0.5 inline-flex h-5 w-5 items-center justify-center text-brand-primary-foreground hover:opacity-60 transition-opacity"
+                    className="ml-0.5 inline-flex min-h-11 min-w-11 items-center justify-center rounded-sm text-brand-primary-foreground hover:opacity-60 active:opacity-60 transition-opacity"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="h-3 w-3 shrink-0" />
                   </span>
                 )}
               </button>

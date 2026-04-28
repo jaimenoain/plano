@@ -62,13 +62,13 @@ These are patterns that repeat across the entire app. Fixing them at the compone
 
 ---
 
-## [ ] Phase 2 — Page-by-Page Review
+## Phase 2 — Page-by-Page Review
 
-Work through pages roughly in order of user traffic (core pages first).
+Work through pages roughly in order of user traffic (core pages first). Subsection headings track completion (`[x]` / `[ ]`).
 
 ---
 
-### 2.1 Feed — [`src/features/feed/pages/Index.tsx`](src/features/feed/pages/Index.tsx)
+### [x] 2.1 Feed — [`src/features/feed/pages/Index.tsx`](src/features/feed/pages/Index.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -78,7 +78,7 @@ Work through pages roughly in order of user traffic (core pages first).
 
 ---
 
-### 2.2 Explore — [`src/features/explore/pages/Explore.tsx`](src/features/explore/pages/Explore.tsx)
+### [x] 2.2 Explore — [`src/features/explore/pages/Explore.tsx`](src/features/explore/pages/Explore.tsx)
 
 This page already has excellent mobile treatment (full-screen map, hide-chrome mode, `safe-area` insets). Focus areas:
 - Verify the `Discovery` compact variant renders correctly at 320px
@@ -87,7 +87,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### 2.3 Building Details — [`src/features/buildings/pages/BuildingDetails.tsx`](src/features/buildings/pages/BuildingDetails.tsx)
+### [ ] 2.3 Building Details — [`src/features/buildings/pages/BuildingDetails.tsx`](src/features/buildings/pages/BuildingDetails.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -99,7 +99,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### 2.4 Profile — [`src/features/profile/pages/Profile.tsx`](src/features/profile/pages/Profile.tsx)
+### [ ] 2.4 Profile — [`src/features/profile/pages/Profile.tsx`](src/features/profile/pages/Profile.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -112,7 +112,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### 2.5 Search — [`src/features/search/SearchPage.tsx`](src/features/search/SearchPage.tsx)
+### [ ] 2.5 Search — [`src/features/search/SearchPage.tsx`](src/features/search/SearchPage.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -122,7 +122,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### 2.6 Events List — [`src/features/events/pages/Events.tsx`](src/features/events/pages/Events.tsx)
+### [ ] 2.6 Events List — [`src/features/events/pages/Events.tsx`](src/features/events/pages/Events.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -131,7 +131,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### 2.7 Event Detail — [`src/features/events/pages/EventDetail.tsx`](src/features/events/pages/EventDetail.tsx)
+### [ ] 2.7 Event Detail — [`src/features/events/pages/EventDetail.tsx`](src/features/events/pages/EventDetail.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -142,7 +142,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### 2.8 Person Details — [`src/features/credits/pages/PersonDetails.tsx`](src/features/credits/pages/PersonDetails.tsx)
+### [ ] 2.8 Person Details — [`src/features/credits/pages/PersonDetails.tsx`](src/features/credits/pages/PersonDetails.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -152,7 +152,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### 2.9 Company Details — [`src/features/credits/pages/CompanyDetails.tsx`](src/features/credits/pages/CompanyDetails.tsx)
+### [ ] 2.9 Company Details — [`src/features/credits/pages/CompanyDetails.tsx`](src/features/credits/pages/CompanyDetails.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -163,7 +163,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### 2.10 Notifications — [`src/features/notifications/pages/Notifications.tsx`](src/features/notifications/pages/Notifications.tsx)
+### [ ] 2.10 Notifications — [`src/features/notifications/pages/Notifications.tsx`](src/features/notifications/pages/Notifications.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -173,7 +173,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### 2.11 Architecture Hub — [`src/pages/ArchitectureHub.tsx`](src/pages/ArchitectureHub.tsx)
+### [ ] 2.11 Architecture Hub — [`src/pages/ArchitectureHub.tsx`](src/pages/ArchitectureHub.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -183,7 +183,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### 2.12 Locality Page — [`src/features/localities/pages/LocalityPage.tsx`](src/features/localities/pages/LocalityPage.tsx)
+### [ ] 2.12 Locality Page — [`src/features/localities/pages/LocalityPage.tsx`](src/features/localities/pages/LocalityPage.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -194,7 +194,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### 2.13 Guides — [`src/features/guides/GuidesPage.tsx`](src/features/guides/GuidesPage.tsx)
+### [ ] 2.13 Guides — [`src/features/guides/GuidesPage.tsx`](src/features/guides/GuidesPage.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -203,7 +203,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### 2.14 Settings — [`src/features/profile/pages/Settings.tsx`](src/features/profile/pages/Settings.tsx)
+### [ ] 2.14 Settings — [`src/features/profile/pages/Settings.tsx`](src/features/profile/pages/Settings.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -213,7 +213,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### 2.15 Collection Map — [`src/features/collections/components/CollectionMapPage.tsx`](src/features/collections/components/CollectionMapPage.tsx)
+### [ ] 2.15 Collection Map — [`src/features/collections/components/CollectionMapPage.tsx`](src/features/collections/components/CollectionMapPage.tsx)
 
 This page already uses `dvh` units and `safe-area` insets correctly. Focus areas:
 - Verify the saved-places filter dot control is reachable above the BottomNav
@@ -222,7 +222,7 @@ This page already uses `dvh` units and `safe-area` insets correctly. Focus areas
 
 ---
 
-### 2.16 Auth & Onboarding — [`src/features/auth/pages/Auth.tsx`](src/features/auth/pages/Auth.tsx), [`Onboarding.tsx`](src/features/auth/pages/Onboarding.tsx)
+### [ ] 2.16 Auth & Onboarding — [`src/features/auth/pages/Auth.tsx`](src/features/auth/pages/Auth.tsx), [`Onboarding.tsx`](src/features/auth/pages/Onboarding.tsx)
 
 These are standalone pages (no `MainLayout`) but are the first thing new users see on mobile.
 - Verify form fields are `font-size: 16px` (already enforced globally in `index.css`) to prevent iOS zoom
