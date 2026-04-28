@@ -3076,9 +3076,12 @@ export type Database = {
             Args: {
               p_architect_ids?: string[]
               p_attribute_ids?: string[]
+              p_building_statuses?: string[]
               p_category_id?: string
               p_city_filter?: string
+              p_contact_user_ids?: string[]
               p_country_filter?: string
+              p_credit_roles?: string[]
               p_limit: number
               p_offset: number
               p_region_filter?: string

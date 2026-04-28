@@ -2,6 +2,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { ContactInteraction, ContactRater } from "@/features/search/components/types";
+import type { CreditRole } from "@/features/credits/types";
 
 export interface DiscoveryFeedImageRow {
   id: string;
@@ -51,6 +52,9 @@ export interface DiscoveryFilters {
   typologyIds?: string[];
   attributeIds?: string[];
   architectIds?: string[];
+  creditRoles?: CreditRole[];
+  contactUserIds?: string[];
+  buildingStatuses?: string[];
 }
 
 export function useDiscoveryFeed(filters: DiscoveryFilters) {
@@ -58,10 +62,34 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
   const LIMIT = 10;
 
   // Destructure for dependency array stability
-  const { city, country, region, categoryId, typologyIds, attributeIds, architectIds } = filters;
+  const {
+    city,
+    country,
+    region,
+    categoryId,
+    typologyIds,
+    attributeIds,
+    architectIds,
+    creditRoles,
+    contactUserIds,
+    buildingStatuses,
+  } = filters;
 
   return useInfiniteQuery({
-    queryKey: ["discovery_feed", user?.id, city, country, region, categoryId, typologyIds, attributeIds, architectIds],
+    queryKey: [
+      "discovery_feed",
+      user?.id,
+      city,
+      country,
+      region,
+      categoryId,
+      typologyIds,
+      attributeIds,
+      architectIds,
+      creditRoles,
+      contactUserIds,
+      buildingStatuses,
+    ],
     queryFn: async ({ pageParam = 0 }) => {
       if (!user) return [];
 
@@ -76,6 +104,13 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
         ...(typologyIds && typologyIds.length > 0 ? { p_typology_ids: typologyIds } : {}),
         ...(attributeIds && attributeIds.length > 0 ? { p_attribute_ids: attributeIds } : {}),
         ...(architectIds && architectIds.length > 0 ? { p_architect_ids: architectIds } : {}),
+        ...(creditRoles && creditRoles.length > 0 ? { p_credit_roles: creditRoles } : {}),
+        ...(contactUserIds && contactUserIds.length > 0
+          ? { p_contact_user_ids: contactUserIds }
+          : {}),
+        ...(buildingStatuses && buildingStatuses.length > 0
+          ? { p_building_statuses: buildingStatuses }
+          : {}),
       });
 
       if (error) throw error;

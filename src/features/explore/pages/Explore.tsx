@@ -1,14 +1,23 @@
 /**
  * Explore — vertical discovery feed (snap scroll + swipe gestures).
  *
- * Layout: The immersive panel is `fixed` between app chrome — MobileTopBar +
- * BottomNav on small screens, AppTopNav on md+ — so imagery and controls sit
- * in the visible viewport rather than under the shell. Mobile uses the
- * shell’s `SidebarTrigger` (MobileTopBar); no duplicate menu control here.
- * Sidebar state is still closed on entry when the tutorial is dismissed so the
- * sheet does not cover the first paint.
+ * Layout: While the first-run tutorial is visible, MainLayout shows MobileTopBar +
+ * AppTopNav; the feed + tutorial sit below that chrome. After the tutorial is
+ * dismissed (or already seen), the horizontal top chrome hides for an immersive
+ * panel between the notch safe-area and BottomNav (mobile) or full viewport (md+).
+ * Sidebar is closed when the tutorial is not shown so the sheet does not cover the feed.
  */
-import { useState, useEffect, useMemo, useRef, useCallback, type RefCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useCallback,
+  type RefCallback,
+} from "react";
+import type { CreditRole } from "@/features/credits/types";
+import type { UserSearchResult } from "@/features/search/hooks/useUserSearch";
 import { Navigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -20,6 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ExploreTutorial } from "@/features/search/components/ExploreTutorial";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { useExploreShell } from "@/components/layout/ExploreShellContext";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import {
@@ -28,12 +38,23 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { DiscoverySearchInput } from "@/features/search/components/DiscoverySearchInput";
+import { DiscoveryFiltersPanel } from "@/features/search/components/DiscoveryFiltersPanel";
 
 export default function Explore() {
   const queryClient = useQueryClient();
   const { user, loading: authLoading } = useAuth();
-  const [showTutorial, setShowTutorial] = useState(false);
+  /** `null` until client reads localStorage — shell stays under top chrome until then. */
+  const [showTutorial, setShowTutorial] = useState<boolean | null>(null);
+
+  const { setExploreHideTopChrome } = useExploreShell();
+
+  useEffect(() => {
+    setShowTutorial(!localStorage.getItem("explore-tutorial-seen"));
+  }, []);
 
   const { setOpen, setOpenMobile, isMobile } = useSidebar();
 
@@ -48,27 +69,96 @@ export default function Explore() {
     region: string | null;
     label: string | null;
   }>({ city: null, country: null, region: null, label: null });
+  const [selectedPeople, setSelectedPeople] = useState<{ id: string; name: string }[]>(
+    []
+  );
+  const [selectedCreditCompany, setSelectedCreditCompany] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [selectedCreditRoles, setSelectedCreditRoles] = useState<CreditRole[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedTypologies, setSelectedTypologies] = useState<string[]>([]);
+  const [selectedAttributes, setSelectedAttributes] = useState<string[]>([]);
+  const [constructionStatuses, setConstructionStatuses] = useState<string[]>([]);
+  const [selectedContacts, setSelectedContacts] = useState<UserSearchResult[]>([]);
+
+  const architectIds = useMemo(() => {
+    const ids = selectedPeople.map((p) => p.id);
+    if (selectedCreditCompany) ids.push(selectedCreditCompany.id);
+    return ids.length > 0 ? ids : undefined;
+  }, [selectedPeople, selectedCreditCompany]);
+
+  const extraFilterCount = useMemo(() => {
+    let n = 0;
+    if (selectedPeople.length > 0) n++;
+    if (selectedContacts.length > 0) n++;
+    if (selectedCategory) n++;
+    if (selectedTypologies.length > 0) n++;
+    if (selectedAttributes.length > 0) n++;
+    if (constructionStatuses.length > 0) n++;
+    if (selectedCreditCompany) n++;
+    if (selectedCreditRoles.length > 0) n++;
+    return n;
+  }, [
+    selectedPeople.length,
+    selectedContacts.length,
+    selectedCategory,
+    selectedTypologies.length,
+    selectedAttributes.length,
+    constructionStatuses.length,
+    selectedCreditCompany,
+    selectedCreditRoles.length,
+  ]);
+
   const [isFilterVisible, setIsFilterVisible] = useState(true);
   const [isLocationSheetOpen, setIsLocationSheetOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  useLayoutEffect(() => {
+    if (showTutorial === null) {
+      setExploreHideTopChrome(false);
+      return () => {
+        setExploreHideTopChrome(false);
+      };
+    }
+    setExploreHideTopChrome(!showTutorial);
+    return () => {
+      setExploreHideTopChrome(false);
+    };
+  }, [showTutorial, setExploreHideTopChrome]);
+
   useEffect(() => {
-    const hasSeenTutorial = localStorage.getItem("explore-tutorial-seen");
-    if (!hasSeenTutorial) {
-      setShowTutorial(true);
-      // Sidebar hides when the user clicks "Begin exploring" in the tutorial
-    } else {
-      // No tutorial — hide sidebar immediately on page load
+    if (showTutorial === false) {
       closeSidebar();
     }
-  }, [closeSidebar]);
+  }, [showTutorial, closeSidebar]);
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
-    useDiscoveryFeed({
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    status,
+    refetch,
+    isFetching,
+  } = useDiscoveryFeed({
       city: locationFilter.city,
       country: locationFilter.country,
       region: locationFilter.region,
+      categoryId: selectedCategory,
+      typologyIds: selectedTypologies.length > 0 ? selectedTypologies : undefined,
+      attributeIds: selectedAttributes.length > 0 ? selectedAttributes : undefined,
+      architectIds,
+      creditRoles:
+        selectedCreditRoles.length > 0 ? selectedCreditRoles : undefined,
+      contactUserIds:
+        selectedContacts.length > 0
+          ? selectedContacts.map((c) => c.id)
+          : undefined,
+      buildingStatuses:
+        constructionStatuses.length > 0 ? constructionStatuses : undefined,
     });
 
   const { containerRef, isVisible } = useIntersectionObserver();
@@ -76,6 +166,21 @@ export default function Explore() {
   useEffect(() => {
     if (isVisible && hasNextPage && !isFetchingNextPage) fetchNextPage();
   }, [isVisible, hasNextPage, isFetchingNextPage]);
+
+  useEffect(() => {
+    scrollContainerRef.current?.scrollTo({ top: 0 });
+  }, [
+    locationFilter.city,
+    locationFilter.country,
+    locationFilter.region,
+    selectedCategory,
+    selectedTypologies,
+    selectedAttributes,
+    architectIds,
+    selectedCreditRoles,
+    selectedContacts,
+    constructionStatuses,
+  ]);
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
@@ -113,6 +218,17 @@ export default function Explore() {
     e.stopPropagation();
     setLocationFilter({ city: null, country: null, region: null, label: null });
   };
+
+  const handleResetExploreFilters = useCallback(() => {
+    setSelectedPeople([]);
+    setSelectedContacts([]);
+    setSelectedCategory(null);
+    setSelectedTypologies([]);
+    setSelectedAttributes([]);
+    setConstructionStatuses([]);
+    setSelectedCreditCompany(null);
+    setSelectedCreditRoles([]);
+  }, []);
 
   const allBuildings = data?.pages.flat() || [];
   const [hiddenBuildingIds, setHiddenBuildingIds] = useState<Set<string>>(
@@ -196,7 +312,7 @@ export default function Explore() {
     <AppLayout isFullScreen>
 
       {/* ── Tutorial overlay ── */}
-      {showTutorial && (
+      {showTutorial === true && (
         <ExploreTutorial
           onComplete={() => {
             setShowTutorial(false);
@@ -209,8 +325,9 @@ export default function Explore() {
       <div
         className={cn(
           "fixed left-0 right-0 z-[5] flex min-h-0 flex-col overflow-hidden bg-[#0A0A0A] text-white",
-          "top-[calc(3.5rem+env(safe-area-inset-top,0px))] bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))]",
-          "md:top-16 md:bottom-0"
+          showTutorial === false
+            ? "top-[env(safe-area-inset-top,0px)] bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:top-0 md:bottom-0"
+            : "top-[calc(3.5rem+env(safe-area-inset-top,0px))] bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:top-16 md:bottom-0"
         )}
       >
         <div className="relative flex min-h-0 flex-1 flex-col">
@@ -244,9 +361,14 @@ export default function Explore() {
                   )}
                   strokeWidth={1.5}
                 />
-                <span className="max-w-[160px] truncate">
+                <span className="max-w-[140px] truncate">
                   {locationFilter.label || "World"}
                 </span>
+                {extraFilterCount > 0 && (
+                  <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-white/20 text-[10px] font-semibold tabular-nums">
+                    {extraFilterCount}
+                  </span>
+                )}
                 {locationFilter.label && (
                   <span
                     role="button"
@@ -273,23 +395,51 @@ export default function Explore() {
 
               <SheetContent
                 side="right"
-                className="flex h-full w-3/4 flex-col overflow-visible border-l border-border-default bg-surface-default p-0 text-text-primary sm:w-search-serp sm:max-w-none"
+                className="flex h-full w-3/4 flex-col overflow-hidden border-l border-border-default bg-surface-default p-0 text-text-primary sm:w-search-serp sm:max-w-none"
               >
-                <SheetHeader className="border-b border-border-default px-6 pb-5 pt-6 text-left">
+                <SheetHeader className="border-b border-border-default px-6 pb-5 pt-6 text-left shrink-0">
                   <SheetTitle className="text-xs font-medium tracking-[0.2em] uppercase text-text-secondary">
-                    Filter by location
+                    Explore filters
                   </SheetTitle>
                 </SheetHeader>
-                <div className="flex min-h-0 flex-1 flex-col overflow-visible px-6 pb-6 pt-4">
-                  <DiscoverySearchInput
-                    value={searchValue}
-                    onSearchChange={setSearchValue}
-                    onLocationSelect={() => {}}
-                    onPlaceDetails={handlePlaceDetails}
-                    placeholder="Search city, region, or country..."
-                    className="w-full"
-                  />
-                </div>
+                <ScrollArea className="min-h-0 flex-1">
+                  <div className="space-y-6 px-6 pb-8 pt-4">
+                    <div className="space-y-3">
+                      <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
+                        Location
+                      </p>
+                      <DiscoverySearchInput
+                        value={searchValue}
+                        onSearchChange={setSearchValue}
+                        onLocationSelect={() => {}}
+                        onPlaceDetails={handlePlaceDetails}
+                        placeholder="Search city, region, or country..."
+                        className="w-full"
+                      />
+                    </div>
+                    <Separator />
+                    <DiscoveryFiltersPanel
+                      selectedPeople={selectedPeople}
+                      onPeopleChange={setSelectedPeople}
+                      selectedCreditCompany={selectedCreditCompany}
+                      onCreditCompanyChange={setSelectedCreditCompany}
+                      selectedCreditRoles={selectedCreditRoles}
+                      onCreditRolesChange={setSelectedCreditRoles}
+                      selectedCategory={selectedCategory}
+                      onCategoryChange={setSelectedCategory}
+                      selectedTypologies={selectedTypologies}
+                      onTypologiesChange={setSelectedTypologies}
+                      selectedAttributes={selectedAttributes}
+                      onAttributesChange={setSelectedAttributes}
+                      constructionStatuses={constructionStatuses}
+                      onConstructionStatusesChange={setConstructionStatuses}
+                      selectedContacts={selectedContacts}
+                      onContactsChange={setSelectedContacts}
+                      showContactPicker
+                      onResetGlobalFilters={handleResetExploreFilters}
+                    />
+                  </div>
+                </ScrollArea>
               </SheetContent>
             </Sheet>
           </div>
@@ -310,13 +460,22 @@ export default function Explore() {
 
           {/* Error */}
           {status === "error" && (
-            <div className="h-full w-full flex flex-col items-center justify-center snap-center gap-3">
+            <div className="h-full w-full flex flex-col items-center justify-center snap-center gap-4 px-8">
               <p className="text-2xs font-medium uppercase tracking-widest text-white/20">
                 Error
               </p>
-              <p className="text-base font-semibold text-white/60">
+              <p className="text-base font-semibold text-white/60 text-center">
                 Failed to load feed
               </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-none border-white/20 bg-transparent text-white/80 hover:bg-white/10 hover:text-white"
+                onClick={() => void refetch()}
+                disabled={isFetching}
+              >
+                Try again
+              </Button>
             </div>
           )}
 

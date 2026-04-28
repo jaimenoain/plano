@@ -11,12 +11,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { PersonFilterSelect } from '@/features/search/components/PersonFilterSelect';
-import { CompanyMapFilterSelect } from '@/features/search/components/CompanyMapFilterSelect';
-import { CREDIT_ROLES } from '@/features/credits/api/credits';
-import { formatCreditRoleLabel } from '@/features/credits/formatCreditRole';
-import type { CreditRole } from '@/features/credits/types';
-import { ContactPicker } from '@/features/search/components/ContactPicker';
+import { DiscoveryFiltersPanel } from '@/features/search/components/DiscoveryFiltersPanel';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useBuildingSearch } from '@/features/search/hooks/useBuildingSearch';
 import { MapMode } from '@/types/plano-map';
@@ -29,61 +24,8 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
-import { UserSearchResult } from '@/features/search/hooks/useUserSearch';
-
-interface MultiSelectCheckboxListProps {
-  items: { id: string; name: string }[];
-  selectedIds: string[];
-  onChange: (ids: string[]) => void;
-  className?: string;
-}
-
-function MultiSelectCheckboxList({ items, selectedIds, onChange, className }: MultiSelectCheckboxListProps) {
-  const toggleItem = (id: string) => {
-    if (selectedIds.includes(id)) {
-      onChange(selectedIds.filter(itemId => itemId !== id));
-    } else {
-      onChange([...selectedIds, id]);
-    }
-  };
-
-  if (items.length === 0) {
-    return <div className="text-xs text-text-secondary py-2">No items available</div>;
-  }
-
-  return (
-    <ScrollArea className={cn("h-[200px] w-full border rounded-md p-2", className)}>
-      <div className="space-y-2">
-        {items.map((item) => (
-          <div key={item.id} className="flex items-center space-x-2">
-            <Checkbox
-              id={item.id}
-              checked={selectedIds.includes(item.id)}
-              onCheckedChange={() => toggleItem(item.id)}
-            />
-            <Label
-              htmlFor={item.id}
-              className="text-sm font-normal cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-              {item.name}
-            </Label>
-          </div>
-        ))}
-      </div>
-    </ScrollArea>
-  );
-}
+} from '@/components/ui/accordion';
+import type { UserSearchResult } from '@/features/search/hooks/useUserSearch';
 
 export function FilterDrawer() {
   const {
@@ -126,8 +68,6 @@ export function FilterDrawer() {
   } = useBuildingSearch();
 
   const {
-    functionalCategories,
-    functionalTypologies,
     materialityAttributes,
     contextAttributes,
     styleAttributes,
@@ -202,61 +142,9 @@ export function FilterDrawer() {
     }
   };
 
-  const handleCategoryChange = (categoryId: string) => {
-    const value = categoryId === "all" ? null : categoryId;
-    setSelectedCategory(value);
-
-    const validTypologies = value
-      ? currentTypologies.filter(typId => {
-          const typ = functionalTypologies.find(t => t.id === typId);
-          return typ && typ.parent_category_id === value;
-        })
-      : currentTypologies;
-
-    if (validTypologies.length !== currentTypologies.length) {
-      setSelectedTypologies(validTypologies);
-    }
-  };
-
-  const handleTypologiesChange = (ids: string[]) => {
-    setSelectedTypologies(ids);
-  };
-
   const currentMaterials = currentMaterialsAndStylesAndContexts.filter(id => materialityAttributes.some(a => a.id === id));
   const currentStyles = currentMaterialsAndStylesAndContexts.filter(id => styleAttributes.some(a => a.id === id));
   const currentContexts = currentMaterialsAndStylesAndContexts.filter(id => contextAttributes.some(a => a.id === id));
-
-  const handleMaterialsChange = (ids: string[]) => {
-    const otherAttributes = currentMaterialsAndStylesAndContexts.filter(id => !materialityAttributes.some(a => a.id === id));
-    setSelectedAttributes([...otherAttributes, ...ids]);
-  };
-
-  const handleContextsChange = (ids: string[]) => {
-    const otherAttributes = currentMaterialsAndStylesAndContexts.filter(id => !contextAttributes.some(a => a.id === id));
-    setSelectedAttributes([...otherAttributes, ...ids]);
-  };
-
-  const handleStylesChange = (ids: string[]) => {
-    const otherAttributes = currentMaterialsAndStylesAndContexts.filter(id => !styleAttributes.some(a => a.id === id));
-    setSelectedAttributes([...otherAttributes, ...ids]);
-  };
-
-  const handleConstructionStatusesChange = (ids: string[]) => {
-    setConstructionStatuses(ids);
-  };
-
-  const creditRoleItems = useMemo(
-    () =>
-      CREDIT_ROLES.map((role) => ({
-        id: role,
-        name: formatCreditRoleLabel(role, null),
-      })),
-    []
-  );
-
-  const handleCreditRolesChange = (ids: string[]) => {
-    setSelectedCreditRoles(ids as CreditRole[]);
-  };
 
   const handleResetGlobalFilters = () => {
     setSelectedPeople([]);
@@ -342,11 +230,6 @@ export function FilterDrawer() {
     selectedCreditCompany,
     selectedCreditRoles,
   ]);
-
-  const filteredTypologies = useMemo(() => {
-    if (!currentCategory) return functionalTypologies;
-    return functionalTypologies.filter(t => t.parent_category_id === currentCategory);
-  }, [functionalTypologies, currentCategory]);
 
   const getTierLabel = (value: number) => {
     switch (value) {
@@ -504,160 +387,26 @@ export function FilterDrawer() {
 
           <Separator />
 
-          {/* Global Filters */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider text-xs">
-                Global Filters
-              </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleResetGlobalFilters}
-                className="h-auto p-0 text-xs text-text-secondary hover:text-text-primary"
-              >
-                Reset
-              </Button>
-            </div>
-
-            <Accordion type="single" collapsible className="w-full">
-              {/* Curators & Friends — only in Discover/unset mode */}
-              {mode !== 'library' && (
-                <AccordionItem value="curators">
-                  <AccordionTrigger className="text-sm">Curators & Friends</AccordionTrigger>
-                  <AccordionContent>
-                    <ContactPicker
-                      selectedContacts={currentContacts}
-                      setSelectedContacts={handleContactsChange}
-                      placeholder="Search people..."
-                    />
-                  </AccordionContent>
-                </AccordionItem>
-              )}
-
-              {/* Credits — people, companies, and roles */}
-              <AccordionItem value="credits">
-                <AccordionTrigger className="text-sm">Credits</AccordionTrigger>
-                <AccordionContent className="space-y-4 pt-2">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium text-text-secondary">People</Label>
-                    <PersonFilterSelect
-                      selectedPeople={currentPeople}
-                      setSelectedPeople={handlePeopleFilterChange}
-                      placeholder="Search people..."
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium text-text-secondary">Company</Label>
-                    <CompanyMapFilterSelect
-                      selectedCompany={selectedCreditCompany}
-                      setSelectedCompany={setSelectedCreditCompany}
-                      placeholder="Search companies…"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium text-text-secondary">Role</Label>
-                    <MultiSelectCheckboxList
-                      items={creditRoleItems}
-                      selectedIds={selectedCreditRoles}
-                      onChange={handleCreditRolesChange}
-                      className="h-[180px]"
-                    />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Function */}
-              <AccordionItem value="function">
-                <AccordionTrigger className="text-sm">Function</AccordionTrigger>
-                <AccordionContent className="space-y-4 pt-2">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium text-text-secondary">Category</Label>
-                    <Select
-                      value={currentCategory || "all"}
-                      onValueChange={handleCategoryChange}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
-                        {functionalCategories.map(cat => (
-                          <SelectItem key={cat.id} value={cat.id}>
-                            {cat.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium text-text-secondary">Typology</Label>
-                    <MultiSelectCheckboxList
-                      items={filteredTypologies}
-                      selectedIds={currentTypologies}
-                      onChange={handleTypologiesChange}
-                      className="h-[150px]"
-                    />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Materiality */}
-              <AccordionItem value="materiality">
-                <AccordionTrigger className="text-sm">Materiality</AccordionTrigger>
-                <AccordionContent className="pt-2">
-                  <MultiSelectCheckboxList
-                    items={materialityAttributes}
-                    selectedIds={currentMaterials}
-                    onChange={handleMaterialsChange}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Style */}
-              <AccordionItem value="style">
-                <AccordionTrigger className="text-sm">Style</AccordionTrigger>
-                <AccordionContent className="pt-2">
-                  <MultiSelectCheckboxList
-                    items={styleAttributes}
-                    selectedIds={currentStyles}
-                    onChange={handleStylesChange}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Context */}
-              <AccordionItem value="context">
-                <AccordionTrigger className="text-sm">Context</AccordionTrigger>
-                <AccordionContent className="pt-2">
-                  <MultiSelectCheckboxList
-                    items={contextAttributes}
-                    selectedIds={currentContexts}
-                    onChange={handleContextsChange}
-                  />
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Global Status */}
-              <AccordionItem value="construction_status">
-                <AccordionTrigger className="text-sm">Global Status</AccordionTrigger>
-                <AccordionContent className="pt-2">
-                  <MultiSelectCheckboxList
-                    items={[
-                      { id: 'Built', name: 'Built' },
-                      { id: 'Lost', name: 'Lost' },
-                      { id: 'Under Construction', name: 'Under Construction' },
-                      { id: 'Unbuilt', name: 'Unbuilt' },
-                    ]}
-                    selectedIds={constructionStatuses || []}
-                    onChange={handleConstructionStatusesChange}
-                    className="h-[150px]"
-                  />
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
+          <DiscoveryFiltersPanel
+            selectedPeople={currentPeople}
+            onPeopleChange={handlePeopleFilterChange}
+            selectedCreditCompany={selectedCreditCompany}
+            onCreditCompanyChange={setSelectedCreditCompany}
+            selectedCreditRoles={selectedCreditRoles}
+            onCreditRolesChange={setSelectedCreditRoles}
+            selectedCategory={currentCategory}
+            onCategoryChange={setSelectedCategory}
+            selectedTypologies={currentTypologies}
+            onTypologiesChange={setSelectedTypologies}
+            selectedAttributes={currentMaterialsAndStylesAndContexts}
+            onAttributesChange={setSelectedAttributes}
+            constructionStatuses={constructionStatuses ?? []}
+            onConstructionStatusesChange={setConstructionStatuses}
+            selectedContacts={currentContacts}
+            onContactsChange={handleContactsChange}
+            showContactPicker={mode !== 'library'}
+            onResetGlobalFilters={handleResetGlobalFilters}
+          />
         </div>
       </SheetContent>
     </Sheet>

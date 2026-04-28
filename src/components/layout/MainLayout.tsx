@@ -1,17 +1,22 @@
-import { Outlet, useRouteLoaderData } from "react-router";
+import { useEffect, useState } from "react";
+import { Outlet, useLocation, useRouteLoaderData } from "react-router";
 import {
   SidebarProvider,
   SidebarInset,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 import { AppSidebar } from "./AppSidebar";
 import { MobileTopBar } from "./MobileTopBar";
 import { AppTopNav } from "./AppTopNav";
+import { ExploreShellProvider } from "./ExploreShellContext";
 
-
-function MainLayoutInset() {
+function MainLayoutInset({ hideTopInset }: { hideTopInset: boolean }) {
   return (
     <SidebarInset
-      className="min-w-0 bg-surface-default pt-14 md:pt-16"
+      className={cn(
+        "min-w-0 bg-surface-default",
+        hideTopInset ? "pt-0" : "pt-14 md:pt-16"
+      )}
       data-testid="main-layout"
     >
       <Outlet />
@@ -29,16 +34,32 @@ function MainLayout() {
     | { sidebarOpen: boolean | null }
     | undefined;
 
+  const location = useLocation();
+  const [exploreHideTopChrome, setExploreHideTopChrome] = useState(false);
+
+  const hideExploreTopChrome =
+    location.pathname === "/explore" && exploreHideTopChrome;
+
+  useEffect(() => {
+    if (location.pathname !== "/explore") {
+      setExploreHideTopChrome(false);
+    }
+  }, [location.pathname]);
+
   return (
-    <SidebarProvider
-      defaultOpen={true}
-      initialOpen={rootData?.sidebarOpen ?? undefined}
+    <ExploreShellProvider
+      value={{ setExploreHideTopChrome }}
     >
-      <AppSidebar />
-      <MobileTopBar />
-      <AppTopNav />
-      <MainLayoutInset />
-    </SidebarProvider>
+      <SidebarProvider
+        defaultOpen={true}
+        initialOpen={rootData?.sidebarOpen ?? undefined}
+      >
+        <AppSidebar />
+        {!hideExploreTopChrome && <MobileTopBar />}
+        {!hideExploreTopChrome && <AppTopNav />}
+        <MainLayoutInset hideTopInset={hideExploreTopChrome} />
+      </SidebarProvider>
+    </ExploreShellProvider>
   );
 }
 

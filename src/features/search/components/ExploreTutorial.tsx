@@ -9,12 +9,21 @@
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Bookmark, EyeOff, MoveUp } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ExploreTutorialProps {
   onComplete: () => void;
+  /**
+   * When true (default), the overlay sits below MobileTopBar + AppTopNav and above BottomNav
+   * so the shell header stays visible and interactive.
+   */
+  belowAppTopChrome?: boolean;
 }
 
-export function ExploreTutorial({ onComplete }: ExploreTutorialProps) {
+export function ExploreTutorial({
+  onComplete,
+  belowAppTopChrome = true,
+}: ExploreTutorialProps) {
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
   const handleComplete = () => {
@@ -25,7 +34,14 @@ export function ExploreTutorial({ onComplete }: ExploreTutorialProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-sm animate-in fade-in duration-500">
+    <div
+      className={cn(
+        "fixed left-0 right-0 z-[55] bg-black/95 backdrop-blur-sm animate-in fade-in duration-500",
+        belowAppTopChrome
+          ? "bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:bottom-0 top-[calc(3.5rem+env(safe-area-inset-top,0px))] md:top-16"
+          : "inset-0"
+      )}
+    >
       {/* Full-height layout: title top, gestures middle, CTA bottom */}
       <div className="h-full flex flex-col justify-between px-8 sm:px-12 py-12 sm:py-16 max-w-md">
 

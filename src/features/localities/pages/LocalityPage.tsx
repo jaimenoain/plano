@@ -185,71 +185,108 @@ interface LocalityStats {
 }
 
 // ---------------------------------------------------------------------------
-// Shared section label — mirrors `text-[10px] font-medium uppercase tracking-widest`
+// Shared section label — editorial micro‑heading
 // pattern used throughout BuildingDetails.
 // ---------------------------------------------------------------------------
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
+    <h2 className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
       {children}
     </h2>
   );
 }
 
 // ---------------------------------------------------------------------------
-// LocalityHero — community-sourced hero image + dramatic editorial title
+// LocalityHero — photography-first hero with overlay title, or typographic fall‑back
 // ---------------------------------------------------------------------------
 function LocalityHero({
   city,
   country,
+  countryCode,
+  region,
   heroImageUrl,
   heroCreditUsername,
   heroSourceBuilding,
 }: {
   city: string;
   country: string;
+  countryCode: string;
+  region: string | null;
   heroImageUrl: string | null;
   heroCreditUsername?: string | null;
   heroSourceBuilding?: string | null;
 }) {
   const absoluteUrl = getBuildingImageUrl(heroImageUrl) ?? null;
+  const cc = countryCode.toLowerCase();
 
-  return (
-    <>
-      {absoluteUrl ? (
-        <div className="relative">
-          <BuildingHero src={absoluteUrl} alt={`${city}, ${country}`} />
-          {/* Community photo credit — bottom-right overlay */}
-          {heroCreditUsername ? (
-            <div className="absolute bottom-3 right-4 flex items-center gap-1.5 text-[10px] text-text-inverse/70">
-              <Camera className="h-3 w-3" aria-hidden />
-              {heroSourceBuilding ? (
-                <span>
-                  {heroSourceBuilding} · @{heroCreditUsername}
-                </span>
-              ) : (
-                <span>@{heroCreditUsername}</span>
-              )}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
+  const eyebrow = (
+    <Link
+      to={`/architecture/${cc}`}
+      className="inline-flex w-fit text-2xs font-medium uppercase tracking-widest text-text-inverse/75 transition-colors hover:text-text-inverse"
+    >
+      {country}
+    </Link>
+  );
 
-      <header className="border-b border-border-default pb-10">
-        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+  const eyebrowMuted = (
+    <Link
+      to={`/architecture/${cc}`}
+      className="inline-flex w-fit text-2xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+    >
+      {country}
+    </Link>
+  );
+
+  if (absoluteUrl) {
+    return (
+      <BuildingHero src={absoluteUrl} alt={`${city}, ${country}`}>
+        <div className="flex w-full max-w-4xl flex-col gap-6">
           <div className="space-y-3">
-            {/* Eyebrow — country name */}
-            <span className="block text-2xs font-medium uppercase tracking-widest text-text-secondary">
-              {country}
-            </span>
-
-            <h1 className="text-4xl font-bold leading-tight tracking-tight text-text-primary md:text-5xl lg:text-6xl">
+            {eyebrow}
+            {region ? (
+              <p className="text-2xs-plus font-medium uppercase tracking-widest text-text-inverse/60">
+                {region}
+              </p>
+            ) : null}
+            <h1 className="text-4xl font-bold leading-[1.05] tracking-tight text-text-inverse md:text-5xl lg:text-6xl">
               {city}
             </h1>
           </div>
+          {heroCreditUsername ? (
+            <div className="flex items-center justify-end gap-1.5 text-2xs text-text-inverse/70">
+              <Camera className="h-3 w-3 shrink-0" aria-hidden />
+              <span>
+                {heroSourceBuilding ? (
+                  <>
+                    {heroSourceBuilding} · @{heroCreditUsername}
+                  </>
+                ) : (
+                  <>@{heroCreditUsername}</>
+                )}
+              </span>
+            </div>
+          ) : null}
         </div>
-      </header>
-    </>
+      </BuildingHero>
+    );
+  }
+
+  return (
+    <header className="border-b border-border-default bg-surface-default">
+      <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+        <div className="space-y-3">
+          {eyebrowMuted}
+          {region ? (
+            <p className="text-2xs-plus font-medium uppercase tracking-widest text-text-disabled">
+              {region}
+            </p>
+          ) : null}
+          <h1 className="text-4xl font-bold leading-[1.05] tracking-tight text-text-primary md:text-5xl lg:text-6xl">
+            {city}
+          </h1>
+        </div>
+      </div>
+    </header>
   );
 }
 
@@ -281,20 +318,14 @@ function LocalityStats({ stats }: { stats: LocalityStats }) {
   ];
 
   return (
-    <div className="grid grid-cols-2 border border-border-default sm:grid-cols-4">
-      {items.map((item, i) => (
-        <div
-          key={item.label}
-          className={cn(
-            "flex flex-col gap-1 px-5 py-4",
-            i < items.length - 1 && "border-r border-border-default",
-          )}
-        >
-          <span className="text-2xl font-bold tracking-tight text-text-primary">
+    <div className="grid grid-cols-2 gap-x-6 gap-y-8 border-b border-border-default py-10 sm:grid-cols-4 sm:gap-x-4">
+      {items.map((item) => (
+        <div key={item.label} className="flex min-w-0 flex-col gap-2">
+          <span className="font-display text-3xl font-semibold tabular-nums tracking-tight text-text-primary md:text-4xl">
             {item.value}
           </span>
-          <span className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
-            <item.icon className="h-3 w-3" aria-hidden />
+          <span className="flex items-center gap-1.5 text-2xs font-medium uppercase tracking-widest text-text-secondary">
+            <item.icon className="h-3 w-3 shrink-0" aria-hidden />
             {item.label}
           </span>
         </div>
@@ -315,36 +346,63 @@ function QuickActions({
   citySlug: string;
   countryCode: string;
 }) {
+  const actions = [
+    {
+      to: `/map?locality=${citySlug}&cc=${countryCode}`,
+      icon: Map,
+      label: "Explore map",
+      emphasize: true,
+    },
+    {
+      to: `/collections/new?locality=${citySlug}`,
+      icon: BookOpen,
+      label: "Create itinerary",
+      emphasize: false,
+    },
+    {
+      to: `/buildings/new?city=${encodeURIComponent(city)}`,
+      icon: Plus,
+      label: "Add a building",
+      emphasize: false,
+    },
+  ] as const;
+
   return (
-    <div className="flex flex-wrap items-center gap-3 border-b border-border-default pb-8 pt-6">
-      <Link
-        to={`/map?locality=${citySlug}&cc=${countryCode}`}
-        className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary"
-      >
-        <Map className="mr-1.5 inline h-3.5 w-3.5" aria-hidden />
-        Explore map →
-      </Link>
-      <span className="text-text-disabled" aria-hidden>
-        ·
-      </span>
-      <Link
-        to={`/collections/new?locality=${citySlug}`}
-        className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-      >
-        <BookOpen className="mr-1.5 inline h-3.5 w-3.5" aria-hidden />
-        Create itinerary →
-      </Link>
-      <span className="text-text-disabled" aria-hidden>
-        ·
-      </span>
-      <Link
-        to={`/buildings/new?city=${encodeURIComponent(city)}`}
-        className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-      >
-        <Plus className="mr-1.5 inline h-3.5 w-3.5" aria-hidden />
-        Add a building →
-      </Link>
-    </div>
+    <nav
+      aria-label="City actions"
+      className="grid gap-0 border-b border-border-default sm:grid-cols-3"
+    >
+      {actions.map(({ to, icon: Icon, label, emphasize }) => (
+        <Link
+          key={to}
+          to={to}
+          className={cn(
+            "group flex items-center justify-between gap-3 border-t border-border-default px-1 py-5 transition-colors first:border-t-0 sm:border-t-0 sm:border-l sm:px-5 sm:py-6 sm:first:border-l-0",
+            emphasize
+              ? "text-text-primary"
+              : "text-text-secondary hover:text-text-primary",
+          )}
+        >
+          <span className="flex min-w-0 items-center gap-2.5">
+            <Icon
+              className={cn(
+                "h-4 w-4 shrink-0 transition-colors",
+                emphasize
+                  ? "text-text-primary group-hover:text-text-secondary"
+                  : "text-text-secondary group-hover:text-text-primary",
+              )}
+              aria-hidden
+            />
+            <span className="text-xs font-medium uppercase tracking-widest transition-colors group-hover:text-text-secondary">
+              {label}
+            </span>
+          </span>
+          <span className="shrink-0 text-xs text-text-primary" aria-hidden>
+            →
+          </span>
+        </Link>
+      ))}
+    </nav>
   );
 }
 
@@ -389,7 +447,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "border px-2.5 py-1 text-[10px] font-medium uppercase tracking-widest transition-colors",
+        "border px-2.5 py-1 text-2xs font-medium uppercase tracking-widest transition-colors",
         active
           ? "border-text-primary bg-text-primary text-text-inverse"
           : "border-border-default text-text-secondary hover:border-text-primary hover:text-text-primary",
@@ -429,8 +487,8 @@ function LocalityMap({ localityId }: { localityId: string }) {
   const hasActiveFilter = styleFilter || accessFilter || statusFilter;
 
   return (
-    <section className="mt-12 border-t border-border-default pt-10">
-      <div className="mb-4 flex items-center justify-between gap-2">
+    <section className="mt-16 border-t border-border-default pt-12">
+      <div className="mb-6 flex items-center justify-between gap-2">
         <SectionLabel>Map</SectionLabel>
         {hasActiveFilter ? (
           <button
@@ -440,7 +498,7 @@ function LocalityMap({ localityId }: { localityId: string }) {
               setAccessFilter(null);
               setStatusFilter(null);
             }}
-            className="text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
+            className="text-2xs font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
           >
             Clear filters
           </button>
@@ -489,7 +547,7 @@ function LocalityMap({ localityId }: { localityId: string }) {
       </div>
 
       {/* Map */}
-      <div className="h-[480px] overflow-hidden border border-border-default">
+      <div className="h-[min(520px,65vh)] overflow-hidden border border-border-default bg-surface-muted">
         <ClientOnly
           fallback={
             <div className="flex h-full w-full items-center justify-center bg-surface-muted">
@@ -592,8 +650,8 @@ function LocalityStewards({ stewards }: { stewards: LocalitySteward[] }) {
   });
 
   return (
-    <section className="mt-12 border-t border-border-default pt-10">
-      <div className="mb-1 flex items-center justify-between gap-2">
+    <section className="mt-16 border-t border-border-default pt-12">
+      <div className="mb-2 flex items-center justify-between gap-2">
         <SectionLabel>Local experts &amp; stewards</SectionLabel>
       </div>
       <p className="mb-4 text-[11px] text-text-disabled">
@@ -623,7 +681,7 @@ function LocalityEvents({
   if (events.length === 0) return null;
 
   return (
-    <section className="mt-12 border-t border-border-default pt-10">
+    <section className="mt-16 border-t border-border-default pt-12">
       <div className="mb-6 flex items-center justify-between gap-2">
         <SectionLabel>Events</SectionLabel>
         <Link
@@ -756,7 +814,7 @@ function LocalityCityGuides({
   if (collections.length === 0) return null;
 
   return (
-    <section className="mt-12 border-t border-border-default pt-10">
+    <section className="mt-16 border-t border-border-default pt-12">
       <div className="mb-6 flex items-center justify-between gap-2">
         <SectionLabel>City guides</SectionLabel>
         <Link
@@ -977,8 +1035,8 @@ function LocalityActivityStream({
   if (items.length === 0) return null;
 
   return (
-    <section className="mt-12 border-t border-border-default pt-10">
-      <div className="mb-4 flex items-center justify-between gap-2">
+    <section className="mt-16 border-t border-border-default pt-12">
+      <div className="mb-6 flex items-center justify-between gap-2">
         <SectionLabel>Recent activity</SectionLabel>
         <Link
           to={`/explore?cc=${countryCode}&city=${citySlug}`}
@@ -1130,6 +1188,8 @@ export default function LocalityPage() {
       <LocalityHero
         city={locality.city}
         country={locality.country}
+        countryCode={locality.country_code}
+        region={locality.region}
         heroImageUrl={locality.hero_image_url}
         heroCreditUsername={heroCreditUsername}
         heroSourceBuilding={heroSourceBuilding}
@@ -1151,7 +1211,7 @@ export default function LocalityPage() {
 
         {/* ── Description ── */}
         {locality.description ? (
-          <p className="mt-8 max-w-2xl text-base leading-relaxed text-text-secondary">
+          <p className="mt-12 max-w-2xl text-lg leading-relaxed text-text-secondary md:text-xl md:leading-relaxed">
             {locality.description}
           </p>
         ) : null}
@@ -1160,8 +1220,8 @@ export default function LocalityPage() {
         <LocalityMap localityId={locality.id} />
 
         {/* ── Buildings ── */}
-        <section className="mt-12 border-t border-border-default pt-10">
-          <div className="mb-6 flex items-center justify-between gap-2">
+        <section className="mt-16 border-t border-border-default pt-12">
+          <div className="mb-8">
             <SectionLabel>Buildings</SectionLabel>
           </div>
           <LocalityBuildingsGrid
@@ -1190,9 +1250,15 @@ export default function LocalityPage() {
           countryCode={countryCode}
         />
 
-        <div className="border-t border-border-default mt-12 pt-6 pb-10 flex items-center justify-between">
-          <Link to="/guides" className="text-xs text-text-secondary hover:text-text-primary transition-colors">
-            ← Back to guides
+        <div className="mt-16 flex items-center justify-between border-t border-border-default pb-12 pt-10">
+          <Link
+            to="/guides"
+            className="group inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+          >
+            <span className="transition-transform group-hover:-translate-x-0.5" aria-hidden>
+              ←
+            </span>
+            Back to guides
           </Link>
         </div>
       </div>
