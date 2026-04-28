@@ -78,19 +78,21 @@ function calculateTierRank(item: MapClusterV2RpcRow): number {
   const isLibraryItem = userRating > 0 || status === 'visited' || status === 'saved' || status === 'pending';
 
   if (isLibraryItem) {
+    // My Library — Michelin dots: 3 / 2 / 1 / Rest (aligned with getPinStyle tiers)
     if (userRating >= 3) return 3;
-    if (userRating >= 1) return 2;
-    // Rating 0, or just saved -> Standard (Rank 1)
+    if (userRating === 2) return 2;
+    if (userRating === 1) return 1;
+    // Rating 0 or saved/visited without numeric rating
     return 1;
   }
 
-  // Discover Context
-  const label = item.tier_rank; // This comes from DB as string
+  // Discover — percentile bands (numeric rank for downstream aggregation; pins use labels in getPinStyle)
+  const label = item.tier_rank;
 
   if (label === 'Top 1%') return 3;
-  if (label === 'Top 5%' || label === 'Top 10%' || label === 'Top 20%') return 2;
+  if (label === 'Top 5%') return 2;
+  if (label === 'Top 20%' || label === 'Top 10%') return 1;
 
-  // "Standard", or anything else -> 1
   return 1;
 }
 

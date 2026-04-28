@@ -79,28 +79,28 @@ export function getPinStyle(item: ClusterResponse): PinStyle {
   const isLibraryItem = userRating > 0 || item.status === 'visited' || item.status === 'saved' || item.status === 'pending';
 
   if (isLibraryItem) {
-    // Context 1: My Library
+    // My Library — Michelin dots → pin tiers (most → least prominent): 3 / 2 / 1 / Rest
     if (userRating >= 3) {
-      // Tier S (User): Lime Theme
       tier = 'S';
     } else if (userRating === 2) {
       tier = 'A';
     } else if (userRating === 1) {
       tier = 'B';
     } else {
-      // Rating 0 or just Saved
       tier = 'C';
     }
   } else {
-    // Context 2: Discover (No User Rating)
+    // Context 2: Discover — global percentile bands (most → least prominent)
     const rank = item.tier_rank_label;
     if (rank === 'Top 1%') {
       tier = 'S';
     } else if (rank === 'Top 5%') {
       tier = 'A';
-    } else if (rank === 'Top 10%' || rank === 'Top 20%') {
+    } else if (rank === 'Top 20%' || rank === 'Top 10%') {
+      // Third prominence band; DB may still use legacy `Top 10%` between 5% and 20%
       tier = 'B';
     } else {
+      // Standard, Top 25%, unknown — Rest
       tier = 'C';
     }
   }

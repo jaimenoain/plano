@@ -72,11 +72,19 @@ describe('getPinStyle', () => {
       expect(style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
     });
 
-    it("returns Tier B for 'Top 10%'", () => {
+    it("returns Tier B for 'Top 10%' (same third band as Top 20%)", () => {
       const item = createMockBuilding({ tier_rank_label: 'Top 10%' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('B');
       expect(style.size).toBe(20);
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.white);
+    });
+
+    it("returns Tier A for 'Top 5%'", () => {
+      const item = createMockBuilding({ tier_rank_label: 'Top 5%' });
+      const style = getPinStyle(item);
+      expect(style.tier).toBe('A');
+      expect(style.size).toBe(30);
       expect(style.backgroundColor).toBe(MAP_MARKER_FILL.white);
     });
 
@@ -88,10 +96,9 @@ describe('getPinStyle', () => {
       expect(style.backgroundColor).toBe(MAP_MARKER_FILL.white);
     });
 
-    it('returns Tier C for other ranks', () => {
-      const item = createMockBuilding({ tier_rank_label: 'Standard' });
-      const style = getPinStyle(item);
-      expect(style.tier).toBe('C');
+    it('returns Tier C for Standard and Top 25%', () => {
+      expect(getPinStyle(createMockBuilding({ tier_rank_label: 'Standard' })).tier).toBe('C');
+      expect(getPinStyle(createMockBuilding({ tier_rank_label: 'Top 25%' })).tier).toBe('C');
     });
   });
 
