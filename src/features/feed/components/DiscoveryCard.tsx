@@ -16,7 +16,7 @@
  *   - Save icon integrated into the name row (right side), no separate Button
  *
  * Swipe feedback stamps:
- *   - Rotated bookmark (save) in brand-primary, "HIDE" typographic stamp for skip
+ *   - Rotated bookmark (save) on success-tinted disc + green wash; "HIDE" stamp for skip
  *
  * Rating overlay:
  *   - "Add points? (Optional)" header → tiny tracking-widest uppercase label
@@ -276,7 +276,7 @@ export function DiscoveryCard({
 
       {/* ── Colour overlays (swipe feedback) ── */}
       <motion.div
-        className="absolute inset-0 bg-brand-primary z-[15] pointer-events-none"
+        className="absolute inset-0 bg-feedback-success z-[15] pointer-events-none"
         style={{ opacity: likeOverlayOpacity }}
       />
       <motion.div
@@ -289,12 +289,16 @@ export function DiscoveryCard({
         style={{ opacity: likeOpacity }}
         className="absolute top-1/2 left-6 z-50 pointer-events-none -translate-y-1/2"
       >
-        <Bookmark
-          className="h-16 w-16 text-brand-primary"
-          strokeWidth={1.75}
+        <div
+          className="flex items-center justify-center rounded-full bg-feedback-success p-4 shadow-card-elevated"
           style={{ transform: "rotate(-12deg)" }}
-          aria-hidden
-        />
+        >
+          <Bookmark
+            className="h-10 w-10 text-white"
+            strokeWidth={2}
+            aria-hidden
+          />
+        </div>
       </motion.div>
       <motion.div
         style={{ opacity: nopeOpacity }}

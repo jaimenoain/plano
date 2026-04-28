@@ -18,7 +18,7 @@ import {
 } from "react";
 import type { CreditRole } from "@/features/credits/types";
 import type { UserSearchResult } from "@/features/search/hooks/useUserSearch";
-import { Navigate } from "react-router";
+import { Navigate, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useDiscoveryFeed } from "@/features/feed/hooks/useDiscoveryFeed";
@@ -32,6 +32,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { useExploreShell } from "@/components/layout/ExploreShellContext";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { extractLocationDetails } from "@/lib/location-utils";
 import {
   Sheet,
   SheetContent,
@@ -45,6 +46,7 @@ import { DiscoverySearchInput } from "@/features/search/components/DiscoverySear
 import { DiscoveryFiltersPanel } from "@/features/search/components/DiscoveryFiltersPanel";
 
 export default function Explore() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, loading: authLoading } = useAuth();
   /** `null` until client reads localStorage — shell stays under top chrome until then. */
@@ -135,6 +137,16 @@ export default function Explore() {
     }
   }, [showTutorial, closeSidebar]);
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (isLocationSheetOpen) return;
+      navigate("/", { replace: true });
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [navigate, isLocationSheetOpen]);
+
   const {
     data,
     fetchNextPage,
@@ -198,18 +210,15 @@ export default function Explore() {
   };
 
   const handlePlaceDetails = (details: google.maps.GeocoderResult) => {
-    let city: string | null = null;
-    let country: string | null = null;
+    const { city, country } = extractLocationDetails(details);
     let region: string | null = null;
-    let label = details.formatted_address;
-
-    details.address_components.forEach((comp) => {
-      if (comp.types.includes("locality")) city = comp.long_name;
-      if (comp.types.includes("country")) country = comp.long_name;
-      if (comp.types.includes("administrative_area_level_1"))
+    details.address_components?.forEach((comp) => {
+      if (comp.types.includes("administrative_area_level_1")) {
         region = comp.long_name;
+      }
     });
 
+    let label = details.formatted_address;
     if (city) label = city;
     else if (region) label = region;
     else if (country) label = country;

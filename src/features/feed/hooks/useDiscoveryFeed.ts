@@ -93,6 +93,9 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
     queryFn: async ({ pageParam = 0 }) => {
       if (!user) return [];
 
+      // Always send extended-only array params (even as []) so PostgREST picks the
+      // canonical function when a legacy get_discovery_feed(uuid,int,int,text) overload
+      // still exists on the database; omitting them can make the RPC ambiguous.
       const { data, error } = await supabase.rpc("get_discovery_feed", {
         p_user_id: user.id,
         p_limit: LIMIT,
@@ -101,16 +104,17 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
         ...(country ? { p_country_filter: country } : {}),
         ...(region ? { p_region_filter: region } : {}),
         ...(categoryId ? { p_category_id: categoryId } : {}),
-        ...(typologyIds && typologyIds.length > 0 ? { p_typology_ids: typologyIds } : {}),
-        ...(attributeIds && attributeIds.length > 0 ? { p_attribute_ids: attributeIds } : {}),
-        ...(architectIds && architectIds.length > 0 ? { p_architect_ids: architectIds } : {}),
-        ...(creditRoles && creditRoles.length > 0 ? { p_credit_roles: creditRoles } : {}),
-        ...(contactUserIds && contactUserIds.length > 0
-          ? { p_contact_user_ids: contactUserIds }
-          : {}),
-        ...(buildingStatuses && buildingStatuses.length > 0
-          ? { p_building_statuses: buildingStatuses }
-          : {}),
+        p_typology_ids: typologyIds && typologyIds.length > 0 ? typologyIds : [],
+        p_attribute_ids:
+          attributeIds && attributeIds.length > 0 ? attributeIds : [],
+        p_architect_ids:
+          architectIds && architectIds.length > 0 ? architectIds : [],
+        p_credit_roles:
+          creditRoles && creditRoles.length > 0 ? creditRoles : [],
+        p_contact_user_ids:
+          contactUserIds && contactUserIds.length > 0 ? contactUserIds : [],
+        p_building_statuses:
+          buildingStatuses && buildingStatuses.length > 0 ? buildingStatuses : [],
       });
 
       if (error) throw error;
