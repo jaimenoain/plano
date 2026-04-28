@@ -1,9 +1,3 @@
-Good, I have a thorough picture of the codebase. Let me now quickly scan a handful of the most complex pages to spot specific responsiveness issues before writing the roadmap.
-
-Here is the full roadmap:
-
----
-
 # Mobile Responsiveness Roadmap
 
 ## Methodology
@@ -87,7 +81,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### [ ] 2.3 Building Details — [`src/features/buildings/pages/BuildingDetails.tsx`](src/features/buildings/pages/BuildingDetails.tsx)
+### [x] 2.3 Building Details — [`src/features/buildings/pages/BuildingDetails.tsx`](src/features/buildings/pages/BuildingDetails.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -99,7 +93,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### [ ] 2.4 Profile — [`src/features/profile/pages/Profile.tsx`](src/features/profile/pages/Profile.tsx)
+### [x] 2.4 Profile — [`src/features/profile/pages/Profile.tsx`](src/features/profile/pages/Profile.tsx)
 
 | Issue | Fix |
 |---|---|

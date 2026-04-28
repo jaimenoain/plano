@@ -167,7 +167,7 @@ function RelatedBuildingRow({
         </Link>
       </div>
       {isLoading ? (
-        <div className="flex gap-4 overflow-hidden">
+        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="flex-shrink-0 w-40 sm:w-48 space-y-2">
               <Skeleton className="aspect-[4/3] w-full" />
@@ -267,7 +267,7 @@ function RelatedByCitySection({
 export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading..." showHeader shellProvidesTopInset>
-      <Skeleton className="h-56 sm:h-64 lg:h-80 w-full rounded-none" />
+      <Skeleton className="h-56 max-h-[50vh] sm:max-h-none sm:h-64 lg:h-80 w-full rounded-none" />
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-8 space-y-8">
@@ -686,7 +686,7 @@ function BuildingInfoSection({
       <dl className="mt-3 divide-y divide-border-default">
         {rows.map(({ key, label, value }) => (
           <div key={key} className="flex items-baseline gap-6 py-3">
-            <dt className="text-xs text-text-secondary shrink-0 w-28">{label}</dt>
+            <dt className="text-xs text-text-secondary shrink-0 w-24 md:w-28">{label}</dt>
             <dd className="text-sm text-text-primary flex-1 min-w-0">{value}</dd>
           </div>
         ))}
@@ -1270,7 +1270,7 @@ export default function BuildingDetails() {
         className="min-h-screen bg-surface-default [&_button]:!rounded-none [&_input]:!rounded-none [&_textarea]:!rounded-none"
       >
         {/* ── HERO — full-bleed, fixed height, no rounding ── */}
-        <div className="h-56 sm:h-64 lg:h-80 w-full overflow-hidden bg-surface-muted">
+        <div className="h-56 max-h-[50vh] sm:max-h-none sm:h-64 lg:h-80 w-full overflow-hidden bg-surface-muted">
           {heroImageUrl ? (
             <motion.img
               key={heroImageUrl}

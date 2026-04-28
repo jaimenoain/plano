@@ -826,19 +826,19 @@ export default function Profile() {
                       </>
                     ) : (
                       <>
-                        <button type="button" onClick={() => { setDraftFirm(profile?.firm || ""); setDraftBio(profile?.bio || ""); setDraftWebsite(profile?.website || ""); setIsEditingHeader(true); }} className="inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-0 md:min-w-0 md:p-0 text-text-disabled hover:text-text-primary transition-colors" aria-label="Edit profile">
+                        <button type="button" onClick={() => { setDraftFirm(profile?.firm || ""); setDraftBio(profile?.bio || ""); setDraftWebsite(profile?.website || ""); setIsEditingHeader(true); }} className="inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-0 md:min-w-0 md:p-0 text-text-disabled hover:text-text-primary active:text-text-primary transition-colors" aria-label="Edit profile">
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
                         <Link to="/settings" className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors">
                           Settings →
                         </Link>
-                        <button type="button" onClick={handleSignOut} className="text-text-disabled hover:text-text-primary transition-colors" aria-label="Sign out">
+                        <button type="button" onClick={handleSignOut} className="inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-8 md:min-w-8 text-text-disabled hover:text-text-primary active:text-text-primary transition-colors" aria-label="Sign out">
                           <LogOut className="w-3.5 h-3.5" />
                         </button>
                       </>
                     )
                   ) : (
-                    targetUserId && <FollowButton userId={targetUserId} initialIsFollowing={isFollowing} className="h-7 text-xs px-4" />
+                    targetUserId && <FollowButton userId={targetUserId} initialIsFollowing={isFollowing} className="min-h-11 px-5 text-xs sm:h-7 sm:min-h-0 sm:px-4" />
                   )}
                 </div>
               </div>
@@ -1019,28 +1019,33 @@ export default function Profile() {
             {/* ── VISITED / SAVED (both are log views) ── */}
             {(activeSection === "visited" || activeSection === "saved") && (
               <div>
-                {/* Toolbar */}
-                <div className="flex items-center justify-between mb-8">
-                  <div className="flex items-center gap-4">
-                    <ToggleGroup type="single" value={viewMode} onValueChange={v => v && setViewMode(v as "grid" | "kanban" | "list")}>
+                {/* Toolbar — wraps on narrow widths; search uses full row below toggles on mobile */}
+                <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+                    <ToggleGroup
+                      type="single"
+                      value={viewMode}
+                      onValueChange={v => v && setViewMode(v as "grid" | "kanban" | "list")}
+                      className="[&_button]:max-md:min-h-11 [&_button]:max-md:min-w-11"
+                    >
                       <ToggleGroupItem value="grid" size="sm" aria-label="Grid"><LayoutGrid className="h-3.5 w-3.5" /></ToggleGroupItem>
                       <ToggleGroupItem value="kanban" size="sm" aria-label="Kanban"><Columns className="h-3.5 w-3.5" /></ToggleGroupItem>
                       <ToggleGroupItem value="list" size="sm" aria-label="List"><List className="h-3.5 w-3.5" /></ToggleGroupItem>
                     </ToggleGroup>
-                    <label className="flex items-center gap-1.5 cursor-pointer">
+                    <label className="flex min-h-11 items-center gap-1.5 cursor-pointer sm:min-h-0">
                       <span className="text-2xs font-medium tracking-widest uppercase text-text-disabled">Hero</span>
                       <Switch checked={showCommunityImages} onCheckedChange={setShowCommunityImages} className="scale-75 origin-right" />
                     </label>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3 w-3 text-text-disabled" />
+                  <div className="flex w-full min-w-0 items-center gap-3 sm:w-auto sm:max-w-sm sm:justify-end">
+                    <div className="relative min-w-0 flex-1 sm:flex-initial sm:max-w-44 sm:focus-within:max-w-sm">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-3 w-3 -translate-y-1/2 text-text-disabled" />
                       <Input
                         placeholder="Search..."
                         value={searchQuery}
                         onChange={e => handleSearchChange(e.target.value)}
                         className={cn(
-                          "pl-8 h-7 w-32 text-xs bg-surface-muted/40 border-transparent focus:bg-surface-default focus:w-44 transition-all",
+                          "min-h-11 w-full min-w-0 pl-8 text-xs bg-surface-muted/40 border-transparent focus:bg-surface-default sm:h-7 sm:min-h-0 sm:w-32 sm:focus:w-44 transition-[width,max-width]",
                           searchQuery && "pr-11",
                         )}
                       />
@@ -1057,7 +1062,7 @@ export default function Profile() {
                     </div>
                     <button
                       type="button"
-                      className="h-7 max-md:min-h-11 px-2.5 max-md:px-3 border border-border-default text-text-disabled hover:text-text-primary hover:border-border-strong transition-colors inline-flex items-center justify-center"
+                      className="h-11 shrink-0 px-3 border border-border-default text-text-disabled hover:text-text-primary hover:border-border-strong transition-colors inline-flex items-center justify-center sm:h-7 sm:px-2.5"
                       onClick={() => navigate(activeSection === "saved" ? `/search?rated_by=${profile?.username || ""}&open_filters=true&mode=library&status=visited%2Csaved%2Cpending` : `/search?rated_by=${profile?.username || ""}&open_filters=true`)}
                       title="View on map"
                     >
@@ -1242,7 +1247,7 @@ export default function Profile() {
                     <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-5">Following</p>
                     <div className="flex gap-5 flex-wrap">
                       {squad.map(member => (
-                        <Link key={member.id} to={`/profile/${member.username}`} className="flex flex-col items-center gap-2 hover:opacity-60 transition-opacity w-14">
+                        <Link key={member.id} to={`/profile/${member.username}`} className="flex flex-col items-center gap-2 hover:opacity-60 active:opacity-60 transition-opacity w-14">
                           <Avatar className="w-10 h-10">
                             <AvatarImage src={member.avatar_url || undefined} />
                             <AvatarFallback className="text-xs">{member.username?.[0]?.toUpperCase()}</AvatarFallback>
@@ -1282,7 +1287,7 @@ export default function Profile() {
                       </div>
                       {currentUser && currentUser.id !== u.id && (
                         <div onClick={e => e.stopPropagation()}>
-                          <FollowButton userId={u.id} initialIsFollowing={u.is_following} isFollower={u.is_follower} className="h-7 text-xs px-3" />
+                          <FollowButton userId={u.id} initialIsFollowing={u.is_following} isFollower={u.is_follower} className="min-h-11 px-4 text-xs sm:h-7 sm:min-h-0 sm:px-3" />
                         </div>
                       )}
                     </div>
@@ -1326,7 +1331,7 @@ function EditorialBuildingCard({ entry, showCommunityImages }: { entry: FeedRevi
           <img
             src={imageUrl}
             alt={entry.building.name}
-            className="w-full h-full object-cover group-hover:opacity-85 transition-opacity duration-300"
+            className="w-full h-full object-cover group-hover:opacity-85 [@media(hover:none)]:opacity-100 transition-opacity duration-300"
           />
         ) : (
           <div className="w-full h-full flex items-end p-3">
@@ -1337,7 +1342,7 @@ function EditorialBuildingCard({ entry, showCommunityImages }: { entry: FeedRevi
         )}
       </div>
       {/* Text — no icons, stark hierarchy */}
-      <p className="text-sm font-bold text-text-primary leading-snug line-clamp-2 group-hover:opacity-60 transition-opacity">
+      <p className="text-sm font-bold text-text-primary leading-snug line-clamp-2 group-hover:opacity-60 [@media(hover:none)]:opacity-100 transition-opacity">
         {entry.building.name}
       </p>
       {meta && (
