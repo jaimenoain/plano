@@ -1,9 +1,10 @@
-import { forwardRef } from "react";
+import { forwardRef, useEffect, useRef, useState, type FocusEvent } from "react";
 import { CollectionMarker } from "@/features/collections/types";
 import { cn } from "@/lib/utils";
-import { Check, MapPin, Bed, Utensils, Bus, Camera, GripVertical } from "lucide-react";
+import { Check, MapPin, Bed, Utensils, Bus, Camera, GripVertical, MessageSquarePlus, Save } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 interface CollectionMarkerCardProps {
   marker: CollectionMarker;
@@ -15,10 +16,31 @@ interface CollectionMarkerCardProps {
   isDraggable?: boolean;
   dragHandleProps?: Record<string, unknown>;
   badgeIndex?: number;
+  /** When set with `canEdit`, shows Add note / edit note UI and persists via this callback. */
+  onUpdateNote?: (note: string) => void;
 }
 
 export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerCardProps>(
-  ({ marker, isHighlighted, setHighlightedId, canEdit, onRemove, onNavigate, isDraggable, dragHandleProps, badgeIndex }, ref) => {
+  ({ marker, isHighlighted, setHighlightedId, canEdit, onRemove, onNavigate, isDraggable, dragHandleProps, badgeIndex, onUpdateNote }, ref) => {
+    const [isEditingNote, setIsEditingNote] = useState(false);
+    const [noteValue, setNoteValue] = useState(marker.notes || "");
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+      setNoteValue(marker.notes || "");
+    }, [marker.notes]);
+
+    useEffect(() => {
+      if (isEditingNote && textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }, [isEditingNote]);
+
+    const handleNoteBlur = (e: FocusEvent<HTMLTextAreaElement>) => {
+      const value = e.target.value;
+      onUpdateNote?.(value);
+      setIsEditingNote(false);
+    };
 
     let Icon = MapPin;
     switch (marker.category) {
@@ -98,17 +120,52 @@ export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerC
                             </h3>
                         </div>
 
-                        {marker.notes && (
-                        <div className="text-xs text-text-secondary mt-1 line-clamp-2 italic">
-                            "{marker.notes}"
-                        </div>
-                    )}
-
                         {displayAddress && (
                             <div className="text-xs text-text-secondary mt-1 line-clamp-1">
                                 {displayAddress}
                             </div>
                         )}
+
+                        <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                            {canEdit && onUpdateNote ? (
+                                isEditingNote ? (
+                                    <div className="relative group/note">
+                                        <Textarea
+                                            ref={textareaRef}
+                                            placeholder="Add a note..."
+                                            value={noteValue}
+                                            onChange={(e) => setNoteValue(e.target.value)}
+                                            onBlur={handleNoteBlur}
+                                            className="resize-none text-xs min-h-[40px] bg-surface-muted/30 border-transparent focus:border-border-default focus:bg-surface-default transition-colors p-2"
+                                            rows={3}
+                                        />
+                                        <div className="absolute bottom-1 right-1 opacity-50 pointer-events-none">
+                                            <Save className="h-3 w-3" />
+                                        </div>
+                                    </div>
+                                ) : noteValue ? (
+                                    <div
+                                        className="text-xs text-text-secondary italic bg-surface-muted/30 p-2 rounded-sm line-clamp-3 cursor-text hover:bg-surface-muted/50 transition-colors"
+                                        onClick={() => setIsEditingNote(true)}
+                                    >
+                                        "{noteValue}"
+                                    </div>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditingNote(true)}
+                                        className="text-xs text-text-secondary hover:text-text-primary flex items-center gap-1 px-1 py-0.5 rounded-sm hover:bg-surface-muted/50 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                                    >
+                                        <MessageSquarePlus className="h-3 w-3" />
+                                        Add note
+                                    </button>
+                                )
+                            ) : marker.notes ? (
+                                <div className="text-xs text-text-secondary italic bg-surface-muted/30 p-2 rounded-sm line-clamp-3">
+                                    "{marker.notes}"
+                                </div>
+                            ) : null}
+                        </div>
                     </div>
                 </div>
             </div>

@@ -163,7 +163,7 @@ function PlacesAutocompleteFields({
   const showIdleHint = status !== "OK" && status !== "ZERO_RESULTS" && status !== "ERROR" && markersCount === 0;
 
   return (
-    <Command shouldFilter={false} className="flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent shadow-none rounded-none border-0">
+    <Command shouldFilter={false} className="flex flex-col bg-transparent shadow-none rounded-none border-0">
       <div className="shrink-0 px-4 pb-3 pt-1">
         <div className="relative">
           <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-text-secondary z-10 pointer-events-none" />
@@ -184,7 +184,7 @@ function PlacesAutocompleteFields({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-6">
+      <div className="px-4 pb-4">
         {status === "OK" || status === "ZERO_RESULTS" ? (
           <CommandList className="max-h-none overflow-visible p-0">
             {status === "OK" && data.length > 0 ? (
@@ -302,52 +302,7 @@ function OtherMarkersTabPanel({
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <div className="shrink-0 px-4 pb-2 pt-4">
-        {markersLoading ? (
-          <div className="space-y-2">
-            {[1, 2].map((i) => (
-              <div key={i} className="h-11 rounded-sm bg-brand-secondary/80 animate-pulse" />
-            ))}
-          </div>
-        ) : markers.length > 0 ? (
-          <>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-text-secondary">Places on this map</p>
-            <ul className="space-y-0.5">
-              {markers.map((marker) => {
-                const Icon = markerCategoryIcon(marker.category);
-                const line2 = displayMarkerSecondaryLine(marker);
-                const busy = removingId === marker.id;
-                return (
-                  <li key={marker.id}>
-                    <div className="flex items-start gap-2 rounded-sm px-2 py-2 transition-colors hover:bg-brand-secondary/60">
-                      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-text-secondary" aria-hidden />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium leading-snug text-text-primary">{marker.name}</p>
-                        {line2 ? (
-                          <p className="mt-0.5 line-clamp-2 text-xs text-text-secondary">{line2}</p>
-                        ) : null}
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 shrink-0 text-text-secondary hover:text-text-primary"
-                        disabled={busy}
-                        onClick={() => handleRemoveMarker(marker.id)}
-                        title="Remove from collection"
-                      >
-                        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </>
-        ) : null}
-      </div>
-
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       {hasError ? (
         <div className="flex flex-1 flex-col justify-center px-4 pb-8 text-center text-sm text-feedback-destructive">
           Could not load Google Places. Try again later.
@@ -358,7 +313,57 @@ function OtherMarkersTabPanel({
           <p className="text-xs">Loading place search…</p>
         </div>
       ) : (
-        <PlacesAutocompleteFields collectionId={collectionId} userId={userId} markersCount={markers.length} />
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="flex flex-col pb-4">
+            <PlacesAutocompleteFields collectionId={collectionId} userId={userId} markersCount={markers.length} />
+            <div className="px-4 pt-4">
+              {markersLoading ? (
+                <div className="space-y-2">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="h-11 rounded-sm bg-brand-secondary/80 animate-pulse" />
+                  ))}
+                </div>
+              ) : markers.length > 0 ? (
+                <>
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wider text-text-secondary">
+                    Places on this map
+                  </p>
+                  <ul className="space-y-0.5">
+                    {markers.map((marker) => {
+                      const Icon = markerCategoryIcon(marker.category);
+                      const line2 = displayMarkerSecondaryLine(marker);
+                      const busy = removingId === marker.id;
+                      return (
+                        <li key={marker.id}>
+                          <div className="flex items-start gap-2 rounded-sm px-2 py-2 transition-colors hover:bg-brand-secondary/60">
+                            <Icon className="mt-0.5 h-4 w-4 shrink-0 text-text-secondary" aria-hidden />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium leading-snug text-text-primary">{marker.name}</p>
+                              {line2 ? (
+                                <p className="mt-0.5 line-clamp-2 text-xs text-text-secondary">{line2}</p>
+                              ) : null}
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 shrink-0 text-text-secondary hover:text-text-primary"
+                              disabled={busy}
+                              onClick={() => handleRemoveMarker(marker.id)}
+                              title="Remove from collection"
+                            >
+                              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                            </Button>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
+              ) : null}
+            </div>
+          </div>
+        </ScrollArea>
       )}
     </div>
   );

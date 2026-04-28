@@ -12,6 +12,7 @@ interface SortableItineraryItemProps {
   badgeIndex: number;
   canEdit?: boolean;
   onUpdateNote?: (itemId: string, note: string) => void;
+  onUpdateMarkerNote?: (markerId: string, note: string) => void;
 }
 
 export function SortableItineraryItem({
@@ -20,7 +21,8 @@ export function SortableItineraryItem({
   setHighlightedId,
   badgeIndex,
   canEdit,
-  onUpdateNote
+  onUpdateNote,
+  onUpdateMarkerNote,
 }: SortableItineraryItemProps) {
   const buildingDetails = useItineraryStore((state) => state.buildingDetails);
   const markerDetails = useItineraryStore((state) => state.markerDetails);
@@ -51,11 +53,27 @@ export function SortableItineraryItem({
           marker={marker}
           isHighlighted={highlightedId === marker.id}
           setHighlightedId={setHighlightedId}
-          canEdit={false}
+          canEdit={!!canEdit}
           onNavigate={() => {}}
           isDraggable={!!canEdit}
           dragHandleProps={canEdit ? { ...attributes, ...listeners } : undefined}
           badgeIndex={badgeIndex}
+          onUpdateNote={
+            canEdit && onUpdateMarkerNote
+              ? (note) => {
+                  onUpdateMarkerNote(marker.id, note);
+                  useItineraryStore.setState((state) => ({
+                    markerDetails: {
+                      ...state.markerDetails,
+                      [marker.id]: {
+                        ...state.markerDetails[marker.id],
+                        notes: note,
+                      },
+                    },
+                  }));
+                }
+              : undefined
+          }
         />
       </div>
     );

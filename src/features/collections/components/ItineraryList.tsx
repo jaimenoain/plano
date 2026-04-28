@@ -339,9 +339,10 @@ interface ItineraryDayColumnProps {
   onUpdateItinerary?: (itinerary: Itinerary) => void;
   canEdit?: boolean;
   onUpdateNote?: (itemId: string, note: string) => void;
+  onUpdateMarkerNote?: (markerId: string, note: string) => void;
 }
 
-function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId, distance, transportMode, title, description, onUpdateItinerary, canEdit, onUpdateNote }: ItineraryDayColumnProps) {
+function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId, distance, transportMode, title, description, onUpdateItinerary, canEdit, onUpdateNote, onUpdateMarkerNote }: ItineraryDayColumnProps) {
   const { setNodeRef } = useDroppable({
     id: `day-${dayNumber}`,
     data: { dayNumber }
@@ -433,6 +434,7 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
                                 badgeIndex={index + 1}
                                 canEdit={canEdit}
                                 onUpdateNote={onUpdateNote}
+                                onUpdateMarkerNote={onUpdateMarkerNote}
                             />
                             {index < stops.length - 1 && (
                                 <ItinerarySegment
@@ -499,9 +501,10 @@ interface ItineraryListProps {
     onUpdateItinerary?: (itinerary: Itinerary) => void;
     canEdit?: boolean;
     onUpdateNote?: (itemId: string, note: string) => void;
+    onUpdateMarkerNote?: (markerId: string, note: string) => void;
 }
 
-export function ItineraryList({ highlightedId, setHighlightedId, onUpdateItinerary, canEdit, onUpdateNote }: ItineraryListProps) {
+export function ItineraryList({ highlightedId, setHighlightedId, onUpdateItinerary, canEdit, onUpdateNote, onUpdateMarkerNote }: ItineraryListProps) {
     const days = useItineraryStore((state) => state.days);
     const transportMode = useItineraryStore((state) => state.transportMode);
     const reorderStops = useItineraryStore((state) => state.reorderStops);
@@ -716,6 +719,7 @@ export function ItineraryList({ highlightedId, setHighlightedId, onUpdateItinera
                         onUpdateItinerary={onUpdateItinerary}
                         canEdit={canEdit}
                         onUpdateNote={onUpdateNote}
+                        onUpdateMarkerNote={onUpdateMarkerNote}
                     />
                 ))}
             </Accordion>

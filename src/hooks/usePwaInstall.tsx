@@ -31,6 +31,35 @@ export function PwaProvider({ children }: { children: ReactNode }) {
     onRegisterError() {},
   });
 
+  // Long-lived installed PWAs (especially mobile) may not re-check the service worker
+  // until a cold start. Probing on resume + periodically helps them pick up new sw.js
+  // (also pair with `Cache-Control` on `/sw.js` in vercel.json so the check is not stale).
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+
+    const checkForUpdate = () => {
+      void navigator.serviceWorker.getRegistration().then((reg) => {
+        void reg?.update();
+      });
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") checkForUpdate();
+    };
+
+    void navigator.serviceWorker.ready.then(() => {
+      checkForUpdate();
+    });
+
+    document.addEventListener("visibilitychange", onVisibility);
+    const intervalId = window.setInterval(checkForUpdate, 60 * 60 * 1000);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   useEffect(() => {
     // Detect iOS
     const userAgent = window.navigator.userAgent.toLowerCase();

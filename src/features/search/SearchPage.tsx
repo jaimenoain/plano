@@ -167,7 +167,7 @@ function SearchPageContent() {
 
   return (
     <AppLayout isFullScreen={true}>
-      <div className="relative flex flex-col h-full w-full overflow-hidden">
+      <div className="relative flex h-[calc(100dvh-3.5rem-5rem)] w-full min-h-0 flex-col overflow-hidden md:fixed md:inset-x-0 md:bottom-0 md:left-0 md:right-0 md:top-16 md:h-auto">
 
         {/* ── Mobile: floating search bar ── */}
         {isMobile && (
@@ -184,7 +184,7 @@ function SearchPageContent() {
           shadow-lg removed — flat, border-only sidebar matches the editorial
           principle that borders carry hierarchy, not elevation.
         */}
-        <div className="absolute bottom-0 left-0 top-0 z-20 hidden w-search-serp flex-col border-r border-border-default bg-surface-card transition-all duration-300 md:flex">
+        <div className="absolute bottom-0 left-0 top-0 z-20 hidden w-search-serp min-h-0 flex-col border-r border-border-default bg-surface-card transition-all duration-300 md:flex">
 
           {/* Sidebar search header — solid background, no backdrop blur needed */}
           <div className="p-4 border-b border-border-default flex items-center gap-2">
@@ -201,7 +201,7 @@ function SearchPageContent() {
             <MapControls />
           </div>
 
-          <div className="flex-1 overflow-hidden relative">
+          <div className="relative min-h-0 flex-1 overflow-hidden">
             <BuildingSidebar
               suggestions={suggestions}
               onLocationClick={handleLocationResultClick}
@@ -213,7 +213,7 @@ function SearchPageContent() {
         </div>
 
         {/* ── Map ── */}
-        <div className="relative h-full flex-1 transition-all duration-300 md:ml-search-serp">
+        <div className="relative h-full min-h-0 flex-1 transition-all duration-300 md:ml-search-serp">
           <ClientOnly fallback={<MapLoadingPlaceholder />}>
             <PlanoMap showEmptyMessage={true} />
           </ClientOnly>

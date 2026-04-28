@@ -1116,7 +1116,7 @@ toast({
 
   return (
     <AppLayout title={collection.name} showBack isFullScreen>
-      <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row-reverse h-[calc(100dvh_-_9rem_-_env(safe-area-inset-bottom))] md:h-full">
+      <div className="relative flex h-[calc(100dvh_-_9rem_-_env(safe-area-inset-bottom))] min-h-0 flex-1 flex-col overflow-hidden lg:flex-row-reverse md:fixed md:inset-x-0 md:bottom-0 md:left-0 md:right-0 md:top-16 md:h-auto">
         <div className="lg:hidden">
           <SearchModeToggle
             mode={viewMode}
@@ -1127,9 +1127,10 @@ toast({
 
         {/* Sidebar List */}
         <div className={cn(
-          "w-full lg:w-80 bg-surface-card border-t lg:border-t-0 lg:border-l border-border-default flex-col shrink-0 lg:h-full lg:flex",
-          viewMode === 'list' ? "h-full flex order-2 lg:order-2" : "hidden lg:flex lg:order-2"
-        )}>
+          "w-full shrink-0 flex-col border-t border-border-default bg-surface-card lg:flex lg:h-full lg:w-80 lg:min-h-0 lg:border-l lg:border-t-0",
+          viewMode === 'list' ? "order-2 flex h-full lg:order-2" : "hidden lg:flex lg:order-2",
+        )}
+        >
             <div className="p-4 border-b flex items-center justify-between gap-4">
                 <div className="min-w-0 flex-1">
                     <h1 className="font-bold text-xl truncate">{collection.name}</h1>
@@ -1244,6 +1245,13 @@ toast({
                                                                         // Just highlight
                                                                         setHighlightedId(marker.id);
                                                                     }}
+                                                                    onUpdateNote={
+                                                                      canEdit
+                                                                        ? (note) => {
+                                                                            void handleUpdateMarkerNote(marker.id, note);
+                                                                          }
+                                                                        : undefined
+                                                                    }
                                                                 />
                                                             ))}
                                                         </Suspense>
@@ -1269,10 +1277,10 @@ toast({
                                 <ItineraryList
                                     highlightedId={highlightedId}
                                     setHighlightedId={setHighlightedId}
-   
-onUpdateItinerary={canEdit ? handleUpdateItinerary : undefined}
-canEdit={canEdit}
-onUpdateNote={handleUpdateNote}
+                                    onUpdateItinerary={canEdit ? handleUpdateItinerary : undefined}
+                                    canEdit={canEdit}
+                                    onUpdateNote={handleUpdateNote}
+                                    onUpdateMarkerNote={canEdit ? handleUpdateMarkerNote : undefined}
                                 />
                                 {!collection.itinerary && (
                                     <div className="text-center py-8 text-text-secondary">
@@ -1297,9 +1305,10 @@ onUpdateNote={handleUpdateNote}
 
         {/* Map */}
         <div className={cn(
-          "flex-1 relative lg:h-full lg:flex",
-          viewMode === 'map' ? "h-full flex order-1 lg:order-1" : "hidden lg:flex lg:order-1"
-        )}>
+          "relative flex-1 lg:flex lg:h-full lg:min-h-0",
+          viewMode === 'map' ? "order-1 flex h-full lg:order-1" : "hidden lg:flex lg:order-1",
+        )}
+        >
             <Suspense fallback={
                 <div className="flex items-center justify-center h-full w-full bg-surface-muted/20">
                     <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
