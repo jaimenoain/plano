@@ -68,9 +68,10 @@ export default function Explore() {
   const [locationFilter, setLocationFilter] = useState<{
     city: string | null;
     country: string | null;
+    countryCode: string | null;
     region: string | null;
     label: string | null;
-  }>({ city: null, country: null, region: null, label: null });
+  }>({ city: null, country: null, countryCode: null, region: null, label: null });
   const [selectedPeople, setSelectedPeople] = useState<{ id: string; name: string }[]>(
     []
   );
@@ -158,6 +159,7 @@ export default function Explore() {
   } = useDiscoveryFeed({
       city: locationFilter.city,
       country: locationFilter.country,
+      countryCode: locationFilter.countryCode,
       region: locationFilter.region,
       categoryId: selectedCategory,
       typologyIds: selectedTypologies.length > 0 ? selectedTypologies : undefined,
@@ -184,6 +186,7 @@ export default function Explore() {
   }, [
     locationFilter.city,
     locationFilter.country,
+    locationFilter.countryCode,
     locationFilter.region,
     selectedCategory,
     selectedTypologies,
@@ -210,7 +213,7 @@ export default function Explore() {
   };
 
   const handlePlaceDetails = (details: google.maps.GeocoderResult) => {
-    const { city, country } = extractLocationDetails(details);
+    const { city, country, countryCode } = extractLocationDetails(details);
     let region: string | null = null;
     details.address_components?.forEach((comp) => {
       if (comp.types.includes("administrative_area_level_1")) {
@@ -223,7 +226,7 @@ export default function Explore() {
     else if (region) label = region;
     else if (country) label = country;
 
-    setLocationFilter({ city, country, region, label });
+    setLocationFilter({ city, country, countryCode, region, label });
     setIsLocationSheetOpen(false);
     setSearchValue("");
 
@@ -234,7 +237,13 @@ export default function Explore() {
 
   const clearFilter = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setLocationFilter({ city: null, country: null, region: null, label: null });
+    setLocationFilter({
+      city: null,
+      country: null,
+      countryCode: null,
+      region: null,
+      label: null,
+    });
   };
 
   const handleResetExploreFilters = useCallback(() => {
@@ -467,7 +476,7 @@ export default function Explore() {
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className="min-h-0 flex-1 w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar"
+            className="min-h-0 flex-1 w-full touch-pan-y overflow-y-scroll overscroll-y-contain snap-y snap-mandatory no-scrollbar"
           >
           {/* Loading */}
           {status === "pending" && (

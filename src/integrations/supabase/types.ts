@@ -3104,6 +3104,7 @@ export type Database = {
               p_category_id?: string
               p_city_filter?: string
               p_contact_user_ids?: string[]
+              p_country_code_filter?: string
               p_country_filter?: string
               p_credit_roles?: string[]
               p_limit: number

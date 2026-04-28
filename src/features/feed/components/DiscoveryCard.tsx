@@ -37,7 +37,13 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { toast } from "sonner";
 import { DiscoveryFeedItem } from "../hooks/useDiscoveryFeed";
 import { Link } from "react-router";
-import { motion, useMotionValue, useTransform, PanInfo } from "framer-motion";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useTransform,
+  type PanInfo,
+} from "framer-motion";
 import { ContactFacepile } from "./ContactFacepile";
 
 interface DiscoveryCardProps {
@@ -166,9 +172,17 @@ export function DiscoveryCard({
   const likeOverlayOpacity = useTransform(x, [20, 100], [0, 0.35]);
   const nopeOverlayOpacity = useTransform(x, [-100, -20], [0.35, 0]);
 
+  /** Distance (px) or horizontal velocity (px/s) to commit — iPad benefits from velocity for short flicks. */
+  const SWIPE_OFFSET_PX = 88;
+  const SWIPE_VELOCITY_PX = 420;
+
   const handleDragEnd = (_: unknown, info: PanInfo) => {
-    const threshold = 100;
-    if (info.offset.x > threshold) {
+    const vx = info.velocity.x;
+    const ox = info.offset.x;
+    const commitRight = ox > SWIPE_OFFSET_PX || vx > SWIPE_VELOCITY_PX;
+    const commitLeft = ox < -SWIPE_OFFSET_PX || vx < -SWIPE_VELOCITY_PX;
+
+    if (commitRight) {
       if (showRating) {
         if (onSwipeSave) onSwipeSave();
       } else {
@@ -176,8 +190,10 @@ export function DiscoveryCard({
         setShowRating(true);
         saveToSupabase("pending");
       }
-    } else if (info.offset.x < -threshold && onSwipeHide) {
+    } else if (commitLeft && onSwipeHide) {
       onSwipeHide();
+    } else {
+      void animate(x, 0, { type: "spring", stiffness: 520, damping: 38 });
     }
   };
 
@@ -226,11 +242,13 @@ export function DiscoveryCard({
   return (
     <motion.div
       ref={containerRef as RefCallback<HTMLDivElement>}
-      className="group/card relative w-full h-full overflow-hidden min-w-0 bg-black snap-start touch-pan-y"
+      className="group/card relative w-full h-full overflow-hidden min-w-0 select-none bg-black snap-start touch-pan-y"
       style={{ x, rotate, opacity }}
       drag="x"
+      dragDirectionLock
       dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={0.7}
+      dragElastic={0.55}
+      dragMomentum={false}
       onDragStart={() => onInteractionStart?.()}
       onDragEnd={handleDragEnd}
     >
@@ -258,6 +276,7 @@ export function DiscoveryCard({
             src={uniqueImages[currentImageIndex]}
             alt={`${building.name} — view ${currentImageIndex + 1}`}
             className="w-full h-full object-cover"
+            draggable={false}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-neutral-900">

@@ -215,35 +215,35 @@ export default function Auth() {
     return (
       <div className="min-h-dvh w-full flex-1 bg-surface-default flex flex-col items-center justify-start md:justify-center overflow-y-auto safe-area-pt safe-area-pb px-4 py-4 md:py-8">
         <div className="w-full max-w-sm flex flex-col items-center gap-4 md:gap-6">
-        <PlanoLogo className="text-2xl text-text-primary shrink-0" />
-        <div className="w-full bg-surface-card border border-border-default rounded-sm shadow-none p-6 md:p-8 flex flex-col gap-4 md:gap-6 text-center">
-          <div className="flex justify-center">
-            <div className="h-16 w-16 bg-brand-secondary/30 rounded-sm flex items-center justify-center">
-              <Mail className="h-8 w-8 text-brand-primary" />
+          <PlanoLogo className="text-2xl text-text-primary shrink-0" />
+          <div className="w-full bg-surface-card border border-border-default rounded-sm shadow-none p-6 md:p-8 flex flex-col gap-4 md:gap-6 text-center">
+            <div className="flex justify-center">
+              <div className="h-16 w-16 bg-brand-secondary/30 rounded-sm flex items-center justify-center">
+                <Mail className="h-8 w-8 text-brand-primary" />
+              </div>
             </div>
+
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-text-primary">
+              Check your email
+            </h1>
+
+            <p className="text-text-secondary">
+              We've sent a {isResetPassword ? "password reset" : "confirmation"} link to{" "}
+              <span className="font-medium text-text-primary">{email}</span>. Please check your inbox to continue.
+            </p>
+
+            <Button
+              variant="outline"
+              className="w-full h-11 min-h-11 font-medium rounded-sm"
+              onClick={() => {
+                setCheckEmail(false);
+                setIsSignUp(false);
+                setIsResetPassword(false);
+              }}
+            >
+              Back to Sign In
+            </Button>
           </div>
-
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-text-primary">
-            Check your email
-          </h1>
-
-          <p className="text-text-secondary">
-            We've sent a {isResetPassword ? "password reset" : "confirmation"} link to{" "}
-            <span className="font-medium text-text-primary">{email}</span>. Please check your inbox to continue.
-          </p>
-
-          <Button
-            variant="outline"
-            className="w-full h-11 min-h-11 font-medium rounded-sm"
-            onClick={() => {
-              setCheckEmail(false);
-              setIsSignUp(false);
-              setIsResetPassword(false);
-            }}
-          >
-            Back to Sign In
-          </Button>
-        </div>
         </div>
       </div>
     );
@@ -252,52 +252,52 @@ export default function Auth() {
   return (
     <div className="min-h-dvh w-full flex-1 bg-surface-default flex flex-col items-center justify-start md:justify-center overflow-y-auto safe-area-pt safe-area-pb px-4 py-4 md:py-8">
       <div className="w-full max-w-sm flex flex-col items-center gap-4 md:gap-6">
-      <PlanoLogo className="text-2xl text-text-primary shrink-0" />
+        <PlanoLogo className="text-2xl text-text-primary shrink-0" />
 
-      <div className="w-full bg-surface-card border border-border-default rounded-sm shadow-none p-6 md:p-8 flex flex-col gap-4 md:gap-6">
-        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-text-primary text-center">
-          {isResetPassword
-            ? "Reset your password"
-            : isSignUp
-              ? "Create your account"
-              : "Welcome back"}
-        </h1>
+        <div className="w-full bg-surface-card border border-border-default rounded-sm shadow-none p-6 md:p-8 flex flex-col gap-4 md:gap-6">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-text-primary text-center">
+            {isResetPassword
+              ? "Reset your password"
+              : isSignUp
+                ? "Create your account"
+                : "Welcome back"}
+          </h1>
 
-        {!isResetPassword && invitedBy && isSignUp && (
-          inviterProfile ? (
-            <div className="flex flex-col items-center gap-4 mb-4 md:mb-8">
-              <div className="flex items-center justify-center pl-3">
-                {relatedProfiles.map((profile) => (
-                  <Avatar key={profile.id} className="h-10 w-10 border-2 border-surface-default -ml-3 ring-2 ring-surface-default">
-                    <AvatarImage src={profile.avatar_url || undefined} />
-                    <AvatarFallback className="text-xs bg-surface-muted">{profile.username?.[0]?.toUpperCase()}</AvatarFallback>
+          {!isResetPassword && invitedBy && isSignUp && (
+            inviterProfile ? (
+              <div className="flex flex-col items-center gap-4 mb-4 md:mb-8">
+                <div className="flex items-center justify-center pl-3">
+                  {relatedProfiles.map((profile) => (
+                    <Avatar key={profile.id} className="h-10 w-10 border-2 border-surface-default -ml-3 ring-2 ring-surface-default">
+                      <AvatarImage src={profile.avatar_url || undefined} />
+                      <AvatarFallback className="text-xs bg-surface-muted">{profile.username?.[0]?.toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                  ))}
+
+                  <Avatar className="h-14 w-14 border-2 border-surface-default -ml-3 z-10 shadow-lg ring-2 ring-surface-default">
+                    <AvatarImage src={inviterProfile.avatar_url || undefined} />
+                    <AvatarFallback className="bg-brand-secondary/30 text-brand-primary text-lg">
+                      {inviterProfile.username?.[0]?.toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
-                ))}
+                </div>
 
-                <Avatar className="h-14 w-14 border-2 border-surface-default -ml-3 z-10 shadow-lg ring-2 ring-surface-default">
-                  <AvatarImage src={inviterProfile.avatar_url || undefined} />
-                  <AvatarFallback className="bg-brand-secondary/30 text-brand-primary text-lg">
-                    {inviterProfile.username?.[0]?.toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="text-center space-y-1">
+                  <p className="text-base text-text-primary">
+                    Join <span className="font-bold">{inviterProfile.username}</span> and others
+                  </p>
+                  <p className="text-sm text-text-secondary">on PLANO</p>
+                </div>
               </div>
-
-              <div className="text-center space-y-1">
-                <p className="text-base text-text-primary">
-                  Join <span className="font-bold">{inviterProfile.username}</span> and others
-                </p>
-                <p className="text-sm text-text-secondary">on PLANO</p>
+            ) : (
+              <div className="bg-brand-secondary/30 text-brand-primary px-4 py-3 rounded-sm text-sm flex items-center gap-2 border border-border-default">
+                <UserPlus className="h-4 w-4 shrink-0" />
+                <span>
+                  <span className="font-semibold">{invitedBy}</span> invited you to join!
+                </span>
               </div>
-            </div>
-          ) : (
-            <div className="bg-brand-secondary/30 text-brand-primary px-4 py-3 rounded-sm text-sm flex items-center gap-2 border border-border-default">
-              <UserPlus className="h-4 w-4 shrink-0" />
-              <span>
-                <span className="font-semibold">{invitedBy}</span> invited you to join!
-              </span>
-            </div>
-          )
-        )}
+            )
+          )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

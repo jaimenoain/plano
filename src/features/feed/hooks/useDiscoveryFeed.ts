@@ -47,6 +47,8 @@ export interface DiscoveryFeedItem {
 export interface DiscoveryFilters {
   city?: string | null;
   country?: string | null;
+  /** ISO 3166-1 alpha-2 from geocoder; preferred over free-text `country` for RPC matching. */
+  countryCode?: string | null;
   region?: string | null;
   categoryId?: string | null;
   typologyIds?: string[];
@@ -65,6 +67,7 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
   const {
     city,
     country,
+    countryCode,
     region,
     categoryId,
     typologyIds,
@@ -81,6 +84,7 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
       user?.id,
       city,
       country,
+      countryCode,
       region,
       categoryId,
       typologyIds,
@@ -102,6 +106,7 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
         p_offset: pageParam,
         ...(city ? { p_city_filter: city } : {}),
         ...(country ? { p_country_filter: country } : {}),
+        ...(countryCode ? { p_country_code_filter: countryCode } : {}),
         ...(region ? { p_region_filter: region } : {}),
         ...(categoryId ? { p_category_id: categoryId } : {}),
         p_typology_ids: typologyIds && typologyIds.length > 0 ? typologyIds : [],
