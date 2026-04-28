@@ -59,17 +59,6 @@ export function MapMarkers({
     }, 300);
   }, [setHighlightedId]);
 
-  /** Wheel over HTML overlays (popup, markers) does not reach the canvas — forward so zoom matches scrolling on bare map. */
-  const forwardWheelToMapZoom = useCallback(
-    (e: React.WheelEvent) => {
-      if (!map) return;
-      e.preventDefault();
-      e.stopPropagation();
-      map.scrollZoom.wheel(e.nativeEvent);
-    },
-    [map]
-  );
-
   // Find the active cluster based on the highlightedId
   const activeCluster = useMemo(() => {
     if (!highlightedId) {
@@ -184,7 +173,6 @@ export function MapMarkers({
           <div
             onMouseEnter={() => !isCluster && handleMouseEnter(String(cluster.id))}
             onMouseLeave={() => !isCluster && handleMouseLeave()}
-            onWheel={forwardWheelToMapZoom}
             className="cursor-pointer" // Ensure pointer cursor
           >
             {content}
@@ -222,7 +210,6 @@ export function MapMarkers({
                   rel="noopener noreferrer"
                   className="block text-inherit no-underline"
                   aria-label={`View details for ${cluster.name || 'Building'}`}
-                  onWheel={forwardWheelToMapZoom}
                   onClick={(e) => {
                       // If it's a custom marker, prevent navigation and just select (highlight)
                       if (cluster.is_custom_marker) {
@@ -246,7 +233,7 @@ export function MapMarkers({
           </Marker>
         );
       }),
-    [displayClusters, map, handleMouseEnter, handleMouseLeave, highlightedId, forwardWheelToMapZoom]
+    [displayClusters, map, handleMouseEnter, handleMouseLeave, highlightedId]
   );
 
   return (
@@ -262,15 +249,13 @@ export function MapMarkers({
           className="plano-map-popup z-[100]"
           maxWidth="300px"
         >
-          <div onWheel={forwardWheelToMapZoom}>
-            <BuildingPopupContent
-              cluster={activeCluster}
-              onMouseEnter={() => handleMouseEnter(String(activeCluster.id))}
-              onMouseLeave={handleMouseLeave}
-              onRemoveFromCollection={onRemoveFromCollection}
-              onAddCandidate={onAddCandidate}
-            />
-          </div>
+          <BuildingPopupContent
+            cluster={activeCluster}
+            onMouseEnter={() => handleMouseEnter(String(activeCluster.id))}
+            onMouseLeave={handleMouseLeave}
+            onRemoveFromCollection={onRemoveFromCollection}
+            onAddCandidate={onAddCandidate}
+          />
         </Popup>
       )}
     </>

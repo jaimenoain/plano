@@ -6,6 +6,7 @@ import maplibregl, { type GeolocateControl as MaplibreGeolocateControl } from 'm
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Layers, Loader2, Maximize2, Minimize2 } from "lucide-react";
 import { useURLMapState } from '@/features/maps/hooks/useURLMapState';
+import { useMapWheelZoomCapture } from '@/features/maps/hooks/useMapWheelZoomCapture';
 import { useStableMapUpdate } from '@/features/maps/hooks/useStableMapUpdate';
 import { MapErrorBoundary } from './MapErrorBoundary';
 import { MapMarkers } from './MapMarkers';
@@ -94,6 +95,8 @@ function CollectionMapGLContent({
   }, []);
 
   const geolocateControlRef = useRef<MaplibreGeolocateControl | null>(null);
+
+  useMapWheelZoomCapture(mapRef, isMapLoaded);
 
   const [viewState, setViewState] = useState({
     latitude: lat,

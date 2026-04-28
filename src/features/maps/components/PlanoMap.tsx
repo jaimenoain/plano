@@ -22,6 +22,7 @@ import maplibregl, { type GeolocateControl as MaplibreGeolocateControl } from 'm
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Layers, Maximize2, Minimize2 } from "lucide-react";
 import { useURLMapState, DEFAULT_LAT, DEFAULT_LNG, DEFAULT_ZOOM } from '@/features/maps/hooks/useURLMapState';
+import { useMapWheelZoomCapture } from '@/features/maps/hooks/useMapWheelZoomCapture';
 import { useStableMapUpdate } from '@/features/maps/hooks/useStableMapUpdate';
 import { MapErrorBoundary } from './MapErrorBoundary';
 import { useMapContext } from '../providers/MapContext';
@@ -49,6 +50,9 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
   } = useMapContext();
 
   const mapRef = useRef<MapRef>(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
+
+  useMapWheelZoomCapture(mapRef, isMapLoaded);
 
   useEffect(() => {
     if (fitBounds && mapRef.current) {
@@ -122,6 +126,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
   }, [updateMapState, updateBounds]);
 
   const onLoad = useCallback((evt: { target: maplibregl.Map }) => {
+    setIsMapLoaded(true);
     updateBounds(evt.target);
     if (lat === DEFAULT_LAT && lng === DEFAULT_LNG && zoom === DEFAULT_ZOOM) {
       let hasInteracted = false;
