@@ -35,7 +35,7 @@ interface CollectionMapGLProps {
   showItinerary?: boolean;
   /** Fired when the visible geographic viewport changes (initial load, pan, zoom). */
   onViewportBoundsChange?: (bounds: Bounds) => void;
-  /** Rendered bottom-left above map canvas (included when map is expanded to fullscreen portal). */
+  /** Extra control below Satellite (top-left); kept out of bottom UI (nav / map-list toggle). */
   bottomLeftOverlay?: ReactNode;
 }
 
@@ -294,41 +294,39 @@ function CollectionMapGLContent({
             />
         </MapGL>
 
-        {/* Top Left: Satellite Toggle */}
-        <div className="absolute top-2 left-2 flex flex-col gap-2 z-[60]">
+        {/* Top Left: Satellite + optional collection actions (avoid bottom nav / mobile map-list toggle). */}
+        <div className="absolute top-2 left-2 z-[80] flex max-w-[min(100vw-5rem,20rem)] flex-col gap-2">
           <button
+            type="button"
             onClick={(e) => {
                 e.stopPropagation();
                 setIsSatellite(!isSatellite);
             }}
-            className="p-2 bg-surface-card/90 backdrop-blur-sm border border-border-default rounded-sm shadow-md hover:bg-surface-muted transition-colors flex items-center gap-2"
+            className="flex items-center gap-2 rounded-sm border border-border-default bg-surface-card/90 p-2 shadow-md backdrop-blur-sm transition-colors hover:bg-surface-muted"
             title={isSatellite ? "Show Map" : "Show Satellite"}
           >
-            <Layers className="w-4 h-4" />
-            <span className="text-xs font-medium hidden sm:inline">{isSatellite ? "Map" : "Satellite"}</span>
+            <Layers className="h-4 w-4 shrink-0" />
+            <span className="hidden text-xs font-medium sm:inline">{isSatellite ? "Map" : "Satellite"}</span>
           </button>
+          {bottomLeftOverlay ? (
+            <div className="pointer-events-auto min-w-0" onClick={(e) => e.stopPropagation()}>
+              {bottomLeftOverlay}
+            </div>
+          ) : null}
         </div>
 
         {/* Top Right: Fullscreen Toggle */}
         <button
+            type="button"
             onClick={(e) => {
                 e.stopPropagation();
                 setIsExpanded(!isExpanded);
             }}
-            className="absolute top-2 right-2 p-2 bg-surface-card/90 backdrop-blur-sm border border-border-default rounded-sm shadow-md hover:bg-surface-muted transition-colors z-[60]"
+            className="absolute top-2 right-2 z-[80] rounded-sm border border-border-default bg-surface-card/90 p-2 shadow-md backdrop-blur-sm transition-colors hover:bg-surface-muted"
             title={isExpanded ? "Collapse Map" : "Expand Map"}
         >
-            {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </button>
-
-        {bottomLeftOverlay ? (
-          <div
-            className="pointer-events-auto absolute bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-3 z-[80] max-w-[min(100vw-2rem,20rem)] md:bottom-8 md:left-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {bottomLeftOverlay}
-          </div>
-        ) : null}
     </div>
   );
 
