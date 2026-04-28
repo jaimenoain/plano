@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { toast } from 'sonner';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
+import { useLocation } from 'react-router';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 /** After the auto install prompt is shown, suppress it again for this long. */
@@ -25,6 +25,8 @@ interface PwaContextType {
 const PwaContext = createContext<PwaContextType | undefined>(undefined);
 
 export function PwaProvider({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const prevPathnameRef = useRef(location.pathname);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
@@ -39,23 +41,26 @@ export function PwaProvider({ children }: { children: ReactNode }) {
     onRegisterError() {},
   });
 
+  // With `registerType: "prompt"`, a waiting worker never activates until we call
+  // `updateServiceWorker`. Apply silently on full reloads or in-app route changes
+  // (no Sonner toast — avoids interrupting work until the user navigates or refreshes).
   useEffect(() => {
     if (!needRefresh) {
-      toast.dismiss('pwa-sw-update');
+      prevPathnameRef.current = location.pathname;
       return;
     }
-    toast.info('A new version of Plano is ready', {
-      id: 'pwa-sw-update',
-      description: 'Refresh when you are finished to avoid losing work in progress.',
-      duration: 600_000,
-      action: {
-        label: 'Refresh now',
-        onClick: () => {
-          void updateServiceWorker(true);
-        },
-      },
-    });
-  }, [needRefresh, updateServiceWorker]);
+
+    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    if (nav?.type === 'reload') {
+      void updateServiceWorker();
+      return;
+    }
+
+    if (location.pathname !== prevPathnameRef.current) {
+      prevPathnameRef.current = location.pathname;
+      void updateServiceWorker();
+    }
+  }, [location.pathname, needRefresh, updateServiceWorker]);
 
   // Long-lived installed PWAs (especially mobile) may not re-check the service worker
   // until a cold start. Probing on resume + periodically helps them pick up new sw.js
