@@ -18,7 +18,7 @@ function formatProfileCardWhen(iso: string): string {
 export function EventProfileCardSkeleton({ className }: { className?: string }) {
   return (
     <div className={cn("flex gap-3 py-3 animate-pulse", className)}>
-      <div className="h-[72px] w-[72px] shrink-0 rounded-md bg-surface-muted" />
+      <div className="h-[72px] w-[72px] shrink-0 rounded-none bg-surface-muted" />
       <div className="min-w-0 flex-1 space-y-2 py-0.5">
         <div className="h-4 w-3/4 max-w-xs rounded-sm bg-surface-muted" />
         <div className="h-3 w-40 rounded-sm bg-surface-muted" />
@@ -60,7 +60,7 @@ export function EventProfileCard({
         className,
       )}
     >
-      <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-md bg-surface-muted">
+      <div className="h-[72px] w-[72px] shrink-0 overflow-hidden rounded-none bg-surface-muted">
         {showCover ? (
           <img
             src={event.coverImageUrl!}

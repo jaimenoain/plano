@@ -410,7 +410,7 @@ export function BuildingSidebar({
                         <img
                           src={avatarSrc}
                           alt=""
-                          className="h-10 w-10 shrink-0 rounded-sm object-cover border border-border-default"
+                          className="h-10 w-10 shrink-0 rounded-none object-cover border border-border-default"
                           loading="lazy"
                         />
                       ) : (
@@ -455,7 +455,7 @@ export function BuildingSidebar({
                         <img
                           src={logoSrc}
                           alt=""
-                          className="h-10 w-10 shrink-0 rounded-sm object-cover border border-border-default"
+                          className="h-10 w-10 shrink-0 rounded-none object-cover border border-border-default"
                           loading="lazy"
                         />
                       ) : (

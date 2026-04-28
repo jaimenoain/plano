@@ -458,7 +458,7 @@ export default function MergeComparison() {
                         {targetLocation && (
                             <div className="space-y-1 pt-2">
                                 <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Location</div>
-                                <div className="w-full h-48 rounded-md border border-border-default bg-surface-muted overflow-hidden relative">
+                                <div className="w-full h-48 rounded-none border border-border-default bg-surface-muted overflow-hidden relative">
                                   <BuildingMap
                                     lat={targetLocation.lat}
                                     lng={targetLocation.lng}
@@ -476,7 +476,7 @@ export default function MergeComparison() {
                                     <CarouselContent className="-ml-2">
                                         {reviewImages[targetBuilding.id].map((url, idx) => (
                                             <CarouselItem key={idx} className="pl-2 basis-1/3 md:basis-1/4">
-                                                <div className="aspect-square relative overflow-hidden rounded-md border bg-surface-muted">
+                                                <div className="aspect-square relative overflow-hidden rounded-none border bg-surface-muted">
                                                     <img src={url} alt={`Review ${idx}`} className="object-cover w-full h-full" loading="lazy" />
                                                 </div>
                                             </CarouselItem>
@@ -558,7 +558,7 @@ export default function MergeComparison() {
                         {sourceLocation && (
                             <div className="space-y-1 pt-2">
                                 <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Location</div>
-                                <div className="w-full h-48 rounded-md border border-red-200 bg-surface-muted overflow-hidden relative">
+                                <div className="w-full h-48 rounded-none border border-red-200 bg-surface-muted overflow-hidden relative">
                                   <BuildingMap
                                     lat={sourceLocation.lat}
                                     lng={sourceLocation.lng}
@@ -576,7 +576,7 @@ export default function MergeComparison() {
                                     <CarouselContent className="-ml-2">
                                         {reviewImages[sourceBuilding.id].map((url, idx) => (
                                             <CarouselItem key={idx} className="pl-2 basis-1/3 md:basis-1/4">
-                                                <div className="aspect-square relative overflow-hidden rounded-md border bg-surface-muted">
+                                                <div className="aspect-square relative overflow-hidden rounded-none border bg-surface-muted">
                                                     <img src={url} alt={`Review ${idx}`} className="object-cover w-full h-full" loading="lazy" />
                                                 </div>
                                             </CarouselItem>

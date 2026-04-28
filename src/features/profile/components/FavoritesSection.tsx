@@ -23,7 +23,7 @@ function FavoritePoster({ fav, className, onClick }: FavoritePosterProps) {
       className={cn("flex flex-col items-start gap-1 w-32 text-left group cursor-pointer", className)}
       onClick={onClick}
     >
-      <div className="aspect-square w-full rounded-sm overflow-hidden bg-surface-muted border border-border-default shadow-none">
+      <div className="aspect-square w-full rounded-none overflow-hidden bg-surface-muted border border-border-default shadow-none">
         {fav.image_url ? (
           <img
             src={fav.image_url}

@@ -130,7 +130,7 @@ function LocalityCard({
   return (
     <Link
       to={href}
-      className="group flex flex-col overflow-hidden rounded-sm border border-border-default bg-surface-default transition-shadow hover:shadow-md"
+      className="group flex flex-col overflow-hidden rounded-none border border-border-default bg-surface-default transition-shadow hover:shadow-md"
     >
       {absoluteUrl ? (
         <div className="h-36 w-full overflow-hidden bg-surface-muted">

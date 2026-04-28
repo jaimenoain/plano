@@ -81,7 +81,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
         <Card
             ref={ref}
             className={cn(
-                "group relative overflow-hidden transition-colors duration-150 cursor-pointer bg-surface-card border border-border-default rounded-sm shadow-none",
+                "group relative overflow-hidden transition-colors duration-150 cursor-pointer bg-surface-card border border-border-default rounded-none shadow-none",
                 isHighlighted
                     ? "border-brand-primary ring-1 ring-brand-primary bg-brand-secondary/50"
                     : "hover:border-border-strong"

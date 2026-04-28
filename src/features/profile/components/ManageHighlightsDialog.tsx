@@ -232,7 +232,7 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
                                       {peopleHighlights.map(p => (
                                           <div key={p.id} className="flex items-center justify-between p-2 rounded-md bg-surface-muted/50">
                                               <div className="flex items-center gap-3">
-                                                  <div className="h-10 w-10 rounded-full bg-surface-muted overflow-hidden">
+                                                  <div className="h-10 w-10 rounded-none bg-surface-muted overflow-hidden">
                                                       {p.image_url && <img src={p.image_url} className="w-full h-full object-cover" alt={p.title} loading="lazy" />}
                                                   </div>
                                                   <span className="text-sm font-medium">{p.title}</span>
@@ -262,7 +262,7 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
                                                       isSelected ? "bg-brand-primary/10 opacity-50 cursor-default" : "hover:bg-surface-muted"
                                                   )}
                                               >
-                                                  <div className="h-10 w-10 rounded-full bg-surface-muted overflow-hidden shrink-0">
+                                                  <div className="h-10 w-10 rounded-none bg-surface-muted overflow-hidden shrink-0">
                                                       {p.image_url && <img src={p.image_url} className="w-full h-full object-cover" alt={p.title} loading="lazy" />}
                                                   </div>
                                                   <span className="text-sm font-medium truncate">{p.title}</span>

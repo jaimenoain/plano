@@ -333,7 +333,7 @@ export function RecommendDialog({
         <div className="space-y-4 py-4">
           {isEvent && eventRow ? (
             <div className="flex items-center gap-4 rounded-sm border border-border-default bg-surface-muted/30 p-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-border-default bg-surface-muted text-text-secondary">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-none border border-border-default bg-surface-muted text-text-secondary">
                 {eventRow.coverImageUrl ? (
                   <img src={eventRow.coverImageUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
                 ) : (
@@ -347,7 +347,7 @@ export function RecommendDialog({
             </div>
           ) : building ? (
             <div className="flex items-center gap-4 rounded-sm border border-border-default bg-surface-muted/30 p-4">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-border-default bg-surface-muted text-text-secondary">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-none border border-border-default bg-surface-muted text-text-secondary">
                 {building.image_url ? (
                   <img src={building.image_url} alt={building.name} className="h-full w-full object-cover" loading="lazy" />
                 ) : (

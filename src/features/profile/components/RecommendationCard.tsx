@@ -60,7 +60,7 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
   const imageUrl = getBuildingImageUrl(building.main_image_url);
 
   return (
-    <div className="bg-surface-card border border-border-default rounded-sm overflow-hidden flex flex-col h-full shadow-none animate-in fade-in zoom-in-95 duration-300">
+    <div className="bg-surface-card border border-border-default rounded-none overflow-hidden flex flex-col h-full shadow-none animate-in fade-in zoom-in-95 duration-300">
       <div className="relative aspect-[4/3] group cursor-pointer overflow-hidden">
         {/* Locality URL not available: Recommendation.building does not include locality_country_code/city_slug — requires recommendations query to join localities table */}
         <Link to={getBuildingUrl(building.id, building.slug, building.short_id)}>

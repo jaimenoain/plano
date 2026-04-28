@@ -24,7 +24,7 @@ export function FolderCard({ folder, to, onClick, className, isDroppable = false
     <Card
       ref={setNodeRef}
       className={cn(
-        "bg-surface-card border border-border-default rounded-sm shadow-none transition-colors hover:border-border-strong",
+        "bg-surface-card border border-border-default rounded-none shadow-none transition-colors hover:border-border-strong",
         isOver && "border-brand-primary ring-2 ring-brand-primary/40"
       )}
     >
@@ -47,7 +47,7 @@ export function FolderCard({ folder, to, onClick, className, isDroppable = false
           </span>
 
           {folder.preview_images && folder.preview_images.length > 0 ? (
-            <div className="grid grid-cols-2 gap-0.5 w-8 h-8 rounded-sm overflow-hidden">
+            <div className="grid grid-cols-2 gap-0.5 w-8 h-8 rounded-none overflow-hidden">
               {folder.preview_images.slice(0, 4).map((img, i) => (
                 <img key={i} src={img} alt="" className="w-full h-full object-cover" loading="lazy" />
               ))}

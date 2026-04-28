@@ -307,7 +307,7 @@ export default function UserPhotoGallery() {
                  <Link
                     key={photo.id}
                     to={linkUrl}
-                    className="relative aspect-square overflow-hidden rounded-sm bg-surface-muted/20 group block"
+                    className="relative aspect-square overflow-hidden rounded-none bg-surface-muted/20 group block"
                  >
                     <img
                       src={imageUrl}

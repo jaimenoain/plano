@@ -381,7 +381,7 @@ function FixtureShowAllPreview({ entry }: { entry: FeedReview }) {
     <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:gap-10">
       <div className="w-full min-w-0 max-w-md shrink-0 space-y-2 xl:max-w-none xl:flex-1">
         <p className="text-2xs font-medium uppercase tracking-wide text-text-secondary">FeedResolvedEntry</p>
-        <div className="hairline overflow-hidden rounded-lg border border-border-default">
+        <div className="hairline overflow-hidden rounded-none border border-border-default">
           <FeedResolvedEntry entry={entry} onLike={noop} onImageLike={noop} onComment={noop} />
         </div>
         <LegacyLayoutDebugPanel layout={legacy} title="deriveLegacyFeedUi (fixture)" />
@@ -389,7 +389,7 @@ function FixtureShowAllPreview({ entry }: { entry: FeedReview }) {
       </div>
       <div className="w-full min-w-0 max-w-md shrink-0 space-y-2 xl:max-w-none xl:flex-1">
         <p className="text-2xs font-medium uppercase tracking-wide text-text-secondary">DetailCard (A / B / C)</p>
-        <div className="hairline overflow-hidden rounded-lg border border-border-default">
+        <div className="hairline overflow-hidden rounded-none border border-border-default">
           {renderPlaygroundDetailCard(entry)}
         </div>
         <LegacyLayoutDebugPanel layout={legacy} title="Legacy layout (same entry)" />
@@ -410,7 +410,7 @@ function FixtureSinglePreview({
   const legacy = deriveLegacyFeedUi(entry);
   return (
     <div className="min-w-0 space-y-2">
-      <div className="hairline overflow-hidden rounded-lg border border-border-default">
+      <div className="hairline overflow-hidden rounded-none border border-border-default">
         {viewMode === "feed" ? (
           renderFeedCardForPlayground(entry, cardTypeOverride, 0)
         ) : (

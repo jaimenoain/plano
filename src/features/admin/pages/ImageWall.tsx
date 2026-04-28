@@ -138,7 +138,7 @@ toast.error("Failed to delete images");
                 <div
                     key={img.uniqueKey}
                     className={cn(
-                      "relative group aspect-square cursor-pointer overflow-hidden rounded-sm border border-border-default transition-all",
+                      "relative group aspect-square cursor-pointer overflow-hidden rounded-none border border-border-default transition-all",
                       selectedKeys.has(img.uniqueKey)
                         ? "ring-2 ring-brand-primary border-brand-primary"
                         : "hover:border-border-strong"

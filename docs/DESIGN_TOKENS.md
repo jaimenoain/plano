@@ -1,7 +1,7 @@
 # Plano: Design Tokens
 
 > **Authoritative source for all visual design decisions.**
-> Token values are reflected in `apps/web/tailwind.config.ts`. Update this file when changing design decisions, then sync `tailwind.config.ts` to match.
+> Token values are reflected in `tailwind.config.ts` at the repository root. Update this file when changing design decisions, then sync `tailwind.config.ts` to match.
 
 ---
 
@@ -203,6 +203,10 @@ Named layout tokens (exact measures, not constrained to the 4px grid):
 
 **Default component radius:** `radius-sm` (`2px`). The sharp directive means almost no rounding. Elements should feel cut, not moulded. Only avatars use `radius-full`.
 
+### Photography and media (mandatory)
+
+**All photographic media uses right-angle corners only:** building photos, feed imagery, thumbnails, map/list previews, event covers, gallery grids, collection previews, profile highlight images, and any `<img>` or video frame that shows subject photography. Apply **`rounded-none`** (or no radius utility) to the element that clips the media — including wrappers with `overflow-hidden`. Do not use `rounded-sm`, `rounded-md`, `rounded-lg`, or `rounded-xl` on photo surfaces or on outer cards whose visible edge is dominated by an image. **Exceptions:** (1) **Avatars** (user/profile identity) remain `rounded-full` per the table above. (2) **Non-photographic UI** (badges, buttons, inputs, purely textual cards, map chrome) keep the component radius tokens as elsewhere in this section. Map containers and non-photo panels may keep soft radius when they do not clip photographic content.
+
 ---
 
 ## 6. Shadows
@@ -237,7 +241,7 @@ Semantic tokens for the card system (`CardSpec` / `resolveCardSpec`). Values liv
 
 ## 7. Tailwind Config Block
 
-The `theme.extend` object that reflects these tokens in `apps/web/tailwind.config.ts`.
+The `theme.extend` object that reflects these tokens in `tailwind.config.ts`.
 
 ```typescript
 theme: {

@@ -17,7 +17,7 @@ export function CollectionGuideCard({ collection }: CollectionGuideCardProps) {
       {/* Mosaic preview */}
       {collection.previewImages.length > 0 && (
         <div
-          className="w-full mb-4 overflow-hidden rounded-sm bg-surface-muted"
+          className="w-full mb-4 overflow-hidden rounded-none bg-surface-muted"
           style={{ aspectRatio: '16/7' }}
         >
           {collection.previewImages.length === 1 ? (

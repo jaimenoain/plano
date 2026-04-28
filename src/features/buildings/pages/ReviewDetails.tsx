@@ -656,7 +656,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                       {review.images.map((img) => (
                         <div
                           key={img.id}
-                          className="rounded-lg overflow-hidden cursor-pointer"
+                          className="rounded-none overflow-hidden cursor-pointer"
                           onClick={() => setSelectedImageId(img.id)}
                         >
                           <img

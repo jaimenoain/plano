@@ -907,7 +907,7 @@ toast({
                 <div className="space-y-4">
                     {/* Video Component */}
                     {(video.status !== 'idle' || video.preview) && (
-                        <div className="relative rounded-sm overflow-hidden border border-border-default bg-surface-muted">
+                        <div className="relative rounded-none overflow-hidden border border-border-default bg-surface-muted">
                              {video.status === 'compressing' && (
                                  <div className="p-10 flex flex-col items-center justify-center gap-3">
                                    <Loader2 className="w-8 h-8 animate-spin text-text-secondary" />
@@ -957,7 +957,7 @@ toast({
                     {/* Image Grid */}
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
                         {images.map((img) => (
-                             <div key={img.id} className="relative aspect-square group rounded-sm overflow-hidden border border-border-default bg-surface-muted">
+                             <div key={img.id} className="relative aspect-square group rounded-none overflow-hidden border border-border-default bg-surface-muted">
                                <img
                                  src={img.preview}
                                  alt="Preview"

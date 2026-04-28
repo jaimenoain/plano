@@ -604,7 +604,7 @@ export default function SubmitEvent() {
                   ) : null}
                 </div>
                 {form.watch("coverImageUrl") ? (
-                  <div className="mt-2 overflow-hidden rounded-sm border border-border-default">
+                  <div className="mt-2 overflow-hidden rounded-none border border-border-default">
                     <img
                       src={form.watch("coverImageUrl")}
                       alt=""

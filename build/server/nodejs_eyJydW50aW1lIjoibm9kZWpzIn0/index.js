@@ -1,4 +1,4 @@
-import { at, au, av, aw, ax, ay, az, aA, aB, aC, aD, aE } from "./assets/server-build-z73nLTFM.js";
+import { at, au, av, aw, ax, ay, az, aA, aB, aC, aD, aE } from "./assets/server-build-D4GXcb2e.js";
 import "@vercel/react-router/entry.server";
 import "react-router";
 import "react/jsx-runtime";
@@ -32,6 +32,8 @@ import "@radix-ui/react-radio-group";
 import "react-dom";
 import "maplibre-gl";
 import "embla-carousel-react";
+import "@supabase/supabase-js";
+import "@anthropic-ai/sdk";
 import "recharts";
 import "@radix-ui/react-toggle-group";
 import "@radix-ui/react-toggle";

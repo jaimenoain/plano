@@ -94,11 +94,11 @@ export function ProfileListView({
                           <img
                             src={imageUrl}
                             alt={review.building.name}
-                            className="w-8 h-8 rounded-md object-cover border border-border-default/50"
+                            className="w-8 h-8 rounded-none object-cover border border-border-default/50"
                           />
                         </div>
                       </HoverCardTrigger>
-                      <HoverCardContent className="w-80 p-0 overflow-hidden rounded-md border-0 shadow-lg" side="right">
+                      <HoverCardContent className="w-80 p-0 overflow-hidden rounded-none border-0 shadow-lg" side="right">
                         <img
                           src={imageUrl}
                           alt={review.building.name}

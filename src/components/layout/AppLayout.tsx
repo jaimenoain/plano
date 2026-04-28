@@ -17,6 +17,8 @@ interface AppLayoutProps {
   headerAction?: ReactNode;
   isFullScreen?: boolean;
   showHeader?: boolean;
+  /** When true, the shell layout (e.g. MainLayout `SidebarInset`) already applies top padding for the fixed app nav — skip extra `pt-16` so content (e.g. hero) sits flush under it. */
+  shellProvidesTopInset?: boolean;
   fullWidth?: boolean;
 }
 
@@ -33,6 +35,7 @@ export function AppLayout({
   headerAction,
   isFullScreen = false,
   showHeader = false,
+  shellProvidesTopInset = false,
   fullWidth = false
 }: AppLayoutProps) {
   void fullWidth;
@@ -56,7 +59,7 @@ export function AppLayout({
         />
       )}
       <div className={cn(
-        showHeader && "pt-16",
+        showHeader && !shellProvidesTopInset && "pt-16",
         "w-full min-w-0",
         isFullScreen && "h-full flex flex-col flex-1",
         showNav && "pb-20 md:pb-0"

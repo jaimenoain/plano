@@ -37,7 +37,7 @@ export function DiscoveryList({
     return (
       <div className="space-y-4 p-4">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="flex flex-row h-auto overflow-hidden rounded-sm border border-border-default bg-surface-card text-text-primary shadow-none">
+          <div key={i} className="flex flex-row h-auto overflow-hidden rounded-none border border-border-default bg-surface-card text-text-primary shadow-none">
             <Skeleton className="w-32 h-32 shrink-0 rounded-none" />
             <div className="flex-1 p-4 space-y-2">
               <Skeleton className="h-5 w-3/4" />

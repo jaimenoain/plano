@@ -31,7 +31,7 @@ export function LeaderboardCard({ building, rank, type }: LeaderboardCardProps) 
         #{rank}
       </div>
 
-      <div className="h-12 w-12 rounded-md overflow-hidden shrink-0 border border-border-default/50">
+      <div className="h-12 w-12 rounded-none overflow-hidden shrink-0 border border-border-default/50">
         <img
           src={imageUrl}
           alt={building.name}

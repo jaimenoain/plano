@@ -31,40 +31,26 @@ export function EventCardSkeleton({ className }: { className?: string }) {
         className,
       )}
     >
-      <div className="h-[180px] w-[120px] shrink-0 rounded-sm bg-surface-muted" />
       <div className="min-w-0 flex-1 space-y-3 py-1">
         <div className="h-5 w-2/3 max-w-md rounded-sm bg-surface-muted" />
         <div className="h-4 w-48 rounded-sm bg-surface-muted" />
         <div className="h-4 w-full max-w-sm rounded-sm bg-surface-muted" />
         <div className="h-4 w-40 rounded-sm bg-surface-muted" />
       </div>
+      <div className="h-[180px] w-[120px] shrink-0 rounded-sm bg-surface-muted" />
     </div>
   );
 }
 
 export function EventCard({ event }: { event: EventCardDTO }) {
   const [coverFailed, setCoverFailed] = useState(false);
-  const showCover = Boolean(event.coverImageUrl) && !coverFailed;
+  const showCover = Boolean(event.coverImageUrl?.trim()) && !coverFailed;
 
   return (
     <Link
       to={getEventUrl(event)}
       className="flex gap-4 rounded-sm border border-border-default bg-surface-card p-4 transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
     >
-      <div className="w-[120px] shrink-0">
-        {showCover ? (
-          <img
-            src={event.coverImageUrl!}
-            alt=""
-            width={120}
-            height={180}
-            className="h-[180px] w-[120px] rounded-sm object-cover"
-            onError={() => setCoverFailed(true)}
-          />
-        ) : (
-          <div className="h-[180px] w-[120px] rounded-sm bg-surface-muted" aria-hidden />
-        )}
-      </div>
       <div className="min-w-0 flex-1 space-y-2 py-1">
         <div className="flex flex-wrap items-start gap-2">
           <h2 className="line-clamp-2 min-w-0 flex-1 text-base font-black text-text-primary">{event.title}</h2>
@@ -80,6 +66,18 @@ export function EventCard({ event }: { event: EventCardDTO }) {
         ) : null}
         <p className="text-sm text-text-secondary">{organiserLine(event)}</p>
       </div>
+      {showCover ? (
+        <div className="w-[120px] shrink-0">
+          <img
+            src={event.coverImageUrl!}
+            alt=""
+            width={120}
+            height={180}
+            className="h-[180px] w-[120px] rounded-none object-cover"
+            onError={() => setCoverFailed(true)}
+          />
+        </div>
+      ) : null}
     </Link>
   );
 }

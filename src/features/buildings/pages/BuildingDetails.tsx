@@ -263,7 +263,7 @@ function RelatedByCitySection({
 
 export function HydrateFallback() {
   return (
-    <AppLayout showBack title="Loading..." showHeader>
+    <AppLayout showBack title="Loading..." showHeader shellProvidesTopInset>
       <Skeleton className="h-56 sm:h-64 lg:h-80 w-full rounded-none" />
       <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -493,6 +493,21 @@ function StreamAuthorAttribution({
 
 // ─── Meta ─────────────────────────────────────────────────────────────────────
 
+/** Header bar + `<title>` base: name with optional city when known. */
+function buildingDetailPageTitle(
+  building: Pick<BuildingDetails, "name" | "city">,
+): string {
+  const city =
+    typeof building.city === "string" ? building.city.trim() : "";
+  return city.length > 0 ? `${building.name}, ${city}` : building.name;
+}
+
+function buildingDetailDocumentTitle(
+  building: Pick<BuildingDetails, "name" | "city">,
+): string {
+  return `${buildingDetailPageTitle(building)} | Plano`;
+}
+
 export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
   if (!data || !data.building) return [{ title: "Plano" }];
   const { building: rawBuilding, heroImageUrl, buildingCredits = [], locality } = data;
@@ -503,10 +518,11 @@ export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
     ? { country_code: locality.country_code, city_slug: locality.city_slug, city: building.city, country: building.country }
     : null;
   const canonical = buildingCanonicalUrl(building, localityForBreadcrumb);
+  const docTitle = buildingDetailDocumentTitle(building);
   return [
-    { title: `${building.name} | Plano` },
+    { title: docTitle },
     { name: "description", content: description },
-    { property: "og:title", content: `${building.name} | Plano` },
+    { property: "og:title", content: docTitle },
     { property: "og:description", content: description },
     { property: "og:image", content: image },
     { property: "og:image:width", content: "1200" },
@@ -515,7 +531,7 @@ export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
     { property: "og:site_name", content: "Plano" },
     { property: "og:type", content: "place" },
     { name: "twitter:card", content: "summary_large_image" },
-    { name: "twitter:title", content: `${building.name} | Plano` },
+    { name: "twitter:title", content: docTitle },
     { name: "twitter:description", content: description },
     { name: "twitter:image", content: image },
     { tagName: "link", rel: "canonical", href: canonical },
@@ -1021,7 +1037,7 @@ export default function BuildingDetails() {
         const img = images[0];
         if (!img) return null;
         return (
-          <div key={block.key} className="rounded-xl border border-border-default overflow-hidden bg-surface-card shadow-sm">
+          <div key={block.key} className="rounded-none border border-border-default overflow-hidden bg-surface-card shadow-sm">
             <div
               className="group relative aspect-[16/10] cursor-pointer overflow-hidden bg-surface-muted"
               onClick={() => setSelectedImage(img)}
@@ -1058,7 +1074,7 @@ export default function BuildingDetails() {
 
       if (blockType === "mosaic") {
         return (
-          <div key={block.key} className="rounded-xl border border-border-default overflow-hidden bg-surface-card shadow-sm">
+          <div key={block.key} className="rounded-none border border-border-default overflow-hidden bg-surface-card shadow-sm">
             <div className={cn("grid gap-px bg-border-default", images.length >= 4 ? "grid-cols-2" : "grid-cols-2")}>
               {images.slice(0, 4).map((img, i) => (
                 <div
@@ -1099,7 +1115,7 @@ export default function BuildingDetails() {
         const img = images[0];
         if (!img) return null;
         return (
-          <div key={block.key} className="rounded-xl border border-border-default overflow-hidden bg-surface-card shadow-sm">
+          <div key={block.key} className="rounded-none border border-border-default overflow-hidden bg-surface-card shadow-sm">
             <div
               className="group relative aspect-[4/3] cursor-pointer overflow-hidden bg-surface-muted"
               onClick={() => setSelectedImage(img)}
@@ -1131,7 +1147,7 @@ export default function BuildingDetails() {
         if (!img) return null;
         const isTall = topLikes >= 10;
         return (
-          <div key={block.key} className="group rounded-xl border border-border-default overflow-hidden bg-surface-card shadow-sm">
+          <div key={block.key} className="group rounded-none border border-border-default overflow-hidden bg-surface-card shadow-sm">
             <div
               className={cn(
                 "relative cursor-pointer overflow-hidden bg-surface-muted",
@@ -1156,7 +1172,7 @@ export default function BuildingDetails() {
       if (blockType === "text-only") {
         if (!preview) return null;
         return (
-          <div key={block.key} className="rounded-xl border border-border-default bg-surface-card shadow-sm p-5 space-y-3">
+          <div key={block.key} className="rounded-none border border-border-default bg-surface-card shadow-sm p-5 space-y-3">
             {authorAttribution}
             <Link to={`/review/${block.entryId}`} className="group/r block">
               <p className="text-sm leading-relaxed text-text-secondary italic group-hover/r:text-text-primary">
@@ -1207,7 +1223,12 @@ export default function BuildingDetails() {
   // ─── MAIN RENDER ─────────────────────────────────────────────────────────
 
   return (
-    <AppLayout title={building.name} showBack showHeader>
+    <AppLayout
+      title={buildingDetailPageTitle(building)}
+      showBack
+      showHeader
+      shellProvidesTopInset
+    >
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -1526,7 +1547,7 @@ export default function BuildingDetails() {
                         {filteredMediaImages.map((img) => (
                           <div
                             key={img.id}
-                            className="group relative break-inside-avoid mb-3 cursor-pointer overflow-hidden rounded-xl bg-surface-muted shadow-sm"
+                            className="group relative break-inside-avoid mb-3 cursor-pointer overflow-hidden rounded-none bg-surface-muted shadow-sm"
                             onClick={() => setSelectedImage(img)}
                           >
                             {img.type === "video" ? (
@@ -1720,13 +1741,6 @@ export default function BuildingDetails() {
 
             {/* ── SIDEBAR — Right Column ── */}
             <div className="lg:col-span-4">
-              <div className="space-y-5">
-
-                {/* Building info — always visible */}
-                <div className="bg-surface-card border border-border-default rounded-xl p-5 shadow-sm">
-                  <BuildingInfoSection building={building} buildingCredits={buildingCredits} />
-                </div>
-
               <div className="lg:sticky lg:top-14 space-y-5">
 
                 {/* Action card */}
@@ -2017,7 +2031,11 @@ export default function BuildingDetails() {
                   </div>
                 )}
 
-              </div>
+                {/* Building info */}
+                <div className="bg-surface-card border border-border-default rounded-xl p-5 shadow-sm">
+                  <BuildingInfoSection building={building} buildingCredits={buildingCredits} />
+                </div>
+
               </div>
             </div>
 

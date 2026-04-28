@@ -6,8 +6,20 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { EventCard, EventCardSkeleton } from "@/features/events/components/EventCard";
 import { getUpcomingEvents, UPCOMING_EVENTS_PAGE_SIZE } from "@/features/events/api/eventsApi";
+import type { EventCardDTO } from "@/features/events/types";
 import { eventKeys } from "@/features/events/queryKeys";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+
+function eventHasCoverImage(ev: EventCardDTO): boolean {
+  return Boolean(ev.coverImageUrl?.trim());
+}
+
+function sortEventsForListing(a: EventCardDTO, b: EventCardDTO): number {
+  const aCover = eventHasCoverImage(a);
+  const bCover = eventHasCoverImage(b);
+  if (aCover !== bCover) return aCover ? -1 : 1;
+  return new Date(a.startAt).getTime() - new Date(b.startAt).getTime();
+}
 
 export const meta: MetaFunction = () => [
   { title: "Architecture Events — Exhibitions, Tours & Talks | Plano" },
@@ -36,7 +48,10 @@ export default function Events() {
     },
   });
 
-  const items = useMemo(() => query.data?.pages.flatMap((p) => p) ?? [], [query.data]);
+  const items = useMemo(() => {
+    const flat = query.data?.pages.flatMap((p) => p) ?? [];
+    return [...flat].sort(sortEventsForListing);
+  }, [query.data]);
 
   useEffect(() => {
     if (!loadMoreVisible) return;

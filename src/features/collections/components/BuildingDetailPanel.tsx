@@ -73,7 +73,7 @@ export function BuildingDetailPanel({ building }: BuildingDetailPanelProps) {
                   <Link
                     to={getBuildingUrl(building.id, building.slug)}
                     target="_blank"
-                    className="block aspect-square relative overflow-hidden rounded-md border bg-surface-muted group cursor-pointer"
+                    className="block aspect-square relative overflow-hidden rounded-none border bg-surface-muted group cursor-pointer"
                   >
                     <img
                       src={img.url}

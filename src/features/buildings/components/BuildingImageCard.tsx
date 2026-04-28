@@ -92,7 +92,7 @@ setIsLiked(previousIsLiked);
     <button
       type="button"
       onClick={onOpen}
-      className="relative aspect-square rounded-sm overflow-hidden group cursor-pointer"
+      className="relative aspect-square rounded-none overflow-hidden group cursor-pointer"
     >
       <img
         src={isVideo && image.poster ? image.poster : image.url}

@@ -14,7 +14,7 @@ export function LocalityCard({ locality, featured = false }: LocalityCardProps) 
     return (
       <Link
         to={href}
-        className="group relative block overflow-hidden rounded-sm bg-surface-muted border border-border-default hover:border-border-strong transition-colors duration-150"
+        className="group relative block overflow-hidden rounded-none bg-surface-muted border border-border-default hover:border-border-strong transition-colors duration-150"
         style={{ aspectRatio: '4/3' }}
       >
         {locality.heroImageUrl ? (

@@ -224,7 +224,7 @@ export function BuildingPopupContent({
   if (cluster.is_custom_marker) {
       return (
         <div
-            className="flex w-[200px] flex-col overflow-hidden rounded-sm bg-surface-card border border-border-default shadow-lg relative max-w-xs"
+            className="flex w-[200px] flex-col overflow-hidden rounded-none bg-surface-card border border-border-default shadow-lg relative max-w-xs"
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
@@ -318,7 +318,7 @@ export function BuildingPopupContent({
   if (cluster.is_candidate) {
       return (
         <div
-            className="flex w-[200px] flex-col overflow-hidden rounded-sm bg-surface-card border border-border-default shadow-lg relative max-w-xs"
+            className="flex w-[200px] flex-col overflow-hidden rounded-none bg-surface-card border border-border-default shadow-lg relative max-w-xs"
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
@@ -377,7 +377,7 @@ export function BuildingPopupContent({
   // Standard Building Logic
   return (
     <div
-      className="flex w-[200px] flex-col overflow-hidden rounded-sm bg-surface-card border border-border-default shadow-lg relative max-w-xs"
+      className="flex w-[200px] flex-col overflow-hidden rounded-none bg-surface-card border border-border-default shadow-lg relative max-w-xs"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
