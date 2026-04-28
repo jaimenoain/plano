@@ -18,6 +18,8 @@ export interface ClusterResponse {
   image_attribution?: string[];
   is_custom_marker?: boolean;
   marker_category?: string;
+  /** Google Places primary type for trip-logistics pins (e.g. `bakery`); refines icon vs coarse `marker_category`. */
+  marker_google_primary_type?: string | null;
   notes?: string | null;
   is_candidate?: boolean;
   address?: string | null;

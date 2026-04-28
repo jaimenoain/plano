@@ -60,6 +60,8 @@ export interface DiscoveryBuilding extends DiscoveryBuildingMapPin {
   visitors?: ContactRater[]; // From RPC
   status?: 'Built' | 'Under Construction' | 'Unbuilt' | 'Lost' | 'Temporary' | null;
   markerCategory?: CollectionMarkerCategory;
+  /** Google Places primary type when `isMarker`; refines map pin icon (e.g. bakery vs restaurant). */
+  markerGooglePrimaryType?: string | null;
   notes?: string | null;
   address?: string | null;
   google_place_id?: string | null;

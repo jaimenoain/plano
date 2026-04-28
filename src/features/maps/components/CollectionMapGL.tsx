@@ -221,6 +221,7 @@ function CollectionMapGLContent({
             // Custom fields
             is_custom_marker: b.isMarker,
             marker_category: b.markerCategory,
+            marker_google_primary_type: b.markerGooglePrimaryType ?? null,
             notes: b.notes ?? null,
             is_candidate: b.isCandidate,
             address: b.address ?? null,

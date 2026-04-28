@@ -779,6 +779,7 @@ export type Database = {
           created_at: string
           created_by: string
           google_place_id: string | null
+          google_primary_type: string | null
           id: string
           lat: number
           lng: number
@@ -793,6 +794,7 @@ export type Database = {
           created_at?: string
           created_by: string
           google_place_id?: string | null
+          google_primary_type?: string | null
           id?: string
           lat: number
           lng: number
@@ -807,6 +809,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           google_place_id?: string | null
+          google_primary_type?: string | null
           id?: string
           lat?: number
           lng?: number
@@ -2528,6 +2531,27 @@ export type Database = {
           name?: string
           owner_id?: string
           slug?: string
+        }
+        Relationships: []
+      }
+      waitlist_signups: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
         }
         Relationships: []
       }

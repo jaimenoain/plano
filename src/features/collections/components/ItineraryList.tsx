@@ -50,8 +50,54 @@ import { Textarea } from "@/components/ui/textarea";
 import { parseDuration, formatDuration } from "@/utils/duration";
 import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { getBuildingImageUrl } from "@/utils/image";
 
 // --- Helper Components ---
+
+type MarkerPlacePhotosMap = Record<
+  string,
+  { url: string; attribution: string[] } | null | undefined
+>;
+
+function resolveSegmentDestinationPreview(
+  nextStop: ItineraryStop,
+  buildingDetails: Record<string, ItineraryBuilding>,
+  markerDetails: Record<string, CollectionMarker>,
+  markerPlacePhotos?: MarkerPlacePhotosMap,
+): { name: string; imageUrl?: string } {
+  if (nextStop.type === "building") {
+    const b = buildingDetails[nextStop.referenceId];
+    return {
+      name: b?.name ?? "Next stop",
+      imageUrl: getBuildingImageUrl(b?.hero_image_url ?? b?.community_preview_url),
+    };
+  }
+  const m = markerDetails[nextStop.referenceId];
+  const photo = markerPlacePhotos?.[nextStop.referenceId];
+  return {
+    name: m?.name ?? "Next stop",
+    imageUrl: photo?.url ?? undefined,
+  };
+}
+
+function SegmentDestinationHeader({ preview }: { preview: { name: string; imageUrl?: string } }) {
+  return (
+    <div className="space-y-2">
+      {preview.imageUrl ? (
+        <div className="relative h-[120px] w-full overflow-hidden rounded-sm border border-border-default bg-surface-muted">
+          <img
+            src={preview.imageUrl}
+            alt={preview.name}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      ) : null}
+      <p className="text-xs font-medium text-text-primary leading-snug line-clamp-2">
+        {preview.name}
+      </p>
+    </div>
+  );
+}
 
 interface AddStopPopoverProps {
   dayIndex: number; // 0-based index for the store
@@ -146,9 +192,19 @@ interface ItinerarySegmentProps {
   defaultTransportMode: string;
   onUpdateItinerary?: (itinerary: Itinerary) => void;
   canEdit?: boolean;
+  /** The stop you travel to along this segment (shown in the popover). */
+  destinationPreview: { name: string; imageUrl?: string } | null;
 }
 
-function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMode, onUpdateItinerary, canEdit }: ItinerarySegmentProps) {
+function ItinerarySegment({
+  stopId,
+  dayIndex,
+  transitToNext,
+  defaultTransportMode,
+  onUpdateItinerary,
+  canEdit,
+  destinationPreview,
+}: ItinerarySegmentProps) {
   const currentMode = transitToNext?.mode || defaultTransportMode;
   const updateSegmentTransit = useItineraryStore((state) => state.updateSegmentTransit);
 
@@ -188,6 +244,11 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
   else if (currentMode === "cycling") Icon = Bike;
   else if (currentMode === "transit") Icon = Bus;
 
+  const readOnlyPopoverOpen =
+    Boolean(instructions) ||
+    Boolean(transitToNext?.estimatedMinutes) ||
+    Boolean(destinationPreview?.imageUrl);
+
   if (!canEdit) {
     return (
       <div className="relative flex items-center justify-center h-6 my-1 group">
@@ -202,7 +263,7 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
             ) : null}
           </div>
 
-          {instructions || transitToNext?.estimatedMinutes ? (
+          {readOnlyPopoverOpen ? (
             <Popover>
               <PopoverTrigger asChild>
                 <button className="shrink-0 bg-surface-default border border-border-default rounded-full p-1 shadow-sm cursor-help">
@@ -211,16 +272,25 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
               </PopoverTrigger>
               <PopoverContent className="w-80" side="right" align="center">
                 <div className="space-y-2">
-                   <h4 className="font-medium leading-none flex items-center gap-2">
-                     <Icon className="w-4 h-4" /> Transport Note
-                   </h4>
-                   {transitToNext?.estimatedMinutes && (
-                     <p className="text-sm font-medium flex items-center gap-1.5 mt-1">
-                       <Clock className="w-3 h-3 text-text-secondary" />
-                       {formatDuration(transitToNext.estimatedMinutes)}
-                     </p>
-                   )}
-                   {instructions && <p className="text-sm text-text-secondary whitespace-pre-wrap mt-2">{instructions}</p>}
+                   {destinationPreview ? (
+                     <SegmentDestinationHeader preview={destinationPreview} />
+                   ) : null}
+                   {(transitToNext?.estimatedMinutes || instructions) ? (
+                     <>
+                       <h4 className="font-medium leading-none flex items-center gap-2">
+                         <Icon className="w-4 h-4" /> Transport Note
+                       </h4>
+                       {transitToNext?.estimatedMinutes ? (
+                         <p className="text-sm font-medium flex items-center gap-1.5 mt-1">
+                           <Clock className="w-3 h-3 text-text-secondary" />
+                           {formatDuration(transitToNext.estimatedMinutes)}
+                         </p>
+                       ) : null}
+                       {instructions ? (
+                         <p className="text-sm text-text-secondary whitespace-pre-wrap mt-2">{instructions}</p>
+                       ) : null}
+                     </>
+                   ) : null}
                 </div>
               </PopoverContent>
             </Popover>
@@ -265,6 +335,9 @@ function ItinerarySegment({ stopId, dayIndex, transitToNext, defaultTransportMod
           </PopoverTrigger>
           <PopoverContent className="w-80" side="right" align="center">
             <div className="grid gap-4">
+            {destinationPreview ? (
+              <SegmentDestinationHeader preview={destinationPreview} />
+            ) : null}
             <div className="space-y-2">
               <h4 className="font-medium leading-none">Segment Options</h4>
               <p className="text-sm text-text-secondary">
@@ -340,9 +413,26 @@ interface ItineraryDayColumnProps {
   canEdit?: boolean;
   onUpdateNote?: (itemId: string, note: string) => void;
   onUpdateMarkerNote?: (markerId: string, note: string) => void;
+  markerPlacePhotos?: MarkerPlacePhotosMap;
 }
 
-function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId, distance, transportMode, title, description, onUpdateItinerary, canEdit, onUpdateNote, onUpdateMarkerNote }: ItineraryDayColumnProps) {
+function ItineraryDayColumn({
+  dayNumber,
+  stops,
+  highlightedId,
+  setHighlightedId,
+  distance,
+  transportMode,
+  title,
+  description,
+  onUpdateItinerary,
+  canEdit,
+  onUpdateNote,
+  onUpdateMarkerNote,
+  markerPlacePhotos,
+}: ItineraryDayColumnProps) {
+  const buildingDetails = useItineraryStore((s) => s.buildingDetails);
+  const markerDetails = useItineraryStore((s) => s.markerDetails);
   const { setNodeRef } = useDroppable({
     id: `day-${dayNumber}`,
     data: { dayNumber }
@@ -444,6 +534,12 @@ function ItineraryDayColumn({ dayNumber, stops, highlightedId, setHighlightedId,
                                   defaultTransportMode={transportMode}
                                   onUpdateItinerary={onUpdateItinerary}
                                   canEdit={canEdit}
+                                  destinationPreview={resolveSegmentDestinationPreview(
+                                    stops[index + 1],
+                                    buildingDetails,
+                                    markerDetails,
+                                    markerPlacePhotos,
+                                  )}
                                 />
                             )}
                         </Fragment>
@@ -502,9 +598,19 @@ interface ItineraryListProps {
     canEdit?: boolean;
     onUpdateNote?: (itemId: string, note: string) => void;
     onUpdateMarkerNote?: (markerId: string, note: string) => void;
+    /** Google Places photo URLs keyed by `collection_markers.id` (same as `useGooglePlacePhotos`). */
+    markerPlacePhotos?: MarkerPlacePhotosMap;
 }
 
-export function ItineraryList({ highlightedId, setHighlightedId, onUpdateItinerary, canEdit, onUpdateNote, onUpdateMarkerNote }: ItineraryListProps) {
+export function ItineraryList({
+  highlightedId,
+  setHighlightedId,
+  onUpdateItinerary,
+  canEdit,
+  onUpdateNote,
+  onUpdateMarkerNote,
+  markerPlacePhotos,
+}: ItineraryListProps) {
     const days = useItineraryStore((state) => state.days);
     const transportMode = useItineraryStore((state) => state.transportMode);
     const reorderStops = useItineraryStore((state) => state.reorderStops);
@@ -720,6 +826,7 @@ export function ItineraryList({ highlightedId, setHighlightedId, onUpdateItinera
                         canEdit={canEdit}
                         onUpdateNote={onUpdateNote}
                         onUpdateMarkerNote={onUpdateMarkerNote}
+                        markerPlacePhotos={markerPlacePhotos}
                     />
                 ))}
             </Accordion>

@@ -823,6 +823,7 @@ export type PlanoPublicTables = {
       id: string
       collection_id: string
       google_place_id: string | null
+      google_primary_type: string | null
       name: string
       category: string
       lat: number
@@ -837,6 +838,7 @@ export type PlanoPublicTables = {
       id?: string
       collection_id: string
       google_place_id?: string | null
+      google_primary_type?: string | null
       name: string
       category: string
       lat: number
@@ -851,6 +853,7 @@ export type PlanoPublicTables = {
       id?: string
       collection_id?: string
       google_place_id?: string | null
+      google_primary_type?: string | null
       name?: string
       category?: string
       lat?: number

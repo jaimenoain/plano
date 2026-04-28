@@ -319,6 +319,69 @@ Deno.serve(async (req) => {
       );
     }
 
+    // /:username/map/:slug  (public collection map — mirrors SSR meta on CollectionMapPage)
+    const collectionMapMatch = path.match(/^\/([^/]+)\/map\/([^/]+)$/);
+    if (collectionMapMatch) {
+      const usernameParam = collectionMapMatch[1];
+      const collectionSlug = collectionMapMatch[2];
+      const uuidRe =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+      let profileQuery = supabase.from("profiles").select("id, username");
+      if (uuidRe.test(usernameParam)) {
+        profileQuery = profileQuery.eq("id", usernameParam);
+      } else {
+        profileQuery = profileQuery.ilike("username", usernameParam);
+      }
+
+      const { data: profile } = await profileQuery.maybeSingle();
+      if (profile?.id) {
+        const { data: collectionRow } = await supabase
+          .from("collections")
+          .select("id, name, slug, description, is_public")
+          .eq("owner_id", profile.id)
+          .eq("slug", collectionSlug)
+          .maybeSingle();
+
+        if (collectionRow?.is_public === true) {
+          const displayUsername = profile.username?.trim() || usernameParam;
+          const name = collectionRow.name?.trim() || "Collection";
+          const title = `${name} by ${displayUsername} | Plano`;
+          const description =
+            typeof collectionRow.description === "string" &&
+            collectionRow.description.trim().length > 0
+              ? collectionRow.description.trim().slice(0, 160)
+              : `Explore ${name} — a curated map on Plano.`;
+          const canonicalUrl = `${SITE_URL}/${displayUsername}/map/${collectionRow.slug}`;
+
+          let image = DEFAULT_IMAGE;
+          const { data: firstItem } = await supabase
+            .from("collection_items")
+            .select("building:buildings(hero_image_url, community_preview_url)")
+            .eq("collection_id", collectionRow.id)
+            .order("order_index", { ascending: true })
+            .limit(1)
+            .maybeSingle();
+
+          const b = firstItem?.building as
+            | { hero_image_url: string | null; community_preview_url: string | null }
+            | null
+            | undefined;
+          if (b) {
+            const hero = absoluteHeroImage(b.hero_image_url);
+            const community = absoluteHeroImage(b.community_preview_url);
+            if (hero !== DEFAULT_IMAGE) image = hero;
+            else if (community !== DEFAULT_IMAGE) image = community;
+          }
+
+          return new Response(
+            renderOgHtml({ title, description, image, url: canonicalUrl }),
+            { headers: corsHeaders },
+          );
+        }
+      }
+    }
+
     const profileMatch = path.match(/^\/profile\/([^/]+)/);
     if (profileMatch) {
       const username = profileMatch[1];

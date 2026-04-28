@@ -28,11 +28,14 @@ interface PeopleYouMayKnowProps {
   showHeading?: boolean;
   /** Max suggestions from RPC (rail uses 3; inline placements may pass more). */
   maxSuggestions?: number;
+  /** Narrow sidebars should pass `stacked` so names use full width (feed right rail). */
+  userRowLayout?: "default" | "stacked";
 }
 
 export function PeopleYouMayKnow({
   showHeading = true,
   maxSuggestions = DEFAULT_SUGGESTION_LIMIT,
+  userRowLayout = "default",
 }: PeopleYouMayKnowProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -118,19 +121,35 @@ export function PeopleYouMayKnow({
       <div>
         {headingEl}
         <div className="flex flex-col">
-          {Array.from({ length: maxSuggestions }).map((_, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-3 p-4 border-b border-border-default"
-            >
-              <div className="h-10 w-10 bg-surface-muted animate-pulse shrink-0 rounded-none" />
-              <div className="flex-1 space-y-2 min-w-0">
-                <div className="h-3 w-24 bg-surface-muted animate-pulse" />
-                <div className="h-2.5 w-16 bg-surface-muted/70 animate-pulse" />
+          {Array.from({ length: maxSuggestions }).map((_, i) =>
+            userRowLayout === "stacked" ? (
+              <div key={i} className="flex flex-col gap-2 border-b border-border-default p-3">
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 bg-surface-muted animate-pulse shrink-0 rounded-full" />
+                  <div className="flex-1 space-y-2 min-w-0 pt-0.5">
+                    <div className="h-3 w-full bg-surface-muted animate-pulse" />
+                    <div className="h-2.5 w-20 bg-surface-muted/70 animate-pulse" />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <div className="h-8 w-8 bg-surface-muted animate-pulse shrink-0" />
+                  <div className="h-8 w-16 bg-surface-muted animate-pulse shrink-0" />
+                </div>
               </div>
-              <div className="h-8 w-14 bg-surface-muted animate-pulse shrink-0" />
-            </div>
-          ))}
+            ) : (
+              <div
+                key={i}
+                className="flex items-center gap-3 p-4 border-b border-border-default"
+              >
+                <div className="h-10 w-10 bg-surface-muted animate-pulse shrink-0 rounded-none" />
+                <div className="flex-1 space-y-2 min-w-0">
+                  <div className="h-3 w-24 bg-surface-muted animate-pulse" />
+                  <div className="h-2.5 w-16 bg-surface-muted/70 animate-pulse" />
+                </div>
+                <div className="h-8 w-14 bg-surface-muted animate-pulse shrink-0" />
+              </div>
+            ),
+          )}
         </div>
       </div>
     );
@@ -145,6 +164,7 @@ export function PeopleYouMayKnow({
         {(suggestions as PeopleYouMayKnowSuggestion[]).map((person) => (
           <UserRow
             key={person.id}
+            layout={userRowLayout}
             user={{
               id: person.id,
               username: person.username,

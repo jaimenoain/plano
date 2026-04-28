@@ -24,6 +24,27 @@
 
 ---
 
+## Waitlist (launch notifications)
+
+**Purpose:** Logged-out visitors may leave an email (and optional name) to be notified when broader access opens.
+
+### Database: `waitlist_signups`
+
+| Column | Type | Notes |
+|--------|------|--------|
+| `id` | uuid | PK, default `gen_random_uuid()` |
+| `email` | text | Required; unique on `lower(trim(email))` |
+| `full_name` | text | Optional |
+| `created_at` | timestamptz | Default `now()` |
+
+**RLS:** `INSERT` allowed for `anon` and `authenticated` (no identity in row). `SELECT` only for `public.is_admin()` (same pattern as `feedback` admin reads).
+
+**Client:** `insertWaitlistSignup` in `src/features/waitlist/api/waitlist.ts` — validates with Zod (`waitlistSignupSchema` / `normalizeWaitlistSignup`), inserts via browser Supabase client; duplicate email returns Postgres `23505` → user-facing “already on the list” copy.
+
+**Migration:** `supabase/migrations/20270864000000_waitlist_signups.sql` — apply in Supabase SQL Editor before production use.
+
+---
+
 ## Auth Domain — profiles, allowed_emails
 
 ⚠️  STUB ONLY — The auth domain is documented here for reference only. `profiles` is auto-created via a `handle_new_user` database trigger on `auth.users` insertion. `allowed_emails` gates sign-up eligibility. Full schema follows below as these tables are already in production and are referenced by every other domain.
@@ -2029,18 +2050,19 @@ CREATE TABLE public.collection_favorites (
 );
 
 CREATE TABLE public.collection_markers (
-  id              uuid             NOT NULL DEFAULT gen_random_uuid(),
-  collection_id   uuid             NOT NULL,
-  google_place_id text,
-  name            text             NOT NULL,
-  category        text             NOT NULL CHECK (category IN ('accommodation', 'dining', 'transport', 'attraction', 'other')),
-  lat             double precision NOT NULL,
-  lng             double precision NOT NULL,
-  address         text,
-  notes           text,
-  website         text,
-  created_by      uuid             NOT NULL,
-  created_at      timestamptz      NOT NULL DEFAULT now(),
+  id                  uuid             NOT NULL DEFAULT gen_random_uuid(),
+  collection_id       uuid             NOT NULL,
+  google_place_id     text,
+  google_primary_type text,
+  name                text             NOT NULL,
+  category            text             NOT NULL CHECK (category IN ('accommodation', 'dining', 'transport', 'attraction', 'other')),
+  lat                 double precision NOT NULL,
+  lng                 double precision NOT NULL,
+  address             text,
+  notes               text,
+  website             text,
+  created_by          uuid             NOT NULL,
+  created_at          timestamptz      NOT NULL DEFAULT now(),
 
   CONSTRAINT collection_markers_pkey PRIMARY KEY (id),
   CONSTRAINT collection_markers_collection_id_fkey FOREIGN KEY (collection_id) REFERENCES public.collections(id),
@@ -2444,6 +2466,8 @@ interface CollectionMarkerDTO {
   id: string;
   collectionId: string;                 // Mapped: collection_id
   googlePlaceId: string | null;         // Mapped: google_place_id
+  /** Google Places primary type (e.g. bakery); refines trip-logistics icons vs coarse category. */
+  googlePrimaryType: string | null;     // Mapped: google_primary_type
   name: string;
   category: 'accommodation' | 'dining' | 'transport' | 'attraction' | 'other';
   lat: number;
@@ -2551,6 +2575,7 @@ const CreateCollectionMarkerSchema = z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
   googlePlaceId: z.string().max(500).optional().nullable(),
+  googlePrimaryType: z.string().max(120).optional().nullable(),
   address: z.string().max(500).optional().nullable(),
   notes: z.string().max(2000).optional().nullable(),
   website: z.string().url().max(2000).optional().nullable(),

@@ -9,6 +9,7 @@ import { AppSidebar } from "./AppSidebar";
 import { MobileTopBar } from "./MobileTopBar";
 import { AppTopNav } from "./AppTopNav";
 import { ExploreShellProvider } from "./ExploreShellContext";
+import { WaitlistSignupProvider } from "@/features/waitlist/WaitlistSignupProvider";
 
 function MainLayoutInset({ hideTopInset }: { hideTopInset: boolean }) {
   return (
@@ -50,15 +51,17 @@ function MainLayout() {
     <ExploreShellProvider
       value={{ setExploreHideTopChrome }}
     >
-      <SidebarProvider
-        defaultOpen={true}
-        initialOpen={rootData?.sidebarOpen ?? undefined}
-      >
-        <AppSidebar />
-        {!hideExploreTopChrome && <MobileTopBar />}
-        {!hideExploreTopChrome && <AppTopNav />}
-        <MainLayoutInset hideTopInset={hideExploreTopChrome} />
-      </SidebarProvider>
+      <WaitlistSignupProvider>
+        <SidebarProvider
+          defaultOpen={true}
+          initialOpen={rootData?.sidebarOpen ?? undefined}
+        >
+          <AppSidebar />
+          {!hideExploreTopChrome && <MobileTopBar />}
+          {!hideExploreTopChrome && <AppTopNav />}
+          <MainLayoutInset hideTopInset={hideExploreTopChrome} />
+        </SidebarProvider>
+      </WaitlistSignupProvider>
     </ExploreShellProvider>
   );
 }

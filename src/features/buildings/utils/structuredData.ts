@@ -233,6 +233,8 @@ export function collectionStructuredData(collection: {
   name: string;
   description: string | null;
   slug: string;
+  /** Canonical list URL (e.g. `/:username/map/:slug`); defaults to legacy `/collection/:slug` if omitted. */
+  listUrl?: string;
   buildings: Array<{ id: string; name: string; slug: string | null; short_id: number | null }>;
 }): object {
   return {
@@ -240,7 +242,9 @@ export function collectionStructuredData(collection: {
     "@type": "ItemList",
     name: collection.name,
     ...(collection.description ? { description: collection.description } : {}),
-    url: `${SITE_URL}/collection/${collection.slug}`,
+    url:
+      collection.listUrl?.trim() ||
+      `${SITE_URL}/collection/${collection.slug}`,
     numberOfItems: collection.buildings.length,
     itemListElement: collection.buildings.map((b, i) => ({
       "@type": "ListItem",

@@ -1,5 +1,37 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, Suspense } from "react";
-import { useParams, useNavigate, Link } from "react-router";
+import { useParams, useNavigate, Link, type MetaFunction } from "react-router";
+import {
+  collectionMapPageLoader,
+  type CollectionMapPageLoaderData,
+} from "./CollectionMapPage.loader";
+
+export { collectionMapPageLoader as loader } from "./CollectionMapPage.loader";
+
+export const meta: MetaFunction<typeof collectionMapPageLoader> = ({ data }) => {
+  if (!data) return [{ title: "Plano" }];
+  const d = data as CollectionMapPageLoaderData;
+  const tags = [
+    { title: d.title },
+    { name: "description", content: d.description },
+    { property: "og:title", content: d.title },
+    { property: "og:description", content: d.description },
+    { property: "og:image", content: d.ogImage },
+    { property: "og:image:width", content: "1200" },
+    { property: "og:image:height", content: "630" },
+    { property: "og:type", content: "website" },
+    { property: "og:url", content: d.canonical },
+    { property: "og:site_name", content: "Plano" },
+    { name: "twitter:card", content: "summary_large_image" },
+    { name: "twitter:title", content: d.title },
+    { name: "twitter:description", content: d.description },
+    { name: "twitter:image", content: d.ogImage },
+    { tagName: "link", rel: "canonical", href: d.canonical },
+  ];
+  if (!d.isPublic) {
+    tags.push({ name: "robots", content: "noindex, nofollow" });
+  }
+  return tags;
+};
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
@@ -8,7 +40,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings, isLngLatInBounds, type Bounds } from "@/utils/map";
 import { getBuildingUrl } from "@/utils/url";
-import { collectionStructuredData } from "@/features/buildings/utils/structuredData";
+import { collectionStructuredData, SITE_URL } from "@/features/buildings/utils/structuredData";
 import { Loader2, Settings, Plus, ExternalLink, Star, ListFilter, MapPinPlus, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -451,10 +483,15 @@ export default function CollectionMap() {
   // Inject ItemList JSON-LD for public collections
   useEffect(() => {
     if (!collection || !collection.is_public || items.length === 0) return;
+    const listUrl =
+      username != null && username.length > 0
+        ? `${SITE_URL}/${username}/map/${collection.slug}`
+        : undefined;
     const ldData = collectionStructuredData({
       name: collection.name,
       description: collection.description,
       slug: collection.slug,
+      ...(listUrl ? { listUrl } : {}),
       buildings: items.map((item) => ({
         id: item.building.id,
         name: item.building.name,
@@ -764,6 +801,7 @@ export default function CollectionMap() {
             year_completed: null,
             isMarker: true,
             markerCategory: marker.category,
+            markerGooglePrimaryType: marker.google_primary_type ?? null,
             notes: marker.notes,
             address: marker.address,
             google_place_id: marker.google_place_id,
@@ -1281,6 +1319,7 @@ toast({
                                     canEdit={canEdit}
                                     onUpdateNote={handleUpdateNote}
                                     onUpdateMarkerNote={canEdit ? handleUpdateMarkerNote : undefined}
+                                    markerPlacePhotos={photos}
                                 />
                                 {!collection.itinerary && (
                                     <div className="text-center py-8 text-text-secondary">

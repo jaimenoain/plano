@@ -45,7 +45,7 @@ export function FeedRightRail({ activities }: FeedRightRailProps) {
       {/* People you may know */}
       <section>
         <p className={railLabel}>People you may know</p>
-        <PeopleYouMayKnow showHeading={false} maxSuggestions={3} />
+        <PeopleYouMayKnow showHeading={false} maxSuggestions={3} userRowLayout="stacked" />
       </section>
 
       {/* Recent activity */}

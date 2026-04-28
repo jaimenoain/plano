@@ -1,7 +1,8 @@
 import { forwardRef, useEffect, useRef, useState, type FocusEvent } from "react";
 import { CollectionMarker } from "@/features/collections/types";
 import { cn } from "@/lib/utils";
-import { Check, MapPin, Bed, Utensils, Bus, Camera, GripVertical, MessageSquarePlus, Save } from "lucide-react";
+import { Check, GripVertical, MessageSquarePlus, Save } from "lucide-react";
+import { getCollectionMarkerLucideIcon } from "@/features/collections/markerPlaceDisplay";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,14 +43,7 @@ export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerC
       setIsEditingNote(false);
     };
 
-    let Icon = MapPin;
-    switch (marker.category) {
-        case 'accommodation': Icon = Bed; break;
-        case 'dining': Icon = Utensils; break;
-        case 'transport': Icon = Bus; break;
-        case 'attraction': Icon = Camera; break;
-        case 'other': Icon = MapPin; break;
-    }
+    const Icon = getCollectionMarkerLucideIcon(marker.category, marker.google_primary_type);
 
     let displayAddress = marker.address;
     if (displayAddress && marker.name) {

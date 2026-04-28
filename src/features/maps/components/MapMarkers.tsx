@@ -6,7 +6,8 @@ import { getPinStyle } from '../utils/pinStyling';
 import { MapPin } from './MapPin';
 import { DAY_COLORS } from '@/features/maps/constants';
 import { MAP_MARKER_FILL } from '@/features/maps/constants/mapMarkerFills';
-import { Bed, Utensils, Bus, Camera, MapPin as MapPinIcon } from 'lucide-react';
+import { getCollectionMarkerLucideIcon } from '@/features/collections/markerPlaceDisplay';
+import type { CollectionMarkerCategory } from '@/features/collections/types';
 import '../../../App.css';
 import { getBuildingUrl } from '@/utils/url';
 
@@ -129,17 +130,13 @@ export function MapMarkers({
           ? MAP_MARKER_Z_HOVER
           : Math.min(pinStyle.zIndex, MAP_MARKER_Z_MAX);
 
-        // Icon logic for custom markers
+        // Icon logic for custom markers (Google primary type refines dining/transport/etc.)
         let MarkerIcon: React.ComponentType<{ className?: string }> | null = null;
         if (cluster.is_custom_marker && cluster.marker_category) {
-             switch (cluster.marker_category) {
-                case 'accommodation': MarkerIcon = Bed; break;
-                case 'dining': MarkerIcon = Utensils; break;
-                case 'transport': MarkerIcon = Bus; break;
-                case 'attraction': MarkerIcon = Camera; break;
-                case 'other': MarkerIcon = MapPinIcon; break;
-                default: MarkerIcon = MapPinIcon;
-            }
+          MarkerIcon = getCollectionMarkerLucideIcon(
+            cluster.marker_category as CollectionMarkerCategory,
+            cluster.marker_google_primary_type,
+          );
         }
 
         const content = (

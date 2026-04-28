@@ -90,6 +90,8 @@ export interface CollectionMarker {
   id: string;
   collection_id: string;
   google_place_id: string | null;
+  /** Google Places primary type (lowercase), e.g. `bakery`. Drives map/list icons; `category` stays the coarse bucket. */
+  google_primary_type?: string | null;
   name: string;
   category: CollectionMarkerCategory;
   lat: number;

@@ -15,10 +15,6 @@ import {
   MapPin,
   PlusCircle,
   Trash2,
-  Bed,
-  Bus,
-  Camera,
-  Utensils,
   type LucideIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -45,7 +41,12 @@ import {
 } from "@/components/ui/command";
 import { Command as CommandPrimitive } from "cmdk";
 import { cn } from "@/lib/utils";
-import type { CollectionMarker, CollectionMarkerCategory } from "@/features/collections/types";
+import type { CollectionMarker } from "@/features/collections/types";
+import {
+  getCollectionMarkerLucideIcon,
+  mapGoogleTypesToCollectionCategory,
+  pickGooglePrimaryTypeForStorage,
+} from "@/features/collections/markerPlaceDisplay";
 
 interface AddBuildingsToCollectionDialogProps {
   collectionId: string;
@@ -55,23 +56,6 @@ interface AddBuildingsToCollectionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-const mapGoogleTypeToCategory = (types: string[] = []): "accommodation" | "dining" | "transport" | "attraction" | "other" => {
-  if (types.some(t => ["restaurant", "cafe", "bar", "bakery", "meal_takeaway", "meal_delivery", "food"].includes(t))) {
-    return "dining";
-  }
-  if (types.some(t => ["lodging", "hotel", "motel", "hostel", "guesthouse"].includes(t))) {
-    return "accommodation";
-  }
-  if (types.some(t => ["transit_station", "subway_station", "bus_station", "train_station", "airport", "taxi_stand", "light_rail_station"].includes(t))) {
-    return "transport";
-  }
-  if (types.some(t => ["museum", "park", "tourist_attraction", "point_of_interest", "art_gallery", "amusement_park", "aquarium", "zoo"].includes(t))) {
-    return "attraction";
-  }
-
-  return "other";
-};
 
 function displayMarkerSecondaryLine(marker: CollectionMarker): string | null {
   let displayAddress = marker.address;
@@ -85,19 +69,8 @@ function displayMarkerSecondaryLine(marker: CollectionMarker): string | null {
   return displayAddress?.trim() || null;
 }
 
-function markerCategoryIcon(category: CollectionMarkerCategory): LucideIcon {
-  switch (category) {
-    case "accommodation":
-      return Bed;
-    case "dining":
-      return Utensils;
-    case "transport":
-      return Bus;
-    case "attraction":
-      return Camera;
-    default:
-      return MapPin;
-  }
+function markerCategoryIcon(marker: CollectionMarker): LucideIcon {
+  return getCollectionMarkerLucideIcon(marker.category, marker.google_primary_type);
 }
 
 /** Search field + suggestion list; mounts only after Google Places script is ready (see parent). */
@@ -135,12 +108,14 @@ function PlacesAutocompleteFields({
 
     try {
       const details = await fetchPlaceDetailsNew(placeId);
-      const category = mapGoogleTypeToCategory(details.types);
+      const category = mapGoogleTypesToCollectionCategory(details.types);
+      const googlePrimaryType = pickGooglePrimaryTypeForStorage(details.primaryType, details.types);
       const name = details.displayName?.trim() || mainText;
 
       const { error } = await supabase.from("collection_markers").insert({
         collection_id: collectionId,
         google_place_id: placeId,
+        google_primary_type: googlePrimaryType,
         name,
         category,
         lat: details.lat,
@@ -330,7 +305,7 @@ function OtherMarkersTabPanel({
                   </p>
                   <ul className="space-y-0.5">
                     {markers.map((marker) => {
-                      const Icon = markerCategoryIcon(marker.category);
+                      const Icon = markerCategoryIcon(marker);
                       const line2 = displayMarkerSecondaryLine(marker);
                       const busy = removingId === marker.id;
                       return (

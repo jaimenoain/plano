@@ -25,6 +25,7 @@ import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { useClaimedPersonForNav } from "@/features/credits/hooks/useClaimedPersonForNav";
 import { useStewardCompaniesForNav } from "@/features/credits/hooks/useStewardCompaniesForNav";
 import { supabase } from "@/integrations/supabase/client";
+import { useWaitlistSignup } from "@/features/waitlist/WaitlistSignupProvider";
 
 // ─── Nav items ────────────────────────────────────────────────────────────────
 
@@ -156,6 +157,7 @@ function UserMenuDropdown() {
 
 export function AppTopNav() {
   const { user } = useAuth();
+  const { openWaitlistDialog } = useWaitlistSignup();
   const location = useLocation();
   const [hasUnread, setHasUnread] = useState(false);
 
@@ -213,23 +215,37 @@ export function AppTopNav() {
           <Search className="h-4 w-4" />
         </Link>
 
-        <Button asChild variant="ghost" size="sm" className="text-sm font-medium">
-          <Link to="/post">Log a visit</Link>
-        </Button>
+        {user ? (
+          <>
+            <Button asChild variant="ghost" size="sm" className="text-sm font-medium">
+              <Link to="/post">Log a visit</Link>
+            </Button>
 
-        <Link
-          to="/notifications"
-          className="relative h-9 w-9 flex items-center justify-center rounded-sm text-text-secondary hover:text-text-primary transition-colors"
-          aria-label="Notifications"
-        >
-          <Bell className="h-4 w-4" />
-          {showBadge && (
-            <span className="absolute top-2 right-2 flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-feedback-destructive opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-feedback-destructive border border-surface-default" />
-            </span>
-          )}
-        </Link>
+            <Link
+              to="/notifications"
+              className="relative h-9 w-9 flex items-center justify-center rounded-sm text-text-secondary hover:text-text-primary transition-colors"
+              aria-label="Notifications"
+            >
+              <Bell className="h-4 w-4" />
+              {showBadge && (
+                <span className="absolute top-2 right-2 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-feedback-destructive opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-feedback-destructive border border-surface-default" />
+                </span>
+              )}
+            </Link>
+          </>
+        ) : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-sm font-medium"
+            onClick={openWaitlistDialog}
+          >
+            Join the waiting list
+          </Button>
+        )}
 
         <UserMenuDropdown />
       </div>

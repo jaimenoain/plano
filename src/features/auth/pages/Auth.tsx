@@ -213,9 +213,10 @@ export default function Auth() {
 
   if (checkEmail) {
     return (
-      <div className="min-h-dvh bg-surface-default flex flex-col items-center justify-start md:justify-center overflow-y-auto safe-area-pt safe-area-pb px-4 py-4 md:py-8">
-        <PlanoLogo className="text-2xl text-text-primary mb-4 md:mb-6 shrink-0" />
-        <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-6 md:p-8 flex flex-col gap-4 md:gap-6 text-center">
+      <div className="min-h-dvh w-full flex-1 bg-surface-default flex flex-col items-center justify-start md:justify-center overflow-y-auto safe-area-pt safe-area-pb px-4 py-4 md:py-8">
+        <div className="w-full max-w-sm flex flex-col items-center gap-4 md:gap-6">
+        <PlanoLogo className="text-2xl text-text-primary shrink-0" />
+        <div className="w-full bg-surface-card border border-border-default rounded-sm shadow-none p-6 md:p-8 flex flex-col gap-4 md:gap-6 text-center">
           <div className="flex justify-center">
             <div className="h-16 w-16 bg-brand-secondary/30 rounded-sm flex items-center justify-center">
               <Mail className="h-8 w-8 text-brand-primary" />
@@ -243,15 +244,17 @@ export default function Auth() {
             Back to Sign In
           </Button>
         </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-dvh bg-surface-default flex flex-col items-center justify-start md:justify-center overflow-y-auto safe-area-pt safe-area-pb px-4 py-4 md:py-8">
-      <PlanoLogo className="text-2xl text-text-primary mb-4 md:mb-6 shrink-0" />
+    <div className="min-h-dvh w-full flex-1 bg-surface-default flex flex-col items-center justify-start md:justify-center overflow-y-auto safe-area-pt safe-area-pb px-4 py-4 md:py-8">
+      <div className="w-full max-w-sm flex flex-col items-center gap-4 md:gap-6">
+      <PlanoLogo className="text-2xl text-text-primary shrink-0" />
 
-      <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-6 md:p-8 flex flex-col gap-4 md:gap-6">
+      <div className="w-full bg-surface-card border border-border-default rounded-sm shadow-none p-6 md:p-8 flex flex-col gap-4 md:gap-6">
         <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-text-primary text-center">
           {isResetPassword
             ? "Reset your password"
@@ -336,42 +339,44 @@ export default function Auth() {
             </div>
           )}
 
-          {isSignUp && !isResetPassword && (
+          {!isResetPassword && (
             <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="terms"
-                  checked={termsAccepted}
-                  onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
-                />
-                <Label
-                  htmlFor="terms"
-                  className="text-sm text-text-secondary leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  I accept the{" "}
-                  <Link
-                    to="/terms"
-                    className="text-text-primary hover:underline decoration-brand-primary decoration-2 underline-offset-4"
-                    target="_blank"
+              {isSignUp ? (
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="terms"
+                    checked={termsAccepted}
+                    onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                    className="mt-0.5"
+                  />
+                  <Label
+                    htmlFor="terms"
+                    className="text-sm font-normal text-text-secondary leading-snug cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    Terms and Conditions
-                  </Link>
-                </Label>
-              </div>
-            </div>
-          )}
-
-          {!isResetPassword && !isSignUp && (
-            <div className="flex justify-end">
-               <button
-                 type="button"
-                 onClick={() => {
-                   setIsResetPassword(true);
-                 }}
-                 className="text-xs text-text-secondary hover:text-text-primary"
-               >
-                 Forgot password?
-               </button>
+                    I accept the{" "}
+                    <Link
+                      to="/terms"
+                      className="font-medium text-text-primary hover:underline decoration-brand-primary decoration-2 underline-offset-4"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Terms and Conditions
+                    </Link>
+                  </Label>
+                </div>
+              ) : (
+                <div className="flex items-start">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsResetPassword(true);
+                    }}
+                    className="text-sm text-text-secondary hover:text-text-primary hover:underline decoration-brand-primary decoration-2 underline-offset-4"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -417,6 +422,7 @@ export default function Auth() {
             </>
           )}
         </p>
+      </div>
       </div>
     </div>
   );

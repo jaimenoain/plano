@@ -1,5 +1,5 @@
 import { Bell } from "lucide-react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { useEffect, useState } from "react";
@@ -7,10 +7,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { useWaitlistSignup } from "@/features/waitlist/WaitlistSignupProvider";
 
 export function MobileTopBar() {
   const { user } = useAuth();
   const { profile } = useUserProfile();
+  const { openWaitlistDialog } = useWaitlistSignup();
+  const navigate = useNavigate();
   const location = useLocation();
   const [hasUnread, setHasUnread] = useState(false);
 
@@ -48,36 +52,61 @@ export function MobileTopBar() {
           <PlanoLogo className="text-xl text-text-primary" />
         </Link>
 
-        {/* Right: Bell + Avatar */}
-        <div className="flex items-center">
-          <Link
-            to="/notifications"
-            className="relative h-11 w-11 flex items-center justify-center rounded-sm text-text-primary"
-            aria-label="Notifications"
-          >
-            <Bell className="h-5 w-5" />
-            {showBadge && (
-              <span className="absolute top-2.5 right-2.5 flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-feedback-destructive opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-feedback-destructive border border-surface-default" />
-              </span>
-            )}
-          </Link>
-          <Link
-            to="/profile"
-            className="h-11 w-11 flex items-center justify-center rounded-sm"
-            aria-label="Profile"
-          >
-            <Avatar className="h-7 w-7 ring-1 ring-border-default">
-              <AvatarImage
-                src={profile?.avatar_url || ""}
-                alt={profile?.username || user?.email || ""}
-              />
-              <AvatarFallback className="text-xs font-bold bg-surface-muted text-text-primary">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-          </Link>
+        {/* Right: signed-in — Bell + Avatar; signed-out — waitlist + Log in */}
+        <div className="flex items-center gap-1 pr-1 shrink-0">
+          {user ? (
+            <>
+              <Link
+                to="/notifications"
+                className="relative h-11 w-11 flex items-center justify-center rounded-sm text-text-primary"
+                aria-label="Notifications"
+              >
+                <Bell className="h-5 w-5" />
+                {showBadge && (
+                  <span className="absolute top-2.5 right-2.5 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-feedback-destructive opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-feedback-destructive border border-surface-default" />
+                  </span>
+                )}
+              </Link>
+              <Link
+                to="/profile"
+                className="h-11 w-11 flex items-center justify-center rounded-sm"
+                aria-label="Profile"
+              >
+                <Avatar className="h-7 w-7 ring-1 ring-border-default">
+                  <AvatarImage
+                    src={profile?.avatar_url || ""}
+                    alt={profile?.username || user?.email || ""}
+                  />
+                  <AvatarFallback className="text-xs font-bold bg-surface-muted text-text-primary">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-9 px-2 text-xs font-semibold text-text-primary"
+                onClick={openWaitlistDialog}
+              >
+                Join list
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-9 px-2 text-xs font-semibold text-text-primary"
+                onClick={() => navigate("/auth")}
+              >
+                Log in
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>

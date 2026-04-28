@@ -25,6 +25,7 @@ import { useSuggestedFeed } from "../hooks/useSuggestedFeed";
 import { useCollectionsFeed } from "../hooks/useCollectionsFeed";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import { FeedRightRail } from "../components/FeedRightRail";
+import { useWaitlistSignup } from "@/features/waitlist/WaitlistSignupProvider";
 
 const INDEX_TITLE = "Plano — The world's architecture, cataloged.";
 const INDEX_DESCRIPTION =
@@ -67,9 +68,18 @@ export const meta: MetaFunction = () => [
 // --- Landing page (logged-out) ---
 function Landing() {
   const navigate = useNavigate();
+  const { openWaitlistDialog } = useWaitlistSignup();
   return (
     <AppLayout showNav={false}>
-      <div className="pointer-events-none fixed right-4 top-4 z-40 safe-area-pt">
+      <div className="pointer-events-none fixed right-4 top-4 z-40 safe-area-pt flex flex-col items-end gap-2 sm:flex-row sm:items-center">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={openWaitlistDialog}
+          className="pointer-events-auto h-10 px-4 font-medium border border-border-default bg-surface-default text-text-primary hover:bg-surface-muted rounded-sm shadow-md"
+        >
+          Join the waiting list
+        </Button>
         <Button
           variant="ghost"
           onClick={() => navigate("/auth")}
