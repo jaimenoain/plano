@@ -18,9 +18,7 @@ export function useBuildingImages(buildingId: string, enabled: boolean = true) {
             user:profiles(
               id,
               username,
-              avatar_url,
-              first_name,
-              last_name
+              avatar_url
             )
           )
         `)

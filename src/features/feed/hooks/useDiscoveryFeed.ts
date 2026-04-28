@@ -115,7 +115,12 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
 
       if (error) throw error;
 
-      const buildings = data as unknown as DiscoveryFeedItem[];
+      const raw = data as unknown;
+      const buildings: DiscoveryFeedItem[] = Array.isArray(raw)
+        ? (raw as DiscoveryFeedItem[])
+        : raw != null && typeof raw === "object"
+          ? [raw as DiscoveryFeedItem]
+          : [];
 
       if (buildings.length > 0) {
         const buildingIds = buildings.map(b => b.id);
@@ -155,9 +160,7 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
                     user:profiles(
                       id,
                       username,
-                      avatar_url,
-                      first_name,
-                      last_name
+                      avatar_url
                     )
                   )
                 `)
@@ -219,7 +222,7 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
                 building_id,
                 status,
                 rating,
-                user:profiles!inner(id, username, avatar_url, first_name, last_name)
+                user:profiles!inner(id, username, avatar_url)
             `)
             .in('building_id', buildingIds)
             .in('user_id', followedIds)
@@ -236,8 +239,8 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
                   id: userProfile.id,
                   username: userProfile.username ?? null,
                   avatar_url: userProfile.avatar_url,
-                  first_name: userProfile.first_name ?? null,
-                  last_name: userProfile.last_name ?? null
+                  first_name: null,
+                  last_name: null,
                 },
                 status: item.status as ContactInteraction["status"],
                 rating: item.rating
