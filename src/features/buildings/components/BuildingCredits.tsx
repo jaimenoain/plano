@@ -324,7 +324,7 @@ function CreditFlagTrigger({
             }
           }}
         >
-          <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto rounded-t-sm">
+          <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto rounded-none [&_button]:!rounded-none">
             <SheetHeader>
               <SheetTitle>Report credit</SheetTitle>
               <SheetDescription>
@@ -353,7 +353,7 @@ function CreditFlagTrigger({
       }}
     >
       <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
-      <PopoverContent className="w-80" align="end" sideOffset={8}>
+      <PopoverContent className="w-80 rounded-none [&_button]:!rounded-none" align="end" sideOffset={8}>
         <p className="mb-4 text-sm text-text-secondary">Flag incorrect information. We review every report.</p>
         {fields}
         {actions}
@@ -393,8 +393,8 @@ function BuildingCreditRow({
     <div
       className={cn(
         isSpotlight
-          ? "rounded-2xl border border-border-default bg-surface-card p-8 lg:p-10 shadow-sm"
-          : "rounded-xl border border-border-default bg-surface-card p-4 shadow-sm",
+          ? "rounded-none border border-border-default bg-surface-card p-8 lg:p-10 shadow-sm"
+          : "rounded-none border border-border-default bg-surface-card p-4 shadow-sm",
         className,
       )}
     >
@@ -406,13 +406,13 @@ function BuildingCreditRow({
       >
         <Avatar
           className={cn(
-            "shrink-0 ring-1 ring-border-tertiary",
+            "shrink-0 rounded-none ring-1 ring-border-tertiary",
             isSpotlight ? "mt-0 h-20 w-20 ring-2 ring-border-default" : "mt-0.5 h-9 w-9",
           )}
         >
           <AvatarImage src={avatarSrc} alt={initials} />
           <AvatarFallback
-            className={cn("font-medium", isSpotlight ? "text-lg" : "text-xs")}
+            className={cn("rounded-none font-medium", isSpotlight ? "text-lg" : "text-xs")}
           >
             {initials}
           </AvatarFallback>
@@ -582,7 +582,7 @@ function TierRoleSections({
   return (
     <section className="first:mt-0 min-w-0" aria-label={tierTitle}>
       {isContributorPanel ? (
-        <div className="rounded-2xl border border-border-default bg-surface-muted p-6 lg:p-8">
+        <div className="rounded-none border border-border-default bg-surface-muted p-6 lg:p-8">
           {inner}
         </div>
       ) : (
@@ -613,9 +613,9 @@ function CreditsEmptyState({
   onAddClick: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center rounded-2xl border border-dashed border-border-strong bg-surface-muted/50 px-6 py-14 text-center lg:px-12 lg:py-20">
+    <div className="flex flex-col items-center rounded-none border border-dashed border-border-strong bg-surface-muted/50 px-6 py-14 text-center lg:px-12 lg:py-20">
       <div
-        className="flex h-14 w-14 items-center justify-center rounded-full border border-border-default bg-surface-card shadow-sm"
+        className="flex h-14 w-14 items-center justify-center rounded-none border border-border-default bg-surface-card shadow-sm"
         aria-hidden
       >
         <Users className="h-7 w-7 text-text-secondary" />
@@ -735,7 +735,7 @@ export function BuildingCredits({
               <Collapsible open={ancillaryOpen} onOpenChange={setAncillaryOpen}>
                 <CollapsibleTrigger
                   type="button"
-                  className="flex w-full items-center justify-between rounded-xl border border-border-default bg-surface-muted px-4 py-4 text-left transition-colors hover:bg-surface-muted/80 lg:px-5"
+                  className="flex w-full items-center justify-between rounded-none border border-border-default bg-surface-muted px-4 py-4 text-left transition-colors hover:bg-surface-muted/80 lg:px-5"
                 >
                   <span className="text-xs font-semibold uppercase tracking-widest text-text-primary">
                     More credits ({ancillary.length})
@@ -793,7 +793,7 @@ export function BuildingCredits({
               <Collapsible open={ancillaryOpen} onOpenChange={setAncillaryOpen}>
                 <CollapsibleTrigger
                   type="button"
-                  className="flex w-full items-center justify-between rounded-xl border border-border-default bg-surface-muted px-4 py-4 text-left transition-colors hover:bg-surface-muted/80 lg:px-5"
+                  className="flex w-full items-center justify-between rounded-none border border-border-default bg-surface-muted px-4 py-4 text-left transition-colors hover:bg-surface-muted/80 lg:px-5"
                 >
                   <span className="text-xs font-semibold uppercase tracking-widest text-text-primary">
                     More credits ({ancillary.length})
@@ -827,7 +827,10 @@ export function BuildingCredits({
 
       {isAuthenticated ? (
         <Sheet open={addOpen} onOpenChange={setAddOpen}>
-          <SheetContent side="right" className="flex w-full flex-col overflow-hidden sm:max-w-lg sm:px-6">
+          <SheetContent
+            side="right"
+            className="flex w-full flex-col overflow-hidden rounded-none sm:max-w-lg sm:px-6 [&_button]:!rounded-none [&_input]:!rounded-none [&_textarea]:!rounded-none"
+          >
             {addOpen ? (
               <AddCreditForm
                 buildingId={buildingId}
@@ -863,9 +866,9 @@ function CreditPreviewRow({
 
   return (
     <div className="flex items-center gap-2.5">
-      <Avatar className="h-7 w-7 shrink-0 ring-1 ring-border-tertiary">
+      <Avatar className="h-7 w-7 shrink-0 rounded-none ring-1 ring-border-tertiary">
         <AvatarImage src={avatarSrc} alt={primaryName} />
-        <AvatarFallback className="text-[10px] font-medium">{initials}</AvatarFallback>
+        <AvatarFallback className="rounded-none text-[10px] font-medium">{initials}</AvatarFallback>
       </Avatar>
       <div className="flex min-w-0 flex-wrap items-baseline gap-x-1">
         {person ? (

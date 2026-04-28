@@ -131,7 +131,7 @@ toast.error("Failed to create collection");
     <div className={cn("space-y-3", className)}>
       <Label className="text-xs font-medium uppercase text-text-secondary">Save to Collections</Label>
 
-      <div className="border border-border-default rounded-sm bg-surface-card">
+      <div className="border border-border-default rounded-none bg-surface-card">
         <ScrollArea className="h-[140px] p-2">
           {loading ? (
             <div className="flex justify-center py-4">
@@ -150,7 +150,7 @@ toast.error("Failed to create collection");
                     key={collection.id}
                     type="button"
                     className={cn(
-                      "flex w-full items-center justify-between px-2 py-1.5 rounded-sm text-left text-sm transition-colors",
+                      "flex w-full items-center justify-between px-2 py-1.5 rounded-none text-left text-sm transition-colors",
                       isSelected
                         ? "bg-brand-secondary text-brand-secondary-foreground font-medium"
                         : "hover:bg-surface-muted text-text-secondary"

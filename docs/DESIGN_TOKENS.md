@@ -13,6 +13,8 @@
 
 **Editorial direction:** The feed, content detail pages (building, profile, architect), and all primary-surface pages follow an editorial magazine aesthetic. Typography weight and scale create hierarchy — not borders, not shadows, not card containers. Content sits directly on the white surface. The contrast between tiny uppercase category labels and massive bold headlines *is* the design. Whitespace is not empty space — it is editorial pause. Images are presented raw, with sharp edges and no decorative chrome.
 
+**Corner geometry (product preference):** We **do not want rounded corners** on boxes, frames, and chrome that surround architecture — prefer **`rounded-none`** (straight right angles) on cards, panels, badges, maps, dialogs, and controls on **content detail surfaces** (the **building detail** page is the reference). Rounded rectangles read as generic consumer UI; right angles echo drafting, physical models, and print. **Intentional exceptions:** purely **circular glyphs** (e.g. Lucide `Circle` for ratings), **dot** markers at small sizes, and **avatar** crops — those are icons or identity discs, not rounded rectangle corners. Shared UI primitives (`Button`, `Input`, etc.) may still ship with `rounded-sm` until a surface overrides them; new work on editorial and detail pages should default to **`rounded-none`** unless an exception above applies.
+
 **Monochromatic content surfaces:** All content and feed pages are strictly monochromatic. Rating dots, active tab indicators, section accent bars, verified badges, icon fills, filter toggles, and interactive icon states all use `text-primary` (`#171717`). **`brand-primary` is near-black (`#171717`) — the primary action colour is black, not lime.** The lime (`#BEFF00`) lives in a separate `brand-accent` token and is reserved for: text selection highlight (`::selection`) and the notification dot on the bell icon. Focus rings and CTA arrows now use monochromatic signals. If `brand-accent` appears anywhere on a content or feed page outside those two contexts, it is an error.
 
 **Single-column editorial layout:** Content detail pages (building detail, profile, architect profile) use a single-column `max-w-4xl` layout. No right sidebars on content pages. The sidebar pattern is restricted to admin and settings contexts.
@@ -192,20 +194,22 @@ Named layout tokens (exact measures, not constrained to the 4px grid):
 
 ## 5. Border Radius
 
+**Preference:** On **editorial and content-detail surfaces**, treat **`radius-none` (`0px`)** as the default for anything that reads as a **box or frame** — including non-photo chrome (badges, sidebar cards, map panels, dialogs). The token ladder below remains available for **legacy shared primitives**, admin/tooling, and surfaces not yet migrated; **building detail** implements **`rounded-none`** throughout. See **§1 Design Intent — Corner geometry** for rationale and exceptions (circular icons, dots, avatars).
+
 | Token | Value | Usage |
 |---|---|---|
-| `radius-none` | `0px` | Flat elements — images, hero sections |
-| `radius-sm` | `2px` | **Default** — inputs, buttons, badges, cards |
+| `radius-none` | `0px` | **Preferred on detail/editorial** — images, heroes, cards, panels, badges, maps, dialogs when building content surfaces |
+| `radius-sm` | `2px` | **Technical default** in many shared primitives — inputs, buttons, badges, cards where not overridden |
 | `radius-md` | `4px` | Slightly softer — dropdowns, tooltips |
 | `radius-lg` | `6px` | Panels, modals |
 | `radius-xl` | `8px` | Large cards, sheets (use sparingly) |
-| `radius-full` | `9999px` | Avatars only — everything else stays sharp |
+| `radius-full` | `9999px` | Avatars and **dot-scale** markers — not for rectangular containers |
 
-**Default component radius:** `radius-sm` (`2px`). The sharp directive means almost no rounding. Elements should feel cut, not moulded. Only avatars use `radius-full`.
+**Sharp directive:** Prefer elements to feel **cut**, not moulded. **`radius-full`** is for **identity avatars** and **pin/dot indicators**, not for badge pills or cards.
 
 ### Photography and media (mandatory)
 
-**All photographic media uses right-angle corners only:** building photos, feed imagery, thumbnails, map/list previews, event covers, gallery grids, collection previews, profile highlight images, and any `<img>` or video frame that shows subject photography. Apply **`rounded-none`** (or no radius utility) to the element that clips the media — including wrappers with `overflow-hidden`. Do not use `rounded-sm`, `rounded-md`, `rounded-lg`, or `rounded-xl` on photo surfaces or on outer cards whose visible edge is dominated by an image. **Exceptions:** (1) **Avatars** (user/profile identity) remain `rounded-full` per the table above. (2) **Non-photographic UI** (badges, buttons, inputs, purely textual cards, map chrome) keep the component radius tokens as elsewhere in this section. Map containers and non-photo panels may keep soft radius when they do not clip photographic content.
+**All photographic media uses right-angle corners only:** building photos, feed imagery, thumbnails, map/list previews, event covers, gallery grids, collection previews, profile highlight images, and any `<img>` or video frame that shows subject photography. Apply **`rounded-none`** (or no radius utility) to the element that clips the media — including wrappers with `overflow-hidden`. Do not use `rounded-sm`, `rounded-md`, `rounded-lg`, or `rounded-xl` on photo surfaces or on outer cards whose visible edge is dominated by an image. **Non-photo chrome** on content detail pages should follow the same **straight-corner** preference (**`rounded-none`**). **Avatars** may use `rounded-full` or `rounded-none` per surface; building detail uses **square** avatars to match the no-rounding rule.
 
 ---
 
@@ -553,7 +557,7 @@ The entire system is built on one principle: **let the architecture be the colou
 
 **Inter** is the primary sans: highly legible in dense UI, neutral enough to let photography dominate, and strong at editorial sizes when paired with existing scale and weight rules (tight line height and slight negative letter-spacing on large headings preserve the poster-like feed hierarchy). **Space Mono** remains the monospace — it supplies technical contrast for metadata, coordinates, and building IDs without competing with the sans. Together they keep the catalogue/editorial split: neutral sans for body and display, monospace for machine-readable detail.
 
-The **sharp radius** (2px default) is the single most important spatial decision. Rounded corners signal friendliness and consumer softness — Plano is neither. Sharp edges communicate precision, intentionality, and respect for the subject matter. The 2px value is not 0px (which can feel unfinished in a web context) but it is close enough to read as deliberately sharp. In the editorial feed, images and content blocks use 0px radius — true sharp edges, like printed photographs in a magazine.
+**Corner geometry** is one of the most important spatial decisions: we **avoid rounded rectangle corners** on editorial and detail surfaces — **building detail** uses **`rounded-none`** for imagery **and** chrome (cards, maps, dialogs, badges). Rounded corners signal generic consumer softness; straight corners communicate precision and respect for the subject. Shared primitives may still use a **2px** (`radius-sm`) default until overridden. In the editorial feed, images and major content blocks use **0px** radius — true sharp edges, like printed photographs in a magazine.
 
 **Spacious density** with **flat shadows** means hierarchy comes from whitespace and typography, not from elevation stacking. This mirrors the way architecture photography is presented in galleries and monographs — generous margins, clear separation, nothing competing for attention. The result should feel closer to a curated exhibition catalogue than a typical SaaS dashboard.
 

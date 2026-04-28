@@ -42,10 +42,10 @@ export function FeedRightRail({ activities }: FeedRightRailProps) {
         <TrendingBuildings />
       </section>
 
-      {/* People to follow */}
+      {/* People you may know */}
       <section>
-        <p className={railLabel}>People to follow</p>
-        <PeopleYouMayKnow />
+        <p className={railLabel}>People you may know</p>
+        <PeopleYouMayKnow showHeading={false} maxSuggestions={3} />
       </section>
 
       {/* Recent activity */}

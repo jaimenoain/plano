@@ -397,7 +397,7 @@ export function AddCreditForm({ buildingId, existingCredits, onRequestClose }: A
                 {visibleNotifyEmails.map((email) => (
                   <div
                     key={email}
-                    className="flex items-center gap-1 rounded-sm border border-border-default bg-surface-muted py-1 pl-2 pr-1"
+                    className="flex items-center gap-1 rounded-none border border-border-default bg-surface-muted py-1 pl-2 pr-1"
                   >
                     <span className="max-w-search-serp-alt truncate text-sm text-text-primary">{email}</span>
                     <Button
@@ -467,7 +467,7 @@ export function AddCreditForm({ buildingId, existingCredits, onRequestClose }: A
               <div
                 key={row.key}
                 className={cn(
-                  "space-y-4 rounded-sm border border-border-default bg-surface-muted p-4",
+                  "space-y-4 rounded-none border border-border-default bg-surface-muted p-4",
                   row.submitStatus === "success" && "border-border-default opacity-90",
                 )}
               >

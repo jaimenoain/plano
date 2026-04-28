@@ -4,18 +4,18 @@ import { ReviewCardFeed, type ReviewCardFeedProps } from "./ReviewCardFeed";
 // recommendation rows that target events, add a card variant with event cover/title
 // (building-only cards would otherwise show null media).
 
-export type FeedResolvedEntryProps = Omit<ReviewCardFeedProps, "typeBAlternateIndex"> & {
+export type FeedResolvedEntryProps = ReviewCardFeedProps & {
+  /** Legacy prop — card layout no longer alternates by index; accepted for API compatibility. */
   typeBAlternateIndex?: number;
-  /** Legacy alias for {@link ReviewCardFeedProps.typeBAlternateIndex}. */
+  /** Legacy alias for `typeBAlternateIndex`. */
   index?: number;
 };
 
 /** Thin alias for {@link ReviewCardFeed} (legacy import path). */
 export function FeedResolvedEntry({
-  index,
-  typeBAlternateIndex,
+  index: _index,
+  typeBAlternateIndex: _typeBAlternateIndex,
   ...rest
 }: FeedResolvedEntryProps) {
-  const alt = typeBAlternateIndex ?? index ?? 0;
-  return <ReviewCardFeed {...rest} typeBAlternateIndex={alt} />;
+  return <ReviewCardFeed {...rest} />;
 }

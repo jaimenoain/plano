@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Folder } from "lucide-react";
+import { Loader2, Folder, Plus, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { slugify } from "@/utils/url";
@@ -27,6 +27,9 @@ export function CreateCollectionDialog({ open, onOpenChange, userId, onSuccess }
   const [loadingFolders, setLoadingFolders] = useState(false);
   const [folders, setFolders] = useState<UserFolder[]>([]);
   const [selectedFolderIds, setSelectedFolderIds] = useState<Set<string>>(new Set());
+  const [folderView, setFolderView] = useState<"list" | "create">("list");
+  const [newFolderName, setNewFolderName] = useState("");
+  const [creatingFolder, setCreatingFolder] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -35,11 +38,15 @@ export function CreateCollectionDialog({ open, onOpenChange, userId, onSuccess }
 
   useEffect(() => {
     if (open) {
+      setFolderView("list");
+      setNewFolderName("");
       fetchFolders();
     } else {
       // Reset state when closed
       setSelectedFolderIds(new Set());
       setFormData({ name: "", description: "", is_public: true });
+      setFolderView("list");
+      setNewFolderName("");
     }
   }, [open]);
 
@@ -68,6 +75,44 @@ export function CreateCollectionDialog({ open, onOpenChange, userId, onSuccess }
       newSet.add(folderId);
     }
     setSelectedFolderIds(newSet);
+  };
+
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+    setCreatingFolder(true);
+    try {
+      let slug = slugify(newFolderName);
+      if (!slug) slug = "folder";
+      const { data: existing } = await supabase.from("user_folders").select("slug").eq("slug", slug).maybeSingle();
+      if (existing) {
+        slug = `${slug}-${Date.now()}`;
+      }
+
+      const { data, error } = await supabase
+        .from("user_folders")
+        .insert({
+          owner_id: userId,
+          name: newFolderName.trim(),
+          is_public: true,
+          slug,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setFolders([data as UserFolder, ...folders]);
+      const nextSelected = new Set(selectedFolderIds);
+      nextSelected.add(data.id);
+      setSelectedFolderIds(nextSelected);
+      setFolderView("list");
+      setNewFolderName("");
+      toast({ description: "Folder created and selected." });
+    } catch (_error) {
+      toast({ variant: "destructive", description: "Failed to create folder." });
+    } finally {
+      setCreatingFolder(false);
+    }
   };
 
   const handleCreate = async () => {
@@ -181,35 +226,86 @@ toast({ variant: "destructive", description: "Failed to create collection." });
 
           <div className="space-y-3 pt-2">
             <Label>Add to Folders (Optional)</Label>
-            {loadingFolders ? (
-              <div className="flex justify-center py-4">
-                <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
-              </div>
-            ) : folders.length === 0 ? (
-              <p className="text-sm text-text-secondary py-2">No folders found.</p>
-            ) : (
-              <ScrollArea className="h-[120px] rounded-md border p-2">
-                <div className="space-y-2">
-                  {folders.map(folder => (
-                    <div key={folder.id} className="flex items-center space-x-3 p-1 rounded hover:bg-surface-muted/30">
-                      <Checkbox
-                        id={`folder-${folder.id}`}
-                        checked={selectedFolderIds.has(folder.id)}
-                        onCheckedChange={() => handleToggleFolder(folder.id)}
-                      />
-                      <div className="grid gap-1.5 leading-none flex-1">
-                        <label
-                          htmlFor={`folder-${folder.id}`}
-                          className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2"
-                        >
-                          <Folder className="h-4 w-4 text-text-secondary" />
-                          {folder.name}
-                        </label>
+            {folderView === "list" ? (
+              <div className="space-y-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setFolderView("create")}
+                  disabled={processing}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create New Folder
+                </Button>
+                {loadingFolders ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
+                  </div>
+                ) : (
+                  <ScrollArea className="h-[120px] rounded-md border p-2">
+                    {folders.length === 0 ? (
+                      <p className="text-sm text-text-secondary py-2 text-center">No folders yet. Create one above.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {folders.map((folder) => (
+                          <div key={folder.id} className="flex items-center space-x-3 p-1 rounded hover:bg-surface-muted/30">
+                            <Checkbox
+                              id={`folder-${folder.id}`}
+                              checked={selectedFolderIds.has(folder.id)}
+                              onCheckedChange={() => handleToggleFolder(folder.id)}
+                            />
+                            <div className="grid gap-1.5 leading-none flex-1">
+                              <label
+                                htmlFor={`folder-${folder.id}`}
+                                className="text-sm font-medium leading-none cursor-pointer flex items-center gap-2"
+                              >
+                                <Folder className="h-4 w-4 text-text-secondary" />
+                                {folder.name}
+                              </label>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  ))}
+                    )}
+                  </ScrollArea>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-folder-name">Folder name</Label>
+                  <Input
+                    id="new-folder-name"
+                    value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    placeholder="e.g. Travel ideas"
+                    disabled={creatingFolder}
+                  />
                 </div>
-              </ScrollArea>
+                <div className="flex flex-wrap gap-2 justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setFolderView("list");
+                      setNewFolderName("");
+                    }}
+                    disabled={creatingFolder}
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleCreateFolder}
+                    disabled={creatingFolder || !newFolderName.trim()}
+                  >
+                    {creatingFolder && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Create Folder
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
         </div>

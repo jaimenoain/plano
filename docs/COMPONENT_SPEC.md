@@ -19,9 +19,10 @@
 
 ## How to read this document
 
-**Interaction Design Principles** (below, before components) — five
+**Interaction Design Principles** (below, before components) — six
 product-specific rules covering progressive disclosure, action
-representation, width discipline, action hierarchy, and spacing rhythm.
+representation, width discipline, action hierarchy, spacing rhythm, and
+**corner geometry** (straight corners on content surfaces — building detail is canonical).
 Read these before building anything. They apply to every component and
 every page in this product, whether listed here or not.
 
@@ -43,7 +44,7 @@ in the entries above.
 
 ## Interaction Design Principles
 
-Plano is an architectural portfolio platform with an **editorial** personality inspired by A24 Films (a24films.com) and contemporary architecture studios (OMA, BIG, Zaha Hadid Architects). Its personality is **editorial, modern, minimalist, sharp, and photographic**. The density setting is **spacious** — generous whitespace creates editorial breathing room. The radius direction is **sharp** — 2px default for app UI, 0px for editorial feed content. In the feed, hierarchy comes from **typography scale and whitespace alone** — not from borders, not from card containers, not from shadows. Tiny metadata lines contrasted against massive bold headlines create structure. Content floats directly on the white canvas. The app shell uses a **horizontal sticky top navigation bar** — not a left sidebar. The body is a two-column grid: fluid center feed + 320px sticky right rail. These five principles are calibrated to that identity, with editorial feed exceptions noted where applicable.
+Plano is an architectural portfolio platform with an **editorial** personality inspired by A24 Films (a24films.com) and contemporary architecture studios (OMA, BIG, Zaha Hadid Architects). Its personality is **editorial, modern, minimalist, sharp, and photographic**. The density setting is **spacious** — generous whitespace creates editorial breathing room. **Corners:** we **do not want rounded corners** on boxes and chrome that frame architecture — prefer **`rounded-none`** on **content detail pages** (building detail is canonical); the editorial feed uses **0px** on imagery and major blocks; shared app primitives may still use **`radius-sm` (2px)** until overridden. In the feed, hierarchy comes from **typography scale and whitespace alone** — not from borders, not from card containers, not from shadows. Tiny metadata lines contrasted against massive bold headlines create structure. Content floats directly on the white canvas. The app shell uses a **horizontal sticky top navigation bar** — not a left sidebar. The body is a two-column grid: fluid center feed + 320px sticky right rail. These six principles are calibrated to that identity, with editorial feed exceptions noted where applicable.
 
 ### 1. Progressive Disclosure
 
@@ -116,6 +117,16 @@ Plano is an architectural portfolio platform with an **editorial** personality i
 **Section separation method (editorial content pages — building detail, profile, architect profile):** `border-t border-border-default` divider with a `text-2xs font-medium uppercase tracking-widest text-text-secondary` section label immediately after it. The section label replaces a traditional `<h2>` heading — it is structural marginalia, not a headline. Vertical padding above the divider: `pt-8` to `pt-12`. This pattern applies to all named sections: "About", "Portfolio", "Reviews", "Location", "Resources", "Highlights", "All-time Favourites", etc.
 
 **Section separation method (editorial feed):** `spacing-16` to `spacing-20` vertical margin between feed items. No borders between major feed items (hero cards, collection cards). The whitespace *is* the separator — editorial breathing room. Borders may appear only as subtle `border-b` dividers between compact/activity card rows where items are dense enough to merge visually.
+
+### 6. Corner geometry (straight corners, not rounded boxes)
+
+**Rule:** Prefer **straight right angles** — **`rounded-none`** — on rectangular containers, panels, badges, map chrome, dialogs, and buttons **on content detail pages**. **Building detail** is the reference implementation: surfaces read as **drafted**, not as consumer UI bubbles.
+
+**OK as circles:** Purely **circular icons** (e.g. Lucide **`Circle`** for rating glyphs), **dot** indicators at small sizes, and **avatar** identity crops — these are not rounded-rectangle corners.
+
+**Default:** Shared primitives (`Button`, `Input`, `Card` in admin grids, etc.) may still ship with **`rounded-sm`** until a page overrides. **New UI on editorial or detail surfaces** should default to **`rounded-none`** unless a listed exception applies.
+
+**Why:** Rounded corners signal friendliness and generic product chrome; Plano’s subject matter is **architecture** — sharp geometry matches plans, models, and print. Full rationale and tokens: **`docs/DESIGN_TOKENS.md`** §1 (Design Intent), §5 (Border Radius), §11 (Designer Notes).
 
 ---
 

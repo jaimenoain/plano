@@ -15,6 +15,8 @@ export interface FeedActivityRowProps {
   displayText?: string;
   hideUser?: boolean;
   showCommunityImages?: boolean;
+  /** When true, avatar thumbnail uses square corners instead of a circle. */
+  squareAvatar?: boolean;
   className?: string;
 }
 
@@ -32,6 +34,7 @@ export function FeedActivityRow({
   displayText,
   hideUser = false,
   showCommunityImages = true,
+  squareAvatar = false,
   className,
 }: FeedActivityRowProps) {
   const navigate = useNavigate();
@@ -71,7 +74,12 @@ export function FeedActivityRow({
       >
         {/* Small avatar */}
         {avatarUrl && !hideUser && (
-          <div className="h-5 w-5 shrink-0 overflow-hidden rounded-full bg-surface-muted">
+          <div
+            className={cn(
+              "h-5 w-5 shrink-0 overflow-hidden bg-surface-muted",
+              squareAvatar ? "rounded-none" : "rounded-full",
+            )}
+          >
             <img src={avatarUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
           </div>
         )}

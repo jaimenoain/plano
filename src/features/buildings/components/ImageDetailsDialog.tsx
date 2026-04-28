@@ -275,7 +275,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
         <DialogDescription className="sr-only">View full size image and comments</DialogDescription>
 
         {/* Close Button - absolute */}
-        <DialogClose className="absolute right-4 top-4 z-50 rounded-full bg-black/50 p-2 text-white hover:bg-black/70 focus:outline-none md:hidden">
+        <DialogClose className="absolute right-4 top-4 z-50 rounded-none bg-black/50 p-2 text-white hover:bg-black/70 focus:outline-none md:hidden">
           <X className="h-4 w-4" />
         </DialogClose>
 
@@ -285,7 +285,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
             <Button
               variant="ghost"
               size="icon"
-              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 z-10 opacity-0 group-hover/image:opacity-100 transition-opacity"
+              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 rounded-none bg-black/50 text-white hover:bg-black/70 z-10 opacity-0 group-hover/image:opacity-100 transition-opacity"
               onClick={(e) => {
                 e.stopPropagation();
                 onPrev?.();
@@ -312,7 +312,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
                     />
                     {isGenerated && (
                         <div className="absolute top-4 left-4 z-20 pointer-events-none">
-                            <span className="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded backdrop-blur-sm border border-white/10 uppercase tracking-wider">
+                            <span className="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded-none backdrop-blur-sm border border-white/10 uppercase tracking-wider">
                                 Render / CGI
                             </span>
                         </div>
@@ -323,7 +323,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
 
           {isGenerated && type === 'video' && (
              <div className="absolute top-4 left-4 z-20 pointer-events-none">
-                 <span className="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded backdrop-blur-sm border border-white/10 uppercase tracking-wider">
+                 <span className="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded-none backdrop-blur-sm border border-white/10 uppercase tracking-wider">
                      Render / CGI
                  </span>
              </div>
@@ -333,7 +333,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70 z-10 opacity-0 group-hover/image:opacity-100 transition-opacity"
+              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 rounded-none bg-black/50 text-white hover:bg-black/70 z-10 opacity-0 group-hover/image:opacity-100 transition-opacity"
               onClick={(e) => {
                 e.stopPropagation();
                 onNext?.();
@@ -361,7 +361,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
                     </div>
                  </div>
 
-                 <DialogClose className="hidden md:flex rounded-full hover:bg-surface-muted p-2">
+                 <DialogClose className="hidden md:flex rounded-none hover:bg-surface-muted p-2">
                      <X className="h-5 w-5" />
                  </DialogClose>
             </div>

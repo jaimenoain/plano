@@ -282,8 +282,8 @@ export function HydrateFallback() {
             </div>
           </div>
           <div className="lg:col-span-4 space-y-6">
-            <Skeleton className="h-64 w-full rounded-xl" />
-            <Skeleton className="h-48 w-full rounded-xl" />
+            <Skeleton className="h-64 w-full rounded-none" />
+            <Skeleton className="h-48 w-full rounded-none" />
           </div>
         </div>
       </div>
@@ -311,7 +311,7 @@ export function ErrorBoundary() {
             ) : null}
             . It may have been removed or the link is incorrect.
           </p>
-          <Button asChild size="lg" variant="default" className="min-w-[200px]">
+          <Button asChild size="lg" variant="default" className="min-w-[200px] rounded-none">
             <Link to="/explore">Browse buildings</Link>
           </Button>
         </div>
@@ -334,13 +334,13 @@ export function ErrorBoundary() {
             type="button"
             size="lg"
             variant="default"
-            className="min-w-[200px]"
+            className="min-w-[200px] rounded-none"
             onClick={() => revalidator.revalidate()}
             disabled={revalidator.state === "loading"}
           >
             Try again
           </Button>
-          <Button asChild size="lg" variant="outline" className="min-w-[200px]">
+          <Button asChild size="lg" variant="outline" className="min-w-[200px] rounded-none">
             <Link to="/explore">Browse buildings</Link>
           </Button>
         </div>
@@ -449,9 +449,9 @@ function StreamAuthorAttribution({
 
   return (
     <div className="flex gap-3 items-start min-w-0">
-      <Avatar className="h-12 w-12 shrink-0 rounded-full border border-border-default bg-surface-muted">
+      <Avatar className="h-12 w-12 shrink-0 rounded-none border border-border-default bg-surface-muted">
         <AvatarImage src={user.avatar_url || undefined} alt="" />
-        <AvatarFallback className="text-sm font-semibold text-text-secondary">
+        <AvatarFallback className="text-sm font-semibold text-text-secondary rounded-none">
           {name.charAt(0).toUpperCase()}
         </AvatarFallback>
       </Avatar>
@@ -728,7 +728,7 @@ function TechnicalSection({ canEdit }: { canEdit: boolean }) {
           <section key={id}>
             <div className="flex items-start justify-between gap-4 border-b border-border-default pb-4 mb-6">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-muted">
+                <div className="flex h-8 w-8 items-center justify-center rounded-none bg-surface-muted">
                   <Icon className="h-4 w-4 text-text-secondary" />
                 </div>
                 <div>
@@ -747,7 +747,7 @@ function TechnicalSection({ canEdit }: { canEdit: boolean }) {
                 </Button>
               )}
             </div>
-            <div className="flex flex-col items-center justify-center py-12 bg-surface-muted/40 rounded-xl border border-dashed border-border-strong/30 text-center">
+            <div className="flex flex-col items-center justify-center py-12 bg-surface-muted/40 rounded-none border border-dashed border-border-strong/30 text-center">
               <Icon className="h-8 w-8 text-text-disabled opacity-30 mb-3" />
               <p className="text-sm font-medium text-text-primary mb-1">No {label.toLowerCase()} yet</p>
               <p className="text-xs text-text-secondary max-w-xs">
@@ -761,7 +761,7 @@ function TechnicalSection({ canEdit }: { canEdit: boolean }) {
       </div>
 
       <AlertDialog open={!!pendingSection} onOpenChange={(open) => { if (!open) setPendingSection(null); }}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-none [&_button]:rounded-none">
           <AlertDialogHeader>
             <AlertDialogTitle>Coming Soon</AlertDialogTitle>
             <AlertDialogDescription>
@@ -838,7 +838,6 @@ export default function BuildingDetails() {
     setShowCollections,
     selectedCollectionIds,
     setSelectedCollectionIds,
-    initialCollectionIds,
     noteEditorOpen,
     setNoteEditorOpen,
     showDeleteAlert,
@@ -1080,7 +1079,7 @@ export default function BuildingDetails() {
               <img src={img.url} alt="" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               {isOfficial && (
-                <span className="absolute left-4 top-4 bg-brand-accent px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-brand-accent-foreground rounded-sm">
+                <span className="absolute left-4 top-4 bg-brand-accent px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-brand-accent-foreground rounded-none">
                   Official
                 </span>
               )}
@@ -1268,7 +1267,7 @@ export default function BuildingDetails() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="min-h-screen bg-surface-default"
+        className="min-h-screen bg-surface-default [&_button]:!rounded-none [&_input]:!rounded-none [&_textarea]:!rounded-none"
       >
         {/* ── HERO — full-bleed, fixed height, no rounding ── */}
         <div className="h-56 sm:h-64 lg:h-80 w-full overflow-hidden bg-surface-muted">
@@ -1281,7 +1280,6 @@ export default function BuildingDetails() {
               src={heroImageUrl}
               alt={heroAlt}
               className="h-full w-full object-cover"
-              // @ts-expect-error fetchPriority is valid but not yet in React types
               fetchPriority="high"
               loading="eager"
             />
@@ -1298,12 +1296,12 @@ export default function BuildingDetails() {
                 {(building.tier_rank || isStatusBuilding) && (
                   <div className="flex flex-wrap items-center gap-2">
                     {building.tier_rank && (
-                      <span className="inline-block px-2 py-0.5 bg-brand-accent text-brand-accent-foreground text-[10px] font-bold uppercase tracking-[0.2em] rounded-sm">
+                      <span className="inline-block px-2 py-0.5 bg-brand-accent text-brand-accent-foreground text-[10px] font-bold uppercase tracking-[0.2em] rounded-none">
                         {building.tier_rank}
                       </span>
                     )}
                     {isStatusBuilding && (
-                      <span className="inline-block px-2 py-0.5 bg-feedback-destructive/10 text-feedback-destructive text-[10px] font-bold uppercase tracking-[0.2em] rounded-sm border border-feedback-destructive/20">
+                      <span className="inline-block px-2 py-0.5 bg-feedback-destructive/10 text-feedback-destructive text-[10px] font-bold uppercase tracking-[0.2em] rounded-none border border-feedback-destructive/20">
                         {building.status}
                       </span>
                     )}
@@ -1422,7 +1420,7 @@ export default function BuildingDetails() {
 
                   {/* Status alert */}
                   {isStatusBuilding && (
-                    <div className="flex items-start gap-4 p-5 rounded-lg bg-feedback-destructive/5 border border-feedback-destructive/20">
+                    <div className="flex items-start gap-4 p-5 rounded-none bg-feedback-destructive/5 border border-feedback-destructive/20">
                       <AlertTriangle className="h-5 w-5 text-feedback-destructive shrink-0 mt-0.5" />
                       <div>
                         <p className="text-sm font-bold text-feedback-destructive uppercase tracking-wider mb-1">
@@ -1473,7 +1471,7 @@ export default function BuildingDetails() {
                         ) : null}
                       </>
                     ) : (
-                      <div className="flex flex-col items-center justify-center py-16 bg-surface-muted/30 rounded-xl border border-dashed border-border-strong/30 text-center">
+                      <div className="flex flex-col items-center justify-center py-16 bg-surface-muted/30 rounded-none border border-dashed border-border-strong/30 text-center">
                         <ImageIcon className="h-10 w-10 text-text-disabled opacity-25 mb-3" />
                         <p className="text-sm font-medium text-text-primary mb-1">No photos yet</p>
                         <p className="text-xs text-text-secondary max-w-xs mb-5">
@@ -1520,7 +1518,7 @@ export default function BuildingDetails() {
                       />
                       <Link
                         to={`${buildingUrl}/review`}
-                        className="text-[10px] font-bold uppercase tracking-widest bg-text-primary text-white px-3 py-1.5 rounded-sm hover:opacity-80 transition-opacity"
+                        className="text-[10px] font-bold uppercase tracking-widest bg-text-primary text-white px-3 py-1.5 rounded-none hover:opacity-80 transition-opacity"
                       >
                         Add Review
                       </Link>
@@ -1567,7 +1565,7 @@ export default function BuildingDetails() {
                           >
                             {img.type === "video" ? (
                               <div className="aspect-video flex items-center justify-center bg-surface-muted">
-                                <div className="h-10 w-10 flex items-center justify-center rounded-full bg-black/50">
+                                <div className="h-10 w-10 flex items-center justify-center rounded-none bg-black/50">
                                   <div className="border-l-[14px] border-l-white border-y-8 border-y-transparent ml-1" />
                                 </div>
                               </div>
@@ -1588,7 +1586,7 @@ export default function BuildingDetails() {
                         ))}
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-center py-24 bg-surface-muted/30 rounded-xl border border-dashed border-border-strong/30 text-center">
+                      <div className="flex flex-col items-center justify-center py-24 bg-surface-muted/30 rounded-none border border-dashed border-border-strong/30 text-center">
                         <ImageIcon className="h-12 w-12 text-text-disabled opacity-25 mb-4" />
                         <h4 className="text-lg font-medium text-text-primary mb-2">
                           {mediaFilter === "all" ? "No photos yet" : `No ${mediaFilter} yet`}
@@ -1628,7 +1626,11 @@ export default function BuildingDetails() {
                         <h4 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-5">
                           Recent Activity
                         </h4>
-                        <ActivityStreamGroup entries={activityOnlyFeedReviews} hideGroupLabel />
+                        <ActivityStreamGroup
+                          entries={activityOnlyFeedReviews}
+                          hideGroupLabel
+                          squareAvatars
+                        />
                       </div>
                     )}
                   </WidgetErrorBoundary>
@@ -1684,7 +1686,7 @@ export default function BuildingDetails() {
                     </header>
 
                     {showLinkEditor && user && (
-                      <div className="mb-8 flex flex-col gap-2 rounded-xl border border-border-default bg-surface-muted p-4 sm:flex-row sm:items-center">
+                      <div className="mb-8 flex flex-col gap-2 rounded-none border border-border-default bg-surface-muted p-4 sm:flex-row sm:items-center">
                         <Input
                           value={newLinkUrl}
                           onChange={(e) => setNewLinkUrl(e.target.value)}
@@ -1719,7 +1721,7 @@ export default function BuildingDetails() {
                           }
                           return (
                             <li key={link.link_id}>
-                              <div className="group flex items-center justify-between gap-4 rounded-xl border border-border-default bg-surface-card px-4 py-4 shadow-sm transition-colors hover:border-border-strong lg:px-5">
+                              <div className="group flex items-center justify-between gap-4 rounded-none border border-border-default bg-surface-card px-4 py-4 shadow-sm transition-colors hover:border-border-strong lg:px-5">
                                 <a
                                   href={link.url}
                                   target="_blank"
@@ -1763,7 +1765,7 @@ export default function BuildingDetails() {
                         })}
                       </ul>
                     ) : (
-                      <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted/40 px-5 py-10 text-center">
+                      <div className="rounded-none border border-dashed border-border-strong bg-surface-muted/40 px-5 py-10 text-center">
                         <p className="text-sm text-text-secondary">
                           No external links yet—add articles, competition pages, or the architect&apos;s project URL.
                         </p>
@@ -1780,7 +1782,7 @@ export default function BuildingDetails() {
               <div className="lg:sticky lg:top-14 space-y-5">
 
                 {/* Action card */}
-                <div className="bg-surface-card border border-border-default rounded-xl p-5 shadow-sm space-y-5">
+                <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-sm space-y-5">
 
                   {/* Status */}
                   <div className="space-y-2">
@@ -1810,9 +1812,9 @@ export default function BuildingDetails() {
                           <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-[220px] p-2">
+                      <DropdownMenuContent align="end" className="w-[220px] p-2 rounded-none">
                         <DropdownMenuItem
-                          className="rounded-md py-2.5"
+                          className="rounded-none py-2.5"
                           onSelect={() => void handleStatusChange("visited")}
                         >
                           <Check className="mr-3 h-4 w-4 shrink-0" />
@@ -1822,7 +1824,7 @@ export default function BuildingDetails() {
                           </div>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          className="rounded-md py-2.5"
+                          className="rounded-none py-2.5"
                           onSelect={() => void handleStatusChange("pending")}
                         >
                           <Bookmark className="mr-3 h-4 w-4 shrink-0" />
@@ -1832,7 +1834,7 @@ export default function BuildingDetails() {
                           </div>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          className="rounded-md py-2.5"
+                          className="rounded-none py-2.5"
                           onSelect={() => void handleStatusChange("ignored")}
                         >
                           <EyeOff className="mr-3 h-4 w-4 shrink-0" />
@@ -1858,7 +1860,7 @@ export default function BuildingDetails() {
                       )}
                     </div>
                     <div
-                      className="flex items-center justify-center gap-5 p-3 bg-surface-muted rounded-lg"
+                      className="flex items-center justify-center gap-5 p-3 bg-surface-muted rounded-none"
                       onMouseLeave={() => setHoverRating(null)}
                     >
                       {[1, 2, 3].map((i) => {
@@ -1955,11 +1957,9 @@ export default function BuildingDetails() {
                         className="overflow-hidden border-t border-border-default pt-4"
                       >
                         <CollectionSelector
-                          buildingId={building.id}
-                          selectedIds={selectedCollectionIds}
-                          initialIds={initialCollectionIds}
+                          userId={user?.id ?? ""}
+                          selectedCollectionIds={selectedCollectionIds}
                           onChange={setSelectedCollectionIds}
-                          onClose={() => setShowCollections(false)}
                         />
                       </motion.div>
                     )}
@@ -1968,7 +1968,7 @@ export default function BuildingDetails() {
                 </div>
 
                 {/* Map card */}
-                <div className="bg-surface-card border border-border-default rounded-xl overflow-hidden shadow-sm">
+                <div className="bg-surface-card border border-border-default rounded-none overflow-hidden shadow-sm">
                   <div className="h-44 relative">
                     {coordinates ? (
                       <div className="h-full w-full grayscale-[0.4] hover:grayscale-0 transition-all duration-700">
@@ -2015,7 +2015,7 @@ export default function BuildingDetails() {
 
                 {/* Overview sidebar: credits preview */}
                 {activeTab === "overview" && buildingCredits.length > 0 && (
-                  <div className="bg-surface-card border border-border-default rounded-xl p-5 shadow-sm">
+                  <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
                         Credits
@@ -2030,7 +2030,6 @@ export default function BuildingDetails() {
                     </div>
                     <BuildingCreditsPreview
                       credits={buildingCredits}
-                      buildingId={building.id}
                       isAuthenticated={Boolean(user)}
                     />
                   </div>
@@ -2040,7 +2039,7 @@ export default function BuildingDetails() {
                 {activeTab === "credits" && (
                   <div
                     id="contributors"
-                    className="scroll-mt-24 rounded-xl border border-border-default bg-surface-card p-5 shadow-sm"
+                    className="scroll-mt-24 rounded-none border border-border-default bg-surface-card p-5 shadow-sm"
                   >
                     <h4 className="mb-3 text-[10px] font-medium uppercase tracking-[0.22em] text-text-secondary">
                       Page contributors
@@ -2054,7 +2053,7 @@ export default function BuildingDetails() {
 
                 {/* Technical tab sidebar: contribution guide */}
                 {activeTab === "technical" && (
-                  <div className="bg-surface-card border border-border-default rounded-xl p-5 shadow-sm space-y-3">
+                  <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-sm space-y-3">
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
                       Contribute
                     </h4>
@@ -2074,7 +2073,7 @@ export default function BuildingDetails() {
                 )}
 
                 {/* Building info */}
-                <div className="bg-surface-card border border-border-default rounded-xl p-5 shadow-sm">
+                <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-sm">
                   <BuildingInfoSection building={building} buildingCredits={buildingCredits} />
                 </div>
 
@@ -2108,7 +2107,7 @@ export default function BuildingDetails() {
       />
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-none [&_button]:rounded-none">
           <AlertDialogHeader>
             <AlertDialogTitle>Remove from list?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -2129,7 +2128,7 @@ export default function BuildingDetails() {
       </AlertDialog>
 
       <AlertDialog open={showDirectionsAlert} onOpenChange={setShowDirectionsAlert}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-none [&_button]:rounded-none">
           <AlertDialogHeader>
             <AlertDialogTitle>Exact Location Unknown</AlertDialogTitle>
             <AlertDialogDescription>

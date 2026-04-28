@@ -13,11 +13,9 @@ import {
   mergeAggregatedFeedWithEventAttendance,
   type AggregatedFeedItem,
 } from "@/lib/feed-aggregation";
-import { FeedClusterCard } from "../components/FeedClusterCard";
 import { ReviewCardFeed } from "../components/ReviewCardFeed";
 import { resolveCardType } from "../utils/resolveCardType";
 import type { FeedReview } from "@/types/feed";
-import { SectionDivider } from "../components/SectionDivider";
 import { LandingHero } from "../components/landing/LandingHero";
 import { LandingMarquee } from "../components/landing/LandingMarquee";
 import { LandingFeatureGrid } from "../components/landing/LandingFeatureGrid";
@@ -212,7 +210,12 @@ export default function Index() {
                   onImageLike={discoveryFeed.toggleImageLike}
                   isDiscoveryLoading={discoveryFeed.isLoading}
                 />
-                {loadMoreActive && <LoadMoreTrigger ref={loadMoreRef} feeds={[socialFeed, collectionsFeed, discoveryFeed]} />}
+                {loadMoreActive && (
+                  <LoadMoreTrigger
+                    containerRef={loadMoreRef}
+                    feeds={[socialFeed, collectionsFeed, discoveryFeed]}
+                  />
+                )}
               </div>
             </div>
           ) : (
@@ -223,6 +226,8 @@ export default function Index() {
                   <div className="flex flex-col gap-20">
                     {(() => {
                       const feedNodes: React.ReactNode[] = [];
+                      /** Cards actually rendered (activity rows are skipped — row count alone can hit n % 4 before any card). */
+                      let feedCardsRendered = 0;
 
                       const processEntry = (
                         entry: FeedReview,
@@ -231,6 +236,7 @@ export default function Index() {
                       ) => {
                         const t = resolveCardType(entry);
                         if (t === "activity") return;
+                        feedCardsRendered += 1;
                         feedNodes.push(
                           <div key={entry.id}>
                             <ReviewCardFeed
@@ -272,10 +278,10 @@ export default function Index() {
 
                       let collectionCursor = 0;
                       let discoveryCursor = 0;
-                      let hasShownDivider = false;
 
                       mergedHomeRows.forEach((row, index) => {
                         if (row.kind === "event_attendance") {
+                          feedCardsRendered += 1;
                           feedNodes.push(
                             <div key={`feed-attendance-${row.entry.eventId}`}>
                               <ReviewCardFeed entry={row.entry} />
@@ -285,7 +291,13 @@ export default function Index() {
                           processAggregatedItem(row.item);
                         }
                         const n = index + 1;
-                        if (n % 4 === 0 && collectionCursor < collectionItems.length) {
+                        // First collections strip after 8 merged rows (not 4), and never before at least one visible card.
+                        if (
+                          n % 4 === 0 &&
+                          n >= 8 &&
+                          feedCardsRendered >= 1 &&
+                          collectionCursor < collectionItems.length
+                        ) {
                           const batch = collectionItems.slice(collectionCursor, collectionCursor + 3);
                           collectionCursor += batch.length;
                           feedNodes.push(
@@ -304,17 +316,6 @@ export default function Index() {
                           );
                         }
                         if (n % 8 === 0) {
-                          if (!hasShownDivider) {
-                            hasShownDivider = true;
-                            feedNodes.push(
-                              <SectionDivider
-                                key="feed-section-from-community"
-                                label="From the community"
-                                href="/explore"
-                                sectionNumber={1}
-                              />,
-                            );
-                          }
                           if (discoveryCursor < discoveryReviews.length) {
                             const post = discoveryReviews[discoveryCursor];
                             discoveryCursor += 1;
@@ -365,17 +366,17 @@ export default function Index() {
 
 // Extracted load-more trigger for cold-start path
 function LoadMoreTrigger({
-  ref,
+  containerRef,
   feeds,
 }: {
-  ref: React.RefObject<HTMLDivElement>;
+  containerRef: React.Dispatch<React.SetStateAction<HTMLElement | null>>;
   feeds: Array<{ isFetchingNextPage: boolean; isError: boolean; hasNextPage: boolean; fetchNextPage: () => void }>;
 }) {
   const loading = feeds.some((f) => f.isFetchingNextPage);
   const hasError = feeds.some((f) => f.isError);
   if (!loading && !hasError) return null;
   return (
-    <div ref={ref} className="flex justify-center py-4">
+    <div ref={containerRef} className="flex justify-center py-4">
       {loading ? (
         <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
       ) : (
