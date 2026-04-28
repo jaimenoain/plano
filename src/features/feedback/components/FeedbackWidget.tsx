@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { MessageCircle } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { capturedErrors } from "@/components/providers/ConsoleErrorInterceptor";
+import { cn } from "@/lib/utils";
 
 type FeedbackType = "bug" | "ux_improvement" | "feature_idea" | "other";
 type Status = "idle" | "loading" | "success" | "error" | "rate_limited";
@@ -51,7 +53,7 @@ export function FeedbackWidget() {
 
   if (!user) return null;
 
-  const triggerSize = open || triggerHovered ? 64 : 24;
+  const isTriggerExpanded = open || triggerHovered;
 
   function openDialog() {
     setOpen(true);
@@ -142,12 +144,11 @@ export function FeedbackWidget() {
     <>
       {/* Corner trigger */}
       <div
-        className="fixed bottom-0 right-0 z-50 overflow-hidden cursor-pointer"
-        style={{
-          width: triggerSize,
-          height: triggerSize,
-          transition: "width 0.2s ease, height 0.2s ease",
-        }}
+        className={cn(
+          "fixed bottom-0 right-0 z-50 overflow-hidden cursor-pointer relative",
+          "transition-[width,height] duration-500 ease-out motion-reduce:transition-none",
+          isTriggerExpanded ? "size-16" : "size-6"
+        )}
         onMouseEnter={() => setTriggerHovered(true)}
         onMouseLeave={() => setTriggerHovered(false)}
         onClick={openDialog}
@@ -155,10 +156,10 @@ export function FeedbackWidget() {
         aria-label="Send feedback"
       >
         <svg
-          width={triggerSize}
-          height={triggerSize}
+          className="size-full block"
           viewBox="0 0 64 64"
           xmlns="http://www.w3.org/2000/svg"
+          aria-hidden
         >
           <polygon
             points="64,0 64,64 0,64"
@@ -166,6 +167,16 @@ export function FeedbackWidget() {
             opacity="0.75"
           />
         </svg>
+        <span
+          className={cn(
+            "absolute inset-0 flex items-center justify-center pointer-events-none text-brand-primary-foreground",
+            "transition-opacity duration-500 ease-out motion-reduce:transition-none",
+            isTriggerExpanded ? "opacity-100" : "opacity-0"
+          )}
+          aria-hidden
+        >
+          <MessageCircle className="size-5" strokeWidth={1.5} />
+        </span>
       </div>
 
       {/* Dialog */}

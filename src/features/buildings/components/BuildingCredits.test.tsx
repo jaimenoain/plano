@@ -144,7 +144,7 @@ describe("BuildingCredits", () => {
     ];
     wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
     expect(screen.queryByRole("link", { name: "Ancillary Name" })).toBeNull();
-    await user.click(screen.getByRole("button", { name: /show all credits/i }));
+    await user.click(screen.getByRole("button", { name: /more credits/i }));
     expect(screen.getByRole("link", { name: "Ancillary Name" })).toBeTruthy();
   });
 
@@ -262,7 +262,7 @@ describe("BuildingCredits (QA 5.2)", () => {
     expect(screen.getByRole("link", { name: "Contributor Eng" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Ancillary Land" })).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: /show all credits/i }));
+    await user.click(screen.getByRole("button", { name: /more credits/i }));
     expect(screen.getByRole("link", { name: "Ancillary Land" })).toBeInTheDocument();
   });
 

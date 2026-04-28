@@ -103,6 +103,9 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "credits", label: "Credits" },
 ];
 
+/** Client-side chunks for overview editorial stream (infinite scroll). */
+const OVERVIEW_STREAM_CHUNK_SIZE = 8;
+
 // ─── Related buildings sub-components ────────────────────────────────────────
 
 function RelatedBuildingCard({ b }: { b: RelatedBuilding }) {
@@ -151,14 +154,14 @@ function RelatedBuildingRow({
   if (!isLoading && buildings.length === 0) return null;
 
   return (
-    <section className="mt-12 border-t border-border-default pt-10">
-      <div className="mb-6 flex items-center justify-between gap-2">
-        <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">
+    <section className="mt-12 border-t border-border-default pt-10 min-w-0">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 min-w-0">
+        <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary min-w-0 flex-1 break-words">
           {title}
         </h2>
         <Link
           to={viewAllHref}
-          className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+          className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary shrink-0 sm:text-right"
         >
           {viewAllLabel} →
         </Link>
@@ -820,7 +823,7 @@ export default function BuildingDetails() {
     selectedIndex,
     topLinks,
     likedLinkIds,
-    userLinks,
+    userLinks: _userLinks,
     showLinkEditor,
     setShowLinkEditor,
     newLinkUrl,
@@ -844,8 +847,8 @@ export default function BuildingDetails() {
     totalRatingPoints,
     visitorCount,
     coordinates,
-    accessSynthesis,
-    accessBadgeVariant,
+    accessSynthesis: _accessSynthesis,
+    accessBadgeVariant: _accessBadgeVariant,
     canEditOfficialData,
     isCreditsAdmin,
     handleStatusChange,
@@ -853,7 +856,7 @@ export default function BuildingDetails() {
     handleImageSelect,
     removePendingImage,
     handleAddLink,
-    handleRemoveLink,
+    handleRemoveLink: _handleRemoveLink,
     handleSaveNote,
     handleDelete,
     handleSetHeroImage,
@@ -1023,6 +1026,38 @@ export default function BuildingDetails() {
 
     return [...entryBlocks, ...orphanBlocks].sort((a, b) => b.score - a.score);
   }, [entries, displayImages, displayImageById]);
+
+  const [visibleOverviewStreamCount, setVisibleOverviewStreamCount] = useState(
+    OVERVIEW_STREAM_CHUNK_SIZE,
+  );
+  const overviewStreamSentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setVisibleOverviewStreamCount(OVERVIEW_STREAM_CHUNK_SIZE);
+  }, [building?.id, entries.length, displayImages.length]);
+
+  useEffect(() => {
+    if (activeTab !== "overview") return;
+    const el = overviewStreamSentinelRef.current;
+    if (!el) return;
+    const len = streamBlocks.length;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) return;
+        setVisibleOverviewStreamCount((n) =>
+          n >= len ? n : Math.min(n + OVERVIEW_STREAM_CHUNK_SIZE, len),
+        );
+      },
+      { root: null, rootMargin: "320px", threshold: 0 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [activeTab, streamBlocks.length, visibleOverviewStreamCount]);
+
+  const visibleOverviewBlocks = useMemo(
+    () => streamBlocks.slice(0, visibleOverviewStreamCount),
+    [streamBlocks, visibleOverviewStreamCount],
+  );
 
   const renderStreamBlock = useCallback(
     (block: StreamBlock) => {
@@ -1355,11 +1390,6 @@ export default function BuildingDetails() {
         >
           <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center -mb-px overflow-x-auto scrollbar-none">
-              {isTabBarSticky && (
-                <span className="hidden sm:block text-sm font-medium text-text-secondary pr-5 mr-1 border-r border-border-default shrink-0 truncate max-w-[180px] py-3.5">
-                  {building.name}
-                </span>
-              )}
               {TABS.map((tab) => (
                 <button
                   key={tab.id}
@@ -1419,24 +1449,11 @@ export default function BuildingDetails() {
                     />
                   )}
 
-                  {/* Community highlights — top 4 scored blocks */}
-                  <section className="space-y-8">
-                    <div className="flex items-center justify-between border-b border-border-default pb-4">
-                      <h3 className="font-display text-xl font-bold tracking-tight">
-                        Community Highlights
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => setTab("media")}
-                        className="text-[10px] font-bold uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
-                      >
-                        View all →
-                      </button>
-                    </div>
-
+                  {/* Editorial stream — full list, infinite scroll (client-chunked) */}
+                  <section className="space-y-10">
                     {streamBlocks.length > 0 ? (
-                      <div className="space-y-10">
-                        {streamBlocks.slice(0, 4).map((block) => (
+                      <>
+                        {visibleOverviewBlocks.map((block) => (
                           <motion.div
                             key={block.key}
                             initial={{ opacity: 0, y: 16 }}
@@ -1447,16 +1464,14 @@ export default function BuildingDetails() {
                             {renderStreamBlock(block)}
                           </motion.div>
                         ))}
-                        {streamBlocks.length > 4 && (
-                          <button
-                            type="button"
-                            onClick={() => setTab("media")}
-                            className="w-full py-4 rounded-xl border border-dashed border-border-strong/40 text-sm text-text-secondary hover:text-text-primary hover:border-border-strong transition-all"
-                          >
-                            + {streamBlocks.length - 4} more in Media tab
-                          </button>
-                        )}
-                      </div>
+                        {visibleOverviewStreamCount < streamBlocks.length ? (
+                          <div
+                            ref={overviewStreamSentinelRef}
+                            className="h-8 w-full shrink-0"
+                            aria-hidden
+                          />
+                        ) : null}
+                      </>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-16 bg-surface-muted/30 rounded-xl border border-dashed border-border-strong/30 text-center">
                         <ImageIcon className="h-10 w-10 text-text-disabled opacity-25 mb-3" />
@@ -1627,55 +1642,64 @@ export default function BuildingDetails() {
 
               {/* ════ CREDITS TAB ════ */}
               {activeTab === "credits" && (
-                <div className="space-y-12">
+                <div className="space-y-16 lg:space-y-20">
+                  <BuildingCredits
+                    buildingId={building.id}
+                    buildingName={building.name}
+                    credits={buildingCredits}
+                    isAuthenticated={Boolean(user)}
+                    isAdmin={isCreditsAdmin}
+                  />
 
-                  {/* Full credits */}
-                  <section>
-                    <h3 className="font-display text-xl font-bold tracking-tight border-b border-border-default pb-4 mb-6">
-                      Credits
-                    </h3>
-                    <BuildingCredits
-                      buildingId={building.id}
-                      credits={buildingCredits}
-                      isAuthenticated={Boolean(user)}
-                      isAdmin={isCreditsAdmin}
-                    />
-                  </section>
-
-                  {/* Resources */}
-                  <section className="border-t border-border-default pt-12 space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary">
-                        Resources
-                      </h4>
-                      {user && (
-                        <button
-                          type="button"
-                          onClick={() => setShowLinkEditor(!showLinkEditor)}
-                          className="text-[10px] font-bold uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
-                        >
-                          {showLinkEditor ? "Close" : "Add link"}
-                        </button>
-                      )}
-                    </div>
+                  <section
+                    className="border-t border-border-default pt-12 lg:pt-16"
+                    aria-labelledby="building-resources-heading"
+                  >
+                    <header className="mb-8 space-y-2">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-text-secondary">
+                        References
+                      </p>
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="space-y-2">
+                          <h3
+                            id="building-resources-heading"
+                            className="font-display text-xl font-bold tracking-tight text-text-primary sm:text-2xl"
+                          >
+                            Links &amp; resources
+                          </h3>
+                          <p className="max-w-xl text-sm leading-relaxed text-text-secondary">
+                            Articles, project pages, and references that help verify or explore this building.
+                          </p>
+                        </div>
+                        {user ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowLinkEditor(!showLinkEditor)}
+                            className="shrink-0 text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+                          >
+                            {showLinkEditor ? "Close" : "Add link →"}
+                          </button>
+                        ) : null}
+                      </div>
+                    </header>
 
                     {showLinkEditor && user && (
-                      <div className="flex flex-col sm:flex-row gap-2 p-4 bg-surface-muted rounded-lg">
+                      <div className="mb-8 flex flex-col gap-2 rounded-xl border border-border-default bg-surface-muted p-4 sm:flex-row sm:items-center">
                         <Input
                           value={newLinkUrl}
                           onChange={(e) => setNewLinkUrl(e.target.value)}
                           placeholder="https://"
-                          className="flex-1 h-9 text-sm"
+                          className="h-10 flex-1 border-border-default bg-surface-card text-sm"
                         />
                         <Input
                           value={newLinkTitle}
                           onChange={(e) => setNewLinkTitle(e.target.value)}
                           placeholder="Title (optional)"
-                          className="flex-1 h-9 text-sm"
+                          className="h-10 flex-1 border-border-default bg-surface-card text-sm"
                         />
                         <Button
                           size="sm"
-                          className="h-9"
+                          className="h-10 shrink-0 sm:px-6"
                           onClick={() => void handleAddLink()}
                           disabled={!newLinkUrl.trim()}
                         >
@@ -1685,55 +1709,67 @@ export default function BuildingDetails() {
                     )}
 
                     {topLinks.length > 0 ? (
-                      <div className="divide-y divide-border-default">
+                      <ul className="space-y-3">
                         {topLinks.map((link) => {
                           let domain = "";
-                          try { domain = new URL(link.url).hostname; } catch { /* ignore */ }
+                          try {
+                            domain = new URL(link.url).hostname;
+                          } catch {
+                            /* ignore */
+                          }
                           return (
-                            <div key={link.link_id} className="group py-4 flex items-center justify-between gap-4">
-                              <a
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="min-w-0 flex-1"
-                              >
-                                <div className="text-sm font-semibold truncate group-hover:underline underline-offset-2">
-                                  {link.title || domain}
-                                </div>
-                                <div className="text-[10px] text-text-secondary uppercase tracking-wider mt-0.5">
-                                  {domain}
-                                </div>
-                              </a>
-                              <div className="flex items-center gap-3 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={(e) => { e.preventDefault(); void handleLinkLike(link.link_id); }}
-                                  className={cn(
-                                    "flex items-center gap-1 text-[10px] font-bold transition-colors",
-                                    likedLinkIds.has(link.link_id)
-                                      ? "text-text-primary"
-                                      : "text-text-disabled hover:text-text-primary",
-                                  )}
+                            <li key={link.link_id}>
+                              <div className="group flex items-center justify-between gap-4 rounded-xl border border-border-default bg-surface-card px-4 py-4 shadow-sm transition-colors hover:border-border-strong lg:px-5">
+                                <a
+                                  href={link.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="min-w-0 flex-1"
                                 >
-                                  <Heart
+                                  <div className="truncate text-sm font-semibold text-text-primary group-hover:underline underline-offset-4">
+                                    {link.title || domain}
+                                  </div>
+                                  <div className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-text-secondary">
+                                    {domain}
+                                  </div>
+                                </a>
+                                <div className="flex shrink-0 items-center gap-3">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      void handleLinkLike(link.link_id);
+                                    }}
                                     className={cn(
-                                      "h-3 w-3",
-                                      likedLinkIds.has(link.link_id) && "fill-current",
+                                      "flex items-center gap-1 text-[10px] font-bold transition-colors",
+                                      likedLinkIds.has(link.link_id)
+                                        ? "text-text-primary"
+                                        : "text-text-disabled hover:text-text-primary",
                                     )}
-                                  />
-                                  {link.like_count}
-                                </button>
-                                <ExternalLink className="h-3.5 w-3.5 text-text-disabled group-hover:text-text-primary transition-colors" />
+                                  >
+                                    <Heart
+                                      className={cn(
+                                        "h-3 w-3",
+                                        likedLinkIds.has(link.link_id) && "fill-current",
+                                      )}
+                                    />
+                                    {link.like_count}
+                                  </button>
+                                  <ExternalLink className="h-3.5 w-3.5 text-text-disabled transition-colors group-hover:text-text-primary" />
+                                </div>
                               </div>
-                            </div>
+                            </li>
                           );
                         })}
-                      </div>
+                      </ul>
                     ) : (
-                      <p className="text-sm text-text-secondary italic">No external resources added yet.</p>
+                      <div className="rounded-xl border border-dashed border-border-strong bg-surface-muted/40 px-5 py-10 text-center">
+                        <p className="text-sm text-text-secondary">
+                          No external links yet—add articles, competition pages, or the architect&apos;s project URL.
+                        </p>
+                      </div>
                     )}
                   </section>
-
                 </div>
               )}
 
@@ -2002,10 +2038,16 @@ export default function BuildingDetails() {
 
                 {/* Credits tab sidebar: contributors */}
                 {activeTab === "credits" && (
-                  <div className="bg-surface-card border border-border-default rounded-xl p-5 shadow-sm">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-4">
-                      Contributors
+                  <div
+                    id="contributors"
+                    className="scroll-mt-24 rounded-xl border border-border-default bg-surface-card p-5 shadow-sm"
+                  >
+                    <h4 className="mb-3 text-[10px] font-medium uppercase tracking-[0.22em] text-text-secondary">
+                      Page contributors
                     </h4>
+                    <p className="mb-3 text-xs leading-relaxed text-text-secondary">
+                      People who added photos, credits, or edits to this listing.
+                    </p>
                     <BuildingContributorsInline buildingId={building.id} />
                   </div>
                 )}

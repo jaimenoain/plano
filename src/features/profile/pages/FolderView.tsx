@@ -242,7 +242,7 @@ setError("Failed to load folder");
                            key={collection.id}
                            collection={collection}
                            username={username}
-                           className="w-full"
+                           variant="profile"
                        />
                    ))}
                </div>

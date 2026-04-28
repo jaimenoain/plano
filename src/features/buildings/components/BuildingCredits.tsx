@@ -1,7 +1,7 @@
 import { useCallback, useReducer, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, ChevronDown, BadgeCheck, Flag } from "lucide-react";
+import { ExternalLink, ChevronDown, BadgeCheck, Flag, Users } from "lucide-react";
 import type { BuildingCreditWithEntities, CreditRole, CreditTier, FlagReason } from "@/features/credits/types";
 import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
 import { visiblePrimaryCredits } from "@/features/credits/buildingCreditDisplay";
@@ -54,6 +54,12 @@ function tierHeadingLabel(tier: CreditTier): string {
   if (tier === "primary") return "Primary";
   if (tier === "contributor") return "Contributor";
   return "Additional";
+}
+
+function tierShortDescription(tier: CreditTier): string {
+  if (tier === "primary") return "Lead design team and core architecture credits.";
+  if (tier === "contributor") return "Engineering, interiors, landscape, and specialist consultants.";
+  return "Further collaborators and supporting roles.";
 }
 
 function groupByTier(credits: BuildingCreditWithEntities[]) {
@@ -118,27 +124,31 @@ function creditInitials(credit: BuildingCreditWithEntities): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-function EntityLinks({ credit }: { credit: BuildingCreditWithEntities }) {
+function EntityLinks({
+  credit,
+  linkClassName,
+}: {
+  credit: BuildingCreditWithEntities;
+  linkClassName?: string;
+}) {
   const { person, company } = credit;
   if (!person && !company) {
     return <span className="text-text-secondary">Unknown entity</span>;
   }
+  const linkCls = cn(
+    "font-medium text-text-primary underline-offset-4 hover:underline",
+    linkClassName,
+  );
   return (
     <span className="flex flex-wrap items-baseline gap-x-1">
       {person ? (
-        <Link
-          to={`/person/${person.slug}`}
-          className="font-medium text-text-primary underline-offset-4 hover:underline"
-        >
+        <Link to={`/person/${person.slug}`} className={linkCls}>
           {person.name}
         </Link>
       ) : null}
       {person && company ? <span className="text-text-secondary">@</span> : null}
       {company ? (
-        <Link
-          to={`/company/${company.slug}`}
-          className="font-medium text-text-primary underline-offset-4 hover:underline"
-        >
+        <Link to={`/company/${company.slug}`} className={linkCls}>
           {company.name}
         </Link>
       ) : null}
@@ -358,12 +368,14 @@ function BuildingCreditRow({
   buildingId,
   sessionFlaggedIds,
   onFlagSessionMarked,
+  variant = "default",
 }: {
   credit: BuildingCreditWithEntities;
   className?: string;
   buildingId: string;
   sessionFlaggedIds: Set<string>;
   onFlagSessionMarked: (creditId: string) => void;
+  variant?: "default" | "spotlight";
 }) {
   const years = yearRangeText(credit);
   const roleLabel = formatCreditRoleLabel(credit.role, credit.roleCustom);
@@ -375,55 +387,118 @@ function BuildingCreditRow({
 
   const avatarSrc = creditAvatarSrc(credit);
   const initials = creditInitials(credit);
+  const isSpotlight = variant === "spotlight";
 
   return (
     <div
       className={cn(
-        "border-b border-border-default py-4 last:border-b-0",
+        isSpotlight
+          ? "rounded-2xl border border-border-default bg-surface-card p-8 lg:p-10 shadow-sm"
+          : "rounded-xl border border-border-default bg-surface-card p-4 shadow-sm",
         className,
       )}
     >
-      <div className="flex gap-3">
-        <Avatar className="mt-0.5 h-9 w-9 shrink-0 ring-1 ring-border-tertiary">
+      <div
+        className={cn(
+          "flex gap-3",
+          isSpotlight && "flex-col items-center text-center sm:flex-row sm:items-start sm:text-left gap-6",
+        )}
+      >
+        <Avatar
+          className={cn(
+            "shrink-0 ring-1 ring-border-tertiary",
+            isSpotlight ? "mt-0 h-20 w-20 ring-2 ring-border-default" : "mt-0.5 h-9 w-9",
+          )}
+        >
           <AvatarImage src={avatarSrc} alt={initials} />
-          <AvatarFallback className="text-xs font-medium">{initials}</AvatarFallback>
+          <AvatarFallback
+            className={cn("font-medium", isSpotlight ? "text-lg" : "text-xs")}
+          >
+            {initials}
+          </AvatarFallback>
         </Avatar>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <div className="min-w-0 flex-1 space-y-1">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                <EntityLinks credit={credit} />
+        <div className="min-w-0 flex-1 w-full">
+          <div
+            className={cn(
+              "flex flex-wrap items-start justify-between gap-2",
+              isSpotlight && "sm:flex-nowrap",
+            )}
+          >
+            <div className="min-w-0 flex-1 space-y-1.5">
+              {isSpotlight ? (
+                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-secondary w-full sm:text-left">
+                  {roleLabel}
+                </p>
+              ) : null}
+              <div
+                className={cn(
+                  "flex flex-wrap items-center gap-x-2 gap-y-0.5",
+                  isSpotlight && "justify-center sm:justify-start",
+                )}
+              >
+                <EntityLinks
+                  credit={credit}
+                  linkClassName={
+                    isSpotlight ? "text-xl font-semibold tracking-tight sm:text-2xl" : undefined
+                  }
+                />
                 {credit.isLead ? (
-                  <span className="text-2xs font-medium uppercase tracking-widest text-text-secondary">Lead</span>
+                  <span className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
+                    Lead
+                  </span>
                 ) : null}
                 {credit.status === "verified" ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span className="inline-flex shrink-0" tabIndex={0}>
-                        <BadgeCheck className="h-4 w-4 text-text-primary" aria-label="Verified credit" />
+                        <BadgeCheck
+                          className={cn(
+                            "text-text-primary",
+                            isSpotlight ? "h-5 w-5" : "h-4 w-4",
+                          )}
+                          aria-label="Verified credit"
+                        />
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>Verified credit</TooltipContent>
                   </Tooltip>
                 ) : null}
                 {credit.status === "flagged" ? (
-                  <span className="text-2xs font-medium uppercase tracking-widest text-destructive">Flagged</span>
+                  <span className="text-2xs font-medium uppercase tracking-widest text-destructive">
+                    Flagged
+                  </span>
                 ) : null}
               </div>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                <span className="text-xs text-text-secondary">{roleLabel}</span>
-                {years ? (
-                  <>
-                    <span className="text-text-disabled">·</span>
-                    <span className="text-xs text-text-secondary">{years}</span>
-                  </>
-                ) : null}
-              </div>
+              {!isSpotlight ? (
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <span className="text-xs text-text-secondary">{roleLabel}</span>
+                  {years ? (
+                    <>
+                      <span className="text-text-disabled">·</span>
+                      <span className="text-xs text-text-secondary">{years}</span>
+                    </>
+                  ) : null}
+                </div>
+              ) : years ? (
+                <p className="text-sm text-text-secondary tabular-nums">{years}</p>
+              ) : null}
               {credit.contributionNotes?.trim() ? (
-                <p className="text-sm leading-relaxed text-text-secondary">{credit.contributionNotes.trim()}</p>
+                <p
+                  className={cn(
+                    "leading-relaxed text-text-secondary",
+                    isSpotlight ? "text-base max-w-xl mx-auto sm:mx-0" : "text-sm",
+                  )}
+                >
+                  {credit.contributionNotes.trim()}
+                </p>
               ) : null}
             </div>
-            <div className="flex shrink-0 items-center gap-0.5">
+            <div
+              className={cn(
+                "flex shrink-0 items-center gap-0.5",
+                isSpotlight && "justify-center sm:justify-end w-full sm:w-auto pt-2 sm:pt-0",
+              )}
+            >
               {project ? (
                 <a
                   href={projectHref(project)}
@@ -467,20 +542,27 @@ function TierRoleSections({
   if (credits.length === 0) return null;
   const byRole = groupTierByRole(credits);
   const tierTitle = `${tierHeadingLabel(tier)} credits`;
-  return (
-    <section className="first:mt-0" aria-label={tierTitle}>
+  const isContributorPanel = tier === "contributor";
+
+  const inner = (
+    <>
       {showTierHeading ? (
-        <h3 className="mb-5 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
-          {tierTitle}
-        </h3>
+        <header className="mb-6 space-y-2">
+          <h3 className="text-[10px] font-medium uppercase tracking-[0.22em] text-text-secondary">
+            {tierTitle}
+          </h3>
+          <p className="max-w-xl text-sm leading-relaxed text-text-secondary">
+            {tierShortDescription(tier)}
+          </p>
+        </header>
       ) : null}
-      <div className="space-y-6">
+      <div className="space-y-8">
         {[...byRole.entries()].map(([role, rows]) => (
           <div key={role}>
-            <h4 className="mb-1 text-xs font-medium uppercase tracking-wider text-text-secondary">
+            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-primary">
               {formatCreditRoleLabel(role, rows[0]?.roleCustom ?? null)}
             </h4>
-            <div>
+            <div className="space-y-3">
               {rows.map((c) => (
                 <BuildingCreditRow
                   key={c.id}
@@ -494,6 +576,18 @@ function TierRoleSections({
           </div>
         ))}
       </div>
+    </>
+  );
+
+  return (
+    <section className="first:mt-0 min-w-0" aria-label={tierTitle}>
+      {isContributorPanel ? (
+        <div className="rounded-2xl border border-border-default bg-surface-muted p-6 lg:p-8">
+          {inner}
+        </div>
+      ) : (
+        inner
+      )}
     </section>
   );
 }
@@ -505,6 +599,58 @@ export interface BuildingCreditsProps {
   isAuthenticated: boolean;
   /** When true, include `status = flagged` rows and show a Flagged badge (building moderators). */
   isAdmin?: boolean;
+  /** Used in the tab intro and empty state. */
+  buildingName?: string | null;
+}
+
+function CreditsEmptyState({
+  buildingName,
+  isAuthenticated,
+  onAddClick,
+}: {
+  buildingName?: string | null;
+  isAuthenticated: boolean;
+  onAddClick: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center rounded-2xl border border-dashed border-border-strong bg-surface-muted/50 px-6 py-14 text-center lg:px-12 lg:py-20">
+      <div
+        className="flex h-14 w-14 items-center justify-center rounded-full border border-border-default bg-surface-card shadow-sm"
+        aria-hidden
+      >
+        <Users className="h-7 w-7 text-text-secondary" />
+      </div>
+      <h3 className="mt-6 font-display text-2xl font-bold tracking-tight text-text-primary">
+        No credits listed yet
+      </h3>
+      <p className="mt-3 max-w-md text-sm leading-relaxed text-text-secondary">
+        {buildingName?.trim() ? (
+          <>
+            Be the first to name the architects, engineers, and collaborators behind{" "}
+            <span className="font-medium text-text-primary">{buildingName.trim()}</span>.{" "}
+          </>
+        ) : (
+          <>Be the first to record who designed and built this project. </>
+        )}
+        Credits link professionals to their work—tag colleagues so they can discover and share this
+        building.
+      </p>
+      <div className="mt-8">
+        {isAuthenticated ? (
+          <Button type="button" variant="default" size="sm" className="h-10 px-6" onClick={onAddClick}>
+            Add a credit
+          </Button>
+        ) : (
+          <Link
+            to="/login"
+            className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-text-secondary"
+          >
+            Sign in to add credits →
+          </Link>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function BuildingCredits({
@@ -512,6 +658,7 @@ export function BuildingCredits({
   buildingId,
   isAuthenticated,
   isAdmin = false,
+  buildingName,
 }: BuildingCreditsProps) {
   const [ancillaryOpen, setAncillaryOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -524,45 +671,80 @@ export function BuildingCredits({
 
   const hasBothTiers = primary.length > 0 && contributor.length > 0;
 
+  const spotlightCredit =
+    visibleCredits.length === 1 && visibleCredits[0].creditTier !== "ancillary"
+      ? visibleCredits[0]
+      : null;
+
+  const addCreditFooter =
+    isAuthenticated && visibleCredits.length > 0 ? (
+      <div className="mt-10 flex flex-wrap items-center gap-4 border-t border-border-default pt-8 lg:mt-12 lg:pt-10">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="uppercase tracking-widest"
+          onClick={() => setAddOpen(true)}
+        >
+          Add a credit
+        </Button>
+      </div>
+    ) : null;
+
   return (
-    <section className="border-t border-border-default pt-10" aria-labelledby="building-credits-heading">
-      <h2 id="building-credits-heading" className="mb-8 text-[10px] font-medium uppercase tracking-widest text-text-secondary">
-        Credits
-      </h2>
+    <section
+      id="full-credits"
+      className="scroll-mt-24"
+      aria-labelledby="building-credits-heading"
+    >
+      <header className="mb-10 lg:mb-14">
+        <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-text-secondary">
+          Project team
+        </p>
+        <h2
+          id="building-credits-heading"
+          className="mt-2 font-display text-3xl font-bold tracking-tight text-text-primary sm:text-4xl"
+        >
+          Credits
+        </h2>
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-text-secondary">
+          Everyone who shaped this building—designers, engineers, makers, and advisors. Add names so
+          collaborators get credit and can share this page with their networks.
+        </p>
+      </header>
 
       {visibleCredits.length === 0 ? (
-        <p className="text-sm text-text-secondary">No credits listed yet.</p>
-      ) : (
+        <CreditsEmptyState
+          buildingName={buildingName}
+          isAuthenticated={isAuthenticated}
+          onAddClick={() => setAddOpen(true)}
+        />
+      ) : spotlightCredit ? (
         <>
-          <div className={cn(
-            "grid grid-cols-1",
-            hasBothTiers && "gap-x-10 lg:grid-cols-2",
-          )}>
-            <TierRoleSections
-              tier="primary"
-              credits={primary}
+          <section aria-label={`${tierHeadingLabel(spotlightCredit.creditTier)} credits`}>
+            <BuildingCreditRow
+              credit={spotlightCredit}
               buildingId={buildingId}
               sessionFlaggedIds={sessionIds}
               onFlagSessionMarked={markAndBump}
+              variant="spotlight"
             />
-            <TierRoleSections
-              tier="contributor"
-              credits={contributor}
-              buildingId={buildingId}
-              sessionFlaggedIds={sessionIds}
-              onFlagSessionMarked={markAndBump}
-            />
-          </div>
+          </section>
           {ancillary.length > 0 ? (
-            <div className="mt-8">
+            <div className="mt-10 lg:mt-12">
               <Collapsible open={ancillaryOpen} onOpenChange={setAncillaryOpen}>
                 <CollapsibleTrigger
                   type="button"
-                  className="flex w-full items-center justify-between border-b border-border-default py-3 text-left text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary"
+                  className="flex w-full items-center justify-between rounded-xl border border-border-default bg-surface-muted px-4 py-4 text-left transition-colors hover:bg-surface-muted/80 lg:px-5"
                 >
-                  <span>Show all credits ({ancillary.length})</span>
+                  <span className="text-xs font-semibold uppercase tracking-widest text-text-primary">
+                    More credits ({ancillary.length})
+                  </span>
                   <ChevronDown
-                    className={cn("h-4 w-4 shrink-0 transition-transform", ancillaryOpen && "rotate-180")}
+                    className={cn(
+                      "h-4 w-4 shrink-0 transition-transform text-text-secondary",
+                      ancillaryOpen && "rotate-180",
+                    )}
                     aria-hidden
                   />
                 </CollapsibleTrigger>
@@ -581,26 +763,80 @@ export function BuildingCredits({
               </Collapsible>
             </div>
           ) : null}
+          {addCreditFooter}
+        </>
+      ) : (
+        <>
+          <div
+            className={cn(
+              "grid grid-cols-1 gap-12",
+              hasBothTiers && "lg:grid-cols-2 lg:gap-x-12 xl:gap-x-16",
+            )}
+          >
+            <TierRoleSections
+              tier="primary"
+              credits={primary}
+              buildingId={buildingId}
+              sessionFlaggedIds={sessionIds}
+              onFlagSessionMarked={markAndBump}
+            />
+            <TierRoleSections
+              tier="contributor"
+              credits={contributor}
+              buildingId={buildingId}
+              sessionFlaggedIds={sessionIds}
+              onFlagSessionMarked={markAndBump}
+            />
+          </div>
+          {ancillary.length > 0 ? (
+            <div className="mt-12">
+              <Collapsible open={ancillaryOpen} onOpenChange={setAncillaryOpen}>
+                <CollapsibleTrigger
+                  type="button"
+                  className="flex w-full items-center justify-between rounded-xl border border-border-default bg-surface-muted px-4 py-4 text-left transition-colors hover:bg-surface-muted/80 lg:px-5"
+                >
+                  <span className="text-xs font-semibold uppercase tracking-widest text-text-primary">
+                    More credits ({ancillary.length})
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 shrink-0 transition-transform text-text-secondary",
+                      ancillaryOpen && "rotate-180",
+                    )}
+                    aria-hidden
+                  />
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="pt-8">
+                    <TierRoleSections
+                      tier="ancillary"
+                      credits={ancillary}
+                      buildingId={buildingId}
+                      sessionFlaggedIds={sessionIds}
+                      onFlagSessionMarked={markAndBump}
+                      showTierHeading={false}
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </div>
+          ) : null}
+          {addCreditFooter}
         </>
       )}
 
       {isAuthenticated ? (
-        <div className="mt-8">
-          <Button type="button" variant="outline" size="sm" className="uppercase tracking-widest" onClick={() => setAddOpen(true)}>
-            Add a credit
-          </Button>
-          <Sheet open={addOpen} onOpenChange={setAddOpen}>
-            <SheetContent side="right" className="flex w-full flex-col overflow-hidden sm:max-w-lg sm:px-6">
-              {addOpen ? (
-                <AddCreditForm
-                  buildingId={buildingId}
-                  existingCredits={credits}
-                  onRequestClose={() => setAddOpen(false)}
-                />
-              ) : null}
-            </SheetContent>
-          </Sheet>
-        </div>
+        <Sheet open={addOpen} onOpenChange={setAddOpen}>
+          <SheetContent side="right" className="flex w-full flex-col overflow-hidden sm:max-w-lg sm:px-6">
+            {addOpen ? (
+              <AddCreditForm
+                buildingId={buildingId}
+                existingCredits={credits}
+                onRequestClose={() => setAddOpen(false)}
+              />
+            ) : null}
+          </SheetContent>
+        </Sheet>
       ) : null}
     </section>
   );

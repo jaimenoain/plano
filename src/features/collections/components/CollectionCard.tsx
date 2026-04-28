@@ -17,9 +17,11 @@ export interface CollectionCardProps {
   username?: string | null;
   className?: string;
   isDragEnabled?: boolean;
+  /** `profile` — full-width editorial tile for profile / folder grids; `compact` — fixed-width strip (default). */
+  variant?: "compact" | "profile";
 }
 
-export function CollectionCard({ collection, username, className, isDragEnabled = false }: CollectionCardProps) {
+export function CollectionCard({ collection, username, className, isDragEnabled = false, variant = "compact" }: CollectionCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `collection-${collection.id}`,
     data: { type: "collection", collection },
@@ -33,7 +35,8 @@ export function CollectionCard({ collection, username, className, isDragEnabled 
       {...attributes}
       {...listeners}
       className={cn(
-        "block flex-shrink-0 w-[180px] group select-none outline-none",
+        "block flex-shrink-0 group select-none outline-none",
+        variant === "profile" ? "w-full" : "w-[180px]",
         isDragEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
         className
       )}
@@ -46,13 +49,27 @@ export function CollectionCard({ collection, username, className, isDragEnabled 
       >
           <Card
             className={cn(
-              "h-[100px] bg-surface-card overflow-hidden relative",
-              collection.isFavorite && "border-b-2 border-text-primary"
+              "relative overflow-hidden rounded-none bg-surface-card shadow-none",
+              variant === "profile"
+                ? "min-h-[120px] h-auto border border-border-default transition-colors hover:border-border-strong"
+                : cn("h-[100px]", collection.isFavorite && "border-b-2 border-text-primary"),
             )}
           >
-              <CardContent className="p-4 h-full flex flex-col justify-between pointer-events-none">
-            <div className="flex justify-between items-start">
-                <h4 className="font-medium text-sm line-clamp-2 leading-tight pr-4 whitespace-normal text-text-primary">
+              <CardContent
+                className={cn(
+                  "h-full flex flex-col justify-between pointer-events-none",
+                  variant === "profile" ? "p-5" : "p-4"
+                )}
+              >
+            <div className="flex justify-between items-start gap-2">
+                <h4
+                  className={cn(
+                    "line-clamp-2 leading-tight whitespace-normal text-text-primary",
+                    variant === "profile"
+                      ? "text-base font-semibold tracking-tight pr-2"
+                      : "font-medium text-sm pr-4"
+                  )}
+                >
                     {collection.name}
                 </h4>
                 {collection.isFavorite ? (

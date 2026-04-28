@@ -46,7 +46,6 @@ import {
   Columns,
   List,
   BadgeCheck,
-  Plus,
   Pencil,
   Check,
   ExternalLink,
@@ -1140,21 +1139,14 @@ export default function Profile() {
             {/* ── COLLECTIONS ── */}
             {activeSection === "collections" && targetUserId && (
               <div>
-                {isOwnProfile && (
-                  <div className="flex justify-end mb-8">
-                    <button type="button" onClick={() => setShowCreateCollection(true)} className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1.5">
-                      <Plus className="w-3 h-3" />New collection →
-                    </button>
-                  </div>
-                )}
                 <WidgetErrorBoundary>
                   <DndContext sensors={sensors} onDragStart={handleCollectionDragStart} onDragEnd={handleCollectionDragEnd}>
                     <CollectionsGrid userId={targetUserId} username={profile?.username || null} isOwnProfile={isOwnProfile} onCreate={isOwnProfile ? () => setShowCreateCollection(true) : undefined} refreshKey={collectionsRefreshKey} />
                     <DragOverlay dropAnimation={null}>
                       {activeCollectionData ? (
-                        <div className="shadow-lg cursor-grabbing bg-surface-card border border-border-default overflow-hidden opacity-90 inline-block">
-                          <div className="p-4 h-[100px] w-[180px] flex flex-col justify-between">
-                            <h4 className="font-medium text-sm line-clamp-2 leading-tight text-text-primary">{activeCollectionData.name}</h4>
+                        <div className="inline-block cursor-grabbing overflow-hidden border border-border-default bg-surface-card opacity-90 shadow-lg">
+                          <div className="flex h-[120px] w-[min(92vw,280px)] flex-col justify-between p-5">
+                            <h4 className="line-clamp-2 text-base font-semibold leading-tight tracking-tight text-text-primary">{activeCollectionData.name}</h4>
                           </div>
                         </div>
                       ) : null}
