@@ -1481,6 +1481,9 @@ toast({
                       hiddenBuildingIds={hiddenBuildingIds}
                       open={showAddBuildings}
                       onOpenChange={setShowAddBuildings}
+                      onCollectionDataChanged={() => {
+                        void refetchItems();
+                      }}
                   />
               </Suspense>
             )}

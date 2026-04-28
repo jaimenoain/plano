@@ -55,6 +55,8 @@ interface AddBuildingsToCollectionDialogProps {
   hiddenBuildingIds?: Set<string>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Parent refetch for the combined `collection_items` + `collection_markers` query (map + list). */
+  onCollectionDataChanged?: () => void;
 }
 
 function displayMarkerSecondaryLine(marker: CollectionMarker): string | null {
@@ -78,10 +80,12 @@ function PlacesAutocompleteFields({
   collectionId,
   userId,
   markersCount,
+  onCollectionDataChanged,
 }: {
   collectionId: string;
   userId: string;
   markersCount: number;
+  onCollectionDataChanged?: () => void;
 }) {
   const {
     ready,
@@ -130,6 +134,7 @@ function PlacesAutocompleteFields({
       setValue("", false);
       queryClient.invalidateQueries({ queryKey: ["collection_markers", collectionId] });
       queryClient.invalidateQueries({ queryKey: ["collection_items", collectionId] });
+      onCollectionDataChanged?.();
     } catch (_error) {
       toast.error("Failed to add place");
     }
@@ -199,10 +204,12 @@ function OtherMarkersTabPanel({
   collectionId,
   userId,
   dialogOpen,
+  onCollectionDataChanged,
 }: {
   collectionId: string;
   userId: string;
   dialogOpen: boolean;
+  onCollectionDataChanged?: () => void;
 }) {
   const queryClient = useQueryClient();
   const [scriptLoaded, setScriptLoaded] = useState(false);
@@ -263,6 +270,7 @@ function OtherMarkersTabPanel({
       toast.success("Place removed from collection");
       queryClient.invalidateQueries({ queryKey: ["collection_markers", collectionId] });
       queryClient.invalidateQueries({ queryKey: ["collection_items", collectionId] });
+      onCollectionDataChanged?.();
     },
     onError: () => {
       toast.error("Could not remove place");
@@ -290,7 +298,12 @@ function OtherMarkersTabPanel({
       ) : (
         <ScrollArea className="min-h-0 flex-1">
           <div className="flex flex-col pb-4">
-            <PlacesAutocompleteFields collectionId={collectionId} userId={userId} markersCount={markers.length} />
+            <PlacesAutocompleteFields
+              collectionId={collectionId}
+              userId={userId}
+              markersCount={markers.length}
+              onCollectionDataChanged={onCollectionDataChanged}
+            />
             <div className="px-4 pt-4">
               {markersLoading ? (
                 <div className="space-y-2">
@@ -375,6 +388,7 @@ export function AddBuildingsToCollectionDialog({
   hiddenBuildingIds,
   open,
   onOpenChange,
+  onCollectionDataChanged,
 }: AddBuildingsToCollectionDialogProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -542,6 +556,7 @@ export function AddBuildingsToCollectionDialog({
       onSuccess: () => {
           toast.success("Building hidden from suggestions");
           queryClient.invalidateQueries({ queryKey: ["collection_items", collectionId] });
+          onCollectionDataChanged?.();
       },
       onError: (_error) => {
 toast.error("Failed to hide building");
@@ -576,6 +591,7 @@ toast.error("Failed to hide building");
     onSuccess: () => {
         toast.success("Building added to collection");
         queryClient.invalidateQueries({ queryKey: ["collection_items", collectionId] });
+        onCollectionDataChanged?.();
     },
     onError: (_error) => {
 toast.error("Failed to add building");
@@ -736,7 +752,12 @@ toast.error("Failed to add building");
             className="m-0 mt-0 flex min-h-0 flex-1 flex-col overflow-hidden border-none p-0 data-[state=inactive]:hidden"
           >
             {user && (
-              <OtherMarkersTabPanel collectionId={collectionId} userId={user.id} dialogOpen={open} />
+              <OtherMarkersTabPanel
+                collectionId={collectionId}
+                userId={user.id}
+                dialogOpen={open}
+                onCollectionDataChanged={onCollectionDataChanged}
+              />
             )}
           </TabsContent>
         </Tabs>

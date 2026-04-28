@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { toast } from 'sonner';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 // Define the event interface
@@ -26,10 +27,31 @@ export function PwaProvider({ children }: { children: ReactNode }) {
   const [showIOSDrawer, setShowIOSDrawer] = useState(false);
   const [isInstallable, setIsInstallable] = useState(false);
 
-  useRegisterSW({
+  const {
+    needRefresh: [needRefresh],
+    updateServiceWorker,
+  } = useRegisterSW({
     onRegistered() {},
     onRegisterError() {},
   });
+
+  useEffect(() => {
+    if (!needRefresh) {
+      toast.dismiss('pwa-sw-update');
+      return;
+    }
+    toast.info('A new version of Plano is ready', {
+      id: 'pwa-sw-update',
+      description: 'Refresh when you are finished to avoid losing work in progress.',
+      duration: 600_000,
+      action: {
+        label: 'Refresh now',
+        onClick: () => {
+          void updateServiceWorker(true);
+        },
+      },
+    });
+  }, [needRefresh, updateServiceWorker]);
 
   // Long-lived installed PWAs (especially mobile) may not re-check the service worker
   // until a cold start. Probing on resume + periodically helps them pick up new sw.js

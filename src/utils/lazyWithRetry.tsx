@@ -26,6 +26,14 @@ export const lazyWithRetry = <T extends ComponentType<unknown>>(
           throw error;
         }
 
+        // Full reload on transient chunk failures is helpful after a production deploy, but in
+        // local dev it fights HMR / Strict Mode and feels like the site "randomly" refreshes.
+        const shouldAttemptChunkReload =
+          import.meta.env.PROD || import.meta.env.MODE === "test";
+        if (!shouldAttemptChunkReload) {
+          throw error;
+        }
+
         const storageKey = "last-force-refresh-timestamp";
         const now = Date.now();
         const lastRefresh = window.sessionStorage.getItem(storageKey);

@@ -1,7 +1,8 @@
 /**
  * DiscoveryCard.tsx — Redesigned with A24 cinematic aesthetic
  *
- * Visual changes (all logic / hooks / state / gesture handlers unchanged):
+ * Swipe / scroll: custom pointer axis gating (vertical feed vs horizontal save/hide), not Framer `drag`.
+ * Visual layer:
  *
  * Image:
  *   - object-contain → object-cover: fills the frame completely, cinematic
@@ -26,7 +27,14 @@
  *
  * Pagination dots: kept, top-right corner instead of centered
  */
-import { useState, useRef, useEffect, useMemo, type RefCallback } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+  type RefCallback,
+} from "react";
 import { DiscoveryBuilding, type CreditSummary } from "@/features/search/components/types";
 import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl, getBuildingLocalityUrl } from "@/utils/url";
@@ -37,13 +45,8 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { toast } from "sonner";
 import { DiscoveryFeedItem } from "../hooks/useDiscoveryFeed";
 import { Link } from "react-router";
-import {
-  animate,
-  motion,
-  useMotionValue,
-  useTransform,
-  type PanInfo,
-} from "framer-motion";
+import { animate, motion, useMotionValue, useTransform } from "framer-motion";
+import { cn } from "@/lib/utils";
 import { ContactFacepile } from "./ContactFacepile";
 
 interface DiscoveryCardProps {
@@ -73,10 +76,20 @@ export function DiscoveryCard({
   const [hasBeenViewed, setHasBeenViewed] = useState(false);
   const prevVisible = useRef(false);
 
-  // Lazy loading setup
-  const { containerRef, isVisible: _isVisible } = useIntersectionObserver({
-    threshold: 0.1,
-  });
+  // Lazy loading setup (hook returns a callback ref, not RefObject)
+  const { containerRef: setLazyObserveTarget, isVisible: _isVisible } =
+    useIntersectionObserver({
+      threshold: 0.1,
+    });
+
+  const cardRootRef = useRef<HTMLDivElement | null>(null);
+  const setCardRootRef: RefCallback<HTMLDivElement> = useCallback(
+    (node) => {
+      cardRootRef.current = node;
+      setLazyObserveTarget(node);
+    },
+    [setLazyObserveTarget]
+  );
 
   // View tracking setup
   const { containerRef: viewTrackerRef, isVisible: isViewVisible } =
@@ -172,32 +185,204 @@ export function DiscoveryCard({
   const likeOverlayOpacity = useTransform(x, [20, 100], [0, 0.35]);
   const nopeOverlayOpacity = useTransform(x, [-100, -20], [0.35, 0]);
 
-  /** Distance (px) or horizontal velocity (px/s) to commit — iPad benefits from velocity for short flicks. */
+  /** Commit when offset or horizontal velocity passes (px / px/s). */
   const SWIPE_OFFSET_PX = 88;
   const SWIPE_VELOCITY_PX = 420;
 
-  const handleDragEnd = (_: unknown, info: PanInfo) => {
-    const vx = info.velocity.x;
-    const ox = info.offset.x;
-    const commitRight = ox > SWIPE_OFFSET_PX || vx > SWIPE_VELOCITY_PX;
-    const commitLeft = ox < -SWIPE_OFFSET_PX || vx < -SWIPE_VELOCITY_PX;
+  /**
+   * Custom pointer swipe (replaces Framer `drag="x"` + `dragDirectionLock`).
+   * Framer’s direction lock + `touch-pan-y` fights iPad Safari: vertical feed scroll and
+   * horizontal save/hide were misclassified (worse in portrait). We only move `x` after
+   * explicit horizontal dominance; vertical dominance yields to the parent scroller.
+   */
+  const [horizontalSwipeActive, setHorizontalSwipeActive] = useState(false);
+  const blockImageTapRef = useRef(false);
+  const swipeSessionRef = useRef<{
+    activePointerId: number | null;
+    /** undecided → first axis wins for the rest of the pointer */
+    axis: "undecided" | "horizontal" | "vertical";
+    originX: number;
+    originY: number;
+    moveSamples: { t: number; x: number }[];
+  }>({
+    activePointerId: null,
+    axis: "undecided",
+    originX: 0,
+    originY: 0,
+    moveSamples: [],
+  });
 
-    if (commitRight) {
-      if (showRating) {
-        if (onSwipeSave) onSwipeSave();
-      } else {
-        setIsSaved(true);
-        setShowRating(true);
-        saveToSupabase("pending");
+  const applyElasticPull = useCallback((rawDx: number) => {
+    const limit = 200;
+    const abs = Math.abs(rawDx);
+    if (abs <= limit) return rawDx;
+    const over = abs - limit;
+    return Math.sign(rawDx) * (limit + over * 0.32);
+  }, []);
+
+  const finishHorizontalSwipe = useCallback(
+    (el: HTMLElement) => {
+      const s = swipeSessionRef.current;
+      const pull = x.get();
+      let vx = 0;
+      const samples = s.moveSamples;
+      if (samples.length >= 2) {
+        const last = samples[samples.length - 1];
+        const first = samples[0];
+        const dt = (last.t - first.t) / 1000;
+        if (dt > 0.04) vx = (last.x - first.x) / dt;
       }
-    } else if (commitLeft && onSwipeHide) {
-      onSwipeHide();
-    } else {
-      void animate(x, 0, { type: "spring", stiffness: 520, damping: 38 });
-    }
-  };
+
+      const commitRight =
+        pull > SWIPE_OFFSET_PX || vx > SWIPE_VELOCITY_PX;
+      const commitLeft =
+        pull < -SWIPE_OFFSET_PX || vx < -SWIPE_VELOCITY_PX;
+
+      if (Math.abs(pull) > 12) blockImageTapRef.current = true;
+
+      if (commitRight) {
+        if (showRating) {
+          if (onSwipeSave) onSwipeSave();
+        } else {
+          setIsSaved(true);
+          setShowRating(true);
+          saveToSupabase("pending");
+        }
+      } else if (commitLeft && onSwipeHide) {
+        onSwipeHide();
+      } else {
+        void animate(x, 0, { type: "spring", stiffness: 520, damping: 38 });
+      }
+
+      const pid = s.activePointerId;
+      if (pid != null && el.hasPointerCapture(pid)) {
+        try {
+          el.releasePointerCapture(pid);
+        } catch {
+          /* already released */
+        }
+      }
+      s.activePointerId = null;
+      s.axis = "undecided";
+      s.moveSamples = [];
+      setHorizontalSwipeActive(false);
+    },
+    [
+      onSwipeHide,
+      onSwipeSave,
+      saveToSupabase,
+      showRating,
+      x,
+    ]
+  );
+
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (showRating) return;
+      if (e.button !== 0) return;
+      if (e.pointerType === "touch" && !e.isPrimary) return;
+
+      const s = swipeSessionRef.current;
+      s.activePointerId = e.pointerId;
+      s.axis = "undecided";
+      s.originX = e.clientX;
+      s.originY = e.clientY;
+      s.moveSamples = [{ t: e.timeStamp, x: e.clientX }];
+      blockImageTapRef.current = false;
+    },
+    [showRating]
+  );
+
+  const onPointerMove = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      const s = swipeSessionRef.current;
+      if (s.activePointerId == null || e.pointerId !== s.activePointerId) return;
+      if (showRating) return;
+
+      const dx = e.clientX - s.originX;
+      const dy = e.clientY - s.originY;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+      const touch = e.pointerType === "touch";
+      const armH = touch ? 24 : 12;
+      const armV = touch ? 20 : 10;
+      const hRatio = touch ? 1.45 : 1.2;
+      const vRatio = touch ? 1.45 : 1.2;
+
+      if (s.axis === "vertical") return;
+
+      if (s.axis === "undecided") {
+        if (absDx < 8 && absDy < 8) return;
+
+        if (absDy >= armV && absDy > absDx * vRatio) {
+          s.axis = "vertical";
+          return;
+        }
+
+        if (absDx >= armH && absDx > absDy * hRatio) {
+          s.axis = "horizontal";
+          onInteractionStart?.();
+          setHorizontalSwipeActive(true);
+          e.currentTarget.setPointerCapture(e.pointerId);
+          s.moveSamples = [{ t: e.timeStamp, x: e.clientX }];
+          e.preventDefault();
+          x.set(applyElasticPull(dx));
+        }
+        return;
+      }
+
+      e.preventDefault();
+      s.moveSamples.push({ t: e.timeStamp, x: e.clientX });
+      if (s.moveSamples.length > 8) s.moveSamples.shift();
+      x.set(applyElasticPull(dx));
+    },
+    [
+      applyElasticPull,
+      onInteractionStart,
+      showRating,
+      x,
+    ]
+  );
+
+  const onPointerEnd = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      const s = swipeSessionRef.current;
+      if (s.activePointerId == null || e.pointerId !== s.activePointerId) return;
+
+      if (s.axis === "horizontal") {
+        finishHorizontalSwipe(e.currentTarget);
+        return;
+      }
+
+      s.activePointerId = null;
+      s.axis = "undecided";
+      s.moveSamples = [];
+      setHorizontalSwipeActive(false);
+    },
+    [finishHorizontalSwipe]
+  );
+
+  /** iOS Safari may still scroll the snap parent unless touchmove is non-passive while dragging horizontally. */
+  useEffect(() => {
+    if (!horizontalSwipeActive) return;
+    const el = cardRootRef.current;
+    if (!el) return;
+    const preventTouchScroll = (ev: TouchEvent) => {
+      ev.preventDefault();
+    };
+    el.addEventListener("touchmove", preventTouchScroll, { passive: false });
+    return () => {
+      el.removeEventListener("touchmove", preventTouchScroll);
+    };
+  }, [horizontalSwipeActive]);
 
   const nextImage = (e: React.MouseEvent) => {
+    if (blockImageTapRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      blockImageTapRef.current = false;
+      return;
+    }
     e.stopPropagation();
     if (currentImageIndex < uniqueImages.length - 1) {
       setCurrentImageIndex((prev) => prev + 1);
@@ -205,6 +390,12 @@ export function DiscoveryCard({
   };
 
   const prevImage = (e: React.MouseEvent) => {
+    if (blockImageTapRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      blockImageTapRef.current = false;
+      return;
+    }
     e.stopPropagation();
     if (currentImageIndex > 0) {
       setCurrentImageIndex((prev) => prev - 1);
@@ -241,16 +432,16 @@ export function DiscoveryCard({
 
   return (
     <motion.div
-      ref={containerRef as RefCallback<HTMLDivElement>}
-      className="group/card relative w-full h-full overflow-hidden min-w-0 select-none bg-black snap-start touch-pan-y"
+      ref={setCardRootRef}
+      className={cn(
+        "group/card relative w-full h-full overflow-hidden min-w-0 select-none bg-black snap-start",
+        horizontalSwipeActive ? "touch-none" : "touch-pan-y"
+      )}
       style={{ x, rotate, opacity }}
-      drag="x"
-      dragDirectionLock
-      dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={0.55}
-      dragMomentum={false}
-      onDragStart={() => onInteractionStart?.()}
-      onDragEnd={handleDragEnd}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerEnd}
+      onPointerCancel={onPointerEnd}
     >
       {/* View tracker */}
       <div
