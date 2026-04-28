@@ -409,7 +409,7 @@ toast({
   return (
     <AppLayout title="Settings" showLogo={false}>
       <NavigationBlocker isDirty={isDirty} />
-      <div className="p-4 sm:p-6 lg:p-8 pb-20">
+      <div className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-2xl mx-auto">
         <Button 
           variant="ghost" 
@@ -598,7 +598,7 @@ toast({
                   <Button
                     type="button"
                     variant="destructive"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                    className="opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity duration-150"
                     onClick={() => setShowDisconnectDialog(true)}
                   >
                     Remove

@@ -86,6 +86,7 @@ import {
   SITE_URL,
 } from "@/features/buildings/utils/structuredData";
 import { getBuildingUrl } from "@/utils/url";
+import { cn } from "@/lib/utils";
 import {
   visibleCreditSummariesFromEmbed,
   type BuildingCreditEmbed,
@@ -825,7 +826,7 @@ export default function Profile() {
                       </>
                     ) : (
                       <>
-                        <button type="button" onClick={() => { setDraftFirm(profile?.firm || ""); setDraftBio(profile?.bio || ""); setDraftWebsite(profile?.website || ""); setIsEditingHeader(true); }} className="text-text-disabled hover:text-text-primary transition-colors" aria-label="Edit profile">
+                        <button type="button" onClick={() => { setDraftFirm(profile?.firm || ""); setDraftBio(profile?.bio || ""); setDraftWebsite(profile?.website || ""); setIsEditingHeader(true); }} className="inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-0 md:min-w-0 md:p-0 text-text-disabled hover:text-text-primary transition-colors" aria-label="Edit profile">
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
                         <Link to="/settings" className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors">
@@ -901,11 +902,11 @@ export default function Profile() {
 
               {/* Followers / following — secondary row */}
               <div className="flex items-center gap-5">
-                <button onClick={() => openUserList("followers")} className="text-left hover:opacity-60 transition-opacity">
+                <button onClick={() => openUserList("followers")} className="text-left hover:opacity-60 active:opacity-60 transition-opacity">
                   <span className="text-sm font-semibold text-text-primary">{stats.followers}</span>
                   <span className="text-xs text-text-disabled ml-1.5">followers</span>
                 </button>
-                <button onClick={() => openUserList("following")} className="text-left hover:opacity-60 transition-opacity">
+                <button onClick={() => openUserList("following")} className="text-left hover:opacity-60 active:opacity-60 transition-opacity">
                   <span className="text-sm font-semibold text-text-primary">{stats.following}</span>
                   <span className="text-xs text-text-disabled ml-1.5">following</span>
                 </button>
@@ -1038,13 +1039,16 @@ export default function Profile() {
                         placeholder="Search..."
                         value={searchQuery}
                         onChange={e => handleSearchChange(e.target.value)}
-                        className="pl-8 h-7 w-32 text-xs bg-surface-muted/40 border-transparent focus:bg-surface-default focus:w-44 transition-all"
+                        className={cn(
+                          "pl-8 h-7 w-32 text-xs bg-surface-muted/40 border-transparent focus:bg-surface-default focus:w-44 transition-all",
+                          searchQuery && "pr-11",
+                        )}
                       />
                       {searchQuery && (
                         <button
                           type="button"
                           onClick={() => handleSearchChange("")}
-                          className="absolute right-2 top-1/2 -translate-y-1/2"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 inline-flex h-11 w-11 items-center justify-center"
                           aria-label="Clear search"
                         >
                           <X className="h-3 w-3 text-text-disabled hover:text-text-primary" />
@@ -1053,7 +1057,7 @@ export default function Profile() {
                     </div>
                     <button
                       type="button"
-                      className="h-7 px-2.5 border border-border-default text-text-disabled hover:text-text-primary hover:border-border-strong transition-colors"
+                      className="h-7 max-md:min-h-11 px-2.5 max-md:px-3 border border-border-default text-text-disabled hover:text-text-primary hover:border-border-strong transition-colors inline-flex items-center justify-center"
                       onClick={() => navigate(activeSection === "saved" ? `/search?rated_by=${profile?.username || ""}&open_filters=true&mode=library&status=visited%2Csaved%2Cpending` : `/search?rated_by=${profile?.username || ""}&open_filters=true`)}
                       title="View on map"
                     >
@@ -1222,11 +1226,11 @@ export default function Profile() {
                 <div>
                   <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-5">Connections</p>
                   <div className="flex gap-12">
-                    <button onClick={() => openUserList("followers")} className="text-left hover:opacity-60 transition-opacity">
+                    <button onClick={() => openUserList("followers")} className="text-left hover:opacity-60 active:opacity-60 transition-opacity">
                       <div className="text-3xl font-bold tracking-tight text-text-primary leading-none">{stats.followers}</div>
                       <div className="text-2xs font-medium tracking-widest uppercase text-text-secondary mt-1.5">Followers</div>
                     </button>
-                    <button onClick={() => openUserList("following")} className="text-left hover:opacity-60 transition-opacity">
+                    <button onClick={() => openUserList("following")} className="text-left hover:opacity-60 active:opacity-60 transition-opacity">
                       <div className="text-3xl font-bold tracking-tight text-text-primary leading-none">{stats.following}</div>
                       <div className="text-2xs font-medium tracking-widest uppercase text-text-secondary mt-1.5">Following</div>
                     </button>
@@ -1347,14 +1351,13 @@ function EditorialBuildingCard({ entry, showCommunityImages }: { entry: FeedRevi
 // CSS columns masonry. Photos at index 0, 7, 14… get a taller aspect ratio.
 function MasonryPhotoGrid({ photos }: { photos: UserPhoto[] }) {
   return (
-    <div style={{ columnCount: 3, columnGap: "3px" }}>
+    <div className="columns-2 md:columns-3 gap-px">
       {photos.map((photo, i) => {
         const isFeatured = i === 0 || i % 7 === 0;
         return (
           <div
             key={photo.id}
-            className={`relative overflow-hidden bg-surface-muted group cursor-pointer break-inside-avoid ${isFeatured ? "aspect-[3/4]" : "aspect-square"}`}
-            style={{ display: "block", marginBottom: "3px" }}
+            className={`relative overflow-hidden bg-surface-muted group cursor-pointer break-inside-avoid mb-px ${isFeatured ? "aspect-[3/4]" : "aspect-square"}`}
           >
             <img
               src={photo.url}
@@ -1362,8 +1365,8 @@ function MasonryPhotoGrid({ photos }: { photos: UserPhoto[] }) {
               className="w-full h-full object-cover group-hover:opacity-85 transition-opacity duration-200"
             />
             {photo.building_name && (
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-end">
-                <span className="translate-y-1.5 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-200 text-[11px] text-white font-medium px-2.5 pb-2.5 line-clamp-1 leading-tight">
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 [@media(hover:none)]:bg-black/50 transition-colors flex items-end">
+                <span className="translate-y-1.5 group-hover:translate-y-0 [@media(hover:none)]:translate-y-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-all duration-200 text-2xs-plus text-white font-medium px-2.5 pb-2.5 line-clamp-1 leading-tight">
                   {photo.building_name}
                 </span>
               </div>
