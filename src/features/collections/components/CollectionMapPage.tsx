@@ -9,7 +9,7 @@ import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings, isLngLatInBounds, type Bounds } from "@/utils/map";
 import { getBuildingUrl } from "@/utils/url";
 import { collectionStructuredData } from "@/features/buildings/utils/structuredData";
-import { Loader2, Settings, Plus, ExternalLink, Star, ListFilter, MapPinPlus } from "lucide-react";
+import { Loader2, Settings, Plus, ExternalLink, Star, ListFilter, MapPinPlus, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -38,6 +38,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
 import { useGooglePlacePhotos } from "@/hooks/useGooglePlacePhotos";
@@ -1509,40 +1510,67 @@ onUpdateNote={handleUpdateNote}
           if (!open) setBulkAddPreviewBuildings([]);
         }}
       >
-        <AlertDialogContent className="max-h-[min(90vh,36rem)] gap-0 overflow-hidden p-0 sm:max-w-lg">
-          <div className="p-6 pb-4">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Add saved places to collection</AlertDialogTitle>
-              <AlertDialogDescription>
-                Add{" "}
-                <span className="font-semibold text-text-primary">{bulkAddPreviewBuildings.length}</span>{" "}
-                {bulkAddPreviewBuildings.length === 1 ? "building" : "buildings"} from your current map
-                view to{" "}
-                <span className="font-semibold text-text-primary">{collection.name}</span>?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
+        <AlertDialogContent className="max-h-[min(90vh,36rem)] gap-0 overflow-hidden rounded-none p-0 shadow-xl sm:max-w-lg">
+          <div className="border-b border-border-default px-6 pb-5 pt-6">
+            <div className="flex gap-4">
+              <div
+                className="flex h-14 w-14 shrink-0 items-center justify-center border border-border-default bg-surface-muted"
+                aria-hidden
+              >
+                <MapPinPlus className="h-7 w-7 text-text-primary" strokeWidth={1.5} />
+              </div>
+              <AlertDialogHeader className="min-w-0 flex-1 space-y-3 text-left">
+                <p className="text-2xs-plus font-medium uppercase tracking-widest text-text-secondary">
+                  Saved places · current map view
+                </p>
+                <AlertDialogTitle className="text-xl font-semibold leading-tight tracking-tight">
+                  Add saved places to collection
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-base leading-relaxed text-text-secondary">
+                  <span className="font-semibold text-text-primary">{bulkAddPreviewBuildings.length}</span>
+                  {bulkAddPreviewBuildings.length === 1 ? " building " : " buildings "}
+                  visible on the map will be added to{" "}
+                  <span className="font-medium text-text-primary">{collection.name}</span>.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+            </div>
           </div>
-          <div className="border-t border-border-default px-6 pb-4">
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-text-secondary">
-              Buildings to add
-            </p>
-            <ScrollArea className="h-52 rounded-sm border border-border-default">
+
+          <div className="px-6 py-5">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-2xs-plus font-medium uppercase tracking-widest text-text-secondary">
+                Preview
+              </p>
+              <Badge variant="secondary" className="rounded-none font-mono text-2xs tabular-nums">
+                {bulkAddPreviewBuildings.length}
+              </Badge>
+            </div>
+            <ScrollArea className="h-52 rounded-none border border-border-default bg-surface-default">
               <ul className="divide-y divide-border-default" role="list">
                 {[...bulkAddPreviewBuildings]
                   .sort((a, b) => a.name.localeCompare(b.name))
-                  .map((b) => (
+                  .map((b, index) => (
                     <li
                       key={b.id}
-                      className="px-3 py-2 text-sm text-text-primary"
+                      className={cn(
+                        "flex gap-3 px-4 py-2.5 text-sm text-text-primary",
+                        index % 2 === 1 && "bg-surface-muted/50",
+                      )}
                       role="listitem"
                     >
-                      {b.name}
+                      <Building2
+                        className="mt-0.5 h-4 w-4 shrink-0 text-text-secondary"
+                        strokeWidth={1.75}
+                        aria-hidden
+                      />
+                      <span className="min-w-0 leading-snug">{b.name}</span>
                     </li>
                   ))}
               </ul>
             </ScrollArea>
           </div>
-          <AlertDialogFooter className="border-t border-border-default bg-surface-muted/40 p-6">
+
+          <AlertDialogFooter className="border-t border-border-default bg-surface-muted px-6 py-4">
             <AlertDialogCancel disabled={isAddingVisibleCandidates}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
@@ -1557,7 +1585,10 @@ onUpdateNote={handleUpdateNote}
                   Adding…
                 </>
               ) : (
-                `Add ${bulkAddPreviewBuildings.length}`
+                <>
+                  Add {bulkAddPreviewBuildings.length}{" "}
+                  {bulkAddPreviewBuildings.length === 1 ? "place" : "places"}
+                </>
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
