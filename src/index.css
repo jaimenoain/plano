@@ -149,3 +149,18 @@
 .maplibregl-ctrl-bottom-right {
   z-index: 1000 !important;
 }
+
+/* Building hover popup: one card — strip MapLibre default frame (padding + white + outer shadow) */
+.plano-map-popup.maplibregl-popup {
+  background: transparent;
+}
+.plano-map-popup .maplibregl-popup-content {
+  margin: 0;
+  padding: 0;
+  background: transparent !important;
+  border-radius: 0;
+  box-shadow: none !important;
+}
+.plano-map-popup .maplibregl-popup-tip {
+  display: none;
+}

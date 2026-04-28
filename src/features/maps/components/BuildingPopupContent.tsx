@@ -20,6 +20,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 
+/** Single surface for map hover card (MapLibre outer frame is reset in index.css) */
+const POPUP_PANEL =
+  'relative flex w-[200px] max-w-xs flex-col overflow-hidden rounded-sm border border-border-default bg-surface-card shadow-sm';
+
 interface BuildingPopupContentProps {
   cluster: ClusterResponse;
   onMouseEnter?: () => void;
@@ -224,7 +228,7 @@ export function BuildingPopupContent({
   if (cluster.is_custom_marker) {
       return (
         <div
-            className="flex w-[200px] flex-col overflow-hidden rounded-none bg-surface-card border border-border-default shadow-lg relative max-w-xs"
+            className={POPUP_PANEL}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
@@ -318,7 +322,7 @@ export function BuildingPopupContent({
   if (cluster.is_candidate) {
       return (
         <div
-            className="flex w-[200px] flex-col overflow-hidden rounded-none bg-surface-card border border-border-default shadow-lg relative max-w-xs"
+            className={POPUP_PANEL}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
@@ -377,7 +381,7 @@ export function BuildingPopupContent({
   // Standard Building Logic
   return (
     <div
-      className="flex w-[200px] flex-col overflow-hidden rounded-none bg-surface-card border border-border-default shadow-lg relative max-w-xs"
+      className={POPUP_PANEL}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >

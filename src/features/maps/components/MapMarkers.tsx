@@ -246,7 +246,7 @@ export function MapMarkers({
           offset={20}
           closeButton={false}
           closeOnClick={false}
-          className="z-[100] map-popup-test bg-surface-card border border-border-default rounded-sm shadow-lg p-4 max-w-xs"
+          className="plano-map-popup z-[100]"
           maxWidth="300px"
         >
           <BuildingPopupContent
