@@ -100,18 +100,26 @@ function fetchSuggestionsLegacy(
 async function fetchSuggestions(
   input: string,
   types: string[] | undefined,
+  legacyFallback: boolean,
 ): Promise<PlaceAutocompletePrediction[]> {
-  if (newApiConfirmed && canUseNewAutocomplete()) {
-    try {
-      const result = await fetchSuggestionsNew(input, types);
-      return result;
-    } catch {
-      // New API unavailable (e.g. 403 — "Places API (New)" not enabled on this key).
-      // Fall back to the legacy AutocompleteService for the rest of the session.
-      newApiConfirmed = false;
+  if (legacyFallback) {
+    if (newApiConfirmed && canUseNewAutocomplete()) {
+      try {
+        const result = await fetchSuggestionsNew(input, types);
+        return result;
+      } catch {
+        // New API unavailable (e.g. 403 — "Places API (New)" not enabled on this key).
+        // Fall back to the legacy AutocompleteService for the rest of the session.
+        newApiConfirmed = false;
+      }
     }
+    return fetchSuggestionsLegacy(input, types);
   }
-  return fetchSuggestionsLegacy(input, types);
+
+  if (!canUseNewAutocomplete()) {
+    throw new Error("NEW_PLACES_AUTOCOMPLETE_UNAVAILABLE");
+  }
+  return fetchSuggestionsNew(input, types);
 }
 
 export function useAutocompleteSuggestions(options: {
@@ -119,8 +127,21 @@ export function useAutocompleteSuggestions(options: {
   debounce?: number;
   initOnMount?: boolean;
   defaultValue?: string;
+  /**
+   * When false, only {@link google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions}
+   * is used (Places API New). When true (default), falls back to legacy AutocompleteService after failures.
+   */
+  legacyAutocompleteFallback?: boolean;
 }) {
-  const { types, debounce = 200, initOnMount = true, defaultValue = "" } = options;
+  const {
+    types,
+    debounce = 200,
+    initOnMount = true,
+    defaultValue = "",
+    legacyAutocompleteFallback = true,
+  } = options;
+  const legacyFallbackRef = useRef(legacyAutocompleteFallback);
+  legacyFallbackRef.current = legacyAutocompleteFallback;
   const [ready, setReady] = useState(false);
   const [value, setValueState] = useState(defaultValue);
   const [suggestions, setSuggestions] = useState<{
@@ -136,8 +157,13 @@ export function useAutocompleteSuggestions(options: {
 
   const init = useCallback(() => {
     if (typeof window === "undefined") return;
-    const hasLegacy = typeof window.google?.maps?.places?.AutocompleteService === "function";
-    if (canUseNewAutocomplete() || hasLegacy) setReady(true);
+    const allowLegacy = legacyFallbackRef.current;
+    if (allowLegacy) {
+      const hasLegacy = typeof window.google?.maps?.places?.AutocompleteService === "function";
+      if (canUseNewAutocomplete() || hasLegacy) setReady(true);
+    } else if (canUseNewAutocomplete()) {
+      setReady(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -165,14 +191,15 @@ export function useAutocompleteSuggestions(options: {
         setSuggestions({ loading: false, status: "", data: [] });
         return;
       }
+      const allowLegacy = legacyFallbackRef.current;
       const hasLegacy = typeof window.google?.maps?.places?.AutocompleteService === "function";
-      if (!canUseNewAutocomplete() && !hasLegacy) return;
+      if (!canUseNewAutocomplete() && (!allowLegacy || !hasLegacy)) return;
 
       const seq = ++requestSeqRef.current;
       setSuggestions((s) => ({ ...s, loading: true }));
 
       try {
-        const data = await fetchSuggestions(input, typesRef.current);
+        const data = await fetchSuggestions(input, typesRef.current, allowLegacy);
         if (seq !== requestSeqRef.current) return;
         setSuggestions({
           loading: false,

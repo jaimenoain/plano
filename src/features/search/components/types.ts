@@ -44,6 +44,8 @@ export interface DiscoveryBuilding extends DiscoveryBuildingMapPin {
   main_image_url?: string | null;
   /** DB `hero_image_url` when present on embedded building rows; fallback if main_image_url unset */
   hero_image_url?: string | null;
+  /** Auto-generated thumbnail; use when `hero_image_url` is empty */
+  community_preview_url?: string | null;
   credits: CreditSummary[] | null;
   styles: StyleSummary[] | null;
   year_completed: number | null;

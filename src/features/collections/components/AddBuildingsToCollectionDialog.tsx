@@ -20,7 +20,7 @@ import { searchBuildingsRpc } from "@/utils/supabaseFallback";
 import { parseLocation } from "@/utils/location";
 import { config } from "@/config";
 import { useAutocompleteSuggestions } from "@/hooks/useAutocompleteSuggestions";
-import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
+import { fetchPlaceDetailsNew } from "@/lib/googleMapsGeocoding";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import {
   Command,
@@ -78,10 +78,10 @@ setHasError(true);
       try {
         setOptions({
           key: apiKey,
+          v: "weekly",
         });
 
         await importLibrary("places");
-        await importLibrary("geocoding");
 
         setScriptLoaded(true);
       } catch (_error) {
@@ -118,10 +118,16 @@ function PlacesAutocomplete({ collectionId, userId }: { collectionId: string, us
     setValue,
     suggestions: { status, data },
     clearSuggestions,
+    init,
   } = useAutocompleteSuggestions({
     debounce: 300,
-    initOnMount: true,
+    initOnMount: false,
+    legacyAutocompleteFallback: false,
   });
+
+  useEffect(() => {
+    init();
+  }, [init]);
 
   const queryClient = useQueryClient();
 
@@ -130,21 +136,22 @@ function PlacesAutocomplete({ collectionId, userId }: { collectionId: string, us
     clearSuggestions();
 
     try {
-      const results = await getGeocode({ placeId });
-      const { lat, lng } = getLatLng(results[0]);
-      const types = results[0].types;
-      const category = mapGoogleTypeToCategory(types);
+      const details = await fetchPlaceDetailsNew(placeId);
+      const category = mapGoogleTypeToCategory(details.types);
+      const name =
+        details.displayName?.trim() ||
+        mainText;
 
       const { error } = await supabase
         .from("collection_markers")
         .insert({
           collection_id: collectionId,
           google_place_id: placeId,
-          name: mainText,
+          name,
           category: category,
-          lat: lat,
-          lng: lng,
-          address: address,
+          lat: details.lat,
+          lng: details.lng,
+          address: details.formattedAddress || address,
           created_by: userId
         });
 
@@ -178,7 +185,7 @@ toast.error("Failed to add marker");
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         {(status === "OK" || status === "ZERO_RESULTS") ? (
           <CommandList className="max-h-full overflow-visible p-2">
             <CommandGroup heading="Suggestions">
@@ -199,10 +206,15 @@ toast.error("Failed to add marker");
               <CommandEmpty>No results found.</CommandEmpty>
             )}
           </CommandList>
+        ) : status === "ERROR" ? (
+          <div className="flex flex-col items-center justify-center h-full text-text-secondary p-8 text-center text-sm">
+            <p>Could not load place suggestions.</p>
+            <p className="mt-2">Confirm Places API (New) is enabled for this project&apos;s API key.</p>
+          </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-text-secondary p-8 text-center">
             <p>Search for real-world locations like restaurants, hotels, or transit stations to add them to your collection map.</p>
-            <p className="mt-2">Selected locations are saved immediately.</p>
+            <p className="mt-2">Places API (New) powers suggestions; selected places are saved immediately.</p>
           </div>
         )}
       </div>
@@ -223,6 +235,7 @@ interface UserBuildingResponse {
     slug: string | null;
     location: unknown | null;
     hero_image_url: string | null;
+    community_preview_url: string | null;
     year_completed: number | null;
     building_credits: {
       credit_tier: string | null;
@@ -284,6 +297,7 @@ export function AddBuildingsToCollectionDialog({
             slug,
             location,
             hero_image_url,
+            community_preview_url,
             year_completed,
             building_credits(
               credit_tier,
@@ -306,7 +320,9 @@ export function AddBuildingsToCollectionDialog({
           return {
             ...b,
             rating: item.rating,
-            main_image_url: b.hero_image_url ? getBuildingImageUrl(b.hero_image_url) : null,
+            main_image_url: (b.hero_image_url || b.community_preview_url)
+              ? getBuildingImageUrl(b.hero_image_url || b.community_preview_url)
+              : null,
             credits: primaryBuildingCreditsToSummaries(b.building_credits ?? []),
             location_lat: location?.lat || 0,
             location_lng: location?.lng || 0,
@@ -578,7 +594,10 @@ toast.error("Failed to add building");
                   ...selectedBuilding,
                   slug: selectedBuilding.slug ?? selectedBuilding.id,
                   hero_image_url:
-                    selectedBuilding.main_image_url ?? selectedBuilding.hero_image_url ?? null,
+                    selectedBuilding.main_image_url
+                    ?? selectedBuilding.hero_image_url
+                    ?? selectedBuilding.community_preview_url
+                    ?? null,
                 }}
               />
             ) : (
@@ -588,7 +607,10 @@ toast.error("Failed to add building");
             )}
           </TabsContent>
 
-          <TabsContent value="other-markers" className="flex-1 p-0 m-0 mt-0 border-none data-[state=inactive]:hidden">
+          <TabsContent
+            value="other-markers"
+            className="flex flex-col flex-1 h-full min-h-0 overflow-hidden p-0 m-0 mt-0 border-none data-[state=inactive]:hidden"
+          >
             {user && <OtherMarkersSearch collectionId={collectionId} userId={user.id} />}
           </TabsContent>
         </Tabs>

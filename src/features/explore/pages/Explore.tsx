@@ -1,27 +1,12 @@
 /**
- * Explore.tsx — A24 cinematic aesthetic (updated)
+ * Explore — vertical discovery feed (snap scroll + swipe gestures).
  *
- * Changes from previous version:
- *
- * Full-bleed image:
- *   The scroll container is now `fixed inset-0 z-[5]` so it breaks out of
- *   AppLayout's sidebar-inset entirely. No left gap regardless of sidebar state.
- *   AppLayout is still rendered as the SidebarProvider context — it just has
- *   no visible content of its own on this page.
- *
- * White hamburger:
- *   A custom `<Menu>` button floats at `fixed top-4 left-4 z-[55]` (above the
- *   explore image at z-5). White text so it reads against any building photo.
- *   Opens the sidebar via useSidebar(). The MainLayout SidebarTrigger is hidden
- *   on /explore to avoid duplicate hamburgers.
- *
- * Sidebar auto-hide:
- *   On mount, if the tutorial has already been seen, the sidebar is closed
- *   immediately. If the tutorial is shown, the sidebar closes when the user
- *   clicks "Begin exploring".
- *
- * "Hide" terminology:
- *   handleSwipeHide and all related labels now say "Hide" consistently.
+ * Layout: The immersive panel is `fixed` between app chrome — MobileTopBar +
+ * BottomNav on small screens, AppTopNav on md+ — so imagery and controls sit
+ * in the visible viewport rather than under the shell. Mobile uses the
+ * shell’s `SidebarTrigger` (MobileTopBar); no duplicate menu control here.
+ * Sidebar state is still closed on entry when the tutorial is dismissed so the
+ * sheet does not cover the first paint.
  */
 import { useState, useEffect, useMemo, useRef, useCallback, type RefCallback } from "react";
 import { Navigate } from "react-router";
@@ -30,7 +15,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useDiscoveryFeed } from "@/features/feed/hooks/useDiscoveryFeed";
 import { DiscoveryCard } from "@/features/feed/components/DiscoveryCard";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
-import { Loader2, MapPin, X, Menu } from "lucide-react";
+import { Loader2, MapPin, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ExploreTutorial } from "@/features/search/components/ExploreTutorial";
@@ -50,11 +35,7 @@ export default function Explore() {
   const { user, loading: authLoading } = useAuth();
   const [showTutorial, setShowTutorial] = useState(false);
 
-  // Sidebar control
-  const { setOpen, setOpenMobile, open, openMobile, isMobile } = useSidebar();
-  // True when the sidebar panel is visible — used to hide our white hamburger
-  // so it doesn't float over the open sidebar (the sidebar's own close button handles that)
-  const isSidebarOpen = isMobile ? openMobile : open;
+  const { setOpen, setOpenMobile, isMobile } = useSidebar();
 
   const closeSidebar = useCallback(() => {
     if (isMobile) setOpenMobile(false);
@@ -212,14 +193,11 @@ export default function Explore() {
   }
 
   return (
-    // AppLayout is kept as the SidebarProvider context host — it renders no
-    // visible content on this page since the explore container is fixed.
     <AppLayout isFullScreen>
 
       {/* ── Tutorial overlay ── */}
       {showTutorial && (
         <ExploreTutorial
-          isSidebarOpen={isSidebarOpen}
           onComplete={() => {
             setShowTutorial(false);
             closeSidebar();
@@ -227,50 +205,24 @@ export default function Explore() {
         />
       )}
 
-      {/* ─────────────────────────────────────────────────────────────────
-          Full-bleed explore container.
-          `fixed inset-0 z-[5]` breaks out of AppLayout's sidebar inset
-          so the image goes edge-to-edge regardless of sidebar state.
-      ───────────────────────────────────────────────────────────────── */}
+      {/* Immersive panel: viewport between fixed app nav (top) and tab bar (bottom, mobile). */}
       <div
-        className="fixed inset-0 z-[5] bg-[#0A0A0A] text-white overflow-hidden"
+        className={cn(
+          "fixed left-0 right-0 z-[5] flex min-h-0 flex-col overflow-hidden bg-[#0A0A0A] text-white",
+          "top-[calc(3.5rem+env(safe-area-inset-top,0px))] bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))]",
+          "md:top-16 md:bottom-0"
+        )}
       >
-
-        {/* ── White hamburger ──────────────────────────────────────────────
-            z-[55]: above the explore image (z-5), above any MainLayout
-            trigger (typically z-10 – z-30), above the desktop sidebar panel
-            (shadcn offcanvas: z-10).
-            Hidden when the sidebar is open — the sidebar's own close button
-            handles that state, and we don't want two hamburgers visible
-            simultaneously on the screen.
-        ──────────────────────────────────────────────────────────────── */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation(); // don't fire onPointerDown collapse on open
-            if (isMobile) setOpenMobile(true);
-            else setOpen(true);
-          }}
-          className={cn(
-            "md:hidden fixed top-4 left-4 z-[55] p-2 text-white transition-opacity",
-            isSidebarOpen
-              ? "opacity-0 pointer-events-none"
-              : "opacity-100 hover:opacity-60"
-          )}
-          aria-label="Open menu"
-        >
-          <Menu className="h-5 w-5" strokeWidth={1.5} />
-        </button>
-
-        {/* ── Location filter — minimal sharp pill, top-center ── */}
-        <div
-          className={cn(
-            "fixed top-4 left-0 right-0 z-50 flex justify-center transition-all duration-300 pointer-events-none",
-            isFilterVisible
-              ? "opacity-100 translate-y-0"
-              : "opacity-0 -translate-y-10"
-          )}
-        >
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          {/* ── Location filter — minimal sharp pill, top-center ── */}
+          <div
+            className={cn(
+              "absolute top-4 left-0 right-0 z-50 flex justify-center transition-all duration-300 pointer-events-none",
+              isFilterVisible
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 -translate-y-10"
+            )}
+          >
           <div className="pointer-events-auto">
             <Sheet open={isLocationSheetOpen} onOpenChange={setIsLocationSheetOpen}>
               <button
@@ -341,14 +293,14 @@ export default function Explore() {
               </SheetContent>
             </Sheet>
           </div>
-        </div>
+          </div>
 
-        {/* ── Snap scroll feed ── */}
-        <div
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
-          className="h-full w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar"
-        >
+          {/* ── Snap scroll feed ── */}
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className="min-h-0 flex-1 w-full overflow-y-scroll snap-y snap-mandatory scroll-smooth no-scrollbar"
+          >
           {/* Loading */}
           {status === "pending" && (
             <div className="h-full w-full flex items-center justify-center snap-center">
@@ -410,6 +362,7 @@ export default function Explore() {
               )}
             </div>
           )}
+          </div>
         </div>
       </div>
 

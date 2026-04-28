@@ -40,6 +40,7 @@ export const searchBuildingsRpc = async (params: {
     slug,
     short_id,
     hero_image_url,
+    community_preview_url,
     year_completed,
     popularity_score,
     access_level,
@@ -100,6 +101,7 @@ throw error;
   return (data || []).map((b: unknown) => {
     const row = b as Record<string, unknown> & {
       hero_image_url?: string | null;
+      community_preview_url?: string | null;
       building_credits?: CreditEmbed[] | null;
       styles?: { style: unknown }[];
       typologies?: { typology?: { name?: string } }[];
@@ -121,9 +123,10 @@ throw error;
       })
       .filter((a): a is { id: string; name: string } => a != null);
     const { building_credits: _bc, hero_image_url, ...rest } = row;
+    const thumbPath = hero_image_url ?? row.community_preview_url ?? null;
     return {
       ...rest,
-      main_image_url: hero_image_url ?? null,
+      main_image_url: thumbPath,
       credits,
       styles: (row.styles || []).map((s) => s.style),
       typologies: (row.typologies || []).map((t) => t.typology?.name).filter(Boolean),
