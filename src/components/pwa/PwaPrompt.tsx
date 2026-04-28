@@ -16,8 +16,8 @@ import {
 export function PwaPrompt() {
   const {
     promptInstall,
-    dismissPrompt,
     shouldShowPrompt,
+    markInstallPromptShown,
     showIOSDrawer,
     setShowIOSDrawer,
     isIOS
@@ -28,7 +28,7 @@ export function PwaPrompt() {
   const stateRef = useRef({
     shouldShowPrompt,
     promptInstall,
-    dismissPrompt,
+    markInstallPromptShown,
     isIOS,
     setShowIOSDrawer
   });
@@ -38,11 +38,11 @@ export function PwaPrompt() {
     stateRef.current = {
       shouldShowPrompt,
       promptInstall,
-      dismissPrompt,
+      markInstallPromptShown,
       isIOS,
       setShowIOSDrawer
     };
-  }, [shouldShowPrompt, promptInstall, dismissPrompt, isIOS, setShowIOSDrawer]);
+  }, [shouldShowPrompt, promptInstall, markInstallPromptShown, isIOS, setShowIOSDrawer]);
 
   useEffect(() => {
     const showUi = () => {
@@ -51,10 +51,11 @@ export function PwaPrompt() {
         isIOS,
         setShowIOSDrawer,
         promptInstall,
-        dismissPrompt
+        markInstallPromptShown
       } = stateRef.current;
 
       if (shouldShowPrompt()) {
+        markInstallPromptShown();
         if (isIOS) {
           setShowIOSDrawer(true);
         } else {
@@ -73,7 +74,6 @@ export function PwaPrompt() {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    dismissPrompt();
                     toast.dismiss(t);
                   }}
                 >

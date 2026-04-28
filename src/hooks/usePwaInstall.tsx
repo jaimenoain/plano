@@ -1,6 +1,10 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+
+/** After the auto install prompt is shown, suppress it again for this long. */
+const PWA_INSTALL_PROMPT_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+const PWA_INSTALL_PROMPT_LAST_SHOWN_KEY = 'pwa_install_prompt_last_shown_at';
 
 // Define the event interface
 interface BeforeInstallPromptEvent extends Event {
@@ -14,8 +18,8 @@ interface PwaContextType {
   showIOSDrawer: boolean;
   setShowIOSDrawer: (show: boolean) => void;
   promptInstall: () => void;
-  dismissPrompt: () => void;
   shouldShowPrompt: () => boolean;
+  markInstallPromptShown: () => void;
 }
 
 const PwaContext = createContext<PwaContextType | undefined>(undefined);
@@ -121,31 +125,24 @@ export function PwaProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const dismissPrompt = () => {
-    const currentVisits = parseInt(localStorage.getItem('pwa_visit_count') || '0', 10);
-    localStorage.setItem('pwa_dismissed_at', Date.now().toString());
-    localStorage.setItem('pwa_dismissed_visits', currentVisits.toString());
-  };
+  const markInstallPromptShown = useCallback(() => {
+    localStorage.setItem(PWA_INSTALL_PROMPT_LAST_SHOWN_KEY, String(Date.now()));
+  }, []);
 
   const shouldShowPrompt = () => {
     // Don't show prompt if already installed/standalone
     if (isStandalone) return false;
 
-    const visits = parseInt(localStorage.getItem('pwa_visit_count') || '0', 10);
-    const dismissedAt = localStorage.getItem('pwa_dismissed_at');
-    const dismissedVisits = parseInt(localStorage.getItem('pwa_dismissed_visits') || '0', 10);
-
-    if (visits < 3) return false;
-
-    if (dismissedAt) {
-      const dismissedDate = new Date(parseInt(dismissedAt, 10));
-      const now = new Date();
-      const diffTime = Math.abs(now.getTime() - dismissedDate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays < 14) return false;
-      if (visits < dismissedVisits + 3) return false;
+    const lastShownRaw = localStorage.getItem(PWA_INSTALL_PROMPT_LAST_SHOWN_KEY);
+    if (lastShownRaw) {
+      const lastShown = parseInt(lastShownRaw, 10);
+      if (!Number.isNaN(lastShown) && Date.now() - lastShown < PWA_INSTALL_PROMPT_COOLDOWN_MS) {
+        return false;
+      }
     }
+
+    const visits = parseInt(localStorage.getItem('pwa_visit_count') || '0', 10);
+    if (visits < 3) return false;
 
     return isInstallable || isIOS;
   };
@@ -156,12 +153,7 @@ export function PwaProvider({ children }: { children: ReactNode }) {
     } else if (deferredPrompt) {
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          // User accepted
-        } else {
-          // User dismissed
-          dismissPrompt();
-        }
+        void choiceResult;
         setDeferredPrompt(null);
         setIsInstallable(false);
       });
@@ -175,8 +167,8 @@ export function PwaProvider({ children }: { children: ReactNode }) {
       showIOSDrawer,
       setShowIOSDrawer,
       promptInstall,
-      dismissPrompt,
       shouldShowPrompt,
+      markInstallPromptShown,
     }}>
       {children}
     </PwaContext.Provider>

@@ -1,3 +1,23 @@
+# Social / link-preview crawlers — explicit allow (Meta Sharing Debugger warns with HTTP 403
+# when facebookexternalhit is not clearly permitted alongside broader User-agent: * rules.)
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Facebot
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Slackbot-LinkExpanding
+Allow: /
+
 User-agent: *
 # Private / management routes — no indexing value
 Disallow: /admin/

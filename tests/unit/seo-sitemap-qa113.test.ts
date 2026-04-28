@@ -28,10 +28,21 @@ describe("QA 11.3 — SEO / sitemap / meta (automated)", () => {
     expect(src).not.toContain("/architect/");
   });
 
-  it("public/robots.txt does not disallow /person/ or /company/", () => {
+  it("public/robots.txt does not broadly block /person/ or /company/ (edit paths only)", () => {
     const robots = readFileSync(join(root, "public/robots.txt"), "utf8");
-    expect(robots).not.toMatch(/disallow:\s*\/person/i);
-    expect(robots).not.toMatch(/disallow:\s*\/company/i);
+    const lines = robots.split("\n").map((l) => l.trim());
+    for (const line of lines) {
+      if (!/^disallow:/i.test(line)) continue;
+      const path = line.replace(/^disallow:\s*/i, "").trim();
+      if (path.startsWith("/person")) {
+        expect(path).toBe("/person/*/edit");
+      }
+      if (path.startsWith("/company")) {
+        expect(path).toBe("/company/*/edit");
+      }
+    }
+    expect(robots).toContain("User-agent: facebookexternalhit");
+    expect(robots).toContain("Allow: /");
   });
 
   it("docs/LAUNCH_HOSTING documents legacy architect URLs and 301 behaviour", () => {
@@ -40,10 +51,10 @@ describe("QA 11.3 — SEO / sitemap / meta (automated)", () => {
     expect(md).toContain("301");
   });
 
-  it("vercel.json proxies /sitemap.xml to the Supabase sitemap function", () => {
+  it("vercel.json rewrites /sitemap.xml to the sitemap proxy route", () => {
     const v = readFileSync(join(root, "vercel.json"), "utf8");
     expect(v).toContain("/sitemap.xml");
-    expect(v).toContain("functions/v1/sitemap");
+    expect(v).toContain("/api/sitemap-proxy");
   });
 
   it("personPageStructuredData and companyPageStructuredData emit Person / Organization with canonical URLs", () => {
