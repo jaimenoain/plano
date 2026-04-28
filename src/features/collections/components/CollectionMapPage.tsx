@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, Suspense } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState, Suspense } from "react";
 import { useParams, useNavigate, Link } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +47,24 @@ const CollectionMapGL = lazyWithRetry(() => import("@/features/maps/components/C
 const CollectionBuildingCard = lazyWithRetry(() => import("@/features/collections/components/CollectionBuildingCard").then(module => ({ default: module.CollectionBuildingCard })));
 const CollectionMarkerCard = lazyWithRetry(() => import("@/features/collections/components/CollectionMarkerCard").then(module => ({ default: module.CollectionMarkerCard })));
 
+const SHOW_SAVED_CANDIDATES_STORAGE = "plano:collection-map:showSavedPlaces" as const;
+
+function readShowSavedCandidatesFromStorage(userId: string, collectionId: string): boolean {
+  try {
+    return localStorage.getItem(`${SHOW_SAVED_CANDIDATES_STORAGE}:${userId}:${collectionId}`) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function writeShowSavedCandidatesToStorage(userId: string, collectionId: string, value: boolean): void {
+  try {
+    localStorage.setItem(`${SHOW_SAVED_CANDIDATES_STORAGE}:${userId}:${collectionId}`, String(value));
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
 // Note: The shape returned from Supabase for collection items is documented here
 // for reference only. We no longer use this interface directly in code, but keep
 // it for developers working with the underlying SQL/selects.
@@ -93,7 +111,6 @@ export default function CollectionMap() {
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [activeTab, setActiveTab] = useState<'items' | 'itinerary'>('items');
 
-  // New States
   const [showSavedCandidates, setShowSavedCandidates] = useState(false);
 
   // New States for Removal
@@ -157,6 +174,21 @@ export default function CollectionMap() {
     },
     enabled: !!ownerProfile?.id && !!slug
   });
+
+  useLayoutEffect(() => {
+    if (!user?.id || !collection?.id) return;
+    setShowSavedCandidates(readShowSavedCandidatesFromStorage(user.id, collection.id));
+  }, [user?.id, collection?.id]);
+
+  const handleShowSavedCandidatesChange = useCallback(
+    (show: boolean) => {
+      setShowSavedCandidates(show);
+      if (user?.id && collection?.id) {
+        writeShowSavedCandidatesToStorage(user.id, collection.id, show);
+      }
+    },
+    [user?.id, collection?.id],
+  );
 
   // Check if user is a contributor
   const { data: isContributor } = useQuery({
@@ -1122,11 +1154,13 @@ onUpdateNote={handleUpdateNote}
                 onOpenChange={setShowSettings}
                 collection={collection}
                 onUpdate={() => {
-                    refetchItems();
-                    window.location.reload();
+                    void queryClient.invalidateQueries({ queryKey: ["collection", slug, ownerProfile?.id] });
+                    void queryClient.invalidateQueries({ queryKey: ["collection_items", collection.id] });
+                    void queryClient.invalidateQueries({ queryKey: ["collection_members", collection.id] });
+                    void queryClient.invalidateQueries({ queryKey: ["collection_stats", collection.id] });
                 }}
                 showSavedCandidates={showSavedCandidates}
-                onShowSavedCandidatesChange={setShowSavedCandidates}
+                onShowSavedCandidatesChange={handleShowSavedCandidatesChange}
                 isOwner={isOwner}
                 canEdit={canEdit}
                 currentUserId={user?.id}
