@@ -167,7 +167,7 @@ toast.error("Failed to add marker");
 
   return (
     <Command shouldFilter={false} className="h-full flex flex-col overflow-hidden bg-transparent">
-      <div className="p-4 border-b shrink-0">
+      <div className="p-4 shrink-0 bg-surface-muted/60">
         <div className="relative">
           <MapPin className="absolute left-3 top-3 h-4 w-4 text-text-secondary z-10" />
           <CommandPrimitive.Input
@@ -466,8 +466,8 @@ toast.error("Failed to add building");
   }, [selectedBuildingId, buildings]);
 
   const searchFooter = searchQuery ? (
-    <div className="flex flex-col items-center justify-center py-8 gap-4 border-t mt-4">
-      <p className="text-center text-text-secondary">
+    <div className="flex flex-col items-center justify-center pt-8 pb-2 gap-4 mt-2">
+      <p className="text-center text-sm text-text-secondary">
         Not finding what you are looking for?
       </p>
       <Button
@@ -484,13 +484,13 @@ toast.error("Failed to add building");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[80vh] flex flex-col p-0 gap-0 overflow-hidden bg-surface-overlay border border-border-default rounded-lg shadow-lg">
-        <DialogHeader className="p-4 pb-2 shrink-0 border-b border-border-default">
+      <DialogContent className="max-w-5xl h-[80vh] flex flex-col p-0 gap-0 overflow-hidden bg-surface-overlay rounded-lg shadow-lg">
+        <DialogHeader className="p-4 pb-3 shrink-0">
           <DialogTitle>Add to Collection</DialogTitle>
         </DialogHeader>
 
         <Tabs defaultValue="architecture" className="flex flex-col flex-1 h-full min-h-0 overflow-hidden">
-          <div className="px-4 border-b">
+          <div className="px-4 border-b border-border-default">
             <TabsList className="justify-start w-full h-12 p-0 bg-transparent rounded-none">
               <TabsTrigger
                 value="architecture"
@@ -509,8 +509,8 @@ toast.error("Failed to add building");
 
           <TabsContent value="architecture" className="flex flex-1 h-full min-h-0 m-0 mt-0 border-none p-0 data-[state=inactive]:hidden">
             {/* Left Column: List */}
-            <div className="w-[350px] shrink-0 flex flex-col border-r">
-              <div className="p-4 pb-2 border-b space-y-2">
+            <div className="w-[350px] shrink-0 flex flex-col min-h-0">
+              <div className="p-4 pb-3 space-y-2 bg-surface-muted/60">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-text-secondary" />
                   <Input
@@ -601,7 +601,7 @@ toast.error("Failed to add building");
                 }}
               />
             ) : (
-              <div className="flex-1 border-l hidden lg:flex items-center justify-center text-text-secondary bg-surface-muted/10">
+              <div className="flex-1 border-l border-border-default hidden lg:flex items-center justify-center text-text-secondary bg-surface-muted/20">
                 Select a building to view details
               </div>
             )}
