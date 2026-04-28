@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from "react";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
-import { config } from '@/config';
+import { config } from "@/config";
 
 interface Marker {
   id: string;
@@ -12,20 +12,45 @@ interface PhotoData {
   attribution: string[];
 }
 
+/** Legacy {@link google.maps.places.PlacesService.getDetails} expects a classic place id (e.g. `ChIJ…`). Places API (New) autocomplete may return `places/ChIJ…`. */
+function placeIdForLegacyGetDetails(placeId: string): string {
+  return placeId.startsWith("places/") ? placeId.slice("places/".length) : placeId;
+}
+
+function parseMarkersFromPhotoFetchKey(key: string): Marker[] {
+  if (!key) return [];
+  return key
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => {
+      const i = line.indexOf("\0");
+      if (i === -1) return { id: line, google_place_id: null };
+      const id = line.slice(0, i);
+      const rawPlace = line.slice(i + 1);
+      return { id, google_place_id: rawPlace.length > 0 ? rawPlace : null };
+    });
+}
+
 export function useGooglePlacePhotos(markers: Marker[]) {
   const [photos, setPhotos] = useState<Record<string, PhotoData | null>>({});
+  const photosRef = useRef(photos);
+  photosRef.current = photos;
+
   const [isLoaded, setIsLoaded] = useState(false);
   const serviceRef = useRef<google.maps.places.PlacesService | null>(null);
-  const fetchingRef = useRef<Set<string>>(new Set());
+
+  const markersFetchKey = markers
+    .map((m) => `${m.id}\0${m.google_place_id ?? ""}`)
+    .sort()
+    .join("\n");
 
   useEffect(() => {
     let isMounted = true;
 
     const initMap = async (): Promise<void> => {
-      // Check if global google object exists and has places
       if (window.google?.maps?.places) {
         if (!serviceRef.current) {
-             serviceRef.current = new google.maps.places.PlacesService(document.createElement('div'));
+          serviceRef.current = new google.maps.places.PlacesService(document.createElement("div"));
         }
         if (isMounted) setIsLoaded(true);
         return undefined;
@@ -41,14 +66,15 @@ export function useGooglePlacePhotos(markers: Marker[]) {
         await importLibrary("places");
 
         if (!serviceRef.current) {
-             serviceRef.current = new google.maps.places.PlacesService(document.createElement('div'));
+          serviceRef.current = new google.maps.places.PlacesService(document.createElement("div"));
         }
         if (isMounted) setIsLoaded(true);
       } catch {
+        // Missing key / blocked network — map still works without place photos
       }
     };
 
-    initMap();
+    void initMap();
 
     return () => {
       isMounted = false;
@@ -56,74 +82,97 @@ export function useGooglePlacePhotos(markers: Marker[]) {
   }, []);
 
   useEffect(() => {
+    const markerIds = new Set(parseMarkersFromPhotoFetchKey(markersFetchKey).map((m) => m.id));
+    setPhotos((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const k of Object.keys(next)) {
+        if (!markerIds.has(k)) {
+          delete next[k];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [markersFetchKey]);
+
+  useEffect(() => {
     if (!isLoaded || !serviceRef.current) return undefined;
 
-    let isMounted = true;
-    const uniquePlaceIds = new Set<string>();
+    const service = serviceRef.current;
+    const markerRows = parseMarkersFromPhotoFetchKey(markersFetchKey);
+
     const placeIdToMarkerIds = new Map<string, string[]>();
+    for (const m of markerRows) {
+      if (!m.google_place_id) continue;
+      const legacyId = placeIdForLegacyGetDetails(m.google_place_id);
+      const list = placeIdToMarkerIds.get(legacyId) ?? [];
+      list.push(m.id);
+      placeIdToMarkerIds.set(legacyId, list);
+    }
 
-    markers.forEach(m => {
-        // Only fetch if we haven't fetched for this marker ID yet
-        if (m.google_place_id && photos[m.id] === undefined && !fetchingRef.current.has(m.id)) {
-            uniquePlaceIds.add(m.google_place_id);
+    if (placeIdToMarkerIds.size === 0) return undefined;
 
-            const current = placeIdToMarkerIds.get(m.google_place_id) || [];
-            current.push(m.id);
-            placeIdToMarkerIds.set(m.google_place_id, current);
+    const pendingPlaceIds: string[] = [];
+    for (const placeId of placeIdToMarkerIds.keys()) {
+      const markerIds = placeIdToMarkerIds.get(placeId) ?? [];
+      if (markerIds.some((id) => photosRef.current[id] === undefined)) {
+        pendingPlaceIds.push(placeId);
+      }
+    }
+    if (pendingPlaceIds.length === 0) return undefined;
 
-            fetchingRef.current.add(m.id);
-        }
-    });
+    let cancelled = false;
 
-if (uniquePlaceIds.size === 0) return undefined;
+    const run = async () => {
+      for (const placeId of pendingPlaceIds) {
+        if (cancelled) return;
 
-    const fetchDetails = async () => {
-        for (const placeId of uniquePlaceIds) {
-             if (!isMounted) break;
+        const markerIds = placeIdToMarkerIds.get(placeId) ?? [];
 
-             const markerIds = placeIdToMarkerIds.get(placeId) || [];
+        await new Promise<void>((resolve) => {
+          service.getDetails({ placeId, fields: ["photos"] }, (place, status) => {
+            if (cancelled) {
+              resolve();
+              return;
+            }
 
-             try {
-                 await new Promise<void>((resolve) => {
-                     serviceRef.current?.getDetails({
-                         placeId: placeId,
-                         fields: ['photos']
-                     }, (place, status) => {
-                         let photoData: PhotoData | null = null;
-                         if (status === google.maps.places.PlacesServiceStatus.OK && place?.photos && place.photos.length > 0) {
-                             photoData = {
-                                 url: place.photos[0].getUrl({ maxWidth: 400 }),
-                                 attribution: place.photos[0].html_attributions || []
-                             };
-                         }
+            let photoData: PhotoData | null = null;
+            if (
+              status === google.maps.places.PlacesServiceStatus.OK &&
+              place?.photos &&
+              place.photos.length > 0
+            ) {
+              photoData = {
+                url: place.photos[0].getUrl({ maxWidth: 400 }),
+                attribution: place.photos[0].html_attributions || [],
+              };
+            }
 
-                         if (isMounted) {
-                             setPhotos(prev => {
-                                 const next = { ...prev };
-                                 markerIds.forEach(id => {
-                                     next[id] = photoData;
-                                 });
-                                 return next;
-                             });
-                         }
-                         resolve();
-                     });
-                 });
-             } catch {
-             }
+            setPhotos((prev) => {
+              const next = { ...prev };
+              for (const id of markerIds) {
+                if (next[id] === undefined) {
+                  next[id] = photoData;
+                }
+              }
+              return next;
+            });
+            resolve();
+          });
+        });
 
-             // Small delay to be polite
-             if (isMounted) await new Promise(r => setTimeout(r, 200));
-        }
+        if (cancelled) return;
+        await new Promise((r) => setTimeout(r, 200));
+      }
     };
 
-    fetchDetails();
+    void run();
 
     return () => {
-      isMounted = false;
+      cancelled = true;
     };
-
-  }, [markers, isLoaded, photos]);
+  }, [markersFetchKey, isLoaded]);
 
   return { photos };
 }
