@@ -26,7 +26,7 @@ export const LandingHero = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
-        <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-text-primary leading-tight">
+        <h1 className="text-3xl md:text-7xl font-bold tracking-tight text-text-primary leading-tight">
           The world's architecture,{" "}
           <br className="hidden md:block" />
           cataloged.

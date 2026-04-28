@@ -140,6 +140,20 @@
   .hairline {
     border-bottom: 0.5px solid var(--border-default);
   }
+
+  /**
+   * Horizontal strip scrollers (mobile): momentum scrolling + hidden scrollbars.
+   * Use instead of `overflow-x-auto` + ad-hoc scrollbar hiding on touch-heavy rows.
+   */
+  .overflow-x-scroll-touch {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .overflow-x-scroll-touch::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Fix for map controls being covered by high z-index map pins */

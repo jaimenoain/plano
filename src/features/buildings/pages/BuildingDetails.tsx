@@ -167,7 +167,7 @@ function RelatedBuildingRow({
         </Link>
       </div>
       {isLoading ? (
-        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
+        <div className="flex gap-4 overflow-x-scroll-touch pb-2">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="flex-shrink-0 w-40 sm:w-48 space-y-2">
               <Skeleton className="aspect-[4/3] w-full" />
@@ -177,7 +177,7 @@ function RelatedBuildingRow({
           ))}
         </div>
       ) : (
-        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
+        <div className="flex gap-4 overflow-x-scroll-touch pb-2">
           {buildings.map((b) => (
             <RelatedBuildingCard key={b.id} b={b} />
           ))}
@@ -1387,7 +1387,7 @@ export default function BuildingDetails() {
           )}
         >
           <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center -mb-px overflow-x-auto scrollbar-none">
+            <div className="flex items-center -mb-px overflow-x-scroll-touch">
               {TABS.map((tab) => (
                 <button
                   key={tab.id}

@@ -279,7 +279,7 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
       <div className="space-y-8">
         <ManageFoldersDialog open={showManageFolders} onOpenChange={setShowManageFolders} userId={userId} onUpdate={fetchData} />
 
-        <div className="border border-border-default bg-surface-muted px-6 py-12 text-center sm:px-10">
+        <div className="border border-border-default bg-surface-muted px-4 py-12 text-center sm:px-10">
           <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center border border-border-default bg-surface-card">
             <MapIcon className="h-7 w-7 text-text-secondary" strokeWidth={1.25} />
           </div>

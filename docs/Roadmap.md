@@ -146,7 +146,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### [ ] 2.9 Company Details — [`src/features/credits/pages/CompanyDetails.tsx`](src/features/credits/pages/CompanyDetails.tsx)
+### [x] 2.9 Company Details — [`src/features/credits/pages/CompanyDetails.tsx`](src/features/credits/pages/CompanyDetails.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -157,7 +157,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### [ ] 2.10 Notifications — [`src/features/notifications/pages/Notifications.tsx`](src/features/notifications/pages/Notifications.tsx)
+### [x] 2.10 Notifications — [`src/features/notifications/pages/Notifications.tsx`](src/features/notifications/pages/Notifications.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -167,7 +167,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### [ ] 2.11 Architecture Hub — [`src/pages/ArchitectureHub.tsx`](src/pages/ArchitectureHub.tsx)
+### [x] 2.11 Architecture Hub — [`src/pages/ArchitectureHub.tsx`](src/pages/ArchitectureHub.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -177,7 +177,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### [ ] 2.12 Locality Page — [`src/features/localities/pages/LocalityPage.tsx`](src/features/localities/pages/LocalityPage.tsx)
+### [x] 2.12 Locality Page — [`src/features/localities/pages/LocalityPage.tsx`](src/features/localities/pages/LocalityPage.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -188,7 +188,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### [ ] 2.13 Guides — [`src/features/guides/GuidesPage.tsx`](src/features/guides/GuidesPage.tsx)
+### [x] 2.13 Guides — [`src/features/guides/GuidesPage.tsx`](src/features/guides/GuidesPage.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -197,7 +197,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### [ ] 2.14 Settings — [`src/features/profile/pages/Settings.tsx`](src/features/profile/pages/Settings.tsx)
+### [x] 2.14 Settings — [`src/features/profile/pages/Settings.tsx`](src/features/profile/pages/Settings.tsx)
 
 | Issue | Fix |
 |---|---|
@@ -207,7 +207,7 @@ This page already has excellent mobile treatment (full-screen map, hide-chrome m
 
 ---
 
-### [ ] 2.15 Collection Map — [`src/features/collections/components/CollectionMapPage.tsx`](src/features/collections/components/CollectionMapPage.tsx)
+### [x] 2.15 Collection Map — [`src/features/collections/components/CollectionMapPage.tsx`](src/features/collections/components/CollectionMapPage.tsx)
 
 This page already uses `dvh` units and `safe-area` insets correctly. Focus areas:
 - Verify the saved-places filter dot control is reachable above the BottomNav
@@ -216,7 +216,7 @@ This page already uses `dvh` units and `safe-area` insets correctly. Focus areas
 
 ---
 
-### [ ] 2.16 Auth & Onboarding — [`src/features/auth/pages/Auth.tsx`](src/features/auth/pages/Auth.tsx), [`Onboarding.tsx`](src/features/auth/pages/Onboarding.tsx)
+### [x] 2.16 Auth & Onboarding — [`src/features/auth/pages/Auth.tsx`](src/features/auth/pages/Auth.tsx), [`Onboarding.tsx`](src/features/auth/pages/Onboarding.tsx)
 
 These are standalone pages (no `MainLayout`) but are the first thing new users see on mobile.
 - Verify form fields are `font-size: 16px` (already enforced globally in `index.css`) to prevent iOS zoom
@@ -225,7 +225,7 @@ These are standalone pages (no `MainLayout`) but are the first thing new users s
 
 ---
 
-## [ ] Phase 3 — Polish
+## [x] Phase 3 — Polish
 
 Once all pages are structurally sound, do a pass for visual quality:
 

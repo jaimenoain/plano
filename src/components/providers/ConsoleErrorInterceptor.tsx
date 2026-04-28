@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- Monkey-patches console.error for captured diagnostics; must reference console. */
 import { useEffect } from "react";
 
 export const capturedErrors: string[] = [];

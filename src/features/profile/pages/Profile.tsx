@@ -130,7 +130,7 @@ export function ErrorBoundary() {
       <AppLayout showBack title="Profile not found" showLogo={false}>
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
           <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-6">404</p>
-          <h1 className="text-5xl font-bold tracking-tight text-text-primary mb-4 leading-none">
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-text-primary mb-4 leading-none">
             Profile not found
           </h1>
           <p className="text-base text-text-secondary max-w-md mb-10 leading-relaxed">
@@ -149,7 +149,7 @@ export function ErrorBoundary() {
     <AppLayout showBack title="Error" showLogo={false}>
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
         <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-6">Error</p>
-        <h1 className="text-5xl font-bold tracking-tight text-text-primary mb-4 leading-none">
+        <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-text-primary mb-4 leading-none">
           Something went wrong
         </h1>
         <p className="text-base text-text-secondary max-w-md mb-10 leading-relaxed">
@@ -766,7 +766,7 @@ export default function Profile() {
       <AppLayout title="User Not Found" showLogo={false} showBack>
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
           <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-6">Unavailable</p>
-          <h2 className="text-5xl font-bold tracking-tight text-text-primary mb-4 leading-none">User not found</h2>
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-text-primary mb-4 leading-none">User not found</h2>
           <p className="text-base text-text-secondary max-w-sm mx-auto mb-10 leading-relaxed">
             This profile is not available. The user might have been deleted, suspended, or does not exist.
           </p>
@@ -844,7 +844,7 @@ export default function Profile() {
               </div>
 
               {/* Username — hero title */}
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-text-primary leading-none break-words mb-5">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-text-primary leading-none break-words mb-5">
                 {profile?.username}
               </h1>
 
@@ -925,7 +925,7 @@ export default function Profile() {
                 </div>
               ) : (
                 <div className="w-32 h-40 sm:w-44 sm:h-56 bg-surface-muted flex items-end p-3">
-                  <span className="text-5xl sm:text-6xl font-bold text-border-strong leading-none select-none">
+                  <span className="text-3xl sm:text-5xl md:text-6xl font-bold text-border-strong leading-none select-none">
                     {profile?.username?.[0]?.toUpperCase()}
                   </span>
                 </div>
@@ -958,7 +958,7 @@ export default function Profile() {
         {/* ══ METRICS AS TABS ══════════════════════════════════════════════ */}
         <div className="sticky top-0 z-20 bg-surface-default border-b border-border-default">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex -mb-px overflow-x-auto scrollbar-none">
+            <div className="flex -mb-px overflow-x-scroll-touch">
               {tabs.map(tab => {
                 const isActive = activeSection === tab.key;
                 return (

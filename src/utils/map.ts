@@ -34,6 +34,19 @@ export function getBoundsFromBuildings(buildings: { location_lat: number; locati
   return { north, south, east, west };
 }
 
+/**
+ * Whether a point lies inside a rectangular map viewport.
+ * Handles bounds that cross the antimeridian (west > east).
+ */
+export function isLngLatInBounds(lat: number, lng: number, bounds: Bounds): boolean {
+  if (lat < bounds.south || lat > bounds.north) return false;
+  const { west, east } = bounds;
+  if (west <= east) {
+    return lng >= west && lng <= east;
+  }
+  return lng >= west || lng <= east;
+}
+
 const EARTH_RADIUS_METERS = 6371000;
 
 function deg2rad(deg: number): number {

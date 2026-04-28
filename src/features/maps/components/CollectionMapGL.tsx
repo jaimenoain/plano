@@ -12,11 +12,16 @@ import { MapMarkers } from './MapMarkers';
 import { ItineraryRoutes } from './ItineraryRoutes';
 import { DiscoveryBuilding } from '@/features/search/components/types';
 import { ClusterResponse } from '../hooks/useMapData';
-import { getBoundsFromBuildings } from '@/utils/map';
+import { getBoundsFromBuildings, type Bounds } from '@/utils/map';
 import { useItineraryStore } from '@/features/itinerary/stores/useItineraryStore';
 import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
 
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
+
+/** Lifts zoom/geo controls above home-indicator + browser overlay chrome on small screens. */
+const MAP_CONTROL_SAFE_AREA_STYLE = {
+  marginBottom: "env(safe-area-inset-bottom, 0px)",
+} as const;
 
 interface CollectionMapGLProps {
   buildings: DiscoveryBuilding[];
@@ -28,6 +33,8 @@ interface CollectionMapGLProps {
   onRemoveMarker?: (id: string) => void;
   showSavedCandidates?: boolean;
   showItinerary?: boolean;
+  /** Fired when the visible geographic viewport changes (initial load, pan, zoom). */
+  onViewportBoundsChange?: (bounds: Bounds) => void;
 }
 
 function CollectionMapGLContent({
@@ -39,7 +46,8 @@ function CollectionMapGLContent({
   onUpdateMarkerNote: _onUpdateMarkerNote,
   onRemoveMarker: _onRemoveMarker,
   showSavedCandidates: _showSavedCandidates,
-  showItinerary
+  showItinerary,
+  onViewportBoundsChange,
 }: CollectionMapGLProps) {
   const { lat, lng, zoom, setMapURL } = useURLMapState();
   const { updateMapState } = useStableMapUpdate(setMapURL);
@@ -153,13 +161,37 @@ function CollectionMapGLContent({
     }, false);
   }, [updateMapState]);
 
+  const reportViewportBounds = useCallback(() => {
+    const map = mapRef.current?.getMap();
+    if (!map || !onViewportBoundsChange) return;
+    const b = map.getBounds();
+    onViewportBoundsChange({
+      north: b.getNorth(),
+      south: b.getSouth(),
+      east: b.getEast(),
+      west: b.getWest(),
+    });
+  }, [onViewportBoundsChange]);
+
   const onMoveEnd = useCallback((evt: ViewStateChangeEvent) => {
     updateMapState({
       lat: evt.viewState.latitude,
       lng: evt.viewState.longitude,
       zoom: evt.viewState.zoom
     }, true);
-  }, [updateMapState]);
+    reportViewportBounds();
+  }, [updateMapState, reportViewportBounds]);
+
+  // Programmatic fit-to-bounds does not always emit onMoveEnd; refresh viewport after fit.
+  useEffect(() => {
+    if (!isMapLoaded || !hasFittedBounds || !onViewportBoundsChange) return;
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        reportViewportBounds();
+      });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [hasFittedBounds, isMapLoaded, onViewportBoundsChange, reportViewportBounds]);
 
   // Transform DiscoveryBuilding[] to ClusterResponse[]
   const clusters = useMemo<ClusterResponse[]>(() => {
@@ -227,7 +259,12 @@ function CollectionMapGLContent({
             {...viewState}
             onMove={onMove}
             onMoveEnd={onMoveEnd}
-            onLoad={() => setIsMapLoaded(true)}
+            onLoad={() => {
+              setIsMapLoaded(true);
+              requestAnimationFrame(() => {
+                reportViewportBounds();
+              });
+            }}
             mapLib={maplibregl}
             mapStyle={isSatellite ? SATELLITE_MAP_STYLE : MAP_STYLE}
             attributionControl={false}
@@ -239,8 +276,9 @@ function CollectionMapGLContent({
                 positionOptions={{ enableHighAccuracy: true }}
                 trackUserLocation={true}
                 showUserLocation={true}
+                style={MAP_CONTROL_SAFE_AREA_STYLE}
             />
-            <NavigationControl position="bottom-right" />
+            <NavigationControl position="bottom-right" style={MAP_CONTROL_SAFE_AREA_STYLE} />
 
             {showItinerary && <ItineraryRoutes />}
 

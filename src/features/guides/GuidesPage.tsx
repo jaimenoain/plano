@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router';
 import { MetaHead } from '@/components/common/MetaHead';
+import { AppLayout } from '@/components/layout/AppLayout';
 import { LocalitySearchInput } from './LocalitySearchInput';
 import { useGuidesLocalities, usePopularCollections } from './useGuides';
 import { LocalityCard } from './LocalityCard';
@@ -104,13 +105,14 @@ export default function GuidesPage() {
         canonicalUrl="/guides"
       />
 
+      <AppLayout>
       <div className="min-h-screen bg-surface-default">
 
         {/* ── Zone 1: Hero ─────────────────────────────────────── */}
         <section className="border-b border-border-default px-4 sm:px-8 py-16 sm:py-20">
           <div className="max-w-2xl">
             <SectionLabel>Guides</SectionLabel>
-            <h1 className="text-4xl sm:text-5xl font-bold text-text-primary mt-3 leading-tight tracking-tight">
+            <h1 className="text-3xl sm:text-5xl font-bold text-text-primary mt-3 leading-tight tracking-tight">
               The world's architecture,<br />city by city.
             </h1>
             <p className="text-text-secondary text-sm mt-4">
@@ -145,7 +147,7 @@ export default function GuidesPage() {
                     setActiveContinent(continent);
                     setShowAllLocalities(false);
                   }}
-                  className={`px-3 py-1.5 text-xs font-medium uppercase tracking-widest rounded-sm transition-colors duration-100 ${
+                  className={`inline-flex min-h-[44px] items-center justify-center px-3 text-xs font-medium uppercase tracking-widest rounded-sm transition-colors duration-100 ${
                     activeContinent === continent
                       ? 'bg-text-primary text-surface-default'
                       : 'bg-transparent text-text-secondary border border-border-default hover:border-border-strong hover:text-text-primary'
@@ -287,6 +289,7 @@ export default function GuidesPage() {
         </section>
 
       </div>
+      </AppLayout>
     </>
   );
 }

@@ -16,6 +16,9 @@ export interface Collection {
 /** Which saved-place suggestions appear on the collection map (by personal dot rating on user_buildings). */
 export type SavedPlacesDotFilter = 'all' | '1' | '2' | '3';
 
+/** Filter saved-place suggestions by library status (`user_buildings.status`: visited vs bucket list / pending). */
+export type SavedPlacesStatusFilter = 'all' | 'visited' | 'pending';
+
 export type TransportMode = 'walking' | 'driving' | 'cycling' | 'transit';
 
 export interface ItineraryRoute {

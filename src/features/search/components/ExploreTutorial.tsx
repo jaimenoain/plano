@@ -50,7 +50,7 @@ export function ExploreTutorial({
           <p className="text-2xs font-medium tracking-[0.25em] uppercase text-white/30 mb-4">
             Plano · Explore
           </p>
-          <h2 className="text-6xl sm:text-7xl font-bold tracking-tight text-white leading-none">
+          <h2 className="text-3xl sm:text-7xl font-bold tracking-tight text-white leading-none">
             Discover<br />Architecture
           </h2>
         </div>

@@ -119,7 +119,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     return Response.json({ events }, { headers });
   } catch (err) {
-    console.error("AI event discovery failed:", err);
+    void err;
     return Response.json(
       { error: "Search failed. Check your Anthropic API key and plan." },
       { status: 500, headers },

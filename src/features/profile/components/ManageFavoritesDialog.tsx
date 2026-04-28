@@ -202,7 +202,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
             {selected.length > 0 && (
                 <div className="px-4 py-2 border-b bg-surface-default/50 backdrop-blur-sm z-10">
                     <div className="text-[10px] uppercase font-bold text-text-secondary mb-2 tracking-wider">Selected ({selected.length}/6)</div>
-                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none snap-x">
+                    <div className="flex gap-2 overflow-x-scroll-touch pb-2 snap-x">
                         {selected.map(item => (
                             <div key={item.id} className="relative shrink-0 w-12 snap-start">
                                 <div className="aspect-[2/3] rounded-none overflow-hidden bg-surface-muted border shadow-sm">

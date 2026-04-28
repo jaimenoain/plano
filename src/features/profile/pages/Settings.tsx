@@ -507,20 +507,20 @@ toast({
               <LayoutTemplate className="h-4 w-4" /> Profile Customization
             </h2>
             <div className="p-4 border border-border-default rounded-sm bg-surface-card text-text-primary shadow-none space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
                    <h3 className="font-medium text-text-primary">All-time Favourites</h3>
                    <p className="text-sm text-text-secondary">Select up to 6 buildings to showcase on your profile.</p>
                 </div>
-                <Button type="button" variant="outline" onClick={() => setShowManageFavorites(true)}>Manage</Button>
+                <Button type="button" variant="outline" className="shrink-0" onClick={() => setShowManageFavorites(true)}>Manage</Button>
               </div>
               <Separator />
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
                    <h3 className="font-medium text-text-primary">Highlights</h3>
                    <p className="text-sm text-text-secondary">Add favorite styles, people, and quotes.</p>
                 </div>
-                <Button type="button" variant="outline" onClick={() => setShowManageHighlights(true)}>Manage</Button>
+                <Button type="button" variant="outline" className="shrink-0" onClick={() => setShowManageHighlights(true)}>Manage</Button>
               </div>
             </div>
           </div>
@@ -533,14 +533,14 @@ toast({
                   <Smartphone className="h-4 w-4" /> App Experience
                 </h2>
                 <div className="p-4 border border-border-default rounded-sm bg-surface-card text-text-primary shadow-none">
-                   <div className="flex items-center justify-between">
-                      <div>
+                   <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1">
                         <h3 className="font-medium text-text-primary">Install App</h3>
                         <p className="text-sm text-text-secondary">
                           Add Plano to your home screen for easier access.
                         </p>
                       </div>
-                      <Button type="button" variant="outline" onClick={promptInstall}>
+                      <Button type="button" variant="outline" className="shrink-0" onClick={promptInstall}>
                         Install
                       </Button>
                    </div>
@@ -588,8 +588,8 @@ toast({
 
             {profile?.verified_architect_id && (
               <div className="pt-4 mt-4 border-t border-border-default group">
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
                     <h3 className="font-medium text-feedback-destructive">Legacy verification claim</h3>
                     <p className="text-sm text-text-secondary">
                       Remove an old verification record still linked to your account.
@@ -598,7 +598,7 @@ toast({
                   <Button
                     type="button"
                     variant="destructive"
-                    className="opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity duration-150"
+                    className="shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 md:[@media(hover:none)]:opacity-100 transition-opacity duration-150"
                     onClick={() => setShowDisconnectDialog(true)}
                   >
                     Remove
@@ -616,8 +616,8 @@ toast({
               <Database className="h-4 w-4" /> Data & Privacy
             </h2>
             <div className="p-4 border border-border-default rounded-sm bg-surface-card text-text-primary shadow-none">
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
                   <h3 className="font-medium text-text-primary">Download My Data</h3>
                   <p className="text-sm text-text-secondary">
                     Export your ratings, reviews, and bucket list to a CSV file.
@@ -626,6 +626,7 @@ toast({
                 <Button
                   type="button"
                   variant="outline"
+                  className="shrink-0"
                   onClick={handleExportData}
                   disabled={exporting}
                 >

@@ -8,13 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download, Bookmark, LogOut, Sparkles, FolderPlus, Folder } from "lucide-react";
+import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download, Bookmark, LogOut, Sparkles, FolderPlus, Folder, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserSearch } from "@/features/profile/components/UserSearch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Collection, type SavedPlacesDotFilter } from "@/features/collections/types";
+import { Collection, type SavedPlacesDotFilter, type SavedPlacesStatusFilter } from "@/features/collections/types";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { parseLocation } from "@/utils/location";
 import { Separator } from "@/components/ui/separator";
@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AddToFolderDialog } from "@/features/profile/components/AddToFolderDialog";
 import { collectionSchema } from "@/lib/validations/collection";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface CollectionSettingsDialogProps {
   collection: Collection;
@@ -42,6 +43,8 @@ interface CollectionSettingsDialogProps {
   onShowSavedCandidatesChange?: (show: boolean) => void;
   savedPlacesDotFilter?: SavedPlacesDotFilter;
   onSavedPlacesDotFilterChange?: (filter: SavedPlacesDotFilter) => void;
+  savedPlacesStatusFilter?: SavedPlacesStatusFilter;
+  onSavedPlacesStatusFilterChange?: (filter: SavedPlacesStatusFilter) => void;
   isOwner?: boolean;
   canEdit?: boolean;
   onSaveAll?: () => void;
@@ -112,14 +115,14 @@ function SavedPlacesDotToggle({
       className="flex-wrap justify-start gap-1"
       aria-label="Filter saved places by dot rating"
     >
-      <ToggleGroupItem value="all" className="min-w-12 px-2">
+      <ToggleGroupItem value="all" className="min-h-[44px] min-w-12 items-center justify-center px-2 md:min-h-9">
         All
       </ToggleGroupItem>
       {[1, 2, 3].map((n) => (
         <ToggleGroupItem
           key={n}
           value={String(n) as SavedPlacesDotFilter}
-          className="min-w-11 px-2 gap-0.5"
+          className="min-h-[44px] min-w-11 items-center justify-center gap-0.5 px-2 md:min-h-9"
           aria-label={n === 1 ? "Show only 1-dot rated places" : `Show only ${n}-dot rated places`}
         >
           <span className="flex items-center gap-0.5" aria-hidden>
@@ -133,6 +136,38 @@ function SavedPlacesDotToggle({
   );
 }
 
+function SavedPlacesStatusToggle({
+  value,
+  onChange,
+}: {
+  value: SavedPlacesStatusFilter;
+  onChange: (filter: SavedPlacesStatusFilter) => void;
+}) {
+  return (
+    <ToggleGroup
+      type="single"
+      value={value}
+      onValueChange={(v) => {
+        if (v === 'all' || v === 'visited' || v === 'pending') onChange(v);
+      }}
+      variant="outline"
+      size="sm"
+      className="flex-wrap justify-start gap-1"
+      aria-label="Filter saved places by visited or bucket list"
+    >
+      <ToggleGroupItem value="all" className="min-h-[44px] min-w-12 items-center justify-center px-2 md:min-h-9">
+        All
+      </ToggleGroupItem>
+      <ToggleGroupItem value="visited" className="min-h-[44px] min-w-[4.5rem] items-center justify-center px-2 md:min-h-9">
+        Visited
+      </ToggleGroupItem>
+      <ToggleGroupItem value="pending" className="min-h-[44px] min-w-[5.5rem] items-center justify-center px-2 md:min-h-9">
+        Bucket list
+      </ToggleGroupItem>
+    </ToggleGroup>
+  );
+}
+
 export function CollectionSettingsDialog({
   collection,
   open,
@@ -142,6 +177,8 @@ export function CollectionSettingsDialog({
   onShowSavedCandidatesChange,
   savedPlacesDotFilter = 'all',
   onSavedPlacesDotFilterChange,
+  savedPlacesStatusFilter = 'all',
+  onSavedPlacesStatusFilterChange,
   isOwner = false,
   canEdit = true,
   onSaveAll,
@@ -505,7 +542,10 @@ toast.error("Failed to export data");
             {canEdit && <TabsTrigger value="collaborators">Collaborators</TabsTrigger>}
           </TabsList>
 
-          <TabsContent value="map" className="space-y-4 py-4 overflow-y-auto flex-1">
+          <TabsContent
+            value="map"
+            className="space-y-4 overflow-y-auto flex-1 pt-4 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]"
+          >
             {canEdit && (
               <div className="flex items-center justify-between space-x-2">
                 <Label htmlFor="community-images" className="flex flex-col space-y-1">
@@ -533,13 +573,38 @@ toast.error("Failed to export data");
                     onCheckedChange={onShowSavedCandidatesChange}
                   />
                 </div>
-                {showSavedCandidates && onSavedPlacesDotFilterChange && (
-                  <div className="rounded-md border border-border-default bg-surface-muted/40 p-3 space-y-2">
-                    <Label className="text-sm font-medium text-text-primary">Show by rating</Label>
-                    <p className="text-xs text-text-secondary">
-                      All includes saves without a dot rating. Choose a column to only show places you rated with that many dots.
-                    </p>
-                    <SavedPlacesDotToggle value={savedPlacesDotFilter} onChange={onSavedPlacesDotFilterChange} />
+                {showSavedCandidates && (
+                  <Alert className="py-3">
+                    <Info className="size-4 shrink-0" aria-hidden />
+                    <AlertDescription className="text-xs">
+                      Saved Places are shown as suggestions on the map. They are not part of this collection unless you add them.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {showSavedCandidates &&
+                  (onSavedPlacesStatusFilterChange || onSavedPlacesDotFilterChange) && (
+                  <div className="rounded-md border border-border-default bg-surface-muted/40 p-3 space-y-4">
+                    {onSavedPlacesStatusFilterChange && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium text-text-primary">Show by list</Label>
+                        <p className="text-xs text-text-secondary">
+                          Visited and Bucket list match your library. All shows both. You can combine this with the rating filter below.
+                        </p>
+                        <SavedPlacesStatusToggle
+                          value={savedPlacesStatusFilter}
+                          onChange={onSavedPlacesStatusFilterChange}
+                        />
+                      </div>
+                    )}
+                    {onSavedPlacesDotFilterChange && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium text-text-primary">Show by rating</Label>
+                        <p className="text-xs text-text-secondary">
+                          All includes saves without a dot rating. Choose a column to only show places you rated with that many dots.
+                        </p>
+                        <SavedPlacesDotToggle value={savedPlacesDotFilter} onChange={onSavedPlacesDotFilterChange} />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

@@ -403,7 +403,7 @@ export function DiscoveryCard({
                     />
                   ) : (
                     <span
-                      className={`text-5xl font-bold leading-none tabular-nums transition-colors ${
+                      className={`text-3xl sm:text-5xl font-bold leading-none tabular-nums transition-colors ${
                         isSelected ? "text-brand-primary" : "text-white/30"
                       }`}
                     >

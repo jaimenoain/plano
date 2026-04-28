@@ -213,16 +213,16 @@ export default function Auth() {
 
   if (checkEmail) {
     return (
-      <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center p-4">
-        <PlanoLogo className="text-2xl text-text-primary mb-6" />
-        <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-8 flex flex-col gap-6 text-center">
+      <div className="min-h-dvh bg-surface-default flex flex-col items-center justify-start md:justify-center overflow-y-auto safe-area-pt safe-area-pb px-4 py-4 md:py-8">
+        <PlanoLogo className="text-2xl text-text-primary mb-4 md:mb-6 shrink-0" />
+        <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-6 md:p-8 flex flex-col gap-4 md:gap-6 text-center">
           <div className="flex justify-center">
             <div className="h-16 w-16 bg-brand-secondary/30 rounded-sm flex items-center justify-center">
               <Mail className="h-8 w-8 text-brand-primary" />
             </div>
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-text-primary">
             Check your email
           </h1>
 
@@ -233,7 +233,7 @@ export default function Auth() {
 
           <Button
             variant="outline"
-            className="w-full h-10 font-medium rounded-sm"
+            className="w-full h-11 min-h-11 font-medium rounded-sm"
             onClick={() => {
               setCheckEmail(false);
               setIsSignUp(false);
@@ -248,11 +248,11 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center p-4">
-      <PlanoLogo className="text-2xl text-text-primary mb-6" />
+    <div className="min-h-dvh bg-surface-default flex flex-col items-center justify-start md:justify-center overflow-y-auto safe-area-pt safe-area-pb px-4 py-4 md:py-8">
+      <PlanoLogo className="text-2xl text-text-primary mb-4 md:mb-6 shrink-0" />
 
-      <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-8 flex flex-col gap-6">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary text-center">
+      <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-6 md:p-8 flex flex-col gap-4 md:gap-6">
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-text-primary text-center">
           {isResetPassword
             ? "Reset your password"
             : isSignUp
@@ -262,7 +262,7 @@ export default function Auth() {
 
         {!isResetPassword && invitedBy && isSignUp && (
           inviterProfile ? (
-            <div className="flex flex-col items-center gap-4 mb-8">
+            <div className="flex flex-col items-center gap-4 mb-4 md:mb-8">
               <div className="flex items-center justify-center pl-3">
                 {relatedProfiles.map((profile) => (
                   <Avatar key={profile.id} className="h-10 w-10 border-2 border-surface-default -ml-3 ring-2 ring-surface-default">
@@ -322,12 +322,13 @@ export default function Auth() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pr-10"
+                  className="pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 flex h-11 min-h-11 w-11 min-w-11 items-center justify-center rounded-sm text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -376,7 +377,7 @@ export default function Auth() {
 
           <Button
             type="submit"
-            className="w-full h-10 font-medium rounded-sm bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover active:scale-[0.98]"
+            className="w-full h-11 min-h-11 font-medium rounded-sm bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover active:scale-[0.98]"
             variant="default"
             disabled={loading}
           >

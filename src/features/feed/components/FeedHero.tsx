@@ -15,7 +15,7 @@ export function FeedHero({ hero, queue }: FeedHeroProps) {
   const architect = hero.building.creditedEntities?.[0]?.name ?? null;
 
   return (
-    <section className="px-6 lg:px-16 pt-14 pb-16 border-b border-text-primary">
+    <section className="px-4 md:px-6 lg:px-16 pt-14 pb-16 border-b border-text-primary">
       {/* Desktop: 2-column layout */}
       <div
         className="hidden md:grid gap-10 items-start"

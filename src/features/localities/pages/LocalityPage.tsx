@@ -248,7 +248,7 @@ function LocalityHero({
                 {region}
               </p>
             ) : null}
-            <h1 className="text-4xl font-bold leading-[1.05] tracking-tight text-text-inverse md:text-5xl lg:text-6xl">
+            <h1 className="text-3xl font-bold leading-[1.05] tracking-tight text-text-inverse md:text-5xl lg:text-6xl">
               {city}
             </h1>
           </div>
@@ -281,7 +281,7 @@ function LocalityHero({
               {region}
             </p>
           ) : null}
-          <h1 className="text-4xl font-bold leading-[1.05] tracking-tight text-text-primary md:text-5xl lg:text-6xl">
+          <h1 className="text-3xl font-bold leading-[1.05] tracking-tight text-text-primary md:text-5xl lg:text-6xl">
             {city}
           </h1>
         </div>
@@ -377,7 +377,7 @@ function QuickActions({
           key={to}
           to={to}
           className={cn(
-            "group flex items-center justify-between gap-3 border-t border-border-default px-1 py-5 transition-colors first:border-t-0 sm:border-t-0 sm:border-l sm:px-5 sm:py-6 sm:first:border-l-0",
+            "group flex items-center justify-between gap-3 border-t border-border-default px-3 py-5 transition-colors first:border-t-0 sm:border-t-0 sm:border-l sm:px-5 sm:py-6 sm:first:border-l-0",
             emphasize
               ? "text-text-primary"
               : "text-text-secondary hover:text-text-primary",
@@ -447,7 +447,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "border px-2.5 py-1 text-2xs font-medium uppercase tracking-widest transition-colors",
+        "inline-flex min-h-[44px] items-center justify-center border px-3 py-2 text-2xs font-medium uppercase tracking-widest transition-colors",
         active
           ? "border-text-primary bg-text-primary text-text-inverse"
           : "border-border-default text-text-secondary hover:border-text-primary hover:text-text-primary",
@@ -769,40 +769,45 @@ function CollectionPreviewMosaic({
     );
   }
 
+  const mainSrc = getBuildingImageUrl(main) ?? "";
+
   return (
-    <div className="grid aspect-[4/3] w-full grid-cols-[2fr_1fr] gap-0.5 overflow-hidden bg-surface-muted">
-      <div className="overflow-hidden">
-        <img
-          src={getBuildingImageUrl(main) ?? ""}
-          alt={name}
-          className="h-full w-full object-cover"
-        />
+    <>
+      {/* Mobile: single hero — avoids ~50px thumbnail strip beside a 2fr/1fr grid */}
+      <div className="aspect-[4/3] w-full overflow-hidden bg-surface-muted md:hidden">
+        <img src={mainSrc} alt={name} className="h-full w-full object-cover" />
       </div>
-      <div className="grid grid-rows-2 gap-0.5">
-        {second ? (
-          <div className="overflow-hidden">
-            <img
-              src={getBuildingImageUrl(second) ?? ""}
-              alt=""
-              className="h-full w-full object-cover"
-            />
-          </div>
-        ) : (
-          <div className="bg-surface-muted" />
-        )}
-        {third ? (
-          <div className="overflow-hidden">
-            <img
-              src={getBuildingImageUrl(third) ?? ""}
-              alt=""
-              className="h-full w-full object-cover"
-            />
-          </div>
-        ) : (
-          <div className="bg-surface-muted" />
-        )}
+
+      <div className="hidden aspect-[4/3] w-full grid-cols-[2fr_1fr] gap-0.5 overflow-hidden bg-surface-muted md:grid">
+        <div className="overflow-hidden">
+          <img src={mainSrc} alt={name} className="h-full w-full object-cover" />
+        </div>
+        <div className="grid grid-rows-2 gap-0.5">
+          {second ? (
+            <div className="overflow-hidden">
+              <img
+                src={getBuildingImageUrl(second) ?? ""}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="bg-surface-muted" />
+          )}
+          {third ? (
+            <div className="overflow-hidden">
+              <img
+                src={getBuildingImageUrl(third) ?? ""}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="bg-surface-muted" />
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

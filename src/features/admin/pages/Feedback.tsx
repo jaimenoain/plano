@@ -78,7 +78,7 @@ export default function FeedbackAdminPage() {
         .limit(200);
 
       if (error) {
-        console.error("Failed to fetch feedback:", error);
+        void error;
       } else {
         setRows((data ?? []) as unknown as FeedbackRow[]);
       }
@@ -101,7 +101,7 @@ export default function FeedbackAdminPage() {
       .from("feedback-screenshots")
       .createSignedUrl(screenshotPath, 60);
     if (error || !data) {
-      console.error("Failed to generate signed URL:", error);
+      void error;
       setSigningUrl(null);
       return;
     }

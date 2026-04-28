@@ -541,7 +541,7 @@ export default function CompanyDetails() {
             <div className="min-w-0 flex-1 space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex min-w-0 flex-wrap items-center gap-3">
-                  <h1 className="text-4xl font-bold tracking-tight text-text-primary md:text-5xl lg:text-6xl">
+                  <h1 className="text-3xl font-bold tracking-tight text-text-primary md:text-5xl lg:text-6xl">
                     {company.name}
                   </h1>
                   {company.claimStatus === "verified" ? (
@@ -726,7 +726,7 @@ export default function CompanyDetails() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="border-border-default"
+                      className="min-h-[44px] min-w-[44px] border-border-default"
                       onClick={() => setRemoveStewardId(s.id)}
                     >
                       Remove
@@ -748,7 +748,10 @@ export default function CompanyDetails() {
                   value={roleFilter}
                   onValueChange={(v) => setRoleFilter(v as RoleFilter)}
                 >
-                  <SelectTrigger className="w-full border-border-default sm:w-56" aria-label="Filter credits by role">
+                  <SelectTrigger
+                    className="h-11 w-full border-border-default sm:w-56"
+                    aria-label="Filter credits by role"
+                  >
                     <SelectValue placeholder="All roles" />
                   </SelectTrigger>
                   <SelectContent>
@@ -778,7 +781,7 @@ export default function CompanyDetails() {
                       <Collapsible open={ancillaryOpen} onOpenChange={setAncillaryOpen}>
                         <CollapsibleTrigger
                           type="button"
-                          className="flex w-full items-center justify-between border-b border-border-default py-3 text-left text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary"
+                          className="flex min-h-[44px] w-full items-center justify-between border-b border-border-default py-3 text-left text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary"
                         >
                           <span>Additional credits ({tierCredits.length})</span>
                           <ChevronDown

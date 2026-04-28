@@ -222,7 +222,7 @@ export default function PersonDetails() {
             <div className="min-w-0 flex-1 space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex min-w-0 flex-wrap items-center gap-3">
-                  <h1 className="text-4xl font-bold tracking-tight text-text-primary md:text-5xl lg:text-6xl">
+                  <h1 className="text-3xl font-bold tracking-tight text-text-primary md:text-5xl lg:text-6xl">
                     {person.name}
                   </h1>
                   {person.claimStatus === "verified" ? (

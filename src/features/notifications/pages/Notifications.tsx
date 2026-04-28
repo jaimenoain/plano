@@ -4,7 +4,7 @@
  * Visual changes (all data-fetching, click-handling, and mark-as-read logic unchanged):
  *
  * Heading:
- *   text-4xl → text-5xl sm:text-6xl font-bold tracking-tight leading-none
+ *   Responsive scale: text-3xl md:text-5xl font-bold tracking-tight leading-none
  *   Settings gear moved from Button wrapper to a bare icon button inline
  *   with the heading so the heading row doubles as the action row.
  *
@@ -30,7 +30,7 @@
  * Load more: Button variant="ghost" → bare text CTA "Load more →".
  * Loading: Loader2 h-8 w-8 → h-4 w-4 text-text-disabled.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 import { useNavigate, Link, type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -226,6 +226,16 @@ export default function Notifications() {
     }
   };
 
+  const handleNotificationRowKeyDown = (
+    e: KeyboardEvent<HTMLDivElement>,
+    notification: Notification
+  ) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleNotificationClick(notification);
+    }
+  };
+
   // ── Icon — two signal colours only (heart red, shield primary); all others secondary ──
   const getIcon = (type: string) => {
     switch (type) {
@@ -368,7 +378,10 @@ export default function Notifications() {
       {list.map((n) => (
         <div
           key={n.id}
+          role="button"
+          tabIndex={0}
           onClick={() => handleNotificationClick(n)}
+          onKeyDown={(e) => handleNotificationRowKeyDown(e, n)}
           className={cn(
             // Unread background removed — neon dot is the sole unread signal
             "flex items-start gap-4 px-4 sm:px-6 py-4 border-b border-border-default last:border-0 cursor-pointer transition-colors hover:bg-surface-muted/40"
@@ -428,7 +441,7 @@ export default function Notifications() {
         <button
           type="button"
           onClick={() => setShowSettings(true)}
-          className="p-1 text-text-disabled hover:text-text-primary transition-colors"
+          className="p-2.5 text-text-disabled hover:text-text-primary transition-colors"
           aria-label="Notification settings"
         >
           <Settings className="h-4 w-4" strokeWidth={1.5} />
@@ -445,7 +458,7 @@ export default function Notifications() {
 
           {/* ── Editorial heading ── */}
           <div className="px-4 sm:px-6 lg:px-8 pt-10 pb-10 border-b border-border-default">
-            <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-text-primary leading-none">
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-text-primary leading-none">
               Notifications
             </h1>
           </div>

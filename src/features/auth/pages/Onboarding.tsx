@@ -271,18 +271,18 @@ export default function Onboarding() {
     );
 
   return (
-    <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center p-4">
-      <PlanoLogo className="text-2xl text-text-primary mb-6" />
-      <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-8 flex flex-col gap-6 text-center">
+    <div className="min-h-dvh bg-surface-default flex flex-col items-center justify-start md:justify-center overflow-y-auto safe-area-pt safe-area-pb px-4 py-4 md:py-8">
+      <PlanoLogo className="text-2xl text-text-primary mb-4 md:mb-6 shrink-0" />
+      <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-6 md:p-8 flex flex-col gap-4 md:gap-6 text-center">
         {/* Step indicator */}
-        <div className="flex items-center justify-center gap-2">
-          <div className="h-1.5 w-12 rounded-sm bg-brand-primary" />
-          <div className="h-1.5 w-12 rounded-sm bg-surface-muted" />
-          <div className="h-1.5 w-12 rounded-sm bg-surface-muted" />
+        <div className="flex items-center justify-center gap-1.5 md:gap-2">
+          <div className="h-1.5 w-10 md:w-12 rounded-sm bg-brand-primary" />
+          <div className="h-1.5 w-10 md:w-12 rounded-sm bg-surface-muted" />
+          <div className="h-1.5 w-10 md:w-12 rounded-sm bg-surface-muted" />
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-text-primary">Welcome!</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-text-primary">Welcome!</h1>
           <p className="text-text-secondary">Let's set up your profile.</p>
         </div>
 
@@ -319,7 +319,7 @@ export default function Onboarding() {
 
         {/* Avatar Selection */}
         <div className="flex flex-col items-center">
-          <Avatar className="h-24 w-24 mb-4 border-2 border-border-default">
+          <Avatar className="h-20 w-20 md:h-24 md:w-24 mb-3 md:mb-4 border-2 border-border-default">
             <AvatarImage src={avatarUrl || undefined} className="object-cover" />
             <AvatarFallback className="text-2xl">
               {username?.[0]?.toUpperCase() || <User className="h-10 w-10 text-text-secondary" />}
@@ -337,7 +337,7 @@ export default function Onboarding() {
             />
             <Label
               htmlFor="avatar-upload"
-              className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-sm border-2 border-dashed border-border-default text-sm text-text-secondary hover:border-brand-primary"
+              className="cursor-pointer inline-flex min-h-11 items-center justify-center gap-2 rounded-sm border-2 border-dashed border-border-default px-4 py-2 text-sm text-text-secondary hover:border-brand-primary"
             >
               {uploading ? (
                 <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
@@ -349,7 +349,7 @@ export default function Onboarding() {
           </div>
         </div>
 
-        <div className="space-y-6 text-left">
+        <div className="space-y-4 md:space-y-6 text-left">
           {/* Username Field */}
           <div className="space-y-2">
             <Label htmlFor="username">Username</Label>
@@ -382,10 +382,10 @@ export default function Onboarding() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <Button onClick={handleSave} disabled={saving} className="w-full h-10 font-medium rounded-sm">
+          <Button onClick={handleSave} disabled={saving} className="w-full h-11 min-h-11 font-medium rounded-sm">
             {saving ? "Saving..." : "Save and Continue"}
           </Button>
-          <Button variant="ghost" onClick={handleSkip} className="w-full">
+          <Button variant="ghost" onClick={handleSkip} className="w-full min-h-11">
             Skip for now
           </Button>
         </div>

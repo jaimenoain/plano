@@ -6,10 +6,10 @@ import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
-import { getBoundsFromBuildings, type Bounds } from "@/utils/map";
+import { getBoundsFromBuildings, isLngLatInBounds, type Bounds } from "@/utils/map";
 import { getBuildingUrl } from "@/utils/url";
 import { collectionStructuredData } from "@/features/buildings/utils/structuredData";
-import { Loader2, Settings, Plus, ExternalLink, Star, ListFilter } from "lucide-react";
+import { Loader2, Settings, Plus, ExternalLink, Star, ListFilter, MapPinPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -20,6 +20,7 @@ import {
   CollectionMarker,
   Itinerary,
   type SavedPlacesDotFilter,
+  type SavedPlacesStatusFilter,
 } from "@/features/collections/types";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ItineraryList } from "@/features/collections/components/ItineraryList";
@@ -50,8 +51,10 @@ const CollectionMarkerCard = lazyWithRetry(() => import("@/features/collections/
 
 const SHOW_SAVED_CANDIDATES_STORAGE = "plano:collection-map:showSavedPlaces" as const;
 const SAVED_PLACES_DOT_FILTER_STORAGE = "plano:collection-map:savedPlacesDotFilter" as const;
+const SAVED_PLACES_STATUS_FILTER_STORAGE = "plano:collection-map:savedPlacesStatusFilter" as const;
 
 const SAVED_PLACES_DOT_FILTERS: SavedPlacesDotFilter[] = ['all', '1', '2', '3'];
+const SAVED_PLACES_STATUS_FILTERS: SavedPlacesStatusFilter[] = ['all', 'visited', 'pending'];
 
 function readShowSavedCandidatesFromStorage(userId: string, collectionId: string): boolean {
   try {
@@ -93,6 +96,30 @@ function writeSavedPlacesDotFilterToStorage(
   }
 }
 
+function readSavedPlacesStatusFilterFromStorage(userId: string, collectionId: string): SavedPlacesStatusFilter {
+  try {
+    const raw = localStorage.getItem(`${SAVED_PLACES_STATUS_FILTER_STORAGE}:${userId}:${collectionId}`);
+    if (raw && (SAVED_PLACES_STATUS_FILTERS as readonly string[]).includes(raw)) {
+      return raw as SavedPlacesStatusFilter;
+    }
+  } catch {
+    /* ignore */
+  }
+  return 'all';
+}
+
+function writeSavedPlacesStatusFilterToStorage(
+  userId: string,
+  collectionId: string,
+  value: SavedPlacesStatusFilter,
+): void {
+  try {
+    localStorage.setItem(`${SAVED_PLACES_STATUS_FILTER_STORAGE}:${userId}:${collectionId}`, value);
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
 function matchesSavedPlacesDotFilter(
   rating: number | null | undefined,
   filter: SavedPlacesDotFilter,
@@ -100,6 +127,15 @@ function matchesSavedPlacesDotFilter(
   if (filter === 'all') return true;
   const n = filter === '1' ? 1 : filter === '2' ? 2 : 3;
   return rating === n;
+}
+
+function matchesSavedPlacesStatusFilter(
+  status: string | null | undefined,
+  filter: SavedPlacesStatusFilter,
+): boolean {
+  if (filter === 'all') return true;
+  if (status == null) return false;
+  return status === filter;
 }
 
 // Note: The shape returned from Supabase for collection items is documented here
@@ -151,6 +187,7 @@ export default function CollectionMap() {
 
   const [showSavedCandidates, setShowSavedCandidates] = useState(false);
   const [savedPlacesDotFilter, setSavedPlacesDotFilter] = useState<SavedPlacesDotFilter>('all');
+  const [savedPlacesStatusFilter, setSavedPlacesStatusFilter] = useState<SavedPlacesStatusFilter>('all');
 
   // New States for Removal
   const [itemToRemove, setItemToRemove] = useState<CollectionItemWithBuilding | null>(null);
@@ -164,6 +201,9 @@ export default function CollectionMap() {
 
   // Map Bounds State
   const [initialBounds, setInitialBounds] = useState<Bounds | null>(null);
+  /** Geographic bounds of the map viewport (for “add visible saved places”). */
+  const [viewportBounds, setViewportBounds] = useState<Bounds | null>(null);
+  const [isAddingVisibleCandidates, setIsAddingVisibleCandidates] = useState(false);
 
   const initializeItinerary = useItineraryStore((state) => state.initializeItinerary);
 
@@ -218,6 +258,7 @@ export default function CollectionMap() {
     if (!user?.id || !collection?.id) return;
     setShowSavedCandidates(readShowSavedCandidatesFromStorage(user.id, collection.id));
     setSavedPlacesDotFilter(readSavedPlacesDotFilterFromStorage(user.id, collection.id));
+    setSavedPlacesStatusFilter(readSavedPlacesStatusFilterFromStorage(user.id, collection.id));
   }, [user?.id, collection?.id]);
 
   const handleShowSavedCandidatesChange = useCallback(
@@ -235,6 +276,16 @@ export default function CollectionMap() {
       setSavedPlacesDotFilter(filter);
       if (user?.id && collection?.id) {
         writeSavedPlacesDotFilterToStorage(user.id, collection.id, filter);
+      }
+    },
+    [user?.id, collection?.id],
+  );
+
+  const handleSavedPlacesStatusFilterChange = useCallback(
+    (filter: SavedPlacesStatusFilter) => {
+      setSavedPlacesStatusFilter(filter);
+      if (user?.id && collection?.id) {
+        writeSavedPlacesStatusFilterToStorage(user.id, collection.id, filter);
       }
     },
     [user?.id, collection?.id],
@@ -456,6 +507,7 @@ export default function CollectionMap() {
                 styles: [],
                 color: null, // Let BuildingDiscoveryMap use status color
                 personal_rating: row.rating ?? null,
+                personal_status: row.status ?? null,
             } as DiscoveryBuilding;
         })
         .filter(b => b.location_lat !== 0 && b.location_lng !== 0);
@@ -698,13 +750,21 @@ export default function CollectionMap() {
       const filteredCandidates = savedCandidates.filter(
         (c) =>
           !existingBuildingIds.has(c.id) &&
-          matchesSavedPlacesDotFilter(c.personal_rating ?? null, savedPlacesDotFilter),
+          matchesSavedPlacesDotFilter(c.personal_rating ?? null, savedPlacesDotFilter) &&
+          matchesSavedPlacesStatusFilter(c.personal_status ?? null, savedPlacesStatusFilter),
       );
       const dimmedExisting = mapBuildings.map(b => ({ ...b, isDimmed: true }));
       return [...dimmedExisting, ...filteredCandidates.map(c => ({ ...c, isCandidate: true }))];
     }
     return mapBuildings;
-  }, [mapBuildings, savedCandidates, showSavedCandidates, existingBuildingIds, savedPlacesDotFilter]);
+  }, [
+    mapBuildings,
+    savedCandidates,
+    showSavedCandidates,
+    existingBuildingIds,
+    savedPlacesDotFilter,
+    savedPlacesStatusFilter,
+  ]);
 
   // Calculate bounds only once when buildings are loaded to prevent map movement on updates
   useEffect(() => {
@@ -716,7 +776,26 @@ export default function CollectionMap() {
   // Reset bounds when switching collections
   useEffect(() => {
     setInitialBounds(null);
+    setViewportBounds(null);
   }, [slug]);
+
+  const visibleSavedCandidatesToAdd = useMemo(() => {
+    if (!showSavedCandidates || !savedCandidates?.length || !viewportBounds) return [];
+    return savedCandidates.filter(
+      (c) =>
+        !existingBuildingIds.has(c.id) &&
+        matchesSavedPlacesDotFilter(c.personal_rating ?? null, savedPlacesDotFilter) &&
+        matchesSavedPlacesStatusFilter(c.personal_status ?? null, savedPlacesStatusFilter) &&
+        isLngLatInBounds(c.location_lat, c.location_lng, viewportBounds),
+    );
+  }, [
+    showSavedCandidates,
+    savedCandidates,
+    viewportBounds,
+    existingBuildingIds,
+    savedPlacesDotFilter,
+    savedPlacesStatusFilter,
+  ]);
 
   const handleUpdateNote = async (itemId: string, newNote: string) => {
       const { error } = await supabase
@@ -781,6 +860,40 @@ export default function CollectionMap() {
         refetchItems();
         // Invalidate saved candidates to refresh the list (it should disappear from candidates)
         queryClient.invalidateQueries({ queryKey: ["saved_candidates"] });
+    }
+  };
+
+  const handleAddVisibleSavedCandidatesToCollection = async () => {
+    if (!collection?.id || visibleSavedCandidatesToAdd.length === 0) return;
+
+    setIsAddingVisibleCandidates(true);
+    try {
+      const rows = visibleSavedCandidatesToAdd.map((b) => ({
+        collection_id: collection.id,
+        building_id: b.id,
+      }));
+      const { error } = await supabase.from("collection_items").insert(rows);
+
+      if (error) throw error;
+
+      const n = visibleSavedCandidatesToAdd.length;
+      toast({
+        title: "Added to collection",
+        description:
+          n === 1
+            ? `${visibleSavedCandidatesToAdd[0].name} was added.`
+            : `${n} saved places in view were added.`,
+      });
+      refetchItems();
+      queryClient.invalidateQueries({ queryKey: ["saved_candidates"] });
+    } catch {
+      toast({
+        title: "Error",
+        description: "Could not add buildings to the collection.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingVisibleCandidates(false);
     }
   };
 
@@ -1160,8 +1273,43 @@ onUpdateNote={handleUpdateNote}
                     onRemoveMarker={canEdit ? handleRemoveItem : undefined}
                     showSavedCandidates={showSavedCandidates}
                     showItinerary={activeTab === 'itinerary'}
+                    onViewportBoundsChange={setViewportBounds}
                 />
             </Suspense>
+
+            {showSavedCandidates && canEdit && (
+              <div className="absolute bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] left-3 z-[50] md:bottom-8 md:left-4">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="shadow-none border border-border-default bg-surface-card/95 backdrop-blur-sm max-w-[min(100vw-2rem,20rem)]"
+                  disabled={
+                    visibleSavedCandidatesToAdd.length === 0 ||
+                    !viewportBounds ||
+                    isAddingVisibleCandidates
+                  }
+                  onClick={() => void handleAddVisibleSavedCandidatesToCollection()}
+                >
+                  {isAddingVisibleCandidates ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 shrink-0 animate-spin" />
+                      Adding…
+                    </>
+                  ) : (
+                    <>
+                      <MapPinPlus className="h-4 w-4 mr-2 shrink-0" />
+                      <span className="truncate">
+                        Add in view
+                        {visibleSavedCandidatesToAdd.length > 0
+                          ? ` (${visibleSavedCandidatesToAdd.length})`
+                          : ""}
+                      </span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
 
             {/* Mobile Itinerary Toggle */}
             {collection.itinerary && (
@@ -1219,6 +1367,8 @@ onUpdateNote={handleUpdateNote}
                 onShowSavedCandidatesChange={handleShowSavedCandidatesChange}
                 savedPlacesDotFilter={savedPlacesDotFilter}
                 onSavedPlacesDotFilterChange={handleSavedPlacesDotFilterChange}
+                savedPlacesStatusFilter={savedPlacesStatusFilter}
+                onSavedPlacesStatusFilterChange={handleSavedPlacesStatusFilterChange}
                 isOwner={isOwner}
                 canEdit={canEdit}
                 currentUserId={user?.id}

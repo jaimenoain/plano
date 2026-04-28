@@ -257,7 +257,7 @@ export default function EventDetail() {
               </span>
 
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <h1 className="text-4xl font-bold leading-tight tracking-tight text-text-primary md:text-5xl">
+                <h1 className="text-3xl font-bold leading-tight tracking-tight text-text-primary md:text-5xl">
                   {event.title}
                 </h1>
                 {canEdit ? (
@@ -465,7 +465,7 @@ export default function EventDetail() {
             {event.buildings.length > 0 ? (
               <section aria-label="Related buildings" className="border-b border-border-default py-8">
                 <h2 className="mb-4 text-2xs font-medium uppercase tracking-widest text-text-secondary">Buildings</h2>
-                <div className="flex gap-3 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex gap-3 overflow-x-scroll-touch pb-1">
                   {event.buildings.map((b) => (
                     <Link
                       key={b.buildingId}

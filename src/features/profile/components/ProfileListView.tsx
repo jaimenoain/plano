@@ -49,7 +49,7 @@ export function ProfileListView({
   };
 
   return (
-    <div className="-mx-4 overflow-x-auto">
+    <div className="-mx-4 overflow-x-scroll-touch">
       <Table className="min-w-full table-fixed">
         <TableHeader>
           <TableRow className="h-10 hover:bg-transparent">

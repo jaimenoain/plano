@@ -90,7 +90,7 @@ export async function action({ request }: ActionFunctionArgs) {
     .single();
 
   if (insertError || !row) {
-    console.error("Feedback insert failed:", insertError);
+    void insertError;
     return Response.json(
       { error: "Insert failed" },
       { status: 500, headers }
@@ -109,7 +109,7 @@ export async function action({ request }: ActionFunctionArgs) {
           .from("feedback-screenshots")
           .upload(storagePath, bytes, { contentType: "image/webp", upsert: true });
         if (uploadError) {
-          console.error("Screenshot upload failed:", uploadError);
+          void uploadError;
         } else {
           await supabase
             .from("feedback")
@@ -118,7 +118,7 @@ export async function action({ request }: ActionFunctionArgs) {
         }
       }
     } catch (err) {
-      console.error("Screenshot processing failed:", err);
+      void err;
     }
   }
 
@@ -134,7 +134,9 @@ export async function action({ request }: ActionFunctionArgs) {
         pageUrl: pageUrl ?? null,
         createdAt: new Date().toISOString(),
       }),
-    }).catch((err) => console.error("Webhook failed:", err));
+    }).catch((err) => {
+      void err;
+    });
   }
 
   return Response.json({ ok: true }, { status: 201, headers });

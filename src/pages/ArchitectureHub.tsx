@@ -65,7 +65,7 @@ export const meta: MetaFunction<typeof architectureHubLoader> = ({ data: d }) =>
 export function HydrateFallback() {
   return (
     <AppLayout>
-      <div className="mx-auto max-w-4xl px-4 py-24 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-24 lg:px-8">
         {/* Hero skeleton */}
         <Skeleton className="mb-3 h-4 w-32 rounded-sm" />
         <Skeleton className="mb-6 h-16 w-2/3 rounded-sm" />
@@ -73,7 +73,7 @@ export function HydrateFallback() {
         <Skeleton className="mb-10 h-5 w-80 max-w-full rounded-sm" />
 
         {/* Stats strip skeleton */}
-        <div className="grid grid-cols-3 gap-8 border-b border-t border-border-default py-10">
+        <div className="grid grid-cols-3 gap-2 border-b border-t border-border-default py-10 sm:gap-4 md:gap-8">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i}>
               <div className="h-9 w-20 animate-pulse rounded-sm bg-surface-muted" />
@@ -206,11 +206,11 @@ export default function ArchitectureHub() {
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
 
         {/* ── Section 1: Hero ─────────────────────────────────────────── */}
-        <section className="py-24 md:py-32">
+        <section className="py-12 md:py-24">
           <p className="mb-4 text-2xs font-medium uppercase tracking-widest text-text-secondary">
             Explore by location
           </p>
-          <h1 className="mb-6 text-5xl font-bold leading-tight tracking-tight text-text-primary md:text-6xl">
+          <h1 className="mb-6 text-3xl font-bold leading-tight tracking-tight text-text-primary md:text-6xl">
             The World's Architecture
           </h1>
           <p className="mb-8 max-w-xl text-base font-normal leading-relaxed text-text-secondary">
@@ -226,9 +226,9 @@ export default function ArchitectureHub() {
         </section>
 
         {/* ── Section 2: Stats strip ──────────────────────────────────── */}
-        <dl className="grid grid-cols-3 gap-8 border-b border-t border-border-default py-10">
+        <dl className="grid grid-cols-3 gap-2 border-b border-t border-border-default py-10 sm:gap-4 md:gap-8">
           <div>
-            <dd className="font-mono text-4xl font-bold tracking-tight text-text-primary">
+            <dd className="font-mono text-3xl font-bold tracking-tight text-text-primary md:text-4xl">
               {totalBuildings.toLocaleString()}
             </dd>
             <dt className="mt-1 text-2xs font-medium uppercase tracking-widest text-text-secondary">
@@ -236,7 +236,7 @@ export default function ArchitectureHub() {
             </dt>
           </div>
           <div>
-            <dd className="font-mono text-4xl font-bold tracking-tight text-text-primary">
+            <dd className="font-mono text-3xl font-bold tracking-tight text-text-primary md:text-4xl">
               {totalCountries}
             </dd>
             <dt className="mt-1 text-2xs font-medium uppercase tracking-widest text-text-secondary">
@@ -244,7 +244,7 @@ export default function ArchitectureHub() {
             </dt>
           </div>
           <div>
-            <dd className="font-mono text-4xl font-bold tracking-tight text-text-primary">
+            <dd className="font-mono text-3xl font-bold tracking-tight text-text-primary md:text-4xl">
               Community
             </dd>
             <dt className="mt-1 text-2xs font-medium uppercase tracking-widest text-text-secondary">

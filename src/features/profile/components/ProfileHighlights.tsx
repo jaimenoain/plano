@@ -59,7 +59,7 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
           {(quotes.length > 0) && (
              <div className="space-y-2">
                  <h4 className="text-2xs font-medium tracking-widest uppercase text-text-disabled">Favorite Quotes</h4>
-                 <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x">
+                 <div className="flex gap-4 overflow-x-scroll-touch pb-2 snap-x">
                     {quotes.map((q, i) => (
                         <div
                           key={i}
@@ -78,7 +78,7 @@ export function ProfileHighlights({ favorites, isOwnProfile, onManage }: Profile
           {showPeople && (
              <div className="space-y-2">
                  <h4 className="text-2xs font-medium tracking-widest uppercase text-text-disabled">Favorite Architects</h4>
-                 <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x">
+                 <div className="flex gap-4 overflow-x-scroll-touch pb-2 snap-x">
                     {people.map(p => (
                         <div key={p.id} className="flex flex-col items-center gap-2 w-20 shrink-0 snap-start">
                              <div className="h-20 w-20 overflow-hidden bg-surface-muted">

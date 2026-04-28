@@ -406,13 +406,13 @@ export default function Explore() {
                 side="right"
                 className="flex h-full w-3/4 flex-col overflow-hidden border-l border-border-default bg-surface-default p-0 text-text-primary sm:w-search-serp sm:max-w-none"
               >
-                <SheetHeader className="border-b border-border-default px-6 pb-5 pt-6 text-left shrink-0">
+                <SheetHeader className="border-b border-border-default px-4 pb-5 pt-6 text-left shrink-0 md:px-6">
                   <SheetTitle className="text-xs font-medium tracking-[0.2em] uppercase text-text-secondary">
                     Explore filters
                   </SheetTitle>
                 </SheetHeader>
                 <ScrollArea className="min-h-0 flex-1">
-                  <div className="space-y-6 px-6 pb-8 pt-4">
+                  <div className="space-y-6 px-4 pb-8 pt-4 md:px-6">
                     <div className="space-y-3">
                       <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
                         Location
