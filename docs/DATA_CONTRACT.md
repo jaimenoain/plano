@@ -1114,6 +1114,16 @@ CREATE POLICY "user_buildings_delete" ON user_buildings
   FOR DELETE USING (user_id = (SELECT auth.uid()));
 ```
 
+**SELECT (admin — all rows)** — additional permissive policy; migration `20270869000000_admin_dashboard_metrics_overhaul.sql`:
+
+```sql
+CREATE POLICY "Admins can view all user_buildings for moderation"
+  ON public.user_buildings
+  FOR SELECT
+  TO authenticated
+  USING (public.is_admin());
+```
+
 ### RLS: likes
 
 **Tenancy model:** not tenant-scoped
@@ -3690,12 +3700,13 @@ CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM public.profiles
-    WHERE id = auth.uid()
-    AND role = 'admin'
+    WHERE id = (SELECT auth.uid())
+      AND role IN ('admin', 'app_admin')
   );
 END;
 $$;
@@ -3757,7 +3768,7 @@ CREATE POLICY "deletion_jobs_update" ON deletion_jobs
 | Method | Endpoint | Purpose | Runtime |
 |--------|----------|---------|---------|
 | GET | /admin | Admin dashboard | supabase (client-side, admin guard) |
-| GET | (RPC) get_admin_pulse | Dashboard pulse metrics | supabase (RPC, admin-only) |
+| GET | (RPC) get_admin_pulse | Dashboard pulse metrics (JSON: `total_users`, `new_users_30d`, `new_users_24h`, `active_users_24h`, `active_users_30d`, `network_density`, `total_buildings` non-deleted, `total_reviews` = `user_buildings` with non-empty trimmed `content` excluding test/admin authors, `total_photos` = buildings with non-empty `hero_image_url`, `pending_reports`) — migration `20270869000000_admin_dashboard_metrics_overhaul.sql` | supabase (RPC, admin-only) |
 | GET | (RPC) get_admin_trends | Activity trend data | supabase (RPC, admin-only) |
 | GET | (RPC) get_admin_leaderboards | User leaderboard data | supabase (RPC, admin-only) |
 | GET | (RPC) get_admin_content_stats | Content analytics | supabase (RPC, admin-only) |
@@ -3781,7 +3792,9 @@ interface AdminPulseDTO {
   activeUsers30d: number;
   networkDensity: number;
   totalBuildings: number;
+  /** User-building rows with non-empty text; all rows (any visibility); excludes test/admin profile authors. */
   totalReviews: number;
+  /** Count of non-deleted buildings with a non-empty `hero_image_url` (not review image volume). */
   totalPhotos: number;
   pendingReports: number;
 }

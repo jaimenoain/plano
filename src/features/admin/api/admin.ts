@@ -1,105 +1,141 @@
 import { supabase } from "@/integrations/supabase/client";
 import { DashboardStats, PhotoCoverageStats, TopPhotoBuilding, ZeroPhotoBuilding } from "@/features/admin/types/admin";
 
+function num(v: unknown, fallback = 0): number {
+  if (typeof v === "number" && !Number.isNaN(v)) return v;
+  if (typeof v === "string" && v.trim() !== "" && !Number.isNaN(Number(v))) return Number(v);
+  return fallback;
+}
+
+function parsePulseJson(raw: unknown): DashboardStats["pulse"] {
+  const o = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  return {
+    total_users: num(o.total_users),
+    new_users_30d: num(o.new_users_30d),
+    new_users_24h: num(o.new_users_24h),
+    active_users_24h: num(o.active_users_24h),
+    active_users_30d: num(o.active_users_30d),
+    network_density: num(o.network_density),
+    total_buildings: num(o.total_buildings),
+    total_reviews: num(o.total_reviews),
+    total_photos: num(o.total_photos),
+    pending_reports: num(o.pending_reports),
+  };
+}
+
+function firstErrorMessage(label: string, error: { message: string } | null): string | null {
+  return error ? `${label}: ${error.message}` : null;
+}
+
+function normalizeActivityTrends(raw: unknown): DashboardStats["activity_trends"] {
+  const t = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  const actionsIn = Array.isArray(t.actions) ? t.actions : [];
+  const loginsIn = Array.isArray(t.logins) ? t.logins : [];
+  const dauIn = Array.isArray(t.dau_by_feature) ? t.dau_by_feature : [];
+  return {
+    actions: actionsIn.map((row) => {
+      const r = row as Record<string, unknown>;
+      return {
+        date: String(r.date ?? ""),
+        logs: num(r.logs),
+        comments: num(r.comments),
+        likes: num(r.likes),
+        follows: num(r.follows),
+      };
+    }),
+    logins: loginsIn.map((row) => {
+      const r = row as Record<string, unknown>;
+      return { date: String(r.date ?? ""), count: num(r.count) };
+    }),
+    dau_by_feature: dauIn.map((row) => {
+      const r = row as Record<string, unknown>;
+      return {
+        date: String(r.date ?? ""),
+        logs_users: num(r.logs_users),
+        comments_users: num(r.comments_users),
+        likes_users: num(r.likes_users),
+        visited_users: num(r.visited_users),
+      };
+    }),
+  };
+}
+
 export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
-  // Parallel RPC calls to avoid single transaction timeout
   const [
-    { data: pulseData, error: _pulseError },
-    { data: trendsData, error: _trendsError },
-    { data: leaderboardsData, error: _leaderboardsError },
-    { data: contentData, error: _contentError },
-    { data: retentionData, error: _retentionError },
-    { data: notificationsData, error: _notificationsError },
-    // Direct queries for counts
-    { count: totalBuildings, error: _buildingsError },
-    { count: totalReviews, error: _reviewsError },
-    { count: totalPhotos, error: _photosError },
-    { count: pendingReports, error: _reportsError },
+    pulseRes,
+    trendsRes,
+    leaderboardsRes,
+    contentRes,
+    retentionRes,
+    notificationsRes,
   ] = await Promise.all([
-    supabase.rpc('get_admin_pulse'),
-    supabase.rpc('get_admin_trends'),
-    supabase.rpc('get_admin_leaderboards'),
-    supabase.rpc('get_admin_content_stats'),
-    supabase.rpc('get_admin_retention'),
-    supabase.rpc('get_admin_notifications'),
-    supabase.from('buildings').select('*', { count: 'exact', head: true }).eq('is_deleted', false),
-    supabase.from('user_buildings').select('*', { count: 'exact', head: true }).not('content', 'is', null),
-    supabase.from('buildings').select('*', { count: 'exact', head: true }).not('hero_image_url', 'is', null).eq('is_deleted', false),
-    supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase.rpc("get_admin_pulse"),
+    supabase.rpc("get_admin_trends"),
+    supabase.rpc("get_admin_leaderboards"),
+    supabase.rpc("get_admin_content_stats"),
+    supabase.rpc("get_admin_retention"),
+    supabase.rpc("get_admin_notifications"),
   ]);
 
-  const pulse =
-    (pulseData as unknown as DashboardStats["pulse"] | null) ?? {
-    total_users: 0,
-    new_users_30d: 0,
-    new_users_24h: 0,
-    active_users_24h: 0,
-    active_users_30d: 0,
-    network_density: 0,
-    total_buildings: 0,
-    total_reviews: 0,
-    total_photos: 0,
-    pending_reports: 0,
-  };
+  const errors = [
+    firstErrorMessage("get_admin_pulse", pulseRes.error),
+    firstErrorMessage("get_admin_trends", trendsRes.error),
+    firstErrorMessage("get_admin_leaderboards", leaderboardsRes.error),
+    firstErrorMessage("get_admin_content_stats", contentRes.error),
+    firstErrorMessage("get_admin_retention", retentionRes.error),
+    firstErrorMessage("get_admin_notifications", notificationsRes.error),
+  ].filter(Boolean) as string[];
 
-  const trends =
-    (trendsData as unknown as DashboardStats["activity_trends"] | null) ?? {
-    actions: [],
-    logins: [],
-    dau_by_feature: [],
-  };
+  if (errors.length > 0) {
+    throw new Error(errors.join("\n"));
+  }
+
+  const pulse = parsePulseJson(pulseRes.data);
+
+  const trends = trendsRes.data != null ? normalizeActivityTrends(trendsRes.data) : { actions: [], logins: [], dau_by_feature: [] };
 
   const leaderboards =
-    (leaderboardsData as unknown as DashboardStats["user_leaderboard"] | null) ?? {
-    most_reviews: [],
-    most_ratings: [],
-    most_likes: [],
-    most_comments: [],
-    most_votes: [],
-    most_recently_online: [],
-    most_follows_given: [],
-    most_followers_gained: [],
-  };
+    (leaderboardsRes.data as unknown as DashboardStats["user_leaderboard"] | null) ?? {
+      most_reviews: [],
+      most_ratings: [],
+      most_likes: [],
+      most_comments: [],
+      most_recently_online: [],
+      most_follows_given: [],
+      most_followers_gained: [],
+    };
 
   const content =
-    (contentData as unknown as { content_intelligence: DashboardStats["content_intelligence"] } | null) ?? {
-    content_intelligence: { trending_buildings: [] },
-  };
+    (contentRes.data as unknown as { content_intelligence: DashboardStats["content_intelligence"] } | null) ?? {
+      content_intelligence: { trending_buildings: [] },
+    };
 
   const retention =
-    (retentionData as unknown as DashboardStats["retention_analysis"] | null) ?? {
-    user_activity_distribution: { active_30d: 0, active_90d: 0, inactive: 0 },
-    active_30d_breakdown: [],
-    recent_users: [],
-  };
+    (retentionRes.data as unknown as DashboardStats["retention_analysis"] | null) ?? {
+      user_activity_distribution: { active_30d: 0, active_90d: 0, inactive: 0 },
+      active_30d_breakdown: [],
+      recent_users: [],
+    };
 
   const notifications =
-    (notificationsData as unknown as DashboardStats["notification_intelligence"] | null) ?? {
-    engagement: {
-      total_notifications: 0,
-      read_rate: 0,
-      active_users_never_read_percent: 0,
-      active_ignoring_percent: 0
-    },
-    unread_distribution: []
-  };
+    (notificationsRes.data as unknown as DashboardStats["notification_intelligence"] | null) ?? {
+      engagement: {
+        total_notifications: 0,
+        read_rate: 0,
+        active_users_never_read_percent: 0,
+        active_ignoring_percent: 0,
+      },
+      unread_distribution: [],
+    };
 
-  const stats: DashboardStats = {
-    pulse: {
-      ...pulse,
-      total_buildings: totalBuildings || 0,
-      total_reviews: totalReviews || 0,
-      total_photos: totalPhotos || 0,
-      pending_reports: pendingReports || 0,
-    },
+  return {
+    pulse,
     activity_trends: trends,
     content_intelligence: content.content_intelligence,
     user_leaderboard: leaderboards,
     retention_analysis: retention,
     notification_intelligence: notifications,
   };
-
-  return stats;
 }
 
 export async function fetchPhotoCoverageStats(): Promise<PhotoCoverageStats> {

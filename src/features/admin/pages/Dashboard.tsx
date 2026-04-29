@@ -19,14 +19,18 @@ export const meta: MetaFunction = () => [
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadStats = async () => {
+      setLoadError(null);
       try {
         const data = await fetchAdminDashboardStats();
         setStats(data);
-      } catch (_error) {
-} finally {
+      } catch (e: unknown) {
+        setStats(null);
+        setLoadError(e instanceof Error ? e.message : "Failed to load dashboard data.");
+      } finally {
         setLoading(false);
       }
     };
@@ -44,8 +48,12 @@ export default function AdminDashboard() {
 
   if (!stats) {
     return (
-      <div className="min-h-screen bg-surface-default flex items-center justify-center">
-        <p className="text-feedback-destructive">Failed to load dashboard data.</p>
+      <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center gap-4 p-6">
+        <p className="text-feedback-destructive text-center max-w-lg">{loadError ?? "Failed to load dashboard data."}</p>
+        <p className="text-sm text-text-secondary text-center max-w-md">
+          If this mentions a missing column or function, apply the latest admin dashboard migration in the Supabase SQL
+          Editor, then reload.
+        </p>
       </div>
     );
   }

@@ -68,7 +68,10 @@ export function RetentionZone({ data }: RetentionZoneProps) {
         <Card>
           <CardHeader>
             <CardTitle>User Status</CardTitle>
-            <CardDescription>Distribution of user activity levels</CardDescription>
+            <CardDescription>
+              Buckets use last online when set, otherwise account created_at as last activity. Active 30d / 90d are mutually
+              exclusive bands.
+            </CardDescription>
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">

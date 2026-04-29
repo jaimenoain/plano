@@ -83,21 +83,9 @@ export function NotificationIntelligenceZone({ data }: NotificationIntelligenceZ
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={unread_distribution}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis
-                  dataKey="bucket"
-                  stroke="#888888"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  stroke="#888888"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => `${value}`}
-                />
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border-default" />
+                <XAxis dataKey="bucket" stroke="var(--border-strong)" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="var(--border-strong)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
                 <Tooltip
                   cursor={{ fill: 'transparent' }}
                   contentStyle={{
@@ -108,9 +96,18 @@ export function NotificationIntelligenceZone({ data }: NotificationIntelligenceZ
                   labelStyle={{ color: 'var(--text-primary)' }}
                 />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                    {unread_distribution.map((_entry, index) => (
-                        <Cell key={`cell-${index}`} fill={index === 0 ? '#22c55e' : index === 3 ? '#ef4444' : '#3b82f6'} />
-                    ))}
+                  {unread_distribution.map((_entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={
+                        index === 0
+                          ? "var(--feedback-success)"
+                          : index === 3
+                            ? "var(--feedback-destructive)"
+                            : "var(--brand-primary)"
+                      }
+                    />
+                  ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>

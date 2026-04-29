@@ -45,7 +45,6 @@ export type DashboardStats = {
       logs: number;
       comments: number;
       likes: number;
-      votes: number;
       follows: number;
     }[];
     logins: {
@@ -57,7 +56,6 @@ export type DashboardStats = {
       logs_users: number;
       comments_users: number;
       likes_users: number;
-      votes_users: number;
       visited_users: number;
     }[];
   };
@@ -76,7 +74,6 @@ export type DashboardStats = {
     most_ratings: LeaderboardUser[];
     most_likes: LeaderboardUser[];
     most_comments: LeaderboardUser[];
-    most_votes: LeaderboardUser[];
     most_recently_online: LeaderboardUser[];
     most_follows_given: LeaderboardUser[];
     most_followers_gained: LeaderboardUser[];
@@ -134,7 +131,6 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
       logs: Math.floor(Math.random() * 50) + 10,
       comments: Math.floor(Math.random() * 100) + 20,
       likes: Math.floor(Math.random() * 200) + 50,
-      votes: Math.floor(Math.random() * 30),
       follows: Math.floor(Math.random() * 10),
     })),
     logins: Array.from({ length: 30 }, (_, i) => ({
@@ -146,7 +142,6 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
       logs_users: Math.floor(Math.random() * 40) + 5,
       comments_users: Math.floor(Math.random() * 80) + 10,
       likes_users: Math.floor(Math.random() * 150) + 20,
-      votes_users: Math.floor(Math.random() * 20),
       visited_users: Math.floor(Math.random() * 200) + 150,
     })),
   },
@@ -179,11 +174,6 @@ export const MOCK_ADMIN_STATS: DashboardStats = {
       { user_id: '8', username: 'chatterbox', avatar_url: null, count: 85 },
       { user_id: '6', username: 'social_butterfly', avatar_url: null, count: 60 },
       { user_id: '1', username: 'archilover99', avatar_url: null, count: 45 },
-    ],
-    most_votes: [
-      { user_id: '9', username: 'voter_citizen', avatar_url: null, count: 20 },
-      { user_id: '10', username: 'decider_dave', avatar_url: null, count: 18 },
-      { user_id: '4', username: 'rater_x', avatar_url: null, count: 15 },
     ],
     most_recently_online: [
       { user_id: '1', username: 'archilover99', avatar_url: null, last_online: new Date().toISOString() },
