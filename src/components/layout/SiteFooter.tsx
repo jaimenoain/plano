@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { ARCHITECTURE_PREFIX, getLocalityUrl } from "@/utils/url";
 
 const exploreLinks = [
@@ -33,28 +34,31 @@ const legalLinks = [
 
 export function SiteFooter() {
   return (
-    <footer className="bg-black text-white w-full mt-auto">
+    <footer
+      className="bg-brand-primary text-text-inverse mt-auto shrink-0 w-screen max-w-[100vw] ml-[calc(50%-50vw)]"
+    >
       <div className="px-8 md:px-12 pt-16 pb-10">
 
         {/* ── Top grid ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-12 pb-14 border-b border-white/10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-12 pb-14 border-b border-text-inverse/10">
 
-          {/* Brand */}
+          {/* Brand — same wordmark as header (PlanoLogo), inverse colour */}
           <div className="col-span-2 md:col-span-1">
             <Link
               to="/"
-              className="block text-3xl font-bold tracking-tighter leading-none text-white mb-4 hover:opacity-80 transition-opacity duration-150"
+              className="inline-block mb-4 text-text-inverse hover:opacity-80 transition-opacity duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-text-inverse/40 rounded-sm"
+              aria-label="Home"
             >
-              Plano
+              <PlanoLogo className="text-xl text-text-inverse" />
             </Link>
-            <p className="text-xs text-white/30 leading-relaxed max-w-[160px]">
+            <p className="text-xs text-text-inverse/30 leading-relaxed max-w-[160px]">
               The world's architecture,<br />catalogued.
             </p>
           </div>
 
           {/* Explore */}
           <div>
-            <p className="text-[10px] font-medium tracking-[0.14em] uppercase text-white/25 mb-5">
+            <p className="text-[10px] font-medium tracking-[0.14em] uppercase text-text-inverse/25 mb-5">
               Explore
             </p>
             <ul className="flex flex-col gap-3">
@@ -62,11 +66,11 @@ export function SiteFooter() {
                 <li key={path}>
                   <Link
                     to={path}
-                    className="flex items-center gap-2 text-sm text-white/50 hover:text-white transition-colors duration-150"
+                    className="flex items-center gap-2 text-sm text-text-inverse/50 hover:text-text-inverse transition-colors duration-150"
                   >
                     {label}
                     {tag && (
-                      <span className="text-[9px] font-medium tracking-[0.1em] uppercase text-white/20 border border-white/10 px-1.5 py-0.5 rounded-[2px]">
+                      <span className="text-[9px] font-medium tracking-[0.1em] uppercase text-text-inverse/20 border border-text-inverse/10 px-1.5 py-0.5 rounded-[2px]">
                         {tag}
                       </span>
                     )}
@@ -78,7 +82,7 @@ export function SiteFooter() {
 
           {/* Guides */}
           <div>
-            <p className="text-[10px] font-medium tracking-[0.14em] uppercase text-white/25 mb-5">
+            <p className="text-[10px] font-medium tracking-[0.14em] uppercase text-text-inverse/25 mb-5">
               Guides
             </p>
             <ul className="flex flex-col gap-3">
@@ -86,7 +90,7 @@ export function SiteFooter() {
                 <li key={path}>
                   <Link
                     to={path}
-                    className="text-sm text-white/50 hover:text-white transition-colors duration-150"
+                    className="text-sm text-text-inverse/50 hover:text-text-inverse transition-colors duration-150"
                   >
                     {label}
                   </Link>
@@ -97,7 +101,7 @@ export function SiteFooter() {
 
           {/* Plano */}
           <div>
-            <p className="text-[10px] font-medium tracking-[0.14em] uppercase text-white/25 mb-5">
+            <p className="text-[10px] font-medium tracking-[0.14em] uppercase text-text-inverse/25 mb-5">
               Plano
             </p>
             <ul className="flex flex-col gap-3">
@@ -105,7 +109,7 @@ export function SiteFooter() {
                 <li key={path}>
                   <Link
                     to={path}
-                    className="text-sm text-white/50 hover:text-white transition-colors duration-150"
+                    className="text-sm text-text-inverse/50 hover:text-text-inverse transition-colors duration-150"
                   >
                     {label}
                   </Link>
@@ -119,7 +123,7 @@ export function SiteFooter() {
         {/* ── Bottom bar ── */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-8">
           <div className="flex items-center gap-8">
-            <span className="text-[11px] text-white/20 tracking-wide">
+            <span className="text-[11px] text-text-inverse/20 tracking-wide">
               © {new Date().getFullYear()} Plano
             </span>
             <div className="flex items-center gap-6">
@@ -127,7 +131,7 @@ export function SiteFooter() {
                 <Link
                   key={path}
                   to={path}
-                  className="text-[11px] text-white/20 hover:text-white/50 tracking-wide transition-colors duration-150"
+                  className="text-[11px] text-text-inverse/20 hover:text-text-inverse/50 tracking-wide transition-colors duration-150"
                 >
                   {label}
                 </Link>
@@ -139,16 +143,16 @@ export function SiteFooter() {
               href="https://instagram.com/plano.app"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[11px] font-medium tracking-[0.1em] uppercase text-white/20 hover:text-white transition-colors duration-150"
+              className="text-[11px] font-medium tracking-[0.1em] uppercase text-text-inverse/20 hover:text-text-inverse transition-colors duration-150"
             >
               Instagram
             </a>
-            <span className="text-white/10 text-xs">·</span>
+            <span className="text-text-inverse/10 text-xs">·</span>
             <a
               href="https://x.com/planoapp"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[11px] font-medium tracking-[0.1em] uppercase text-white/20 hover:text-white transition-colors duration-150"
+              className="text-[11px] font-medium tracking-[0.1em] uppercase text-text-inverse/20 hover:text-text-inverse transition-colors duration-150"
             >
               X
             </a>
