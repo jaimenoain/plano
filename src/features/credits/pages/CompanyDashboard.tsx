@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -16,7 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CompanyPortfolioManageSection } from "@/features/credits/components/CompanyPortfolioManageSection";
 import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
-import type { CreditRole } from "@/features/credits/types";
+import type { CompanyPortfolioItem, CreditRole } from "@/features/credits/types";
 import {
   approveCompanyStewardRequestById,
   getCompanyPortfolio,
@@ -32,6 +32,14 @@ import { toast } from "sonner";
 
 const ALL_ROLES = "__all__" as const;
 type RoleFilter = typeof ALL_ROLES | CreditRole;
+
+function creditYearValues(it: CompanyPortfolioItem): number[] {
+  const out: number[] = [];
+  if (it.credit.yearFrom != null) out.push(it.credit.yearFrom);
+  if (it.credit.yearTo != null) out.push(it.credit.yearTo);
+  if (it.building.yearCompleted != null) out.push(it.building.yearCompleted);
+  return out;
+}
 
 function pickCompany(
   list: StewardCompanyNavItem[],
@@ -109,6 +117,23 @@ export default function CompanyDashboard() {
       set.add(item.credit.role);
     }
     return [...set].sort((a, b) => formatCreditRoleLabel(a, null).localeCompare(formatCreditRoleLabel(b, null)));
+  }, [orderedItems]);
+
+  const companyStats = useMemo(() => {
+    const buildingIds = new Set(orderedItems.map((i) => i.building.id));
+    const roles = new Set(orderedItems.map((i) => i.credit.role));
+    const years: number[] = [];
+    for (const it of orderedItems) {
+      years.push(...creditYearValues(it));
+    }
+    const minY = years.length ? Math.min(...years) : null;
+    const maxY = years.length ? Math.max(...years) : null;
+    return {
+      buildingCount: buildingIds.size,
+      roleCount: roles.size,
+      yearMin: minY,
+      yearMax: maxY,
+    };
   }, [orderedItems]);
 
   const syncCompanyParam = useCallback(
@@ -206,9 +231,15 @@ export default function CompanyDashboard() {
     return (
       <AppLayout title="Company portfolio" showBack>
         <div className="mx-auto max-w-4xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-4 w-96" />
-          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-10 w-72" />
+          <Skeleton className="h-4 max-w-xl" />
+          <div className="grid gap-4 md:grid-cols-3">
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+          </div>
+          <Skeleton className="h-72 w-full" />
         </div>
       </AppLayout>
     );
@@ -223,18 +254,39 @@ export default function CompanyDashboard() {
   return (
     <AppLayout title="Company portfolio" showBack>
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <header className="mb-8 space-y-4">
-          <h1 className="text-3xl font-bold tracking-tight text-text-primary md:text-4xl">Company portfolio</h1>
-          <p className="text-sm text-text-secondary md:text-base">
-            Curate how your studio appears: edit credits, add projects from the catalogue, list new buildings, and set
-            presentation order.{" "}
-            <Button variant="link" className="h-auto p-0 text-sm font-medium md:text-base" asChild>
-              <Link to={`/company/${selected.slug}?edit=1`}>Manage company page</Link>
-            </Button>
-          </p>
+        <header className="mb-10 space-y-5">
+          <div className="space-y-2">
+            <p className="text-xs font-medium uppercase tracking-widest text-text-secondary">{selected.name}</p>
+            <h1 className="text-3xl font-bold tracking-tight text-text-primary md:text-4xl">Company portfolio</h1>
+            <p className="max-w-2xl text-sm leading-relaxed text-text-secondary md:text-base">
+              Curate how your studio appears: edit credits, add projects from the catalogue, list new buildings, and set
+              presentation order.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-8 sm:gap-y-2">
+            <Link
+              to={`/company/${selected.slug}`}
+              className="group/pub inline-flex items-baseline gap-1 text-xs font-medium uppercase tracking-widest text-text-primary"
+            >
+              <span className="transition-colors group-hover/pub:text-text-secondary">View public company</span>
+              <span className="transition-transform group-hover/pub:translate-x-0.5" aria-hidden>
+                →
+              </span>
+            </Link>
+            <Link
+              to={`/company/${selected.slug}?edit=1`}
+              className="group/edit inline-flex items-baseline gap-1 text-xs font-medium uppercase tracking-widest text-text-primary"
+            >
+              <span className="transition-colors group-hover/edit:text-text-secondary">Edit company profile</span>
+              <span className="transition-transform group-hover/edit:translate-x-0.5" aria-hidden>
+                →
+              </span>
+            </Link>
+          </div>
 
           {list.length > 1 ? (
-            <div className="max-w-md">
+            <div className="max-w-md border-t border-border-default pt-5">
               <label className="mb-2 block text-xs font-medium uppercase tracking-widest text-text-secondary">
                 Company
               </label>
@@ -246,7 +298,7 @@ export default function CompanyDashboard() {
                   setSearchParams(next, { replace: true });
                 }}
               >
-                <SelectTrigger className="border-border-default" aria-label="Select company">
+                <SelectTrigger className="rounded-none border-border-default" aria-label="Select company">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -262,63 +314,118 @@ export default function CompanyDashboard() {
         </header>
 
         {isOwner && pendingQuery.data && pendingQuery.data.length > 0 ? (
-          <section className="mb-12">
-            <h2 className="mb-4 text-xs font-medium uppercase tracking-widest text-text-secondary">
+          <section className="mb-12" aria-labelledby="pending-access-heading">
+            <h2
+              id="pending-access-heading"
+              className="mb-4 text-xs font-medium uppercase tracking-widest text-text-secondary"
+            >
               Pending access requests
             </h2>
-            <div className="space-y-4">
-              {pendingQuery.data.map((req) => (
-                <Card key={req.id}>
-                  <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-2">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <Avatar className="h-10 w-10 shrink-0">
-                        <AvatarImage src={req.requesterAvatarUrl ?? ""} alt="" />
-                        <AvatarFallback className="text-xs">
-                          {(req.requesterUsername ?? "?").charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <CardTitle className="text-base font-semibold">
-                          {req.requesterUsername ?? "Plano user"}
-                        </CardTitle>
-                        <p className="text-xs text-text-secondary">
-                          Requested {new Date(req.createdAt).toLocaleDateString()}
-                        </p>
+            <Card className="overflow-hidden border border-border-default">
+              <ul className="divide-y divide-border-default">
+                {pendingQuery.data.map((req) => (
+                  <li key={req.id} className="px-4 py-5 sm:px-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex min-w-0 items-start gap-3">
+                        <Avatar className="h-11 w-11 shrink-0">
+                          <AvatarImage src={req.requesterAvatarUrl ?? ""} alt="" />
+                          <AvatarFallback className="text-xs">
+                            {(req.requesterUsername ?? "?").charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 space-y-1">
+                          <p className="text-base font-semibold text-text-primary">
+                            {req.requesterUsername ?? "Plano user"}
+                          </p>
+                          <p className="text-xs text-text-secondary">
+                            Requested {new Date(req.createdAt).toLocaleDateString()}
+                          </p>
+                          {req.message.trim().length > 0 ? (
+                            <p className="pt-2 text-sm leading-relaxed text-text-secondary">{req.message}</p>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 gap-2 sm:pt-0.5">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="rounded-none"
+                          disabled={rejectMut.isPending || approveMut.isPending}
+                          onClick={() => rejectMut.mutate(req.id)}
+                        >
+                          Decline
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="rounded-none"
+                          disabled={approveMut.isPending || rejectMut.isPending}
+                          onClick={() => approveMut.mutate(req.id)}
+                        >
+                          Approve
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex shrink-0 gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        disabled={rejectMut.isPending || approveMut.isPending}
-                        onClick={() => rejectMut.mutate(req.id)}
-                      >
-                        Decline
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={approveMut.isPending || rejectMut.isPending}
-                        onClick={() => approveMut.mutate(req.id)}
-                      >
-                        Approve
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  {req.message.trim().length > 0 ? (
-                    <CardContent className="pt-0">
-                      <p className="text-sm text-text-secondary">{req.message}</p>
-                    </CardContent>
-                  ) : null}
-                </Card>
-              ))}
-            </div>
+                  </li>
+                ))}
+              </ul>
+            </Card>
           </section>
         ) : null}
 
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">Portfolio</h2>
+        {portfolioQuery.isLoading ? (
+          <div className="mb-8 grid gap-4 md:grid-cols-3">
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+            <Skeleton className="h-28" />
+          </div>
+        ) : portfolioQuery.isError ? null : (
+          <div className="mb-8 grid gap-4 md:grid-cols-3">
+            <Card className="border border-border-default">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Buildings credited</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold tabular-nums">{companyStats.buildingCount}</div>
+                <CardDescription className="text-xs normal-case tracking-normal text-text-secondary">
+                  Distinct buildings in this portfolio
+                </CardDescription>
+              </CardContent>
+            </Card>
+            <Card className="border border-border-default">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Roles</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold tabular-nums">{companyStats.roleCount}</div>
+                <CardDescription className="text-xs normal-case tracking-normal text-text-secondary">
+                  Distinct credit roles
+                </CardDescription>
+              </CardContent>
+            </Card>
+            <Card className="border border-border-default">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Year span</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold tabular-nums">
+                  {companyStats.yearMin != null && companyStats.yearMax != null
+                    ? companyStats.yearMin === companyStats.yearMax
+                      ? String(companyStats.yearMin)
+                      : `${companyStats.yearMin}–${companyStats.yearMax}`
+                    : "—"}
+                </div>
+                <CardDescription className="text-xs normal-case tracking-normal text-text-secondary">
+                  From credit years and completion dates
+                </CardDescription>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        <div className="mb-6 border border-border-default bg-surface-card px-4 py-4 sm:flex sm:items-end sm:justify-between sm:px-5 sm:py-5">
+          <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-text-secondary sm:mb-0">Portfolio</h2>
           <div className="w-full sm:w-56">
             <Select
               value={roleFilter}
@@ -327,7 +434,7 @@ export default function CompanyDashboard() {
                 else setRoleFilter(v as CreditRole);
               }}
             >
-              <SelectTrigger className="border-border-default" aria-label="Filter by credit role">
+              <SelectTrigger className="rounded-none border-border-default" aria-label="Filter by credit role">
                 <SelectValue placeholder="All roles" />
               </SelectTrigger>
               <SelectContent>
@@ -343,7 +450,7 @@ export default function CompanyDashboard() {
         </div>
 
         {portfolioQuery.isLoading ? (
-          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-72 w-full rounded-none" />
         ) : portfolioQuery.isError ? (
           <p className="text-sm text-text-secondary">Could not load credits. Try again later.</p>
         ) : orderedItems.length === 0 ? (

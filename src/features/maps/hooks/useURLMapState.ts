@@ -108,6 +108,90 @@ export const MapStateSchema = z.object({
 
 export type MapState = Omit<z.infer<typeof MapStateSchema>, 'filters'> & { filters: MapFilters };
 
+function syncFilterParams(newParams: URLSearchParams, filters: MapFilters) {
+  const setOrDelete = (key: string, value?: string | null) => {
+    if (value == null || value === '') {
+      newParams.delete(key);
+      return;
+    }
+    newParams.set(key, value);
+  };
+
+  const setArrayParam = (key: string, values?: string[]) => {
+    if (values && values.length > 0) {
+      newParams.set(key, values.join(','));
+      return;
+    }
+    newParams.delete(key);
+  };
+
+  setOrDelete('q', filters.query?.trim() || undefined);
+  setArrayParam('status', filters.status);
+
+  if (filters.hideVisited) newParams.set('hideVisited', 'true');
+  else newParams.delete('hideVisited');
+
+  if (filters.hideSaved) newParams.set('hideSaved', 'true');
+  else newParams.delete('hideSaved');
+
+  // hideHidden defaults to true in parser, so only persist explicit false.
+  if (filters.hideHidden === false) newParams.set('hideHidden', 'false');
+  else newParams.delete('hideHidden');
+
+  if (filters.hideWithoutImages) newParams.set('hideWithoutImages', 'true');
+  else newParams.delete('hideWithoutImages');
+
+  if ((filters.personalMinRating ?? 0) > 0) {
+    newParams.set('minRating', String(filters.personalMinRating));
+  } else {
+    newParams.delete('minRating');
+  }
+
+  if (typeof filters.minRating === 'number') {
+    newParams.set('globalMinRating', String(filters.minRating));
+  } else {
+    newParams.delete('globalMinRating');
+  }
+
+  if ((filters.contactMinRating ?? 0) > 0) {
+    newParams.set('contactMinRating', String(filters.contactMinRating));
+  } else {
+    newParams.delete('contactMinRating');
+  }
+
+  setOrDelete('category', filters.category);
+  setArrayParam('typologies', filters.typologies);
+  setArrayParam('attributes', filters.attributes);
+  setArrayParam('accessLevels', filters.accessLevels);
+  setArrayParam('accessLogistics', filters.accessLogistics);
+  setArrayParam('accessCosts', filters.accessCosts);
+  setArrayParam('rated_by', filters.ratedBy);
+
+  if (filters.people && filters.people.length > 0) {
+    newParams.set('people', filters.people.map((p) => p.id).join(','));
+    newParams.delete('architects');
+  } else {
+    newParams.delete('people');
+    newParams.delete('architects');
+  }
+
+  if (filters.collections && filters.collections.length > 0) {
+    newParams.set('collections', filters.collections.map((c) => c.id).join(','));
+  } else {
+    newParams.delete('collections');
+  }
+
+  setArrayParam('folders', filters.folderIds);
+
+  if (filters.filterContacts) newParams.set('filterContacts', 'true');
+  else newParams.delete('filterContacts');
+
+  if (filters.creditCompany?.id) newParams.set('creditCompany', filters.creditCompany.id);
+  else newParams.delete('creditCompany');
+
+  setArrayParam('creditRoles', filters.creditRoles);
+}
+
 export const useURLMapState = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -185,15 +269,9 @@ export const useURLMapState = () => {
         else newParams.set('mode', updates.mode);
       }
 
-      // We explicitly ignore updates.filters here to let useBuildingSearch handle it
-      // and prevent dual-writes or overwriting flat params.
-      // But MapContext currently expects `setMapURL({ filters })` to work, which is
-      // now handled internally by Context/Search instead of useURLMapState for the URL part.
-      // Actually wait, MapContext uses setMapURL to set URL state. If we drop it here,
-      // MapContext's filters state will NOT be in the URL unless MapContext passes it down
-      // to useBuildingSearch, OR MapContext just keeps it in local state.
-      // The instructions state: "URL parameter synchronization must be handled by a single layer
-      // (preferably within useBuildingSearch.ts which already possesses the foundation for flat params)."
+      if (updates.filters !== undefined) {
+        syncFilterParams(newParams, updates.filters);
+      }
 
       return newParams;
     }, { replace: true });

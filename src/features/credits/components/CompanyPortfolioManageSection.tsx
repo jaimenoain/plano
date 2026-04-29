@@ -154,39 +154,47 @@ export function CompanyPortfolioManageSection({
 
   return (
     <section className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <p className="text-sm text-text-secondary">
-          Drag to set the order visitors see on this page. Edit roles, tiers, and project details anytime.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant={reorderMode ? "default" : "outline"}
-            size="sm"
-            disabled={items.length < 2 || reorderMut.isPending}
-            onClick={() => {
-              if (reorderMode) setReorderMode(false);
-              else setReorderMode(true);
-            }}
-          >
-            {reorderMode ? "Done reordering" : "Reorder list"}
-          </Button>
-          <Button type="button" size="sm" variant="secondary" onClick={() => setAddOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" aria-hidden />
-            Add credit
-          </Button>
-          <Button type="button" size="sm" variant="outline" asChild>
-            <Link to="/add-building">Add new building</Link>
-          </Button>
+      <div className="border border-border-default bg-surface-card px-4 py-4 sm:px-5 sm:py-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <p className="max-w-xl text-sm leading-relaxed text-text-secondary">
+            Drag to set the order visitors see here. Edit roles, tiers, and project details anytime.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant={reorderMode ? "default" : "outline"}
+              size="sm"
+              className="rounded-none"
+              disabled={items.length < 2 || reorderMut.isPending}
+              onClick={() => {
+                if (reorderMode) setReorderMode(false);
+                else setReorderMode(true);
+              }}
+            >
+              {reorderMode ? "Done reordering" : "Reorder list"}
+            </Button>
+            <Button type="button" size="sm" variant="secondary" className="rounded-none" onClick={() => setAddOpen(true)}>
+              <Plus className="mr-1 h-4 w-4" aria-hidden />
+              Add credit
+            </Button>
+            <Button type="button" size="sm" variant="outline" className="rounded-none" asChild>
+              <Link to="/add-building">Add new building</Link>
+            </Button>
+          </div>
         </div>
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-          <Card>
+          <Card className="overflow-hidden border border-border-default">
             <CardContent className="p-0">
               {items.length === 0 ? (
-                <p className="p-6 text-sm text-text-secondary">No credits yet. Add a credit or list a new building.</p>
+                <div className="flex flex-col items-center px-6 py-14 text-center">
+                  <p className="text-sm font-medium text-text-primary">No credits yet</p>
+                  <p className="mt-2 max-w-md text-sm leading-relaxed text-text-secondary">
+                    Add a credit from the catalogue or list a new building, then attach your studio&apos;s role here.
+                  </p>
+                </div>
               ) : (
                 items.map((row) => (
                   <SortablePortfolioRow key={row.credit.id} id={row.credit.id} disabled={!reorderMode || reorderMut.isPending}>
@@ -195,7 +203,7 @@ export function CompanyPortfolioManageSection({
                         {reorderMode ? (
                           <button
                             type="button"
-                            className="mt-6 flex h-11 w-10 shrink-0 items-center justify-center rounded-md border border-border-default bg-surface-muted text-text-secondary hover:bg-surface-muted/80"
+                            className="mt-6 flex h-11 w-10 shrink-0 items-center justify-center rounded-none border border-border-default bg-surface-muted text-text-secondary hover:bg-surface-muted/80"
                             aria-label="Drag to reorder"
                             {...(dragProps ?? {})}
                           >
@@ -206,7 +214,7 @@ export function CompanyPortfolioManageSection({
                           <CompanyCreditCard credit={{ ...row.credit, building: row.building }} />
                         </div>
                         {!reorderMode ? (
-                          <div className="flex shrink-0 flex-col gap-2 border-l border-border-default py-4 pl-3 pr-2">
+                          <div className="flex w-28 shrink-0 flex-col justify-center gap-2 border-l border-border-default bg-surface-muted/30 py-4 pl-4 pr-3 sm:w-32">
                             <span className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
                               {tierLabel(row.credit.creditTier)}
                             </span>
@@ -214,7 +222,7 @@ export function CompanyPortfolioManageSection({
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="h-9 gap-1 px-2"
+                              className="h-9 gap-1 rounded-none px-2"
                               onClick={() => setEditItem(row)}
                             >
                               <Pencil className="h-4 w-4" aria-hidden />
