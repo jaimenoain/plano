@@ -194,6 +194,30 @@ export default function Settings() {
 
       if (profileError) throw profileError;
 
+      if (initialState) {
+        const prevCountry = initialState.country ?? "";
+        const prevLocation = initialState.location ?? "";
+        const nextCountry = v.country ?? "";
+        const nextLocation = v.location ?? "";
+        const geographyChanged =
+          nextCountry !== prevCountry || nextLocation !== prevLocation;
+        if (geographyChanged) {
+          const { data: geoSync, error: geoErr } = await supabase.rpc(
+            "sync_ambassador_membership_after_profile_geography",
+          );
+          if (!geoErr && geoSync && typeof geoSync === "object" && geoSync !== null) {
+            const action = (geoSync as { action?: string }).action;
+            if (action === "flagged_pending_review") {
+              toast({
+                title: "Chapter notified",
+                description:
+                  "Your ambassador membership is under review after your location change. Chapter leaders have been notified.",
+              });
+            }
+          }
+        }
+      }
+
       // 2. Update Auth Data (Email/Password)
       const authUpdates: { email?: string; password?: string } = {};
       if (email !== user.email) authUpdates.email = email;

@@ -17,6 +17,8 @@ import {
   Home,
   MessageSquare,
   CalendarDays,
+  Shield,
+  Globe2,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
@@ -54,6 +56,16 @@ const managementItems = [
     title: "Users",
     url: "/admin/users",
     icon: Users,
+  },
+  {
+    title: "Ambassadors",
+    url: "/admin/ambassadors",
+    icon: Shield,
+  },
+  {
+    title: "Ambassador coverage",
+    url: "/admin/ambassadors/coverage",
+    icon: Globe2,
   },
   {
     title: "Moderation",
@@ -172,7 +184,12 @@ export function AdminSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    isActive={location.pathname === item.url}
+                    isActive={
+                      item.url === "/admin/ambassadors"
+                        ? location.pathname.startsWith("/admin/ambassadors") &&
+                            location.pathname !== "/admin/ambassadors/coverage"
+                        : location.pathname === item.url
+                    }
                     tooltip={item.title}
                   >
                     <Link to={item.url}>

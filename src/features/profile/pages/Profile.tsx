@@ -46,6 +46,7 @@ import {
   Columns,
   List,
   BadgeCheck,
+  Shield,
   Pencil,
   Check,
   ExternalLink,
@@ -97,6 +98,12 @@ import { profileLogCardImageUrl } from "@/features/profile/utils/profileLogCardI
 import { ProfileEventsSection } from "@/features/profile/components/ProfileEventsSection";
 
 export { profileLoader as loader } from "./Profile.loader";
+
+function ambassadorProgramLabel(role: string): string {
+  if (role === "president") return "President";
+  if (role === "exco") return "ExCo";
+  return "Ambassador";
+}
 
 const PROFILE_PAGE_SELECT =
   "id, username, avatar_url, bio, favorites, last_online, verified_architect_id, firm, website" as const;
@@ -258,6 +265,10 @@ export default function Profile() {
   const { toast } = useToast();
   const [viewMode, setViewMode] = useState<"grid" | "kanban" | "list">("grid");
   const [targetUserId, setTargetUserId] = useState<string | null>(null);
+  const [ambassadorBadge, setAmbassadorBadge] = useState<{
+    role: string;
+    chapterName: string;
+  } | null>(null);
   const { profile: loaderProfile } = useLoaderData<typeof profileLoader>();
   const [profile, setProfile] = useState<Profile | null>(loaderProfile as Profile | null);
   const [stats, setStats] = useState<Stats>({ reviews: 0, pending: 0, followers: 0, following: 0, photos: 0, maps: 0 });
@@ -458,6 +469,36 @@ export default function Profile() {
         if (!cancelled) setClaimedPersonForProfile(summary);
       } catch {
         if (!cancelled) setClaimedPersonForProfile(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [targetUserId]);
+
+  useEffect(() => {
+    if (!targetUserId) {
+      setAmbassadorBadge(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { data, error } = await supabase.rpc("get_ambassador_badge_for_profile", {
+          p_user_id: targetUserId,
+        });
+        if (cancelled) return;
+        if (error || !data?.length) {
+          setAmbassadorBadge(null);
+          return;
+        }
+        const row = data[0];
+        setAmbassadorBadge({
+          role: row.ambassador_role,
+          chapterName: row.chapter_name,
+        });
+      } catch {
+        if (!cancelled) setAmbassadorBadge(null);
       }
     })();
     return () => {
@@ -804,11 +845,19 @@ export default function Profile() {
 
               {/* Action bar */}
               <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-2 min-h-[20px]">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-h-[20px]">
                   {verifiedArchitectId && (
                     <>
                       <BadgeCheck className="w-3.5 h-3.5 text-text-primary shrink-0" />
                       <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">Architect</span>
+                    </>
+                  )}
+                  {ambassadorBadge && (
+                    <>
+                      <Shield className="w-3.5 h-3.5 text-text-primary shrink-0" />
+                      <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
+                        {ambassadorProgramLabel(ambassadorBadge.role)} · {ambassadorBadge.chapterName}
+                      </span>
                     </>
                   )}
                 </div>
@@ -1224,6 +1273,16 @@ export default function Profile() {
                     <div className="flex items-center gap-2 text-sm text-text-primary">
                       <BadgeCheck className="w-4 h-4 shrink-0" />
                       Verified architect on Plano
+                    </div>
+                  </div>
+                )}
+
+                {ambassadorBadge && (
+                  <div>
+                    <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-2">Ambassador program</p>
+                    <div className="flex items-center gap-2 text-sm text-text-primary">
+                      <Shield className="w-4 h-4 shrink-0" />
+                      {ambassadorProgramLabel(ambassadorBadge.role)} · {ambassadorBadge.chapterName}
                     </div>
                   </div>
                 )}

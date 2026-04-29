@@ -63,7 +63,11 @@ interface Notification {
     | "suggest_follow"
     | "recommendation"
     | "visit_request"
-    | "architect_verification";
+    | "architect_verification"
+    | "ambassador_application_received"
+    | "ambassador_application_approved"
+    | "ambassador_application_rejected"
+    | "ambassador_membership_review";
   is_read: boolean;
   actor_id: string;
   recommendation_id?: string | null;
@@ -81,7 +85,17 @@ interface Notification {
     user?: { username: string | null };
     building?: { name: string };
   };
-  metadata?: { status?: string; event_slug?: string; event_title?: string };
+  metadata?: {
+    status?: string;
+    event_slug?: string;
+    event_title?: string;
+    application_id?: string;
+    chapter_id?: string;
+    chapter_name?: string;
+    reviewer_note?: string | null;
+    membership_id?: string;
+    member_username?: string;
+  };
   recommendation?: {
     id?: string;
     status?: string | null;
@@ -221,6 +235,13 @@ export default function Notifications() {
       notification.architect_id
     ) {
       navigate(["/", "architect", "/", notification.architect_id].join(""));
+    } else if (
+      notification.type === "ambassador_application_received" ||
+      notification.type === "ambassador_application_approved" ||
+      notification.type === "ambassador_application_rejected" ||
+      notification.type === "ambassador_membership_review"
+    ) {
+      navigate("/embassy");
     } else if (notification.resource?.id) {
       navigate(`/review/${notification.resource.id}`);
     }
@@ -257,6 +278,13 @@ export default function Notifications() {
       case "architect_verification":
         // System event of consequence — text-primary
         return <ShieldCheck className="h-3.5 w-3.5 text-text-primary" />;
+      case "ambassador_application_received":
+        return <ShieldCheck className="h-3.5 w-3.5 text-text-primary" />;
+      case "ambassador_application_approved":
+      case "ambassador_application_rejected":
+        return <ShieldCheck className="h-3.5 w-3.5 text-text-secondary" />;
+      case "ambassador_membership_review":
+        return <ShieldCheck className="h-3.5 w-3.5 text-text-primary" />;
       default:
         return <Bell className="h-3.5 w-3.5 text-text-disabled" />;
     }
@@ -285,6 +313,57 @@ export default function Notifications() {
             >
               {isApproved ? "approved" : "declined"}
             </span>
+          </span>
+        );
+      }
+      case "ambassador_application_received":
+        return (
+          <span>
+            <span className="font-medium">{actorName}</span> applied to join your ambassador chapter
+          </span>
+        );
+      case "ambassador_application_approved": {
+        const ch = n.metadata?.chapter_name?.trim();
+        return (
+          <span>
+            Your ambassador application was{" "}
+            <span className="text-feedback-success font-medium">approved</span>
+            {ch ? (
+              <>
+                {" "}
+                for <span className="font-medium">{ch}</span>
+              </>
+            ) : null}
+          </span>
+        );
+      }
+      case "ambassador_application_rejected": {
+        const note = n.metadata?.reviewer_note?.trim();
+        return (
+          <span>
+            Your ambassador application was{" "}
+            <span className="text-feedback-destructive font-medium">not approved</span>
+            {note ? (
+              <>
+                . Note: <span className="italic">{note}</span>
+              </>
+            ) : null}
+          </span>
+        );
+      }
+      case "ambassador_membership_review": {
+        const who = n.metadata?.member_username?.trim() || actorName;
+        const ch = n.metadata?.chapter_name?.trim();
+        return (
+          <span>
+            <span className="font-medium">{who}</span> updated their profile location
+            {ch ? (
+              <>
+                {" "}
+                and may no longer match <span className="font-medium">{ch}</span>
+              </>
+            ) : null}
+            . Please review their membership.
           </span>
         );
       }

@@ -45,6 +45,228 @@
 
 ---
 
+## Ambassador program (foundation)
+
+Geographic **chapters** and per-user **memberships** power the volunteer ambassador network (`/embassy` in later phases). Phase 1 adds schema, RLS, admin CRUD at `/admin/ambassadors`, and a public-safe profile badge via RPC.
+
+### Database: `ambassador_chapters`
+
+| Column | Type | Notes |
+|--------|------|--------|
+| `id` | uuid | PK, default `gen_random_uuid()` |
+| `name` | text | Display name (e.g. city or country chapter) |
+| `type` | text | `'local'` \| `'national'` |
+| `locality_id` | uuid | FK → `localities.id`; required when `type = 'local'` |
+| `country_code` | text | ISO-3166-1 alpha-2, **uppercase**, length 2 |
+| `parent_chapter_id` | uuid | FK → `ambassador_chapters.id`; local chapters point at their national chapter; **null** for national rows |
+| `status` | text | `'active'` \| `'inactive'` \| `'forming'` |
+| `max_ambassadors` | integer | Cap per chapter; default 20; must be > 0 |
+| `created_at` / `updated_at` | timestamptz | Defaults + touch triggers |
+
+**RLS (summary):** `SELECT` for all `authenticated`; `INSERT` / `UPDATE` / `DELETE` only when `public.is_admin()`.
+
+### Database: `ambassador_memberships`
+
+| Column | Type | Notes |
+|--------|------|--------|
+| `id` | uuid | PK |
+| `chapter_id` | uuid | FK → `ambassador_chapters.id`, **ON DELETE CASCADE** |
+| `user_id` | uuid | FK → `profiles.id`, **ON DELETE CASCADE**; **UNIQUE** — one chapter per user globally |
+| `role` | text | `'president'` \| `'exco'` \| `'ambassador'` |
+| `exco_responsibility` | text | Required when `role = 'exco'`; one of `content`, `marketing`, `architect_relations`, `data_quality`, `community`; otherwise null |
+| `status` | text | `'active'` \| `'inactive'` \| `'pending_review'` |
+| `joined_at` | timestamptz | Default `now()` |
+| `invited_by` | uuid | Optional FK → `profiles.id` |
+| `updated_by` | uuid | Optional FK → `profiles.id`; set when a chapter **president** updates a row via **`president_update_chapter_membership`** |
+| `created_at` / `updated_at` | timestamptz | Defaults + touch triggers |
+
+**RLS (summary):** `SELECT` — own row, chapter leaders for their chapter, national president for national + child local chapters, or admin; `INSERT` — admin only (Embassy **president** invites use RPC **`president_invite_ambassador_member`**); `UPDATE` — admin only (Embassy **president** edits use RPC **`president_update_chapter_membership`**); `DELETE` — admin only.
+
+### Database: `ambassador_applications`
+
+| Column | Type | Notes |
+|--------|------|--------|
+| `id` | uuid | PK |
+| `user_id` | uuid | FK → `profiles.id`, **ON DELETE CASCADE** |
+| `chapter_id` | uuid | FK → `ambassador_chapters.id`, **ON DELETE CASCADE** |
+| `motivation_text` | text | Required; min length enforced in RPC (`submit_ambassador_application`) |
+| `status` | text | `'pending'` \| `'approved'` \| `'rejected'` |
+| `reviewed_by` | uuid | Optional FK → `profiles.id` |
+| `reviewer_note` | text | Optional; set on reject |
+| `reviewed_at` | timestamptz | Set when approved or rejected |
+| `created_at` | timestamptz | Default `now()` |
+
+**Constraint:** partial unique index on `user_id` **where** `status = 'pending'` — at most one pending application per user.
+
+**RLS (summary):** `SELECT` — own rows, chapter leaders for their `chapter_id`, or admin; `INSERT` — not granted to `authenticated` (applications created only via **`submit_ambassador_application`**); `UPDATE` — admin or chapter leader for the row’s chapter; `DELETE` — admin only.
+
+### RPC: `submit_ambassador_application(p_chapter_id uuid, p_motivation_text text)`
+
+**Returns:** `uuid` — new application `id`.
+
+**SECURITY DEFINER.** Validates caller, motivation length (≥ 100), no membership with **`status IN ('active','pending_review')`**, chapter `status IN ('active','forming')`, inserts row, inserts `notifications` of type **`ambassador_application_received`** for each active **`president`** / **`exco`** in the target chapter (`metadata`: `application_id`, `chapter_id`). **`GRANT EXECUTE`** to `authenticated`.
+
+### RPC: `review_ambassador_application(p_application_id uuid, p_approve boolean, p_reviewer_note text default null)`
+
+**Returns:** `void`.
+
+**SECURITY DEFINER.** Caller must be admin or **`is_chapter_leader(chapter_id)`** for the application’s chapter. If `p_approve`: checks ambassador capacity (`role = 'ambassador'` & `status = 'active'` vs `max_ambassadors`, bypass for admin), inserts **`ambassador_memberships`** (`role = 'ambassador'`, `status = 'active'`, `invited_by = auth.uid()`), sets application **`approved`**, notifies applicant (**`ambassador_application_approved`**, `metadata.chapter_name`). If reject: sets **`rejected`**, optional note, **`ambassador_application_rejected`**. **`GRANT EXECUTE`** to `authenticated`.
+
+### Notifications: ambassador types
+
+The `notifications.type` check (live DB) includes:
+
+- `ambassador_application_received` — chapter leaders: new application (metadata: `application_id`, `chapter_id`)
+- `ambassador_application_approved` — applicant (metadata: `application_id`, `chapter_id`, `chapter_name`)
+- `ambassador_application_rejected` — applicant (metadata: `application_id`, `chapter_id`, optional `reviewer_note`)
+- `ambassador_membership_review` — chapter **president** / **ExCo** (`active`): member updated profile geography and no longer matches the chapter heuristic (metadata: `membership_id`, `chapter_id`, `chapter_name`, `member_username`)
+
+### RPC: `has_embassy_portal_access()`
+
+**Returns:** `boolean` — **`true`** if **`auth.uid()`** has an **`ambassador_memberships`** row with **`status IN ('active','pending_review')`**. Used so **`/embassy`** stays reachable while membership is under review after a location change.
+
+**SECURITY DEFINER.** **`GRANT EXECUTE`** to **`authenticated`**.
+
+### RPC: `sync_ambassador_membership_after_profile_geography()`
+
+**Returns:** `jsonb` with **`action`**: `no_profile` \| `no_active_membership` \| `chapter_missing` \| `still_matches` \| `flagged_pending_review`.
+
+**SECURITY DEFINER.** Reads **`profiles.country`** / **`profiles.location`** for **`auth.uid()`** and their **`active`** **`ambassador_memberships`** row + chapter. If geography still matches (**`_ambassador_profile_matches_chapter`** heuristic, aligned with chapter apply defaults), returns **`still_matches`**. Otherwise sets membership **`status = 'pending_review'`** and inserts **`ambassador_membership_review`** for each **`active`** **`president`** / **`exco`** in that chapter (**`actor_id`** = member). **`GRANT EXECUTE`** to **`authenticated`**.
+
+**Client:** `Settings.tsx` calls this RPC after a successful profile save when **`country`** or **`location`** changed.
+
+### Internal: `_ambassador_profile_matches_chapter(p_country text, p_location text, p_chapter ambassador_chapters)`
+
+**Returns:** `boolean`. **`SECURITY DEFINER`**; **no `GRANT`** to **`authenticated`** (called only from **`sync_ambassador_membership_after_profile_geography`**).
+
+### RPC: `get_ambassador_badge_for_profile(p_user_id uuid)`
+
+**Returns:** set of rows `{ ambassador_role: text, chapter_name: text }` (at most one active membership).
+
+**Purpose:** Expose only role + chapter name on any profile (including logged-out viewers) without granting broad `SELECT` on `ambassador_memberships`. **SECURITY DEFINER**; **`GRANT EXECUTE`** to `anon` and `authenticated`.
+
+**Client:** `Profile.tsx` calls `supabase.rpc('get_ambassador_badge_for_profile', { p_user_id })` after `targetUserId` is known.
+
+### Embassy task feed (internal helpers + RPCs)
+
+**Internal (no `GRANT` to `authenticated`):**
+
+- `_ambassador_can_access_chapter(p_chapter_id uuid)` — `true` when **`is_admin()`** or **`auth.uid()`** has an **`active`** row in **`ambassador_memberships`** for **`p_chapter_id`**.
+- `_building_in_ambassador_chapter_scope(p_building_id uuid, p_chapter_id uuid)` — `true` when the building is not deleted and: **local** chapter → **`buildings.locality_id`** matches the chapter’s **`locality_id`**; **national** chapter → building **`country_code`** (uppercase match) or the building’s **`localities.country_code`** matches the chapter’s **`country_code`**.
+
+### RPC: `get_ambassador_buildings_without_photos(p_chapter_id uuid, p_limit int default 20)`
+
+**Returns:** rows `id`, `short_id`, `slug`, `name`, `city`, `country`, `popularity_score`, `hero_image_url` — no review images and no hero image, ordered by **`popularity_score`** descending.
+
+**SECURITY DEFINER.** Requires **`_ambassador_can_access_chapter(p_chapter_id)`**. **`GRANT EXECUTE`** to **`authenticated`**.
+
+### RPC: `get_ambassador_buildings_missing_metadata(p_chapter_id uuid, p_limit int default 20)`
+
+**Returns:** rows `id`, `short_id`, `slug`, `name`, `city`, `country`, `popularity_score`, `year_completed`, `has_styles`, `has_architect_credit` — only buildings in scope where **`year_completed`** is null and/or no **`building_styles`** rows and/or no **`building_credits`** row with **`status IN ('active','verified')`**, **`credit_tier = 'primary'`**, **`role = 'design_architect'`**; ordered by **`popularity_score`** descending.
+
+**SECURITY DEFINER.** Same access as above. **`GRANT EXECUTE`** to **`authenticated`**.
+
+### RPC: `get_ambassador_unclaimed_firms(p_chapter_id uuid, p_limit int default 20)`
+
+**Returns:** rows `id`, `slug`, `name`, `country`, `building_count`, `claim_status` — **`companies.claim_status = 'unclaimed'`** with at least one non-**`hidden`** **`building_credits`** link to a building in chapter scope; ordered by sum of linked buildings’ **`popularity_score`**, then count.
+
+**SECURITY DEFINER.** Same access as above. **`GRANT EXECUTE`** to **`authenticated`**.
+
+### RPC: `get_ambassador_recent_buildings(p_chapter_id uuid, p_limit int default 20)`
+
+**Returns:** rows `id`, `short_id`, `slug`, `name`, `city`, `country`, `created_at`, `hero_image_url` — buildings in scope with **`created_at`** in the last 30 days (UTC), newest first.
+
+**SECURITY DEFINER.** Same access as above. **`GRANT EXECUTE`** to **`authenticated`**.
+
+### RPC: `get_ambassador_my_audit_timeline(p_limit int default 20)`
+
+**Returns:** rows `id`, `building_id`, `building_name`, `building_slug`, `building_short_id`, `table_name`, `operation`, `created_at` — from **`building_audit_logs`** where **`user_id = auth.uid()`**, newest first (supersedes admin-only **`building_audit_logs`** `SELECT` RLS for this read path).
+
+**SECURITY DEFINER.** **`GRANT EXECUTE`** to **`authenticated`**.
+
+**Client:** `Embassy.tsx` (and `src/features/embassy/api/taskFeed.ts`) call these RPCs with TanStack Query.
+
+### Embassy leadership (Phase 4)
+
+**Access:** Metrics, activity, and member directory require **`is_admin()`**, **`is_chapter_leader(p_chapter_id)`**, or (Phase 5) **`is_national_president_of_local_chapter_parent(p_chapter_id)`** when **`p_chapter_id`** is a **local** chapter whose **`parent_chapter_id`** is the caller’s national chapter where they are **president** (read-only national oversight). Invite and membership updates require **`is_chapter_president(p_chapter_id)`** (enforced inside RPCs).
+
+### RPC: `get_chapter_metrics(p_chapter_id uuid, p_days int default 30)`
+
+**Returns:** one row — `total_edits`, `total_photos_added`, `total_building_visits` for `[period_start, period_end)` (UTC, `p_days` long); same three counts for the immediately preceding window of equal length (`prev_*`, `prev_period_*`). **Edits** = all **`building_audit_logs`** rows whose building is in chapter scope; **photos** = subset of **`buildings`** **`UPDATE`** logs where **`hero_image_url`** becomes non-empty from empty; **visits** = **`user_buildings`** rows with **`status = 'visited'`** and **`visited_at`** in the window, building in chapter scope.
+
+**SECURITY DEFINER.** **`GRANT EXECUTE`** to **`authenticated`**.
+
+### RPC: `get_chapter_ambassador_activity(p_chapter_id uuid, p_days int default 30)`
+
+**Returns:** one row per **`ambassador_memberships`** row for the chapter with **`status = 'active'`** — `user_id`, `username`, `avatar_url`, `role`, `edits_count`, `photos_added` (same definitions as metrics, filtered by member and window), `last_active_at` (max audit `created_at` in chapter scope, all time).
+
+**SECURITY DEFINER.** **`GRANT EXECUTE`** to **`authenticated`**.
+
+### RPC: `get_chapter_members_with_contact(p_chapter_id uuid)`
+
+**Returns:** one row per membership in the chapter (any status) — `membership_id`, `user_id`, `username`, `avatar_url`, `email` (from **`auth.users`**), `role`, `exco_responsibility`, `status`, `joined_at`, `invited_by`.
+
+**SECURITY DEFINER.** **`GRANT EXECUTE`** to **`authenticated`**.
+
+### RPC: `president_invite_ambassador_member(p_chapter_id uuid, p_user_id uuid, p_role text, p_exco_responsibility text default null)`
+
+**Returns:** new membership **`id`** (uuid). Validates president, **`p_role IN ('ambassador','exco')`**, ExCo responsibility when needed, chapter **`max_ambassadors`** for ambassador invites, target user has no existing membership. Inserts **`ambassador_memberships`** with **`status = 'active'`**, **`invited_by = auth.uid()`**.
+
+**SECURITY DEFINER.** **`GRANT EXECUTE`** to **`authenticated`**.
+
+### RPC: `president_update_chapter_membership(p_membership_id uuid, p_role text, p_exco_responsibility text, p_status text)`
+
+**Returns:** void. Validates president for the row’s chapter; blocks changing **own** **`role`**; updates **`role`**, **`exco_responsibility`**, **`status`**, and **`updated_by`**. Null or blank **`p_exco_responsibility`** while remaining ExCo keeps the existing responsibility.
+
+**SECURITY DEFINER.** **`GRANT EXECUTE`** to **`authenticated`**.
+
+**Client:** `Embassy.tsx` — chapter leaders see **Leadership** tab (`EmbassyLeadership.tsx`, `src/features/embassy/api/leadership.ts`); URL query **`tab=leadership`**. National chapter **presidents** also see **National overview** (`tab=national`, `EmbassyNationalOverview.tsx`, `get_national_chapter_overview`).
+
+### Phase 5 — National overview and admin coverage
+
+#### RPC: `get_national_chapter_overview(p_national_chapter_id uuid)`
+
+**Returns:** one row per **active** **local** child chapter (`parent_chapter_id = p_national_chapter_id`, `type = 'local'`, `status = 'active'`) — `chapter_id`, `chapter_name`, `locality_id`, `member_count` (active memberships), `president_name` (first active president’s `profiles.username`), `edits_last_30d`, `photos_last_30d` (same definitions as chapter metrics, UTC 30-day window), `last_activity_at` (max audit timestamp in chapter building scope).
+
+**SECURITY DEFINER.** Caller must be **`is_admin()`** or **`is_chapter_president(p_national_chapter_id)`** on a row with **`type = 'national'`**. **`GRANT EXECUTE`** to **`authenticated`**.
+
+#### RPC: `get_admin_ambassador_locality_coverage()`
+
+**Returns:** all **`localities`** ordered by **`buildings_count` DESC** — `locality_id`, `city`, `country`, `country_code`, `buildings_count`, optional first matching **`ambassador_chapters`** row where **`type = 'local'`** and **`locality_id`** matches (`chapter_id`, `chapter_name`, `chapter_status`), plus **`chapter_member_count`** (active memberships for that chapter, 0 when no chapter).
+
+**SECURITY DEFINER.** **`is_admin()`** only. **`GRANT EXECUTE`** to **`authenticated`**.
+
+#### RPC: `get_admin_ambassador_program_stats()`
+
+**Returns:** one row — `total_active_memberships`, `pending_applications` (`ambassador_applications.status = 'pending'`), `chapters_active` / `chapters_forming` / `chapters_inactive` (counts on **`ambassador_chapters`**), **`members_by_country`** (`jsonb` array of `{ country_code, active_count }` from active memberships joined to their chapter’s **`country_code`**).
+
+**SECURITY DEFINER.** **`is_admin()`** only. **`GRANT EXECUTE`** to **`authenticated`**.
+
+#### Helper (DB): `is_national_president_of_local_chapter_parent(p_chapter_id uuid)`
+
+**Returns:** whether **`auth.uid()`** is an **active** **president** of the **national** chapter that is **`parent_chapter_id`** of **`p_chapter_id`** (local child). Used by leadership read RPCs only. **`SECURITY DEFINER`**; **`GRANT EXECUTE`** to **`authenticated`**.
+
+### Helper functions (DB)
+
+- `get_user_ambassador_membership()` — active membership row for `auth.uid()`
+- `is_ambassador()` — whether `auth.uid()` has any **active** membership (task RPCs and leadership checks; unchanged)
+- `has_embassy_portal_access()` — **active** or **`pending_review`** membership (Embassy route guard)
+- `is_chapter_leader(p_chapter_id uuid)` — president or ExCo for that chapter
+- `is_chapter_president(p_chapter_id uuid)` — president for that chapter  
+
+All **`SECURITY DEFINER`** with `search_path = public`; **`GRANT EXECUTE`** to `authenticated` (badge RPC additionally to `anon`).
+
+### App API / admin UI
+
+- **List / create:** `src/features/admin/pages/AmbassadorChapters.tsx` — table + “New chapter” dialog; Zod `ambassadorChapterCreateSchema` in `src/lib/validations/ambassador.ts`.
+- **Detail / members:** `src/features/admin/pages/AmbassadorChapterDetail.tsx` — edit chapter fields, list members, add member (username search on `profiles`), edit role/status, remove member.
+- **Routes:** `/admin/ambassadors`, `/admin/ambassadors/applications`, `/admin/ambassadors/coverage`, `/admin/ambassadors/:chapterId` in `app/routes.ts`; sidebar **Ambassadors** and **Ambassador coverage** in `AdminSidebar.tsx`.
+- **Public apply + Embassy:** `/become-ambassador` (`BecomeAmbassador.tsx`), `/embassy` (`Embassy.tsx` + `AmbassadorGuard.tsx` via **`has_embassy_portal_access`**).
+
+**Migrations:** `supabase/migrations/20270870000000_ambassador_foundation.sql` then **`20270870100000_ambassador_applications.sql`** then **`20270870200000_ambassador_task_feed_rpcs.sql`** then **`20270870300000_ambassador_leadership_rpcs.sql`** then **`20270870400000_ambassador_phase5_national_overview_admin_coverage.sql`** then **`20270870500000_ambassador_phase6_location_review.sql`** — apply in Supabase SQL Editor in order (then run `npm run gen-types` if the hosted project should match committed `types.ts`).
+
+---
+
 ## Auth Domain — profiles, allowed_emails
 
 ⚠️  STUB ONLY — The auth domain is documented here for reference only. `profiles` is auto-created via a `handle_new_user` database trigger on `auth.users` insertion. `allowed_emails` gates sign-up eligibility. Full schema follows below as these tables are already in production and are referenced by every other domain.

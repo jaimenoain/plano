@@ -39,6 +39,19 @@ export default [
     route("/admin", "features/admin/pages/Dashboard.tsx"),
     route("/admin/buildings", "features/admin/pages/Buildings.tsx"),
     route("/admin/users", "features/admin/pages/Users.tsx"),
+    route("/admin/ambassadors", "features/admin/pages/AmbassadorChapters.tsx"),
+    route(
+      "/admin/ambassadors/applications",
+      "features/admin/pages/AmbassadorApplications.tsx",
+    ),
+    route(
+      "/admin/ambassadors/coverage",
+      "features/admin/pages/AmbassadorCoverage.tsx",
+    ),
+    route(
+      "/admin/ambassadors/:chapterId",
+      "features/admin/pages/AmbassadorChapterDetail.tsx",
+    ),
     route("/admin/moderation", "features/admin/pages/Moderation.tsx"),
     route("/admin/images", "features/admin/pages/ImageWall.tsx"),
     route("/admin/photos", "features/admin/pages/PhotoAnalytics.tsx"),
@@ -60,6 +73,8 @@ export default [
     route("/search", "features/search/SearchPage.tsx"),
     route("/post", "pages/Post.tsx"),
     route("/notifications", "features/notifications/pages/Notifications.tsx"),
+    route("/become-ambassador", "features/ambassadors/pages/BecomeAmbassador.tsx"),
+    route("/embassy", "features/embassy/pages/Embassy.tsx"),
     route("/add-building", "features/buildings/pages/AddBuilding.tsx"),
     route("/connect", "features/connect/pages/Connect.tsx"),
     route("/events/new", "features/events/pages/SubmitEvent.tsx", {
