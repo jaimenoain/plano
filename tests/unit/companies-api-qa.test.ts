@@ -218,7 +218,10 @@ describe("QA 2.2 — companies API (mocked supabase client)", () => {
     });
 
     const out = await getCompanyPortfolio("00000000-0000-4000-8000-000000000000");
-    expect(out).toEqual({ primary: [], contributor: [], ancillary: [] });
+    expect(out).toEqual({
+      byTier: { primary: [], contributor: [], ancillary: [] },
+      orderedFlat: [],
+    });
   });
 
   it("getCompanyPortfolio with roleFilter returns only matching role credits", async () => {
@@ -256,6 +259,7 @@ describe("QA 2.2 — companies API (mocked supabase client)", () => {
       flagged_by_user_id: null,
       added_by_user_id: null,
       display_order: 0,
+      company_portfolio_rank: null,
       created_at: "t",
       updated_at: "t",
       person: null,
@@ -303,11 +307,12 @@ describe("QA 2.2 — companies API (mocked supabase client)", () => {
     });
 
     const all = await getCompanyPortfolio(companySummary.id);
-    expect(all.primary).toHaveLength(2);
+    expect(all.byTier.primary).toHaveLength(2);
+    expect(all.orderedFlat).toHaveLength(2);
 
     const filtered = await getCompanyPortfolio(companySummary.id, "structural_engineer");
-    expect(filtered.primary).toHaveLength(1);
-    expect(filtered.primary[0]!.credit.role).toBe("structural_engineer");
+    expect(filtered.byTier.primary).toHaveLength(1);
+    expect(filtered.byTier.primary[0]!.credit.role).toBe("structural_engineer");
   });
 
   it("getCompanyStewards returns empty array when RLS yields no rows", async () => {

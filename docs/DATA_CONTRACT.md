@@ -3158,7 +3158,7 @@ Browser Supabase client wrappers live in `src/features/credits/api/companies.ts`
 | `searchCompanies(query)` | `CompanySummary[]` (`id`, `name`, `slug`, `claimStatus`, `country`, `logoUrl`, `creditCount` — visible `building_credits` count per company for picker disambiguation). |
 | `createCompany(input)` | Zod-validated insert; slug via `slugifyCompanyName` (same rules as `slugify_person_name`) + numeric suffix on collision. |
 | `updateCompany(id, input)` | Zod partial update; RLS (steward / admin). Returns `null` if row absent after update. |
-| `getCompanyPortfolio(companyId, roleFilter?)` | `CompanyPortfolioByTier` — credits with `building` + `person` joins; optional `.eq('role', roleFilter)`; ordered per tier then `display_order` / `is_lead`. |
+| `getCompanyPortfolio(companyId, roleFilter?)` | `CompanyPortfolioPayload`: `byTier` (`CompanyPortfolioByTier`) plus `orderedFlat` — same credits with `building` + `person` joins; optional `.eq('role', roleFilter)`; `orderedFlat` sorts by `company_portfolio_rank` (non-null first, ascending), then `credit_tier`, `display_order`, `is_lead`. |
 | `getCompanyStewards(companyId)` | `CompanySteward[]`; RLS yields empty for users who are not admin, a steward of that company, or the row’s `user_id`. |
 | `getCompanyStewardsWithProfiles(companyId)` | `CompanyStewardWithProfile[]` — same as above plus `profiles.username` / `avatar_url` for display. |
 | `removeCompanySteward(stewardRowId)` | `DELETE` on `company_stewards`; RLS per owner/self rules above. |
@@ -3181,7 +3181,7 @@ Browser Supabase client wrappers live in `src/features/credits/api/companies.ts`
 | `submitCompanyClaimDispute(companyId, { reason, evidenceUrl? })` | Zod-validated; `insert` on `company_claim_disputes` + `notify-admin-dispute`. |
 | `SubmitCompanyClaimDisputeSchema` | Exported Zod object for reason (required) and optional evidence URL. |
 
-DTOs: `CompanyCreditWithBuilding`, `CompanyWithCredits`, `CompanyPortfolioItem`, `CompanyPortfolioByTier`, `CompanyStewardWithProfile`. `slugifyCompanyName` mirrors SQL `public.slugify_person_name` (used for company slugs in migrations).
+DTOs: `CompanyCreditWithBuilding`, `CompanyWithCredits`, `CompanyPortfolioItem`, `CompanyPortfolioByTier`, `CompanyPortfolioPayload`, `CompanyStewardWithProfile`. `slugifyCompanyName` mirrors SQL `public.slugify_person_name` (used for company slugs in migrations).
 
 ---
 
@@ -3273,6 +3273,7 @@ CREATE TABLE public.building_credits (
   flagged_by_user_id uuid REFERENCES public.profiles (id) ON DELETE SET NULL,
   added_by_user_id uuid REFERENCES public.profiles (id) ON DELETE SET NULL,
   display_order integer NOT NULL,
+  company_portfolio_rank integer NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
 
@@ -3282,7 +3283,9 @@ CREATE TABLE public.building_credits (
 );
 ```
 
-**Indexes:** `building_id`, `person_id`, `company_id`, `status`. Year check constraints mirror `person_company_affiliations` (reasonable range, `year_to >= year_from` when both set).
+**Indexes:** `building_id`, `person_id`, `company_id`, `status`. Partial index **`building_credits_company_portfolio_rank_idx`** on `(company_id, company_portfolio_rank)` where both are non-null (migration **`20270864000000_building_credits_company_portfolio_rank.sql`**). Year check constraints mirror `person_company_affiliations` (reasonable range, `year_to >= year_from` when both set).
+
+**`company_portfolio_rank`:** Optional ordering for the signed-in company steward portfolio (`/company-portfolio`). `NULL` means “use legacy sort” within the tier (`display_order`, `is_lead`). Stewards may `UPDATE` this column under existing `building_credits_update` RLS. Application DTO: `companyPortfolioRank` on `BuildingCredit` / `BuildingCreditWithEntities`.
 
 **Migration notes (Phase 1 backfill):** Inserts skipped source rows that did not resolve to a **`people`** (individual) or **`companies`** (studio) row after Tasks 1.1–1.2. Counts were reconciled at cutover; the pre-v2 junction table was removed in migration **`20270837000000_drop_legacy_architect_tables.sql`**.
 
@@ -3321,7 +3324,8 @@ Browser Supabase client wrappers live in `src/features/credits/api/credits.ts`. 
 | Function | Behaviour |
 |----------|-----------|
 | `getBuildingCredits(buildingId)` | All credits for the building joined with `people` / `companies` summaries; RLS omits `hidden` for non-admins. Sorted by `credit_tier`, `display_order`, `is_lead` descending. |
-| `addBuildingCredit(input)` | Zod-validated insert; requires at least one of `personId`, `companyId`; `added_by_user_id` from `auth.getUser()` (not client-supplied). `contribution_notes` max **500** characters; `role = other` requires non-empty `role_custom`. |
+| `addBuildingCredit(input)` | Zod-validated insert; requires at least one of `personId`, `companyId`; `added_by_user_id` from `auth.getUser()` (not client-supplied). `contribution_notes` max **500** characters; `role = other` requires non-empty `role_custom`. When `companyId` is set, sets `company_portfolio_rank` to the next integer after the current max for that company (or `0`). |
+| `updateBuildingCredit(creditId, input)` | Zod partial update of `role`, `roleCustom`, `creditTier`, `isLead`, `contributionNotes`, `yearFrom`, `yearTo`, `projectUrl`, `companyPortfolioRank` (maps to `company_portfolio_rank`). Does not change `building_id`, `person_id`, or `company_id`. RLS as for other credit updates. |
 | `flagCredit(creditId, reason, notes)` | Calls RPC `flag_building_credit` (SECURITY DEFINER). Sets `status = flagged`, `flagged_from_status` to the prior `active` / `verified` value, `flag_reason`, `flag_notes`, `flagged_at`; `flagged_by_user_id` is `auth.uid()` when signed in, else `NULL`. Only transitions `active` / `verified` → `flagged`. Refetches the row after RPC success. |
 | `updateCreditStatus(creditId, { status })` | Status-only patch; RLS applies (admin / claim owner / steward per policies). |
 | `getFlaggedCreditsForAdmin()` | Admin queue: `status = flagged`, ordered by `flagged_at` descending. Select joins `people` / `companies` (incl. `claim_status`), `buildings` (`id`, `name`, `slug`, `short_id`), `profiles` for `added_by_user_id` → `username`. Returns `FlaggedCreditModerationItem[]`. |

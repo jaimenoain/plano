@@ -146,6 +146,8 @@ export interface BuildingCredit {
   flaggedByUserId: string | null;
   addedByUserId: string | null;
   displayOrder: number;
+  /** When set, company steward portfolio uses this for global ordering (see `getCompanyPortfolio` `orderedFlat`). */
+  companyPortfolioRank: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -224,4 +226,11 @@ export interface CompanyPortfolioByTier {
   primary: CompanyPortfolioItem[];
   contributor: CompanyPortfolioItem[];
   ancillary: CompanyPortfolioItem[];
+}
+
+/** `getCompanyPortfolio` result: tier buckets plus a flat list sorted for the steward dashboard. */
+export interface CompanyPortfolioPayload {
+  byTier: CompanyPortfolioByTier;
+  /** Explicit `companyPortfolioRank` rows first (ascending), then unranked rows by tier and `displayOrder`. */
+  orderedFlat: CompanyPortfolioItem[];
 }

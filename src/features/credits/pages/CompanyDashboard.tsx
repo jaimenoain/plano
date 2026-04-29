@@ -14,9 +14,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CompanyCreditCard } from "@/features/credits/components/CompanyCreditCard";
+import { CompanyPortfolioManageSection } from "@/features/credits/components/CompanyPortfolioManageSection";
 import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
-import type { CompanyCreditWithBuilding, CompanyPortfolioItem, CreditRole } from "@/features/credits/types";
+import type { CreditRole } from "@/features/credits/types";
 import {
   approveCompanyStewardRequestById,
   getCompanyPortfolio,
@@ -32,32 +32,6 @@ import { toast } from "sonner";
 
 const ALL_ROLES = "__all__" as const;
 type RoleFilter = typeof ALL_ROLES | CreditRole;
-
-function groupByRole(credits: CompanyCreditWithBuilding[]): Map<CreditRole, CompanyCreditWithBuilding[]> {
-  const map = new Map<CreditRole, CompanyCreditWithBuilding[]>();
-  for (const c of credits) {
-    const list = map.get(c.role) ?? [];
-    list.push(c);
-    map.set(c.role, list);
-  }
-  const roles = [...map.keys()].sort((a, b) =>
-    formatCreditRoleLabel(a, null).localeCompare(formatCreditRoleLabel(b, null))
-  );
-  const ordered = new Map<CreditRole, CompanyCreditWithBuilding[]>();
-  for (const r of roles) {
-    const items = map.get(r);
-    if (items) ordered.set(r, items);
-  }
-  return ordered;
-}
-
-function portfolioItemToCredit(row: CompanyPortfolioItem): CompanyCreditWithBuilding {
-  return { ...row.credit, building: row.building };
-}
-
-function flattenPortfolio(p: Awaited<ReturnType<typeof getCompanyPortfolio>>): CompanyPortfolioItem[] {
-  return [...p.primary, ...p.contributor, ...p.ancillary];
-}
 
 function pickCompany(
   list: StewardCompanyNavItem[],
@@ -102,12 +76,14 @@ export default function CompanyDashboard() {
 
   const isOwner = selected?.stewardRole === "owner";
 
+  const portfolioQueryKey = useMemo(
+    () =>
+      ["companyPortfolioDashboard", selected?.companyId ?? "", roleFilter === ALL_ROLES ? "all" : roleFilter] as const,
+    [selected?.companyId, roleFilter],
+  );
+
   const portfolioQuery = useQuery({
-    queryKey: [
-      "companyPortfolioDashboard",
-      selected?.companyId ?? "",
-      roleFilter === ALL_ROLES ? "all" : roleFilter,
-    ],
+    queryKey: portfolioQueryKey,
     queryFn: () =>
       getCompanyPortfolio(selected!.companyId, roleFilter === ALL_ROLES ? undefined : roleFilter),
     enabled: Boolean(selected?.companyId),
@@ -121,23 +97,19 @@ export default function CompanyDashboard() {
     staleTime: 30_000,
   });
 
-  const flatCredits = useMemo(() => {
+  const orderedItems = useMemo(() => {
     const p = portfolioQuery.data;
     if (!p) return [];
-    return flattenPortfolio(p).map(portfolioItemToCredit);
+    return p.orderedFlat;
   }, [portfolioQuery.data]);
 
   const roleOptions = useMemo(() => {
     const set = new Set<CreditRole>();
-    const p = portfolioQuery.data;
-    if (!p) return [];
-    for (const item of flattenPortfolio(p)) {
+    for (const item of orderedItems) {
       set.add(item.credit.role);
     }
     return [...set].sort((a, b) => formatCreditRoleLabel(a, null).localeCompare(formatCreditRoleLabel(b, null)));
-  }, [portfolioQuery.data]);
-
-  const byRole = useMemo(() => groupByRole(flatCredits), [flatCredits]);
+  }, [orderedItems]);
 
   const syncCompanyParam = useCallback(
     (slug: string) => {
@@ -254,7 +226,8 @@ export default function CompanyDashboard() {
         <header className="mb-8 space-y-4">
           <h1 className="text-3xl font-bold tracking-tight text-text-primary md:text-4xl">Company portfolio</h1>
           <p className="text-sm text-text-secondary md:text-base">
-            Buildings credited to your company on Plano.{" "}
+            Curate how your studio appears: edit credits, add projects from the catalogue, list new buildings, and set
+            presentation order.{" "}
             <Button variant="link" className="h-auto p-0 text-sm font-medium md:text-base" asChild>
               <Link to={`/company/${selected.slug}?edit=1`}>Manage company page</Link>
             </Button>
@@ -345,7 +318,7 @@ export default function CompanyDashboard() {
         ) : null}
 
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">Credits by role</h2>
+          <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">Portfolio</h2>
           <div className="w-full sm:w-56">
             <Select
               value={roleFilter}
@@ -373,23 +346,18 @@ export default function CompanyDashboard() {
           <Skeleton className="h-64 w-full" />
         ) : portfolioQuery.isError ? (
           <p className="text-sm text-text-secondary">Could not load credits. Try again later.</p>
-        ) : flatCredits.length === 0 ? (
-          <p className="text-sm text-text-secondary">No credits for this company yet.</p>
+        ) : orderedItems.length === 0 ? (
+          <CompanyPortfolioManageSection
+            companyId={selected.companyId}
+            items={[]}
+            queryKeyPrefix={portfolioQueryKey}
+          />
         ) : (
-          <div className="space-y-10">
-            {[...byRole.entries()].map(([role, credits]) => (
-              <div key={role}>
-                <h3 className="mb-4 text-sm font-medium text-text-primary">
-                  {formatCreditRoleLabel(role, null)}
-                </h3>
-                <div>
-                  {credits.map((c) => (
-                    <CompanyCreditCard key={c.id} credit={c} />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+          <CompanyPortfolioManageSection
+            companyId={selected.companyId}
+            items={orderedItems}
+            queryKeyPrefix={portfolioQueryKey}
+          />
         )}
       </div>
     </AppLayout>

@@ -226,6 +226,7 @@ type CreditRow = {
   flagged_by_user_id: string | null;
   added_by_user_id: string | null;
   display_order: number;
+  company_portfolio_rank?: number | null;
   created_at: string;
   updated_at: string;
   company: CompanyEmbed;
@@ -295,6 +296,7 @@ function mapCreditRow(
     flaggedByUserId: row.flagged_by_user_id,
     addedByUserId: row.added_by_user_id,
     displayOrder: row.display_order,
+    companyPortfolioRank: row.company_portfolio_rank ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     person: personSummary,
@@ -308,12 +310,18 @@ const TIER_SORT: Record<CreditTier, number> = {
   ancillary: 2,
 };
 
-function sortCreditsForPerson<T extends { creditTier: CreditTier; displayOrder: number; isLead: boolean }>(
-  rows: T[]
-): T[] {
+function sortCreditsForPerson<
+  T extends { creditTier: CreditTier; companyPortfolioRank: number | null; displayOrder: number; isLead: boolean },
+>(rows: T[]): T[] {
   return [...rows].sort((a, b) => {
     const td = TIER_SORT[a.creditTier] - TIER_SORT[b.creditTier];
     if (td !== 0) return td;
+    const ra = a.companyPortfolioRank;
+    const rb = b.companyPortfolioRank;
+    const aRanked = ra != null;
+    const bRanked = rb != null;
+    if (aRanked && bRanked && ra !== rb) return ra - rb;
+    if (aRanked !== bRanked) return aRanked ? -1 : 1;
     if (a.displayOrder !== b.displayOrder) return a.displayOrder - b.displayOrder;
     return (b.isLead ? 1 : 0) - (a.isLead ? 1 : 0);
   });
@@ -325,6 +333,12 @@ function sortCreditRows(rows: CreditRow[]): CreditRow[] {
     const tb = b.credit_tier as CreditTier;
     const td = TIER_SORT[ta] - TIER_SORT[tb];
     if (td !== 0) return td;
+    const ra = a.company_portfolio_rank;
+    const rb = b.company_portfolio_rank;
+    const aRanked = ra != null;
+    const bRanked = rb != null;
+    if (aRanked && bRanked && ra !== rb) return ra - rb;
+    if (aRanked !== bRanked) return aRanked ? -1 : 1;
     if (a.display_order !== b.display_order) return a.display_order - b.display_order;
     return (b.is_lead ? 1 : 0) - (a.is_lead ? 1 : 0);
   });

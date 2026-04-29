@@ -5,7 +5,12 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { CompanyCreditWithBuilding, CompanyPortfolioItem, CreditRole } from "@/features/credits/types";
+import type {
+  CompanyCreditWithBuilding,
+  CompanyPortfolioItem,
+  CompanyPortfolioPayload,
+  CreditRole,
+} from "@/features/credits/types";
 import CompanyDashboard from "./CompanyDashboard";
 
 vi.mock("@/utils/image", () => ({
@@ -32,7 +37,7 @@ const mocks = vi.hoisted(() => ({
     slug: string;
     stewardRole: "owner" | "steward";
   }[],
-  portfolio: {
+  portfolioByTier: {
     primary: [] as CompanyPortfolioItem[],
     contributor: [] as CompanyPortfolioItem[],
     ancillary: [] as CompanyPortfolioItem[],
@@ -125,7 +130,8 @@ function baseCredit(
     flaggedFromStatus: null,
     flaggedByUserId: null,
     addedByUserId: null,
-    displayOrder: 0,
+    displayOrder: overrides.displayOrder ?? 0,
+    companyPortfolioRank: overrides.companyPortfolioRank ?? null,
     createdAt: "t",
     updatedAt: "t",
     person: overrides.person ?? null,
@@ -140,6 +146,11 @@ function mkItem(credit: CompanyCreditWithBuilding): CompanyPortfolioItem {
   return { credit: rest as CompanyPortfolioItem["credit"], building };
 }
 
+function wrapPortfolioPayload(byTier: CompanyPortfolioPayload["byTier"]): CompanyPortfolioPayload {
+  const orderedFlat = [...byTier.primary, ...byTier.contributor, ...byTier.ancillary];
+  return { byTier, orderedFlat };
+}
+
 describe("CompanyDashboard (QA 9.2)", () => {
   let queryClient: QueryClient;
 
@@ -152,19 +163,20 @@ describe("CompanyDashboard (QA 9.2)", () => {
     mocks.stewardList = [
       { companyId: "co-1", name: "Acme Co", slug: "acme-co", stewardRole: "owner" },
     ];
-    mocks.portfolio = { primary: [], contributor: [], ancillary: [] };
+    mocks.portfolioByTier = { primary: [], contributor: [], ancillary: [] };
     mocks.pending = [];
     mocks.getMyStewardCompaniesForNav.mockImplementation(() => Promise.resolve(mocks.stewardList));
     mocks.getCompanyPortfolio.mockImplementation(async (_companyId: string, roleFilter?: CreditRole) => {
+      const tier = mocks.portfolioByTier;
       if (!roleFilter) {
-        return mocks.portfolio;
+        return wrapPortfolioPayload(tier);
       }
       const filterItems = (items: CompanyPortfolioItem[]) => items.filter((i) => i.credit.role === roleFilter);
-      return {
-        primary: filterItems(mocks.portfolio.primary),
-        contributor: filterItems(mocks.portfolio.contributor),
-        ancillary: filterItems(mocks.portfolio.ancillary),
-      };
+      return wrapPortfolioPayload({
+        primary: filterItems(tier.primary),
+        contributor: filterItems(tier.contributor),
+        ancillary: filterItems(tier.ancillary),
+      });
     });
     mocks.listPendingStewardRequestsForCompany.mockImplementation(() => Promise.resolve(mocks.pending));
     mocks.approveCompanyStewardRequestById.mockResolvedValue({
@@ -198,13 +210,14 @@ describe("CompanyDashboard (QA 9.2)", () => {
     );
   }
 
-  it("groups credits under role headings and shows person link on cards when present", async () => {
-    mocks.portfolio = {
+  it("lists portfolio credits with person link on cards when present", async () => {
+    mocks.portfolioByTier = {
       primary: [
         mkItem(
           baseCredit({
             id: "c1",
             role: "structural_engineer",
+            displayOrder: 1,
             buildingId: "b1",
             building: baseBuilding("b1", "Bridge Hall"),
             person: { id: "p1", name: "Sam Person", slug: "sam-person" },
@@ -214,6 +227,7 @@ describe("CompanyDashboard (QA 9.2)", () => {
           baseCredit({
             id: "c2",
             role: "design_architect",
+            displayOrder: 0,
             buildingId: "b2",
             building: baseBuilding("b2", "Glass Tower"),
           }),
@@ -225,11 +239,11 @@ describe("CompanyDashboard (QA 9.2)", () => {
 
     renderDashboard();
 
-    expect(await screen.findByRole("heading", { name: /credits by role/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Design Architect" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Structural Engineer" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /^portfolio$/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Glass Tower" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Bridge Hall" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Sam Person" })).toHaveAttribute("href", "/person/sam-person");
+    expect(screen.getByRole("button", { name: /add credit/i })).toBeInTheDocument();
   });
 
   it("shows pending access requests with approve/decline for owners only", async () => {
@@ -244,7 +258,7 @@ describe("CompanyDashboard (QA 9.2)", () => {
         requesterAvatarUrl: null,
       },
     ];
-    mocks.portfolio = {
+    mocks.portfolioByTier = {
       primary: [mkItem(baseCredit({ id: "c1", role: "design_architect" }))],
       contributor: [],
       ancillary: [],
@@ -279,21 +293,21 @@ describe("CompanyDashboard (QA 9.2)", () => {
         requesterAvatarUrl: null,
       },
     ];
-    mocks.portfolio = {
+    mocks.portfolioByTier = {
       primary: [mkItem(baseCredit({ id: "c1", role: "design_architect" }))],
       contributor: [],
       ancillary: [],
     };
 
     renderDashboard();
-    await screen.findByRole("heading", { name: /credits by role/i });
+    await screen.findByRole("heading", { name: /^portfolio$/i });
 
     expect(screen.queryByRole("heading", { name: /pending access requests/i })).toBeNull();
     expect(mocks.listPendingStewardRequestsForCompany).not.toHaveBeenCalled();
   });
 
   it("refetches portfolio with role filter when user picks a role", async () => {
-    mocks.portfolio = {
+    mocks.portfolioByTier = {
       primary: [
         mkItem(baseCredit({ id: "c1", role: "design_architect", buildingId: "b1", building: baseBuilding("b1", "Only Design") })),
         mkItem(
@@ -334,8 +348,7 @@ describe("CompanyDashboard (QA 9.2)", () => {
     ];
     mocks.getCompanyPortfolio.mockImplementation(async (companyId: string) => {
       const name = companyId === "co-a" ? "Alpha Building" : "Beta Building";
-      const slug = companyId === "co-a" ? "alpha-building" : "beta-building";
-      return {
+      return wrapPortfolioPayload({
         primary: [
           mkItem(
             baseCredit({
@@ -354,7 +367,7 @@ describe("CompanyDashboard (QA 9.2)", () => {
         ],
         contributor: [],
         ancillary: [],
-      };
+      });
     });
 
     const user = userEvent.setup();

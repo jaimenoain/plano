@@ -10,6 +10,7 @@ import type {
   CompanyCreditWithBuilding,
   CompanyPortfolioByTier,
   CompanyPortfolioItem,
+  CompanyPortfolioPayload,
   CompanySteward,
   CompanyStewardRole,
   CompanyStewardWithProfile,
@@ -113,6 +114,7 @@ type CreditRow = {
   flagged_by_user_id: string | null;
   added_by_user_id: string | null;
   display_order: number;
+  company_portfolio_rank?: number | null;
   created_at: string;
   updated_at: string;
   person: PersonEmbed;
@@ -188,6 +190,7 @@ function mapCreditRow(row: CreditRow): BuildingCreditWithEntities {
     flaggedByUserId: row.flagged_by_user_id,
     addedByUserId: row.added_by_user_id,
     displayOrder: row.display_order,
+    companyPortfolioRank: row.company_portfolio_rank ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     person: row.person,
@@ -201,12 +204,18 @@ const TIER_SORT: Record<CreditTier, number> = {
   ancillary: 2,
 };
 
-function sortCreditsForCompany<T extends { creditTier: CreditTier; displayOrder: number; isLead: boolean }>(
-  rows: T[]
-): T[] {
+function sortCreditsForCompany<
+  T extends { creditTier: CreditTier; companyPortfolioRank: number | null; displayOrder: number; isLead: boolean },
+>(rows: T[]): T[] {
   return [...rows].sort((a, b) => {
     const td = TIER_SORT[a.creditTier] - TIER_SORT[b.creditTier];
     if (td !== 0) return td;
+    const ra = a.companyPortfolioRank;
+    const rb = b.companyPortfolioRank;
+    const aRanked = ra != null;
+    const bRanked = rb != null;
+    if (aRanked && bRanked && ra !== rb) return ra - rb;
+    if (aRanked !== bRanked) return aRanked ? -1 : 1;
     if (a.displayOrder !== b.displayOrder) return a.displayOrder - b.displayOrder;
     return (b.isLead ? 1 : 0) - (a.isLead ? 1 : 0);
   });
@@ -218,8 +227,29 @@ function sortCreditRows(rows: CreditRow[]): CreditRow[] {
     const tb = b.credit_tier as CreditTier;
     const td = TIER_SORT[ta] - TIER_SORT[tb];
     if (td !== 0) return td;
+    const ra = a.company_portfolio_rank;
+    const rb = b.company_portfolio_rank;
+    const aRanked = ra != null;
+    const bRanked = rb != null;
+    if (aRanked && bRanked && ra !== rb) return ra - rb;
+    if (aRanked !== bRanked) return aRanked ? -1 : 1;
     if (a.display_order !== b.display_order) return a.display_order - b.display_order;
     return (b.is_lead ? 1 : 0) - (a.is_lead ? 1 : 0);
+  });
+}
+
+function sortCompanyPortfolioOrderedFlat(items: CompanyPortfolioItem[]): CompanyPortfolioItem[] {
+  return [...items].sort((a, b) => {
+    const ra = a.credit.companyPortfolioRank;
+    const rb = b.credit.companyPortfolioRank;
+    const aRanked = ra != null;
+    const bRanked = rb != null;
+    if (aRanked && bRanked && ra !== rb) return ra - rb;
+    if (aRanked !== bRanked) return aRanked ? -1 : 1;
+    const tda = TIER_SORT[a.credit.creditTier] - TIER_SORT[b.credit.creditTier];
+    if (tda !== 0) return tda;
+    if (a.credit.displayOrder !== b.credit.displayOrder) return a.credit.displayOrder - b.credit.displayOrder;
+    return (b.credit.isLead ? 1 : 0) - (a.credit.isLead ? 1 : 0);
   });
 }
 
@@ -485,14 +515,16 @@ export async function updateCompany(id: string, input: UpdateCompanyInput): Prom
 }
 
 /**
- * All credits for the company with building summaries, grouped by `credit_tier`.
+ * All credits for the company with building summaries, grouped by `credit_tier`,
+ * plus `orderedFlat` for the steward dashboard (portfolio rank, then tier, then display order).
  * When `roleFilter` is set, only credits with that `role` are included.
  */
 export async function getCompanyPortfolio(
   companyId: string,
   roleFilter?: CreditRole
-): Promise<CompanyPortfolioByTier> {
-  const empty: CompanyPortfolioByTier = { primary: [], contributor: [], ancillary: [] };
+): Promise<CompanyPortfolioPayload> {
+  const emptyByTier: CompanyPortfolioByTier = { primary: [], contributor: [], ancillary: [] };
+  const empty: CompanyPortfolioPayload = { byTier: emptyByTier, orderedFlat: [] };
 
   const { data: companyRow, error: coErr } = await supabase
     .from("companies")
@@ -519,6 +551,7 @@ export async function getCompanyPortfolio(
   if (crErr) throw crErr;
 
   const sorted = sortCreditRows((creditRows || []) as CreditRow[]);
+  const flatItems: CompanyPortfolioItem[] = [];
 
   for (const row of sorted) {
     const building = mapBuildingSummary(row.building);
@@ -528,13 +561,17 @@ export async function getCompanyPortfolio(
     const credit = { ...baseCredit, company: baseCredit.company ?? companySummary };
 
     const item: CompanyPortfolioItem = { credit, building };
+    flatItems.push(item);
     const tier = credit.creditTier;
-    if (tier === "primary") empty.primary.push(item);
-    else if (tier === "contributor") empty.contributor.push(item);
-    else empty.ancillary.push(item);
+    if (tier === "primary") emptyByTier.primary.push(item);
+    else if (tier === "contributor") emptyByTier.contributor.push(item);
+    else emptyByTier.ancillary.push(item);
   }
 
-  return empty;
+  return {
+    byTier: emptyByTier,
+    orderedFlat: sortCompanyPortfolioOrderedFlat(flatItems),
+  };
 }
 
 /**

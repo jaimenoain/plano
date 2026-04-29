@@ -299,6 +299,7 @@ export type Database = {
           added_by_user_id: string | null
           building_id: string
           company_id: string | null
+          company_portfolio_rank: number | null
           contribution_notes: string | null
           created_at: string
           credit_tier: Database["public"]["Enums"]["credit_tier_enum"]
@@ -327,6 +328,7 @@ export type Database = {
           added_by_user_id?: string | null
           building_id: string
           company_id?: string | null
+          company_portfolio_rank?: number | null
           contribution_notes?: string | null
           created_at?: string
           credit_tier?: Database["public"]["Enums"]["credit_tier_enum"]
@@ -355,6 +357,7 @@ export type Database = {
           added_by_user_id?: string | null
           building_id?: string
           company_id?: string | null
+          company_portfolio_rank?: number | null
           contribution_notes?: string | null
           created_at?: string
           credit_tier?: Database["public"]["Enums"]["credit_tier_enum"]

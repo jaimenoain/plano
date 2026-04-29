@@ -79,6 +79,30 @@ const AddBuildingCreditSchema = z
 
 export type AddBuildingCreditInput = z.infer<typeof AddBuildingCreditSchema>;
 
+const UpdateBuildingCreditSchema = z
+  .object({
+    role: z.enum(CREDIT_ROLES).optional(),
+    roleCustom: z.string().max(500).nullable().optional(),
+    creditTier: z.enum(CREDIT_TIERS).optional(),
+    isLead: z.boolean().optional(),
+    contributionNotes: z.string().max(500).nullable().optional(),
+    yearFrom: z.number().int().min(1000).max(2100).nullable().optional(),
+    yearTo: z.number().int().min(1000).max(2100).nullable().optional(),
+    projectUrl: z.string().max(2000).nullable().optional(),
+    companyPortfolioRank: z.number().int().min(0).max(1_000_000).nullable().optional(),
+  })
+  .strict()
+  .refine((d) => Object.keys(d).length > 0, { message: "No fields to update", path: ["role"] })
+  .refine(
+    (d) =>
+      d.role === undefined ||
+      d.role !== "other" ||
+      (typeof d.roleCustom === "string" && d.roleCustom.trim().length > 0),
+    { message: "Describe the role when selecting Other", path: ["roleCustom"] },
+  );
+
+export type UpdateBuildingCreditInput = z.infer<typeof UpdateBuildingCreditSchema>;
+
 const UpdateCreditStatusSchema = z.object({
   status: z.enum(CREDIT_STATUSES),
 });
@@ -109,6 +133,7 @@ type CreditRow = {
   flagged_by_user_id: string | null;
   added_by_user_id: string | null;
   display_order: number;
+  company_portfolio_rank?: number | null;
   created_at: string;
   updated_at: string;
   person: PersonEmbed;
@@ -179,6 +204,7 @@ function mapCreditRow(row: CreditRow): BuildingCreditWithEntities {
     flaggedByUserId: row.flagged_by_user_id,
     addedByUserId: row.added_by_user_id,
     displayOrder: row.display_order,
+    companyPortfolioRank: row.company_portfolio_rank ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     person: row.person
@@ -349,6 +375,21 @@ export async function addBuildingCredit(input: AddBuildingCreditInput): Promise<
   if (orderErr) throw orderErr;
   const displayOrder = (topRow?.display_order != null ? topRow.display_order : -1) + 1;
 
+  let companyPortfolioRank: number | null = null;
+  if (data.companyId) {
+    const { data: maxRankRow, error: rankErr } = await supabase
+      .from("building_credits")
+      .select("company_portfolio_rank")
+      .eq("company_id", data.companyId)
+      .not("company_portfolio_rank", "is", null)
+      .order("company_portfolio_rank", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (rankErr) throw rankErr;
+    companyPortfolioRank =
+      maxRankRow?.company_portfolio_rank != null ? maxRankRow.company_portfolio_rank + 1 : 0;
+  }
+
   const insertRow = {
     building_id: data.buildingId,
     person_id: data.personId ?? null,
@@ -362,6 +403,7 @@ export async function addBuildingCredit(input: AddBuildingCreditInput): Promise<
     year_to: data.yearTo ?? null,
     project_url: data.projectUrl ?? null,
     display_order: displayOrder,
+    company_portfolio_rank: companyPortfolioRank,
     added_by_user_id: user.id,
   };
 
@@ -392,6 +434,46 @@ export async function addBuildingCredit(input: AddBuildingCreditInput): Promise<
     },
   });
   return mapped;
+}
+
+/**
+ * Partial update for `building_credits`. RLS applies (admin / claimed person / company steward).
+ * Does not change `building_id`, `person_id`, or `company_id`.
+ */
+export async function updateBuildingCredit(
+  creditId: string,
+  input: UpdateBuildingCreditInput,
+): Promise<BuildingCreditWithEntities> {
+  const data = UpdateBuildingCreditSchema.parse(input);
+
+  const patch: Record<string, unknown> = {};
+  if (data.role !== undefined) patch.role = data.role;
+  if (data.roleCustom !== undefined) patch.role_custom = data.roleCustom;
+  if (data.creditTier !== undefined) patch.credit_tier = data.creditTier;
+  if (data.isLead !== undefined) patch.is_lead = data.isLead;
+  if (data.contributionNotes !== undefined) patch.contribution_notes = data.contributionNotes;
+  if (data.yearFrom !== undefined) patch.year_from = data.yearFrom;
+  if (data.yearTo !== undefined) patch.year_to = data.yearTo;
+  if (data.projectUrl !== undefined) patch.project_url = data.projectUrl;
+  if (data.companyPortfolioRank !== undefined) patch.company_portfolio_rank = data.companyPortfolioRank;
+
+  const { data: row, error } = await supabase
+    .from("building_credits")
+    .update(patch)
+    .eq("id", creditId)
+    .select(
+      `
+      *,
+      person:people(id, name, slug, avatar_url),
+      company:companies(id, name, slug, logo_url)
+    `,
+    )
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!row) throw new Error("Credit not found or not permitted to update");
+
+  return mapCreditRow(row as CreditRow);
 }
 
 export type PrimaryCreditFormEntity = { kind: "person" | "company"; id: string };
