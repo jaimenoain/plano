@@ -1269,9 +1269,9 @@ export default function BuildingDetails() {
         transition={{ duration: 0.5 }}
         className="min-h-screen bg-surface-default [&_button]:!rounded-none [&_input]:!rounded-none [&_textarea]:!rounded-none"
       >
-        {/* ── HERO — full-bleed, fixed height, no rounding ── */}
-        <div className="h-56 max-h-[50vh] sm:max-h-none sm:h-64 lg:h-80 w-full overflow-hidden bg-surface-muted">
-          {heroImageUrl ? (
+        {/* ── HERO — full-bleed only when a hero image exists (no empty band) ── */}
+        {heroImageUrl ? (
+          <div className="h-56 max-h-[50vh] sm:max-h-none sm:h-64 lg:h-80 w-full overflow-hidden bg-surface-muted">
             <motion.img
               key={heroImageUrl}
               initial={{ opacity: 0, scale: 1.03 }}
@@ -1283,8 +1283,8 @@ export default function BuildingDetails() {
               fetchPriority="high"
               loading="eager"
             />
-          ) : null}
-        </div>
+          </div>
+        ) : null}
 
         {/* ── BUILDING HEADER — title, metadata row, stats ── */}
         <div className="border-b border-border-default">
