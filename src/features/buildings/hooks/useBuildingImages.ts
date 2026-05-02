@@ -5,7 +5,6 @@ export function useBuildingImages(buildingId: string, enabled: boolean = true) {
   return useQuery({
     queryKey: ["building_images", buildingId],
     queryFn: async () => {
-      // review_images is linked via user_buildings
       const { data, error } = await supabase
         .from("review_images")
         .select(`
@@ -13,7 +12,7 @@ export function useBuildingImages(buildingId: string, enabled: boolean = true) {
           storage_path,
           likes_count,
           created_at,
-          user_buildings!review_images_review_id_fkey!inner(
+          building_posts!review_images_review_id_fkey!inner(
             building_id,
             user:profiles(
               id,
@@ -22,7 +21,7 @@ export function useBuildingImages(buildingId: string, enabled: boolean = true) {
             )
           )
         `)
-        .eq("user_buildings.building_id", buildingId)
+        .eq("building_posts.building_id", buildingId)
         .order('likes_count', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(10);

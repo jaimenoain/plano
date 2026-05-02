@@ -36,7 +36,7 @@ type ReviewImageGalleryRow = {
   storage_path: string;
   likes_count: number | null;
   review_id: string;
-  user_buildings?:
+  building_posts?:
     | { building: GalleryBuilding | GalleryBuilding[] | null }
     | { building: GalleryBuilding | GalleryBuilding[] | null }[]
     | null;
@@ -122,7 +122,7 @@ export default function UserPhotoGallery() {
           storage_path,
           likes_count,
           review_id,
-          user_buildings!review_images_review_id_fkey (
+          building_posts!review_images_review_id_fkey (
             building:buildings (
               id,
               short_id,
@@ -157,7 +157,7 @@ export default function UserPhotoGallery() {
 
         const rows = data as ReviewImageGalleryRow[];
         const mappedPhotos = rows.map((item) => {
-          const ub = item.user_buildings;
+          const ub = item.building_posts;
           const row = Array.isArray(ub) ? ub[0] : ub;
           const bRaw = row?.building;
           const b = Array.isArray(bRaw) ? bRaw[0] : bRaw;

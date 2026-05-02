@@ -284,6 +284,7 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
       return lastPage.length === expectedSize ? allPages.length : undefined;
     },
     enabled: !!user,
+    staleTime: 60 * 1000,
   });
 
   const toggleLike = useCallback(async (reviewId: string) => {

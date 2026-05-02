@@ -633,6 +633,60 @@ export type Database = {
           },
         ]
       }
+      building_posts: {
+        Row: {
+          id: string
+          user_id: string
+          building_id: string
+          title: string | null
+          body: string | null
+          tags: string[] | null
+          video_url: string | null
+          visibility: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          building_id: string
+          title?: string | null
+          body?: string | null
+          tags?: string[] | null
+          video_url?: string | null
+          visibility?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          building_id?: string
+          title?: string | null
+          body?: string | null
+          tags?: string[] | null
+          video_url?: string | null
+          visibility?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_posts_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       building_styles: {
         Row: {
           building_id: string
@@ -1145,10 +1199,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "comments_user_building_id_fkey"
+            foreignKeyName: "comments_building_post_id_fkey"
             columns: ["interaction_id"]
             isOneToOne: false
-            referencedRelation: "user_buildings"
+            referencedRelation: "building_posts"
             referencedColumns: ["id"]
           },
           {
@@ -1942,10 +1996,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "likes_user_building_id_fkey"
+            foreignKeyName: "likes_building_post_id_fkey"
             columns: ["interaction_id"]
             isOneToOne: false
-            referencedRelation: "user_buildings"
+            referencedRelation: "building_posts"
             referencedColumns: ["id"]
           },
           {
@@ -2126,7 +2180,7 @@ export type Database = {
             foreignKeyName: "notifications_resource_id_fkey"
             columns: ["resource_id"]
             isOneToOne: false
-            referencedRelation: "user_buildings"
+            referencedRelation: "building_posts"
             referencedColumns: ["id"]
           },
           {
@@ -2451,7 +2505,7 @@ export type Database = {
             foreignKeyName: "review_images_review_id_fkey"
             columns: ["review_id"]
             isOneToOne: false
-            referencedRelation: "user_buildings"
+            referencedRelation: "building_posts"
             referencedColumns: ["id"]
           },
           {
@@ -2493,7 +2547,7 @@ export type Database = {
             foreignKeyName: "review_links_review_id_fkey"
             columns: ["review_id"]
             isOneToOne: false
-            referencedRelation: "user_buildings"
+            referencedRelation: "building_posts"
             referencedColumns: ["id"]
           },
           {
@@ -2600,44 +2654,29 @@ export type Database = {
       user_buildings: {
         Row: {
           building_id: string
-          content: string | null
           created_at: string
-          edited_at: string | null
           id: string
           rating: number | null
           status: string
-          tags: string[] | null
           user_id: string
-          video_url: string | null
-          visibility: string | null
           visited_at: string | null
         }
         Insert: {
           building_id: string
-          content?: string | null
           created_at?: string
-          edited_at?: string | null
           id?: string
           rating?: number | null
           status?: string
-          tags?: string[] | null
           user_id: string
-          video_url?: string | null
-          visibility?: string | null
           visited_at?: string | null
         }
         Update: {
           building_id?: string
-          content?: string | null
           created_at?: string
-          edited_at?: string | null
           id?: string
           rating?: number | null
           status?: string
-          tags?: string[] | null
           user_id?: string
-          video_url?: string | null
-          visibility?: string | null
           visited_at?: string | null
         }
         Relationships: [

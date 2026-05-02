@@ -156,9 +156,9 @@ export default function ReviewDetails() {
         try {
             // 1. Fetch Log Data
             const { data: reviewData, error } = await supabase
-                .from("user_buildings")
+                .from("building_posts")
                 .select(`
-                    id, content, rating, tags, created_at, user_id, building_id, status,
+                    id, body, tags, created_at, user_id, building_id,
                     user:profiles(username, avatar_url),
                     building:buildings(id, short_id, slug, name, year_completed, address, hero_image_url, building_credits(status, credit_tier, person:people(id, name), company:companies(id, name))),
                     images:review_images(id, storage_path, is_generated)
@@ -180,6 +180,14 @@ export default function ReviewDetails() {
                 setLoading(false);
                 return;
             }
+
+            // 1b. Fetch rating/status from user_buildings
+            const { data: ubData } = await supabase
+                .from("user_buildings")
+                .select("rating, status")
+                .eq("user_id", reviewData.user_id)
+                .eq("building_id", reviewData.building_id)
+                .maybeSingle();
 
             // 2. Fetch Auxiliary Data in Parallel
             const [likesCount, commentsCount, userLike, likersData] = await Promise.all([
@@ -218,13 +226,13 @@ export default function ReviewDetails() {
 
             setReview({
                 id: reviewData.id,
-                content: reviewData.content,
-                rating: reviewData.rating,
+                content: reviewData.body,
+                rating: ubData?.rating ?? null,
                 tags: reviewData.tags,
                 created_at: reviewData.created_at ?? "",
                 user_id: reviewData.user_id,
                 building_id: reviewData.building_id,
-                status: reviewData.status,
+                status: ubData?.status ?? "visited",
                 user: Array.isArray(reviewData.user) ? reviewData.user[0] : reviewData.user,
                 building: formattedBuilding,
                 images,
@@ -257,42 +265,57 @@ export default function ReviewDetails() {
                 // Try to find friends first
                 if (followingIds.length > 0) {
                     const { data: friendsData } = await supabase
-                        .from("user_buildings")
+                        .from("building_posts")
                         .select(`
-                            id, rating,
+                            id, user_id, building_id,
                             user:profiles(username, avatar_url)
                         `)
                         .eq("building_id", reviewData.building_id)
                         .in("user_id", followingIds)
                         .neq("id", reviewData.id)
-                        .eq("status", "visited") // Only visited logs usually have ratings/value
                         .limit(15);
 
                     if (friendsData && friendsData.length > 0) {
-                        relatedData = friendsData;
+                        // Get ratings from user_buildings
+                        const userIds = [...new Set(friendsData.map(r => r.user_id))];
+                        const { data: ratingsData } = await supabase
+                            .from("user_buildings")
+                            .select("user_id, rating, status")
+                            .eq("building_id", reviewData.building_id)
+                            .in("user_id", userIds)
+                            .eq("status", "visited");
+                        const ratingMap = new Map(ratingsData?.map(r => [r.user_id, r.rating]) ?? []);
+                        relatedData = friendsData.map(r => ({ ...r, rating: ratingMap.get(r.user_id) ?? null }));
                     }
                 }
 
                 // Fallback to community
                 if (relatedData.length === 0) {
-                    let query = supabase
-                        .from("user_buildings")
+                    let bpQuery = supabase
+                        .from("building_posts")
                         .select(`
-                            id, rating,
+                            id, user_id, building_id,
                             user:profiles(username, avatar_url)
                         `)
                         .eq("building_id", reviewData.building_id)
                         .neq("id", reviewData.id)
-                        .eq("status", "visited")
                         .limit(15);
 
                     if (user) {
-                        query = query.neq("user_id", user.id);
+                        bpQuery = bpQuery.neq("user_id", user.id);
                     }
 
-                    const { data: communityData } = await query;
+                    const { data: communityData } = await bpQuery;
                     if (communityData) {
-                        relatedData = communityData;
+                        const userIds = [...new Set(communityData.map(r => r.user_id))];
+                        const { data: ratingsData } = await supabase
+                            .from("user_buildings")
+                            .select("user_id, rating, status")
+                            .eq("building_id", reviewData.building_id)
+                            .in("user_id", userIds)
+                            .eq("status", "visited");
+                        const ratingMap = new Map(ratingsData?.map(r => [r.user_id, r.rating]) ?? []);
+                        relatedData = communityData.map(r => ({ ...r, rating: ratingMap.get(r.user_id) ?? null }));
                     }
                 }
 

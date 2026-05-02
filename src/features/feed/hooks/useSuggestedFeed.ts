@@ -3,20 +3,6 @@ import { useInfiniteQuery, useQueryClient, InfiniteData } from "@tanstack/react-
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { FeedReview, RawFeedRow, creditedEntitiesFromRpcJson } from "@/types/feed";
-
-interface ReviewImageDbRow {
-  id: string;
-  review_id: string;
-  storage_path: string;
-  likes_count?: number | null;
-}
-
-type ImageLikeRow = { image_id: string };
-
-type ReviewImagesByReviewId = Record<
-  string,
-  { id: string; url: string; likes_count: number; is_liked: boolean }[]
->;
 import { getBuildingImageUrl } from "@/utils/image";
 
 interface UseSuggestedFeedOptions {
@@ -46,46 +32,6 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
       const posts = (data || []) as unknown as RawFeedRow[];
 
       if (posts.length === 0) return [];
-
-      // Extract review IDs to fetch images
-      const reviewIds = posts.map((p) => p.id);
-
-      // Fetch images
-      const { data: imagesData } = await supabase
-        .from('review_images')
-        .select('*')
-        .in('review_id', reviewIds);
-
-      // Fetch image likes for current user to determine is_liked status for images
-      let likedImageIds: Set<string> = new Set();
-      const imageRows = (imagesData || []) as unknown as ReviewImageDbRow[];
-      if (imageRows.length > 0) {
-        const imageIds = imageRows.map((img) => img.id);
-        const { data: likesData } = await supabase
-          .from('image_likes')
-          .select('image_id')
-          .eq('user_id', user.id)
-          .in('image_id', imageIds);
-
-        if (likesData) {
-          likedImageIds = new Set(
-            (likesData as unknown as ImageLikeRow[]).map((l) => l.image_id)
-          );
-        }
-      }
-
-      const imagesMap = imageRows.reduce<ReviewImagesByReviewId>((acc, img) => {
-        if (!acc[img.review_id]) {
-          acc[img.review_id] = [];
-        }
-        acc[img.review_id].push({
-          id: img.id,
-          url: getBuildingImageUrl(img.storage_path) || "",
-          likes_count: img.likes_count || 0,
-          is_liked: likedImageIds.has(img.id)
-        });
-        return acc;
-      }, {});
 
       return posts.map((post) => {
         const buildingData = post.building_data;
@@ -136,7 +82,12 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
           likes_count: post.likes_count || 0,
           comments_count: post.comments_count || 0,
           is_liked: post.is_liked,
-          images: imagesMap[post.id] || [],
+          images: (post.review_images || []).map((img) => ({
+            id: img.id,
+            url: getBuildingImageUrl(img.storage_path),
+            likes_count: img.likes_count || 0,
+            is_liked: img.is_liked ?? false,
+          })),
           is_suggested: post.is_suggested,
           suggestion_reason: post.suggestion_reason,
         } as FeedReview;
@@ -148,6 +99,7 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
     },
     enabled: !!user && enabled,
     initialPageParam: 0,
+    staleTime: 60 * 1000,
   });
 
   const toggleLike = useCallback(async (reviewId: string) => {

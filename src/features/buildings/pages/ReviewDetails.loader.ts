@@ -17,11 +17,11 @@ export async function reviewLoader({ request, params }: LoaderFunctionArgs) {
   }
 
   const { data: row, error } = await supabase
-    .from("user_buildings")
+    .from("building_posts")
     .select(
       `
       id,
-      content,
+      body,
       created_at,
       user:profiles(username),
       building:buildings(id, name, short_id, slug, hero_image_url),
@@ -70,8 +70,8 @@ export async function reviewLoader({ request, params }: LoaderFunctionArgs) {
   const ogImage = firstImageUrl ?? mainFallback ?? `${SITE_URL}/cover.jpg`;
 
   const content =
-    typeof row.content === "string" && row.content.trim().length > 0
-      ? row.content.trim()
+    typeof row.body === "string" && row.body.trim().length > 0
+      ? row.body.trim()
       : null;
   const description =
     content ??

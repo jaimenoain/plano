@@ -382,14 +382,11 @@ export const upsertUserBuilding = async (data: {
   building_id: string;
   status: 'visited' | 'pending';
   rating?: number | null;
-  content?: string | null;
-  tags?: string[] | null;
-  visibility?: string;
-  edited_at?: string;
 }) => {
+    const { user_id, building_id, status, rating } = data;
     const { data: result, error } = await supabase
       .from("user_buildings")
-      .upsert(data, { onConflict: "user_id, building_id" })
+      .upsert({ user_id, building_id, status, rating }, { onConflict: "user_id, building_id" })
       .select()
       .single();
 

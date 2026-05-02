@@ -72,13 +72,13 @@ export default function Moderation() {
       const enriched = await Promise.all((rawReports as ReportQueryRow[]).map(async (r) => {
         // Try Review
         const { data: review } = await supabase
-            .from('user_buildings')
-            .select('content')
+            .from('building_posts')
+            .select('body')
             .eq('id', r.reported_id)
             .maybeSingle();
 
         if (review) {
-            return { ...r, contentType: 'review' as const, contentSnippet: review.content ?? undefined };
+            return { ...r, contentType: 'review' as const, contentSnippet: review.body ?? undefined };
         }
 
         // Try Comment
@@ -141,7 +141,7 @@ toast.error("Failed to dismiss report");
     try {
         let deleteError: PostgrestError | null = null;
         if (report.contentType === 'review') {
-            const { error } = await supabase.from('user_buildings').delete().eq('id', report.reported_id);
+            const { error } = await supabase.from('building_posts').delete().eq('id', report.reported_id);
             deleteError = error;
         } else if (report.contentType === 'comment') {
             const { error } = await supabase.from('comments').delete().eq('id', report.reported_id);

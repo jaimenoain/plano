@@ -89,7 +89,6 @@ export function BuildingPopupContent({
           user_id: user.id,
           building_id: buildingId,
           status: status,
-          edited_at: new Date().toISOString()
         }, { onConflict: 'user_id, building_id' });
 
         if (error) throw error;
@@ -122,15 +121,17 @@ export function BuildingPopupContent({
         // Check for content (reviews, images)
         setIsSaving(true);
         try {
-            const { data } = await supabase
-                .from('user_buildings')
-                .select('content, review_images(count)')
+            const { data: postsData } = await supabase
+                .from('building_posts')
+                .select('body, review_images(count)')
                 .eq('user_id', user.id)
-                .eq('building_id', buildingId)
-                .single();
+                .eq('building_id', buildingId);
 
-            const hasReview = data?.content && data.content.trim().length > 0;
-            const imageCount = data?.review_images?.[0]?.count || 0;
+            const hasReview = postsData?.some(p => p.body && p.body.trim().length > 0);
+            const imageCount = postsData?.reduce((sum, p) => {
+                const cnt = (p.review_images as { count: number }[] | null)?.[0]?.count ?? 0;
+                return sum + cnt;
+            }, 0) ?? 0;
 
             if (hasReview || imageCount > 0) {
                 let msg = "You are about to remove this building from your list.";

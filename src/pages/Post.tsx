@@ -103,8 +103,6 @@ export default function Post() {
         const mappedStatus = entry.status === 'pending' ? 'bucket_list' : 'review';
         setPostType(mappedStatus === "bucket_list" ? "bucket_list" : "review");
         if (entry.rating) setRating(entry.rating);
-        if (entry.content) setContent(entry.content);
-        if (entry.visibility) setVisibility(entry.visibility as Visibility);
       }
     } catch (_error) {
 } finally {
@@ -125,10 +123,6 @@ export default function Post() {
         building_id: buildingId,
         status: dbStatus,
         rating: (isReview && rating > 0) ? rating : null,
-        content: content.trim() || null,
-        tags: null,
-        visibility,
-        edited_at: new Date().toISOString()
       });
 
       // Handle Recommendations

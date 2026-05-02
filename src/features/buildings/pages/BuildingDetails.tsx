@@ -1969,7 +1969,7 @@ export default function BuildingDetails() {
 
                 {/* Map card */}
                 <div className="bg-surface-card border border-border-default rounded-none overflow-hidden shadow-sm">
-                  <div className="h-44 relative">
+                  <div className="aspect-square relative">
                     {coordinates ? (
                       <div className="h-full w-full grayscale-[0.4] hover:grayscale-0 transition-all duration-700">
                         <BuildingLocationMap

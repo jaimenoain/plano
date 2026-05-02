@@ -166,46 +166,56 @@ export default function WriteReview() {
               }
           })());
 
-          // Task B: Fetch User Building + Relations
+          // Task B: Fetch User Building (status/rating) + latest Building Post (content/media)
           tasks.push((async () => {
-              const { data: userBuilding, error: ubError } = await supabase
-                .from("user_buildings")
-                .select(`
-                    id, rating, content, status, visibility, video_url,
-                    review_links(id, url, title),
-                    review_images(id, storage_path, is_generated)
-                `)
-                .eq("user_id", user.id)
-                .eq("building_id", building.id)
-                .maybeSingle();
+              const [ubResult, postResult] = await Promise.all([
+                supabase
+                  .from("user_buildings")
+                  .select("rating, status")
+                  .eq("user_id", user.id)
+                  .eq("building_id", building.id)
+                  .maybeSingle(),
+                supabase
+                  .from("building_posts")
+                  .select("id, body, video_url, visibility, review_links(id, url, title), review_images(id, storage_path, is_generated)")
+                  .eq("user_id", user.id)
+                  .eq("building_id", building.id)
+                  .order("updated_at", { ascending: false })
+                  .limit(1)
+                  .maybeSingle(),
+              ]);
 
-              if (ubError) throw ubError;
+              if (ubResult.error) throw ubResult.error;
+              if (postResult.error) throw postResult.error;
+
+              const userBuilding = ubResult.data;
+              const latestPost = postResult.data;
 
               if (userBuilding) {
-                setReviewId(userBuilding.id);
                 if (userBuilding.rating) setRating(userBuilding.rating);
-                if (userBuilding.content) setContent(userBuilding.content);
-
-                if (userBuilding.visibility) setVisibility(userBuilding.visibility);
-
                 if (userBuilding.status === 'pending') {
                   setStatus('pending');
                 } else {
                   setStatus('visited');
                 }
+              }
 
-                if (userBuilding.video_url) {
+              if (latestPost) {
+                setReviewId(latestPost.id);
+                if (latestPost.body) setContent(latestPost.body);
+                if (latestPost.visibility) setVisibility(latestPost.visibility);
+
+                if (latestPost.video_url) {
                   setVideo({
                     file: null,
-                    preview: getBuildingImageUrl(userBuilding.video_url) || null,
-                    storage_path: userBuilding.video_url,
+                    preview: getBuildingImageUrl(latestPost.video_url) || null,
+                    storage_path: latestPost.video_url,
                     status: 'ready',
                     progress: 100
                   });
                 }
 
-                // Process Links (Nested)
-                const existingLinks = userBuilding.review_links;
+                const existingLinks = latestPost.review_links;
                 if (existingLinks) {
                   setLinks(
                     existingLinks.map((l) => ({
@@ -217,8 +227,7 @@ export default function WriteReview() {
                   if (existingLinks.length > 0) setShowLinks(true);
                 }
 
-                // Process Images (Nested)
-                const remoteImages = userBuilding.review_images;
+                const remoteImages = latestPost.review_images;
                 if (remoteImages) {
                   const loadedImages: ReviewImage[] = remoteImages.map((img) => ({
                     id: img.id,
@@ -570,9 +579,9 @@ toast({
         await deleteFiles([video.storage_path]);
       }
 
-      // 2. Delete the record
+      // 2. Delete the building_post (cascades to review_images, review_links, likes, comments)
       const { error } = await supabase
-        .from('user_buildings')
+        .from('building_posts')
         .delete()
         .eq('id', reviewId);
 
@@ -617,26 +626,49 @@ toast({
 
     setSubmitting(true);
     try {
-      // 1. Upsert User Building (Review)
-      const { data: userBuilding, error: upsertError } = await supabase
+      // 1a. Upsert user_buildings (status + rating only)
+      const { error: ubError } = await supabase
         .from("user_buildings")
         .upsert({
           user_id: user.id,
           building_id: buildingId,
           rating: reviewValues.rating === 0 ? null : reviewValues.rating,
-          content: reviewValues.content ?? null,
           status: reviewValues.status,
-          visibility: reviewValues.visibility,
-          video_url: video.storage_path, // Save video path
-          edited_at: new Date().toISOString()
-        }, { onConflict: 'user_id, building_id' })
-        .select()
-        .single();
+        }, { onConflict: 'user_id, building_id' });
 
-      if (upsertError) throw upsertError;
-      if (!userBuilding) throw new Error("Failed to save review");
+      if (ubError) throw ubError;
 
-      const reviewId = userBuilding.id;
+      // 1b. Upsert building_posts (content, video, visibility)
+      let postId = reviewId; // reviewId state holds building_posts.id
+      if (postId) {
+        const { error: updateError } = await supabase
+          .from("building_posts")
+          .update({
+            body: reviewValues.content ?? null,
+            video_url: video.storage_path,
+            visibility: reviewValues.visibility,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", postId);
+        if (updateError) throw updateError;
+      } else {
+        const { data: newPost, error: insertError } = await supabase
+          .from("building_posts")
+          .insert({
+            user_id: user.id,
+            building_id: buildingId,
+            body: reviewValues.content ?? null,
+            video_url: video.storage_path,
+            visibility: reviewValues.visibility,
+          })
+          .select("id")
+          .single();
+        if (insertError) throw insertError;
+        postId = newPost.id;
+        setReviewId(postId);
+      }
+
+      // postId (building_posts.id) is the review ID for all related records
 
       // Update Collections
       const { data: currentItems } = await supabase
@@ -665,14 +697,14 @@ toast({
       const { error: deleteLinksError } = await supabase
         .from("review_links")
         .delete()
-        .eq("review_id", reviewId);
+        .eq("review_id", postId!);
 
       if (deleteLinksError) throw deleteLinksError;
 
       // Insert new links
       if (links.length > 0) {
         const linksPayload = links.map((l) => ({
-          review_id: reviewId,
+          review_id: postId!,
           user_id: user.id,
           url: l.url,
           title: l.title,
@@ -723,7 +755,7 @@ toast({
           .upsert(
             existingImages.map(img => ({
               id: img.id,
-              review_id: reviewId,
+              review_id: postId!,
               user_id: user.id,
               storage_path: img.storage_path!,
               is_generated: img.is_generated
@@ -738,9 +770,9 @@ toast({
       if (newImages.length > 0) {
         const uploadedImages = await Promise.all(
           newImages.map(async (img) => {
-            const storagePath = await uploadFile(img.file!, reviewId);
+            const storagePath = await uploadFile(img.file!, postId!);
             return {
-              review_id: reviewId,
+              review_id: postId!,
               user_id: user.id,
               storage_path: storagePath,
               is_generated: img.is_generated,

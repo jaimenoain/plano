@@ -72,15 +72,15 @@ export async function getBuildingContributors(
       .single(),
 
     supabase
-      .from('user_buildings')
-      .select('id, user_id, content, created_at, profiles!user_id(id, username, avatar_url)')
+      .from('building_posts')
+      .select('id, user_id, body, created_at, profiles!user_id(id, username, avatar_url)')
       .eq('building_id', buildingId)
       .order('created_at', { ascending: true }),
 
     supabase
       .from('review_images')
-      .select('id, user_id, likes_count, created_at, profiles!review_images_user_id_fkey(id, username, avatar_url), user_buildings!review_images_review_id_fkey!inner(building_id)')
-      .eq('user_buildings.building_id', buildingId)
+      .select('id, user_id, likes_count, created_at, profiles!review_images_user_id_fkey(id, username, avatar_url), building_posts!review_images_review_id_fkey!inner(building_id)')
+      .eq('building_posts.building_id', buildingId)
       .order('created_at', { ascending: true }),
 
     supabase
@@ -106,8 +106,8 @@ export async function getBuildingContributors(
     }
   }
 
-  // ── First reviewer (earliest user_buildings row with review text) ──────────
-  const firstReview = reviews.find(r => r.content);
+  // ── First reviewer (earliest building_posts row with body text) ──────────
+  const firstReview = reviews.find(r => r.body);
   if (firstReview) {
     const user = toUser(firstReview.profiles as RawProfile);
     if (user) {

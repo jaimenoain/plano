@@ -513,7 +513,7 @@ export default function Profile() {
       try {
         const { data } = await supabase
           .from("review_images")
-          .select("id, storage_path, review:user_buildings(building:buildings(name))")
+          .select("id, storage_path, review:building_posts(building:buildings(name))")
           .eq("user_id", targetUserId)
           .order("created_at", { ascending: false })
           .limit(60);
@@ -536,19 +536,34 @@ export default function Profile() {
     if (!targetUserId) return;
     if (pageIndex === 0) { setContentLoading(true); } else { setIsFetchingMore(true); }
     try {
-      let query = supabase
+      // Step 1: Get eligible building_ids with status/rating from user_buildings
+      let ubQuery = supabase
         .from("user_buildings")
-        .select(`id, content, rating, created_at, edited_at, user_id, building_id, status,
+        .select("building_id, rating, status")
+        .eq("user_id", targetUserId);
+      if (activeFilter === "visited") { ubQuery = ubQuery.eq("status", "visited"); }
+      else if (activeFilter === "pending") { ubQuery = ubQuery.eq("status", "pending"); }
+      else { ubQuery = ubQuery.in("status", ["visited", "pending"]); }
+      const { data: ubData, error: ubError } = await ubQuery;
+      if (ubError) throw ubError;
+      const ubMap = new Map((ubData ?? []).map(r => [r.building_id, r]));
+      const eligibleBuildingIds = [...ubMap.keys()];
+      if (eligibleBuildingIds.length === 0) {
+        if (reset) { setContent([]); setHasMore(false); } else { setHasMore(false); }
+        return;
+      }
+
+      // Step 2: Query building_posts for content, paginated
+      const from = pageIndex * ITEMS_PER_PAGE;
+      const { data: entriesData, error: entriesError } = await supabase
+        .from("building_posts")
+        .select(`id, body, created_at, updated_at, user_id, building_id,
           building:buildings ( id, name, address, city, country, year_completed, hero_image_url, community_preview_url, slug, short_id, building_credits ( status, credit_tier, person:people (id, name), company:companies (id, name) ) )`)
         .eq("user_id", targetUserId)
-        .order("edited_at", { ascending: false, nullsFirst: false })
-        .order("created_at", { ascending: false });
-      if (activeFilter === "visited") { query = query.eq("status", "visited"); }
-      else if (activeFilter === "pending") { query = query.eq("status", "pending"); }
-      else { query = query.in("status", ["visited", "pending"]); }
-      const from = pageIndex * ITEMS_PER_PAGE;
-      query = query.range(from, from + ITEMS_PER_PAGE - 1);
-      const { data: entriesData, error: entriesError } = await query;
+        .in("building_id", eligibleBuildingIds)
+        .order("updated_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false })
+        .range(from, from + ITEMS_PER_PAGE - 1);
       if (entriesError) throw entriesError;
       if (!entriesData || entriesData.length === 0) {
         if (reset) { setContent([]); setHasMore(false); } else { setHasMore(false); }
@@ -577,16 +592,17 @@ export default function Profile() {
         imagesByReviewId.get(img.review_id)!.push(obj);
       });
       type ProfileFeedRow = {
-        id: string; content: string | null; rating: number | null; created_at: string;
-        edited_at?: string | null; status: "visited" | "pending"; building_id: string;
+        id: string; body: string | null; created_at: string;
+        updated_at?: string | null; building_id: string;
         building?: { id?: string; name?: string | null; address?: string | null; city?: string | null; country?: string | null; year_completed?: number | null; hero_image_url?: string | null; community_preview_url?: string | null; slug?: string | null; short_id?: number | null; building_credits?: BuildingCreditEmbed[] | null; } | null;
       };
       const formattedContent: FeedReview[] = (entriesData as ProfileFeedRow[]).map(item => {
+        const ub = ubMap.get(item.building_id);
         const reviewLikes = likesCount.get(item.id) || 0;
         const itemImages = imagesByReviewId.get(item.id) || [];
         const imageLikes = itemImages.reduce((sum: number, img: { likes_count?: number }) => sum + (img.likes_count || 0), 0);
         return {
-          id: item.id, content: item.content, rating: item.rating, created_at: item.created_at, edited_at: item.edited_at ?? null, status: item.status,
+          id: item.id, content: item.body, rating: ub?.rating ?? null, created_at: item.created_at, edited_at: item.updated_at ?? null, status: (ub?.status ?? "visited") as "visited" | "pending",
           user: {
             username: profile?.username || "Unknown",
             avatar_url: profile?.avatar_url || null,

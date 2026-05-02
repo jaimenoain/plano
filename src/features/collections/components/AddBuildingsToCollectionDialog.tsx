@@ -473,18 +473,15 @@ export function AddBuildingsToCollectionDialog({
       if (buildingIdsWithoutImages.length > 0) {
         const { data: imagesData } = await supabase
           .from('review_images')
-          .select('storage_path, user_buildings!inner(building_id)')
-          .in('user_buildings.building_id', buildingIdsWithoutImages)
+          .select('storage_path, building_posts!review_images_review_id_fkey!inner(building_id)')
+          .in('building_posts.building_id', buildingIdsWithoutImages)
           .limit(50);
 
         if (imagesData) {
           const imageMap = new Map();
-          imagesData.forEach((img: { storage_path: string; user_buildings: { building_id: string } | { building_id: string }[] | null }) => {
-            if (!img.user_buildings) return;
-            // Handle array or object case for joined relationship (though !inner typically returns object if 1:1 or N:1)
-            // But supabase-js types can be tricky. Here we know it's a join on review_images (N) -> user_buildings (1).
-            // So img.user_buildings should be an object.
-            const bId = Array.isArray(img.user_buildings) ? img.user_buildings[0]?.building_id : img.user_buildings.building_id;
+          imagesData.forEach((img: { storage_path: string; building_posts: { building_id: string } | { building_id: string }[] | null }) => {
+            if (!img.building_posts) return;
+            const bId = Array.isArray(img.building_posts) ? img.building_posts[0]?.building_id : img.building_posts.building_id;
 
             if (bId && !imageMap.has(bId)) {
               imageMap.set(bId, img.storage_path);

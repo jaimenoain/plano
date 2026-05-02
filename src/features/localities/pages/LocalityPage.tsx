@@ -257,12 +257,15 @@ function LocalityHero({
               <Camera className="h-3 w-3 shrink-0" aria-hidden />
               <span>
                 {heroSourceBuilding ? (
-                  <>
-                    {heroSourceBuilding} · @{heroCreditUsername}
-                  </>
-                ) : (
-                  <>@{heroCreditUsername}</>
-                )}
+                  <>{heroSourceBuilding} · </>
+                ) : null}
+                Foto:{" "}
+                <Link
+                  to={`/profile/${heroCreditUsername}`}
+                  className="transition-colors hover:text-text-inverse"
+                >
+                  {heroCreditUsername}
+                </Link>
               </span>
             </div>
           ) : null}

@@ -59,6 +59,7 @@ export function useCollectionsFeed(options: UseCollectionsFeedOptions = {}) {
     getNextPageParam: (lastPage, allPages) =>
       lastPage.length < PAGE_SIZE ? undefined : allPages.length * PAGE_SIZE,
     enabled: !!user && enabled,
+    staleTime: 60 * 1000,
   });
 
   return query;

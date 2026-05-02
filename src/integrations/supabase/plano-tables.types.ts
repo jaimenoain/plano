@@ -19,6 +19,60 @@ type RpcArgs = {
 }
 
 export type PlanoPublicTables = {
+  building_posts: {
+    Row: {
+      id: string
+      user_id: string
+      building_id: string
+      title: string | null
+      body: string | null
+      tags: string[] | null
+      video_url: string | null
+      visibility: string
+      created_at: string
+      updated_at: string
+    }
+    Insert: {
+      id?: string
+      user_id: string
+      building_id: string
+      title?: string | null
+      body?: string | null
+      tags?: string[] | null
+      video_url?: string | null
+      visibility?: string
+      created_at?: string
+      updated_at?: string
+    }
+    Update: {
+      id?: string
+      user_id?: string
+      building_id?: string
+      title?: string | null
+      body?: string | null
+      tags?: string[] | null
+      video_url?: string | null
+      visibility?: string
+      created_at?: string
+      updated_at?: string
+    }
+    Relationships: [
+      {
+        foreignKeyName: "building_posts_user_id_fkey"
+        columns: ["user_id"]
+        isOneToOne: false
+        referencedRelation: "profiles"
+        referencedColumns: ["id"]
+      },
+      {
+        foreignKeyName: "building_posts_building_id_fkey"
+        columns: ["building_id"]
+        isOneToOne: false
+        referencedRelation: "buildings"
+        referencedColumns: ["id"]
+      },
+    ]
+  }
   admin_audit_logs: {
     Row: {
       id: string
@@ -719,10 +773,10 @@ export type PlanoPublicTables = {
     }
     Relationships: [
       {
-        foreignKeyName: "comments_user_building_id_fkey"
+        foreignKeyName: "comments_building_post_id_fkey"
         columns: ["interaction_id"]
         isOneToOne: false
-        referencedRelation: "user_buildings"
+        referencedRelation: "building_posts"
         referencedColumns: ["id"]
       },
       {
@@ -755,10 +809,10 @@ export type PlanoPublicTables = {
     }
     Relationships: [
       {
-        foreignKeyName: "likes_user_building_id_fkey"
+        foreignKeyName: "likes_building_post_id_fkey"
         columns: ["interaction_id"]
         isOneToOne: false
-        referencedRelation: "user_buildings"
+        referencedRelation: "building_posts"
         referencedColumns: ["id"]
       },
       {
@@ -1466,7 +1520,7 @@ export type PlanoPublicTables = {
         foreignKeyName: "notifications_resource_id_fkey"
         columns: ["resource_id"]
         isOneToOne: false
-        referencedRelation: "user_buildings"
+        referencedRelation: "building_posts"
         referencedColumns: ["id"]
       },
       {
@@ -1526,7 +1580,7 @@ export type PlanoPublicTables = {
         foreignKeyName: "review_images_review_id_fkey"
         columns: ["review_id"]
         isOneToOne: false
-        referencedRelation: "user_buildings"
+        referencedRelation: "building_posts"
         referencedColumns: ["id"]
       },
       {
@@ -1575,7 +1629,7 @@ export type PlanoPublicTables = {
         foreignKeyName: "review_links_review_id_fkey"
         columns: ["review_id"]
         isOneToOne: false
-        referencedRelation: "user_buildings"
+        referencedRelation: "building_posts"
         referencedColumns: ["id"]
       },
       {
@@ -1627,12 +1681,7 @@ export type PlanoPublicTables = {
       building_id: string
       status: string
       rating: number | null
-      content: string | null
-      tags: string[] | null
-      edited_at: string | null
       created_at: string | null
-      visibility: string | null
-      video_url: string | null
       visited_at: string | null
     }
     Insert: {
@@ -1641,12 +1690,7 @@ export type PlanoPublicTables = {
       building_id: string
       status?: string
       rating?: number | null
-      content?: string | null
-      tags?: string[] | null
-      edited_at?: string | null
       created_at?: string | null
-      visibility?: string | null
-      video_url?: string | null
       visited_at?: string | null
     }
     Update: {
@@ -1655,12 +1699,7 @@ export type PlanoPublicTables = {
       building_id?: string
       status?: string
       rating?: number | null
-      content?: string | null
-      tags?: string[] | null
-      edited_at?: string | null
       created_at?: string | null
-      visibility?: string | null
-      video_url?: string | null
       visited_at?: string | null
     }
     Relationships: [

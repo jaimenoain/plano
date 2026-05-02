@@ -283,6 +283,8 @@ export function useBuildingInteractions({
 
   // ── Notes / images ───────────────────────────────────────────────────────
   const [note, setNote] = useState("");
+  /** ID of the current user's building_posts row for this building. */
+  const [activePostId, setActivePostId] = useState<string | null>(null);
   const [pendingImages, setPendingImages] = useState<
     Array<{
       id: string;
@@ -318,11 +320,8 @@ export function useBuildingInteractions({
   const [verifiedClaims, setVerifiedClaims] = useState<string[]>([]);
   const [hasVerifiedArchitect, setHasVerifiedArchitect] = useState(false);
 
-  // ── Derived computeds ────────────────────────────────────────────────────
-  const visitorCount = useMemo(
-    () => entries.filter((e) => e.status === "visited").length,
-    [entries],
-  );
+  // ── Visitor count (separate from entries — building_posts has multiple rows per user) ──
+  const [visitorCount, setVisitorCount] = useState(0);
 
   const totalRatingPoints = useMemo(() => {
     const rated = entries.filter((e) => e.rating != null);
@@ -446,6 +445,18 @@ export function useBuildingInteractions({
 
       tasks.push(fetchTopLinks(resolvedBuildingId));
 
+      // Visitor count: count distinct users who have visited this building
+      tasks.push(
+        (async () => {
+          const { count } = await supabase
+            .from("user_buildings")
+            .select("id", { count: "exact", head: true })
+            .eq("building_id", resolvedBuildingId)
+            .eq("status", "visited");
+          setVisitorCount(count ?? 0);
+        })(),
+      );
+
       if (userId) {
         tasks.push(
           (async () => {
@@ -457,14 +468,22 @@ export function useBuildingInteractions({
               .eq("status", "verified");
             if (claims) setVerifiedClaims(claims.map((c) => c.architect_id));
 
-            // User's own review entry
+            // User's status/rating from user_buildings
             const { data: userEntry } = await supabase
               .from("user_buildings")
-              .select(
-                "*, images:review_images(id, storage_path, is_generated, is_official)",
-              )
+              .select("id, status, rating")
               .eq("user_id", userId)
               .eq("building_id", resolvedBuildingId)
+              .maybeSingle();
+
+            // User's latest building_post for this building (note + links)
+            const { data: latestPost } = await supabase
+              .from("building_posts")
+              .select("id, body")
+              .eq("user_id", userId)
+              .eq("building_id", resolvedBuildingId)
+              .order("updated_at", { ascending: false })
+              .limit(1)
               .maybeSingle();
 
             // User's collections containing this building
@@ -493,12 +512,16 @@ export function useBuildingInteractions({
                 setUserStatus(st);
               else setUserStatus(null);
               setMyRating(userEntry.rating || 0);
-              setNote(userEntry.content || "");
+            }
+
+            if (latestPost) {
+              setActivePostId(latestPost.id);
+              setNote(latestPost.body || "");
 
               const { data: userLinksData } = await supabase
                 .from("review_links")
                 .select("id, url, title")
-                .eq("review_id", userEntry.id);
+                .eq("review_id", latestPost.id);
               if (userLinksData) {
                 setUserLinks(
                   userLinksData.map((l) => ({
@@ -508,6 +531,9 @@ export function useBuildingInteractions({
                   })),
                 );
               }
+            } else {
+              setActivePostId(null);
+              setNote("");
             }
           })(),
         );
@@ -709,7 +735,6 @@ export function useBuildingInteractions({
             building_id: building.id,
             status: newStatus,
             rating: myRating > 0 ? myRating : null,
-            edited_at: new Date().toISOString(),
           },
           { onConflict: "user_id, building_id" },
         );
@@ -757,7 +782,6 @@ export function useBuildingInteractions({
             building_id: building.id,
             status: statusToUse,
             rating: rating > 0 ? rating : null,
-            edited_at: new Date().toISOString(),
           },
           { onConflict: "user_id, building_id" },
         );
@@ -846,7 +870,8 @@ export function useBuildingInteractions({
     const statusToUse = userStatus || "visited";
     if (!userStatus) setUserStatus("visited");
     try {
-      const { data: savedEntry, error } = await supabase
+      // 1. Ensure user_buildings row exists with current status/rating
+      const { error: ubError } = await supabase
         .from("user_buildings")
         .upsert(
           {
@@ -854,18 +879,35 @@ export function useBuildingInteractions({
             building_id: building.id,
             status: statusToUse,
             rating: myRating > 0 ? myRating : null,
-            content: note,
-            edited_at: new Date().toISOString(),
           },
           { onConflict: "user_id, building_id" },
-        )
-        .select()
-        .single();
-      if (error) throw error;
+        );
+      if (ubError) throw ubError;
 
-      const reviewId = savedEntry.id;
+      // 2. Upsert the building_posts row (update existing or create new)
+      let postId = activePostId;
+      if (postId) {
+        const { error: updateError } = await supabase
+          .from("building_posts")
+          .update({ body: note, updated_at: new Date().toISOString() })
+          .eq("id", postId);
+        if (updateError) throw updateError;
+      } else {
+        const { data: newPost, error: insertError } = await supabase
+          .from("building_posts")
+          .insert({
+            user_id: user.id,
+            building_id: building.id,
+            body: note,
+          })
+          .select("id")
+          .single();
+        if (insertError) throw insertError;
+        postId = newPost.id;
+        setActivePostId(postId);
+      }
 
-      // Sync collection membership
+      // 3. Sync collection membership
       const addedIds = selectedCollectionIds.filter(
         (id) => !initialCollectionIds.includes(id),
       );
@@ -889,30 +931,25 @@ export function useBuildingInteractions({
           .eq("building_id", building.id);
       setInitialCollectionIds(selectedCollectionIds);
 
-      // Sync review links
-      if (reviewId) {
-        await supabase
-          .from("review_links")
-          .delete()
-          .eq("review_id", reviewId);
-        if (userLinks.length > 0) {
-          await supabase.from("review_links").insert(
-            userLinks.map((l) => ({
-              review_id: reviewId,
-              user_id: user.id,
-              url: l.url,
-              title: l.title,
-            })),
-          );
-        }
+      // 4. Sync review links (keyed to building_posts.id)
+      await supabase.from("review_links").delete().eq("review_id", postId);
+      if (userLinks.length > 0) {
+        await supabase.from("review_links").insert(
+          userLinks.map((l) => ({
+            review_id: postId,
+            user_id: user.id,
+            url: l.url,
+            title: l.title,
+          })),
+        );
       }
 
-      // Upload pending images
-      if (pendingImages.length > 0 && reviewId) {
+      // 5. Upload pending images (keyed to building_posts.id)
+      if (pendingImages.length > 0) {
         for (const img of pendingImages) {
-          const storagePath = await uploadFile(img.file, reviewId);
+          const storagePath = await uploadFile(img.file, postId);
           await supabase.from("review_images").insert({
-            review_id: reviewId,
+            review_id: postId,
             user_id: user.id,
             storage_path: storagePath,
             is_generated: img.is_generated,
@@ -939,6 +976,7 @@ export function useBuildingInteractions({
     userStatus,
     myRating,
     note,
+    activePostId,
     selectedCollectionIds,
     initialCollectionIds,
     userLinks,
@@ -951,12 +989,20 @@ export function useBuildingInteractions({
   const handleDelete = useCallback(async () => {
     if (!user || !building) return;
     try {
+      // Delete all building_posts for this user+building (cascades to review_images, review_links, likes, comments)
+      await supabase
+        .from("building_posts")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("building_id", building.id);
+
       const { error } = await supabase
         .from("user_buildings")
         .delete()
         .eq("user_id", user.id)
         .eq("building_id", building.id);
       if (error) throw error;
+
       if (initialCollectionIds.length > 0) {
         await supabase
           .from("collection_items")
@@ -967,6 +1013,7 @@ export function useBuildingInteractions({
       setUserStatus(null);
       setMyRating(0);
       setNote("");
+      setActivePostId(null);
       setNoteEditorOpen(false);
       setSelectedCollectionIds([]);
       setInitialCollectionIds([]);
