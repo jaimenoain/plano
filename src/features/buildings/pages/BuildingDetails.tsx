@@ -60,6 +60,7 @@ import {
   visiblePrimaryCredits,
 } from "@/features/credits/buildingCreditDisplay";
 import { getBuildingUrl, getLocalityUrl } from "@/utils/url";
+import { getBuildingImageUrl } from "@/utils/image";
 import { CollectionSelector } from "@/features/collections/components/CollectionSelector";
 import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
 import { PrimaryCreditsLinks } from "../components/PrimaryCreditsLinks";
@@ -1927,25 +1928,50 @@ export default function BuildingDetails() {
                             ? post.body.length > 80 ? post.body.slice(0, 80) + "…" : post.body
                             : null;
                           const dateStr = new Date(post.updated_at || post.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+                          const thumbs = post.images.slice(0, 4);
+                          const extraCount = post.images.length - 4;
                           return (
                             <div
                               key={post.id}
-                              className="flex items-start gap-2 rounded-sm border border-border-default bg-surface-muted/30 px-3 py-2.5 group"
+                              className="rounded-sm border border-border-default bg-surface-muted/30 group"
                             >
-                              <div className="flex-1 min-w-0">
-                                {preview
-                                  ? <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">&ldquo;{preview}&rdquo;</p>
-                                  : <p className="text-xs text-text-disabled italic">No text</p>
-                                }
-                                <p className="text-[10px] text-text-disabled mt-1">{dateStr}</p>
+                              {thumbs.length > 0 && (
+                                <div className={cn(
+                                  "grid gap-0.5 overflow-hidden rounded-t-sm",
+                                  thumbs.length === 1 ? "grid-cols-1" : "grid-cols-3",
+                                )}>
+                                  {thumbs.map((img, i) => {
+                                    const url = getBuildingImageUrl(img.storage_path);
+                                    const isLast = i === thumbs.length - 1 && extraCount > 0;
+                                    return (
+                                      <div key={img.id} className="relative aspect-square bg-surface-muted overflow-hidden">
+                                        {url && <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" />}
+                                        {isLast && (
+                                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                            <span className="text-text-inverse text-xs font-bold">+{extraCount}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              <div className="flex items-start gap-2 px-3 py-2.5">
+                                <div className="flex-1 min-w-0">
+                                  {preview
+                                    ? <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">&ldquo;{preview}&rdquo;</p>
+                                    : <p className="text-xs text-text-disabled italic">No text</p>
+                                  }
+                                  <p className="text-[10px] text-text-disabled mt-1">{dateStr}</p>
+                                </div>
+                                <button
+                                  onClick={() => void handleSelectPost(post.id)}
+                                  className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-border-default"
+                                  title="Edit this note"
+                                >
+                                  <Pencil className="h-3.5 w-3.5 text-text-secondary" />
+                                </button>
                               </div>
-                              <button
-                                onClick={() => void handleSelectPost(post.id)}
-                                className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-border-default"
-                                title="Edit this note"
-                              >
-                                <Pencil className="h-3.5 w-3.5 text-text-secondary" />
-                              </button>
                             </div>
                           );
                         })}

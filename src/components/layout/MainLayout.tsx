@@ -37,9 +37,12 @@ function MainLayout() {
 
   const location = useLocation();
   const [exploreHideTopChrome, setExploreHideTopChrome] = useState(false);
+  const [landingHideTopChrome, setLandingHideTopChrome] = useState(false);
 
   const hideExploreTopChrome =
     location.pathname === "/explore" && exploreHideTopChrome;
+
+  const hideTopChrome = hideExploreTopChrome || landingHideTopChrome;
 
   useEffect(() => {
     if (location.pathname !== "/explore") {
@@ -49,7 +52,7 @@ function MainLayout() {
 
   return (
     <ExploreShellProvider
-      value={{ setExploreHideTopChrome }}
+      value={{ setExploreHideTopChrome, setLandingHideTopChrome }}
     >
       <WaitlistSignupProvider>
         <SidebarProvider
@@ -57,9 +60,9 @@ function MainLayout() {
           initialOpen={rootData?.sidebarOpen ?? undefined}
         >
           <AppSidebar />
-          {!hideExploreTopChrome && <MobileTopBar />}
-          {!hideExploreTopChrome && <AppTopNav />}
-          <MainLayoutInset hideTopInset={hideExploreTopChrome} />
+          {!hideTopChrome && <MobileTopBar />}
+          {!hideTopChrome && <AppTopNav />}
+          <MainLayoutInset hideTopInset={hideTopChrome} />
         </SidebarProvider>
       </WaitlistSignupProvider>
     </ExploreShellProvider>

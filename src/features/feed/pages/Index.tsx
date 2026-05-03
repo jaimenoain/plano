@@ -24,6 +24,7 @@ import { LandingFooter } from "../components/landing/LandingFooter";
 import { useFeed } from "../hooks/useFeed";
 import { useSuggestedFeed } from "../hooks/useSuggestedFeed";
 import { useCollectionsFeed } from "../hooks/useCollectionsFeed";
+import { useExploreShell } from "@/components/layout/ExploreShellContext";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import { FeedRightRail } from "../components/FeedRightRail";
 
@@ -68,6 +69,12 @@ export const meta: MetaFunction = () => [
 
 // --- Landing page (logged-out) ---
 function Landing() {
+  const { setLandingHideTopChrome } = useExploreShell();
+  useEffect(() => {
+    setLandingHideTopChrome(true);
+    return () => setLandingHideTopChrome(false);
+  }, [setLandingHideTopChrome]);
+
   return (
     <AppLayout showNav={false} showFooter={false}>
       <LandingNav />
