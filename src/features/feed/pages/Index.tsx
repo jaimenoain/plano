@@ -6,7 +6,6 @@ import { FeedCollectionCard } from "../components/FeedCollectionCard";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { SITE_URL } from "@/features/buildings/utils/structuredData";
 import {
   aggregateFeed,
@@ -20,12 +19,14 @@ import type { FeedCollection, FeedReview } from "@/types/feed";
 import { LandingHero } from "../components/landing/LandingHero";
 import { LandingMarquee } from "../components/landing/LandingMarquee";
 import { LandingFeatureGrid } from "../components/landing/LandingFeatureGrid";
+import { LandingNav } from "../components/landing/LandingNav";
+import { LandingFooter } from "../components/landing/LandingFooter";
 import { useFeed } from "../hooks/useFeed";
 import { useSuggestedFeed } from "../hooks/useSuggestedFeed";
 import { useCollectionsFeed } from "../hooks/useCollectionsFeed";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import { FeedRightRail } from "../components/FeedRightRail";
-import { useWaitlistSignup } from "@/features/waitlist/WaitlistSignupProvider";
+
 
 const INDEX_TITLE = "Plano — The world's architecture, cataloged.";
 const INDEX_DESCRIPTION =
@@ -67,42 +68,25 @@ export const meta: MetaFunction = () => [
 
 // --- Landing page (logged-out) ---
 function Landing() {
-  const navigate = useNavigate();
-  const { openWaitlistDialog } = useWaitlistSignup();
   return (
-    <AppLayout showNav={false}>
-      <div className="pointer-events-none fixed right-4 top-4 z-40 safe-area-pt flex flex-col items-end gap-2 sm:flex-row sm:items-center">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={openWaitlistDialog}
-          className="pointer-events-auto h-10 px-4 font-medium border border-border-default bg-surface-default text-text-primary hover:bg-surface-muted rounded-sm shadow-md"
-        >
-          Join the waiting list
-        </Button>
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/auth")}
-          className="pointer-events-auto h-10 px-4 font-medium bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover rounded-sm shadow-md"
-        >
-          Log in
-        </Button>
-      </div>
+    <AppLayout showNav={false} showFooter={false}>
+      <LandingNav />
       <main className="flex-1 w-full min-w-0 overflow-x-hidden">
         <LandingHero />
         <LandingMarquee />
-        <div className="container mx-auto py-24 px-4">
-          <div className="text-center mb-16 space-y-4">
-            <h2 className="text-4xl font-bold tracking-tight text-text-primary">
-              Everything you need
-            </h2>
-            <p className="text-text-secondary text-lg max-w-2xl mx-auto">
-              Built for architecture enthusiasts, by architecture enthusiasts.
+        <section className="max-w-5xl mx-auto py-24 px-5 md:px-8">
+          <div className="mb-16 space-y-3">
+            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-text-disabled">
+              What we're building
             </p>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary max-w-xl">
+              A permanent record of the built world.
+            </h2>
           </div>
           <LandingFeatureGrid />
-        </div>
+        </section>
       </main>
+      <LandingFooter />
     </AppLayout>
   );
 }

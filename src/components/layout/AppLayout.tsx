@@ -20,11 +20,12 @@ interface AppLayoutProps {
   /** When true, the shell layout (e.g. MainLayout `SidebarInset`) already applies top padding for the fixed app nav — skip extra `pt-16` so content (e.g. hero) sits flush under it. */
   shellProvidesTopInset?: boolean;
   fullWidth?: boolean;
+  showFooter?: boolean;
 }
 
-export function AppLayout({ 
-  children, 
-  title, 
+export function AppLayout({
+  children,
+  title,
   variant,
   searchBar,
   leftAction,
@@ -36,13 +37,14 @@ export function AppLayout({
   isFullScreen = false,
   showHeader = false,
   shellProvidesTopInset = false,
-  fullWidth = false
+  fullWidth = false,
+  showFooter: showFooterProp,
 }: AppLayoutProps) {
   void fullWidth;
 
   // Footer is hidden on map and full-screen variants — those are immersive
   // surfaces where a footer would be obscured or intrusive.
-  const showFooter = variant !== 'map' && !isFullScreen;
+  const showFooter = showFooterProp !== false && variant !== 'map' && !isFullScreen;
 
   return (
     <>

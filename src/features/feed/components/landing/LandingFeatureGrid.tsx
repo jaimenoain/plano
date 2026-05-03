@@ -1,113 +1,78 @@
-import { Check } from "lucide-react";
+import { Building2, Users, MapPin } from "lucide-react";
+
+const features = [
+  {
+    tag: "Discover",
+    icon: Building2,
+    title: "Every building, documented.",
+    description:
+      "Browse thousands of buildings across every city, style, and era. Search by architect, movement, material, or location.",
+    items: [
+      { label: "Bauhaus", meta: "Movement" },
+      { label: "Tadao Ando", meta: "Architect" },
+      { label: "Brutalism", meta: "Style" },
+    ],
+  },
+  {
+    tag: "Credit",
+    icon: Users,
+    title: "Architects get the credit they deserve.",
+    description:
+      "Every building attributed to the architects, engineers, and studios behind it. A permanent record of who made what.",
+    items: [
+      { label: "Renzo Piano", meta: "223 buildings" },
+      { label: "Zaha Hadid Architects", meta: "Studio · 89 buildings" },
+      { label: "Arup", meta: "Engineering · 1,400+ projects" },
+    ],
+  },
+  {
+    tag: "Track",
+    icon: MapPin,
+    title: "Your architecture journey.",
+    description:
+      "Log every building you visit. Rate them, collect favorites, and follow the architects whose work inspires you.",
+    items: [
+      { label: "Fallingwater", meta: "Visited" },
+      { label: "Unité d'Habitation", meta: "Want to visit" },
+      { label: "Barbican Centre", meta: "In 'Brutalist Gems'" },
+    ],
+  },
+];
 
 export const LandingFeatureGrid = () => {
   return (
-    <div className="grid grid-cols-1 gap-16 md:grid-cols-3 md:gap-12 py-16 md:py-24 px-4 max-w-5xl mx-auto">
-      {/* Feature 1: Log Your Journey */}
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <p className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
-            Track
-          </p>
-          <h3 className="text-2xl font-bold tracking-tight text-text-primary">
-            Log Your Journey
-          </h3>
-          <p className="text-sm text-text-secondary leading-relaxed">
-            Keep track of every architectural masterpiece you've visited.
-          </p>
-        </div>
+    <div className="grid grid-cols-1 gap-16 md:grid-cols-3 md:gap-10">
+      {features.map(({ tag, icon: Icon, title, description, items }) => (
+        <div key={tag} className="space-y-8">
+          {/* Header */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Icon className="h-3.5 w-3.5 text-text-disabled" strokeWidth={1.5} />
+              <p className="text-[11px] font-medium tracking-[0.18em] uppercase text-text-disabled">
+                {tag}
+              </p>
+            </div>
+            <h3 className="text-xl font-bold tracking-tight text-text-primary leading-snug">
+              {title}
+            </h3>
+            <p className="text-sm text-text-secondary leading-relaxed">{description}</p>
+          </div>
 
-        <div className="space-y-2">
-          {["Unité d'Habitation", "Barbican Centre", "Villa Savoye"].map(
-            (name) => (
+          {/* Example rows */}
+          <div className="space-y-0">
+            {items.map(({ label, meta }, i) => (
               <div
-                key={name}
-                className="flex items-center justify-between border-b border-border-default pb-2"
+                key={label}
+                className="flex items-center justify-between border-b border-border-default py-3"
+                style={{ opacity: 1 - i * 0.28 }}
               >
-                <span className="text-sm font-medium text-text-primary">
-                  {name}
-                </span>
-                <Check className="h-3.5 w-3.5 text-text-disabled" />
+                <span className="text-sm font-medium text-text-primary">{label}</span>
+                <span className="text-xs text-text-disabled">{meta}</span>
               </div>
-            )
-          )}
-        </div>
-      </div>
-
-      {/* Feature 2: Curate Lists */}
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <p className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
-            Collect
-          </p>
-          <h3 className="text-2xl font-bold tracking-tight text-text-primary">
-            Curate Lists
-          </h3>
-          <p className="text-sm text-text-secondary leading-relaxed">
-            Organize your favorites into collections like "Brutalist Gems".
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          <div className="border-b border-border-default pb-3">
-            <p className="text-sm font-semibold text-text-primary">
-              Brutalist Gems
-            </p>
-            <p className="text-xs text-text-secondary mt-0.5">12 buildings</p>
-          </div>
-          <div className="border-b border-border-default pb-3 opacity-50">
-            <p className="text-sm font-semibold text-text-primary">
-              Tokyo Metabolist
-            </p>
-            <p className="text-xs text-text-secondary mt-0.5">8 buildings</p>
-          </div>
-          <div className="opacity-25">
-            <p className="text-sm font-semibold text-text-primary">
-              Sacred Spaces
-            </p>
-            <p className="text-xs text-text-secondary mt-0.5">5 buildings</p>
+            ))}
           </div>
         </div>
-      </div>
-
-      {/* Feature 3: Follow Architects */}
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <p className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
-            Connect
-          </p>
-          <h3 className="text-2xl font-bold tracking-tight text-text-primary">
-            Follow Architects
-          </h3>
-          <p className="text-sm text-text-secondary leading-relaxed">
-            Stay updated with works from legends like Le Corbusier.
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center gap-3 border-b border-border-default pb-3">
-            <div className="h-8 w-8 shrink-0 rounded-full bg-surface-muted" />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-text-primary">
-                Le Corbusier
-              </p>
-              <p className="text-xs text-text-secondary">Architect</p>
-            </div>
-            <span className="text-xs font-medium uppercase tracking-widest text-text-secondary">
-              Follow
-            </span>
-          </div>
-          <div className="flex items-center gap-3 opacity-40">
-            <div className="h-8 w-8 shrink-0 rounded-full bg-surface-muted" />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-text-primary">
-                Zaha Hadid
-              </p>
-              <p className="text-xs text-text-secondary">Architect</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      ))}
     </div>
   );
 };

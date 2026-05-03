@@ -1,74 +1,75 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
-import { DiscoverySearchInput } from "@/features/search/components/DiscoverySearchInput";
 import { motion } from "framer-motion";
+import { useWaitlistSignup } from "@/features/waitlist/WaitlistSignupProvider";
+import { Button } from "@/components/ui/button";
 
 export const LandingHero = () => {
-  const [searchValue, setSearchValue] = useState("");
-  const navigate = useNavigate();
-
-  const handleLocationSelect = (location: { lat: number; lng: number }) => {
-    navigate(`/search?lat=${location.lat}&lng=${location.lng}`);
-  };
-
-  const handleSearchSubmit = () => {
-    if (searchValue.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchValue)}`);
-    }
-  };
+  const { openWaitlistDialog } = useWaitlistSignup();
 
   return (
-    <div className="w-full min-h-[80vh] py-24 md:py-32 flex flex-col items-center justify-center space-y-10">
-      {/* Typography */}
-      <motion.div
-        className="w-full max-w-4xl px-4 flex flex-col items-center text-center space-y-6"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-      >
-        <h1 className="text-3xl md:text-7xl font-bold tracking-tight text-text-primary leading-tight">
-          The world's architecture,{" "}
-          <br className="hidden md:block" />
-          cataloged.
-        </h1>
-        <p className="text-lg md:text-xl text-text-secondary max-w-xl">
-          Track visits, rate buildings, and follow friends.
-        </p>
-      </motion.div>
+    <div className="w-full min-h-[92vh] flex flex-col items-center justify-center px-5 md:px-8 pt-14">
+      <div className="w-full max-w-4xl flex flex-col items-center text-center">
 
-      {/* Search */}
-      <motion.div
-        className="w-full max-w-lg px-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.15 }}
-      >
-        <div className="border-b border-border-default">
-          <DiscoverySearchInput
-            value={searchValue}
-            onSearchChange={setSearchValue}
-            onLocationSelect={handleLocationSelect}
-            placeholder="Search for a city, building, or architect..."
-            className="w-full [&_input]:bg-transparent [&_input]:border-none [&_input]:focus-visible:ring-0 [&_input]:text-base [&_input]:h-12 [&_input]:placeholder:text-text-secondary/70"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSearchSubmit();
-              }
-            }}
-          />
-        </div>
-      </motion.div>
+        {/* Eyebrow label */}
+        <motion.p
+          className="text-[11px] font-medium tracking-[0.2em] uppercase text-text-disabled mb-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          Coming soon
+        </motion.p>
 
-      {/* Subtle CTA */}
-      <motion.button
-        onClick={() => navigate("/search")}
-        className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.3 }}
-      >
-        Explore nearby →
-      </motion.button>
+        {/* Headline */}
+        <motion.h1
+          className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-text-primary leading-[1.05] mb-8"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
+        >
+          The world's
+          <br />
+          architecture database.
+        </motion.h1>
+
+        {/* Subheadline */}
+        <motion.p
+          className="text-base md:text-xl text-text-secondary max-w-2xl leading-relaxed mb-12"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+        >
+          Like IMDb, but for buildings. We're cataloging every structure on earth — so the architects, engineers, and studios who make them possible finally get the credit they deserve.
+        </motion.p>
+
+        {/* CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+        >
+          <Button
+            type="button"
+            onClick={openWaitlistDialog}
+            className="h-12 px-8 text-sm font-medium rounded-sm bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover"
+          >
+            Join the waiting list
+          </Button>
+        </motion.div>
+
+        {/* Feature triptych */}
+        <motion.div
+          className="flex items-center gap-4 md:gap-8 mt-12 text-xs font-medium tracking-[0.15em] uppercase text-text-disabled"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+        >
+          <span>Discover buildings</span>
+          <span className="text-border-default">·</span>
+          <span>Track visits</span>
+          <span className="text-border-default">·</span>
+          <span>Follow architects</span>
+        </motion.div>
+      </div>
     </div>
   );
 };

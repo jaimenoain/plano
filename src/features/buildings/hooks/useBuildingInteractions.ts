@@ -145,6 +145,10 @@ export interface BuildingInteractions {
   // Notes / images
   note: string;
   setNote: React.Dispatch<React.SetStateAction<string>>;
+  /** ID of the post currently loaded in the editor, or null for a new note. */
+  activePostId: string | null;
+  /** All of the user's posts for this building, newest first. */
+  userPosts: { id: string; body: string | null; created_at: string; updated_at: string }[];
   pendingImages: Array<{
     id: string;
     file: File;
@@ -199,6 +203,8 @@ export interface BuildingInteractions {
   handleAddLink: () => void;
   handleRemoveLink: (id: string) => void;
   handleSaveNote: () => Promise<void>;
+  handleSelectPost: (id: string) => Promise<void>;
+  handleNewNote: () => void;
   handleDelete: () => Promise<void>;
   handleSendInvites: () => Promise<void>;
   handleSetHeroImage: () => Promise<void>;
@@ -283,8 +289,12 @@ export function useBuildingInteractions({
 
   // ── Notes / images ───────────────────────────────────────────────────────
   const [note, setNote] = useState("");
-  /** ID of the current user's building_posts row for this building. */
+  /** ID of the building_posts row currently open in the editor (null = new). */
   const [activePostId, setActivePostId] = useState<string | null>(null);
+  /** All of this user's building_posts for this building, newest first. */
+  const [userPosts, setUserPosts] = useState<
+    { id: string; body: string | null; created_at: string; updated_at: string }[]
+  >([]);
   const [pendingImages, setPendingImages] = useState<
     Array<{
       id: string;
@@ -476,15 +486,15 @@ export function useBuildingInteractions({
               .eq("building_id", resolvedBuildingId)
               .maybeSingle();
 
-            // User's latest building_post for this building (note + links)
-            const { data: latestPost } = await supabase
+            // All of this user's building_posts for this building, newest first
+            const { data: allPosts } = await supabase
               .from("building_posts")
-              .select("id, body")
+              .select("id, body, created_at, updated_at")
               .eq("user_id", userId)
               .eq("building_id", resolvedBuildingId)
               .order("updated_at", { ascending: false })
-              .limit(1)
-              .maybeSingle();
+              .limit(20);
+            const latestPost = allPosts?.[0] ?? null;
 
             // User's collections containing this building
             const { data: collectionItems } = await supabase
@@ -514,6 +524,15 @@ export function useBuildingInteractions({
               setMyRating(userEntry.rating || 0);
             }
 
+            setUserPosts(
+              (allPosts ?? []).map((p) => ({
+                id: p.id,
+                body: p.body,
+                created_at: p.created_at ?? "",
+                updated_at: p.updated_at ?? p.created_at ?? "",
+              })),
+            );
+
             if (latestPost) {
               setActivePostId(latestPost.id);
               setNote(latestPost.body || "");
@@ -534,6 +553,7 @@ export function useBuildingInteractions({
             } else {
               setActivePostId(null);
               setNote("");
+              setUserPosts([]);
             }
           })(),
         );
@@ -961,7 +981,22 @@ export function useBuildingInteractions({
         setPendingImages([]);
       }
 
-      toast({ title: "Review saved" });
+      // Keep userPosts in sync locally (avoids full refetch)
+      const now = new Date().toISOString();
+      setUserPosts((prev) => {
+        if (activePostId) {
+          return prev.map((p) =>
+            p.id === activePostId ? { ...p, body: note, updated_at: now } : p,
+          );
+        }
+        // Newly inserted post
+        return [
+          { id: postId, body: note, created_at: now, updated_at: now },
+          ...prev,
+        ];
+      });
+
+      toast({ title: "Note saved" });
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
       queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
       void fetchUserSpecificData();
@@ -1014,6 +1049,7 @@ export function useBuildingInteractions({
       setMyRating(0);
       setNote("");
       setActivePostId(null);
+      setUserPosts([]);
       setNoteEditorOpen(false);
       setSelectedCollectionIds([]);
       setInitialCollectionIds([]);
@@ -1024,6 +1060,34 @@ export function useBuildingInteractions({
       toast({ variant: "destructive", title: "Failed to remove" });
     }
   }, [user, building, initialCollectionIds, queryClient, toast]);
+
+  /** Load an existing post into the editor. Fetches its links from DB. */
+  const handleSelectPost = useCallback(
+    async (postId: string) => {
+      const post = userPosts.find((p) => p.id === postId);
+      if (!post) return;
+      setActivePostId(postId);
+      setNote(post.body ?? "");
+      setNoteEditorOpen(true);
+      // Load links for this post
+      const { data: linksData } = await supabase
+        .from("review_links")
+        .select("id, url, title")
+        .eq("review_id", postId);
+      setUserLinks(
+        (linksData ?? []).map((l) => ({ id: l.id, url: l.url, title: l.title ?? "" })),
+      );
+    },
+    [userPosts],
+  );
+
+  /** Start a brand-new note (clears editor without touching existing posts). */
+  const handleNewNote = useCallback(() => {
+    setActivePostId(null);
+    setNote("");
+    setUserLinks([]);
+    setNoteEditorOpen(true);
+  }, []);
 
   const handleSendInvites = useCallback(async () => {
     if (!user || !building || selectedFriends.length === 0) return;
@@ -1213,6 +1277,8 @@ export function useBuildingInteractions({
     setNewLinkTitle,
     note,
     setNote,
+    activePostId,
+    userPosts,
     pendingImages,
     isSavingNote,
     showCollections,
@@ -1245,6 +1311,8 @@ export function useBuildingInteractions({
     handleAddLink,
     handleRemoveLink,
     handleSaveNote,
+    handleSelectPost,
+    handleNewNote,
     handleDelete,
     handleSendInvites,
     handleSetHeroImage,

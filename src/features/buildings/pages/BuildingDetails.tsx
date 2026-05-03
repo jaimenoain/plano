@@ -832,6 +832,8 @@ export default function BuildingDetails() {
     setNewLinkTitle,
     note,
     setNote,
+    activePostId,
+    userPosts,
     pendingImages,
     isSavingNote,
     showCollections,
@@ -857,6 +859,8 @@ export default function BuildingDetails() {
     handleAddLink,
     handleRemoveLink: _handleRemoveLink,
     handleSaveNote,
+    handleSelectPost,
+    handleNewNote,
     handleDelete,
     handleSetHeroImage,
     handleToggleOfficial,
@@ -1894,7 +1898,7 @@ export default function BuildingDetails() {
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() => setNoteEditorOpen(!noteEditorOpen)}
+                      onClick={handleNewNote}
                       className="h-9 text-[10px] font-bold uppercase tracking-wider bg-surface-muted hover:bg-border-default border-none"
                     >
                       <Plus className="h-3.5 w-3.5 mr-1.5" /> Note
@@ -1909,6 +1913,46 @@ export default function BuildingDetails() {
                     </Button>
                   </div>
 
+                  {/* Existing notes list */}
+                  <AnimatePresence>
+                    {!noteEditorOpen && userPosts.length > 0 && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden space-y-2 pt-1"
+                      >
+                        {userPosts.map((post) => {
+                          const preview = post.body?.trim()
+                            ? post.body.length > 80 ? post.body.slice(0, 80) + "…" : post.body
+                            : null;
+                          const dateStr = new Date(post.updated_at || post.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+                          return (
+                            <div
+                              key={post.id}
+                              className="flex items-start gap-2 rounded-sm border border-border-default bg-surface-muted/30 px-3 py-2.5 group"
+                            >
+                              <div className="flex-1 min-w-0">
+                                {preview
+                                  ? <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">&ldquo;{preview}&rdquo;</p>
+                                  : <p className="text-xs text-text-disabled italic">No text</p>
+                                }
+                                <p className="text-[10px] text-text-disabled mt-1">{dateStr}</p>
+                              </div>
+                              <button
+                                onClick={() => void handleSelectPost(post.id)}
+                                className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-border-default"
+                                title="Edit this note"
+                              >
+                                <Pencil className="h-3.5 w-3.5 text-text-secondary" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   {/* Note editor */}
                   <AnimatePresence>
                     {noteEditorOpen && (
@@ -1918,6 +1962,16 @@ export default function BuildingDetails() {
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden space-y-3 pt-4 border-t border-border-default"
                       >
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-text-disabled">
+                            {activePostId ? "Editing note" : "New note"}
+                          </span>
+                          {userPosts.length > 0 && !activePostId && (
+                            <span className="text-[10px] text-text-disabled">
+                              {userPosts.length} existing note{userPosts.length !== 1 ? "s" : ""}
+                            </span>
+                          )}
+                        </div>
                         <Textarea
                           value={note}
                           onChange={(e) => setNote(e.target.value)}
