@@ -23,7 +23,7 @@ export function LandingFooter() {
         </div>
         <div className="flex items-center gap-5">
           <a
-            href="https://instagram.com/plano.app"
+            href="https://www.instagram.com/plano_map/"
             target="_blank"
             rel="noopener noreferrer"
             className="text-[11px] font-medium tracking-[0.1em] uppercase text-text-disabled hover:text-text-secondary transition-colors"

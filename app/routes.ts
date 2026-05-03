@@ -151,6 +151,14 @@ export default [
     route("/building/:id/review", "features/buildings/pages/WriteReview.tsx", {
       id: "building-review-id-only",
     }),
+    route(
+      "/building/:id/:slug/note/:postId/edit",
+      "features/buildings/pages/EditNote.tsx",
+      { id: "building-note-edit-slug" },
+    ),
+    route("/building/:id/note/:postId/edit", "features/buildings/pages/EditNote.tsx", {
+      id: "building-note-edit-id-only",
+    }),
     route("/portfolio", "features/credits/pages/PersonDashboard.tsx"),
     route("/company-portfolio", "features/credits/pages/CompanyDashboard.tsx"),
     route("/superadmin/cards", "features/superadmin/pages/CardPlayground.tsx"),

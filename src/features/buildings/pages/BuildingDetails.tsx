@@ -14,6 +14,7 @@ import {
   isRouteErrorResponse,
   useRevalidator,
   useSearchParams,
+  useNavigate,
   type MetaFunction,
 } from "react-router";
 import {
@@ -782,6 +783,7 @@ function TechnicalSection({ canEdit }: { canEdit: boolean }) {
 // ─── Page component ───────────────────────────────────────────────────────────
 
 export default function BuildingDetails() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const {
@@ -1965,7 +1967,7 @@ export default function BuildingDetails() {
                                   <p className="text-[10px] text-text-disabled mt-1">{dateStr}</p>
                                 </div>
                                 <button
-                                  onClick={() => void handleSelectPost(post.id)}
+                                  onClick={() => void navigate(`/building/${building.id}/note/${post.id}/edit`)}
                                   className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-border-default"
                                   title="Edit this note"
                                 >

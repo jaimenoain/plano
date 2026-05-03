@@ -168,10 +168,17 @@ export default function Index() {
 
   const aggregatedReviews = useMemo(() => aggregateFeed(socialReviews), [socialReviews]);
   const eventAttendance = socialFeed.eventAttendance ?? [];
-  const mergedHomeRows = useMemo(
-    () => mergeAggregatedFeedWithEventAttendance(aggregatedReviews, eventAttendance),
-    [aggregatedReviews, eventAttendance],
-  );
+  const mergedHomeRows = useMemo(() => {
+    const rows = mergeAggregatedFeedWithEventAttendance(aggregatedReviews, eventAttendance);
+    const firstHeroIdx = rows.findIndex(
+      (r) => r.kind === "aggregated" && r.item.type === "hero",
+    );
+    if (firstHeroIdx > 0) {
+      const hero = rows[firstHeroIdx];
+      return [hero, ...rows.slice(0, firstHeroIdx), ...rows.slice(firstHeroIdx + 1)];
+    }
+    return rows;
+  }, [aggregatedReviews, eventAttendance]);
   const collectionItems = useMemo(
     () => collectionsFeed.data?.pages.flatMap((p) => p) || [],
     [collectionsFeed.data],
