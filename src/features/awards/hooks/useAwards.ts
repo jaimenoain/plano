@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   getAwards,
   getAwardById,
@@ -136,12 +137,12 @@ export function useAwardLeaderboard(awardId?: string, limit = 50) {
   return useQuery({
     queryKey: [...awardKeys.all, "leaderboard", awardId, limit],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_award_leaderboard", {
+      const { data, error } = await (supabase as any).rpc("get_award_leaderboard", {
         p_award_id: awardId || null,
         p_limit: limit,
       });
       if (error) throw error;
-      return data as any[];
+      return data as unknown as any[];
     },
     staleTime: STALE_TIME,
   });

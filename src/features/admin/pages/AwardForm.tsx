@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams, type MetaFunction } from "react-router";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAward, useCreateAward, useUpdateAward } from "@/features/awards/hooks/useAwards";
+import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -32,6 +34,8 @@ export default function AwardForm() {
   const { data: existingAward, isLoading: loadingAward } = useAward(awardId ?? "");
   const createAward = useCreateAward();
   const updateAward = useUpdateAward();
+  const queryClient = useQueryClient();
+  const [syncing, setSyncing] = useState(false);
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -43,6 +47,7 @@ export default function AwardForm() {
   const [bodyType, setBodyType] = useState<string>("");
   const [bodyName, setBodyName] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [wikidataQid, setWikidataQid] = useState("");
 
   // Populate form when editing
   useEffect(() => {
@@ -57,6 +62,7 @@ export default function AwardForm() {
     setBodyType(existingAward.awardingBodyType ?? "");
     setBodyName(existingAward.awardingBodyName ?? "");
     setIsActive(existingAward.isActive);
+    setWikidataQid(existingAward.wikidataQid ?? "");
   }, [existingAward]);
 
   // Auto-generate slug from name
@@ -85,6 +91,7 @@ export default function AwardForm() {
       awarding_body_type: bodyType || null,
       awarding_body_name: bodyName.trim() || null,
       is_active: isActive,
+      wikidata_qid: wikidataQid.trim() || null,
     };
 
     if (isEdit && awardId) {
@@ -106,6 +113,23 @@ export default function AwardForm() {
         },
         onError: () => toast.error("Failed to create award"),
       });
+    }
+  };
+
+  const handleSyncWikidata = async () => {
+    if (!awardId) return;
+    setSyncing(true);
+    try {
+      const { error } = await supabase.functions.invoke("sync-award-wikidata", {
+        body: { award_id: awardId },
+      });
+      if (error) throw error;
+      toast.success("Synced successfully");
+      queryClient.invalidateQueries({ queryKey: ["awards", awardId] });
+    } catch (err: any) {
+      toast.error(`Failed to sync Wikidata: ${err.message}`);
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -176,6 +200,33 @@ export default function AwardForm() {
             onChange={(e) => setWebsite(e.target.value)}
             placeholder="https://…"
           />
+        </div>
+
+        {/* Wikidata QID */}
+        <div className="space-y-2">
+          <Label htmlFor="award-wikidata-qid">Wikidata QID</Label>
+          <div className="flex items-center gap-2">
+            <Input
+              id="award-wikidata-qid"
+              value={wikidataQid}
+              onChange={(e) => setWikidataQid(e.target.value)}
+              placeholder="e.g. Q48143"
+            />
+            {isEdit && wikidataQid && (
+              <Button type="button" variant="ghost" size="sm" onClick={handleSyncWikidata} disabled={syncing}>
+                {syncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Sync →
+              </Button>
+            )}
+          </div>
+          <p className="text-xs text-text-secondary">
+            Find the QID by searching <a href="https://www.wikidata.org" target="_blank" rel="noreferrer" className="underline hover:text-text-primary">wikidata.org</a>. It always starts with Q followed by numbers.
+          </p>
+          {existingAward?.wikidataSitelinks !== null && existingAward?.wikidataSitelinks !== undefined ? (
+            <p className="text-sm text-text-secondary mt-1">Wikipedia presence: {existingAward.wikidataSitelinks} language editions</p>
+          ) : wikidataQid ? (
+            <p className="text-sm text-text-secondary mt-1">Not yet synced</p>
+          ) : null}
         </div>
 
         {/* Country */}

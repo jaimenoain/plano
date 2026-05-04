@@ -16,6 +16,9 @@ export interface AwardDTO {
   awardingBodyCompanyId: string | null;
   awardingBodyName: string | null;
   isActive: boolean;
+  wikidataQid: string | null;
+  wikidataSitelinks: number | null;
+  wikidataFetchedAt: string | null;
   createdAt: string;
   // Joined:
   awardingBodyCompany?: { id: string; name: string; slug: string } | null;

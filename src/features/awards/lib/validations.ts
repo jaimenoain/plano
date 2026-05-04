@@ -11,6 +11,7 @@ export const CreateAwardSchema = z.object({
   awardingBodyCompanyId:  z.string().uuid().optional().nullable(),
   awardingBodyName:       z.string().max(500).optional().nullable(),
   isActive:               z.boolean().default(true),
+  wikidataQid:            z.string().regex(/^Q[0-9]+$/).optional().nullable(),
 });
 export const UpdateAwardSchema = CreateAwardSchema.partial();
 

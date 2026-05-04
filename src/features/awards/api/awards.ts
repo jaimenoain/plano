@@ -36,6 +36,9 @@ function toAwardDTO(row: any, editionCount?: number): AwardDTO {
     awardingBodyCompanyId: row.awarding_body_company_id ?? null,
     awardingBodyName: row.awarding_body_name ?? null,
     isActive: row.is_active,
+    wikidataQid: row.wikidata_qid ?? null,
+    wikidataSitelinks: row.wikidata_sitelinks ?? null,
+    wikidataFetchedAt: row.wikidata_fetched_at ?? null,
     createdAt: row.created_at,
     awardingBodyCompany: body,
     editionCount,
@@ -119,6 +122,7 @@ export async function getAwards(): Promise<AwardDTO[]> {
       awarding_body_company:companies!awards_awarding_body_company_id_fkey(id, name, slug),
       award_editions(count)
     `)
+    .order("wikidata_sitelinks", { ascending: false, nullsFirst: false })
     .order("name", { ascending: true });
 
   if (error) throw new Error(`Failed to load awards: ${error.message}`);

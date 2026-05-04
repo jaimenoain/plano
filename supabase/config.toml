@@ -46,3 +46,6 @@ verify_jwt = false
 
 [functions.notify-credit-outcome]
 verify_jwt = false
+
+[functions.sync-award-wikidata]
+verify_jwt = false

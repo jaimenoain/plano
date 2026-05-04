@@ -4,7 +4,6 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, Trophy, MapPin, Calendar, LayoutList } from "lucide-react";
 import { awardLoader, type AwardLoaderData } from "./AwardPage.loader";
-import { cn } from "@/lib/utils";
 import { AwardLeaderboardDialog } from "../components/AwardLeaderboardDialog";
 import { Button } from "@/components/ui/button";
 

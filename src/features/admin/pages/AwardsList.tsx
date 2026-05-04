@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, type MetaFunction } from "react-router";
-import { Loader2, Plus, Pencil, Search } from "lucide-react";
+import { Loader2, Plus, Pencil, Search, ArrowUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { useAwards, useUpdateAward } from "@/features/awards/hooks/useAwards";
 import { Input } from "@/components/ui/input";
@@ -27,12 +27,34 @@ const frequencyLabel: Record<string, string> = {
 
 export default function AwardsList() {
   const [search, setSearch] = useState("");
+  const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'wikidata', direction: 'asc' | 'desc' }>({ key: 'wikidata', direction: 'desc' });
   const { data: awards, isLoading } = useAwards();
   const updateAward = useUpdateAward();
 
   const filtered = (awards ?? []).filter((a) =>
     a.name.toLowerCase().includes(search.toLowerCase()),
   );
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortConfig.key === 'name') {
+      return sortConfig.direction === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+    } else {
+      const aSitelinks = a.wikidataSitelinks ?? -1;
+      const bSitelinks = b.wikidataSitelinks ?? -1;
+      if (aSitelinks !== bSitelinks) {
+        return sortConfig.direction === 'asc' ? aSitelinks - bSitelinks : bSitelinks - aSitelinks;
+      }
+      return a.name.localeCompare(b.name);
+    }
+  });
+
+  const toggleSort = (key: 'name' | 'wikidata') => {
+    if (sortConfig.key === key) {
+      setSortConfig({ key, direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' });
+    } else {
+      setSortConfig({ key, direction: key === 'name' ? 'asc' : 'desc' });
+    }
+  };
 
   const handleToggleActive = (awardId: string, current: boolean) => {
     updateAward.mutate(
@@ -71,9 +93,20 @@ export default function AwardsList() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
+              <TableHead>
+                <Button variant="ghost" onClick={() => toggleSort('name')} className="-ml-4 h-8 data-[active=true]:text-text-primary" data-active={sortConfig.key === 'name'}>
+                  Name
+                  <ArrowUpDown className="ml-2 h-3 w-3" />
+                </Button>
+              </TableHead>
               <TableHead>Awarding Body</TableHead>
               <TableHead>Frequency</TableHead>
+              <TableHead>
+                <Button variant="ghost" onClick={() => toggleSort('wikidata')} className="-ml-4 h-8 data-[active=true]:text-text-primary" data-active={sortConfig.key === 'wikidata'}>
+                  Wikidata
+                  <ArrowUpDown className="ml-2 h-3 w-3" />
+                </Button>
+              </TableHead>
               <TableHead className="text-center">Editions</TableHead>
               <TableHead className="text-center">Active</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -82,21 +115,21 @@ export default function AwardsList() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-text-secondary">
+                <TableCell colSpan={7} className="h-24 text-center text-text-secondary">
                   <div className="flex items-center justify-center gap-2">
                     <Loader2 className="h-5 w-5 animate-spin" />
                     Loading…
                   </div>
                 </TableCell>
               </TableRow>
-            ) : filtered.length === 0 ? (
+            ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-text-secondary">
+                <TableCell colSpan={7} className="h-24 text-center text-text-secondary">
                   {search ? "No awards match your search." : "No awards yet. Create one to get started."}
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((award) => (
+              sorted.map((award) => (
                 <TableRow key={award.id}>
                   <TableCell>
                     <Link
@@ -123,6 +156,15 @@ export default function AwardsList() {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">{frequencyLabel[award.frequency] ?? award.frequency}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {award.wikidataQid ? (
+                      award.wikidataSitelinks !== null && award.wikidataSitelinks !== undefined ? (
+                        <Badge variant="secondary">{award.wikidataSitelinks} wikis</Badge>
+                      ) : (
+                        <span className="text-sm text-text-secondary">—</span>
+                      )
+                    ) : null}
                   </TableCell>
                   <TableCell className="text-center text-sm text-text-secondary">
                     {award.editionCount ?? 0}
