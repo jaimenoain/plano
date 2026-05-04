@@ -22,7 +22,7 @@ import {
   Check, Bookmark, Image as ImageIcon,
   Heart, ExternalLink, Circle, AlertTriangle,
   EyeOff, Plus, X,
-  Pencil, BadgeCheck, ChevronDown, Share2, Navigation,
+  Pencil, BadgeCheck, ChevronDown, Share2, Navigation, Info,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
@@ -527,6 +528,8 @@ export interface BuildingDetails {
   intervention?: string | null;
   category?: string | null;
   architect_statement?: string | null;
+  size_category?: string | null;
+  size_sqm?: number | null;
   hero_image_id: string | null;
 }
 
@@ -745,6 +748,65 @@ function PendingPhotosQueue({
   );
 }
 
+// ─── Size helpers ─────────────────────────────────────────────────────────────
+
+const SIZE_CATEGORIES = [
+  { value: "micro",         label: "Micro",               gfa: "< 50 m²",           height: "1 Story",    focus: "Tectonics & Materiality" },
+  { value: "residential",   label: "Residential",          gfa: "50 – 500 m²",       height: "1–3 Stories", focus: "Privacy & Domesticity" },
+  { value: "boutique",      label: "Boutique/Medium",      gfa: "500 – 2,000 m²",    height: "2–4 Stories", focus: "Community & Mixed-Use" },
+  { value: "institutional", label: "Institutional/Large",  gfa: "2,000 – 10,000 m²", height: "3–6 Stories", focus: "Circulation & Regulation" },
+  { value: "mega",          label: "Mega/Complex",         gfa: "10,000+ m²",        height: "Variable",    focus: "Infrastructure & Logistics" },
+  { value: "high_rise",     label: "High-Rise",            gfa: "Variable",           height: "7+ Stories",  focus: "Structure & Verticality" },
+] as const;
+
+function sizeCategoryLabel(value: string): string {
+  return SIZE_CATEGORIES.find((c) => c.value === value)?.label ?? value;
+}
+
+function formatSqm(sqm: number): string {
+  return sqm.toLocaleString("en-US") + " m²";
+}
+
+function SizeReferencePopover() {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="inline-flex items-center justify-center h-4 w-4 text-text-secondary hover:text-text-primary transition-colors"
+          aria-label="Size reference guide"
+        >
+          <Info className="h-3.5 w-3.5" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent side="top" className="w-[420px] max-w-[90vw] p-0 overflow-hidden">
+        <div className="px-4 pt-4 pb-2">
+          <p className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-1">Size Reference</p>
+          <p className="text-xs text-text-secondary">Categorization based on Gross Floor Area (GFA) and building height.</p>
+        </div>
+        <table className="w-full text-xs border-t border-border-default">
+          <thead>
+            <tr className="border-b border-border-default bg-surface-muted/40">
+              <th className="text-left px-4 py-2 font-semibold text-text-secondary">Category</th>
+              <th className="text-left px-4 py-2 font-semibold text-text-secondary">GFA</th>
+              <th className="text-left px-4 py-2 font-semibold text-text-secondary hidden sm:table-cell">Height</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border-default">
+            {SIZE_CATEGORIES.map((cat) => (
+              <tr key={cat.value}>
+                <td className="px-4 py-2 font-medium text-text-primary">{cat.label}</td>
+                <td className="px-4 py-2 text-text-secondary">{cat.gfa}</td>
+                <td className="px-4 py-2 text-text-secondary hidden sm:table-cell">{cat.height}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 // ─── Building info definition list ───────────────────────────────────────────
 
 function BuildingInfoSection({
@@ -795,6 +857,13 @@ function BuildingInfoSection({
 
     if (building.category?.trim()) {
       items.push({ key: "category", label: "Category", value: building.category });
+    }
+
+    if (building.size_category || building.size_sqm) {
+      const parts: string[] = [];
+      if (building.size_category) parts.push(sizeCategoryLabel(building.size_category));
+      if (building.size_sqm) parts.push(formatSqm(building.size_sqm));
+      items.push({ key: "size", label: "Size", value: parts.join(" · ") });
     }
 
     if (building.context?.trim()) {
@@ -885,6 +954,7 @@ function BuildingInfoTab({
   const hasAccess = accessParts.length > 0 || building.access_notes?.trim();
   const hasAliases = aliases.length > 0;
   const hasAddress = building.address?.trim();
+  const hasSize = !!(building.size_category || building.size_sqm);
 
   return (
     <div className="space-y-0 divide-y divide-border-default">
@@ -952,6 +1022,32 @@ function BuildingInfoTab({
                 <p className="text-sm text-text-primary">{value}</p>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Size */}
+      {hasSize && (
+        <section className="py-8">
+          <div className="flex items-center gap-2 mb-5">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+              Size
+            </p>
+            <SizeReferencePopover />
+          </div>
+          <div className="flex flex-wrap gap-x-8 gap-y-4">
+            {building.size_category && (
+              <div>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-text-secondary mb-1">Category</p>
+                <p className="text-sm text-text-primary">{sizeCategoryLabel(building.size_category)}</p>
+              </div>
+            )}
+            {building.size_sqm && (
+              <div>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-text-secondary mb-1">Floor Area</p>
+                <p className="text-sm text-text-primary">{formatSqm(building.size_sqm)}</p>
+              </div>
+            )}
           </div>
         </section>
       )}

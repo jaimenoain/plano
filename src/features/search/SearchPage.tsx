@@ -73,8 +73,12 @@ function SearchPageContent() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
   useEffect(() => {
-    if (filters.query !== debouncedSearchValue) {
-      setFilter("query", debouncedSearchValue);
+    // Normalize empty string to undefined so both sides use the same "no query" sentinel.
+    // Without this, `undefined !== ""` is always true and creates an infinite loop:
+    // setFilter → new location object → new setFilter ref → effect re-runs → repeat.
+    const normalized = debouncedSearchValue || undefined;
+    if (filters.query !== normalized) {
+      setFilter("query", normalized);
     }
   }, [debouncedSearchValue, filters.query, setFilter]);
 
@@ -83,6 +87,7 @@ function SearchPageContent() {
     if (query !== searchValue) {
       setSearchValue(query);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.query]);
 
   const handleSearchChange = (value: string) => {

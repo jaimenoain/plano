@@ -757,6 +757,8 @@ export type Database = {
           name: string
           popularity_score: number
           short_id: number
+          size_category: string | null
+          size_sqm: number | null
           slug: string | null
           source: string | null
           status: Database["public"]["Enums"]["building_status"] | null
@@ -800,6 +802,8 @@ export type Database = {
           name: string
           popularity_score?: number
           short_id?: number
+          size_category?: string | null
+          size_sqm?: number | null
           slug?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["building_status"] | null
@@ -843,6 +847,8 @@ export type Database = {
           name?: string
           popularity_score?: number
           short_id?: number
+          size_category?: string | null
+          size_sqm?: number | null
           slug?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["building_status"] | null

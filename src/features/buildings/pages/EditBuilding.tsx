@@ -166,6 +166,8 @@ export default function EditBuilding() {
         access_logistics: (typeof row.access_logistics === "string" ? row.access_logistics : "") || "",
         access_cost: (typeof row.access_cost === "string" ? row.access_cost : "") || "",
         access_notes: (typeof row.access_notes === "string" ? row.access_notes : "") || "",
+        size_category: (typeof row.size_category === "string" ? row.size_category : "") || "",
+        size_sqm: typeof row.size_sqm === "number" ? row.size_sqm : null,
         designCreditEntities: designTags,
         functional_category_id:
           (typeof row.functional_category_id === "string" ? row.functional_category_id : "") || "",
@@ -257,6 +259,8 @@ toast.error("Error loading building");
           access_logistics: (formData.access_logistics || null) as BuildingEnums["building_access_logistics"] | null,
           access_cost: (formData.access_cost || null) as BuildingEnums["building_access_cost"] | null,
           access_notes: formData.access_notes || null,
+          size_category: formData.size_category || null,
+          size_sqm: formData.size_sqm ?? null,
           functional_category_id: formData.functional_category_id,
           // Removed legacy column updates for typologies/attributes
 

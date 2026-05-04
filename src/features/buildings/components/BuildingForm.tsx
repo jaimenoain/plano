@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { buildingSchema, editBuildingSchema } from "@/lib/validations/building";
 import { Loader2, Plus, X, Check, Info } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import {
   CreditedEntitiesSelect,
@@ -27,6 +28,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { TagInput } from "@/components/ui/tag-input";
 import { Textarea } from "@/components/ui/textarea";
+
+const SIZE_CATEGORY_OPTIONS = [
+  { label: "Micro",               value: "micro" },
+  { label: "Residential",          value: "residential" },
+  { label: "Boutique/Medium",      value: "boutique" },
+  { label: "Institutional/Large",  value: "institutional" },
+  { label: "Mega/Complex",         value: "mega" },
+  { label: "High-Rise",            value: "high_rise" },
+];
+
+const SIZE_REFERENCE_ROWS = [
+  { label: "Micro",               gfa: "< 50 m²",           height: "1 Story" },
+  { label: "Residential",          gfa: "50 – 500 m²",       height: "1–3 Stories" },
+  { label: "Boutique/Medium",      gfa: "500 – 2,000 m²",    height: "2–4 Stories" },
+  { label: "Institutional/Large",  gfa: "2,000 – 10,000 m²", height: "3–6 Stories" },
+  { label: "Mega/Complex",         gfa: "10,000+ m²",        height: "Variable" },
+  { label: "High-Rise",            gfa: "Variable",           height: "7+ Stories" },
+];
 
 const STATUS_OPTIONS = ['Built', 'Under Construction', 'Unbuilt', 'Lost', 'Temporary'];
 const ACCESS_LEVEL_OPTIONS = [
@@ -61,6 +80,8 @@ export interface BuildingFormData {
   access_cost?: string | null;
   access_notes?: string | null;
   architect_statement?: string | null;
+  size_category?: string | null;
+  size_sqm?: number | null;
   designCreditEntities: CreditedEntityTag[];
   functional_category_id: string | null;
   functional_typology_ids: string[];
@@ -94,6 +115,8 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [access_cost, setAccessCost] = useState<string>(initialValues.access_cost || "");
   const [access_notes, setAccessNotes] = useState<string>(initialValues.access_notes || "");
   const [architect_statement, setArchitectStatement] = useState<string>(initialValues.architect_statement || "");
+  const [size_category, setSizeCategory] = useState<string>(initialValues.size_category || "");
+  const [size_sqm, setSizeSqm] = useState<string>(initialValues.size_sqm?.toString() || "");
   const [designCreditEntities, setDesignCreditEntities] = useState<CreditedEntityTag[]>(
     initialValues.designCreditEntities,
   );
@@ -318,6 +341,8 @@ toast.error("Failed to add attribute");
         access_cost: access_cost || null,
         access_notes: access_notes || null,
         architect_statement: architect_statement || null,
+        size_category: size_category || null,
+        size_sqm: size_sqm ? parseFloat(size_sqm) : null,
         designCreditEntities,
         functional_category_id,
         functional_typology_ids,
@@ -435,6 +460,77 @@ toast.error("Failed to add attribute");
             <div className="text-xs text-text-secondary text-right">
               {access_notes.length}/500
             </div>
+          </div>
+        </div>
+
+        {/* Size */}
+        <div className="space-y-4 border border-border-default rounded-sm p-4 bg-surface-muted/30">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold">Size</h3>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center h-4 w-4 text-text-secondary hover:text-text-primary transition-colors"
+                  aria-label="Size reference guide"
+                >
+                  <Info className="h-3.5 w-3.5" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent side="top" className="w-[420px] max-w-[90vw] p-0 overflow-hidden">
+                <div className="px-4 pt-4 pb-2">
+                  <p className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-1">Size Reference</p>
+                  <p className="text-xs text-text-secondary">Categorization based on Gross Floor Area (GFA) and building height.</p>
+                </div>
+                <table className="w-full text-xs border-t border-border-default">
+                  <thead>
+                    <tr className="border-b border-border-default bg-surface-muted/40">
+                      <th className="text-left px-4 py-2 font-semibold text-text-secondary">Category</th>
+                      <th className="text-left px-4 py-2 font-semibold text-text-secondary">GFA</th>
+                      <th className="text-left px-4 py-2 font-semibold text-text-secondary hidden sm:table-cell">Height</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border-default">
+                    {SIZE_REFERENCE_ROWS.map((row) => (
+                      <tr key={row.label}>
+                        <td className="px-4 py-2 font-medium text-text-primary">{row.label}</td>
+                        <td className="px-4 py-2 text-text-secondary">{row.gfa}</td>
+                        <td className="px-4 py-2 text-text-secondary hidden sm:table-cell">{row.height}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Category</Label>
+            <Select value={size_category} onValueChange={setSizeCategory}>
+              <SelectTrigger className="max-w-xs">
+                <SelectValue placeholder="Select size category" />
+              </SelectTrigger>
+              <SelectContent>
+                {SIZE_CATEGORY_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="size_sqm">Floor Area (m²)</Label>
+            <Input
+              id="size_sqm"
+              type="number"
+              min={0}
+              value={size_sqm}
+              onChange={(e) => setSizeSqm(e.target.value)}
+              placeholder="e.g. 4200"
+              autoComplete="off"
+              className="max-w-[10rem]"
+            />
+            <p className="text-xs text-text-secondary">Gross Floor Area in square metres, if known.</p>
           </div>
         </div>
 
