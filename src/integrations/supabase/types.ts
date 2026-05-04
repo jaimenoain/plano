@@ -744,6 +744,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           functional_category_id: string | null
+          height_m: number | null
           hero_image_id: string | null
           hero_image_url: string | null
           id: string
@@ -762,6 +763,7 @@ export type Database = {
           slug: string | null
           source: string | null
           status: Database["public"]["Enums"]["building_status"] | null
+          storeys: number | null
           tier_rank: Database["public"]["Enums"]["building_tier_rank"] | null
           updated_at: string
           year_completed: number | null
@@ -789,6 +791,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           functional_category_id?: string | null
+          height_m?: number | null
           hero_image_id?: string | null
           hero_image_url?: string | null
           id?: string
@@ -807,6 +810,7 @@ export type Database = {
           slug?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["building_status"] | null
+          storeys?: number | null
           tier_rank?: Database["public"]["Enums"]["building_tier_rank"] | null
           updated_at?: string
           year_completed?: number | null
@@ -834,6 +838,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           functional_category_id?: string | null
+          height_m?: number | null
           hero_image_id?: string | null
           hero_image_url?: string | null
           id?: string
@@ -852,6 +857,7 @@ export type Database = {
           slug?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["building_status"] | null
+          storeys?: number | null
           tier_rank?: Database["public"]["Enums"]["building_tier_rank"] | null
           updated_at?: string
           year_completed?: number | null

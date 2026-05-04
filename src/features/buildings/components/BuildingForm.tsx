@@ -82,6 +82,8 @@ export interface BuildingFormData {
   architect_statement?: string | null;
   size_category?: string | null;
   size_sqm?: number | null;
+  height_m?: number | null;
+  storeys?: number | null;
   designCreditEntities: CreditedEntityTag[];
   functional_category_id: string | null;
   functional_typology_ids: string[];
@@ -117,6 +119,8 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [architect_statement, setArchitectStatement] = useState<string>(initialValues.architect_statement || "");
   const [size_category, setSizeCategory] = useState<string>(initialValues.size_category || "");
   const [size_sqm, setSizeSqm] = useState<string>(initialValues.size_sqm?.toString() || "");
+  const [height_m, setHeightM] = useState<string>(initialValues.height_m?.toString() || "");
+  const [storeys, setStoreys] = useState<string>(initialValues.storeys?.toString() || "");
   const [designCreditEntities, setDesignCreditEntities] = useState<CreditedEntityTag[]>(
     initialValues.designCreditEntities,
   );
@@ -343,6 +347,8 @@ toast.error("Failed to add attribute");
         architect_statement: architect_statement || null,
         size_category: size_category || null,
         size_sqm: size_sqm ? parseFloat(size_sqm) : null,
+        height_m: height_m ? parseFloat(height_m) : null,
+        storeys: storeys ? parseInt(storeys, 10) : null,
         designCreditEntities,
         functional_category_id,
         functional_typology_ids,
@@ -518,19 +524,44 @@ toast.error("Failed to add attribute");
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="size_sqm">Floor Area (m²)</Label>
-            <Input
-              id="size_sqm"
-              type="number"
-              min={0}
-              value={size_sqm}
-              onChange={(e) => setSizeSqm(e.target.value)}
-              placeholder="e.g. 4200"
-              autoComplete="off"
-              className="max-w-[10rem]"
-            />
-            <p className="text-xs text-text-secondary">Gross Floor Area in square metres, if known.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="size_sqm">Floor Area (m²)</Label>
+              <Input
+                id="size_sqm"
+                type="number"
+                min={0}
+                value={size_sqm}
+                onChange={(e) => setSizeSqm(e.target.value)}
+                placeholder="e.g. 4200"
+                autoComplete="off"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="storeys">Storeys</Label>
+              <Input
+                id="storeys"
+                type="number"
+                min={1}
+                step={1}
+                value={storeys}
+                onChange={(e) => setStoreys(e.target.value)}
+                placeholder="e.g. 8"
+                autoComplete="off"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="height_m">Height (m)</Label>
+              <Input
+                id="height_m"
+                type="number"
+                min={0}
+                value={height_m}
+                onChange={(e) => setHeightM(e.target.value)}
+                placeholder="e.g. 32"
+                autoComplete="off"
+              />
+            </div>
           </div>
         </div>
 

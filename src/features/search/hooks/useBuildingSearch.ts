@@ -629,8 +629,14 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     setSearchParams((prevParams) => {
       const params = new URLSearchParams(prevParams);
 
-      if (debouncedQuery) params.set("q", debouncedQuery);
-      else params.delete("q");
+      if (debouncedQuery) {
+        params.set("q", debouncedQuery);
+      } else if (!prevParams.get("q")) {
+        // Only remove ?q= if there's no existing value. An external owner
+        // (e.g. SearchPage via MapContext) may have set it — deleting it when
+        // our own debouncedQuery is empty causes an infinite write-delete loop.
+        params.delete("q");
+      }
 
       // Location
       if (!params.has("lat")) params.set("lat", userLocation.lat.toString());

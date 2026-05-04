@@ -530,6 +530,8 @@ export interface BuildingDetails {
   architect_statement?: string | null;
   size_category?: string | null;
   size_sqm?: number | null;
+  height_m?: number | null;
+  storeys?: number | null;
   hero_image_id: string | null;
 }
 
@@ -859,10 +861,12 @@ function BuildingInfoSection({
       items.push({ key: "category", label: "Category", value: building.category });
     }
 
-    if (building.size_category || building.size_sqm) {
+    if (building.size_category || building.size_sqm || building.storeys || building.height_m) {
       const parts: string[] = [];
       if (building.size_category) parts.push(sizeCategoryLabel(building.size_category));
       if (building.size_sqm) parts.push(formatSqm(building.size_sqm));
+      if (building.storeys) parts.push(`${building.storeys} fl`);
+      if (building.height_m) parts.push(`${building.height_m} m`);
       items.push({ key: "size", label: "Size", value: parts.join(" · ") });
     }
 
@@ -954,7 +958,7 @@ function BuildingInfoTab({
   const hasAccess = accessParts.length > 0 || building.access_notes?.trim();
   const hasAliases = aliases.length > 0;
   const hasAddress = building.address?.trim();
-  const hasSize = !!(building.size_category || building.size_sqm);
+  const hasSize = !!(building.size_category || building.size_sqm || building.storeys || building.height_m);
 
   return (
     <div className="space-y-0 divide-y divide-border-default">
@@ -1046,6 +1050,18 @@ function BuildingInfoTab({
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-wider text-text-secondary mb-1">Floor Area</p>
                 <p className="text-sm text-text-primary">{formatSqm(building.size_sqm)}</p>
+              </div>
+            )}
+            {building.storeys && (
+              <div>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-text-secondary mb-1">Storeys</p>
+                <p className="text-sm text-text-primary">{building.storeys}</p>
+              </div>
+            )}
+            {building.height_m && (
+              <div>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-text-secondary mb-1">Height</p>
+                <p className="text-sm text-text-primary">{building.height_m} m</p>
               </div>
             )}
           </div>

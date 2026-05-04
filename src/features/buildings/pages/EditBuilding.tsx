@@ -168,6 +168,8 @@ export default function EditBuilding() {
         access_notes: (typeof row.access_notes === "string" ? row.access_notes : "") || "",
         size_category: (typeof row.size_category === "string" ? row.size_category : "") || "",
         size_sqm: typeof row.size_sqm === "number" ? row.size_sqm : null,
+        height_m: typeof row.height_m === "number" ? row.height_m : null,
+        storeys: typeof row.storeys === "number" ? row.storeys : null,
         designCreditEntities: designTags,
         functional_category_id:
           (typeof row.functional_category_id === "string" ? row.functional_category_id : "") || "",
@@ -261,6 +263,8 @@ toast.error("Error loading building");
           access_notes: formData.access_notes || null,
           size_category: formData.size_category || null,
           size_sqm: formData.size_sqm ?? null,
+          height_m: formData.height_m ?? null,
+          storeys: formData.storeys ?? null,
           functional_category_id: formData.functional_category_id,
           // Removed legacy column updates for typologies/attributes
 
