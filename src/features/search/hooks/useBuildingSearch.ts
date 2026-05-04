@@ -480,6 +480,10 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   );
 
   const [awardId, setAwardId] = useState<string | null>(searchParams.get("awardId") || null);
+  const [awardOutcome, setAwardOutcome] = useState<string | null>(searchParams.get("awardOutcome") || null);
+  const [awardYearFrom, setAwardYearFrom] = useState<number | null>(
+    searchParams.get("awardYearFrom") ? parseInt(searchParams.get("awardYearFrom")!, 10) : null
+  );
   const [awardYearTo, setAwardYearTo] = useState<number | null>(
     searchParams.get("awardYearTo") ? parseInt(searchParams.get("awardYearTo")!, 10) : null
   );
@@ -621,6 +625,10 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
         selectedCollections.length > 0 ||
         selectedFolders.length > 0 ||
         selectedContacts.length > 0 ||
+        awardId !== null ||
+        awardOutcome !== null ||
+        awardYearFrom !== null ||
+        awardYearTo !== null ||
         accessLevels.length > 0 ||
         accessLogistics.length > 0 ||
         accessCosts.length > 0 ||
@@ -646,6 +654,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     selectedAttributes, selectedPeople, selectedCollections, selectedFolders, selectedContacts,
     accessLevels, accessLogistics, accessCosts, constructionStatuses,
     selectedCreditCompany, selectedCreditRoles,
+    awardId, awardOutcome, awardYearFrom, awardYearTo,
     sizeCategories, minSizeSqm, maxSizeSqm, minStoreys, maxStoreys
   ]);
 

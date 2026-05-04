@@ -536,7 +536,7 @@ export default function Profile() {
     if (!targetUserId) return;
     if (pageIndex === 0) { setContentLoading(true); } else { setIsFetchingMore(true); }
     try {
-      // Step 1: Get eligible building_ids with status/rating from user_buildings
+      // Step 1: Get all eligible building IDs with status/rating from user_buildings
       let ubQuery = supabase
         .from("user_buildings")
         .select("building_id, rating, status")
@@ -544,31 +544,64 @@ export default function Profile() {
       if (activeFilter === "visited") { ubQuery = ubQuery.eq("status", "visited"); }
       else if (activeFilter === "pending") { ubQuery = ubQuery.eq("status", "pending"); }
       else { ubQuery = ubQuery.in("status", ["visited", "pending"]); }
+      
       const { data: ubData, error: ubError } = await ubQuery;
       if (ubError) throw ubError;
+      
       const ubMap = new Map((ubData ?? []).map(r => [r.building_id, r]));
-      const eligibleBuildingIds = [...ubMap.keys()];
+      const eligibleBuildingIds = Array.from(ubMap.keys());
+      
       if (eligibleBuildingIds.length === 0) {
         if (reset) { setContent([]); setHasMore(false); } else { setHasMore(false); }
         return;
       }
 
-      // Step 2: Query building_posts for content, paginated
+      // Step 2: Query ALL post IDs for these buildings to deduplicate them
+      // We order by updated_at DESC to pick the latest post per building in the next step
+      const { data: allPosts, error: allPostsError } = await supabase
+        .from("building_posts")
+        .select("id, building_id, updated_at")
+        .eq("user_id", targetUserId)
+        .in("building_id", eligibleBuildingIds)
+        .order("updated_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false });
+
+      if (allPostsError) throw allPostsError;
+
+      // Deduplicate: keep only the latest post for each building
+      const uniqueLatestPostIds: string[] = [];
+      const seenBuildings = new Set<string>();
+      allPosts?.forEach(post => {
+        if (!seenBuildings.has(post.building_id)) {
+          seenBuildings.add(post.building_id);
+          uniqueLatestPostIds.push(post.id);
+        }
+      });
+
+      // Step 3: Paginate the deduplicated list of post IDs
       const from = pageIndex * ITEMS_PER_PAGE;
+      const paginatedPostIds = uniqueLatestPostIds.slice(from, from + ITEMS_PER_PAGE);
+
+      if (paginatedPostIds.length === 0) {
+        if (reset) { setContent([]); setHasMore(false); } else { setHasMore(false); }
+        return;
+      }
+
+      // Step 4: Query full content for the paginated post IDs
       const { data: entriesData, error: entriesError } = await supabase
         .from("building_posts")
         .select(`id, body, created_at, updated_at, user_id, building_id,
           building:buildings ( id, name, address, city, country, year_completed, hero_image_url, community_preview_url, slug, short_id, building_credits ( status, credit_tier, person:people (id, name), company:companies (id, name) ) )`)
-        .eq("user_id", targetUserId)
-        .in("building_id", eligibleBuildingIds)
+        .in("id", paginatedPostIds)
         .order("updated_at", { ascending: false, nullsFirst: false })
-        .order("created_at", { ascending: false })
-        .range(from, from + ITEMS_PER_PAGE - 1);
+        .order("created_at", { ascending: false });
+
       if (entriesError) throw entriesError;
       if (!entriesData || entriesData.length === 0) {
         if (reset) { setContent([]); setHasMore(false); } else { setHasMore(false); }
         return;
       }
+
       const entryIds = entriesData.map(r => r.id);
       const { data: imagesData } = await supabase.from("review_images").select("id, review_id, storage_path, likes_count").in("review_id", entryIds);
       const imageIds = imagesData?.map(img => img.id) || [];
@@ -612,8 +645,8 @@ export default function Profile() {
           tags: [] as string[], likes_count: reviewLikes + imageLikes, comments_count: commentsCount.get(item.id) || 0, is_liked: userLikes.has(item.id), watch_with_users: [] as WatchWithUser[], images: itemImages,
         };
       });
-      if (reset) { setContent(formattedContent); setHasMore(formattedContent.length === ITEMS_PER_PAGE); setPage(0); }
-      else { setContent(prev => [...prev, ...formattedContent]); setHasMore(formattedContent.length === ITEMS_PER_PAGE); }
+      if (reset) { setContent(formattedContent); setHasMore(uniqueLatestPostIds.length > (from + ITEMS_PER_PAGE)); setPage(0); }
+      else { setContent(prev => [...prev, ...formattedContent]); setHasMore(uniqueLatestPostIds.length > (from + ITEMS_PER_PAGE)); }
     } catch (_error) {
     } finally { setContentLoading(false); setIsFetchingMore(false); }
   }, [targetUserId, activeFilter, currentUser, profile]);
