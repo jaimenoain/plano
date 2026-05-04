@@ -86,6 +86,16 @@ export default function AmbassadorChapterDetail() {
 
   const load = useCallback(async () => {
     if (!chapterId) return;
+    
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(chapterId);
+    if (!isUuid) {
+      console.error("Invalid chapter ID format:", chapterId);
+      setChapter(null);
+      setMembers([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const { data: ch, error: cErr } = await supabase
@@ -123,8 +133,9 @@ export default function AmbassadorChapterDetail() {
       if (mErr) throw mErr;
       const raw = (mems ?? []) as MemberWithProfile[];
       setMembers(raw);
-    } catch {
-      toast.error("Failed to load chapter");
+    } catch (err) {
+      console.error("Failed to load chapter:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to load chapter");
       setChapter(null);
     } finally {
       setLoading(false);

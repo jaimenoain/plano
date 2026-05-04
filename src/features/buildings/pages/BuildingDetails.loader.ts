@@ -34,25 +34,118 @@ export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
   const canonicalShortId =
     typeof building.short_id === "number" ? building.short_id : null;
 
-  // -------------------------------------------------------------------------
-  // Locality consistency check (new /architecture/:cc/:city/:id/:slug routes)
-  // -------------------------------------------------------------------------
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const buildingAny = building as any;
   const localityId: string | null = buildingAny.locality_id ?? null;
+  const buildingId = building.id as string;
 
-  // Fetch locality data when we have a locality_id (one extra round-trip, cached at CDN level).
-  let locality: { country_code: string; city_slug: string } | null = null;
-  if (localityId) {
-    const { data: loc } = await supabase
-      .from("localities")
-      .select("country_code, slug")
-      .eq("id", localityId)
-      .maybeSingle();
-    if (loc) {
-      locality = { country_code: loc.country_code, city_slug: loc.slug };
-    }
-  }
+  // -------------------------------------------------------------------------
+  // Run locality, hero-image pipeline, and credits in PARALLEL — they are
+  // independent of each other and together were adding 200-400ms of serial wait.
+  // -------------------------------------------------------------------------
+
+  type ImageRow = {
+    id: string;
+    storage_path: string;
+    width_px: number | null;
+    height_px: number | null;
+    likes_count: number | null;
+    created_at: string | null;
+  };
+
+  const [localityResult, heroImagePipelineResult, buildingCredits] =
+    await Promise.all([
+      // 1. Locality lookup
+      (async (): Promise<{ country_code: string; city_slug: string } | null> => {
+        if (!localityId) return null;
+        const { data: loc } = await supabase
+          .from("localities")
+          .select("country_code, slug")
+          .eq("id", localityId)
+          .maybeSingle();
+        return loc ? { country_code: loc.country_code, city_slug: loc.slug } : null;
+      })(),
+
+      // 2. Hero image pipeline (user_buildings → review_images → pick best)
+      (async (): Promise<{ candidateRows: ImageRow[]; heroImageUrl: string | null }> => {
+        const { data: reviewRows } = await supabase
+          .from("user_buildings")
+          .select("id")
+          .eq("building_id", buildingId);
+
+        const reviewIds = (reviewRows ?? []).map((r) => r.id);
+        let candidateRows: ImageRow[] = [];
+
+        if (reviewIds.length > 0) {
+          const { data: imgRows } = await supabase
+            .from("review_images")
+            .select("id, storage_path, width_px, height_px, likes_count, created_at")
+            .in("review_id", reviewIds)
+            .order("likes_count", { ascending: false, nullsFirst: false })
+            .order("created_at", { ascending: false, nullsFirst: false });
+          candidateRows = (imgRows ?? []) as ImageRow[];
+        }
+
+        let heroImageUrl: string | null = null;
+
+        if (building.hero_image_id) {
+          let designated: Pick<
+            ImageRow,
+            "storage_path" | "width_px" | "height_px"
+          > | null =
+            candidateRows.find((r) => r.id === building.hero_image_id) ?? null;
+          if (!designated) {
+            const { data: heroOnly } = await supabase
+              .from("review_images")
+              .select("storage_path, width_px, height_px")
+              .eq("id", building.hero_image_id)
+              .maybeSingle();
+            if (heroOnly) designated = heroOnly;
+          }
+          if (designated) {
+            const w = designated.width_px;
+            const h = designated.height_px;
+            if (w != null && h != null) {
+              if (isBuildingHeroEligibleSize(w, h)) {
+                heroImageUrl = getBuildingImageUrl(designated.storage_path) ?? null;
+              }
+            } else {
+              // Legacy rows without stored dimensions — keep explicit hero choice.
+              heroImageUrl = getBuildingImageUrl(designated.storage_path) ?? null;
+            }
+          }
+        }
+
+        if (!heroImageUrl) {
+          const pickedPath = pickFirstHeroEligibleStoragePath(candidateRows);
+          if (pickedPath) {
+            heroImageUrl = getBuildingImageUrl(pickedPath) ?? null;
+          }
+        }
+
+        // Fallback: community_preview_url
+        if (!heroImageUrl) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const communityPreview = (building as any).community_preview_url as
+            | string
+            | null
+            | undefined;
+          if (communityPreview) {
+            heroImageUrl = communityPreview.startsWith("http")
+              ? communityPreview
+              : (getBuildingImageUrl(communityPreview) ?? null);
+          }
+        }
+
+        return { candidateRows, heroImageUrl };
+      })(),
+
+      // 3. Building credits
+      getBuildingCreditsWithClient(supabase, buildingId),
+    ]);
+
+  const locality = localityResult;
+  const heroImageUrl = heroImagePipelineResult.heroImageUrl;
 
   // Helper: build the canonical URL for this building.
   function canonicalUrl(): string {
@@ -69,7 +162,9 @@ export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
     return getBuildingUrl(id, canonicalSlug, canonicalShortId);
   }
 
-  // If the route carries :cc and :city params, validate locality consistency.
+  // -------------------------------------------------------------------------
+  // Locality consistency check (new /architecture/:cc/:city/:id/:slug routes)
+  // -------------------------------------------------------------------------
   if (params.cc && params.city) {
     const ccMismatch =
       locality &&
@@ -99,88 +194,6 @@ export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
   if (idMismatch || slugMissing || slugMismatch) {
     throw redirect(canonicalUrl(), { status: 301, headers });
   }
-
-  const buildingId = building.id as string;
-
-  const { data: reviewRows } = await supabase
-    .from("user_buildings")
-    .select("id")
-    .eq("building_id", buildingId);
-
-  const reviewIds = (reviewRows ?? []).map((r) => r.id);
-
-  type ImageRow = {
-    id: string;
-    storage_path: string;
-    width_px: number | null;
-    height_px: number | null;
-    likes_count: number | null;
-    created_at: string | null;
-  };
-
-  let candidateRows: ImageRow[] = [];
-  if (reviewIds.length > 0) {
-    const { data: imgRows } = await supabase
-      .from("review_images")
-      .select("id, storage_path, width_px, height_px, likes_count, created_at")
-      .in("review_id", reviewIds)
-      .order("likes_count", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false, nullsFirst: false });
-    candidateRows = (imgRows ?? []) as ImageRow[];
-  }
-
-  let heroImageUrl: string | null = null;
-
-  if (building.hero_image_id) {
-    let designated: Pick<
-      ImageRow,
-      "storage_path" | "width_px" | "height_px"
-    > | null =
-      candidateRows.find((r) => r.id === building.hero_image_id) ?? null;
-    if (!designated) {
-      const { data: heroOnly } = await supabase
-        .from("review_images")
-        .select("storage_path, width_px, height_px")
-        .eq("id", building.hero_image_id)
-        .maybeSingle();
-      if (heroOnly) designated = heroOnly;
-    }
-    if (designated) {
-      const w = designated.width_px;
-      const h = designated.height_px;
-      if (w != null && h != null) {
-        if (isBuildingHeroEligibleSize(w, h)) {
-          heroImageUrl = getBuildingImageUrl(designated.storage_path) ?? null;
-        }
-      } else {
-        // Legacy rows without stored dimensions — keep explicit hero choice.
-        heroImageUrl = getBuildingImageUrl(designated.storage_path) ?? null;
-      }
-    }
-  }
-
-  if (!heroImageUrl) {
-    const pickedPath = pickFirstHeroEligibleStoragePath(candidateRows);
-    if (pickedPath) {
-      heroImageUrl = getBuildingImageUrl(pickedPath) ?? null;
-    }
-  }
-
-  // Fallback: community_preview_url is a storage path — run it through getBuildingImageUrl.
-  if (!heroImageUrl) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const communityPreview = (building as any).community_preview_url as
-      | string
-      | null
-      | undefined;
-    if (communityPreview) {
-      heroImageUrl = communityPreview.startsWith("http")
-        ? communityPreview
-        : (getBuildingImageUrl(communityPreview) ?? null);
-    }
-  }
-
-  const buildingCredits = await getBuildingCreditsWithClient(supabase, buildingId);
 
   return data({ building, heroImageUrl, buildingCredits, locality }, { headers });
 }

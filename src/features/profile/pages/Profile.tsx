@@ -449,62 +449,69 @@ export default function Profile() {
     void fetchProfileData();
   }, [routeUsername, currentUser, navigate, authLoading]);
 
-  useEffect(() => { if (targetUserId) { fetchStats(); } }, [targetUserId, collectionsRefreshKey]);
-  useEffect(() => {
-    if (!targetUserId) return;
-    setIsFollowing(false);
-    void checkIfFollowing();
-    void fetchSquad();
-  }, [targetUserId, currentUser]);
-
+  // ── Batch all profile metadata queries into a single effect ──
+  // Previously these were 4 separate useEffects, each firing independent async
+  // calls. Running them via Promise.allSettled eliminates the request storm and
+  // reduces overall wall-clock time.
   useEffect(() => {
     if (!targetUserId) {
       setClaimedPersonForProfile(null);
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      try {
-        const summary = await getClaimedPersonSummaryForProfile(targetUserId);
-        if (!cancelled) setClaimedPersonForProfile(summary);
-      } catch {
-        if (!cancelled) setClaimedPersonForProfile(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [targetUserId]);
-
-  useEffect(() => {
-    if (!targetUserId) {
       setAmbassadorBadge(null);
       return;
     }
     let cancelled = false;
+
     void (async () => {
-      try {
-        const { data, error } = await supabase.rpc("get_ambassador_badge_for_profile", {
-          p_user_id: targetUserId,
-        });
-        if (cancelled) return;
-        if (error || !data?.length) {
+      const [_statsResult, _followResult, claimedResult, ambassadorResult] =
+        await Promise.allSettled([
+          // 1. Stats (6 count queries, already parallelized internally)
+          fetchStats(),
+
+          // 2. Following status + squad
+          (async () => {
+            setIsFollowing(false);
+            await Promise.all([checkIfFollowing(), fetchSquad()]);
+          })(),
+
+          // 3. Claimed person summary
+          getClaimedPersonSummaryForProfile(targetUserId),
+
+          // 4. Ambassador badge
+          supabase.rpc("get_ambassador_badge_for_profile", {
+            p_user_id: targetUserId,
+          }),
+        ]);
+
+      if (cancelled) return;
+
+      // Apply claimed person result
+      if (claimedResult.status === "fulfilled") {
+        setClaimedPersonForProfile(claimedResult.value);
+      } else {
+        setClaimedPersonForProfile(null);
+      }
+
+      // Apply ambassador badge result
+      if (ambassadorResult.status === "fulfilled") {
+        const { data, error } = ambassadorResult.value;
+        if (!error && data?.length) {
+          const row = data[0];
+          setAmbassadorBadge({
+            role: row.ambassador_role,
+            chapterName: row.chapter_name,
+          });
+        } else {
           setAmbassadorBadge(null);
-          return;
         }
-        const row = data[0];
-        setAmbassadorBadge({
-          role: row.ambassador_role,
-          chapterName: row.chapter_name,
-        });
-      } catch {
-        if (!cancelled) setAmbassadorBadge(null);
+      } else {
+        setAmbassadorBadge(null);
       }
     })();
+
     return () => {
       cancelled = true;
     };
-  }, [targetUserId]);
+  }, [targetUserId, currentUser, collectionsRefreshKey]);
 
   useEffect(() => {
     if (activeSection !== "photos" || !targetUserId || userPhotos.length > 0) return;

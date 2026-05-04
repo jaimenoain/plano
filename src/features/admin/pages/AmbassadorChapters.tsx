@@ -57,6 +57,7 @@ export default function AmbassadorChapters() {
   const [localityHits, setLocalityHits] = useState<LocalityPick[]>([]);
   const [localityLoading, setLocalityLoading] = useState(false);
   const [nationalOptions, setNationalOptions] = useState<ChapterRow[]>([]);
+  const [countries, setCountries] = useState<{ name: string; code: string }[]>([]);
 
   const [form, setForm] = useState<AmbassadorChapterCreateInput>({
     name: "",
@@ -94,8 +95,9 @@ export default function AmbassadorChapters() {
         next[m.chapter_id] = (next[m.chapter_id] ?? 0) + 1;
       }
       setCounts(next);
-    } catch {
-      toast.error("Failed to load chapters");
+    } catch (err) {
+      console.error("Failed to load chapters:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to load chapters");
     } finally {
       setLoading(false);
     }
@@ -104,6 +106,27 @@ export default function AmbassadorChapters() {
   useEffect(() => {
     void loadChapters();
   }, [loadChapters]);
+
+  useEffect(() => {
+    const loadCountries = async () => {
+      const { data, error } = await supabase
+        .from("localities")
+        .select("country, country_code")
+        .order("country");
+      if (error) return;
+
+      const unique: { name: string; code: string }[] = [];
+      const seen = new Set<string>();
+      for (const row of data) {
+        if (!seen.has(row.country_code)) {
+          seen.add(row.country_code);
+          unique.push({ name: row.country, code: row.country_code });
+        }
+      }
+      setCountries(unique);
+    };
+    void loadCountries();
+  }, []);
 
   const loadNationalForCountry = useCallback(async (cc: string) => {
     const { data, error } = await supabase
@@ -157,7 +180,7 @@ export default function AmbassadorChapters() {
     setForm({
       name: "",
       type: "national",
-      country_code: "ES",
+      country_code: countries[0]?.code ?? "ES",
       locality_id: null,
       parent_chapter_id: null,
       max_ambassadors: 20,
@@ -167,14 +190,55 @@ export default function AmbassadorChapters() {
     setLocalityHits([]);
   };
 
+  // Sync name based on type and selection
+  useEffect(() => {
+    if (form.type === "national") {
+      const country = countries.find((c) => c.code === form.country_code);
+      if (country && form.name !== country.name) {
+        setForm((f) => ({ ...f, name: country.name }));
+      }
+    }
+  }, [form.type, form.country_code, countries, form.name]);
+
   const handleCreate = async () => {
+    if (!form.name) {
+      toast.error("Please select a country or locality first");
+      return;
+    }
+
     const parsed = ambassadorChapterCreateSchema.safeParse(form);
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Invalid form");
       return;
     }
+
     setSaving(true);
     try {
+      // Check for duplicates
+      let query = supabase.from("ambassador_chapters").select("id").eq("type", form.type);
+
+      if (form.type === "national") {
+        query = query.eq("country_code", form.country_code);
+      } else if (form.locality_id) {
+        query = query.eq("locality_id", form.locality_id);
+      } else {
+        toast.error("Locality is required for local chapters");
+        setSaving(false);
+        return;
+      }
+
+      const { data: existing, error: checkError } = await query.limit(1);
+      if (checkError) throw checkError;
+      if (existing && existing.length > 0) {
+        toast.error(
+          `A ${form.type} chapter for this ${
+            form.type === "national" ? "country" : "locality"
+          } already exists.`,
+        );
+        setSaving(false);
+        return;
+      }
+
       const payload = {
         name: parsed.data.name,
         type: parsed.data.type,
@@ -293,15 +357,6 @@ export default function AmbassadorChapters() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="ch-name">Name</Label>
-              <Input
-                id="ch-name"
-                value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                placeholder="e.g. Madrid or Spain"
-              />
-            </div>
-            <div className="space-y-2">
               <Label>Type</Label>
               <Select
                 value={form.type}
@@ -309,6 +364,7 @@ export default function AmbassadorChapters() {
                   setForm((f) => ({
                     ...f,
                     type: v as AmbassadorChapterCreateInput["type"],
+                    name: v === "national" ? f.name : "",
                     locality_id: v === "national" ? null : f.locality_id,
                     parent_chapter_id: v === "national" ? null : f.parent_chapter_id,
                   }))
@@ -324,15 +380,24 @@ export default function AmbassadorChapters() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="ch-cc">Country code (ISO-2)</Label>
-              <Input
-                id="ch-cc"
+              <Label>Country</Label>
+              <Select
                 value={form.country_code}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, country_code: e.target.value.toUpperCase() }))
+                onValueChange={(v) =>
+                  setForm((f) => ({ ...f, country_code: v.toUpperCase() }))
                 }
-                maxLength={2}
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a country" />
+                </SelectTrigger>
+                <SelectContent>
+                  {countries.map((c) => (
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.name} ({c.code})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             {form.type === "local" && (
               <>
@@ -374,16 +439,17 @@ export default function AmbassadorChapters() {
                           <button
                             type="button"
                             className="w-full text-left px-3 py-2 text-sm hover:bg-surface-muted transition-colors"
-                            onClick={() => {
-                              setForm((f) => ({
-                                ...f,
-                                locality_id: loc.id,
-                                country_code: loc.country_code.toUpperCase(),
-                              }));
-                              setLocalityQuery(`${loc.city}, ${loc.country}`);
-                            }}
-                          >
-                            {loc.city}, {loc.country} ({loc.country_code})
+                              onClick={() => {
+                                setForm((f) => ({
+                                  ...f,
+                                  name: loc.city,
+                                  locality_id: loc.id,
+                                  country_code: loc.country_code.toUpperCase(),
+                                }));
+                                setLocalityQuery(`${loc.city}, ${loc.country}`);
+                              }}
+                            >
+                              {loc.city}, {loc.country} ({loc.country_code})
                           </button>
                         </li>
                       ))}

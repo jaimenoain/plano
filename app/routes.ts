@@ -35,7 +35,7 @@ export default [
   route("/api/admin/events-discover", "features/admin/api/events-discover.route.ts"),
 
   // Admin (AdminGuard remains as a wrapper component inside AdminLayout)
-  layout("features/admin/components/AdminLayout.tsx", [
+  layout("features/admin/components/AdminLayoutWithGuard.tsx", [
     route("/admin", "features/admin/pages/Dashboard.tsx"),
     route("/admin/buildings", "features/admin/pages/Buildings.tsx"),
     route("/admin/users", "features/admin/pages/Users.tsx"),
