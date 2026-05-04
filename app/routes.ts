@@ -65,9 +65,13 @@ export default [
     route("/admin/feedback", "features/admin/pages/Feedback.tsx"),
     route("/admin/events", "features/admin/pages/AdminEvents.tsx"),
     route("/admin/awards", "features/admin/pages/AwardsList.tsx"),
-    route("/admin/awards/new", "features/admin/pages/AwardForm.tsx"),
+    route("/admin/awards/new", "features/admin/pages/AwardForm.tsx", {
+      id: "admin-award-new",
+    }),
     route("/admin/awards/:awardId", "features/admin/pages/AwardDetail.tsx"),
-    route("/admin/awards/:awardId/edit", "features/admin/pages/AwardForm.tsx"),
+    route("/admin/awards/:awardId/edit", "features/admin/pages/AwardForm.tsx", {
+      id: "admin-award-edit",
+    }),
     route("/admin/awards/:awardId/editions/new", "features/admin/pages/EditionForm.tsx"),
     route(
       "/admin/awards/:awardId/editions/:editionId",

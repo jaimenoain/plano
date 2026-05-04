@@ -30,21 +30,21 @@ import { TagInput } from "@/components/ui/tag-input";
 import { Textarea } from "@/components/ui/textarea";
 
 const SIZE_CATEGORY_OPTIONS = [
-  { label: "Micro",               value: "micro" },
-  { label: "Residential",          value: "residential" },
-  { label: "Boutique/Medium",      value: "boutique" },
-  { label: "Institutional/Large",  value: "institutional" },
-  { label: "Mega/Complex",         value: "mega" },
-  { label: "High-Rise",            value: "high_rise" },
+  { label: "XS", value: "xs" },
+  { label: "S",  value: "s" },
+  { label: "M",  value: "m" },
+  { label: "L",  value: "l" },
+  { label: "XL", value: "xl" },
+  { label: "XXL", value: "xxl" },
 ];
 
 const SIZE_REFERENCE_ROWS = [
-  { label: "Micro",               gfa: "< 50 m²",           height: "1 Story" },
-  { label: "Residential",          gfa: "50 – 500 m²",       height: "1–3 Stories" },
-  { label: "Boutique/Medium",      gfa: "500 – 2,000 m²",    height: "2–4 Stories" },
-  { label: "Institutional/Large",  gfa: "2,000 – 10,000 m²", height: "3–6 Stories" },
-  { label: "Mega/Complex",         gfa: "10,000+ m²",        height: "Variable" },
-  { label: "High-Rise",            gfa: "Variable",           height: "7+ Stories" },
+  { label: "XS",  gfa: "< 50 m²" },
+  { label: "S",   gfa: "50 – 500 m²" },
+  { label: "M",   gfa: "500 – 2,000 m²" },
+  { label: "L",   gfa: "2,000 – 10,000 m²" },
+  { label: "XL",  gfa: "10,000 – 50,000 m²" },
+  { label: "XXL", gfa: "50,000+ m²" },
 ];
 
 const STATUS_OPTIONS = ['Built', 'Under Construction', 'Unbuilt', 'Lost', 'Temporary'];
@@ -486,14 +486,13 @@ toast.error("Failed to add attribute");
               <PopoverContent side="top" className="w-[420px] max-w-[90vw] p-0 overflow-hidden">
                 <div className="px-4 pt-4 pb-2">
                   <p className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-1">Size Reference</p>
-                  <p className="text-xs text-text-secondary">Categorization based on Gross Floor Area (GFA) and building height.</p>
+                  <p className="text-xs text-text-secondary">Categorization based on Gross Floor Area (GFA).</p>
                 </div>
                 <table className="w-full text-xs border-t border-border-default">
                   <thead>
                     <tr className="border-b border-border-default bg-surface-muted/40">
                       <th className="text-left px-4 py-2 font-semibold text-text-secondary">Category</th>
                       <th className="text-left px-4 py-2 font-semibold text-text-secondary">GFA</th>
-                      <th className="text-left px-4 py-2 font-semibold text-text-secondary hidden sm:table-cell">Height</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-default">
@@ -501,7 +500,6 @@ toast.error("Failed to add attribute");
                       <tr key={row.label}>
                         <td className="px-4 py-2 font-medium text-text-primary">{row.label}</td>
                         <td className="px-4 py-2 text-text-secondary">{row.gfa}</td>
-                        <td className="px-4 py-2 text-text-secondary hidden sm:table-cell">{row.height}</td>
                       </tr>
                     ))}
                   </tbody>

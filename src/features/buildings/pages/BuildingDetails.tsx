@@ -413,7 +413,72 @@ function BuildingMapTab({
   );
 }
 
-// ─── Static route exports ─────────────────────────────────────────────────────
+// ─── Note Photo Grid ──────────────────────────────────────────────────────────
+
+function NotePhotoGrid({
+  images,
+  totalCount,
+  onImageClick,
+}: {
+  images: { id: string; storage_path: string }[];
+  totalCount: number;
+  onImageClick: (img: { id: string; storage_path: string }) => void;
+}) {
+  const count = images.length;
+  const extraCount = totalCount - count;
+
+  if (count === 0) return null;
+
+  return (
+    <div
+      className={cn(
+        "grid gap-px overflow-hidden",
+        count === 1 ? "grid-cols-1" : "grid-cols-2",
+      )}
+    >
+      {images.map((img, i) => {
+        const url = getBuildingImageUrl(img.storage_path);
+        const isLast = i === count - 1 && extraCount > 0;
+
+        // Custom spans for 3 images: first one is wide
+        const isThreeAndFirst = count === 3 && i === 0;
+
+        return (
+          <button
+            key={img.id}
+            type="button"
+            className={cn(
+              "relative bg-surface-muted overflow-hidden group/img transition-all duration-300",
+              count === 1 ? "aspect-[16/10]" : "aspect-square",
+              isThreeAndFirst && "col-span-2 aspect-[21/9]",
+            )}
+            onClick={() => onImageClick(img)}
+          >
+            {url && (
+              <img
+                src={url}
+                alt=""
+                className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105"
+                loading="lazy"
+              />
+            )}
+            {isLast ? (
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center transition-colors group-hover/img:bg-black/30">
+                <span className="text-text-inverse text-xs font-bold tracking-wider">
+                  +{extraCount}
+                </span>
+              </div>
+            ) : (
+              <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/5 transition-colors" />
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Building Details Component ──────────────────────────────────────────────
 
 export function HydrateFallback() {
   return (
@@ -754,12 +819,12 @@ function PendingPhotosQueue({
 // ─── Size helpers ─────────────────────────────────────────────────────────────
 
 const SIZE_CATEGORIES = [
-  { value: "micro",         label: "Micro",               gfa: "< 50 m²",           height: "1 Story",    focus: "Tectonics & Materiality" },
-  { value: "residential",   label: "Residential",          gfa: "50 – 500 m²",       height: "1–3 Stories", focus: "Privacy & Domesticity" },
-  { value: "boutique",      label: "Boutique/Medium",      gfa: "500 – 2,000 m²",    height: "2–4 Stories", focus: "Community & Mixed-Use" },
-  { value: "institutional", label: "Institutional/Large",  gfa: "2,000 – 10,000 m²", height: "3–6 Stories", focus: "Circulation & Regulation" },
-  { value: "mega",          label: "Mega/Complex",         gfa: "10,000+ m²",        height: "Variable",    focus: "Infrastructure & Logistics" },
-  { value: "high_rise",     label: "High-Rise",            gfa: "Variable",           height: "7+ Stories",  focus: "Structure & Verticality" },
+  { value: "xs", label: "XS", gfa: "< 50 m²" },
+  { value: "s",  label: "S",  gfa: "50 – 500 m²" },
+  { value: "m",  label: "M",  gfa: "500 – 2,000 m²" },
+  { value: "l",  label: "L",  gfa: "2,000 – 10,000 m²" },
+  { value: "xl", label: "XL", gfa: "10,000 – 50,000 m²" },
+  { value: "xxl", label: "XXL", gfa: "50,000+ m²" },
 ] as const;
 
 function sizeCategoryLabel(value: string): string {
@@ -785,14 +850,13 @@ function SizeReferencePopover() {
       <PopoverContent side="top" className="w-[420px] max-w-[90vw] p-0 overflow-hidden">
         <div className="px-4 pt-4 pb-2">
           <p className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-1">Size Reference</p>
-          <p className="text-xs text-text-secondary">Categorization based on Gross Floor Area (GFA) and building height.</p>
+          <p className="text-xs text-text-secondary">Categorization based on Gross Floor Area (GFA).</p>
         </div>
         <table className="w-full text-xs border-t border-border-default">
           <thead>
             <tr className="border-b border-border-default bg-surface-muted/40">
               <th className="text-left px-4 py-2 font-semibold text-text-secondary">Category</th>
               <th className="text-left px-4 py-2 font-semibold text-text-secondary">GFA</th>
-              <th className="text-left px-4 py-2 font-semibold text-text-secondary hidden sm:table-cell">Height</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-default">
@@ -800,7 +864,6 @@ function SizeReferencePopover() {
               <tr key={cat.value}>
                 <td className="px-4 py-2 font-medium text-text-primary">{cat.label}</td>
                 <td className="px-4 py-2 text-text-secondary">{cat.gfa}</td>
-                <td className="px-4 py-2 text-text-secondary hidden sm:table-cell">{cat.height}</td>
               </tr>
             ))}
           </tbody>
@@ -1228,6 +1291,8 @@ export default function BuildingDetails() {
     user,
     profile,
   });
+
+  const buildingAny = building as any;
 
   // ── Tab state (URL-based) ─────────────────────────────────────────────────
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1875,11 +1940,13 @@ export default function BuildingDetails() {
                   <ClientOnly>
                     <RelatedByArchitectSection building={building} primaryCredit={primaryCredit} />
                     {building.city && (
-                      <RelatedByCitySection building={building} locality={locality} />
-                      <BuildingAwardsSection 
-                        buildingId={building.id} 
-                        buildingName={building.name} 
-                      />
+                      <>
+                        <RelatedByCitySection building={building} locality={locality} />
+                        <BuildingAwardsSection
+                          buildingId={building.id}
+                          buildingName={building.name}
+                        />
+                      </>
                     )}
                   </ClientOnly>
                 </div>
@@ -2319,68 +2386,79 @@ export default function BuildingDetails() {
                             </span>
                           )}
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           {userPosts.map((post, idx) => {
                             const preview = post.body?.trim()
                               ? post.body.length > 100 ? post.body.slice(0, 100) + "…" : post.body
                               : null;
                             const dateStr = new Date(post.updated_at || post.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
                             const thumbs = post.images.slice(0, 4);
-                            const extraCount = post.images.length - 4;
+
+                            const handleNoteImageClick = (img: typeof post.images[0]) => {
+                              const url = getBuildingImageUrl(img.storage_path);
+                              if (!url) return;
+
+                              setSelectedImage({
+                                id: img.id,
+                                url: url,
+                                type: "image",
+                                likes_count: 0,
+                                created_at: post.created_at,
+                                user: {
+                                  username: post.user.username,
+                                  avatar_url: post.user.avatar_url,
+                                },
+                                caption: post.content,
+                              });
+                            };
+
                             return (
                               <div
                                 key={post.id}
-                                className="border border-border-default bg-surface-muted/30 group overflow-hidden"
+                                className="border border-border-default bg-surface-muted/30 group/note overflow-hidden transition-all duration-200 hover:border-border-strong hover:bg-surface-muted/50"
                               >
-                                {/* Card header — always visible, anchors each note */}
-                                <div className="flex items-center justify-between px-3 py-2 border-b border-border-default bg-surface-muted/50">
+                                {/* Card header */}
+                                <div className="flex items-center justify-between px-3 py-2 border-b border-border-default bg-surface-muted/20">
                                   <div className="flex items-center gap-2 min-w-0">
+                                    <span className="text-[10px] font-bold text-text-secondary tracking-tight uppercase">
+                                      {dateStr}
+                                    </span>
                                     {userPosts.length > 1 && (
-                                      <span className="text-[9px] font-bold text-text-disabled shrink-0">
+                                      <span className="text-[9px] font-medium text-text-disabled bg-surface-default/50 px-1 border border-border-default/50">
                                         {idx + 1}/{userPosts.length}
                                       </span>
                                     )}
-                                    <span className="text-[10px] text-text-disabled truncate">{dateStr}</span>
                                   </div>
                                   <button
                                     onClick={() => void navigate(`/building/${building.id}/note/${post.id}/edit`)}
-                                    className="flex-shrink-0 p-1 rounded hover:bg-border-default transition-colors"
+                                    className="flex-shrink-0 p-1.5 rounded-none hover:bg-surface-default transition-colors opacity-40 group-hover/note:opacity-100"
                                     title="Edit this note"
                                   >
-                                    <Pencil className="h-3 w-3 text-text-disabled" />
+                                    <Pencil className="h-3 w-3 text-text-primary" />
                                   </button>
                                 </div>
-                                {/* Images */}
-                                {thumbs.length > 0 && (
-                                  <div className={cn(
-                                    "grid gap-0.5",
-                                    thumbs.length === 1 ? "grid-cols-1" : "grid-cols-3",
-                                  )}>
-                                    {thumbs.map((img, i) => {
-                                      const url = getBuildingImageUrl(img.storage_path);
-                                      const isLast = i === thumbs.length - 1 && extraCount > 0;
-                                      return (
-                                        <div key={img.id} className="relative aspect-square bg-surface-muted overflow-hidden">
-                                          {url && <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" />}
-                                          {isLast && (
-                                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                              <span className="text-text-inverse text-xs font-bold">+{extraCount}</span>
-                                            </div>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
+
+                                {/* Dynamic Photo Grid */}
+                                <NotePhotoGrid
+                                  images={thumbs}
+                                  totalCount={post.images.length}
+                                  onImageClick={handleNoteImageClick}
+                                />
+
                                 {/* Body */}
-                                <div className="px-3 py-2.5">
+                                <div className="px-3.5 py-3">
                                   {post.title?.trim() && (
-                                    <p className="text-xs font-semibold text-text-primary leading-snug mb-1 truncate">{post.title}</p>
+                                    <p className="text-xs font-bold text-text-primary leading-snug mb-1.5">{post.title}</p>
                                   )}
-                                  {preview
-                                    ? <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">{preview}</p>
-                                    : !post.title?.trim() && <p className="text-xs text-text-disabled italic">No text</p>
-                                  }
+                                  {preview ? (
+                                    <p className="text-[11px] text-text-secondary leading-relaxed line-clamp-3">
+                                      {preview}
+                                    </p>
+                                  ) : (
+                                    !post.title?.trim() && (
+                                      <p className="text-[11px] text-text-disabled italic font-serif">Empty note</p>
+                                    )
+                                  )}
                                 </div>
                               </div>
                             );
