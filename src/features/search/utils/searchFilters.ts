@@ -10,6 +10,9 @@ export interface BuildingFilterData {
   access_logistics?: string | null;
   access_cost?: string | null;
   status?: string | null;
+  size_category?: string | null;
+  size_sqm?: number | null;
+  storeys?: number | null;
   [key: string]: unknown; // Allow passing through other fields like id, location, etc.
 }
 
@@ -28,6 +31,11 @@ export interface FilterCriteria {
   accessLogistics?: string[];
   accessCosts?: string[];
   constructionStatuses?: string[];
+  sizeCategories?: string[];
+  minSizeSqm?: number | null;
+  maxSizeSqm?: number | null;
+  minStoreys?: number | null;
+  maxStoreys?: number | null;
   userCollectionMap?: Record<string, Set<string>>;
   userRatings?: Record<string, number>;
 }
@@ -137,7 +145,39 @@ export function filterLocalBuildings(
       }
     } else {
       // Default exclusion if no filter provided (match backend default)
-      if (b.status === 'Lost' || b.status === 'Under Construction' || b.status === 'Unbuilt') {
+      const excludedStatuses = ['Demolished', 'Lost', 'Under Construction', 'Unbuilt'];
+      if (b.status && excludedStatuses.includes(b.status)) {
+        return false;
+      }
+    }
+
+    // Size Category
+    if (filters.sizeCategories && filters.sizeCategories.length > 0) {
+      if (!b.size_category || !filters.sizeCategories.includes(b.size_category)) {
+        return false;
+      }
+    }
+
+    // Size (sqm) Range
+    if (filters.minSizeSqm !== null && filters.minSizeSqm !== undefined && filters.minSizeSqm > 0) {
+      if (b.size_sqm === null || b.size_sqm === undefined || b.size_sqm < filters.minSizeSqm) {
+        return false;
+      }
+    }
+    if (filters.maxSizeSqm !== null && filters.maxSizeSqm !== undefined) {
+      if (b.size_sqm === null || b.size_sqm === undefined || b.size_sqm > filters.maxSizeSqm) {
+        return false;
+      }
+    }
+
+    // Storeys Range
+    if (filters.minStoreys !== null && filters.minStoreys !== undefined && filters.minStoreys > 1) {
+      if (b.storeys === null || b.storeys === undefined || b.storeys < filters.minStoreys) {
+        return false;
+      }
+    }
+    if (filters.maxStoreys !== null && filters.maxStoreys !== undefined) {
+      if (b.storeys === null || b.storeys === undefined || b.storeys > filters.maxStoreys) {
         return false;
       }
     }

@@ -83,6 +83,13 @@ export interface MapFilters {
   awardOutcome?: string;
   awardYearFrom?: number;
   awardYearTo?: number;
+
+  // Size
+  sizeCategories?: string[];
+  minSizeSqm?: number;
+  maxSizeSqm?: number;
+  minStoreys?: number;
+  maxStoreys?: number;
 }
 
 export interface MapState {

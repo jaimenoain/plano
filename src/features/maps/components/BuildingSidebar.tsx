@@ -129,6 +129,11 @@ export function BuildingSidebar({
         credit_company_id: filters.creditCompany?.id ?? undefined,
         credit_roles:
           filters.creditRoles && filters.creditRoles.length > 0 ? filters.creditRoles : undefined,
+        size_categories: filters.sizeCategories && filters.sizeCategories.length > 0 ? filters.sizeCategories : undefined,
+        min_size_sqm: filters.minSizeSqm || undefined,
+        max_size_sqm: filters.maxSizeSqm || undefined,
+        min_storeys: filters.minStoreys || undefined,
+        max_storeys: filters.maxStoreys || undefined,
       };
       const { data, error } = await supabase.rpc('get_buildings_list', {
         min_lat: bounds.south,
@@ -310,9 +315,9 @@ export function BuildingSidebar({
 
                       {/* Architect (credits) and locality (city only) */}
                       <div className="mt-1 flex flex-col gap-0.5">
-                        {building.credit_names && building.credit_names.length > 0 && (
+                        {building.credit_names?.length > 0 && (
                           <p className="text-xs text-text-secondary line-clamp-1">
-                            {building.credit_names.join(', ')}
+                            {building.credit_names.filter(Boolean).join(', ')}
                           </p>
                         )}
                         {building.city ? (

@@ -480,12 +480,22 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   );
 
   const [awardId, setAwardId] = useState<string | null>(searchParams.get("awardId") || null);
-  const [awardOutcome, setAwardOutcome] = useState<string | null>(searchParams.get("awardOutcome") || null);
-  const [awardYearFrom, setAwardYearFrom] = useState<number | null>(
-    searchParams.get("awardYearFrom") ? parseInt(searchParams.get("awardYearFrom")!, 10) : null
-  );
   const [awardYearTo, setAwardYearTo] = useState<number | null>(
     searchParams.get("awardYearTo") ? parseInt(searchParams.get("awardYearTo")!, 10) : null
+  );
+
+  const [sizeCategories, setSizeCategories] = useState<string[]>(getArrayParam(searchParams.get("sizeCategories")));
+  const [minSizeSqm, setMinSizeSqm] = useState<number | null>(
+    searchParams.get("minSizeSqm") ? parseInt(searchParams.get("minSizeSqm")!, 10) : null
+  );
+  const [maxSizeSqm, setMaxSizeSqm] = useState<number | null>(
+    searchParams.get("maxSizeSqm") ? parseInt(searchParams.get("maxSizeSqm")!, 10) : null
+  );
+  const [minStoreys, setMinStoreys] = useState<number | null>(
+    searchParams.get("minStoreys") ? parseInt(searchParams.get("minStoreys")!, 10) : null
+  );
+  const [maxStoreys, setMaxStoreys] = useState<number | null>(
+    searchParams.get("maxStoreys") ? parseInt(searchParams.get("maxStoreys")!, 10) : null
   );
 
   // Resolve rated_by profiles from URL
@@ -616,7 +626,12 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
         accessCosts.length > 0 ||
         constructionStatuses.length > 0 ||
         selectedCreditCompany !== null ||
-        selectedCreditRoles.length > 0;
+        selectedCreditRoles.length > 0 ||
+        sizeCategories.length > 0 ||
+        minSizeSqm !== null ||
+        maxSizeSqm !== null ||
+        minStoreys !== null ||
+        maxStoreys !== null;
 
      if (hasActiveFilters) {
          try {
@@ -630,7 +645,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     filterContacts, personalMinRating, globalMinRating, contactMinRating, selectedCategory, selectedTypologies,
     selectedAttributes, selectedPeople, selectedCollections, selectedFolders, selectedContacts,
     accessLevels, accessLogistics, accessCosts, constructionStatuses,
-    selectedCreditCompany, selectedCreditRoles
+    selectedCreditCompany, selectedCreditRoles,
+    sizeCategories, minSizeSqm, maxSizeSqm, minStoreys, maxStoreys
   ]);
 
   // Sync state to URL params
@@ -740,6 +756,21 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       if (awardYearTo) params.set("awardYearTo", awardYearTo.toString());
       else params.delete("awardYearTo");
 
+      if (sizeCategories.length > 0) params.set("sizeCategories", sizeCategories.join(","));
+      else params.delete("sizeCategories");
+
+      if (minSizeSqm !== null) params.set("minSizeSqm", minSizeSqm.toString());
+      else params.delete("minSizeSqm");
+
+      if (maxSizeSqm !== null) params.set("maxSizeSqm", maxSizeSqm.toString());
+      else params.delete("maxSizeSqm");
+
+      if (minStoreys !== null) params.set("minStoreys", minStoreys.toString());
+      else params.delete("minStoreys");
+
+      if (maxStoreys !== null) params.set("maxStoreys", maxStoreys.toString());
+      else params.delete("maxStoreys");
+
       // Construct rated_by param
       const ratedByUsers = new Set<string>();
       const authUsername = (user?.user_metadata as { username?: string } | undefined)?.username;
@@ -793,6 +824,11 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     awardOutcome,
     awardYearFrom,
     awardYearTo,
+    sizeCategories,
+    minSizeSqm,
+    maxSizeSqm,
+    minStoreys,
+    maxStoreys,
     setSearchParams,
     user
   ]);
@@ -862,7 +898,12 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       awardId,
       awardOutcome,
       awardYearFrom,
-      awardYearTo
+      awardYearTo,
+      sizeCategories,
+      minSizeSqm,
+      maxSizeSqm,
+      minStoreys,
+      maxStoreys
     ],
     queryFn: async () => {
       try {
@@ -1024,7 +1065,10 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
                 attributes:building_attributes(attribute_id),
                 access_level,
                 access_logistics,
-                access_cost
+                access_cost,
+                size_category,
+                size_sqm,
+                storeys
               `)
               .in('id', Array.from(buildingIds));
 
@@ -1055,10 +1099,14 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
               typologyIds: selectedTypologies,
               attributeIds: selectedAttributes,
               selectedCreditEntityIds: selectedPeople.map((a) => a.id),
-              accessLevels,
               accessLogistics,
               accessCosts,
               constructionStatuses,
+              sizeCategories,
+              minSizeSqm,
+              maxSizeSqm,
+              minStoreys,
+              maxStoreys,
             });
 
             // 6. Map to MapItem (BuildingPoint)
@@ -1131,6 +1179,11 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
               award_outcome: awardOutcome || undefined,
               award_year_from: awardYearFrom || undefined,
               award_year_to: awardYearTo || undefined,
+              size_categories: sizeCategories.length > 0 ? sizeCategories : undefined,
+              min_size_sqm: minSizeSqm || undefined,
+              max_size_sqm: maxSizeSqm || undefined,
+              min_storeys: minStoreys || undefined,
+              max_storeys: maxStoreys || undefined,
             }
           });
 
@@ -1313,6 +1366,16 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     setAwardYearFrom,
     awardYearTo,
     setAwardYearTo,
+    sizeCategories,
+    setSizeCategories,
+    minSizeSqm,
+    setMinSizeSqm,
+    maxSizeSqm,
+    setMaxSizeSqm,
+    minStoreys,
+    setMinStoreys,
+    maxStoreys,
+    setMaxStoreys,
     viewMode,
     setViewMode,
     mode,

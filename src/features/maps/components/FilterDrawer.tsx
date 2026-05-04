@@ -71,6 +71,16 @@ export function FilterDrawer() {
     setAwardYearFrom,
     awardYearTo,
     setAwardYearTo,
+    sizeCategories,
+    setSizeCategories,
+    minSizeSqm,
+    setMinSizeSqm,
+    maxSizeSqm,
+    setMaxSizeSqm,
+    minStoreys,
+    setMinStoreys,
+    maxStoreys,
+    setMaxStoreys,
     mode,
     setMode,
   } = useBuildingSearch();
@@ -167,6 +177,11 @@ export function FilterDrawer() {
     setAwardOutcome(null);
     setAwardYearFrom(null);
     setAwardYearTo(null);
+    setSizeCategories([]);
+    setMinSizeSqm(null);
+    setMaxSizeSqm(null);
+    setMinStoreys(null);
+    setMaxStoreys(null);
   };
 
   const handleClearAll = () => {
@@ -186,6 +201,11 @@ export function FilterDrawer() {
     setSelectedCreditRoles([]);
     setHideSaved(false);
     setHideVisited(false);
+    setSizeCategories([]);
+    setMinSizeSqm(null);
+    setMaxSizeSqm(null);
+    setMinStoreys(null);
+    setMaxStoreys(null);
     setMode(null);
   };
 
@@ -212,6 +232,9 @@ export function FilterDrawer() {
     if (constructionStatuses?.length > 0) count++;
     if (selectedCreditCompany) count++;
     if (selectedCreditRoles.length > 0) count++;
+    if (sizeCategories.length > 0) count++;
+    if (minSizeSqm !== null || maxSizeSqm !== null) count++;
+    if (minStoreys !== null || maxStoreys !== null) count++;
 
     if (mode === 'discover') {
       if (currentMinRating > 0) count++;
@@ -426,6 +449,16 @@ export function FilterDrawer() {
             onAwardYearFromChange={setAwardYearFrom}
             awardYearTo={awardYearTo}
             onAwardYearToChange={setAwardYearTo}
+            sizeCategories={sizeCategories}
+            onSizeCategoriesChange={setSizeCategories}
+            minSizeSqm={minSizeSqm}
+            onMinSizeSqmChange={setMinSizeSqm}
+            maxSizeSqm={maxSizeSqm}
+            onMaxSizeSqmChange={setMaxSizeSqm}
+            minStoreys={minStoreys}
+            onMinStoreysChange={setMinStoreys}
+            maxStoreys={maxStoreys}
+            onMaxStoreysChange={setMaxStoreys}
           />
         </div>
       </SheetContent>

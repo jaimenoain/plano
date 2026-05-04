@@ -108,6 +108,16 @@ export interface DiscoveryFiltersPanelProps {
   onAwardYearFromChange?: (year: number | null) => void;
   awardYearTo?: number | null;
   onAwardYearToChange?: (year: number | null) => void;
+  sizeCategories?: string[];
+  onSizeCategoriesChange?: (categories: string[]) => void;
+  minSizeSqm?: number | null;
+  onMinSizeSqmChange?: (val: number | null) => void;
+  maxSizeSqm?: number | null;
+  onMaxSizeSqmChange?: (val: number | null) => void;
+  minStoreys?: number | null;
+  onMinStoreysChange?: (val: number | null) => void;
+  maxStoreys?: number | null;
+  onMaxStoreysChange?: (val: number | null) => void;
 }
 
 export function DiscoveryFiltersPanel({
@@ -138,6 +148,16 @@ export function DiscoveryFiltersPanel({
   onAwardYearFromChange,
   awardYearTo,
   onAwardYearToChange,
+  sizeCategories = [],
+  onSizeCategoriesChange,
+  minSizeSqm,
+  onMinSizeSqmChange,
+  maxSizeSqm,
+  onMaxSizeSqmChange,
+  minStoreys,
+  onMinStoreysChange,
+  maxStoreys,
+  onMaxStoreysChange,
 }: DiscoveryFiltersPanelProps) {
   const {
     functionalCategories,
@@ -451,6 +471,109 @@ export function DiscoveryFiltersPanel({
                     {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map((year) => (
                       <SelectItem key={year} value={year.toString()}>
                         {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="size">
+          <AccordionTrigger className="text-sm">Size</AccordionTrigger>
+          <AccordionContent className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-text-secondary">
+                Category
+              </Label>
+              <MultiSelectCheckboxList
+                items={[
+                  { id: "xs", name: "XS" },
+                  { id: "s", name: "S" },
+                  { id: "m", name: "M" },
+                  { id: "l", name: "L" },
+                  { id: "xl", name: "XL" },
+                  { id: "xxl", name: "XXL" },
+                ]}
+                selectedIds={sizeCategories}
+                onChange={onSizeCategoriesChange || (() => {})}
+                className="h-[150px]"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-text-secondary">
+                Size (sqm)
+              </Label>
+              <div className="grid grid-cols-2 gap-4">
+                <Select
+                  value={minSizeSqm?.toString() || "any"}
+                  onValueChange={(val) => onMinSizeSqmChange?.(val === "any" ? null : parseInt(val, 10))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Min sqm" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Min</SelectItem>
+                    {[0, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000].map((val) => (
+                      <SelectItem key={val} value={val.toString()}>
+                        {val.toLocaleString()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={maxSizeSqm?.toString() || "any"}
+                  onValueChange={(val) => onMaxSizeSqmChange?.(val === "any" ? null : parseInt(val, 10))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Max sqm" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Max</SelectItem>
+                    {[50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000].map((val) => (
+                      <SelectItem key={val} value={val.toString()}>
+                        {val.toLocaleString()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-text-secondary">
+                Storeys
+              </Label>
+              <div className="grid grid-cols-2 gap-4">
+                <Select
+                  value={minStoreys?.toString() || "any"}
+                  onValueChange={(val) => onMinStoreysChange?.(val === "any" ? null : parseInt(val, 10))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Min" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Min</SelectItem>
+                    {[1, 2, 3, 4, 5, 10, 20, 30, 40, 50].map((val) => (
+                      <SelectItem key={val} value={val.toString()}>
+                        {val}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={maxStoreys?.toString() || "any"}
+                  onValueChange={(val) => onMaxStoreysChange?.(val === "any" ? null : parseInt(val, 10))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Max" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Max</SelectItem>
+                    {[1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100].map((val) => (
+                      <SelectItem key={val} value={val.toString()}>
+                        {val}
                       </SelectItem>
                     ))}
                   </SelectContent>

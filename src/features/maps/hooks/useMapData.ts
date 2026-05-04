@@ -145,6 +145,11 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
         award_outcome: filters.awardOutcome,
         award_year_from: filters.awardYearFrom,
         award_year_to: filters.awardYearTo,
+        size_categories: filters.sizeCategories && filters.sizeCategories.length > 0 ? filters.sizeCategories : undefined,
+        min_size_sqm: filters.minSizeSqm || undefined,
+        max_size_sqm: filters.maxSizeSqm || undefined,
+        min_storeys: filters.minStoreys || undefined,
+        max_storeys: filters.maxStoreys || undefined,
       };
 
       const { data, error } = await supabase.rpc('get_map_clusters_v2', {
