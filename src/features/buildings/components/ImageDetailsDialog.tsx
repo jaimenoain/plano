@@ -41,6 +41,7 @@ interface ImageDetailsDialogProps {
   isOfficial?: boolean;
   isHero?: boolean;
   canEdit?: boolean;
+  caption?: string | null;
   onToggleOfficial?: () => void;
   onSetHero?: () => void;
 }
@@ -64,6 +65,7 @@ export function ImageDetailsDialog({
   isOfficial,
   isHero,
   canEdit,
+  caption,
   onToggleOfficial,
   onSetHero
 }: ImageDetailsDialogProps) {
@@ -365,6 +367,13 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
                      <X className="h-5 w-5" />
                  </DialogClose>
             </div>
+
+            {/* Caption */}
+            {caption && (
+              <div className="px-4 py-3 border-b">
+                <p className="text-sm text-text-primary leading-relaxed">{caption}</p>
+              </div>
+            )}
 
             {/* Curation Actions */}
             {canEdit && (

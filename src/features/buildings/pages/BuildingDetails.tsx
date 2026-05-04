@@ -410,6 +410,7 @@ interface DisplayImage {
   user: { username: string | null; avatar_url: string | null } | null;
   is_generated?: boolean;
   is_official?: boolean;
+  caption?: string | null;
 }
 
 function formatCatalogLabel(value: string | null | undefined): string | null {
@@ -1278,7 +1279,7 @@ export default function BuildingDetails() {
       >
         {/* ── HERO — full-bleed only when a hero image exists (no empty band) ── */}
         {heroImageUrl ? (
-          <div className="h-56 max-h-[50vh] sm:max-h-none sm:h-64 lg:h-80 w-full overflow-hidden bg-surface-muted">
+          <div className="relative h-56 max-h-[50vh] sm:max-h-none sm:h-64 lg:h-80 w-full overflow-hidden bg-surface-muted">
             <motion.img
               key={heroImageUrl}
               initial={{ opacity: 0, scale: 1.03 }}
@@ -1286,7 +1287,7 @@ export default function BuildingDetails() {
               transition={{ duration: 0.8 }}
               src={heroImageUrl}
               alt={heroAlt}
-              className="h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover"
               fetchPriority="high"
               loading="eager"
             />
@@ -1923,60 +1924,75 @@ export default function BuildingDetails() {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden space-y-2 pt-1"
+                        className="overflow-hidden pt-1"
                       >
-                        {userPosts.map((post) => {
-                          const preview = post.body?.trim()
-                            ? post.body.length > 80 ? post.body.slice(0, 80) + "…" : post.body
-                            : null;
-                          const dateStr = new Date(post.updated_at || post.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-                          const thumbs = post.images.slice(0, 4);
-                          const extraCount = post.images.length - 4;
-                          return (
-                            <div
-                              key={post.id}
-                              className="rounded-sm border border-border-default bg-surface-muted/30 group"
-                            >
-                              {thumbs.length > 0 && (
-                                <div className={cn(
-                                  "grid gap-0.5 overflow-hidden rounded-t-sm",
-                                  thumbs.length === 1 ? "grid-cols-1" : "grid-cols-3",
-                                )}>
-                                  {thumbs.map((img, i) => {
-                                    const url = getBuildingImageUrl(img.storage_path);
-                                    const isLast = i === thumbs.length - 1 && extraCount > 0;
-                                    return (
-                                      <div key={img.id} className="relative aspect-square bg-surface-muted overflow-hidden">
-                                        {url && <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" />}
-                                        {isLast && (
-                                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                            <span className="text-text-inverse text-xs font-bold">+{extraCount}</span>
-                                          </div>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+                            My Notes
+                          </span>
+                          {userPosts.length > 1 && (
+                            <span className="text-[10px] font-bold text-text-disabled bg-surface-muted px-1.5 py-0.5 rounded-full">
+                              {userPosts.length}
+                            </span>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          {userPosts.map((post) => {
+                            const preview = post.body?.trim()
+                              ? post.body.length > 80 ? post.body.slice(0, 80) + "…" : post.body
+                              : null;
+                            const dateStr = new Date(post.updated_at || post.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+                            const thumbs = post.images.slice(0, 4);
+                            const extraCount = post.images.length - 4;
+                            return (
+                              <div
+                                key={post.id}
+                                className="rounded-sm border border-border-default bg-surface-muted/30 group"
+                              >
+                                {thumbs.length > 0 && (
+                                  <div className={cn(
+                                    "grid gap-0.5 overflow-hidden rounded-t-sm",
+                                    thumbs.length === 1 ? "grid-cols-1" : "grid-cols-3",
+                                  )}>
+                                    {thumbs.map((img, i) => {
+                                      const url = getBuildingImageUrl(img.storage_path);
+                                      const isLast = i === thumbs.length - 1 && extraCount > 0;
+                                      return (
+                                        <div key={img.id} className="relative aspect-square bg-surface-muted overflow-hidden">
+                                          {url && <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" />}
+                                          {isLast && (
+                                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                              <span className="text-text-inverse text-xs font-bold">+{extraCount}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                                <div className="flex items-start gap-2 px-3 py-2.5">
+                                  <div className="flex-1 min-w-0">
+                                    {post.title?.trim() && (
+                                      <p className="text-xs font-semibold text-text-primary leading-snug mb-0.5 truncate">{post.title}</p>
+                                    )}
+                                    {preview
+                                      ? <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">{preview}</p>
+                                      : !post.title?.trim() && <p className="text-xs text-text-disabled italic">No text</p>
+                                    }
+                                    <p className="text-[10px] text-text-disabled mt-1">{dateStr}</p>
+                                  </div>
+                                  <button
+                                    onClick={() => void navigate(`/building/${building.id}/note/${post.id}/edit`)}
+                                    className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-border-default"
+                                    title="Edit this note"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5 text-text-secondary" />
+                                  </button>
                                 </div>
-                              )}
-                              <div className="flex items-start gap-2 px-3 py-2.5">
-                                <div className="flex-1 min-w-0">
-                                  {preview
-                                    ? <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">&ldquo;{preview}&rdquo;</p>
-                                    : <p className="text-xs text-text-disabled italic">No text</p>
-                                  }
-                                  <p className="text-[10px] text-text-disabled mt-1">{dateStr}</p>
-                                </div>
-                                <button
-                                  onClick={() => void navigate(`/building/${building.id}/note/${post.id}/edit`)}
-                                  className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-border-default"
-                                  title="Edit this note"
-                                >
-                                  <Pencil className="h-3.5 w-3.5 text-text-secondary" />
-                                </button>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -2183,6 +2199,7 @@ export default function BuildingDetails() {
         isGenerated={selectedImage?.is_generated}
         isOfficial={selectedImage?.is_official}
         isHero={selectedImage?.id === building?.hero_image_id}
+        caption={selectedImage?.caption}
         canEdit={canEditOfficialData}
         onToggleOfficial={handleToggleOfficial}
         onSetHero={handleSetHeroImage}

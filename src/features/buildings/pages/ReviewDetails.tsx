@@ -80,7 +80,7 @@ interface FeedReview {
     main_image_url: string | null;
     creditedEntities: { id: string; name: string }[] | null;
   };
-  images: { id: string; url: string; is_generated?: boolean }[];
+  images: { id: string; url: string; is_generated?: boolean; caption?: string | null }[];
   likes_count: number;
   comments_count: number;
   is_liked: boolean;
@@ -161,7 +161,7 @@ export default function ReviewDetails() {
                     id, body, tags, created_at, user_id, building_id,
                     user:profiles(username, avatar_url),
                     building:buildings(id, short_id, slug, name, year_completed, address, hero_image_url, building_credits(status, credit_tier, person:people(id, name), company:companies(id, name))),
-                    images:review_images(id, storage_path, is_generated)
+                    images:review_images(id, storage_path, is_generated, caption)
                 `)
                 .eq("id", paramId)
                 .single();
@@ -215,12 +215,12 @@ export default function ReviewDetails() {
               creditedEntities: visibleCreditSummariesFromEmbed(rb.building_credits),
             };
 
-            const images: { id: string; url: string; is_generated?: boolean }[] = [];
+            const images: { id: string; url: string; is_generated?: boolean; caption?: string | null }[] = [];
             for (const img of reviewData.images || []) {
-                const row = img as { id: string; storage_path: string; is_generated?: boolean };
+                const row = img as { id: string; storage_path: string; is_generated?: boolean; caption?: string | null };
                 const url = getBuildingImageUrl(row.storage_path);
                 if (url) {
-                    images.push({ id: row.id, url, is_generated: row.is_generated });
+                    images.push({ id: row.id, url, is_generated: row.is_generated, caption: row.caption });
                 }
             }
 
@@ -1072,6 +1072,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
           isGenerated={
             review.images.find((img) => img.id === selectedImageId)?.is_generated
           }
+          caption={review.images.find((img) => img.id === selectedImageId)?.caption}
           onNext={() => {
             const currentIndex = review.images.findIndex(
               (img) => img.id === selectedImageId,

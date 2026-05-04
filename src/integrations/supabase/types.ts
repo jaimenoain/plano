@@ -2465,6 +2465,7 @@ export type Database = {
       }
       review_images: {
         Row: {
+          caption: string | null
           created_at: string
           height_px: number | null
           id: string
@@ -2477,6 +2478,7 @@ export type Database = {
           width_px: number | null
         }
         Insert: {
+          caption?: string | null
           created_at?: string
           height_px?: number | null
           id?: string
@@ -2489,6 +2491,7 @@ export type Database = {
           width_px?: number | null
         }
         Update: {
+          caption?: string | null
           created_at?: string
           height_px?: number | null
           id?: string

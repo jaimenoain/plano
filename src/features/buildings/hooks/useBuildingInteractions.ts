@@ -68,6 +68,7 @@ interface RpcBuildingReviewRow {
     created_at?: string;
     is_generated?: boolean;
     is_official?: boolean;
+    caption?: string | null;
   }>;
   video_url?: string | null;
   content?: string | null;
@@ -86,6 +87,7 @@ export interface DisplayImage {
   user: { username: string | null; avatar_url: string | null } | null;
   is_generated?: boolean;
   is_official?: boolean;
+  caption?: string | null;
 }
 
 // ─── Hook inputs ─────────────────────────────────────────────────────────────
@@ -148,7 +150,7 @@ export interface BuildingInteractions {
   /** ID of the post currently loaded in the editor, or null for a new note. */
   activePostId: string | null;
   /** All of the user's posts for this building, newest first. */
-  userPosts: { id: string; body: string | null; created_at: string; updated_at: string; images: { id: string; storage_path: string }[] }[];
+  userPosts: { id: string; title: string | null; body: string | null; created_at: string; updated_at: string; images: { id: string; storage_path: string }[] }[];
   pendingImages: Array<{
     id: string;
     file: File;
@@ -293,7 +295,7 @@ export function useBuildingInteractions({
   const [activePostId, setActivePostId] = useState<string | null>(null);
   /** All of this user's building_posts for this building, newest first. */
   const [userPosts, setUserPosts] = useState<
-    { id: string; body: string | null; created_at: string; updated_at: string; images: { id: string; storage_path: string }[] }[]
+    { id: string; title: string | null; body: string | null; created_at: string; updated_at: string; images: { id: string; storage_path: string }[] }[]
   >([]);
   const [pendingImages, setPendingImages] = useState<
     Array<{
@@ -489,7 +491,7 @@ export function useBuildingInteractions({
             // All of this user's building_posts for this building, newest first
             const { data: allPosts } = await supabase
               .from("building_posts")
-              .select("id, body, created_at, updated_at, review_images(id, storage_path)")
+              .select("id, title, body, created_at, updated_at, review_images(id, storage_path)")
               .eq("user_id", userId)
               .eq("building_id", resolvedBuildingId)
               .order("updated_at", { ascending: false })
@@ -620,6 +622,7 @@ export function useBuildingInteractions({
                       user: entry.user_data,
                       is_generated: img.is_generated,
                       is_official: img.is_official,
+                      caption: img.caption,
                     });
                   }
                 });
@@ -992,7 +995,7 @@ export function useBuildingInteractions({
         }
         // Newly inserted post — images will be populated on next full fetch
         return [
-          { id: postId, body: note, created_at: now, updated_at: now, images: [] },
+          { id: postId, title: null, body: note, created_at: now, updated_at: now, images: [] },
           ...prev,
         ];
       });

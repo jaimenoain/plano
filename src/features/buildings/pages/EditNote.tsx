@@ -40,6 +40,7 @@ interface AttachedImage {
   /** Present for existing (already uploaded) images. */
   storage_path?: string;
   is_generated: boolean;
+  caption: string;
   width_px?: number | null;
   height_px?: number | null;
 }
@@ -93,7 +94,7 @@ export default function EditNote() {
         const [postResult, buildingResult] = await Promise.all([
           supabase
             .from("building_posts")
-            .select("id, title, body, tags, user_id, review_images(id, storage_path, is_generated), review_links(id, url, title)")
+            .select("id, title, body, tags, user_id, review_images(id, storage_path, is_generated, caption), review_links(id, url, title)")
             .eq("id", postId)
             .single(),
           supabase
@@ -117,11 +118,12 @@ export default function EditNote() {
         setTags(post.tags ?? []);
 
         const existingImages: AttachedImage[] = (Array.isArray(post.review_images) ? post.review_images : []).map(
-          (img: { id: string; storage_path: string; is_generated: boolean | null }) => ({
+          (img: { id: string; storage_path: string; is_generated: boolean | null; caption: string | null }) => ({
             id: img.id,
             preview: getBuildingImageUrl(img.storage_path) ?? "",
             storage_path: img.storage_path,
             is_generated: img.is_generated ?? false,
+            caption: img.caption ?? "",
           })
         );
         setImages(existingImages);
@@ -166,6 +168,7 @@ export default function EditNote() {
               file: compressed,
               preview,
               is_generated: false,
+              caption: "",
               width_px: width,
               height_px: height,
             },
@@ -196,6 +199,12 @@ export default function EditNote() {
   const toggleGenerated = useCallback((id: string) => {
     setImages((prev) =>
       prev.map((img) => (img.id === id ? { ...img, is_generated: !img.is_generated } : img))
+    );
+  }, []);
+
+  const updateCaption = useCallback((id: string, caption: string) => {
+    setImages((prev) =>
+      prev.map((img) => (img.id === id ? { ...img, caption } : img))
     );
   }, []);
 
@@ -243,7 +252,16 @@ export default function EditNote() {
         setDeletedImageIds([]);
       }
 
-      // 3. Upload new images and insert records
+      // 3. Update existing images (caption, is_generated)
+      const existingImages = images.filter((img) => !img.file && img.storage_path);
+      for (const img of existingImages) {
+        await supabase
+          .from("review_images")
+          .update({ caption: img.caption || null, is_generated: img.is_generated })
+          .eq("id", img.id);
+      }
+
+      // 4. Upload new images and insert records
       const newImages = images.filter((img) => !!img.file);
       if (newImages.length > 0) {
         for (const img of newImages) {
@@ -253,6 +271,7 @@ export default function EditNote() {
             user_id: user!.id,
             storage_path: storagePath,
             is_generated: img.is_generated,
+            caption: img.caption || null,
             width_px: img.width_px ?? null,
             height_px: img.height_px ?? null,
           });
@@ -260,7 +279,7 @@ export default function EditNote() {
         }
       }
 
-      // 4. Sync links (delete all + re-insert)
+      // 5. Sync links (delete all + re-insert)
       await supabase.from("review_links").delete().eq("review_id", postId);
       if (links.length > 0) {
         await supabase.from("review_links").insert(
@@ -400,31 +419,44 @@ export default function EditNote() {
                 {images.map((img) => (
                   <div
                     key={img.id}
-                    className="relative aspect-square group rounded-sm overflow-hidden border border-border-default bg-surface-muted"
+                    className="relative group rounded-sm overflow-hidden border border-border-default bg-surface-muted flex flex-col"
                   >
-                    <img src={img.preview} alt="" className="w-full h-full object-cover" />
+                    {/* Thumbnail */}
+                    <div className="relative aspect-square">
+                      <img src={img.preview} alt="" className="w-full h-full object-cover" />
 
-                    {/* Photo / Render toggle */}
-                    <button
-                      type="button"
-                      onClick={() => toggleGenerated(img.id)}
-                      className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase transition-colors z-10 ${
-                        img.is_generated
-                          ? "bg-brand-primary text-brand-primary-foreground"
-                          : "bg-black/55 text-white hover:bg-black/75"
-                      }`}
-                    >
-                      {img.is_generated ? "Render" : "Photo"}
-                    </button>
+                      {/* Photo / Render toggle */}
+                      <button
+                        type="button"
+                        onClick={() => toggleGenerated(img.id)}
+                        className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase transition-colors z-10 ${
+                          img.is_generated
+                            ? "bg-brand-primary text-brand-primary-foreground"
+                            : "bg-black/55 text-white hover:bg-black/75"
+                        }`}
+                      >
+                        {img.is_generated ? "Render" : "Photo"}
+                      </button>
 
-                    {/* Remove */}
-                    <button
-                      type="button"
-                      onClick={() => removeImage(img.id)}
-                      className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
+                      {/* Remove */}
+                      <button
+                        type="button"
+                        onClick={() => removeImage(img.id)}
+                        className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Caption input */}
+                    <input
+                      type="text"
+                      value={img.caption}
+                      onChange={(e) => updateCaption(img.id, e.target.value)}
+                      placeholder="Caption…"
+                      disabled={saving}
+                      className="text-[11px] px-2 py-1.5 bg-transparent border-t border-border-default text-text-primary placeholder:text-text-disabled outline-none w-full focus:bg-surface-muted/40"
+                    />
                   </div>
                 ))}
 
