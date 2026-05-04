@@ -1628,7 +1628,7 @@ export default function BuildingDetails() {
       >
         {/* ── HERO — full-bleed only when a hero image exists (no empty band) ── */}
         {heroImageUrl ? (
-          <div className="relative h-56 max-h-[50vh] sm:max-h-none sm:h-64 lg:h-80 w-full overflow-hidden bg-surface-muted">
+          <div className="relative h-56 max-h-[50vh] sm:max-h-none sm:h-64 lg:h-80 w-screen overflow-hidden bg-surface-muted">
             <motion.img
               key={heroImageUrl}
               initial={{ opacity: 0, scale: 1.03 }}
