@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PersonFilterSelect } from "@/features/search/components/PersonFilterSelect";
 import { CompanyMapFilterSelect } from "@/features/search/components/CompanyMapFilterSelect";
+import { AwardFilterSelect } from "@/features/awards/components/AwardFilterSelect";
 import { CREDIT_ROLES } from "@/features/credits/api/credits";
 import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
 import type { CreditRole } from "@/features/credits/types";
@@ -99,6 +100,14 @@ export interface DiscoveryFiltersPanelProps {
   showContactPicker?: boolean;
   showResetRow?: boolean;
   onResetGlobalFilters?: () => void;
+  awardId?: string | null;
+  onAwardChange?: (award: { id: string; name: string } | null) => void;
+  awardOutcome?: string | null;
+  onAwardOutcomeChange?: (outcome: string | null) => void;
+  awardYearFrom?: number | null;
+  onAwardYearFromChange?: (year: number | null) => void;
+  awardYearTo?: number | null;
+  onAwardYearToChange?: (year: number | null) => void;
 }
 
 export function DiscoveryFiltersPanel({
@@ -121,6 +130,14 @@ export function DiscoveryFiltersPanel({
   showContactPicker = true,
   showResetRow = true,
   onResetGlobalFilters,
+  awardId,
+  onAwardChange,
+  awardOutcome,
+  onAwardOutcomeChange,
+  awardYearFrom,
+  onAwardYearFromChange,
+  awardYearTo,
+  onAwardYearToChange,
 }: DiscoveryFiltersPanelProps) {
   const {
     functionalCategories,
@@ -361,6 +378,85 @@ export function DiscoveryFiltersPanel({
               onChange={onConstructionStatusesChange}
               className="h-[150px]"
             />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="awards">
+          <AccordionTrigger className="text-sm">Awards</AccordionTrigger>
+          <AccordionContent className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-text-secondary">
+                Specific Award
+              </Label>
+              <AwardFilterSelect
+                selectedAwardId={awardId || null}
+                onAwardChange={onAwardChange || (() => {})}
+                placeholder="Search awards..."
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-medium text-text-secondary">
+                Outcome
+              </Label>
+              <Select
+                value={awardOutcome || "any"}
+                onValueChange={(val) => onAwardOutcomeChange?.(val === "any" ? null : val)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Any Outcome" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any Outcome</SelectItem>
+                  <SelectItem value="winner">Winner</SelectItem>
+                  <SelectItem value="finalist">Finalist</SelectItem>
+                  <SelectItem value="shortlisted">Shortlisted</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-text-secondary">
+                  Year From
+                </Label>
+                <Select
+                  value={awardYearFrom?.toString() || "any"}
+                  onValueChange={(val) => onAwardYearFromChange?.(val === "any" ? null : parseInt(val, 10))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="From" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any</SelectItem>
+                    {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-text-secondary">
+                  Year To
+                </Label>
+                <Select
+                  value={awardYearTo?.toString() || "any"}
+                  onValueChange={(val) => onAwardYearToChange?.(val === "any" ? null : parseInt(val, 10))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="To" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="any">Any</SelectItem>
+                    {Array.from({ length: 50 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </AccordionContent>
         </AccordionItem>
       </Accordion>

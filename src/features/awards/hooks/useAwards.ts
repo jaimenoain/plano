@@ -132,6 +132,21 @@ export function useAwardsByCompany(companyId: string) {
   });
 }
 
+export function useAwardLeaderboard(awardId?: string, limit = 50) {
+  return useQuery({
+    queryKey: [...awardKeys.all, "leaderboard", awardId, limit],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_award_leaderboard", {
+        p_award_id: awardId || null,
+        p_limit: limit,
+      });
+      if (error) throw error;
+      return data as any[];
+    },
+    staleTime: STALE_TIME,
+  });
+}
+
 // ── Mutations ────────────────────────────────────────────────
 
 export function useCreateAward() {
@@ -234,5 +249,75 @@ export function useDeleteRecipient() {
   return useMutation({
     mutationFn: deleteRecipient,
     onSuccess: () => qc.invalidateQueries({ queryKey: awardKeys.all }),
+  });
+}
+
+// ── Suggestions ──────────────────────────────────────────────
+
+import {
+  createSuggestion,
+  getSuggestions,
+  getSuggestionById,
+  approveSuggestion,
+  rejectSuggestion,
+  getAwardsByBody,
+} from "@/features/awards/api/awards";
+
+export const suggestionKeys = {
+  all: ["award-suggestions"] as const,
+  lists: (status?: string) => [...suggestionKeys.all, "list", status || "all"] as const,
+  detail: (id: string) => [...suggestionKeys.all, "detail", id] as const,
+};
+
+export function useCreateSuggestion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: createSuggestion,
+    onSuccess: () => qc.invalidateQueries({ queryKey: suggestionKeys.all }),
+  });
+}
+
+export function useSuggestions(status?: string) {
+  return useQuery({
+    queryKey: suggestionKeys.lists(status),
+    queryFn: () => getSuggestions(status),
+    staleTime: STALE_TIME,
+  });
+}
+
+export function useSuggestion(id: string) {
+  return useQuery({
+    queryKey: suggestionKeys.detail(id),
+    queryFn: () => getSuggestionById(id),
+    enabled: id.length > 0,
+    staleTime: STALE_TIME,
+  });
+}
+
+export function useApproveSuggestion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: approveSuggestion,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: suggestionKeys.all });
+      qc.invalidateQueries({ queryKey: awardKeys.all });
+    },
+  });
+}
+
+export function useRejectSuggestion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, note }: { id: string; note?: string }) => rejectSuggestion(id, note),
+    onSuccess: () => qc.invalidateQueries({ queryKey: suggestionKeys.all }),
+  });
+}
+
+export function useAwardsByBody(companyId: string) {
+  return useQuery({
+    queryKey: [...awardKeys.all, "by-body", companyId],
+    queryFn: () => getAwardsByBody(companyId),
+    enabled: companyId.length > 0,
+    staleTime: STALE_TIME,
   });
 }

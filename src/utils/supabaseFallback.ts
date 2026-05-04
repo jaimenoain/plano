@@ -294,8 +294,9 @@ export const fetchBuildingDetails = async (id: string, client?: SupabaseClient) 
       category:functional_categories(name),
       typologies:building_functional_typologies(typology:functional_typologies(name, id)),
       attributes:building_attributes(attribute:attributes(name, id, group_id, group:attribute_groups(slug))),
-      building_credits(status, person:people(id, name), company:companies(id, name))
-    `);
+      building_credits(status, person:people(id, name), company:companies(id, name)),
+      award_recipients(award_edition:award_editions(award:awards(name)))
+    `).eq("award_recipients.outcome", "winner");
 
     const segment = classifyBuildingPathIdSegment(id);
     if (segment.kind === "uuid") {
@@ -346,6 +347,11 @@ export const fetchBuildingDetails = async (id: string, client?: SupabaseClient) 
         .filter((a) => a.group?.slug === 'intervention' || a.group?.slug === 'interventions')
         .map((a) => a.name)
         .join(', ') || null;
+    
+    // Extract winner award name
+    const awardRecipients = (data as any).award_recipients || [];
+    const winnerAward = awardRecipients[0];
+    const winnerAwardName = winnerAward?.award_edition?.award?.name || null;
 
     type Row = typeof data & { building_credits?: BuildingCreditEmbed[] | null };
     const row = data as Row;
@@ -360,7 +366,8 @@ export const fetchBuildingDetails = async (id: string, client?: SupabaseClient) 
         typology: typologies,
         materials: materials.length > 0 ? materials : null,
         context: context,
-        intervention: intervention
+        intervention: intervention,
+        winner_award_name: winnerAwardName
     };
 };
 

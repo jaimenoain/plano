@@ -479,6 +479,15 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     parseCreditRolesParam(searchParams.get("creditRoles"))
   );
 
+  const [awardId, setAwardId] = useState<string | null>(searchParams.get("awardId") || null);
+  const [awardOutcome, setAwardOutcome] = useState<string | null>(searchParams.get("awardOutcome") || null);
+  const [awardYearFrom, setAwardYearFrom] = useState<number | null>(
+    searchParams.get("awardYearFrom") ? parseInt(searchParams.get("awardYearFrom")!, 10) : null
+  );
+  const [awardYearTo, setAwardYearTo] = useState<number | null>(
+    searchParams.get("awardYearTo") ? parseInt(searchParams.get("awardYearTo")!, 10) : null
+  );
+
   // Resolve rated_by profiles from URL
   const ratedByParam = searchParams.get("rated_by");
   const { data: ratedByProfiles, isLoading: isLoadingRatedBy } = useQuery({
@@ -719,6 +728,18 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       if (selectedCreditRoles.length > 0) params.set("creditRoles", selectedCreditRoles.join(","));
       else params.delete("creditRoles");
 
+      if (awardId) params.set("awardId", awardId);
+      else params.delete("awardId");
+
+      if (awardOutcome) params.set("awardOutcome", awardOutcome);
+      else params.delete("awardOutcome");
+
+      if (awardYearFrom) params.set("awardYearFrom", awardYearFrom.toString());
+      else params.delete("awardYearFrom");
+
+      if (awardYearTo) params.set("awardYearTo", awardYearTo.toString());
+      else params.delete("awardYearTo");
+
       // Construct rated_by param
       const ratedByUsers = new Set<string>();
       const authUsername = (user?.user_metadata as { username?: string } | undefined)?.username;
@@ -768,6 +789,10 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     constructionStatuses,
     selectedCreditCompany,
     selectedCreditRoles,
+    awardId,
+    awardOutcome,
+    awardYearFrom,
+    awardYearTo,
     setSearchParams,
     user
   ]);
@@ -833,7 +858,11 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       debouncedBounds, // Use debounced bounds
       zoom, // Use zoom level
       user?.id,
-      searchTriggerVersion
+      searchTriggerVersion,
+      awardId,
+      awardOutcome,
+      awardYearFrom,
+      awardYearTo
     ],
     queryFn: async () => {
       try {
@@ -1098,6 +1127,10 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
               construction_statuses: constructionStatuses.length > 0 ? constructionStatuses : undefined,
               credit_company_id: selectedCreditCompany?.id,
               credit_roles: selectedCreditRoles.length > 0 ? selectedCreditRoles : undefined,
+              award_id: awardId || undefined,
+              award_outcome: awardOutcome || undefined,
+              award_year_from: awardYearFrom || undefined,
+              award_year_to: awardYearTo || undefined,
             }
           });
 
@@ -1272,6 +1305,14 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     setSelectedCreditCompany,
     selectedCreditRoles,
     setSelectedCreditRoles,
+    awardId,
+    setAwardId,
+    awardOutcome,
+    setAwardOutcome,
+    awardYearFrom,
+    setAwardYearFrom,
+    awardYearTo,
+    setAwardYearTo,
     viewMode,
     setViewMode,
     mode,

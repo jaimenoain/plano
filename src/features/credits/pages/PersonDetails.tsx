@@ -22,6 +22,7 @@ import { PersonCreditCard } from "@/features/credits/components/PersonCreditCard
 import { EditPersonForm } from "@/features/credits/components/EditPersonForm";
 import { getPerson, personQueryKey } from "@/features/credits/api/people";
 import { ClaimPersonDialog } from "@/features/credits/components/ClaimPersonDialog";
+import { PersonAwardsSection } from "@/features/awards/components/PersonAwardsSection";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { personDetailsLoader, type PersonDetailsLoaderData } from "./PersonDetails.loader";
@@ -306,6 +307,8 @@ export default function PersonDetails() {
             )}
           </div>
         ) : null}
+
+        <PersonAwardsSection personId={person.id} personName={person.name} />
 
         <div className="mt-12">
           <h2 className="mb-2 text-xs font-medium uppercase tracking-widest text-text-secondary">Credits</h2>

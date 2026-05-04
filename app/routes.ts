@@ -73,6 +73,11 @@ export default [
       "/admin/awards/:awardId/editions/:editionId",
       "features/admin/pages/EditionDetail.tsx",
     ),
+    route("/admin/awards/suggestions", "features/admin/pages/AwardSuggestions.tsx"),
+    route(
+      "/admin/awards/suggestions/:suggestionId",
+      "features/admin/pages/AwardSuggestionDetail.tsx",
+    ),
   ]),
 
   // Main app (MainLayout wraps all user-facing routes)
@@ -93,6 +98,8 @@ export default [
       id: "events-submit-edit",
     }),
     route("/events", "features/events/pages/Events.tsx"),
+    route("/award/:slug", "features/awards/pages/AwardPage.tsx"),
+    route("/award/:slug/:year", "features/awards/pages/AwardEditionPage.tsx"),
     // /events/:cc/:city/:slug — locality-scoped physical event URL (T13)
     route("/events/:cc/:city/:slug", "features/events/pages/EventDetail.tsx", {
       id: "event-detail-locality",

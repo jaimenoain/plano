@@ -387,7 +387,7 @@ Add to the `managementItems` array in `src/features/admin/components/AdminSideba
 
 ---
 
-## [ ] Phase 2 — Display
+## [x] Phase 2 — Display
 
 > Public award pages · Awards sections on entity detail pages
 
@@ -484,7 +484,7 @@ File: `src/features/companies/pages/CompanyPage.tsx`
 
 ---
 
-## [ ] Phase 3 — Discovery
+## [x] Phase 3 — Discovery
 
 > Map filter · Search filter · Leaderboard · Notifications
 
@@ -657,7 +657,7 @@ Optionally add a subtle "award winner" indicator to building cards in search and
 
 ---
 
-## [ ] Phase 4 — Community
+## [x] Phase 4 — Community
 
 > Suggestion flow · Admin approval · Award body profile linkage
 

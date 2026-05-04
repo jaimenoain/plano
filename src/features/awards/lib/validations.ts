@@ -52,3 +52,21 @@ export const CreateRecipientSchema = z.object({
     .filter(Boolean).length;
   return set === 1;
 }, { message: 'Exactly one recipient FK must be set' });
+
+export const CreateSuggestionSchema = z.object({
+  awardId:              z.string().uuid(),
+  editionId:            z.string().uuid().optional().nullable(),
+  categoryId:           z.string().uuid().optional().nullable(),
+  recipientType:        z.enum(['building','person','company']),
+  recipientBuildingId:  z.string().uuid().optional().nullable(),
+  recipientPersonId:    z.string().uuid().optional().nullable(),
+  recipientCompanyId:   z.string().uuid().optional().nullable(),
+  outcome:              OutcomeEnum.default('winner'),
+  year:                 z.number().int().min(1800).max(2100).optional().nullable(),
+  sourceUrl:            z.string().url().max(2000),
+  notes:                z.string().max(2000).optional().nullable(),
+}).refine(d => {
+  const set = [d.recipientBuildingId, d.recipientPersonId, d.recipientCompanyId]
+    .filter(Boolean).length;
+  return set === 1;
+}, { message: 'Exactly one recipient FK must be set' });

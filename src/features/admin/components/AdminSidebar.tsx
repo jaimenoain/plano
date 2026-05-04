@@ -113,6 +113,11 @@ const managementItems = [
     url: "/admin/awards",
     icon: Trophy,
   },
+  {
+    title: "Award Suggestions",
+    url: "/admin/awards/suggestions",
+    icon: Trophy,
+  },
 ];
 
 const creditsItems = [
@@ -138,10 +143,14 @@ const creditsItems = [
   },
 ];
 
+import { useSuggestions } from "@/features/awards/hooks/useAwards";
+
 export function AdminSidebar() {
   const location = useLocation();
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const { data: suggestions = [] } = useSuggestions('pending');
+  const pendingCount = suggestions.length;
 
   const handleSignOut = async () => {
     await signOut();
@@ -198,9 +207,16 @@ export function AdminSidebar() {
                     }
                     tooltip={item.title}
                   >
-                    <Link to={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
+                    <Link to={item.url} className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-2">
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </div>
+                      {item.url === "/admin/awards/suggestions" && pendingCount > 0 && (
+                        <span className="bg-brand-primary text-text-inverse text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center shrink-0">
+                          {pendingCount}
+                        </span>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -27,6 +27,7 @@ export interface BuildingPoint {
   architect_names: string[] | null;
   popularity_score?: number | null;
   tier_rank?: TierRank | null;
+  winner_award_name?: string | null;
 }
 
 export type MapItem = ClusterPoint | BuildingPoint;
@@ -76,6 +77,12 @@ export interface MapFilters {
   creditCompany?: { id: string; name: string } | null;
   /** Map / list RPC: `building_credits.role` in this set, excluding hidden credits */
   creditRoles?: string[];
+
+  // Awards
+  awardId?: string;
+  awardOutcome?: string;
+  awardYearFrom?: number;
+  awardYearTo?: number;
 }
 
 export interface MapState {

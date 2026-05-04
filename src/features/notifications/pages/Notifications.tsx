@@ -67,7 +67,8 @@ interface Notification {
     | "ambassador_application_received"
     | "ambassador_application_approved"
     | "ambassador_application_rejected"
-    | "ambassador_membership_review";
+    | "ambassador_membership_review"
+    | "award_win";
   is_read: boolean;
   actor_id: string;
   recommendation_id?: string | null;
@@ -242,6 +243,10 @@ export default function Notifications() {
       notification.type === "ambassador_membership_review"
     ) {
       navigate("/embassy");
+    } else if (notification.type === "award_win") {
+      if (notification.resource?.building?.id) {
+        navigate(`/building/${notification.resource.id}`);
+      }
     } else if (notification.resource?.id) {
       navigate(`/review/${notification.resource.id}`);
     }
@@ -285,6 +290,8 @@ export default function Notifications() {
         return <ShieldCheck className="h-3.5 w-3.5 text-text-secondary" />;
       case "ambassador_membership_review":
         return <ShieldCheck className="h-3.5 w-3.5 text-text-primary" />;
+      case "award_win":
+        return <Trophy className="h-3.5 w-3.5 text-amber-500" />;
       default:
         return <Bell className="h-3.5 w-3.5 text-text-disabled" />;
     }
@@ -444,6 +451,12 @@ export default function Notifications() {
             <span className="font-medium">{actorName}</span> recommended{" "}
             <span className="italic">{buildingName || "a building"}</span> for
             you
+          </span>
+        );
+      case "award_win":
+        return (
+          <span>
+            Congratulations! Your building <span className="font-medium italic">{buildingName || "a building"}</span> won an award
           </span>
         );
       default:

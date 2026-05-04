@@ -2,8 +2,9 @@ import { forwardRef, useState, useRef, useEffect } from "react";
 import { CollectionItemWithBuilding } from "@/features/collections/types";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, MessageSquarePlus, Check, GripVertical } from "lucide-react";
+import { Save, MessageSquarePlus, Check, GripVertical, Medal } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -128,6 +129,12 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                                 <h3 className="font-semibold text-sm leading-tight line-clamp-2 text-text-primary">
                                     {item.building.name}
                                 </h3>
+                                {item.building.winner_award_name && (
+                                    <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-500/20 px-1.5 py-0 h-4 text-[9px] uppercase tracking-wider font-bold shrink-0">
+                                        <Medal className="h-2.5 w-2.5 mr-1" />
+                                        Winner
+                                    </Badge>
+                                )}
                              </div>
                         </div>
 

@@ -63,6 +63,14 @@ export function FilterDrawer() {
     setSelectedCreditCompany,
     selectedCreditRoles,
     setSelectedCreditRoles,
+    awardId,
+    setAwardId,
+    awardOutcome,
+    setAwardOutcome,
+    awardYearFrom,
+    setAwardYearFrom,
+    awardYearTo,
+    setAwardYearTo,
     mode,
     setMode,
   } = useBuildingSearch();
@@ -155,6 +163,10 @@ export function FilterDrawer() {
     setConstructionStatuses([]);
     setSelectedCreditCompany(null);
     setSelectedCreditRoles([]);
+    setAwardId(null);
+    setAwardOutcome(null);
+    setAwardYearFrom(null);
+    setAwardYearTo(null);
   };
 
   const handleClearAll = () => {
@@ -406,6 +418,14 @@ export function FilterDrawer() {
             onContactsChange={handleContactsChange}
             showContactPicker={mode !== 'library'}
             onResetGlobalFilters={handleResetGlobalFilters}
+            awardId={awardId}
+            onAwardChange={(award) => setAwardId(award?.id || null)}
+            awardOutcome={awardOutcome}
+            onAwardOutcomeChange={setAwardOutcome}
+            awardYearFrom={awardYearFrom}
+            onAwardYearFromChange={setAwardYearFrom}
+            awardYearTo={awardYearTo}
+            onAwardYearToChange={setAwardYearTo}
           />
         </div>
       </SheetContent>

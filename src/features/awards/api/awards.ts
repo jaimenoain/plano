@@ -198,6 +198,20 @@ export async function getEditionById(editionId: string): Promise<AwardEditionDTO
   return toEditionDTO(data);
 }
 
+export async function getEditionByAwardAndYear(awardId: string, year: number): Promise<AwardEditionDTO> {
+  const { data, error } = await db
+    .from("award_editions")
+    .select("*")
+    .eq("award_id", awardId)
+    .eq("year", year)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to load edition: ${error.message}`);
+  if (!data) throw new Error("Edition not found");
+
+  return toEditionDTO(data);
+}
+
 export async function getCategoriesByAward(awardId: string): Promise<AwardCategoryDTO[]> {
   const { data, error } = await db
     .from("award_categories")
@@ -476,4 +490,149 @@ export async function searchCompanies(query: string): Promise<{ id: string; name
 
   if (error) throw new Error(`Search failed: ${error.message}`);
   return data ?? [];
+}
+
+export async function searchAwards(query: string): Promise<{ id: string; name: string; slug: string }[]> {
+  const { data, error } = await db
+    .from("awards")
+    .select("id, name, slug")
+    .ilike("name", `%${query}%`)
+    .eq("is_active", true)
+    .limit(15);
+
+  if (error) throw new Error(`Search failed: ${error.message}`);
+  return data ?? [];
+}
+
+// ── Suggestions ──────────────────────────────────────────────
+
+import type { AwardSuggestionDTO } from "@/features/awards/types/awards";
+
+function toSuggestionDTO(row: any): AwardSuggestionDTO {
+  return {
+    id: row.id,
+    submittedBy: row.submitted_by,
+    awardId: row.award_id,
+    editionId: row.edition_id ?? null,
+    categoryId: row.category_id ?? null,
+    recipientType: row.recipient_type,
+    recipientBuildingId: row.recipient_building_id ?? null,
+    recipientPersonId: row.recipient_person_id ?? null,
+    recipientCompanyId: row.recipient_company_id ?? null,
+    outcome: row.outcome,
+    year: row.year ?? null,
+    sourceUrl: row.source_url ?? null,
+    notes: row.notes ?? null,
+    status: row.status,
+    reviewedBy: row.reviewed_by ?? null,
+    reviewerNote: row.reviewer_note ?? null,
+    reviewedAt: row.reviewed_at ?? null,
+    createdAt: row.created_at,
+    award: row.award ? { name: row.award.name, slug: row.award.slug } : undefined,
+    building: row.building ? { name: row.building.name, slug: row.building.slug } : undefined,
+    person: row.person ? { name: row.person.name, slug: row.person.slug } : undefined,
+    company: row.company ? { name: row.company.name, slug: row.company.slug } : undefined,
+    submittedByProfile: row.submitted_by_profile ? { name: row.submitted_by_profile.name, avatarUrl: row.submitted_by_profile.avatar_url ?? null } : undefined,
+  };
+}
+
+export async function createSuggestion(payload: any): Promise<AwardSuggestionDTO> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Authentication required");
+
+  const { data, error } = await db
+    .from("award_recipient_suggestions")
+    .insert({
+      ...payload,
+      submitted_by: user.id
+    })
+    .select("*")
+    .single();
+
+  if (error) throw new Error(`Failed to submit suggestion: ${error.message}`);
+  return toSuggestionDTO(data);
+}
+
+export async function getSuggestions(status?: string): Promise<AwardSuggestionDTO[]> {
+  let query = db
+    .from("award_recipient_suggestions")
+    .select(`
+      *,
+      award:awards(name, slug),
+      building:buildings(name, slug),
+      person:people(name, slug),
+      company:companies(name, slug),
+      submitted_by_profile:profiles!award_recipient_suggestions_submitted_by_fkey(name, avatar_url)
+    `);
+  
+  if (status) {
+    query = query.eq("status", status);
+  }
+
+  const { data, error } = await query.order("created_at", { ascending: false });
+
+  if (error) throw new Error(`Failed to load suggestions: ${error.message}`);
+  return (data ?? []).map(toSuggestionDTO);
+}
+
+export async function getSuggestionById(id: string): Promise<AwardSuggestionDTO> {
+  const { data, error } = await db
+    .from("award_recipient_suggestions")
+    .select(`
+      *,
+      award:awards(name, slug),
+      building:buildings(name, slug),
+      person:people(name, slug),
+      company:companies(name, slug),
+      submitted_by_profile:profiles!award_recipient_suggestions_submitted_by_fkey(name, avatar_url)
+    `)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to load suggestion: ${error.message}`);
+  if (!data) throw new Error("Suggestion not found");
+  return toSuggestionDTO(data);
+}
+
+export async function approveSuggestion(suggestionId: string): Promise<void> {
+  const { error } = await db.rpc("approve_award_suggestion", { p_suggestion_id: suggestionId });
+  if (error) throw new Error(`Failed to approve suggestion: ${error.message}`);
+}
+
+export async function rejectSuggestion(suggestionId: string, note?: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Authentication required");
+
+  const { error } = await db
+    .from("award_recipient_suggestions")
+    .update({
+      status: "rejected",
+      reviewer_note: note,
+      reviewed_by: user.id,
+      reviewed_at: new Date().toISOString()
+    })
+    .eq("id", suggestionId);
+
+  if (error) throw new Error(`Failed to reject suggestion: ${error.message}`);
+}
+
+export async function getAwardsByBody(companyId: string): Promise<AwardDTO[]> {
+  const { data, error } = await db
+    .from("awards")
+    .select(`
+      *,
+      award_editions(count)
+    `)
+    .eq("awarding_body_company_id", companyId)
+    .eq("is_active", true);
+
+  if (error) throw new Error(`Failed to load administered awards: ${error.message}`);
+
+  return (data ?? []).map((row: any) => {
+    const editionCount =
+      Array.isArray(row.award_editions) && row.award_editions.length > 0
+        ? (row.award_editions[0] as any).count ?? 0
+        : 0;
+    return toAwardDTO(row, editionCount);
+  });
 }

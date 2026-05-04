@@ -229,6 +229,49 @@ Deno.serve(async (req) => {
       }
     }
 
+    // /award/:slug/:year
+    const awardEditionMatch = path.match(/^\/award\/([^/]+)\/(\d+)$/);
+    if (awardEditionMatch) {
+      const awardSlug = awardEditionMatch[1];
+      const year = parseInt(awardEditionMatch[2], 10);
+      const { data: award } = await supabase
+        .from("awards")
+        .select("id, name, slug")
+        .eq("slug", awardSlug)
+        .maybeSingle();
+
+      if (award) {
+        const title = `${award.name} ${year} | Plano`;
+        const description = `Discover all winners and recipients of the ${award.name} ${year} on Plano.`;
+        const canonicalUrl = `${SITE_URL}/award/${award.slug}/${year}`;
+        return new Response(
+          renderOgHtml({ title, description, image: DEFAULT_IMAGE, url: canonicalUrl }),
+          { headers: corsHeaders },
+        );
+      }
+    }
+
+    // /award/:slug
+    const awardMatch = path.match(/^\/award\/([^/]+)$/);
+    if (awardMatch) {
+      const awardSlug = awardMatch[1];
+      const { data: award } = await supabase
+        .from("awards")
+        .select("name, slug, description")
+        .eq("slug", awardSlug)
+        .maybeSingle();
+
+      if (award) {
+        const title = `${award.name} | Plano`;
+        const description = award.description || `Explore the history of the ${award.name} on Plano.`;
+        const canonicalUrl = `${SITE_URL}/award/${award.slug}`;
+        return new Response(
+          renderOgHtml({ title, description, image: DEFAULT_IMAGE, url: canonicalUrl }),
+          { headers: corsHeaders },
+        );
+      }
+    }
+
     // Legacy: /building/:id/:slug
     const buildingMatch = path.match(/^\/building\/(\d+)(?:\/([^/]+))?/);
     if (buildingMatch) {

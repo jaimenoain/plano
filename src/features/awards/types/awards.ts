@@ -65,3 +65,30 @@ export interface AwardRecipientDTO {
   category?: { name: string };
   award?:    { name: string; slug: string };
 }
+
+export interface AwardSuggestionDTO {
+  id: string;
+  submittedBy: string;
+  awardId: string;
+  editionId: string | null;
+  categoryId: string | null;
+  recipientType: RecipientType;
+  recipientBuildingId: string | null;
+  recipientPersonId: string | null;
+  recipientCompanyId: string | null;
+  outcome: AwardOutcome;
+  year: number | null;
+  sourceUrl: string | null;
+  notes: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewedBy: string | null;
+  reviewerNote: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  // Joined:
+  award?: { name: string; slug: string };
+  building?: { name: string; slug: string };
+  person?: { name: string; slug: string };
+  company?: { name: string; slug: string };
+  submittedByProfile?: { name: string; avatarUrl: string | null };
+}

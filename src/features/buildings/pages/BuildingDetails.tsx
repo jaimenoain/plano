@@ -21,7 +21,7 @@ import {
   Loader2, MapPin,
   Check, Bookmark, Image as ImageIcon,
   Heart, ExternalLink, Circle, AlertTriangle,
-  EyeOff, Plus, X,
+  EyeOff, Plus, X, Medal,
   Pencil, BadgeCheck, ChevronDown, Share2, Navigation, Info,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -68,6 +68,7 @@ import { PrimaryCreditsLinks } from "../components/PrimaryCreditsLinks";
 import { ArchitectStatement } from "../components/ArchitectStatement";
 import { BuildingCredits, BuildingCreditsPreview } from "../components/BuildingCredits";
 import { BuildingContributorsInline } from "../components/BuildingContributorsInline";
+import { BuildingAwardsSection } from "@/features/awards/components/BuildingAwardsSection";
 import { buildingLoader } from "./BuildingDetails.loader";
 import {
   buildingCanonicalUrl,
@@ -1662,6 +1663,12 @@ export default function BuildingDetails() {
                         {building.status}
                       </span>
                     )}
+                    {buildingAny.winner_award_name && (
+                      <span className="inline-block px-2 py-0.5 bg-amber-500/10 text-amber-600 text-[10px] font-bold uppercase tracking-[0.2em] rounded-none border border-amber-500/20 flex items-center gap-1">
+                        <Medal className="h-3 w-3" />
+                        Winner: {buildingAny.winner_award_name}
+                      </span>
+                    )}
                   </div>
                 )}
 
@@ -1869,6 +1876,10 @@ export default function BuildingDetails() {
                     <RelatedByArchitectSection building={building} primaryCredit={primaryCredit} />
                     {building.city && (
                       <RelatedByCitySection building={building} locality={locality} />
+                      <BuildingAwardsSection 
+                        buildingId={building.id} 
+                        buildingName={building.name} 
+                      />
                     )}
                   </ClientOnly>
                 </div>

@@ -10,7 +10,7 @@ import {
   type MetaFunction,
 } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, ChevronDown, Pencil, BadgeCheck, UserPlus } from "lucide-react";
+import { ExternalLink, ChevronDown, Pencil, BadgeCheck, UserPlus, Trophy } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -55,6 +55,8 @@ import type {
 import { CompanyCreditCard } from "@/features/credits/components/CompanyCreditCard";
 import { EditCompanyForm } from "@/features/credits/components/EditCompanyForm";
 import { ClaimCompanyDialog } from "@/features/credits/components/ClaimCompanyDialog";
+import { CompanyAwardsSection } from "@/features/awards/components/CompanyAwardsSection";
+import { useAwardsByBody } from "@/features/awards/hooks/useAwards";
 import { RequestStewardAccessDialog } from "@/features/credits/components/RequestStewardAccessDialog";
 import {
   companyClaimDisputeOpenQueryKey,
@@ -182,6 +184,36 @@ export function ErrorBoundary() {
         </Button>
       </div>
     </AppLayout>
+  );
+}
+
+function AdministeredAwardsSection({ companyId }: { companyId: string }) {
+  const { data: awards = [], isLoading } = useAwardsByBody(companyId);
+
+  if (isLoading || awards.length === 0) return null;
+
+  return (
+    <section className="mt-12 border-t border-border-default pt-10">
+      <div className="mb-6 flex items-center gap-3">
+        <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">
+          Administered Awards
+        </h2>
+        <Trophy className="w-3.5 h-3.5 text-text-secondary" />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {awards.map((award) => (
+          <Link 
+            key={award.id}
+            to={`/award/${award.slug}`}
+            className="flex flex-col p-4 border border-border-default rounded-sm hover:bg-surface-muted transition-colors group"
+          >
+            <span className="text-sm font-bold group-hover:text-brand-primary">{award.name}</span>
+            <span className="text-xs text-secondary mt-1">{award.editionCount} editions documented</span>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -737,6 +769,10 @@ export default function CompanyDetails() {
             </ul>
           </section>
         ) : null}
+
+        <CompanyAwardsSection companyId={company.id} companyName={company.name} />
+
+        <AdministeredAwardsSection companyId={company.id} />
 
         <div className="mt-12">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

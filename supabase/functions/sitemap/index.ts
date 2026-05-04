@@ -48,6 +48,7 @@ function buildSitemapIndex(today: string): string {
     { loc: `${SITE_URL}/sitemap-events.xml`, lastmod: today },
     { loc: `${SITE_URL}/sitemap-people.xml`, lastmod: today },
     { loc: `${SITE_URL}/sitemap-companies.xml`, lastmod: today },
+    { loc: `${SITE_URL}/sitemap-awards.xml`, lastmod: today },
     { loc: `${SITE_URL}/sitemap-collections.xml`, lastmod: today },
   ];
 
@@ -357,6 +358,51 @@ async function buildCollectionsSitemap(supabase: ReturnType<typeof createClient>
   return xml;
 }
 
+async function buildAwardsSitemap(supabase: ReturnType<typeof createClient>): Promise<string> {
+  let awards: { slug: string; updated_at: string | null; created_at: string | null; id: string }[] = [];
+  let editions: { award_id: string; year: number | null; updated_at: string | null; awards: { slug: string } | null }[] = [];
+
+  try {
+    const { data: aData, error: aError } = await supabase
+      .from("awards")
+      .select("id, slug, updated_at, created_at")
+      .eq("is_active", true)
+      .not("slug", "is", null);
+    if (aError) console.error("sitemap/awards: awards error", aError.message);
+    else awards = aData ?? [];
+
+    const { data: eData, error: eError } = await supabase
+      .from("award_editions")
+      .select("award_id, year, updated_at, awards(slug)")
+      .not("year", "is", null);
+    if (eError) console.error("sitemap/awards: editions error", eError.message);
+    else editions = eData ?? [];
+  } catch (e) {
+    console.error("sitemap/awards: query exception", e);
+  }
+
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+  
+  // Award main pages
+  for (const a of awards) {
+    const lastmod = formatLastmod(a.updated_at ?? a.created_at);
+    const loc = `${SITE_URL}/award/${a.slug}`;
+    xml += `  <url>\n    <loc>${escapeXml(loc)}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ""}\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+  }
+
+  // Edition pages
+  for (const e of editions) {
+    if (!e.awards?.slug || !e.year) continue;
+    const lastmod = formatLastmod(e.updated_at);
+    const loc = `${SITE_URL}/award/${e.awards.slug}/${e.year}`;
+    xml += `  <url>\n    <loc>${escapeXml(loc)}</loc>${lastmod ? `\n    <lastmod>${lastmod}</lastmod>` : ""}\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
+  }
+
+  xml += `</urlset>`;
+  console.log(`sitemap/awards: url_count=${awards.length + editions.length}`);
+  return xml;
+}
+
 // ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
@@ -436,6 +482,9 @@ Deno.serve(async (req) => {
         break;
       case "companies":
         xml = await buildCompaniesSitemap(supabase);
+        break;
+      case "awards":
+        xml = await buildAwardsSitemap(supabase);
         break;
       case "collections":
         xml = await buildCollectionsSitemap(supabase);

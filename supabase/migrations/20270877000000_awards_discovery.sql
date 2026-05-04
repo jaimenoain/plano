@@ -1,0 +1,703 @@
+-- Phase 3 — Discovery
+-- Migration: 20270877000000_awards_discovery.sql
+
+-- 1. Helper RPC: get_buildings_with_awards
+CREATE OR REPLACE FUNCTION public.get_buildings_with_awards(
+  p_award_id    UUID DEFAULT NULL,
+  p_outcome     TEXT DEFAULT NULL,   -- e.g. 'winner'
+  p_year_from   INT  DEFAULT NULL,
+  p_year_to     INT  DEFAULT NULL
+)
+RETURNS TABLE(building_id UUID)
+LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT DISTINCT ar.recipient_building_id
+  FROM public.award_recipients ar
+  JOIN public.award_editions   ae ON ae.id = ar.edition_id
+  WHERE ar.recipient_type = 'building'
+    AND ar.recipient_building_id IS NOT NULL
+    AND (p_award_id   IS NULL OR ae.award_id = p_award_id)
+    AND (p_outcome    IS NULL OR ar.outcome  = p_outcome)
+    AND (p_year_from  IS NULL OR ae.year    >= p_year_from)
+    AND (p_year_to    IS NULL OR ae.year    <= p_year_to);
+$$;
+
+-- 2. Leaderboard RPC
+CREATE OR REPLACE FUNCTION public.get_award_leaderboard(
+  p_award_id UUID DEFAULT NULL,
+  p_limit    INT  DEFAULT 50
+)
+RETURNS TABLE(
+  building_id    UUID,
+  building_name  TEXT,
+  building_slug  TEXT,
+  hero_image_url TEXT,
+  city           TEXT,
+  country        TEXT,
+  award_score    INT,
+  win_count      INT,
+  finalist_count INT
+)
+LANGUAGE sql STABLE SECURITY DEFINER AS $$
+  SELECT
+    b.id, b.name, b.slug, b.hero_image_url, b.city, b.country,
+    SUM(CASE ar.outcome
+      WHEN 'winner'           THEN 10
+      WHEN 'highly_commended' THEN  6
+      WHEN 'commended'        THEN  5
+      WHEN 'special_mention'  THEN  4
+      WHEN 'finalist'         THEN  3
+      WHEN 'shortlisted'      THEN  2
+      WHEN 'longlisted'       THEN  1
+      ELSE 0 END
+    )::INT AS award_score,
+    COUNT(*) FILTER (WHERE ar.outcome = 'winner')::INT   AS win_count,
+    COUNT(*) FILTER (WHERE ar.outcome = 'finalist')::INT AS finalist_count
+  FROM public.award_recipients ar
+  JOIN public.award_editions   ae ON ae.id = ar.edition_id
+  JOIN public.buildings         b ON  b.id = ar.recipient_building_id
+  WHERE ar.recipient_type = 'building'
+    AND (p_award_id IS NULL OR ae.award_id = p_award_id)
+  GROUP BY b.id, b.name, b.slug, b.hero_image_url, b.city, b.country
+  ORDER BY award_score DESC
+  LIMIT p_limit;
+$$;
+
+-- 3. Update Notifications
+ALTER TABLE public.notifications
+  DROP CONSTRAINT IF EXISTS notifications_type_check;
+
+ALTER TABLE public.notifications
+  ADD CONSTRAINT notifications_type_check CHECK (type IN (
+    'follow', 'like', 'comment', 'recommendation',
+    'friend_joined', 'suggest_follow', 'visit_request',
+    'architect_verification',
+    'award_win'
+  ));
+
+-- 4. Notification Trigger
+CREATE OR REPLACE FUNCTION public.handle_award_win_notification()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_building_name TEXT;
+  v_building_slug TEXT;
+  v_award_name    TEXT;
+  v_edition_year  INT;
+BEGIN
+  IF NEW.recipient_type = 'building' AND NEW.recipient_building_id IS NOT NULL THEN
+    -- Get context data
+    SELECT name, slug INTO v_building_name, v_building_slug FROM public.buildings WHERE id = NEW.recipient_building_id;
+    SELECT a.name, ae.year INTO v_award_name, v_edition_year
+    FROM public.award_editions ae
+    JOIN public.awards a ON a.id = ae.award_id
+    WHERE ae.id = NEW.edition_id;
+
+    -- Insert notifications for credited users
+    INSERT INTO public.notifications (user_id, type, metadata)
+    SELECT
+      p.claimed_by_user_id,
+      'award_win',
+      jsonb_build_object(
+        'award_name', v_award_name,
+        'edition_year', v_edition_year,
+        'building_id', NEW.recipient_building_id,
+        'building_name', v_building_name,
+        'building_slug', v_building_slug,
+        'outcome', NEW.outcome
+      )
+    FROM public.building_credits bc
+    JOIN public.people p ON p.id = bc.person_id
+    WHERE bc.building_id = NEW.recipient_building_id
+      AND bc.status IN ('active', 'verified')
+      AND p.claimed_by_user_id IS NOT NULL;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger already exists? DROP first to be safe
+DROP TRIGGER IF EXISTS award_win_notification_trigger ON public.award_recipients;
+CREATE TRIGGER award_win_notification_trigger
+AFTER INSERT ON public.award_recipients
+FOR EACH ROW EXECUTE FUNCTION public.handle_award_win_notification();
+
+-- 5. Update Map/Search RPCs
+
+-- 5a. get_map_clusters
+DROP FUNCTION IF EXISTS get_map_clusters(double precision, double precision, double precision, double precision, int, jsonb, int);
+CREATE OR REPLACE FUNCTION get_map_clusters(
+  min_lat double precision,
+  max_lat double precision,
+  min_lng double precision,
+  max_lng double precision,
+  zoom int,
+  filters jsonb DEFAULT NULL,
+  row_limit int DEFAULT 150000
+)
+RETURNS TABLE (
+  id text,
+  lat double precision,
+  lng double precision,
+  count bigint,
+  is_cluster boolean,
+  name text,
+  slug text,
+  image_url text,
+  architect_names text[],
+  popularity_score int,
+  tier_rank text,
+  winner_award_name text
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
+DECLARE
+  v_grid_size double precision;
+  v_safe_min_lat double precision;
+  v_safe_max_lat double precision;
+  v_safe_min_lng double precision;
+  v_safe_max_lng double precision;
+  v_radius double precision;
+  v_lat double precision;
+  v_lng double precision;
+
+  -- Filter variables
+  v_query text;
+  v_cities_filter text[];
+  v_country_filter text;
+  v_architect_ids uuid[];
+  v_category_id uuid;
+  v_typology_ids uuid[];
+  v_attribute_ids uuid[];
+  v_year int;
+  v_access_levels text[];
+  v_access_logistics text[];
+  v_access_costs text[];
+  v_construction_statuses text[];
+  v_credit_company_id uuid;
+  v_credit_roles text[];
+  v_award_id uuid;
+  v_award_outcome text;
+  v_award_year_from int;
+  v_award_year_to int;
+BEGIN
+  v_grid_size := 85.0 / pow(2, zoom);
+
+  IF filters IS NOT NULL THEN
+    v_query := filters->>'query';
+    IF filters ? 'cities' AND jsonb_typeof(filters->'cities') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filters->'cities')) INTO v_cities_filter;
+    END IF;
+    v_country_filter := filters->>'country';
+    IF filters ? 'architect_ids' AND jsonb_typeof(filters->'architect_ids') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filters->'architect_ids')::uuid) INTO v_architect_ids;
+    END IF;
+    IF filters ? 'category_id' AND filters->>'category_id' IS NOT NULL THEN
+        v_category_id := (filters->>'category_id')::uuid;
+    END IF;
+    IF filters ? 'typology_ids' AND jsonb_typeof(filters->'typology_ids') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filters->'typology_ids')::uuid) INTO v_typology_ids;
+    END IF;
+    IF filters ? 'access_levels' AND jsonb_typeof(filters->'access_levels') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filters->'access_levels')) INTO v_access_levels;
+    END IF;
+    IF filters ? 'access_logistics' AND jsonb_typeof(filters->'access_logistics') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filters->'access_logistics')) INTO v_access_logistics;
+    END IF;
+    IF filters ? 'access_costs' AND jsonb_typeof(filters->'access_costs') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filters->'access_costs')) INTO v_access_costs;
+    END IF;
+    IF filters ? 'construction_statuses' AND jsonb_typeof(filters->'construction_statuses') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filters->'construction_statuses')) INTO v_construction_statuses;
+    END IF;
+    IF filters ? 'attribute_ids' AND jsonb_typeof(filters->'attribute_ids') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filters->'attribute_ids')::uuid) INTO v_attribute_ids;
+    END IF;
+    IF filters ? 'year' AND filters->>'year' IS NOT NULL THEN
+        v_year := (filters->>'year')::int;
+    END IF;
+    IF filters ? 'lat' THEN v_lat := (filters->>'lat')::double precision; END IF;
+    IF filters ? 'lng' THEN v_lng := (filters->>'lng')::double precision; END IF;
+    IF filters ? 'radius' THEN v_radius := (filters->>'radius')::double precision; END IF;
+    IF filters ? 'credit_company_id' THEN v_credit_company_id := (filters->>'credit_company_id')::uuid; END IF;
+    IF filters ? 'credit_roles' AND jsonb_typeof(filters->'credit_roles') = 'array' THEN
+      SELECT ARRAY(SELECT jsonb_array_elements_text(filters->'credit_roles')) INTO v_credit_roles;
+    END IF;
+
+    -- New Award Filters
+    IF filters ? 'award_id' THEN v_award_id := (filters->>'award_id')::uuid; END IF;
+    IF filters ? 'award_outcome' THEN v_award_outcome := filters->>'award_outcome'; END IF;
+    IF filters ? 'award_year_from' THEN v_award_year_from := (filters->>'award_year_from')::int; END IF;
+    IF filters ? 'award_year_to' THEN v_award_year_to := (filters->>'award_year_to')::int; END IF;
+  END IF;
+
+  v_safe_min_lat := LEAST(min_lat, max_lat);
+  v_safe_max_lat := GREATEST(min_lat, max_lat);
+  v_safe_min_lng := min_lng;
+  v_safe_max_lng := max_lng;
+
+  RETURN QUERY
+  WITH building_credit_names_agg AS (
+      SELECT
+          bc.building_id,
+          array_agg(DISTINCT COALESCE(p.name, c.name)) FILTER (WHERE COALESCE(p.name, c.name) IS NOT NULL) AS credit_names
+      FROM building_credits bc
+      LEFT JOIN people p ON bc.person_id = p.id
+      LEFT JOIN companies c ON bc.company_id = c.id
+      WHERE bc.status IS DISTINCT FROM 'hidden'::public.credit_status_enum
+      GROUP BY bc.building_id
+  ),
+  filtered_buildings AS (
+    SELECT
+      b.id,
+      b.location,
+      b.name,
+      b.slug,
+      b.popularity_score,
+      b.tier_rank::text as tier_rank,
+      main_image_url(b) as image_url,
+      ba_agg.credit_names as architect_names,
+      w.award_name as winner_award_name
+    FROM buildings b
+    LEFT JOIN building_credit_names_agg ba_agg ON b.id = ba_agg.building_id
+    LEFT JOIN LATERAL (
+      SELECT a.name as award_name
+      FROM public.award_recipients ar
+      JOIN public.award_editions ae ON ae.id = ar.edition_id
+      JOIN public.awards a ON a.id = ae.award_id
+      WHERE ar.recipient_building_id = b.id
+        AND ar.outcome = 'winner'
+      ORDER BY ae.year DESC, ae.edition_date DESC
+      LIMIT 1
+    ) w ON true
+    WHERE
+    (
+      (v_lat IS NULL AND v_lng IS NULL AND v_radius IS NULL) AND
+      (
+        ( (max_lng - min_lng) > 179 AND b.location::geometry && st_makeenvelope(v_safe_min_lng, v_safe_min_lat, v_safe_max_lng, v_safe_max_lat, 4326) )
+        OR
+        ( (max_lng - min_lng) <= 179 AND b.location && st_makeenvelope(v_safe_min_lng, v_safe_min_lat, v_safe_max_lng, v_safe_max_lat, 4326)::geography )
+      )
+    )
+    OR
+    ( v_lat IS NOT NULL AND v_lng IS NOT NULL AND st_dwithin(b.location, st_point(v_lng, v_lat)::geography, v_radius) )
+    AND (b.is_deleted IS FALSE OR b.is_deleted IS NULL)
+    AND (b.status::text NOT IN ('Demolished', 'Lost', 'Unbuilt'))
+    AND (v_access_levels IS NULL OR cardinality(v_access_levels) = 0 OR b.access_level::text = ANY(v_access_levels))
+    AND (v_access_logistics IS NULL OR cardinality(v_access_logistics) = 0 OR b.access_logistics::text = ANY(v_access_logistics))
+    AND (v_access_costs IS NULL OR cardinality(v_access_costs) = 0 OR b.access_cost::text = ANY(v_access_costs))
+    AND (
+      ( (v_construction_statuses IS NULL OR cardinality(v_construction_statuses) = 0) AND (b.status::text NOT IN ('Demolished', 'Lost', 'Under Construction', 'Unbuilt')) )
+      OR b.status::text = ANY(v_construction_statuses)
+    )
+    AND (
+      v_query IS NULL OR v_query = '' OR
+      b.name ILIKE '%' || v_query || '%' OR
+      b.alt_name ILIKE '%' || v_query || '%' OR
+      b.address ILIKE '%' || v_query || '%' OR
+      array_to_string(ba_agg.credit_names, ' ') ILIKE '%' || v_query || '%' OR
+      EXISTS ( SELECT 1 FROM unnest(b.aliases) AS a(alias) WHERE alias ILIKE '%' || v_query || '%' )
+    )
+    AND (v_cities_filter IS NULL OR cardinality(v_cities_filter) = 0 OR b.city = ANY(v_cities_filter))
+    AND (v_country_filter IS NULL OR b.country = v_country_filter)
+    AND ( v_architect_ids IS NULL OR cardinality(v_architect_ids) = 0 OR EXISTS ( SELECT 1 FROM building_credits bc WHERE bc.building_id = b.id AND bc.status NOT IN ('hidden') AND (bc.person_id = ANY(v_architect_ids) OR bc.company_id = ANY(v_architect_ids)) ) )
+    AND (v_category_id IS NULL OR b.functional_category_id = v_category_id)
+    AND ( v_typology_ids IS NULL OR cardinality(v_typology_ids) = 0 OR EXISTS ( SELECT 1 FROM building_functional_typologies bft WHERE bft.building_id = b.id AND bft.typology_id = ANY(v_typology_ids) ) )
+    AND ( v_attribute_ids IS NULL OR cardinality(v_attribute_ids) = 0 OR EXISTS ( SELECT 1 FROM building_attributes batt WHERE batt.building_id = b.id AND batt.attribute_id = ANY(v_attribute_ids) ) )
+    AND (v_year IS NULL OR b.year_completed = v_year)
+    AND public.building_matches_credit_filters(b.id, v_credit_company_id, v_credit_roles)
+    -- Award Filtering
+    AND (v_award_id IS NULL OR b.id IN (SELECT building_id FROM public.get_buildings_with_awards(v_award_id, v_award_outcome, v_award_year_from, v_award_year_to)))
+    LIMIT row_limit
+  )
+  SELECT
+    CASE WHEN count(*) > 1 THEN md5(format('%s-%s', st_x(st_snaptogrid(fb.location::geometry, v_grid_size)), st_y(st_snaptogrid(fb.location::geometry, v_grid_size))))::text ELSE max(fb.id::text) END as id,
+    st_y(st_centroid(st_collect(fb.location::geometry))) as lat,
+    st_x(st_centroid(st_collect(fb.location::geometry))) as lng,
+    count(*) as count,
+    count(*) > 1 as is_cluster,
+    CASE WHEN count(*) = 1 THEN max(fb.name) ELSE NULL END as name,
+    CASE WHEN count(*) = 1 THEN max(fb.slug) ELSE NULL END as slug,
+    CASE WHEN count(*) = 1 THEN max(fb.image_url) ELSE NULL END as image_url,
+    CASE WHEN count(*) = 1 THEN max(fb.architect_names) ELSE NULL END as architect_names,
+    CASE WHEN count(*) = 1 THEN max(fb.popularity_score) ELSE NULL END as popularity_score,
+    CASE WHEN count(*) = 1 THEN max(fb.tier_rank) ELSE NULL END as tier_rank,
+    CASE WHEN count(*) = 1 THEN max(fb.winner_award_name) ELSE NULL END as winner_award_name
+  FROM filtered_buildings fb
+  GROUP BY st_snaptogrid(fb.location::geometry, v_grid_size);
+END;
+$$;
+
+-- 5b. get_map_clusters_v2
+DROP FUNCTION IF EXISTS get_map_clusters_v2(double precision, double precision, double precision, double precision, double precision, jsonb);
+CREATE OR REPLACE FUNCTION get_map_clusters_v2(
+  min_lat double precision,
+  max_lat double precision,
+  min_lng double precision,
+  max_lng double precision,
+  zoom_level double precision,
+  filter_criteria jsonb DEFAULT NULL
+)
+RETURNS TABLE (
+  id text,
+  lat double precision,
+  lng double precision,
+  count bigint,
+  is_cluster boolean,
+  status text,
+  name text,
+  slug text,
+  image_url text,
+  popularity_score int,
+  tier_rank text,
+  max_tier int,
+  winner_award_name text
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
+DECLARE
+  v_grid_size double precision;
+  v_safe_min_lat double precision;
+  v_safe_max_lat double precision;
+  v_safe_min_lng double precision;
+  v_safe_max_lng double precision;
+  v_lat_span double precision;
+  v_lng_span double precision;
+
+  -- Filter variables
+  v_query text;
+  v_cities_filter text[];
+  v_country_filter text;
+  v_architect_ids uuid[];
+  v_category_id uuid;
+  v_typology_ids uuid[];
+  v_attribute_ids uuid[];
+  v_year int;
+  v_access_levels text[];
+  v_access_logistics text[];
+  v_access_costs text[];
+  v_construction_statuses text[];
+  v_status_filter text[];
+  v_min_rating int;
+  v_personal_min_rating int;
+  v_hide_saved boolean;
+  v_hide_visited boolean;
+  v_ranking_preference text;
+  v_credit_company_id uuid;
+  v_credit_roles text[];
+  v_award_id uuid;
+  v_award_outcome text;
+  v_award_year_from int;
+  v_award_year_to int;
+BEGIN
+  v_grid_size := 85.0 / pow(2, zoom_level);
+  IF zoom_level >= 13 THEN v_grid_size := v_grid_size / 6.0;
+  ELSIF zoom_level >= 11 THEN v_grid_size := v_grid_size / 3.0;
+  END IF;
+
+  v_lat_span := max_lat - min_lat;
+  v_lng_span := max_lng - min_lng;
+  v_safe_min_lat := GREATEST(-90.0, min_lat - (v_lat_span * 0.1));
+  v_safe_max_lat := LEAST(90.0, max_lat + (v_lat_span * 0.1));
+  v_safe_min_lng := GREATEST(-180.0, min_lng - (v_lng_span * 0.1));
+  v_safe_max_lng := LEAST(180.0, max_lng + (v_lng_span * 0.1));
+
+  IF filter_criteria IS NOT NULL THEN
+    v_query := filter_criteria->>'query';
+    IF filter_criteria ? 'cities' AND jsonb_typeof(filter_criteria->'cities') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'cities')) INTO v_cities_filter;
+    END IF;
+    v_country_filter := filter_criteria->>'country';
+    IF filter_criteria ? 'architect_ids' AND jsonb_typeof(filter_criteria->'architect_ids') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'architect_ids')::uuid) INTO v_architect_ids;
+    END IF;
+    IF filter_criteria ? 'category_id' THEN v_category_id := (filter_criteria->>'category_id')::uuid; END IF;
+    IF filter_criteria ? 'typology_ids' AND jsonb_typeof(filter_criteria->'typology_ids') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'typology_ids')::uuid) INTO v_typology_ids;
+    END IF;
+    IF filter_criteria ? 'attribute_ids' AND jsonb_typeof(filter_criteria->'attribute_ids') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'attribute_ids')::uuid) INTO v_attribute_ids;
+    END IF;
+    IF filter_criteria ? 'access_levels' AND jsonb_typeof(filter_criteria->'access_levels') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'access_levels')) INTO v_access_levels;
+    END IF;
+    IF filter_criteria ? 'access_logistics' AND jsonb_typeof(filter_criteria->'access_logistics') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'access_logistics')) INTO v_access_logistics;
+    END IF;
+    IF filter_criteria ? 'access_costs' AND jsonb_typeof(filter_criteria->'access_costs') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'access_costs')) INTO v_access_costs;
+    END IF;
+    IF filter_criteria ? 'construction_statuses' AND jsonb_typeof(filter_criteria->'construction_statuses') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'construction_statuses')) INTO v_construction_statuses;
+    END IF;
+    IF filter_criteria ? 'year' THEN v_year := (filter_criteria->>'year')::int; END IF;
+    IF filter_criteria ? 'status' AND jsonb_typeof(filter_criteria->'status') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'status')) INTO v_status_filter;
+    END IF;
+    v_min_rating := COALESCE((filter_criteria->>'min_rating')::int, 0);
+    v_personal_min_rating := COALESCE((filter_criteria->>'personal_min_rating')::int, 0);
+    v_hide_saved := COALESCE((filter_criteria->>'hide_saved')::boolean, false);
+    v_hide_visited := COALESCE((filter_criteria->>'hide_visited')::boolean, false);
+    v_ranking_preference := COALESCE(filter_criteria->>'ranking_preference', 'global');
+    IF filter_criteria ? 'credit_company_id' THEN v_credit_company_id := (filter_criteria->>'credit_company_id')::uuid; END IF;
+    IF filter_criteria ? 'credit_roles' AND jsonb_typeof(filter_criteria->'credit_roles') = 'array' THEN
+      SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'credit_roles')) INTO v_credit_roles;
+    END IF;
+
+    -- Award Filters
+    IF filter_criteria ? 'award_id' THEN v_award_id := (filter_criteria->>'award_id')::uuid; END IF;
+    IF filter_criteria ? 'award_outcome' THEN v_award_outcome := filter_criteria->>'award_outcome'; END IF;
+    IF filter_criteria ? 'award_year_from' THEN v_award_year_from := (filter_criteria->>'award_year_from')::int; END IF;
+    IF filter_criteria ? 'award_year_to' THEN v_award_year_to := (filter_criteria->>'award_year_to')::int; END IF;
+  ELSE
+    v_min_rating := 0; v_personal_min_rating := 0; v_hide_saved := false; v_hide_visited := false; v_ranking_preference := 'global';
+  END IF;
+
+  RETURN QUERY
+  WITH filtered_buildings AS (
+    SELECT
+      b.id,
+      b.location,
+      b.name,
+      b.slug,
+      main_image_url(b) as image_url,
+      b.popularity_score,
+      b.tier_rank,
+      CASE WHEN ub.status::text = 'visited' THEN 'visited' WHEN ub.status::text = 'pending' THEN 'saved' ELSE 'none' END as mapped_status,
+      COALESCE(ub.rating, 0) as mapped_rating,
+      w.award_name as winner_award_name
+    FROM buildings b
+    LEFT JOIN user_buildings ub ON b.id = ub.building_id AND ub.user_id = auth.uid()
+    LEFT JOIN LATERAL (
+      SELECT a.name as award_name
+      FROM public.award_recipients ar
+      JOIN public.award_editions ae ON ae.id = ar.edition_id
+      JOIN public.awards a ON a.id = ae.award_id
+      WHERE ar.recipient_building_id = b.id
+        AND ar.outcome = 'winner'
+      ORDER BY ae.year DESC, ae.edition_date DESC
+      LIMIT 1
+    ) w ON true
+    WHERE (b.is_deleted IS FALSE OR b.is_deleted IS NULL)
+      AND b.location IS NOT NULL
+      AND ( (v_construction_statuses IS NULL OR cardinality(v_construction_statuses) = 0) AND (b.status::text NOT IN ('Demolished', 'Lost', 'Under Construction', 'Unbuilt')) OR b.status::text = ANY(v_construction_statuses) )
+      AND (COALESCE(b.popularity_score, 0) >= -50)
+      AND (ub.status::text IS DISTINCT FROM 'ignored')
+      AND ( ( (v_safe_max_lng - v_safe_min_lng) > 179 AND b.location::geometry && st_makeenvelope(v_safe_min_lng, v_safe_min_lat, v_safe_max_lng, v_safe_max_lat, 4326) ) OR ( (v_safe_max_lng - v_safe_min_lng) <= 179 AND b.location && st_makeenvelope(v_safe_min_lng, v_safe_min_lat, v_safe_max_lng, v_safe_max_lat, 4326)::geography ) )
+      AND (v_cities_filter IS NULL OR cardinality(v_cities_filter) = 0 OR b.city = ANY(v_cities_filter))
+      AND (v_country_filter IS NULL OR b.country = v_country_filter)
+      AND ( v_architect_ids IS NULL OR cardinality(v_architect_ids) = 0 OR EXISTS ( SELECT 1 FROM building_credits bc WHERE bc.building_id = b.id AND bc.status NOT IN ('hidden') AND (bc.person_id = ANY(v_architect_ids) OR bc.company_id = ANY(v_architect_ids)) ) )
+      AND (v_category_id IS NULL OR b.functional_category_id = v_category_id)
+      AND ( v_typology_ids IS NULL OR cardinality(v_typology_ids) = 0 OR EXISTS ( SELECT 1 FROM building_functional_typologies bft WHERE bft.building_id = b.id AND bft.typology_id = ANY(v_typology_ids) ) )
+      AND ( v_attribute_ids IS NULL OR cardinality(v_attribute_ids) = 0 OR EXISTS ( SELECT 1 FROM building_attributes batt WHERE batt.building_id = b.id AND batt.attribute_id = ANY(v_attribute_ids) ) )
+      AND (v_year IS NULL OR b.year_completed = v_year)
+      AND (v_access_levels IS NULL OR cardinality(v_access_levels) = 0 OR b.access_level::text = ANY(v_access_levels))
+      AND (v_access_logistics IS NULL OR cardinality(v_access_logistics) = 0 OR b.access_logistics::text = ANY(v_access_logistics))
+      AND (v_access_costs IS NULL OR cardinality(v_access_costs) = 0 OR b.access_cost::text = ANY(v_access_costs))
+      AND ( v_query IS NULL OR v_query = '' OR b.name ILIKE '%' || v_query || '%' OR b.alt_name ILIKE '%' || v_query || '%' OR b.address ILIKE '%' || v_query || '%' OR EXISTS ( SELECT 1 FROM building_credits bc LEFT JOIN people p ON bc.person_id = p.id LEFT JOIN companies c ON bc.company_id = c.id WHERE bc.building_id = b.id AND bc.status NOT IN ('hidden') AND COALESCE(p.name, c.name) ILIKE '%' || v_query || '%' ) OR EXISTS ( SELECT 1 FROM unnest(b.aliases) AS a(alias) WHERE alias ILIKE '%' || v_query || '%' ) OR (LENGTH(v_query) > 2 AND similarity(b.name, v_query) > 0.3) )
+      AND ( v_status_filter IS NULL OR cardinality(v_status_filter) = 0 OR ( ('visited' = ANY(v_status_filter) AND ub.status::text = 'visited') OR ('saved' = ANY(v_status_filter) AND ub.status::text = 'pending') OR ('none' = ANY(v_status_filter) AND (ub.status IS NULL OR ub.status::text = 'ignored')) ) )
+      AND (v_hide_saved IS FALSE OR ub.status::text IS DISTINCT FROM 'pending')
+      AND (v_hide_visited IS FALSE OR ub.status::text IS DISTINCT FROM 'visited')
+      AND (v_personal_min_rating = 0 OR COALESCE(ub.rating, 0) >= v_personal_min_rating)
+      AND ( v_min_rating = 0 OR (v_min_rating = 1 AND b.tier_rank::text IN ('Top 20%', 'Top 10%', 'Top 5%', 'Top 1%')) OR (v_min_rating = 2 AND b.tier_rank::text IN ('Top 5%', 'Top 1%')) OR (v_min_rating = 3 AND b.tier_rank::text = 'Top 1%') )
+      AND public.building_matches_credit_filters(b.id, v_credit_company_id, v_credit_roles)
+      -- Award Filtering
+      AND (v_award_id IS NULL OR b.id IN (SELECT building_id FROM public.get_buildings_with_awards(v_award_id, v_award_outcome, v_award_year_from, v_award_year_to)))
+  )
+  SELECT
+    CASE WHEN count(*) > 1 THEN md5(format('%s-%s', st_x(st_snaptogrid(fb.location::geometry, v_grid_size)), st_y(st_snaptogrid(fb.location::geometry, v_grid_size))))::text ELSE max(fb.id::text) END as id,
+    st_y(st_centroid(st_collect(fb.location::geometry))) as lat,
+    st_x(st_centroid(st_collect(fb.location::geometry))) as lng,
+    count(*) as count,
+    count(*) > 1 as is_cluster,
+    CASE WHEN count(*) = 1 THEN max(fb.mapped_status) ELSE NULL END as status,
+    CASE WHEN count(*) = 1 THEN max(fb.name) ELSE NULL END as name,
+    CASE WHEN count(*) = 1 THEN max(fb.slug) ELSE NULL END as slug,
+    CASE WHEN count(*) = 1 THEN max(fb.image_url) ELSE NULL END as image_url,
+    CASE WHEN count(*) = 1 THEN max(fb.popularity_score) ELSE NULL END as popularity_score,
+    CASE WHEN count(*) = 1 THEN max(fb.tier_rank)::text ELSE NULL END as tier_rank,
+    CASE WHEN count(*) > 1 THEN MAX(CASE WHEN v_ranking_preference = 'personal' THEN CASE WHEN fb.mapped_rating >= 3 THEN 3 WHEN fb.mapped_rating = 2 THEN 2 ELSE 1 END ELSE GREATEST(CASE WHEN fb.mapped_rating >= 3 THEN 3 WHEN fb.mapped_rating = 2 THEN 2 ELSE 1 END, CASE WHEN fb.tier_rank::text = 'Top 1%' THEN 4 WHEN fb.tier_rank::text IN ('Top 5%', 'Top 10%') THEN 3 WHEN fb.tier_rank::text = 'Top 20%' THEN 2 ELSE 1 END) END)::int ELSE NULL END as max_tier,
+    CASE WHEN count(*) = 1 THEN max(fb.winner_award_name) ELSE NULL END as winner_award_name
+  FROM filtered_buildings fb
+  GROUP BY st_snaptogrid(fb.location::geometry, v_grid_size);
+END;
+$$;
+
+-- 5c. get_buildings_list
+DROP FUNCTION IF EXISTS get_buildings_list(double precision, double precision, double precision, double precision, jsonb, integer, integer);
+CREATE OR REPLACE FUNCTION get_buildings_list(
+  min_lat double precision,
+  min_lng double precision,
+  max_lat double precision,
+  max_lng double precision,
+  filter_criteria jsonb DEFAULT '{}'::jsonb,
+  page int DEFAULT 1,
+  page_size int DEFAULT 20
+)
+RETURNS TABLE (
+  id uuid,
+  name text,
+  slug text,
+  image_url text,
+  lat double precision,
+  lng double precision,
+  rating int,
+  status text,
+  credit_names text[],
+  year_completed int,
+  city text,
+  country text,
+  popularity_score int,
+  tier_rank text,
+  alt_name text,
+  winner_award_name text
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
+DECLARE
+  v_safe_min_lat double precision;
+  v_safe_max_lat double precision;
+  v_safe_min_lng double precision;
+  v_safe_max_lng double precision;
+  v_center_point geography;
+
+  -- Filter variables
+  v_query text;
+  v_cities_filter text[];
+  v_country_filter text;
+  v_architect_ids uuid[];
+  v_category_id uuid;
+  v_typology_ids uuid[];
+  v_attribute_ids uuid[];
+  v_year int;
+  v_access_levels text[];
+  v_access_logistics text[];
+  v_access_costs text[];
+  v_status_filter text[];
+  v_min_rating int;
+  v_personal_min_rating int;
+  v_sort_by text;
+  v_credit_company_id uuid;
+  v_credit_roles text[];
+  v_award_id uuid;
+  v_award_outcome text;
+  v_award_year_from int;
+  v_award_year_to int;
+
+BEGIN
+  v_safe_min_lat := GREATEST(-90.0, min_lat);
+  v_safe_max_lat := LEAST(90.0, max_lat);
+  v_safe_min_lng := GREATEST(-180.0, min_lng);
+  v_safe_max_lng := LEAST(180.0, max_lng);
+  v_center_point := st_setsrid(st_point((v_safe_min_lng + v_safe_max_lng) / 2.0, (v_safe_min_lat + v_safe_max_lat) / 2.0), 4326)::geography;
+
+  IF filter_criteria IS NOT NULL THEN
+    v_query := filter_criteria->>'query';
+    v_sort_by := filter_criteria->>'sort_by';
+    IF filter_criteria ? 'cities' AND jsonb_typeof(filter_criteria->'cities') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'cities')) INTO v_cities_filter;
+    END IF;
+    v_country_filter := filter_criteria->>'country';
+    IF filter_criteria ? 'architect_ids' AND jsonb_typeof(filter_criteria->'architect_ids') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'architect_ids')::uuid) INTO v_architect_ids;
+    ELSIF filter_criteria ? 'architects' AND jsonb_typeof(filter_criteria->'architects') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'architects')::uuid) INTO v_architect_ids;
+    END IF;
+    IF filter_criteria ? 'category_id' THEN v_category_id := (filter_criteria->>'category_id')::uuid; END IF;
+    IF filter_criteria ? 'typology_ids' AND jsonb_typeof(filter_criteria->'typology_ids') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'typology_ids')::uuid) INTO v_typology_ids;
+    END IF;
+    IF filter_criteria ? 'access_levels' AND jsonb_typeof(filter_criteria->'access_levels') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'access_levels')) INTO v_access_levels;
+    END IF;
+    IF filter_criteria ? 'access_logistics' AND jsonb_typeof(filter_criteria->'access_logistics') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'access_logistics')) INTO v_access_logistics;
+    END IF;
+    IF filter_criteria ? 'access_costs' AND jsonb_typeof(filter_criteria->'access_costs') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'access_costs')) INTO v_access_costs;
+    END IF;
+    IF filter_criteria ? 'attribute_ids' AND jsonb_typeof(filter_criteria->'attribute_ids') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'attribute_ids')::uuid) INTO v_attribute_ids;
+    END IF;
+    IF filter_criteria ? 'year' THEN v_year := (filter_criteria->>'year')::int; END IF;
+    IF filter_criteria ? 'status' AND jsonb_typeof(filter_criteria->'status') = 'array' THEN
+        SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'status')) INTO v_status_filter;
+    END IF;
+    v_min_rating := COALESCE((filter_criteria->>'min_rating')::int, 0);
+    v_personal_min_rating := COALESCE((filter_criteria->>'personal_min_rating')::int, 0);
+    IF filter_criteria ? 'credit_company_id' THEN v_credit_company_id := (filter_criteria->>'credit_company_id')::uuid; END IF;
+    IF filter_criteria ? 'credit_roles' AND jsonb_typeof(filter_criteria->'credit_roles') = 'array' THEN
+      SELECT ARRAY(SELECT jsonb_array_elements_text(filter_criteria->'credit_roles')) INTO v_credit_roles;
+    END IF;
+
+    -- Award Filters
+    IF filter_criteria ? 'award_id' THEN v_award_id := (filter_criteria->>'award_id')::uuid; END IF;
+    IF filter_criteria ? 'award_outcome' THEN v_award_outcome := filter_criteria->>'award_outcome'; END IF;
+    IF filter_criteria ? 'award_year_from' THEN v_award_year_from := (filter_criteria->>'award_year_from')::int; END IF;
+    IF filter_criteria ? 'award_year_to' THEN v_award_year_to := (filter_criteria->>'award_year_to')::int; END IF;
+  END IF;
+
+  RETURN QUERY
+  SELECT
+    b.id, b.name, b.slug, main_image_url(b) as image_url, st_y(b.location::geometry) as lat, st_x(b.location::geometry) as lng,
+    COALESCE(ub.rating, 0) as rating, ub.status::text as status, ba_agg.credit_names, b.year_completed, b.city, b.country, b.popularity_score, b.tier_rank::text, b.alt_name,
+    w.award_name as winner_award_name
+  FROM buildings b
+  LEFT JOIN user_buildings ub ON b.id = ub.building_id AND ub.user_id = auth.uid()
+  LEFT JOIN (
+      SELECT bc.building_id, array_agg(DISTINCT COALESCE(p.name, c.name)) FILTER (WHERE COALESCE(p.name, c.name) IS NOT NULL) AS credit_names
+      FROM building_credits bc
+      LEFT JOIN people p ON bc.person_id = p.id
+      LEFT JOIN companies c ON bc.company_id = c.id
+      WHERE bc.status NOT IN ('hidden')
+      GROUP BY bc.building_id
+  ) ba_agg ON b.id = ba_agg.building_id
+  LEFT JOIN LATERAL (
+      SELECT a.name as award_name
+      FROM public.award_recipients ar
+      JOIN public.award_editions ae ON ae.id = ar.edition_id
+      JOIN public.awards a ON a.id = ae.award_id
+      WHERE ar.recipient_building_id = b.id
+        AND ar.outcome = 'winner'
+      ORDER BY ae.year DESC, ae.edition_date DESC
+      LIMIT 1
+  ) w ON true
+  WHERE (b.is_deleted IS FALSE OR b.is_deleted IS NULL)
+    AND b.location && st_makeenvelope(v_safe_min_lng, v_safe_min_lat, v_safe_max_lng, v_safe_max_lat, 4326)::geography
+    AND (v_cities_filter IS NULL OR cardinality(v_cities_filter) = 0 OR b.city = ANY(v_cities_filter))
+    AND (v_country_filter IS NULL OR b.country = v_country_filter)
+    AND ( v_architect_ids IS NULL OR cardinality(v_architect_ids) = 0 OR EXISTS ( SELECT 1 FROM building_credits bc WHERE bc.building_id = b.id AND bc.status NOT IN ('hidden') AND (bc.person_id = ANY(v_architect_ids) OR bc.company_id = ANY(v_architect_ids)) ) )
+    AND (v_category_id IS NULL OR b.functional_category_id = v_category_id)
+    AND ( v_typology_ids IS NULL OR cardinality(v_typology_ids) = 0 OR EXISTS ( SELECT 1 FROM building_functional_typologies bft WHERE bft.building_id = b.id AND bft.typology_id = ANY(v_typology_ids) ) )
+    AND ( v_attribute_ids IS NULL OR cardinality(v_attribute_ids) = 0 OR EXISTS ( SELECT 1 FROM building_attributes batt WHERE batt.building_id = b.id AND batt.attribute_id = ANY(v_attribute_ids) ) )
+    AND (v_year IS NULL OR b.year_completed = v_year)
+    AND (v_access_levels IS NULL OR cardinality(v_access_levels) = 0 OR b.access_level::text = ANY(v_access_levels))
+    AND (v_access_logistics IS NULL OR cardinality(v_access_logistics) = 0 OR b.access_logistics::text = ANY(v_access_logistics))
+    AND (v_access_costs IS NULL OR cardinality(v_access_costs) = 0 OR b.access_cost::text = ANY(v_access_costs))
+    AND ( v_query IS NULL OR v_query = '' OR b.name ILIKE '%' || v_query || '%' OR b.alt_name ILIKE '%' || v_query || '%' OR b.address ILIKE '%' || v_query || '%' OR EXISTS ( SELECT 1 FROM building_credits bc LEFT JOIN people p ON bc.person_id = p.id LEFT JOIN companies c ON bc.company_id = c.id WHERE bc.building_id = b.id AND bc.status NOT IN ('hidden') AND COALESCE(p.name, c.name) ILIKE '%' || v_query || '%' ) )
+    AND ( v_status_filter IS NULL OR cardinality(v_status_filter) = 0 OR ( ('visited' = ANY(v_status_filter) AND ub.status::text = 'visited') OR ('saved' = ANY(v_status_filter) AND ub.status::text = 'pending') OR ('none' = ANY(v_status_filter) AND (ub.status IS NULL OR ub.status::text = 'ignored')) ) )
+    AND (v_personal_min_rating = 0 OR COALESCE(ub.rating, 0) >= v_personal_min_rating)
+    AND ( v_min_rating = 0 OR (v_min_rating = 1 AND b.tier_rank::text IN ('Top 20%', 'Top 10%', 'Top 5%', 'Top 1%')) OR (v_min_rating = 2 AND b.tier_rank::text IN ('Top 5%', 'Top 1%')) OR (v_min_rating = 3 AND b.tier_rank::text = 'Top 1%') )
+    AND public.building_matches_credit_filters(b.id, v_credit_company_id, v_credit_roles)
+    -- Award Filtering
+    AND (v_award_id IS NULL OR b.id IN (SELECT building_id FROM public.get_buildings_with_awards(v_award_id, v_award_outcome, v_award_year_from, v_award_year_to)))
+  ORDER BY
+    CASE WHEN v_sort_by = 'popularity' THEN b.popularity_score END DESC,
+    CASE WHEN v_sort_by = 'distance' THEN b.location <-> v_center_point END ASC,
+    CASE WHEN v_sort_by = 'newest' THEN b.year_completed END DESC,
+    b.name ASC
+  LIMIT page_size OFFSET (page - 1) * page_size;
+END;
+$$;
+
+-- Grants
+GRANT EXECUTE ON FUNCTION get_map_clusters(double precision, double precision, double precision, double precision, int, jsonb, int) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_map_clusters(double precision, double precision, double precision, double precision, int, jsonb, int) TO anon;
+GRANT EXECUTE ON FUNCTION get_map_clusters_v2(double precision, double precision, double precision, double precision, double precision, jsonb) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_map_clusters_v2(double precision, double precision, double precision, double precision, double precision, jsonb) TO anon;
+GRANT EXECUTE ON FUNCTION get_buildings_list(double precision, double precision, double precision, double precision, jsonb, integer, integer) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_buildings_list(double precision, double precision, double precision, double precision, jsonb, integer, integer) TO anon;

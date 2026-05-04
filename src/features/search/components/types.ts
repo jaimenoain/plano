@@ -66,6 +66,7 @@ export interface DiscoveryBuilding extends DiscoveryBuildingMapPin {
   address?: string | null;
   google_place_id?: string | null;
   website?: string | null;
+  winner_award_name?: string | null;
 }
 
 export interface ContactRater {
@@ -123,6 +124,7 @@ export interface BuildingPoint {
   slug: string;
   image_url: string | null;
   architect_names: string[] | null;
+  winner_award_name?: string | null;
 }
 
 export type MapItem = ClusterPoint | BuildingPoint;

@@ -141,6 +141,10 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
         credit_company_id: filters.creditCompany?.id ?? undefined,
         credit_roles:
           filters.creditRoles && filters.creditRoles.length > 0 ? filters.creditRoles : undefined,
+        award_id: filters.awardId,
+        award_outcome: filters.awardOutcome,
+        award_year_from: filters.awardYearFrom,
+        award_year_to: filters.awardYearTo,
       };
 
       const { data, error } = await supabase.rpc('get_map_clusters_v2', {

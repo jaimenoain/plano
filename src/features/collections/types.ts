@@ -75,6 +75,7 @@ export interface CollectionItemWithBuilding {
     hero_image_url: string | null;
     community_preview_url: string | null;
     location_precision: "exact" | "approximate";
+    winner_award_name?: string | null;
     building_credits?: {
       credit_tier: string | null;
       status: string | null;
