@@ -529,6 +529,7 @@ export function useBuildingInteractions({
             setUserPosts(
               (allPosts ?? []).map((p) => ({
                 id: p.id,
+                title: p.title ?? null,
                 body: p.body,
                 created_at: p.created_at ?? "",
                 updated_at: p.updated_at ?? p.created_at ?? "",

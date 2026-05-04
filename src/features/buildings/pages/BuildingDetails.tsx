@@ -23,7 +23,6 @@ import {
   Heart, ExternalLink, Circle, AlertTriangle,
   EyeOff, Plus, X,
   Pencil, BadgeCheck, ChevronDown, Share2, Navigation,
-  FileText, Box, Hammer,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
@@ -91,18 +90,22 @@ import {
   getBuildingsByCity,
   type RelatedBuilding,
 } from "@/features/buildings/api/related";
+import { supabase } from "@/integrations/supabase/client";
+import MapGL, { Marker, NavigationControl, GeolocateControl } from "react-map-gl/maplibre";
+import maplibregl from "maplibre-gl";
 
 export { buildingLoader as loader } from "./BuildingDetails.loader";
 
 // ─── Tab config ───────────────────────────────────────────────────────────────
 
-type TabId = "overview" | "media" | "technical" | "credits";
+type TabId = "overview" | "media" | "info" | "credits" | "map";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "media", label: "Media" },
-  { id: "technical", label: "Technical" },
+  { id: "info", label: "Info" },
   { id: "credits", label: "Credits" },
+  { id: "map", label: "Map" },
 ];
 
 /** Client-side chunks for overview editorial stream (infinite scroll). */
@@ -261,6 +264,150 @@ function RelatedByCitySection({
       buildings={buildings}
       isLoading={isLoading}
     />
+  );
+}
+
+// ─── Map Tab ─────────────────────────────────────────────────────────────────
+
+interface NearbyBuilding {
+  id: string;
+  name: string;
+  address: string | null;
+  location_lat: number;
+  location_lng: number;
+  dist_meters: number;
+}
+
+const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
+const NEARBY_RADIUS_METERS = 1000;
+
+function BuildingMapTab({
+  lat,
+  lng,
+  buildingId,
+  buildingName,
+}: {
+  lat: number;
+  lng: number;
+  buildingId: string;
+  buildingName: string;
+}) {
+  const [isClient, setIsClient] = useState(false);
+  const [showNearby, setShowNearby] = useState(false);
+  const [nearbyBuildings, setNearbyBuildings] = useState<NearbyBuilding[]>([]);
+  const [isLoadingNearby, setIsLoadingNearby] = useState(false);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+  useEffect(() => { setIsClient(true); }, []);
+
+  const handleShowNearby = useCallback(async () => {
+    if (showNearby) { setShowNearby(false); return; }
+    setIsLoadingNearby(true);
+    try {
+      const { data, error } = await supabase.rpc("find_nearby_buildings", {
+        lat,
+        long: lng,
+        radius_meters: NEARBY_RADIUS_METERS,
+      });
+      if (!error && data) {
+        setNearbyBuildings(
+          (data as NearbyBuilding[]).filter((b) => b.id !== buildingId),
+        );
+      }
+    } finally {
+      setIsLoadingNearby(false);
+      setShowNearby(true);
+    }
+  }, [lat, lng, buildingId, showNearby]);
+
+  if (!isClient) {
+    return <div className="h-[600px] bg-surface-muted" />;
+  }
+
+  return (
+    <div className="relative h-[600px] w-full">
+      <MapGL
+        initialViewState={{ longitude: lng, latitude: lat, zoom: 15 }}
+        mapLib={maplibregl}
+        style={{ width: "100%", height: "100%" }}
+        mapStyle={DEFAULT_MAP_STYLE}
+        attributionControl={false}
+      >
+        <NavigationControl position="bottom-right" />
+        <GeolocateControl position="bottom-right" trackUserLocation showUserLocation />
+
+        {/* Current building marker */}
+        <Marker longitude={lng} latitude={lat} anchor="bottom" style={{ zIndex: 20 }}>
+          <div className="flex flex-col items-center gap-0.5">
+            <div className="bg-text-primary text-surface-default text-[10px] font-medium px-2 py-0.5 whitespace-nowrap max-w-[140px] truncate shadow-sm">
+              {buildingName}
+            </div>
+            <div className="w-3 h-3 bg-text-primary rotate-45 -mt-1 shadow-sm" />
+          </div>
+        </Marker>
+
+        {/* Nearby building markers */}
+        {showNearby && nearbyBuildings.map((b) => (
+          <Marker
+            key={b.id}
+            longitude={b.location_lng}
+            latitude={b.location_lat}
+            anchor="bottom"
+            style={{ zIndex: hoveredId === b.id ? 30 : 10 }}
+          >
+            <Link
+              to={`/building/${b.id}`}
+              onMouseEnter={() => setHoveredId(b.id)}
+              onMouseLeave={() => setHoveredId(null)}
+              className="flex flex-col items-center gap-0 group"
+            >
+              <div
+                className={cn(
+                  "text-[10px] font-medium px-2 py-0.5 whitespace-nowrap max-w-[120px] truncate shadow-sm transition-colors",
+                  hoveredId === b.id
+                    ? "bg-text-primary text-surface-default"
+                    : "bg-surface-default text-text-primary border border-border-default",
+                )}
+              >
+                {b.name}
+              </div>
+              <div
+                className={cn(
+                  "w-2.5 h-2.5 rotate-45 -mt-1 shadow-sm transition-colors",
+                  hoveredId === b.id ? "bg-text-primary" : "bg-surface-default border border-border-default",
+                )}
+              />
+            </Link>
+          </Marker>
+        ))}
+      </MapGL>
+
+      {/* Show nearby buildings button */}
+      <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-50">
+        <button
+          type="button"
+          onClick={() => void handleShowNearby()}
+          disabled={isLoadingNearby}
+          className="flex items-center gap-2 bg-surface-default border border-border-default shadow-md px-4 py-2.5 text-xs font-medium uppercase tracking-widest text-text-primary hover:bg-surface-muted transition-colors disabled:opacity-60"
+        >
+          {isLoadingNearby ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <MapPin className="h-3.5 w-3.5" />
+          )}
+          {showNearby
+            ? `Hide nearby (${nearbyBuildings.length})`
+            : "Show nearby buildings"}
+        </button>
+      </div>
+
+      {/* Nearby count badge */}
+      {showNearby && nearbyBuildings.length === 0 && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-surface-default border border-border-default shadow-sm px-3 py-1.5 text-xs text-text-secondary">
+          No other buildings found within 1 km
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -698,86 +845,175 @@ function BuildingInfoSection({
   );
 }
 
-// ─── Technical tab placeholder ────────────────────────────────────────────────
+// ─── Info tab ────────────────────────────────────────────────────────────────
 
-function TechnicalSection({ canEdit }: { canEdit: boolean }) {
-  const [pendingSection, setPendingSection] = useState<string | null>(null);
+function BuildingInfoTab({
+  building,
+  buildingCredits,
+}: {
+  building: BuildingDetails;
+  buildingCredits: import("@/features/credits/types").BuildingCreditWithEntities[];
+}) {
+  const primaryCredits = visiblePrimaryCredits(buildingCredits);
+  const aliases = (building.aliases ?? []).filter((a): a is string => typeof a === "string" && a.trim().length > 0);
 
-  const sections = [
-    {
-      id: "drawings",
-      icon: FileText,
-      label: "Technical Drawings",
-      description: "Floor plans, sections, elevations, and construction documents.",
-    },
-    {
-      id: "renders",
-      icon: Box,
-      label: "3D Renders & Visualizations",
-      description: "Renderings, models, and digital visualizations.",
-    },
-    {
-      id: "construction",
-      icon: Hammer,
-      label: "Construction Details",
-      description: "Construction process photos, material close-ups, and assembly details.",
-    },
-  ] as const;
+  const keyStats: { label: string; value: ReactNode }[] = [];
+  if (building.year_completed) keyStats.push({ label: "Year", value: building.year_completed });
+  if (building.city || building.country)
+    keyStats.push({ label: "Location", value: [building.city, building.country].filter(Boolean).join(", ") });
+  if (building.typology?.length)
+    keyStats.push({ label: building.typology.length === 1 ? "Typology" : "Typologies", value: building.typology.join(", ") });
+
+  const classificationRows: { label: string; value: string }[] = [];
+  if (building.styles?.length)
+    classificationRows.push({ label: "Style", value: building.styles.map((s) => s.name).join(", ") });
+  if (building.category?.trim())
+    classificationRows.push({ label: "Category", value: building.category });
+  if (building.context?.trim())
+    classificationRows.push({ label: "Context", value: formatCatalogLabel(building.context) ?? building.context });
+  if (building.intervention?.trim())
+    classificationRows.push({ label: "Intervention", value: formatCatalogLabel(building.intervention) ?? building.intervention });
+
+  const accessParts = [
+    formatCatalogLabel(building.access_level),
+    formatCatalogLabel(building.access_logistics),
+    formatCatalogLabel(building.access_cost),
+  ].filter((v): v is string => Boolean(v));
+
+  const hasClassification = classificationRows.length > 0;
+  const hasMaterials = (building.materials?.length ?? 0) > 0;
+  const hasAccess = accessParts.length > 0 || building.access_notes?.trim();
+  const hasAliases = aliases.length > 0;
+  const hasAddress = building.address?.trim();
 
   return (
-    <>
-      <div className="space-y-10">
-        {sections.map(({ id, icon: Icon, label, description }) => (
-          <section key={id}>
-            <div className="flex items-start justify-between gap-4 border-b border-border-default pb-4 mb-6">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-none bg-surface-muted">
-                  <Icon className="h-4 w-4 text-text-secondary" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-sm text-text-primary">{label}</h3>
-                  <p className="text-xs text-text-secondary mt-0.5">{description}</p>
-                </div>
-              </div>
-              {canEdit && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="shrink-0 h-8 text-xs"
-                  onClick={() => setPendingSection(label)}
-                >
-                  <Plus className="h-3 w-3 mr-1.5" /> Add
-                </Button>
-              )}
-            </div>
-            <div className="flex flex-col items-center justify-center py-12 bg-surface-muted/40 rounded-none border border-dashed border-border-strong/30 text-center">
-              <Icon className="h-8 w-8 text-text-disabled opacity-30 mb-3" />
-              <p className="text-sm font-medium text-text-primary mb-1">No {label.toLowerCase()} yet</p>
-              <p className="text-xs text-text-secondary max-w-xs">
-                {canEdit
-                  ? "You can add content to this section using the button above."
-                  : "Be the first to contribute to this section."}
+    <div className="space-y-0 divide-y divide-border-default">
+
+      {/* Key stat grid */}
+      {keyStats.length > 0 && (
+        <div className={cn(
+          "grid gap-px bg-border-default border border-border-default mb-10",
+          keyStats.length === 1 ? "grid-cols-1" :
+          keyStats.length === 2 ? "grid-cols-2" :
+          "grid-cols-2 sm:grid-cols-3",
+        )}>
+          {keyStats.map(({ label, value }) => (
+            <div key={label} className="bg-surface-default p-6 sm:p-8">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-3">
+                {label}
+              </p>
+              <p className="font-display text-2xl sm:text-3xl font-bold text-text-primary leading-tight">
+                {value}
               </p>
             </div>
-          </section>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      <AlertDialog open={!!pendingSection} onOpenChange={(open) => { if (!open) setPendingSection(null); }}>
-        <AlertDialogContent className="rounded-none [&_button]:rounded-none">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Coming Soon</AlertDialogTitle>
-            <AlertDialogDescription>
-              Uploading {pendingSection?.toLowerCase()} is not yet available. This feature is
-              actively being developed — check back soon.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setPendingSection(null)}>Got it</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+      {/* Architect */}
+      {primaryCredits.length > 0 && (
+        <section className="py-8">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-4">
+            {primaryCredits.length === 1 ? "Architect" : "Architects"}
+          </p>
+          <div className="font-display text-xl sm:text-2xl font-bold text-text-primary leading-snug">
+            <PrimaryCreditsLinks
+              credits={buildingCredits}
+              linkClassName="hover:underline underline-offset-4 decoration-1"
+            />
+          </div>
+        </section>
+      )}
+
+      {/* Address */}
+      {hasAddress && (
+        <section className="py-8">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-4">
+            Address
+          </p>
+          <p className="text-sm text-text-primary leading-relaxed">
+            {[building.address, building.city, building.country].filter(Boolean).join(", ")}
+          </p>
+        </section>
+      )}
+
+      {/* Classification */}
+      {hasClassification && (
+        <section className="py-8">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-5">
+            Classification
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-5">
+            {classificationRows.map(({ label, value }) => (
+              <div key={label}>
+                <p className="text-[10px] font-medium uppercase tracking-wider text-text-secondary mb-1">
+                  {label}
+                </p>
+                <p className="text-sm text-text-primary">{value}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Materials */}
+      {hasMaterials && (
+        <section className="py-8">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-5">
+            Materials
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {building.materials!.map((m) => (
+              <span
+                key={m}
+                className="px-3 py-1.5 bg-surface-muted border border-border-default text-xs text-text-primary font-medium"
+              >
+                {m}
+              </span>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Access */}
+      {hasAccess && (
+        <section className="py-8">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-5">
+            Access
+          </p>
+          {accessParts.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {accessParts.map((part) => (
+                <span
+                  key={part}
+                  className="px-3 py-1.5 bg-surface-muted border border-border-default text-xs text-text-primary font-medium"
+                >
+                  {part}
+                </span>
+              ))}
+            </div>
+          )}
+          {building.access_notes?.trim() && (
+            <p className="text-sm text-text-secondary leading-relaxed">
+              {building.access_notes}
+            </p>
+          )}
+        </section>
+      )}
+
+      {/* Aliases */}
+      {hasAliases && (
+        <section className="py-8">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-4">
+            Also Known As
+          </p>
+          <p className="text-sm text-text-secondary leading-relaxed">
+            {aliases.join(" · ")}
+          </p>
+        </section>
+      )}
+
+    </div>
   );
 }
 
@@ -885,7 +1121,7 @@ export default function BuildingDetails() {
   const activeTab = (searchParams.get("tab") as TabId | null) ?? "overview";
   const setTab = useCallback(
     (id: TabId) => {
-      setSearchParams(id === "overview" ? {} : { tab: id }, { replace: true });
+      setSearchParams(id === "overview" ? {} : { tab: id }, { replace: true, preventScrollReset: true });
     },
     [setSearchParams],
   );
@@ -904,6 +1140,7 @@ export default function BuildingDetails() {
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+
 
   // ── Pure UI state ─────────────────────────────────────────────────────────
   const [isMapExpanded, setIsMapExpanded] = useState(false);
@@ -1416,11 +1653,34 @@ export default function BuildingDetails() {
         </div>
 
         {/* ── TAB CONTENT ── */}
-        <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div className={cn(
+          activeTab === "map" ? "" : "max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-10",
+        )}>
+          <div className={cn(
+            activeTab !== "map" && "grid grid-cols-1 lg:grid-cols-12 gap-12",
+          )}>
 
             {/* ── MAIN CONTENT COLUMN ── */}
-            <div className="lg:col-span-8 min-w-0">
+            <div className={cn(
+              activeTab !== "map" && "lg:col-span-8",
+              "min-w-0",
+            )}>
+
+              {/* ════ MAP TAB ════ */}
+              {activeTab === "map" && (
+                coordinates ? (
+                  <BuildingMapTab
+                    lat={coordinates.lat}
+                    lng={coordinates.lng}
+                    buildingId={building.id}
+                    buildingName={building.name}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-96 text-text-secondary text-sm">
+                    Location data not available for this building.
+                  </div>
+                )
+              )}
 
               {/* ════ OVERVIEW TAB ════ */}
               {activeTab === "overview" && (
@@ -1645,9 +1905,9 @@ export default function BuildingDetails() {
                 </div>
               )}
 
-              {/* ════ TECHNICAL TAB ════ */}
-              {activeTab === "technical" && (
-                <TechnicalSection canEdit={canEditOfficialData} />
+              {/* ════ INFO TAB ════ */}
+              {activeTab === "info" && (
+                <BuildingInfoTab building={building} buildingCredits={buildingCredits} />
               )}
 
               {/* ════ CREDITS TAB ════ */}
@@ -1786,7 +2046,7 @@ export default function BuildingDetails() {
             </div>
 
             {/* ── SIDEBAR — Right Column ── */}
-            <div className="lg:col-span-4">
+            {activeTab !== "map" && <div className="lg:col-span-4">
               <div className="lg:sticky lg:top-14 space-y-5">
 
                 {/* Action card */}
@@ -1937,9 +2197,9 @@ export default function BuildingDetails() {
                           )}
                         </div>
                         <div className="space-y-2">
-                          {userPosts.map((post) => {
+                          {userPosts.map((post, idx) => {
                             const preview = post.body?.trim()
-                              ? post.body.length > 80 ? post.body.slice(0, 80) + "…" : post.body
+                              ? post.body.length > 100 ? post.body.slice(0, 100) + "…" : post.body
                               : null;
                             const dateStr = new Date(post.updated_at || post.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
                             const thumbs = post.images.slice(0, 4);
@@ -1947,11 +2207,30 @@ export default function BuildingDetails() {
                             return (
                               <div
                                 key={post.id}
-                                className="rounded-sm border border-border-default bg-surface-muted/30 group"
+                                className="border border-border-default bg-surface-muted/30 group overflow-hidden"
                               >
+                                {/* Card header — always visible, anchors each note */}
+                                <div className="flex items-center justify-between px-3 py-2 border-b border-border-default bg-surface-muted/50">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    {userPosts.length > 1 && (
+                                      <span className="text-[9px] font-bold text-text-disabled shrink-0">
+                                        {idx + 1}/{userPosts.length}
+                                      </span>
+                                    )}
+                                    <span className="text-[10px] text-text-disabled truncate">{dateStr}</span>
+                                  </div>
+                                  <button
+                                    onClick={() => void navigate(`/building/${building.id}/note/${post.id}/edit`)}
+                                    className="flex-shrink-0 p-1 rounded hover:bg-border-default transition-colors"
+                                    title="Edit this note"
+                                  >
+                                    <Pencil className="h-3 w-3 text-text-disabled" />
+                                  </button>
+                                </div>
+                                {/* Images */}
                                 {thumbs.length > 0 && (
                                   <div className={cn(
-                                    "grid gap-0.5 overflow-hidden rounded-t-sm",
+                                    "grid gap-0.5",
                                     thumbs.length === 1 ? "grid-cols-1" : "grid-cols-3",
                                   )}>
                                     {thumbs.map((img, i) => {
@@ -1970,24 +2249,15 @@ export default function BuildingDetails() {
                                     })}
                                   </div>
                                 )}
-                                <div className="flex items-start gap-2 px-3 py-2.5">
-                                  <div className="flex-1 min-w-0">
-                                    {post.title?.trim() && (
-                                      <p className="text-xs font-semibold text-text-primary leading-snug mb-0.5 truncate">{post.title}</p>
-                                    )}
-                                    {preview
-                                      ? <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">{preview}</p>
-                                      : !post.title?.trim() && <p className="text-xs text-text-disabled italic">No text</p>
-                                    }
-                                    <p className="text-[10px] text-text-disabled mt-1">{dateStr}</p>
-                                  </div>
-                                  <button
-                                    onClick={() => void navigate(`/building/${building.id}/note/${post.id}/edit`)}
-                                    className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-border-default"
-                                    title="Edit this note"
-                                  >
-                                    <Pencil className="h-3.5 w-3.5 text-text-secondary" />
-                                  </button>
+                                {/* Body */}
+                                <div className="px-3 py-2.5">
+                                  {post.title?.trim() && (
+                                    <p className="text-xs font-semibold text-text-primary leading-snug mb-1 truncate">{post.title}</p>
+                                  )}
+                                  {preview
+                                    ? <p className="text-xs text-text-secondary leading-relaxed line-clamp-2">{preview}</p>
+                                    : !post.title?.trim() && <p className="text-xs text-text-disabled italic">No text</p>
+                                  }
                                 </div>
                               </div>
                             );
@@ -2149,34 +2419,15 @@ export default function BuildingDetails() {
                   </div>
                 )}
 
-                {/* Technical tab sidebar: contribution guide */}
-                {activeTab === "technical" && (
-                  <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-sm space-y-3">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-                      Contribute
-                    </h4>
-                    <p className="text-xs text-text-secondary leading-relaxed">
-                      Help build the world&apos;s most complete architecture database by contributing technical drawings, renders, and construction documentation.
-                    </p>
-                    {user ? (
-                      <Button size="sm" variant="outline" className="w-full h-9 text-xs" disabled>
-                        Upload Technical Content
-                      </Button>
-                    ) : (
-                      <Button size="sm" variant="outline" className="w-full h-9 text-xs" asChild>
-                        <Link to="/login">Sign in to contribute</Link>
-                      </Button>
-                    )}
+                {/* Building info — hidden on info tab (shown in main content there) */}
+                {activeTab !== "info" && (
+                  <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-sm">
+                    <BuildingInfoSection building={building} buildingCredits={buildingCredits} />
                   </div>
                 )}
 
-                {/* Building info */}
-                <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-sm">
-                  <BuildingInfoSection building={building} buildingCredits={buildingCredits} />
-                </div>
-
               </div>
-            </div>
+            </div>}
 
           </div>
         </div>
