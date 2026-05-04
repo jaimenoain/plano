@@ -64,7 +64,15 @@ export default defineConfig(() => ({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
-        maximumFileSizeToCacheInBytes: 5000000,
+        // Skip precaching the largest, route-specific chunks (maps, admin dashboard).
+        // They still get runtime-cached on first use, but are not pushed to every
+        // visitor when the SW installs.
+        globIgnores: [
+          "**/maplibre-gl-*.js",
+          "**/maplibre-gl-*.css",
+          "**/Dashboard-*.js",
+        ],
+        maximumFileSizeToCacheInBytes: 1_000_000,
         // React Router SSR client build has no precached `index.html`; a NavigationRoute
         // bound to it throws workbox "non-precached-url". Offline shell is server-driven.
         navigateFallback: null,

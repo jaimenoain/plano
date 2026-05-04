@@ -44,8 +44,9 @@ export default function FlaggedCredits() {
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   useEffect(() => {
-    const t = window.setInterval(() => setNowMs(Date.now()), 60_000);
-    return () => window.clearInterval(t);
+    const onFocus = () => setNowMs(Date.now());
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, []);
 
   const { data: rows, isLoading, error, refetch } = useQuery({

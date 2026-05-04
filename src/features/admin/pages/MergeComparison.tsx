@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { useParams, useNavigate, type MetaFunction } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminBuilding } from "@/features/admin/types/admin_building";
@@ -30,7 +30,9 @@ import {
   primaryBuildingCreditsToSummaries,
   type BuildingCreditEmbedRow,
 } from "@/features/credits/api/credits";
-import { BuildingMap } from "@/features/admin/components/BuildingMap";
+const BuildingMap = lazy(() =>
+  import("@/features/admin/components/BuildingMap").then((m) => ({ default: m.BuildingMap })),
+);
 import { parseLocation } from "@/utils/location";
 import {
   Carousel,
@@ -459,12 +461,14 @@ export default function MergeComparison() {
                             <div className="space-y-1 pt-2">
                                 <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Location</div>
                                 <div className="w-full h-48 rounded-none border border-border-default bg-surface-muted overflow-hidden relative">
-                                  <BuildingMap
-                                    lat={targetLocation.lat}
-                                    lng={targetLocation.lng}
-                                    className="w-full h-full"
-                                    locationPrecision="exact"
-                                  />
+                                  <Suspense fallback={<div className="w-full h-full bg-surface-muted" />}>
+                                    <BuildingMap
+                                      lat={targetLocation.lat}
+                                      lng={targetLocation.lng}
+                                      className="w-full h-full"
+                                      locationPrecision="exact"
+                                    />
+                                  </Suspense>
                                 </div>
                             </div>
                         )}
@@ -559,12 +563,14 @@ export default function MergeComparison() {
                             <div className="space-y-1 pt-2">
                                 <div className="text-sm text-text-secondary uppercase tracking-wider font-semibold">Location</div>
                                 <div className="w-full h-48 rounded-none border border-red-200 bg-surface-muted overflow-hidden relative">
-                                  <BuildingMap
-                                    lat={sourceLocation.lat}
-                                    lng={sourceLocation.lng}
-                                    className="w-full h-full"
-                                    locationPrecision="exact"
-                                  />
+                                  <Suspense fallback={<div className="w-full h-full bg-surface-muted" />}>
+                                    <BuildingMap
+                                      lat={sourceLocation.lat}
+                                      lng={sourceLocation.lng}
+                                      className="w-full h-full"
+                                      locationPrecision="exact"
+                                    />
+                                  </Suspense>
                                 </div>
                             </div>
                         )}

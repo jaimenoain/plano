@@ -725,7 +725,7 @@ function PendingPhotosQueue({
     <div className="flex flex-wrap items-center gap-2">
       {pendingImages.map((img) => (
         <div key={img.id} className="relative h-16 w-16 shrink-0 bg-surface-muted">
-          <img src={img.preview} alt="" className="h-full w-full object-cover" />
+          <img src={img.preview} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
           <button
             type="button"
             className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center bg-surface-overlay text-text-primary hover:bg-surface-muted"
@@ -1434,7 +1434,7 @@ export default function BuildingDetails() {
               className="group relative aspect-[16/10] cursor-pointer overflow-hidden bg-surface-muted"
               onClick={() => setSelectedImage(img)}
             >
-              <img src={img.url} alt="" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-300" />
               {isOfficial && (
                 <span className="absolute left-4 top-4 bg-brand-accent px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-brand-accent-foreground rounded-none">
@@ -1477,7 +1477,7 @@ export default function BuildingDetails() {
                   )}
                   onClick={() => setSelectedImage(img)}
                 >
-                  <img src={img.url} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   {img.likes_count > 0 && (
                     <span className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow">
                       <Heart className="h-2.5 w-2.5 fill-white" aria-hidden />
@@ -1512,7 +1512,7 @@ export default function BuildingDetails() {
               className="group relative aspect-[4/3] cursor-pointer overflow-hidden bg-surface-muted"
               onClick={() => setSelectedImage(img)}
             >
-              <img src={img.url} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
               {img.likes_count > 0 && (
                 <span className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[10px] font-bold text-white drop-shadow">
                   <Heart className="h-3 w-3 fill-white" aria-hidden />
@@ -1547,7 +1547,7 @@ export default function BuildingDetails() {
               )}
               onClick={() => setSelectedImage(img)}
             >
-              <img src={img.url} alt="" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-300" />
               {img.likes_count > 0 && (
                 <span className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[10px] font-bold text-white">

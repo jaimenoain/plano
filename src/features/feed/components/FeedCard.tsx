@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
 import { useNavigate } from "react-router";
 import { formatDistanceToNow } from "date-fns";
+import { Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
+import { useTrackNoteView } from "@/features/feed/hooks/useTrackNoteView";
 import { countWords } from "@/features/feed/utils/resolveCardType";
 import { CardImage } from "@/features/feed/components/card-parts/CardImage";
 import { CardFooter } from "@/features/feed/components/card-primitives/CardFooter";
@@ -34,10 +37,12 @@ export function FeedCard({
   onImageLike,
 }: FeedCardProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [essayExpanded, setEssayExpanded] = useState(false);
   const [showReadMore, setShowReadMore] = useState(false);
   const [isNarrowViewport, setIsNarrowViewport] = useState(false);
   const bodyRef = useRef<HTMLParagraphElement>(null);
+  const trackViewRef = useTrackNoteView(entry.id, entry.user_id);
 
   const { data } = useReviewCardData(entry, { showCommunityImages });
   const contentWordCount = countWords(entry.content);
@@ -86,6 +91,8 @@ export function FeedCard({
   const hasMedia = mediaItems.length > 0;
   const extraCount = mediaItems.length - 1;
   const suppressReadMore = isNarrowViewport && contentWordCount > 0 && contentWordCount < 120;
+  const viewsCount = entry.views_count ?? 0;
+  const isAuthor = !!user && !!entry.user_id && user.id === entry.user_id;
 
   const buildingUrl = (b: typeof entry.building) =>
     b && b.locality_country_code && b.locality_city_slug
@@ -108,6 +115,7 @@ export function FeedCard({
 
   return (
     <article
+      ref={trackViewRef}
       data-testid={`feed-card-${entry.id}`}
       onClick={handleCardClick}
       className={cn(
@@ -172,6 +180,20 @@ export function FeedCard({
           {!hideUser && <>{DOT}<span>{timeAgo}</span></>}
           {!hideUser && entry.rating != null && entry.rating > 0 && (
             <>{DOT}<PointsBadge points={entry.rating} /></>
+          )}
+          {!hideUser && isAuthor && viewsCount > 0 && (
+            <>
+              {DOT}
+              <span
+                className="inline-flex items-center gap-1"
+                data-testid={`feed-card-views-${entry.id}`}
+                aria-label={`${viewsCount} ${viewsCount === 1 ? "view" : "views"}`}
+                title={`${viewsCount} ${viewsCount === 1 ? "view" : "views"}`}
+              >
+                <Eye className="h-3 w-3" strokeWidth={1.75} aria-hidden />
+                <span className="font-mono">{viewsCount}</span>
+              </span>
+            </>
           )}
         </div>
       )}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import type { MetaFunction } from "react-router";
 import {
   fetchPhotoCoverageStats,
@@ -7,8 +7,15 @@ import {
 } from "@/features/admin/api/admin";
 import type { PhotoCoverageStats, TopPhotoBuilding, ZeroPhotoBuilding } from "@/features/admin/types/admin";
 import { PhotoCoverageStatsRow } from "@/features/admin/components/PhotoCoverageStatsRow";
-import { PhotoActivityZone } from "@/features/admin/components/PhotoActivityZone";
-import { ZeroPhotoBuildingsZone } from "@/features/admin/components/ZeroPhotoBuildingsZone";
+
+const PhotoActivityZone = lazy(() =>
+  import("@/features/admin/components/PhotoActivityZone").then((m) => ({ default: m.PhotoActivityZone })),
+);
+const ZeroPhotoBuildingsZone = lazy(() =>
+  import("@/features/admin/components/ZeroPhotoBuildingsZone").then((m) => ({ default: m.ZeroPhotoBuildingsZone })),
+);
+
+const ZoneFallback = () => <div className="h-64 bg-surface-muted/30" />;
 
 export const meta: MetaFunction = () => [{ title: "Photo Analytics | Plano" }];
 
@@ -46,12 +53,16 @@ export default function PhotoAnalytics() {
 
       <section className="space-y-4">
         <h2 className="text-3xl font-semibold tracking-tight text-text-primary">Photo Activity</h2>
-        <PhotoActivityZone data={topBuildings} />
+        <Suspense fallback={<ZoneFallback />}>
+          <PhotoActivityZone data={topBuildings} />
+        </Suspense>
       </section>
 
       <section className="space-y-4">
         <h2 className="text-3xl font-semibold tracking-tight text-text-primary">Buildings Without Photos</h2>
-        <ZeroPhotoBuildingsZone data={zeroBuildings} />
+        <Suspense fallback={<ZoneFallback />}>
+          <ZeroPhotoBuildingsZone data={zeroBuildings} />
+        </Suspense>
       </section>
     </div>
   );

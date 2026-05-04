@@ -64,7 +64,7 @@ export function FeedHero({ hero, queue }: FeedHeroProps) {
               >
                 <div className="w-16 h-16 shrink-0 overflow-hidden bg-surface-muted rounded-none">
                   {thumbUrl && (
-                    <img src={thumbUrl} alt="" className="w-full h-full object-cover" />
+                    <img src={thumbUrl} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                   )}
                 </div>
                 <div className="min-w-0 pt-0.5">

@@ -54,6 +54,8 @@ export interface FeedReview {
   building: ReviewBuilding;
   likes_count: number;
   comments_count: number;
+  /** Distinct authenticated viewers who have loaded this note in a feed (excludes the author). Optional so legacy/test fixtures don't have to set it; readers should default to 0. */
+  views_count?: number;
   is_liked: boolean;
   images?: ReviewImage[];
   video_url?: string | null;
@@ -126,6 +128,7 @@ export interface RawFeedRow {
   building_data?: RawFeedBuildingData | null;
   likes_count?: number | null;
   comments_count?: number | null;
+  views_count?: number | null;
   is_liked: boolean;
   review_images?: RawFeedReviewImageRow[] | null;
   is_suggested?: boolean;

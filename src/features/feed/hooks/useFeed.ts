@@ -264,6 +264,7 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
         },
         likes_count: review.likes_count || 0,
         comments_count: review.comments_count || 0,
+        views_count: review.views_count || 0,
         is_liked: review.is_liked,
         images: (review.review_images || []).map((img) => {
             return {

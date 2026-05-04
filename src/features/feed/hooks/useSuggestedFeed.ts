@@ -81,6 +81,7 @@ export function useSuggestedFeed(options: UseSuggestedFeedOptions = {}) {
           },
           likes_count: post.likes_count || 0,
           comments_count: post.comments_count || 0,
+          views_count: post.views_count || 0,
           is_liked: post.is_liked,
           images: (post.review_images || []).map((img) => ({
             id: img.id,
