@@ -1,0 +1,479 @@
+import { supabase } from "@/integrations/supabase/client";
+import type {
+  AwardDTO,
+  AwardEditionDTO,
+  AwardCategoryDTO,
+  AwardRecipientDTO,
+} from "@/features/awards/types/awards";
+
+// The awards tables are not yet in the generated Supabase types (migration pending).
+// Use an untyped alias until `npm run gen-types` is re-run after migration.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as any;
+
+// ── Row → DTO mappers ────────────────────────────────────────
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+function toAwardDTO(row: any, editionCount?: number): AwardDTO {
+  const body = row.awarding_body_company
+    ? {
+        id: row.awarding_body_company.id as string,
+        name: row.awarding_body_company.name as string,
+        slug: row.awarding_body_company.slug as string,
+      }
+    : null;
+
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    description: row.description ?? null,
+    website: row.website ?? null,
+    country: row.country ?? null,
+    frequency: row.frequency,
+    awardingBodyType: row.awarding_body_type ?? null,
+    awardingBodyCompanyId: row.awarding_body_company_id ?? null,
+    awardingBodyName: row.awarding_body_name ?? null,
+    isActive: row.is_active,
+    createdAt: row.created_at,
+    awardingBodyCompany: body,
+    editionCount,
+  };
+}
+
+function toEditionDTO(row: any, recipientCount?: number): AwardEditionDTO {
+  return {
+    id: row.id,
+    awardId: row.award_id,
+    year: row.year ?? null,
+    editionDate: row.edition_date ?? null,
+    ceremonyLocation: row.ceremony_location ?? null,
+    notes: row.notes ?? null,
+    createdAt: row.created_at,
+    recipientCount,
+  };
+}
+
+function toCategoryDTO(row: any): AwardCategoryDTO {
+  return {
+    id: row.id,
+    awardId: row.award_id,
+    name: row.name,
+    description: row.description ?? null,
+    isActive: row.is_active,
+    validFromEditionId: row.valid_from_edition_id ?? null,
+    validToEditionId: row.valid_to_edition_id ?? null,
+    createdAt: row.created_at,
+  };
+}
+
+function toRecipientDTO(row: any): AwardRecipientDTO {
+  const building = row.building
+    ? { id: row.building.id, name: row.building.name, slug: row.building.slug, heroImageUrl: row.building.hero_image_url ?? null }
+    : null;
+  const person = row.person
+    ? { id: row.person.id, name: row.person.name, slug: row.person.slug, avatarUrl: row.person.avatar_url ?? null }
+    : null;
+  const company = row.company
+    ? { id: row.company.id, name: row.company.name, slug: row.company.slug }
+    : null;
+  const category = row.category
+    ? { name: row.category.name }
+    : null;
+  const edition = row.edition
+    ? { year: row.edition.year ?? null, editionDate: row.edition.edition_date ?? null }
+    : null;
+  const award = row.award
+    ? { name: row.award.name, slug: row.award.slug }
+    : null;
+
+  return {
+    id: row.id,
+    editionId: row.edition_id,
+    categoryId: row.category_id,
+    recipientType: row.recipient_type,
+    recipientBuildingId: row.recipient_building_id ?? null,
+    recipientPersonId: row.recipient_person_id ?? null,
+    recipientCompanyId: row.recipient_company_id ?? null,
+    outcome: row.outcome,
+    notes: row.notes ?? null,
+    createdAt: row.created_at,
+    building,
+    person,
+    company,
+    category: category ?? undefined,
+    edition: edition ?? undefined,
+    award: award ?? undefined,
+  };
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+// ── Queries ──────────────────────────────────────────────────
+
+export async function getAwards(): Promise<AwardDTO[]> {
+  const { data, error } = await db
+    .from("awards")
+    .select(`
+      *,
+      awarding_body_company:companies!awards_awarding_body_company_id_fkey(id, name, slug),
+      award_editions(count)
+    `)
+    .order("name", { ascending: true });
+
+  if (error) throw new Error(`Failed to load awards: ${error.message}`);
+
+  return (data ?? []).map((row: any) => {
+    const editionCount =
+      Array.isArray(row.award_editions) && row.award_editions.length > 0
+        ? (row.award_editions[0] as any).count ?? 0
+        : 0;
+    return toAwardDTO(row, editionCount);
+  });
+}
+
+export async function getAwardById(awardId: string): Promise<AwardDTO> {
+  const { data, error } = await db
+    .from("awards")
+    .select(`
+      *,
+      awarding_body_company:companies!awards_awarding_body_company_id_fkey(id, name, slug)
+    `)
+    .eq("id", awardId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to load award: ${error.message}`);
+  if (!data) throw new Error("Award not found");
+
+  return toAwardDTO(data);
+}
+
+export async function getAwardBySlug(slug: string): Promise<AwardDTO> {
+  const { data, error } = await db
+    .from("awards")
+    .select(`
+      *,
+      awarding_body_company:companies!awards_awarding_body_company_id_fkey(id, name, slug)
+    `)
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to load award: ${error.message}`);
+  if (!data) throw new Error("Award not found");
+
+  return toAwardDTO(data);
+}
+
+export async function getEditionsByAward(awardId: string): Promise<AwardEditionDTO[]> {
+  const { data, error } = await db
+    .from("award_editions")
+    .select(`
+      *,
+      award_recipients(count)
+    `)
+    .eq("award_id", awardId)
+    .order("year", { ascending: false });
+
+  if (error) throw new Error(`Failed to load editions: ${error.message}`);
+
+  return (data ?? []).map((row: any) => {
+    const recipientCount =
+      Array.isArray(row.award_recipients) && row.award_recipients.length > 0
+        ? (row.award_recipients[0] as any).count ?? 0
+        : 0;
+    return toEditionDTO(row, recipientCount);
+  });
+}
+
+export async function getEditionById(editionId: string): Promise<AwardEditionDTO> {
+  const { data, error } = await db
+    .from("award_editions")
+    .select("*")
+    .eq("id", editionId)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to load edition: ${error.message}`);
+  if (!data) throw new Error("Edition not found");
+
+  return toEditionDTO(data);
+}
+
+export async function getCategoriesByAward(awardId: string): Promise<AwardCategoryDTO[]> {
+  const { data, error } = await db
+    .from("award_categories")
+    .select("*")
+    .eq("award_id", awardId)
+    .order("name", { ascending: true });
+
+  if (error) throw new Error(`Failed to load categories: ${error.message}`);
+
+  return (data ?? []).map(toCategoryDTO);
+}
+
+export async function getRecipientsByEdition(editionId: string): Promise<AwardRecipientDTO[]> {
+  const { data, error } = await db
+    .from("award_recipients")
+    .select(`
+      *,
+      building:buildings!award_recipients_recipient_building_id_fkey(id, name, slug, hero_image_url),
+      person:people!award_recipients_recipient_person_id_fkey(id, name, slug, avatar_url),
+      company:companies!award_recipients_recipient_company_id_fkey(id, name, slug),
+      category:award_categories!award_recipients_category_id_fkey(name),
+      edition:award_editions!award_recipients_edition_id_fkey(year, edition_date)
+    `)
+    .eq("edition_id", editionId)
+    .order("outcome", { ascending: true });
+
+  if (error) throw new Error(`Failed to load recipients: ${error.message}`);
+
+  return (data ?? []).map(toRecipientDTO);
+}
+
+export async function getAwardsByBuilding(buildingId: string): Promise<AwardRecipientDTO[]> {
+  const { data, error } = await db
+    .from("award_recipients")
+    .select(`
+      *,
+      category:award_categories!award_recipients_category_id_fkey(name),
+      edition:award_editions!award_recipients_edition_id_fkey(year, edition_date, award_id),
+      award:award_editions!award_recipients_edition_id_fkey(awards!award_editions_award_id_fkey(name, slug))
+    `)
+    .eq("recipient_building_id", buildingId)
+    .eq("recipient_type", "building");
+
+  if (error) throw new Error(`Failed to load awards for building: ${error.message}`);
+
+  return (data ?? []).map((row: any) => {
+    const awardNested = row.award?.awards;
+    return toRecipientDTO({
+      ...row,
+      award: awardNested ?? null,
+    });
+  });
+}
+
+export async function getAwardsByPerson(personId: string): Promise<AwardRecipientDTO[]> {
+  const { data, error } = await db
+    .from("award_recipients")
+    .select(`
+      *,
+      category:award_categories!award_recipients_category_id_fkey(name),
+      edition:award_editions!award_recipients_edition_id_fkey(year, edition_date, award_id),
+      award:award_editions!award_recipients_edition_id_fkey(awards!award_editions_award_id_fkey(name, slug))
+    `)
+    .eq("recipient_person_id", personId)
+    .eq("recipient_type", "person");
+
+  if (error) throw new Error(`Failed to load awards for person: ${error.message}`);
+
+  return (data ?? []).map((row: any) => {
+    const awardNested = row.award?.awards;
+    return toRecipientDTO({
+      ...row,
+      award: awardNested ?? null,
+    });
+  });
+}
+
+export async function getAwardsByCompany(companyId: string): Promise<AwardRecipientDTO[]> {
+  const { data, error } = await db
+    .from("award_recipients")
+    .select(`
+      *,
+      category:award_categories!award_recipients_category_id_fkey(name),
+      edition:award_editions!award_recipients_edition_id_fkey(year, edition_date, award_id),
+      award:award_editions!award_recipients_edition_id_fkey(awards!award_editions_award_id_fkey(name, slug))
+    `)
+    .eq("recipient_company_id", companyId)
+    .eq("recipient_type", "company");
+
+  if (error) throw new Error(`Failed to load awards for company: ${error.message}`);
+
+  return (data ?? []).map((row: any) => {
+    const awardNested = row.award?.awards;
+    return toRecipientDTO({
+      ...row,
+      award: awardNested ?? null,
+    });
+  });
+}
+
+// ── Mutations ────────────────────────────────────────────────
+
+export async function createAward(payload: {
+  name: string;
+  slug: string;
+  description?: string | null;
+  website?: string | null;
+  country?: string | null;
+  frequency?: string;
+  awarding_body_type?: string | null;
+  awarding_body_company_id?: string | null;
+  awarding_body_name?: string | null;
+  is_active?: boolean;
+}): Promise<AwardDTO> {
+  const { data, error } = await db
+    .from("awards")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(`Failed to create award: ${error.message}`);
+  return toAwardDTO(data);
+}
+
+export async function updateAward(
+  awardId: string,
+  payload: Record<string, unknown>,
+): Promise<AwardDTO> {
+  const { data, error } = await db
+    .from("awards")
+    .update({ ...payload, updated_at: new Date().toISOString() })
+    .eq("id", awardId)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(`Failed to update award: ${error.message}`);
+  return toAwardDTO(data);
+}
+
+export async function deleteAward(awardId: string): Promise<void> {
+  const { error } = await db.from("awards").delete().eq("id", awardId);
+  if (error) throw new Error(`Failed to delete award: ${error.message}`);
+}
+
+export async function createEdition(payload: {
+  award_id: string;
+  year?: number | null;
+  edition_date?: string | null;
+  ceremony_location?: string | null;
+  notes?: string | null;
+}): Promise<AwardEditionDTO> {
+  const { data, error } = await db
+    .from("award_editions")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(`Failed to create edition: ${error.message}`);
+  return toEditionDTO(data);
+}
+
+export async function updateEdition(
+  editionId: string,
+  payload: Record<string, unknown>,
+): Promise<AwardEditionDTO> {
+  const { data, error } = await db
+    .from("award_editions")
+    .update({ ...payload, updated_at: new Date().toISOString() })
+    .eq("id", editionId)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(`Failed to update edition: ${error.message}`);
+  return toEditionDTO(data);
+}
+
+export async function deleteEdition(editionId: string): Promise<void> {
+  const { error } = await db.from("award_editions").delete().eq("id", editionId);
+  if (error) throw new Error(`Failed to delete edition: ${error.message}`);
+}
+
+export async function createCategory(payload: {
+  award_id: string;
+  name: string;
+  description?: string | null;
+  is_active?: boolean;
+  valid_from_edition_id?: string | null;
+  valid_to_edition_id?: string | null;
+}): Promise<AwardCategoryDTO> {
+  const { data, error } = await db
+    .from("award_categories")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(`Failed to create category: ${error.message}`);
+  return toCategoryDTO(data);
+}
+
+export async function updateCategory(
+  categoryId: string,
+  payload: Record<string, unknown>,
+): Promise<AwardCategoryDTO> {
+  const { data, error } = await db
+    .from("award_categories")
+    .update({ ...payload, updated_at: new Date().toISOString() })
+    .eq("id", categoryId)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(`Failed to update category: ${error.message}`);
+  return toCategoryDTO(data);
+}
+
+export async function deleteCategory(categoryId: string): Promise<void> {
+  const { error } = await db.from("award_categories").delete().eq("id", categoryId);
+  if (error) throw new Error(`Failed to delete category: ${error.message}`);
+}
+
+export async function createRecipient(payload: {
+  edition_id: string;
+  category_id: string;
+  recipient_type: string;
+  recipient_building_id?: string | null;
+  recipient_person_id?: string | null;
+  recipient_company_id?: string | null;
+  outcome?: string;
+  notes?: string | null;
+}): Promise<AwardRecipientDTO> {
+  const { data, error } = await db
+    .from("award_recipients")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(`Failed to create recipient: ${error.message}`);
+  return toRecipientDTO(data);
+}
+
+export async function deleteRecipient(recipientId: string): Promise<void> {
+  const { error } = await db.from("award_recipients").delete().eq("id", recipientId);
+  if (error) throw new Error(`Failed to delete recipient: ${error.message}`);
+}
+
+// ── Entity search (for AddRecipientDialog) ───────────────────
+
+export async function searchBuildings(query: string): Promise<{ id: string; name: string; slug: string; city: string | null }[]> {
+  const { data, error } = await db
+    .from("buildings")
+    .select("id, name, slug, city")
+    .ilike("name", `%${query}%`)
+    .eq("is_deleted", false)
+    .limit(15);
+
+  if (error) throw new Error(`Search failed: ${error.message}`);
+  return data ?? [];
+}
+
+export async function searchPeople(query: string): Promise<{ id: string; name: string; slug: string }[]> {
+  const { data, error } = await db
+    .from("people")
+    .select("id, name, slug")
+    .ilike("name", `%${query}%`)
+    .limit(15);
+
+  if (error) throw new Error(`Search failed: ${error.message}`);
+  return data ?? [];
+}
+
+export async function searchCompanies(query: string): Promise<{ id: string; name: string; slug: string }[]> {
+  const { data, error } = await db
+    .from("companies")
+    .select("id, name, slug")
+    .ilike("name", `%${query}%`)
+    .limit(15);
+
+  if (error) throw new Error(`Search failed: ${error.message}`);
+  return data ?? [];
+}

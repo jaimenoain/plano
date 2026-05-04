@@ -19,6 +19,7 @@ import {
   CalendarDays,
   Shield,
   Globe2,
+  Trophy,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
@@ -106,6 +107,11 @@ const managementItems = [
     title: "Events",
     url: "/admin/events",
     icon: CalendarDays,
+  },
+  {
+    title: "Awards",
+    url: "/admin/awards",
+    icon: Trophy,
   },
 ];
 

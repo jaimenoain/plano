@@ -38,7 +38,7 @@ All code in this feature follows the existing Plano conventions. Key rules to ke
 
 ---
 
-## [ ] Phase 1 — Foundation
+## [x] Phase 1 — Foundation
 
 > DB schema · RLS · TypeScript types · Admin CRUD (no public UI)
 

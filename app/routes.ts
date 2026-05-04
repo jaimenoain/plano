@@ -64,6 +64,15 @@ export default [
     route("/admin/system", "pages/AdminSystemPlaceholder.tsx"),
     route("/admin/feedback", "features/admin/pages/Feedback.tsx"),
     route("/admin/events", "features/admin/pages/AdminEvents.tsx"),
+    route("/admin/awards", "features/admin/pages/AwardsList.tsx"),
+    route("/admin/awards/new", "features/admin/pages/AwardForm.tsx"),
+    route("/admin/awards/:awardId", "features/admin/pages/AwardDetail.tsx"),
+    route("/admin/awards/:awardId/edit", "features/admin/pages/AwardForm.tsx"),
+    route("/admin/awards/:awardId/editions/new", "features/admin/pages/EditionForm.tsx"),
+    route(
+      "/admin/awards/:awardId/editions/:editionId",
+      "features/admin/pages/EditionDetail.tsx",
+    ),
   ]),
 
   // Main app (MainLayout wraps all user-facing routes)
