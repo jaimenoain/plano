@@ -4650,31 +4650,31 @@ export type Database = {
         | "wrong_role"
         | "other"
       credit_role_enum:
-        | "design_architect"
-        | "architect_of_record"
-        | "executive_architect"
-        | "interior_architect"
-        | "landscape_architect"
-        | "urban_designer"
-        | "conservation_architect"
-        | "structural_engineer"
-        | "mep_engineer"
-        | "civil_engineer"
-        | "geotechnical_engineer"
-        | "facade_engineer"
-        | "wind_consultant"
-        | "acoustic_consultant"
-        | "fire_engineer"
-        | "lighting_designer"
-        | "developer"
-        | "main_contractor"
-        | "project_manager"
-        | "cost_consultant"
-        | "planning_consultant"
-        | "graphic_wayfinding_designer"
-        | "art_consultant"
-        | "sustainability_consultant"
-        | "heritage_consultant"
+        | "design_architecture"
+        | "architecture_of_record"
+        | "executive_architecture"
+        | "interior_architecture"
+        | "landscape_architecture"
+        | "urban_design"
+        | "conservation_architecture"
+        | "structural_engineering"
+        | "mep_engineering"
+        | "civil_engineering"
+        | "geotechnical_engineering"
+        | "facade_engineering"
+        | "wind_consultancy"
+        | "acoustic_consultancy"
+        | "fire_engineering"
+        | "lighting_design"
+        | "development"
+        | "main_contracting"
+        | "project_management"
+        | "cost_consultancy"
+        | "planning_consultancy"
+        | "graphic_wayfinding_design"
+        | "art_consultancy"
+        | "sustainability_consultancy"
+        | "heritage_consultancy"
         | "other"
       credit_status_enum: "active" | "verified" | "flagged" | "hidden"
       credit_tier_enum: "primary" | "contributor" | "ancillary"
@@ -4867,31 +4867,31 @@ export const Constants = {
         "other",
       ],
       credit_role_enum: [
-        "design_architect",
-        "architect_of_record",
-        "executive_architect",
-        "interior_architect",
-        "landscape_architect",
-        "urban_designer",
-        "conservation_architect",
-        "structural_engineer",
-        "mep_engineer",
-        "civil_engineer",
-        "geotechnical_engineer",
-        "facade_engineer",
-        "wind_consultant",
-        "acoustic_consultant",
-        "fire_engineer",
-        "lighting_designer",
-        "developer",
-        "main_contractor",
-        "project_manager",
-        "cost_consultant",
-        "planning_consultant",
-        "graphic_wayfinding_designer",
-        "art_consultant",
-        "sustainability_consultant",
-        "heritage_consultant",
+        "design_architecture",
+        "architecture_of_record",
+        "executive_architecture",
+        "interior_architecture",
+        "landscape_architecture",
+        "urban_design",
+        "conservation_architecture",
+        "structural_engineering",
+        "mep_engineering",
+        "civil_engineering",
+        "geotechnical_engineering",
+        "facade_engineering",
+        "wind_consultancy",
+        "acoustic_consultancy",
+        "fire_engineering",
+        "lighting_design",
+        "development",
+        "main_contracting",
+        "project_management",
+        "cost_consultancy",
+        "planning_consultancy",
+        "graphic_wayfinding_design",
+        "art_consultancy",
+        "sustainability_consultancy",
+        "heritage_consultancy",
         "other",
       ],
       credit_status_enum: ["active", "verified", "flagged", "hidden"],

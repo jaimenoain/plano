@@ -99,7 +99,7 @@ describe("BuildingAudit (QA 8.3 credit audit merge)", () => {
         action_type: "credit_added",
         target_type: "credit",
         target_id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
-        details: { building_id: BUILDING_ID, role: "design_architect" },
+        details: { building_id: BUILDING_ID, role: "design_architecture" },
       },
       {
         id: "aal-other",
@@ -137,7 +137,7 @@ describe("BuildingAudit (QA 8.3 credit audit merge)", () => {
 
     const table = await screen.findByRole("table");
     expect(within(table).getByText("Credit added")).toBeInTheDocument();
-    expect(within(table).getByText(/design_architect/)).toBeInTheDocument();
+    expect(within(table).getByText(/design_architecture/)).toBeInTheDocument();
     expect(within(table).getByText("Credit status")).toBeInTheDocument();
     expect(within(table).getByText("active")).toBeInTheDocument();
     expect(within(table).getByText("flagged")).toBeInTheDocument();

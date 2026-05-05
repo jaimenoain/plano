@@ -96,6 +96,7 @@ interface ColdStartFeedProps {
   onLike: (reviewId: string) => void;
   onImageLike: (reviewId: string, imageId: string) => void;
   isDiscoveryLoading: boolean;
+  isEmptyFeed?: boolean;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -105,6 +106,7 @@ export function ColdStartFeed({
   onLike,
   onImageLike,
   isDiscoveryLoading,
+  isEmptyFeed = false,
 }: ColdStartFeedProps) {
   const featuredReview = discoveryReviews[0] ?? null;
   const remainingReviews = featuredReview ? discoveryReviews.slice(1) : discoveryReviews;
@@ -115,13 +117,15 @@ export function ColdStartFeed({
       {/* ── Section 1: Editorial "Discover" prompt ────────────────────────── */}
       <div className="border-t border-border-default pt-6">
         <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-4">
-          Get started
+          {isEmptyFeed ? "Feed is empty" : "Get started"}
         </p>
         <h2 className="text-2xl font-bold text-text-primary leading-tight mb-2">
-          Discover architecture<br />with friends
+          {isEmptyFeed ? "No recent activity" : "Discover architecture with friends"}
         </h2>
         <p className="text-sm text-text-secondary mb-5 max-w-sm">
-          Follow architects and enthusiasts to see their visits, ratings, and collections here.
+          {isEmptyFeed
+            ? "People you follow haven't posted recently. Explore the community for more inspiration."
+            : "Follow architects and enthusiasts to see their visits, ratings, and collections here."}
         </p>
         <Link
           to="/connect"

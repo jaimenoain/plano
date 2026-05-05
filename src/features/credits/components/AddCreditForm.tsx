@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { Copy, X } from "lucide-react";
 import { ZodError } from "zod";
 import {
   addBuildingCredit,
@@ -32,6 +32,7 @@ import {
   parseCreditNotifyEmails,
 } from "@/lib/parse-credit-notify-emails";
 import { cn } from "@/lib/utils";
+import { getBuildingUrl } from "@/utils/url";
 
 type SubmitStatus = "idle" | "pending" | "success" | "error";
 
@@ -63,7 +64,7 @@ function createEmptyRow(): CreditEntryRow {
     key: newRowKey(),
     person: null,
     company: null,
-    role: "design_architect",
+    role: "design_architectureure",
     roleOtherText: "",
     creditTier: "contributor",
     isLead: false,
@@ -184,11 +185,17 @@ function leadWarningForRow(
 
 export interface AddCreditFormProps {
   buildingId: string;
+  buildingName?: string | null;
   existingCredits: BuildingCreditWithEntities[];
   onRequestClose: () => void;
 }
 
-export function AddCreditForm({ buildingId, existingCredits, onRequestClose }: AddCreditFormProps) {
+export function AddCreditForm({
+  buildingId,
+  buildingName,
+  existingCredits,
+  onRequestClose,
+}: AddCreditFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [step, setStep] = useState<"form" | "notify">("form");
@@ -340,6 +347,15 @@ export function AddCreditForm({ buildingId, existingCredits, onRequestClose }: A
     setNotifyRemovedEmails((prev) => (prev.includes(email) ? prev : [...prev, email]));
   }, []);
 
+  const handleCopyInvitation = useCallback(() => {
+    const url = window.location.origin + getBuildingUrl(buildingId);
+    const name = buildingName?.trim() || "this building";
+    const text = `I've credited your work at ${name}, take a look here\n${url}`;
+
+    void navigator.clipboard.writeText(text);
+    toast({ title: "Message and link copied" });
+  }, [buildingId, buildingName, toast]);
+
   if (step === "notify") {
     return (
       <>
@@ -416,6 +432,29 @@ export function AddCreditForm({ buildingId, existingCredits, onRequestClose }: A
               </div>
             </div>
           ) : null}
+
+          <div className="space-y-3 rounded-none border border-border-default bg-surface-card p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-secondary">
+                Share manually
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-2 text-text-primary hover:bg-surface-muted"
+                onClick={handleCopyInvitation}
+              >
+                <Copy className="h-3.5 w-3.5" />
+                Copy link
+              </Button>
+            </div>
+            <div className="rounded-none border border-border-tertiary bg-surface-muted p-3 text-sm leading-relaxed text-text-primary">
+              <p>I&apos;ve credited your work at {buildingName?.trim() || "this building"}, take a look here:</p>
+              <p className="mt-1 break-all text-text-secondary underline">
+                {window.location.origin + getBuildingUrl(buildingId)}
+              </p>
+            </div>
+          </div>
 
           <div className="flex flex-col gap-2 border-t border-border-default pt-4">
             <Button

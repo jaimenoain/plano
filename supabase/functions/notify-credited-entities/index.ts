@@ -1,5 +1,5 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Resend } from 'https://esm.sh/resend@2.0.0'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.0'
+import { Resend } from 'https://esm.sh/resend@2.1.0'
 import React from 'https://esm.sh/react@18.3.1'
 import {
   CreditNotificationEmail,
@@ -8,7 +8,8 @@ import {
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-auth, Authorization, apikey',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 const MAX_CREDITS = 50
@@ -94,263 +95,295 @@ function oneEmbed<T>(v: T | T[] | null): T | null {
 }
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-
-  if (!supabaseUrl || !supabaseAnonKey || !serviceRoleKey) {
-    return new Response(JSON.stringify({ error: 'Server misconfiguration' }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
-  const authHeader = req.headers.get('Authorization')
-  if (!authHeader?.startsWith('Bearer ')) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
-  const jwt = authHeader.replace('Bearer ', '')
-  const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: authHeader } },
-    auth: { persistSession: false },
-  })
-
-  const {
-    data: { user },
-    error: userError,
-  } = await userClient.auth.getUser(jwt)
-
-  if (userError || !user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
-  let body: { creditIds?: unknown; emails?: unknown }
   try {
-    body = await req.json()
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    console.log('notify-credited-entities: request received', {
+      method: req.method,
+      url: req.url,
     })
-  }
 
-  const creditIdsRaw = body.creditIds
-  const emailsRaw = body.emails
-  if (!Array.isArray(creditIdsRaw) || !Array.isArray(emailsRaw)) {
-    return new Response(JSON.stringify({ error: 'Invalid payload' }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
-  const creditIds = creditIdsRaw.filter((id): id is string => typeof id === 'string').map((id) => id.trim())
-  const emailsIn = emailsRaw.filter((e): e is string => typeof e === 'string').map((e) => normalizeEmail(e))
-
-  if (creditIds.length === 0 || creditIds.length > MAX_CREDITS) {
-    return new Response(JSON.stringify({ error: 'Invalid credit list' }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
-  const emailSet = new Set<string>()
-  const emails: string[] = []
-  for (const e of emailsIn) {
-    if (!e || !isValidEmail(e)) continue
-    if (emailSet.has(e)) continue
-    emailSet.add(e)
-    emails.push(e)
-    if (emails.length >= MAX_EMAILS) break
-  }
-
-  if (emails.length === 0) {
-    return new Response(JSON.stringify({ error: 'Add at least one valid email' }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
-  const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } })
-
-  const { data: creditRows, error: crErr } = await admin
-    .from('building_credits')
-    .select(
-      `
-      id,
-      building_id,
-      added_by_user_id,
-      status,
-      role,
-      role_custom,
-      person:people(name),
-      company:companies(name)
-    `,
-    )
-    .in('id', creditIds)
-
-  if (crErr || !creditRows || creditRows.length !== creditIds.length) {
-    return new Response(JSON.stringify({ error: 'Credits not found' }), {
-      status: 404,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
-  const rows = creditRows as CreditRow[]
-  const buildingId = rows[0]?.building_id
-  for (const r of rows) {
-    if (r.building_id !== buildingId) {
-      return new Response(JSON.stringify({ error: 'Credits must belong to the same building' }), {
-        status: 400,
+    if (req.method !== 'POST') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
-    if (r.added_by_user_id !== user.id) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-    if (r.status === 'hidden') {
-      return new Response(JSON.stringify({ error: 'Credit is no longer active' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-  }
 
-  const { data: building, error: bErr } = await admin
-    .from('buildings')
-    .select('id, name, short_id, slug, main_image_url, community_preview_url')
-    .eq('id', buildingId)
-    .maybeSingle()
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-  if (bErr || !building) {
-    return new Response(JSON.stringify({ error: 'Building not found' }), {
-      status: 404,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
-  const siteUrl = (Deno.env.get('SITE_URL') ?? 'https://plano.app').replace(/\/$/, '')
-  const publicStorage =
-    Deno.env.get('PUBLIC_STORAGE_URL')?.replace(/\/$/, '') ??
-    `${supabaseUrl.replace(/\/$/, '')}/storage/v1/object/public`
-
-  const heroUrl =
-    toPublicImageUrl(building.main_image_url, publicStorage) ??
-    toPublicImageUrl(building.community_preview_url, publicStorage)
-
-  const buildingPath = buildingPagePath(building.short_id, building.slug)
-  const buildingPageUrl = `${siteUrl}${buildingPath}`
-
-  type Minted = { creditId: string; tokenHex: string; tokenHash: Uint8Array }
-  const minted: Minted[] = []
-
-  for (const r of rows) {
-    const { data: tokenHex, error: rpcErr } = await admin.rpc('generate_credit_removal_token', {
-      credit_id: r.id,
-    })
-
-    if (rpcErr || typeof tokenHex !== 'string' || !/^[0-9a-f]{64}$/i.test(tokenHex)) {
-      return new Response(JSON.stringify({ error: 'Could not prepare notification' }), {
+    if (!supabaseUrl || !supabaseAnonKey || !serviceRoleKey) {
+      console.error('notify-credited-entities: missing env vars')
+      return new Response(JSON.stringify({ error: 'Server misconfiguration' }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    const tokenBytes = hexToBytes(tokenHex.toLowerCase())
-    const tokenHash = await sha256(tokenBytes)
-    minted.push({ creditId: r.id, tokenHex: tokenHex.toLowerCase(), tokenHash })
-  }
-
-  const creditLines: CreditNotificationCreditLine[] = rows.map((r, i) => {
-    const person = oneEmbed(r.person)
-    const company = oneEmbed(r.company)
-    return {
-      roleLabel: formatRoleLabel(r.role, r.role_custom),
-      entityLine: formatEntityLine(person, company),
-      removeUrl: `${siteUrl}/remove-credit/${minted[i]!.tokenHex}`,
-    }
-  })
-
-  const resendKey = Deno.env.get('RESEND_API_KEY')
-  if (!resendKey) {
-    return new Response(JSON.stringify({ error: 'Email is not configured' }), {
-      status: 503,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
-  }
-
-  const resend = new Resend(resendKey)
-  const subject = `You've been credited on ${building.name} — Plano`
-
-  for (const email of emails) {
-    const recipientHash = await sha256Utf8(email)
-
-    try {
-      await resend.emails.send({
-        from: 'PLANO <hello@plano.app>',
-        to: [email],
-        subject,
-        react: React.createElement(CreditNotificationEmail, {
-          buildingName: building.name,
-          buildingImageUrl: heroUrl ?? null,
-          buildingPageUrl,
-          claimProfileUrl: siteUrl,
-          credits: creditLines,
-        }),
-      })
-    } catch (e) {
-      console.error('notify-credited-entities resend failed', e)
-      return new Response(JSON.stringify({ error: 'Could not send email' }), {
-        status: 502,
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.error('notify-credited-entities: missing or invalid auth header')
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
-    for (let i = 0; i < minted.length; i++) {
-      const m = minted[i]!
-      const { error: insErr } = await admin.from('credit_notification_log').insert({
-        credit_id: m.creditId,
-        recipient_hash: recipientHash,
-        token_hash: m.tokenHash,
+    const jwt = authHeader.replace('Bearer ', '')
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    })
+
+    const {
+      data: { user },
+      error: userError,
+    } = await userClient.auth.getUser(jwt)
+
+    if (userError || !user) {
+      console.error('notify-credited-entities: auth verification failed', userError)
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
-      if (insErr) {
-        console.error('credit_notification_log insert failed', insErr)
-        return new Response(JSON.stringify({ error: 'Could not record notification' }), {
-          status: 500,
+    }
+
+    console.log('notify-credited-entities: auth success', { userId: user.id })
+
+    let body: { creditIds?: unknown; emails?: unknown }
+    try {
+      body = await req.json()
+      console.log('notify-credited-entities: body received', body)
+    } catch (e) {
+      console.error('notify-credited-entities: failed to parse JSON body', e)
+      return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const creditIdsRaw = body.creditIds
+    const emailsRaw = body.emails
+    if (!Array.isArray(creditIdsRaw) || !Array.isArray(emailsRaw)) {
+      return new Response(JSON.stringify({ error: 'Invalid payload' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const creditIds = creditIdsRaw.filter((id): id is string => typeof id === 'string').map((id) => id.trim())
+    const emailsIn = emailsRaw.filter((e): e is string => typeof e === 'string').map((e) => normalizeEmail(e))
+
+    if (creditIds.length === 0 || creditIds.length > MAX_CREDITS) {
+      return new Response(JSON.stringify({ error: 'Invalid credit list' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const emailSet = new Set<string>()
+    const emails: string[] = []
+    for (const e of emailsIn) {
+      if (!e || !isValidEmail(e)) continue
+      if (emailSet.has(e)) continue
+      emailSet.add(e)
+      emails.push(e)
+      if (emails.length >= MAX_EMAILS) break
+    }
+
+    if (emails.length === 0) {
+      return new Response(JSON.stringify({ error: 'Add at least one valid email' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } })
+
+    console.log('notify-credited-entities: fetching credits', { count: creditIds.length })
+    const { data: creditRows, error: crErr } = await admin
+      .from('building_credits')
+      .select(
+        `
+        id,
+        building_id,
+        added_by_user_id,
+        status,
+        role,
+        role_custom,
+        person:people(name),
+        company:companies(name)
+      `,
+      )
+      .in('id', creditIds)
+
+    if (crErr || !creditRows || creditRows.length !== creditIds.length) {
+      console.error('notify-credited-entities: credits not found or query failed', { crErr, count: creditRows?.length })
+      return new Response(JSON.stringify({ error: 'Credits not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const rows = creditRows as CreditRow[]
+    const buildingId = rows[0]?.building_id
+    for (const r of rows) {
+      if (r.building_id !== buildingId) {
+        return new Response(JSON.stringify({ error: 'Credits must belong to the same building' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      if (r.added_by_user_id !== user.id) {
+        console.error('notify-credited-entities: ownership mismatch', { creditAddedBy: r.added_by_user_id, userId: user.id })
+        return new Response(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+      if (r.status === 'hidden') {
+        return new Response(JSON.stringify({ error: 'Credit is no longer active' }), {
+          status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         })
       }
     }
+
+    const { data: building, error: bErr } = await admin
+      .from('buildings')
+      .select('id, name, short_id, slug, main_image_url, community_preview_url')
+      .eq('id', buildingId)
+      .maybeSingle()
+
+    if (bErr || !building) {
+      console.error('notify-credited-entities: building not found', bErr)
+      return new Response(JSON.stringify({ error: 'Building not found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const siteUrl = (Deno.env.get('SITE_URL') ?? 'https://plano.app').replace(/\/$/, '')
+    const publicStorage =
+      Deno.env.get('PUBLIC_STORAGE_URL')?.replace(/\/$/, '') ??
+      `${supabaseUrl.replace(/\/$/, '')}/storage/v1/object/public`
+
+    const heroUrl =
+      toPublicImageUrl(building.main_image_url, publicStorage) ??
+      toPublicImageUrl(building.community_preview_url, publicStorage)
+
+    const buildingPath = buildingPagePath(building.short_id, building.slug)
+    const buildingPageUrl = `${siteUrl}${buildingPath}`
+
+    type Minted = { creditId: string; tokenHex: string; tokenHash: Uint8Array }
+    const minted: Minted[] = []
+
+    for (const r of rows) {
+      const { data: tokenHex, error: rpcErr } = await admin.rpc('generate_credit_removal_token', {
+        credit_id: r.id,
+      })
+
+      if (rpcErr || typeof tokenHex !== 'string' || !/^[0-9a-f]{64}$/i.test(tokenHex)) {
+        console.error('notify-credited-entities: rpc failed', rpcErr)
+        return new Response(JSON.stringify({ error: 'Could not prepare notification' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      const tokenBytes = hexToBytes(tokenHex.toLowerCase())
+      const tokenHash = await sha256(tokenBytes)
+      minted.push({ creditId: r.id, tokenHex: tokenHex.toLowerCase(), tokenHash })
+    }
+
+    const creditLines: CreditNotificationCreditLine[] = rows.map((r, i) => {
+      const person = oneEmbed(r.person)
+      const company = oneEmbed(r.company)
+      return {
+        roleLabel: formatRoleLabel(r.role, r.role_custom),
+        entityLine: formatEntityLine(person, company),
+        removeUrl: `${siteUrl}/remove-credit/${minted[i]!.tokenHex}`,
+      }
+    })
+
+    const resendKey = Deno.env.get('RESEND_API_KEY')
+    if (!resendKey) {
+      console.error('notify-credited-entities: missing RESEND_API_KEY')
+      return new Response(JSON.stringify({ error: 'Email is not configured' }), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const resend = new Resend(resendKey)
+    const subject = `You've been credited on ${building.name} — Plano`
+
+    for (const email of emails) {
+      const recipientHash = await sha256Utf8(email)
+
+      try {
+        console.log('notify-credited-entities: sending email to', email)
+        const { error: sendErr } = await resend.emails.send({
+          from: 'PLANO <hello@plano.app>',
+          to: [email],
+          subject,
+          react: React.createElement(CreditNotificationEmail, {
+            buildingName: building.name,
+            buildingImageUrl: heroUrl ?? null,
+            buildingPageUrl,
+            claimProfileUrl: siteUrl,
+            credits: creditLines,
+          }),
+        })
+
+        if (sendErr) {
+          console.error('notify-credited-entities: resend reported error', sendErr)
+          throw new Error('Resend failed: ' + JSON.stringify(sendErr))
+        }
+      } catch (e) {
+        console.error('notify-credited-entities: resend throw', e)
+        return new Response(JSON.stringify({ error: 'Could not send email' }), {
+          status: 502,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      for (let i = 0; i < minted.length; i++) {
+        const m = minted[i]!
+        const { error: insErr } = await admin.from('credit_notification_log').insert({
+          credit_id: m.creditId,
+          recipient_hash: recipientHash,
+          token_hash: m.tokenHash,
+        })
+        if (insErr) {
+          console.error('notify-credited-entities: log insert failed', insErr)
+          return new Response(JSON.stringify({ error: 'Could not record notification' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          })
+        }
+      }
+    }
+
+    console.log('notify-credited-entities: success', {
+      buildingId,
+      creditCount: rows.length,
+      recipientCount: emails.length,
+    })
+
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  } catch (err) {
+    console.error('notify-credited-entities: unexpected error', err)
+    return new Response(JSON.stringify({ error: 'An unexpected error occurred: ' + (err instanceof Error ? err.message : String(err)) }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   }
-
-  console.log('notify_credited_entities_sent', {
-    buildingId,
-    creditCount: rows.length,
-    recipientCount: emails.length,
-  })
-
-  return new Response(JSON.stringify({ ok: true }), {
-    status: 200,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  })
 })

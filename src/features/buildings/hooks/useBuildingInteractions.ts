@@ -30,7 +30,7 @@ type ProfileForHook = { role?: string | null } | null | undefined;
 
 // ─── Types (local to hook, mirrored from BuildingDetails) ────────────────────
 
-interface TopLink {
+export interface TopLink {
   link_id: string;
   url: string;
   title: string | null;

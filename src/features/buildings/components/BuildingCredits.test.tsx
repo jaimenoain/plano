@@ -36,7 +36,7 @@ const baseCredit = (over: Partial<BuildingCreditWithEntities>): BuildingCreditWi
   buildingId: "b1",
   personId: over.personId ?? null,
   companyId: over.companyId ?? null,
-  role: over.role ?? "design_architect",
+  role: over.role ?? "design_architecture",
   roleCustom: over.roleCustom ?? null,
   creditTier: over.creditTier ?? "primary",
   isLead: over.isLead ?? false,
@@ -238,19 +238,19 @@ describe("BuildingCredits (QA 5.2)", () => {
       baseCredit({
         id: "p1",
         creditTier: "primary",
-        role: "design_architect",
+        role: "design_architecture",
         person: { id: "a", name: "Primary Arch", slug: "pa" },
       }),
       baseCredit({
         id: "co1",
         creditTier: "contributor",
-        role: "structural_engineer",
+        role: "structural_engineering",
         person: { id: "b", name: "Contributor Eng", slug: "ce" },
       }),
       baseCredit({
         id: "an1",
         creditTier: "ancillary",
-        role: "landscape_architect",
+        role: "landscape_architecture",
         person: { id: "c", name: "Ancillary Land", slug: "al" },
       }),
     ];

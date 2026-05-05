@@ -30,7 +30,7 @@ function baseCredit(overrides: Partial<BuildingCreditWithEntities> & { id: strin
     buildingId: overrides.buildingId ?? "b1",
     personId: "p1",
     companyId: null,
-    role: overrides.role ?? "design_architect",
+    role: overrides.role ?? "design_architecture",
     roleCustom: null,
     creditTier: "primary",
     isLead: false,
@@ -107,7 +107,7 @@ describe("PersonDashboard (QA 9.1)", () => {
           baseCredit({
             id: "c1",
             buildingId: "b-same",
-            role: "structural_engineer",
+            role: "structural_engineering",
             yearFrom: 2015,
           }),
           {
@@ -127,7 +127,7 @@ describe("PersonDashboard (QA 9.1)", () => {
           baseCredit({
             id: "c2",
             buildingId: "b-same",
-            role: "design_architect",
+            role: "design_architecture",
             yearFrom: 2010,
             yearTo: 2012,
           }),
@@ -145,7 +145,7 @@ describe("PersonDashboard (QA 9.1)", () => {
           },
         ),
         mkItem(
-          baseCredit({ id: "c3", buildingId: "b-other", role: "design_architect" }),
+          baseCredit({ id: "c3", buildingId: "b-other", role: "design_architecture" }),
           {
             id: "b-other",
             name: "Other Hall",
@@ -199,7 +199,7 @@ describe("PersonDashboard (QA 9.1)", () => {
           baseCredit({
             id: "cy-old",
             buildingId: "b-old",
-            role: "design_architect",
+            role: "design_architecture",
             yearFrom: 2000,
           }),
           {
@@ -219,7 +219,7 @@ describe("PersonDashboard (QA 9.1)", () => {
           baseCredit({
             id: "cy-new",
             buildingId: "b-new",
-            role: "structural_engineer",
+            role: "structural_engineering",
             yearFrom: 2015,
           }),
           {
@@ -270,7 +270,7 @@ describe("PersonDashboard (QA 9.1)", () => {
           baseCredit({
             id: "c-co",
             buildingId: "b1",
-            role: "landscape_architect",
+            role: "landscape_architecture",
             company: { id: "co1", name: "Green Fields Ltd", slug: "green-fields" },
           }),
           {

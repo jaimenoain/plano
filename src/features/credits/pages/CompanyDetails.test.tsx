@@ -84,7 +84,7 @@ function mkCredit(
     buildingId: "b1",
     personId: "p1",
     companyId: "co1",
-    role: "design_architect",
+    role: "design_architecture",
     roleCustom: null,
     creditTier: "primary",
     isLead: true,
@@ -139,10 +139,10 @@ function buildLoaderData(): CompanyDetailsLoaderData {
   };
 
   const credits: CompanyCreditWithBuilding[] = [
-    mkCredit({ id: "c-design", role: "design_architect", buildingId: "b1" }),
+    mkCredit({ id: "c-design", role: "design_architecture", buildingId: "b1" }),
     mkCredit({
       id: "c-struct",
-      role: "structural_engineer",
+      role: "structural_engineering",
       buildingId: "b2",
       building: {
         id: "b2",

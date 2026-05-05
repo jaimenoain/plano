@@ -124,7 +124,7 @@ describe('useMapData', () => {
   it('should pass credit company and role filters to RPC', async () => {
     const filters = {
       creditCompany: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', name: 'Acme' },
-      creditRoles: ['structural_engineer', 'mep_engineer'],
+      creditRoles: ['structural_engineering', 'mep_engineering'],
     };
 
     const bounds = { north: 10, south: 0, east: 10, west: 0 };
@@ -141,7 +141,7 @@ describe('useMapData', () => {
       expect.objectContaining({
         filter_criteria: expect.objectContaining({
           credit_company_id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
-          credit_roles: ['structural_engineer', 'mep_engineer'],
+          credit_roles: ['structural_engineering', 'mep_engineering'],
         }),
       })
     );

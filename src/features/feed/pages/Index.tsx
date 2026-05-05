@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo } from "react";
 import { useNavigate, type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { ColdStartFeed } from "../components/ColdStartFeed";
 import { FeedCollectionCard } from "../components/FeedCollectionCard";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -113,6 +115,20 @@ export default function Index() {
       }
     }
   }, [user, authLoading, navigate]);
+
+  const { data: followingCount } = useQuery({
+    queryKey: ["following-count", user?.id],
+    queryFn: async () => {
+      if (!user) return 0;
+      const { count, error } = await supabase
+        .from("follows")
+        .select("*", { count: "exact", head: true })
+        .eq("follower_id", user.id);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!user,
+  });
 
   const socialFeed = useFeed({ showGroupActivity: true });
   /** Defer secondary RPCs until the primary feed returns — cuts parallel contention on first paint. */
@@ -247,6 +263,7 @@ export default function Index() {
                   onLike={discoveryFeed.toggleLike}
                   onImageLike={discoveryFeed.toggleImageLike}
                   isDiscoveryLoading={discoveryFeed.isLoading}
+                  isEmptyFeed={(followingCount ?? 0) > 0}
                 />
                 {loadMoreActive && (
                   <LoadMoreTrigger

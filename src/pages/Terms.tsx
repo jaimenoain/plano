@@ -132,7 +132,7 @@ export default function Terms() {
         <section className="space-y-4">
           <h2 className="text-2xl font-semibold">9. Limitation of Liability</h2>
           <p>
-            In no event shall Plano, its developers, or affiliates be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Service.
+            In no event shall Plano, its developments, or affiliates be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Service.
           </p>
         </section>
 

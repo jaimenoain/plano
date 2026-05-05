@@ -216,7 +216,7 @@ describe("CompanyDashboard (QA 9.2)", () => {
         mkItem(
           baseCredit({
             id: "c1",
-            role: "structural_engineer",
+            role: "structural_engineering",
             displayOrder: 1,
             buildingId: "b1",
             building: baseBuilding("b1", "Bridge Hall"),
@@ -226,7 +226,7 @@ describe("CompanyDashboard (QA 9.2)", () => {
         mkItem(
           baseCredit({
             id: "c2",
-            role: "design_architect",
+            role: "design_architecture",
             displayOrder: 0,
             buildingId: "b2",
             building: baseBuilding("b2", "Glass Tower"),
@@ -259,7 +259,7 @@ describe("CompanyDashboard (QA 9.2)", () => {
       },
     ];
     mocks.portfolioByTier = {
-      primary: [mkItem(baseCredit({ id: "c1", role: "design_architect" }))],
+      primary: [mkItem(baseCredit({ id: "c1", role: "design_architecture" }))],
       contributor: [],
       ancillary: [],
     };
@@ -294,7 +294,7 @@ describe("CompanyDashboard (QA 9.2)", () => {
       },
     ];
     mocks.portfolioByTier = {
-      primary: [mkItem(baseCredit({ id: "c1", role: "design_architect" }))],
+      primary: [mkItem(baseCredit({ id: "c1", role: "design_architecture" }))],
       contributor: [],
       ancillary: [],
     };
@@ -309,11 +309,11 @@ describe("CompanyDashboard (QA 9.2)", () => {
   it("refetches portfolio with role filter when user picks a role", async () => {
     mocks.portfolioByTier = {
       primary: [
-        mkItem(baseCredit({ id: "c1", role: "design_architect", buildingId: "b1", building: baseBuilding("b1", "Only Design") })),
+        mkItem(baseCredit({ id: "c1", role: "design_architecture", buildingId: "b1", building: baseBuilding("b1", "Only Design") })),
         mkItem(
           baseCredit({
             id: "c2",
-            role: "structural_engineer",
+            role: "structural_engineering",
             buildingId: "b2",
             building: baseBuilding("b2", "Only Structural"),
           }),
@@ -335,7 +335,7 @@ describe("CompanyDashboard (QA 9.2)", () => {
     await user.click(within(listbox).getByRole("option", { name: "Structural Engineer" }));
 
     await waitFor(() => {
-      expect(mocks.getCompanyPortfolio).toHaveBeenCalledWith("co-1", "structural_engineer");
+      expect(mocks.getCompanyPortfolio).toHaveBeenCalledWith("co-1", "structural_engineering");
     });
     expect(screen.queryByRole("link", { name: "Only Design" })).toBeNull();
     expect(screen.getByRole("link", { name: "Only Structural" })).toBeInTheDocument();
@@ -353,7 +353,7 @@ describe("CompanyDashboard (QA 9.2)", () => {
           mkItem(
             baseCredit({
               id: companyId === "co-a" ? "ca1" : "cb1",
-              role: "design_architect",
+              role: "design_architecture",
               buildingId: companyId === "co-a" ? "ba1" : "bb1",
               companyId,
               company: {

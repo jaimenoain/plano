@@ -41,7 +41,7 @@ describe("useURLMapState (QA 10.2 — credit filter URL params)", () => {
     render(
       <MemoryRouter
         initialEntries={[
-          "/search?creditCompany=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee&creditRoles=structural_engineer,mep_engineer",
+          "/search?creditCompany=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee&creditRoles=structural_engineering,mep_engineering",
         ]}
       >
         <Routes>
@@ -51,7 +51,7 @@ describe("useURLMapState (QA 10.2 — credit filter URL params)", () => {
     );
 
     expect(screen.getByTestId("credit-company-id")).toHaveTextContent("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
-    expect(screen.getByTestId("credit-roles")).toHaveTextContent("structural_engineer|mep_engineer");
+    expect(screen.getByTestId("credit-roles")).toHaveTextContent("structural_engineering|mep_engineering");
   });
 
   it("leaves credit filters empty when params absent", () => {

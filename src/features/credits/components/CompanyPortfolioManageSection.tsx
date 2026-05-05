@@ -468,7 +468,7 @@ function AddCompanyCreditDialog({
   const [search, setSearch] = useState("");
   const debounced = useDebounce(search, 300);
   const [picked, setPicked] = useState<BuildingPick | null>(null);
-  const [role, setRole] = useState<CreditRole>("design_architect");
+  const [role, setRole] = useState<CreditRole>("design_architectureure");
   const [roleOther, setRoleOther] = useState("");
   const [creditTier, setCreditTier] = useState<CreditTier>("contributor");
   const [isLead, setIsLead] = useState(false);
@@ -493,7 +493,7 @@ function AddCompanyCreditDialog({
   const resetForm = () => {
     setSearch("");
     setPicked(null);
-    setRole("design_architect");
+    setRole("design_architectureure");
     setRoleOther("");
     setCreditTier("contributor");
     setIsLead(false);

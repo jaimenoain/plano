@@ -53,7 +53,7 @@ const baseCredit = (over: Partial<BuildingCreditWithEntities>): BuildingCreditWi
   buildingId: "b1",
   personId: over.personId ?? null,
   companyId: over.companyId ?? null,
-  role: over.role ?? "design_architect",
+  role: over.role ?? "design_architecture",
   roleCustom: over.roleCustom ?? null,
   creditTier: over.creditTier ?? "primary",
   isLead: over.isLead ?? false,
@@ -145,7 +145,7 @@ describe("AddCreditForm", () => {
       buildingId: "b1",
       personId: "p1",
       companyId: null,
-      role: "design_architect",
+      role: "design_architecture",
     });
     expect(await screen.findByRole("heading", { name: /notify credited people/i })).toBeTruthy();
   });
@@ -176,7 +176,7 @@ describe("AddCreditForm", () => {
       baseCredit({
         id: "lead-row",
         isLead: true,
-        role: "design_architect",
+        role: "design_architecture",
         person: { id: "p2", name: "Existing Lead", slug: "existing-lead" },
       }),
     ];

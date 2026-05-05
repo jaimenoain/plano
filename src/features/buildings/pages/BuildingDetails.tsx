@@ -24,6 +24,7 @@ import {
   EyeOff, Plus, X, Medal,
   Pencil, BadgeCheck, ChevronDown, Share2, Navigation, Info,
 } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -78,7 +79,7 @@ import {
   SITE_URL,
 } from "@/features/buildings/utils/structuredData";
 import { cn } from "@/lib/utils";
-import { useBuildingInteractions } from "@/features/buildings/hooks/useBuildingInteractions";
+import { useBuildingInteractions, type TopLink } from "@/features/buildings/hooks/useBuildingInteractions";
 import {
   buildingEntryToFeedReview,
   type BuildingSummaryForFeed,
@@ -452,7 +453,10 @@ function NotePhotoGrid({
               count === 1 ? "aspect-[16/10]" : "aspect-square",
               isThreeAndFirst && "col-span-2 aspect-[21/9]",
             )}
-            onClick={() => onImageClick(img)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onImageClick(img);
+            }}
           >
             {url && (
               <img
@@ -987,9 +991,31 @@ function BuildingInfoSection({
 function BuildingInfoTab({
   building,
   buildingCredits,
+  topLinks,
+  user,
+  showLinkEditor,
+  setShowLinkEditor,
+  newLinkUrl,
+  setNewLinkUrl,
+  newLinkTitle,
+  setNewLinkTitle,
+  handleAddLink,
+  handleLinkLike,
+  likedLinkIds,
 }: {
   building: BuildingDetails;
   buildingCredits: import("@/features/credits/types").BuildingCreditWithEntities[];
+  topLinks: TopLink[];
+  user: User | null;
+  showLinkEditor: boolean;
+  setShowLinkEditor: (v: boolean) => void;
+  newLinkUrl: string;
+  setNewLinkUrl: (v: string) => void;
+  newLinkTitle: string;
+  setNewLinkTitle: (v: string) => void;
+  handleAddLink: () => void;
+  handleLinkLike: (linkId: string) => Promise<void>;
+  likedLinkIds: Set<string>;
 }) {
   const primaryCredits = visiblePrimaryCredits(buildingCredits);
   const aliases = (building.aliases ?? []).filter((a): a is string => typeof a === "string" && a.trim().length > 0);
@@ -1188,6 +1214,127 @@ function BuildingInfoTab({
           </p>
         </section>
       )}
+
+      {/* Links & resources */}
+      <section
+        className="py-12 border-t border-border-default"
+        aria-labelledby="building-resources-heading"
+      >
+        <header className="mb-8 space-y-2">
+          <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-text-secondary">
+            References
+          </p>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-2">
+              <h3
+                id="building-resources-heading"
+                className="font-display text-xl font-bold tracking-tight text-text-primary sm:text-2xl"
+              >
+                Links &amp; resources
+              </h3>
+              <p className="max-w-xl text-sm leading-relaxed text-text-secondary">
+                Articles, project pages, and references that help verify or explore this building.
+              </p>
+            </div>
+            {user ? (
+              <button
+                type="button"
+                onClick={() => setShowLinkEditor(!showLinkEditor)}
+                className="shrink-0 text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+              >
+                {showLinkEditor ? "Close" : "Add link →"}
+              </button>
+            ) : null}
+          </div>
+        </header>
+
+        {showLinkEditor && user && (
+          <div className="mb-8 flex flex-col gap-2 rounded-none border border-border-default bg-surface-muted p-4 sm:flex-row sm:items-center">
+            <Input
+              value={newLinkUrl}
+              onChange={(e) => setNewLinkUrl(e.target.value)}
+              placeholder="https://"
+              className="h-10 flex-1 border-border-default bg-surface-card text-sm"
+            />
+            <Input
+              value={newLinkTitle}
+              onChange={(e) => setNewLinkTitle(e.target.value)}
+              placeholder="Title (optional)"
+              className="h-10 flex-1 border-border-default bg-surface-card text-sm"
+            />
+            <Button
+              size="sm"
+              className="h-10 shrink-0 sm:px-6"
+              onClick={() => void handleAddLink()}
+              disabled={!newLinkUrl.trim()}
+            >
+              Add
+            </Button>
+          </div>
+        )}
+
+        {topLinks.length > 0 ? (
+          <ul className="space-y-3">
+            {topLinks.map((link) => {
+              let domain = "";
+              try {
+                domain = new URL(link.url).hostname;
+              } catch {
+                /* ignore */
+              }
+              return (
+                <li key={link.link_id}>
+                  <div className="group flex items-center justify-between gap-4 rounded-none border border-border-default bg-surface-card px-4 py-4 shadow-sm transition-colors hover:border-border-strong lg:px-5">
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="min-w-0 flex-1"
+                    >
+                      <div className="truncate text-sm font-semibold text-text-primary group-hover:underline underline-offset-4">
+                        {link.title || domain}
+                      </div>
+                      <div className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-text-secondary">
+                        {domain}
+                      </div>
+                    </a>
+                    <div className="flex shrink-0 items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          void handleLinkLike(link.link_id);
+                        }}
+                        className={cn(
+                          "flex items-center gap-1 text-[10px] font-bold transition-colors",
+                          likedLinkIds.has(link.link_id)
+                            ? "text-text-primary"
+                            : "text-text-disabled hover:text-text-primary",
+                        )}
+                      >
+                        <Heart
+                          className={cn(
+                            "h-3 w-3",
+                            likedLinkIds.has(link.link_id) && "fill-current",
+                          )}
+                        />
+                        {link.like_count}
+                      </button>
+                      <ExternalLink className="h-3.5 w-3.5 text-text-disabled transition-colors group-hover:text-text-primary" />
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <div className="rounded-none border border-dashed border-border-strong bg-surface-muted/40 px-5 py-10 text-center">
+            <p className="text-sm text-text-secondary">
+              No external links yet—add articles, competition pages, or the architect&apos;s project URL.
+            </p>
+          </div>
+        )}
+      </section>
 
     </div>
   );
@@ -2097,7 +2244,21 @@ export default function BuildingDetails() {
 
               {/* ════ INFO TAB ════ */}
               {activeTab === "info" && (
-                <BuildingInfoTab building={building} buildingCredits={buildingCredits} />
+                <BuildingInfoTab
+                  building={building}
+                  buildingCredits={buildingCredits}
+                  topLinks={topLinks}
+                  user={user}
+                  showLinkEditor={showLinkEditor}
+                  setShowLinkEditor={setShowLinkEditor}
+                  newLinkUrl={newLinkUrl}
+                  setNewLinkUrl={setNewLinkUrl}
+                  newLinkTitle={newLinkTitle}
+                  setNewLinkTitle={setNewLinkTitle}
+                  handleAddLink={handleAddLink}
+                  handleLinkLike={handleLinkLike}
+                  likedLinkIds={likedLinkIds}
+                />
               )}
 
               {/* ════ CREDITS TAB ════ */}
@@ -2110,126 +2271,6 @@ export default function BuildingDetails() {
                     isAuthenticated={Boolean(user)}
                     isAdmin={isCreditsAdmin}
                   />
-
-                  <section
-                    className="border-t border-border-default pt-12 lg:pt-16"
-                    aria-labelledby="building-resources-heading"
-                  >
-                    <header className="mb-8 space-y-2">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-text-secondary">
-                        References
-                      </p>
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="space-y-2">
-                          <h3
-                            id="building-resources-heading"
-                            className="font-display text-xl font-bold tracking-tight text-text-primary sm:text-2xl"
-                          >
-                            Links &amp; resources
-                          </h3>
-                          <p className="max-w-xl text-sm leading-relaxed text-text-secondary">
-                            Articles, project pages, and references that help verify or explore this building.
-                          </p>
-                        </div>
-                        {user ? (
-                          <button
-                            type="button"
-                            onClick={() => setShowLinkEditor(!showLinkEditor)}
-                            className="shrink-0 text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-                          >
-                            {showLinkEditor ? "Close" : "Add link →"}
-                          </button>
-                        ) : null}
-                      </div>
-                    </header>
-
-                    {showLinkEditor && user && (
-                      <div className="mb-8 flex flex-col gap-2 rounded-none border border-border-default bg-surface-muted p-4 sm:flex-row sm:items-center">
-                        <Input
-                          value={newLinkUrl}
-                          onChange={(e) => setNewLinkUrl(e.target.value)}
-                          placeholder="https://"
-                          className="h-10 flex-1 border-border-default bg-surface-card text-sm"
-                        />
-                        <Input
-                          value={newLinkTitle}
-                          onChange={(e) => setNewLinkTitle(e.target.value)}
-                          placeholder="Title (optional)"
-                          className="h-10 flex-1 border-border-default bg-surface-card text-sm"
-                        />
-                        <Button
-                          size="sm"
-                          className="h-10 shrink-0 sm:px-6"
-                          onClick={() => void handleAddLink()}
-                          disabled={!newLinkUrl.trim()}
-                        >
-                          Add
-                        </Button>
-                      </div>
-                    )}
-
-                    {topLinks.length > 0 ? (
-                      <ul className="space-y-3">
-                        {topLinks.map((link) => {
-                          let domain = "";
-                          try {
-                            domain = new URL(link.url).hostname;
-                          } catch {
-                            /* ignore */
-                          }
-                          return (
-                            <li key={link.link_id}>
-                              <div className="group flex items-center justify-between gap-4 rounded-none border border-border-default bg-surface-card px-4 py-4 shadow-sm transition-colors hover:border-border-strong lg:px-5">
-                                <a
-                                  href={link.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="min-w-0 flex-1"
-                                >
-                                  <div className="truncate text-sm font-semibold text-text-primary group-hover:underline underline-offset-4">
-                                    {link.title || domain}
-                                  </div>
-                                  <div className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-text-secondary">
-                                    {domain}
-                                  </div>
-                                </a>
-                                <div className="flex shrink-0 items-center gap-3">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      void handleLinkLike(link.link_id);
-                                    }}
-                                    className={cn(
-                                      "flex items-center gap-1 text-[10px] font-bold transition-colors",
-                                      likedLinkIds.has(link.link_id)
-                                        ? "text-text-primary"
-                                        : "text-text-disabled hover:text-text-primary",
-                                    )}
-                                  >
-                                    <Heart
-                                      className={cn(
-                                        "h-3 w-3",
-                                        likedLinkIds.has(link.link_id) && "fill-current",
-                                      )}
-                                    />
-                                    {link.like_count}
-                                  </button>
-                                  <ExternalLink className="h-3.5 w-3.5 text-text-disabled transition-colors group-hover:text-text-primary" />
-                                </div>
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    ) : (
-                      <div className="rounded-none border border-dashed border-border-strong bg-surface-muted/40 px-5 py-10 text-center">
-                        <p className="text-sm text-text-secondary">
-                          No external links yet—add articles, competition pages, or the architect&apos;s project URL.
-                        </p>
-                      </div>
-                    )}
-                  </section>
                 </div>
               )}
 
@@ -2415,7 +2456,8 @@ export default function BuildingDetails() {
                             return (
                               <div
                                 key={post.id}
-                                className="border border-border-default bg-surface-muted/30 group/note overflow-hidden transition-all duration-200 hover:border-border-strong hover:bg-surface-muted/50"
+                                className="border border-border-default bg-surface-muted/30 group/note overflow-hidden transition-all duration-200 hover:border-border-strong hover:bg-surface-muted/50 cursor-pointer"
+                                onClick={() => void navigate(`/building/${building.id}/note/${post.id}/edit`)}
                               >
                                 {/* Card header */}
                                 <div className="flex items-center justify-between px-3 py-2 border-b border-border-default bg-surface-muted/20">
@@ -2430,7 +2472,10 @@ export default function BuildingDetails() {
                                     )}
                                   </div>
                                   <button
-                                    onClick={() => void navigate(`/building/${building.id}/note/${post.id}/edit`)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      void navigate(`/building/${building.id}/note/${post.id}/edit`);
+                                    }}
                                     className="flex-shrink-0 p-1.5 rounded-none hover:bg-surface-default transition-colors opacity-40 group-hover/note:opacity-100"
                                     title="Edit this note"
                                   >

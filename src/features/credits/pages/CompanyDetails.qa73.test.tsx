@@ -85,7 +85,7 @@ function mkCredit(
     buildingId: "b1",
     personId: "p1",
     companyId: "co1",
-    role: "design_architect",
+    role: "design_architecture",
     roleCustom: null,
     creditTier: "primary",
     isLead: true,

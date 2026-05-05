@@ -834,6 +834,7 @@ export function BuildingCredits({
             {addOpen ? (
               <AddCreditForm
                 buildingId={buildingId}
+                buildingName={buildingName}
                 existingCredits={credits}
                 onRequestClose={() => setAddOpen(false)}
               />

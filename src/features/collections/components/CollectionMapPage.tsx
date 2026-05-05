@@ -174,7 +174,7 @@ function matchesSavedPlacesStatusFilter(
 
 // Note: The shape returned from Supabase for collection items is documented here
 // for reference only. We no longer use this interface directly in code, but keep
-// it for developers working with the underlying SQL/selects.
+// it for developments working with the underlying SQL/selects.
 // type CollectionItemResponse = { ... }
 
 /**
