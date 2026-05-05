@@ -54,6 +54,9 @@ Disallow: /
 User-agent: GPTBot
 Disallow: /
 
+User-agent: GPTBot-User
+Disallow: /
+
 User-agent: CCBot
 Disallow: /
 
@@ -63,10 +66,43 @@ Disallow: /
 User-agent: Claude-Web
 Disallow: /
 
+User-agent: ClaudeBot
+Disallow: /
+
 User-agent: cohere-ai
 Disallow: /
 
 User-agent: Google-Extended
 Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: DataForSeoBot
+Disallow: /
+
+User-agent: ImagesiftBot
+Disallow: /
+
+User-agent: omgili
+Disallow: /
+
+User-agent: omgilibot
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /building
+Disallow: /architecture
+Disallow: /person
+Disallow: /company
 
 Sitemap: https://plano.app/sitemap.xml
