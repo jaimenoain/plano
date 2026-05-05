@@ -1,7 +1,7 @@
 import { useCallback, useReducer, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, ChevronDown, BadgeCheck, Flag, Users } from "lucide-react";
+import { ExternalLink, ChevronDown, BadgeCheck, Flag, Users, User, Building2 } from "lucide-react";
 import type { BuildingCreditWithEntities, CreditRole, CreditTier, FlagReason } from "@/features/credits/types";
 import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
 import { visiblePrimaryCredits } from "@/features/credits/buildingCreditDisplay";
@@ -293,7 +293,7 @@ function CreditFlagTrigger({
       type="button"
       variant="ghost"
       size="icon"
-      className="h-7 w-7 shrink-0 text-text-disabled hover:text-text-secondary"
+      className="h-7 w-7 shrink-0 text-text-disabled hover:text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity"
       aria-label="Report issue with this credit"
     >
       <Flag className="h-3.5 w-3.5" aria-hidden />
@@ -307,7 +307,7 @@ function CreditFlagTrigger({
           type="button"
           variant="ghost"
           size="icon"
-          className="h-7 w-7 shrink-0 text-text-disabled hover:text-text-secondary"
+          className="h-7 w-7 shrink-0 text-text-disabled hover:text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity"
           aria-label="Report issue with this credit"
           onClick={() => setOpen(true)}
         >
@@ -391,6 +391,7 @@ function BuildingCreditRow({
   return (
     <div
       className={cn(
+        "group",
         isSpotlight
           ? "rounded-none border border-border-default bg-surface-card p-8 lg:p-10 shadow-sm"
           : "rounded-none border border-border-default bg-surface-card p-4 shadow-sm",
@@ -410,10 +411,20 @@ function BuildingCreditRow({
           )}
         >
           <AvatarImage src={avatarSrc} alt={initials} />
-          <AvatarFallback
-            className={cn("rounded-none font-medium", isSpotlight ? "text-lg" : "text-xs")}
-          >
-            {initials}
+          <AvatarFallback className="rounded-none bg-surface-subtle">
+            {credit.company && !credit.person ? (
+              <Building2
+                className={cn("text-text-disabled", isSpotlight ? "h-8 w-8" : "h-4 w-4")}
+                strokeWidth={1.5}
+                aria-hidden
+              />
+            ) : (
+              <User
+                className={cn("text-text-disabled", isSpotlight ? "h-8 w-8" : "h-4 w-4")}
+                strokeWidth={1.5}
+                aria-hidden
+              />
+            )}
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1 w-full">
