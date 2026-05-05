@@ -70,7 +70,10 @@ export function YourContacts() {
 
   useEffect(() => {
     const fetchContacts = async () => {
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
         const { data: followingRefs } = await supabase
@@ -122,7 +125,8 @@ export function YourContacts() {
         } else {
           setFollowers([]);
         }
-      } catch (_error) {
+      } catch (err) {
+        console.error("[YourContacts] Error fetching contacts:", err);
       } finally {
         setLoading(false);
       }

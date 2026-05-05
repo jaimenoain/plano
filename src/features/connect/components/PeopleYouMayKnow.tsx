@@ -39,7 +39,10 @@ export function PeopleYouMayKnow() {
 
   useEffect(() => {
     const fetchSuggestions = async () => {
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
         const { data: followingData } = await supabase
@@ -91,8 +94,8 @@ export function PeopleYouMayKnow() {
         } else {
           setSuggestions(candidates);
         }
-      } catch (_err) {
-        void _err;
+      } catch (err) {
+        console.error("[PeopleYouMayKnow] Error fetching suggestions:", err);
       } finally {
         setLoading(false);
       }

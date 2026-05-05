@@ -1,7 +1,10 @@
 import { type MetaFunction } from "react-router";
+import { useEffect } from "react";
+import { useNavigate } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PeopleYouMayKnow } from "@/features/connect/components/PeopleYouMayKnow";
 import { YourContacts } from "@/features/connect/components/YourContacts";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 export const meta: MetaFunction = () => [
   { title: "Connect | Plano" },
@@ -9,6 +12,19 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function Connect() {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
+
+  if (authLoading || !user) {
+    return null;
+  }
+
   return (
     <div className="w-full">
       <AppLayout title="Connect" showLogo={false}>

@@ -547,7 +547,7 @@ function TierRoleSections({
   const inner = (
     <>
       {showTierHeading ? (
-        <header className="mb-6 space-y-2">
+        <header className="mb-6 space-y-2 lg:mb-8">
           <h3 className="text-[10px] font-medium uppercase tracking-[0.22em] text-text-secondary">
             {tierTitle}
           </h3>
@@ -580,7 +580,7 @@ function TierRoleSections({
   );
 
   return (
-    <section className="first:mt-0 min-w-0" aria-label={tierTitle}>
+    <section className="min-w-0 max-w-3xl" aria-label={tierTitle}>
       {isContributorPanel ? (
         <div className="rounded-none border border-border-default bg-surface-muted p-6 lg:p-8">
           {inner}
@@ -668,8 +668,6 @@ export function BuildingCredits({
   );
   const { primary, contributor, ancillary } = groupByTier(visibleCredits);
   const { sessionIds, markAndBump } = useSessionFlaggedCreditBump();
-
-  const hasBothTiers = primary.length > 0 && contributor.length > 0;
 
   const spotlightCredit =
     visibleCredits.length === 1 && visibleCredits[0].creditTier !== "ancillary"
@@ -767,12 +765,7 @@ export function BuildingCredits({
         </>
       ) : (
         <>
-          <div
-            className={cn(
-              "grid grid-cols-1 gap-12",
-              hasBothTiers && "lg:grid-cols-2 lg:gap-x-12 xl:gap-x-16",
-            )}
-          >
+          <div className="space-y-12 lg:space-y-16">
             <TierRoleSections
               tier="primary"
               credits={primary}
@@ -789,7 +782,7 @@ export function BuildingCredits({
             />
           </div>
           {ancillary.length > 0 ? (
-            <div className="mt-12">
+            <div className="mt-12 max-w-3xl">
               <Collapsible open={ancillaryOpen} onOpenChange={setAncillaryOpen}>
                 <CollapsibleTrigger
                   type="button"
