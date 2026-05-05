@@ -169,7 +169,7 @@ toast.error("Failed to load buildings");
       `,
       )
       .eq("building_id", building.id)
-      .eq("role", "design_architectureure")
+      .eq("role", "design_architecture")
       .eq("credit_tier", "primary")
       .in("status", ["active", "verified"])
       .order("display_order", { ascending: true });

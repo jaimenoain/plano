@@ -47,7 +47,7 @@ export default function EditBuilding() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState<CreditRole>("design_architectureure");
+  const [role, setRole] = useState<CreditRole>("design_architecture");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialValues, setInitialValues] = useState<BuildingFormData | null>(null);
   const [locationData, setLocationData] = useState<LocationData | null>(null);
@@ -116,7 +116,7 @@ export default function EditBuilding() {
         `,
         )
         .eq("building_id", data.id)
-        .eq("role", "design_architectureure")
+        .eq("role", "design_architecture")
         .eq("credit_tier", "primary")
         .in("status", ["active", "verified"])
         .order("display_order", { ascending: true });

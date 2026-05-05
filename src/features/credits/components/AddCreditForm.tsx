@@ -64,7 +64,7 @@ function createEmptyRow(): CreditEntryRow {
     key: newRowKey(),
     person: null,
     company: null,
-    role: "design_architectureure",
+    role: "design_architecture",
     roleOtherText: "",
     creditTier: "contributor",
     isLead: false,
