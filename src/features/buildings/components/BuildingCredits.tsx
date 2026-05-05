@@ -82,20 +82,19 @@ function sortRowsInRole(rows: BuildingCreditWithEntities[]): BuildingCreditWithE
   });
 }
 
-function groupTierByRole(credits: BuildingCreditWithEntities[]): Map<CreditRole, BuildingCreditWithEntities[]> {
-  const map = new Map<CreditRole, BuildingCreditWithEntities[]>();
+function groupTierByRole(credits: BuildingCreditWithEntities[]): Map<string, BuildingCreditWithEntities[]> {
+  const map = new Map<string, BuildingCreditWithEntities[]>();
   for (const c of credits) {
-    const list = map.get(c.role) ?? [];
+    const label = formatCreditRoleLabel(c.role, c.roleCustom);
+    const list = map.get(label) ?? [];
     list.push(c);
-    map.set(c.role, list);
+    map.set(label, list);
   }
-  const roles = [...map.keys()].sort((a, b) =>
-    formatCreditRoleLabel(a, null).localeCompare(formatCreditRoleLabel(b, null)),
-  );
-  const ordered = new Map<CreditRole, BuildingCreditWithEntities[]>();
-  for (const r of roles) {
-    const items = map.get(r);
-    if (items) ordered.set(r, sortRowsInRole(items));
+  const labels = [...map.keys()].sort((a, b) => a.localeCompare(b));
+  const ordered = new Map<string, BuildingCreditWithEntities[]>();
+  for (const label of labels) {
+    const items = map.get(label);
+    if (items) ordered.set(label, sortRowsInRole(items));
   }
   return ordered;
 }
@@ -557,10 +556,10 @@ function TierRoleSections({
         </header>
       ) : null}
       <div className="space-y-8">
-        {[...byRole.entries()].map(([role, rows]) => (
-          <div key={role}>
+        {[...byRole.entries()].map(([label, rows]) => (
+          <div key={label}>
             <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-primary">
-              {formatCreditRoleLabel(role, rows[0]?.roleCustom ?? null)}
+              {label}
             </h4>
             <div className="space-y-3">
               {rows.map((c) => (
