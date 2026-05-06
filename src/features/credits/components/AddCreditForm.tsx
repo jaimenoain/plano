@@ -284,7 +284,7 @@ export function AddCreditForm({
               : r,
           ),
         );
-      } catch (e) {
+        console.error("AddCreditForm: submission error", e);
         apiFailures += 1;
         let message = "Could not save this credit";
         if (e instanceof ZodError) {

@@ -375,19 +375,24 @@ export async function addBuildingCredit(input: AddBuildingCreditInput): Promise<
     added_by_user_id: user.id,
   };
 
+  console.log("addBuildingCredit: inserting", insertRow);
+
   const { data: row, error } = await supabase
     .from("building_credits")
     .insert(insertRow)
     .select(
       `
       *,
-      person:people(id, name, slug),
-      company:companies(id, name, slug)
+      person:people(id, name, slug, avatar_url),
+      company:companies(id, name, slug, logo_url)
     `
     )
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("addBuildingCredit: error", error);
+    throw error;
+  }
   const mapped = mapCreditRow(row as CreditRow);
   await insertEntityAuditLog({
     actionType: "credit_added",
