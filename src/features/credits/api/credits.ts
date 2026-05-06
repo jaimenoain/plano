@@ -375,7 +375,6 @@ export async function addBuildingCredit(input: AddBuildingCreditInput): Promise<
     added_by_user_id: user.id,
   };
 
-  console.log("addBuildingCredit: inserting", insertRow);
 
   const { data: row, error } = await supabase
     .from("building_credits")
@@ -383,17 +382,29 @@ export async function addBuildingCredit(input: AddBuildingCreditInput): Promise<
     .select(
       `
       *,
-      person:people(id, name, slug, avatar_url),
-      company:companies(id, name, slug, logo_url)
+      people(id, name, slug, avatar_url),
+      companies(id, name, slug, logo_url)
     `
     )
     .single();
 
   if (error) {
-    console.error("addBuildingCredit: error", error);
-    throw error;
+    console.error("addBuildingCredit: database error", error);
+    throw new Error(error.message || "Failed to save credit to the database");
   }
-  const mapped = mapCreditRow(row as CreditRow);
+
+  if (!row) {
+    throw new Error("Credit saved but could not be retrieved. Please refresh.");
+  }
+
+  // Map the join results back to the person/company aliases if needed
+  const rowWithAliases: CreditRow = {
+    ...row,
+    person: (row as any).people || null,
+    company: (row as any).companies || null,
+  };
+
+  const mapped = mapCreditRow(rowWithAliases);
   await insertEntityAuditLog({
     actionType: "credit_added",
     targetType: "credit",

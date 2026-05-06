@@ -47,7 +47,6 @@ export default function EditBuilding() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [role, setRole] = useState<CreditRole>("design_architecture");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialValues, setInitialValues] = useState<BuildingFormData | null>(null);
   const [locationData, setLocationData] = useState<LocationData | null>(null);

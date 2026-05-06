@@ -47,6 +47,7 @@ import {
   Settings,
   Users,
   ShieldCheck,
+  Trophy,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -244,7 +245,7 @@ export default function Notifications() {
     ) {
       navigate("/embassy");
     } else if (notification.type === "award_win") {
-      if (notification.resource?.building?.id) {
+      if (notification.resource?.id) {
         navigate(`/building/${notification.resource.id}`);
       }
     } else if (notification.resource?.id) {

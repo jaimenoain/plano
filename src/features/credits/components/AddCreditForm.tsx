@@ -264,15 +264,15 @@ export function AddCreditForm({
       const built = rowToPayload(buildingId, row);
       if (!built.ok) continue;
 
-      setRows((prev) =>
-        prev.map((r) => (r.key === row.key ? { ...r, submitStatus: "pending", submitError: null } : r)),
-      );
+      setRows((prev) => {
+        return prev.map((r) => (r.key === row.key ? { ...r, submitStatus: "pending", submitError: null } : r));
+      });
 
       try {
         const created = await addBuildingCredit(built.data);
         anyApiSuccess = true;
-        setRows((prev) =>
-          prev.map((r) =>
+        setRows((prev) => {
+          return prev.map((r) =>
             r.key === row.key
               ? {
                   ...r,
@@ -282,21 +282,21 @@ export function AddCreditForm({
                   submittedCreditId: created.id,
                 }
               : r,
-          ),
-        );
-        console.error("AddCreditForm: submission error", e);
+          );
+        });
+      } catch (err: unknown) {
         apiFailures += 1;
         let message = "Could not save this credit";
-        if (e instanceof ZodError) {
-          message = e.issues[0]?.message ?? message;
-        } else if (e instanceof Error && e.message) {
-          message = e.message;
+        if (err instanceof ZodError) {
+          message = err.issues[0]?.message ?? message;
+        } else if (err instanceof Error && err.message) {
+          message = err.message;
         }
-        setRows((prev) =>
-          prev.map((r) =>
+        setRows((prev) => {
+          return prev.map((r) =>
             r.key === row.key ? { ...r, submitStatus: "error", submitError: message, validationError: null } : r,
-          ),
-        );
+          );
+        });
       }
     }
 

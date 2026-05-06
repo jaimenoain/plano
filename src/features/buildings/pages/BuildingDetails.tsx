@@ -353,7 +353,9 @@ function BuildingMapTab({
         </Marker>
 
         {/* Nearby building markers */}
-        {showNearby && nearbyBuildings.map((b) => (
+        {showNearby && nearbyBuildings
+          .filter(b => typeof b.location_lat === 'number' && typeof b.location_lng === 'number')
+          .map((b) => (
           <Marker
             key={b.id}
             longitude={b.location_lng}
@@ -1425,7 +1427,6 @@ export default function BuildingDetails() {
     handleAddLink,
     handleRemoveLink: _handleRemoveLink,
     handleSaveNote,
-    handleSelectPost,
     handleNewNote,
     handleDelete,
     handleSetHeroImage,
@@ -2466,10 +2467,10 @@ export default function BuildingDetails() {
                                 likes_count: 0,
                                 created_at: post.created_at,
                                 user: {
-                                  username: post.user.username,
-                                  avatar_url: post.user.avatar_url,
+                                  username: profile?.username || user?.email || "Me",
+                                  avatar_url: profile?.avatar_url || null,
                                 },
-                                caption: post.content,
+                                caption: post.title || post.body || null,
                               });
                             };
 
