@@ -19,7 +19,7 @@ Each phase can be merged and deployed independently. No phase requires the next 
 
 ---
 
-## [ ] Phase 1 — Foundation
+## [x] Phase 1 — Foundation
 
 > DB schema · RLS · TypeScript types · Admin CRUD  
 > **Audience:** Admins only. Nothing is public-facing.
@@ -83,7 +83,7 @@ An admin can open `/admin/awards`, create an award with editions and categories,
 
 ---
 
-## [ ] Phase 2 — Entity Display
+## [x] Phase 2 — Entity Display
 
 > Public award pages · Awards sections on building / person / company pages · SEO  
 > **Audience:** All visitors. Award data becomes publicly crawlable.
