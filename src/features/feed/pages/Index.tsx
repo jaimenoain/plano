@@ -254,58 +254,34 @@ export default function Index() {
         </div>
       ) : (
         <div className="w-full max-w-7xl mx-auto bg-surface-default md:border-l md:border-r border-border-default min-h-screen">
-          {socialReviews.length === 0 && eventAttendance.length === 0 ? (
-            // --- Cold-start state ---
-            <div className="px-4 md:px-6 lg:px-16 pb-32">
-              <div className="flex flex-col gap-16 lg:gap-20 mt-16">
-                <ColdStartFeed
-                  discoveryReviews={discoveryReviews}
-                  onLike={discoveryFeed.toggleLike}
-                  onImageLike={discoveryFeed.toggleImageLike}
-                  isDiscoveryLoading={discoveryFeed.isLoading}
-                  isEmptyFeed={(followingCount ?? 0) > 0}
-                />
-                {loadMoreActive && (
-                  <LoadMoreTrigger
-                    containerRef={loadMoreRef}
-                    feeds={[socialFeed, collectionsFeed, discoveryFeed]}
+          <div className="md:grid md:grid-cols-[minmax(0,1fr)_320px]">
+            <main className="min-w-0 md:border-r md:border-border-default overflow-hidden">
+              <div className="px-4 md:px-6 lg:px-16 pt-10 pb-32">
+                {socialReviews.length === 0 && eventAttendance.length === 0 ? (
+                  <ColdStartFeed
+                    discoveryReviews={discoveryReviews}
+                    onLike={discoveryFeed.toggleLike}
+                    onImageLike={discoveryFeed.toggleImageLike}
+                    isDiscoveryLoading={discoveryFeed.isLoading}
+                    isEmptyFeed={(followingCount ?? 0) > 0}
+                    hideSuggestions={(followingCount ?? 0) === 0}
                   />
+                ) : (
+                  <div className="flex flex-col gap-20">{feedStreamNodes}</div>
+                )}
+
+                {loadMoreActive && (
+                  <div className="mt-16">
+                    <LoadMoreTrigger
+                      containerRef={loadMoreRef}
+                      feeds={[socialFeed, collectionsFeed, discoveryFeed]}
+                    />
+                  </div>
                 )}
               </div>
-            </div>
-          ) : (
-            // --- Active feed state ---
-            <div className="md:grid md:grid-cols-[minmax(0,1fr)_320px]">
-              <main className="min-w-0 md:border-r md:border-border-default overflow-hidden">
-                <div className="px-4 md:px-6 lg:px-16 pt-10 pb-32">
-                  <div className="flex flex-col gap-20">{feedStreamNodes}</div>
-
-                  {loadMoreActive && (
-                    <div ref={loadMoreRef} className="flex justify-center mt-16 py-4">
-                      {socialFeed.isFetchingNextPage ||
-                      collectionsFeed.isFetchingNextPage ||
-                      discoveryFeed.isFetchingNextPage ? (
-                        <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
-                      ) : socialFeed.isError || collectionsFeed.isError || discoveryFeed.isError ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (socialFeed.isError && socialFeed.hasNextPage) void socialFeed.fetchNextPage();
-                            else if (collectionsFeed.isError && collectionsFeed.hasNextPage) void collectionsFeed.fetchNextPage();
-                            else if (discoveryFeed.isError && discoveryFeed.hasNextPage) void discoveryFeed.fetchNextPage();
-                          }}
-                          className="text-xs font-medium tracking-[0.18em] uppercase text-text-secondary hover:text-text-primary transition-colors"
-                        >
-                          Error loading more. Click to retry.
-                        </button>
-                      ) : null}
-                    </div>
-                  )}
-                </div>
-              </main>
-              <FeedRightRail activities={activityEntries} />
-            </div>
-          )}
+            </main>
+            <FeedRightRail activities={activityEntries} />
+          </div>
         </div>
       )}
     </AppLayout>

@@ -97,6 +97,7 @@ interface ColdStartFeedProps {
   onImageLike: (reviewId: string, imageId: string) => void;
   isDiscoveryLoading: boolean;
   isEmptyFeed?: boolean;
+  hideSuggestions?: boolean;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -107,9 +108,11 @@ export function ColdStartFeed({
   onImageLike,
   isDiscoveryLoading,
   isEmptyFeed = false,
+  hideSuggestions = false,
 }: ColdStartFeedProps) {
   const featuredReview = discoveryReviews[0] ?? null;
-  const remainingReviews = featuredReview ? discoveryReviews.slice(1) : discoveryReviews;
+  const remainingReviews =
+    featuredReview && !hideSuggestions ? discoveryReviews.slice(1) : discoveryReviews;
 
   return (
     <div className="flex flex-col gap-10 w-full">
@@ -136,10 +139,12 @@ export function ColdStartFeed({
       </div>
 
       {/* ── Section 2: People you may know + Featured building ───────────── */}
-      <div className="grid grid-cols-2 gap-8 items-start">
-        <PeopleYouMayKnow />
-        {featuredReview && <FeaturedBuildingCard review={featuredReview} />}
-      </div>
+      {!hideSuggestions && (
+        <div className="grid grid-cols-2 gap-8 items-start">
+          <PeopleYouMayKnow />
+          {featuredReview && <FeaturedBuildingCard review={featuredReview} />}
+        </div>
+      )}
 
       {/* ── Section 3: Community discovery feed ──────────────────────────── */}
       <SectionDivider label="From the community" href="/explore" />

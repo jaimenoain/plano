@@ -673,8 +673,7 @@ export default function AwardsIndex() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-24">
         {/* ── Heading ── */}
         <div className="mb-8 border-b border-border-default pb-8">
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-text-primary leading-none flex items-center gap-4">
-            <Trophy className="h-8 w-8 md:h-12 md:w-12 text-text-primary shrink-0" strokeWidth={1.5} />
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-text-primary leading-none">
             Awards
           </h1>
           <p className="mt-3 text-sm text-text-secondary">
