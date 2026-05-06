@@ -1454,6 +1454,8 @@ export default function BuildingDetails() {
     [setSearchParams],
   );
 
+  const [addCreditOpen, setAddCreditOpen] = useState(false);
+
   // ── Sticky tab bar detection ──────────────────────────────────────────────
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [isTabBarSticky, setIsTabBarSticky] = useState(false);
@@ -1966,22 +1968,35 @@ export default function BuildingDetails() {
           )}
         >
           <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center -mb-px overflow-x-scroll-touch">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.id}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center -mb-px overflow-x-scroll-touch">
+                {TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setTab(tab.id)}
+                    className={cn(
+                      "px-5 py-3.5 text-sm font-medium border-b-2 shrink-0 transition-colors duration-150 whitespace-nowrap",
+                      activeTab === tab.id
+                        ? "border-text-primary text-text-primary"
+                        : "border-transparent text-text-secondary hover:text-text-primary",
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              {activeTab === "credits" && user && (
+                <Button
                   type="button"
-                  onClick={() => setTab(tab.id)}
-                  className={cn(
-                    "px-5 py-3.5 text-sm font-medium border-b-2 shrink-0 transition-colors duration-150 whitespace-nowrap",
-                    activeTab === tab.id
-                      ? "border-text-primary text-text-primary"
-                      : "border-transparent text-text-secondary hover:text-text-primary",
-                  )}
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 text-xs uppercase tracking-widest"
+                  onClick={() => setAddCreditOpen(true)}
                 >
-                  {tab.label}
-                </button>
-              ))}
+                  + Add credits
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -2273,6 +2288,8 @@ export default function BuildingDetails() {
                     credits={buildingCredits}
                     isAuthenticated={Boolean(user)}
                     isAdmin={isCreditsAdmin}
+                    addOpen={addCreditOpen}
+                    onAddOpenChange={setAddCreditOpen}
                   />
                 </div>
               )}

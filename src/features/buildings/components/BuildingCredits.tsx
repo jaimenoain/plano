@@ -611,6 +611,9 @@ export interface BuildingCreditsProps {
   isAdmin?: boolean;
   /** Used in the tab intro and empty state. */
   buildingName?: string | null;
+  /** Controlled open state for the add-credit sheet (optional; internal state used if omitted). */
+  addOpen?: boolean;
+  onAddOpenChange?: (open: boolean) => void;
 }
 
 function CreditsEmptyState({
@@ -669,9 +672,13 @@ export function BuildingCredits({
   isAuthenticated,
   isAdmin = false,
   buildingName,
+  addOpen: addOpenProp,
+  onAddOpenChange,
 }: BuildingCreditsProps) {
   const [ancillaryOpen, setAncillaryOpen] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
+  const [addOpenInternal, setAddOpenInternal] = useState(false);
+  const addOpen = addOpenProp !== undefined ? addOpenProp : addOpenInternal;
+  const setAddOpen = onAddOpenChange ?? setAddOpenInternal;
   const visibleCredits = useMemo(
     () => (isAdmin ? credits : credits.filter((c) => c.status !== "flagged")),
     [credits, isAdmin],
