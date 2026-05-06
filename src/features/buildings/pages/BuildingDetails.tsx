@@ -976,6 +976,7 @@ function BuildingInfoSection({
 
   return (
     <section>
+      <BuildingAwardsSection buildingId={building.id} buildingName={building.name} />
       <h3 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
         Building Info
       </h3>
@@ -1057,6 +1058,7 @@ function BuildingInfoTab({
 
   return (
     <div className="space-y-0 divide-y divide-border-default">
+      <BuildingAwardsSection buildingId={building.id} buildingName={building.name} />
 
       {/* Key stat grid */}
       {keyStats.length > 0 && (
@@ -2106,13 +2108,7 @@ export default function BuildingDetails() {
                   <ClientOnly>
                     <RelatedByArchitectSection building={building} primaryCredit={primaryCredit} />
                     {building.city && (
-                      <>
-                        <RelatedByCitySection building={building} locality={locality} />
-                        <BuildingAwardsSection
-                          buildingId={building.id}
-                          buildingName={building.name}
-                        />
-                      </>
+                      <RelatedByCitySection building={building} locality={locality} />
                     )}
                   </ClientOnly>
                 </div>
