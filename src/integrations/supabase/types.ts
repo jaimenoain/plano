@@ -3072,7 +3072,11 @@ export type Database = {
               id: string
               location_lat: number
               location_lng: number
+              main_image_url: string
               name: string
+              short_id: number
+              similarity_score: number
+              slug: string
             }[]
           }
         | {

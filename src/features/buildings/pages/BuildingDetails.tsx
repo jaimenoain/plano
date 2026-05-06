@@ -274,11 +274,14 @@ function RelatedByCitySection({
 
 interface NearbyBuilding {
   id: string;
+  short_id: number;
+  slug: string | null;
   name: string;
   address: string | null;
   location_lat: number;
   location_lng: number;
   dist_meters: number;
+  main_image_url: string | null;
 }
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
@@ -359,7 +362,7 @@ function BuildingMapTab({
             style={{ zIndex: hoveredId === b.id ? 30 : 10 }}
           >
             <Link
-              to={`/building/${b.id}`}
+              to={b.slug ? `/building/${b.short_id}/${b.slug}` : `/building/${b.id}`}
               onMouseEnter={() => setHoveredId(b.id)}
               onMouseLeave={() => setHoveredId(null)}
               className="flex flex-col items-center gap-0 group"
