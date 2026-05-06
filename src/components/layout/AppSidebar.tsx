@@ -25,6 +25,7 @@ import {
   Briefcase,
   Building2,
   ChevronDown,
+  Trophy,
   type LucideIcon,
 } from "lucide-react";
 import { useLocation, Link, useNavigate } from "react-router";
@@ -63,6 +64,14 @@ const mainNavItems: MainNavItem[] = [
   { icon: BookOpen, label: "Guides", path: "/guides" },
   { icon: Search, label: "Search", path: "/search" },
   { icon: Users, label: "Connect", path: "/connect" },
+  {
+    icon: Trophy,
+    label: "Awards",
+    path: "/awards",
+    isActive: (pathname) =>
+      pathname === "/awards" ||
+      pathname.startsWith("/award/"),
+  },
 ];
 
 // ─── NavItem ─────────────────────────────────────────────────────────────────

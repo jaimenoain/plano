@@ -102,6 +102,7 @@ export default [
       id: "events-submit-edit",
     }),
     route("/events", "features/events/pages/Events.tsx"),
+    route("/awards", "features/awards/pages/AwardsIndex.tsx"),
     route("/award/:slug", "features/awards/pages/AwardPage.tsx"),
     route("/award/:slug/:year", "features/awards/pages/AwardEditionPage.tsx"),
     // /events/:cc/:city/:slug — locality-scoped physical event URL (T13)

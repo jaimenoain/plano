@@ -135,7 +135,7 @@ Any building, person, or company page with award data shows an `AWARDS` section.
 
 ---
 
-## [ ] Phase 3 — Discovery
+## [x] Phase 3 — Discovery
 
 > Map filter · Search filter · Building card badge · Leaderboard dialog · Award-win notifications  
 > **Audience:** All users. Awards become a discovery surface.
@@ -178,7 +178,7 @@ Users can filter the map to "Stirling Prize winners only". Award-winning buildin
 
 ---
 
-## [ ] Phase 4 — Community
+## [x] Phase 4 — Community
 
 > User suggestion flow · Admin review · Awarding-body company section  
 > **Audience:** Authenticated users (suggestions), admins (review).
@@ -219,7 +219,7 @@ Any authenticated user can submit a suggestion from a building, person, or compa
 
 ---
 
-## [ ] Phase 5 — Awards Hub
+## [x] Phase 5 — Awards Hub
 
 > Standalone `/awards` page: recent feed, leaderboard tab, directory tab, right rail  
 > **Audience:** All visitors. The first destination a curious user would navigate to.

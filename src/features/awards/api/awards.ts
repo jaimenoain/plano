@@ -620,6 +620,64 @@ export async function rejectSuggestion(suggestionId: string, note?: string): Pro
   if (error) throw new Error(`Failed to reject suggestion: ${error.message}`);
 }
 
+// ── Awards Hub ───────────────────────────────────────────────
+
+export interface RecentRecipientFilters {
+  recipientType?: 'building' | 'person' | 'company' | null;
+  winnersOnly?: boolean;
+  offset?: number;
+  limit?: number;
+}
+
+export async function getRecentRecipients(filters: RecentRecipientFilters = {}): Promise<AwardRecipientDTO[]> {
+  const { recipientType, winnersOnly, offset = 0, limit = 20 } = filters;
+
+  let query = db
+    .from("award_recipients")
+    .select(`
+      *,
+      building:buildings!award_recipients_recipient_building_id_fkey(id, name, slug, hero_image_url),
+      person:people!award_recipients_recipient_person_id_fkey(id, name, slug, avatar_url),
+      company:companies!award_recipients_recipient_company_id_fkey(id, name, slug),
+      category:award_categories!award_recipients_category_id_fkey(name),
+      edition:award_editions!award_recipients_edition_id_fkey(year, edition_date),
+      award:award_editions!award_recipients_edition_id_fkey(awards!award_editions_award_id_fkey(name, slug))
+    `)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (recipientType) query = query.eq("recipient_type", recipientType);
+  if (winnersOnly) query = query.eq("outcome", "winner");
+
+  const { data, error } = await query;
+  if (error) throw new Error(`Failed to load recent recipients: ${error.message}`);
+
+  return (data ?? []).map((row: any) => {
+    const awardNested = row.award?.awards;
+    return toRecipientDTO({ ...row, award: awardNested ?? null });
+  });
+}
+
+export interface AwardsStatsDTO {
+  awardCount: number;
+  recipientCount: number;
+}
+
+export async function getAwardsStats(): Promise<AwardsStatsDTO> {
+  const [awardsRes, recipientsRes] = await Promise.all([
+    db.from("awards").select("id", { count: "exact", head: true }).eq("is_active", true),
+    db.from("award_recipients").select("id", { count: "exact", head: true }),
+  ]);
+
+  if (awardsRes.error) throw new Error(`Failed to load awards count: ${awardsRes.error.message}`);
+  if (recipientsRes.error) throw new Error(`Failed to load recipients count: ${recipientsRes.error.message}`);
+
+  return {
+    awardCount: awardsRes.count ?? 0,
+    recipientCount: recipientsRes.count ?? 0,
+  };
+}
+
 export async function getAwardsByBody(companyId: string): Promise<AwardDTO[]> {
   const { data, error } = await db
     .from("awards")

@@ -382,7 +382,10 @@ async function buildAwardsSitemap(supabase: ReturnType<typeof createClient>): Pr
   }
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
-  
+
+  // Awards hub
+  xml += `  <url>\n    <loc>${SITE_URL}/awards</loc>\n    <changefreq>daily</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+
   // Award main pages
   for (const a of awards) {
     const lastmod = formatLastmod(a.updated_at ?? a.created_at);

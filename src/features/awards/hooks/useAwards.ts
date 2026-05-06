@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   getAwards,
@@ -11,6 +11,8 @@ import {
   getAwardsByBuilding,
   getAwardsByPerson,
   getAwardsByCompany,
+  getRecentRecipients,
+  getAwardsStats,
   createAward,
   updateAward,
   deleteAward,
@@ -22,6 +24,7 @@ import {
   deleteCategory,
   createRecipient,
   deleteRecipient,
+  type RecentRecipientFilters,
 } from "@/features/awards/api/awards";
 
 // ── Cache keys ───────────────────────────────────────────────
@@ -319,6 +322,50 @@ export function useAwardsByBody(companyId: string) {
     queryKey: [...awardKeys.all, "by-body", companyId],
     queryFn: () => getAwardsByBody(companyId),
     enabled: companyId.length > 0,
+    staleTime: STALE_TIME,
+  });
+}
+
+// ── Awards Hub hooks ─────────────────────────────────────────
+
+export function useRecentRecipients(filters: Omit<RecentRecipientFilters, 'offset' | 'limit'> = {}) {
+  return useInfiniteQuery({
+    queryKey: [...awardKeys.all, "recent", filters],
+    queryFn: ({ pageParam }) =>
+      getRecentRecipients({ ...filters, offset: pageParam as number, limit: 20 }),
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length === 20 ? allPages.length * 20 : undefined,
+    initialPageParam: 0,
+    staleTime: STALE_TIME,
+  });
+}
+
+export function useAwardsStats() {
+  return useQuery({
+    queryKey: [...awardKeys.all, "stats"],
+    queryFn: getAwardsStats,
+    staleTime: STALE_TIME,
+  });
+}
+
+export function usePersonAwardLeaderboard(awardId?: string, limit = 50) {
+  return useQuery({
+    queryKey: [...awardKeys.all, "person-leaderboard", awardId, limit],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("get_person_award_leaderboard", {
+        p_award_id: awardId || null,
+        p_limit: limit,
+      });
+      if (error) throw error;
+      return data as Array<{
+        person_id: string;
+        person_name: string;
+        person_slug: string;
+        avatar_url: string | null;
+        award_count: number;
+        win_count: number;
+      }>;
+    },
     staleTime: STALE_TIME,
   });
 }
