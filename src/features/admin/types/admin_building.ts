@@ -32,6 +32,7 @@ export type BuildingRow = {
   is_deleted?: boolean;
   is_verified?: boolean;
   hero_image_url?: string | null;
+  community_preview_url?: string | null;
   popularity_score?: number | null;
   tier_rank?: TierRank | null;
 };

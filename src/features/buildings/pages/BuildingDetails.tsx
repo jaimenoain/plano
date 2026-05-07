@@ -302,20 +302,25 @@ function BuildingMapTab({
   const [showNearby, setShowNearby] = useState(false);
   const [nearbyBuildings, setNearbyBuildings] = useState<NearbyBuilding[]>([]);
   const [isLoadingNearby, setIsLoadingNearby] = useState(false);
+  const [nearbyError, setNearbyError] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   useEffect(() => { setIsClient(true); }, []);
 
   const handleShowNearby = useCallback(async () => {
-    if (showNearby) { setShowNearby(false); return; }
+    if (showNearby) { setShowNearby(false); setNearbyError(null); return; }
     setIsLoadingNearby(true);
+    setNearbyError(null);
     try {
       const { data, error } = await supabase.rpc("find_nearby_buildings", {
         lat,
         long: lng,
         radius_meters: NEARBY_RADIUS_METERS,
       });
-      if (!error && data) {
+      if (error) {
+        console.error("[BuildingMapTab] find_nearby_buildings RPC error:", error);
+        setNearbyError(error.message);
+      } else if (data) {
         setNearbyBuildings(
           (data as NearbyBuilding[]).filter((b) => b.id !== buildingId),
         );
@@ -410,7 +415,12 @@ function BuildingMapTab({
       </div>
 
       {/* Nearby count badge */}
-      {showNearby && nearbyBuildings.length === 0 && (
+      {showNearby && nearbyError && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-surface-default border border-border-default shadow-sm px-3 py-1.5 text-xs text-feedback-destructive">
+          Could not load nearby buildings
+        </div>
+      )}
+      {showNearby && !nearbyError && nearbyBuildings.length === 0 && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-surface-default border border-border-default shadow-sm px-3 py-1.5 text-xs text-text-secondary">
           No other buildings found within 1 km
         </div>
