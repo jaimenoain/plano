@@ -1,10 +1,11 @@
-import { getAwardBySlug, getEditionsByAward } from "@/features/awards/api/awards";
-import type { AwardDTO, AwardEditionDTO } from "@/features/awards/types/awards";
+import { getAwardBySlug, getEditionsByAward, getAwardAdmins } from "@/features/awards/api/awards";
+import type { AwardDTO, AwardEditionDTO, AwardAdminDTO } from "@/features/awards/types/awards";
 import type { LoaderFunctionArgs } from "react-router";
 
 export interface AwardLoaderData {
   award: AwardDTO;
   editions: AwardEditionDTO[];
+  admins: AwardAdminDTO[];
   metaTitle: string;
   description: string;
   canonical: string;
@@ -16,7 +17,10 @@ export async function awardLoader({ params }: LoaderFunctionArgs): Promise<Award
 
   try {
     const award = await getAwardBySlug(slug);
-    const editions = await getEditionsByAward(award.id);
+    const [editions, admins] = await Promise.all([
+      getEditionsByAward(award.id),
+      getAwardAdmins(award.id),
+    ]);
 
     const metaTitle = `${award.name} | Plano`;
     const description = award.description || `Explore the history of the ${award.name} on Plano.`;
@@ -25,6 +29,7 @@ export async function awardLoader({ params }: LoaderFunctionArgs): Promise<Award
     return {
       award,
       editions,
+      admins,
       metaTitle,
       description,
       canonical,

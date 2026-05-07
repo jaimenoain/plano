@@ -265,6 +265,12 @@ import {
   approveSuggestion,
   rejectSuggestion,
   getAwardsByBody,
+  getAwardAdmins,
+  isCurrentUserAwardAdmin,
+  getMyAwardClaimRequest,
+  submitAwardClaimRequest,
+  getAwardClaimRequests,
+  reviewAwardClaimRequest,
 } from "@/features/awards/api/awards";
 
 export const suggestionKeys = {
@@ -367,5 +373,82 @@ export function usePersonAwardLeaderboard(awardId?: string, limit = 50) {
       }>;
     },
     staleTime: STALE_TIME,
+  });
+}
+
+// ── Award Administration ─────────────────────────────────────
+
+export const awardAdminKeys = {
+  admins:       (awardId: string) => [...awardKeys.all, "admins", awardId] as const,
+  isAdmin:      (awardId: string) => [...awardKeys.all, "is-admin", awardId] as const,
+  myRequest:    (awardId: string) => [...awardKeys.all, "my-claim-request", awardId] as const,
+  claimRequests:(status?: string) => ["award-claim-requests", status ?? "all"] as const,
+};
+
+export function useAwardAdmins(awardId: string) {
+  return useQuery({
+    queryKey: awardAdminKeys.admins(awardId),
+    queryFn:  () => getAwardAdmins(awardId),
+    enabled:  awardId.length > 0,
+    staleTime: STALE_TIME,
+  });
+}
+
+export function useIsAwardAdmin(awardId: string) {
+  return useQuery({
+    queryKey: awardAdminKeys.isAdmin(awardId),
+    queryFn:  () => isCurrentUserAwardAdmin(awardId),
+    enabled:  awardId.length > 0,
+    staleTime: STALE_TIME,
+  });
+}
+
+export function useMyAwardClaimRequest(awardId: string) {
+  return useQuery({
+    queryKey: awardAdminKeys.myRequest(awardId),
+    queryFn:  () => getMyAwardClaimRequest(awardId),
+    enabled:  awardId.length > 0,
+    staleTime: STALE_TIME,
+  });
+}
+
+export function useSubmitAwardClaimRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ awardId, reason }: { awardId: string; reason: string }) =>
+      submitAwardClaimRequest(awardId, reason),
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: awardAdminKeys.myRequest(vars.awardId) });
+      qc.invalidateQueries({ queryKey: awardKeys.all });
+    },
+  });
+}
+
+// ── Admin: claim request queue ────────────────────────────────
+
+export function useAwardClaimRequests(status?: 'pending' | 'approved' | 'rejected') {
+  return useQuery({
+    queryKey: awardAdminKeys.claimRequests(status),
+    queryFn:  () => getAwardClaimRequests(status),
+    staleTime: STALE_TIME,
+  });
+}
+
+export function useReviewAwardClaimRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      requestId,
+      approve,
+      reviewerNote,
+    }: {
+      requestId: string;
+      approve: boolean;
+      reviewerNote?: string;
+    }) => reviewAwardClaimRequest(requestId, approve, reviewerNote),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["award-claim-requests"] });
+      qc.invalidateQueries({ queryKey: awardKeys.all });
+    },
   });
 }

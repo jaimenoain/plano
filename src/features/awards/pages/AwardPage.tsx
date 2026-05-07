@@ -2,10 +2,14 @@ import { useState } from "react";
 import { useLoaderData, Link, type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Trophy, MapPin, Calendar, LayoutList } from "lucide-react";
+import { ExternalLink, Trophy, MapPin, Calendar, LayoutList, Shield, Settings } from "lucide-react";
 import { awardLoader, type AwardLoaderData } from "./AwardPage.loader";
 import { AwardLeaderboardDialog } from "../components/AwardLeaderboardDialog";
+import { ClaimAwardDialog } from "../components/ClaimAwardDialog";
 import { Button } from "@/components/ui/button";
+import { useMyAwardClaimRequest, useIsAwardAdmin } from "@/features/awards/hooks/useAwards";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 export { awardLoader as loader } from "./AwardPage.loader";
 
@@ -25,8 +29,25 @@ export const meta: MetaFunction<typeof awardLoader> = ({ data }) => {
 };
 
 export default function AwardPage() {
-  const { award, editions } = useLoaderData() as AwardLoaderData;
+  const { award, editions, admins } = useLoaderData() as AwardLoaderData;
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
+  const [claimOpen, setClaimOpen]             = useState(false);
+
+  // Client-side auth checks (no SSR session in the loader).
+  const { data: sessionUser } = useQuery({
+    queryKey: ["session-user"],
+    queryFn:  async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
+    staleTime: 60_000,
+  });
+  const isLoggedIn = Boolean(sessionUser);
+
+  const { data: myRequest }  = useMyAwardClaimRequest(award.id);
+  const { data: isAwardAdmin } = useIsAwardAdmin(award.id);
+
+  const ownerAdmin = admins.find((a) => a.role === "owner");
 
   const awardingBody = award.awardingBodyCompany ? (
     <Link 
@@ -69,6 +90,18 @@ export default function AwardPage() {
                   <Badge variant="secondary" className="uppercase tracking-widest text-[10px] font-bold px-2 py-0.5 bg-surface-muted text-text-secondary border-none h-auto">
                     {award.frequency.replace('_', ' ')}
                   </Badge>
+
+                  {/* Claimed / verified badge */}
+                  {award.claimStatus !== "unclaimed" && (
+                    <Badge
+                      variant="secondary"
+                      className="gap-1 uppercase tracking-widest text-[10px] font-bold px-2 py-0.5 bg-feedback-success/10 text-feedback-success border-none h-auto"
+                    >
+                      <Shield className="h-2.5 w-2.5" />
+                      {award.claimStatus === "verified" ? "Verified" : "Official"}
+                      {ownerAdmin?.profile?.username && ` · ${ownerAdmin.profile.username}`}
+                    </Badge>
+                  )}
                 </div>
 
                 {award.website && (
@@ -85,8 +118,8 @@ export default function AwardPage() {
               </div>
 
               <div className="flex flex-col gap-2 shrink-0">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   className="gap-2 text-xs font-bold uppercase tracking-widest h-9"
                   onClick={() => setLeaderboardOpen(true)}
@@ -94,6 +127,44 @@ export default function AwardPage() {
                   <LayoutList className="h-4 w-4" />
                   View Leaderboard
                 </Button>
+
+                {/* Award admin portal link — only visible to the award's own admins. */}
+                {isAwardAdmin && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 text-xs font-bold uppercase tracking-widest h-9"
+                    asChild
+                  >
+                    <Link to={`/award/${award.slug}/admin`}>
+                      <Settings className="h-4 w-4" />
+                      Manage award
+                    </Link>
+                  </Button>
+                )}
+
+                {/* Claim CTA — only shown when award is unclaimed. */}
+                {award.claimStatus === "unclaimed" && isLoggedIn && !isAwardAdmin && (
+                  myRequest?.status === "pending" ? (
+                    <Badge
+                      variant="secondary"
+                      className="gap-1.5 text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-surface-muted text-text-secondary border-none self-start"
+                    >
+                      <Shield className="h-3 w-3" />
+                      Claim under review
+                    </Badge>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-2 text-xs font-medium uppercase tracking-widest h-9 text-text-secondary hover:text-text-primary"
+                      onClick={() => setClaimOpen(true)}
+                    >
+                      <Shield className="h-4 w-4" />
+                      Claim this award
+                    </Button>
+                  )
+                )}
               </div>
             </div>
 
@@ -160,11 +231,18 @@ export default function AwardPage() {
         </section>
       </div>
 
-      <AwardLeaderboardDialog 
+      <AwardLeaderboardDialog
         awardId={award.id}
         awardName={award.name}
         open={leaderboardOpen}
         onOpenChange={setLeaderboardOpen}
+      />
+
+      <ClaimAwardDialog
+        awardId={award.id}
+        awardName={award.name}
+        open={claimOpen}
+        onOpenChange={setClaimOpen}
       />
     </AppLayout>
   );

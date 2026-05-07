@@ -4,6 +4,8 @@ import type {
   AwardEditionDTO,
   AwardCategoryDTO,
   AwardRecipientDTO,
+  AwardAdminDTO,
+  AwardClaimRequestDTO,
 } from "@/features/awards/types/awards";
 
 // The awards tables are not yet in the generated Supabase types (migration pending).
@@ -36,6 +38,7 @@ function toAwardDTO(row: any, editionCount?: number): AwardDTO {
     awardingBodyCompanyId: row.awarding_body_company_id ?? null,
     awardingBodyName: row.awarding_body_name ?? null,
     isActive: row.is_active,
+    claimStatus: (row.claim_status ?? 'unclaimed') as AwardDTO['claimStatus'],
     wikidataQid: row.wikidata_qid ?? null,
     wikidataSitelinks: row.wikidata_sitelinks ?? null,
     wikidataFetchedAt: row.wikidata_fetched_at ?? null,
@@ -697,4 +700,123 @@ export async function getAwardsByBody(companyId: string): Promise<AwardDTO[]> {
         : 0;
     return toAwardDTO(row, editionCount);
   });
+}
+
+// ── Award Admins ─────────────────────────────────────────────
+
+function toAwardAdminDTO(row: any): AwardAdminDTO {
+  return {
+    id: row.id,
+    awardId: row.award_id,
+    userId: row.user_id,
+    role: row.role,
+    invitedBy: row.invited_by ?? null,
+    createdAt: row.created_at,
+    profile: row.profiles
+      ? { username: row.profiles.username, avatarUrl: row.profiles.avatar_url ?? null }
+      : undefined,
+  };
+}
+
+export async function getAwardAdmins(awardId: string): Promise<AwardAdminDTO[]> {
+  const { data, error } = await db
+    .from("award_admins")
+    .select("*, profiles(username, avatar_url)")
+    .eq("award_id", awardId)
+    .order("created_at", { ascending: true });
+
+  if (error) throw new Error(`Failed to load award admins: ${error.message}`);
+  return (data ?? []).map(toAwardAdminDTO);
+}
+
+/** Returns true if the current session user is an admin of the given award. */
+export async function isCurrentUserAwardAdmin(awardId: string): Promise<boolean> {
+  const { data, error } = await db.rpc("plano_auth_is_award_admin", { p_award_id: awardId });
+  if (error) return false;
+  return Boolean(data);
+}
+
+// ── Award Claim Requests ──────────────────────────────────────
+
+function toAwardClaimRequestDTO(row: any): AwardClaimRequestDTO {
+  return {
+    id: row.id,
+    awardId: row.award_id,
+    requesterUserId: row.requester_user_id,
+    reason: row.reason,
+    status: row.status,
+    reviewedBy: row.reviewed_by ?? null,
+    reviewerNote: row.reviewer_note ?? null,
+    reviewedAt: row.reviewed_at ?? null,
+    createdAt: row.created_at,
+    award: row.awards ? { name: row.awards.name, slug: row.awards.slug } : undefined,
+    requesterProfile: row.profiles
+      ? { username: row.profiles.username, avatarUrl: row.profiles.avatar_url ?? null }
+      : undefined,
+  };
+}
+
+/** Returns the current user's latest claim request for an award, or null. */
+export async function getMyAwardClaimRequest(awardId: string): Promise<AwardClaimRequestDTO | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await db
+    .from("award_claim_requests")
+    .select("*")
+    .eq("award_id", awardId)
+    .eq("requester_user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to load claim request: ${error.message}`);
+  return data ? toAwardClaimRequestDTO(data) : null;
+}
+
+export async function submitAwardClaimRequest(
+  awardId: string,
+  reason: string,
+): Promise<{ ok: boolean; error?: string; requestId?: string }> {
+  const { data, error } = await db.rpc("submit_award_claim_request", {
+    p_award_id: awardId,
+    p_reason:   reason,
+  });
+  if (error) return { ok: false, error: error.message };
+  return {
+    ok:        data.ok,
+    error:     data.error,
+    requestId: data.request_id,
+  };
+}
+
+// ── Admin: claim request queue ────────────────────────────────
+
+export async function getAwardClaimRequests(
+  status?: 'pending' | 'approved' | 'rejected',
+): Promise<AwardClaimRequestDTO[]> {
+  let query = db
+    .from("award_claim_requests")
+    .select("*, awards(name, slug), profiles(username, avatar_url)")
+    .order("created_at", { ascending: false });
+
+  if (status) query = query.eq("status", status);
+
+  const { data, error } = await query;
+  if (error) throw new Error(`Failed to load claim requests: ${error.message}`);
+  return (data ?? []).map(toAwardClaimRequestDTO);
+}
+
+export async function reviewAwardClaimRequest(
+  requestId: string,
+  approve: boolean,
+  reviewerNote?: string,
+): Promise<void> {
+  const { data, error } = await db.rpc("review_award_claim_request", {
+    p_request_id:    requestId,
+    p_approve:       approve,
+    p_reviewer_note: reviewerNote ?? null,
+  });
+  if (error) throw new Error(`Failed to review claim request: ${error.message}`);
+  if (data && !data.ok) throw new Error(data.error ?? "Review failed");
 }

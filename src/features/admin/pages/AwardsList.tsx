@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, type MetaFunction } from "react-router";
-import { Loader2, Plus, Pencil, Search, ArrowUpDown } from "lucide-react";
+import { Loader2, Plus, Pencil, Search, ArrowUpDown, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { useAwards, useUpdateAward } from "@/features/awards/hooks/useAwards";
 import { Input } from "@/components/ui/input";
@@ -108,6 +108,7 @@ export default function AwardsList() {
                 </Button>
               </TableHead>
               <TableHead className="text-center">Editions</TableHead>
+              <TableHead>Claim</TableHead>
               <TableHead className="text-center">Active</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -115,7 +116,7 @@ export default function AwardsList() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-text-secondary">
+                <TableCell colSpan={8} className="h-24 text-center text-text-secondary">
                   <div className="flex items-center justify-center gap-2">
                     <Loader2 className="h-5 w-5 animate-spin" />
                     Loading…
@@ -124,7 +125,7 @@ export default function AwardsList() {
               </TableRow>
             ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-text-secondary">
+                <TableCell colSpan={8} className="h-24 text-center text-text-secondary">
                   {search ? "No awards match your search." : "No awards yet. Create one to get started."}
                 </TableCell>
               </TableRow>
@@ -168,6 +169,23 @@ export default function AwardsList() {
                   </TableCell>
                   <TableCell className="text-center text-sm text-text-secondary">
                     {award.editionCount ?? 0}
+                  </TableCell>
+                  <TableCell>
+                    {award.claimStatus === "unclaimed" ? (
+                      <span className="text-xs text-text-secondary opacity-50">—</span>
+                    ) : (
+                      <Badge
+                        variant="secondary"
+                        className={`gap-1 text-[10px] font-bold uppercase tracking-widest border-none h-auto ${
+                          award.claimStatus === "verified"
+                            ? "bg-feedback-success/15 text-feedback-success"
+                            : "bg-brand-primary/10 text-brand-primary"
+                        }`}
+                      >
+                        <Shield className="h-2.5 w-2.5" />
+                        {award.claimStatus}
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell className="text-center">
                     <Switch

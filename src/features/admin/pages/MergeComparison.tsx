@@ -294,7 +294,7 @@ export default function MergeComparison() {
             navigate(getBuildingUrl(targetPointer!, target?.slug, target?.short_id != null ? Number(target.short_id) : null));
 
         } catch (error) {
-            const msg = error instanceof Error ? error.message : "Unknown error";
+            const msg = error instanceof Error ? error.message : (error as { message?: string })?.message ?? "Unknown error";
             toast.error("Merge failed: " + msg);
         } finally {
             setMerging(false);

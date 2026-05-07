@@ -4,6 +4,9 @@ export type AwardOutcome =
 
 export type RecipientType = 'building' | 'person' | 'company';
 
+export type AwardClaimStatus = 'unclaimed' | 'claimed' | 'verified';
+export type AwardAdminRole   = 'owner' | 'editor';
+
 export interface AwardDTO {
   id: string;
   name: string;
@@ -16,6 +19,7 @@ export interface AwardDTO {
   awardingBodyCompanyId: string | null;
   awardingBodyName: string | null;
   isActive: boolean;
+  claimStatus: AwardClaimStatus;
   wikidataQid: string | null;
   wikidataSitelinks: number | null;
   wikidataFetchedAt: string | null;
@@ -23,6 +27,32 @@ export interface AwardDTO {
   // Joined:
   awardingBodyCompany?: { id: string; name: string; slug: string } | null;
   editionCount?: number;
+}
+
+export interface AwardAdminDTO {
+  id: string;
+  awardId: string;
+  userId: string;
+  role: AwardAdminRole;
+  invitedBy: string | null;
+  createdAt: string;
+  // Joined:
+  profile?: { username: string; avatarUrl: string | null };
+}
+
+export interface AwardClaimRequestDTO {
+  id: string;
+  awardId: string;
+  requesterUserId: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewedBy: string | null;
+  reviewerNote: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  // Joined:
+  award?: { name: string; slug: string };
+  requesterProfile?: { username: string; avatarUrl: string | null };
 }
 
 export interface AwardEditionDTO {
