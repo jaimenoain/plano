@@ -45,6 +45,7 @@ import { Loader2, MapPin, UserRound, Building2 } from 'lucide-react';
 import { Link } from 'react-router';
 import { getBuildingImageUrl, getStorageAssetUrl } from '@/utils/image';
 import { Suggestion } from '@/features/search/components/DiscoverySearchInput';
+import { SmartFilterSuggestions } from '@/features/search/components/SmartFilterSuggestions';
 import type { CompanySummary, PersonSummary } from '@/features/credits/types';
 import type { BuildingSearchHit } from '@/features/search/api/searchBuildingsV2';
 import { getBoundsFromBuildings } from '@/utils/map';
@@ -78,6 +79,10 @@ interface BuildingSidebarProps {
   isDiscovery?: boolean;
   /** When set, bypasses the internal get_buildings_list query and renders these Find-mode results instead. */
   findModeBuildings?: BuildingSearchHit[] | null;
+  /** Phase 4 — when in Find mode, this is the active query used to compute smart filter chips. */
+  findModeQuery?: string;
+  /** Phase 4 — called after a smart filter chip is applied. Used by parent to clear the search input. */
+  onSmartFilterApplied?: () => void;
   className?: string;
 }
 
@@ -91,6 +96,8 @@ export function BuildingSidebar({
   companies = [],
   isDiscovery = false,
   findModeBuildings = null,
+  findModeQuery,
+  onSmartFilterApplied,
   className,
 }: BuildingSidebarProps = {}) {
   const {
@@ -296,6 +303,16 @@ export function BuildingSidebar({
               <div className="h-px bg-border-default mx-4 my-2" />
             </div>
           ) : null}
+
+          {/* ── Phase 4: Smart filter chips (Find mode only) ── */}
+          {findModeBuildings && findModeQuery && findModeQuery.trim().length >= 3 && (
+            <SmartFilterSuggestions
+              query={findModeQuery}
+              people={people}
+              companies={companies}
+              onApplied={onSmartFilterApplied}
+            />
+          )}
 
           {/* ── Building results ── */}
           {isLoading ? (

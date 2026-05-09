@@ -259,6 +259,8 @@ function SearchPageContent() {
               companies={companies}
               isDiscovery={isDiscovery}
               findModeBuildings={isFindMode ? findResults.buildings : null}
+              findModeQuery={isFindMode ? debouncedSearchValue : undefined}
+              onSmartFilterApplied={() => setSearchValue("")}
             />
           </div>
         </div>
@@ -315,6 +317,9 @@ function SearchPageContent() {
                 people={people}
                 companies={companies}
                 isDiscovery={isDiscovery}
+                findModeBuildings={isFindMode ? findResults.buildings : null}
+                findModeQuery={isFindMode ? debouncedSearchValue : undefined}
+                onSmartFilterApplied={() => setSearchValue("")}
                 className="pb-24"
               />
             </div>

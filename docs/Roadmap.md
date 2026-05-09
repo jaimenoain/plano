@@ -292,7 +292,7 @@ A new `get_map_clusters_v3` RPC. The viewport-driven Browse experience becomes r
 
 ---
 
-## [ ] Phase 4 — Smart filter chips (2–3 days)
+## [x] Phase 4 — Smart filter chips (2–3 days)
 
 **Goal:** When the user's query corresponds to a known filter value (`brutalism` → Brutalist attribute, `renzo piano` → architect filter, `tokyo` → city filter), surface a chip above the search results offering one-click application of that filter. Turns Find mode into a discoverable bridge into Browse mode.
 

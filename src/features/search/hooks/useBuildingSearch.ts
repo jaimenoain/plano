@@ -538,6 +538,40 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     staleTime: 1000 * 60 * 60 // 1 hour
   });
 
+  // Phase 4 — listen for smart-filter chip applications dispatched from
+  // BuildingSidebar. The chip lives outside this hook's tree, so it can't
+  // call setters directly; we route through a window-level event so this
+  // hook (the canonical owner of filter URL state) applies the change.
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ key: string; value: unknown }>).detail;
+      if (!detail) return;
+      switch (detail.key) {
+        case "category":
+          setSelectedCategory(detail.value as string);
+          break;
+        case "typology":
+          setSelectedTypologies((prev) => Array.from(new Set([...prev, detail.value as string])));
+          break;
+        case "attribute":
+          setSelectedAttributes((prev) => Array.from(new Set([...prev, detail.value as string])));
+          break;
+        case "person": {
+          const person = detail.value as { id: string; name: string };
+          setSelectedPeople((prev) =>
+            prev.some((p) => p.id === person.id) ? prev : [...prev, person],
+          );
+          break;
+        }
+        case "creditCompany":
+          setSelectedCreditCompany(detail.value as { id: string; name: string });
+          break;
+      }
+    };
+    window.addEventListener("plano:apply-smart-filter", handler);
+    return () => window.removeEventListener("plano:apply-smart-filter", handler);
+  }, []);
+
   // Sync resolved profiles to state
   useEffect(() => {
     if (ratedByProfiles && ratedByProfiles.length > 0) {
