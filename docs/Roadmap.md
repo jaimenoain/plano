@@ -114,7 +114,7 @@ A single PR titled `Phase 0: Search quick wins`. Touches a small number of files
 
 ---
 
-## [ ] Phase 1 — Hybrid scoring foundation for buildings (3–5 days)
+## [x] Phase 1 — Hybrid scoring foundation for buildings (3–5 days)
 
 **Goal:** Build the Postgres infrastructure for a proper Find-mode building search. Ship a new `search_buildings_v2` RPC behind a feature flag. Don't wire it up to the UI yet — that's Phase 2. By the end of this phase, the database has everything it needs to support a fast, ranked, typo-tolerant, viewport-independent text search across buildings.
 
