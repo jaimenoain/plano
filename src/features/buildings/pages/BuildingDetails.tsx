@@ -2295,6 +2295,7 @@ export default function BuildingDetails() {
                     credits={buildingCredits}
                     isAuthenticated={Boolean(user)}
                     isAdmin={isCreditsAdmin}
+                    currentUserId={user?.id ?? null}
                     addOpen={addCreditOpen}
                     onAddOpenChange={setAddCreditOpen}
                   />

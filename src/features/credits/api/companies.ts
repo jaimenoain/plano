@@ -195,6 +195,7 @@ function mapCreditRow(row: CreditRow): BuildingCreditWithEntities {
     updatedAt: row.updated_at,
     person: row.person,
     company: row.company,
+    note: null,
   };
 }
 

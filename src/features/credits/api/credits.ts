@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { insertEntityAuditLog } from "@/features/credits/api/entity-audit-log";
 import type {
   BuildingCreditWithEntities,
+  CreditNote,
   CreditRole,
   CreditStatus,
   CreditTier,
@@ -111,6 +112,15 @@ export type UpdateCreditStatusInput = z.infer<typeof UpdateCreditStatusSchema>;
 
 type PersonEmbed = { id: string; name: string; slug: string; avatar_url: string | null } | null;
 type CompanyEmbed = { id: string; name: string; slug: string; logo_url: string | null } | null;
+type NoteEmbed = {
+  id: string;
+  credit_id: string;
+  user_id: string;
+  content: string;
+  image_urls: string[];
+  created_at: string;
+  updated_at: string;
+} | null;
 
 type CreditRow = {
   id: string;
@@ -138,6 +148,7 @@ type CreditRow = {
   updated_at: string;
   person: PersonEmbed;
   company: CompanyEmbed;
+  note: NoteEmbed;
 };
 
 type ModerationPersonEmbed = {
@@ -212,6 +223,17 @@ function mapCreditRow(row: CreditRow): BuildingCreditWithEntities {
       : null,
     company: row.company
       ? { id: row.company.id, name: row.company.name, slug: row.company.slug, logoUrl: row.company.logo_url }
+      : null,
+    note: row.note
+      ? {
+          id: row.note.id,
+          creditId: row.note.credit_id,
+          userId: row.note.user_id,
+          content: row.note.content,
+          imageUrls: row.note.image_urls,
+          createdAt: row.note.created_at,
+          updatedAt: row.note.updated_at,
+        }
       : null,
   };
 }
@@ -324,7 +346,8 @@ export async function getBuildingCreditsWithClient(
       `
       *,
       person:people(id, name, slug, avatar_url),
-      company:companies(id, name, slug, logo_url)
+      company:companies(id, name, slug, logo_url),
+      note:building_credit_notes(id, credit_id, user_id, content, image_urls, created_at, updated_at)
     `,
     )
     .eq("building_id", buildingId);
@@ -402,6 +425,7 @@ export async function addBuildingCredit(input: AddBuildingCreditInput): Promise<
     ...row,
     person: (row as any).people || null,
     company: (row as any).companies || null,
+    note: null,
   };
 
   const mapped = mapCreditRow(rowWithAliases);
@@ -445,7 +469,8 @@ export async function updateBuildingCredit(
       `
       *,
       person:people(id, name, slug, avatar_url),
-      company:companies(id, name, slug, logo_url)
+      company:companies(id, name, slug, logo_url),
+      note:building_credit_notes(id, credit_id, user_id, content, image_urls, created_at, updated_at)
     `,
     )
     .maybeSingle();
@@ -774,4 +799,76 @@ export async function notifyCreditedEntities(input: NotifyCreditedEntitiesInput)
   }
 
   return { ok: true };
+}
+
+// ─── Credit Notes ────────────────────────────────────────────────────────────
+
+const UpsertCreditNoteSchema = z
+  .object({
+    content: z.string().min(1, "Note cannot be empty").max(5000),
+    imageUrls: z.array(z.string().url()).max(10).optional(),
+  })
+  .strict();
+
+export type UpsertCreditNoteInput = z.infer<typeof UpsertCreditNoteSchema>;
+
+export function creditNoteQueryKey(creditId: string) {
+  return ["credit-note", creditId] as const;
+}
+
+export async function upsertCreditNote(
+  creditId: string,
+  input: UpsertCreditNoteInput,
+): Promise<CreditNote> {
+  const {
+    data: { user },
+    error: authErr,
+  } = await supabase.auth.getUser();
+  if (authErr) throw authErr;
+  if (!user) throw new Error("Authentication required");
+
+  const parsed = UpsertCreditNoteSchema.parse(input);
+
+  const { data: row, error } = await supabase
+    .from("building_credit_notes")
+    .upsert(
+      {
+        credit_id: creditId,
+        user_id: user.id,
+        content: parsed.content,
+        image_urls: parsed.imageUrls ?? [],
+      },
+      { onConflict: "credit_id" },
+    )
+    .select("id, credit_id, user_id, content, image_urls, created_at, updated_at")
+    .single();
+
+  if (error) throw error;
+
+  return {
+    id: row.id,
+    creditId: row.credit_id,
+    userId: row.user_id,
+    content: row.content,
+    imageUrls: row.image_urls as string[],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function deleteCreditNote(creditId: string): Promise<void> {
+  const {
+    data: { user },
+    error: authErr,
+  } = await supabase.auth.getUser();
+  if (authErr) throw authErr;
+  if (!user) throw new Error("Authentication required");
+
+  const { error } = await supabase
+    .from("building_credit_notes")
+    .delete()
+    .eq("credit_id", creditId)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
 }

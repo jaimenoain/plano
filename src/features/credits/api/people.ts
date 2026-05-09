@@ -301,6 +301,7 @@ function mapCreditRow(
     updatedAt: row.updated_at,
     person: personSummary,
     company: row.company,
+    note: null,
   };
 }
 

@@ -1,5 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
-import { useLocation } from 'react-router';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 /** After the auto install prompt is shown, suppress it again for this long. */
@@ -25,42 +24,21 @@ interface PwaContextType {
 const PwaContext = createContext<PwaContextType | undefined>(undefined);
 
 export function PwaProvider({ children }: { children: ReactNode }) {
-  const location = useLocation();
-  const prevPathnameRef = useRef(location.pathname);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [showIOSDrawer, setShowIOSDrawer] = useState(false);
   const [isInstallable, setIsInstallable] = useState(false);
 
-  const {
-    needRefresh: [needRefresh],
-    updateServiceWorker,
-  } = useRegisterSW({
+  // Register the service worker. We deliberately do NOT call `updateServiceWorker`
+  // automatically: in vite-plugin-pwa it always triggers `window.location.reload()`
+  // once the new worker takes control, which would interrupt the user mid-navigation.
+  // With `registerType: "prompt"` the waiting worker installs in the background and
+  // takes over the next time all app instances are closed.
+  useRegisterSW({
     onRegistered() {},
     onRegisterError() {},
   });
-
-  // With `registerType: "prompt"`, a waiting worker never activates until we call
-  // `updateServiceWorker`. Apply silently on full reloads or in-app route changes
-  // (no Sonner toast — avoids interrupting work until the user navigates or refreshes).
-  useEffect(() => {
-    if (!needRefresh) {
-      prevPathnameRef.current = location.pathname;
-      return;
-    }
-
-    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
-    if (nav?.type === 'reload') {
-      void updateServiceWorker();
-      return;
-    }
-
-    if (location.pathname !== prevPathnameRef.current) {
-      prevPathnameRef.current = location.pathname;
-      void updateServiceWorker();
-    }
-  }, [location.pathname, needRefresh, updateServiceWorker]);
 
   // Long-lived installed PWAs (especially mobile) may not re-check the service worker
   // until a cold start. Probing on resume + periodically helps them pick up new sw.js

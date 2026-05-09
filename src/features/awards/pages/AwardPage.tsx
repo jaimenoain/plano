@@ -7,7 +7,8 @@ import { awardLoader, type AwardLoaderData } from "./AwardPage.loader";
 import { AwardLeaderboardDialog } from "../components/AwardLeaderboardDialog";
 import { ClaimAwardDialog } from "../components/ClaimAwardDialog";
 import { Button } from "@/components/ui/button";
-import { useMyAwardClaimRequest, useIsAwardAdmin } from "@/features/awards/hooks/useAwards";
+import { useMyAwardClaimRequest, useIsAwardAdmin, useUpcomingEventsByAward } from "@/features/awards/hooks/useAwards";
+import { editionEventTypeLabels } from "@/features/awards/types/awards";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -44,8 +45,9 @@ export default function AwardPage() {
   });
   const isLoggedIn = Boolean(sessionUser);
 
-  const { data: myRequest }  = useMyAwardClaimRequest(award.id);
-  const { data: isAwardAdmin } = useIsAwardAdmin(award.id);
+  const { data: myRequest }       = useMyAwardClaimRequest(award.id);
+  const { data: isAwardAdmin }    = useIsAwardAdmin(award.id);
+  const { data: upcomingEvents = [] } = useUpcomingEventsByAward(award.id);
 
   const ownerAdmin = admins.find((a) => a.role === "owner");
 
@@ -175,6 +177,49 @@ export default function AwardPage() {
             )}
           </div>
         </header>
+
+        {/* What's Next — only shown when there are upcoming events */}
+        {upcomingEvents.length > 0 && (
+          <section className="mt-10 border-b border-border-default pb-10">
+            <h2 className="mb-6 text-xs font-medium uppercase tracking-widest text-text-secondary">
+              What's Next
+            </h2>
+            <div className="divide-y divide-border-default">
+              {upcomingEvents.map((ev) => {
+                const d = new Date(ev.eventDate + "T12:00:00");
+                return (
+                  <div key={ev.id} className="flex items-start gap-5 py-4 first:pt-0 last:pb-0">
+                    <div className="w-14 shrink-0 text-center">
+                      <div className="text-2xl font-bold tabular-nums text-text-primary leading-none">
+                        {d.toLocaleDateString(undefined, { day: "numeric" })}
+                      </div>
+                      <div className="text-xs uppercase tracking-widest text-text-secondary mt-0.5">
+                        {d.toLocaleDateString(undefined, { month: "short" })}
+                      </div>
+                      <div className="text-xs text-text-secondary">
+                        {d.getFullYear()}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0 pt-0.5">
+                      <div className="text-sm font-semibold text-text-primary">
+                        {editionEventTypeLabels[ev.eventType]}
+                      </div>
+                      {ev.location && (
+                        <div className="mt-0.5 flex items-center gap-1 text-xs text-text-secondary">
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          {ev.location}
+                        </div>
+                      )}
+                      {ev.notes && (
+                        <div className="mt-0.5 text-xs text-text-secondary">{ev.notes}</div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         <section className="mt-12">
           <h2 className="mb-8 text-xs font-medium uppercase tracking-widest text-text-secondary">

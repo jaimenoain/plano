@@ -271,6 +271,11 @@ import {
   submitAwardClaimRequest,
   getAwardClaimRequests,
   reviewAwardClaimRequest,
+  getEventsByEdition,
+  getUpcomingEventsByAward,
+  createEditionEvent,
+  updateEditionEvent,
+  deleteEditionEvent,
 } from "@/features/awards/api/awards";
 
 export const suggestionKeys = {
@@ -449,6 +454,64 @@ export function useReviewAwardClaimRequest() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["award-claim-requests"] });
       qc.invalidateQueries({ queryKey: awardKeys.all });
+    },
+  });
+}
+
+// ── Edition Events ────────────────────────────────────────────
+
+export const editionEventKeys = {
+  all:             ["award-edition-events"] as const,
+  byEdition:       (editionId: string) => [...editionEventKeys.all, "edition", editionId] as const,
+  upcomingByAward: (awardId: string)   => [...editionEventKeys.all, "upcoming", awardId]  as const,
+};
+
+export function useEditionEvents(editionId: string) {
+  return useQuery({
+    queryKey: editionEventKeys.byEdition(editionId),
+    queryFn:  () => getEventsByEdition(editionId),
+    enabled:  editionId.length > 0,
+    staleTime: STALE_TIME,
+  });
+}
+
+export function useUpcomingEventsByAward(awardId: string) {
+  return useQuery({
+    queryKey: editionEventKeys.upcomingByAward(awardId),
+    queryFn:  () => getUpcomingEventsByAward(awardId),
+    enabled:  awardId.length > 0,
+    staleTime: STALE_TIME,
+  });
+}
+
+export function useCreateEditionEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: createEditionEvent,
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: editionEventKeys.byEdition(vars.edition_id) });
+      qc.invalidateQueries({ queryKey: editionEventKeys.all });
+    },
+  });
+}
+
+export function useUpdateEditionEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ eventId, payload }: { eventId: string; payload: Record<string, unknown> }) =>
+      updateEditionEvent(eventId, payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: editionEventKeys.all });
+    },
+  });
+}
+
+export function useDeleteEditionEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteEditionEvent,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: editionEventKeys.all });
     },
   });
 }

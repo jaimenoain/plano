@@ -613,6 +613,51 @@ export type PlanoPublicTables = {
       },
     ]
   }
+  building_credit_notes: {
+    Row: {
+      id: string
+      credit_id: string
+      user_id: string
+      content: string
+      image_urls: string[]
+      created_at: string
+      updated_at: string
+    }
+    Insert: {
+      id?: string
+      credit_id: string
+      user_id: string
+      content: string
+      image_urls?: string[]
+      created_at?: string
+      updated_at?: string
+    }
+    Update: {
+      id?: string
+      credit_id?: string
+      user_id?: string
+      content?: string
+      image_urls?: string[]
+      created_at?: string
+      updated_at?: string
+    }
+    Relationships: [
+      {
+        foreignKeyName: "building_credit_notes_credit_id_fkey"
+        columns: ["credit_id"]
+        isOneToOne: true
+        referencedRelation: "building_credits"
+        referencedColumns: ["id"]
+      },
+      {
+        foreignKeyName: "building_credit_notes_user_id_fkey"
+        columns: ["user_id"]
+        isOneToOne: false
+        referencedRelation: "profiles"
+        referencedColumns: ["id"]
+      },
+    ]
+  }
   credit_notification_log: {
     Row: {
       id: string

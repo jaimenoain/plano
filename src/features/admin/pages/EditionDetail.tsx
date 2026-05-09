@@ -32,6 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { AddRecipientDialog } from "@/features/admin/components/AddRecipientDialog";
+import { EditionEventsSection } from "@/features/awards/components/EditionEventsSection";
 
 export const meta: MetaFunction = () => [{ title: "Edition Detail | Plano Admin" }];
 
@@ -243,6 +244,13 @@ export default function EditionDetail() {
             </div>
           </div>
         ))
+      )}
+
+      {/* Edition events */}
+      {editionId && (
+        <div className="rounded-sm border border-border-default bg-surface-card p-6">
+          <EditionEventsSection editionId={editionId} />
+        </div>
       )}
 
       {/* Add recipient dialog */}

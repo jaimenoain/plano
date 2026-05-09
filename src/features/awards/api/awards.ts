@@ -513,7 +513,11 @@ export async function searchAwards(query: string): Promise<{ id: string; name: s
 
 // ── Suggestions ──────────────────────────────────────────────
 
-import type { AwardSuggestionDTO } from "@/features/awards/types/awards";
+import type {
+  AwardSuggestionDTO,
+  AwardEditionEventDTO,
+  AwardEditionEventType,
+} from "@/features/awards/types/awards";
 
 function toSuggestionDTO(row: any): AwardSuggestionDTO {
   return {
@@ -819,4 +823,93 @@ export async function reviewAwardClaimRequest(
   });
   if (error) throw new Error(`Failed to review claim request: ${error.message}`);
   if (data && !data.ok) throw new Error(data.error ?? "Review failed");
+}
+
+// ── Edition Events ────────────────────────────────────────────
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function toEditionEventDTO(row: any): AwardEditionEventDTO {
+  return {
+    id:        row.id,
+    editionId: row.edition_id,
+    eventType: row.event_type as AwardEditionEventType,
+    eventDate: row.event_date,
+    location:  row.location  ?? null,
+    notes:     row.notes     ?? null,
+    createdAt: row.created_at,
+  };
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+export async function getEventsByEdition(editionId: string): Promise<AwardEditionEventDTO[]> {
+  const { data, error } = await db
+    .from("award_edition_events")
+    .select("*")
+    .eq("edition_id", editionId)
+    .order("event_date", { ascending: true });
+
+  if (error) throw new Error(`Failed to load edition events: ${error.message}`);
+  return (data ?? []).map(toEditionEventDTO);
+}
+
+export async function getUpcomingEventsByAward(awardId: string): Promise<AwardEditionEventDTO[]> {
+  // Resolve edition IDs first, then filter events — avoids nested-join filtering.
+  const { data: editions, error: edError } = await db
+    .from("award_editions")
+    .select("id")
+    .eq("award_id", awardId);
+
+  if (edError) throw new Error(`Failed to load editions: ${edError.message}`);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const editionIds = (editions ?? []).map((e: any) => e.id as string);
+  if (editionIds.length === 0) return [];
+
+  const today = new Date().toISOString().split("T")[0];
+  const { data, error } = await db
+    .from("award_edition_events")
+    .select("*")
+    .in("edition_id", editionIds)
+    .gte("event_date", today)
+    .order("event_date", { ascending: true })
+    .limit(10);
+
+  if (error) throw new Error(`Failed to load upcoming events: ${error.message}`);
+  return (data ?? []).map(toEditionEventDTO);
+}
+
+export async function createEditionEvent(payload: {
+  edition_id: string;
+  event_type: AwardEditionEventType;
+  event_date: string;
+  location?: string | null;
+  notes?: string | null;
+}): Promise<AwardEditionEventDTO> {
+  const { data, error } = await db
+    .from("award_edition_events")
+    .insert(payload)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(`Failed to create event: ${error.message}`);
+  return toEditionEventDTO(data);
+}
+
+export async function updateEditionEvent(
+  eventId: string,
+  payload: Record<string, unknown>,
+): Promise<AwardEditionEventDTO> {
+  const { data, error } = await db
+    .from("award_edition_events")
+    .update({ ...payload, updated_at: new Date().toISOString() })
+    .eq("id", eventId)
+    .select("*")
+    .single();
+
+  if (error) throw new Error(`Failed to update event: ${error.message}`);
+  return toEditionEventDTO(data);
+}
+
+export async function deleteEditionEvent(eventId: string): Promise<void> {
+  const { error } = await db.from("award_edition_events").delete().eq("id", eventId);
+  if (error) throw new Error(`Failed to delete event: ${error.message}`);
 }

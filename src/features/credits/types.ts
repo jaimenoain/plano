@@ -152,10 +152,23 @@ export interface BuildingCredit {
   updatedAt: string;
 }
 
+/** Note written by the credit owner documenting their involvement (one per credit). */
+export interface CreditNote {
+  id: string;
+  creditId: string;
+  userId: string;
+  content: string;
+  imageUrls: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 /** Credit row with joined person/company labels for building detail and lists */
 export interface BuildingCreditWithEntities extends BuildingCredit {
   person: { id: string; name: string; slug: string; avatarUrl?: string | null } | null;
   company: { id: string; name: string; slug: string; logoUrl?: string | null } | null;
+  /** Null when no note has been written yet. */
+  note: CreditNote | null;
 }
 
 /** Flagged-credits admin queue row with claim context for countdown / warnings. */

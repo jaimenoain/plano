@@ -2,6 +2,25 @@ export type AwardOutcome =
   | 'winner' | 'finalist' | 'shortlisted' | 'longlisted'
   | 'nominated' | 'commended' | 'highly_commended' | 'special_mention';
 
+export type AwardEditionEventType =
+  | 'nominations_open'
+  | 'nominations_close'
+  | 'longlist_announcement'
+  | 'shortlist_announcement'
+  | 'winner_announcement'
+  | 'ceremony'
+  | 'other';
+
+export const editionEventTypeLabels: Record<AwardEditionEventType, string> = {
+  nominations_open:       'Nominations Open',
+  nominations_close:      'Nominations Close',
+  longlist_announcement:  'Longlist Announced',
+  shortlist_announcement: 'Shortlist Announced',
+  winner_announcement:    'Winners Announced',
+  ceremony:               'Ceremony',
+  other:                  'Announcement',
+};
+
 export type RecipientType = 'building' | 'person' | 'company';
 
 export type AwardClaimStatus = 'unclaimed' | 'claimed' | 'verified';
@@ -97,6 +116,16 @@ export interface AwardRecipientDTO {
   edition?:  { year: number | null; editionDate: string | null };
   category?: { name: string };
   award?:    { name: string; slug: string };
+}
+
+export interface AwardEditionEventDTO {
+  id: string;
+  editionId: string;
+  eventType: AwardEditionEventType;
+  eventDate: string;   // ISO date (YYYY-MM-DD)
+  location: string | null;
+  notes: string | null;
+  createdAt: string;
 }
 
 export interface AwardSuggestionDTO {

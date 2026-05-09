@@ -14,6 +14,7 @@ import {
   Check,
   X,
   ExternalLink,
+  CalendarDays,
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -59,6 +66,7 @@ import {
 } from "@/features/awards/hooks/useAwards";
 import { awardAdminLoader, type AwardAdminLoaderData } from "./AwardAdminPage.loader";
 import { AddRecipientDialog } from "@/features/admin/components/AddRecipientDialog";
+import { EditionEventsSection } from "@/features/awards/components/EditionEventsSection";
 
 export { awardAdminLoader as loader } from "./AwardAdminPage.loader";
 
@@ -173,10 +181,12 @@ function EditionsTab({ awardId }: { awardId: string }) {
   const { data: editions = [], isLoading } = useEditionsByAward(awardId);
   const createEdition = useCreateEdition();
   const deleteEdition = useDeleteEdition();
-  const [adding, setAdding]         = useState(false);
-  const [newYear, setNewYear]       = useState("");
-  const [newLocation, setNewLocation] = useState("");
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [adding, setAdding]               = useState(false);
+  const [newYear, setNewYear]             = useState("");
+  const [newLocation, setNewLocation]     = useState("");
+  const [deletingId, setDeletingId]       = useState<string | null>(null);
+  const [eventsEditionId, setEventsEditionId] = useState<string | null>(null);
+  const eventsEdition = editions.find((e) => e.id === eventsEditionId);
 
   const handleAdd = () => {
     const year = parseInt(newYear, 10);
@@ -231,7 +241,7 @@ function EditionsTab({ awardId }: { awardId: string }) {
               <TableHead>Year</TableHead>
               <TableHead>Location</TableHead>
               <TableHead className="text-center">Recipients</TableHead>
-              <TableHead className="w-10" />
+              <TableHead className="w-24" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -248,14 +258,25 @@ function EditionsTab({ awardId }: { awardId: string }) {
                   <TableCell className="text-text-secondary text-sm">{ed.ceremonyLocation ?? "—"}</TableCell>
                   <TableCell className="text-center text-sm text-text-secondary">{ed.recipientCount ?? 0}</TableCell>
                   <TableCell>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 text-text-secondary hover:text-feedback-error"
-                      onClick={() => setDeletingId(ed.id)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-text-secondary hover:text-text-primary"
+                        title="Manage events"
+                        onClick={() => setEventsEditionId(ed.id)}
+                      >
+                        <CalendarDays className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-text-secondary hover:text-feedback-error"
+                        onClick={() => setDeletingId(ed.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -263,6 +284,20 @@ function EditionsTab({ awardId }: { awardId: string }) {
           </TableBody>
         </Table>
       </div>
+
+      {/* Edition events dialog */}
+      <Dialog open={!!eventsEditionId} onOpenChange={(o) => !o && setEventsEditionId(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              Events — {eventsEdition?.year ?? eventsEdition?.editionDate ?? "Edition"}
+            </DialogTitle>
+          </DialogHeader>
+          {eventsEditionId && (
+            <EditionEventsSection editionId={eventsEditionId} />
+          )}
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={!!deletingId} onOpenChange={(o) => !o && setDeletingId(null)}>
         <AlertDialogContent>

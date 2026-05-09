@@ -1,11 +1,12 @@
 import { useCallback, useReducer, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, ChevronDown, BadgeCheck, Flag, Users, User, Building2 } from "lucide-react";
+import { ExternalLink, ChevronDown, BadgeCheck, Flag, Users, User, Building2, NotebookPen, ImageIcon } from "lucide-react";
 import type { BuildingCreditWithEntities, CreditRole, CreditTier, FlagReason } from "@/features/credits/types";
 import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
 import { visiblePrimaryCredits } from "@/features/credits/buildingCreditDisplay";
 import { AddCreditForm } from "@/features/credits/components/AddCreditForm";
+import { CreditNoteSheet } from "@/features/credits/components/CreditNoteSheet";
 import { flagCredit, buildingCreditsQueryKey } from "@/features/credits/api/credits";
 import { markCreditFlaggedInSession, readSessionFlaggedCreditIds } from "@/features/credits/creditFlagSession";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -365,17 +366,22 @@ function BuildingCreditRow({
   credit,
   className,
   buildingId,
+  buildingName,
   sessionFlaggedIds,
   onFlagSessionMarked,
+  currentUserId,
   variant = "default",
 }: {
   credit: BuildingCreditWithEntities;
   className?: string;
   buildingId: string;
+  buildingName?: string | null;
   sessionFlaggedIds: Set<string>;
   onFlagSessionMarked: (creditId: string) => void;
+  currentUserId?: string | null;
   variant?: "default" | "spotlight";
 }) {
+  const [noteSheetOpen, setNoteSheetOpen] = useState(false);
   const years = yearRangeText(credit);
   const roleLabel = formatCreditRoleLabel(credit.role, credit.roleCustom);
   const project = credit.projectUrl?.trim() ?? "";
@@ -383,6 +389,9 @@ function BuildingCreditRow({
     credit.status !== "flagged" &&
     credit.status !== "hidden" &&
     !sessionFlaggedIds.has(credit.id);
+
+  // Show note CTA when the signed-in user submitted this credit.
+  const isOwner = Boolean(currentUserId && credit.addedByUserId === currentUserId);
 
   const avatarSrc = creditAvatarSrc(credit);
   const initials = creditInitials(credit);
@@ -520,6 +529,25 @@ function BuildingCreditRow({
                   <ExternalLink className="h-3.5 w-3.5" aria-hidden />
                 </a>
               ) : null}
+              {isOwner ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0 text-text-disabled hover:text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity"
+                      aria-label={credit.note ? "Edit your note" : "Add a note about your work"}
+                      onClick={() => setNoteSheetOpen(true)}
+                    >
+                      <NotebookPen className="h-3.5 w-3.5" aria-hidden />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {credit.note ? "Edit your note" : "Add a note about your work"}
+                  </TooltipContent>
+                </Tooltip>
+              ) : null}
               <CreditFlagTrigger
                 creditId={credit.id}
                 buildingId={buildingId}
@@ -528,8 +556,80 @@ function BuildingCreditRow({
               />
             </div>
           </div>
+
+          {/* Inline note display */}
+          {credit.note ? (
+            <div className="mt-4 space-y-3 rounded-none border-l-2 border-border-default pl-4">
+              <div>
+                <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-text-disabled">
+                  {isOwner ? "Your note" : "Note from the team"}
+                </p>
+                <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-text-secondary">
+                  {credit.note.content}
+                </p>
+              </div>
+              {credit.note.imageUrls.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {credit.note.imageUrls.map((url) => (
+                    <img
+                      key={url}
+                      src={getStorageAssetUrl(url) ?? url}
+                      alt=""
+                      className="h-20 w-20 rounded-none object-cover ring-1 ring-border-default"
+                    />
+                  ))}
+                  <span className="flex items-center gap-1 text-xs text-text-disabled">
+                    <ImageIcon className="h-3 w-3" aria-hidden />
+                    {credit.note.imageUrls.length}
+                  </span>
+                </div>
+              ) : null}
+              {isOwner && !credit.note ? null : isOwner ? (
+                <button
+                  type="button"
+                  onClick={() => setNoteSheetOpen(true)}
+                  className="text-xs text-text-disabled underline-offset-2 hover:text-text-secondary hover:underline"
+                >
+                  Edit note
+                </button>
+              ) : null}
+            </div>
+          ) : isOwner ? (
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => setNoteSheetOpen(true)}
+                className="flex items-center gap-1.5 text-xs font-medium text-text-disabled underline-offset-2 hover:text-text-secondary hover:underline"
+              >
+                <NotebookPen className="h-3.5 w-3.5" aria-hidden />
+                Add a note about your work
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
+
+      {/* Note edit sheet */}
+      {isOwner ? (
+        <Sheet open={noteSheetOpen} onOpenChange={setNoteSheetOpen}>
+          <SheetContent
+            side="right"
+            className="flex w-full flex-col overflow-hidden rounded-none sm:max-w-lg sm:px-6 [&_button]:!rounded-none [&_textarea]:!rounded-none"
+          >
+            {noteSheetOpen ? (
+              <CreditNoteSheet
+                creditId={credit.id}
+                buildingId={buildingId}
+                buildingName={buildingName}
+                creditRole={credit.role}
+                creditRoleCustom={credit.roleCustom}
+                existingNote={credit.note}
+                onClose={() => setNoteSheetOpen(false)}
+              />
+            ) : null}
+          </SheetContent>
+        </Sheet>
+      ) : null}
     </div>
   );
 }
@@ -538,15 +638,19 @@ function TierRoleSections({
   tier,
   credits,
   buildingId,
+  buildingName,
   sessionFlaggedIds,
   onFlagSessionMarked,
+  currentUserId,
   showTierHeading = true,
 }: {
   tier: CreditTier;
   credits: BuildingCreditWithEntities[];
   buildingId: string;
+  buildingName?: string | null;
   sessionFlaggedIds: Set<string>;
   onFlagSessionMarked: (creditId: string) => void;
+  currentUserId?: string | null;
   showTierHeading?: boolean;
 }) {
   if (credits.length === 0) return null;
@@ -578,8 +682,10 @@ function TierRoleSections({
                   key={c.id}
                   credit={c}
                   buildingId={buildingId}
+                  buildingName={buildingName}
                   sessionFlaggedIds={sessionFlaggedIds}
                   onFlagSessionMarked={onFlagSessionMarked}
+                  currentUserId={currentUserId}
                 />
               ))}
             </div>
@@ -611,6 +717,8 @@ export interface BuildingCreditsProps {
   isAdmin?: boolean;
   /** Used in the tab intro and empty state. */
   buildingName?: string | null;
+  /** Signed-in user's id — used to identify credits that belong to the current user. */
+  currentUserId?: string | null;
   /** Controlled open state for the add-credit sheet (optional; internal state used if omitted). */
   addOpen?: boolean;
   onAddOpenChange?: (open: boolean) => void;
@@ -672,6 +780,7 @@ export function BuildingCredits({
   isAuthenticated,
   isAdmin = false,
   buildingName,
+  currentUserId,
   addOpen: addOpenProp,
   onAddOpenChange,
 }: BuildingCreditsProps) {
@@ -740,8 +849,10 @@ export function BuildingCredits({
             <BuildingCreditRow
               credit={spotlightCredit}
               buildingId={buildingId}
+              buildingName={buildingName}
               sessionFlaggedIds={sessionIds}
               onFlagSessionMarked={markAndBump}
+              currentUserId={currentUserId}
               variant="spotlight"
             />
           </section>
@@ -769,8 +880,10 @@ export function BuildingCredits({
                       tier="ancillary"
                       credits={ancillary}
                       buildingId={buildingId}
+                      buildingName={buildingName}
                       sessionFlaggedIds={sessionIds}
                       onFlagSessionMarked={markAndBump}
+                      currentUserId={currentUserId}
                       showTierHeading={false}
                     />
                   </div>
@@ -787,15 +900,19 @@ export function BuildingCredits({
               tier="primary"
               credits={primary}
               buildingId={buildingId}
+              buildingName={buildingName}
               sessionFlaggedIds={sessionIds}
               onFlagSessionMarked={markAndBump}
+              currentUserId={currentUserId}
             />
             <TierRoleSections
               tier="contributor"
               credits={contributor}
               buildingId={buildingId}
+              buildingName={buildingName}
               sessionFlaggedIds={sessionIds}
               onFlagSessionMarked={markAndBump}
+              currentUserId={currentUserId}
             />
           </div>
           {ancillary.length > 0 ? (
@@ -822,8 +939,10 @@ export function BuildingCredits({
                       tier="ancillary"
                       credits={ancillary}
                       buildingId={buildingId}
+                      buildingName={buildingName}
                       sessionFlaggedIds={sessionIds}
                       onFlagSessionMarked={markAndBump}
+                      currentUserId={currentUserId}
                       showTierHeading={false}
                     />
                   </div>
