@@ -27,7 +27,7 @@
  *   h-8 w-8 text-text-secondary → h-4 w-4 text-text-disabled — subtle,
  *   consistent with loading states across the rest of the app.
  */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Map as MapIcon, List as ListIcon, Loader2 } from "lucide-react";
 import { ClientOnly } from "@/components/common/ClientOnly";
@@ -35,6 +35,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
 import { Bounds, getBoundsFromBuildings } from "@/utils/map";
 import { useNavigate } from "react-router";
+import type { SearchBuildingsV2Filters } from "@/features/search/api/searchBuildingsV2";
 
 import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext";
 import { PlanoMap } from "@/features/maps/components/PlanoMap";
@@ -75,9 +76,35 @@ function SearchPageContent() {
   // Find mode: query >= 2 chars after debounce
   const isFindMode = debouncedSearchValue.trim().length >= 2;
 
+  // Map MapFilters → SearchBuildingsV2Filters so Find-mode RPCs respect the
+  // same global filters (credits, taxonomy, size, awards, access) as Browse mode.
+  const findModeFilters = useMemo((): SearchBuildingsV2Filters | undefined => {
+    const f: SearchBuildingsV2Filters = {};
+    if (filters.creditCompany?.id) f.credit_company_id = filters.creditCompany.id;
+    if (filters.creditRoles?.length) f.credit_roles = filters.creditRoles;
+    if (filters.category) f.category_id = filters.category;
+    if (filters.typologies?.length) f.typology_ids = filters.typologies;
+    if (filters.attributes?.length) f.attribute_ids = filters.attributes;
+    if (filters.constructionStatuses?.length) f.construction_statuses = filters.constructionStatuses;
+    if (filters.sizeCategories?.length) f.size_categories = filters.sizeCategories;
+    if (filters.minSizeSqm) f.min_size_sqm = filters.minSizeSqm;
+    if (filters.maxSizeSqm) f.max_size_sqm = filters.maxSizeSqm;
+    if (filters.minStoreys) f.min_storeys = filters.minStoreys;
+    if (filters.maxStoreys) f.max_storeys = filters.maxStoreys;
+    if (filters.awardId) f.award_id = filters.awardId;
+    if (filters.awardOutcome) f.award_outcome = filters.awardOutcome;
+    if (filters.awardYearFrom) f.award_year_from = filters.awardYearFrom;
+    if (filters.awardYearTo) f.award_year_to = filters.awardYearTo;
+    if (filters.accessLevels?.length) f.access_levels = filters.accessLevels;
+    if (filters.accessLogistics?.length) f.access_logistics = filters.accessLogistics;
+    if (filters.accessCosts?.length) f.access_costs = filters.accessCosts;
+    return Object.keys(f).length > 0 ? f : undefined;
+  }, [filters]);
+
   // Find mode — three parallel RPCs, no bbox
   const findResults = useUnifiedSearch({
     query: debouncedSearchValue,
+    filters: findModeFilters,
     minLength: 2,
   });
 

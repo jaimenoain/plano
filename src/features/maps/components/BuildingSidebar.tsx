@@ -274,7 +274,7 @@ export function BuildingSidebar({
               <p className="px-4 pt-4 pb-2 text-2xs font-medium tracking-widest uppercase text-text-secondary">
                 Jump to location
               </p>
-              {suggestions.map((suggestion) => (
+              {suggestions.slice(0, 3).map((suggestion) => (
                 <button
                   key={suggestion.place_id}
                   type="button"
