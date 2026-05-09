@@ -178,7 +178,7 @@ A migration set, the new RPC, and a thin TypeScript API wrapper. No UI changes. 
 
 ---
 
-## [ ] Phase 2 — Wire up Find mode end-to-end (3–5 days)
+## [x] Phase 2 — Wire up Find mode end-to-end (3–5 days)
 
 **Goal:** Make the search bar actually work. By the end of this phase, typing a query in the search bar uses `search_buildings_v2`, returns results regardless of map position, and works for people and companies too. This is the user-visible "search starts working" moment.
 

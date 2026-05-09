@@ -339,42 +339,12 @@ export async function getCompany(slug: string): Promise<CompanyWithCredits | nul
 }
 
 /**
- * Fuzzy name search; returns `CompanySummary` rows.
+ * Fuzzy name search — thin wrapper around search_companies_v2 RPC.
+ * Replaced the previous ilike sequential-scan pattern.
  */
 export async function searchCompanies(query: string): Promise<CompanySummary[]> {
-  const q = query.trim().replace(/[%_]/g, "").slice(0, 200);
-  if (!q) return [];
-
-  const { data: rows, error } = await supabase
-    .from("companies")
-    .select("id, name, slug, claim_status, country, logo_url, building_credits(count)")
-    .ilike("name", `%${q}%`)
-    .limit(25);
-
-  if (error) throw error;
-  if (!rows?.length) return [];
-
-  return rows.map((r) => {
-    const id = r.id as string;
-    const row = r as {
-      id: string;
-      name: string;
-      slug: string;
-      claim_status: CompanySummary["claimStatus"];
-      country: string | null;
-      logo_url: string | null;
-      building_credits: { count: number }[];
-    };
-    return {
-      id,
-      name: row.name,
-      slug: row.slug,
-      claimStatus: row.claim_status,
-      country: row.country,
-      logoUrl: row.logo_url,
-      creditCount: row.building_credits?.[0]?.count ?? 0,
-    };
-  });
+  const { searchCompaniesV2 } = await import("@/features/search/api/searchCompaniesV2");
+  return searchCompaniesV2(query, { limit: 25 });
 }
 
 /**

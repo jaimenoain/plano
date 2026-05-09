@@ -46,7 +46,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
 
   const {
     methods: { setBounds, setHighlightedId, fitMapBounds },
-    state: { highlightedId, filters, bounds, mode, fitBounds },
+    state: { highlightedId, filters, bounds, mode, fitBounds, findModeBuildings },
   } = useMapContext();
 
   const mapRef = useRef<MapRef>(null);
@@ -148,12 +148,36 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
     }
   }, [updateBounds, lat, lng, zoom, updateMapState]);
 
-  const { clusters, isLoading, isFetching } = useMapData({
+  const { clusters: browseClusters, isLoading: browseLoading, isFetching: browseFetching } = useMapData({
     bounds: bounds || { north: 0, south: 0, east: 0, west: 0 },
     zoom: viewState.zoom,
     filters,
     mode,
   });
+
+  // In Find mode, override map clusters with search_buildings_v2 results.
+  // findModeBuildings are transformed to the ClusterResponse shape so MapMarkers
+  // needs no changes. Browse mode (no findModeBuildings) uses the RPC as before.
+  const clusters = findModeBuildings
+    ? findModeBuildings
+        .filter((b) => b.lat != null && b.lng != null)
+        .map((b) => ({
+          id: b.id,
+          lat: b.lat as number,
+          lng: b.lng as number,
+          is_cluster: false,
+          count: 1,
+          rating: null,
+          status: null,
+          name: b.name,
+          slug: b.slug,
+          image_url: b.hero_image_url ?? undefined,
+          tier_rank_label: b.tier_rank,
+          tier_rank: 1,
+        }))
+    : browseClusters;
+  const isLoading = findModeBuildings ? false : browseLoading;
+  const isFetching = findModeBuildings ? false : browseFetching;
 
   const visibleClustersCount = useMemo(() => {
     if (!clusters || !bounds) return 0;

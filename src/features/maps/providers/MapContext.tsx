@@ -5,6 +5,7 @@ import { useStableMapUpdate } from '../hooks/useStableMapUpdate';
 import { MapMode, MapFilters, MapState } from '@/types/plano-map';
 import type { MapState as URLMapState } from '@/features/maps/hooks/useURLMapState';
 import { Bounds } from '@/utils/map';
+import type { BuildingSearchHit } from '@/features/search/api/searchBuildingsV2';
 
 interface Contact {
   id: string;
@@ -20,6 +21,7 @@ interface MapContextMethods {
   setMapState: (state: Partial<MapState>) => void;
   setBounds: (bounds: Bounds) => void;
   setHighlightedId: (id: string | null) => void;
+  setFindModeBuildings: (buildings: BuildingSearchHit[] | null) => void;
 }
 
 interface MapContextValue {
@@ -32,6 +34,7 @@ interface MapContextValue {
     bounds: Bounds | null;
     fitBounds: Bounds | null;
     highlightedId: string | null;
+    findModeBuildings: BuildingSearchHit[] | null;
   };
   methods: MapContextMethods;
 }
@@ -45,6 +48,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
   const [bounds, setBounds] = useState<Bounds | null>(null);
   const [fitBounds, setFitBounds] = useState<Bounds | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [findModeBuildings, setFindModeBuildings] = useState<BuildingSearchHit[] | null>(null);
   const [hydratedContacts, setHydratedContacts] = useState<Record<string, Contact>>({});
 
   // Fetch missing contacts if we have ratedBy param but no contacts (or partial)
@@ -186,6 +190,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
         bounds,
         fitBounds,
         highlightedId,
+        findModeBuildings,
       },
       methods: {
         moveMap,
@@ -195,9 +200,10 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
         setMapState,
         setBounds,
         setHighlightedId,
+        setFindModeBuildings,
       },
     }),
-    [lat, lng, zoom, mode, mergedFilters, bounds, fitBounds, highlightedId, moveMap, fitMapBounds, setMode, setFilter, setMapState]
+    [lat, lng, zoom, mode, mergedFilters, bounds, fitBounds, highlightedId, findModeBuildings, moveMap, fitMapBounds, setMode, setFilter, setMapState, setFindModeBuildings]
   );
 
   return <MapContext.Provider value={value}>{children}</MapContext.Provider>;

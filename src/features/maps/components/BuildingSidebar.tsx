@@ -46,6 +46,7 @@ import { Link } from 'react-router';
 import { getBuildingImageUrl, getStorageAssetUrl } from '@/utils/image';
 import { Suggestion } from '@/features/search/components/DiscoverySearchInput';
 import type { CompanySummary, PersonSummary } from '@/features/credits/types';
+import type { BuildingSearchHit } from '@/features/search/api/searchBuildingsV2';
 import { getBoundsFromBuildings } from '@/utils/map';
 import { cn } from '@/lib/utils';
 import { getBuildingUrl } from '@/utils/url';
@@ -75,6 +76,8 @@ interface BuildingSidebarProps {
   people?: PersonSummary[];
   companies?: CompanySummary[];
   isDiscovery?: boolean;
+  /** When set, bypasses the internal get_buildings_list query and renders these Find-mode results instead. */
+  findModeBuildings?: BuildingSearchHit[] | null;
   className?: string;
 }
 
@@ -87,6 +90,7 @@ export function BuildingSidebar({
   people = [],
   companies = [],
   isDiscovery = false,
+  findModeBuildings = null,
   className,
 }: BuildingSidebarProps = {}) {
   const {
@@ -97,13 +101,15 @@ export function BuildingSidebar({
   const lastZoomedQuery = useRef<string | null>(null);
   const [resultTab, setResultTab] = useState<SearchResultTab>('buildings');
 
+  // Browse mode: get_buildings_list (infinite, viewport-constrained).
+  // Disabled when findModeBuildings are provided — Find mode bypasses this query.
   const {
     data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading,
-    isFetching,
+    isLoading: browseLoading,
+    isFetching: browseFetching,
     isError,
   } = useInfiniteQuery({
     queryKey: ['buildings-list', bounds, filters],
@@ -150,13 +156,17 @@ export function BuildingSidebar({
     getNextPageParam: (lastPage, allPages) => {
       return lastPage && lastPage.length === PAGE_SIZE ? allPages.length + 1 : undefined;
     },
-    enabled: !!bounds,
+    enabled: !!bounds && !findModeBuildings,
     initialPageParam: 1,
     placeholderData: keepPreviousData,
   });
 
-  // Infinite scroll observer
+  const isLoading = findModeBuildings ? false : (browseLoading && !bounds);
+  const isFetching = findModeBuildings ? false : browseFetching;
+
+  // Infinite scroll observer (Browse mode only)
   useEffect(() => {
+    if (findModeBuildings) return;
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
@@ -168,10 +178,11 @@ export function BuildingSidebar({
     const currentTarget = observerTarget.current;
     if (currentTarget) observer.observe(currentTarget);
     return () => { if (currentTarget) observer.unobserve(currentTarget); };
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, findModeBuildings]);
 
-  // Auto-zoom on search
+  // Auto-zoom on Browse-mode query (Find mode handles its own fit via SearchPage)
   useEffect(() => {
+    if (findModeBuildings) return;
     if (filters.query && !isFetching && data && data.pages?.[0]?.length) {
       if (filters.query !== lastZoomedQuery.current) {
         const allBuildings = data.pages.flat();
@@ -188,9 +199,27 @@ export function BuildingSidebar({
     } else if (!filters.query) {
       lastZoomedQuery.current = null;
     }
-  }, [filters.query, isFetching, data, fitMapBounds]);
+  }, [filters.query, isFetching, data, fitMapBounds, findModeBuildings]);
 
-  const buildings = useMemo(() => {
+  // buildings — either Find-mode hits adapted to the Building shape, or Browse-mode rows
+  const buildings = useMemo<Building[]>(() => {
+    if (findModeBuildings) {
+      return findModeBuildings.map((h) => ({
+        id: h.id,
+        name: h.name,
+        slug: h.slug,
+        image_url: h.hero_image_url,
+        rating: 0,
+        status: null,
+        lat: h.lat ?? 0,
+        lng: h.lng ?? 0,
+        credit_names: h.credit_names,
+        year_completed: h.year_completed,
+        city: h.city,
+        country: h.country,
+        alt_name: h.alt_name,
+      }));
+    }
     const allBuildings = data?.pages.flat() || [];
     return [...allBuildings].sort((a, b) => {
       const isHiddenA = a.status === 'ignored';
@@ -199,7 +228,7 @@ export function BuildingSidebar({
       if (!isHiddenA && isHiddenB) return -1;
       return 0;
     });
-  }, [data?.pages]);
+  }, [findModeBuildings, data?.pages]);
 
   const peopleCount = people.length;
   const companiesCount = companies.length;
@@ -269,7 +298,7 @@ export function BuildingSidebar({
           ) : null}
 
           {/* ── Building results ── */}
-          {!bounds || isLoading ? (
+          {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-4 w-4 animate-spin text-text-disabled" />
             </div>
@@ -279,7 +308,9 @@ export function BuildingSidebar({
             </div>
           ) : buildings.length === 0 ? (
             <div className="px-4 py-12 text-center space-y-3">
-              <p className="text-sm text-text-disabled">No buildings found in this area</p>
+              <p className="text-sm text-text-disabled">
+                {findModeBuildings !== null ? "No buildings match this search" : "No buildings found in this area"}
+              </p>
               <Link
                 to="/add-building"
                 className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity"

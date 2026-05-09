@@ -53,7 +53,9 @@ export async function searchBuildingsV2(
 ): Promise<BuildingSearchHit[]> {
   const { limit = 20, offset = 0, filters } = opts;
 
-  const { data, error } = await supabase.rpc("search_buildings_v2", {
+  // Cast through unknown: search_buildings_v2 is not yet in generated types
+  // (requires running `npm run gen-types` after the Phase 1 migration is applied).
+  const { data, error } = await (supabase as unknown as { rpc: (name: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }> }).rpc("search_buildings_v2", {
     p_query: query,
     p_limit: limit,
     p_offset: offset,
@@ -61,5 +63,5 @@ export async function searchBuildingsV2(
   });
 
   if (error) throw error;
-  return (data ?? []) as BuildingSearchHit[];
+  return ((data as unknown[]) ?? []) as BuildingSearchHit[];
 }

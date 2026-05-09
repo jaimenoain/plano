@@ -417,74 +417,12 @@ export async function getPerson(slug: string): Promise<PersonWithCredits | null>
 }
 
 /**
- * Fuzzy name search; returns `PersonSummary` rows with affiliation and sample building labels.
+ * Fuzzy name search — thin wrapper around search_people_v2 RPC.
+ * Replaced the previous 3-round-trip ilike + affiliations + credits pattern.
  */
 export async function searchPeople(query: string): Promise<PersonSummary[]> {
-  const q = query.trim().replace(/[%_]/g, "").slice(0, 200);
-  if (!q) return [];
-
-  const { data: peopleRows, error: pErr } = await supabase
-    .from("people")
-    .select("id, name, slug, claim_status, nationality, avatar_url, building_credits(count)")
-    .ilike("name", `%${q}%`)
-    .limit(25);
-
-  if (pErr) throw pErr;
-  if (!peopleRows?.length) return [];
-
-  const ids = peopleRows.map((r) => r.id as string);
-
-  const [{ data: affRows, error: aErr }, { data: creditSampleRows, error: crErr }] = await Promise.all([
-    supabase
-      .from("person_company_affiliations")
-      .select("person_id, company:companies(name)")
-      .in("person_id", ids),
-    supabase.from("building_credits").select("person_id, building:buildings(name)").in("person_id", ids),
-  ]);
-
-  if (aErr) throw aErr;
-  if (crErr) throw crErr;
-
-  const companiesByPerson = new Map<string, Set<string>>();
-  for (const row of affRows || []) {
-    const pid = row.person_id as string;
-    const name = (row as { company: { name: string } | null }).company?.name;
-    if (!name) continue;
-    if (!companiesByPerson.has(pid)) companiesByPerson.set(pid, new Set());
-    companiesByPerson.get(pid)!.add(name);
-  }
-
-  const knownBuildingByPerson = new Map<string, string>();
-  for (const row of creditSampleRows || []) {
-    const pid = row.person_id as string;
-    if (knownBuildingByPerson.has(pid)) continue;
-    const bname = (row as { building: { name: string } | null }).building?.name;
-    if (bname) knownBuildingByPerson.set(pid, bname);
-  }
-
-  return peopleRows.map((r) => {
-    const id = r.id as string;
-    const row = r as {
-      id: string;
-      name: string;
-      slug: string;
-      claim_status: PersonSummary["claimStatus"];
-      nationality: string | null;
-      avatar_url: string | null;
-      building_credits: { count: number }[];
-    };
-    return {
-      id,
-      name: row.name,
-      slug: row.slug,
-      claimStatus: row.claim_status,
-      associatedCompanies: Array.from(companiesByPerson.get(id) ?? []).sort(),
-      knownBuilding: knownBuildingByPerson.get(id) ?? null,
-      nationality: row.nationality,
-      avatarUrl: row.avatar_url,
-      creditCount: row.building_credits?.[0]?.count ?? 0,
-    };
-  });
+  const { searchPeopleV2 } = await import("@/features/search/api/searchPeopleV2");
+  return searchPeopleV2(query, { limit: 25 });
 }
 
 /**

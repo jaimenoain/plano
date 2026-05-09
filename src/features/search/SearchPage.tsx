@@ -27,13 +27,13 @@
  *   h-8 w-8 text-text-secondary → h-4 w-4 text-text-disabled — subtle,
  *   consistent with loading states across the rest of the app.
  */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Map as MapIcon, List as ListIcon, Loader2 } from "lucide-react";
 import { ClientOnly } from "@/components/common/ClientOnly";
 import { useDebounce } from "@/hooks/useDebounce";
 import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
-import { Bounds } from "@/utils/map";
+import { Bounds, getBoundsFromBuildings } from "@/utils/map";
 import { useNavigate } from "react-router";
 
 import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext";
@@ -42,6 +42,7 @@ import { BuildingSidebar } from "@/features/maps/components/BuildingSidebar";
 import { MapControls } from "@/features/maps/components/MapControls";
 import { DiscoverySearchInput, Suggestion } from "@/features/search/components/DiscoverySearchInput";
 import { useGlobalEntitySearch } from "@/features/search/hooks/useGlobalEntitySearch";
+import { useUnifiedSearch } from "@/features/search/hooks/useUnifiedSearch";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 /** SSR/hydration skeleton — matches PlanoMap outer shell to avoid layout shift */
@@ -63,14 +64,58 @@ function SearchPageContent() {
   const navigate = useNavigate();
   const {
     state: { bounds, filters },
-    methods: { setFilter, moveMap, fitMapBounds },
+    methods: { setFilter, moveMap, fitMapBounds, setFindModeBuildings },
   } = useMapContext();
 
   const [searchValue, setSearchValue] = useState(filters.query || "");
   const debouncedSearchValue = useDebounce(searchValue, 300);
-  const { people, companies, isDiscovery } = useGlobalEntitySearch({ searchQuery: searchValue, bounds });
   const [viewMode, setViewMode] = useState<"list" | "map">("map");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+
+  // Find mode: query >= 2 chars after debounce
+  const isFindMode = debouncedSearchValue.trim().length >= 2;
+
+  // Find mode — three parallel RPCs, no bbox
+  const findResults = useUnifiedSearch({
+    query: debouncedSearchValue,
+    minLength: 2,
+  });
+
+  // Browse mode — people/companies from the existing global entity search (no-query path)
+  const browseEntities = useGlobalEntitySearch({
+    searchQuery: "",
+    bounds,
+    enabled: !isFindMode,
+  });
+
+  // Derived people/companies for BuildingSidebar
+  const people = isFindMode ? findResults.people : browseEntities.people;
+  const companies = isFindMode ? findResults.companies : browseEntities.companies;
+  const isDiscovery = !isFindMode;
+
+  // Push find-mode building results into MapContext so PlanoMap uses them as pins
+  const lastFitQuery = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isFindMode) {
+      setFindModeBuildings(null);
+      lastFitQuery.current = null;
+      return;
+    }
+    setFindModeBuildings(findResults.buildings);
+
+    // Fly to fit the result set on the first response for each distinct query
+    const q = debouncedSearchValue.trim();
+    if (findResults.buildings.length > 0 && q !== lastFitQuery.current) {
+      const pts = findResults.buildings
+        .filter((b) => b.lat != null && b.lng != null)
+        .map((b) => ({ location_lat: b.lat as number, location_lng: b.lng as number }));
+      const newBounds = getBoundsFromBuildings(pts);
+      if (newBounds) {
+        fitMapBounds(newBounds);
+        lastFitQuery.current = q;
+      }
+    }
+  }, [isFindMode, findResults.buildings, debouncedSearchValue, setFindModeBuildings, fitMapBounds]);
 
   useEffect(() => {
     // Normalize empty string to undefined so both sides use the same "no query" sentinel.
@@ -213,6 +258,7 @@ function SearchPageContent() {
               people={people}
               companies={companies}
               isDiscovery={isDiscovery}
+              findModeBuildings={isFindMode ? findResults.buildings : null}
             />
           </div>
         </div>
