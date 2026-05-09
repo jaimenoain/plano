@@ -190,6 +190,10 @@ function syncFilterParams(newParams: URLSearchParams, filters: MapFilters) {
   else newParams.delete('creditCompany');
 
   setArrayParam('creditRoles', filters.creditRoles);
+  setArrayParam('constructionStatuses', filters.constructionStatuses);
+
+  if (filters.showDemolished) newParams.set('showDemolished', 'true');
+  else newParams.delete('showDemolished');
 }
 
 export const useURLMapState = () => {
@@ -247,6 +251,8 @@ export const useURLMapState = () => {
          return { id, name: id };
        })(),
        creditRoles: getArrayParam(searchParams.get("creditRoles")),
+       constructionStatuses: getArrayParam(searchParams.get("constructionStatuses")),
+       showDemolished: getBoolParam(searchParams.get("showDemolished")),
     };
 
     return { ...parsed, filters } as MapState;

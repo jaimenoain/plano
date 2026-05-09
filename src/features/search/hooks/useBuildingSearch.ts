@@ -471,6 +471,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   const [accessCosts, setAccessCosts] = useState<string[]>(getArrayParam(searchParams.get("accessCosts")));
 
   const [constructionStatuses, setConstructionStatuses] = useState<string[]>(getArrayParam(searchParams.get("constructionStatuses")));
+  const [showDemolished, setShowDemolished] = useState<boolean>(getBoolParam(searchParams.get("showDemolished"), false));
 
   const [selectedCreditCompany, setSelectedCreditCompany] = useState<{ id: string; name: string } | null>(
     () => getCreditCompanyParam(searchParams.get("creditCompany"))
@@ -747,6 +748,9 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       if (constructionStatuses.length > 0) params.set("constructionStatuses", constructionStatuses.join(","));
       else params.delete("constructionStatuses");
 
+      if (showDemolished) params.set("showDemolished", "true");
+      else params.delete("showDemolished");
+
       if (selectedCreditCompany) params.set("creditCompany", selectedCreditCompany.id);
       else params.delete("creditCompany");
 
@@ -827,6 +831,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     accessLogistics,
     accessCosts,
     constructionStatuses,
+    showDemolished,
     selectedCreditCompany,
     selectedCreditRoles,
     awardId,
@@ -1363,6 +1368,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     setAccessCosts,
     constructionStatuses,
     setConstructionStatuses,
+    showDemolished,
+    setShowDemolished,
     selectedCreditCompany,
     setSelectedCreditCompany,
     selectedCreditRoles,

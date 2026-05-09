@@ -48,7 +48,7 @@ describe('useMapData Ranking Preference', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(rpcMock).toHaveBeenCalledWith('get_map_clusters_v2', expect.objectContaining({
+    expect(rpcMock).toHaveBeenCalledWith('get_map_clusters_v3', expect.objectContaining({
       filter_criteria: expect.objectContaining({
         ranking_preference: 'personal'
       })
@@ -67,7 +67,7 @@ describe('useMapData Ranking Preference', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(rpcMock).toHaveBeenCalledWith('get_map_clusters_v2', expect.objectContaining({
+    expect(rpcMock).toHaveBeenCalledWith('get_map_clusters_v3', expect.objectContaining({
       filter_criteria: expect.objectContaining({
         ranking_preference: 'global'
       })
@@ -85,7 +85,7 @@ describe('useMapData Ranking Preference', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(rpcMock).toHaveBeenCalledWith('get_map_clusters_v2', expect.objectContaining({
+    expect(rpcMock).toHaveBeenCalledWith('get_map_clusters_v3', expect.objectContaining({
       filter_criteria: expect.objectContaining({
         ranking_preference: 'global'
       })

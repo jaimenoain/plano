@@ -234,7 +234,7 @@ The split between Find mode and Browse mode in the frontend. Three smoking-gun b
 
 ---
 
-## [ ] Phase 3 — Slim Browse mode and stabilise the map (3–5 days)
+## [x] Phase 3 — Slim Browse mode and stabilise the map (3–5 days)
 
 **Goal:** Make Browse mode honest and fast. Remove the silent exclusions, fix the map freeze, and consolidate `get_map_clusters` and `get_map_clusters_v2` into a single trustworthy `get_map_clusters_v3`. Add the "Show demolished" toggle.
 

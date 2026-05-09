@@ -54,7 +54,7 @@ describe('useMapData', () => {
 
     // Verify RPC call args
     // The second argument to rpc is the params object
-    expect(rpcMock).toHaveBeenCalledWith('get_map_clusters_v2', expect.objectContaining({
+    expect(rpcMock).toHaveBeenCalledWith('get_map_clusters_v3', expect.objectContaining({
       filter_criteria: expect.objectContaining({
         attribute_ids: expect.arrayContaining(['mat1', 'mat2', 'sty1', 'ctx1', 'attr1'])
       })
@@ -80,7 +80,7 @@ describe('useMapData', () => {
 
     // Verify RPC call args
     // Should pass undefined or empty array for attribute_ids, but definitely not fail
-    expect(rpcMock).toHaveBeenCalledWith('get_map_clusters_v2', expect.objectContaining({
+    expect(rpcMock).toHaveBeenCalledWith('get_map_clusters_v3', expect.objectContaining({
       filter_criteria: expect.objectContaining({
         // In current implementation, it might be undefined or empty array.
         // We accept both, but mainly verify it doesn't crash.
@@ -137,7 +137,7 @@ describe('useMapData', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(rpcMock).toHaveBeenCalledWith(
-      'get_map_clusters_v2',
+      'get_map_clusters_v3',
       expect.objectContaining({
         filter_criteria: expect.objectContaining({
           credit_company_id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',

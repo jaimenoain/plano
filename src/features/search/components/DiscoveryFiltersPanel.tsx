@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import type { UserSearchResult } from "@/features/search/hooks/useUserSearch";
@@ -94,6 +95,8 @@ export interface DiscoveryFiltersPanelProps {
   onAttributesChange: (ids: string[]) => void;
   constructionStatuses: string[];
   onConstructionStatusesChange: (ids: string[]) => void;
+  showDemolished?: boolean;
+  onShowDemolishedChange?: (next: boolean) => void;
   selectedContacts?: UserSearchResult[];
   onContactsChange?: (contacts: UserSearchResult[]) => void;
   /** When false, Curators & Friends is omitted (e.g. map My Library mode). */
@@ -135,6 +138,8 @@ export function DiscoveryFiltersPanel({
   onAttributesChange,
   constructionStatuses,
   onConstructionStatusesChange,
+  showDemolished = false,
+  onShowDemolishedChange,
   selectedContacts = [],
   onContactsChange,
   showContactPicker = true,
@@ -383,20 +388,33 @@ export function DiscoveryFiltersPanel({
 
         <AccordionItem value="construction_status">
           <AccordionTrigger className="text-sm">Building status</AccordionTrigger>
-          <AccordionContent className="pt-2">
+          <AccordionContent className="pt-2 space-y-3">
+            <div className="flex items-center justify-between">
+              <Label
+                htmlFor="show-demolished-toggle"
+                className="text-sm font-normal cursor-pointer"
+              >
+                Show demolished
+              </Label>
+              <Switch
+                id="show-demolished-toggle"
+                checked={showDemolished}
+                onCheckedChange={(next) => onShowDemolishedChange?.(next)}
+                aria-label="Show demolished and lost buildings"
+              />
+            </div>
             <MultiSelectCheckboxList
               items={[
                 { id: "Built", name: "Built" },
-                { id: "Lost", name: "Lost" },
-                {
-                  id: "Under Construction",
-                  name: "Under Construction",
-                },
+                { id: "Under Construction", name: "Under Construction" },
+                { id: "Temporary", name: "Temporary" },
                 { id: "Unbuilt", name: "Unbuilt" },
+                { id: "Demolished", name: "Demolished" },
+                { id: "Lost", name: "Lost" },
               ]}
               selectedIds={constructionStatuses || []}
               onChange={onConstructionStatusesChange}
-              className="h-[150px]"
+              className="h-[180px]"
             />
           </AccordionContent>
         </AccordionItem>

@@ -59,6 +59,8 @@ export function FilterDrawer() {
     setSelectedContacts,
     constructionStatuses,
     setConstructionStatuses,
+    showDemolished,
+    setShowDemolished,
     selectedCreditCompany,
     setSelectedCreditCompany,
     selectedCreditRoles,
@@ -230,6 +232,7 @@ export function FilterDrawer() {
     if (currentContexts.length > 0) count++;
     if (currentStyles.length > 0) count++;
     if (constructionStatuses?.length > 0) count++;
+    if (showDemolished) count++;
     if (selectedCreditCompany) count++;
     if (selectedCreditRoles.length > 0) count++;
     if (sizeCategories.length > 0) count++;
@@ -262,6 +265,7 @@ export function FilterDrawer() {
     currentContexts,
     currentStyles,
     constructionStatuses,
+    showDemolished,
     selectedCreditCompany,
     selectedCreditRoles,
   ]);
@@ -437,6 +441,8 @@ export function FilterDrawer() {
             onAttributesChange={setSelectedAttributes}
             constructionStatuses={constructionStatuses ?? []}
             onConstructionStatusesChange={setConstructionStatuses}
+            showDemolished={showDemolished}
+            onShowDemolishedChange={setShowDemolished}
             selectedContacts={currentContacts}
             onContactsChange={handleContactsChange}
             showContactPicker={mode !== 'library'}
