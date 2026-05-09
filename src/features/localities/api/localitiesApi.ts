@@ -48,11 +48,10 @@ function mapBuildingRow(row: BuildingSelectRow): LocalityBuildingDTO {
   };
 }
 
-/** Maps DB row (`slug` is the city URL segment) to `LocalityDTO` (`city_slug` alias). */
+/** Maps a DB locality row to `LocalityDTO`. */
 function mapLocalityRowToDto(row: Tables<"localities">): LocalityDTO {
   return {
     ...row,
-    city_slug: row.slug,
     region: null,
     region_slug: null,
   };
@@ -68,7 +67,7 @@ export async function getLocalityByCountryCity(
     .from("localities")
     .select("*")
     .eq("country_code", countryCode.toUpperCase())
-    .eq("slug", citySlug)
+    .eq("city_slug", citySlug)
     .maybeSingle();
 
   if (error || !data) return null;

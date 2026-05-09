@@ -60,10 +60,10 @@ export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
         if (!localityId) return null;
         const { data: loc } = await supabase
           .from("localities")
-          .select("country_code, slug")
+          .select("country_code, city_slug")
           .eq("id", localityId)
           .maybeSingle();
-        return loc ? { country_code: loc.country_code, city_slug: loc.slug } : null;
+        return loc ? { country_code: loc.country_code, city_slug: loc.city_slug } : null;
       })(),
 
       // 2. Hero image pipeline (user_buildings → review_images → pick best)

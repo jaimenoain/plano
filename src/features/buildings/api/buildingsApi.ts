@@ -42,11 +42,11 @@ export async function getBuildingWithLocality(
   if (localityId) {
     const { data: loc } = await supabase
       .from("localities")
-      .select("country_code, slug")
+      .select("country_code, city_slug")
       .eq("id", localityId)
       .maybeSingle();
     if (loc) {
-      locality = { country_code: loc.country_code, city_slug: loc.slug };
+      locality = { country_code: loc.country_code, city_slug: loc.city_slug };
     }
   }
 

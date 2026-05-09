@@ -1,7 +1,7 @@
-import { data, type LoaderFunctionArgs } from "react-router";
+import { data, redirect, type LoaderFunctionArgs } from "react-router";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SITE_URL, localityPageStructuredData } from "@/features/buildings/utils/structuredData";
-import { getLocalityByCountryCity, getLocalityBuildings } from "@/features/localities/api/localitiesApi";
+import { getLocalityByCountryCity, getLocalityBySlug, getLocalityBuildings } from "@/features/localities/api/localitiesApi";
 import type { LocalityDTO, LocalityBuildingDTO } from "@/features/localities/types";
 import { getLocalityUrl } from "@/utils/url";
 import { config } from "@/config";
@@ -35,7 +35,22 @@ export async function localityPageLoader({ request, params }: LoaderFunctionArgs
   if (!cc?.trim() || !city?.trim()) throw new Response("Not found", { status: 404 });
 
   const locality = await getLocalityByCountryCity(supabase, cc, city);
-  if (!locality) throw new Response("Not found", { status: 404 });
+
+  // Backward-compat: old URLs used the legacy `slug` column (e.g. `bilbao-es`)
+  // as the city segment. If the city segment matches the legacy slug, 301 to
+  // the canonical city_slug-based URL.
+  if (!locality) {
+    const legacy = await getLocalityBySlug(supabase, city);
+    if (legacy && legacy.country_code.toLowerCase() === cc.toLowerCase()) {
+      throw redirect(getLocalityUrl(legacy.country_code, legacy.city_slug), 301);
+    }
+    throw new Response("Not found", { status: 404 });
+  }
+
+  // Canonicalize country-code casing if mismatched.
+  if (cc !== locality.country_code.toLowerCase()) {
+    throw redirect(getLocalityUrl(locality.country_code, locality.city_slug), 301);
+  }
 
   const initialBuildings = await getLocalityBuildings(supabase, locality.id, 0, 24);
 

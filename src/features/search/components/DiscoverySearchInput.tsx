@@ -282,7 +282,7 @@ function DiscoverySearchInputInner({
             <CommandList>
               {status === "OK" && data.length > 0 ? (
                 <CommandGroup>
-                  {data.map(({ place_id, description }) => (
+                  {data.slice(0, 3).map(({ place_id, description }) => (
                     <CommandItem
                       key={place_id}
                       value={description}

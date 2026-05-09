@@ -31,7 +31,7 @@ interface BuildingRow {
   slug: string | null;
   short_id: number | null;
   hero_image_url: string | null;
-  locality: { country_code: string; slug: string } | null;
+  locality: { country_code: string; city_slug: string } | null;
 }
 
 async function fetchTrendingBuildings(): Promise<TrendingBuilding[]> {
@@ -64,7 +64,7 @@ async function fetchTrendingBuildings(): Promise<TrendingBuilding[]> {
   // Step 3: fetch building details for the top IDs
   const { data: buildingRows, error: buildingError } = await supabase
     .from("buildings")
-    .select("id, name, city, country, slug, short_id, hero_image_url, locality:localities(country_code, slug)")
+    .select("id, name, city, country, slug, short_id, hero_image_url, locality:localities(country_code, city_slug)")
     .in("id", topIds);
 
   if (buildingError) throw buildingError;
@@ -80,7 +80,7 @@ async function fetchTrendingBuildings(): Promise<TrendingBuilding[]> {
       ...rest,
       visitCount: countMap[id] ?? 0,
       locality_country_code: locality?.country_code ?? null,
-      locality_city_slug: locality?.slug ?? null,
+      locality_city_slug: locality?.city_slug ?? null,
     });
   }
   return out;

@@ -2108,6 +2108,7 @@ export type Database = {
         Row: {
           buildings_count: number
           city: string
+          city_slug: string
           country: string
           country_code: string
           created_at: string
@@ -2124,6 +2125,7 @@ export type Database = {
         Insert: {
           buildings_count?: number
           city: string
+          city_slug?: string
           country: string
           country_code: string
           created_at?: string
@@ -2140,6 +2142,7 @@ export type Database = {
         Update: {
           buildings_count?: number
           city?: string
+          city_slug?: string
           country?: string
           country_code?: string
           created_at?: string
