@@ -225,10 +225,10 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
 
       // Cast through unknown: get_map_clusters_v3 is not yet in generated types
       // (requires running `npm run gen-types` after the Phase 3 migration is applied).
-      const rpcFn = (supabase as unknown as {
+      // Call as a method (not a detached function) so `this` remains the supabase client.
+      const builder = (supabase as unknown as {
         rpc: (name: string, args: Record<string, unknown>) => unknown;
-      }).rpc;
-      const builder = rpcFn('get_map_clusters_v3', {
+      }).rpc('get_map_clusters_v3', {
         min_lat: fetchBox.south,
         max_lat: fetchBox.north,
         min_lng: fetchBox.west,
