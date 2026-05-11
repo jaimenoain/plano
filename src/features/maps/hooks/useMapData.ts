@@ -52,9 +52,13 @@ const MIN_LNG = -180;
  * Phase 3 — default status set used when the caller hasn't picked an explicit
  * `constructionStatuses` filter. Preserves today's user-perceived default
  * ("non-built buildings stay hidden") while exposing the toggle.
+ *
+ * Encoded as an *exclusion* list rather than an inclusion list so legacy
+ * rows with `b.status IS NULL` still render — a strict `status = ANY([...])`
+ * inclusion filter drops NULL rows entirely (`NULL = ANY([...])` is NULL).
  */
-const DEFAULT_VISIBLE_STATUSES = ['Built', 'Temporary'] as const;
-const DEMOLISHED_STATUSES = ['Demolished', 'Lost'] as const;
+const DEFAULT_EXCLUDED_STATUSES = ['Demolished', 'Lost', 'Under Construction', 'Unbuilt'] as const;
+const SHOW_DEMOLISHED_EXCLUDED_STATUSES = ['Under Construction', 'Unbuilt'] as const;
 
 function calculateFetchBox(bounds: Bounds): Bounds {
   const latSpan = bounds.north - bounds.south;
@@ -71,15 +75,24 @@ function calculateFetchBox(bounds: Bounds): Bounds {
   return { north, south, east, west };
 }
 
-function resolveConstructionStatuses(filters: MapFilters): string[] | undefined {
+interface ConstructionStatusFilter {
+  construction_statuses?: string[];
+  exclude_construction_statuses?: string[];
+}
+
+function resolveConstructionStatuses(filters: MapFilters): ConstructionStatusFilter {
   // Explicit picks from the Building status filter override the toggle.
+  // Strict inclusion semantics — NULL-status rows are intentionally excluded
+  // when the user has hand-picked statuses.
   if (filters.constructionStatuses && filters.constructionStatuses.length > 0) {
-    return filters.constructionStatuses;
+    return { construction_statuses: filters.constructionStatuses };
   }
+  // Default / "Show demolished" toggle paths use an exclusion list so legacy
+  // rows with NULL status stay visible (matches pre-Phase 3 behaviour).
   if (filters.showDemolished) {
-    return [...DEFAULT_VISIBLE_STATUSES, ...DEMOLISHED_STATUSES];
+    return { exclude_construction_statuses: [...SHOW_DEMOLISHED_EXCLUDED_STATUSES] };
   }
-  return [...DEFAULT_VISIBLE_STATUSES];
+  return { exclude_construction_statuses: [...DEFAULT_EXCLUDED_STATUSES] };
 }
 
 /** Row shape from `get_map_clusters_v3` RPC (subset used for tier logic). */
@@ -124,6 +137,7 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
   // included whole object references (filters.collections, filters.contacts,
   // filters.creditCompany, filters.people) whose identity changed every render
   // and queued up RPC calls during fast map panning.
+  const statusFilter = useMemo(() => resolveConstructionStatuses(filters), [filters]);
   const filterKey = useMemo(() => {
     const allAttributeIds = [
       ...(filters.attributes || []),
@@ -164,10 +178,10 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
       maxSizeSqm: filters.maxSizeSqm ?? null,
       minStoreys: filters.minStoreys ?? null,
       maxStoreys: filters.maxStoreys ?? null,
-      constructionStatuses: filters.constructionStatuses ?? null,
-      showDemolished: filters.showDemolished ?? null,
+      constructionStatuses: statusFilter.construction_statuses ?? null,
+      excludeConstructionStatuses: statusFilter.exclude_construction_statuses ?? null,
     });
-  }, [filters]);
+  }, [filters, statusFilter]);
 
   // AbortController ref — cancels in-flight RPC calls when the map pans /
   // filters change. Without this, fast panning queues up requests and freezes
@@ -208,7 +222,8 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
         access_levels: filters.accessLevels && filters.accessLevels.length > 0 ? filters.accessLevels : undefined,
         access_logistics: filters.accessLogistics && filters.accessLogistics.length > 0 ? filters.accessLogistics : undefined,
         access_costs: filters.accessCosts && filters.accessCosts.length > 0 ? filters.accessCosts : undefined,
-        construction_statuses: resolveConstructionStatuses(filters),
+        construction_statuses: statusFilter.construction_statuses,
+        exclude_construction_statuses: statusFilter.exclude_construction_statuses,
         credit_company_id: filters.creditCompany?.id ?? undefined,
         credit_roles:
           filters.creditRoles && filters.creditRoles.length > 0 ? filters.creditRoles : undefined,

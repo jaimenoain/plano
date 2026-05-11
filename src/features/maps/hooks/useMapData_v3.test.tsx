@@ -43,29 +43,33 @@ describe('useMapData — Phase 3 (get_map_clusters_v3)', () => {
     expect(args.filter_criteria.query).toBeUndefined();
   });
 
-  it('defaults to ["Built","Temporary"] when neither showDemolished nor explicit constructionStatuses is set', async () => {
+  it('uses an exclusion list (not inclusion) when neither showDemolished nor explicit constructionStatuses is set, so NULL-status rows pass through', async () => {
     const filters: MapFilters = {};
     const { result } = renderHook(() => useMapData({ bounds, zoom, filters }), {
       wrapper: createWrapper(),
     });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(rpcMock.mock.calls[0][1].filter_criteria.construction_statuses)
-      .toEqual(['Built', 'Temporary']);
+    const fc = rpcMock.mock.calls[0][1].filter_criteria;
+    expect(fc.construction_statuses).toBeUndefined();
+    expect(fc.exclude_construction_statuses)
+      .toEqual(['Demolished', 'Lost', 'Under Construction', 'Unbuilt']);
   });
 
-  it('appends Demolished + Lost when showDemolished is true (and no explicit picks)', async () => {
+  it('shrinks the exclusion list (drops Demolished + Lost) when showDemolished is true and there are no explicit picks', async () => {
     const filters: MapFilters = { showDemolished: true };
     const { result } = renderHook(() => useMapData({ bounds, zoom, filters }), {
       wrapper: createWrapper(),
     });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(rpcMock.mock.calls[0][1].filter_criteria.construction_statuses)
-      .toEqual(['Built', 'Temporary', 'Demolished', 'Lost']);
+    const fc = rpcMock.mock.calls[0][1].filter_criteria;
+    expect(fc.construction_statuses).toBeUndefined();
+    expect(fc.exclude_construction_statuses)
+      .toEqual(['Under Construction', 'Unbuilt']);
   });
 
-  it('explicit constructionStatuses pick overrides the showDemolished toggle', async () => {
+  it('explicit constructionStatuses pick uses strict inclusion and overrides the showDemolished toggle', async () => {
     const filters: MapFilters = {
       constructionStatuses: ['Under Construction'],
       showDemolished: true,
@@ -75,8 +79,9 @@ describe('useMapData — Phase 3 (get_map_clusters_v3)', () => {
     });
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(rpcMock.mock.calls[0][1].filter_criteria.construction_statuses)
-      .toEqual(['Under Construction']);
+    const fc = rpcMock.mock.calls[0][1].filter_criteria;
+    expect(fc.construction_statuses).toEqual(['Under Construction']);
+    expect(fc.exclude_construction_statuses).toBeUndefined();
   });
 
   it('does NOT send a popularity floor (no silent popularity exclusion)', async () => {
