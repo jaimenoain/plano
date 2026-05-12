@@ -599,6 +599,7 @@ export interface BuildingDetails {
   address: string | null;
   city: string | null;
   country: string | null;
+  century?: number | null;
   year_completed: number;
   styles: { id: string; name: string }[];
   created_by: string;
@@ -985,11 +986,20 @@ function BuildingInfoSection({
   if (rows.length === 0) return null;
 
   return (
-    <section>
+    <section className="group/info">
       <BuildingAwardsSection buildingId={building.id} buildingName={building.name} />
-      <h3 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-        Building Info
-      </h3>
+      <div className="flex items-center gap-2">
+        <h3 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+          Building Info
+        </h3>
+        <button
+          className="opacity-0 group-hover/info:opacity-100 transition-opacity inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary"
+          onClick={() => {/* TODO: open edit modal */}}
+        >
+          <Pencil className="h-3 w-3" />
+          Edit
+        </button>
+      </div>
       <dl className="mt-3 divide-y divide-border-default">
         {rows.map(({ key, label, value }) => (
           <div key={key} className="flex items-baseline gap-6 py-3">
@@ -1920,10 +1930,14 @@ export default function BuildingDetails() {
                       />
                     </span>
                   )}
-                  {building.year_completed && (
+                  {(building.year_completed || buildingAny.century) && (
                     <>
                       <span className="text-border-strong" aria-hidden>·</span>
-                      <span>{building.year_completed}</span>
+                      <span>
+                        {building.year_completed
+                          ? building.year_completed
+                          : `${buildingAny.century}th c.`}
+                      </span>
                     </>
                   )}
                   {(building.city || building.country) && (
@@ -2316,63 +2330,87 @@ export default function BuildingDetails() {
                     <label className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
                       My Status
                     </label>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-between h-10 px-3 text-sm font-medium"
-                        >
-                          <div className="flex items-center gap-2">
-                            {userStatus === "visited" ? (
-                              <Check className="h-4 w-4 text-feedback-success" />
-                            ) : userStatus === "pending" ? (
-                              <Bookmark className="h-4 w-4 text-brand-accent fill-current" />
-                            ) : (
-                              <Circle className="h-4 w-4 text-text-disabled" />
-                            )}
-                            {userStatus === "visited"
-                              ? "Visited"
-                              : userStatus === "pending"
-                                ? "Saved"
-                                : "Add to list"}
-                          </div>
-                          <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-[220px] p-2 rounded-none">
-                        <DropdownMenuItem
-                          className="rounded-none py-2.5"
-                          onSelect={() => void handleStatusChange("visited")}
-                        >
-                          <Check className="mr-3 h-4 w-4 shrink-0" />
-                          <div>
-                            <p className="font-bold text-xs uppercase tracking-wider">Visited</p>
-                            <p className="text-[10px] text-text-secondary">I've seen this in person</p>
-                          </div>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="rounded-none py-2.5"
-                          onSelect={() => void handleStatusChange("pending")}
-                        >
-                          <Bookmark className="mr-3 h-4 w-4 shrink-0" />
-                          <div>
-                            <p className="font-bold text-xs uppercase tracking-wider">Wishlist</p>
-                            <p className="text-[10px] text-text-secondary">I want to visit this</p>
-                          </div>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="rounded-none py-2.5"
-                          onSelect={() => void handleStatusChange("ignored")}
-                        >
-                          <EyeOff className="mr-3 h-4 w-4 shrink-0" />
-                          <div>
-                            <p className="font-bold text-xs uppercase tracking-wider">Hide</p>
-                            <p className="text-[10px] text-text-secondary">Don&apos;t show in my feed</p>
-                          </div>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {userStatus === "ignored" ? (
+                      <div className="flex items-center gap-2 h-10 px-3 border border-border-default bg-surface-muted text-sm font-medium text-text-disabled">
+                        <EyeOff className="h-4 w-4 shrink-0" />
+                        <span>Hidden</span>
+                      </div>
+                    ) : (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-between h-10 px-3 text-sm font-medium"
+                          >
+                            <div className="flex items-center gap-2">
+                              {userStatus === "visited" ? (
+                                <Check className="h-4 w-4 text-feedback-success" />
+                              ) : userStatus === "pending" ? (
+                                <Bookmark className="h-4 w-4 text-brand-accent fill-current" />
+                              ) : (
+                                <Circle className="h-4 w-4 text-text-disabled" />
+                              )}
+                              {userStatus === "visited"
+                                ? "Visited"
+                                : userStatus === "pending"
+                                  ? "Saved"
+                                  : "Add to list"}
+                            </div>
+                            <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-[220px] p-2 rounded-none">
+                          <DropdownMenuItem
+                            className="rounded-none py-2.5"
+                            onSelect={() => void handleStatusChange("visited")}
+                          >
+                            <Check className="mr-3 h-4 w-4 shrink-0" />
+                            <div>
+                              <p className="font-bold text-xs uppercase tracking-wider">Visited</p>
+                              <p className="text-[10px] text-text-secondary">I've seen this in person</p>
+                            </div>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="rounded-none py-2.5"
+                            onSelect={() => void handleStatusChange("pending")}
+                          >
+                            <Bookmark className="mr-3 h-4 w-4 shrink-0" />
+                            <div>
+                              <p className="font-bold text-xs uppercase tracking-wider">Wishlist</p>
+                              <p className="text-[10px] text-text-secondary">I want to visit this</p>
+                            </div>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="rounded-none py-2.5"
+                            onSelect={() => void handleStatusChange("ignored")}
+                          >
+                            <EyeOff className="mr-3 h-4 w-4 shrink-0" />
+                            <div>
+                              <p className="font-bold text-xs uppercase tracking-wider">Hide</p>
+                              <p className="text-[10px] text-text-secondary">Don&apos;t show in my feed</p>
+                            </div>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
+
+                  {userStatus === "ignored" ? (
+                    <div className="space-y-3">
+                      <p className="text-xs text-text-secondary leading-relaxed">
+                        This building is hidden. It won&apos;t appear on the map or be suggested to you.
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full h-9 text-[10px] font-bold uppercase tracking-wider"
+                        onClick={() => void handleStatusChange("ignored")}
+                      >
+                        Unhide
+                      </Button>
+                    </div>
+                  ) : (
+                  <>
 
                   {/* Rating */}
                   <div className="space-y-2">
@@ -2606,6 +2644,9 @@ export default function BuildingDetails() {
                       </motion.div>
                     )}
                   </AnimatePresence>
+
+                  </>
+                  )}
 
                 </div>
 

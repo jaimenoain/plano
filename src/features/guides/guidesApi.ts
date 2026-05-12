@@ -14,12 +14,16 @@ export interface GuidesLocalityRow {
   buildingsCount: number;
 }
 
-export async function getGuidesLocalities(): Promise<GuidesLocalityRow[]> {
-  const { data, error } = await supabase
+export async function getGuidesLocalities(limit?: number): Promise<GuidesLocalityRow[]> {
+  let query = supabase
     .from('localities')
     .select('id, city, country, country_code, slug, hero_image_url, buildings_count')
     .gt('buildings_count', 0)
     .order('buildings_count', { ascending: false });
+
+  if (limit !== undefined) query = query.limit(limit);
+
+  const { data, error } = await query;
 
   if (error) throw error;
 

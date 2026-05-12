@@ -73,6 +73,7 @@ export interface BuildingFormData {
   alt_name?: string | null;
   aliases?: string[];
   hero_image_url?: string | null;
+  century?: number | null;
   year_completed: number | null;
   status?: string | null;
   access_level?: string | null;
@@ -111,6 +112,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [alt_name, setAltName] = useState(initialValues.alt_name || "");
   const [aliases, setAliases] = useState<string[]>(initialValues.aliases || []);
   const [year_completed, setYear] = useState<string>(initialValues.year_completed?.toString() || "");
+  const [century_manual, setCenturyManual] = useState<string>(initialValues.century?.toString() || "");
   const [status, setStatus] = useState<string>(initialValues.status || "");
   const [access_level, setAccessLevel] = useState<string>(initialValues.access_level || "");
   const [access_logistics, setAccessLogistics] = useState<string>(initialValues.access_logistics || "");
@@ -331,6 +333,8 @@ toast.error("Failed to add attribute");
     if (isBot()) return;
 
     try {
+      const yearNum = year_completed ? parseInt(year_completed, 10) : null;
+      const derivedCentury = yearNum && !isNaN(yearNum) ? Math.ceil(yearNum / 100) : null;
       const rawData = {
         ...(mode === 'edit' && buildingId ? { id: buildingId } : {}),
         name,
@@ -338,6 +342,7 @@ toast.error("Failed to add attribute");
         alt_name: alt_name || null,
         aliases,
         // hero_image_url removed
+        century: derivedCentury ?? (century_manual || null),
         year_completed,
         status: status || null,
         access_level: access_level || null,
@@ -594,19 +599,49 @@ toast.error("Failed to add attribute");
           </>
         )}
 
-        {/* Year Built */}
+        {/* Year Built + Century */}
         {showYear && (
-          <div className="space-y-2">
-            <Label htmlFor="year_completed">Year Built</Label>
-            <Input
-              id="year_completed"
-              type="number"
-              value={year_completed}
-              onChange={(e) => setYear(e.target.value)}
-              placeholder="e.g. 1973"
-              autoComplete="off"
-              className="max-w-[8rem]"
-            />
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="year_completed">Year Built</Label>
+              <Input
+                id="year_completed"
+                type="number"
+                value={year_completed}
+                onChange={(e) => setYear(e.target.value)}
+                placeholder="e.g. 1973"
+                autoComplete="off"
+                className="max-w-[8rem]"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="century">
+                Century
+                {year_completed && !isNaN(parseInt(year_completed, 10)) && (
+                  <span className="ml-1.5 text-xs font-normal text-text-secondary">(auto)</span>
+                )}
+              </Label>
+              <Input
+                id="century"
+                type="number"
+                min={1}
+                step={1}
+                value={
+                  year_completed && !isNaN(parseInt(year_completed, 10))
+                    ? Math.ceil(parseInt(year_completed, 10) / 100)
+                    : century_manual
+                }
+                onChange={(e) => {
+                  if (!year_completed || isNaN(parseInt(year_completed, 10))) {
+                    setCenturyManual(e.target.value);
+                  }
+                }}
+                readOnly={!!(year_completed && !isNaN(parseInt(year_completed, 10)))}
+                placeholder="e.g. 20"
+                autoComplete="off"
+                className="max-w-[6rem]"
+              />
+            </div>
           </div>
         )}
 

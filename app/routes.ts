@@ -106,7 +106,7 @@ export default [
     route("/awards", "features/awards/pages/AwardsIndex.tsx"),
     route("/award/:slug", "features/awards/pages/AwardPage.tsx"),
     route("/award/:slug/admin", "features/awards/pages/AwardAdminPage.tsx"),
-    route("/award/:slug/:year", "features/awards/pages/AwardEditionPage.tsx"),
+    route("/award/:slug/:editionSlug", "features/awards/pages/AwardEditionPage.tsx"),
     // /events/:cc/:city/:slug — locality-scoped physical event URL (T13)
     route("/events/:cc/:city/:slug", "features/events/pages/EventDetail.tsx", {
       id: "event-detail-locality",

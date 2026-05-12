@@ -16,13 +16,16 @@ export const CreateAwardSchema = z.object({
 export const UpdateAwardSchema = CreateAwardSchema.partial();
 
 export const CreateEditionSchema = z.object({
-  awardId:           z.string().uuid(),
-  year:              z.number().int().min(1800).max(2100).optional().nullable(),
-  editionDate:       z.string().optional().nullable(),   // ISO date
-  ceremonyLocation:  z.string().max(500).optional().nullable(),
-  notes:             z.string().max(2000).optional().nullable(),
-}).refine(d => d.year != null || d.editionDate != null, {
-  message: 'Either year or editionDate must be provided',
+  awardId:          z.string().uuid(),
+  year:             z.number().int().min(1800).max(2100).optional().nullable(),
+  editionLabel:     z.string().max(200).optional().nullable(),
+  editionNumber:    z.number().int().min(1).optional().nullable(),
+  slug:             z.string().max(200).regex(/^[a-z0-9-]+$/).optional().nullable(),
+  editionDate:      z.string().optional().nullable(),   // ISO date
+  ceremonyLocation: z.string().max(500).optional().nullable(),
+  notes:            z.string().max(2000).optional().nullable(),
+}).refine(d => d.year != null || d.editionLabel != null, {
+  message: 'Either year or editionLabel must be provided',
 });
 
 export const CreateCategorySchema = z.object({

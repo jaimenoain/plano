@@ -8,6 +8,7 @@ import { AwardLeaderboardDialog } from "../components/AwardLeaderboardDialog";
 import { ClaimAwardDialog } from "../components/ClaimAwardDialog";
 import { Button } from "@/components/ui/button";
 import { useMyAwardClaimRequest, useIsAwardAdmin, useUpcomingEventsByAward } from "@/features/awards/hooks/useAwards";
+import { getEditionDisplayLabel } from "@/features/awards/types/awards";
 import { editionEventTypeLabels } from "@/features/awards/types/awards";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -233,18 +234,18 @@ export default function AwardPage() {
               editions.map((edition) => (
                 <Link
                   key={edition.id}
-                  to={`/award/${award.slug}/${edition.year || 'edition'}`}
+                  to={`/award/${award.slug}/${edition.slug ?? edition.year ?? 'edition'}`}
                   className="group flex items-center justify-between p-4 -mx-4 hover:bg-surface-muted transition-colors border-b border-border-default last:border-0"
                 >
                   <div className="flex items-center gap-6 min-w-0">
                     <div className="flex flex-col items-center justify-center w-12 h-12 bg-surface-muted group-hover:bg-surface-card rounded-sm border border-border-default transition-colors">
                       <span className="text-lg font-bold text-text-primary">
-                        {edition.year || '??'}
+                        {getEditionDisplayLabel(edition) || '??'}
                       </span>
                     </div>
                     <div className="flex flex-col min-w-0">
                       <div className="flex items-center gap-2 text-sm font-bold text-text-primary">
-                        {edition.year ? `${award.name} ${edition.year}` : award.name}
+                        {getEditionDisplayLabel(edition) ? `${award.name} ${getEditionDisplayLabel(edition)}` : award.name}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-text-secondary mt-0.5">
                         {edition.ceremonyLocation && (

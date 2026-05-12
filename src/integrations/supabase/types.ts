@@ -782,6 +782,7 @@ export type Database = {
           aliases: string[]
           alt_name: string | null
           architect_statement: string | null
+          century: number | null
           city: string | null
           community_preview_url: string | null
           country: string | null
@@ -829,6 +830,7 @@ export type Database = {
           aliases?: string[]
           alt_name?: string | null
           architect_statement?: string | null
+          century?: number | null
           city?: string | null
           community_preview_url?: string | null
           country?: string | null
@@ -876,6 +878,7 @@ export type Database = {
           aliases?: string[]
           alt_name?: string | null
           architect_statement?: string | null
+          century?: number | null
           city?: string | null
           community_preview_url?: string | null
           country?: string | null

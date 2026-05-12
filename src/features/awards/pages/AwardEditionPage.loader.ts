@@ -1,5 +1,11 @@
-import { getAwardBySlug, getEditionByAwardAndYear, getRecipientsByEdition } from "@/features/awards/api/awards";
+import {
+  getAwardBySlug,
+  getEditionByAwardAndYear,
+  getEditionBySlug,
+  getRecipientsByEdition,
+} from "@/features/awards/api/awards";
 import type { AwardDTO, AwardEditionDTO, AwardRecipientDTO } from "@/features/awards/types/awards";
+import { getEditionDisplayLabel } from "@/features/awards/types/awards";
 import type { LoaderFunctionArgs } from "react-router";
 
 export interface AwardEditionLoaderData {
@@ -12,20 +18,28 @@ export interface AwardEditionLoaderData {
 }
 
 export async function awardEditionLoader({ params }: LoaderFunctionArgs): Promise<AwardEditionLoaderData> {
-  const { slug, year: yearStr } = params;
-  if (!slug || !yearStr) throw new Response("Slug and year required", { status: 400 });
-
-  const year = parseInt(yearStr, 10);
-  if (isNaN(year)) throw new Response("Invalid year", { status: 400 });
+  const { slug, editionSlug } = params;
+  if (!slug || !editionSlug) throw new Response("Award slug and edition slug required", { status: 400 });
 
   try {
     const award = await getAwardBySlug(slug);
-    const edition = await getEditionByAwardAndYear(award.id, year);
+
+    // Try slug lookup first. If editionSlug is a pure integer, also try year lookup
+    // so that existing year-based URLs (/award/riba/2024) continue to work.
+    let edition: AwardEditionDTO;
+    const yearNum = /^\d{4}$/.test(editionSlug) ? parseInt(editionSlug, 10) : NaN;
+    if (!isNaN(yearNum)) {
+      edition = await getEditionByAwardAndYear(award.id, yearNum);
+    } else {
+      edition = await getEditionBySlug(award.id, editionSlug);
+    }
+
     const recipients = await getRecipientsByEdition(edition.id);
 
-    const metaTitle = `${award.name} ${year} | Plano`;
-    const description = `Discover all winners and recipients of the ${award.name} ${year} on Plano.`;
-    const canonical = `https://plano.archi/award/${slug}/${year}`;
+    const displayLabel = getEditionDisplayLabel(edition);
+    const metaTitle = `${award.name} ${displayLabel} | Plano`;
+    const description = `Discover all winners and recipients of the ${award.name} ${displayLabel} on Plano.`;
+    const canonical = `https://plano.archi/award/${slug}/${edition.slug ?? editionSlug}`;
 
     return {
       award,

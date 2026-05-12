@@ -134,7 +134,7 @@ export default function EditionDetail() {
     );
   }
 
-  const editionLabel = edition.year ?? edition.editionDate ?? "Edition";
+  const editionLabel = edition.editionLabel ?? edition.year?.toString() ?? edition.editionDate ?? "Edition";
 
   return (
     <div className="space-y-6 p-8">

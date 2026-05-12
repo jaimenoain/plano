@@ -24,6 +24,9 @@ export default function EditionForm() {
   const updateEdition = useUpdateEdition();
 
   const [year, setYear] = useState("");
+  const [editionLabel, setEditionLabel] = useState("");
+  const [editionNumber, setEditionNumber] = useState("");
+  const [slug, setSlug] = useState("");
   const [editionDate, setEditionDate] = useState("");
   const [ceremonyLocation, setCeremonyLocation] = useState("");
   const [notes, setNotes] = useState("");
@@ -31,6 +34,9 @@ export default function EditionForm() {
   useEffect(() => {
     if (!existingEdition) return;
     setYear(existingEdition.year?.toString() ?? "");
+    setEditionLabel(existingEdition.editionLabel ?? "");
+    setEditionNumber(existingEdition.editionNumber?.toString() ?? "");
+    setSlug(existingEdition.slug ?? "");
     setEditionDate(existingEdition.editionDate ?? "");
     setCeremonyLocation(existingEdition.ceremonyLocation ?? "");
     setNotes(existingEdition.notes ?? "");
@@ -42,8 +48,9 @@ export default function EditionForm() {
     e.preventDefault();
 
     const yearNum = year ? parseInt(year, 10) : null;
-    if (!yearNum && !editionDate) {
-      toast.error("Either year or edition date is required");
+    const editionNumberNum = editionNumber ? parseInt(editionNumber, 10) : null;
+    if (!yearNum && !editionLabel.trim()) {
+      toast.error("Either year or edition label is required");
       return;
     }
 
@@ -53,6 +60,9 @@ export default function EditionForm() {
           editionId,
           payload: {
             year: yearNum,
+            edition_label: editionLabel.trim() || null,
+            edition_number: editionNumberNum,
+            slug: slug.trim() || null,
             edition_date: editionDate || null,
             ceremony_location: ceremonyLocation.trim() || null,
             notes: notes.trim() || null,
@@ -71,6 +81,9 @@ export default function EditionForm() {
         {
           award_id: awardId,
           year: yearNum,
+          edition_label: editionLabel.trim() || null,
+          edition_number: editionNumberNum,
+          slug: slug.trim() || null,
           edition_date: editionDate || null,
           ceremony_location: ceremonyLocation.trim() || null,
           notes: notes.trim() || null,
@@ -113,6 +126,50 @@ export default function EditionForm() {
             onChange={(e) => setYear(e.target.value)}
             placeholder="e.g. 2024"
           />
+        </div>
+
+        {/* Edition label */}
+        <div className="space-y-2">
+          <Label htmlFor="edition-label">Edition label</Label>
+          <Input
+            id="edition-label"
+            value={editionLabel}
+            onChange={(e) => setEditionLabel(e.target.value)}
+            placeholder="e.g. XVI, Spring 2024, 2024 — Asia Pacific"
+          />
+          <p className="text-xs text-text-secondary">
+            Use instead of (or alongside) a year for named editions. Required if no year is set.
+          </p>
+        </div>
+
+        {/* Edition number */}
+        <div className="space-y-2">
+          <Label htmlFor="edition-number">Edition number</Label>
+          <Input
+            id="edition-number"
+            type="number"
+            min={1}
+            value={editionNumber}
+            onChange={(e) => setEditionNumber(e.target.value)}
+            placeholder="e.g. 16"
+          />
+          <p className="text-xs text-text-secondary">
+            Ordinal for ordering when year is absent (e.g. 16 for BEAU XVI).
+          </p>
+        </div>
+
+        {/* Slug */}
+        <div className="space-y-2">
+          <Label htmlFor="edition-slug">URL slug</Label>
+          <Input
+            id="edition-slug"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
+            placeholder="e.g. xvi, spring-2024"
+          />
+          <p className="text-xs text-text-secondary">
+            Lowercase, hyphens only. Auto-populated from year for year-based editions. Must be unique per award.
+          </p>
         </div>
 
         {/* Edition date */}

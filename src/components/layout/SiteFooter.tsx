@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { ARCHITECTURE_PREFIX, getLocalityUrl } from "@/utils/url";
+import { useTopGuideLocalities } from "@/features/guides/useGuides";
 
 const exploreLinks = [
   { label: "Architecture", path: ARCHITECTURE_PREFIX },
@@ -10,14 +11,6 @@ const exploreLinks = [
   { label: "New York",     path: getLocalityUrl("US", "new-york"),  tag: "US" },
   { label: "Barcelona",    path: getLocalityUrl("ES", "barcelona"), tag: "ES" },
   { label: "Berlin",       path: getLocalityUrl("DE", "berlin"),    tag: "DE" },
-];
-
-const guideLinks = [
-  { label: "All guides",             path: "/guides" },
-  { label: "Brutalism in London",    path: "/guides/brutalism-london" },
-  { label: "Modernism in Barcelona", path: "/guides/modernism-barcelona" },
-  { label: "Metabolism in Tokyo",    path: "/guides/metabolism-tokyo" },
-  { label: "Bauhaus trail, Germany", path: "/guides/bauhaus-germany" },
 ];
 
 const planoLinks = [
@@ -33,6 +26,8 @@ const legalLinks = [
 ];
 
 export function SiteFooter() {
+  const { data: topLocalities = [] } = useTopGuideLocalities(4);
+
   return (
     <footer
       className="bg-brand-primary text-text-inverse mt-auto shrink-0 w-screen max-w-[100vw] ml-[calc(50%-50vw)]"
@@ -86,13 +81,21 @@ export function SiteFooter() {
               Guides
             </p>
             <ul className="flex flex-col gap-3">
-              {guideLinks.map(({ label, path }) => (
-                <li key={path}>
+              <li>
+                <Link
+                  to="/guides"
+                  className="text-sm text-text-inverse/50 hover:text-text-inverse transition-colors duration-150"
+                >
+                  All guides
+                </Link>
+              </li>
+              {topLocalities.map((locality) => (
+                <li key={locality.id}>
                   <Link
-                    to={path}
+                    to={getLocalityUrl(locality.countryCode, locality.citySlug)}
                     className="text-sm text-text-inverse/50 hover:text-text-inverse transition-colors duration-150"
                   >
-                    {label}
+                    {locality.city}
                   </Link>
                 </li>
               ))}

@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AwardRecipientDTO } from "../types/awards";
+import { getEditionDisplayLabel } from "../types/awards";
 import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
 
@@ -57,7 +58,7 @@ export function AwardRecipientCard({ recipient, className, showAwardName = false
           </Link>
           <div className="text-2xs-plus text-text-secondary truncate">
             {recipient.building.slug.includes('building') ? 'Building' : 'Structure'}
-            {recipient.edition?.year && ` · ${recipient.edition.year}`}
+            {recipient.edition && getEditionDisplayLabel(recipient.edition) && ` · ${getEditionDisplayLabel(recipient.edition)}`}
           </div>
         </div>
       </div>
@@ -82,7 +83,7 @@ export function AwardRecipientCard({ recipient, className, showAwardName = false
             {recipient.person.name}
           </Link>
           <div className="text-2xs-plus text-text-secondary truncate">
-            Person{recipient.edition?.year && ` · ${recipient.edition.year}`}
+            Person{recipient.edition && getEditionDisplayLabel(recipient.edition) && ` · ${getEditionDisplayLabel(recipient.edition)}`}
           </div>
         </div>
       </div>
@@ -100,7 +101,7 @@ export function AwardRecipientCard({ recipient, className, showAwardName = false
           {recipient.company.name}
         </Link>
         <div className="text-2xs-plus text-text-secondary truncate">
-          Company{recipient.edition?.year && ` · ${recipient.edition.year}`}
+          Company{recipient.edition && getEditionDisplayLabel(recipient.edition) && ` · ${getEditionDisplayLabel(recipient.edition)}`}
         </div>
       </div>
     );

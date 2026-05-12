@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { LocationInput } from "@/components/ui/LocationInput";
 import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
-import { MapPin, Layers } from "lucide-react";
+import { Layers } from "lucide-react";
 import Map, { Marker, NavigationControl, MapMouseEvent, type MarkerDragEvent } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -263,13 +263,28 @@ updateLocation(lat, lng, selectedAddress, { city: null, country: null, countryCo
               >
                   <div className="flex flex-col items-center">
                     {locationPrecision === 'approximate' ? (
-                        <div className="w-6 h-6 rounded-full bg-brand-primary border-2 border-surface-default drop-shadow-md transition-transform" />
-                    ) : (
-                        <MapPin
-                            className="h-8 w-8 text-brand-primary fill-brand-primary drop-shadow-md transition-colors"
+                        <div
+                          className="w-7 h-7 rounded-full bg-white border-2 border-brand-primary transition-transform"
+                          style={{ boxShadow: '0 2px 10px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.25)' }}
                         />
+                    ) : (
+                        <svg
+                          width="32"
+                          height="40"
+                          viewBox="0 0 32 40"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          style={{ filter: 'drop-shadow(0 3px 10px rgba(0,0,0,0.55))' }}
+                        >
+                          <path
+                            d="M16 1C7.716 1 1 7.716 1 16c0 10.5 15 23 15 23S31 26.5 31 16C31 7.716 24.284 1 16 1z"
+                            fill="white"
+                            stroke="#171717"
+                            strokeWidth="2"
+                          />
+                          <circle cx="16" cy="16" r="5" fill="#171717" />
+                        </svg>
                     )}
-                      <div className="w-2 h-1 bg-black/30 rounded-full blur-[1px]"></div>
                   </div>
               </Marker>
             )}

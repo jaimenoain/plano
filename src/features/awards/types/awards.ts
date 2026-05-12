@@ -78,13 +78,21 @@ export interface AwardEditionDTO {
   id: string;
   awardId: string;
   year: number | null;
-  editionDate: string | null;   // ISO date
+  editionLabel: string | null;   // e.g. "XVI", "Spring 2024"
+  editionNumber: number | null;  // ordinal for ordering when year is absent
+  slug: string | null;           // URL-safe identifier, unique per award
+  editionDate: string | null;    // ISO date
   ceremonyLocation: string | null;
   notes: string | null;
   createdAt: string;
   // Joined:
   award?: AwardDTO;
   recipientCount?: number;
+}
+
+/** Returns the display label for an edition: edition_label if set, otherwise year. */
+export function getEditionDisplayLabel(edition: Pick<AwardEditionDTO, 'editionLabel' | 'year'>): string {
+  return edition.editionLabel ?? edition.year?.toString() ?? '';
 }
 
 export interface AwardCategoryDTO {
@@ -113,7 +121,7 @@ export interface AwardRecipientDTO {
   building?: { id: string; name: string; slug: string; heroImageUrl: string | null } | null;
   person?:   { id: string; name: string; slug: string; avatarUrl: string | null } | null;
   company?:  { id: string; name: string; slug: string } | null;
-  edition?:  { year: number | null; editionDate: string | null };
+  edition?:  { year: number | null; editionLabel: string | null; editionDate: string | null; slug: string | null };
   category?: { name: string };
   award?:    { name: string; slug: string };
 }

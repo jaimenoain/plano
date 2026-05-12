@@ -4,6 +4,7 @@ import { Trophy, MapPin, Calendar, ChevronRight } from "lucide-react";
 import { awardEditionLoader, type AwardEditionLoaderData } from "./AwardEditionPage.loader";
 import { AwardRecipientCard } from "../components/AwardRecipientCard";
 import type { AwardRecipientDTO } from "../types/awards";
+import { getEditionDisplayLabel } from "../types/awards";
 
 export { awardEditionLoader as loader } from "./AwardEditionPage.loader";
 
@@ -24,6 +25,7 @@ export const meta: MetaFunction<typeof awardEditionLoader> = ({ data }) => {
 
 export default function AwardEditionPage() {
   const { award, edition, recipients } = useLoaderData() as AwardEditionLoaderData;
+  const displayLabel = getEditionDisplayLabel(edition);
 
   // Group recipients by category
   const recipientsByCategory = recipients.reduce((acc, recipient) => {
@@ -38,7 +40,7 @@ export default function AwardEditionPage() {
   const categories = Object.keys(recipientsByCategory).sort();
 
   return (
-    <AppLayout showBack title={`${award.name} ${edition.year}`} showHeader>
+    <AppLayout showBack title={`${award.name} ${displayLabel}`} showHeader>
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <header className="mb-12">
           <nav className="flex items-center gap-1.5 text-2xs font-bold uppercase tracking-widest text-text-secondary mb-6">
@@ -48,12 +50,12 @@ export default function AwardEditionPage() {
               {award.name}
             </Link>
             <ChevronRight className="w-3 h-3" />
-            <span className="text-text-primary">{edition.year}</span>
+            <span className="text-text-primary">{displayLabel}</span>
           </nav>
 
           <div className="flex flex-col gap-4">
             <h1 className="text-3xl font-bold tracking-tight text-text-primary md:text-5xl">
-              {award.name} {edition.year}
+              {award.name} {displayLabel}
             </h1>
             
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-text-secondary">

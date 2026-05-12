@@ -15,6 +15,14 @@ export function useGuidesLocalities() {
   });
 }
 
+export function useTopGuideLocalities(limit = 4) {
+  return useQuery({
+    queryKey: [...guidesKeys.localities(), 'top', limit],
+    queryFn: () => getGuidesLocalities(limit),
+    staleTime: 1000 * 60 * 10,
+  });
+}
+
 export function usePopularCollections() {
   return useQuery({
     queryKey: guidesKeys.collections(),

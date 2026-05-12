@@ -108,7 +108,6 @@ interface Notification {
 const NOTIFICATION_QUERY = `
   *,
   actor:notifications_actor_id_fkey(username, avatar_url),
-  architect:notifications_architect_id_fkey(name),
   resource:notifications_resource_id_fkey(
     id,
     user_id,
@@ -185,8 +184,8 @@ export default function Notifications() {
           .eq("is_read", false);
         if (updateError) throw updateError;
       }
-    } catch (_error) {
-      void _error;
+    } catch (error) {
+      console.error("Failed to fetch notifications", error);
     } finally {
       setLoading(false);
     }
@@ -213,7 +212,8 @@ export default function Notifications() {
       const moreNotifications = (data ?? []) as unknown as Notification[];
       setNotifications((prev) => [...prev, ...moreNotifications]);
       setHasMore(moreNotifications.length === 20);
-    } catch (_error) {
+    } catch (error) {
+      console.error("Failed to load more notifications", error);
     } finally {
       setLoadingMore(false);
     }

@@ -159,7 +159,7 @@ export default function AwardDetail() {
                 (editions ?? []).map((edition) => (
                   <TableRow key={edition.id}>
                     <TableCell className="font-medium text-sm">
-                      {edition.year ?? edition.editionDate ?? "—"}
+                      {edition.editionLabel ?? edition.year ?? edition.editionDate ?? "—"}
                     </TableCell>
                     <TableCell className="text-sm text-text-secondary">
                       {edition.ceremonyLocation ?? <span className="opacity-40">—</span>}

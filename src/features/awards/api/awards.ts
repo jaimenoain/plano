@@ -53,6 +53,9 @@ function toEditionDTO(row: any, recipientCount?: number): AwardEditionDTO {
     id: row.id,
     awardId: row.award_id,
     year: row.year ?? null,
+    editionLabel: row.edition_label ?? null,
+    editionNumber: row.edition_number ?? null,
+    slug: row.slug ?? null,
     editionDate: row.edition_date ?? null,
     ceremonyLocation: row.ceremony_location ?? null,
     notes: row.notes ?? null,
@@ -88,7 +91,12 @@ function toRecipientDTO(row: any): AwardRecipientDTO {
     ? { name: row.category.name }
     : null;
   const edition = row.edition
-    ? { year: row.edition.year ?? null, editionDate: row.edition.edition_date ?? null }
+    ? {
+        year: row.edition.year ?? null,
+        editionLabel: row.edition.edition_label ?? null,
+        editionDate: row.edition.edition_date ?? null,
+        slug: row.edition.slug ?? null,
+      }
     : null;
   const award = row.award
     ? { name: row.award.name, slug: row.award.slug }
@@ -179,7 +187,8 @@ export async function getEditionsByAward(awardId: string): Promise<AwardEditionD
       award_recipients(count)
     `)
     .eq("award_id", awardId)
-    .order("year", { ascending: false });
+    .order("year", { ascending: false, nullsFirst: false })
+    .order("edition_number", { ascending: false, nullsFirst: false });
 
   if (error) throw new Error(`Failed to load editions: ${error.message}`);
 
@@ -219,6 +228,20 @@ export async function getEditionByAwardAndYear(awardId: string, year: number): P
   return toEditionDTO(data);
 }
 
+export async function getEditionBySlug(awardId: string, slug: string): Promise<AwardEditionDTO> {
+  const { data, error } = await db
+    .from("award_editions")
+    .select("*")
+    .eq("award_id", awardId)
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) throw new Error(`Failed to load edition: ${error.message}`);
+  if (!data) throw new Error("Edition not found");
+
+  return toEditionDTO(data);
+}
+
 export async function getCategoriesByAward(awardId: string): Promise<AwardCategoryDTO[]> {
   const { data, error } = await db
     .from("award_categories")
@@ -240,7 +263,7 @@ export async function getRecipientsByEdition(editionId: string): Promise<AwardRe
       person:people!award_recipients_recipient_person_id_fkey(id, name, slug, avatar_url),
       company:companies!award_recipients_recipient_company_id_fkey(id, name, slug),
       category:award_categories!award_recipients_category_id_fkey(name),
-      edition:award_editions!award_recipients_edition_id_fkey(year, edition_date)
+      edition:award_editions!award_recipients_edition_id_fkey(year, edition_label, edition_date, slug)
     `)
     .eq("edition_id", editionId)
     .order("outcome", { ascending: true });
@@ -256,7 +279,7 @@ export async function getAwardsByBuilding(buildingId: string): Promise<AwardReci
     .select(`
       *,
       category:award_categories!award_recipients_category_id_fkey(name),
-      edition:award_editions!award_recipients_edition_id_fkey(year, edition_date, award_id),
+      edition:award_editions!award_recipients_edition_id_fkey(year, edition_label, edition_date, slug, award_id),
       award:award_editions!award_recipients_edition_id_fkey(awards!award_editions_award_id_fkey(name, slug))
     `)
     .eq("recipient_building_id", buildingId)
@@ -279,7 +302,7 @@ export async function getAwardsByPerson(personId: string): Promise<AwardRecipien
     .select(`
       *,
       category:award_categories!award_recipients_category_id_fkey(name),
-      edition:award_editions!award_recipients_edition_id_fkey(year, edition_date, award_id),
+      edition:award_editions!award_recipients_edition_id_fkey(year, edition_label, edition_date, slug, award_id),
       award:award_editions!award_recipients_edition_id_fkey(awards!award_editions_award_id_fkey(name, slug))
     `)
     .eq("recipient_person_id", personId)
@@ -302,7 +325,7 @@ export async function getAwardsByCompany(companyId: string): Promise<AwardRecipi
     .select(`
       *,
       category:award_categories!award_recipients_category_id_fkey(name),
-      edition:award_editions!award_recipients_edition_id_fkey(year, edition_date, award_id),
+      edition:award_editions!award_recipients_edition_id_fkey(year, edition_label, edition_date, slug, award_id),
       award:award_editions!award_recipients_edition_id_fkey(awards!award_editions_award_id_fkey(name, slug))
     `)
     .eq("recipient_company_id", companyId)
@@ -366,6 +389,9 @@ export async function deleteAward(awardId: string): Promise<void> {
 export async function createEdition(payload: {
   award_id: string;
   year?: number | null;
+  edition_label?: string | null;
+  edition_number?: number | null;
+  slug?: string | null;
   edition_date?: string | null;
   ceremony_location?: string | null;
   notes?: string | null;
@@ -647,7 +673,7 @@ export async function getRecentRecipients(filters: RecentRecipientFilters = {}):
       person:people!award_recipients_recipient_person_id_fkey(id, name, slug, avatar_url),
       company:companies!award_recipients_recipient_company_id_fkey(id, name, slug),
       category:award_categories!award_recipients_category_id_fkey(name),
-      edition:award_editions!award_recipients_edition_id_fkey(year, edition_date),
+      edition:award_editions!award_recipients_edition_id_fkey(year, edition_label, edition_date, slug),
       award:award_editions!award_recipients_edition_id_fkey(awards!award_editions_award_id_fkey(name, slug))
     `)
     .order("created_at", { ascending: false })

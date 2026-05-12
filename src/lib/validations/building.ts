@@ -8,6 +8,14 @@ export const buildingSchema = z.object({
   alt_name: z.string().nullable().optional(),
   aliases: z.array(z.string()).optional().default([]),
   hero_image_url: z.string().nullable().optional(),
+  century: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) return null;
+    const parsed = typeof val === 'string' ? parseInt(val, 10) : Number(val);
+    return isNaN(parsed) ? null : parsed;
+  }, z.number({ invalid_type_error: "Century must be a number" })
+    .int("Century must be an integer")
+    .min(1, "Century must be at least 1")
+    .nullable()),
   // Preprocess handles conversion from string input (e.g. from HTML input) to number or null
   year_completed: z.preprocess((val) => {
     if (val === "" || val === null || val === undefined) return null;
@@ -69,6 +77,14 @@ export const editBuildingSchema = z.object({
   alt_name: z.string().nullable().optional(),
   aliases: z.array(z.string()).optional().default([]),
   hero_image_url: z.string().nullable().optional(),
+  century: z.preprocess((val) => {
+    if (val === "" || val === null || val === undefined) return null;
+    const parsed = typeof val === 'string' ? parseInt(val, 10) : Number(val);
+    return isNaN(parsed) ? null : parsed;
+  }, z.number({ invalid_type_error: "Century must be a number" })
+    .int("Century must be an integer")
+    .min(1, "Century must be at least 1")
+    .nullable()).optional(),
   year_completed: z.preprocess((val) => {
     if (val === "" || val === null || val === undefined) return null;
     const parsed = typeof val === 'string' ? parseInt(val, 10) : Number(val);
