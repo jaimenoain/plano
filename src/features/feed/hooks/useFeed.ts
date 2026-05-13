@@ -11,6 +11,10 @@ import {
   type ReviewUser,
 } from "@/types/feed";
 import { getBuildingImageUrl } from "@/utils/image";
+import { isFeedV2RankerEnabled } from "@/features/feed/flags";
+import { getFeedRanked } from "@/features/feed/api/getFeedRanked";
+import { scoreFeedItem } from "@/features/feed/utils/scoreFeedItem";
+import { useSeenItems } from "@/features/feed/hooks/useSeenItems";
 
 const INITIAL_PAGE_SIZE = 10;
 const SUBSEQUENT_PAGE_SIZE = 36;
@@ -190,6 +194,7 @@ async function loadFeedEventAttendance(viewerId: string): Promise<FeedEventAtten
 export function useFeed({ showGroupActivity }: UseFeedOptions) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const seenItems = useSeenItems();
 
   const queryKey = ["feed", user?.id, showGroupActivity];
   const eventAttendanceQueryKey = ["feed-event-attendance", user?.id] as const;
@@ -214,6 +219,16 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
       const limit = isFirstPage ? INITIAL_PAGE_SIZE : SUBSEQUENT_PAGE_SIZE;
       const from = isFirstPage ? 0 : INITIAL_PAGE_SIZE + (pageParam - 1) * SUBSEQUENT_PAGE_SIZE;
 
+      // --- feed_v2_ranker flag: ranked path ---
+      if (isFeedV2RankerEnabled()) {
+        const items = await getFeedRanked({ limit, offset: from });
+        const reranked = scoreFeedItem(items, seenItems.hasSeen);
+        return reranked
+          .filter((item) => item.kind === "post")
+          .map((item) => item.payload) as FeedReview[];
+      }
+
+      // --- Legacy path (flag off) ---
       const { data, error } = await supabase
         .rpc("get_feed", {
           p_limit: limit,

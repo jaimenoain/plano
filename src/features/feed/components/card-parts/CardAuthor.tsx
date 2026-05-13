@@ -14,6 +14,10 @@ export interface CardAuthorProps {
 /**
  * AuthorBelow — attribution line beneath the feed title.
  * Username · timestamp · award dots.
+ *
+ * Carries `data-attribution-kind="direct"` so this is the ring-1 instance of
+ * the `<CardAttribution>` contract — the username + rating chrome around it
+ * is decoration, not a separate label.
  */
 export function CardAuthor({
   username,
@@ -26,7 +30,10 @@ export function CardAuthor({
   const timeAgo = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-[10px]", className)}>
+    <div
+      data-attribution-kind="direct"
+      className={cn("flex flex-wrap items-center gap-[10px]", className)}
+    >
       {avatarUrl && (
         <div className="h-5 w-5 shrink-0 overflow-hidden rounded-full bg-surface-muted">
           <img src={avatarUrl} alt="" className="h-full w-full object-cover" />

@@ -5,6 +5,11 @@ export { CardImage, type CardImageProps } from "./CardImage";
 export { CardMeta, type CardMetaProps } from "./CardMeta";
 export { CardAuthor, type CardAuthorProps } from "./CardAuthor";
 export {
+  CardAttribution,
+  type CardAttributionProps,
+  type CardAttributionKind,
+} from "./CardAttribution";
+export {
   CardFooter,
   type CardFooterProps,
   PointsBadge,

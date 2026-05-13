@@ -103,7 +103,7 @@ export function FeedbackWidget() {
         className={cn(
           "fixed bottom-0 right-0 z-50 overflow-hidden cursor-pointer",
           "transition-[width,height] duration-500 ease-in-out motion-reduce:transition-none",
-          isTriggerExpanded ? "w-20 h-20" : "w-6 h-6"
+          isTriggerExpanded ? "w-20 h-20" : "w-10 h-10"
         )}
         onMouseEnter={() => setTriggerHovered(true)}
         onMouseLeave={() => setTriggerHovered(false)}

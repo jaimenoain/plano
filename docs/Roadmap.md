@@ -59,7 +59,7 @@ These apply to every phase. Re-read before starting each one.
 
 ---
 
-## [ ] Phase 0 — Foundations & inventory (1–2 days)
+## [x] Phase 0 — Foundations & inventory (1–2 days)
 
 **Goal:** Lay the groundwork that every later phase depends on, without changing any user-visible behaviour. By the end of this phase, the codebase has: an attribution component used by all existing cards, a unified card-source type definition, a shared seen-tracking hook, and a documented inventory of every feed-related RPC and component. No ranker yet. No surface changes.
 
@@ -115,7 +115,7 @@ A single PR titled `Phase 0: Feed foundations`. Touches a small number of files.
 
 ---
 
-## [ ] Phase 1 — The ranker (3–5 days)
+## [x] Phase 1 — The ranker (3–5 days)
 
 **Goal:** Replace `ORDER BY created_at DESC` with a real score across the existing ring-1 source. By the end of this phase, the feed renders the same content sources as today but in a ranked order. Cold-start fork stays. No mosaic layout. No new content types. This is the smallest possible "the ranker exists and works" slice.
 
@@ -197,7 +197,7 @@ A new `get_feed_ranked` RPC, a `scoreFeedItem` utility on the client, an updated
 
 ---
 
-## [ ] Phase 2 — Merge the three sources & retire the cold-start fork (3–5 days)
+## [x] Phase 2 — Merge the three sources & retire the cold-start fork (3–5 days)
 
 **Goal:** One ranked stream, three sources interleaved by the ranker. Cold-start page goes away. By the end of this phase, a user with 0 follows lands on the same `/feed` page as a user with 50 follows, with the source mix determined by graph size, not by a UI fork.
 
