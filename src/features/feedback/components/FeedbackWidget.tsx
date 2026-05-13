@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 
 type FeedbackType = "bug" | "ux_improvement" | "feature_idea" | "other";
 type Status = "idle" | "loading" | "success" | "error" | "rate_limited";
-type ScreenshotState = "none" | "capturing" | "attached";
 
 const TYPES: { value: FeedbackType; emoji: string; label: string }[] = [
   { value: "bug", emoji: "🐛", label: "Bug report" },
@@ -17,28 +16,6 @@ const TYPES: { value: FeedbackType; emoji: string; label: string }[] = [
   { value: "other", emoji: "💬", label: "Other" },
 ];
 
-async function captureScreenshot(): Promise<string | null> {
-  try {
-    const stream = await navigator.mediaDevices.getDisplayMedia({
-      video: { displaySurface: "browser" } as MediaTrackConstraints,
-    });
-    const video = document.createElement("video");
-    video.srcObject = stream;
-    await new Promise<void>((resolve) => {
-      video.onloadedmetadata = () => resolve();
-    });
-    await video.play();
-    const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext("2d")!.drawImage(video, 0, 0);
-    stream.getTracks().forEach((t) => t.stop());
-    return canvas.toDataURL("image/webp", 0.7);
-  } catch {
-    return null;
-  }
-}
-
 export function FeedbackWidget() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -46,8 +23,6 @@ export function FeedbackWidget() {
   const [feedbackType, setFeedbackType] = useState<FeedbackType>("bug");
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<Status>("idle");
-  const [screenshotState, setScreenshotState] = useState<ScreenshotState>("none");
-  const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
   const [shaking, setShaking] = useState(false);
   const shakeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -70,25 +45,7 @@ export function FeedbackWidget() {
     setFeedbackType("bug");
     setMessage("");
     setStatus("idle");
-    setScreenshotState("none");
-    setScreenshotDataUrl(null);
     setShaking(false);
-  }
-
-  async function handleScreenshot() {
-    setScreenshotState("capturing");
-    const dataUrl = await captureScreenshot();
-    if (dataUrl) {
-      setScreenshotDataUrl(dataUrl);
-      setScreenshotState("attached");
-    } else {
-      setScreenshotState("none");
-    }
-  }
-
-  function removeScreenshot() {
-    setScreenshotDataUrl(null);
-    setScreenshotState("none");
   }
 
   async function handleSubmit() {
@@ -117,7 +74,6 @@ export function FeedbackWidget() {
             language: navigator.language,
             referrer: document.referrer,
           },
-          ...(screenshotDataUrl ? { screenshotDataUrl } : {}),
         }),
       });
 
@@ -145,9 +101,9 @@ export function FeedbackWidget() {
       {/* Corner trigger */}
       <div
         className={cn(
-          "fixed bottom-0 right-0 z-50 overflow-hidden cursor-pointer relative",
-          "transition-[width,height] duration-500 ease-out motion-reduce:transition-none",
-          isTriggerExpanded ? "size-16" : "size-6"
+          "fixed bottom-0 right-0 z-50 overflow-hidden cursor-pointer",
+          "transition-[width,height] duration-500 ease-in-out motion-reduce:transition-none",
+          isTriggerExpanded ? "w-20 h-20" : "w-6 h-6"
         )}
         onMouseEnter={() => setTriggerHovered(true)}
         onMouseLeave={() => setTriggerHovered(false)}
@@ -156,26 +112,27 @@ export function FeedbackWidget() {
         aria-label="Send feedback"
       >
         <svg
-          className="size-full block"
-          viewBox="0 0 64 64"
+          className="size-full block absolute inset-0"
+          viewBox="0 0 100 100"
           xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="none"
           aria-hidden
         >
           <polygon
-            points="64,0 64,64 0,64"
+            points="100,0 100,100 0,100"
             fill="var(--brand-primary)"
-            opacity="0.75"
+            className="transition-all duration-500"
           />
         </svg>
         <span
           className={cn(
-            "absolute inset-0 flex items-center justify-center pointer-events-none text-brand-primary-foreground",
-            "transition-opacity duration-500 ease-out motion-reduce:transition-none",
-            isTriggerExpanded ? "opacity-100" : "opacity-0"
+            "absolute bottom-3 right-3 flex items-center justify-center pointer-events-none text-brand-primary-foreground",
+            "transition-all duration-500 ease-in-out motion-reduce:transition-none",
+            isTriggerExpanded ? "opacity-100 scale-100 translate-x-0 translate-y-0" : "opacity-0 scale-50 translate-x-4 translate-y-4"
           )}
           aria-hidden
         >
-          <MessageCircle className="size-5" strokeWidth={1.5} />
+          <MessageCircle className="size-6" strokeWidth={2} />
         </span>
       </div>
 
@@ -184,26 +141,39 @@ export function FeedbackWidget() {
         <div className="fixed inset-0 z-[1200] flex items-center justify-center sm:items-center items-end">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={closeDialog}
           />
 
           {/* Panel */}
-          <div className="relative w-full max-w-[448px] rounded-t-lg sm:rounded-lg bg-surface-overlay border border-border-default shadow-xl mx-0 sm:mx-4">
+          <div className="relative w-full max-w-[448px] rounded-t-2xl sm:rounded-2xl bg-surface-overlay border border-border-default shadow-2xl mx-0 sm:mx-4 overflow-hidden animate-in fade-in zoom-in-95 slide-in-from-bottom-10 duration-200">
             {status === "success" ? (
-              <div className="flex items-center justify-center py-12 text-lg font-medium text-text-primary">
-                ✅ Thanks for the feedback!
+              <div className="flex flex-col items-center justify-center py-16 gap-4">
+                <div className="size-16 rounded-full bg-feedback-success/10 flex items-center justify-center text-3xl">
+                  ✅
+                </div>
+                <div className="text-xl font-semibold text-text-primary">
+                  Feedback received!
+                </div>
+                <div className="text-text-secondary text-center px-8">
+                  Thank you for helping us improve Plano.
+                </div>
               </div>
             ) : (
-              <div className="p-5 flex flex-col gap-4">
+              <div className="p-6 flex flex-col gap-6">
                 {/* Header */}
                 <div className="flex items-center justify-between">
-                  <h2 className="text-base font-semibold text-text-primary">
-                    Send feedback
-                  </h2>
+                  <div>
+                    <h2 className="text-lg font-bold text-text-primary">
+                      Feedback
+                    </h2>
+                    <p className="text-sm text-text-secondary">
+                      Help us make Plano better
+                    </p>
+                  </div>
                   <button
                     onClick={closeDialog}
-                    className="text-text-secondary hover:text-text-primary transition-colors text-xl leading-none"
+                    className="size-8 flex items-center justify-center rounded-full hover:bg-surface-muted text-text-secondary hover:text-text-primary transition-colors text-2xl leading-none"
                     aria-label="Close"
                   >
                     ×
@@ -211,66 +181,42 @@ export function FeedbackWidget() {
                 </div>
 
                 {/* Type selector */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   {TYPES.map(({ value, emoji, label }) => (
                     <button
                       key={value}
                       onClick={() => setFeedbackType(value)}
-                      className={[
-                        "flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors",
+                      className={cn(
+                        "flex items-center gap-2 rounded-xl border px-4 py-3 text-sm transition-all duration-200",
                         feedbackType === value
-                          ? "border-brand-primary bg-brand-primary/10 text-text-primary font-medium"
-                          : "border-border-default bg-surface-default text-text-secondary hover:border-brand-primary/50",
-                      ].join(" ")}
+                          ? "border-brand-primary bg-brand-primary/10 text-brand-primary font-semibold shadow-sm"
+                          : "border-border-default bg-surface-default text-text-secondary hover:border-brand-primary/40 hover:bg-surface-muted"
+                      )}
                     >
-                      <span>{emoji}</span>
+                      <span className="text-lg">{emoji}</span>
                       <span>{label}</span>
                     </button>
                   ))}
                 </div>
 
-                {/* Screenshot button */}
-                <div className="flex items-center gap-2">
-                  {screenshotState === "none" && (
-                    <button
-                      onClick={handleScreenshot}
-                      className="text-sm border border-border-default rounded-md px-3 py-1.5 text-text-secondary hover:border-border-strong transition-colors"
-                    >
-                      📎 Attach screenshot
-                    </button>
-                  )}
-                  {screenshotState === "capturing" && (
-                    <span className="text-sm text-text-secondary flex items-center gap-1.5">
-                      <span className="inline-block w-3 h-3 rounded-full border-2 border-text-secondary border-t-transparent animate-spin" />
-                      Capturing…
-                    </span>
-                  )}
-                  {screenshotState === "attached" && (
-                    <span className="text-sm flex items-center gap-2">
-                      <span className="text-feedback-success font-medium">✓ Screenshot attached</span>
-                      <button
-                        onClick={removeScreenshot}
-                        className="text-text-secondary hover:text-text-primary transition-colors"
-                      >
-                        ✕ Remove
-                      </button>
-                    </span>
-                  )}
-                </div>
-
                 {/* Textarea */}
-                <textarea
-                  rows={4}
-                  className="w-full resize-none rounded-md border border-border-default bg-surface-default px-3 py-2 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:ring-2 focus:ring-brand-primary"
-                  placeholder="Describe what happened, what you expected, or your idea…"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  disabled={status === "loading"}
-                />
+                <div className="space-y-2">
+                  <textarea
+                    rows={4}
+                    className="w-full resize-none rounded-xl border border-border-default bg-surface-default px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
+                    placeholder="Tell us what's on your mind…"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    disabled={status === "loading"}
+                  />
+                  <div className="text-[10px] text-text-disabled uppercase tracking-wider font-semibold">
+                    At least 10 characters
+                  </div>
+                </div>
 
                 {/* Error message */}
                 {(status === "error" || status === "rate_limited") && (
-                  <p className="text-sm text-feedback-destructive">
+                  <p className="text-sm text-feedback-destructive font-medium bg-feedback-destructive/10 p-3 rounded-lg">
                     {status === "rate_limited"
                       ? "Too many submissions, please try again later."
                       : "Something went wrong. Please try again."}
@@ -278,23 +224,23 @@ export function FeedbackWidget() {
                 )}
 
                 {/* Footer */}
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-3 pt-2">
                   <button
                     onClick={closeDialog}
                     disabled={status === "loading"}
-                    className="px-4 py-2 text-sm rounded-md border border-border-default text-text-secondary hover:border-border-strong transition-colors disabled:opacity-50"
+                    className="px-6 py-2.5 text-sm font-medium rounded-xl border border-border-default text-text-secondary hover:bg-surface-muted transition-colors disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSubmit}
                     disabled={status === "loading"}
-                    className={[
-                      "px-4 py-2 text-sm rounded-md bg-brand-primary text-brand-primary-foreground font-medium transition-colors hover:bg-brand-primary-hover disabled:opacity-50",
-                      shaking ? "animate-shake" : "",
-                    ].join(" ")}
+                    className={cn(
+                      "px-6 py-2.5 text-sm rounded-xl bg-brand-primary text-brand-primary-foreground font-bold shadow-lg shadow-brand-primary/20 transition-all hover:bg-brand-primary/90 active:scale-95 disabled:opacity-50",
+                      shaking && "animate-shake"
+                    )}
                   >
-                    {status === "loading" ? "Sending…" : "Send feedback"}
+                    {status === "loading" ? "Sending…" : "Submit"}
                   </button>
                 </div>
               </div>

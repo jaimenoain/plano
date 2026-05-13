@@ -22,10 +22,10 @@ export default [
     "features/credits/pages/ApproveStewardRequest.tsx",
   ),
   route("/admin/unauthorized", "features/admin/pages/Unauthorized.tsx"),
-  route("/admin/merge", "features/admin/pages/MergeBuildings.tsx"),
+  route("/admin/merge", "features/admin/pages/MergeEntities.tsx"),
   route(
-    "/admin/merge/:targetId/:sourceId",
-    "features/admin/pages/MergeComparison.tsx",
+    "/admin/merge/:entityType/:targetId/:sourceId",
+    "features/admin/pages/MergeComparisonEntities.tsx",
   ),
 
   // Feedback API resource route
