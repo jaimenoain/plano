@@ -12,6 +12,7 @@ import { countWords } from "@/features/feed/utils/resolveCardType";
 import { CardImage } from "@/features/feed/components/card-parts/CardImage";
 import { CardFooter } from "@/features/feed/components/card-primitives/CardFooter";
 import { PointsBadge } from "@/features/feed/components/card-primitives/PointsBadge";
+import type { TileSize } from "@/features/feed/utils/assignTileSize";
 
 const MOBILE_MAX_WIDTH_PX = 767;
 
@@ -25,6 +26,7 @@ export interface FeedCardProps {
   onLike?: (reviewId: string) => void;
   onComment?: (reviewId: string) => void;
   onImageLike?: (reviewId: string, imageId: string) => void;
+  tileSize?: TileSize;
 }
 
 export function FeedCard({
@@ -35,6 +37,7 @@ export function FeedCard({
   onLike,
   onComment,
   onImageLike,
+  tileSize,
 }: FeedCardProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -113,6 +116,64 @@ export function FeedCard({
     }
   };
 
+  // ── xl tile: full-height photo overlay ────────────────────────────────────
+  if (tileSize === "xl") {
+    if (!hasMedia) {
+      console.warn(`[FeedCard] xl tile requested for card ${entry.id} with no media — downgrading to sm`);
+      // Fall through to sm pull-quote below
+    } else {
+      return (
+        <article
+          ref={trackViewRef}
+          data-testid={`feed-card-${entry.id}`}
+          onClick={handleCardClick}
+          className="group/card relative h-full w-full cursor-pointer overflow-hidden"
+        >
+          <CardImage
+            items={mediaItems}
+            aspectRatio="1/1"
+            reviewId={entry.id}
+            onImageLike={onImageLike}
+            firstMediaOnly
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
+          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+            <h2 className="font-sans font-bold text-text-inverse leading-[0.95] tracking-[-0.035em] text-[clamp(1.5rem,3vw,2.5rem)] line-clamp-2">
+              {mainTitle}
+            </h2>
+            <p className="mt-2 text-xs text-white/70">{username} · {timeAgo}</p>
+          </div>
+        </article>
+      );
+    }
+  }
+
+  // ── sm tile: pull-quote ────────────────────────────────────────────────────
+  if (tileSize === "sm" || (tileSize === "xl" && !hasMedia)) {
+    return (
+      <article
+        ref={trackViewRef}
+        data-testid={`feed-card-${entry.id}`}
+        onClick={handleCardClick}
+        className="group/card relative h-full w-full cursor-pointer flex flex-col justify-between p-5 bg-surface-card"
+      >
+        <div className="flex-1 overflow-hidden">
+          <blockquote className="font-sans font-medium text-text-primary leading-[1.15] tracking-[-0.025em] text-[clamp(1.1rem,2vw,1.5rem)] line-clamp-4">
+            {entry.content || mainTitle}
+          </blockquote>
+        </div>
+        <div className="mt-4 flex flex-col gap-1">
+          <p className="text-xs font-medium text-text-primary line-clamp-1">{mainTitle}</p>
+          <p className="text-[11px] text-text-disabled">{username}</p>
+        </div>
+      </article>
+    );
+  }
+
+  // ── lg / md tiles: existing layout with h-full and adjusted aspect ratios ─
+  const cardImageAspectRatio = tileSize === "md" ? "4/5" : "16/9";
+
   return (
     <article
       ref={trackViewRef}
@@ -120,6 +181,7 @@ export function FeedCard({
       onClick={handleCardClick}
       className={cn(
         "group/card relative w-full cursor-pointer min-w-0",
+        tileSize && "h-full",
         isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-6",
       )}
     >
@@ -128,7 +190,7 @@ export function FeedCard({
         <div className="relative mb-5">
           <CardImage
             items={mediaItems}
-            aspectRatio="16/9"
+            aspectRatio={cardImageAspectRatio}
             reviewId={entry.id}
             onImageLike={onImageLike}
             firstMediaOnly
@@ -146,7 +208,8 @@ export function FeedCard({
       {!hideBuildingInfo && (
         <h2
           className={cn(
-            "font-sans font-bold tracking-[-0.035em] text-text-primary leading-[0.95] line-clamp-2",
+            "font-sans font-bold tracking-[-0.035em] text-text-primary leading-[0.95]",
+            tileSize ? "line-clamp-2" : "line-clamp-2",
             hasMedia
               ? "text-[clamp(1.75rem,3.5vw,2.5rem)]"
               : "text-[clamp(2rem,4.5vw,3rem)]",
@@ -205,12 +268,12 @@ export function FeedCard({
             ref={bodyRef}
             className={cn(
               "text-[17px] leading-[1.75] text-text-primary max-w-[62ch] font-sans",
-              !essayExpanded && "line-clamp-4",
+              !essayExpanded && (tileSize ? "line-clamp-2" : "line-clamp-4"),
             )}
           >
             {entry.content}
           </p>
-          {showReadMore && !essayExpanded && !suppressReadMore && (
+          {showReadMore && !essayExpanded && !suppressReadMore && !tileSize && (
             <button
               type="button"
               onClick={(e) => {

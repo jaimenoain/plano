@@ -11,6 +11,7 @@ import {
   CardMeta,
   CardAuthor,
 } from "@/features/feed/components/card-parts";
+import type { TileSize } from "@/features/feed/utils/assignTileSize";
 
 const MOBILE_MAX_WIDTH_PX = 767;
 const PULL_QUOTE_WORD_THRESHOLD = 15;
@@ -22,6 +23,7 @@ export interface FeedCardAProps {
   showCommunityImages?: boolean;
   onLike?: (reviewId: string) => void;
   onComment?: (reviewId: string) => void;
+  tileSize?: TileSize;
 }
 
 export function FeedCardA({
@@ -31,6 +33,7 @@ export function FeedCardA({
   showCommunityImages = true,
   onLike,
   onComment,
+  tileSize,
 }: FeedCardAProps) {
   const navigate = useNavigate();
   const [essayExpanded, setEssayExpanded] = useState(false);
@@ -81,7 +84,7 @@ export function FeedCardA({
 
   const { username, isArchitectOfBuilding, mainTitle } = data;
   const isPullQuote =
-    entry.content?.trim() && contentWordCount > 0 && contentWordCount <= PULL_QUOTE_WORD_THRESHOLD;
+    tileSize === "sm" || (entry.content?.trim() && contentWordCount > 0 && contentWordCount <= PULL_QUOTE_WORD_THRESHOLD);
 
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -119,6 +122,7 @@ export function FeedCardA({
       onClick={handleCardClick}
       className={cn(
         "group/card relative w-full cursor-pointer min-w-0",
+        tileSize && "h-full",
         isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-6",
       )}
     >

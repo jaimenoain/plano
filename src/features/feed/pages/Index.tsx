@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ColdStartFeed } from "../components/ColdStartFeed";
 import { FeedCollectionCard } from "../components/FeedCollectionCard";
-import { PeopleYouMayKnow } from "../components/PeopleYouMayKnow";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { Loader2 } from "lucide-react";
@@ -38,6 +37,7 @@ import { getFeedRanked } from "../api/getFeedRanked";
 import { getCollectionsFeedAsItems } from "../api/getCollectionsFeedAsItems";
 import { getSuggestedPostsAsItems } from "../api/getSuggestedPostsAsItems";
 import { mergeFeedSources } from "../utils/mergeFeedSources";
+import { FeedMosaic } from "../components/FeedMosaic";
 
 
 const INDEX_TITLE = "Plano — The world's architecture, cataloged.";
@@ -301,15 +301,13 @@ export default function Index() {
           <div className="w-full max-w-7xl mx-auto bg-surface-default md:border-l md:border-r border-border-default min-h-screen">
             <div className="md:grid md:grid-cols-[minmax(0,1fr)_320px]">
               <main className="min-w-0 md:border-r md:border-border-default overflow-hidden">
-                <div className="px-4 md:px-6 lg:px-16 pt-10 pb-32">
-                  <div className="flex flex-col gap-20">
-                    {buildV2FeedNodes(
-                      v2Items,
-                      followingCount ?? 0,
-                      socialFeed.toggleLike,
-                      socialFeed.toggleImageLike,
-                    )}
-                  </div>
+                <div className="pt-10 pb-32">
+                  <FeedMosaic
+                    items={v2Items}
+                    followingCount={followingCount ?? 0}
+                    onLike={socialFeed.toggleLike}
+                    onImageLike={socialFeed.toggleImageLike}
+                  />
                   {(v2CollectionsQuery.isLoading || v2DiscoveryQuery.isLoading) && (
                     <div className="flex justify-center py-8">
                       <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
@@ -366,66 +364,6 @@ export default function Index() {
       )}
     </AppLayout>
   );
-}
-
-// ── V2 helpers ─────────────────────────────────────────────────────────────
-
-/**
- * Injects inline follow-prompt cards roughly every 7 items for users who have
- * fewer than 5 follows (sparse graph). Users with 5+ follows see no prompts.
- */
-function injectPromptCards(items: FeedItem[], followingCount: number): FeedItem[] {
-  if (followingCount >= 5) return items;
-  const result: FeedItem[] = [];
-  items.forEach((item, i) => {
-    result.push(item);
-    if ((i + 1) % 7 === 0) {
-      result.push({
-        kind: "prompt",
-        id: `prompt-${i}`,
-        ring: "editorial",
-        score: 0,
-        attribution: { kind: "editorial", text: "Suggested for you" },
-        payload: { maxSuggestions: 3 },
-      });
-    }
-  });
-  return result;
-}
-
-function buildV2FeedNodes(
-  items: FeedItem[],
-  followingCount: number,
-  toggleLike: (id: string) => void,
-  toggleImageLike: (reviewId: string, imageId: string) => void,
-): React.ReactNode[] {
-  const withPrompts = injectPromptCards(items, followingCount);
-  return withPrompts.map((item) => {
-    if (item.kind === "prompt") {
-      return (
-        <div key={item.id} className="border-t border-border-default pt-6">
-          <PeopleYouMayKnow maxSuggestions={item.payload.maxSuggestions} showHeading />
-        </div>
-      );
-    }
-    if (item.kind === "collection") {
-      return (
-        <WidgetErrorBoundary key={item.id}>
-          <FeedCollectionCard collection={item.payload} />
-        </WidgetErrorBoundary>
-      );
-    }
-    // kind === "post"
-    return (
-      <div key={item.id}>
-        <ReviewCardFeed
-          entry={item.payload}
-          onLike={toggleLike}
-          onImageLike={toggleImageLike}
-        />
-      </div>
-    );
-  });
 }
 
 // ──────────────────────────────────────────────────────────────────────────
