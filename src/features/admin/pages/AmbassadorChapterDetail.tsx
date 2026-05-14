@@ -133,9 +133,10 @@ export default function AmbassadorChapterDetail() {
       if (mErr) throw mErr;
       const raw = (mems ?? []) as MemberWithProfile[];
       setMembers(raw);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to load chapter:", err);
-      toast.error(err instanceof Error ? err.message : "Failed to load chapter");
+      const message = err?.message || (typeof err === "string" ? err : "Failed to load chapter");
+      toast.error(message);
       setChapter(null);
     } finally {
       setLoading(false);

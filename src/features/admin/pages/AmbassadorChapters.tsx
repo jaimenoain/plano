@@ -95,13 +95,14 @@ export default function AmbassadorChapters() {
         next[m.chapter_id] = (next[m.chapter_id] ?? 0) + 1;
       }
       setCounts(next);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to load chapters:", err);
-      toast.error(err instanceof Error ? err.message : "Failed to load chapters");
+      const message = err?.message || (typeof err === "string" ? err : "Failed to load chapters");
+      toast.error(message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [supabase]);
 
   useEffect(() => {
     void loadChapters();
