@@ -1,8 +1,16 @@
--- Fix infinite recursion in ambassador_memberships RLS policy.
--- The recursion happened because the policy called functions that queried the same table,
--- and the policy did not have a strong enough base case to break the recursion.
+-- Fix infinite recursion in ambassador_memberships RLS policy using a non-RLS view.
+-- This is a robust way to bypass RLS inside SECURITY DEFINER functions without triggering recursion.
 
--- 1. Redefine helpers with clearer SECURITY DEFINER behavior.
+-- 1. Create a "shadow" view that bypasses RLS (since it will be queried by SECURITY DEFINER functions).
+-- We'll put it in a separate schema if possible, but public is fine if we manage permissions.
+CREATE OR REPLACE VIEW public._ambassador_memberships_internal AS
+  SELECT * FROM public.ambassador_memberships;
+
+-- Only postgres (and thus SECURITY DEFINER functions owned by postgres) should access this view.
+REVOKE ALL ON public._ambassador_memberships_internal FROM PUBLIC;
+GRANT SELECT ON public._ambassador_memberships_internal TO postgres;
+
+-- 2. Redefine helpers to query the shadow view.
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean
 LANGUAGE plpgsql
@@ -10,6 +18,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
+  -- Querying profiles is generally safe as it doesn't recurse back to memberships.
   RETURN EXISTS (
     SELECT 1 FROM public.profiles
     WHERE id = auth.uid()
@@ -25,11 +34,10 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  -- We query the table directly. Since this is SECURITY DEFINER and owned by postgres,
-  -- it should bypass RLS, breaking the recursion.
+  -- Query the INTERNAL view to bypass RLS and break recursion.
   RETURN EXISTS (
     SELECT 1
-    FROM public.ambassador_memberships
+    FROM public._ambassador_memberships_internal
     WHERE user_id = auth.uid()
       AND chapter_id = p_chapter_id
       AND role IN ('president', 'exco')
@@ -45,9 +53,10 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
+  -- Query the INTERNAL view to bypass RLS and break recursion.
   RETURN EXISTS (
     SELECT 1
-    FROM public.ambassador_memberships
+    FROM public._ambassador_memberships_internal
     WHERE user_id = auth.uid()
       AND chapter_id = p_chapter_id
       AND role = 'president'
@@ -56,8 +65,7 @@ BEGIN
 END;
 $$;
 
--- 2. Simplify and fix the policy.
--- We drop the old ones and create a single robust SELECT policy.
+-- 3. Simplify and fix the policy.
 DROP POLICY IF EXISTS "Ambassador memberships select" ON public.ambassador_memberships;
 
 CREATE POLICY "Ambassador memberships select"
@@ -65,19 +73,16 @@ CREATE POLICY "Ambassador memberships select"
   FOR SELECT
   TO authenticated
   USING (
-    -- Base cases (always check these first to break recursion)
     user_id = auth.uid() 
     OR public.is_admin()
+    OR public.is_chapter_leader(chapter_id)
     OR (
-      -- Use a subquery that targets the chapter leadership
-      -- Because is_chapter_leader is SECURITY DEFINER, it bypasses RLS on memberships.
-      public.is_chapter_leader(chapter_id)
-    )
-    OR (
-      -- President of national chapter can see members of local sub-chapters
+      -- For the national president case, we also use a safe check.
+      -- We can either define another helper or just ensure it's not the primary recursion path.
+      -- Let's define a helper for "is_parent_chapter_president" to be safe.
       EXISTS (
-        SELECT 1 
-        FROM public.ambassador_memberships leader_m
+        SELECT 1
+        FROM public._ambassador_memberships_internal leader_m
         JOIN public.ambassador_chapters national_c ON national_c.id = leader_m.chapter_id
         JOIN public.ambassador_chapters target_c ON target_c.id = ambassador_memberships.chapter_id
         WHERE leader_m.user_id = auth.uid()
@@ -89,7 +94,6 @@ CREATE POLICY "Ambassador memberships select"
     )
   );
 
--- Ensure grants are correct
 GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_chapter_leader(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_chapter_president(uuid) TO authenticated;
