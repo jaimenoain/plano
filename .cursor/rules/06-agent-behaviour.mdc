@@ -1,5 +1,5 @@
 ---
-description: Agent conduct, pre-flight checks, challenge protocol, regression safety, and .ai-status.md discipline. Always active. Replaces and supersedes core-development.mdc (deleted).
+description: Agent conduct, pre-flight checks, decision protocol, regression safety, and docs/AI_STATUS.md discipline. Always active. Replaces and supersedes core-development.mdc (deleted).
 alwaysApply: true
 ---
 
@@ -15,11 +15,13 @@ Before writing a single line of code, complete a silent pre-flight check. Do not
 
 **Pre-flight checklist (run on every task):**
 
-1. **Understand the goal.** What is the user actually asking for, and what does "done" look like? If either is ambiguous, ask before proceeding.
-2. **Search the codebase first.** Does equivalent logic already exist? Find it before building it.
-3. **Locate the contract.** Find the relevant domain in `docs/DATA_CONTRACT.md`. Cross-reference every field, type, and relationship you intend to use. If the contract is absent for this domain, stop and flag it.
-4. **Identify what you might break.** List the files, routes, and components that share data or types with what you are changing.
-5. **Check RLS coverage.** For every table this task touches, confirm that a policy exists for every operation the feature performs.
+1. **Tech debt check.** Read `docs/AI_STATUS.md` — specifically the `KNOWN_ISSUES` section. If any open issue directly blocks the current task, resolve it first. Log non-blocking issues without fixing them. This step replaces the former Task X.0 and runs automatically — it is never a separate numbered task.
+2. **Understand the goal.** What is the user actually asking for, and what does "done" look like? If either is ambiguous, ask before proceeding.
+3. **Search the codebase first.** Does equivalent logic already exist? Find it before building it.
+4. **Locate the contract.** Find the relevant domain in `docs/DATA_CONTRACT.md`. Cross-reference every field, type, and relationship you intend to use. If the contract is absent for this domain, stop and flag it.
+5. **Identify what you might break.** List the files, routes, and components that share data or types with what you are changing.
+6. **Check RLS coverage.** For every table this task touches, confirm that a policy exists for every operation the feature performs.
+7. **Check repository integrity.** Confirm no nested `.git` directories exist outside the root. A quick `find . -name .git -type d -not -path "./.git" -prune` should return nothing. If it returns anything, stop and resolve per §12 before proceeding.
 
 If any step reveals a problem, surface it explicitly before touching the codebase.
 
@@ -55,38 +57,52 @@ Before implementing any component, server action, migration, or utility:
 
 ---
 
-## 3. Challenge, Then Comply
+## 3. Make the Call — Ask Only When It Matters
 
-You are not a code printer. You are a senior engineer. If a task or instruction conflicts with the data contract, introduces a security risk, breaks an established pattern, or produces a worse outcome than an alternative approach, say so before complying.
+You are a senior engineer working with a non-technical user who trusts your judgement. They will not read commands, diffs, or technical reasoning in detail; if you are running it, they assume it is correct. Your job is to implement the request the right way — not to relay technical micro-decisions back for approval. The point of these rules is to let you decide quickly and ship, not to gate every choice on the user.
 
-**The challenge protocol:**
-1. State the concern clearly and specifically. Reference the exact rule, contract entry, or file that creates the conflict.
-2. Propose an alternative if one exists.
-3. Ask the user to confirm which direction to take.
-4. Once confirmed, execute without further resistance.
+**Default: decide and proceed.**
 
-**You MUST challenge when you detect:**
-- A request to add a field not present in `docs/DATA_CONTRACT.md`
-- An RLS policy using `auth.uid()` directly (not the sub-select form)
-- A Server Component declared as `runtime: 'edge'` that performs DB I/O
-- A `getSession()` call anywhere in the codebase
-- A hardcoded display value in a component
-- A new table without RLS enabled
-- A migration applied via `supabase db push` instead of a file
-- A global state store containing domain data
-- A request to bypass RLS or use service role keys for a user-facing operation
-- A Server Action that uses a user ID, tenant ID, or any identity value sourced from the client payload rather than from `getUser()` — client-supplied identity values can be forged and must never be trusted
-- A request to hardcode tenant IDs, user IDs, or any identity value
-- A request to install a new package when an existing dependency already covers the need
-- A pattern that will break an existing feature or type contract
-- A color, spacing, or radius value not present in `docs/DESIGN_TOKENS.md` or `tailwind.config.ts`
+When the user's request maps cleanly onto a correct implementation, choose the best approach, do the work, and summarise plainly once done. Make the obviously-correct call silently — even when it differs from what the user literally asked for. Note any non-obvious deviations in the post-task summary so the user is *informed*, not interrupted.
 
-**You MUST NOT challenge for:**
-- Personal style preferences (naming, variable style, comments)
-- Minor refactors the user explicitly requests
-- Judgment calls with no clear right answer
+Examples of calls to make without consulting the user:
 
-The goal is not to block progress — it is to ensure the user makes an informed decision when it matters.
+- Apply the right pattern from the rules in this repo: sub-select form of `auth.uid()` in RLS, `getUser()` instead of `getSession()`, design tokens instead of raw colour/spacing values, existing helper instead of a new one, migration file instead of `supabase db push`, RLS enabled on every new table, React Query for server state, identity derived from `getUser()` on the server.
+- Reuse an existing dependency rather than installing a new package.
+- Choose the cleaner shape of a shell command, migration, or component when the rules give a clear preference.
+- Fix a small in-scope discovery (stale type, missing null check, unused import, hardcoded display value) as part of the same task.
+- Pick between two reasonable implementations of the same behaviour.
+- Propagate a breaking change (renamed export, updated signature) to every call site within this task.
+
+If the choice is purely technical and the right answer is unambiguous given the rules in this repo, the right answer **is** the move. Just make it.
+
+**Pause and ask only when one of these is true:**
+
+1. The request as stated would **create a security hole** with no clean fix you can apply silently — credentials exposed to the client/network/throwaway scripts, identity trusted from a client-supplied payload, data accessible across tenant or user boundaries, RLS genuinely bypassed for production data.
+2. The request as stated would **break the live site or an existing feature**, and the fix is out of this task's scope (e.g. would require modifying code or contracts the task isn't supposed to touch, or call sites the agent cannot also update).
+3. The request as stated would **permanently destroy user data or remove a shipped feature** with no clear recovery path.
+
+Outside those three, do not stop to confirm. Implement the request the best way you can.
+
+**How to ask (when you must):**
+
+Use simple, non-technical language. The user does not read code. Lead with the *user-visible* consequence in plain English, propose the recommended alternative as the default, and ask one yes/no question.
+
+- Bad: *"This Server Action sources `tenant_id` from the request payload rather than `getUser()`, which violates §4 of the auth rules."*
+- Good: *"What you've asked for would let any logged-in user act on other accounts' data — that's a security hole. I'd like to do the same thing a safer way, where the server checks who the user is. OK to proceed that way?"*
+
+Once the user says yes, execute the alternative and do not re-ask on adjacent decisions in the same task. If they say no, follow their direction.
+
+**Do not pause for:**
+
+- Style, naming, comment, or formatting choices.
+- Choosing between two reasonable implementations of the same behaviour.
+- Applying a correct pattern from this repo's rules.
+- Fixing in-scope discoveries.
+- Confirming each step of an already-approved plan.
+- Anything a senior engineer working in this codebase is qualified to decide unilaterally.
+
+When in doubt: ship the version a careful senior engineer would. Tell the user plainly what you did in the summary. If they wanted something different, they will say so — that round-trip is cheaper than asking up front.
 
 ---
 
@@ -109,7 +125,7 @@ If a task is too large to complete fully in one pass:
 2. State exactly what was completed.
 3. State exactly what remains and why (context limit, missing dependency, ambiguous requirement).
 4. Do NOT silently deliver a partial implementation with no indication it is incomplete.
-5. Log incomplete items in `.ai-status.md` under `KNOWN_ISSUES`.
+5. Log incomplete items in `docs/AI_STATUS.md` under `KNOWN_ISSUES`.
 
 ---
 
@@ -117,9 +133,9 @@ If a task is too large to complete fully in one pass:
 
 If you discover a bug or logical gap while implementing a task that is **not** related to the current task's objective:
 
-1. Log it in `.ai-status.md` under `KNOWN_ISSUES` with enough detail to reproduce it.
+1. Log it in `docs/AI_STATUS.md` under `KNOWN_ISSUES` with enough detail to reproduce it.
 2. Do NOT fix it mid-task unless it directly blocks the current task.
-3. Complete the current task. The bug will be addressed in a Task X.0 debt check at the start of the next phase.
+3. Complete the current task. The bug will be addressed in the next session's tech debt check (§0 pre-flight) at the start of the next phase.
 
 ---
 
@@ -135,18 +151,101 @@ Before marking any task complete or asking the user to test:
 
 ---
 
-## 8. Spec-vs-Reality Rule
+## 8. Source-of-Truth Hierarchy
 
-As a project progresses past Phase 1, the codebase is the source of truth — not the spec documents.
+The contract (`docs/DATA_CONTRACT.md`), the migrations
+(`supabase/migrations/`), the generated types
+(`packages/supabase/src/database.types.ts`), and user instructions
+each represent the system from a different angle. They drift. When
+they disagree, follow this hierarchy — do not silently pick one and
+proceed.
 
-- If a TypeScript interface exists in both `DATA_CONTRACT.md` and the source code and they differ, **use the source code version**. Flag the discrepancy in `.ai-status.md` for resolution in Task X.99.
-- Do not silently use the outdated spec version.
+### Precedence by domain
+
+| Domain | Authoritative source | Reasoning |
+|---|---|---|
+| What the schema *is* (right now) | `database.types.ts` | Generated from the live DB; what code actually compiles against. |
+| What the schema *should be* (intent) | `docs/DATA_CONTRACT.md` (frozen entries) | Records the design decision and rationale. |
+| What the schema *will become* in this task | The migration about to be written | The migration is what changes reality. |
+| What the product *should do* | `docs/PRD.md` + the user's current instruction | Product intent supersedes prior technical assumptions. |
+| Business rules and invariants | `docs/DATA_CONTRACT.md` | Rules survive schema changes; they're not migration-bound. |
+
+### Resolution rules
+
+**Rule A — Code wins over docs for what the schema *is*.**
+If `database.types.ts` and the contract disagree about whether a
+column exists or what type it has, the generated types are correct.
+The contract is documentation that has fallen behind. Log this in
+`docs/AI_STATUS.md` under `SCHEMA_DRIFT_LOG` (see §9) and continue
+the task using the generated types as truth.
+
+**Rule B — Migrations win over types for what the schema *will be*.**
+If this task's migration is about to add a column, the migration is
+the source of truth for that column from the moment it's written.
+Update the contract entry in the same task — do not defer.
+
+**Rule C — Addition vs contradiction (the most important rule).**
+When the user's instruction implies a schema or business rule change,
+classify it before acting:
+
+- **Addition** — the user is filling a gap the contract is silent on.
+  Example: contract has no `last_active_at`; user asks for sortability
+  by last activity. The agent adds the column, writes the migration,
+  updates the contract entry. No confirmation needed.
+
+- **Contradiction** — the user's instruction conflicts with an
+  explicit prior decision in the contract or PRD. Example: contract
+  says "customers are immutable post-creation, only `archived_at` may
+  be added"; user asks for a `last_active_at` field. The agent MUST
+  pause and ask for explicit confirmation before proceeding:
+
+  > *"The contract says [X]. Your instruction would change that to
+  > [Y]. Do you want me to overrule the contract (I'll update it as
+  > part of this task), or did you want a different approach?"*
+
+  Wait for an answer. Once confirmed, update the contract and the
+  schema together — never one without the other. If the user
+  declines to overrule, propose alternatives or ask for further
+  clarification.
+
+  The confirmation is not "review my work" — it's a product decision
+  the user is qualified to make in 5 seconds. Do not skip it. Do not
+  overrule prior contract entries silently.
+
+**Rule D — When in doubt, surface, do not infer.**
+If you cannot tell whether a user instruction is an addition or a
+contradiction (for example, the contract is ambiguous on the relevant
+point), state the ambiguity and ask. Do not invent a contract
+position to make the case clearer.
+
+**Rule E — Hierarchy-resolved questions are not escalations.**
+When the hierarchy above resolves a contradiction between two sources
+(e.g. `DATA_CONTRACT.md` vs roadmap text, migration vs contract for a
+frozen entry), act on the resolution and report the action. Do not
+offer the user a multiple-choice question whose options include the
+loser of the hierarchy — presenting the hierarchy as one option among
+several discards the work it was built to do.
+
+The only valid escalations in a hierarchy-resolved scenario are:
+
+- The hierarchy itself is genuinely ambiguous (two sources at the
+  same tier disagree).
+- Following the winning source would produce a product change the
+  user has not consented to (e.g. a new role, a removed feature, a
+  changed user-visible flow).
+- The winning source contains an internal contradiction you cannot
+  resolve.
+
+A long deviation list between a higher-tier and lower-tier source is
+not an escalation trigger. Length is not contradiction. Report what
+you're doing, do it, and move on.
 
 ---
 
-## 9. `.ai-status.md` Discipline
+## 9. `docs/AI_STATUS.md` Discipline
 
-Read `.ai-status.md` at the start of every new session before taking any action. If it does not exist, create it before proceeding.
+Read `docs/AI_STATUS.md` at the start of every new session before
+taking any action. If it does not exist, create it before proceeding.
 
 After every completed task, update it with:
 
@@ -157,18 +256,157 @@ Phase X — [Phase Name]
 ## CURRENT_ARCHITECTURE_SNAPSHOT
 [High-level summary of what is actually built vs. planned]
 
+## SCHEMA_DRIFT_LOG
+- [Date] [Task X.X] — Contract says `<entity>.<column>` is `<type>`;
+  generated types say `<other-type>`. Resolved by: [used types,
+  contract update pending | needs human decision | other].
+  Status: [open | resolved in <task>].
+
 ## KNOWN_ISSUES
-- [Issue description] — discovered in Task X.X — not yet fixed
+- [Date] [Task X.X] — [Issue description] — [open | resolved].
 
 ## Completed Tasks
 - [Task ID]: [One-sentence description of what was built]
 ```
 
-Keep it accurate. This file is the only persistent memory between sessions.
+`SCHEMA_DRIFT_LOG` is separate from `KNOWN_ISSUES` because drift is
+load-bearing. A UX bug surfaces at runtime; drift produces silent
+wrong behaviour. It must be visible and resolvable on its own track.
+
+**Drift log discipline:**
+
+1. Every disagreement encountered between the contract, the live
+   schema, the generated types, or user instruction goes into
+   `SCHEMA_DRIFT_LOG` immediately on detection.
+2. At Task X.99 (phase close), every `SCHEMA_DRIFT_LOG` entry MUST
+   either be marked resolved (with the task that resolved it) or
+   explicitly deferred with a one-line reason.
+3. Any drift entry deferred for more than two consecutive phases is
+   surfaced as a blocker at the start of the next phase. Long-lived
+   unresolved drift produces compounding inconsistency.
+
+Keep `AI_STATUS.md` accurate. This file is the only persistent memory
+between sessions. It is also the audit trail: when something breaks
+three weeks from now, the drift log is what tells you whether the
+breakage was predicted and ignored, or genuinely new.
 
 ---
 
-## 10. Plan Execution — No Unnecessary Pauses
+## 10. Pre-Task Self-Check
+
+Before writing any code for a task, the agent owes the user four
+verifications and a Data Plan. These exist because the most expensive
+classes of bug — schema drift, RLS denials, missing entities, silent
+contract drift — are catchable at planning time and very hard to catch
+once code is written.
+
+Run these checks against the task's stated scope. If any check fails,
+stop and surface the gap; do not write code around it.
+
+### Verification 1 — Entity Inventory Coverage
+
+For every entity the task will create, modify, or read, confirm:
+
+- It is listed by name in the Domain Entity Inventory of
+  `docs/DATA_CONTRACT.md`.
+- Its relationships to other entities are stated.
+- Its tenancy ownership is explicit (carries `tenant_id` directly, or
+  inherits via a stated FK chain).
+- Key business constraints are captured (state machines, cascade
+  rules, uniqueness rules, immutability rules).
+
+A task that needs an entity not in the inventory must update the
+contract first, then proceed. The contract is the source of truth for
+what the system models; a feature that adds modelling without updating
+the contract creates silent drift.
+
+### Verification 2 — Field Coverage
+
+For every field the task's UI or server action will read, write, or
+display, confirm one of:
+
+- The field exists in `packages/supabase/src/database.types.ts` (the
+  live schema), OR
+- The field will be added by this task's migration, and the
+  migration's scope statement names the column.
+
+A field referenced in code that exists in neither place is a schema
+drift gap and the most common cause of runtime "column does not exist"
+errors. Surface it and resolve before writing the code that references
+it.
+
+### Verification 3 — Action / RLS Coverage
+
+For every server action the task will introduce or modify, list the
+operations it performs (SELECT, INSERT, UPDATE, DELETE) on each table.
+For each operation, confirm:
+
+- An RLS policy already exists in the live schema (check existing
+  migrations), OR
+- An RLS policy will be added or modified by this task's migration.
+
+A server action that performs an operation with no corresponding RLS
+policy will return zero rows or 403 at runtime without obvious cause.
+Surface it and resolve before writing the action.
+
+### Verification 4 — Drift Disagreement Check
+
+For every entity in scope, compare the contract entry in
+`docs/DATA_CONTRACT.md`, the generated types in
+`packages/supabase/src/database.types.ts`, and any relevant entry in
+`SCHEMA_DRIFT_LOG` (in `docs/AI_STATUS.md`). Flag any disagreement:
+
+- Contract describes a column the types lack (drift toward contract;
+  migration probably hasn't run).
+- Types contain a column the contract doesn't mention (drift toward
+  types; contract is stale).
+- A frozen contract entry has a `**Pending migration:**` note that
+  overlaps this task's scope (planned change; this task's migration
+  must consume the note rather than restate it).
+- A `SCHEMA_DRIFT_LOG` entry exists for an entity in scope.
+
+Resolve disagreements per the Source-of-Truth Hierarchy in §8. Do not
+proceed until each disagreement has explicit handling — either this
+task fixes the drift, or the task is paused until the drift is fixed.
+
+### Required output: the Data Plan
+
+Once the four verifications pass, output a Data Plan **before any
+code**. The Data Plan is a 5–15 line block listing:
+
+- Every column this task's migration will add or modify, with type.
+- Every RLS policy this task's migration will add or modify, with the
+  predicate form in plain English (e.g. "members of the same tenant
+  can SELECT").
+- Every server action this task will introduce, with the operations
+  it performs and the table(s) it touches.
+
+The Data Plan is not a request for human approval. Output it, then
+proceed. Its purpose is traceability: if a downstream failure occurs,
+the failure is locatable to the planning step rather than buried in a
+migration. The rule files and the contract are the safety net; the
+Data Plan is the audit trail.
+
+### Granularity and RLS recursion
+
+Two further checks live in their own rule files and run as part of the
+same pre-task self-check:
+
+- **Granularity Self-Check** — `05-vertical-slice.mdc` § "Granularity
+  Self-Check". If the task as scoped is too small or too large, flag
+  and propose a merge or split before proceeding.
+- **RLS Recursion / Helper Function Safety** — `01-database.mdc` § 7
+  "Helper function safety check". If the task adds or modifies an RLS
+  policy that depends on a helper function, confirm the helper is
+  marked `SECURITY DEFINER` (or that the policy avoids the cross-table
+  chain).
+
+Surface findings from either check under their own heading in the
+pre-task output if anything flags.
+
+---
+
+## 11. Plan Execution — No Unnecessary Pauses
 
 When executing the steps of a single task or plan, complete all steps sequentially and autonomously without stopping between them.
 
@@ -184,3 +422,140 @@ When executing the steps of a single task or plan, complete all steps sequential
 - Re-state the plan before executing it.
 
 Once a plan is approved, execute it in full. Deliver a single summary when everything is done.
+
+---
+
+## 12. Repository Integrity — Single-Repo Rule
+
+This is a single-repo monorepo. The root `.git` directory is the only source of truth for version control. Nested git repositories inside `apps/`, `packages/`, or any other subdirectory fragment the IDE source-control panel, hide changes from the root repo, and silently swallow commits. They are a recurring class of accidental damage caused by third-party scaffolders.
+
+**Never run `git init`** in any subdirectory of the monorepo.
+
+**No submodules.** Do not add Git submodules unless the user explicitly requests them.
+
+**Initialization sanitization.** When running a third-party scaffolder (`npx create-next-app`, `expo init`, `pnpm create vite`, etc.), pass the tool's no-git flag where one is available (e.g. `--no-git` for `create-next-app`). After it runs, scan for nested `.git` directories with:
+
+```bash
+find . -name .git -type d -not -path "./.git" -prune
+```
+
+**Detection and removal protocol.** If a nested `.git` is found:
+
+1. Stop the current task.
+2. List the offending path(s) to the user.
+3. Confirm before deletion — `.git` directories are irreversible to remove without backups, and on rare occasions a nested repo may be intentional (e.g. a vendored project). Treat removal as a destructive operation per §4. Do not auto-delete.
+4. Once confirmed, remove the directory and re-run the scan to verify the tree is clean.
+
+If the source-control panel of the IDE shows multiple repositories, that is the same problem surfacing through a different signal — apply the same protocol.
+
+---
+
+## 13. Tool-Call Efficiency — Minimize Permission Prompts
+
+Every permission-gated tool call interrupts the user. Reduce the count by batching where it is safe to do so.
+
+**Chain related shell commands.** When several read or inspection commands run in sequence and none depends on the structured output of another, combine them into a single Bash call with `&&` (or `;` when failure tolerance is acceptable). One approval, one context switch.
+
+- Yes: `git status --short && git log --oneline -5 && ls docs/`
+- No: three separate Bash calls for the same three pieces of information.
+
+**Use parallel tool calls for independent work.** When two or more tool calls do not depend on each other (reading three unrelated files, running typecheck alongside lint, running two unrelated greps), issue them in a single response so they execute concurrently. This eliminates wall-clock pauses even when each call still prompts individually.
+
+**Never chain destructive or hard-to-reverse actions.** A `git push`, a `supabase db push` or any migration apply, a `git reset --hard`, a `git restore`, a file or directory deletion (`rm`, `rm -rf`), a package install or upgrade, and any force flag must each be its own tool call so the user can approve or decline it individually. Routine local writes — `git add`, `git commit`, file edits via Edit/Write — may be chained with each other and with reads (e.g. `git add X && git commit -m '...' && git status --short`).
+
+**Announce long tool sequences up front.** When more than three permission-gated calls are about to fire in a row, lead with a one-line plan ("running typecheck, lint, and build, then committing") so the user can batch the mental approval rather than context-switching on every prompt.
+
+### Prefer native tools to shell pipelines for file work
+
+For any operation that touches the filesystem — reading, writing, editing, searching, listing — use the native Claude Code tools, not a shell pipeline. The shell is for git, builds, and process control. It is not for file inspection or iteration. Native tools produce **zero** permission prompts and handle paths with shell-special characters (`(app)`, `[tenant]`, backticks, `$`) without escaping.
+
+| You want to | Use | Not |
+|---|---|---|
+| Read a file or a range of lines | `Read` with `offset`/`limit` | `sed -n 'X,Yp' file`, `head -n X file`, `tail -n X file` |
+| Write a file (and create parent dirs) | `Write` | `mkdir -p ... && cat > file <<EOF` |
+| Edit a file in place | `Edit` | `sed -i ...`, `awk -i inplace ...` |
+| Search file contents | `Grep` (or `rg` if you genuinely need shell) | `grep -r`, `grep -rn`, `find ... -exec grep` |
+| Find files by name or glob | `Glob` (or `rg --files`) | `find <path> -name '...'`, `ls -R` |
+| Inspect or process N files | N parallel tool calls in one message | `for f in ...; do ... done`, `while read f; do ... done`, `xargs <cmd>` |
+
+If you find yourself reaching for `sed`, `awk`, `for`, `while`, `xargs`, or a `grep` pipeline against the local filesystem, stop and use the native tool. The native tool path is almost always shorter to express and produces output that lands directly in the conversation rather than as truncated shell stdout.
+
+**Specifically: never use shell `for` or `while` loops to iterate files.** Loop bodies are arbitrary code that cannot be allowlisted. To inspect ten files, issue ten parallel `Read` calls in a single message — faster, no prompts, content arrives in the conversation.
+
+**Specifically: never use `sed -n 'X,Yp'` to read a line range.** The Bash validator rejects sed scripts other than a small set it can prove are read-only, and the `Read` tool with `offset` and `limit` does this natively.
+
+**Specifically: for any grep pattern that contains alternation (`|` / `\|`), backticks, `${...}`, template literals, or a path with `(`, `[`, or `{` in it — use the `Grep` tool, not shell `grep`/`rg`.** The shell quoting traps around these patterns trip the validator's parser ("Parse error") and force a prompt for a command that has a native equivalent producing none.
+
+### Construct commands that match clean allowlist patterns
+
+The shell forms below produce permission prompts that no reasonable allowlist entry can cover. Each has a clean equivalent — prefer the clean form so the project allowlist actually applies.
+
+**Do not append exit-code echoes.** `cmd 2>&1; echo "EXIT: $?"` and `cmd; echo "EXIT_CODE=$?"` are unnecessary — the Bash tool result already includes the exit code. Appending them turns a clean `npx next lint` into a multi-segment command that no allowlist pattern matches, forcing a prompt.
+
+- Yes: `npx next lint --max-warnings=0`
+- No: `npx next lint 2>&1; echo "EXIT: $?"`
+
+**Do not use absolute paths into `node_modules/.bin/`.** Run binaries via `npx <tool>` so the command starts with `npx`, which the allowlist can target. Absolute paths embed the project directory and can never be allowlisted generically.
+
+- Yes: `npx tsc --noEmit -p apps/web/tsconfig.typecheck.json`
+- No: `/Users/.../ceeq/node_modules/.bin/tsc --noEmit -p /Users/.../ceeq/apps/web/tsconfig.typecheck.json`
+
+**Do not `cd <subdir> && <cmd>` to scope a workspace task.** Use the workspace-aware form — `npx --workspace apps/web <cmd>` or `npx turbo run <task> --filter=@my-app/web` — which starts with `npx` and can be allowlisted as a single prefix. A `cd && ...` chain starts with `cd`, which the allowlist cannot meaningfully target.
+
+- Yes: `npx turbo run lint --filter=@my-app/web`
+- Yes: `npx --workspace apps/web next lint`
+- No: `cd apps/web && npx next lint`
+
+**Do not use `git -C <absolute-path>` when the Bash tool is already in the project's working directory.** Plain `git log`, `git diff`, `git show`, `git status`, and `git branch` are auto-allowed; the `-C <path>` prefix prevents the auto-allow from triggering and forces a prompt. Only use `-C` when you genuinely need to operate on a different repo than the cwd.
+
+- Yes: `git log --oneline -10 -- docs/Roadmap.md`
+- No: `git -C /Users/jaime/Documents/projects/obly/ log --oneline -10 -- docs/Roadmap.md`
+
+**Do not use `find -exec`.** The `-exec` flag looks like arbitrary code execution to the permission matcher even when the executed command is read-only (`-exec ls {}`, `-exec cat {}`), so it cannot be auto-allowed and cannot be safely allowlisted with a wildcard. Use one of these instead:
+
+- To list matches with metadata: `find <path> -name '<pat>' -type f` (default `-print` is plenty) — read the output directly.
+- To grep inside matches: `rg <pattern> <path>` or `rg --files <path> | rg <name-pattern>`.
+- To find files by name fast: `fd <pattern> <path>` if available.
+
+If you genuinely need a side-effecting per-file action, make it a separate, explicit step the user can review.
+
+**Do not use interpreter `-c` / `-e` for one-off parsing or inspection.** `python3 -c`, `node -e`, `ruby -e`, `perl -e`, `php -r`, and `lua -e` are arbitrary code execution — they cannot be safely allowlisted and they prompt every time. For the cases that drive these:
+
+- Reading a file or a known field of a JSON/YAML file: use the `Read` tool, then inspect the content in the conversation.
+- Querying a JSON file from the shell: use `jq` (auto-allowed). Example: `jq '.scripts' apps/web/package.json` instead of `python3 -c "import json; ..."`.
+- Querying YAML: use `yq` if available, otherwise read the file and parse it conversationally.
+- Tabular text processing: `awk` and `sort -u` cover most needs and are auto-allowed.
+
+**Do not write and execute shell scripts to `/tmp` (or any throwaway path).** `cat > /tmp/x.sh <<'EOF' ... EOF && bash /tmp/x.sh` is arbitrary code execution via heredoc, and the script content is not visible in any allowlist pattern. If a multi-step operation genuinely needs to be a script, put it under `scripts/` in the repo so it gets reviewed in a commit. For one-off operations, run the steps as discrete Bash tool calls instead.
+
+**Do not curl Supabase REST/RPC endpoints with the service role key.** Sourcing `.env.local` and attaching `$SUPABASE_SERVICE_ROLE_KEY` to a `curl` against `$NEXT_PUBLIC_SUPABASE_URL/rest/v1/...` is precisely the "bypass RLS / use service role keys" pattern §3 requires you to challenge. The legitimate alternatives:
+
+- To verify a SQL function or schema object exists: query `pg_proc` / `information_schema` via a migration test or the Supabase SQL editor.
+- To exercise an RPC end-to-end: write an integration test against the **local** Supabase instance with the **anon** key, not prod env vars.
+- If the user explicitly asks for a one-off service-role probe, follow the ask protocol in §3 — name the user-visible risk in plain English, propose the safer alternative as the default, get a yes/no, then run the single call (not a generated allowlist pattern).
+
+**Do not shell out to `mkdir` to prepare a directory for a new file.** The `Write` tool creates any missing parent directories automatically when it writes the first file. Calling `mkdir` separately is redundant, and `mkdir -p` against paths containing shell-glob metacharacters — including escaped Next.js route group (`\(app\)`) and dynamic segment (`\[tenant\]`) syntax — trips the harness's "no globs in write operations" guard, which cannot be allowlisted. Just use `Write` with the final file path.
+
+**Do not use `xargs ... sh -c '...'`, `xargs ... bash -c '...'`, or any `sh -c` / `bash -c` invocation.** These are arbitrary code execution via a quoted script body and can never be allowlisted. To inspect a small set of files matched by a pattern:
+
+- Run `find <path> -name '<pat>' -type f` (or `rg --files <path> | rg <pat>`) on its own and look at the output.
+- Then call the `Read` tool once per file you actually want to inspect. This is faster than the shell pipeline, shows the content directly in the conversation, and produces no permission prompts.
+
+For content searches, use `rg <pattern> <path>` directly — it walks files itself, so no `xargs` is needed.
+
+**Prefer `rg` over `grep -r` for code searches.** `rg` (ripgrep) is auto-allowed, faster, respects `.gitignore` automatically (so no `node_modules` exclusion needed), and supports type filters (`-t ts -t tsx`) without `--include` flag soup. Critically: do not mix `find` syntax into `grep` — `grep -r ... ! -path "*/node_modules/*"` is not a valid composition (the `!` is `find`'s negation, not `grep`'s), it breaks the read-only-grep validator, and it forces a prompt for a command that wouldn't even work as written. The clean form:
+
+- Yes: `rg "pinned" -t ts -t tsx apps/web`
+- No: `grep -r "pinned" apps/web --include="*.ts" --include="*.tsx" ! -path "*/node_modules/*"`
+
+**Do not shell-escape Next.js route syntax (`\(app\)`, `\[tenant\]`) into bash arguments.** Paths containing route groups or dynamic segments should be passed to the Read/Write/Glob/Grep tools directly, with the literal `(app)` and `[tenant]` characters. If a shell command genuinely needs such a path, single-quote it: `'apps/web/app/(app)/[tenant]/page.tsx'`. The backslash-escaped form makes the harness treat the path as a glob pattern in write operations and refuses to allowlist it.
+
+**Use `WebFetch` for documentation and web URLs, not `curl`.** A `curl` to a docs URL prompts every time because `curl` is not auto-allowable (it can POST, follow redirects to mutating endpoints, or exfiltrate data). `WebFetch` is the designed tool — it handles fetch + content extraction in one step, has its own permission model, and lets you grep the returned content in-context.
+
+- Yes: `WebFetch(url="https://docs.aurinko.io/llms-full.txt", prompt="Find sections about ensureScopes and Mail.Send")`
+- No: `curl -s -L https://docs.aurinko.io/llms-full.txt | grep -i -A 3 -B 1 "ensureScopes|nativeScopes|..."`
+
+**Do not slice long `git diff` output with `| sed -n 'N,Mp'`.** The pipe-to-sed shape is brittle to allowlist (the matcher's greedy wildcards struggle with multi-segment commands) and prompts every time. For long diffs, redirect once and use the `Read` tool's native offset/limit instead — the Read tool exists precisely for paged reading.
+
+- Yes: `git diff apps/web/lib/actions/apollo.ts > /tmp/apollo.diff`, then `Read(path="/tmp/apollo.diff", offset=300, limit=300)`.
+- No: `git diff apps/web/lib/actions/apollo.ts | sed -n '300,600p'`
