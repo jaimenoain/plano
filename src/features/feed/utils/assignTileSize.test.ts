@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { assignTileSize } from "./assignTileSize";
-import type { FeedItem, FeedItemPost, FeedItemCollection, FeedItemPrompt } from "@/types/feedItem";
+import type { FeedItem, FeedItemPost, FeedItemCollection, FeedItemPrompt, FeedItemBuildingSpotlight } from "@/types/feedItem";
 import type { FeedReview } from "@/types/feed";
 
 function makePost(
@@ -110,5 +110,80 @@ describe("assignTileSize", () => {
   it("prompt → md", () => {
     const item = makePrompt("pr1");
     expect(assignTileSize(item)).toBe("md");
+  });
+
+  it("building_spotlight ring='direct' score > 8 → xl", () => {
+    const item: FeedItemBuildingSpotlight = {
+      kind: "building_spotlight",
+      id: "spotlight:b1",
+      ring: "direct",
+      score: 9.0,
+      attribution: { kind: "direct", text: "5 photos from people you follow" },
+      payload: {
+        buildingId: "b1",
+        buildingName: "Casa da Música",
+        buildingCity: "Porto",
+        mainImageUrl: "https://example.com/img.jpg",
+        communityPreviewUrl: null,
+        slug: "casa-da-musica",
+        shortId: 42,
+        window: "7d",
+        postsCount: 5,
+        photosCount: 14,
+        ring1Contributors: [],
+        lastActivityAt: new Date().toISOString(),
+      },
+    };
+    expect(assignTileSize(item)).toBe("xl");
+  });
+
+  it("building_spotlight ring='direct' score <= 8 → lg", () => {
+    const item: FeedItemBuildingSpotlight = {
+      kind: "building_spotlight",
+      id: "spotlight:b2",
+      ring: "direct",
+      score: 5.0,
+      attribution: { kind: "direct", text: "3 photos from people you follow" },
+      payload: {
+        buildingId: "b2",
+        buildingName: "Test Building",
+        buildingCity: "Lisbon",
+        mainImageUrl: null,
+        communityPreviewUrl: null,
+        slug: null,
+        shortId: null,
+        window: "30d",
+        postsCount: 2,
+        photosCount: 3,
+        ring1Contributors: [],
+        lastActivityAt: new Date().toISOString(),
+      },
+    };
+    expect(assignTileSize(item)).toBe("lg");
+  });
+
+  it("building_spotlight ring='open' always → lg (no xl for open spotlights)", () => {
+    const item: FeedItemBuildingSpotlight = {
+      kind: "building_spotlight",
+      id: "spotlight:b3",
+      ring: "open",
+      score: 12.0, // high score but open ring
+      attribution: { kind: "open", text: "Trending in Berlin today" },
+      payload: {
+        buildingId: "b3",
+        buildingName: "Open Building",
+        buildingCity: "Berlin",
+        mainImageUrl: null,
+        communityPreviewUrl: null,
+        slug: null,
+        shortId: null,
+        window: "24h",
+        postsCount: 5,
+        photosCount: 8,
+        ring1Contributors: [],
+        lastActivityAt: new Date().toISOString(),
+      },
+    };
+    expect(assignTileSize(item)).toBe("lg");
   });
 });

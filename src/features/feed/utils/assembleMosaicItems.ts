@@ -12,23 +12,30 @@ function getAuthorUsername(item: FeedItem): string | null {
 }
 
 function getBuildingId(item: FeedItem): string | null {
-  if (item.kind !== "post") return null;
-  return item.payload.building?.id ?? null;
+  if (item.kind === "post") return item.payload.building?.id ?? null;
+  if (item.kind === "building_spotlight") return item.payload.buildingId;
+  return null;
 }
 
 function conflicts(a: FeedItem, b: FeedItem): boolean {
-  if (a.kind !== "post" || b.kind !== "post") return false;
+  // Author conflict: only between post items
+  if (a.kind === "post" && b.kind === "post") {
+    const authorA = getAuthorUsername(a);
+    const authorB = getAuthorUsername(b);
+    if (authorA && authorB && authorA === authorB) return true;
+  }
 
-  const authorA = getAuthorUsername(a);
-  const authorB = getAuthorUsername(b);
-  if (authorA && authorB && authorA === authorB) return true;
-
+  // Building conflict: between any items that reference the same building
+  // (e.g. a spotlight and a post about the same building should not be adjacent)
   const buildingA = getBuildingId(a);
   const buildingB = getBuildingId(b);
   if (buildingA && buildingB && buildingA === buildingB) return true;
 
   return false;
 }
+
+/** Minimum number of non-spotlight tiles between two spotlight tiles. */
+const MIN_SPOTLIGHT_GAP = 5;
 
 /**
  * Converts a sorted feed array into mosaic tiles with:
@@ -43,18 +50,33 @@ export function assembleMosaicItems(items: FeedItem[]): MosaicItem[] {
   // Work on a copy to avoid mutating input
   const arr = [...items];
 
-  // Single adjacency-diversity pass
+  // Single adjacency-diversity pass: swap adjacent pairs that share an author or building.
   for (let i = 1; i < arr.length; i++) {
     if (conflicts(arr[i - 1], arr[i]) && i + 1 < arr.length) {
-      // Swap arr[i] and arr[i+1]
       const tmp = arr[i];
       arr[i] = arr[i + 1];
       arr[i + 1] = tmp;
     }
   }
 
+  // Spotlight frequency cap: at most 1 spotlight per MIN_SPOTLIGHT_GAP surface units.
+  // Spotlights too close together are deferred past the current page.
+  const capped: FeedItem[] = [];
+  let lastSpotlightPos = -MIN_SPOTLIGHT_GAP;
+  for (const item of arr) {
+    if (item.kind === "building_spotlight") {
+      if (capped.length - lastSpotlightPos >= MIN_SPOTLIGHT_GAP) {
+        lastSpotlightPos = capped.length;
+        capped.push(item);
+      }
+      // else: skip — too close to the previous spotlight
+    } else {
+      capped.push(item);
+    }
+  }
+
   // Assign tile sizes — first item is the anchor
-  return arr.map((item, index) => ({
+  return capped.map((item, index) => ({
     item,
     tileSize: assignTileSize(item, index === 0),
   }));

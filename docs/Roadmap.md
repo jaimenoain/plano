@@ -393,7 +393,7 @@ A new `get_feed_extended` RPC, a new ring-2 source in the client merge, and ring
 
 ---
 
-## [ ] Phase 5 — Building spotlights (3–4 days)
+## [x] Phase 5 — Building spotlights (3–4 days)
 
 **Goal:** Introduce the building-as-feed-subject card type. By the end of this phase, the feed surfaces cards like "Casa da Música — 14 new photos this week, 4 from people you follow" with stacked thumbnails and a facepile of ring-1 contributors. This is the type that anchors the feed for users with sparse graphs.
 

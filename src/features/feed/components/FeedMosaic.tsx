@@ -3,6 +3,7 @@ import type { TileSize } from "@/features/feed/utils/assignTileSize";
 import type { FeedItem } from "@/types/feedItem";
 import { FeedCard } from "./FeedCard";
 import { FeedCollectionCard } from "./FeedCollectionCard";
+import { BuildingSpotlightCard } from "./BuildingSpotlightCard";
 import { PeopleYouMayKnow } from "./PeopleYouMayKnow";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 
@@ -52,6 +53,16 @@ function MosaicTile({
       <div className={tileCellClass(tileSize)}>
         <WidgetErrorBoundary>
           <FeedCollectionCard collection={item.payload} />
+        </WidgetErrorBoundary>
+      </div>
+    );
+  }
+
+  if (item.kind === "building_spotlight") {
+    return (
+      <div className={tileCellClass(tileSize)}>
+        <WidgetErrorBoundary>
+          <BuildingSpotlightCard item={item} />
         </WidgetErrorBoundary>
       </div>
     );

@@ -179,4 +179,43 @@ describe("mergeFeedSources", () => {
     expect(ids).toContain("d1");
     expect(ids).toContain("e1");
   });
+
+  // ── Phase 5: building spotlights ──────────────────────────────────────────
+
+  it("spotlight items are included when passed as 5th argument", () => {
+    const spotlight: FeedItem = {
+      kind: "building_spotlight",
+      id: "spotlight:b1",
+      ring: "direct",
+      score: 2.0,
+      attribution: { kind: "direct", text: "5 photos from people you follow" },
+      payload: {
+        buildingId: "b1",
+        buildingName: "Building 1",
+        buildingCity: "Lisbon",
+        mainImageUrl: null,
+        communityPreviewUrl: null,
+        slug: null,
+        shortId: null,
+        window: "7d",
+        postsCount: 3,
+        photosCount: 5,
+        ring1Contributors: [],
+        lastActivityAt: new Date().toISOString(),
+      },
+    };
+
+    const result = mergeFeedSources([], [], [], [], [spotlight], noSeen);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("spotlight:b1");
+    expect(result[0].kind).toBe("building_spotlight");
+  });
+
+  it("5-arg legacy signature still works (spotlights defaults to [])", () => {
+    const social: FeedItem[] = [makePost("s1", 1.0, "direct", "alice", "b1")];
+    const result = mergeFeedSources(social, [], [], [], noSeen);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("s1");
+  });
 });

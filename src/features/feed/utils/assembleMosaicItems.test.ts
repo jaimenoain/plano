@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { assembleMosaicItems } from "./assembleMosaicItems";
-import type { FeedItemPost, FeedItemCollection, FeedItemPrompt } from "@/types/feedItem";
+import type { FeedItemPost, FeedItemCollection, FeedItemPrompt, FeedItemBuildingSpotlight } from "@/types/feedItem";
 import type { FeedReview } from "@/types/feed";
 
 function makePost(
@@ -50,6 +50,35 @@ function makePrompt(id: string): FeedItemPrompt {
     score: 0,
     attribution: { kind: "open", text: "suggested" },
     payload: { maxSuggestions: 5 },
+  };
+}
+
+function makeSpotlight(
+  id: string,
+  buildingId: string,
+  score = 3.0,
+  ring: FeedItemBuildingSpotlight["ring"] = "direct",
+): FeedItemBuildingSpotlight {
+  return {
+    kind: "building_spotlight",
+    id: `spotlight:${id}`,
+    ring,
+    score,
+    attribution: { kind: ring, text: "activity from people you follow" },
+    payload: {
+      buildingId,
+      buildingName: `Building ${id}`,
+      buildingCity: "Lisbon",
+      mainImageUrl: "https://example.com/img.jpg",
+      communityPreviewUrl: null,
+      slug: id,
+      shortId: null,
+      window: "7d",
+      postsCount: 3,
+      photosCount: 5,
+      ring1Contributors: [],
+      lastActivityAt: new Date().toISOString(),
+    },
   };
 }
 
@@ -117,6 +146,51 @@ describe("assembleMosaicItems", () => {
     const result = assembleMosaicItems(items);
     // No conflict among non-post items; order unchanged
     expect(result.map((r) => r.item.id)).toEqual(["col1", "col2", "p"]);
+  });
+
+  it("building_spotlight and post sharing the same building conflict and get swapped", () => {
+    const spotlight = makeSpotlight("bldg-spotlight", "bldg");
+    const post = makePost("post-same-bldg", 8, "alice", "bldg", withImage);
+    const other = makePost("other", 6, "bob", "other-bldg", withImage);
+    const items = [spotlight, post, other];
+    const result = assembleMosaicItems(items);
+    // post (same building as spotlight) should be swapped with other
+    expect(result[0].item.id).toBe(spotlight.id);
+    expect(result[1].item.id).toBe("other");
+    expect(result[2].item.id).toBe("post-same-bldg");
+  });
+
+  it("spotlight frequency cap: second spotlight within 5 tiles is dropped", () => {
+    const s1 = makeSpotlight("s1", "bldg1");
+    const s2 = makeSpotlight("s2", "bldg2");
+    // Only 2 posts between the two spotlights — not enough gap (need 5)
+    const items = [
+      s1,
+      makePost("p1", 5, "alice", "b1"),
+      makePost("p2", 4, "bob", "b2"),
+      s2,
+    ];
+    const result = assembleMosaicItems(items);
+    const spotlightIds = result.filter((r) => r.item.kind === "building_spotlight").map((r) => r.item.id);
+    expect(spotlightIds).toHaveLength(1);
+    expect(spotlightIds[0]).toBe(s1.id);
+  });
+
+  it("spotlight frequency cap: second spotlight passes when gap is >= 5", () => {
+    const s1 = makeSpotlight("s1", "bldg1");
+    const s2 = makeSpotlight("s2", "bldg2");
+    const items = [
+      s1,
+      makePost("p1", 9, "alice", "b1", withImage),
+      makePost("p2", 8, "bob", "b2", withImage),
+      makePost("p3", 7, "carol", "b3", withImage),
+      makePost("p4", 6, "dave", "b4", withImage),
+      makePost("p5", 5, "eve", "b5", withImage),
+      s2,
+    ];
+    const result = assembleMosaicItems(items);
+    const spotlightIds = result.filter((r) => r.item.kind === "building_spotlight").map((r) => r.item.id);
+    expect(spotlightIds).toHaveLength(2);
   });
 
   it("does not mutate the input array", () => {

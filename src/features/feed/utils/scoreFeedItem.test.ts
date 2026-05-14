@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { scoreFeedItem } from "./scoreFeedItem";
-import type { FeedItem, FeedItemPost } from "@/types/feedItem";
+import type { FeedItem, FeedItemPost, FeedItemBuildingSpotlight } from "@/types/feedItem";
 import type { FeedReview } from "@/types/feed";
 
 function makePost(
@@ -105,6 +105,38 @@ describe("scoreFeedItem", () => {
     const result = scoreFeedItem(items, noSeen);
     // video=2.8, text=0.65×0.6=0.39 → video still first
     expect(result[0].id).toBe("video");
+  });
+
+  it("building_spotlight shares building diversity pool with posts for the same building", () => {
+    const spotlight: FeedItemBuildingSpotlight = {
+      kind: "building_spotlight",
+      id: "spotlight:bldg",
+      ring: "direct",
+      score: 10,
+      attribution: { kind: "direct", text: "5 photos from people you follow" },
+      payload: {
+        buildingId: "bldg",
+        buildingName: "Test Building",
+        buildingCity: "Lisbon",
+        mainImageUrl: null,
+        communityPreviewUrl: null,
+        slug: null,
+        shortId: null,
+        window: "7d",
+        postsCount: 3,
+        photosCount: 5,
+        ring1Contributors: [],
+        lastActivityAt: new Date().toISOString(),
+      },
+    };
+    const postSameBuilding = makePost("p-same", 9, "alice", "bldg");
+    const postOther = makePost("p-other", 6, "bob", "other-bldg");
+    // Spotlight appears first (score 10), post for same building penalized
+    const result = scoreFeedItem([spotlight, postSameBuilding, postOther], noSeen);
+    expect(result[0].id).toBe("spotlight:bldg");
+    // postSameBuilding gets building penalty (0.6) → 9×3×0.6=16.2; postOther→6×3=18 → postOther second
+    expect(result[1].id).toBe("p-other");
+    expect(result[2].id).toBe("p-same");
   });
 
   it("does not mutate input items", () => {

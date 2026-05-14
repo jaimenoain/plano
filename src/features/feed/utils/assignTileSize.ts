@@ -13,6 +13,11 @@ export type TileSize = "xl" | "lg" | "md" | "sm";
  * Invariant: text-only posts never get xl.
  */
 export function assignTileSize(item: FeedItem, isAnchor = false): TileSize {
+  // building_spotlight: xl for high-score ring-1 buildings, lg by default
+  if (item.kind === "building_spotlight") {
+    return item.score > 8.0 && item.ring === "direct" ? "xl" : "lg";
+  }
+
   // Non-post items always render at md
   if (item.kind !== "post") {
     return "md";

@@ -44,7 +44,11 @@ export function scoreFeedItem(
     const authorId =
       item.kind === "post" ? (item.payload.user?.username ?? "") : "";
     const buildingId =
-      item.kind === "post" ? (item.payload.building?.id ?? "") : "";
+      item.kind === "post"
+        ? (item.payload.building?.id ?? "")
+        : item.kind === "building_spotlight"
+          ? item.payload.buildingId
+          : "";
 
     const authorN = authorCount.get(authorId) ?? 0;
     const buildingN = buildingCount.get(buildingId) ?? 0;
