@@ -128,7 +128,7 @@ export default function AmbassadorApplications() {
       } else if (msg.includes("no_chapter_assigned")) {
         toast.error("A chapter must be assigned before approving");
       } else {
-        toast.error("Approve failed");
+        toast.error(msg ? `Approve failed: ${msg}` : "Approve failed");
       }
     } finally {
       setActionId(null);
