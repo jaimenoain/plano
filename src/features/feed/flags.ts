@@ -1,15 +1,8 @@
 /**
- * Feed v2 feature flag. Default-on as of Phase 3 ship.
- *
- * Kill-switch (browser console):
- *   localStorage.setItem('feed_v2_ranker', 'false')  // force off
- *   localStorage.removeItem('feed_v2_ranker')         // restore default (on)
+ * Feed v2 is fully shipped (Phases 0–7 complete). Flag removed per post-rebuild
+ * cleanup in FEED_REDESIGN_ROADMAP.md. Always returns true; retained as a shim
+ * so any stale import sites compile without changes until they are cleaned up.
  */
 export function isFeedV2RankerEnabled(): boolean {
-  try {
-    const stored = localStorage.getItem("feed_v2_ranker");
-    return stored !== "false";
-  } catch {
-    return true;
-  }
+  return true;
 }
