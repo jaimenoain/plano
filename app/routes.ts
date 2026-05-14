@@ -92,6 +92,7 @@ export default [
     route("/search", "features/search/SearchPage.tsx"),
     route("/post", "pages/Post.tsx"),
     route("/notifications", "features/notifications/pages/Notifications.tsx"),
+    route("/support", "features/ambassadors/pages/SupportPage.tsx"),
     route("/become-ambassador", "features/ambassadors/pages/BecomeAmbassador.tsx"),
     route("/embassy", "features/embassy/pages/Embassy.tsx"),
     route("/add-building", "features/buildings/pages/AddBuilding.tsx"),

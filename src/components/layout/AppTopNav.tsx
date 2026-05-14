@@ -40,6 +40,11 @@ const mainNavItems = [
   { label: "Guides", path: "/guides" },
   { label: "Search", path: "/search" },
   { label: "Connect", path: "/connect" },
+  {
+    label: "Support",
+    path: "/support",
+    isActive: (p: string) => p === "/support" || p.startsWith("/become-ambassador"),
+  },
 ];
 
 function TopNavLink({
