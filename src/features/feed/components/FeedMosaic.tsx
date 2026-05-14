@@ -8,6 +8,9 @@ import { EditorialCard } from "./EditorialCard";
 import { MomentClusterCard } from "./MomentClusterCard";
 import { PeopleYouMayKnow } from "./PeopleYouMayKnow";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
+import { useState } from "react";
+import { UsersRound, X } from "lucide-react";
+import { Link } from "react-router";
 
 export interface FeedMosaicProps {
   items: FeedItem[];
@@ -103,19 +106,61 @@ function MosaicTile({
   );
 }
 
-export function FeedMosaic({ items, followingCount: _followingCount, onLike, onImageLike }: FeedMosaicProps) {
+const FOLLOW_NUDGE_THRESHOLD = 5;
+const FOLLOW_NUDGE_DISMISSED_KEY = "plano_follow_nudge_dismissed";
+
+function FollowNudgeBanner({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <div className="flex items-center gap-4 px-5 py-4 border-b border-border-default">
+      <UsersRound className="h-5 w-5 shrink-0 text-text-secondary" />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-text-primary leading-tight">Follow more people</p>
+        <p className="text-xs text-text-secondary mt-0.5">Your feed will be more interesting when you follow friends.</p>
+      </div>
+      <Link
+        to="/connect"
+        className="shrink-0 px-4 py-1.5 bg-text-primary text-text-inverse text-sm font-medium hover:opacity-90 transition-opacity"
+      >
+        Find people
+      </Link>
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label="Dismiss"
+        className="shrink-0 p-1 text-text-disabled hover:text-text-secondary transition-colors"
+      >
+        <X className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+export function FeedMosaic({ items, followingCount, onLike, onImageLike }: FeedMosaicProps) {
+  const [dismissed, setDismissed] = useState(
+    () => localStorage.getItem(FOLLOW_NUDGE_DISMISSED_KEY) === "1",
+  );
   const mosaicItems = assembleMosaicItems(items);
 
+  const showNudge = !dismissed && followingCount < FOLLOW_NUDGE_THRESHOLD;
+
+  function handleDismiss() {
+    localStorage.setItem(FOLLOW_NUDGE_DISMISSED_KEY, "1");
+    setDismissed(true);
+  }
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 [grid-auto-flow:dense] sm:[grid-auto-rows:22rem] gap-[2px]">
-      {mosaicItems.map((mosaicItem) => (
-        <MosaicTile
-          key={mosaicItem.item.id}
-          mosaicItem={mosaicItem}
-          onLike={onLike}
-          onImageLike={onImageLike}
-        />
-      ))}
+    <div>
+      {showNudge && <FollowNudgeBanner onDismiss={handleDismiss} />}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 [grid-auto-flow:dense] sm:[grid-auto-rows:22rem] gap-[2px]">
+        {mosaicItems.map((mosaicItem) => (
+          <MosaicTile
+            key={mosaicItem.item.id}
+            mosaicItem={mosaicItem}
+            onLike={onLike}
+            onImageLike={onImageLike}
+          />
+        ))}
+      </div>
     </div>
   );
 }

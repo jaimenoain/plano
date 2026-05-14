@@ -275,7 +275,7 @@ export default function Index() {
 
     for (const { key } of queries) {
       queryClient.setQueryData<FeedItem[]>(key, (old) => {
-        if (!old) return [];
+        if (!old) return old;
         return old.map((item) => {
           if (item.kind === "post" && item.payload.id === reviewId) {
             return {
@@ -434,10 +434,22 @@ export default function Index() {
 
   // ── V2 unified stream render path ──────────────────────────────────────────
   if (isFeedV2RankerEnabled()) {
-    const v2Loading = v2SocialQuery.isLoading;
+    const v2SecondaryLoading =
+      v2CollectionsQuery.isLoading ||
+      v2DiscoveryQuery.isLoading ||
+      v2ExtendedQuery.isLoading ||
+      v2SpotlightsQuery.isLoading ||
+      v2EditorialQuery.isLoading ||
+      v2ClustersQuery.isLoading;
+
+    // Hold the full-page spinner until secondary sources have a chance to
+    // contribute — prevents briefly flashing ColdStartFeed or a single tile
+    // while only the social query has resolved.
+    const v2AnyLoading = v2SocialQuery.isLoading || (v2Items.length === 0 && v2SecondaryLoading);
+
     return (
       <AppLayout>
-        {v2Loading ? (
+        {v2AnyLoading ? (
           <div className="flex items-center justify-center min-h-[60vh]">
             <Loader2 className="h-10 w-10 animate-spin text-text-secondary" />
           </div>
@@ -458,17 +470,19 @@ export default function Index() {
                       />
                     </div>
                   ) : (
-                    <FeedMosaic
-                      items={v2Items}
-                      followingCount={followingCount ?? 0}
-                      onLike={handleV2Like}
-                      onImageLike={handleV2ImageLike}
-                    />
-                  )}
-                  {(v2CollectionsQuery.isLoading || v2DiscoveryQuery.isLoading || v2ExtendedQuery.isLoading || v2SpotlightsQuery.isLoading || v2EditorialQuery.isLoading) && (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
-                    </div>
+                    <>
+                      <FeedMosaic
+                        items={v2Items}
+                        followingCount={followingCount ?? 0}
+                        onLike={handleV2Like}
+                        onImageLike={handleV2ImageLike}
+                      />
+                      {v2SecondaryLoading && (
+                        <div className="flex justify-center py-8">
+                          <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </main>
@@ -634,12 +648,13 @@ function LoadMoreTrigger({
 }) {
   const loading = feeds.some((f) => f.isFetchingNextPage);
   const hasError = feeds.some((f) => f.isError);
-  if (!loading && !hasError) return null;
+  // Always render the sentinel div so the IntersectionObserver ref is mounted
+  // and can trigger fetchNextPage when it scrolls into view.
   return (
     <div ref={containerRef} className="flex justify-center py-4">
       {loading ? (
         <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
-      ) : (
+      ) : hasError ? (
         <button
           type="button"
           onClick={() => feeds.find((f) => f.isError && f.hasNextPage)?.fetchNextPage()}
@@ -647,7 +662,7 @@ function LoadMoreTrigger({
         >
           Error loading more. Click to retry.
         </button>
-      )}
+      ) : null}
     </div>
   );
 }

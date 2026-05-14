@@ -24,6 +24,7 @@ const attendanceClient = supabase as unknown as SupabaseClient;
 
 interface UseFeedOptions {
   showGroupActivity: boolean;
+  enabled?: boolean;
 }
 
 type EventJoinRow = {
@@ -191,7 +192,7 @@ async function loadFeedEventAttendance(viewerId: string): Promise<FeedEventAtten
   return out;
 }
 
-export function useFeed({ showGroupActivity }: UseFeedOptions) {
+export function useFeed({ showGroupActivity, enabled = true }: UseFeedOptions) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const seenItems = useSeenItems();
@@ -299,7 +300,7 @@ export function useFeed({ showGroupActivity }: UseFeedOptions) {
       const expectedSize = isFirstPage ? INITIAL_PAGE_SIZE : SUBSEQUENT_PAGE_SIZE;
       return lastPage.length === expectedSize ? allPages.length : undefined;
     },
-    enabled: !!user,
+    enabled: !!user && enabled,
     staleTime: 60 * 1000,
   });
 
