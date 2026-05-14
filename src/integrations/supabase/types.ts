@@ -3957,6 +3957,7 @@ export type Database = {
           p_application_id: string
           p_approve: boolean
           p_reviewer_note?: string | null
+          p_chapter_id?: string | null
         }
         Returns: undefined
       }

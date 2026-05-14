@@ -55,6 +55,9 @@ export default function AmbassadorApplications() {
   const [rejectTarget, setRejectTarget] = useState<ApplicationListRow | null>(null);
   const [rejectNote, setRejectNote] = useState("");
   const [actionId, setActionId] = useState<string | null>(null);
+  const [approveOpen, setApproveOpen] = useState(false);
+  const [approveTarget, setApproveTarget] = useState<ApplicationListRow | null>(null);
+  const [approveChapterId, setApproveChapterId] = useState<string>("");
 
   const loadChapters = useCallback(async () => {
     const { data, error } = await supabase
@@ -104,13 +107,14 @@ export default function AmbassadorApplications() {
     });
   }, [rows, statusFilter, chapterFilter]);
 
-  const handleApprove = async (app: ApplicationListRow) => {
+  const doApprove = async (app: ApplicationListRow, chapterId?: string) => {
     setActionId(app.id);
     try {
       const { error } = await supabase.rpc("review_ambassador_application", {
         p_application_id: app.id,
         p_approve: true,
         p_reviewer_note: null,
+        p_chapter_id: chapterId ?? null,
       });
       if (error) throw error;
       toast.success("Approved");
@@ -119,12 +123,33 @@ export default function AmbassadorApplications() {
       const msg = e && typeof e === "object" && "message" in e ? String((e as Error).message) : "";
       if (msg.includes("chapter_full")) {
         toast.error("Chapter is at ambassador capacity");
+      } else if (msg.includes("applicant_already_member")) {
+        toast.error("Applicant is already an active ambassador");
+      } else if (msg.includes("no_chapter_assigned")) {
+        toast.error("A chapter must be assigned before approving");
       } else {
         toast.error("Approve failed");
       }
     } finally {
       setActionId(null);
     }
+  };
+
+  const handleApprove = (app: ApplicationListRow) => {
+    if (app.chapter_id) {
+      void doApprove(app);
+    } else {
+      setApproveTarget(app);
+      setApproveChapterId("");
+      setApproveOpen(true);
+    }
+  };
+
+  const handleApproveConfirm = async () => {
+    if (!approveTarget) return;
+    await doApprove(approveTarget, approveChapterId || undefined);
+    setApproveOpen(false);
+    setApproveTarget(null);
   };
 
   const handleRejectConfirm = async () => {
@@ -245,7 +270,7 @@ export default function AmbassadorApplications() {
                           <Button
                             type="button"
                             size="sm"
-                            onClick={() => void handleApprove(app)}
+                            onClick={() => handleApprove(app)}
                             disabled={actionId === app.id}
                           >
                             {actionId === app.id ? (
@@ -279,6 +304,48 @@ export default function AmbassadorApplications() {
           </Table>
         </div>
       )}
+
+      <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign chapter and approve</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-text-secondary">
+            This application has no chapter selected. Choose a chapter before approving.
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor="admin-approve-chapter">Chapter</Label>
+            <Select value={approveChapterId} onValueChange={setApproveChapterId}>
+              <SelectTrigger id="admin-approve-chapter" aria-label="Select chapter">
+                <SelectValue placeholder="Select a chapter" />
+              </SelectTrigger>
+              <SelectContent>
+                {chapters.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={() => setApproveOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleApproveConfirm()}
+              disabled={!approveChapterId || (approveTarget ? actionId === approveTarget.id : false)}
+            >
+              {approveTarget && actionId === approveTarget.id ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                "Approve"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
         <DialogContent>
