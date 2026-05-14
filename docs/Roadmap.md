@@ -503,7 +503,7 @@ Three new editorial slot types, an `editorial` ring assignment, and a `<Velocity
 
 ---
 
-## [ ] Phase 7 — Moments clustering (4–5 days)
+## [x] Phase 7 — Moments clustering (4–5 days)
 
 **Goal:** Collapse related posts into single feed units. By the end of this phase, when three friends visit Lisbon in the same week, the feed shows one "Your contacts are in Lisbon" card with stacked thumbnails instead of three separate posts.
 

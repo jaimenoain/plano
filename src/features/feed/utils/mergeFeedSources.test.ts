@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { mergeFeedSources } from "./mergeFeedSources";
-import type { FeedItem, FeedItemPost, FeedItemCollection } from "@/types/feedItem";
+import type { FeedItem, FeedItemPost, FeedItemCollection, FeedItemMomentCluster } from "@/types/feedItem";
 import type { FeedReview, FeedCollection } from "@/types/feed";
 
 function makePost(
@@ -275,5 +275,93 @@ describe("mergeFeedSources", () => {
     const result = mergeFeedSources([], [], [], [], [spotlight], noSeen);
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("spotlight:b1");
+  });
+
+  // ── Phase 7: moment clusters ──────────────────────────────────────────────
+
+  function makeCluster(
+    id: string,
+    leadPostId: string,
+    supportingPostIds: string[],
+    score = 2.0,
+  ): FeedItemMomentCluster {
+    return {
+      kind: "moment_cluster",
+      id,
+      ring: "direct",
+      score,
+      clusterKind: "multi_user_single_building",
+      leadPost: { id: leadPostId, buildingId: "b1", buildingName: "Test Building" },
+      supportingPosts: supportingPostIds.map((pid) => ({
+        id: pid,
+        buildingId: "b1",
+        buildingName: "Test Building",
+      })),
+      actors: [{ id: "u1", username: "alice", avatarUrl: null }],
+      buildingOrLocality: {
+        kind: "building",
+        buildingId: "b1",
+        buildingName: "Test Building",
+        city: "Lisbon",
+        mainImageUrl: null,
+        communityPreviewUrl: null,
+        slug: null,
+        shortId: null,
+      },
+      attribution: { kind: "direct", text: "alice visited Test Building" },
+    };
+  }
+
+  it("cluster items are included in the merged output", () => {
+    const cluster = makeCluster("cluster-1", "lead-1", [], 5.0);
+    const result = mergeFeedSources([], [], [], [], [], noSeen, [], [cluster]);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("cluster-1");
+    expect(result[0].kind).toBe("moment_cluster");
+  });
+
+  it("dedup: standalone post whose id is the cluster lead post is removed", () => {
+    const post = makePost("lead-1", 3.0, "direct", "alice", "b1");
+    const cluster = makeCluster("cluster-1", "lead-1", [], 5.0);
+
+    const result = mergeFeedSources([post], [], [], [], [], noSeen, [], [cluster]);
+
+    const ids = result.map((r) => r.id);
+    expect(ids).toContain("cluster-1");
+    expect(ids).not.toContain("lead-1");
+  });
+
+  it("dedup: standalone posts whose ids are supporting posts are removed", () => {
+    const support1 = makePost("s1", 2.0, "direct", "alice", "b1");
+    const support2 = makePost("s2", 1.5, "direct", "bob", "b2");
+    const unrelated = makePost("u1", 0.5, "direct", "carol", "b3");
+    const cluster = makeCluster("cluster-1", "lead", ["s1", "s2"], 8.0);
+
+    const result = mergeFeedSources(
+      [support1, support2, unrelated],
+      [],
+      [],
+      [],
+      [],
+      noSeen,
+      [],
+      [cluster],
+    );
+
+    const ids = result.map((r) => r.id);
+    expect(ids).toContain("cluster-1");
+    expect(ids).toContain("u1");
+    expect(ids).not.toContain("s1");
+    expect(ids).not.toContain("s2");
+  });
+
+  it("a high-score cluster outranks a low-score standalone post", () => {
+    const lowPost = makePost("low", 0.5, "direct", "alice", "b1");
+    const cluster = makeCluster("high-cluster", "other-lead", [], 10.0);
+
+    const result = mergeFeedSources([lowPost], [], [], [], [], noSeen, [], [cluster]);
+
+    expect(result[0].id).toBe("high-cluster");
+    expect(result[1].id).toBe("low");
   });
 });

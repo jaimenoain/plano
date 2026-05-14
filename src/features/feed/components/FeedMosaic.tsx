@@ -5,6 +5,7 @@ import { FeedCard } from "./FeedCard";
 import { FeedCollectionCard } from "./FeedCollectionCard";
 import { BuildingSpotlightCard } from "./BuildingSpotlightCard";
 import { EditorialCard } from "./EditorialCard";
+import { MomentClusterCard } from "./MomentClusterCard";
 import { PeopleYouMayKnow } from "./PeopleYouMayKnow";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 
@@ -74,6 +75,16 @@ function MosaicTile({
       <div className={tileCellClass(tileSize)}>
         <WidgetErrorBoundary>
           <EditorialCard item={item} />
+        </WidgetErrorBoundary>
+      </div>
+    );
+  }
+
+  if (item.kind === "moment_cluster") {
+    return (
+      <div className={tileCellClass(tileSize)}>
+        <WidgetErrorBoundary>
+          <MomentClusterCard item={item} />
         </WidgetErrorBoundary>
       </div>
     );

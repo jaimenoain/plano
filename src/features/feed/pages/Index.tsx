@@ -39,6 +39,7 @@ import { getSuggestedPostsAsItems } from "../api/getSuggestedPostsAsItems";
 import { getFeedExtended } from "../api/getFeedExtended";
 import { getBuildingSpotlights } from "../api/getBuildingSpotlights";
 import { getEditorialSlots } from "../api/getEditorialSlots";
+import { getFeedClusters } from "../api/getFeedClusters";
 import { mergeFeedSources } from "../utils/mergeFeedSources";
 import { FeedMosaic } from "../components/FeedMosaic";
 
@@ -193,6 +194,13 @@ export default function Index() {
     staleTime: 15 * 60 * 1000, // editorial slots change at most every 15 min (trending TTL)
   });
 
+  const v2ClustersQuery = useQuery({
+    queryKey: ["v2-clusters-feed", user?.id],
+    queryFn: () => getFeedClusters({ limit: 20 }),
+    enabled: !!user && isFeedV2RankerEnabled() && primaryFeedReady,
+    staleTime: 5 * 60 * 1000, // clusters are activity-driven; 5-min stale is fine
+  });
+
   const v2Items = useMemo(() => {
     if (!isFeedV2RankerEnabled()) return [];
     const social = v2SocialQuery.data ?? [];
@@ -201,8 +209,9 @@ export default function Index() {
     const extended = v2ExtendedQuery.data ?? [];
     const spotlights = v2SpotlightsQuery.data ?? [];
     const editorial = v2EditorialQuery.data ?? [];
-    return mergeFeedSources(social, collections, discovery, extended, spotlights, seenItems.hasSeen, editorial);
-  }, [v2SocialQuery.data, v2CollectionsQuery.data, v2DiscoveryQuery.data, v2ExtendedQuery.data, v2SpotlightsQuery.data, v2EditorialQuery.data, seenItems.hasSeen]);
+    const clusters = v2ClustersQuery.data ?? [];
+    return mergeFeedSources(social, collections, discovery, extended, spotlights, seenItems.hasSeen, editorial, clusters);
+  }, [v2SocialQuery.data, v2CollectionsQuery.data, v2DiscoveryQuery.data, v2ExtendedQuery.data, v2SpotlightsQuery.data, v2EditorialQuery.data, v2ClustersQuery.data, seenItems.hasSeen]);
   // ──────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {

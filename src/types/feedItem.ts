@@ -122,18 +122,81 @@ export interface FeedItemEditorial extends FeedItemBase {
   };
 }
 
+/** One post summarised inside a moment cluster card. */
+export interface ClusterPost {
+  id: string;
+  content?: string | null;
+  createdAt?: string;
+  buildingId: string;
+  buildingName: string;
+  buildingCity?: string | null;
+  imageStoragePath?: string | null;
+}
+
+/** One actor (ring-1 user) who contributed to a moment cluster. */
+export interface ClusterActor {
+  id: string;
+  username: string;
+  avatarUrl: string | null;
+}
+
+/** Context for a building cluster card. */
+export interface ClusterBuilding {
+  kind: "building";
+  buildingId: string;
+  buildingName: string;
+  city: string | null;
+  mainImageUrl: string | null;
+  communityPreviewUrl: string | null;
+  slug: string | null;
+  shortId: number | null;
+}
+
+/** Context for a locality cluster card ("Your contacts are in Lisbon"). */
+export interface ClusterLocality {
+  kind: "locality";
+  localityId: string;
+  city: string | null;
+  buildingName?: string;
+  mainImageUrl?: string | null;
+}
+
+/**
+ * Moment cluster card — collapses multiple related ring-1 posts into a single
+ * feed unit.
+ *
+ * Phase 7 introduces this variant.
+ *
+ * clusterKind discriminates the grouping logic:
+ *   multi_user_locality         — ≥2 follows posted in the same city (7 days)
+ *   multi_photo_single_building — 1 follow posted ≥3 photos of 1 building (7 days)
+ *   multi_user_single_building  — ≥2 follows posted about 1 building (30 days)
+ */
+export interface FeedItemMomentCluster extends FeedItemBase {
+  kind: "moment_cluster";
+  clusterKind:
+    | "multi_user_locality"
+    | "multi_photo_single_building"
+    | "multi_user_single_building";
+  leadPost: ClusterPost;
+  supportingPosts: ClusterPost[];
+  actors: ClusterActor[];
+  buildingOrLocality: ClusterBuilding | ClusterLocality;
+}
+
 /**
  * Discriminated union of every shape the unified feed surface can render.
  *
  * Phase 0 declares `post` and `collection`. Phase 2 adds `prompt` (inline
  * follow nudge for sparse-graph users). Phase 5 adds `building_spotlight`.
- * Phase 6 adds `editorial`. New variants extend this union; consumers narrow
- * with the `kind` discriminator and TypeScript catches unhandled cases via
- * exhaustive `switch`.
+ * Phase 6 adds `editorial`. Phase 7 adds `moment_cluster`. New variants extend
+ * this union; consumers narrow with the `kind` discriminator and TypeScript
+ * catches unhandled cases via exhaustive `switch`.
  */
 export type FeedItem =
   | FeedItemPost
   | FeedItemCollection
   | FeedItemPrompt
   | FeedItemBuildingSpotlight
-  | FeedItemEditorial;
+  | FeedItemEditorial
+  | FeedItemMomentCluster;

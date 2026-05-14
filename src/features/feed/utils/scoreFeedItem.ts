@@ -48,7 +48,9 @@ export function scoreFeedItem(
         ? (item.payload.building?.id ?? "")
         : item.kind === "building_spotlight"
           ? item.payload.buildingId
-          : "";
+          : item.kind === "moment_cluster" && item.buildingOrLocality.kind === "building"
+            ? item.buildingOrLocality.buildingId
+            : "";
 
     const authorN = authorCount.get(authorId) ?? 0;
     const buildingN = buildingCount.get(buildingId) ?? 0;

@@ -23,6 +23,11 @@ export function assignTileSize(item: FeedItem, isAnchor = false): TileSize {
     return item.score > 8.0 && item.ring === "direct" ? "xl" : "lg";
   }
 
+  // moment_cluster: always lg — one wide card showing the lead image + thumbnails
+  if (item.kind === "moment_cluster") {
+    return "lg";
+  }
+
   // Non-post items always render at md
   if (item.kind !== "post") {
     return "md";
