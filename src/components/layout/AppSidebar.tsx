@@ -25,6 +25,7 @@ import {
   Briefcase,
   Building2,
   ChevronDown,
+  Landmark,
   Trophy,
   type LucideIcon,
 } from "lucide-react";
@@ -42,6 +43,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useClaimedPersonForNav } from "@/features/credits/hooks/useClaimedPersonForNav";
 import { useStewardCompaniesForNav } from "@/features/credits/hooks/useStewardCompaniesForNav";
+import { useAmbassadorNavAccess } from "@/features/ambassadors/hooks/useAmbassadorNavAccess";
 
 // ─── Nav data ────────────────────────────────────────────────────────────────
 type MainNavItem = {
@@ -116,6 +118,7 @@ function UserMenu() {
   const navigate = useNavigate();
   const { data: claimedPersonNav } = useClaimedPersonForNav();
   const { data: stewardCompanies = [] } = useStewardCompaniesForNav();
+  const { data: isAmbassador } = useAmbassadorNavAccess();
   const ownProfilePath = profile?.username
     ? `/profile/${encodeURIComponent(profile.username)}`
     : "/profile";
@@ -177,6 +180,17 @@ function UserMenu() {
                 Profile
               </Link>
             </DropdownMenuItem>
+            {isAmbassador ? (
+              <DropdownMenuItem asChild>
+                <Link
+                  to="/ambassador-portal"
+                  className="flex items-center gap-2 cursor-pointer text-white/80 hover:text-white focus:text-white focus:bg-white/10"
+                >
+                  <Landmark className="h-4 w-4" />
+                  Ambassador Portal
+                </Link>
+              </DropdownMenuItem>
+            ) : null}
             {claimedPersonNav ? (
               <DropdownMenuItem asChild>
                 <Link

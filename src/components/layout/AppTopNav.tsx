@@ -4,6 +4,7 @@ import {
   Bell,
   Briefcase,
   Building2,
+  Landmark,
   LogOut,
   Search,
   Settings,
@@ -24,6 +25,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { useClaimedPersonForNav } from "@/features/credits/hooks/useClaimedPersonForNav";
 import { useStewardCompaniesForNav } from "@/features/credits/hooks/useStewardCompaniesForNav";
+import { useAmbassadorNavAccess } from "@/features/ambassadors/hooks/useAmbassadorNavAccess";
 import { supabase } from "@/integrations/supabase/client";
 import { useWaitlistSignup } from "@/features/waitlist/WaitlistSignupProvider";
 
@@ -82,6 +84,7 @@ function UserMenuDropdown() {
   const navigate = useNavigate();
   const { data: claimedPersonNav } = useClaimedPersonForNav();
   const { data: stewardCompanies = [] } = useStewardCompaniesForNav();
+  const { data: isAmbassador } = useAmbassadorNavAccess();
 
   if (!user) return null;
 
@@ -123,6 +126,14 @@ function UserMenuDropdown() {
             Profile
           </Link>
         </DropdownMenuItem>
+        {isAmbassador ? (
+          <DropdownMenuItem asChild>
+            <Link to="/ambassador-portal" className="flex items-center gap-2 cursor-pointer">
+              <Landmark className="h-4 w-4" />
+              Ambassador Portal
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
         {claimedPersonNav ? (
           <DropdownMenuItem asChild>
             <Link to="/portfolio" className="flex items-center gap-2 cursor-pointer">

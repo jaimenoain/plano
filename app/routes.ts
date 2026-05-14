@@ -95,6 +95,7 @@ export default [
     route("/support", "features/ambassadors/pages/SupportPage.tsx"),
     route("/become-ambassador", "features/ambassadors/pages/BecomeAmbassador.tsx"),
     route("/embassy", "features/embassy/pages/Embassy.tsx"),
+    route("/ambassador-portal", "features/ambassadors/pages/AmbassadorPortal.tsx"),
     route("/add-building", "features/buildings/pages/AddBuilding.tsx"),
     route("/connect", "features/connect/pages/Connect.tsx"),
     route("/events/new", "features/events/pages/SubmitEvent.tsx", {
