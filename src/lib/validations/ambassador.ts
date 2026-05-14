@@ -112,8 +112,10 @@ export type AmbassadorMembershipUpdateInput = z.infer<
 >;
 
 export const ambassadorApplicationSubmitSchema = z.object({
-  chapter_id: z.string().uuid(),
-  motivation_text: z.string().trim().min(100).max(5000),
+  chapter_id: z.string().uuid().optional().nullable(),
+  locality_id: z.string().uuid().optional().nullable(),
+  motivation_text: z.string().trim().max(5000).optional().nullable(),
+  interests: z.array(z.string()).optional().nullable(),
 });
 
 export type AmbassadorApplicationSubmitInput = z.infer<

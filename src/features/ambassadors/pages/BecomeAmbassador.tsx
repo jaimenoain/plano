@@ -14,6 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -55,7 +57,12 @@ export default function BecomeAmbassador() {
   const [membership, setMembership] = useState<MembershipWithChapter | null>(null);
   const [pending, setPending] = useState<ApplicationRow | null>(null);
   const [loadingData, setLoadingData] = useState(false);
-  const [chapterId, setChapterId] = useState<string>("");
+  const [localityId, setLocalityId] = useState<string>("");
+  const [localityQuery, setLocalityQuery] = useState("");
+  const [localityHits, setLocalityHits] = useState<LocalityPick[]>([]);
+  const [localityLoading, setLocalityLoading] = useState(false);
+  const [chapterId, setChapterId] = useState<string | null>(null);
+  const [interests, setInterests] = useState<string[]>([]);
   const [motivation, setMotivation] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -129,16 +136,29 @@ export default function BecomeAmbassador() {
       if (pendingRes.error) throw pendingRes.error;
       setPending(pendingRes.data ?? null);
 
-      const defaultChapter = await pickDefaultChapterId(
+      const defaultChapterId = await pickDefaultChapterId(
         list,
         profileRes.data?.country ?? null,
         profileRes.data?.location ?? null,
       );
-      setChapterId((prev) => (prev && list.some((c) => c.id === prev) ? prev : defaultChapter));
+      
+      const defaultChapter = list.find(c => c.id === defaultChapterId);
+      if (defaultChapter && defaultChapter.locality_id) {
+        setLocalityId(defaultChapter.locality_id);
+        setChapterId(defaultChapter.id);
+        // We'll fetch the locality name to show in the search box
+        const { data: loc } = await supabase
+          .from("localities")
+          .select("city, country")
+          .eq("id", defaultChapter.locality_id)
+          .single();
+        if (loc) {
+          setLocalityQuery(`${loc.city}, ${loc.country}`);
+        }
+      }
     } catch {
-      toast.error("Could not load chapters");
+      toast.error("Could not load data");
       setChapters([]);
-      setChapterId("");
     } finally {
       setLoadingData(false);
     }
@@ -147,6 +167,41 @@ export default function BecomeAmbassador() {
   useEffect(() => {
     void loadChaptersAndProfile();
   }, [loadChaptersAndProfile]);
+
+  useEffect(() => {
+    const q = localityQuery.trim();
+    if (q.length < 2) {
+      setLocalityHits([]);
+      return;
+    }
+    // If the query matches the selected locality's name, don't search
+    const t = window.setTimeout(() => {
+      void (async () => {
+        setLocalityLoading(true);
+        const safe = q.replace(/%/g, "").slice(0, 64);
+        const { data, error } = await supabase
+          .from("localities")
+          .select("id, city, country, country_code")
+          .or(`city.ilike.%${safe}%,country.ilike.%${safe}%`)
+          .limit(10);
+        setLocalityLoading(false);
+        if (error) {
+          setLocalityHits([]);
+          return;
+        }
+        setLocalityHits(data ?? []);
+      })();
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [localityQuery]);
+
+  const interestOptions = [
+    { id: "photos", label: "Taking photos of buildings in your area" },
+    { id: "data", label: "Reviewing data entries" },
+    { id: "community", label: "Community management" },
+    { id: "translation", label: "Translation & Localisation" },
+    { id: "events", label: "Organising events" },
+  ];
 
   const selectedChapter = useMemo(
     () => chapters.find((c) => c.id === chapterId) ?? null,
@@ -159,7 +214,9 @@ export default function BecomeAmbassador() {
     e.preventDefault();
     const parsed = ambassadorApplicationSubmitSchema.safeParse({
       chapter_id: chapterId,
+      locality_id: localityId,
       motivation_text: motivation,
+      interests: interests,
     });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "Check your application");
@@ -169,12 +226,15 @@ export default function BecomeAmbassador() {
     setSubmitting(true);
     try {
       const { error } = await supabase.rpc("submit_ambassador_application", {
-        p_chapter_id: parsed.data.chapter_id,
-        p_motivation_text: parsed.data.motivation_text,
+        p_chapter_id: parsed.data.chapter_id ?? null,
+        p_motivation_text: parsed.data.motivation_text ?? null,
+        p_locality_id: parsed.data.locality_id ?? null,
+        p_interests: parsed.data.interests ?? null,
       });
       if (error) throw error;
       toast.success("Application submitted");
       setMotivation("");
+      setInterests([]);
       await loadChaptersAndProfile();
     } catch (e: unknown) {
       const msg = e && typeof e === "object" && "message" in e ? String((e as Error).message) : "";
@@ -300,47 +360,88 @@ export default function BecomeAmbassador() {
               ) : null}
               <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="chapter">Chapter</Label>
-                  <Select
-                    value={chapterId || undefined}
-                    onValueChange={setChapterId}
-                    required
-                  >
-                    <SelectTrigger id="chapter" className="w-full max-w-md">
-                      <SelectValue placeholder="Select a chapter" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {chapters.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.name} ({c.type === "national" ? "National" : "Local"}) · {c.country_code}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {selectedChapter ? (
-                    <p className="text-sm text-text-secondary">
-                      Status: {selectedChapter.status}. Ambassador places filled: {ambassadorSlotsUsed} /{" "}
-                      {selectedChapter.max_ambassadors} (ambassador role only).
-                    </p>
-                  ) : null}
+                  <Label htmlFor="locality">Where are you based?</Label>
+                  <div className="relative w-full max-w-md">
+                    <Input
+                      id="locality"
+                      value={localityQuery}
+                      onChange={(e) => setLocalityQuery(e.target.value)}
+                      placeholder="Type city name..."
+                      className="w-full"
+                      autoComplete="off"
+                    />
+                    {localityLoading && (
+                      <div className="absolute right-3 top-2.5">
+                        <Loader2 className="h-4 w-4 animate-spin text-text-disabled" />
+                      </div>
+                    )}
+                    {localityHits.length > 0 && (
+                      <div className="absolute top-full left-0 w-full z-10 mt-1 bg-surface-overlay border border-border-default rounded-sm shadow-lg overflow-hidden">
+                        <ul className="divide-y divide-border-default max-h-48 overflow-y-auto">
+                          {localityHits.map((loc) => (
+                            <li key={loc.id}>
+                              <button
+                                type="button"
+                                className="w-full text-left px-4 py-2.5 text-sm hover:bg-surface-muted transition-colors"
+                                onClick={() => {
+                                  setLocalityId(loc.id);
+                                  setLocalityQuery(`${loc.city}, ${loc.country}`);
+                                  setLocalityHits([]);
+                                  
+                                  // Find relevant chapter for this locality to populate chapterId
+                                  const chapter = chapters.find(c => 
+                                    (c.type === "local" && c.locality_id === loc.id) ||
+                                    (c.type === "national" && c.country_code === loc.country_code)
+                                  );
+                                  setChapterId(chapter?.id ?? null);
+                                }}
+                              >
+                                <span className="font-medium text-text-primary">{loc.city}</span>
+                                <span className="text-text-secondary ml-1">
+                                  {loc.country} ({loc.country_code})
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
                 </div>
+
+                <div className="space-y-3">
+                  <Label>What could you help with?</Label>
+                  <ToggleGroup
+                    type="multiple"
+                    variant="outline"
+                    value={interests}
+                    onValueChange={setInterests}
+                    className="flex flex-wrap justify-start gap-2"
+                  >
+                    {interestOptions.map((opt) => (
+                      <ToggleGroupItem
+                        key={opt.id}
+                        value={opt.label}
+                        className="h-auto py-1.5 px-3 rounded-full text-sm data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground border-border-default"
+                      >
+                        {opt.label}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="motivation">Why do you want to be an ambassador?</Label>
+                  <Label htmlFor="motivation">Why do you want to be an ambassador? (Optional)</Label>
                   <Textarea
                     id="motivation"
                     value={motivation}
                     onChange={(e) => setMotivation(e.target.value)}
-                    rows={8}
-                    required
-                    minLength={100}
-                    className="resize-y min-h-[160px]"
-                    placeholder="Write at least 100 characters."
+                    rows={6}
+                    className="resize-y min-h-[120px]"
+                    placeholder="Tell us a bit about your interest in architecture and Plano."
                   />
-                  <p className="text-2xs text-text-disabled">
-                    {motivation.trim().length} / 100 characters minimum
-                  </p>
                 </div>
-                <Button type="submit" disabled={submitting || !chapterId}>
+                <Button type="submit" disabled={submitting || !localityId}>
                   {submitting ? (
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                   ) : (
@@ -400,3 +501,8 @@ async function pickDefaultChapterId(
   if (firstNational) return firstNational.id;
   return chapters[0]?.id ?? "";
 }
+
+type LocalityPick = Pick<
+  Database["public"]["Tables"]["localities"]["Row"],
+  "id" | "city" | "country" | "country_code"
+>;
