@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { getBuildingUrl } from "@/utils/url";
 import { CardAttribution } from "./card-parts/CardAttribution";
+import { VelocityBadge } from "./VelocityBadge";
 import type { FeedItemBuildingSpotlight } from "@/types/feedItem";
 
 interface BuildingSpotlightCardProps {
@@ -36,13 +37,18 @@ export function BuildingSpotlightCard({ item }: BuildingSpotlightCardProps) {
     >
       {/* Hero image */}
       {heroImage ? (
-        <div className="flex-shrink-0 h-[58%] overflow-hidden">
+        <div className="flex-shrink-0 h-[58%] overflow-hidden relative">
           <img
             src={heroImage}
             alt={payload.buildingName}
             className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
             loading="lazy"
           />
+          {payload.photosCount >= 10 && (
+            <div className="absolute bottom-3 left-3">
+              <VelocityBadge recentLikes={payload.photosCount} />
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex-shrink-0 h-[58%] bg-surface-overlay" />

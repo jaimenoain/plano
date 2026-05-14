@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { assembleMosaicItems } from "./assembleMosaicItems";
-import type { FeedItemPost, FeedItemCollection, FeedItemPrompt, FeedItemBuildingSpotlight } from "@/types/feedItem";
+import type { FeedItemPost, FeedItemCollection, FeedItemPrompt, FeedItemBuildingSpotlight, FeedItemEditorial } from "@/types/feedItem";
 import type { FeedReview } from "@/types/feed";
 
 function makePost(
@@ -191,6 +191,68 @@ describe("assembleMosaicItems", () => {
     const result = assembleMosaicItems(items);
     const spotlightIds = result.filter((r) => r.item.kind === "building_spotlight").map((r) => r.item.id);
     expect(spotlightIds).toHaveLength(2);
+  });
+
+  it("editorial items are pinned to position 0 regardless of input order", () => {
+    const editorial: FeedItemEditorial = {
+      kind: "editorial",
+      subKind: "photo_of_the_day",
+      id: "editorial:photo_of_the_day:rev1",
+      ring: "editorial",
+      score: 0,
+      attribution: { kind: "editorial", text: "Photo of the Day" },
+      payload: {
+        buildingId: "b-editorial",
+        building: {
+          id: "b-editorial",
+          name: "Award Building",
+          mainImageUrl: null,
+          communityPreviewUrl: null,
+          city: null,
+          slug: null,
+          shortId: null,
+        },
+      },
+    };
+    const post1 = makePost("p1", 10, "alice", "b1", withImage);
+    const post2 = makePost("p2", 8, "bob", "b2", withImage);
+    // Editorial appears last in the input but should surface first
+    const items = [post1, post2, editorial];
+    const result = assembleMosaicItems(items);
+    expect(result[0].item.kind).toBe("editorial");
+    expect(result[0].item.id).toBe(editorial.id);
+    expect(result[0].tileSize).toBe("xl");
+  });
+
+  it("editorial item participates in building-conflict resolution with posts on the same building", () => {
+    const editorial: FeedItemEditorial = {
+      kind: "editorial",
+      subKind: "trending_this_hour",
+      id: "editorial:trending:rev1",
+      ring: "editorial",
+      score: 5,
+      attribution: { kind: "editorial", text: "Trending now" },
+      payload: {
+        buildingId: "shared-bldg",
+        building: {
+          id: "shared-bldg",
+          name: "Trending Building",
+          mainImageUrl: null,
+          communityPreviewUrl: null,
+          city: null,
+          slug: null,
+          shortId: null,
+        },
+      },
+    };
+    const post = makePost("p-same", 8, "alice", "shared-bldg", withImage);
+    const other = makePost("p-other", 6, "bob", "other-bldg", withImage);
+    // After pinning: [editorial, p-same, p-other]
+    // Adjacent editorial+post share a building → swap post with other
+    const result = assembleMosaicItems([editorial, post, other]);
+    expect(result[0].item.kind).toBe("editorial");
+    expect(result[1].item.id).toBe("p-other");
+    expect(result[2].item.id).toBe("p-same");
   });
 
   it("does not mutate the input array", () => {

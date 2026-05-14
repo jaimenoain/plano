@@ -75,17 +75,65 @@ export interface FeedItemBuildingSpotlight extends FeedItemBase {
   };
 }
 
+/** Shared building shape returned by all editorial RPCs. */
+export interface EditorialBuildingData {
+  id: string;
+  name: string;
+  mainImageUrl: string | null;
+  communityPreviewUrl: string | null;
+  city: string | null;
+  slug: string | null;
+  shortId: number | null;
+}
+
+export interface EditorialAuthorData {
+  username: string;
+  avatarUrl: string | null;
+}
+
+/**
+ * Editorial slot — one of three rotation-tier content types that guarantee
+ * the top of the feed changes between visits even with no new posts.
+ *
+ * Phase 6 introduces this variant. Always rendered at the xl anchor position.
+ *
+ * subKind discriminates the payload shape:
+ *   photo_of_the_day   — most-liked public review image from last 7 days
+ *   on_this_day        — viewer's anniversary building visit (1y / 5y / 10y)
+ *   trending_this_hour — highest-velocity post in viewer's locality
+ */
+export interface FeedItemEditorial extends FeedItemBase {
+  kind: "editorial";
+  subKind: "photo_of_the_day" | "on_this_day" | "trending_this_hour";
+  payload: {
+    buildingId: string;
+    building: EditorialBuildingData;
+    // photo_of_the_day & trending_this_hour
+    reviewId?: string;
+    author?: EditorialAuthorData;
+    imageStoragePath?: string | null;
+    // on_this_day
+    yearsAgo?: number;
+    visitDate?: string;
+    visitRating?: number | null;
+    // trending_this_hour
+    engagementVelocity?: number;
+    recentLikes?: number;
+  };
+}
+
 /**
  * Discriminated union of every shape the unified feed surface can render.
  *
  * Phase 0 declares `post` and `collection`. Phase 2 adds `prompt` (inline
  * follow nudge for sparse-graph users). Phase 5 adds `building_spotlight`.
- * Later phases add `moment`, `editorial` as their RPCs land. New variants
- * extend this union; consumers narrow with the `kind` discriminator and
- * TypeScript catches unhandled cases via exhaustive `switch`.
+ * Phase 6 adds `editorial`. New variants extend this union; consumers narrow
+ * with the `kind` discriminator and TypeScript catches unhandled cases via
+ * exhaustive `switch`.
  */
 export type FeedItem =
   | FeedItemPost
   | FeedItemCollection
   | FeedItemPrompt
-  | FeedItemBuildingSpotlight;
+  | FeedItemBuildingSpotlight
+  | FeedItemEditorial;

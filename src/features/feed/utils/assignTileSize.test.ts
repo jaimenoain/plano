@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { assignTileSize } from "./assignTileSize";
-import type { FeedItem, FeedItemPost, FeedItemCollection, FeedItemPrompt, FeedItemBuildingSpotlight } from "@/types/feedItem";
+import type { FeedItem, FeedItemPost, FeedItemCollection, FeedItemPrompt, FeedItemBuildingSpotlight, FeedItemEditorial } from "@/types/feedItem";
 import type { FeedReview } from "@/types/feed";
 
 function makePost(
@@ -160,6 +160,33 @@ describe("assignTileSize", () => {
       },
     };
     expect(assignTileSize(item)).toBe("lg");
+  });
+
+  it("editorial → always xl regardless of score or subKind", () => {
+    const item: FeedItemEditorial = {
+      kind: "editorial",
+      subKind: "photo_of_the_day",
+      id: "editorial:photo_of_the_day:rev1",
+      ring: "editorial",
+      score: 0,
+      attribution: { kind: "editorial", text: "Photo of the Day" },
+      payload: {
+        buildingId: "b1",
+        building: {
+          id: "b1",
+          name: "Test Building",
+          mainImageUrl: null,
+          communityPreviewUrl: null,
+          city: null,
+          slug: null,
+          shortId: null,
+        },
+        reviewId: "rev1",
+        imageStoragePath: null,
+      },
+    };
+    expect(assignTileSize(item)).toBe("xl");
+    expect(assignTileSize(item, false)).toBe("xl");
   });
 
   it("building_spotlight ring='open' always → lg (no xl for open spotlights)", () => {

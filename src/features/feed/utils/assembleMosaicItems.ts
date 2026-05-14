@@ -14,6 +14,7 @@ function getAuthorUsername(item: FeedItem): string | null {
 function getBuildingId(item: FeedItem): string | null {
   if (item.kind === "post") return item.payload.building?.id ?? null;
   if (item.kind === "building_spotlight") return item.payload.buildingId;
+  if (item.kind === "editorial") return item.payload.buildingId;
   return null;
 }
 
@@ -39,16 +40,22 @@ const MIN_SPOTLIGHT_GAP = 5;
 
 /**
  * Converts a sorted feed array into mosaic tiles with:
- *   1. Tile-size assignment (first item is the xl anchor if it has media).
- *   2. Adjacency diversity: swaps adjacent pairs sharing an author or building.
+ *   1. Editorial items pinned to the front (position 0+).
+ *   2. Tile-size assignment (editorial is always xl anchor).
+ *   3. Adjacency diversity: swaps adjacent pairs sharing an author or building.
  *
  * Pure function — does not mutate input.
  */
 export function assembleMosaicItems(items: FeedItem[]): MosaicItem[] {
   if (items.length === 0) return [];
 
-  // Work on a copy to avoid mutating input
-  const arr = [...items];
+  // Extract editorial items and pin them to the front of the feed.
+  // The first editorial item occupies the xl anchor slot.
+  const editorialItems = items.filter((i) => i.kind === "editorial");
+  const nonEditorialItems = items.filter((i) => i.kind !== "editorial");
+
+  // Work on a copy of non-editorial items to avoid mutating input
+  const arr = [...editorialItems, ...nonEditorialItems];
 
   // Single adjacency-diversity pass: swap adjacent pairs that share an author or building.
   for (let i = 1; i < arr.length; i++) {

@@ -218,4 +218,62 @@ describe("mergeFeedSources", () => {
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("s1");
   });
+
+  // ── Phase 6: editorial slots ──────────────────────────────────────────────
+
+  it("editorial items are included when passed as 7th argument", () => {
+    const editorial: FeedItem = {
+      kind: "editorial",
+      subKind: "photo_of_the_day",
+      id: "editorial:photo_of_the_day:rev1",
+      ring: "editorial",
+      score: 10.0,
+      attribution: { kind: "editorial", text: "Photo of the Day" },
+      payload: {
+        buildingId: "b1",
+        building: {
+          id: "b1",
+          name: "Test Building",
+          mainImageUrl: null,
+          communityPreviewUrl: null,
+          city: null,
+          slug: null,
+          shortId: null,
+        },
+      },
+    };
+
+    const result = mergeFeedSources([], [], [], [], [], noSeen, [editorial]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("editorial:photo_of_the_day:rev1");
+    expect(result[0].kind).toBe("editorial");
+  });
+
+  it("6-arg signature still works when editorial is omitted", () => {
+    const spotlight: FeedItem = {
+      kind: "building_spotlight",
+      id: "spotlight:b1",
+      ring: "direct",
+      score: 2.0,
+      attribution: { kind: "direct", text: "5 photos from people you follow" },
+      payload: {
+        buildingId: "b1",
+        buildingName: "Building 1",
+        buildingCity: "Lisbon",
+        mainImageUrl: null,
+        communityPreviewUrl: null,
+        slug: null,
+        shortId: null,
+        window: "7d",
+        postsCount: 3,
+        photosCount: 5,
+        ring1Contributors: [],
+        lastActivityAt: new Date().toISOString(),
+      },
+    };
+    const result = mergeFeedSources([], [], [], [], [spotlight], noSeen);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("spotlight:b1");
+  });
 });

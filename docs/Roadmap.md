@@ -447,7 +447,7 @@ A `building_activity_rolling` materialized view, a `get_building_spotlights` RPC
 
 ---
 
-## [ ] Phase 6 — Rotation tiers (dynamism) (3–4 days)
+## [x] Phase 6 — Rotation tiers (dynamism) (3–4 days)
 
 **Goal:** Guarantee the top of the feed changes between visits, even with no new posts. By the end of this phase, the surface includes Photo of the Day, On This Day, and Trending This Hour as clock-driven editorial slots, plus velocity badges on cards.
 

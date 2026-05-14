@@ -38,6 +38,7 @@ import { getCollectionsFeedAsItems } from "../api/getCollectionsFeedAsItems";
 import { getSuggestedPostsAsItems } from "../api/getSuggestedPostsAsItems";
 import { getFeedExtended } from "../api/getFeedExtended";
 import { getBuildingSpotlights } from "../api/getBuildingSpotlights";
+import { getEditorialSlots } from "../api/getEditorialSlots";
 import { mergeFeedSources } from "../utils/mergeFeedSources";
 import { FeedMosaic } from "../components/FeedMosaic";
 
@@ -185,6 +186,13 @@ export default function Index() {
     staleTime: 5 * 60 * 1000, // spotlights are activity-driven; 5-min stale is fine
   });
 
+  const v2EditorialQuery = useQuery({
+    queryKey: ["v2-editorial-feed", user?.id],
+    queryFn: () => getEditorialSlots(),
+    enabled: !!user && isFeedV2RankerEnabled(),
+    staleTime: 15 * 60 * 1000, // editorial slots change at most every 15 min (trending TTL)
+  });
+
   const v2Items = useMemo(() => {
     if (!isFeedV2RankerEnabled()) return [];
     const social = v2SocialQuery.data ?? [];
@@ -192,8 +200,9 @@ export default function Index() {
     const discovery = v2DiscoveryQuery.data ?? [];
     const extended = v2ExtendedQuery.data ?? [];
     const spotlights = v2SpotlightsQuery.data ?? [];
-    return mergeFeedSources(social, collections, discovery, extended, spotlights, seenItems.hasSeen);
-  }, [v2SocialQuery.data, v2CollectionsQuery.data, v2DiscoveryQuery.data, v2ExtendedQuery.data, v2SpotlightsQuery.data, seenItems.hasSeen]);
+    const editorial = v2EditorialQuery.data ?? [];
+    return mergeFeedSources(social, collections, discovery, extended, spotlights, seenItems.hasSeen, editorial);
+  }, [v2SocialQuery.data, v2CollectionsQuery.data, v2DiscoveryQuery.data, v2ExtendedQuery.data, v2SpotlightsQuery.data, v2EditorialQuery.data, seenItems.hasSeen]);
   // ──────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -326,7 +335,7 @@ export default function Index() {
                     onLike={socialFeed.toggleLike}
                     onImageLike={socialFeed.toggleImageLike}
                   />
-                  {(v2CollectionsQuery.isLoading || v2DiscoveryQuery.isLoading || v2ExtendedQuery.isLoading || v2SpotlightsQuery.isLoading) && (
+                  {(v2CollectionsQuery.isLoading || v2DiscoveryQuery.isLoading || v2ExtendedQuery.isLoading || v2SpotlightsQuery.isLoading || v2EditorialQuery.isLoading) && (
                     <div className="flex justify-center py-8">
                       <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
                     </div>

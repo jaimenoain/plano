@@ -4,6 +4,7 @@ import type { FeedItem } from "@/types/feedItem";
 import { FeedCard } from "./FeedCard";
 import { FeedCollectionCard } from "./FeedCollectionCard";
 import { BuildingSpotlightCard } from "./BuildingSpotlightCard";
+import { EditorialCard } from "./EditorialCard";
 import { PeopleYouMayKnow } from "./PeopleYouMayKnow";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 
@@ -63,6 +64,16 @@ function MosaicTile({
       <div className={tileCellClass(tileSize)}>
         <WidgetErrorBoundary>
           <BuildingSpotlightCard item={item} />
+        </WidgetErrorBoundary>
+      </div>
+    );
+  }
+
+  if (item.kind === "editorial") {
+    return (
+      <div className={tileCellClass(tileSize)}>
+        <WidgetErrorBoundary>
+          <EditorialCard item={item} />
         </WidgetErrorBoundary>
       </div>
     );
