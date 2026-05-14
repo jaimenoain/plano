@@ -149,8 +149,62 @@ export function FeedCard({
     }
   }
 
+  // ── lg tile: wide 2-col photo overlay ─────────────────────────────────────
+  if (tileSize === "lg" && hasMedia) {
+    return (
+      <article
+        ref={trackViewRef}
+        data-testid={`feed-card-${entry.id}`}
+        onClick={handleCardClick}
+        className="group/card relative h-full w-full cursor-pointer overflow-hidden"
+      >
+        <CardImage
+          items={mediaItems}
+          reviewId={entry.id}
+          onImageLike={onImageLike}
+          firstMediaOnly
+          className="absolute inset-0 h-full w-full"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-5">
+          <h2 className="font-sans font-bold text-text-inverse leading-[0.95] tracking-[-0.03em] text-[clamp(1.1rem,2vw,1.75rem)] line-clamp-2">
+            {mainTitle}
+          </h2>
+          <p className="mt-1.5 text-xs text-white/65">{username} · {timeAgo}</p>
+        </div>
+      </article>
+    );
+  }
+
+  // ── md tile: single-col photo overlay ─────────────────────────────────────
+  if (tileSize === "md" && hasMedia) {
+    return (
+      <article
+        ref={trackViewRef}
+        data-testid={`feed-card-${entry.id}`}
+        onClick={handleCardClick}
+        className="group/card relative h-full w-full cursor-pointer overflow-hidden"
+      >
+        <CardImage
+          items={mediaItems}
+          reviewId={entry.id}
+          onImageLike={onImageLike}
+          firstMediaOnly
+          className="absolute inset-0 h-full w-full"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 p-3">
+          <h2 className="font-sans font-bold text-text-inverse leading-[0.95] tracking-[-0.03em] text-[clamp(1rem,1.5vw,1.4rem)] line-clamp-1">
+            {mainTitle}
+          </h2>
+          <p className="mt-1 text-[11px] text-white/60">{username}</p>
+        </div>
+      </article>
+    );
+  }
+
   // ── sm tile: pull-quote ────────────────────────────────────────────────────
-  if (tileSize === "sm" || (tileSize === "xl" && !hasMedia)) {
+  if (tileSize === "sm" || (tileSize === "xl" && !hasMedia) || (tileSize === "lg" && !hasMedia) || (tileSize === "md" && !hasMedia)) {
     return (
       <article
         ref={trackViewRef}
@@ -171,8 +225,8 @@ export function FeedCard({
     );
   }
 
-  // ── lg / md tiles: existing layout with h-full and adjusted aspect ratios ─
-  const cardImageAspectRatio = tileSize === "md" ? "4/5" : "16/9";
+  // ── V1 / no-tileSize: legacy stacked layout (used outside the mosaic) ──────
+  const cardImageAspectRatio = "16/9";
 
   return (
     <article

@@ -228,10 +228,7 @@ export function AppTopNav() {
             >
               <Bell className="h-4 w-4" />
               {showBadge && (
-                <span className="absolute top-2 right-2 flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-feedback-destructive opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-feedback-destructive border border-surface-default" />
-                </span>
+                <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-full bg-feedback-destructive border border-surface-default" />
               )}
             </Link>
           </>
