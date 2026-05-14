@@ -60,19 +60,28 @@ export function mergeFeedSources(
   }
 
   // Filter standalone post items that are already claimed by a cluster.
-  const deduped = (items: FeedItem[]): FeedItem[] =>
+  const filterClustered = (items: FeedItem[]): FeedItem[] =>
     items.filter((item) => !(item.kind === "post" && clusteredPostIds.has(item.id)));
 
-  return scoreFeedItem(
-    [
-      ...deduped(social),
-      ...deduped(collections),
-      ...deduped(discovery),
-      ...deduped(extended),
-      ...spotlights,
-      ...(editorial ?? []),
-      ...clusterItems,
-    ],
-    seenFn,
-  );
+  // 1. Deduplicate by ID across all sources to prevent the same item appearing twice
+  // if it's returned by multiple RPCs (e.g. social + discovery).
+  const allItems = [
+    ...filterClustered(social),
+    ...filterClustered(collections),
+    ...filterClustered(discovery),
+    ...filterClustered(extended),
+    ...filterClustered(spotlights),
+    ...(editorial ?? []),
+    ...clusterItems,
+  ];
+
+  const uniqueById = new Map<string, FeedItem>();
+  for (const item of allItems) {
+    if (!uniqueById.has(item.id)) {
+      uniqueById.set(item.id, item);
+    }
+  }
+
+  // 2. Score and sort the unique set
+  return scoreFeedItem(Array.from(uniqueById.values()), seenFn);
 }

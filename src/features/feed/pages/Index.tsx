@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useCallback } from "react";
 import { useNavigate, type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ColdStartFeed } from "../components/ColdStartFeed";
 import { FeedCollectionCard } from "../components/FeedCollectionCard";
@@ -18,7 +18,7 @@ import {
 import { ReviewCardFeed } from "../components/ReviewCardFeed";
 import { resolveCardType } from "../utils/resolveCardType";
 import type { FeedCollection, FeedReview } from "@/types/feed";
-import type { FeedItem } from "@/types/feedItem";
+import type { FeedItem, FeedItemPost } from "@/types/feedItem";
 export type { FeedItem };
 import { LandingHero } from "../components/landing/LandingHero";
 import { LandingMarquee } from "../components/landing/LandingMarquee";
@@ -117,6 +117,7 @@ function Landing() {
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { containerRef: loadMoreRef, isVisible: isLoadMoreVisible } = useIntersectionObserver({
     rootMargin: "200px",
   });
@@ -143,11 +144,11 @@ export default function Index() {
     enabled: !!user,
   });
 
-  const socialFeed = useFeed({ showGroupActivity: true });
-  /** Defer secondary RPCs until the primary feed returns — cuts parallel contention on first paint. */
+  const socialFeed = useFeed({ showGroupActivity: true, enabled: !isFeedV2RankerEnabled() });
+  /** Defer secondary RPCs until the primary feed returns — cuts parallel contention on first paint. (Only used in legacy path) */
   const primaryFeedReady = !socialFeed.isLoading;
-  const collectionsFeed = useCollectionsFeed({ enabled: !!user && primaryFeedReady });
-  const discoveryFeed = useSuggestedFeed({ enabled: !!user && primaryFeedReady });
+  const collectionsFeed = useCollectionsFeed({ enabled: !!user && primaryFeedReady && !isFeedV2RankerEnabled() });
+  const discoveryFeed = useSuggestedFeed({ enabled: !!user && primaryFeedReady && !isFeedV2RankerEnabled() });
 
   // ── V2 unified stream queries ──────────────────────────────────────────────
   const seenItems = useSeenItems();
@@ -162,28 +163,28 @@ export default function Index() {
   const v2CollectionsQuery = useQuery({
     queryKey: ["v2-collections-feed", user?.id],
     queryFn: () => getCollectionsFeedAsItems({ limit: 30 }),
-    enabled: !!user && isFeedV2RankerEnabled() && primaryFeedReady,
+    enabled: !!user && isFeedV2RankerEnabled(),
     staleTime: 60 * 1000,
   });
 
   const v2DiscoveryQuery = useQuery({
     queryKey: ["v2-discovery-feed", user?.id],
     queryFn: () => getSuggestedPostsAsItems({ limit: 30 }),
-    enabled: !!user && isFeedV2RankerEnabled() && primaryFeedReady,
+    enabled: !!user && isFeedV2RankerEnabled(),
     staleTime: 60 * 1000,
   });
 
   const v2ExtendedQuery = useQuery({
     queryKey: ["v2-extended-feed", user?.id],
     queryFn: () => getFeedExtended({ limit: 30 }),
-    enabled: !!user && isFeedV2RankerEnabled() && primaryFeedReady,
+    enabled: !!user && isFeedV2RankerEnabled(),
     staleTime: 60 * 1000,
   });
 
   const v2SpotlightsQuery = useQuery({
     queryKey: ["v2-spotlights-feed", user?.id],
     queryFn: () => getBuildingSpotlights({ limit: 20 }),
-    enabled: !!user && isFeedV2RankerEnabled() && primaryFeedReady,
+    enabled: !!user && isFeedV2RankerEnabled(),
     staleTime: 5 * 60 * 1000, // spotlights are activity-driven; 5-min stale is fine
   });
 
@@ -197,7 +198,7 @@ export default function Index() {
   const v2ClustersQuery = useQuery({
     queryKey: ["v2-clusters-feed", user?.id],
     queryFn: () => getFeedClusters({ limit: 20 }),
-    enabled: !!user && isFeedV2RankerEnabled() && primaryFeedReady,
+    enabled: !!user && isFeedV2RankerEnabled(),
     staleTime: 5 * 60 * 1000, // clusters are activity-driven; 5-min stale is fine
   });
 
@@ -213,6 +214,106 @@ export default function Index() {
     return mergeFeedSources(social, collections, discovery, extended, spotlights, seenItems.hasSeen, editorial, clusters);
   }, [v2SocialQuery.data, v2CollectionsQuery.data, v2DiscoveryQuery.data, v2ExtendedQuery.data, v2SpotlightsQuery.data, v2EditorialQuery.data, v2ClustersQuery.data, seenItems.hasSeen]);
   // ──────────────────────────────────────────────────────────────────────────
+
+  const handleV2Like = useCallback(async (reviewId: string) => {
+    if (!user) return;
+
+    const queries = [
+      { key: ["v2-social-feed", user.id], query: v2SocialQuery },
+      { key: ["v2-discovery-feed", user.id], query: v2DiscoveryQuery },
+      { key: ["v2-collections-feed", user.id], query: v2CollectionsQuery },
+      { key: ["v2-extended-feed", user.id], query: v2ExtendedQuery },
+    ];
+
+    // Optimistic Update across all relevant V2 queries
+    for (const { key } of queries) {
+      const currentData = queryClient.getQueryData<FeedItem[]>(key);
+      if (!currentData) continue;
+
+      queryClient.setQueryData<FeedItem[]>(key, (old) => {
+        if (!old) return [];
+        return old.map((item) => {
+          if (item.kind === "post" && item.payload.id === reviewId) {
+            const isLiked = !item.payload.is_liked;
+            return {
+              ...item,
+              payload: {
+                ...item.payload,
+                is_liked: isLiked,
+                likes_count: isLiked ? item.payload.likes_count + 1 : item.payload.likes_count - 1,
+              },
+            };
+          }
+          return item;
+        });
+      });
+    }
+
+    try {
+      const isLiked = v2SocialQuery.data?.find(i => i.id === reviewId && i.kind === "post")?.payload.is_liked ?? false;
+      if (isLiked) {
+        await supabase.from("likes").delete().eq("interaction_id", reviewId).eq("user_id", user.id);
+      } else {
+        await supabase.from("likes").insert({ interaction_id: reviewId, user_id: user.id });
+      }
+    } catch (err) {
+      console.error("Failed to toggle like:", err);
+      // Invalidate to recover
+      queries.forEach(({ key }) => queryClient.invalidateQueries({ queryKey: key }));
+    }
+  }, [user, queryClient, v2SocialQuery.data, v2DiscoveryQuery, v2CollectionsQuery, v2ExtendedQuery]);
+
+  const handleV2ImageLike = useCallback(async (reviewId: string, imageId: string) => {
+    if (!user) return;
+
+    const queries = [
+      { key: ["v2-social-feed", user.id] },
+      { key: ["v2-discovery-feed", user.id] },
+      { key: ["v2-collections-feed", user.id] },
+      { key: ["v2-extended-feed", user.id] },
+    ];
+
+    for (const { key } of queries) {
+      queryClient.setQueryData<FeedItem[]>(key, (old) => {
+        if (!old) return [];
+        return old.map((item) => {
+          if (item.kind === "post" && item.payload.id === reviewId) {
+            return {
+              ...item,
+              payload: {
+                ...item.payload,
+                images: item.payload.images?.map((img) => {
+                  if (img.id === imageId) {
+                    const isLiked = !img.is_liked;
+                    return {
+                      ...img,
+                      is_liked: isLiked,
+                      likes_count: isLiked ? img.likes_count + 1 : img.likes_count - 1,
+                    };
+                  }
+                  return img;
+                }),
+              },
+            };
+          }
+          return item;
+        });
+      });
+    }
+
+    try {
+      // Check current state from any source
+      const img = v2SocialQuery.data?.find(i => i.id === reviewId && i.kind === "post")?.payload.images?.find(im => im.id === imageId);
+      if (img?.is_liked) {
+        await supabase.from("image_likes").delete().eq("user_id", user.id).eq("image_id", imageId);
+      } else {
+        await supabase.from("image_likes").insert({ user_id: user.id, image_id: imageId });
+      }
+    } catch (err) {
+      console.error("Failed to toggle image like:", err);
+      queries.forEach(({ key }) => queryClient.invalidateQueries({ queryKey: key }));
+    }
+  }, [user, queryClient, v2SocialQuery.data]);
 
   useEffect(() => {
     if (!isLoadMoreVisible) return;
@@ -277,6 +378,13 @@ export default function Index() {
     () => collectionsFeed.data?.pages.flatMap((p) => p) || [],
     [collectionsFeed.data],
   );
+  const v2DiscoveryReviews = useMemo(
+    () => (v2DiscoveryQuery.data ?? [])
+      .filter((i): i is FeedItemPost => i.kind === "post")
+      .map(i => i.payload),
+    [v2DiscoveryQuery.data]
+  );
+
   const discoveryReviews = useMemo(
     () => discoveryFeed.data?.pages.flatMap((page) => page) || [],
     [discoveryFeed.data],
@@ -336,14 +444,27 @@ export default function Index() {
         ) : (
           <div className="w-full max-w-7xl mx-auto bg-surface-default md:border-l md:border-r border-border-default min-h-screen">
             <div className="md:grid md:grid-cols-[minmax(0,1fr)_320px]">
-              <main className="min-w-0 md:border-r md:border-border-default overflow-hidden">
+              <main className="min-w-0 md:border-r md:border-border-default">
                 <div className="pt-10 pb-32">
-                  <FeedMosaic
-                    items={v2Items}
-                    followingCount={followingCount ?? 0}
-                    onLike={socialFeed.toggleLike}
-                    onImageLike={socialFeed.toggleImageLike}
-                  />
+                  {v2Items.length === 0 ? (
+                    <div className="px-4 md:px-6 lg:px-16">
+                      <ColdStartFeed
+                        discoveryReviews={v2DiscoveryReviews}
+                        onLike={handleV2Like}
+                        onImageLike={handleV2ImageLike}
+                        isDiscoveryLoading={v2DiscoveryQuery.isLoading}
+                        isEmptyFeed={(followingCount ?? 0) > 0}
+                        hideSuggestions={(followingCount ?? 0) === 0}
+                      />
+                    </div>
+                  ) : (
+                    <FeedMosaic
+                      items={v2Items}
+                      followingCount={followingCount ?? 0}
+                      onLike={handleV2Like}
+                      onImageLike={handleV2ImageLike}
+                    />
+                  )}
                   {(v2CollectionsQuery.isLoading || v2DiscoveryQuery.isLoading || v2ExtendedQuery.isLoading || v2SpotlightsQuery.isLoading || v2EditorialQuery.isLoading) && (
                     <div className="flex justify-center py-8">
                       <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
