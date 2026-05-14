@@ -66,7 +66,7 @@ describe("mergeFeedSources", () => {
     const collections: FeedItem[] = [];
     const discovery: FeedItem[] = [makePost("disc-1", 2.0, "open", "bob", "b2")];
 
-    const result = mergeFeedSources(social, collections, discovery, noSeen);
+    const result = mergeFeedSources(social, collections, discovery, [], noSeen);
 
     expect(result[0].id).toBe("social-1");
     expect(result[1].id).toBe("disc-1");
@@ -77,7 +77,7 @@ describe("mergeFeedSources", () => {
     const collections: FeedItem[] = [makeCollection("c1", 0.5)];
     const discovery: FeedItem[] = [makePost("d", 0.8, "open", "bob", "b2")];
 
-    const result = mergeFeedSources(social, collections, discovery, noSeen);
+    const result = mergeFeedSources(social, collections, discovery, [], noSeen);
 
     expect(result).toHaveLength(3);
     const ids = result.map((r) => r.id);
@@ -91,7 +91,7 @@ describe("mergeFeedSources", () => {
     const collections: FeedItem[] = [makeCollection("col-1", 0.9), makeCollection("col-2", 0.7)];
     const discovery: FeedItem[] = [makePost("disc-1", 0.5, "open", "bob", "b3")];
 
-    const result = mergeFeedSources(social, collections, discovery, noSeen);
+    const result = mergeFeedSources(social, collections, discovery, [], noSeen);
 
     expect(result).toHaveLength(3);
     // collections are ring='direct' (multiplier 3.0); disc is ring='open' (multiplier 1.0)
@@ -114,14 +114,69 @@ describe("mergeFeedSources", () => {
     // "seen-post" has score 1.0 × ring(3.0) = 3.0, but seen ×0.3 = 0.9
     // "fresh-post" has score 0.5 × ring(3.0) = 1.5 → beats seen-post
     const hasSeen = (id: string) => id === "seen-post";
-    const result = mergeFeedSources(social, collections, discovery, hasSeen);
+    const result = mergeFeedSources(social, collections, discovery, [], hasSeen);
 
     expect(result[0].id).toBe("fresh-post");
     expect(result[1].id).toBe("seen-post");
   });
 
   it("returns empty array when all sources are empty", () => {
-    const result = mergeFeedSources([], [], [], noSeen);
+    const result = mergeFeedSources([], [], [], [], noSeen);
     expect(result).toHaveLength(0);
+  });
+
+  // ── Phase 4: ring-2 (extended) tests ──────────────────────────────────────
+
+  it("extended items appear in output when passed as 4th argument", () => {
+    const extended: FeedItem[] = [makePost("ext-1", 0.5, "extended", "carol", "b5")];
+
+    const result = mergeFeedSources([], [], [], extended, noSeen);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("ext-1");
+    expect(result[0].ring).toBe("extended");
+  });
+
+  it("extended items score lower than direct items with equal raw scores (ring multiplier 1.5 < 3.0)", () => {
+    // Both have raw score 1.0. After ring multiplier:
+    //   direct:   1.0 × 3.0 = 3.0
+    //   extended: 1.0 × 1.5 = 1.5
+    // Direct post should rank first.
+    const social: FeedItem[] = [makePost("direct-1", 1.0, "direct", "alice", "b1")];
+    const extended: FeedItem[] = [makePost("ext-1", 1.0, "extended", "carol", "b5")];
+
+    const result = mergeFeedSources(social, [], [], extended, noSeen);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe("direct-1");
+    expect(result[1].id).toBe("ext-1");
+  });
+
+  it("extended items with high raw score can outrank open (discovery) items (1.5 > 1.0)", () => {
+    // extended: 1.0 × 1.5 = 1.5  >  open: 1.0 × 1.0 = 1.0
+    const discovery: FeedItem[] = [makePost("disc-1", 1.0, "open", "bob", "b2")];
+    const extended: FeedItem[] = [makePost("ext-1", 1.0, "extended", "carol", "b5")];
+
+    const result = mergeFeedSources([], [], discovery, extended, noSeen);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].id).toBe("ext-1");
+    expect(result[1].id).toBe("disc-1");
+  });
+
+  it("all four sources are included in the merged output", () => {
+    const social: FeedItem[] = [makePost("s1", 1.0, "direct", "alice", "b1")];
+    const collections: FeedItem[] = [makeCollection("col-1", 0.5)];
+    const discovery: FeedItem[] = [makePost("d1", 0.4, "open", "bob", "b2")];
+    const extended: FeedItem[] = [makePost("e1", 0.3, "extended", "carol", "b3")];
+
+    const result = mergeFeedSources(social, collections, discovery, extended, noSeen);
+
+    expect(result).toHaveLength(4);
+    const ids = result.map((r) => r.id);
+    expect(ids).toContain("s1");
+    expect(ids).toContain("col-1");
+    expect(ids).toContain("d1");
+    expect(ids).toContain("e1");
   });
 });

@@ -265,7 +265,7 @@ A unified `get_feed_unified` RPC (or — the agent decides — three parallel RP
 
 ---
 
-## [ ] Phase 3 — Masonry mosaic surface (5–7 days)
+## [x] Phase 3 — Masonry mosaic surface (5–7 days)
 
 **Goal:** Replace the uniform list of cards with a tile-based grid where tile size is proportional to score. By the end of this phase, the feed visually looks like a gallery, not a microblog. This is the largest visual change in the rebuild.
 
@@ -336,7 +336,7 @@ A new `<FeedMosaic>` component replacing the current `<ActivityStream>` layout. 
 
 ---
 
-## [ ] Phase 4 — Second-degree ring (3–4 days)
+## [x] Phase 4 — Second-degree ring (3–4 days)
 
 **Goal:** Add ring-2 candidates to the feed: posts liked or saved by users the viewer follows. By the end of this phase, a user sees content from outside their direct graph attributed as "Liked by Anna, who you follow." This is the discovery primitive that makes the feed valuable for users with sparse-to-moderate graphs.
 
