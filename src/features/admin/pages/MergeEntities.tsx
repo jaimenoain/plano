@@ -7,17 +7,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Loader2, 
-  Merge, 
-  RefreshCw, 
-  Building2, 
-  User, 
-  Briefcase, 
-  MapPin, 
+import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Loader2,
+  Merge,
+  RefreshCw,
+  Building2,
+  User,
+  Briefcase,
+  MapPin,
   Search,
   ArrowRightLeft,
-  ChevronRight
+  ChevronRight,
+  Play,
+  SlidersHorizontal
 } from "lucide-react";
 import { toast } from "sonner";
 import { EntityType, MergeEntity } from "../types/merge";
@@ -55,9 +59,18 @@ export default function MergeEntities() {
   // Potential Duplicates State
   const [potentialDuplicates, setPotentialDuplicates] = useState<PotentialDuplicate[]>([]);
   const [loadingPotential, setLoadingPotential] = useState(false);
+  const [duplicateQueryRan, setDuplicateQueryRan] = useState(false);
+  const [duplicateUnavailable, setDuplicateUnavailable] = useState(false);
+
+  // Query parameters
+  const [threshold, setThreshold] = useState(0.7);
+  const [limitCount, setLimitCount] = useState("20");
 
   useEffect(() => {
-    fetchPotentialDuplicates();
+    // Reset duplicate results and query state when type changes
+    setPotentialDuplicates([]);
+    setDuplicateQueryRan(false);
+    setDuplicateUnavailable(false);
     // Reset selections when type changes
     setSelectedMaster(null);
     setSelectedDup(null);
@@ -65,25 +78,36 @@ export default function MergeEntities() {
     setDupSearch("");
   }, [activeType]);
 
+  const rpcNameForType: Partial<Record<EntityType, string>> = {
+    building: "get_potential_duplicates",
+    person: "get_potential_duplicate_people",
+    company: "get_potential_duplicate_companies",
+    locality: "get_potential_duplicate_localities",
+  };
+
   const fetchPotentialDuplicates = async () => {
-    if (activeType !== "building") {
-      setPotentialDuplicates([]);
+    const rpcName = rpcNameForType[activeType];
+    if (!rpcName) {
+      setDuplicateUnavailable(true);
       return;
     }
-    
+
     setLoadingPotential(true);
+    setDuplicateUnavailable(false);
     try {
-      const { data, error } = await supabase.rpc('get_potential_duplicates', {
-        limit_count: 20,
-        similarity_threshold: 0.7
+      const { data, error } = await supabase.rpc(rpcName as any, {
+        limit_count: parseInt(limitCount),
+        similarity_threshold: threshold,
       });
       if (error) throw error;
-      setPotentialDuplicates(data as PotentialDuplicate[]);
+      setPotentialDuplicates((data as PotentialDuplicate[]) ?? []);
     } catch (_error) {
-      // Gracefully handle if RPC missing
+      // RPC not available for this entity type
+      setDuplicateUnavailable(true);
       setPotentialDuplicates([]);
     } finally {
       setLoadingPotential(false);
+      setDuplicateQueryRan(true);
     }
   };
 
@@ -361,79 +385,213 @@ export default function MergeEntities() {
         )}
       </AnimatePresence>
 
-      {/* Potential Duplicates List - Only for buildings for now */}
-      {activeType === "building" && (
-        <div className="space-y-6 pt-12 border-t-2 border-border-default/50">
-          <div className="flex justify-between items-center">
-            <h3 className="text-2xl font-black flex items-center gap-2">
-              Potential Duplicates
-              <Badge variant="outline" className="ml-2 font-mono">{potentialDuplicates.length}</Badge>
+      {/* Duplicate Detection Query Runner */}
+      <div className="space-y-6 pt-12 border-t-2 border-border-default/50">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h3 className="text-2xl font-black flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-brand-primary/10 flex items-center justify-center border border-brand-primary/20">
+                <Search className="w-4 h-4 text-brand-primary" />
+              </div>
+              Duplicate Detection
+              {duplicateQueryRan && !duplicateUnavailable && (
+                <Badge variant="outline" className="ml-1 font-mono">{potentialDuplicates.length} found</Badge>
+              )}
             </h3>
-            <Button 
-              variant="outline" 
+            <p className="text-sm text-text-secondary">
+              Run a name-similarity scan across {activeType} records to surface potential duplicates.
+            </p>
+          </div>
+
+          {duplicateQueryRan && !duplicateUnavailable && (
+            <Button
+              variant="outline"
               size="sm"
-              onClick={fetchPotentialDuplicates} 
+              onClick={fetchPotentialDuplicates}
               disabled={loadingPotential}
-              className="rounded-full h-9"
+              className="rounded-full h-9 shrink-0"
             >
               <RefreshCw className={`mr-2 h-3.5 w-3.5 ${loadingPotential ? "animate-spin" : ""}`} />
-              Rescan System
+              Re-run
             </Button>
-          </div>
-          
-          <ScrollArea className="h-[400px] rounded-2xl border-2 border-border-default/50 bg-surface-card/30 backdrop-blur-sm overflow-hidden">
-            {potentialDuplicates.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-[390px] text-text-secondary space-y-4">
-                <div className="w-16 h-16 rounded-full bg-surface-muted flex items-center justify-center">
-                   <Search className="w-8 h-8 opacity-20" />
+          )}
+        </div>
+
+        {/* Query Parameters */}
+        <Card className="bg-surface-card/60 border border-border-default/60 rounded-2xl">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-5 text-xs font-black text-text-secondary uppercase tracking-widest">
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              Query Parameters
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-[1fr,auto,auto] gap-6 items-end">
+              {/* Similarity Threshold */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-semibold text-text-primary">Similarity Threshold</label>
+                  <span className="text-sm font-black tabular-nums text-brand-primary bg-brand-primary/10 px-2.5 py-0.5 rounded-full border border-brand-primary/20">
+                    {Math.round(threshold * 100)}%
+                  </span>
                 </div>
-                <p className="font-medium opacity-50">
-                  {loadingPotential ? "Analyzing records..." : "No highly similar records detected."}
-                </p>
+                <Slider
+                  min={0.5}
+                  max={0.99}
+                  step={0.01}
+                  value={[threshold]}
+                  onValueChange={([v]) => setThreshold(v)}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-[10px] text-text-secondary opacity-50">
+                  <span>50% — more results</span>
+                  <span>99% — near-exact only</span>
+                </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
-                {potentialDuplicates.map((pair, idx) => (
-                  <motion.div 
-                    key={idx}
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="group flex flex-col p-4 bg-surface-card border rounded-xl hover:border-brand-primary/40 hover:shadow-lg transition-all"
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex flex-col max-w-[40%]">
-                        <span className="text-sm font-bold truncate text-text-primary">{pair.name1}</span>
-                        <span className="text-[10px] font-mono text-text-secondary">{pair.id1.slice(0, 8)}</span>
-                      </div>
-                      
-                      <div className="flex flex-col items-center">
-                        <div className="text-[10px] font-black text-brand-primary uppercase tracking-tighter mb-0.5">Similarity</div>
-                        <div className="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-xs font-black border border-brand-primary/20">
-                          {Math.round(pair.score * 100)}%
+
+              {/* Limit */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-text-primary">Max Results</label>
+                <Select value={limitCount} onValueChange={setLimitCount}>
+                  <SelectTrigger className="w-28 bg-surface-card border-2 rounded-xl h-10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["10", "20", "50", "100"].map(v => (
+                      <SelectItem key={v} value={v}>{v} pairs</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Run Button */}
+              <Button
+                onClick={fetchPotentialDuplicates}
+                disabled={loadingPotential}
+                className="h-10 px-6 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl font-bold gap-2 shadow-lg shadow-brand-primary/20 transition-all hover:scale-105 active:scale-95"
+              >
+                {loadingPotential ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Play className="w-4 h-4" />
+                )}
+                {loadingPotential ? "Scanning..." : "Run Query"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Results */}
+        <AnimatePresence mode="wait">
+          {!duplicateQueryRan && !loadingPotential && (
+            <motion.div
+              key="idle"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center py-16 text-text-secondary opacity-40 space-y-3"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-surface-muted flex items-center justify-center">
+                <Play className="w-7 h-7" />
+              </div>
+              <p className="text-sm font-medium">Configure parameters above and run the query</p>
+            </motion.div>
+          )}
+
+          {loadingPotential && (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center py-16 space-y-4"
+            >
+              <Loader2 className="w-10 h-10 animate-spin text-brand-primary" />
+              <p className="text-sm font-medium text-text-secondary animate-pulse">Scanning {activeType} records for similar names…</p>
+            </motion.div>
+          )}
+
+          {duplicateQueryRan && !loadingPotential && duplicateUnavailable && (
+            <motion.div
+              key="unavailable"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center py-14 text-text-secondary space-y-3"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-surface-muted flex items-center justify-center opacity-40">
+                <Search className="w-6 h-6" />
+              </div>
+              <p className="font-medium opacity-50 text-sm">Duplicate detection is not yet available for {activeType} records.</p>
+              <p className="text-xs opacity-30">A <code className="font-mono">get_potential_duplicate_{activeType}s</code> database function is needed.</p>
+            </motion.div>
+          )}
+
+          {duplicateQueryRan && !loadingPotential && !duplicateUnavailable && potentialDuplicates.length === 0 && (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center py-14 text-text-secondary space-y-3"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-surface-muted flex items-center justify-center opacity-40">
+                <Search className="w-6 h-6" />
+              </div>
+              <p className="font-medium opacity-50 text-sm">No matches above {Math.round(threshold * 100)}% similarity — try lowering the threshold.</p>
+            </motion.div>
+          )}
+
+          {duplicateQueryRan && !loadingPotential && !duplicateUnavailable && potentialDuplicates.length > 0 && (
+            <motion.div
+              key="results"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <ScrollArea className="h-[420px] rounded-2xl border-2 border-border-default/50 bg-surface-card/30 backdrop-blur-sm overflow-hidden">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
+                  {potentialDuplicates.map((pair, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: idx * 0.03 }}
+                      className="group flex flex-col p-4 bg-surface-card border rounded-xl hover:border-brand-primary/40 hover:shadow-lg transition-all"
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex flex-col max-w-[40%]">
+                          <span className="text-sm font-bold truncate text-text-primary">{pair.name1}</span>
+                          <span className="text-[10px] font-mono text-text-secondary">{pair.id1.slice(0, 8)}</span>
+                        </div>
+
+                        <div className="flex flex-col items-center">
+                          <div className="text-[10px] font-black text-brand-primary uppercase tracking-tighter mb-0.5">Similarity</div>
+                          <div className="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-xs font-black border border-brand-primary/20">
+                            {Math.round(pair.score * 100)}%
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col max-w-[40%] text-right">
+                          <span className="text-sm font-bold truncate text-text-primary">{pair.name2}</span>
+                          <span className="text-[10px] font-mono text-text-secondary">{pair.id2.slice(0, 8)}</span>
                         </div>
                       </div>
-                      
-                      <div className="flex flex-col max-w-[40%] text-right">
-                        <span className="text-sm font-bold truncate text-text-primary">{pair.name2}</span>
-                        <span className="text-[10px] font-mono text-text-secondary">{pair.id2.slice(0, 8)}</span>
-                      </div>
-                    </div>
-                    
-                    <Button 
-                      className="w-full h-9 bg-surface-muted hover:bg-brand-primary hover:text-white text-text-primary text-xs font-bold transition-all border-none"
-                      onClick={() => navigate(`/admin/merge/${activeType}/${pair.id1}/${pair.id2}`)}
-                    >
-                      Analyze & Merge
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-        </div>
-      )}
+
+                      <Button
+                        className="w-full h-9 bg-surface-muted hover:bg-brand-primary hover:text-white text-text-primary text-xs font-bold transition-all border-none"
+                        onClick={() => navigate(`/admin/merge/${activeType}/${pair.id1}/${pair.id2}`)}
+                      >
+                        Analyze & Merge
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </motion.div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
