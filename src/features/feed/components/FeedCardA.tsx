@@ -200,7 +200,7 @@ export function FeedCardA({
                     Read the full review
                   </span>
                   {" "}
-                  <span className="transition-colors inline-block group-hover/readmore:translate-x-0.5 group-hover/readmore:text-brand-accent">
+                  <span className="inline-block group-hover/readmore:translate-x-0.5 transition-transform">
                     →
                   </span>
                 </button>

@@ -1,6 +1,9 @@
 import { assembleMosaicItems } from "@/features/feed/utils/assembleMosaicItems";
+import { deriveLegacyFeedUi } from "@/features/feed/utils/deriveLegacyFeedUi";
 import type { FeedItem } from "@/types/feedItem";
-import { FeedCard } from "./FeedCard";
+import { FeedCardA } from "./FeedCardA";
+import { FeedCardB } from "./FeedCardB";
+import { FeedCardC } from "./FeedCardC";
 import { FeedCollectionCard } from "./FeedCollectionCard";
 import { BuildingSpotlightCard } from "./BuildingSpotlightCard";
 import { EditorialCard } from "./EditorialCard";
@@ -51,7 +54,7 @@ export function FeedMosaic({ items, followingCount, onLike, onImageLike }: FeedM
   const [dismissed, setDismissed] = useState(
     () => localStorage.getItem(FOLLOW_NUDGE_DISMISSED_KEY) === "1",
   );
-  const orderedItems = assembleMosaicItems(items).map((m) => m.item);
+  const mosaicItems = assembleMosaicItems(items);
   const showNudge = !dismissed && followingCount < FOLLOW_NUDGE_THRESHOLD;
 
   function handleDismiss() {
@@ -63,7 +66,7 @@ export function FeedMosaic({ items, followingCount, onLike, onImageLike }: FeedM
     <div>
       {showNudge && <FollowNudgeBanner onDismiss={handleDismiss} />}
       <div className="divide-y divide-border-default">
-        {orderedItems.map((item) => {
+        {mosaicItems.map(({ item }) => {
           if (item.kind === "prompt") {
             return (
               <div key={item.id} className="px-5 py-8 md:px-10">
@@ -73,13 +76,17 @@ export function FeedMosaic({ items, followingCount, onLike, onImageLike }: FeedM
           }
 
           if (item.kind === "post") {
+            const entry = item.payload;
+            const { layout } = deriveLegacyFeedUi(entry);
             return (
               <div key={item.id} className="px-5 py-10 md:px-8">
-                <FeedCard
-                  entry={item.payload}
-                  onLike={onLike}
-                  onImageLike={onImageLike}
-                />
+                {layout === "compact-stack" || layout === "text-forward" ? (
+                  <FeedCardA entry={entry} onLike={onLike} />
+                ) : layout === "balanced" ? (
+                  <FeedCardB entry={entry} onLike={onLike} onImageLike={onImageLike} />
+                ) : (
+                  <FeedCardC entry={entry} onLike={onLike} onImageLike={onImageLike} />
+                )}
               </div>
             );
           }
