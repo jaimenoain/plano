@@ -50,7 +50,7 @@ The portal lives at `/embassy` and comprises five screens. Role-based visibility
 
 ---
 
-## [ ] Phase 1 — Portal foundation
+## [x] Phase 1 — Portal foundation
 
 **Complexity: low — primarily frontend over existing RPCs**
 
@@ -88,10 +88,10 @@ Phase 1 delivers a complete, working portal. Every screen is present. The only t
 | [x] 3. Data & research tool | Pure frontend over an existing RPC. Quick win that delivers real value to researcher ambassadors. |
 | [x] 4. Architect outreach tool | Frontend over existing RPC + one small new table (`outreach_log`). Can ship without the log table initially if needed. |
 | [x] 5. Onboarding flow | Requires `contributor_type` field on `ambassador_memberships`. Straightforward once the portal shell exists. |
-| [ ] 6. Chapter projects board | Requires the `chapter_projects` table. The most "social" feature — worth getting right rather than rushing. |
-| [ ] 7. My goals + leaderboard | Requires the `ambassador_goals` table and the audit log query. Can be developed in parallel with step 6. |
-| [ ] 8. Curation + community tools | Simplest tools. Build last in Phase 1 to ensure the higher-value tools are solid first. |
-| [ ] 9. Photography tool (list placeholder) | Trivial once the portal shell exists — same data as Data & research, different filter. Needed so the Contribute hub feels complete. |
+| [x] 6. Chapter projects board | Requires the `chapter_projects` table. The most "social" feature — worth getting right rather than rushing. |
+| [x] 7. My goals + leaderboard | Requires the `ambassador_goals` table and the audit log query. Can be developed in parallel with step 6. |
+| [x] 8. Curation + community tools | Simplest tools. Build last in Phase 1 to ensure the higher-value tools are solid first. |
+| [x] 9. Photography tool (list placeholder) | Trivial once the portal shell exists — same data as Data & research, different filter. Needed so the Contribute hub feels complete. |
 
 ---
 

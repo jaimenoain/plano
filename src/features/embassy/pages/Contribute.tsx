@@ -2,14 +2,27 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchAmbassadorBuildingsMissingMetadata, fetchAmbassadorUnclaimedFirms, type AmbassadorBuildingMissingMeta, type AmbassadorUnclaimedFirm } from "@/features/embassy/api/taskFeed";
+import { 
+  fetchAmbassadorBuildingsMissingMetadata, 
+  fetchAmbassadorUnclaimedFirms, 
+  fetchAmbassadorRecentBuildings,
+  fetchAmbassadorBuildingsWithoutPhotos,
+  type AmbassadorBuildingMissingMeta, 
+  type AmbassadorUnclaimedFirm,
+  type AmbassadorRecentBuilding,
+  type AmbassadorBuildingNoPhoto
+} from "@/features/embassy/api/taskFeed";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router";
-import { Building2, Search, ArrowLeft, Filter, CheckCircle2, AlertCircle, MessageSquare, History, Check, Loader2 } from "lucide-react";
+import { 
+  Building2, Search, ArrowLeft, Filter, CheckCircle2, 
+  AlertCircle, MessageSquare, History, Check, Loader2,
+  Camera, Sparkles, UserPlus, ExternalLink, Map
+} from "lucide-react";
 import { getBuildingUrl } from "@/utils/url";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -17,7 +30,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-type ToolType = "research" | "photography" | "outreach" | "curation" | "projects" | null;
+type ToolType = "research" | "photography" | "outreach" | "curation" | "community" | null;
 
 export default function ContributePage() {
   const { user } = useAuth();
@@ -48,8 +61,16 @@ export default function ContributePage() {
     return <ArchitectOutreachTool chapterId={chapterId} onBack={() => setActiveTool(null)} />;
   }
 
+  if (activeTool === "photography" && chapterId) {
+    return <PhotographyTool chapterId={chapterId} onBack={() => setActiveTool(null)} />;
+  }
+
+  if (activeTool === "curation" && chapterId) {
+    return <CurationTool chapterId={chapterId} onBack={() => setActiveTool(null)} />;
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-20">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Contribute</h1>
         <p className="text-muted-foreground">
@@ -63,8 +84,16 @@ export default function ContributePage() {
           title="Data & Research"
           description="Complete missing metadata like architects, completion years, and styles."
           icon={<Search className="h-6 w-6" />}
-          count={null}
           onClick={() => setActiveTool("research")}
+          active
+        />
+
+        {/* Photography Tool */}
+        <ToolCard
+          title="Photography"
+          description="Find buildings that need photos and help document them visually."
+          icon={<Camera className="h-6 w-6" />}
+          onClick={() => setActiveTool("photography")}
           active
         />
 
@@ -73,44 +102,43 @@ export default function ContributePage() {
           title="Architect Outreach"
           description="Help firms claim their portfolio and verify their credits."
           icon={<CheckCircle2 className="h-6 w-6" />}
-          count={null}
           onClick={() => setActiveTool("outreach")}
           active
         />
 
-        {/* Placeholder Tools */}
-        <ToolCard
-          title="Photography"
-          description="Find buildings that need photos and help document them visually."
-          icon={<Building2 className="h-6 w-6" />}
-          count={null}
-          onClick={() => {}} // Active in later steps
-          active={false}
-          comingSoon
-        />
-
+        {/* Curation Tool */}
         <ToolCard
           title="Curation"
           description="Review tags, group buildings into collections, and highlight gems."
           icon={<Filter className="h-6 w-6" />}
-          count={null}
-          onClick={() => {}}
-          active={false}
-          comingSoon
+          onClick={() => setActiveTool("curation")}
+          active
         />
+
+        {/* Community Tool */}
+        <ToolCard
+          title="Grow Community"
+          description="Invite architects and firms in your area to join Plano."
+          icon={<UserPlus className="h-6 w-6" />}
+          onClick={() => {}} // Simple enough for a direct link or modal in next step
+          asChild
+        >
+          <Link to="/connect">Open Connect</Link>
+        </ToolCard>
       </div>
     </div>
   );
 }
 
-function ToolCard({ title, description, icon, count, onClick, active, comingSoon }: { 
+function ToolCard({ title, description, icon, onClick, active = true, comingSoon, children, asChild }: { 
   title: string; 
   description: string; 
   icon: React.ReactNode; 
-  count: number | null;
-  onClick: () => void;
-  active: boolean;
+  onClick?: () => void;
+  active?: boolean;
   comingSoon?: boolean;
+  children?: React.ReactNode;
+  asChild?: boolean;
 }) {
   return (
     <Card 
@@ -118,7 +146,7 @@ function ToolCard({ title, description, icon, count, onClick, active, comingSoon
         "relative flex flex-col p-6 transition-all",
         active ? "hover:border-brand-primary cursor-pointer border-border-default shadow-sm" : "opacity-60 border-dashed"
       )}
-      onClick={active ? onClick : undefined}
+      onClick={!asChild && active ? onClick : undefined}
     >
       <div className="flex items-start justify-between mb-4">
         <div className={cn(
@@ -127,23 +155,26 @@ function ToolCard({ title, description, icon, count, onClick, active, comingSoon
         )}>
           {icon}
         </div>
-        {count !== null && active && (
-          <Badge variant="secondary" className="font-semibold">{count}</Badge>
-        )}
         {comingSoon && (
           <Badge variant="outline" className="text-[10px] uppercase tracking-wider">Coming Soon</Badge>
         )}
       </div>
       <h3 className="text-lg font-semibold mb-2">{title}</h3>
       <p className="text-sm text-muted-foreground mb-6 flex-1">{description}</p>
-      <Button 
-        variant={active ? "default" : "secondary"} 
-        size="sm" 
-        className="w-full mt-auto"
-        disabled={!active}
-      >
-        {active ? "Open Tool" : "Locked"}
-      </Button>
+      {asChild ? (
+        <Button asChild variant="default" size="sm" className="w-full mt-auto">
+          {children}
+        </Button>
+      ) : (
+        <Button 
+          variant={active ? "default" : "secondary"} 
+          size="sm" 
+          className="w-full mt-auto"
+          disabled={!active}
+        >
+          {active ? "Open Tool" : "Locked"}
+        </Button>
+      )}
     </Card>
   );
 }
@@ -317,7 +348,7 @@ function ArchitectOutreachTool({ chapterId, onBack }: { chapterId: string; onBac
       queryClient.invalidateQueries({ queryKey: ["embassy-outreach-logs"] });
     },
     onError: () => {
-      toast.error("Failed to log outreach. Make sure the database migration has been applied.");
+      toast.error("Failed to log outreach.");
     }
   });
 
@@ -451,3 +482,124 @@ function ArchitectOutreachTool({ chapterId, onBack }: { chapterId: string; onBac
   );
 }
 
+function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () => void }) {
+  const { data: buildings, isLoading, error } = useQuery({
+    queryKey: ["embassy-buildings-no-photo", chapterId],
+    queryFn: () => fetchAmbassadorBuildingsWithoutPhotos(chapterId),
+    enabled: !!chapterId,
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={onBack}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold tracking-tight">Photography</h1>
+          <p className="text-sm text-muted-foreground">Find buildings that don't have images yet.</p>
+        </div>
+      </div>
+
+      <div className="bg-brand-primary/5 border border-brand-primary/20 rounded-xl p-4 flex items-center gap-3">
+        <Map className="h-5 w-5 text-brand-primary shrink-0" />
+        <p className="text-sm text-brand-primary font-medium">
+          The Photography Map (Phase 2) will soon allow you to find these on a map.
+        </p>
+      </div>
+
+      {isLoading ? (
+        <div className="grid gap-4">
+          {[0, 1, 2].map(i => <Skeleton key={i} className="h-28 w-full rounded-xl" />)}
+        </div>
+      ) : error ? (
+        <div className="p-8 text-center border rounded-xl bg-destructive/5 text-destructive">
+          <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+          <p>Failed to load photography tasks.</p>
+        </div>
+      ) : buildings?.length === 0 ? (
+        <div className="p-12 text-center border border-dashed rounded-xl">
+          <Camera className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+          <p className="text-lg font-medium">All photographed!</p>
+          <p className="text-sm text-muted-foreground">Every building in your chapter has at least one photo.</p>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {buildings?.map((b) => (
+            <Card key={b.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group hover:border-brand-primary transition-all">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold truncate">{b.name}</h3>
+                <p className="text-xs text-muted-foreground">{b.city || b.country || "Global"}</p>
+              </div>
+              <Button size="sm" asChild>
+                <Link to={getBuildingUrl(b.id, b.slug, b.short_id)}>
+                  View Building
+                </Link>
+              </Button>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => void }) {
+  const { data: buildings, isLoading, error } = useQuery({
+    queryKey: ["embassy-recent-buildings", chapterId],
+    queryFn: () => fetchAmbassadorRecentBuildings(chapterId),
+    enabled: !!chapterId,
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={onBack}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold tracking-tight">Curation</h1>
+          <p className="text-sm text-muted-foreground">Review recently added buildings and ensure they meet quality standards.</p>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="grid gap-4">
+          {[0, 1, 2].map(i => <Skeleton key={i} className="h-28 w-full rounded-xl" />)}
+        </div>
+      ) : error ? (
+        <div className="p-8 text-center border rounded-xl bg-destructive/5 text-destructive">
+          <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+          <p>Failed to load curation tasks.</p>
+        </div>
+      ) : buildings?.length === 0 ? (
+        <div className="p-12 text-center border border-dashed rounded-xl">
+          <Sparkles className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+          <p className="text-lg font-medium">Clear for now</p>
+          <p className="text-sm text-muted-foreground">No new buildings have been added recently.</p>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {buildings?.map((b) => (
+            <Card key={b.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group hover:border-brand-primary transition-all">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-semibold truncate">{b.name}</h3>
+                  <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground">
+                    New
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground">Added by @{b.added_by_username || "anonymous"}</p>
+              </div>
+              <Button size="sm" asChild>
+                <Link to={getBuildingUrl(b.id, b.slug, b.short_id)}>
+                  Review
+                </Link>
+              </Button>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
