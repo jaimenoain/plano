@@ -99,6 +99,10 @@ export interface MapFilters {
   maxSizeSqm?: number;
   minStoreys?: number;
   maxStoreys?: number;
+
+  // Photography Gaps (Phase 2)
+  photographyGaps?: boolean;
+  gapPhotoCounts?: number[];
 }
 
 export interface MapState {

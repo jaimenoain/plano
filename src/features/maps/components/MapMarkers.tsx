@@ -11,6 +11,8 @@ import type { CollectionMarkerCategory } from '@/features/collections/types';
 import '../../../App.css';
 import { getBuildingUrl } from '@/utils/url';
 
+import { useMapContext } from '../providers/MapContext';
+
 interface MapMarkersProps {
   clusters: ClusterResponse[];
   highlightedId?: string | null;
@@ -27,6 +29,7 @@ export function MapMarkers({
   onAddCandidate
 }: MapMarkersProps) {
   const { current: map } = useMap();
+  const { state: { filters } } = useMapContext();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Ref to retain the currently highlighted cluster even if it disappears from the backend clusters array
@@ -102,7 +105,7 @@ export function MapMarkers({
         const isCluster = cluster.is_cluster;
         const buildingUrl = !isCluster ? getBuildingUrl(String(cluster.id), cluster.slug) : '#';
 
-        let pinStyle = getPinStyle(cluster);
+        let pinStyle = getPinStyle(cluster, { photographyGaps: filters.photographyGaps });
 
         // Itinerary overrides
         const itinerarySequence = cluster.itinerary_sequence;

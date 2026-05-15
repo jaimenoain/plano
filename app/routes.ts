@@ -94,9 +94,11 @@ export default [
     route("/notifications", "features/notifications/pages/Notifications.tsx"),
     route("/support", "features/ambassadors/pages/SupportPage.tsx"),
     route("/become-ambassador", "features/ambassadors/pages/BecomeAmbassador.tsx"),
-    layout("features/embassy/components/EmbassyLayout.tsx", [
-      index("features/embassy/pages/Contribute.tsx"),
-      route("contribute", "features/embassy/pages/Contribute.tsx"),
+    route("embassy", "features/embassy/components/EmbassyLayout.tsx", [
+      index("features/embassy/pages/Contribute.tsx", { id: "embassy-index" }),
+      route("contribute", "features/embassy/pages/Contribute.tsx", {
+        id: "embassy-contribute",
+      }),
       route("goals", "features/embassy/pages/MyGoals.tsx"),
       route("projects", "features/embassy/pages/ChapterProjects.tsx"),
       route("leadership", "features/embassy/pages/Leadership.tsx"),

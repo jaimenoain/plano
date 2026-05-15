@@ -29,6 +29,9 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext";
+import { PlanoMap } from "@/features/maps/components/PlanoMap";
+import { List } from "lucide-react";
 
 type ToolType = "research" | "photography" | "outreach" | "curation" | "community" | null;
 
@@ -62,7 +65,11 @@ export default function ContributePage() {
   }
 
   if (activeTool === "photography" && chapterId) {
-    return <PhotographyTool chapterId={chapterId} onBack={() => setActiveTool(null)} />;
+    return (
+      <MapProvider>
+        <PhotographyTool chapterId={chapterId} onBack={() => setActiveTool(null)} />
+      </MapProvider>
+    );
   }
 
   if (activeTool === "curation" && chapterId) {
@@ -483,61 +490,137 @@ function ArchitectOutreachTool({ chapterId, onBack }: { chapterId: string; onBac
 }
 
 function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () => void }) {
+  const [view, setView] = useState<"list" | "map">("map");
+  const { state: { filters }, methods: { setFilter } } = useMapContext();
+  
   const { data: buildings, isLoading, error } = useQuery({
     queryKey: ["embassy-buildings-no-photo", chapterId],
     queryFn: () => fetchAmbassadorBuildingsWithoutPhotos(chapterId),
-    enabled: !!chapterId,
+    enabled: !!chapterId && view === "list",
   });
 
+  // Photography map is always active in Photography mode
+  useEffect(() => {
+    if (view === "map") {
+      setFilter("photographyGaps", true);
+      // Default to "All gaps" if none selected
+      if (!filters.gapPhotoCounts || filters.gapPhotoCounts.length === 0) {
+        setFilter("gapPhotoCounts", [0, 1]); // Show 0 and 1-2 photos by default as "gaps"
+      }
+    } else {
+      setFilter("photographyGaps", false);
+    }
+  }, [view, setFilter]);
+
+  const gapFilters = [
+    { label: "No photos", value: 0 },
+    { label: "Fewer than 3", value: 1 },
+    { label: "3+ photos", value: 3 },
+  ];
+
+  const toggleGapFilter = (val: number) => {
+    const current = filters.gapPhotoCounts || [];
+    if (current.includes(val)) {
+      setFilter("gapPhotoCounts", current.filter(v => v !== val));
+    } else {
+      setFilter("gapPhotoCounts", [...current, val]);
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={onBack}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold tracking-tight">Photography</h1>
-          <p className="text-sm text-muted-foreground">Find buildings that don't have images yet.</p>
+    <div className="flex flex-col h-[calc(100vh-12rem)] min-h-[500px]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 shrink-0">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Photography</h1>
+            <p className="text-sm text-muted-foreground">Find buildings that need images.</p>
+          </div>
+        </div>
+
+        <div className="flex items-center bg-muted p-1 rounded-lg">
+          <Button 
+            variant={view === "map" ? "background" : "ghost"} 
+            size="sm" 
+            onClick={() => setView("map")}
+            className={cn("gap-2", view === "map" && "bg-surface-card shadow-sm")}
+          >
+            <Map className="h-4 w-4" />
+            Map
+          </Button>
+          <Button 
+            variant={view === "list" ? "background" : "ghost"} 
+            size="sm" 
+            onClick={() => setView("list")}
+            className={cn("gap-2", view === "list" && "bg-surface-card shadow-sm")}
+          >
+            <List className="h-4 w-4" />
+            List
+          </Button>
         </div>
       </div>
 
-      <div className="bg-brand-primary/5 border border-brand-primary/20 rounded-xl p-4 flex items-center gap-3">
-        <Map className="h-5 w-5 text-brand-primary shrink-0" />
-        <p className="text-sm text-brand-primary font-medium">
-          The Photography Map (Phase 2) will soon allow you to find these on a map.
-        </p>
-      </div>
-
-      {isLoading ? (
-        <div className="grid gap-4">
-          {[0, 1, 2].map(i => <Skeleton key={i} className="h-28 w-full rounded-xl" />)}
-        </div>
-      ) : error ? (
-        <div className="p-8 text-center border rounded-xl bg-destructive/5 text-destructive">
-          <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-          <p>Failed to load photography tasks.</p>
-        </div>
-      ) : buildings?.length === 0 ? (
-        <div className="p-12 text-center border border-dashed rounded-xl">
-          <Camera className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-          <p className="text-lg font-medium">All photographed!</p>
-          <p className="text-sm text-muted-foreground">Every building in your chapter has at least one photo.</p>
+      {view === "map" ? (
+        <div className="flex-1 flex flex-col gap-4 min-h-0">
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar shrink-0">
+            {gapFilters.map((f) => (
+              <Button
+                key={f.value}
+                variant={filters.gapPhotoCounts?.includes(f.value) ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleGapFilter(f.value)}
+                className="whitespace-nowrap rounded-full"
+              >
+                <div className="flex items-center gap-2">
+                  <div className={cn(
+                    "w-2 h-2 rounded-full",
+                    f.value === 0 ? "bg-[#EF4444]" : f.value === 1 ? "bg-[#F59E0B]" : "bg-[#10B981]"
+                  )} />
+                  {f.label}
+                </div>
+              </Button>
+            ))}
+          </div>
+          <div className="flex-1 border rounded-2xl overflow-hidden shadow-inner bg-surface-muted relative">
+            <PlanoMap />
+          </div>
         </div>
       ) : (
-        <div className="grid gap-4">
-          {buildings?.map((b) => (
-            <Card key={b.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group hover:border-brand-primary transition-all">
-              <div className="min-w-0 flex-1">
-                <h3 className="font-semibold truncate">{b.name}</h3>
-                <p className="text-xs text-muted-foreground">{b.city || b.country || "Global"}</p>
-              </div>
-              <Button size="sm" asChild>
-                <Link to={getBuildingUrl(b.id, b.slug, b.short_id)}>
-                  View Building
-                </Link>
-              </Button>
-            </Card>
-          ))}
+        <div className="flex-1 overflow-y-auto pr-2">
+          {isLoading ? (
+            <div className="grid gap-4">
+              {[0, 1, 2].map(i => <Skeleton key={i} className="h-28 w-full rounded-xl" />)}
+            </div>
+          ) : error ? (
+            <div className="p-8 text-center border rounded-xl bg-destructive/5 text-destructive">
+              <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+              <p>Failed to load photography tasks.</p>
+            </div>
+          ) : buildings?.length === 0 ? (
+            <div className="p-12 text-center border border-dashed rounded-xl">
+              <Camera className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+              <p className="text-lg font-medium">All photographed!</p>
+              <p className="text-sm text-muted-foreground">Every building in your chapter has at least one photo.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {buildings?.map((b) => (
+                <Card key={b.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group hover:border-brand-primary transition-all">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold truncate">{b.name}</h3>
+                    <p className="text-xs text-muted-foreground">{b.city || b.country || "Global"}</p>
+                  </div>
+                  <Button size="sm" asChild>
+                    <Link to={getBuildingUrl(b.id, b.slug, b.short_id)}>
+                      View Building
+                    </Link>
+                  </Button>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

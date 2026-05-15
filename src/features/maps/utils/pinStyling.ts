@@ -15,7 +15,35 @@ export interface PinStyle {
   backgroundColor?: string;
 }
 
-export function getPinStyle(item: ClusterResponse): PinStyle {
+export interface PinOptions {
+  photographyGaps?: boolean;
+}
+
+export function getPinStyle(item: ClusterResponse, options?: PinOptions): PinStyle {
+  // Step 0: Gap Layer Check (Phase 2)
+  const shape: PinShape = item.location_approximate ? 'circle' : 'pin';
+
+  if (options?.photographyGaps && !item.is_cluster) {
+    const photoCount = item.photos_count ?? 0;
+    let backgroundColor = "#EF4444"; // Red (0 photos)
+    if (photoCount >= 3) {
+      backgroundColor = "#10B981"; // Green (3+ photos)
+    } else if (photoCount > 0) {
+      backgroundColor = "#F59E0B"; // Amber (1-2 photos)
+    }
+
+    return {
+      tier: 'C',
+      shape,
+      zIndex: 30,
+      size: 24,
+      classes: 'border-white border-2 shadow-sm',
+      backgroundColor,
+      showDot: false,
+      showContent: true,
+    };
+  }
+
   // Step 1: Cluster Check
   if (item.is_cluster) {
     const size = item.count > 1000 ? 64 : item.count > 100 ? 48 : 32;

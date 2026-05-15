@@ -32,6 +32,7 @@ export interface ClusterResponse {
   color?: string | null;
   itinerary_sequence?: number;
   itinerary_day_index?: number;
+  photos_count?: number;
 }
 
 export interface UseMapDataProps {
@@ -180,6 +181,8 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
       maxStoreys: filters.maxStoreys ?? null,
       constructionStatuses: statusFilter.construction_statuses ?? null,
       excludeConstructionStatuses: statusFilter.exclude_construction_statuses ?? null,
+      photographyGaps: filters.photographyGaps ?? null,
+      gapPhotoCounts: filters.gapPhotoCounts ?? null,
     });
   }, [filters, statusFilter]);
 
@@ -236,6 +239,8 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
         max_size_sqm: filters.maxSizeSqm || undefined,
         min_storeys: filters.minStoreys || undefined,
         max_storeys: filters.maxStoreys || undefined,
+        photography_gaps: filters.photographyGaps,
+        gap_photo_counts: filters.gapPhotoCounts,
       };
 
       // Cast through unknown: get_map_clusters_v3 is not yet in generated types

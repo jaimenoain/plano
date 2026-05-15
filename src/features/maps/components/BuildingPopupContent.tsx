@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Bookmark, Check, EyeOff, Trash2, Plus, MapPin, Map, ExternalLink } from 'lucide-react';
+import { Bookmark, Check, EyeOff, Trash2, Plus, MapPin, Map, ExternalLink, Camera } from 'lucide-react';
+import { useMapContext } from '../providers/MapContext';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -43,6 +44,7 @@ export function BuildingPopupContent({
   const { statuses, ratings } = useUserBuildingStatuses();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { state: { filters } } = useMapContext();
   const [isSaving, setIsSaving] = useState(false);
 
   // Interaction State
@@ -405,6 +407,17 @@ export function BuildingPopupContent({
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs text-text-secondary">
             No Image
+          </div>
+        )}
+
+        {filters.photographyGaps && (
+          <div className="absolute top-2 left-2 z-20">
+            <div className="bg-white/90 backdrop-blur-sm border border-border-default px-2 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+              <Camera className="h-3 w-3 text-text-primary" />
+              <span className="text-[10px] font-bold text-text-primary uppercase">
+                {cluster.photos_count ?? 0} {cluster.photos_count === 1 ? 'Photo' : 'Photos'}
+              </span>
+            </div>
           </div>
         )}
       </div>
