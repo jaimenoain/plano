@@ -183,7 +183,7 @@ function UserMenu() {
             {isAmbassador ? (
               <DropdownMenuItem asChild>
                 <Link
-                  to="/ambassador-portal"
+                  to="/embassy/contribute"
                   className="flex items-center gap-2 cursor-pointer text-white/80 hover:text-white focus:text-white focus:bg-white/10"
                 >
                   <Landmark className="h-4 w-4" />
