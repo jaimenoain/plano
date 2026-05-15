@@ -467,7 +467,9 @@ Every permission-gated tool call interrupts the user. Reduce the count by batchi
 
 ### Prefer native tools to shell pipelines for file work
 
-For any operation that touches the filesystem — reading, writing, editing, searching, listing — use the native Claude Code tools, not a shell pipeline. The shell is for git, builds, and process control. It is not for file inspection or iteration. Native tools produce **zero** permission prompts and handle paths with shell-special characters (`(app)`, `[tenant]`, backticks, `$`) without escaping.
+**TL;DR — before constructing any shell pipeline against the filesystem, stop. If the work is reading, writing, editing, searching, or listing files, the answer is a native tool, not the shell. Shell is exclusively for git, builds, and process control. Re-reach for the shell only after you've ruled out the native tool.**
+
+For any operation that touches the filesystem — reading, writing, editing, searching, listing — use the native Claude Code tools, not a shell pipeline. Native tools produce **zero** permission prompts and handle paths with shell-special characters (`(app)`, `[tenant]`, backticks, `$`) without escaping. The shell parser will literally fail on `ls /path/(app)/foo` and `grep ... /path/(app)/...` — those characters open a subshell. There is no escape that fixes it cleanly; quoting works but the native tools are simpler.
 
 | You want to | Use | Not |
 |---|---|---|

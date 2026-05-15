@@ -21,6 +21,8 @@
       "Bash(npm run lint*)",
       "Bash(npm run build*)",
       "Bash(sed -n '*p' *)",
+      "Bash(cd * && git status*)",
+      "Bash(cd * && git status* | grep *)",
       "Bash(git -C * log *)",
       "Bash(git -C * diff *)",
       "Bash(git -C * show *)",
