@@ -111,7 +111,7 @@ Phase 2 replaces the Photography tool placeholder with a proper map view. The un
 
 ---
 
-## [ ] Phase 3 — Campaigns
+## [x] Phase 3 — Campaigns
 
 **Complexity: low-to-medium — new admin UI + one new table**
 

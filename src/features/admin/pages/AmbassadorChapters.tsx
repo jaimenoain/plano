@@ -27,7 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Plus, Shield, ClipboardList } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2, Plus, Shield, ClipboardList, AlertTriangle, Users, Crown, Target } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import {
@@ -271,6 +272,38 @@ export default function AmbassadorChapters() {
     [],
   );
 
+  const { data: attention } = useQuery({
+    queryKey: ["ambassador-attention"],
+    queryFn: async () => {
+      const [{ count: pendingApplications }, { data: memberships }] = await Promise.all([
+        supabase
+          .from("ambassador_applications")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "pending"),
+        supabase
+          .from("ambassador_memberships")
+          .select("chapter_id, role")
+          .eq("status", "active")
+          .eq("role", "president"),
+      ]);
+
+      const chaptersWithPresident = new Set((memberships ?? []).map((m) => m.chapter_id));
+      const chaptersWithoutPresident = chapters.filter(
+        (c) => c.status === "active" && !chaptersWithPresident.has(c.id),
+      );
+
+      return {
+        pendingApplications: pendingApplications ?? 0,
+        chaptersWithoutPresident: chaptersWithoutPresident.length,
+      };
+    },
+    enabled: chapters.length > 0,
+  });
+
+  const hasAttention =
+    (attention?.pendingApplications ?? 0) > 0 ||
+    (attention?.chaptersWithoutPresident ?? 0) > 0;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -290,6 +323,12 @@ export default function AmbassadorChapters() {
             <Link to="/admin/ambassadors/coverage">Coverage</Link>
           </Button>
           <Button variant="outline" type="button" asChild>
+            <Link to="/admin/ambassadors/campaigns">
+              <Target className="h-4 w-4 mr-2" aria-hidden />
+              Campaigns
+            </Link>
+          </Button>
+          <Button variant="outline" type="button" asChild>
             <Link to="/admin/ambassadors/applications">
               <ClipboardList className="h-4 w-4 mr-2" aria-hidden />
               Applications
@@ -301,6 +340,36 @@ export default function AmbassadorChapters() {
           </Button>
         </div>
       </div>
+
+      {hasAttention && attention && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
+            <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+              Needs attention
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            {attention.pendingApplications > 0 && (
+              <Link
+                to="/admin/ambassadors/applications"
+                className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300 hover:underline"
+              >
+                <Users className="h-4 w-4" />
+                {attention.pendingApplications} pending application
+                {attention.pendingApplications !== 1 ? "s" : ""}
+              </Link>
+            )}
+            {attention.chaptersWithoutPresident > 0 && (
+              <span className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
+                <Crown className="h-4 w-4" />
+                {attention.chaptersWithoutPresident} active chapter
+                {attention.chaptersWithoutPresident !== 1 ? "s" : ""} without a president
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="rounded-lg border border-border-default bg-surface-card overflow-hidden">
         {loading ? (

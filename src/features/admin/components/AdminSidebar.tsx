@@ -20,6 +20,7 @@ import {
   Shield,
   Globe2,
   Trophy,
+  Target,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
@@ -47,6 +48,7 @@ const communityItems = [
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Ambassadors", url: "/admin/ambassadors", icon: Shield },
   { title: "Ambassador Coverage", url: "/admin/ambassadors/coverage", icon: Globe2 },
+  { title: "Campaigns", url: "/admin/ambassadors/campaigns", icon: Target },
   { title: "Feedback", url: "/admin/feedback", icon: MessageSquare },
 ];
 
@@ -156,7 +158,9 @@ export function AdminSidebar() {
                       isActive={
                         item.url === "/admin/ambassadors"
                           ? location.pathname.startsWith("/admin/ambassadors") &&
-                              location.pathname !== "/admin/ambassadors/coverage"
+                              location.pathname !== "/admin/ambassadors/coverage" &&
+                              location.pathname !== "/admin/ambassadors/campaigns" &&
+                              location.pathname !== "/admin/ambassadors/applications"
                           : location.pathname === item.url
                       }
                       tooltip={item.title}

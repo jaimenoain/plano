@@ -80,10 +80,6 @@ export function getPinStyle(item: ClusterResponse, options?: PinOptions): PinSty
     };
   }
 
-  // Step 2: Shape Check
-  // Default to 'pin'. If item.location_approximate exists in the future, check it here.
-  const shape: PinShape = item.location_approximate ? 'circle' : 'pin';
-
   // Step 2b: Color Override (Custom Category / Member Status)
   if (item.color) {
     return {

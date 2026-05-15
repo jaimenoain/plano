@@ -49,6 +49,10 @@ export default [
       "features/admin/pages/AmbassadorCoverage.tsx",
     ),
     route(
+      "/admin/ambassadors/campaigns",
+      "features/admin/pages/AmbassadorCampaigns.tsx",
+    ),
+    route(
       "/admin/ambassadors/:chapterId",
       "features/admin/pages/AmbassadorChapterDetail.tsx",
     ),

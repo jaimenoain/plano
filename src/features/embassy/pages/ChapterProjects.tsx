@@ -6,15 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pin, CheckCircle2, Archive, Loader2, AlertCircle, Trash2 } from "lucide-react";
+import { Plus, Pin, CheckCircle2, Archive, Loader2, AlertCircle, Trash2, Target } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format, parseISO } from "date-fns";
 
 type Project = {
   id: string;
@@ -25,6 +26,76 @@ type Project = {
   created_by: string;
   created_at: string;
 };
+
+type Campaign = {
+  id: string;
+  title: string;
+  description: string | null;
+  start_date: string;
+  end_date: string;
+  metric_type: "photos" | "edits" | "outreach";
+  target_value: number;
+  chapter_scope: "all" | "specific";
+};
+
+async function fetchCampaignProgress(
+  campaign: Campaign,
+  chapterId: string,
+): Promise<number> {
+  const { start_date, end_date, metric_type } = campaign;
+  const endTs = end_date + "T23:59:59Z";
+
+  if (metric_type === "photos") {
+    // Count photos by members of this chapter
+    const { data: memberIds } = await supabase
+      .from("ambassador_memberships")
+      .select("user_id")
+      .eq("chapter_id", chapterId)
+      .eq("status", "active");
+    if (!memberIds?.length) return 0;
+    const ids = memberIds.map((m) => m.user_id);
+    const { count } = await supabase
+      .from("review_images")
+      .select("id", { count: "exact", head: true })
+      .in("user_id", ids)
+      .gte("created_at", start_date)
+      .lte("created_at", endTs);
+    return count ?? 0;
+  }
+
+  if (metric_type === "edits") {
+    const { data: memberIds } = await supabase
+      .from("ambassador_memberships")
+      .select("user_id")
+      .eq("chapter_id", chapterId)
+      .eq("status", "active");
+    if (!memberIds?.length) return 0;
+    const ids = memberIds.map((m) => m.user_id);
+    const { count } = await supabase
+      .from("building_audit_logs")
+      .select("id", { count: "exact", head: true })
+      .in("user_id", ids)
+      .gte("created_at", start_date)
+      .lte("created_at", endTs);
+    return count ?? 0;
+  }
+
+  // outreach
+  const { data: memberMemberships } = await supabase
+    .from("ambassador_memberships")
+    .select("id")
+    .eq("chapter_id", chapterId)
+    .eq("status", "active");
+  if (!memberMemberships?.length) return 0;
+  const membershipIds = memberMemberships.map((m) => m.id);
+  const { count } = await supabase
+    .from("outreach_log")
+    .select("id", { count: "exact", head: true })
+    .in("ambassador_id", membershipIds)
+    .gte("created_at", start_date)
+    .lte("created_at", endTs);
+  return count ?? 0;
+}
 
 export default function ChapterProjectsPage() {
   const { user } = useAuth();
@@ -66,6 +137,30 @@ export default function ChapterProjectsPage() {
       return data as Project[];
     },
     enabled: !!chapterId,
+  });
+
+  const { data: campaigns = [] } = useQuery({
+    queryKey: ["programme-campaigns-portal", chapterId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("programme_campaigns")
+        .select("*")
+        .order("start_date", { ascending: false });
+      if (error) return [] as Campaign[];
+      return data as Campaign[];
+    },
+    enabled: !!chapterId,
+  });
+
+  const { data: campaignProgress = {} } = useQuery({
+    queryKey: ["programme-campaigns-progress-portal", chapterId, campaigns.map((c) => c.id).join(",")],
+    queryFn: async () => {
+      const entries = await Promise.all(
+        campaigns.map(async (c) => [c.id, await fetchCampaignProgress(c, chapterId!)] as [string, number]),
+      );
+      return Object.fromEntries(entries);
+    },
+    enabled: !!chapterId && campaigns.length > 0,
   });
 
   const createMutation = useMutation({
@@ -139,6 +234,56 @@ export default function ChapterProjectsPage() {
           </Button>
         )}
       </div>
+
+      {campaigns.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Target className="h-4 w-4 text-brand-accent" />
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
+              Programme campaigns
+            </h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {campaigns.map((c) => {
+              const progress = campaignProgress[c.id] ?? 0;
+              const pct = Math.min(100, Math.round((progress / c.target_value) * 100));
+              return (
+                <Card
+                  key={c.id}
+                  className="flex flex-col p-5 border-l-4 border-l-brand-accent"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <Badge
+                      variant="outline"
+                      className="gap-1 px-2 py-0.5 text-xs font-medium bg-brand-accent/10 text-brand-accent border-brand-accent/20"
+                    >
+                      <Target className="h-3 w-3" />
+                      Programme campaign
+                    </Badge>
+                    <span className="text-xs text-text-secondary capitalize">{c.metric_type}</span>
+                  </div>
+                  <h3 className="text-base font-bold mb-1">{c.title}</h3>
+                  {c.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                      {c.description}
+                    </p>
+                  )}
+                  <div className="mt-auto space-y-2">
+                    <div className="flex justify-between text-xs text-text-secondary">
+                      <span>Chapter progress</span>
+                      <span>{progress} / {c.target_value} ({pct}%)</span>
+                    </div>
+                    <Progress value={pct} className="h-1.5" />
+                    <p className="text-[10px] text-text-secondary">
+                      {format(parseISO(c.start_date), "d MMM")} – {format(parseISO(c.end_date), "d MMM yyyy")}
+                    </p>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="grid gap-6 md:grid-cols-2">
