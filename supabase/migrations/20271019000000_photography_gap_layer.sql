@@ -26,7 +26,8 @@ RETURNS TABLE (
   tier_rank text,
   max_tier integer,
   winner_award_name text,
-  photos_count integer
+  photos_count integer,
+  city text
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -179,7 +180,8 @@ BEGIN
       CASE WHEN ub.status::text = 'visited' THEN 'visited' WHEN ub.status::text = 'pending' THEN 'saved' ELSE 'none' END as mapped_status,
       COALESCE(ub.rating, 0) as mapped_rating,
       w.award_name as winner_award_name,
-      COALESCE(pc.photos_count, 0)::int as photos_count
+      COALESCE(pc.photos_count, 0)::int as photos_count,
+      b.city
     FROM buildings b
     LEFT JOIN user_buildings ub ON b.id = ub.building_id AND ub.user_id = auth.uid()
     LEFT JOIN (
@@ -250,7 +252,8 @@ BEGIN
     CASE WHEN count(*) = 1 THEN max(fb.tier_rank)::text ELSE NULL END as tier_rank,
     CASE WHEN count(*) > 1 THEN MAX(CASE WHEN v_ranking_preference = 'personal' THEN CASE WHEN fb.mapped_rating >= 3 THEN 3 WHEN fb.mapped_rating = 2 THEN 2 ELSE 1 END ELSE GREATEST(CASE WHEN fb.mapped_rating >= 3 THEN 3 WHEN fb.mapped_rating = 2 THEN 2 ELSE 1 END, CASE WHEN fb.tier_rank::text = 'Top 1%' THEN 4 WHEN fb.tier_rank::text IN ('Top 5%', 'Top 10%') THEN 3 WHEN fb.tier_rank::text = 'Top 20%' THEN 2 ELSE 1 END) END)::int ELSE NULL END as max_tier,
     CASE WHEN count(*) = 1 THEN max(fb.winner_award_name) ELSE NULL END as winner_award_name,
-    CASE WHEN count(*) = 1 THEN max(fb.photos_count) ELSE NULL END as photos_count
+    CASE WHEN count(*) = 1 THEN max(fb.photos_count) ELSE NULL END as photos_count,
+    max(fb.city) as city
   FROM filtered_buildings fb
   GROUP BY st_snaptogrid(fb.location::geometry, v_grid_size);
 END;

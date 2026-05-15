@@ -10,6 +10,8 @@ import { getCollectionMarkerLucideIcon } from '@/features/collections/markerPlac
 import type { CollectionMarkerCategory } from '@/features/collections/types';
 import '../../../App.css';
 import { getBuildingUrl } from '@/utils/url';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 import { useMapContext } from '../providers/MapContext';
 
@@ -178,7 +180,7 @@ export function MapMarkers({
           <div
             onMouseEnter={() => !isCluster && handleMouseEnter(String(cluster.id))}
             onMouseLeave={() => !isCluster && handleMouseLeave()}
-            className="cursor-pointer" // Ensure pointer cursor
+            className={cn("cursor-pointer", isMobile && "p-2 -m-2")}
           >
             {content}
           </div>
@@ -213,7 +215,7 @@ export function MapMarkers({
                   href={buildingUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block text-inherit no-underline"
+                  className={cn("block text-inherit no-underline", isMobile && "p-2 -m-2")}
                   aria-label={`View details for ${cluster.name || 'Building'}`}
                   onClick={(e) => {
                       // If it's a custom marker, prevent navigation and just select (highlight)
@@ -241,27 +243,44 @@ export function MapMarkers({
     [displayClusters, map, handleMouseEnter, handleMouseLeave, highlightedId]
   );
 
+  const isMobile = useIsMobile();
+
   return (
     <>
       {markers}
       {activeCluster && (
-        <Popup
-          longitude={activeCluster.lng}
-          latitude={activeCluster.lat}
-          offset={20}
-          closeButton={false}
-          closeOnClick={false}
-          className="plano-map-popup z-[100]"
-          maxWidth="300px"
-        >
-          <BuildingPopupContent
-            cluster={activeCluster}
-            onMouseEnter={() => handleMouseEnter(String(activeCluster.id))}
-            onMouseLeave={handleMouseLeave}
-            onRemoveFromCollection={onRemoveFromCollection}
-            onAddCandidate={onAddCandidate}
-          />
-        </Popup>
+        isMobile ? (
+          <Sheet open={!!activeCluster} onOpenChange={(open) => !open && setHighlightedId(null)}>
+            <SheetContent side="bottom" className="p-0 h-[auto] max-h-[80vh] overflow-y-auto rounded-t-2xl border-none">
+              <div className="w-12 h-1.5 bg-muted rounded-full mx-auto my-3" />
+              <div className="pb-8">
+                <BuildingPopupContent
+                  cluster={activeCluster}
+                  onRemoveFromCollection={onRemoveFromCollection}
+                  onAddCandidate={onAddCandidate}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
+        ) : (
+          <Popup
+            longitude={activeCluster.lng}
+            latitude={activeCluster.lat}
+            offset={20}
+            closeButton={false}
+            closeOnClick={false}
+            className="plano-map-popup z-[100]"
+            maxWidth="300px"
+          >
+            <BuildingPopupContent
+              cluster={activeCluster}
+              onMouseEnter={() => handleMouseEnter(String(activeCluster.id))}
+              onMouseLeave={handleMouseLeave}
+              onRemoveFromCollection={onRemoveFromCollection}
+              onAddCandidate={onAddCandidate}
+            />
+          </Popup>
+        )
       )}
     </>
   );

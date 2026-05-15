@@ -33,6 +33,7 @@ export interface ClusterResponse {
   itinerary_sequence?: number;
   itinerary_day_index?: number;
   photos_count?: number;
+  city?: string;
 }
 
 export interface UseMapDataProps {

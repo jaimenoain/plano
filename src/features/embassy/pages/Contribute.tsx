@@ -584,7 +584,7 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
             ))}
           </div>
           <div className="flex-1 border rounded-2xl overflow-hidden shadow-inner bg-surface-muted relative">
-            <PlanoMap />
+            <PlanoMap showGapCallout />
           </div>
         </div>
       ) : (

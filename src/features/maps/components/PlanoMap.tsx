@@ -20,7 +20,7 @@ import { createPortal } from "react-dom";
 import Map, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef } from 'react-map-gl/maplibre';
 import maplibregl, { type GeolocateControl as MaplibreGeolocateControl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Layers, Maximize2, Minimize2 } from "lucide-react";
+import { Camera, Layers, Maximize2, Minimize2 } from "lucide-react";
 import { useURLMapState, DEFAULT_LAT, DEFAULT_LNG, DEFAULT_ZOOM } from '@/features/maps/hooks/useURLMapState';
 import { useMapWheelZoomCapture } from '@/features/maps/hooks/useMapWheelZoomCapture';
 import { useStableMapUpdate } from '@/features/maps/hooks/useStableMapUpdate';
@@ -35,9 +35,10 @@ const LOCAL_STORAGE_MAP_KEY = 'plano_map_view_state';
 
 interface PlanoMapProps {
   showEmptyMessage?: boolean;
+  showGapCallout?: boolean;
 }
 
-function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
+function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
   const { lat, lng, zoom, setMapURL } = useURLMapState();
   const { updateMapState } = useStableMapUpdate(setMapURL);
 
@@ -155,9 +156,6 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
     mode,
   });
 
-  // In Find mode, override map clusters with search_buildings_v2 results.
-  // findModeBuildings are transformed to the ClusterResponse shape so MapMarkers
-  // needs no changes. Browse mode (no findModeBuildings) uses the RPC as before.
   const clusters = findModeBuildings
     ? findModeBuildings
         .filter((b) => b.lat != null && b.lng != null)
@@ -186,6 +184,13 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
       c.lng <= bounds.east && c.lng >= bounds.west
     ).length;
   }, [clusters, bounds]);
+
+  const topGapCluster = useMemo(() => {
+    if (!showGapCallout || !filters.photographyGaps || !clusters || clusters.length === 0 || viewState.zoom >= 12) return null;
+    return clusters
+      .filter(c => c.is_cluster)
+      .reduce((prev, curr) => (curr.count > (prev?.count || 0) ? curr : prev), null as any);
+  }, [clusters, filters.photographyGaps, showGapCallout, viewState.zoom]);
 
   const mapContent = (
     <div className={`relative h-full w-full overflow-hidden bg-surface-default ${isExpanded ? "fixed inset-0 z-[9999]" : "z-0"}`}>
@@ -218,13 +223,11 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
         )}
       </Map>
 
-      {/* ── Empty state ── */}
       {showEmptyMessage && !isLoading && !isFetching && bounds && visibleClustersCount === 0 && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-surface-card/95 backdrop-blur-sm border border-border-default p-5 text-center max-w-xs animate-in fade-in zoom-in duration-300">
           <p className="text-sm text-text-primary mb-3">
             No buildings in this area
           </p>
-          {/* Editorial text CTA — no neon, no underline, no bold */}
           <button
             type="button"
             onClick={() => mapRef.current?.zoomOut()}
@@ -235,8 +238,7 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
         </div>
       )}
 
-      {/* ── Top-left: Satellite toggle ── */}
-      {/* shadow-md removed — border + frosted glass is sufficient over the map */}
+      {/* ── Top-left: Satellite toggle & Gap Callout ── */}
       <div className="absolute top-2 left-2 flex flex-col gap-2 z-[60]">
         <button
           type="button"
@@ -248,15 +250,40 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
           title={isSatellite ? "Show Map" : "Show Satellite"}
         >
           <Layers className="w-4 h-4" strokeWidth={1.5} />
-          {/* Uppercase tracking: editorial micro-label treatment */}
           <span className="text-xs font-medium uppercase tracking-wide hidden sm:inline">
             {isSatellite ? "Map" : "Satellite"}
           </span>
         </button>
+
+        {topGapCluster && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              mapRef.current?.flyTo({
+                center: [topGapCluster.lng, topGapCluster.lat],
+                zoom: 14,
+                duration: 1000
+              });
+            }}
+            className="p-3 bg-brand-primary text-brand-primary-foreground border border-brand-primary shadow-lg animate-in slide-in-from-left-4 duration-500 max-w-[200px] text-left"
+          >
+            <div className="flex items-start gap-2">
+              <Camera className="w-4 h-4 shrink-0 mt-0.5" />
+              <div className="flex flex-col">
+                <span className="text-xs font-bold leading-tight">
+                  {topGapCluster.count} gaps in {topGapCluster.city || "this area"}
+                </span>
+                <span className="text-[10px] opacity-80 uppercase tracking-wider mt-1">
+                  Tap to explore →
+                </span>
+              </div>
+            </div>
+          </button>
+        )}
       </div>
 
       {/* ── Top-right: Fullscreen toggle ── */}
-      {/* shadow-md removed */}
       <button
         type="button"
         onClick={(e) => {
@@ -279,10 +306,10 @@ function PlanoMapContent({ showEmptyMessage }: PlanoMapProps) {
   return mapContent;
 }
 
-export function PlanoMap({ showEmptyMessage }: PlanoMapProps) {
+export function PlanoMap({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
   return (
     <MapErrorBoundary>
-      <PlanoMapContent showEmptyMessage={showEmptyMessage} />
+      <PlanoMapContent showEmptyMessage={showEmptyMessage} showGapCallout={showGapCallout} />
     </MapErrorBoundary>
   );
 }

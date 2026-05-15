@@ -95,7 +95,7 @@ Phase 1 delivers a complete, working portal. Every screen is present. The only t
 
 ---
 
-## [ ] Phase 2 — Photography map
+## [x] Phase 2 — Photography map
 
 **Complexity: medium — new map layer on existing infrastructure**
 

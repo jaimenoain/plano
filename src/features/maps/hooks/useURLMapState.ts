@@ -74,6 +74,8 @@ export const MapFiltersObjectSchema = z.object({
     avatar_url: z.string().optional().nullable(),
   })).optional(),
   ratedBy: z.array(z.string()).optional(),
+  photographyGaps: z.boolean().optional(),
+  gapPhotoCounts: z.array(z.number()).optional(),
 }).catchall(z.unknown())
 .transform((obj) => {
     const newObj = { ...obj };
@@ -194,6 +196,15 @@ function syncFilterParams(newParams: URLSearchParams, filters: MapFilters) {
 
   if (filters.showDemolished) newParams.set('showDemolished', 'true');
   else newParams.delete('showDemolished');
+
+  if (filters.photographyGaps) newParams.set('photographyGaps', 'true');
+  else newParams.delete('photographyGaps');
+
+  if (filters.gapPhotoCounts && filters.gapPhotoCounts.length > 0) {
+    newParams.set('gapPhotoCounts', filters.gapPhotoCounts.join(','));
+  } else {
+    newParams.delete('gapPhotoCounts');
+  }
 }
 
 export const useURLMapState = () => {
@@ -253,6 +264,8 @@ export const useURLMapState = () => {
        creditRoles: getArrayParam(searchParams.get("creditRoles")),
        constructionStatuses: getArrayParam(searchParams.get("constructionStatuses")),
        showDemolished: getBoolParam(searchParams.get("showDemolished")),
+       photographyGaps: getBoolParam(searchParams.get("photographyGaps")),
+       gapPhotoCounts: searchParams.get("gapPhotoCounts") ? searchParams.get("gapPhotoCounts")!.split(",").map(Number) : undefined,
     };
 
     return { ...parsed, filters } as MapState;
