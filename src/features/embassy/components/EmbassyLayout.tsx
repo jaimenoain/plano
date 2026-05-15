@@ -1,4 +1,5 @@
-import { Link, Outlet, useLocation } from "react-router";
+import { Link, Outlet, useLocation, useNavigate } from "react-router";
+import { useEffect } from "react";
 import { AmbassadorGuard } from "./AmbassadorGuard";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,7 @@ export async function loader({ request }: { request: Request }) {
 export default function EmbassyLayout() {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Fetch membership to check roles for Leadership tab visibility
   const { data: membership } = useQuery({
@@ -34,9 +36,6 @@ export default function EmbassyLayout() {
     },
     enabled: !!user,
   });
-
-  const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     if (membership && !membership.onboarded_at && membership.status === "active" && location.pathname !== "/embassy/welcome") {
