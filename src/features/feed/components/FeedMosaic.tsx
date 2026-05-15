@@ -1,5 +1,4 @@
-import { assembleMosaicItems, type MosaicItem } from "@/features/feed/utils/assembleMosaicItems";
-import type { TileSize } from "@/features/feed/utils/assignTileSize";
+import { assembleMosaicItems } from "@/features/feed/utils/assembleMosaicItems";
 import type { FeedItem } from "@/types/feedItem";
 import { FeedCard } from "./FeedCard";
 import { FeedCollectionCard } from "./FeedCollectionCard";
@@ -17,93 +16,6 @@ export interface FeedMosaicProps {
   followingCount: number;
   onLike: (id: string) => void;
   onImageLike: (reviewId: string, imageId: string) => void;
-}
-
-function tileCellClass(tileSize: TileSize): string {
-  switch (tileSize) {
-    case "xl":
-      return "col-span-1 sm:col-span-2 row-span-1 sm:row-span-2 h-[30rem] sm:h-full overflow-hidden";
-    case "lg":
-      return "col-span-1 sm:col-span-2 h-[22rem] sm:h-full overflow-hidden";
-    case "md":
-      return "col-span-1 h-[22rem] sm:h-full overflow-hidden";
-    case "sm":
-      return "col-span-1 h-[16rem] sm:h-full overflow-hidden";
-  }
-}
-
-function MosaicTile({
-  mosaicItem,
-  onLike,
-  onImageLike,
-}: {
-  mosaicItem: MosaicItem;
-  onLike: (id: string) => void;
-  onImageLike: (reviewId: string, imageId: string) => void;
-}) {
-  const { item, tileSize } = mosaicItem;
-
-  if (item.kind === "prompt") {
-    return (
-      <div className="col-span-1 sm:col-span-2 lg:col-span-3 overflow-hidden">
-        <div className="p-6">
-          <PeopleYouMayKnow maxSuggestions={item.payload.maxSuggestions} />
-        </div>
-      </div>
-    );
-  }
-
-  if (item.kind === "collection") {
-    return (
-      <div className={tileCellClass(tileSize)}>
-        <WidgetErrorBoundary>
-          <FeedCollectionCard collection={item.payload} />
-        </WidgetErrorBoundary>
-      </div>
-    );
-  }
-
-  if (item.kind === "building_spotlight") {
-    return (
-      <div className={tileCellClass(tileSize)}>
-        <WidgetErrorBoundary>
-          <BuildingSpotlightCard item={item} />
-        </WidgetErrorBoundary>
-      </div>
-    );
-  }
-
-  if (item.kind === "editorial") {
-    return (
-      <div className={tileCellClass(tileSize)}>
-        <WidgetErrorBoundary>
-          <EditorialCard item={item} />
-        </WidgetErrorBoundary>
-      </div>
-    );
-  }
-
-  if (item.kind === "moment_cluster") {
-    return (
-      <div className={tileCellClass(tileSize)}>
-        <WidgetErrorBoundary>
-          <MomentClusterCard item={item} />
-        </WidgetErrorBoundary>
-      </div>
-    );
-  }
-
-  // kind === "post"
-  return (
-    <div className={tileCellClass(tileSize)}>
-      <FeedCard
-        entry={item.payload}
-        tileSize={tileSize}
-        onLike={onLike}
-        onImageLike={onImageLike}
-      />
-    </div>
-  );
 }
 
 const FOLLOW_NUDGE_THRESHOLD = 5;
@@ -139,8 +51,7 @@ export function FeedMosaic({ items, followingCount, onLike, onImageLike }: FeedM
   const [dismissed, setDismissed] = useState(
     () => localStorage.getItem(FOLLOW_NUDGE_DISMISSED_KEY) === "1",
   );
-  const mosaicItems = assembleMosaicItems(items);
-
+  const orderedItems = assembleMosaicItems(items).map((m) => m.item);
   const showNudge = !dismissed && followingCount < FOLLOW_NUDGE_THRESHOLD;
 
   function handleDismiss() {
@@ -151,15 +62,39 @@ export function FeedMosaic({ items, followingCount, onLike, onImageLike }: FeedM
   return (
     <div>
       {showNudge && <FollowNudgeBanner onDismiss={handleDismiss} />}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 [grid-auto-flow:dense] sm:[grid-auto-rows:22rem] gap-[2px]">
-        {mosaicItems.map((mosaicItem) => (
-          <MosaicTile
-            key={mosaicItem.item.id}
-            mosaicItem={mosaicItem}
-            onLike={onLike}
-            onImageLike={onImageLike}
-          />
-        ))}
+      <div className="divide-y divide-border-default">
+        {orderedItems.map((item) => {
+          if (item.kind === "prompt") {
+            return (
+              <div key={item.id} className="px-5 py-8 md:px-10">
+                <PeopleYouMayKnow maxSuggestions={item.payload.maxSuggestions} />
+              </div>
+            );
+          }
+
+          if (item.kind === "post") {
+            return (
+              <div key={item.id} className="px-5 py-10 md:px-8">
+                <FeedCard
+                  entry={item.payload}
+                  onLike={onLike}
+                  onImageLike={onImageLike}
+                />
+              </div>
+            );
+          }
+
+          return (
+            <div key={item.id} className="h-52 overflow-hidden">
+              <WidgetErrorBoundary>
+                {item.kind === "collection" && <FeedCollectionCard collection={item.payload} />}
+                {item.kind === "building_spotlight" && <BuildingSpotlightCard item={item} />}
+                {item.kind === "editorial" && <EditorialCard item={item} />}
+                {item.kind === "moment_cluster" && <MomentClusterCard item={item} />}
+              </WidgetErrorBoundary>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

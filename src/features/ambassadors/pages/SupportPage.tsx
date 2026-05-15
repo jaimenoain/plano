@@ -1,5 +1,6 @@
 import { Link, type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { Button } from "@/components/ui/button";
 import { SITE_URL } from "@/features/buildings/utils/structuredData";
 
 const PAGE_TITLE = "Support the mission | Plano";
@@ -84,17 +85,15 @@ export default function SupportPage() {
                 complete database of built architecture — city by city, building by building.
                 The programme is open to anyone who cares about architecture where they live.
               </p>
-              <div className="mt-10 flex items-center gap-8">
+              <div className="mt-10 flex items-center gap-6">
+                <Button asChild variant="accent" size="lg" className="tracking-widest uppercase text-xs font-bold px-10">
+                  <Link to="/become-ambassador">
+                    Apply now
+                  </Link>
+                </Button>
                 <Link
                   to="/become-ambassador"
-                  className="group inline-flex items-center gap-2 text-xs font-medium tracking-widest uppercase text-text-primary"
-                >
-                  Apply now
-                  <span className="transition-transform group-hover:translate-x-0.5">→</span>
-                </Link>
-                <Link
-                  to="/become-ambassador"
-                  className="text-xs font-medium tracking-widest uppercase text-text-secondary hover:text-text-primary transition-colors"
+                  className="text-xs font-medium tracking-widest uppercase text-text-secondary hover:text-text-primary transition-colors py-4 px-2"
                 >
                   Learn more ↓
                 </Link>
@@ -248,12 +247,11 @@ export default function SupportPage() {
                 respond within two weeks. No experience required — only care.
               </p>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                <Link
-                  to="/become-ambassador"
-                  className="inline-flex items-center justify-center px-8 py-3.5 bg-brand-primary text-brand-primary-foreground text-sm font-medium hover:bg-brand-primary-hover transition-colors"
-                >
-                  Apply to a chapter
-                </Link>
+                <Button asChild variant="accent" size="lg" className="px-10">
+                  <Link to="/become-ambassador">
+                    Apply to a chapter
+                  </Link>
+                </Button>
                 <Link
                   to="/embassy"
                   className="group inline-flex items-center gap-2 text-xs font-medium tracking-widest uppercase text-text-secondary hover:text-text-primary transition-colors"
