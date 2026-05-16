@@ -130,8 +130,8 @@ export function DiscoveryCard({
     const matchingImage = additionalImages.find(
       (img) => getBuildingImageUrl(img.storage_path) === currentUrl
     );
-    if (matchingImage?.user_buildings?.user) {
-      const userData = matchingImage.user_buildings.user;
+    if (matchingImage?.building_posts?.user) {
+      const userData = matchingImage.building_posts.user;
       return Array.isArray(userData) ? userData[0] : userData;
     }
     return null;

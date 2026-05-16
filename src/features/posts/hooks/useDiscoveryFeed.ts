@@ -10,7 +10,7 @@ export interface DiscoveryFeedImageRow {
   storage_path: string;
   likes_count?: number | null;
   created_at?: string | null;
-  user_buildings?: {
+  building_posts?: {
     building_id: string;
     user: ContactRater | ContactRater[];
   } | null;
@@ -173,7 +173,9 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
             .from('follows')
             .select('following_id')
             .eq('follower_id', user.id),
-          // Fetch up to 10 images for each building individually so one doesn't starve the rest
+          // Fetch up to 10 images for each building individually so one doesn't starve the rest.
+          // review_images.review_id now references building_posts (was user_buildings before
+          // the 20270872 migration); keep the embed pointed at the canonical FK.
           ...buildingIds.map(buildingId =>
               supabase
                 .from('review_images')
@@ -182,7 +184,7 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
                   storage_path,
                   likes_count,
                   created_at,
-                  user_buildings!review_images_review_id_fkey!inner(
+                  building_posts!review_images_review_id_fkey!inner(
                     building_id,
                     user:profiles(
                       id,
@@ -191,7 +193,7 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
                     )
                   )
                 `)
-                .eq('user_buildings.building_id', buildingId)
+                .eq('building_posts.building_id', buildingId)
                 .order('likes_count', { ascending: false })
                 .order('created_at', { ascending: false })
                 .limit(10)
@@ -226,7 +228,7 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
         if (imagesData) {
           const imagesMap: Record<string, DiscoveryFeedImageRow[]> = {};
           (imagesData as unknown as DiscoveryFeedImageRow[]).forEach((item) => {
-             const buildingId = item.user_buildings?.building_id;
+             const buildingId = item.building_posts?.building_id;
              if (buildingId) {
                  if (!imagesMap[buildingId]) imagesMap[buildingId] = [];
                  // Keep max 10 images per building to match useBuildingImages behavior
