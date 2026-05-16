@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,12 +7,13 @@ import { supabase } from "@/integrations/supabase/client";
 export function AmbassadorGuard({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      navigate("/auth", { replace: true, state: { redirectTo: "/embassy" } });
+      navigate(`/auth?redirect=${encodeURIComponent(location.pathname)}`, { replace: true });
       return;
     }
     let cancelled = false;
