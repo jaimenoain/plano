@@ -180,16 +180,6 @@ export default [
       id: "building-edit-id-only",
     }),
     route(
-      "/building/:id/:slug/review",
-      "features/buildings/pages/WriteReview.tsx",
-      {
-        id: "building-review-slug",
-      },
-    ),
-    route("/building/:id/review", "features/buildings/pages/WriteReview.tsx", {
-      id: "building-review-id-only",
-    }),
-    route(
       "/building/:id/:slug/note/:postId/edit",
       "features/buildings/pages/EditNote.tsx",
       { id: "building-note-edit-slug" },

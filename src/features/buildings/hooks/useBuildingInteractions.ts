@@ -1079,6 +1079,10 @@ export function useBuildingInteractions({
       setNoteEditorOpen(false);
       setSelectedCollectionIds([]);
       setInitialCollectionIds([]);
+      setPendingImages((prev) => {
+        prev.forEach((img) => URL.revokeObjectURL(img.preview));
+        return [];
+      });
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
       queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
       toast({ title: "Removed from list" });

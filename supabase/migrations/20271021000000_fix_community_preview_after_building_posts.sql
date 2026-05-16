@@ -69,3 +69,57 @@ BEGIN
     END LOOP;
 END;
 $$;
+
+-- =============================================================================
+-- Architect verification on review_images (20270616000000) had the same
+-- legacy join: it derived the image's building via `user_buildings(id)`, so
+-- the architect/admin checks short-circuit silently for every new-style note.
+-- Re-point at building_posts.
+-- =============================================================================
+
+DROP POLICY IF EXISTS "Verified architects can update review images"
+    ON public.review_images;
+
+CREATE POLICY "Verified architects can update review images"
+    ON public.review_images FOR UPDATE
+    TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1
+            FROM public.building_posts bp
+            WHERE bp.id = review_images.review_id
+              AND public.is_verified_architect_for_building(auth.uid(), bp.building_id)
+        )
+    );
+
+CREATE OR REPLACE FUNCTION public.check_review_image_update()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    is_architect BOOLEAN;
+    building_uuid UUID;
+BEGIN
+    SELECT building_id INTO building_uuid
+      FROM public.building_posts
+     WHERE id = NEW.review_id;
+
+    is_architect := public.is_verified_architect_for_building(auth.uid(), building_uuid);
+
+    IF (NEW.is_official IS DISTINCT FROM OLD.is_official) THEN
+        IF NOT (public.is_admin() OR is_architect) THEN
+            RAISE EXCEPTION 'Only verified architects or admins can update the is_official flag.';
+        END IF;
+    END IF;
+
+    IF is_architect AND NOT public.is_admin() AND (auth.uid() != OLD.user_id) THEN
+        IF (to_jsonb(NEW) - 'is_official' - 'updated_at') IS DISTINCT FROM
+           (to_jsonb(OLD) - 'is_official' - 'updated_at') THEN
+               RAISE EXCEPTION 'Architects can only update the is_official flag on community images.';
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;

@@ -66,14 +66,17 @@ export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
         return loc ? { country_code: loc.country_code, city_slug: loc.city_slug } : null;
       })(),
 
-      // 2. Hero image pipeline (user_buildings → review_images → pick best)
+      // 2. Hero image pipeline (building_posts → review_images → pick best).
+      //    Since the 20270872 migration `review_images.review_id` points at
+      //    `building_posts(id)`, not `user_buildings(id)`. Querying the old
+      //    table here silently missed every photo on a new-style note.
       (async (): Promise<{ candidateRows: ImageRow[]; heroImageUrl: string | null }> => {
-        const { data: reviewRows } = await supabase
-          .from("user_buildings")
+        const { data: postRows } = await supabase
+          .from("building_posts")
           .select("id")
           .eq("building_id", buildingId);
 
-        const reviewIds = (reviewRows ?? []).map((r) => r.id);
+        const reviewIds = (postRows ?? []).map((r) => r.id);
         let candidateRows: ImageRow[] = [];
 
         if (reviewIds.length > 0) {

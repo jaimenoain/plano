@@ -2146,8 +2146,8 @@ export default function BuildingDetails() {
                         <p className="text-xs text-text-secondary max-w-xs mb-5">
                           Be the first to share this building with the community.
                         </p>
-                        <Button size="sm" variant="outline" asChild>
-                          <Link to={`${buildingUrl}/review`}>Add Review</Link>
+                        <Button size="sm" variant="outline" onClick={startNoteWithPhotos}>
+                          Add Note
                         </Button>
                       </div>
                     )}
@@ -2177,12 +2177,16 @@ export default function BuildingDetails() {
                       >
                         <Plus className="h-3 w-3" /> Upload
                       </button>
-                      <Link
-                        to={`${buildingUrl}/review`}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTab("overview");
+                          handleNewNote();
+                        }}
                         className="text-[10px] font-bold uppercase tracking-widest bg-text-primary text-white px-3 py-1.5 rounded-none hover:opacity-80 transition-opacity"
                       >
-                        Add Review
-                      </Link>
+                        Add Note
+                      </button>
                     </div>
                   </div>
 
@@ -2263,8 +2267,14 @@ export default function BuildingDetails() {
                           >
                             Upload Photo
                           </Button>
-                          <Button size="sm" asChild>
-                            <Link to={`${buildingUrl}/review`}>Write Review</Link>
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setTab("overview");
+                              handleNewNote();
+                            }}
+                          >
+                            Write Note
                           </Button>
                         </div>
                       </div>
