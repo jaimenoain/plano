@@ -1,5 +1,4 @@
-import { Link, Outlet, useLocation, useNavigate } from "react-router";
-import { useEffect } from "react";
+import { Link, Outlet, useLocation } from "react-router";
 import { AmbassadorGuard } from "./AmbassadorGuard";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { cn } from "@/lib/utils";
@@ -7,12 +6,34 @@ import { LayoutDashboard, Target, Users, Settings2 } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { redirect } from "react-router";
+import { redirect, type LoaderFunctionArgs } from "react-router";
+import { createSupabaseServerClient } from "@/lib/supabase.server";
 
-export async function loader({ request }: { request: Request }) {
+export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
+  const responseHeaders = new Headers();
+  const supabaseServer = createSupabaseServerClient(request, responseHeaders);
+
+  const { data: { user } } = await supabaseServer.auth.getUser();
+  if (user) {
+    const { data: membership } = await supabaseServer
+      .from("ambassador_memberships")
+      .select("status, onboarded_at")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (
+      membership &&
+      membership.status === "active" &&
+      !membership.onboarded_at &&
+      url.pathname !== "/embassy/welcome"
+    ) {
+      return redirect("/embassy/welcome", { headers: responseHeaders });
+    }
+  }
+
   if (url.pathname === "/embassy" || url.pathname === "/embassy/") {
-    return redirect("/embassy/contribute");
+    return redirect("/embassy/contribute", { headers: responseHeaders });
   }
   return null;
 }
@@ -20,7 +41,6 @@ export async function loader({ request }: { request: Request }) {
 export default function EmbassyLayout() {
   const { user } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
 
   // Fetch membership to check roles for Leadership tab visibility
   const { data: membership } = useQuery({
@@ -36,12 +56,6 @@ export default function EmbassyLayout() {
     },
     enabled: !!user,
   });
-
-  useEffect(() => {
-    if (membership && !membership.onboarded_at && membership.status === "active" && location.pathname !== "/embassy/welcome") {
-      navigate("/embassy/welcome");
-    }
-  }, [membership, navigate, location.pathname]);
 
   const isLeader = membership?.role === "exco" || membership?.role === "president";
 
