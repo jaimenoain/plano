@@ -45,7 +45,7 @@ export default function ContributePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ambassador_memberships")
-        .select("chapter_id")
+        .select("role, status, onboarded_at, chapter_id")
         .eq("user_id", user?.id)
         .single();
       if (error) throw error;

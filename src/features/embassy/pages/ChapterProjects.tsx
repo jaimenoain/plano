@@ -109,7 +109,7 @@ export default function ChapterProjectsPage() {
   const [status, setStatus] = useState<"active" | "completed" | "archived">("active");
 
   const { data: membership } = useQuery({
-    queryKey: ["ambassador-membership", user?.id],
+    queryKey: ["ambassador-membership-projects", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ambassador_memberships")

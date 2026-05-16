@@ -28,7 +28,7 @@ export default function EmbassyLayout() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ambassador_memberships")
-        .select("role, status, onboarded_at")
+        .select("role, status, onboarded_at, chapter_id")
         .eq("user_id", user?.id)
         .single();
       if (error) throw error;

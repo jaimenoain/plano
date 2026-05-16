@@ -43,7 +43,7 @@ export default function MyGoalsPage() {
 
   // Fetch membership for chapterId (to show leaderboard)
   const { data: membership } = useQuery({
-    queryKey: ["ambassador-membership", user?.id],
+    queryKey: ["ambassador-membership-goals", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ambassador_memberships")

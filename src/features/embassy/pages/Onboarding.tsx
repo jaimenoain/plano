@@ -43,7 +43,7 @@ export default function OnboardingPage() {
   const [type, setType] = useState<ContributorType | null>(null);
 
   const { data: membership } = useQuery({
-    queryKey: ["ambassador-membership", user?.id],
+    queryKey: ["ambassador-membership-onboarding", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ambassador_memberships")
@@ -68,7 +68,9 @@ export default function OnboardingPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["ambassador-membership", user?.id] });
+      // Invalidate all membership caches so EmbassyLayout re-checks onboarded_at
+      queryClient.invalidateQueries({ queryKey: ["ambassador-membership"] });
+      queryClient.invalidateQueries({ queryKey: ["ambassador-membership-onboarding", user?.id] });
       toast.success("Welcome aboard!");
       navigate("/embassy");
     },
