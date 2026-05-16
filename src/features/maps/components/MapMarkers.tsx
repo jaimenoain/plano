@@ -12,6 +12,7 @@ import '../../../App.css';
 import { getBuildingUrl } from '@/utils/url';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 
 import { useMapContext } from '../providers/MapContext';
 
@@ -32,6 +33,7 @@ export function MapMarkers({
 }: MapMarkersProps) {
   const { current: map } = useMap();
   const { state: { filters } } = useMapContext();
+  const isMobile = useIsMobile();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Ref to retain the currently highlighted cluster even if it disappears from the backend clusters array
@@ -240,10 +242,8 @@ export function MapMarkers({
           </Marker>
         );
       }),
-    [displayClusters, map, handleMouseEnter, handleMouseLeave, highlightedId]
+    [displayClusters, map, handleMouseEnter, handleMouseLeave, highlightedId, isMobile, filters.photographyGaps]
   );
-
-  const isMobile = useIsMobile();
 
   return (
     <>
