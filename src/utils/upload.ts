@@ -1,5 +1,15 @@
 import { supabase } from '../integrations/supabase/client';
 
+// Mirrors the server-side whitelist in supabase/functions/generate-upload-url:
+// only [A-Za-z0-9._\- ] are accepted. Anything else (parens, plus, accented
+// characters, emoji, …) gets replaced with `_` so common camera-roll filenames
+// don't get the upload rejected.
+function sanitizeFileName(name: string): string {
+  return name
+    .replace(/[^a-zA-Z0-9._\- ]/g, '_')
+    .replace(/\.{2,}/g, '.');
+}
+
 export async function uploadFile(file: File, folderName?: string): Promise<string> {
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -10,7 +20,7 @@ export async function uploadFile(file: File, folderName?: string): Promise<strin
   // 2. Invoke the function (Auth header is automatically added by supabase-js)
   const { data, error } = await supabase.functions.invoke('generate-upload-url', {
     body: {
-      fileName: file.name,
+      fileName: sanitizeFileName(file.name),
       contentType: file.type,
       folderName,
     },
@@ -52,7 +62,7 @@ export async function uploadFileWithProgress(
 
   const { data, error } = await supabase.functions.invoke('generate-upload-url', {
     body: {
-      fileName: file.name,
+      fileName: sanitizeFileName(file.name),
       contentType: file.type,
       folderName,
     },

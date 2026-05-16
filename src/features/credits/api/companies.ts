@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { slugifyPersonName } from "@/features/credits/api/people";
 import { supabase } from "@/integrations/supabase/client";
 import { insertEntityAuditLog } from "@/features/credits/api/entity-audit-log";
+import { getDistanceFromLatLonInM } from "@/utils/map";
 import type {
   BuildingCreditWithEntities,
   BuildingSummaryForPersonCredit,
@@ -358,19 +359,26 @@ export async function discoverCompanies(
   let companyIds: string[] | null = null;
 
   if (bounds) {
-    const { data: buildingRows, error: bErr } = await supabase
-      .from("buildings")
-      .select("id")
-      .gte("location_lat", bounds.south)
-      .lte("location_lat", bounds.north)
-      .gte("location_lng", bounds.west)
-      .lte("location_lng", bounds.east)
-      .limit(300);
+    const centerLat = (bounds.north + bounds.south) / 2;
+    const centerLng = (bounds.west + bounds.east) / 2;
+    const radiusMeters = getDistanceFromLatLonInM(
+      centerLat,
+      centerLng,
+      bounds.north,
+      bounds.east,
+    );
+
+    const { data: buildingRows, error: bErr } = await supabase.rpc(
+      "find_nearby_buildings",
+      { lat: centerLat, long: centerLng, radius_meters: radiusMeters },
+    );
 
     if (bErr) throw bErr;
     if (!buildingRows?.length) return [];
 
-    const buildingIds = buildingRows.map((r) => r.id as string);
+    const buildingIds = (buildingRows as Array<{ id: string }>)
+      .slice(0, 300)
+      .map((r) => r.id);
     const { data: creditRows, error: cErr } = await supabase
       .from("building_credits")
       .select("company_id")

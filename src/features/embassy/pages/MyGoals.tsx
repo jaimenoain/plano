@@ -317,10 +317,10 @@ function ActivityRow({ item }: { item: AmbassadorAuditRow }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">
-          <span className="text-brand-primary font-bold">{item.action.toUpperCase()}</span> · {item.target_name}
+          <span className="text-brand-primary font-bold">{item.operation.toUpperCase()}</span> · {item.building_name}
         </p>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-          {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
+          {item.created_at ? formatDistanceToNow(new Date(item.created_at), { addSuffix: true }) : ""}
         </p>
       </div>
       <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
