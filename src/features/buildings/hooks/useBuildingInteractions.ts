@@ -202,6 +202,8 @@ export interface BuildingInteractions {
   handleRate: (buildingId: string, rating: number) => Promise<void>;
   handleImageSelect: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   removePendingImage: (id: string) => void;
+  /** Drop all not-yet-saved photo attachments; revokes their blob URLs. Call on Cancel. */
+  clearPendingImages: () => void;
   handleAddLink: () => void;
   handleRemoveLink: (id: string) => void;
   handleSaveNote: () => Promise<void>;
@@ -722,6 +724,10 @@ export function useBuildingInteractions({
 
   useEffect(() => {
     setNoteEditorOpen(false);
+    setPendingImages((prev) => {
+      prev.forEach((img) => URL.revokeObjectURL(img.preview));
+      return [];
+    });
   }, [building?.id, user?.id]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
@@ -866,6 +872,13 @@ export function useBuildingInteractions({
     });
   }, []);
 
+  const clearPendingImages = useCallback(() => {
+    setPendingImages((prev) => {
+      prev.forEach((img) => URL.revokeObjectURL(img.preview));
+      return [];
+    });
+  }, []);
+
   const handleAddLink = useCallback(() => {
     if (!newLinkUrl.trim()) return;
     let url = newLinkUrl.trim();
@@ -973,14 +986,17 @@ export function useBuildingInteractions({
       if (pendingImages.length > 0) {
         for (const img of pendingImages) {
           const storagePath = await uploadFile(img.file, postId);
-          await supabase.from("review_images").insert({
-            review_id: postId,
-            user_id: user.id,
-            storage_path: storagePath,
-            is_generated: img.is_generated,
-            width_px: img.width_px,
-            height_px: img.height_px,
-          });
+          const { error: imgInsertError } = await supabase
+            .from("review_images")
+            .insert({
+              review_id: postId,
+              user_id: user.id,
+              storage_path: storagePath,
+              is_generated: img.is_generated,
+              width_px: img.width_px,
+              height_px: img.height_px,
+            });
+          if (imgInsertError) throw imgInsertError;
         }
         pendingImages.forEach((img) => URL.revokeObjectURL(img.preview));
         setPendingImages([]);
@@ -1005,8 +1021,13 @@ export function useBuildingInteractions({
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
       queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
       void fetchUserSpecificData();
-    } catch (_error: unknown) {
-      toast({ variant: "destructive", title: "Failed to save note" });
+    } catch (error: unknown) {
+      console.error("handleSaveNote failed", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to save note",
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
     } finally {
       setIsSavingNote(false);
     }
@@ -1073,6 +1094,10 @@ export function useBuildingInteractions({
       if (!post) return;
       setActivePostId(postId);
       setNote(post.body ?? "");
+      setPendingImages((prev) => {
+        prev.forEach((img) => URL.revokeObjectURL(img.preview));
+        return [];
+      });
       setNoteEditorOpen(true);
       // Load links for this post
       const { data: linksData } = await supabase
@@ -1091,6 +1116,10 @@ export function useBuildingInteractions({
     setActivePostId(null);
     setNote("");
     setUserLinks([]);
+    setPendingImages((prev) => {
+      prev.forEach((img) => URL.revokeObjectURL(img.preview));
+      return [];
+    });
     setNoteEditorOpen(true);
   }, []);
 
@@ -1313,6 +1342,7 @@ export function useBuildingInteractions({
     handleRate,
     handleImageSelect,
     removePendingImage,
+    clearPendingImages,
     handleAddLink,
     handleRemoveLink,
     handleSaveNote,

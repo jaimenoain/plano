@@ -255,10 +255,11 @@ export default function EditNote() {
       // 3. Update existing images (caption, is_generated)
       const existingImages = images.filter((img) => !img.file && img.storage_path);
       for (const img of existingImages) {
-        await supabase
+        const { error: imgUpdateError } = await supabase
           .from("review_images")
           .update({ caption: img.caption || null, is_generated: img.is_generated })
           .eq("id", img.id);
+        if (imgUpdateError) throw imgUpdateError;
       }
 
       // 4. Upload new images and insert records
@@ -266,15 +267,18 @@ export default function EditNote() {
       if (newImages.length > 0) {
         for (const img of newImages) {
           const storagePath = await uploadFile(img.file!, postId);
-          await supabase.from("review_images").insert({
-            review_id: postId,
-            user_id: user!.id,
-            storage_path: storagePath,
-            is_generated: img.is_generated,
-            caption: img.caption || null,
-            width_px: img.width_px ?? null,
-            height_px: img.height_px ?? null,
-          });
+          const { error: imgInsertError } = await supabase
+            .from("review_images")
+            .insert({
+              review_id: postId,
+              user_id: user!.id,
+              storage_path: storagePath,
+              is_generated: img.is_generated,
+              caption: img.caption || null,
+              width_px: img.width_px ?? null,
+              height_px: img.height_px ?? null,
+            });
+          if (imgInsertError) throw imgInsertError;
           URL.revokeObjectURL(img.preview);
         }
       }
@@ -294,8 +298,13 @@ export default function EditNote() {
 
       toast({ title: "Note saved" });
       navigateBack();
-    } catch {
-      toast({ variant: "destructive", title: "Failed to save note" });
+    } catch (error) {
+      console.error("EditNote handleSave failed", error);
+      toast({
+        variant: "destructive",
+        title: "Failed to save note",
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
     } finally {
       setSaving(false);
     }

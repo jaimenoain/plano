@@ -1446,6 +1446,7 @@ export default function BuildingDetails() {
     handleRate,
     handleImageSelect,
     removePendingImage,
+    clearPendingImages,
     handleAddLink,
     handleRemoveLink: _handleRemoveLink,
     handleSaveNote,
@@ -1499,6 +1500,20 @@ export default function BuildingDetails() {
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [showDirectionsAlert, setShowDirectionsAlert] = useState(false);
   const [mediaFilter, setMediaFilter] = useState<"all" | "photos" | "videos">("all");
+
+  // Shared file input for attaching photos to the active note draft. Always
+  // mounted so refs from the note editor and Media-tab shortcuts stay valid
+  // regardless of which tab is currently rendered.
+  const notePhotoInputRef = useRef<HTMLInputElement>(null);
+  const openNotePhotoPicker = useCallback(() => {
+    notePhotoInputRef.current?.click();
+  }, []);
+  /** Media-tab shortcut: jump to Overview, open a fresh note draft, prompt for photos. */
+  const startNoteWithPhotos = useCallback(() => {
+    setTab("overview");
+    handleNewNote();
+    notePhotoInputRef.current?.click();
+  }, [setTab, handleNewNote]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1867,6 +1882,16 @@ export default function BuildingDetails() {
         transition={{ duration: 0.5 }}
         className="min-h-screen bg-surface-default [&_button]:!rounded-none [&_input]:!rounded-none [&_textarea]:!rounded-none"
       >
+        {/* Hidden file input for attaching photos to the active note draft. */}
+        <input
+          ref={notePhotoInputRef}
+          type="file"
+          multiple
+          accept="image/*"
+          className="hidden"
+          onChange={handleImageSelect}
+        />
+
         {/* ── HERO — full-bleed only when a hero image exists (no empty band) ── */}
         {heroImageUrl ? (
           <div className="relative h-56 max-h-[50vh] sm:max-h-none sm:h-64 lg:h-80 w-screen overflow-hidden bg-surface-muted">
@@ -2148,18 +2173,10 @@ export default function BuildingDetails() {
                       <button
                         type="button"
                         className="text-[10px] font-bold uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1.5"
-                        onClick={() => document.getElementById("building-file-input")?.click()}
+                        onClick={startNoteWithPhotos}
                       >
                         <Plus className="h-3 w-3" /> Upload
                       </button>
-                      <input
-                        id="building-file-input"
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageSelect}
-                      />
                       <Link
                         to={`${buildingUrl}/review`}
                         className="text-[10px] font-bold uppercase tracking-widest bg-text-primary text-white px-3 py-1.5 rounded-none hover:opacity-80 transition-opacity"
@@ -2242,7 +2259,7 @@ export default function BuildingDetails() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => document.getElementById("building-file-input")?.click()}
+                            onClick={startNoteWithPhotos}
                           >
                             Upload Photo
                           </Button>
@@ -2610,18 +2627,37 @@ export default function BuildingDetails() {
                           onRemove={removePendingImage}
                           onSave={() => void handleSaveNote()}
                         />
-                        <div className="flex justify-end gap-2">
-                          <Button size="sm" variant="ghost" onClick={() => setNoteEditorOpen(false)}>
-                            Cancel
-                          </Button>
+                        <div className="flex items-center justify-between gap-2">
                           <Button
                             size="sm"
-                            onClick={() => void handleSaveNote()}
+                            variant="ghost"
+                            onClick={openNotePhotoPicker}
                             disabled={isSavingNote}
+                            className="text-xs font-medium text-text-secondary hover:text-text-primary"
                           >
-                            {isSavingNote && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
-                            Save
+                            <Plus className="h-3.5 w-3.5 mr-1" />
+                            {pendingImages.length > 0 ? "Add more photos" : "Add photos"}
                           </Button>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                clearPendingImages();
+                                setNoteEditorOpen(false);
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => void handleSaveNote()}
+                              disabled={isSavingNote}
+                            >
+                              {isSavingNote && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+                              Save
+                            </Button>
+                          </div>
                         </div>
                       </motion.div>
                     )}
