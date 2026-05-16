@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams, redirect } from "react-router";
+import { useSearchParams, redirect, type LoaderFunctionArgs } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { createSupabaseServerClient } from "@/lib/supabase.server";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { EmbassyLeadership } from "@/features/embassy/components/EmbassyLeadership";
 import { EmbassyNationalOverview } from "@/features/embassy/components/EmbassyNationalOverview";
@@ -27,18 +28,23 @@ type PendingApplication = ApplicationRow & {
   applicant: { id: string; username: string | null; avatar_url: string | null } | null;
 };
 
-export async function loader() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return redirect("/auth?redirectTo=/embassy/leadership");
+export async function loader({ request }: LoaderFunctionArgs) {
+  const responseHeaders = new Headers();
+  const supabaseServer = createSupabaseServerClient(request, responseHeaders);
 
-  const { data: membership } = await supabase
+  const { data: { user } } = await supabaseServer.auth.getUser();
+  if (!user) {
+    return redirect("/auth?redirect=/embassy/leadership", { headers: responseHeaders });
+  }
+
+  const { data: membership } = await supabaseServer
     .from("ambassador_memberships")
     .select("role, status")
     .eq("user_id", user.id)
     .single();
 
   if (!membership || (membership.role !== "exco" && membership.role !== "president")) {
-    return redirect("/embassy");
+    return redirect("/embassy", { headers: responseHeaders });
   }
 
   return null;

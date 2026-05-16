@@ -8,28 +8,34 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Search, Camera, CheckCircle2, ArrowRight, Loader2, Landmark } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate, redirect } from "react-router";
+import { useNavigate, redirect, type LoaderFunctionArgs } from "react-router";
 import { cn } from "@/lib/utils";
+import { createSupabaseServerClient } from "@/lib/supabase.server";
 
 type Step = 1 | 2 | 3;
 type ContributorType = "researcher" | "photographer" | "outreach" | "all";
 
-export async function loader() {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return redirect("/auth");
+export async function loader({ request }: LoaderFunctionArgs) {
+  const responseHeaders = new Headers();
+  const supabaseServer = createSupabaseServerClient(request, responseHeaders);
 
-  const { data: membership } = await supabase
+  const { data: { user } } = await supabaseServer.auth.getUser();
+  if (!user) {
+    return redirect("/auth?redirect=/embassy/welcome", { headers: responseHeaders });
+  }
+
+  const { data: membership } = await supabaseServer
     .from("ambassador_memberships")
     .select("onboarded_at, status")
     .eq("user_id", user.id)
     .single();
 
   if (!membership || membership.status !== "active") {
-    return redirect("/embassy");
+    return redirect("/embassy", { headers: responseHeaders });
   }
 
   if (membership.onboarded_at) {
-    return redirect("/embassy");
+    return redirect("/embassy", { headers: responseHeaders });
   }
 
   return null;
