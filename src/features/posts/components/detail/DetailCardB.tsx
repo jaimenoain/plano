@@ -4,9 +4,9 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { FeedReview } from "@/types/feed";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
-import { CardFooter, CardImage, PointsBadge } from "@/features/feed/components/card-parts";
-import { CARD_B_HEIGHT } from "@/features/feed/utils/resolveCardType";
+import { useReviewCardData } from "@/features/posts/hooks/useReviewCardData";
+import { CardFooter, CardImage, PointsBadge } from "@/features/posts/components/card-parts";
+import { CARD_B_HEIGHT } from "@/features/posts/utils/resolveCardType";
 import { DetailByline } from "./DetailByline";
 
 export interface DetailCardBProps {

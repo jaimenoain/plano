@@ -1,18 +1,18 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { ChevronDown, Copy } from "lucide-react";
-import { FeedResolvedEntry } from "@/features/feed/components/FeedResolvedEntry";
-import { FeedActivityRow } from "@/features/feed/components/FeedActivityRow";
-import { FeedCardA } from "@/features/feed/components/FeedCardA";
-import { FeedCardB } from "@/features/feed/components/FeedCardB";
-import { FeedCardC } from "@/features/feed/components/FeedCardC";
-import { DetailCardA } from "@/features/feed/components/detail/DetailCardA";
-import { DetailCardB } from "@/features/feed/components/detail/DetailCardB";
-import { DetailCardC } from "@/features/feed/components/detail/DetailCardC";
+import { FeedResolvedEntry } from "@/features/posts/components/FeedResolvedEntry";
+import { FeedActivityRow } from "@/features/posts/components/FeedActivityRow";
+import { FeedCardA } from "@/features/posts/components/FeedCardA";
+import { FeedCardB } from "@/features/posts/components/FeedCardB";
+import { FeedCardC } from "@/features/posts/components/FeedCardC";
+import { DetailCardA } from "@/features/posts/components/detail/DetailCardA";
+import { DetailCardB } from "@/features/posts/components/detail/DetailCardB";
+import { DetailCardC } from "@/features/posts/components/detail/DetailCardC";
 import {
   deriveLegacyFeedUi,
   type LegacyFeedCardUi,
-} from "@/features/feed/utils/deriveLegacyFeedUi";
-import { resolveCardType } from "@/features/feed/utils/resolveCardType";
+} from "@/features/posts/utils/deriveLegacyFeedUi";
+import { resolveCardType } from "@/features/posts/utils/resolveCardType";
 import type { CardType } from "@/types/cards";
 import type { FeedReview, ReviewImage } from "@/types/feed";
 import { cardFixtures, type CardFixture } from "@/features/superadmin/fixtures/cardFixtures";

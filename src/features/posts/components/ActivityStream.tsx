@@ -1,5 +1,5 @@
 import type { FeedReview } from "@/types/feed";
-import { FeedActivityRow } from "@/features/feed/components/FeedActivityRow";
+import { FeedActivityRow } from "@/features/posts/components/FeedActivityRow";
 
 export interface ActivityStreamGroupProps {
   entries: FeedReview[];

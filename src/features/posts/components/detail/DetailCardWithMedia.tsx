@@ -5,11 +5,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import type { DetailCardVariant } from "@/types/cards";
 import type { FeedReview, ReviewImage } from "@/types/feed";
-import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
-import { CardImage, PointsBadge } from "@/features/feed/components/card-parts";
-import { DetailCardFootnote } from "@/features/feed/components/detail/DetailCardFootnote";
-import { DetailCardTextTreatmentBlock } from "@/features/feed/components/detail/DetailCardTextTreatmentBlock";
-import { partitionDetailOverflowImages } from "@/features/feed/utils/resolveCardType";
+import { useReviewCardData } from "@/features/posts/hooks/useReviewCardData";
+import { CardImage, PointsBadge } from "@/features/posts/components/card-parts";
+import { DetailCardFootnote } from "@/features/posts/components/detail/DetailCardFootnote";
+import { DetailCardTextTreatmentBlock } from "@/features/posts/components/detail/DetailCardTextTreatmentBlock";
+import { partitionDetailOverflowImages } from "@/features/posts/utils/resolveCardType";
 
 const MD_MEDIA_QUERY = "(min-width: 768px)";
 

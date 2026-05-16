@@ -5,10 +5,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import type { DetailCardVariant } from "@/types/cards";
 import type { FeedReview } from "@/types/feed";
-import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
-import { PointsBadge } from "@/features/feed/components/card-parts";
-import { DetailCardFootnote } from "@/features/feed/components/detail/DetailCardFootnote";
-import { DetailCardTextTreatmentBlock } from "@/features/feed/components/detail/DetailCardTextTreatmentBlock";
+import { useReviewCardData } from "@/features/posts/hooks/useReviewCardData";
+import { PointsBadge } from "@/features/posts/components/card-parts";
+import { DetailCardFootnote } from "@/features/posts/components/detail/DetailCardFootnote";
+import { DetailCardTextTreatmentBlock } from "@/features/posts/components/detail/DetailCardTextTreatmentBlock";
 
 export interface DetailCardNoMediaProps {
   entry: FeedReview;

@@ -4,8 +4,8 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { FeedReview } from "@/types/feed";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
-import { CardFooter, PointsBadge } from "@/features/feed/components/card-parts";
+import { useReviewCardData } from "@/features/posts/hooks/useReviewCardData";
+import { CardFooter, PointsBadge } from "@/features/posts/components/card-parts";
 import { DetailByline } from "./DetailByline";
 
 export interface DetailCardAProps {

@@ -1,8 +1,8 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { FeedPhotoCarousel, type CarouselImage } from "@/features/feed/components/FeedPhotoCarousel";
+import { FeedPhotoCarousel, type CarouselImage } from "@/features/posts/components/FeedPhotoCarousel";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
-import type { ReviewCardMediaItem } from "@/features/feed/hooks/useReviewCardData";
+import type { ReviewCardMediaItem } from "@/features/posts/hooks/useReviewCardData";
 
 export interface CardImageProps {
   items: ReviewCardMediaItem[];

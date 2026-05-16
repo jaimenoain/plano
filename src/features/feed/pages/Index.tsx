@@ -1,31 +1,21 @@
-import React, { useEffect, useMemo, useCallback } from "react";
-import { useNavigate, type MetaFunction } from "react-router";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { ColdStartFeed } from "../components/ColdStartFeed";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useEffect } from "react";
+import { Link, useNavigate, type MetaFunction } from "react-router";
+import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
 import { Loader2 } from "lucide-react";
+
+import { AppLayout } from "@/components/layout/AppLayout";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useExploreShell } from "@/components/layout/ExploreShellContext";
+import { supabase } from "@/integrations/supabase/client";
 import { SITE_URL } from "@/features/buildings/utils/structuredData";
+import { getBuildingImageUrl, getStorageAssetUrl } from "@/utils/image";
+
 import { LandingHero } from "../components/landing/LandingHero";
 import { LandingMarquee } from "../components/landing/LandingMarquee";
 import { LandingFeatureGrid } from "../components/landing/LandingFeatureGrid";
 import { LandingNav } from "../components/landing/LandingNav";
 import { LandingFooter } from "../components/landing/LandingFooter";
-import { useSeenItems } from "../hooks/useSeenItems";
-import { useExploreShell } from "@/components/layout/ExploreShellContext";
-import { FeedRightRail } from "../components/FeedRightRail";
-import { getFeedRanked } from "../api/getFeedRanked";
-import { getCollectionsFeedAsItems } from "../api/getCollectionsFeedAsItems";
-import { getSuggestedPostsAsItems } from "../api/getSuggestedPostsAsItems";
-import { getFeedExtended } from "../api/getFeedExtended";
-import { getBuildingSpotlights } from "../api/getBuildingSpotlights";
-import { getEditorialSlots } from "../api/getEditorialSlots";
-import { getFeedClusters } from "../api/getFeedClusters";
-import { mergeFeedSources } from "../utils/mergeFeedSources";
-import { FeedMosaic } from "../components/FeedMosaic";
-import type { FeedItem, FeedItemPost } from "@/types/feedItem";
-export type { FeedItem };
 
 const INDEX_TITLE = "Plano — The world's architecture, cataloged.";
 const INDEX_DESCRIPTION =
@@ -46,26 +36,49 @@ export const meta: MetaFunction = () => [
   { name: "twitter:description", content: INDEX_DESCRIPTION },
   { name: "twitter:image", content: INDEX_OG_IMAGE },
   { tagName: "link", rel: "canonical", href: INDEX_CANONICAL },
-  {
-    "script:ld+json": {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "url": SITE_URL,
-      "name": "Plano",
-      "description": "The world's architecture, cataloged.",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": {
-          "@type": "EntryPoint",
-          "urlTemplate": `${SITE_URL}/search?q={search_term_string}`,
-        },
-        "query-input": "required name=search_term_string",
-      },
-    },
-  },
 ];
 
-// --- Landing page (logged-out) ---
+type FeedNote = {
+  id: string;
+  title: string | null;
+  body: string | null;
+  created_at: string;
+  user: {
+    username: string | null;
+    avatar_url: string | null;
+  } | null;
+  building: {
+    id: string;
+    slug: string | null;
+    name: string;
+    city: string | null;
+    country: string | null;
+  } | null;
+  images: { id: string; storage_path: string }[];
+};
+
+async function fetchFeed(): Promise<FeedNote[]> {
+  const { data, error } = await supabase
+    .from("building_posts")
+    .select(
+      `
+      id,
+      title,
+      body,
+      created_at,
+      user:profiles!building_posts_user_id_fkey(username, avatar_url),
+      building:buildings!building_posts_building_id_fkey(id, slug, name, city, country),
+      images:review_images(id, storage_path)
+    `,
+    )
+    .eq("visibility", "public")
+    .order("created_at", { ascending: false })
+    .limit(30);
+
+  if (error) throw error;
+  return (data ?? []) as unknown as FeedNote[];
+}
+
 function Landing() {
   const { setLandingHideTopChrome } = useExploreShell();
   useEffect(() => {
@@ -96,199 +109,180 @@ function Landing() {
   );
 }
 
-// --- Main Index Component ---
+function NoteImages({
+  images,
+  noteHref,
+}: {
+  images: FeedNote["images"];
+  noteHref: string;
+}) {
+  if (images.length === 0) return null;
+
+  if (images.length === 1) {
+    return (
+      <Link to={noteHref} className="block mt-4 overflow-hidden rounded-md">
+        <img
+          src={getBuildingImageUrl(images[0].storage_path)}
+          alt=""
+          loading="lazy"
+          className="w-full max-h-[680px] object-cover bg-surface-muted"
+        />
+      </Link>
+    );
+  }
+
+  const visible = images.slice(0, 4);
+  const overflow = images.length - visible.length;
+
+  return (
+    <Link to={noteHref} className="mt-4 grid grid-cols-2 gap-1">
+      {visible.map((img, i) => (
+        <div key={img.id} className="relative aspect-square overflow-hidden rounded-md bg-surface-muted">
+          <img
+            src={getBuildingImageUrl(img.storage_path)}
+            alt=""
+            loading="lazy"
+            className="w-full h-full object-cover"
+          />
+          {i === visible.length - 1 && overflow > 0 && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-lg font-medium">
+              +{overflow}
+            </div>
+          )}
+        </div>
+      ))}
+    </Link>
+  );
+}
+
+function NoteCard({ note }: { note: FeedNote }) {
+  const author = note.user;
+  const building = note.building;
+  const images = note.images ?? [];
+
+  const time = formatDistanceToNow(new Date(note.created_at), {
+    addSuffix: true,
+  });
+
+  const profileHref = author?.username ? `/profile/${author.username}` : null;
+  const buildingHref = building
+    ? `/building/${building.id}${building.slug ? `/${building.slug}` : ""}`
+    : null;
+  const noteHref = `/review/${note.id}`;
+
+  const authorAvatar = author?.avatar_url
+    ? getStorageAssetUrl(author.avatar_url)
+    : undefined;
+  const authorName = author?.username ?? "Someone";
+
+  const hasText = Boolean(note.title || note.body);
+  const hasImages = images.length > 0;
+  if (!hasText && !hasImages) return null;
+
+  return (
+    <article className="border-b border-border-default py-8 first:pt-2">
+      <header className="flex items-center gap-3 mb-4">
+        {authorAvatar ? (
+          <img
+            src={authorAvatar}
+            alt=""
+            className="w-9 h-9 rounded-full object-cover bg-surface-muted"
+          />
+        ) : (
+          <div className="w-9 h-9 rounded-full bg-surface-muted" />
+        )}
+        <div className="flex-1 min-w-0 text-sm leading-tight">
+          <div className="text-text-primary truncate">
+            {profileHref ? (
+              <Link to={profileHref} className="font-medium hover:underline">
+                {authorName}
+              </Link>
+            ) : (
+              <span className="font-medium">{authorName}</span>
+            )}
+            {building && buildingHref && (
+              <>
+                <span className="text-text-disabled"> · </span>
+                <Link
+                  to={buildingHref}
+                  className="text-text-secondary hover:underline"
+                >
+                  {building.name}
+                </Link>
+              </>
+            )}
+          </div>
+          <div className="text-xs text-text-disabled mt-0.5">{time}</div>
+        </div>
+      </header>
+
+      {hasText && (
+        <Link to={noteHref} className="block group">
+          {note.title && (
+            <h2 className="text-lg font-semibold text-text-primary mb-1 group-hover:underline">
+              {note.title}
+            </h2>
+          )}
+          {note.body && (
+            <p className="text-text-secondary whitespace-pre-wrap leading-relaxed line-clamp-6">
+              {note.body}
+            </p>
+          )}
+        </Link>
+      )}
+
+      <NoteImages images={images} noteHref={noteHref} />
+    </article>
+  );
+}
+
+function Feed() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["feed-v3"],
+    queryFn: fetchFeed,
+    staleTime: 60_000,
+  });
+
+  return (
+    <AppLayout>
+      <div className="mx-auto w-full max-w-[640px] px-4 md:px-6 pt-10 pb-32">
+        <h1 className="text-2xl font-semibold text-text-primary mb-8 tracking-tight">
+          Latest
+        </h1>
+
+        {isLoading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
+          </div>
+        ) : error ? (
+          <div className="text-text-secondary text-sm py-12">
+            Couldn't load the feed. Please refresh.
+          </div>
+        ) : (data?.length ?? 0) === 0 ? (
+          <div className="text-text-secondary text-sm py-12">
+            No posts yet. Be the first to share.
+          </div>
+        ) : (
+          <div>
+            {data!.map((note) => (
+              <NoteCard key={note.id} note={note} />
+            ))}
+          </div>
+        )}
+      </div>
+    </AppLayout>
+  );
+}
+
 export default function Index() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (user && !authLoading) {
-      if (!user.user_metadata?.onboarding_completed) {
-        navigate("/onboarding");
-      }
+    if (user && !authLoading && !user.user_metadata?.onboarding_completed) {
+      navigate("/onboarding");
     }
   }, [user, authLoading, navigate]);
-
-  const { data: followingCount } = useQuery({
-    queryKey: ["following-count", user?.id],
-    queryFn: async () => {
-      if (!user) return 0;
-      const { count, error } = await supabase
-        .from("follows")
-        .select("*", { count: "exact", head: true })
-        .eq("follower_id", user.id);
-      if (error) throw error;
-      return count || 0;
-    },
-    enabled: !!user,
-  });
-
-  const seenItems = useSeenItems();
-
-  const v2SocialQuery = useQuery({
-    queryKey: ["v2-social-feed", user?.id],
-    queryFn: () => getFeedRanked({ limit: 30 }),
-    enabled: !!user,
-    staleTime: 60 * 1000,
-  });
-
-  const v2CollectionsQuery = useQuery({
-    queryKey: ["v2-collections-feed", user?.id],
-    queryFn: () => getCollectionsFeedAsItems({ limit: 30 }),
-    enabled: !!user,
-    staleTime: 60 * 1000,
-  });
-
-  const v2DiscoveryQuery = useQuery({
-    queryKey: ["v2-discovery-feed", user?.id],
-    queryFn: () => getSuggestedPostsAsItems({ limit: 30 }),
-    enabled: !!user,
-    staleTime: 60 * 1000,
-  });
-
-  const v2ExtendedQuery = useQuery({
-    queryKey: ["v2-extended-feed", user?.id],
-    queryFn: () => getFeedExtended({ limit: 30 }),
-    enabled: !!user,
-    staleTime: 60 * 1000,
-  });
-
-  const v2SpotlightsQuery = useQuery({
-    queryKey: ["v2-spotlights-feed", user?.id],
-    queryFn: () => getBuildingSpotlights({ limit: 20 }),
-    enabled: !!user,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const v2EditorialQuery = useQuery({
-    queryKey: ["v2-editorial-feed", user?.id],
-    queryFn: () => getEditorialSlots(),
-    enabled: !!user,
-    staleTime: 15 * 60 * 1000,
-  });
-
-  const v2ClustersQuery = useQuery({
-    queryKey: ["v2-clusters-feed", user?.id],
-    queryFn: () => getFeedClusters({ limit: 20 }),
-    enabled: !!user,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const v2Items = useMemo(() => {
-    const social = v2SocialQuery.data ?? [];
-    const collections = v2CollectionsQuery.data ?? [];
-    const discovery = v2DiscoveryQuery.data ?? [];
-    const extended = v2ExtendedQuery.data ?? [];
-    const spotlights = v2SpotlightsQuery.data ?? [];
-    const editorial = v2EditorialQuery.data ?? [];
-    const clusters = v2ClustersQuery.data ?? [];
-    return mergeFeedSources(social, collections, discovery, extended, spotlights, seenItems.hasSeen, editorial, clusters);
-  }, [v2SocialQuery.data, v2CollectionsQuery.data, v2DiscoveryQuery.data, v2ExtendedQuery.data, v2SpotlightsQuery.data, v2EditorialQuery.data, v2ClustersQuery.data, seenItems.hasSeen]);
-
-  const handleV2Like = useCallback(async (reviewId: string) => {
-    if (!user) return;
-
-    const queries = [
-      { key: ["v2-social-feed", user.id], query: v2SocialQuery },
-      { key: ["v2-discovery-feed", user.id], query: v2DiscoveryQuery },
-      { key: ["v2-collections-feed", user.id], query: v2CollectionsQuery },
-      { key: ["v2-extended-feed", user.id], query: v2ExtendedQuery },
-    ];
-
-    for (const { key } of queries) {
-      const currentData = queryClient.getQueryData<FeedItem[]>(key);
-      if (!currentData) continue;
-
-      queryClient.setQueryData<FeedItem[]>(key, (old) => {
-        if (!old) return [];
-        return old.map((item) => {
-          if (item.kind === "post" && item.payload.id === reviewId) {
-            const isLiked = !item.payload.is_liked;
-            return {
-              ...item,
-              payload: {
-                ...item.payload,
-                is_liked: isLiked,
-                likes_count: isLiked ? item.payload.likes_count + 1 : item.payload.likes_count - 1,
-              },
-            };
-          }
-          return item;
-        });
-      });
-    }
-
-    try {
-      const isLiked = v2SocialQuery.data?.find(i => i.id === reviewId && i.kind === "post")?.payload.is_liked ?? false;
-      if (isLiked) {
-        await supabase.from("likes").delete().eq("interaction_id", reviewId).eq("user_id", user.id);
-      } else {
-        await supabase.from("likes").insert({ interaction_id: reviewId, user_id: user.id });
-      }
-    } catch (err) {
-      console.error("Failed to toggle like:", err);
-      queries.forEach(({ key }) => queryClient.invalidateQueries({ queryKey: key }));
-    }
-  }, [user, queryClient, v2SocialQuery.data, v2DiscoveryQuery, v2CollectionsQuery, v2ExtendedQuery]);
-
-  const handleV2ImageLike = useCallback(async (reviewId: string, imageId: string) => {
-    if (!user) return;
-
-    const queries = [
-      { key: ["v2-social-feed", user.id] },
-      { key: ["v2-discovery-feed", user.id] },
-      { key: ["v2-collections-feed", user.id] },
-      { key: ["v2-extended-feed", user.id] },
-    ];
-
-    for (const { key } of queries) {
-      queryClient.setQueryData<FeedItem[]>(key, (old) => {
-        if (!old) return old;
-        return old.map((item) => {
-          if (item.kind === "post" && item.payload.id === reviewId) {
-            return {
-              ...item,
-              payload: {
-                ...item.payload,
-                images: item.payload.images?.map((img) => {
-                  if (img.id === imageId) {
-                    const isLiked = !img.is_liked;
-                    return {
-                      ...img,
-                      is_liked: isLiked,
-                      likes_count: isLiked ? img.likes_count + 1 : img.likes_count - 1,
-                    };
-                  }
-                  return img;
-                }),
-              },
-            };
-          }
-          return item;
-        });
-      });
-    }
-
-    try {
-      const img = v2SocialQuery.data?.find(i => i.id === reviewId && i.kind === "post")?.payload.images?.find(im => im.id === imageId);
-      if (img?.is_liked) {
-        await supabase.from("image_likes").delete().eq("user_id", user.id).eq("image_id", imageId);
-      } else {
-        await supabase.from("image_likes").insert({ user_id: user.id, image_id: imageId });
-      }
-    } catch (err) {
-      console.error("Failed to toggle image like:", err);
-      queries.forEach(({ key }) => queryClient.invalidateQueries({ queryKey: key }));
-    }
-  }, [user, queryClient, v2SocialQuery.data]);
-
-  const v2DiscoveryReviews = useMemo(
-    () => (v2DiscoveryQuery.data ?? [])
-      .filter((i): i is FeedItemPost => i.kind === "post")
-      .map(i => i.payload),
-    [v2DiscoveryQuery.data]
-  );
 
   if (authLoading) {
     return (
@@ -298,63 +292,6 @@ export default function Index() {
     );
   }
 
-  if (!user) {
-    return <Landing />;
-  }
-
-  const v2SecondaryLoading =
-    v2CollectionsQuery.isLoading ||
-    v2DiscoveryQuery.isLoading ||
-    v2ExtendedQuery.isLoading ||
-    v2SpotlightsQuery.isLoading ||
-    v2EditorialQuery.isLoading ||
-    v2ClustersQuery.isLoading;
-
-  const v2AnyLoading = v2SocialQuery.isLoading || (v2Items.length === 0 && v2SecondaryLoading);
-
-  return (
-    <AppLayout>
-      {v2AnyLoading ? (
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-10 w-10 animate-spin text-text-secondary" />
-        </div>
-      ) : (
-        <div className="w-full max-w-7xl mx-auto bg-surface-default md:border-l md:border-r border-border-default min-h-screen">
-          <div className="md:grid md:grid-cols-[minmax(0,1fr)_320px]">
-            <main className="min-w-0 md:border-r md:border-border-default">
-              <div className="pt-10 pb-32">
-                {v2Items.length === 0 ? (
-                  <div className="px-4 md:px-6 lg:px-16">
-                    <ColdStartFeed
-                      discoveryReviews={v2DiscoveryReviews}
-                      onLike={handleV2Like}
-                      onImageLike={handleV2ImageLike}
-                      isDiscoveryLoading={v2DiscoveryQuery.isLoading}
-                      isEmptyFeed={(followingCount ?? 0) > 0}
-                      hideSuggestions={(followingCount ?? 0) === 0}
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <FeedMosaic
-                      items={v2Items}
-                      followingCount={followingCount ?? 0}
-                      onLike={handleV2Like}
-                      onImageLike={handleV2ImageLike}
-                    />
-                    {v2SecondaryLoading && (
-                      <div className="flex justify-center py-8">
-                        <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </main>
-            <FeedRightRail activities={[]} />
-          </div>
-        </div>
-      )}
-    </AppLayout>
-  );
+  if (!user) return <Landing />;
+  return <Feed />;
 }

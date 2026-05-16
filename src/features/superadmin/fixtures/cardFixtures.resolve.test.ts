@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deriveLegacyFeedUi } from "@/features/feed/utils/deriveLegacyFeedUi";
+import { deriveLegacyFeedUi } from "@/features/posts/utils/deriveLegacyFeedUi";
 import { cardFixtures } from "./cardFixtures";
 
 describe("cardFixtures expectedLayout", () => {

@@ -4,9 +4,9 @@ import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { FeedReview } from "@/types/feed";
-import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
-import { CardFooter, CardImage } from "@/features/feed/components/card-parts";
-import { CARD_C_IMAGE_HEIGHT } from "@/features/feed/utils/resolveCardType";
+import { useReviewCardData } from "@/features/posts/hooks/useReviewCardData";
+import { CardFooter, CardImage } from "@/features/posts/components/card-parts";
+import { CARD_C_IMAGE_HEIGHT } from "@/features/posts/utils/resolveCardType";
 
 export interface DetailCardCProps {
   entry: FeedReview;

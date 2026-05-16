@@ -1,4 +1,4 @@
-import type { LegacyFeedCardUi } from "@/features/feed/utils/deriveLegacyFeedUi";
+import type { LegacyFeedCardUi } from "@/features/posts/utils/deriveLegacyFeedUi";
 import type { FeedReview, ReviewBuilding, ReviewImage, ReviewUser } from "@/types/feed";
 
 export type CardFixture = {

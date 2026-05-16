@@ -3,15 +3,15 @@ import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
 import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
-import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
-import { useTrackNoteView } from "@/features/feed/hooks/useTrackNoteView";
-import { countWords } from "@/features/feed/utils/resolveCardType";
+import { useReviewCardData } from "@/features/posts/hooks/useReviewCardData";
+import { useTrackNoteView } from "@/features/posts/hooks/useTrackNoteView";
+import { countWords } from "@/features/posts/utils/resolveCardType";
 import {
   BuildingHeadline,
   CardFooter,
   CardMeta,
   CardAuthor,
-} from "@/features/feed/components/card-parts";
+} from "@/features/posts/components/card-parts";
 
 const MOBILE_MAX_WIDTH_PX = 767;
 const PULL_QUOTE_WORD_THRESHOLD = 15;

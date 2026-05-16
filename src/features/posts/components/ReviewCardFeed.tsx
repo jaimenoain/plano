@@ -1,6 +1,6 @@
 import type { FeedEventAttendance, FeedHomeEntry, FeedReview } from "@/types/feed";
-import { resolveCardType } from "@/features/feed/utils/resolveCardType";
-import { SuggestedContentBlock } from "@/features/feed/components/SuggestedContentBlock";
+import { resolveCardType } from "@/features/posts/utils/resolveCardType";
+import { SuggestedContentBlock } from "@/features/posts/components/SuggestedContentBlock";
 import { FeedCardA } from "./FeedCardA";
 import { FeedCardB } from "./FeedCardB";
 import { FeedCardC } from "./FeedCardC";

@@ -84,7 +84,7 @@ import {
   buildingEntryToFeedReview,
   type BuildingSummaryForFeed,
 } from "@/features/buildings/utils/buildingReviewFeedAdapter";
-import { ActivityStreamGroup } from "@/features/feed/components/ActivityStream";
+import { ActivityStreamGroup } from "@/features/posts/components/ActivityStream";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ClientOnly } from "@/components/common/ClientOnly";
 import {

@@ -1,4 +1,4 @@
-import { resolveCardType } from "@/features/feed/utils/resolveCardType";
+import { resolveCardType } from "@/features/posts/utils/resolveCardType";
 import type { CardType } from "@/types/cards";
 import type { FeedEventAttendance, FeedReview } from "@/types/feed";
 import { differenceInHours } from "date-fns";

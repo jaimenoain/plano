@@ -4,7 +4,7 @@ import {
   collapseIntoRows,
   type AggregatedFeedItem,
 } from "@/lib/feed-aggregation";
-import { resolveCardType } from "@/features/feed/utils/resolveCardType";
+import { resolveCardType } from "@/features/posts/utils/resolveCardType";
 import type { FeedReview, ReviewBuilding } from "@/types/feed";
 
 const building = (

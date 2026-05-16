@@ -3,16 +3,16 @@ import { useNavigate } from "react-router";
 import { cn } from "@/lib/utils";
 import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
-import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
-import { useTrackNoteView } from "@/features/feed/hooks/useTrackNoteView";
+import { useReviewCardData } from "@/features/posts/hooks/useReviewCardData";
+import { useTrackNoteView } from "@/features/posts/hooks/useTrackNoteView";
 import {
   BuildingHeadline,
   CardFooter,
   CardImage,
   CardMeta,
   CardAuthor,
-} from "@/features/feed/components/card-parts";
-import { CARD_C_IMAGE_HEIGHT } from "@/features/feed/utils/resolveCardType";
+} from "@/features/posts/components/card-parts";
+import { CARD_C_IMAGE_HEIGHT } from "@/features/posts/utils/resolveCardType";
 
 const MD_MEDIA_QUERY = "(min-width: 768px)";
 

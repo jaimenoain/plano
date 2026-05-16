@@ -1,7 +1,7 @@
 import type { FeedReview } from "@/types/feed";
-import { resolveDetailVariant } from "@/features/feed/utils/resolveCardType";
-import { DetailCardNoMedia } from "@/features/feed/components/detail/DetailCardNoMedia";
-import { DetailCardWithMedia } from "@/features/feed/components/detail/DetailCardWithMedia";
+import { resolveDetailVariant } from "@/features/posts/utils/resolveCardType";
+import { DetailCardNoMedia } from "@/features/posts/components/detail/DetailCardNoMedia";
+import { DetailCardWithMedia } from "@/features/posts/components/detail/DetailCardWithMedia";
 
 export interface DetailCardProps {
   entry: FeedReview;

@@ -3,8 +3,8 @@ import type { MouseEvent } from "react";
 import { useNavigate } from "react-router";
 import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
-import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
-import { SuggestedContentBlock } from "@/features/feed/components/SuggestedContentBlock";
+import { useReviewCardData } from "@/features/posts/hooks/useReviewCardData";
+import { SuggestedContentBlock } from "@/features/posts/components/SuggestedContentBlock";
 import { cn } from "@/lib/utils";
 
 export type FeedActivityStatus = "visited" | "pending";

@@ -1,9 +1,9 @@
-import { FeedCardA } from "@/features/feed/components/FeedCardA";
-import { FeedCardB } from "@/features/feed/components/FeedCardB";
-import { FeedCardC } from "@/features/feed/components/FeedCardC";
-import { FeedActivityRow } from "@/features/feed/components/FeedActivityRow";
-import { SuggestedContentBlock } from "@/features/feed/components/SuggestedContentBlock";
-import { resolveCardType } from "@/features/feed/utils/resolveCardType";
+import { FeedCardA } from "@/features/posts/components/FeedCardA";
+import { FeedCardB } from "@/features/posts/components/FeedCardB";
+import { FeedCardC } from "@/features/posts/components/FeedCardC";
+import { FeedActivityRow } from "@/features/posts/components/FeedActivityRow";
+import { SuggestedContentBlock } from "@/features/posts/components/SuggestedContentBlock";
+import { resolveCardType } from "@/features/posts/utils/resolveCardType";
 import type { FeedReview } from "@/types/feed";
 
 export interface ProfileReviewCardProps {

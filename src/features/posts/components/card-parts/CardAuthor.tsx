@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from "date-fns";
-import { PointsBadge } from "@/features/feed/components/card-primitives";
+import { PointsBadge } from "@/features/posts/components/card-primitives";
 import { cn } from "@/lib/utils";
 
 export interface CardAuthorProps {

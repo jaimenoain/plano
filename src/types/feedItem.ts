@@ -1,5 +1,5 @@
 import type { FeedReview, FeedCollection } from "./feed";
-import type { CardAttributionKind } from "@/features/feed/components/card-parts/CardAttribution";
+import type { CardAttributionKind } from "@/features/posts/components/card-parts/CardAttribution";
 
 /**
  * Concentric-ring assignment for a feed candidate.
