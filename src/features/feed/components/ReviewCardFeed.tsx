@@ -1,13 +1,15 @@
 import type { FeedEventAttendance, FeedHomeEntry, FeedReview } from "@/types/feed";
+import { resolveCardType } from "@/features/feed/utils/resolveCardType";
+import { SuggestedContentBlock } from "@/features/feed/components/SuggestedContentBlock";
+import { FeedCardA } from "./FeedCardA";
+import { FeedCardB } from "./FeedCardB";
+import { FeedCardC } from "./FeedCardC";
+import { FeedActivityRow } from "./FeedActivityRow";
+import { FeedEventAttendanceRow } from "./FeedEventAttendanceRow";
 
 function isEventAttendanceEntry(entry: FeedHomeEntry): entry is FeedEventAttendance {
   return "rowType" in entry && entry.rowType === "event_attendance";
 }
-import { resolveCardType } from "@/features/feed/utils/resolveCardType";
-import { SuggestedContentBlock } from "@/features/feed/components/SuggestedContentBlock";
-import { FeedCard } from "./FeedCard";
-import { FeedActivityRow } from "./FeedActivityRow";
-import { FeedEventAttendanceRow } from "./FeedEventAttendanceRow";
 
 export interface ReviewCardFeedProps {
   entry: FeedHomeEntry;
@@ -52,18 +54,24 @@ export function ReviewCardFeed({
     );
   }
 
+  const shared = {
+    hideUser,
+    hideBuildingInfo,
+    showCommunityImages,
+    onLike,
+    onComment,
+  };
+
   return (
     <div className="contents" data-testid={`review-card-feed-${review.id}`}>
       <SuggestedContentBlock isSuggested={review.is_suggested} suggestionReason={review.suggestion_reason}>
-        <FeedCard
-          entry={review}
-          hideUser={hideUser}
-          hideBuildingInfo={hideBuildingInfo}
-          showCommunityImages={showCommunityImages}
-          onLike={onLike}
-          onComment={onComment}
-          onImageLike={onImageLike}
-        />
+        {t === "A" ? (
+          <FeedCardA entry={review} {...shared} />
+        ) : t === "B" ? (
+          <FeedCardB entry={review} {...shared} onImageLike={onImageLike} />
+        ) : (
+          <FeedCardC entry={review} {...shared} onImageLike={onImageLike} />
+        )}
       </SuggestedContentBlock>
     </div>
   );

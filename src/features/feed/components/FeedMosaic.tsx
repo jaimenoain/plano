@@ -54,7 +54,7 @@ export function FeedMosaic({ items, followingCount, onLike, onImageLike }: FeedM
   const [dismissed, setDismissed] = useState(
     () => localStorage.getItem(FOLLOW_NUDGE_DISMISSED_KEY) === "1",
   );
-  const mosaicItems = assembleMosaicItems(items);
+  const orderedItems = assembleMosaicItems(items);
   const showNudge = !dismissed && followingCount < FOLLOW_NUDGE_THRESHOLD;
 
   function handleDismiss() {
@@ -66,7 +66,7 @@ export function FeedMosaic({ items, followingCount, onLike, onImageLike }: FeedM
     <div>
       {showNudge && <FollowNudgeBanner onDismiss={handleDismiss} />}
       <div className="divide-y divide-border-default">
-        {mosaicItems.map(({ item }) => {
+        {orderedItems.map((item) => {
           if (item.kind === "prompt") {
             return (
               <div key={item.id} className="px-5 py-8 md:px-10">

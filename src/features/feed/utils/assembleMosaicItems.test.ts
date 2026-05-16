@@ -89,17 +89,11 @@ describe("assembleMosaicItems", () => {
     expect(assembleMosaicItems([])).toEqual([]);
   });
 
-  it("first item always gets its assigned size (anchor = xl if has media)", () => {
+  it("single post passes through", () => {
     const items = [makePost("a", 2.0, "alice", "b1", withImage)];
     const result = assembleMosaicItems(items);
-    expect(result[0].tileSize).toBe("xl");
-    expect(result[0].item.id).toBe("a");
-  });
-
-  it("first item without media → lg (anchor, text-only)", () => {
-    const items = [makePost("a", 2.0, "alice", "b1")];
-    const result = assembleMosaicItems(items);
-    expect(result[0].tileSize).toBe("lg");
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("a");
   });
 
   it("adjacent same-author posts get swapped", () => {
@@ -109,10 +103,9 @@ describe("assembleMosaicItems", () => {
       makePost("c", 6, "carol", "b3", withImage),
     ];
     const result = assembleMosaicItems(items);
-    // b and c should be swapped so c comes before b
-    expect(result[0].item.id).toBe("a");
-    expect(result[1].item.id).toBe("c");
-    expect(result[2].item.id).toBe("b");
+    expect(result[0].id).toBe("a");
+    expect(result[1].id).toBe("c");
+    expect(result[2].id).toBe("b");
   });
 
   it("adjacent same-building posts get swapped", () => {
@@ -122,9 +115,9 @@ describe("assembleMosaicItems", () => {
       makePost("c", 6, "carol", "other", withImage),
     ];
     const result = assembleMosaicItems(items);
-    expect(result[0].item.id).toBe("a");
-    expect(result[1].item.id).toBe("c");
-    expect(result[2].item.id).toBe("b");
+    expect(result[0].id).toBe("a");
+    expect(result[1].id).toBe("c");
+    expect(result[2].id).toBe("b");
   });
 
   it("no conflict means no swap", () => {
@@ -134,7 +127,7 @@ describe("assembleMosaicItems", () => {
       makePost("c", 6, "carol", "b3", withImage),
     ];
     const result = assembleMosaicItems(items);
-    expect(result.map((r) => r.item.id)).toEqual(["a", "b", "c"]);
+    expect(result.map((r) => r.id)).toEqual(["a", "b", "c"]);
   });
 
   it("items with no author/building id do not conflict", () => {
@@ -144,8 +137,7 @@ describe("assembleMosaicItems", () => {
       makePost("p", 5, "alice", "b1"),
     ];
     const result = assembleMosaicItems(items);
-    // No conflict among non-post items; order unchanged
-    expect(result.map((r) => r.item.id)).toEqual(["col1", "col2", "p"]);
+    expect(result.map((r) => r.id)).toEqual(["col1", "col2", "p"]);
   });
 
   it("building_spotlight and post sharing the same building conflict and get swapped", () => {
@@ -154,16 +146,14 @@ describe("assembleMosaicItems", () => {
     const other = makePost("other", 6, "bob", "other-bldg", withImage);
     const items = [spotlight, post, other];
     const result = assembleMosaicItems(items);
-    // post (same building as spotlight) should be swapped with other
-    expect(result[0].item.id).toBe(spotlight.id);
-    expect(result[1].item.id).toBe("other");
-    expect(result[2].item.id).toBe("post-same-bldg");
+    expect(result[0].id).toBe(spotlight.id);
+    expect(result[1].id).toBe("other");
+    expect(result[2].id).toBe("post-same-bldg");
   });
 
   it("spotlight frequency cap: second spotlight within 5 tiles is dropped", () => {
     const s1 = makeSpotlight("s1", "bldg1");
     const s2 = makeSpotlight("s2", "bldg2");
-    // Only 2 posts between the two spotlights — not enough gap (need 5)
     const items = [
       s1,
       makePost("p1", 5, "alice", "b1"),
@@ -171,7 +161,7 @@ describe("assembleMosaicItems", () => {
       s2,
     ];
     const result = assembleMosaicItems(items);
-    const spotlightIds = result.filter((r) => r.item.kind === "building_spotlight").map((r) => r.item.id);
+    const spotlightIds = result.filter((r) => r.kind === "building_spotlight").map((r) => r.id);
     expect(spotlightIds).toHaveLength(1);
     expect(spotlightIds[0]).toBe(s1.id);
   });
@@ -189,7 +179,7 @@ describe("assembleMosaicItems", () => {
       s2,
     ];
     const result = assembleMosaicItems(items);
-    const spotlightIds = result.filter((r) => r.item.kind === "building_spotlight").map((r) => r.item.id);
+    const spotlightIds = result.filter((r) => r.kind === "building_spotlight").map((r) => r.id);
     expect(spotlightIds).toHaveLength(2);
   });
 
@@ -216,12 +206,10 @@ describe("assembleMosaicItems", () => {
     };
     const post1 = makePost("p1", 10, "alice", "b1", withImage);
     const post2 = makePost("p2", 8, "bob", "b2", withImage);
-    // Editorial appears last in the input but should surface first
     const items = [post1, post2, editorial];
     const result = assembleMosaicItems(items);
-    expect(result[0].item.kind).toBe("editorial");
-    expect(result[0].item.id).toBe(editorial.id);
-    expect(result[0].tileSize).toBe("xl");
+    expect(result[0].kind).toBe("editorial");
+    expect(result[0].id).toBe(editorial.id);
   });
 
   it("editorial item participates in building-conflict resolution with posts on the same building", () => {
@@ -247,12 +235,10 @@ describe("assembleMosaicItems", () => {
     };
     const post = makePost("p-same", 8, "alice", "shared-bldg", withImage);
     const other = makePost("p-other", 6, "bob", "other-bldg", withImage);
-    // After pinning: [editorial, p-same, p-other]
-    // Adjacent editorial+post share a building → swap post with other
     const result = assembleMosaicItems([editorial, post, other]);
-    expect(result[0].item.kind).toBe("editorial");
-    expect(result[1].item.id).toBe("p-other");
-    expect(result[2].item.id).toBe("p-same");
+    expect(result[0].kind).toBe("editorial");
+    expect(result[1].id).toBe("p-other");
+    expect(result[2].id).toBe("p-same");
   });
 
   it("does not mutate the input array", () => {

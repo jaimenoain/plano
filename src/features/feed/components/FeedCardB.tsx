@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
+import { useTrackNoteView } from "@/features/feed/hooks/useTrackNoteView";
 import {
   BuildingHeadline,
   CardFooter,
@@ -12,7 +13,6 @@ import {
   CardAuthor,
 } from "@/features/feed/components/card-parts";
 import { CARD_C_IMAGE_HEIGHT } from "@/features/feed/utils/resolveCardType";
-import type { TileSize } from "@/features/feed/utils/assignTileSize";
 
 const MD_MEDIA_QUERY = "(min-width: 768px)";
 
@@ -26,7 +26,6 @@ export interface FeedCardBProps {
   onLike?: (reviewId: string) => void;
   onComment?: (reviewId: string) => void;
   onImageLike?: (reviewId: string, imageId: string) => void;
-  tileSize?: TileSize;
 }
 
 export function FeedCardB({
@@ -39,13 +38,13 @@ export function FeedCardB({
   onLike,
   onComment,
   onImageLike,
-  tileSize,
 }: FeedCardBProps) {
   const navigate = useNavigate();
   const [essayExpanded, setEssayExpanded] = useState(false);
   const [showReadMore, setShowReadMore] = useState(false);
   const [isMdUp, setIsMdUp] = useState(false);
   const bodyRef = useRef<HTMLParagraphElement>(null);
+  const trackViewRef = useTrackNoteView(entry.id, entry.user_id);
 
   const { data } = useReviewCardData(entry, { showCommunityImages });
 
@@ -88,8 +87,7 @@ export function FeedCardB({
   if (!data || !entry.building) return null;
 
   const { username, isArchitectOfBuilding, mainTitle, mediaItems } = data;
-  const imageAspectRatio = tileSize === "xl" ? "1/1" : tileSize === "md" ? "4/5" : "16/9";
-  const showImage = !tileSize || tileSize !== "sm";
+  const imageAspectRatio = "16/9";
 
   const handleCardClick = (e: MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -123,29 +121,27 @@ export function FeedCardB({
 
   return (
     <article
+      ref={trackViewRef}
       data-testid={`feed-card-b-${entry.id}`}
       onClick={handleCardClick}
       className={cn(
         "group/card relative w-full cursor-pointer min-w-0",
-        tileSize && "h-full",
         isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-6",
       )}
     >
       <div className="grid w-full min-w-0 grid-cols-1 gap-0 md:grid-cols-2 md:gap-16 md:items-start">
         {/* Photo column */}
-        {showImage && (
-          <div className={cn("order-1 min-w-0", imageOnLeft ? "md:order-1" : "md:order-2")}>
-            <CardImage
-              items={mediaItems}
-              height={isMdUp ? undefined : CARD_C_IMAGE_HEIGHT}
-              aspectRatio={isMdUp ? imageAspectRatio : undefined}
-              reviewId={entry.id}
-              onImageLike={onImageLike}
-              firstMediaOnly
-              className="transition-transform duration-500 group-hover/card:scale-[1.01]"
-            />
-          </div>
-        )}
+        <div className={cn("order-1 min-w-0", imageOnLeft ? "md:order-1" : "md:order-2")}>
+          <CardImage
+            items={mediaItems}
+            height={isMdUp ? undefined : CARD_C_IMAGE_HEIGHT}
+            aspectRatio={isMdUp ? imageAspectRatio : undefined}
+            reviewId={entry.id}
+            onImageLike={onImageLike}
+            firstMediaOnly
+            className="transition-transform duration-500 group-hover/card:scale-[1.01]"
+          />
+        </div>
 
         {/* Text column */}
         <div

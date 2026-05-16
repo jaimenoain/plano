@@ -35,8 +35,6 @@ function ClusterThumbnail({ post }: { post: ClusterPost }) {
  *
  * Inline expansion: tapping "Show all" reveals the full list of supporting posts
  * without navigating away, keeping friction low.
- *
- * Tile size: always `lg` (2×1 wide) — see assignTileSize.ts.
  */
 export function MomentClusterCard({ item }: MomentClusterCardProps) {
   const navigate = useNavigate();

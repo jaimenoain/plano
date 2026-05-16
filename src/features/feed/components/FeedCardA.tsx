@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 import { FeedReview } from "@/types/feed";
 import { useReviewCardData } from "@/features/feed/hooks/useReviewCardData";
+import { useTrackNoteView } from "@/features/feed/hooks/useTrackNoteView";
 import { countWords } from "@/features/feed/utils/resolveCardType";
 import {
   BuildingHeadline,
@@ -11,7 +12,6 @@ import {
   CardMeta,
   CardAuthor,
 } from "@/features/feed/components/card-parts";
-import type { TileSize } from "@/features/feed/utils/assignTileSize";
 
 const MOBILE_MAX_WIDTH_PX = 767;
 const PULL_QUOTE_WORD_THRESHOLD = 15;
@@ -23,7 +23,6 @@ export interface FeedCardAProps {
   showCommunityImages?: boolean;
   onLike?: (reviewId: string) => void;
   onComment?: (reviewId: string) => void;
-  tileSize?: TileSize;
 }
 
 export function FeedCardA({
@@ -33,7 +32,6 @@ export function FeedCardA({
   showCommunityImages = true,
   onLike,
   onComment,
-  tileSize,
 }: FeedCardAProps) {
   const navigate = useNavigate();
   const [essayExpanded, setEssayExpanded] = useState(false);
@@ -41,6 +39,7 @@ export function FeedCardA({
   const [isNarrowViewport, setIsNarrowViewport] = useState(false);
   const bodyRef = useRef<HTMLParagraphElement>(null);
   const contentWordCount = countWords(entry.content);
+  const trackViewRef = useTrackNoteView(entry.id, entry.user_id);
 
   const { data } = useReviewCardData(entry, { showCommunityImages });
 
@@ -84,7 +83,7 @@ export function FeedCardA({
 
   const { username, isArchitectOfBuilding, mainTitle } = data;
   const isPullQuote =
-    tileSize === "sm" || (entry.content?.trim() && contentWordCount > 0 && contentWordCount <= PULL_QUOTE_WORD_THRESHOLD);
+    Boolean(entry.content?.trim()) && contentWordCount > 0 && contentWordCount <= PULL_QUOTE_WORD_THRESHOLD;
 
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -118,11 +117,11 @@ export function FeedCardA({
 
   return (
     <article
+      ref={trackViewRef}
       data-testid={`feed-card-a-${entry.id}`}
       onClick={handleCardClick}
       className={cn(
         "group/card relative w-full cursor-pointer min-w-0",
-        tileSize && "h-full",
         isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-6",
       )}
     >
