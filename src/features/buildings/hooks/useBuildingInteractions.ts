@@ -490,15 +490,37 @@ export function useBuildingInteractions({
               .eq("building_id", resolvedBuildingId)
               .maybeSingle();
 
-            // All of this user's building_posts for this building, newest first
+            // All of this user's building_posts for this building, newest first.
+            // We deliberately do NOT use the PostgREST `review_images(...)` embed
+            // here: when the FK target was swapped from user_buildings to
+            // building_posts in migration 20270872 the production schema cache
+            // started silently returning `[]` for the embed even when rows
+            // exist. Two queries + manual merge is cache-immune.
             const { data: allPosts } = await supabase
               .from("building_posts")
-              .select("id, title, body, created_at, updated_at, review_images(id, storage_path)")
+              .select("id, title, body, created_at, updated_at")
               .eq("user_id", userId)
               .eq("building_id", resolvedBuildingId)
               .order("updated_at", { ascending: false })
               .limit(20);
             const latestPost = allPosts?.[0] ?? null;
+
+            const postIds = (allPosts ?? []).map((p) => p.id);
+            const imagesByPost = new Map<
+              string,
+              { id: string; storage_path: string }[]
+            >();
+            if (postIds.length > 0) {
+              const { data: imgRows } = await supabase
+                .from("review_images")
+                .select("id, storage_path, review_id")
+                .in("review_id", postIds);
+              (imgRows ?? []).forEach((img) => {
+                const list = imagesByPost.get(img.review_id) ?? [];
+                list.push({ id: img.id, storage_path: img.storage_path });
+                imagesByPost.set(img.review_id, list);
+              });
+            }
 
             // User's collections containing this building
             const { data: collectionItems } = await supabase
@@ -535,7 +557,7 @@ export function useBuildingInteractions({
                 body: p.body,
                 created_at: p.created_at ?? "",
                 updated_at: p.updated_at ?? p.created_at ?? "",
-                images: (Array.isArray(p.review_images) ? p.review_images : []) as { id: string; storage_path: string }[],
+                images: imagesByPost.get(p.id) ?? [],
               })),
             );
 

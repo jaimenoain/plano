@@ -125,15 +125,22 @@ export function BuildingPopupContent({
         try {
             const { data: postsData } = await supabase
                 .from('building_posts')
-                .select('body, review_images(count)')
+                .select('id, body')
                 .eq('user_id', user.id)
                 .eq('building_id', buildingId);
 
             const hasReview = postsData?.some(p => p.body && p.body.trim().length > 0);
-            const imageCount = postsData?.reduce((sum, p) => {
-                const cnt = (p.review_images as { count: number }[] | null)?.[0]?.count ?? 0;
-                return sum + cnt;
-            }, 0) ?? 0;
+            const postIds = (postsData ?? []).map(p => p.id);
+            let imageCount = 0;
+            if (postIds.length > 0) {
+                // Separate count query — PostgREST `review_images(count)` embed
+                // returns 0 in production after the 20270872 FK swap.
+                const { count } = await supabase
+                    .from('review_images')
+                    .select('id', { count: 'exact', head: true })
+                    .in('review_id', postIds);
+                imageCount = count ?? 0;
+            }
 
             if (hasReview || imageCount > 0) {
                 let msg = "You are about to remove this building from your list.";

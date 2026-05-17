@@ -91,12 +91,25 @@ export default function EditNote() {
 
     const load = async () => {
       try {
-        const [postResult, buildingResult] = await Promise.all([
+        // Fetch the post, its images, its links, and the building in parallel.
+        // The `review_images` / `review_links` arrays are fetched as separate
+        // queries (rather than via PostgREST embed) because production's
+        // schema cache silently returns `[]` for the embed after the FK swap
+        // in migration 20270872. Direct WHERE-in queries are immune.
+        const [postResult, imagesResult, linksResult, buildingResult] = await Promise.all([
           supabase
             .from("building_posts")
-            .select("id, title, body, tags, user_id, review_images(id, storage_path, is_generated, caption), review_links(id, url, title)")
+            .select("id, title, body, tags, user_id")
             .eq("id", postId)
             .single(),
+          supabase
+            .from("review_images")
+            .select("id, storage_path, is_generated, caption")
+            .eq("review_id", postId),
+          supabase
+            .from("review_links")
+            .select("id, url, title")
+            .eq("review_id", postId),
           supabase
             .from("buildings")
             .select("id, name, slug, short_id")
@@ -117,7 +130,7 @@ export default function EditNote() {
         setBody(post.body ?? "");
         setTags(post.tags ?? []);
 
-        const existingImages: AttachedImage[] = (Array.isArray(post.review_images) ? post.review_images : []).map(
+        const existingImages: AttachedImage[] = (imagesResult.data ?? []).map(
           (img: { id: string; storage_path: string; is_generated: boolean | null; caption: string | null }) => ({
             id: img.id,
             preview: getBuildingImageUrl(img.storage_path) ?? "",
@@ -128,7 +141,7 @@ export default function EditNote() {
         );
         setImages(existingImages);
 
-        const existingLinks = (Array.isArray(post.review_links) ? post.review_links : []).map(
+        const existingLinks = (linksResult.data ?? []).map(
           (l: { id: string; url: string; title: string | null }) => ({
             id: l.id,
             url: l.url,
