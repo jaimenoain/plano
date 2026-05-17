@@ -615,13 +615,14 @@ toast.error("Location search failed. Please click on the map to set the location
                   >
                     <div className="flex flex-col items-center">
                         {locationPrecision === 'approximate' ? (
-                            <div className="w-6 h-6 rounded-full bg-brand-primary border-2 border-surface-default drop-shadow-md transition-transform" />
+                            <div className="w-7 h-7 rounded-full bg-brand-accent border-[3px] border-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] transition-transform" />
                         ) : (
                             <MapPin
-                                className="h-8 w-8 text-brand-primary fill-brand-primary drop-shadow-md transition-colors"
+                                className="h-9 w-9 text-white fill-brand-accent drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] transition-colors"
+                                strokeWidth={1.5}
                             />
                         )}
-                        <div className="w-2 h-1 bg-black/30 rounded-full blur-[1px]"></div>
+                        <div className="w-2 h-1 bg-black/40 rounded-full blur-[1px]"></div>
                     </div>
                   </Marker>
                 )}
@@ -666,9 +667,9 @@ toast.error("Location search failed. Please click on the map to set the location
               <div className="absolute top-4 left-4 bg-surface-default/95 backdrop-blur px-3 py-2 rounded-md border shadow-sm text-xs space-y-1">
                  <div className="flex items-center gap-2">
                      {locationPrecision === 'approximate' ? (
-                         <div className="w-3 h-3 rounded-full bg-brand-primary border border-surface-default" />
+                         <div className="w-3 h-3 rounded-full bg-brand-accent border border-white shadow-sm" />
                      ) : (
-                         <MapPin className="h-3 w-3 text-brand-primary fill-brand-primary" />
+                         <MapPin className="h-3 w-3 text-white fill-brand-accent drop-shadow-sm" strokeWidth={1.5} />
                      )}
                      <span>Selected Location</span>
                  </div>

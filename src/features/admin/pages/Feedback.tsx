@@ -29,7 +29,7 @@ interface FeedbackRow {
   screenshot_path: string | null;
   created_at: string;
   user_id: string;
-  profiles: { username: string | null; email: string | null } | null;
+  profiles: { username: string | null } | null;
 }
 
 const TYPE_LABELS: Record<FeedbackType, string> = {
@@ -74,7 +74,7 @@ export default function FeedbackAdminPage() {
         .from("feedback")
         .select(
           `id, type, message, page_url, user_agent, console_errors, metadata, screenshot_path, created_at, user_id,
-           profiles ( username, email )`
+           profiles ( username )`
         )
         .order("created_at", { ascending: false })
         .limit(200);
@@ -196,7 +196,7 @@ export default function FeedbackAdminPage() {
                       <TypePill type={row.type} />
                     </TableCell>
                     <TableCell className="text-sm text-text-secondary">
-                      {row.profiles?.username ?? row.profiles?.email ?? row.user_id.slice(0, 8)}
+                      {row.profiles?.username ?? row.user_id.slice(0, 8)}
                     </TableCell>
                     <TableCell className="max-w-xs text-sm text-text-primary">
                       <span title={row.message}>
