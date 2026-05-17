@@ -511,10 +511,17 @@ export function useBuildingInteractions({
               { id: string; storage_path: string }[]
             >();
             if (postIds.length > 0) {
-              const { data: imgRows } = await supabase
+              const { data: imgRows, error: imgErr } = await supabase
                 .from("review_images")
                 .select("id, storage_path, review_id")
                 .in("review_id", postIds);
+              // Deploy verification + diagnostic. Remove once confirmed working.
+              // eslint-disable-next-line no-console
+              console.info("[plano:notes] review_images fetch", {
+                postIds,
+                rows: imgRows?.length ?? 0,
+                err: imgErr?.message,
+              });
               (imgRows ?? []).forEach((img) => {
                 const list = imagesByPost.get(img.review_id) ?? [];
                 list.push({ id: img.id, storage_path: img.storage_path });
