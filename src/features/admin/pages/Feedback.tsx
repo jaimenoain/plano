@@ -59,6 +59,7 @@ function TypePill({ type }: { type: FeedbackType }) {
 export default function FeedbackAdminPage() {
   const [rows, setRows] = useState<FeedbackRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<FeedbackType | "all">("all");
   const [dateRange, setDateRange] = useState<DateRange>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -67,18 +68,19 @@ export default function FeedbackAdminPage() {
   useEffect(() => {
     async function load() {
       setLoading(true);
+      setLoadError(null);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("feedback")
         .select(
           `id, type, message, page_url, user_agent, console_errors, metadata, screenshot_path, created_at, user_id,
-           profiles!feedback_user_id_fkey ( username, email )`
+           profiles ( username, email )`
         )
         .order("created_at", { ascending: false })
         .limit(200);
 
       if (error) {
-        void error;
+        setLoadError(error.message);
       } else {
         setRows((data ?? []) as unknown as FeedbackRow[]);
       }
@@ -154,6 +156,10 @@ export default function FeedbackAdminPage() {
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
+        </div>
+      ) : loadError ? (
+        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          Failed to load feedback: {loadError}
         </div>
       ) : (
         <Table>

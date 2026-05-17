@@ -101,11 +101,14 @@ export type Database = {
       ambassador_memberships: {
         Row: {
           chapter_id: string
+          contributor_type: string | null
           created_at: string
           exco_responsibility: string | null
           id: string
           invited_by: string | null
           joined_at: string
+          onboarded_at: string | null
+          preferred_tools: string[] | null
           role: string
           status: string
           updated_at: string
@@ -114,11 +117,14 @@ export type Database = {
         }
         Insert: {
           chapter_id: string
+          contributor_type?: string | null
           created_at?: string
           exco_responsibility?: string | null
           id?: string
           invited_by?: string | null
           joined_at?: string
+          onboarded_at?: string | null
+          preferred_tools?: string[] | null
           role: string
           status?: string
           updated_at?: string
@@ -127,11 +133,14 @@ export type Database = {
         }
         Update: {
           chapter_id?: string
+          contributor_type?: string | null
           created_at?: string
           exco_responsibility?: string | null
           id?: string
           invited_by?: string | null
           joined_at?: string
+          onboarded_at?: string | null
+          preferred_tools?: string[] | null
           role?: string
           status?: string
           updated_at?: string
@@ -2892,6 +2901,10 @@ export type Database = {
       }
     }
     Functions: {
+      complete_ambassador_onboarding: {
+        Args: { p_preferred_tools: string[] }
+        Returns: undefined
+      }
       _postgis_deprecate: {
         Args: { newname: string; oldname: string; version: string }
         Returns: undefined

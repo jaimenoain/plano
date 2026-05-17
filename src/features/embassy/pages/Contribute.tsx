@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,17 +35,69 @@ import { List } from "lucide-react";
 
 type ToolType = "research" | "photography" | "outreach" | "curation" | "community" | null;
 
+interface ToolDefinition {
+  key: NonNullable<ToolType>;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  asChild?: boolean;
+}
+
+const ALL_TOOLS: ToolDefinition[] = [
+  {
+    key: "research",
+    title: "Data & Research",
+    description: "Complete missing metadata like architects, completion years, and styles.",
+    icon: <Search className="h-6 w-6" />,
+  },
+  {
+    key: "photography",
+    title: "Photography",
+    description: "Find buildings that need photos and help document them visually.",
+    icon: <Camera className="h-6 w-6" />,
+  },
+  {
+    key: "outreach",
+    title: "Architect Outreach",
+    description: "Help firms claim their portfolio and verify their credits.",
+    icon: <CheckCircle2 className="h-6 w-6" />,
+  },
+  {
+    key: "curation",
+    title: "Curation",
+    description: "Review tags, group buildings into collections, and highlight gems.",
+    icon: <Filter className="h-6 w-6" />,
+  },
+  {
+    key: "community",
+    title: "Grow Community",
+    description: "Invite architects and firms in your area to join Plano.",
+    icon: <UserPlus className="h-6 w-6" />,
+    asChild: true,
+  },
+];
+
+function sortToolsByPreference(preferred: string[] | null | undefined): ToolDefinition[] {
+  if (!preferred || preferred.length === 0) return ALL_TOOLS;
+  const preferredSet = new Set(preferred);
+  const ordered = preferred
+    .map((key) => ALL_TOOLS.find((t) => t.key === key))
+    .filter((t): t is ToolDefinition => t !== undefined);
+  const rest = ALL_TOOLS.filter((t) => !preferredSet.has(t.key));
+  return [...ordered, ...rest];
+}
+
 export default function ContributePage() {
   const { user } = useAuth();
   const [activeTool, setActiveTool] = useState<ToolType>(null);
 
-  // Fetch membership for chapterId
+  // Fetch membership for chapterId and preferred_tools
   const { data: membership } = useQuery({
     queryKey: ["ambassador-membership", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ambassador_memberships")
-        .select("role, status, onboarded_at, chapter_id")
+        .select("role, status, onboarded_at, chapter_id, preferred_tools")
         .eq("user_id", user?.id)
         .single();
       if (error) throw error;
@@ -55,6 +107,7 @@ export default function ContributePage() {
   });
 
   const chapterId = membership?.chapter_id;
+  const sortedTools = sortToolsByPreference(membership?.preferred_tools);
 
   if (activeTool === "research" && chapterId) {
     return <DataResearchTool chapterId={chapterId} onBack={() => setActiveTool(null)} />;
@@ -86,52 +139,19 @@ export default function ContributePage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* Data & Research Tool */}
-        <ToolCard
-          title="Data & Research"
-          description="Complete missing metadata like architects, completion years, and styles."
-          icon={<Search className="h-6 w-6" />}
-          onClick={() => setActiveTool("research")}
-          active
-        />
-
-        {/* Photography Tool */}
-        <ToolCard
-          title="Photography"
-          description="Find buildings that need photos and help document them visually."
-          icon={<Camera className="h-6 w-6" />}
-          onClick={() => setActiveTool("photography")}
-          active
-        />
-
-        {/* Architect Outreach Tool */}
-        <ToolCard
-          title="Architect Outreach"
-          description="Help firms claim their portfolio and verify their credits."
-          icon={<CheckCircle2 className="h-6 w-6" />}
-          onClick={() => setActiveTool("outreach")}
-          active
-        />
-
-        {/* Curation Tool */}
-        <ToolCard
-          title="Curation"
-          description="Review tags, group buildings into collections, and highlight gems."
-          icon={<Filter className="h-6 w-6" />}
-          onClick={() => setActiveTool("curation")}
-          active
-        />
-
-        {/* Community Tool */}
-        <ToolCard
-          title="Grow Community"
-          description="Invite architects and firms in your area to join Plano."
-          icon={<UserPlus className="h-6 w-6" />}
-          onClick={() => {}} // Simple enough for a direct link or modal in next step
-          asChild
-        >
-          <Link to="/connect">Open Connect</Link>
-        </ToolCard>
+        {sortedTools.map((tool) => (
+          <ToolCard
+            key={tool.key}
+            title={tool.title}
+            description={tool.description}
+            icon={tool.icon}
+            onClick={() => setActiveTool(tool.key)}
+            active
+            asChild={tool.asChild}
+          >
+            {tool.key === "community" && <Link to="/connect">Open Connect</Link>}
+          </ToolCard>
+        ))}
       </div>
     </div>
   );
