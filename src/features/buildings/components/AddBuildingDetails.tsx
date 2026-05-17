@@ -33,7 +33,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const handleFormSubmit = async (data: BuildingFormData) => {
+  const handleFormSubmit = async (formData: BuildingFormData) => {
     if (!user) {
       toast.error("You must be logged in to add a building");
       return;
@@ -41,21 +41,28 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
 
     setIsSubmitting(true);
 
+    let insertedData: { id: string; slug: string | null; short_id: number | null } | null = null;
     try {
-      // 2. Insert Building
-      const { data: insertedData, error } = await supabase
+      // 1. Insert Building (hard-fail: if this errors the rest is skipped)
+      const { data, error } = await supabase
         .from('buildings')
         .insert({
-          name: data.name,
-          slug: data.slug ?? undefined,
-          alt_name: data.alt_name || null,
-          aliases: data.aliases || [],
-          year_completed: data.year_completed,
-          status: (data.status || null) as BuildingEnums["building_status"] | null,
-          access_level: (data.access_level || null) as BuildingEnums["building_access_level"] | null,
-          access_logistics: (data.access_logistics || null) as BuildingEnums["building_access_logistics"] | null,
-          access_cost: (data.access_cost || null) as BuildingEnums["building_access_cost"] | null,
-          access_notes: data.access_notes || null,
+          name: formData.name,
+          slug: formData.slug ?? undefined,
+          alt_name: formData.alt_name || null,
+          aliases: formData.aliases || [],
+          century: formData.century ?? null,
+          year_completed: formData.year_completed,
+          status: (formData.status || null) as BuildingEnums["building_status"] | null,
+          access_level: (formData.access_level || null) as BuildingEnums["building_access_level"] | null,
+          access_logistics: (formData.access_logistics || null) as BuildingEnums["building_access_logistics"] | null,
+          access_cost: (formData.access_cost || null) as BuildingEnums["building_access_cost"] | null,
+          access_notes: formData.access_notes || null,
+          architect_statement: formData.architect_statement || null,
+          size_category: formData.size_category || null,
+          size_sqm: formData.size_sqm ?? null,
+          height_m: formData.height_m ?? null,
+          storeys: formData.storeys ?? null,
 
           // Location Data (Merged from Main & Feature branches)
           address: locationData.address,
@@ -67,85 +74,84 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           location_precision: locationData.precision || 'exact',
 
           created_by: user.id,
-          functional_category_id: data.functional_category_id,
+          functional_category_id: formData.functional_category_id,
         })
-        .select()
+        .select('id, slug, short_id')
         .single();
 
       if (error) throw error;
-
-      const buildingId = insertedData.id;
-
-      // 3. Insert User Building (Auto-add to creator's list)
-      try {
-        const { error: userBuildingError } = await supabase
-          .from('user_buildings')
-          .insert({
-            user_id: user.id,
-            building_id: buildingId,
-            status: 'visited',
-            created_at: new Date().toISOString()
-          });
-
-        if (userBuildingError) throw userBuildingError;
-      } catch (_err) {
-        void _err;
-      }
-
-      if (data.designCreditEntities.length > 0) {
-        try {
-          await replacePrimaryDesignCredits(
-            buildingId,
-            [],
-            data.designCreditEntities.map((e) => ({ kind: e.kind, id: e.id })),
-          );
-        } catch (_err) {
-          void _err;
-        }
-      }
-
-      // 5. Insert Typologies (Junction Table)
-      if (data.functional_typology_ids.length > 0) {
-        try {
-          const typologyLinks = data.functional_typology_ids.map(tId => ({
-            building_id: buildingId,
-            typology_id: tId
-          }));
-
-          const { error: _typoError } = await supabase
-            .from('building_functional_typologies')
-            .insert(typologyLinks);
-
-          } catch (_err) {
-}
-      }
-
-      // 6. Insert Attributes (Junction Table)
-      if (data.selected_attribute_ids.length > 0) {
-        try {
-          const attributeLinks = data.selected_attribute_ids.map(aId => ({
-            building_id: buildingId,
-            attribute_id: aId
-          }));
-
-          const { error: _attrError } = await supabase
-            .from('building_attributes')
-            .insert(attributeLinks);
-
-          } catch (_err) {
-}
-      }
-
-      // 7. Success State
-      toast.success("Building added successfully!");
-      // Locality URL not available: insert response does not include locality_country_code/city_slug — requires buildings INSERT to return locality join or a separate lookup
-      navigate(getBuildingUrl(insertedData.id, insertedData.slug, insertedData.short_id));
-
+      insertedData = data;
     } catch (error: unknown) {
-toast.error(`Failed to save building: ${error instanceof Error ? error.message : "Unknown error"}`);
-    } finally {
+      toast.error(`Failed to save building: ${error instanceof Error ? error.message : "Unknown error"}`);
       setIsSubmitting(false);
+      return;
     }
+
+    const buildingId = insertedData.id;
+
+    // 2. Auto-add to creator's list (best-effort; non-blocking)
+    try {
+      await supabase
+        .from('user_buildings')
+        .insert({
+          user_id: user.id,
+          building_id: buildingId,
+          status: 'visited',
+          created_at: new Date().toISOString()
+        });
+    } catch (_err) {
+      void _err;
+    }
+
+    // 3. Primary design credits — surface failures so credits aren't silently dropped
+    if (formData.designCreditEntities.length > 0) {
+      try {
+        await replacePrimaryDesignCredits(
+          buildingId,
+          [],
+          formData.designCreditEntities.map((e) => ({ kind: e.kind, id: e.id })),
+        );
+      } catch (err: unknown) {
+        toast.error(`Building saved, but design credits could not be added: ${err instanceof Error ? err.message : "Unknown error"}`);
+      }
+    }
+
+    // 4. Typologies (junction table)
+    if (formData.functional_typology_ids.length > 0) {
+      const typologyLinks = formData.functional_typology_ids.map(tId => ({
+        building_id: buildingId,
+        typology_id: tId
+      }));
+
+      const { error: typoError } = await supabase
+        .from('building_functional_typologies')
+        .insert(typologyLinks);
+
+      if (typoError) {
+        toast.error(`Building saved, but typologies could not be added: ${typoError.message}`);
+      }
+    }
+
+    // 5. Attributes (junction table)
+    if (formData.selected_attribute_ids.length > 0) {
+      const attributeLinks = formData.selected_attribute_ids.map(aId => ({
+        building_id: buildingId,
+        attribute_id: aId
+      }));
+
+      const { error: attrError } = await supabase
+        .from('building_attributes')
+        .insert(attributeLinks);
+
+      if (attrError) {
+        toast.error(`Building saved, but attributes could not be added: ${attrError.message}`);
+      }
+    }
+
+    toast.success("Building added successfully!");
+    // Locality URL not available: insert response does not include locality_country_code/city_slug — requires buildings INSERT to return locality join or a separate lookup
+    navigate(getBuildingUrl(insertedData.id, insertedData.slug, insertedData.short_id));
+    setIsSubmitting(false);
   };
 
   const initialValues: BuildingFormData = {

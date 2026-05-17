@@ -395,11 +395,11 @@ toast.error("Failed to add attribute");
             autoComplete="off"
             className="max-w-md"
           />
-          {finalSlug && (
-            <div className={`flex items-center gap-1.5 mt-1 text-xs transition-colors duration-300 ${isSlugCollision ? 'text-amber-600 dark:text-amber-500' : 'text-text-secondary'}`}>
-              {isSlugCollision && <Info className="h-3.5 w-3.5" />}
+          {isSlugCollision && (
+            <div className="flex items-center gap-1.5 mt-1 text-xs text-amber-600 dark:text-amber-500">
+              <Info className="h-3.5 w-3.5" />
               <span>
-                plano.com/b/{finalSlug}
+                A building with this name already exists — a unique suffix will be appended to its URL.
                 {isCheckingSlug && <span className="ml-2 animate-pulse opacity-50">...</span>}
               </span>
             </div>
