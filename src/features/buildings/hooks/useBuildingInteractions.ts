@@ -1011,11 +1011,15 @@ export function useBuildingInteractions({
         );
       }
 
-      // 5. Upload pending images (keyed to building_posts.id)
+      // 5. Upload pending images (keyed to building_posts.id).
+      // We use `.select().single()` so PostgREST returns the inserted row;
+      // without it (`Prefer: return=minimal`) a silent RLS rejection can come
+      // back as 201 with an empty body and we'd never know the row wasn't
+      // actually written.
       if (pendingImages.length > 0) {
         for (const img of pendingImages) {
           const storagePath = await uploadFile(img.file, postId);
-          const { error: imgInsertError } = await supabase
+          const { data: inserted, error: imgInsertError } = await supabase
             .from("review_images")
             .insert({
               review_id: postId,
@@ -1024,8 +1028,15 @@ export function useBuildingInteractions({
               is_generated: img.is_generated,
               width_px: img.width_px,
               height_px: img.height_px,
-            });
+            })
+            .select("id")
+            .single();
           if (imgInsertError) throw imgInsertError;
+          if (!inserted?.id) {
+            throw new Error(
+              `Photo insert returned no row — likely RLS/policy rejection. Storage path: ${storagePath}`,
+            );
+          }
         }
         pendingImages.forEach((img) => URL.revokeObjectURL(img.preview));
         setPendingImages([]);

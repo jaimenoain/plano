@@ -275,12 +275,16 @@ export default function EditNote() {
         if (imgUpdateError) throw imgUpdateError;
       }
 
-      // 4. Upload new images and insert records
+      // 4. Upload new images and insert records.
+      // `.select().single()` forces PostgREST to return the inserted row.
+      // Without it (`Prefer: return=minimal`) a silent RLS rejection comes
+      // back as 201 with an empty body — the row never lands and we never
+      // know about it.
       const newImages = images.filter((img) => !!img.file);
       if (newImages.length > 0) {
         for (const img of newImages) {
           const storagePath = await uploadFile(img.file!, postId);
-          const { error: imgInsertError } = await supabase
+          const { data: inserted, error: imgInsertError } = await supabase
             .from("review_images")
             .insert({
               review_id: postId,
@@ -290,8 +294,15 @@ export default function EditNote() {
               caption: img.caption || null,
               width_px: img.width_px ?? null,
               height_px: img.height_px ?? null,
-            });
+            })
+            .select("id")
+            .single();
           if (imgInsertError) throw imgInsertError;
+          if (!inserted?.id) {
+            throw new Error(
+              `Photo insert returned no row — likely RLS/policy rejection. Storage path: ${storagePath}`,
+            );
+          }
           URL.revokeObjectURL(img.preview);
         }
       }
