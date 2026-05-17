@@ -15,6 +15,7 @@ const exploreLinks = [
 
 const planoLinks = [
   { label: "About",           path: "/about" },
+  { label: "Updates",         path: "/updates" },
   { label: "For architects",  path: "/for-architects" },
   { label: "Add a building",  path: "/building/new" },
   { label: "Events",          path: "/events" },

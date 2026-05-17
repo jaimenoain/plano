@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 export const EMBASSY_TASK_FEED_LIMIT = 20;
+export const EMBASSY_SEARCH_FEED_LIMIT = 500;
 
 export type AmbassadorBuildingNoPhoto =
   Database["public"]["Functions"]["get_ambassador_buildings_without_photos"]["Returns"][number];
@@ -34,7 +35,7 @@ export async function fetchAmbassadorBuildingsMissingMetadata(
 ): Promise<AmbassadorBuildingMissingMeta[]> {
   const { data, error } = await supabase.rpc("get_ambassador_buildings_missing_metadata", {
     p_chapter_id: chapterId,
-    p_limit: EMBASSY_TASK_FEED_LIMIT,
+    p_limit: EMBASSY_SEARCH_FEED_LIMIT,
   });
   if (error) throw error;
   return data ?? [];
@@ -45,7 +46,7 @@ export async function fetchAmbassadorUnclaimedFirms(
 ): Promise<AmbassadorUnclaimedFirm[]> {
   const { data, error } = await supabase.rpc("get_ambassador_unclaimed_firms", {
     p_chapter_id: chapterId,
-    p_limit: EMBASSY_TASK_FEED_LIMIT,
+    p_limit: EMBASSY_SEARCH_FEED_LIMIT,
   });
   if (error) throw error;
   return data ?? [];

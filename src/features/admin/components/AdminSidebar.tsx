@@ -21,6 +21,7 @@ import {
   Globe2,
   Trophy,
   Target,
+  Newspaper,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
@@ -41,6 +42,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 const contentItems = [
   { title: "Buildings", url: "/admin/buildings", icon: Building2 },
   { title: "Events", url: "/admin/events", icon: CalendarDays },
+  { title: "Updates", url: "/admin/updates", icon: Newspaper },
   { title: "Merge Duplicates", url: "/admin/merge", icon: Merge },
 ];
 

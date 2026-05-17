@@ -12,6 +12,9 @@ export default [
   route("/update-password", "features/auth/pages/UpdatePassword.tsx"),
   route("/onboarding", "features/auth/pages/Onboarding.tsx"),
   route("/terms", "pages/Terms.tsx"),
+  route("/about", "pages/About.tsx"),
+  route("/updates", "pages/Updates.tsx"),
+  route("/updates/:slug", "pages/UpdateDetail.tsx"),
   route("/remove-credit/:token", "features/credits/pages/RemoveCredit.tsx"),
   route(
     "/verify-company-claim/:token",
@@ -68,6 +71,9 @@ export default [
     route("/admin/system", "pages/AdminSystemPlaceholder.tsx"),
     route("/admin/feedback", "features/admin/pages/Feedback.tsx"),
     route("/admin/events", "features/admin/pages/AdminEvents.tsx"),
+    route("/admin/updates", "features/admin/pages/UpdatesList.tsx"),
+    route("/admin/updates/new", "features/admin/pages/UpdateForm.tsx", { id: "admin-update-new" }),
+    route("/admin/updates/:updateId", "features/admin/pages/UpdateForm.tsx", { id: "admin-update-edit" }),
     route("/admin/awards", "features/admin/pages/AwardsList.tsx"),
     route("/admin/awards/new", "features/admin/pages/AwardForm.tsx", {
       id: "admin-award-new",

@@ -35,7 +35,16 @@
       "Bash(git tag *)",
       "Bash(git add * && git commit -m \"*)",
       "Bash(git add * && git commit -m \"* && git tag *)",
-      "Bash(git diff * > /tmp/*)"
+      "Bash(git diff * > /tmp/*)",
+      "Bash(cd * && npx tsc *)",
+      "Bash(pnpm exec tsc *)",
+      "Bash(cd * && pnpm exec tsc *)",
+      "Bash(npx vitest run *)",
+      "Bash(cd * && npx vitest run *)",
+      "Bash(turbo run test *)",
+      "Bash(npx turbo run test *)",
+      "mcp__Claude_Preview__preview_eval",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }
