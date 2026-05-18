@@ -1,26 +1,47 @@
 /**
- * Vercel's auto-generated server-index.mjs imports "react-router" externally.
- * nft on the production builder often omits dist/development/index.mjs while Node 24
- * resolves to that path via the package exports map. Copy react-router next to each
- * server bundle so Node finds it adjacent to server-index.mjs.
+ * Vercel's Node file tracer can miss .mjs export targets from react-router
+ * packages. Force server resolution to .js entrypoints and avoid duplicate
+ * react-router copies in per-bundle node_modules.
  */
-import { cpSync, existsSync, mkdirSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const serverBuildDir = join(root, "build", "server");
-const source = join(root, "node_modules", "react-router");
-const requiredFile = join("dist", "development", "index.mjs");
+const reactRouterPackageJson = join(root, "node_modules", "react-router", "package.json");
+const reactRouterNodePackageJson = join(root, "node_modules", "@react-router", "node", "package.json");
 
-if (!existsSync(source)) {
-  console.error("[copy-react-router] node_modules/react-router not found — run npm ci first");
-  process.exit(1);
-}
+function forceNodeJsEntrypoints(packageJsonPath) {
+  if (!existsSync(packageJsonPath)) {
+    console.error(`[copy-react-router] Missing ${packageJsonPath}`);
+    process.exit(1);
+  }
 
-if (!existsSync(join(source, requiredFile))) {
-  console.error(`[copy-react-router] Missing ${join(source, requiredFile)}`);
-  process.exit(1);
+  const pkg = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+
+  if (typeof pkg.module === "string" && pkg.module.endsWith(".mjs")) {
+    pkg.module = pkg.module.replace(/\.mjs$/, ".js");
+  }
+
+  if (pkg.exports?.["."]?.node) {
+    for (const key of ["module", "module-sync", "default"]) {
+      const value = pkg.exports["."].node[key];
+      if (typeof value === "string" && value.endsWith(".mjs")) {
+        pkg.exports["."].node[key] = value.replace(/\.mjs$/, ".js");
+      }
+    }
+  }
+
+  if (pkg.exports?.["."]?.module?.default?.endsWith?.(".mjs")) {
+    pkg.exports["."].module.default = pkg.exports["."].module.default.replace(/\.mjs$/, ".js");
+  }
+
+  if (pkg.exports?.["."]?.import?.default?.endsWith?.(".mjs")) {
+    pkg.exports["."].import.default = pkg.exports["."].import.default.replace(/\.mjs$/, ".js");
+  }
+
+  writeFileSync(packageJsonPath, `${JSON.stringify(pkg, null, 2)}\n`);
 }
 
 if (!existsSync(serverBuildDir)) {
@@ -38,14 +59,12 @@ if (bundles.length === 0) {
 }
 
 for (const bundle of bundles) {
-  const dest = join(serverBuildDir, bundle.name, "node_modules", "react-router");
-  mkdirSync(dirname(dest), { recursive: true });
-  cpSync(source, dest, { recursive: true });
-
-  if (!existsSync(join(dest, requiredFile))) {
-    console.error(`[copy-react-router] Copy failed for ${bundle.name}`);
-    process.exit(1);
+  const duplicatePackageDir = join(serverBuildDir, bundle.name, "node_modules", "react-router");
+  if (existsSync(duplicatePackageDir)) {
+    rmSync(duplicatePackageDir, { recursive: true, force: true });
+    console.log(`[copy-react-router] ${bundle.name}: removed duplicate bundled react-router copy`);
   }
-
-  console.log(`[copy-react-router] ${bundle.name}/node_modules/react-router`);
 }
+
+forceNodeJsEntrypoints(reactRouterPackageJson);
+forceNodeJsEntrypoints(reactRouterNodePackageJson);
