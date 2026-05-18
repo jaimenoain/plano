@@ -134,6 +134,7 @@ function calculateTierRank(item: MapClusterRpcRow): number {
 
 export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapDataProps) {
   const fetchBox = useMemo(() => calculateFetchBox(bounds), [bounds]);
+  const zoomLevel = Math.round(zoom);
 
   // Phase 3 — flatten filters to a stable scalar key. The previous queryKey
   // included whole object references (filters.collections, filters.contacts,
@@ -193,7 +194,7 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
   const abortRef = useRef<AbortController | null>(null);
 
   const { data: clusters, isLoading, isFetching, error } = useQuery({
-    queryKey: ['map-clusters-v3', fetchBox, filterKey, mode],
+    queryKey: ['map-clusters-v3', fetchBox, zoomLevel, filterKey, mode],
     queryFn: async () => {
       abortRef.current?.abort();
       const controller = new AbortController();
@@ -254,7 +255,7 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
         max_lat: fetchBox.north,
         min_lng: fetchBox.west,
         max_lng: fetchBox.east,
-        zoom_level: Math.round(zoom),
+        zoom_level: zoomLevel,
         filter_criteria: filterCriteria,
       });
 

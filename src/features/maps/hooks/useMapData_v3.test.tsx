@@ -84,6 +84,30 @@ describe('useMapData — Phase 3 (get_map_clusters_v3)', () => {
     expect(fc.exclude_construction_statuses).toBeUndefined();
   });
 
+  it('refetches when integer zoom level changes', async () => {
+    const filters: MapFilters = {};
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+
+    const { rerender } = renderHook(
+      ({ zoom }: { zoom: number }) => useMapData({ bounds, zoom, filters }),
+      { wrapper, initialProps: { zoom: 10 } }
+    );
+
+    await waitFor(() => expect(rpcMock).toHaveBeenCalledTimes(1));
+    expect(rpcMock.mock.calls[0][1].zoom_level).toBe(10);
+
+    rpcMock.mockClear();
+    rerender({ zoom: 11 });
+
+    await waitFor(() => expect(rpcMock).toHaveBeenCalledTimes(1));
+    expect(rpcMock.mock.calls[0][1].zoom_level).toBe(11);
+  });
+
   it('does NOT send a popularity floor (no silent popularity exclusion)', async () => {
     const filters: MapFilters = {};
     const { result } = renderHook(() => useMapData({ bounds, zoom, filters }), {

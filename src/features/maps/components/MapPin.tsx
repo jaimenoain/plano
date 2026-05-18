@@ -32,7 +32,7 @@ export const MapPin: React.FC<MapPinProps> = ({ style, children, isHovered }) =>
     <div
       className={`
         relative flex items-center justify-center
-        transition-transform duration-300 ease-out
+        transition-transform duration-150 ease-out
         ${style.classes}
         ${shapeClasses}
         ${hoverClasses}

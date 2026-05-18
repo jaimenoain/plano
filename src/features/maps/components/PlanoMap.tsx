@@ -24,6 +24,7 @@ import { Camera, Layers, Maximize2, Minimize2 } from "lucide-react";
 import { useURLMapState, DEFAULT_LAT, DEFAULT_LNG, DEFAULT_ZOOM } from '@/features/maps/hooks/useURLMapState';
 import { useMapWheelZoomCapture } from '@/features/maps/hooks/useMapWheelZoomCapture';
 import { useStableMapUpdate } from '@/features/maps/hooks/useStableMapUpdate';
+import { useMapClusterViewport } from '@/features/maps/hooks/useMapClusterViewport';
 import { MapErrorBoundary } from './MapErrorBoundary';
 import { useMapContext } from '../providers/MapContext';
 import { useMapData } from '../hooks/useMapData';
@@ -52,6 +53,8 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
 
   const mapRef = useRef<MapRef>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const { viewport: clusterViewport, scheduleViewportUpdate, flushPendingViewport } =
+    useMapClusterViewport();
 
   useMapWheelZoomCapture(mapRef, isMapLoaded);
 
@@ -111,7 +114,8 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
   const onMove = useCallback((evt: ViewStateChangeEvent) => {
     setViewState(evt.viewState);
     updateMapState({ lat: evt.viewState.latitude, lng: evt.viewState.longitude, zoom: evt.viewState.zoom }, false);
-  }, [updateMapState]);
+    scheduleViewportUpdate(evt.target, evt.viewState.zoom);
+  }, [updateMapState, scheduleViewportUpdate]);
 
   const onMoveEnd = useCallback((evt: ViewStateChangeEvent) => {
     updateMapState({ lat: evt.viewState.latitude, lng: evt.viewState.longitude, zoom: evt.viewState.zoom }, true);
@@ -123,11 +127,13 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
         zoom: evt.viewState.zoom,
       }));
     } catch {}
+    flushPendingViewport(evt.target, evt.viewState.zoom);
     updateBounds(evt.target);
-  }, [updateMapState, updateBounds]);
+  }, [updateMapState, updateBounds, flushPendingViewport]);
 
   const onLoad = useCallback((evt: { target: maplibregl.Map }) => {
     setIsMapLoaded(true);
+    flushPendingViewport(evt.target, evt.target.getZoom());
     updateBounds(evt.target);
     if (lat === DEFAULT_LAT && lng === DEFAULT_LNG && zoom === DEFAULT_ZOOM) {
       let hasInteracted = false;
@@ -147,11 +153,14 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
       }
       if (!hasInteracted) geolocateControlRef.current?.trigger();
     }
-  }, [updateBounds, lat, lng, zoom, updateMapState]);
+  }, [updateBounds, lat, lng, zoom, updateMapState, flushPendingViewport]);
+
+  const clusterBounds = clusterViewport?.bounds ?? bounds;
+  const clusterZoom = clusterViewport?.zoom ?? viewState.zoom;
 
   const { clusters: browseClusters, isLoading: browseLoading, isFetching: browseFetching } = useMapData({
-    bounds: bounds || { north: 0, south: 0, east: 0, west: 0 },
-    zoom: viewState.zoom,
+    bounds: clusterBounds || { north: 0, south: 0, east: 0, west: 0 },
+    zoom: clusterZoom,
     filters,
     mode,
   });
@@ -200,7 +209,10 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
         onMove={onMove}
         onMoveEnd={onMoveEnd}
         onLoad={onLoad}
-        onResize={(evt) => updateBounds(evt.target)}
+        onResize={(evt) => {
+          flushPendingViewport(evt.target, evt.target.getZoom());
+          updateBounds(evt.target);
+        }}
         mapLib={maplibregl}
         mapStyle={isSatellite ? SATELLITE_MAP_STYLE : MAP_STYLE}
         attributionControl={false}
