@@ -21,7 +21,15 @@ export default defineConfig(() => ({
   // the map tree from rendering during SSR. Do not remove noExternal without first
   // converting all map imports to dynamic client-only imports.
   ssr: {
-    noExternal: ["react-map-gl"],
+    // react-router package exports resolve to dist/development/*.mjs by default.
+    // Vercel's serverless file tracer omits those paths from the function bundle,
+    // causing ERR_MODULE_NOT_FOUND at runtime. Bundling avoids external resolution.
+    noExternal: [
+      "react-map-gl",
+      "react-router",
+      "@react-router/node",
+      "@vercel/react-router",
+    ],
   },
   plugins: [
     reactRouter(),
