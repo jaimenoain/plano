@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { ContactInteraction, ContactRater } from "@/features/search/components/types";
@@ -85,6 +85,22 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
     buildingStatuses,
   } = filters;
 
+  // Cache follows separately so they are not re-fetched on every page load.
+  // The result is stable (changes only when the user follows/unfollows someone)
+  // and is shared across all pages of the infinite query.
+  const { data: followedIds = [] } = useQuery({
+    queryKey: ["follows", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("follows")
+        .select("following_id")
+        .eq("follower_id", user!.id);
+      return data?.map((f) => f.following_id) ?? [];
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
+
   return useInfiniteQuery({
     queryKey: [
       "discovery_feed",
@@ -149,149 +165,132 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
           ? [raw as DiscoveryFeedItem]
           : [];
 
-      if (buildings.length > 0) {
-        const buildingIds = buildings.map(b => b.id);
+      if (buildings.length === 0) return buildings;
 
+      const buildingIds = buildings.map((b) => b.id);
 
-        // Fetch primary credits, follows, and images in parallel
-        const [creditsRes, followsRes, ...imageResponses] = await Promise.all([
-          supabase
-            .from("building_credits")
-            .select(
-              `
-              building_id,
-              credit_tier,
-              status,
-              person:people(id, name),
-              company:companies(id, name)
-            `,
-            )
-            .in("building_id", buildingIds)
-            .eq("credit_tier", "primary")
-            .in("status", ["active", "verified"]),
-          supabase
-            .from('follows')
-            .select('following_id')
-            .eq('follower_id', user.id),
-          // Fetch up to 10 images for each building individually so one doesn't starve the rest.
-          // review_images.review_id now references building_posts (was user_buildings before
-          // the 20270872 migration); keep the embed pointed at the canonical FK.
-          ...buildingIds.map(buildingId =>
-              supabase
-                .from('review_images')
-                .select(`
-                  id,
-                  storage_path,
-                  likes_count,
-                  created_at,
-                  building_posts!review_images_review_id_fkey!inner(
-                    building_id,
-                    user:profiles(
-                      id,
-                      username,
-                      avatar_url
-                    )
-                  )
-                `)
-                .eq('building_posts.building_id', buildingId)
-                .order('likes_count', { ascending: false })
-                .order('created_at', { ascending: false })
-                .limit(10)
+      // Single batched image query instead of one-per-building.
+      // review_images.review_id references building_posts (post-20270872 migration).
+      const imagesQuery = supabase
+        .from("review_images")
+        .select(
+          `
+          id,
+          storage_path,
+          likes_count,
+          created_at,
+          building_posts!review_images_review_id_fkey!inner(
+            building_id,
+            user:profiles(id, username, avatar_url)
           )
-        ]);
+        `,
+        )
+        .in("building_posts.building_id", buildingIds)
+        .order("likes_count", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(buildingIds.length * 10);
 
-        const creditsData = creditsRes.data;
-        const followsData = followsRes.data;
-        // Merge all individual building image results
-        const imagesData = imageResponses.flatMap(res => res.data || []);
+      // Fetch credits, images, and interactions (when follows exist) all at once.
+      const [creditsRes, imagesRes, interactionsRes] = await Promise.all([
+        supabase
+          .from("building_credits")
+          .select(
+            `
+            building_id,
+            credit_tier,
+            status,
+            person:people(id, name),
+            company:companies(id, name)
+          `,
+          )
+          .in("building_id", buildingIds)
+          .eq("credit_tier", "primary")
+          .in("status", ["active", "verified"]),
+        imagesQuery,
+        followedIds.length > 0
+          ? supabase
+              .from("user_buildings")
+              .select(
+                `
+              building_id,
+              status,
+              rating,
+              user:profiles!inner(id, username, avatar_url)
+            `,
+              )
+              .in("building_id", buildingIds)
+              .in("user_id", followedIds)
+              .or("status.eq.visited,status.eq.pending,rating.gt.0")
+          : Promise.resolve({ data: [] as UserBuildingInteractionRow[] }),
+      ]);
 
-        if (creditsData) {
-          const creditsMap: Record<string, { id: string; name: string }[]> = {};
-          (creditsData as unknown as BuildingCreditEmbedRow[]).forEach((item) => {
-            const p = item.person;
-            const c = item.company;
-            let entry: { id: string; name: string } | null = null;
-            if (p && c) entry = { id: p.id, name: `${p.name} @ ${c.name}` };
-            else if (p) entry = { id: p.id, name: p.name };
-            else if (c) entry = { id: c.id, name: c.name };
-            if (entry) {
-              if (!creditsMap[item.building_id]) creditsMap[item.building_id] = [];
-              creditsMap[item.building_id].push(entry);
-            }
-          });
-          buildings.forEach((building) => {
-            building.credits = creditsMap[building.id] || [];
-          });
-        }
-
-        // --- Process Images ---
-        if (imagesData) {
-          const imagesMap: Record<string, DiscoveryFeedImageRow[]> = {};
-          (imagesData as unknown as DiscoveryFeedImageRow[]).forEach((item) => {
-             const buildingId = item.building_posts?.building_id;
-             if (buildingId) {
-                 if (!imagesMap[buildingId]) imagesMap[buildingId] = [];
-                 // Keep max 10 images per building to match useBuildingImages behavior
-                 if (imagesMap[buildingId].length < 10) {
-                     imagesMap[buildingId].push(item);
-                 }
-             }
-          });
-          buildings.forEach(building => {
-              building.images = imagesMap[building.id] || [];
-          });
-        }
-
-        // --- Process Interactions ---
-        const followedIds = followsData?.map(f => f.following_id) || [];
-        if (followedIds.length > 0) {
-          const { data: interactions } = await supabase
-            .from('user_buildings')
-            .select(`
-                building_id,
-                status,
-                rating,
-                user:profiles!inner(id, username, avatar_url)
-            `)
-            .in('building_id', buildingIds)
-            .in('user_id', followedIds)
-            .or('status.eq.visited,status.eq.pending,rating.gt.0');
-
-          if (interactions) {
-            const interactionsMap: Record<string, ContactInteraction[]> = {};
-
-            (interactions as unknown as UserBuildingInteractionRow[]).forEach((item) => {
-              const userProfile = Array.isArray(item.user) ? item.user[0] : item.user;
-
-              const interaction: ContactInteraction = {
-                user: {
-                  id: userProfile.id,
-                  username: userProfile.username ?? null,
-                  avatar_url: userProfile.avatar_url,
-                  first_name: null,
-                  last_name: null,
-                },
-                status: item.status as ContactInteraction["status"],
-                rating: item.rating
-              };
-
-              if (!interactionsMap[item.building_id]) {
-                interactionsMap[item.building_id] = [];
-              }
-              interactionsMap[item.building_id].push(interaction);
-            });
-
-            buildings.forEach(building => {
-              building.contact_interactions = interactionsMap[building.id] || [];
-            });
+      // --- Process Credits ---
+      if (creditsRes.data) {
+        const creditsMap: Record<string, { id: string; name: string }[]> = {};
+        (creditsRes.data as unknown as BuildingCreditEmbedRow[]).forEach((item) => {
+          const p = item.person;
+          const c = item.company;
+          let entry: { id: string; name: string } | null = null;
+          if (p && c) entry = { id: p.id, name: `${p.name} @ ${c.name}` };
+          else if (p) entry = { id: p.id, name: p.name };
+          else if (c) entry = { id: c.id, name: c.name };
+          if (entry) {
+            if (!creditsMap[item.building_id]) creditsMap[item.building_id] = [];
+            creditsMap[item.building_id].push(entry);
           }
-        }
+        });
+        buildings.forEach((building) => {
+          building.credits = creditsMap[building.id] || [];
+        });
+      }
+
+      // --- Process Images ---
+      if (imagesRes.data) {
+        const imagesMap: Record<string, DiscoveryFeedImageRow[]> = {};
+        (imagesRes.data as unknown as DiscoveryFeedImageRow[]).forEach((item) => {
+          const buildingId = item.building_posts?.building_id;
+          if (buildingId) {
+            if (!imagesMap[buildingId]) imagesMap[buildingId] = [];
+            if (imagesMap[buildingId].length < 10) {
+              imagesMap[buildingId].push(item);
+            }
+          }
+        });
+        buildings.forEach((building) => {
+          building.images = imagesMap[building.id] || [];
+        });
+      }
+
+      // --- Process Interactions ---
+      const interactions = (interactionsRes as { data: UserBuildingInteractionRow[] | null }).data;
+      if (interactions && interactions.length > 0) {
+        const interactionsMap: Record<string, ContactInteraction[]> = {};
+        interactions.forEach((item) => {
+          const userProfile = Array.isArray(item.user) ? item.user[0] : item.user;
+          const interaction: ContactInteraction = {
+            user: {
+              id: userProfile.id,
+              username: userProfile.username ?? null,
+              avatar_url: userProfile.avatar_url,
+              first_name: null,
+              last_name: null,
+            },
+            status: item.status as ContactInteraction["status"],
+            rating: item.rating,
+          };
+          if (!interactionsMap[item.building_id]) {
+            interactionsMap[item.building_id] = [];
+          }
+          interactionsMap[item.building_id].push(interaction);
+        });
+        buildings.forEach((building) => {
+          building.contact_interactions = interactionsMap[building.id] || [];
+        });
       }
 
       return buildings;
     },
     getNextPageParam: (lastPage, allPages) => {
-      // If we got fewer results than limit, there are no more pages
       if (lastPage.length < LIMIT) return undefined;
       return allPages.length * LIMIT;
     },

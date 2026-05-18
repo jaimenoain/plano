@@ -236,11 +236,34 @@ function NoteCard({ note }: { note: FeedNote }) {
   );
 }
 
+function FeedSkeleton() {
+  return (
+    <div>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="border-b border-border-default py-8 first:pt-2 animate-pulse">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-full bg-surface-muted" />
+            <div className="flex-1 space-y-1.5">
+              <div className="h-3 w-32 rounded bg-surface-muted" />
+              <div className="h-2.5 w-16 rounded bg-surface-muted" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="h-4 w-3/4 rounded bg-surface-muted" />
+            <div className="h-3 w-full rounded bg-surface-muted" />
+            <div className="h-3 w-5/6 rounded bg-surface-muted" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Feed() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["feed-v3"],
     queryFn: fetchFeed,
-    staleTime: 60_000,
+    staleTime: 5 * 60 * 1000,
   });
 
   return (
@@ -251,9 +274,7 @@ function Feed() {
         </h1>
 
         {isLoading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
-          </div>
+          <FeedSkeleton />
         ) : error ? (
           <div className="text-text-secondary text-sm py-12">
             Couldn't load the feed. Please refresh.
