@@ -32,6 +32,28 @@ export const getEventUrl = (event: {
   return `/events/${event.slug}`;
 };
 
+export type BuildingLinkInput = {
+  id: string;
+  slug?: string | null;
+  short_id?: number | null;
+  locality_country_code?: string | null;
+  locality_city_slug?: string | null;
+};
+
+/** Prefer /architecture/:cc/:city/... when locality data is present; else legacy /building/... */
+export const resolveBuildingUrl = (building: BuildingLinkInput): string => {
+  if (building.locality_country_code && building.locality_city_slug) {
+    return getBuildingLocalityUrl(
+      building.locality_country_code,
+      building.locality_city_slug,
+      building.id,
+      building.slug,
+      building.short_id ?? null,
+    );
+  }
+  return getBuildingUrl(building.id, building.slug, building.short_id ?? undefined);
+};
+
 /** Fallback for callers that don't yet have locality data. */
 export const getBuildingUrl = (id: string, slug?: string | null, shortId?: number | null) => {
   if (shortId !== undefined && shortId !== null) {
@@ -96,5 +118,21 @@ if (import.meta.vitest) {
     expect(getBuildingUrl('uuid-1', 'slug', 99)).toBe('/building/99/slug');
     expect(getBuildingUrl('uuid-1', null, 99)).toBe('/building/99');
     expect(getBuildingUrl('uuid-1')).toBe('/building/uuid-1');
+  });
+  it('resolveBuildingUrl prefers locality path', () => {
+    expect(
+      resolveBuildingUrl({
+        id: 'uuid-1',
+        slug: 'tour-eiffel',
+        short_id: 42,
+        locality_country_code: 'FR',
+        locality_city_slug: 'paris',
+      }),
+    ).toBe('/architecture/fr/paris/42/tour-eiffel');
+  });
+  it('resolveBuildingUrl falls back without locality', () => {
+    expect(resolveBuildingUrl({ id: 'uuid-1', slug: 'slug', short_id: 99 })).toBe(
+      '/building/99/slug',
+    );
   });
 }

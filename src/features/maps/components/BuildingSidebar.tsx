@@ -50,7 +50,7 @@ import type { CompanySummary, PersonSummary } from '@/features/credits/types';
 import type { BuildingSearchHit } from '@/features/search/api/searchBuildingsV2';
 import { getBoundsFromBuildings } from '@/utils/map';
 import { cn } from '@/lib/utils';
-import { getBuildingUrl } from '@/utils/url';
+import { resolveBuildingUrl } from '@/utils/url';
 
 interface Building {
   id: string;
@@ -66,6 +66,9 @@ interface Building {
   city: string | null;
   country: string | null;
   alt_name?: string | null;
+  short_id?: number | null;
+  locality_country_code?: string | null;
+  locality_city_slug?: string | null;
 }
 
 type SearchResultTab = 'buildings' | 'people' | 'companies';
@@ -225,6 +228,9 @@ export function BuildingSidebar({
         city: h.city,
         country: h.country,
         alt_name: h.alt_name,
+        short_id: h.short_id,
+        locality_country_code: h.locality_country_code,
+        locality_city_slug: h.locality_city_slug,
       }));
     }
     const allBuildings = data?.pages.flat() || [];
@@ -341,7 +347,7 @@ export function BuildingSidebar({
                 const imageUrl = getBuildingImageUrl(building.image_url);
                 return (
                   <Link
-                    to={getBuildingUrl(building.id, building.slug)}
+                    to={resolveBuildingUrl(building)}
                     key={building.id}
                     className="group flex pl-4 pr-3 py-3 border-b border-border-default last:border-0 hover:bg-surface-muted/30 transition-colors"
                     onMouseEnter={() => setHighlightedId(building.id)}

@@ -15,6 +15,9 @@ export interface BuildingSearchHit {
   tier_rank: string | null;
   credit_names: string[];
   rank_score: number;
+  short_id?: number | null;
+  locality_country_code?: string | null;
+  locality_city_slug?: string | null;
 }
 
 export interface SearchBuildingsV2Filters {
