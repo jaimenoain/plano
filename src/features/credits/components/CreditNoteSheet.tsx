@@ -16,7 +16,6 @@ import { SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet
 import { useToast } from "@/hooks/use-toast";
 import { getStorageAssetUrl } from "@/utils/image";
 
-const MAX_IMAGES = 5;
 const IMAGE_BUCKET = "avatars";
 
 interface CreditNoteSheetProps {
@@ -93,11 +92,6 @@ export function CreditNoteSheet({
 
   async function handleImageFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
-    const remaining = MAX_IMAGES - imageUrls.length;
-    if (remaining <= 0) {
-      toast({ description: `Maximum ${MAX_IMAGES} images per note.` });
-      return;
-    }
 
     const {
       data: { user },
@@ -105,7 +99,7 @@ export function CreditNoteSheet({
     if (!user) return;
 
     setUploading(true);
-    const toUpload = Array.from(files).slice(0, remaining);
+    const toUpload = Array.from(files);
     try {
       const uploaded = await Promise.all(
         toUpload.map((f) => uploadCreditNoteImage(creditId, user.id, f)),
@@ -180,8 +174,7 @@ export function CreditNoteSheet({
         {/* Image upload */}
         <div className="space-y-3">
           <p className="text-sm font-medium text-text-primary">
-            Photos{" "}
-            <span className="font-normal text-text-secondary">(optional, up to {MAX_IMAGES})</span>
+            Photos <span className="font-normal text-text-secondary">(optional)</span>
           </p>
 
           {imageUrls.length > 0 ? (
@@ -207,29 +200,25 @@ export function CreditNoteSheet({
             </div>
           ) : null}
 
-          {imageUrls.length < MAX_IMAGES ? (
-            <>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="sr-only"
-                onChange={(e) => void handleImageFiles(e.target.files)}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isBusy}
-                onClick={() => fileInputRef.current?.click()}
-                className="gap-2"
-              >
-                <ImagePlus className="h-4 w-4" aria-hidden />
-                {uploading ? "Uploading…" : "Add photos"}
-              </Button>
-            </>
-          ) : null}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="sr-only"
+            onChange={(e) => void handleImageFiles(e.target.files)}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isBusy}
+            onClick={() => fileInputRef.current?.click()}
+            className="gap-2"
+          >
+            <ImagePlus className="h-4 w-4" aria-hidden />
+            {uploading ? "Uploading…" : "Add photos"}
+          </Button>
         </div>
       </div>
 

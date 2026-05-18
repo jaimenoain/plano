@@ -806,7 +806,7 @@ export async function notifyCreditedEntities(input: NotifyCreditedEntitiesInput)
 const UpsertCreditNoteSchema = z
   .object({
     content: z.string().min(1, "Note cannot be empty").max(5000),
-    imageUrls: z.array(z.string().url()).max(10).optional(),
+    imageUrls: z.array(z.string().url()).optional(),
   })
   .strict();
 
