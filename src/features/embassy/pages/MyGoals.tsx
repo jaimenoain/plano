@@ -58,17 +58,15 @@ export default function MyGoalsPage() {
 
   const chapterId = membership?.chapter_id;
 
-  // Fetch personal goals
+  // Fetch personal goals — RPC derives current_value at read time from
+  // review_images / building_audit_logs / user_buildings / company_stewards,
+  // since the ambassador_goals.current_value column itself is never written.
   const { data: goals, isLoading: loadingGoals } = useQuery({
     queryKey: ["ambassador-goals", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("ambassador_goals")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: false });
+      const { data, error } = await (supabase as any).rpc("get_my_ambassador_goals");
       if (error) throw error;
-      return data as Goal[];
+      return (data ?? []) as Goal[];
     },
     enabled: !!user,
   });
