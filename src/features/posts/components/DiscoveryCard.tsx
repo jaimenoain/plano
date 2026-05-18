@@ -153,7 +153,6 @@ export function DiscoveryCard({
           user_id: user.id,
           building_id: building.id,
           status,
-          edited_at: new Date().toISOString(),
           ...(ratingValue !== undefined ? { rating: ratingValue } : {}),
         },
         { onConflict: "user_id, building_id" }

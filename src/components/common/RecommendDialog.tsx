@@ -135,7 +135,7 @@ export function RecommendDialog({
       if (existingLog) {
         const { error } = await supabase
           .from("user_buildings")
-          .update({ rating, edited_at: new Date().toISOString() })
+          .update({ rating })
           .eq("id", existingLog.id);
         if (error) throw error;
       } else {
@@ -144,7 +144,6 @@ export function RecommendDialog({
           building_id: bId,
           rating,
           status: "visited",
-          edited_at: new Date().toISOString(),
         });
         if (error) throw error;
         setUserStatus("visited");

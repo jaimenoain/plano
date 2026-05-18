@@ -733,7 +733,7 @@ export default function Profile() {
       });
     }
     try {
-      const { error } = await supabase.from("user_buildings").update({ ...updates, edited_at: new Date().toISOString() }).eq("id", id);
+      const { error } = await supabase.from("user_buildings").update({ ...updates }).eq("id", id);
       if (error) throw error;
       if (updates.status) toast({ description: "Status updated" });
     } catch (_error) {

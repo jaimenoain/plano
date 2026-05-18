@@ -82,7 +82,7 @@ export const handleDragEndLogic = async ({
 
     const { error } = await supabase
       .from("user_buildings")
-      .update({ rating: dbRating, edited_at: new Date().toISOString() })
+      .update({ rating: dbRating })
       .eq("id", activeItem.id);
 
     if (error) throw error;

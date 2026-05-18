@@ -47,7 +47,6 @@ export function AddBuildingDialog({ onBuildingAdded, className }: AddBuildingDia
         user_id: user.id,
         building_id: buildingId,
         status: status,
-        edited_at: new Date().toISOString()
       }, { onConflict: 'user_id, building_id' });
 
       if (error) throw error;

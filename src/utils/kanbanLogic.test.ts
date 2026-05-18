@@ -49,7 +49,7 @@ describe('handleDragEndLogic', () => {
     // DATA INTEGRITY CHECK: Ensure status is NOT in the update payload
     const updatePayload = mockSupabase.update.mock.calls[0][0];
     expect(updatePayload).toHaveProperty('rating');
-    expect(updatePayload).toHaveProperty('edited_at');
+    expect(updatePayload).not.toHaveProperty('edited_at');
     expect(updatePayload).not.toHaveProperty('status');
   });
 

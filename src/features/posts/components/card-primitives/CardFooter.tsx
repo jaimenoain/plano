@@ -47,7 +47,6 @@ export function CardFooter({
           user_id: user.id,
           building_id: buildingId,
           status: "pending",
-          edited_at: new Date().toISOString(),
         },
         { onConflict: "user_id,building_id" },
       );
