@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "react-router dev",
-    "build": "react-router build && node ./scripts/copy-react-router-into-server-build.mjs",
+    "build": "react-router build",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "test": "vitest run",
     "test:watch": "vitest",
