@@ -27,10 +27,7 @@ export default defineConfig(() => ({
     reactRouter(),
     VitePWA({
       strategies: "generateSW",
-      // `autoUpdate` reloads all clients as soon as a new SW is found — disruptive
-      // (lost form state, scroll) and pairs badly with periodic `registration.update()`.
-      // `prompt` lets us offer a user-triggered refresh instead.
-      registerType: "prompt",
+      registerType: "autoUpdate",
       devOptions: { enabled: false },
       includeAssets: [
         "robots.txt",

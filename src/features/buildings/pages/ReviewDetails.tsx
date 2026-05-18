@@ -159,7 +159,7 @@ export default function ReviewDetails() {
                 .from("building_posts")
                 .select(`
                     id, body, tags, created_at, user_id, building_id,
-                    user:profiles(username, avatar_url),
+                    user:profiles!building_posts_user_id_fkey(username, avatar_url),
                     building:buildings(id, short_id, slug, name, year_completed, address, hero_image_url, building_credits(status, credit_tier, person:people(id, name), company:companies(id, name))),
                     images:review_images(id, storage_path, is_generated, caption)
                 `)
@@ -268,7 +268,7 @@ export default function ReviewDetails() {
                         .from("building_posts")
                         .select(`
                             id, user_id, building_id,
-                            user:profiles(username, avatar_url)
+                            user:profiles!building_posts_user_id_fkey(username, avatar_url)
                         `)
                         .eq("building_id", reviewData.building_id)
                         .in("user_id", followingIds)
@@ -295,7 +295,7 @@ export default function ReviewDetails() {
                         .from("building_posts")
                         .select(`
                             id, user_id, building_id,
-                            user:profiles(username, avatar_url)
+                            user:profiles!building_posts_user_id_fkey(username, avatar_url)
                         `)
                         .eq("building_id", reviewData.building_id)
                         .neq("id", reviewData.id)

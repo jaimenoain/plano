@@ -220,14 +220,33 @@ export default function Explore() {
   const FILTER_BAR_SHOW_BELOW_PX = 28;
   const FILTER_BAR_HIDE_ABOVE_PX = 80;
 
+  /**
+   * On 120Hz tablets the native scroll fires many more events per gesture than React
+   * can reconcile cheaply. Coalesce into rAF so we only re-evaluate visibility once
+   * per frame.
+   */
+  const scrollRafRef = useRef<number | null>(null);
+  useEffect(() => {
+    return () => {
+      if (scrollRafRef.current != null) {
+        cancelAnimationFrame(scrollRafRef.current);
+        scrollRafRef.current = null;
+      }
+    };
+  }, []);
+
   const handleScroll = () => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-    const top = el.scrollTop;
-    setIsFilterVisible((prev) => {
-      if (top <= FILTER_BAR_SHOW_BELOW_PX) return true;
-      if (top >= FILTER_BAR_HIDE_ABOVE_PX) return false;
-      return prev;
+    if (scrollRafRef.current != null) return;
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      const el = scrollContainerRef.current;
+      if (!el) return;
+      const top = el.scrollTop;
+      setIsFilterVisible((prev) => {
+        if (top <= FILTER_BAR_SHOW_BELOW_PX) return true;
+        if (top >= FILTER_BAR_HIDE_ABOVE_PX) return false;
+        return prev;
+      });
     });
   };
 
@@ -578,6 +597,7 @@ export default function Explore() {
             <div
               key={building.id}
               className="h-full w-full snap-start snap-always"
+              style={{ contain: "layout paint" }}
             >
               <DiscoveryCard
                 building={building}

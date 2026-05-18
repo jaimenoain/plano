@@ -14,7 +14,7 @@ export function useBuildingImages(buildingId: string, enabled: boolean = true) {
           created_at,
           building_posts!review_images_review_id_fkey!inner(
             building_id,
-            user:profiles(
+            user:profiles!building_posts_user_id_fkey(
               id,
               username,
               avatar_url

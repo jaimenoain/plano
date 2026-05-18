@@ -23,7 +23,7 @@ export async function reviewLoader({ request, params }: LoaderFunctionArgs) {
       id,
       body,
       created_at,
-      user:profiles(username),
+      user:profiles!building_posts_user_id_fkey(username),
       building:buildings(id, name, short_id, slug, hero_image_url),
       images:review_images(id, storage_path)
     `,

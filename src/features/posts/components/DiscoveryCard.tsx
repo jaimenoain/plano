@@ -185,17 +185,29 @@ export function DiscoveryCard({
   const likeOverlayOpacity = useTransform(x, [20, 100], [0, 0.35]);
   const nopeOverlayOpacity = useTransform(x, [-100, -20], [0.35, 0]);
 
-  /** Commit when offset or horizontal velocity passes (px / px/s). */
-  const SWIPE_OFFSET_PX = 88;
-  const SWIPE_VELOCITY_PX = 420;
+  /**
+   * Commit thresholds scale with the card width so a tablet doesn't trip a save/hide
+   * on a small horizontal drift during vertical scroll. 18% of width, clamped to a
+   * phone-friendly minimum and a tablet-friendly maximum.
+   */
+  const computeSwipeThresholds = useCallback((widthPx: number) => {
+    const offset = Math.max(88, Math.min(180, widthPx * 0.18));
+    return { offset, velocity: 480 };
+  }, []);
 
   /**
    * Custom pointer swipe (replaces Framer `drag="x"` + `dragDirectionLock`).
-   * Framer’s direction lock + `touch-pan-y` fights iPad Safari: vertical feed scroll and
+   * Framer's direction lock + `touch-pan-y` fights iPad Safari: vertical feed scroll and
    * horizontal save/hide were misclassified (worse in portrait). We only move `x` after
    * explicit horizontal dominance; vertical dominance yields to the parent scroller.
    */
   const [horizontalSwipeActive, setHorizontalSwipeActive] = useState(false);
+  /**
+   * Mirror of `horizontalSwipeActive` for the permanently-attached touchmove blocker.
+   * State-driven attachment leaves a 1-frame gap on iPad Safari during which native
+   * snap scroll can commit before we lock horizontal — using a ref closes that gap.
+   */
+  const horizontalSwipeActiveRef = useRef(false);
   const blockImageTapRef = useRef(false);
   const swipeSessionRef = useRef<{
     activePointerId: number | null;
@@ -204,12 +216,15 @@ export function DiscoveryCard({
     originX: number;
     originY: number;
     moveSamples: { t: number; x: number }[];
+    /** Card width captured at gesture start — feeds the scaled commit thresholds. */
+    width: number;
   }>({
     activePointerId: null,
     axis: "undecided",
     originX: 0,
     originY: 0,
     moveSamples: [],
+    width: 0,
   });
 
   const applyElasticPull = useCallback((rawDx: number) => {
@@ -232,6 +247,9 @@ export function DiscoveryCard({
         const dt = (last.t - first.t) / 1000;
         if (dt > 0.04) vx = (last.x - first.x) / dt;
       }
+
+      const { offset: SWIPE_OFFSET_PX, velocity: SWIPE_VELOCITY_PX } =
+        computeSwipeThresholds(s.width || el.clientWidth || 375);
 
       const commitRight =
         pull > SWIPE_OFFSET_PX || vx > SWIPE_VELOCITY_PX;
@@ -265,9 +283,12 @@ export function DiscoveryCard({
       s.activePointerId = null;
       s.axis = "undecided";
       s.moveSamples = [];
+      s.width = 0;
+      horizontalSwipeActiveRef.current = false;
       setHorizontalSwipeActive(false);
     },
     [
+      computeSwipeThresholds,
       onSwipeHide,
       onSwipeSave,
       saveToSupabase,
@@ -288,6 +309,7 @@ export function DiscoveryCard({
       s.originX = e.clientX;
       s.originY = e.clientY;
       s.moveSamples = [{ t: e.timeStamp, x: e.clientX }];
+      s.width = e.currentTarget.clientWidth;
       blockImageTapRef.current = false;
     },
     [showRating]
@@ -304,10 +326,13 @@ export function DiscoveryCard({
       const absDx = Math.abs(dx);
       const absDy = Math.abs(dy);
       const touch = e.pointerType === "touch";
-      const armH = touch ? 24 : 12;
-      const armV = touch ? 20 : 10;
-      const hRatio = touch ? 1.45 : 1.2;
-      const vRatio = touch ? 1.45 : 1.2;
+      // Touch arms widened + horizontal lock made stricter so a tablet user's finger
+      // drift during a vertical fling doesn't get misread as a save/hide swipe.
+      // Vertical lock made easier (lower ratio) so the feed scroll always wins ties.
+      const armH = touch ? 32 : 12;
+      const armV = touch ? 18 : 10;
+      const hRatio = touch ? 1.7 : 1.2;
+      const vRatio = touch ? 1.25 : 1.2;
 
       if (s.axis === "vertical") return;
 
@@ -322,6 +347,7 @@ export function DiscoveryCard({
         if (absDx >= armH && absDx > absDy * hRatio) {
           s.axis = "horizontal";
           onInteractionStart?.();
+          horizontalSwipeActiveRef.current = true;
           setHorizontalSwipeActive(true);
           e.currentTarget.setPointerCapture(e.pointerId);
           s.moveSamples = [{ t: e.timeStamp, x: e.clientX }];
@@ -357,24 +383,32 @@ export function DiscoveryCard({
       s.activePointerId = null;
       s.axis = "undecided";
       s.moveSamples = [];
+      s.width = 0;
+      horizontalSwipeActiveRef.current = false;
       setHorizontalSwipeActive(false);
     },
     [finishHorizontalSwipe]
   );
 
-  /** iOS Safari may still scroll the snap parent unless touchmove is non-passive while dragging horizontally. */
+  /**
+   * iPad Safari can commit a snap-scroll step in the gap between a state update and
+   * the effect that attaches a non-passive `touchmove` blocker. Attach the listener
+   * once on mount and read the ref so the block engages on the same frame the axis
+   * locks to horizontal.
+   */
   useEffect(() => {
-    if (!horizontalSwipeActive) return;
     const el = cardRootRef.current;
     if (!el) return;
     const preventTouchScroll = (ev: TouchEvent) => {
-      ev.preventDefault();
+      if (horizontalSwipeActiveRef.current && ev.cancelable) {
+        ev.preventDefault();
+      }
     };
     el.addEventListener("touchmove", preventTouchScroll, { passive: false });
     return () => {
       el.removeEventListener("touchmove", preventTouchScroll);
     };
-  }, [horizontalSwipeActive]);
+  }, []);
 
   const nextImage = (e: React.MouseEvent) => {
     if (blockImageTapRef.current) {
@@ -434,10 +468,10 @@ export function DiscoveryCard({
     <motion.div
       ref={setCardRootRef}
       className={cn(
-        "group/card relative w-full h-full overflow-hidden min-w-0 select-none bg-black snap-start",
+        "group/card relative w-full h-full overflow-hidden min-w-0 select-none bg-black",
         horizontalSwipeActive ? "touch-none" : "touch-pan-y"
       )}
-      style={{ x, rotate, opacity }}
+      style={{ x, rotate, opacity, willChange: "transform" }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerEnd}

@@ -16,6 +16,7 @@ import { LandingMarquee } from "../components/landing/LandingMarquee";
 import { LandingFeatureGrid } from "../components/landing/LandingFeatureGrid";
 import { LandingNav } from "../components/landing/LandingNav";
 import { LandingFooter } from "../components/landing/LandingFooter";
+import { FeedSidebar } from "../components/FeedSidebar";
 
 const INDEX_TITLE = "Plano — The world's architecture, cataloged.";
 const INDEX_DESCRIPTION =
@@ -268,28 +269,37 @@ function Feed() {
 
   return (
     <AppLayout>
-      <div className="mx-auto w-full max-w-[640px] px-4 md:px-6 pt-10 pb-32">
-        <h1 className="text-2xl font-semibold text-text-primary mb-8 tracking-tight">
-          Latest
-        </h1>
+      <div className="mx-auto w-full max-w-[960px] px-4 md:px-6 pt-10 pb-32 md:flex md:items-start md:gap-8">
+        <main className="w-full md:flex-1 md:min-w-0">
+          <h1 className="text-2xl font-semibold text-text-primary mb-8 tracking-tight">
+            Latest
+          </h1>
 
-        {isLoading ? (
-          <FeedSkeleton />
-        ) : error ? (
-          <div className="text-text-secondary text-sm py-12">
-            Couldn't load the feed. Please refresh.
+          {isLoading ? (
+            <FeedSkeleton />
+          ) : error ? (
+            <div className="text-text-secondary text-sm py-12">
+              Couldn't load the feed. Please refresh.
+            </div>
+          ) : (data?.length ?? 0) === 0 ? (
+            <div className="text-text-secondary text-sm py-12">
+              No posts yet. Be the first to share.
+            </div>
+          ) : (
+            <div>
+              {data!.map((note) => (
+                <NoteCard key={note.id} note={note} />
+              ))}
+            </div>
+          )}
+        </main>
+
+        {/* ── Secondary column (1/3) — desktop only ── */}
+        <aside className="hidden md:block md:w-1/3 md:shrink-0">
+          <div className="sticky top-20">
+            <FeedSidebar />
           </div>
-        ) : (data?.length ?? 0) === 0 ? (
-          <div className="text-text-secondary text-sm py-12">
-            No posts yet. Be the first to share.
-          </div>
-        ) : (
-          <div>
-            {data!.map((note) => (
-              <NoteCard key={note.id} note={note} />
-            ))}
-          </div>
-        )}
+        </aside>
       </div>
     </AppLayout>
   );

@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogClose, DialogTitle, DialogDescription } fr
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageCircle, Send, X, Trash2, Loader2, ChevronLeft, ChevronRight, Check, Plus, Image as ImageIcon } from "lucide-react";
+import { Heart, MessageCircle, Send, X, Trash2, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { formatDistanceToNow, format } from "date-fns";
@@ -38,12 +38,7 @@ interface ImageDetailsDialogProps {
   hasNext?: boolean;
   hasPrev?: boolean;
   isGenerated?: boolean;
-  isOfficial?: boolean;
-  isHero?: boolean;
-  canEdit?: boolean;
   caption?: string | null;
-  onToggleOfficial?: () => void;
-  onSetHero?: () => void;
 }
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -62,12 +57,7 @@ export function ImageDetailsDialog({
   hasNext,
   hasPrev,
   isGenerated,
-  isOfficial,
-  isHero,
-  canEdit,
   caption,
-  onToggleOfficial,
-  onSetHero
 }: ImageDetailsDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -373,34 +363,6 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
               <div className="px-4 py-3 border-b">
                 <p className="text-sm text-text-primary leading-relaxed">{caption}</p>
               </div>
-            )}
-
-            {/* Curation Actions */}
-            {canEdit && (
-                <div className="px-4 py-3 border-b bg-surface-muted/10 space-y-2">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary">Curation</h4>
-                    <div className="flex flex-col gap-2">
-                        <Button
-                            variant={isOfficial ? "secondary" : "outline"}
-                            size="sm"
-                            onClick={onToggleOfficial}
-                            className="justify-start h-8"
-                        >
-                            {isOfficial ? <Check className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
-                            {isOfficial ? "Official Lookbook" : "Add to Lookbook"}
-                        </Button>
-                        <Button
-                            variant={isHero ? "secondary" : "outline"}
-                            size="sm"
-                            onClick={onSetHero}
-                            className="justify-start h-8"
-                            disabled={isHero}
-                        >
-                            {isHero ? <Check className="w-4 h-4 mr-2" /> : <ImageIcon className="w-4 h-4 mr-2" />}
-                            {isHero ? "Current Hero Image" : "Set as Hero Image"}
-                        </Button>
-                    </div>
-                </div>
             )}
 
             {/* Stats */}

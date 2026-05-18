@@ -1452,8 +1452,6 @@ export default function BuildingDetails() {
     handleSaveNote,
     handleNewNote,
     handleDelete,
-    handleSetHeroImage,
-    handleToggleOfficial,
     handleLinkLike,
     handleNextImage,
     handlePrevImage,
@@ -2809,12 +2807,7 @@ export default function BuildingDetails() {
         hasNext={selectedIndex < displayImages.length - 1}
         hasPrev={selectedIndex > 0}
         isGenerated={selectedImage?.is_generated}
-        isOfficial={selectedImage?.is_official}
-        isHero={selectedImage?.id === building?.hero_image_id}
         caption={selectedImage?.caption}
-        canEdit={canEditOfficialData}
-        onToggleOfficial={handleToggleOfficial}
-        onSetHero={handleSetHeroImage}
       />
 
       <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>

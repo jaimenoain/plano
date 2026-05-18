@@ -181,7 +181,7 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
           created_at,
           building_posts!review_images_review_id_fkey!inner(
             building_id,
-            user:profiles(id, username, avatar_url)
+            user:profiles!building_posts_user_id_fkey(id, username, avatar_url)
           )
         `,
         )
