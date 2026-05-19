@@ -42,6 +42,7 @@ export interface SearchBuildingsV2Filters {
   access_levels?: string[];
   access_logistics?: string[];
   access_costs?: string[];
+  centuries?: number[];
 }
 
 export interface SearchBuildingsV2Options {

@@ -205,6 +205,29 @@ function syncFilterParams(newParams: URLSearchParams, filters: MapFilters) {
   } else {
     newParams.delete('gapPhotoCounts');
   }
+
+  if (filters.centuries && filters.centuries.length > 0) {
+    newParams.set('centuries', filters.centuries.join(','));
+  } else {
+    newParams.delete('centuries');
+  }
+
+  setOrDelete('awardId', filters.awardId ?? undefined);
+  setOrDelete('awardOutcome', filters.awardOutcome ?? undefined);
+  if (filters.awardYearFrom != null) newParams.set('awardYearFrom', String(filters.awardYearFrom));
+  else newParams.delete('awardYearFrom');
+  if (filters.awardYearTo != null) newParams.set('awardYearTo', String(filters.awardYearTo));
+  else newParams.delete('awardYearTo');
+
+  setArrayParam('sizeCategories', filters.sizeCategories);
+  if (filters.minSizeSqm != null) newParams.set('minSizeSqm', String(filters.minSizeSqm));
+  else newParams.delete('minSizeSqm');
+  if (filters.maxSizeSqm != null) newParams.set('maxSizeSqm', String(filters.maxSizeSqm));
+  else newParams.delete('maxSizeSqm');
+  if (filters.minStoreys != null) newParams.set('minStoreys', String(filters.minStoreys));
+  else newParams.delete('minStoreys');
+  if (filters.maxStoreys != null) newParams.set('maxStoreys', String(filters.maxStoreys));
+  else newParams.delete('maxStoreys');
 }
 
 export const useURLMapState = () => {
@@ -266,6 +289,21 @@ export const useURLMapState = () => {
        showDemolished: getBoolParam(searchParams.get("showDemolished")),
        photographyGaps: getBoolParam(searchParams.get("photographyGaps")),
        gapPhotoCounts: searchParams.get("gapPhotoCounts") ? searchParams.get("gapPhotoCounts")!.split(",").map(Number) : undefined,
+       awardId: searchParams.get("awardId") || undefined,
+       awardOutcome: searchParams.get("awardOutcome") || undefined,
+       awardYearFrom: getNumParam(searchParams.get("awardYearFrom")),
+       awardYearTo: getNumParam(searchParams.get("awardYearTo")),
+       sizeCategories: getArrayParam(searchParams.get("sizeCategories")),
+       minSizeSqm: getNumParam(searchParams.get("minSizeSqm")),
+       maxSizeSqm: getNumParam(searchParams.get("maxSizeSqm")),
+       minStoreys: getNumParam(searchParams.get("minStoreys")),
+       maxStoreys: getNumParam(searchParams.get("maxStoreys")),
+       centuries: (() => {
+         const raw = searchParams.get("centuries");
+         if (!raw) return undefined;
+         const parsed = raw.split(",").map((s) => parseInt(s, 10)).filter((n) => Number.isInteger(n) && n >= 1);
+         return parsed.length > 0 ? parsed : undefined;
+       })(),
     };
 
     return { ...parsed, filters } as MapState;

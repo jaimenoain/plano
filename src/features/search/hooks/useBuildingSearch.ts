@@ -359,6 +359,14 @@ async function enrichBuildings(
 
 // URL Param Parsers
 const getArrayParam = (param: string | null): string[] => param ? param.split(",") : [];
+
+const getNumArrayParam = (param: string | null): number[] =>
+  param
+    ? param
+        .split(",")
+        .map((s) => parseInt(s, 10))
+        .filter((n) => Number.isInteger(n) && n >= 1)
+    : [];
 const getBoolParam = (param: string | null, defaultVal: boolean): boolean => 
   param !== null ? param === "true" : defaultVal;
 const getNumParam = (param: string | null, defaultVal: number): number => 
@@ -501,6 +509,9 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   );
   const [maxStoreys, setMaxStoreys] = useState<number | null>(
     searchParams.get("maxStoreys") ? parseInt(searchParams.get("maxStoreys")!, 10) : null
+  );
+  const [selectedCenturies, setSelectedCenturies] = useState<number[]>(
+    getNumArrayParam(searchParams.get("centuries")),
   );
 
   // Resolve rated_by profiles from URL
@@ -674,7 +685,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
         minSizeSqm !== null ||
         maxSizeSqm !== null ||
         minStoreys !== null ||
-        maxStoreys !== null;
+        maxStoreys !== null ||
+        selectedCenturies.length > 0;
 
      if (hasActiveFilters) {
          try {
@@ -690,7 +702,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     accessLevels, accessLogistics, accessCosts, constructionStatuses,
     selectedCreditCompany, selectedCreditRoles,
     awardId, awardOutcome, awardYearFrom, awardYearTo,
-    sizeCategories, minSizeSqm, maxSizeSqm, minStoreys, maxStoreys
+    sizeCategories, minSizeSqm, maxSizeSqm, minStoreys, maxStoreys, selectedCenturies
   ]);
 
   // Sync state to URL params
@@ -818,6 +830,9 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       if (maxStoreys !== null) params.set("maxStoreys", maxStoreys.toString());
       else params.delete("maxStoreys");
 
+      if (selectedCenturies.length > 0) params.set("centuries", selectedCenturies.join(","));
+      else params.delete("centuries");
+
       // Construct rated_by param
       const ratedByUsers = new Set<string>();
       const authUsername = (user?.user_metadata as { username?: string } | undefined)?.username;
@@ -877,6 +892,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     maxSizeSqm,
     minStoreys,
     maxStoreys,
+    selectedCenturies,
     setSearchParams,
     user
   ]);
@@ -951,7 +967,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       minSizeSqm,
       maxSizeSqm,
       minStoreys,
-      maxStoreys
+      maxStoreys,
+      selectedCenturies,
     ],
     queryFn: async () => {
       try {
@@ -1116,7 +1133,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
                 access_cost,
                 size_category,
                 size_sqm,
-                storeys
+                storeys,
+                century
               `)
               .in('id', Array.from(buildingIds));
 
@@ -1155,6 +1173,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
               maxSizeSqm,
               minStoreys,
               maxStoreys,
+              centuries: selectedCenturies,
             });
 
             // 6. Map to MapItem (BuildingPoint)
@@ -1232,6 +1251,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
               max_size_sqm: maxSizeSqm || undefined,
               min_storeys: minStoreys || undefined,
               max_storeys: maxStoreys || undefined,
+              centuries: selectedCenturies.length > 0 ? selectedCenturies : undefined,
             }
           });
 
@@ -1426,6 +1446,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     setMinStoreys,
     maxStoreys,
     setMaxStoreys,
+    selectedCenturies,
+    setSelectedCenturies,
     viewMode,
     setViewMode,
     mode,

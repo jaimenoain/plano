@@ -83,6 +83,8 @@ export function FilterDrawer() {
     setMinStoreys,
     maxStoreys,
     setMaxStoreys,
+    selectedCenturies,
+    setSelectedCenturies,
     mode,
     setMode,
   } = useBuildingSearch();
@@ -184,6 +186,7 @@ export function FilterDrawer() {
     setMaxSizeSqm(null);
     setMinStoreys(null);
     setMaxStoreys(null);
+    setSelectedCenturies([]);
   };
 
   const handleClearAll = () => {
@@ -208,6 +211,7 @@ export function FilterDrawer() {
     setMaxSizeSqm(null);
     setMinStoreys(null);
     setMaxStoreys(null);
+    setSelectedCenturies([]);
     setMode(null);
   };
 
@@ -238,6 +242,7 @@ export function FilterDrawer() {
     if (sizeCategories.length > 0) count++;
     if (minSizeSqm !== null || maxSizeSqm !== null) count++;
     if (minStoreys !== null || maxStoreys !== null) count++;
+    if (selectedCenturies.length > 0) count++;
 
     if (mode === 'discover') {
       if (currentMinRating > 0) count++;
@@ -268,6 +273,7 @@ export function FilterDrawer() {
     showDemolished,
     selectedCreditCompany,
     selectedCreditRoles,
+    selectedCenturies,
   ]);
 
   const getTierLabel = (value: number) => {
@@ -465,6 +471,8 @@ export function FilterDrawer() {
             onMinStoreysChange={setMinStoreys}
             maxStoreys={maxStoreys}
             onMaxStoreysChange={setMaxStoreys}
+            selectedCenturies={selectedCenturies}
+            onCenturiesChange={setSelectedCenturies}
           />
         </div>
       </SheetContent>

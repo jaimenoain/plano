@@ -150,6 +150,8 @@ export function BuildingSidebar({
         max_size_sqm: filters.maxSizeSqm || undefined,
         min_storeys: filters.minStoreys || undefined,
         max_storeys: filters.maxStoreys || undefined,
+        centuries:
+          filters.centuries && filters.centuries.length > 0 ? filters.centuries : undefined,
       };
       const { data, error } = await supabase.rpc('get_buildings_list', {
         min_lat: bounds.south,

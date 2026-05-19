@@ -13,6 +13,7 @@ export interface BuildingFilterData {
   size_category?: string | null;
   size_sqm?: number | null;
   storeys?: number | null;
+  century?: number | null;
   [key: string]: unknown; // Allow passing through other fields like id, location, etc.
 }
 
@@ -36,6 +37,7 @@ export interface FilterCriteria {
   maxSizeSqm?: number | null;
   minStoreys?: number | null;
   maxStoreys?: number | null;
+  centuries?: number[];
   userCollectionMap?: Record<string, Set<string>>;
   userRatings?: Record<string, number>;
 }
@@ -178,6 +180,12 @@ export function filterLocalBuildings(
     }
     if (filters.maxStoreys !== null && filters.maxStoreys !== undefined) {
       if (b.storeys === null || b.storeys === undefined || b.storeys > filters.maxStoreys) {
+        return false;
+      }
+    }
+
+    if (filters.centuries && filters.centuries.length > 0) {
+      if (b.century == null || !filters.centuries.includes(b.century)) {
         return false;
       }
     }

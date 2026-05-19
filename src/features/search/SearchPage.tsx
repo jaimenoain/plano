@@ -98,6 +98,7 @@ function SearchPageContent() {
     if (filters.accessLevels?.length) f.access_levels = filters.accessLevels;
     if (filters.accessLogistics?.length) f.access_logistics = filters.accessLogistics;
     if (filters.accessCosts?.length) f.access_costs = filters.accessCosts;
+    if (filters.centuries?.length) f.centuries = filters.centuries;
     return Object.keys(f).length > 0 ? f : undefined;
   }, [filters]);
 

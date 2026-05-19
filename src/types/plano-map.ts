@@ -100,6 +100,9 @@ export interface MapFilters {
   minStoreys?: number;
   maxStoreys?: number;
 
+  /** Buildings whose `century` column matches any selected value (OR). */
+  centuries?: number[];
+
   // Photography Gaps (Phase 2)
   photographyGaps?: boolean;
   gapPhotoCounts?: number[];

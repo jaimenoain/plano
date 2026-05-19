@@ -26,6 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { CENTURY_FILTER_ITEMS } from "@/lib/century";
 import type { UserSearchResult } from "@/features/search/hooks/useUserSearch";
 
 interface MultiSelectCheckboxListProps {
@@ -121,6 +122,8 @@ export interface DiscoveryFiltersPanelProps {
   onMinStoreysChange?: (val: number | null) => void;
   maxStoreys?: number | null;
   onMaxStoreysChange?: (val: number | null) => void;
+  selectedCenturies?: number[];
+  onCenturiesChange?: (centuries: number[]) => void;
 }
 
 export function DiscoveryFiltersPanel({
@@ -163,6 +166,8 @@ export function DiscoveryFiltersPanel({
   onMinStoreysChange,
   maxStoreys,
   onMaxStoreysChange,
+  selectedCenturies = [],
+  onCenturiesChange,
 }: DiscoveryFiltersPanelProps) {
   const {
     functionalCategories,
@@ -415,6 +420,22 @@ export function DiscoveryFiltersPanel({
               selectedIds={constructionStatuses || []}
               onChange={onConstructionStatusesChange}
               className="h-[180px]"
+            />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="century">
+          <AccordionTrigger className="text-sm">Century</AccordionTrigger>
+          <AccordionContent className="pt-2">
+            <MultiSelectCheckboxList
+              items={CENTURY_FILTER_ITEMS}
+              selectedIds={selectedCenturies.map(String)}
+              onChange={(ids) =>
+                onCenturiesChange?.(
+                  ids.map((id) => parseInt(id, 10)).filter((n) => Number.isInteger(n) && n >= 1),
+                )
+              }
+              className="h-[200px]"
             />
           </AccordionContent>
         </AccordionItem>
