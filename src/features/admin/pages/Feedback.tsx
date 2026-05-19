@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import type { MetaFunction } from "react-router";
+import { Columns, Loader2, Table2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
@@ -11,45 +12,36 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { FeedbackDetailContent } from "@/features/admin/components/FeedbackDetailContent";
+import { FeedbackKanbanView } from "@/features/admin/components/FeedbackKanbanView";
+import {
+  FEEDBACK_TYPES,
+  TYPE_COLORS,
+  TYPE_LABELS,
+  type DateRange,
+  type FeedbackRow,
+  type FeedbackType,
+  type FeedbackViewMode,
+} from "@/features/admin/feedback/feedbackTypes";
+import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [{ title: "Admin Feedback | Plano" }];
-
-type FeedbackType = "bug" | "ux_improvement" | "feature_idea" | "other";
-type DateRange = "7d" | "30d" | "all";
-
-interface FeedbackRow {
-  id: string;
-  type: FeedbackType;
-  message: string;
-  page_url: string | null;
-  user_agent: string | null;
-  console_errors: string[];
-  metadata: Record<string, unknown>;
-  screenshot_path: string | null;
-  created_at: string;
-  user_id: string;
-  profiles: { username: string | null } | null;
-}
-
-const TYPE_LABELS: Record<FeedbackType, string> = {
-  bug: "Bug report",
-  ux_improvement: "UX improvement",
-  feature_idea: "Feature idea",
-  other: "Other",
-};
-
-const TYPE_COLORS: Record<FeedbackType, string> = {
-  bug: "bg-red-100 text-red-700 border-red-200",
-  ux_improvement: "bg-blue-100 text-blue-700 border-blue-200",
-  feature_idea: "bg-purple-100 text-purple-700 border-purple-200",
-  other: "bg-neutral-100 text-neutral-700 border-neutral-200",
-};
 
 function TypePill({ type }: { type: FeedbackType }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${TYPE_COLORS[type]}`}
+      className={cn(
+        "inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium",
+        TYPE_COLORS[type],
+      )}
     >
       {TYPE_LABELS[type]}
     </span>
@@ -62,7 +54,9 @@ export default function FeedbackAdminPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<FeedbackType | "all">("all");
   const [dateRange, setDateRange] = useState<DateRange>("all");
+  const [viewMode, setViewMode] = useState<FeedbackViewMode>("table");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedRow, setSelectedRow] = useState<FeedbackRow | null>(null);
   const [signingUrl, setSigningUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -74,7 +68,7 @@ export default function FeedbackAdminPage() {
         .from("feedback")
         .select(
           `id, type, message, page_url, user_agent, console_errors, metadata, screenshot_path, created_at, user_id,
-           profiles ( username )`
+           profiles ( username )`,
         )
         .order("created_at", { ascending: false })
         .limit(200);
@@ -92,8 +86,10 @@ export default function FeedbackAdminPage() {
   const now = Date.now();
   const filtered = rows.filter((r) => {
     if (typeFilter !== "all" && r.type !== typeFilter) return false;
-    if (dateRange === "7d" && now - new Date(r.created_at).getTime() > 7 * 86_400_000) return false;
-    if (dateRange === "30d" && now - new Date(r.created_at).getTime() > 30 * 86_400_000) return false;
+    if (dateRange === "7d" && now - new Date(r.created_at).getTime() > 7 * 86_400_000)
+      return false;
+    if (dateRange === "30d" && now - new Date(r.created_at).getTime() > 30 * 86_400_000)
+      return false;
     return true;
   });
 
@@ -111,15 +107,35 @@ export default function FeedbackAdminPage() {
     setSigningUrl(null);
   }
 
-  const TYPES: FeedbackType[] = ["bug", "ux_improvement", "feature_idea", "other"];
+  function openDetail(row: FeedbackRow) {
+    if (viewMode === "kanban") {
+      setSelectedRow(row);
+    } else {
+      setExpandedId(expandedId === row.id ? null : row.id);
+    }
+  }
 
   return (
-    <div className="p-6 space-y-5">
-      <h1 className="text-xl font-semibold text-text-primary">Feedback</h1>
+    <div className="space-y-5 p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-semibold text-text-primary">Feedback</h1>
+        <ToggleGroup
+          type="single"
+          value={viewMode}
+          onValueChange={(v) => v && setViewMode(v as FeedbackViewMode)}
+        >
+          <ToggleGroupItem value="table" size="sm" aria-label="Table view">
+            <Table2 className="h-3.5 w-3.5" />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="kanban" size="sm" aria-label="Kanban view">
+            <Columns className="h-3.5 w-3.5" />
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
 
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           <Button
             variant={typeFilter === "all" ? "default" : "outline"}
             size="sm"
@@ -127,7 +143,7 @@ export default function FeedbackAdminPage() {
           >
             All
           </Button>
-          {TYPES.map((t) => (
+          {FEEDBACK_TYPES.map((t) => (
             <Button
               key={t}
               variant={typeFilter === t ? "default" : "outline"}
@@ -138,7 +154,7 @@ export default function FeedbackAdminPage() {
             </Button>
           ))}
         </div>
-        <div className="flex items-center gap-1 ml-auto">
+        <div className="ml-auto flex items-center gap-1">
           {(["7d", "30d", "all"] as DateRange[]).map((d) => (
             <Button
               key={d}
@@ -152,15 +168,20 @@ export default function FeedbackAdminPage() {
         </div>
       </div>
 
-      {/* Table */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
         </div>
       ) : loadError ? (
-        <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-md border border-feedback-destructive/30 bg-feedback-destructive/10 p-4 text-sm text-feedback-destructive">
           Failed to load feedback: {loadError}
         </div>
+      ) : viewMode === "kanban" ? (
+        <FeedbackKanbanView
+          rows={filtered}
+          typeFilter={typeFilter}
+          onSelectRow={(row) => setSelectedRow(row)}
+        />
       ) : (
         <Table>
           <TableHeader>
@@ -175,22 +196,16 @@ export default function FeedbackAdminPage() {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="text-center py-12 text-text-secondary"
-                >
+                <TableCell colSpan={5} className="py-12 text-center text-text-secondary">
                   No feedback yet.
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((row) => (
-                <>
+                <Fragment key={row.id}>
                   <TableRow
-                    key={row.id}
                     className="cursor-pointer hover:bg-surface-muted"
-                    onClick={() =>
-                      setExpandedId(expandedId === row.id ? null : row.id)
-                    }
+                    onClick={() => openDetail(row)}
                   >
                     <TableCell>
                       <TypePill type={row.type} />
@@ -220,97 +235,83 @@ export default function FeedbackAdminPage() {
                         "—"
                       )}
                     </TableCell>
-                    <TableCell className="text-xs text-text-secondary whitespace-nowrap">
+                    <TableCell className="whitespace-nowrap text-xs text-text-secondary">
                       {formatDistanceToNow(new Date(row.created_at), {
                         addSuffix: true,
                       })}
                     </TableCell>
                   </TableRow>
 
-                  {/* Expanded detail row */}
                   {expandedId === row.id && (
-                    <TableRow key={`${row.id}-detail`}>
-                      <TableCell
-                        colSpan={5}
-                        className="bg-surface-muted px-5 py-4"
-                      >
-                        <div className="space-y-3 text-sm">
-                          <div>
-                            <p className="font-medium text-text-primary mb-1">
-                              Full message
-                            </p>
-                            <p className="text-text-secondary whitespace-pre-wrap">
-                              {row.message}
-                            </p>
-                          </div>
-                          {row.user_agent && (
-                            <div>
-                              <p className="font-medium text-text-primary mb-1">
-                                Browser
-                              </p>
-                              <p className="text-text-secondary break-all">
-                                {row.user_agent}
-                              </p>
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-medium text-text-primary mb-1">
-                              Console errors
-                            </p>
-                            {row.console_errors.length === 0 ? (
-                              <p className="text-text-secondary">None</p>
-                            ) : (
-                              <ul className="font-mono text-xs text-feedback-destructive space-y-1">
-                                {row.console_errors.map((e, i) => (
-                                  <li key={i}>{e}</li>
-                                ))}
-                              </ul>
-                            )}
-                          </div>
-                          {Object.keys(row.metadata).length > 0 && (
-                            <div>
-                              <p className="font-medium text-text-primary mb-1">
-                                Metadata
-                              </p>
-                              <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-text-secondary">
-                                {Object.entries(row.metadata).map(([k, v]) => (
-                                  <>
-                                    <dt key={`k-${k}`} className="font-medium text-text-primary">
-                                      {k}
-                                    </dt>
-                                    <dd key={`v-${k}`}>{String(v)}</dd>
-                                  </>
-                                ))}
-                              </dl>
-                            </div>
-                          )}
-                          {row.screenshot_path && (
-                            <div>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={signingUrl === "loading"}
-                                onClick={() =>
-                                  handleViewScreenshot(row.screenshot_path!)
-                                }
-                              >
-                                {signingUrl === "loading" ? (
-                                  <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
-                                ) : null}
-                                View screenshot
-                              </Button>
-                            </div>
-                          )}
-                        </div>
+                    <TableRow>
+                      <TableCell colSpan={5} className="bg-surface-muted px-5 py-4">
+                        <FeedbackDetailContent
+                          row={row}
+                          signingUrl={signingUrl}
+                          onViewScreenshot={handleViewScreenshot}
+                        />
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </Fragment>
               ))
             )}
           </TableBody>
         </Table>
       )}
+
+      <Sheet
+        open={selectedRow !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedRow(null);
+        }}
+      >
+        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-lg">
+          {selectedRow && (
+            <>
+              <SheetHeader className="space-y-3 text-left">
+                <SheetTitle className="flex flex-wrap items-center gap-2">
+                  <TypePill type={selectedRow.type} />
+                </SheetTitle>
+                <SheetDescription asChild>
+                  <div className="space-y-1 text-sm text-text-secondary">
+                    <p>
+                      <span className="font-medium text-text-primary">User: </span>
+                      {selectedRow.profiles?.username ?? selectedRow.user_id.slice(0, 8)}
+                    </p>
+                    <p>
+                      <span className="font-medium text-text-primary">Submitted: </span>
+                      {formatDistanceToNow(new Date(selectedRow.created_at), {
+                        addSuffix: true,
+                      })}
+                    </p>
+                    {selectedRow.page_url && (
+                      <p>
+                        <span className="font-medium text-text-primary">Page: </span>
+                        <a
+                          href={selectedRow.page_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="break-all hover:underline"
+                        >
+                          {selectedRow.page_url}
+                        </a>
+                      </p>
+                    )}
+                  </div>
+                </SheetDescription>
+              </SheetHeader>
+              <div className="mt-6">
+                <FeedbackDetailContent
+                  row={selectedRow}
+                  signingUrl={signingUrl}
+                  onViewScreenshot={handleViewScreenshot}
+                />
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
