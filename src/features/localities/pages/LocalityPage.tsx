@@ -429,7 +429,7 @@ const ACCESS_FILTERS = [
 const STATUS_FILTERS = [
   { label: "Existing", value: "Built" },
   { label: "Under construction", value: "Under Construction" },
-  { label: "Demolished", value: "Lost" },
+  { label: "Lost", value: "Lost" },
 ] as const;
 
 type StyleFilter = (typeof STYLE_FILTERS)[number]["value"] | null;

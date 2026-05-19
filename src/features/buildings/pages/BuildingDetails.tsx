@@ -78,6 +78,7 @@ import {
   buildingDescription,
   SITE_URL,
 } from "@/features/buildings/utils/structuredData";
+import { formatBuildingStatusForDisplay, isLostStatus } from "@/lib/buildingStatus";
 import { cn } from "@/lib/utils";
 import { useBuildingInteractions, type TopLink } from "@/features/buildings/hooks/useBuildingInteractions";
 import {
@@ -1859,7 +1860,7 @@ export default function BuildingDetails() {
     .join(" ");
 
   const isStatusBuilding =
-    building.status === "Lost" ||
+    isLostStatus(building.status) ||
     building.status === "Unbuilt" ||
     building.status === "Under Construction";
 
@@ -1921,9 +1922,9 @@ export default function BuildingDetails() {
                         {building.tier_rank}
                       </span>
                     )}
-                    {isStatusBuilding && (
+                    {isStatusBuilding && building.status && (
                       <span className="inline-block px-2 py-0.5 bg-feedback-destructive/10 text-feedback-destructive text-[10px] font-bold uppercase tracking-[0.2em] rounded-none border border-feedback-destructive/20">
-                        {building.status}
+                        {formatBuildingStatusForDisplay(building.status)}
                       </span>
                     )}
                     {buildingAny.winner_award_name && (
@@ -2091,10 +2092,10 @@ export default function BuildingDetails() {
                       <AlertTriangle className="h-5 w-5 text-feedback-destructive shrink-0 mt-0.5" />
                       <div>
                         <p className="text-sm font-bold text-feedback-destructive uppercase tracking-wider mb-1">
-                          {building.status}
+                          {formatBuildingStatusForDisplay(building.status!)}
                         </p>
                         <p className="text-sm text-text-secondary">
-                          {building.status === "Lost"
+                          {isLostStatus(building.status)
                             ? "This building no longer stands at this location."
                             : building.status === "Unbuilt"
                               ? "This project was never built and exists only in records."
@@ -2850,7 +2851,7 @@ export default function BuildingDetails() {
                 )
               }
             >
-              {building.status === "Lost" ? "Navigate to Site" : "Get Directions"}
+              {isLostStatus(building.status) ? "Navigate to Site" : "Get Directions"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

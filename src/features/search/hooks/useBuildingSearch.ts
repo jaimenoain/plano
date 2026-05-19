@@ -22,6 +22,10 @@ import { Bounds } from "@/utils/map";
 import { CREDIT_ROLES } from "@/features/credits/api/credits";
 import type { CreditRole } from "@/features/credits/types";
 import type { MapMode } from "@/types/plano-map";
+import {
+  getShowLostFromUrlParams,
+  normalizeConstructionStatuses,
+} from "@/lib/buildingStatus";
 
 // Type definitions for better type safety
 interface BuildingDataItem {
@@ -478,8 +482,18 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   const [accessLogistics, setAccessLogistics] = useState<string[]>(getArrayParam(searchParams.get("accessLogistics")));
   const [accessCosts, setAccessCosts] = useState<string[]>(getArrayParam(searchParams.get("accessCosts")));
 
-  const [constructionStatuses, setConstructionStatuses] = useState<string[]>(getArrayParam(searchParams.get("constructionStatuses")));
-  const [showDemolished, setShowDemolished] = useState<boolean>(getBoolParam(searchParams.get("showDemolished"), false));
+  const [constructionStatuses, setConstructionStatusesState] = useState<string[]>(() =>
+    normalizeConstructionStatuses(getArrayParam(searchParams.get("constructionStatuses"))),
+  );
+  const setConstructionStatuses = useCallback((next: string[] | ((prev: string[]) => string[])) => {
+    setConstructionStatusesState((prev) => {
+      const resolved = typeof next === "function" ? next(prev) : next;
+      return normalizeConstructionStatuses(resolved);
+    });
+  }, []);
+  const [showLost, setShowLost] = useState<boolean>(() =>
+    getShowLostFromUrlParams((key) => searchParams.get(key)),
+  );
 
   const [selectedCreditCompany, setSelectedCreditCompany] = useState<{ id: string; name: string } | null>(
     () => getCreditCompanyParam(searchParams.get("creditCompany"))
@@ -794,8 +808,9 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       if (constructionStatuses.length > 0) params.set("constructionStatuses", constructionStatuses.join(","));
       else params.delete("constructionStatuses");
 
-      if (showDemolished) params.set("showDemolished", "true");
-      else params.delete("showDemolished");
+      if (showLost) params.set("showLost", "true");
+      else params.delete("showLost");
+      params.delete("showDemolished");
 
       if (selectedCreditCompany) params.set("creditCompany", selectedCreditCompany.id);
       else params.delete("creditCompany");
@@ -880,7 +895,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     accessLogistics,
     accessCosts,
     constructionStatuses,
-    showDemolished,
+    showLost,
     selectedCreditCompany,
     selectedCreditRoles,
     awardId,
@@ -1422,8 +1437,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     setAccessCosts,
     constructionStatuses,
     setConstructionStatuses,
-    showDemolished,
-    setShowDemolished,
+    showLost,
+    setShowLost,
     selectedCreditCompany,
     setSelectedCreditCompany,
     selectedCreditRoles,

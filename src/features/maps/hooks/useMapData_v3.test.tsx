@@ -43,7 +43,7 @@ describe('useMapData — Phase 3 (get_map_clusters_v3)', () => {
     expect(args.filter_criteria.query).toBeUndefined();
   });
 
-  it('uses an exclusion list (not inclusion) when neither showDemolished nor explicit constructionStatuses is set, so NULL-status rows pass through', async () => {
+  it('uses an exclusion list (not inclusion) when neither showLost nor explicit constructionStatuses is set, so NULL-status rows pass through', async () => {
     const filters: MapFilters = {};
     const { result } = renderHook(() => useMapData({ bounds, zoom, filters }), {
       wrapper: createWrapper(),
@@ -56,8 +56,8 @@ describe('useMapData — Phase 3 (get_map_clusters_v3)', () => {
       .toEqual(['Demolished', 'Lost', 'Under Construction', 'Unbuilt']);
   });
 
-  it('shrinks the exclusion list (drops Demolished + Lost) when showDemolished is true and there are no explicit picks', async () => {
-    const filters: MapFilters = { showDemolished: true };
+  it('shrinks the exclusion list (drops Demolished + Lost) when showLost is true and there are no explicit picks', async () => {
+    const filters: MapFilters = { showLost: true };
     const { result } = renderHook(() => useMapData({ bounds, zoom, filters }), {
       wrapper: createWrapper(),
     });
@@ -69,10 +69,10 @@ describe('useMapData — Phase 3 (get_map_clusters_v3)', () => {
       .toEqual(['Under Construction', 'Unbuilt']);
   });
 
-  it('explicit constructionStatuses pick uses strict inclusion and overrides the showDemolished toggle', async () => {
+  it('explicit constructionStatuses pick uses strict inclusion and overrides the showLost toggle', async () => {
     const filters: MapFilters = {
       constructionStatuses: ['Under Construction'],
-      showDemolished: true,
+      showLost: true,
     };
     const { result } = renderHook(() => useMapData({ bounds, zoom, filters }), {
       wrapper: createWrapper(),

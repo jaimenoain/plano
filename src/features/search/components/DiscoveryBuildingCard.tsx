@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EyeOff, Circle, Medal } from "lucide-react";
 import { Link } from "react-router";
 import { DiscoveryBuilding, ContactInteraction } from "./types";
+import { formatBuildingStatusForDisplay, isLostStatus } from "@/lib/buildingStatus";
 import { cn } from "@/lib/utils";
 import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl, getBuildingLocalityUrl } from "@/utils/url";
@@ -137,9 +138,9 @@ export function DiscoveryBuildingCard({
                 </div>
               </Badge>
             )}
-            {(building.status === 'Lost' || building.status === 'Unbuilt') && (
+            {(building.status === 'Unbuilt' || isLostStatus(building.status)) && (
               <Badge variant="outline" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto text-text-secondary border-text-secondary/30 max-w-full truncate">
-                {building.status}
+                {building.status === 'Unbuilt' ? 'Unbuilt' : formatBuildingStatusForDisplay(building.status!)}
               </Badge>
             )}
             {isHidden && (

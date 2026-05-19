@@ -1,6 +1,10 @@
 import { useMemo, useRef } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import {
+  DEFAULT_EXCLUDED_CONSTRUCTION_STATUSES,
+  SHOW_LOST_EXCLUDED_CONSTRUCTION_STATUSES,
+} from '@/lib/buildingStatus';
 import { Bounds } from '@/utils/map';
 import { MapFilters, MapMode } from '@/types/plano-map';
 
@@ -59,9 +63,6 @@ const MIN_LNG = -180;
  * rows with `b.status IS NULL` still render — a strict `status = ANY([...])`
  * inclusion filter drops NULL rows entirely (`NULL = ANY([...])` is NULL).
  */
-const DEFAULT_EXCLUDED_STATUSES = ['Demolished', 'Lost', 'Under Construction', 'Unbuilt'] as const;
-const SHOW_DEMOLISHED_EXCLUDED_STATUSES = ['Under Construction', 'Unbuilt'] as const;
-
 function calculateFetchBox(bounds: Bounds): Bounds {
   const latSpan = bounds.north - bounds.south;
   const lngSpan = bounds.east - bounds.west;
@@ -89,12 +90,12 @@ function resolveConstructionStatuses(filters: MapFilters): ConstructionStatusFil
   if (filters.constructionStatuses && filters.constructionStatuses.length > 0) {
     return { construction_statuses: filters.constructionStatuses };
   }
-  // Default / "Show demolished" toggle paths use an exclusion list so legacy
+  // Default / "Show lost" toggle paths use an exclusion list so legacy
   // rows with NULL status stay visible (matches pre-Phase 3 behaviour).
-  if (filters.showDemolished) {
-    return { exclude_construction_statuses: [...SHOW_DEMOLISHED_EXCLUDED_STATUSES] };
+  if (filters.showLost) {
+    return { exclude_construction_statuses: [...SHOW_LOST_EXCLUDED_CONSTRUCTION_STATUSES] };
   }
-  return { exclude_construction_statuses: [...DEFAULT_EXCLUDED_STATUSES] };
+  return { exclude_construction_statuses: [...DEFAULT_EXCLUDED_CONSTRUCTION_STATUSES] };
 }
 
 /** Row shape from `get_map_clusters_v3` RPC (subset used for tier logic). */

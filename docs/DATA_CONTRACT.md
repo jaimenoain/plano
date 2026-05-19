@@ -514,6 +514,8 @@ CREATE TYPE public.location_precision AS ENUM ('exact', 'approximate');
 CREATE TYPE public.building_status AS ENUM (
   'Built', 'Under Construction', 'Unbuilt', 'Demolished', 'Temporary', 'Lost'
 );
+-- App/UI canonical term for no-longer-standing buildings is **Lost** (`Demolished` is a legacy
+-- enum value; existing rows were migrated to `Lost` — do not surface "Demolished" in the product).
 
 -- Legacy single-field access enum (deprecated, retained for migration reference)
 CREATE TYPE public.building_access AS ENUM (
@@ -890,7 +892,7 @@ interface BuildingDTO {
   city: string | null;
   country: string | null;
   yearCompleted: number | null;                  // Mapped: year_completed
-  status: 'Built' | 'Under Construction' | 'Unbuilt' | 'Demolished' | 'Temporary' | 'Lost' | null;
+  status: 'Built' | 'Under Construction' | 'Unbuilt' | 'Temporary' | 'Lost' | null;
   accessLevel: 'public' | 'private' | 'restricted' | 'commercial' | null;
   accessLogistics: 'walk-in' | 'booking_required' | 'tour_only' | 'exterior_only' | null;
   accessCost: 'free' | 'paid' | 'customers_only' | null;
@@ -997,7 +999,7 @@ const CreateBuildingSchema = z.object({
   city: z.string().max(200).optional().nullable(),
   country: z.string().max(200).optional().nullable(),
   yearCompleted: z.number().int().min(-3000).max(2100).optional().nullable(),
-  status: z.enum(['Built', 'Under Construction', 'Unbuilt', 'Demolished', 'Temporary', 'Lost']).optional().nullable(),
+  status: z.enum(['Built', 'Under Construction', 'Unbuilt', 'Temporary', 'Lost']).optional().nullable(),
   accessLevel: z.enum(['public', 'private', 'restricted', 'commercial']).optional().nullable(),
   accessLogistics: z.enum(['walk-in', 'booking_required', 'tour_only', 'exterior_only']).optional().nullable(),
   accessCost: z.enum(['free', 'paid', 'customers_only']).optional().nullable(),
@@ -3864,7 +3866,7 @@ const MapFilterSchema = z.object({
   people: z.array(z.string().uuid()).optional(), // URL `people=`; legacy bookmark key may still be read once client-side
   creditCompany: z.string().uuid().optional(),   // URL `creditCompany=` — filter map/list RPCs by `building_credits.company_id`
   creditRoles: z.array(z.string()).optional(),   // URL `creditRoles=` — subset of `credit_role_enum`
-  statuses: z.array(z.enum(['Built', 'Under Construction', 'Unbuilt', 'Demolished', 'Temporary', 'Lost'])).optional(),
+  statuses: z.array(z.enum(['Built', 'Under Construction', 'Unbuilt', 'Temporary', 'Lost'])).optional(),
   accessLevels: z.array(z.enum(['public', 'private', 'restricted', 'commercial'])).optional(),
   accessLogistics: z.array(z.enum(['walk-in', 'booking_required', 'tour_only', 'exterior_only'])).optional(),
   accessCosts: z.array(z.enum(['free', 'paid', 'customers_only'])).optional(),

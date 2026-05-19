@@ -1,3 +1,8 @@
+import {
+  DEFAULT_EXCLUDED_CONSTRUCTION_STATUSES,
+  normalizeConstructionStatus,
+  normalizeConstructionStatuses,
+} from '@/lib/buildingStatus';
 
 export interface BuildingFilterData {
   id: string;
@@ -142,13 +147,19 @@ export function filterLocalBuildings(
 
     // Construction Status
     if (filters.constructionStatuses && filters.constructionStatuses.length > 0) {
-      if (!b.status || !filters.constructionStatuses.includes(b.status)) {
+      const selected = normalizeConstructionStatuses(filters.constructionStatuses);
+      const buildingStatus = b.status ? normalizeConstructionStatus(b.status) : null;
+      if (!buildingStatus || !selected.includes(buildingStatus)) {
         return false;
       }
     } else {
       // Default exclusion if no filter provided (match backend default)
-      const excludedStatuses = ['Demolished', 'Lost', 'Under Construction', 'Unbuilt'];
-      if (b.status && excludedStatuses.includes(b.status)) {
+      if (
+        b.status &&
+        DEFAULT_EXCLUDED_CONSTRUCTION_STATUSES.includes(
+          b.status as (typeof DEFAULT_EXCLUDED_CONSTRUCTION_STATUSES)[number],
+        )
+      ) {
         return false;
       }
     }

@@ -1,6 +1,10 @@
 import { useSearchParams } from 'react-router';
 import { z } from 'zod';
 import { useMemo, useCallback } from 'react';
+import {
+  getShowLostFromUrlParams,
+  normalizeConstructionStatuses,
+} from '@/lib/buildingStatus';
 import { MapMode, MapFilters, type MichelinRating } from '@/types/plano-map';
 
 // Constants
@@ -194,8 +198,9 @@ function syncFilterParams(newParams: URLSearchParams, filters: MapFilters) {
   setArrayParam('creditRoles', filters.creditRoles);
   setArrayParam('constructionStatuses', filters.constructionStatuses);
 
-  if (filters.showDemolished) newParams.set('showDemolished', 'true');
-  else newParams.delete('showDemolished');
+  if (filters.showLost) newParams.set('showLost', 'true');
+  else newParams.delete('showLost');
+  newParams.delete('showDemolished');
 
   if (filters.photographyGaps) newParams.set('photographyGaps', 'true');
   else newParams.delete('photographyGaps');
@@ -285,8 +290,11 @@ export const useURLMapState = () => {
          return { id, name: id };
        })(),
        creditRoles: getArrayParam(searchParams.get("creditRoles")),
-       constructionStatuses: getArrayParam(searchParams.get("constructionStatuses")),
-       showDemolished: getBoolParam(searchParams.get("showDemolished")),
+       constructionStatuses: (() => {
+         const raw = getArrayParam(searchParams.get("constructionStatuses"));
+         return raw ? normalizeConstructionStatuses(raw) : undefined;
+       })(),
+       showLost: getShowLostFromUrlParams((key) => searchParams.get(key)) || undefined,
        photographyGaps: getBoolParam(searchParams.get("photographyGaps")),
        gapPhotoCounts: searchParams.get("gapPhotoCounts") ? searchParams.get("gapPhotoCounts")!.split(",").map(Number) : undefined,
        awardId: searchParams.get("awardId") || undefined,

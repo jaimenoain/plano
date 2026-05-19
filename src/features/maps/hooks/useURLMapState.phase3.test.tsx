@@ -1,73 +1,88 @@
-// @vitest-environment happy-dom
-import { describe, it, expect, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router";
-import { useURLMapState } from "./useURLMapState";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useSearchParams } from "react-router";
+import { afterEach, describe, expect, it } from "vitest";
+import { MapProvider, useMapContext } from "../providers/MapContext";
 
-function ShowDemolishedProbe() {
-  const { filters, setMapURL } = useURLMapState();
-  const location = useLocation();
-
+function ShowLostProbe() {
+  const { state, methods } = useMapContext();
+  const { filters } = state;
+  const [searchParams] = useSearchParams();
   return (
-    <div>
-      <span data-testid="show-demolished">{filters.showDemolished ? "true" : "false"}</span>
-      <span data-testid="search">{location.search}</span>
+    <>
+      <span data-testid="show-lost">{filters.showLost ? "true" : "false"}</span>
+      <span data-testid="search">{searchParams.toString()}</span>
       <button
         type="button"
         onClick={() =>
-          setMapURL({
-            filters: { ...filters, showDemolished: !filters.showDemolished },
+          methods.setMapState({
+            filters: { ...filters, showLost: !filters.showLost },
           })
         }
       >
-        toggle-demolished
+        toggle-lost
       </button>
-    </div>
+    </>
   );
 }
 
-describe("useURLMapState — Phase 3 (Show demolished)", () => {
+describe("useURLMapState — show lost buildings", () => {
   afterEach(() => {
     cleanup();
   });
 
-  it("hydrates showDemolished=true from URL", () => {
+  const renderProbe = (initialEntry: string) =>
     render(
-      <MemoryRouter initialEntries={["/search?showDemolished=true"]}>
+      <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
-          <Route path="/search" element={<ShowDemolishedProbe />} />
+          <Route
+            path="/search"
+            element={
+              <MapProvider>
+                <ShowLostProbe />
+              </MapProvider>
+            }
+          />
         </Routes>
       </MemoryRouter>,
     );
 
-    expect(screen.getByTestId("show-demolished")).toHaveTextContent("true");
+  it("hydrates showLost=true from showLost URL param", () => {
+    renderProbe("/search?showLost=true");
+    expect(screen.getByTestId("show-lost")).toHaveTextContent("true");
   });
 
-  it("defaults showDemolished to false when param is absent", () => {
+  it("hydrates showLost=true from legacy showDemolished URL param", () => {
+    renderProbe("/search?showDemolished=true");
+    expect(screen.getByTestId("show-lost")).toHaveTextContent("true");
+  });
+
+  it("defaults showLost to false when param is absent", () => {
+    renderProbe("/search");
+    expect(screen.getByTestId("show-lost")).toHaveTextContent("false");
+  });
+
+  it("writes showLost=true to URL when toggled on, removes legacy param when toggled off", () => {
     render(
       <MemoryRouter initialEntries={["/search"]}>
         <Routes>
-          <Route path="/search" element={<ShowDemolishedProbe />} />
+          <Route
+            path="/search"
+            element={
+              <MapProvider>
+                <ShowLostProbe />
+              </MapProvider>
+            }
+          />
         </Routes>
       </MemoryRouter>,
     );
 
-    expect(screen.getByTestId("show-demolished")).toHaveTextContent("false");
-  });
+    fireEvent.click(screen.getByRole("button", { name: "toggle-lost" }));
+    expect(screen.getByTestId("search")).toHaveTextContent("showLost=true");
+    expect(screen.getByTestId("search").textContent).not.toContain("showDemolished");
 
-  it("writes showDemolished=true to URL when toggled on, removes it when toggled off", () => {
-    render(
-      <MemoryRouter initialEntries={["/search"]}>
-        <Routes>
-          <Route path="/search" element={<ShowDemolishedProbe />} />
-        </Routes>
-      </MemoryRouter>,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "toggle-demolished" }));
-    expect(screen.getByTestId("search")).toHaveTextContent("showDemolished=true");
-
-    fireEvent.click(screen.getByRole("button", { name: "toggle-demolished" }));
+    fireEvent.click(screen.getByRole("button", { name: "toggle-lost" }));
+    expect(screen.getByTestId("search").textContent).not.toContain("showLost");
     expect(screen.getByTestId("search").textContent).not.toContain("showDemolished");
   });
 });

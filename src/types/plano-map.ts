@@ -74,12 +74,12 @@ export interface MapFilters {
   accessCosts?: string[];
 
   /**
-   * Phase 3 — when true, surfaces `Demolished` and `Lost` buildings in Browse mode.
+   * When true, surfaces lost (no longer standing) buildings in Browse mode.
    * Acts as a quick-access shortcut on top of the explicit `constructionStatuses`
    * filter; if `constructionStatuses` is set, that takes precedence.
    */
-  showDemolished?: boolean;
-  /** Building status multi-select (Built, Under Construction, Unbuilt, Demolished, Temporary, Lost). */
+  showLost?: boolean;
+  /** Building status multi-select (Built, Under Construction, Unbuilt, Temporary, Lost). */
   constructionStatuses?: string[];
 
   /** Map / list RPC: `building_credits` with this `company_id`, excluding hidden credits */

@@ -96,8 +96,8 @@ export interface DiscoveryFiltersPanelProps {
   onAttributesChange: (ids: string[]) => void;
   constructionStatuses: string[];
   onConstructionStatusesChange: (ids: string[]) => void;
-  showDemolished?: boolean;
-  onShowDemolishedChange?: (next: boolean) => void;
+  showLost?: boolean;
+  onShowLostChange?: (next: boolean) => void;
   selectedContacts?: UserSearchResult[];
   onContactsChange?: (contacts: UserSearchResult[]) => void;
   /** When false, Curators & Friends is omitted (e.g. map My Library mode). */
@@ -141,8 +141,8 @@ export function DiscoveryFiltersPanel({
   onAttributesChange,
   constructionStatuses,
   onConstructionStatusesChange,
-  showDemolished = false,
-  onShowDemolishedChange,
+  showLost = false,
+  onShowLostChange,
   selectedContacts = [],
   onContactsChange,
   showContactPicker = true,
@@ -396,16 +396,16 @@ export function DiscoveryFiltersPanel({
           <AccordionContent className="pt-2 space-y-3">
             <div className="flex items-center justify-between">
               <Label
-                htmlFor="show-demolished-toggle"
+                htmlFor="show-lost-toggle"
                 className="text-sm font-normal cursor-pointer"
               >
-                Show demolished
+                Show lost buildings
               </Label>
               <Switch
-                id="show-demolished-toggle"
-                checked={showDemolished}
-                onCheckedChange={(next) => onShowDemolishedChange?.(next)}
-                aria-label="Show demolished and lost buildings"
+                id="show-lost-toggle"
+                checked={showLost}
+                onCheckedChange={(next) => onShowLostChange?.(next)}
+                aria-label="Show lost buildings"
               />
             </div>
             <MultiSelectCheckboxList
@@ -414,7 +414,6 @@ export function DiscoveryFiltersPanel({
                 { id: "Under Construction", name: "Under Construction" },
                 { id: "Temporary", name: "Temporary" },
                 { id: "Unbuilt", name: "Unbuilt" },
-                { id: "Demolished", name: "Demolished" },
                 { id: "Lost", name: "Lost" },
               ]}
               selectedIds={constructionStatuses || []}
