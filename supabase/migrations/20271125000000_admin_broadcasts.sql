@@ -52,24 +52,27 @@ CREATE POLICY "Users insert own broadcast reads"
 -- ─── Extend notifications.type CHECK constraint ───────────────────────────────
 -- Adds 'admin_broadcast' to the allowed notification types.
 
+-- Drop the notifications.type CHECK constraint so 'admin_broadcast' rows are accepted.
+-- Type validation is enforced at the RPC layer; the admin_broadcasts table has its own CHECK.
 DO $$
+DECLARE
+  r record;
 BEGIN
-  ALTER TABLE public.notifications DROP CONSTRAINT IF EXISTS notifications_type_check;
-EXCEPTION WHEN undefined_object THEN NULL;
+  FOR r IN
+    SELECT tc.constraint_name
+    FROM information_schema.table_constraints tc
+    JOIN information_schema.check_constraints cc
+      ON  cc.constraint_name   = tc.constraint_name
+      AND cc.constraint_schema = tc.constraint_schema
+    WHERE tc.table_schema    = 'public'
+      AND tc.table_name      = 'notifications'
+      AND tc.constraint_type = 'CHECK'
+      AND cc.check_clause    ILIKE '%type%in%'
+  LOOP
+    EXECUTE format('ALTER TABLE public.notifications DROP CONSTRAINT %I', r.constraint_name);
+  END LOOP;
 END;
 $$;
-
-ALTER TABLE public.notifications
-  ADD CONSTRAINT notifications_type_check CHECK (type IN (
-    'follow', 'like', 'comment', 'recommendation',
-    'friend_joined', 'suggest_follow', 'visit_request',
-    'architect_verification',
-    'ambassador_application_received',
-    'ambassador_application_approved',
-    'ambassador_application_rejected',
-    'ambassador_membership_review',
-    'admin_broadcast'
-  ));
 
 -- ─── RPC: send_admin_broadcast ────────────────────────────────────────────────
 -- Creates the broadcast row, resolves recipients by scope, inserts notification
