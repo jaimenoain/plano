@@ -30,14 +30,18 @@ export function PwaProvider({ children }: { children: ReactNode }) {
   const [showIOSDrawer, setShowIOSDrawer] = useState(false);
   const [isInstallable, setIsInstallable] = useState(false);
 
-  // Register the service worker. We deliberately do NOT call `updateServiceWorker`
-  // automatically: in vite-plugin-pwa it always triggers `window.location.reload()`
-  // once the new worker takes control, which would interrupt the user mid-navigation.
-  // With `registerType: "prompt"` the waiting worker installs in the background and
-  // takes over the next time all app instances are closed.
-  useRegisterSW({
+  // Register the service worker and auto-activate any new version as soon as it
+  // installs. `updateServiceWorker(true)` sends SKIP_WAITING to the waiting worker
+  // and reloads the page once it takes control. Trade-off: a user mid-typing can
+  // get interrupted. Accepted because otherwise installed PWAs (especially mobile)
+  // can sit on a stale shell whose hashed asset URLs no longer exist on the server,
+  // which presents as "the site is broken."
+  const { updateServiceWorker } = useRegisterSW({
     onRegistered() {},
     onRegisterError() {},
+    onNeedRefresh() {
+      void updateServiceWorker(true);
+    },
   });
 
   // Long-lived installed PWAs (especially mobile) may not re-check the service worker
