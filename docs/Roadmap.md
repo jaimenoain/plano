@@ -61,7 +61,7 @@ A new tab — **Programme Health** — at `/admin/programme/health`, containing 
 
 ---
 
-## [ ] Phase 2 — Chapter President Directory
+## [x] Phase 2 — Chapter President Directory
 
 **Goal:** Give the core team a single place to see every chapter president, understand their chapter's health at a glance, and reach out directly.
 

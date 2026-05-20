@@ -23,6 +23,7 @@ import {
   Target,
   Newspaper,
   HeartPulse,
+  UsersRound,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
@@ -43,6 +44,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 
 const programmeItems = [
   { title: "Health Dashboard", url: "/admin/programme/health", icon: HeartPulse },
+  { title: "Presidents", url: "/admin/programme/presidents", icon: UsersRound },
 ];
 
 const contentItems = [

@@ -2,7 +2,7 @@ import { Link, Outlet, useLocation } from "react-router";
 import { AmbassadorGuard } from "./AmbassadorGuard";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Target, Users, Settings2, UsersRound } from "lucide-react";
+import { LayoutDashboard, Target, Users, Settings2, UsersRound, CheckSquare } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,6 +64,7 @@ export default function EmbassyLayout() {
     { label: "My Goals", href: "/embassy/goals", icon: Target },
     { label: "Chapter Projects", href: "/embassy/projects", icon: Users },
     { label: "Team", href: "/embassy/team", icon: UsersRound },
+    { label: "Tasks", href: "/embassy/tasks", icon: CheckSquare },
     ...(isLeader ? [{ label: "Leadership", href: "/embassy/leadership", icon: Settings2 }] : []),
   ];
 

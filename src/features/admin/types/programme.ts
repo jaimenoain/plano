@@ -39,3 +39,46 @@ export interface ProgrammeHealthSummary {
   flaggedChapters: FlaggedChapter[];
   topChapters: TopChapter[];
 }
+
+export interface ExcoMember {
+  userId: string;
+  username: string;
+  avatarUrl: string | null;
+  excoResponsibility: string | null;
+}
+
+export type InterventionFlagType =
+  | 'no_president'
+  | 'president_inactive'
+  | 'forming_stalled'
+  | 'at_capacity_open_apps'
+  | 'no_chapter_activity';
+
+export type InterventionSeverity = 'urgent' | 'warning' | 'info';
+
+export interface InterventionFlag {
+  flagType: InterventionFlagType;
+  severity: InterventionSeverity;
+  chapterId: string;
+  chapterName: string;
+  countryCode: string;
+  description: string;
+  suggestedAction: string;
+  detectedAt: string;
+}
+
+export interface PresidentDirectoryRow {
+  presidentUserId: string;
+  presidentUsername: string;
+  presidentAvatarUrl: string | null;
+  chapterId: string;
+  chapterName: string;
+  countryCode: string;
+  chapterStatus: string;
+  memberCount: number;
+  lastActiveAt: string | null;
+  edits30d: number;
+  openApplications: number;
+  memberSince: string;
+  excoMembers: ExcoMember[];
+}

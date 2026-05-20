@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -29,10 +30,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Plus, Target } from "lucide-react";
+import { CheckCheck, Inbox, Lightbulb, Loader2, Plus, Target, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { format, parseISO, isAfter, isBefore } from "date-fns";
+import { format, formatDistanceToNow, parseISO, isAfter, isBefore } from "date-fns";
 import type { MetaFunction } from "react-router";
 
 export const meta: MetaFunction = () => [
@@ -51,6 +52,17 @@ type Campaign = {
   chapter_scope: "all" | "specific";
   created_by: string;
   created_at: string;
+};
+
+type DraftIdea = {
+  id: string;
+  chapter_id: string;
+  title: string;
+  description: string | null;
+  created_by: string;
+  created_at: string;
+  ambassador_chapters: { name: string } | null;
+  profiles: { username: string } | null;
 };
 
 type FormState = {
@@ -74,9 +86,11 @@ function campaignStatus(c: Campaign): "upcoming" | "active" | "ended" {
 
 async function fetchProgress(campaign: Campaign): Promise<number> {
   const { start_date, end_date, metric_type } = campaign;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = supabase as any;
 
   if (metric_type === "photos") {
-    const { count, error } = await supabase
+    const { count, error } = await db
       .from("review_images")
       .select("id", { count: "exact", head: true })
       .gte("created_at", start_date)
@@ -86,7 +100,7 @@ async function fetchProgress(campaign: Campaign): Promise<number> {
   }
 
   if (metric_type === "edits") {
-    const { count, error } = await supabase
+    const { count, error } = await db
       .from("building_audit_logs")
       .select("id", { count: "exact", head: true })
       .gte("created_at", start_date)
@@ -96,7 +110,7 @@ async function fetchProgress(campaign: Campaign): Promise<number> {
   }
 
   // outreach
-  const { count, error } = await supabase
+  const { count, error } = await db
     .from("outreach_log")
     .select("id", { count: "exact", head: true })
     .gte("created_at", start_date)
@@ -119,10 +133,54 @@ export default function AmbassadorCampaigns() {
     chapter_scope: "all",
   });
 
+  const { data: draftIdeas = [], isLoading: ideasLoading } = useQuery({
+    queryKey: ["admin-draft-ideas"],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("chapter_projects")
+        .select("id, chapter_id, title, description, created_by, created_at, ambassador_chapters(name), profiles!created_by(username)")
+        .eq("status", "draft")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as DraftIdea[];
+    },
+  });
+
+  const publishIdeaMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from("chapter_projects")
+        .update({ status: "active", updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Idea published as a chapter project.");
+      queryClient.invalidateQueries({ queryKey: ["admin-draft-ideas"] });
+    },
+    onError: () => toast.error("Failed to publish idea."),
+  });
+
+  const deleteIdeaMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).from("chapter_projects").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Idea deleted.");
+      queryClient.invalidateQueries({ queryKey: ["admin-draft-ideas"] });
+    },
+    onError: () => toast.error("Failed to delete idea."),
+  });
+
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ["programme-campaigns"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
         .from("programme_campaigns")
         .select("*")
         .order("start_date", { ascending: false });
@@ -145,7 +203,8 @@ export default function AmbassadorCampaigns() {
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
-      const { error } = await supabase.from("programme_campaigns").insert({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).from("programme_campaigns").insert({
         title: form.title,
         description: form.description || null,
         start_date: form.start_date,
@@ -200,6 +259,92 @@ export default function AmbassadorCampaigns() {
         </Button>
       </div>
 
+      {/* Draft ideas submitted by ambassadors */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Inbox className="h-4 w-4 text-text-secondary" />
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
+            Ambassador ideas inbox
+          </h2>
+          {draftIdeas.length > 0 && (
+            <Badge variant="secondary" className="text-xs">{draftIdeas.length}</Badge>
+          )}
+        </div>
+
+        {ideasLoading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
+          </div>
+        ) : draftIdeas.length === 0 ? (
+          <p className="text-sm text-text-secondary py-4">
+            No pending ideas. Ambassadors can submit ideas from their chapter projects page.
+          </p>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {draftIdeas.map((idea) => (
+              <Card key={idea.id} className="flex flex-col p-5 border border-dashed bg-muted/20">
+                <div className="flex items-start justify-between mb-3">
+                  <Badge
+                    variant="outline"
+                    className="gap-1 px-2 py-0.5 text-xs font-medium text-feedback-warning border-feedback-warning/30 bg-feedback-warning/10"
+                  >
+                    <Lightbulb className="h-3 w-3" />
+                    Draft idea
+                  </Badge>
+                  <button
+                    type="button"
+                    aria-label="Delete idea"
+                    className="text-text-secondary hover:text-feedback-destructive transition-colors"
+                    onClick={() => {
+                      if (confirm("Delete this idea?")) deleteIdeaMutation.mutate(idea.id);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <h3 className="text-base font-bold text-text-primary mb-1">{idea.title}</h3>
+                {idea.description && (
+                  <p className="text-sm text-text-secondary line-clamp-3 mb-3 flex-1 leading-relaxed">
+                    {idea.description}
+                  </p>
+                )}
+
+                <div className="mt-auto pt-3 border-t border-border-default space-y-2">
+                  <div className="flex items-center justify-between text-[11px] text-text-secondary">
+                    <span>
+                      {idea.ambassador_chapters?.name ?? "Unknown chapter"}
+                      {idea.profiles?.username ? ` · @${idea.profiles.username}` : ""}
+                    </span>
+                    <span>{formatDistanceToNow(new Date(idea.created_at), { addSuffix: true })}</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="w-full gap-1.5"
+                    onClick={() => publishIdeaMutation.mutate(idea.id)}
+                    disabled={publishIdeaMutation.isPending}
+                  >
+                    {publishIdeaMutation.isPending ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <CheckCheck className="h-3.5 w-3.5" />
+                    )}
+                    Publish as project
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Target className="h-4 w-4 text-text-secondary" />
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
+            Programme campaigns
+          </h2>
+        </div>
       <div className="rounded-lg border border-border-default bg-surface-card overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-16">
@@ -263,6 +408,7 @@ export default function AmbassadorCampaigns() {
             </TableBody>
           </Table>
         )}
+      </div>
       </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
