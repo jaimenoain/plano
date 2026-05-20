@@ -296,8 +296,10 @@ export function EmbassyLeadership({ chapterId, currentUserId, isPresident }: Emb
               <Skeleton key={i} className="h-28 w-full rounded-sm" />
             ))}
           </div>
-        ) : metricsQuery.isError || !metrics ? (
+        ) : metricsQuery.isError ? (
           <p className="text-sm text-feedback-destructive">Could not load chapter metrics.</p>
+        ) : !metrics ? (
+          <p className="text-sm text-text-secondary">No metrics data available yet.</p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-3">
             <Card className="border border-border-default rounded-sm p-4 space-y-2">

@@ -43,7 +43,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .eq("user_id", user.id)
     .single();
 
-  if (!membership || (membership.role !== "exco" && membership.role !== "president")) {
+  if (
+    !membership ||
+    membership.status !== "active" ||
+    (membership.role !== "exco" && membership.role !== "president")
+  ) {
     return redirect("/embassy", { headers: responseHeaders });
   }
 
