@@ -75,7 +75,11 @@ export default function MyGoalsPage() {
   });
 
   // Fetch leaderboard
-  const { data: leaderboard, isLoading: loadingLeaderboard } = useQuery({
+  const {
+    data: leaderboard,
+    isLoading: loadingLeaderboard,
+    isError: leaderboardError,
+  } = useQuery({
     queryKey: ["chapter-leaderboard", chapterId],
     queryFn: () => fetchChapterAmbassadorActivity(chapterId!, 30),
     enabled: !!chapterId,
@@ -200,13 +204,25 @@ export default function MyGoalsPage() {
                 <span>Points (30d)</span>
               </div>
               <div className="divide-y">
-                {loadingLeaderboard ? (
+                {!chapterId && !loadingLeaderboard ? (
+                  <p className="px-4 py-6 text-sm text-muted-foreground text-center">
+                    You're not in a chapter yet.
+                  </p>
+                ) : leaderboardError ? (
+                  <p className="px-4 py-6 text-sm text-feedback-destructive text-center">
+                    Could not load the leaderboard.
+                  </p>
+                ) : loadingLeaderboard ? (
                   [0, 1, 2, 3, 4].map(i => <Skeleton key={i} className="h-14 w-full m-1 rounded-md" />)
+                ) : !leaderboard?.length ? (
+                  <p className="px-4 py-6 text-sm text-muted-foreground text-center">
+                    No ambassadors in this chapter yet.
+                  </p>
                 ) : (() => {
-                  const top10 = leaderboard?.slice(0, 10) ?? [];
+                  const top10 = leaderboard.slice(0, 10);
                   const currentUserInTop10 = top10.some(m => m.user_id === user?.id);
-                  const currentUserRank = leaderboard?.findIndex(m => m.user_id === user?.id) ?? -1;
-                  const currentUserEntry = currentUserRank >= 10 ? leaderboard![currentUserRank] : null;
+                  const currentUserRank = leaderboard.findIndex(m => m.user_id === user?.id);
+                  const currentUserEntry = currentUserRank >= 10 ? leaderboard[currentUserRank] : null;
                   return (
                     <>
                       {top10.map((member, i) => (
