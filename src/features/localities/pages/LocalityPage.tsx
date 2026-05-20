@@ -616,21 +616,34 @@ function StewardCard({
 
   const stats = [
     steward.buildingsLogged > 0
-      ? `${steward.buildingsLogged} buildings`
+      ? {
+          icon: Building2,
+          label: `${steward.buildingsLogged} building${steward.buildingsLogged === 1 ? "" : "s"}`,
+        }
       : null,
-    steward.photosUploaded > 0 ? `${steward.photosUploaded} photos` : null,
-    steward.reviewsWritten > 0 ? `${steward.reviewsWritten} reviews` : null,
-  ]
-    .filter(Boolean)
-    .slice(0, 2)
-    .join(" · ");
+    steward.photosUploaded > 0
+      ? {
+          icon: Camera,
+          label: `${steward.photosUploaded} photo${steward.photosUploaded === 1 ? "" : "s"}`,
+        }
+      : null,
+    steward.reviewsWritten > 0
+      ? {
+          icon: BookOpen,
+          label: `${steward.reviewsWritten} review${steward.reviewsWritten === 1 ? "" : "s"}`,
+        }
+      : null,
+  ].filter(Boolean) as Array<{ icon: typeof Building2; label: string }>;
 
   return (
     <Link
       to={`/profile/${steward.username}`}
-      className="group flex items-center gap-4 border border-border-default p-4 transition-colors hover:border-text-primary/20 hover:bg-surface-muted/40"
+      className="group flex items-center gap-4 px-1 py-3.5 transition-colors hover:bg-surface-muted/50"
     >
-      <Avatar className="h-12 w-12 shrink-0 border border-border-default bg-surface-muted">
+      <span className="w-7 shrink-0 text-[10px] font-medium tabular-nums text-text-disabled transition-colors group-hover:text-text-secondary">
+        {String(rank).padStart(2, "0")}
+      </span>
+      <Avatar className="h-10 w-10 shrink-0 border border-border-default bg-surface-muted">
         <AvatarImage src={steward.avatarUrl ?? undefined} alt="" />
         <AvatarFallback className="text-sm font-medium text-text-secondary">
           {initials}
@@ -638,23 +651,34 @@ function StewardCard({
       </Avatar>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-          <span className="text-sm font-medium text-text-primary transition-colors group-hover:text-brand-primary">
+          <span className="truncate text-sm font-medium text-text-primary transition-colors group-hover:text-brand-primary">
             {steward.username}
           </span>
           {steward.isAmbassador ? (
-            <span className="inline-flex items-center gap-1 border border-text-primary/30 px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-text-secondary">
-              <Star className="h-2.5 w-2.5" aria-hidden />
+            <span className="inline-flex items-center gap-1 text-[9px] font-medium uppercase tracking-widest text-text-secondary">
+              <Star className="h-2.5 w-2.5 fill-current" aria-hidden />
               {steward.ambassadorTitle ?? "Ambassador"}
             </span>
           ) : null}
         </div>
-        {stats ? (
-          <p className="mt-0.5 text-[11px] text-text-disabled">{stats}</p>
+        {stats.length > 0 ? (
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-text-secondary">
+            {stats.map(({ icon: Icon, label }) => (
+              <span
+                key={label}
+                className="inline-flex items-center gap-1 tabular-nums"
+              >
+                <Icon className="h-3 w-3 text-text-disabled" aria-hidden />
+                {label}
+              </span>
+            ))}
+          </p>
         ) : null}
       </div>
-      <span className="shrink-0 text-right text-[10px] tabular-nums text-text-disabled">
-        #{rank}
-      </span>
+      <ArrowRight
+        className="h-3.5 w-3.5 shrink-0 text-text-disabled opacity-0 transition-opacity group-hover:opacity-100"
+        aria-hidden
+      />
     </Link>
   );
 }
@@ -671,17 +695,23 @@ function LocalityStewards({ stewards }: { stewards: LocalitySteward[] }) {
 
   return (
     <section className="mt-16 border-t border-border-default pt-12">
-      <div className="mb-2 flex items-center justify-between gap-2">
+      <div className="mb-2 flex items-baseline justify-between gap-2">
         <SectionLabel>Local experts &amp; stewards</SectionLabel>
+        <span className="text-[10px] tabular-nums text-text-disabled">
+          {sorted.length}{" "}
+          {sorted.length === 1 ? "contributor" : "contributors"}
+        </span>
       </div>
-      <p className="mb-4 text-[11px] text-text-disabled">
+      <p className="mb-6 max-w-prose text-xs text-text-secondary">
         Community members who contribute most to this city on Plano.
       </p>
-      <div className="grid grid-cols-1 gap-px bg-border-default sm:grid-cols-2">
+      <ul className="divide-y divide-border-default border-y border-border-default">
         {sorted.map((s, i) => (
-          <StewardCard key={s.userId} steward={s} rank={i + 1} />
+          <li key={s.userId}>
+            <StewardCard steward={s} rank={i + 1} />
+          </li>
         ))}
-      </div>
+      </ul>
     </section>
   );
 }

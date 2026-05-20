@@ -163,7 +163,20 @@ export function DiscoveryCard({
     }
   };
 
-  // After 3s with no rating, animate card sliding up (mimics swipe-up) then advance
+  // ── Framer Motion values ──
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 200], [-10, 10]);
+  // Card stays fully opaque in both swipe directions — mirrors save behaviour on hide.
+  // Previous: [0, 1, 1, 1, 1] faded the card to black on left swipe, hiding the stamp.
+  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [1, 1, 1, 1, 1]);
+  // Stamps: symmetric — both appear starting at ±20px, fully visible at ±100px (threshold)
+  const likeOpacity = useTransform(x, [20, 100], [0, 1]);
+  const nopeOpacity = useTransform(x, [-100, -20], [1, 0]);
+  const likeOverlayOpacity = useTransform(x, [20, 100], [0, 0.35]);
+  const nopeOverlayOpacity = useTransform(x, [-100, -20], [0.35, 0]);
+
+  // After 5s with no rating, animate card sliding up (mimics swipe-up) then advance
   useEffect(() => {
     if (!showRating || rating !== null) return;
     const timer = setTimeout(async () => {
@@ -172,7 +185,7 @@ export function DiscoveryCard({
         ease: [0.4, 0, 0.6, 1],
       });
       if (onSwipeSave) onSwipeSave();
-    }, 3000);
+    }, 5000);
     return () => {
       clearTimeout(timer);
       animate(y, 0, { duration: 0 });
@@ -187,19 +200,6 @@ export function DiscoveryCard({
       if (onSwipeSave) onSwipeSave();
     }, 500);
   };
-
-  // ── Framer Motion values ──
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 200], [-10, 10]);
-  // Card stays fully opaque in both swipe directions — mirrors save behaviour on hide.
-  // Previous: [0, 1, 1, 1, 1] faded the card to black on left swipe, hiding the stamp.
-  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [1, 1, 1, 1, 1]);
-  // Stamps: symmetric — both appear starting at ±20px, fully visible at ±100px (threshold)
-  const likeOpacity = useTransform(x, [20, 100], [0, 1]);
-  const nopeOpacity = useTransform(x, [-100, -20], [1, 0]);
-  const likeOverlayOpacity = useTransform(x, [20, 100], [0, 0.35]);
-  const nopeOverlayOpacity = useTransform(x, [-100, -20], [0.35, 0]);
 
   /**
    * Commit thresholds scale with the card width so a tablet doesn't trip a save/hide

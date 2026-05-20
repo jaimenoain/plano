@@ -57,6 +57,11 @@ Searchable fields and their value types:
 - year_completed    → integer year (e.g. 1998)
 - status            → one of: "Built", "Under Construction", "Unbuilt", "Lost", "Temporary"
 - alt_name          → string — the well-known English alternative name if the building has one (e.g. "Eiffel Tower" for "Tour Eiffel"). Omit if the primary name is already in English.
+- category          → string — the primary functional category, one of: "Civic & Institutional", "Commercial", "Cultural", "Educational", "Healthcare", "Industrial", "Infrastructure", "Landscape & Public Space", "Memorial & Sacred", "Mixed Use", "Residential", "Sports & Recreation", "Tourism & Hospitality"
+- typologies        → array of strings — specific building types within the category (e.g. ["Museum", "Art Gallery"] or ["Apartment Block", "Housing Estate"]). Use common architectural typology names.
+- style             → array of strings — recognised architectural styles (e.g. ["Brutalism", "Modernism", "Art Deco"]). Use established style names only.
+- materiality       → array of strings — primary construction materials visible or documented (e.g. ["Concrete", "Glass", "Steel", "Brick"]). Use common material names.
+- context           → array of strings — urban or site context descriptors (e.g. ["Urban", "Suburban", "Waterfront", "Campus", "Industrial Zone"]). Use established descriptors.
 - access_level      → one of: "public", "private", "restricted", "commercial"
 - access_logistics  → one of: "walk-in", "booking_required", "tour_only", "exterior_only"
 - access_cost       → one of: "free", "paid", "customers_only"
@@ -68,6 +73,7 @@ Searchable fields and their value types:
 Rules:
 - Only include fields you found actual evidence for. Omit uncertain fields entirely.
 - For each data_point, source_url must be a real URL and snippet must be a verbatim or near-verbatim excerpt.
+- For array-valued fields (typologies, style, materiality, context), the value must be a JSON array of strings, not a comma-separated string.
 - Do not invent or hallucinate any data.
 - Return only the JSON object.`;
 
@@ -168,7 +174,7 @@ export async function action({ request }: ActionFunctionArgs) {
 Name: ${building.name}
 Location: ${locationParts || "unknown"}
 
-Use web_search to find: year completed, current status, alternative name, access details (level/logistics/cost/notes), and size (floor area, height, storeys).`;
+Use web_search to find: year completed, current status, alternative name, functional category, typologies, architectural styles, materiality, urban context, access details (level/logistics/cost/notes), and size (floor area, height, storeys).`;
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

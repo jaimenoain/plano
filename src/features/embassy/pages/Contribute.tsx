@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams, Link } from "react-router";
+import { useSearchParams, Link, useNavigate } from "react-router";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   fetchAmbassadorBuildingsMissingMetadata,
   fetchAmbassadorUnclaimedFirms,
@@ -20,7 +21,7 @@ import {
 import type { BuildingResearchResult, ResearchDataPoint } from "@/features/embassy/api/building-research.route";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,9 +29,15 @@ import {
   AlertCircle, MessageSquare, Loader2,
   Camera, Sparkles, UserPlus, ExternalLink, Map, List,
   Flag, Video, Award, Telescope, XCircle, CheckCircle,
+  RefreshCw, Building2, User, Briefcase, MapPin,
+  SlidersHorizontal, Play, ChevronRight,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import type { EntityType } from "@/features/admin/types/merge";
 import { getBuildingImageUrl, getStorageAssetUrl } from "@/utils/image";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { getBuildingUrl } from "@/utils/url";
@@ -262,10 +269,13 @@ type ResearchStatus =
   | { status: "ready"; result: BuildingResearchResult }
   | { status: "saving"; result: BuildingResearchResult };
 
+type ResearchTab = "data-completion" | "duplicates";
+
 function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: () => void }) {
   const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [researchState, setResearchState] = useState<ResearchStatus>({ status: "idle" });
+  const [tab, setTab] = useState<ResearchTab>("data-completion");
 
   const { data: buildings, isLoading, error } = useQuery({
     queryKey: ["embassy-missing-metadata", chapterId],
@@ -373,108 +383,401 @@ function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: ()
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search buildings..."
-            className="pl-10"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <Tabs value={tab} onValueChange={(v) => setTab(v as ResearchTab)}>
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="data-completion">Data completion</TabsTrigger>
+          <TabsTrigger value="duplicates">Duplicate Detection</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="data-completion" className="mt-6 space-y-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search buildings..."
+                className="pl-10"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+              {filters.map((f) => (
+                <Button
+                  key={f.value}
+                  variant={filter === f.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilter(f.value)}
+                  className="whitespace-nowrap rounded-full"
+                >
+                  {f.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="grid gap-4">
+              {[0, 1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
+            </div>
+          ) : error ? (
+            <div className="p-8 text-center border rounded-xl bg-destructive/5 text-destructive">
+              <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+              <p>Failed to load research tasks. Please try again.</p>
+            </div>
+          ) : filteredBuildings.length === 0 ? (
+            <div className="p-12 text-center border border-dashed rounded-xl">
+              <CheckCircle2 className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+              <p className="text-lg font-medium">All caught up!</p>
+              <p className="text-sm text-muted-foreground">No buildings match your current filters.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {filteredBuildings.map((b) => {
+                const isResearching =
+                  researchState.status === "loading" && researchState.buildingId === b.id;
+                return (
+                  <Card
+                    key={b.id}
+                    className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group hover:border-brand-primary transition-all"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold truncate">{b.name}</h3>
+                        <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground">
+                          {b.city || b.country || "Global"}
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {b.missing_fields?.map(field => (
+                          <Badge
+                            key={field}
+                            variant="secondary"
+                            className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-none text-[10px] font-bold uppercase"
+                          >
+                            {field === "architect_credit" ? "No Architect" :
+                             field === "year_completed" ? "No Year" :
+                             field === "styles" ? "No Style" : field}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={researchState.status === "loading"}
+                        onClick={() => handleAiResearch(b.id)}
+                        className="gap-1.5"
+                      >
+                        {isResearching ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            Researching…
+                          </>
+                        ) : (
+                          <>
+                            <Telescope className="h-3.5 w-3.5" />
+                            Research with AI
+                          </>
+                        )}
+                      </Button>
+                      <Button size="sm" asChild>
+                        <Link to={`${getBuildingUrl(b.id, b.slug, b.short_id)}/edit`}>
+                          Complete Data
+                        </Link>
+                      </Button>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="duplicates" className="mt-6">
+          <DuplicateDetectionPanel />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// ---------- Duplicate Detection Panel ----------
+
+type PotentialDuplicate = {
+  id1: string;
+  name1: string;
+  id2: string;
+  name2: string;
+  score: number;
+};
+
+const RPC_NAME_FOR_ENTITY_TYPE: Partial<Record<EntityType, string>> = {
+  building: "get_potential_duplicates",
+  person: "get_potential_duplicate_people",
+  company: "get_potential_duplicate_companies",
+  locality: "get_potential_duplicate_localities",
+};
+
+function DuplicateDetectionPanel() {
+  const navigate = useNavigate();
+  const [activeType, setActiveType] = useState<EntityType>("building");
+  const [potentialDuplicates, setPotentialDuplicates] = useState<PotentialDuplicate[]>([]);
+  const [loadingPotential, setLoadingPotential] = useState(false);
+  const [duplicateQueryRan, setDuplicateQueryRan] = useState(false);
+  const [duplicateUnavailable, setDuplicateUnavailable] = useState(false);
+  const [threshold, setThreshold] = useState(0.7);
+  const [limitCount, setLimitCount] = useState("20");
+
+  useEffect(() => {
+    setPotentialDuplicates([]);
+    setDuplicateQueryRan(false);
+    setDuplicateUnavailable(false);
+  }, [activeType]);
+
+  const fetchPotentialDuplicates = async () => {
+    const rpcName = RPC_NAME_FOR_ENTITY_TYPE[activeType];
+    if (!rpcName) {
+      setDuplicateUnavailable(true);
+      return;
+    }
+
+    setLoadingPotential(true);
+    setDuplicateUnavailable(false);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await supabase.rpc(rpcName as any, {
+        limit_count: parseInt(limitCount),
+        similarity_threshold: threshold,
+      });
+      if (error) throw error;
+      setPotentialDuplicates((data as PotentialDuplicate[]) ?? []);
+    } catch (_error) {
+      setDuplicateUnavailable(true);
+      setPotentialDuplicates([]);
+    } finally {
+      setLoadingPotential(false);
+      setDuplicateQueryRan(true);
+    }
+  };
+
+  const typeIcons = {
+    building: <Building2 className="w-4 h-4 mr-2" />,
+    person: <User className="w-4 h-4 mr-2" />,
+    company: <Briefcase className="w-4 h-4 mr-2" />,
+    locality: <MapPin className="w-4 h-4 mr-2" />,
+  };
+
+  return (
+    <div className="space-y-6">
+      <Tabs value={activeType} onValueChange={(v) => setActiveType(v as EntityType)} className="w-full md:w-auto">
+        <TabsList className="grid grid-cols-2 md:flex bg-surface-muted p-1">
+          <TabsTrigger value="building" className="px-4">{typeIcons.building} Buildings</TabsTrigger>
+          <TabsTrigger value="person" className="px-4">{typeIcons.person} Architects</TabsTrigger>
+          <TabsTrigger value="company" className="px-4">{typeIcons.company} Companies</TabsTrigger>
+          <TabsTrigger value="locality" className="px-4">{typeIcons.locality} Localities</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h3 className="text-2xl font-black flex items-center gap-3">
+            <div className="w-9 h-9 rounded bg-brand-primary/10 flex items-center justify-center border border-brand-primary/20">
+              <Search className="w-4 h-4 text-brand-primary" />
+            </div>
+            Duplicate Detection
+            {duplicateQueryRan && !duplicateUnavailable && (
+              <Badge variant="outline" className="ml-1 font-mono">{potentialDuplicates.length} found</Badge>
+            )}
+          </h3>
+          <p className="text-sm text-text-secondary">
+            Run a name-similarity scan across {activeType} records to surface potential duplicates.
+          </p>
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-          {filters.map((f) => (
-            <Button
-              key={f.value}
-              variant={filter === f.value ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilter(f.value)}
-              className="whitespace-nowrap rounded-full"
-            >
-              {f.label}
-            </Button>
-          ))}
-        </div>
+
+        {duplicateQueryRan && !duplicateUnavailable && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchPotentialDuplicates}
+            disabled={loadingPotential}
+            className="rounded-full h-9 shrink-0"
+          >
+            <RefreshCw className={`mr-2 h-3.5 w-3.5 ${loadingPotential ? "animate-spin" : ""}`} />
+            Re-run
+          </Button>
+        )}
       </div>
 
-      {isLoading ? (
-        <div className="grid gap-4">
-          {[0, 1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
-        </div>
-      ) : error ? (
-        <div className="p-8 text-center border rounded-xl bg-destructive/5 text-destructive">
-          <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-          <p>Failed to load research tasks. Please try again.</p>
-        </div>
-      ) : filteredBuildings.length === 0 ? (
-        <div className="p-12 text-center border border-dashed rounded-xl">
-          <CheckCircle2 className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-          <p className="text-lg font-medium">All caught up!</p>
-          <p className="text-sm text-muted-foreground">No buildings match your current filters.</p>
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {filteredBuildings.map((b) => {
-            const isResearching =
-              researchState.status === "loading" && researchState.buildingId === b.id;
-            return (
-              <Card
-                key={b.id}
-                className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group hover:border-brand-primary transition-all"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold truncate">{b.name}</h3>
-                    <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground">
-                      {b.city || b.country || "Global"}
-                    </Badge>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {b.missing_fields?.map(field => (
-                      <Badge
-                        key={field}
-                        variant="secondary"
-                        className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-none text-[10px] font-bold uppercase"
-                      >
-                        {field === "architect_credit" ? "No Architect" :
-                         field === "year_completed" ? "No Year" :
-                         field === "styles" ? "No Style" : field}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex gap-2 shrink-0">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={researchState.status === "loading"}
-                    onClick={() => handleAiResearch(b.id)}
-                    className="gap-1.5"
+      <Card className="bg-surface-card border border-border-default rounded-md">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-2 mb-5 text-xs font-black text-text-secondary uppercase tracking-widest">
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            Query Parameters
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-[1fr,auto,auto] gap-6 items-end">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-semibold text-text-primary">Similarity Threshold</label>
+                <span className="text-sm font-black tabular-nums text-brand-primary bg-brand-primary/10 px-2.5 py-0.5 rounded-full border border-brand-primary/20">
+                  {Math.round(threshold * 100)}%
+                </span>
+              </div>
+              <Slider
+                min={0.5}
+                max={0.99}
+                step={0.01}
+                value={[threshold]}
+                onValueChange={([v]) => setThreshold(v)}
+                className="w-full"
+              />
+              <div className="flex justify-between text-[10px] text-text-secondary opacity-50">
+                <span>50% — more results</span>
+                <span>99% — near-exact only</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-text-primary">Max Results</label>
+              <Select value={limitCount} onValueChange={setLimitCount}>
+                <SelectTrigger className="w-28 bg-surface-card border-2 h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {["10", "20", "50", "100"].map(v => (
+                    <SelectItem key={v} value={v}>{v} pairs</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button
+              onClick={fetchPotentialDuplicates}
+              disabled={loadingPotential}
+              className="h-10 px-6 bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold gap-2 shadow-md transition-colors"
+            >
+              {loadingPotential ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Play className="w-4 h-4" />
+              )}
+              {loadingPotential ? "Scanning..." : "Run Query"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <AnimatePresence mode="wait">
+        {!duplicateQueryRan && !loadingPotential && (
+          <motion.div
+            key="idle"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col items-center justify-center py-16 text-text-secondary opacity-40 space-y-3"
+          >
+            <div className="w-16 h-16 rounded-md bg-surface-muted flex items-center justify-center">
+              <Play className="w-7 h-7" />
+            </div>
+            <p className="text-sm font-medium">Configure parameters above and run the query</p>
+          </motion.div>
+        )}
+
+        {loadingPotential && (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col items-center justify-center py-16 space-y-4"
+          >
+            <Loader2 className="w-10 h-10 animate-spin text-brand-primary" />
+            <p className="text-sm font-medium text-text-secondary animate-pulse">Scanning {activeType} records for similar names…</p>
+          </motion.div>
+        )}
+
+        {duplicateQueryRan && !loadingPotential && duplicateUnavailable && (
+          <motion.div
+            key="unavailable"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col items-center justify-center py-14 text-text-secondary space-y-3"
+          >
+            <div className="w-14 h-14 rounded-md bg-surface-muted flex items-center justify-center opacity-40">
+              <Search className="w-6 h-6" />
+            </div>
+            <p className="font-medium opacity-50 text-sm">Duplicate detection is not yet available for {activeType} records.</p>
+            <p className="text-xs opacity-30">A <code className="font-mono">get_potential_duplicate_{activeType}s</code> database function is needed.</p>
+          </motion.div>
+        )}
+
+        {duplicateQueryRan && !loadingPotential && !duplicateUnavailable && potentialDuplicates.length === 0 && (
+          <motion.div
+            key="empty"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col items-center justify-center py-14 text-text-secondary space-y-3"
+          >
+            <div className="w-14 h-14 rounded-md bg-surface-muted flex items-center justify-center opacity-40">
+              <Search className="w-6 h-6" />
+            </div>
+            <p className="font-medium opacity-50 text-sm">No matches above {Math.round(threshold * 100)}% similarity — try lowering the threshold.</p>
+          </motion.div>
+        )}
+
+        {duplicateQueryRan && !loadingPotential && !duplicateUnavailable && potentialDuplicates.length > 0 && (
+          <motion.div
+            key="results"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <ScrollArea className="h-[420px] rounded-md border border-border-default bg-surface-card overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
+                {potentialDuplicates.map((pair, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: idx * 0.03 }}
+                    className="group flex flex-col p-4 bg-surface-card border border-border-default rounded hover:border-border-strong hover:shadow-md transition-all"
                   >
-                    {isResearching ? (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        Researching…
-                      </>
-                    ) : (
-                      <>
-                        <Telescope className="h-3.5 w-3.5" />
-                        Research with AI
-                      </>
-                    )}
-                  </Button>
-                  <Button size="sm" asChild>
-                    <Link to={`${getBuildingUrl(b.id, b.slug, b.short_id)}/edit`}>
-                      Complete Data
-                    </Link>
-                  </Button>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex flex-col max-w-[40%]">
+                        <span className="text-sm font-bold truncate text-text-primary">{pair.name1}</span>
+                        <span className="text-[10px] font-mono text-text-secondary">{pair.id1.slice(0, 8)}</span>
+                      </div>
+
+                      <div className="flex flex-col items-center">
+                        <div className="text-[10px] font-black text-brand-primary uppercase tracking-tighter mb-0.5">Similarity</div>
+                        <div className="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-xs font-black border border-brand-primary/20">
+                          {Math.round(pair.score * 100)}%
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col max-w-[40%] text-right">
+                        <span className="text-sm font-bold truncate text-text-primary">{pair.name2}</span>
+                        <span className="text-[10px] font-mono text-text-secondary">{pair.id2.slice(0, 8)}</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      className="w-full h-9 bg-surface-muted hover:bg-brand-primary hover:text-white text-text-primary text-xs font-bold transition-all border-none"
+                      onClick={() => navigate(`/admin/merge/${activeType}/${pair.id1}/${pair.id2}`)}
+                    >
+                      Analyze & Merge
+                      <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </motion.div>
+                ))}
+              </div>
+            </ScrollArea>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -485,6 +788,11 @@ const FIELD_LABELS: Record<string, string> = {
   year_completed:   "Year Completed",
   status:           "Status",
   alt_name:         "Alternative Name",
+  category:         "Category",
+  typologies:       "Typologies",
+  style:            "Architectural Style",
+  materiality:      "Materiality",
+  context:          "Context",
   access_level:     "Access Level",
   access_logistics: "Access Logistics",
   access_cost:      "Access Cost",
@@ -493,6 +801,8 @@ const FIELD_LABELS: Record<string, string> = {
   height_m:         "Height (m)",
   storeys:          "Storeys",
 };
+
+const ARRAY_FIELDS = new Set(["typologies", "style", "materiality", "context"]);
 
 type ReviewItem = ResearchDataPoint & { accepted: boolean; editedValue: string };
 
@@ -535,7 +845,10 @@ function ResearchReviewPanel({
       if (!item.accepted) continue;
       const v = item.editedValue.trim();
       if (!v) continue;
-      if (item.field === "year_completed" || item.field === "storeys") {
+      if (ARRAY_FIELDS.has(item.field)) {
+        const arr = v.split(",").map((s) => s.trim()).filter(Boolean);
+        if (arr.length > 0) updates[item.field] = arr;
+      } else if (item.field === "year_completed" || item.field === "storeys") {
         const n = parseInt(v, 10);
         if (!isNaN(n)) updates[item.field] = n;
       } else if (item.field === "size_sqm" || item.field === "height_m") {
@@ -637,6 +950,9 @@ function ResearchReviewPanel({
                       onChange={(e) => handleValueChange(item.field, e.target.value)}
                       className="text-sm"
                     />
+                  )}
+                  {ARRAY_FIELDS.has(item.field) && (
+                    <p className="text-[11px] text-muted-foreground">Comma-separated — edit or remove values as needed.</p>
                   )}
                 </div>
 

@@ -33,6 +33,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { getBuildingImageUrl } from "@/utils/image";
+import { getBuildingUrl } from "@/utils/url";
 import { EntityType } from "../types/merge";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -192,7 +193,13 @@ export default function MergeComparisonEntities() {
             }
 
             toast.success("Merge completed successfully");
-            navigate("/admin/merge");
+
+            if (entityType === "building" && targetPointer) {
+              const target = entities.find(e => e.id === targetPointer);
+              navigate(getBuildingUrl(targetPointer, target?.slug, target?.short_id));
+            } else {
+              navigate("/admin/merge");
+            }
 
         } catch (error: any) {
             toast.error(`Merge failed: ${error.message || "Unknown error"}`);

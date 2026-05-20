@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCheck, Inbox, Lightbulb, Loader2, Plus, Target, Trash2 } from "lucide-react";
+import { Inbox, Lightbulb, Loader2, Plus, Target } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { format, formatDistanceToNow, parseISO, isAfter, isBefore } from "date-fns";
@@ -185,35 +185,6 @@ export default function AmbassadorCampaigns() {
     },
   });
 
-  const publishIdeaMutation = useMutation({
-    mutationFn: async (id: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
-        .from("chapter_projects")
-        .update({ status: "active", updated_at: new Date().toISOString() })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Idea published as a chapter project.");
-      queryClient.invalidateQueries({ queryKey: ["admin-draft-ideas"] });
-    },
-    onError: () => toast.error("Failed to publish idea."),
-  });
-
-  const deleteIdeaMutation = useMutation({
-    mutationFn: async (id: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from("chapter_projects").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Idea deleted.");
-      queryClient.invalidateQueries({ queryKey: ["admin-draft-ideas"] });
-    },
-    onError: () => toast.error("Failed to delete idea."),
-  });
-
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ["programme-campaigns"],
     queryFn: async () => {
@@ -325,7 +296,7 @@ export default function AmbassadorCampaigns() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {draftIdeas.map((idea) => (
               <Card key={idea.id} className="flex flex-col p-5 border border-dashed bg-muted/20">
-                <div className="flex items-start justify-between mb-3">
+                <div className="mb-3">
                   <Badge
                     variant="outline"
                     className="gap-1 px-2 py-0.5 text-xs font-medium text-feedback-warning border-feedback-warning/30 bg-feedback-warning/10"
@@ -333,16 +304,6 @@ export default function AmbassadorCampaigns() {
                     <Lightbulb className="h-3 w-3" />
                     Draft idea
                   </Badge>
-                  <button
-                    type="button"
-                    aria-label="Delete idea"
-                    className="text-text-secondary hover:text-feedback-destructive transition-colors"
-                    onClick={() => {
-                      if (confirm("Delete this idea?")) deleteIdeaMutation.mutate(idea.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
                 </div>
 
                 <h3 className="text-base font-bold text-text-primary mb-1">{idea.title}</h3>
@@ -352,7 +313,7 @@ export default function AmbassadorCampaigns() {
                   </p>
                 )}
 
-                <div className="mt-auto pt-3 border-t border-border-default space-y-2">
+                <div className="mt-auto pt-3 border-t border-border-default">
                   <div className="flex items-center justify-between text-[11px] text-text-secondary">
                     <span>
                       {idea.chapter_name ?? "Unknown chapter"}
@@ -360,19 +321,6 @@ export default function AmbassadorCampaigns() {
                     </span>
                     <span>{formatDistanceToNow(new Date(idea.created_at), { addSuffix: true })}</span>
                   </div>
-                  <Button
-                    size="sm"
-                    className="w-full gap-1.5"
-                    onClick={() => publishIdeaMutation.mutate(idea.id)}
-                    disabled={publishIdeaMutation.isPending}
-                  >
-                    {publishIdeaMutation.isPending ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <CheckCheck className="h-3.5 w-3.5" />
-                    )}
-                    Publish as project
-                  </Button>
                 </div>
               </Card>
             ))}

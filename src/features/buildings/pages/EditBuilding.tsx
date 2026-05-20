@@ -335,9 +335,8 @@ toast.error("Unexpected error");
 
   return (
     <AppLayout title="Edit Building" showBack>
-      <div className="min-h-screen bg-surface-default">
-      <div className="w-full min-w-0 p-4 sm:p-6 lg:p-8 space-y-6">
-        <h1 className="text-4xl font-bold tracking-tight leading-tight text-text-primary mb-8">
+      <div className="w-full min-w-0 p-4 sm:p-6 lg:p-8 space-y-8">
+        <h1 className="text-4xl font-bold tracking-tight leading-snug text-text-primary">
           Edit Building
         </h1>
 
@@ -396,7 +395,7 @@ toast.error("Unexpected error");
         {/* Details Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Edit Building Details</CardTitle>
+            <CardTitle>Building Details</CardTitle>
           </CardHeader>
           <CardContent>
             <BuildingForm
@@ -410,7 +409,6 @@ toast.error("Unexpected error");
             />
           </CardContent>
         </Card>
-      </div>
       </div>
     </AppLayout>
   );

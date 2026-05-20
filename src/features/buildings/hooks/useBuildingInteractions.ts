@@ -331,7 +331,7 @@ export function useBuildingInteractions({
   const [deleteWarningMessage, setDeleteWarningMessage] = useState("");
 
   // ── Verified architect detection ─────────────────────────────────────────
-  const [verifiedClaims, setVerifiedClaims] = useState<string[]>([]);
+  const [_verifiedClaims, setVerifiedClaims] = useState<string[]>([]);
   const [_hasVerifiedArchitect, setHasVerifiedArchitect] = useState(false);
 
   // ── Visitor count (separate from entries — building_posts has multiple rows per user) ──
@@ -1299,18 +1299,6 @@ export function useBuildingInteractions({
     },
     [user, likedLinkIds, toast],
   );
-
-  // ── Auth-derived flags ────────────────────────────────────────────────────
-  //
-  // isVerifiedArchitect: true when the signed-in user has a verified architect
-  // claim for one of the primary credited persons on this building.
-  const _isVerifiedArchitect = useMemo(() => {
-    if (verifiedClaims.length === 0) return false;
-    const primaryPersonIds = visiblePrimaryCredits(buildingCredits)
-      .map((c) => c.personId)
-      .filter((pid): pid is string => pid != null);
-    return primaryPersonIds.some((pid) => verifiedClaims.includes(pid));
-  }, [verifiedClaims, buildingCredits]);
 
   const canEditOfficialData = !!user;
 
