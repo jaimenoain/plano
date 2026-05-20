@@ -628,14 +628,11 @@ function StewardCard({
   return (
     <Link
       to={`/profile/${steward.username}`}
-      className="group flex items-center gap-3 border-b border-border-default py-3 last:border-b-0"
+      className="group flex items-center gap-4 border border-border-default p-4 transition-colors hover:border-text-primary/20 hover:bg-surface-muted/40"
     >
-      <span className="w-4 shrink-0 text-right text-[10px] tabular-nums text-text-disabled">
-        {rank}
-      </span>
-      <Avatar className="h-8 w-8 shrink-0 border border-border-default bg-surface-muted">
+      <Avatar className="h-12 w-12 shrink-0 border border-border-default bg-surface-muted">
         <AvatarImage src={steward.avatarUrl ?? undefined} alt="" />
-        <AvatarFallback className="text-xs font-medium text-text-secondary">
+        <AvatarFallback className="text-sm font-medium text-text-secondary">
           {initials}
         </AvatarFallback>
       </Avatar>
@@ -655,7 +652,9 @@ function StewardCard({
           <p className="mt-0.5 text-[11px] text-text-disabled">{stats}</p>
         ) : null}
       </div>
-      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-text-disabled opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
+      <span className="shrink-0 text-right text-[10px] tabular-nums text-text-disabled">
+        #{rank}
+      </span>
     </Link>
   );
 }
@@ -678,7 +677,7 @@ function LocalityStewards({ stewards }: { stewards: LocalitySteward[] }) {
       <p className="mb-4 text-[11px] text-text-disabled">
         Community members who contribute most to this city on Plano.
       </p>
-      <div>
+      <div className="grid grid-cols-1 gap-px bg-border-default sm:grid-cols-2">
         {sorted.map((s, i) => (
           <StewardCard key={s.userId} steward={s} rank={i + 1} />
         ))}

@@ -686,11 +686,15 @@ function ResearchReviewPanel({
   );
 }
 
+const OUTREACH_PAGE_SIZE = 25;
+
 function ArchitectOutreachTool({ chapterId, onBack }: { chapterId: string; onBack: () => void }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [visibleCount, setVisibleCount] = useState(OUTREACH_PAGE_SIZE);
   const [drawerFirm, setDrawerFirm] = useState<AmbassadorUnclaimedFirm | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const { data: firms, isLoading, error } = useQuery({
     queryKey: ["embassy-unclaimed-firms", chapterId],
@@ -722,12 +726,37 @@ function ArchitectOutreachTool({ chapterId, onBack }: { chapterId: string; onBac
     return map;
   }, [myLogs]);
 
+  // Search filters the full dataset; visibleCount controls how many are rendered.
   const filteredFirms = useMemo(() => {
     if (!firms) return [];
     return firms.filter(f =>
       f.name.toLowerCase().includes(search.toLowerCase())
     );
   }, [firms, search]);
+
+  // Reset visible count when search changes so results start from the top.
+  useEffect(() => {
+    setVisibleCount(OUTREACH_PAGE_SIZE);
+  }, [search]);
+
+  // Extend visible slice when the sentinel scrolls into view.
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisibleCount(c => c + OUTREACH_PAGE_SIZE);
+        }
+      },
+      { threshold: 0.1 },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [filteredFirms.length]);
+
+  const visibleFirms = filteredFirms.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredFirms.length;
 
   return (
     <div className="space-y-6">
@@ -768,7 +797,7 @@ function ArchitectOutreachTool({ chapterId, onBack }: { chapterId: string; onBac
         </div>
       ) : (
         <div className="grid gap-4">
-          {filteredFirms.map((f) => {
+          {visibleFirms.map((f) => {
             const latestStatus = myLogByFirm[f.id];
             return (
               <Card
@@ -803,6 +832,11 @@ function ArchitectOutreachTool({ chapterId, onBack }: { chapterId: string; onBac
               </Card>
             );
           })}
+          {hasMore && (
+            <div ref={sentinelRef} className="flex justify-center py-4">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          )}
         </div>
       )}
 

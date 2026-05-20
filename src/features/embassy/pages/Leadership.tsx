@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams, redirect, type LoaderFunctionArgs } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { Pin, X } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchBroadcastBanners, markBroadcastRead } from "@/features/admin/api/programme";
+import type { BroadcastBanner } from "@/features/admin/types/programme";
 import { supabase } from "@/integrations/supabase/client";
 import { createSupabaseServerClient } from "@/lib/supabase.server";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -122,6 +125,27 @@ export default function LeadershipPage() {
 
   const activeTab = searchParams.get("tab") || "health";
 
+  const queryClient = useQueryClient();
+  const { data: broadcastBanners = [] } = useQuery({
+    queryKey: ["ambassador", "broadcast-banners", user?.id],
+    queryFn: fetchBroadcastBanners,
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
+  const [dismissedBanners, setDismissedBanners] = useState<Set<string>>(new Set());
+
+  const { mutate: acknowledge } = useMutation({
+    mutationFn: markBroadcastRead,
+    onSuccess: (_, id) => {
+      setDismissedBanners((prev) => new Set([...prev, id]));
+      queryClient.invalidateQueries({ queryKey: ["ambassador", "broadcast-banners"] });
+    },
+  });
+
+  const visibleBanners = broadcastBanners.filter(
+    (b: BroadcastBanner) => !dismissedBanners.has(b.id),
+  );
+
   const handleApprove = async (app: PendingApplication) => {
     setActionId(app.id);
     try {
@@ -180,6 +204,38 @@ export default function LeadershipPage() {
 
   return (
     <div className="space-y-8">
+      {visibleBanners.length > 0 && (
+        <div className="space-y-2">
+          {visibleBanners.map((banner: BroadcastBanner) => (
+            <div
+              key={banner.id}
+              className={`flex items-start gap-3 rounded-lg border p-4 ${
+                banner.isPinned
+                  ? "bg-surface-muted border-border-default"
+                  : "bg-feedback-warning/10 border-feedback-warning/30"
+              }`}
+            >
+              {banner.isPinned && (
+                <Pin className="h-4 w-4 text-text-secondary shrink-0 mt-0.5" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-text-primary">{banner.subject}</p>
+                <p className="text-sm text-text-secondary mt-0.5 whitespace-pre-wrap">
+                  {banner.body}
+                </p>
+              </div>
+              <button
+                className="shrink-0 text-text-secondary hover:text-text-primary transition-colors"
+                onClick={() => acknowledge(banner.id)}
+                title={banner.isPinned ? "Dismiss" : "Acknowledge"}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Leadership</h1>
         <p className="text-muted-foreground">

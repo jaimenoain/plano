@@ -283,6 +283,46 @@ All **`SECURITY DEFINER`** with `search_path = public`; **`GRANT EXECUTE`** to `
 
 **Migrations:** `supabase/migrations/20270870000000_ambassador_foundation.sql` then **`20270870100000_ambassador_applications.sql`** then **`20270870200000_ambassador_task_feed_rpcs.sql`** then **`20270870300000_ambassador_leadership_rpcs.sql`** then **`20270870400000_ambassador_phase5_national_overview_admin_coverage.sql`** then **`20270870500000_ambassador_phase6_location_review.sql`** — apply in Supabase SQL Editor in order (then run `npm run gen-types` if the hosted project should match committed `types.ts`).
 
+### Database: `chapter_tasks`
+
+Chapter-scoped task list visible at `/embassy/tasks`. Any active ambassador can create a task; assignment and visibility are optional.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid | PK, `gen_random_uuid()` |
+| `chapter_id` | uuid | FK → `ambassador_chapters.id` ON DELETE CASCADE |
+| `title` | text | NOT NULL |
+| `description` | text | Optional |
+| `due_date` | date | Optional |
+| `visibility` | text | `'chapter'` (default) \| `'leadership'` \| `'only_me'`; CHECK enforced |
+| `status` | text | `'todo'` (default) \| `'in_progress'` \| `'done'`; CHECK enforced |
+| `created_by` | uuid | FK → `profiles.id` ON DELETE CASCADE |
+| `assigned_to` | uuid | FK → `profiles.id` ON DELETE SET NULL; optional |
+| `project_id` | uuid | FK → `chapter_projects.id` ON DELETE SET NULL; optional |
+| `company_id` | uuid | FK → `companies.id` ON DELETE SET NULL; optional (architecture firm link) |
+| `created_at` / `updated_at` | timestamptz | Defaults; `updated_at` touched by `trg_chapter_tasks_updated_at` |
+
+**Visibility semantics:**
+- `'chapter'` — all active chapter members see the task (default on create).
+- `'leadership'` — only users with `role IN ('president','exco')` in the chapter see it; only a leader can set this value (enforced in UI).
+- `'only_me'` — only the task creator sees it; any member can set this on their own tasks.
+
+**RLS:**
+- `SELECT` — active chapter member who passes the visibility predicate above.
+- `INSERT` — active chapter member; `created_by` must equal `auth.uid()`.
+- `UPDATE` — task creator OR chapter leader (`president`/`exco`) for that chapter.
+- `DELETE` — task creator OR chapter leader for that chapter.
+
+### RPC: `get_chapter_tasks(p_chapter_id uuid)`
+
+Returns tasks visible to the caller, joined with `creator_username`, `assignee_username`, `assignee_avatar_url`, `project_title`, and `company_name`. Ordered: todo → in_progress → done, then `due_date ASC NULLS LAST`, then `created_at DESC`.
+
+**SECURITY DEFINER.** `GRANT EXECUTE` to `authenticated`.
+
+**Client:** `Tasks.tsx` queries this via `(supabase as any).rpc('get_chapter_tasks', { p_chapter_id })`.
+
+**Migration:** `supabase/migrations/20271124000000_chapter_tasks.sql` — apply in Supabase SQL Editor.
+
 ---
 
 ## Auth Domain — profiles, allowed_emails

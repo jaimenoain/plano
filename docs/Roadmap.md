@@ -93,7 +93,7 @@ A new tab — **Presidents** — at `/admin/programme/presidents`, containing:
 
 ---
 
-## [ ] Phase 3 — Intervention Queue
+## [x] Phase 3 — Intervention Queue
 
 **Goal:** Surface issues the core team needs to act on before they become problems, without requiring manual inspection of every chapter.
 
@@ -129,7 +129,19 @@ Each flag has: a severity badge (`urgent` / `warning` / `info`), a plain-English
 
 ---
 
-## [ ] Phase 4 — Broadcast and Announcements
+## Phase 3 Summary
+
+**Completed:** 2026-05-20
+
+**Deviations:**
+- `president_location_mismatch` flag not implemented — `profiles` table has a free-text `country` column, not a `country_code` ISO field, so a reliable country-code comparison is not possible without a schema change. Deferred to a future iteration once profiles stores a normalised country code.
+
+**Specs updated:**
+- `docs/AI_STATUS.md` — updated current phase and architecture snapshot.
+
+---
+
+## [x] Phase 4 — Broadcast and Announcements
 
 **Goal:** Let the core team send structured messages to chapter presidents (all, by country, or individually) and confirm receipt.
 
@@ -159,6 +171,17 @@ Each flag has: a severity badge (`urgent` / `warning` / `info`), a plain-English
 
 ### New RPC needed
 - `send_admin_broadcast` — creates the broadcast row, resolves recipients by scope, inserts notification rows for each, enforces rate limit (max 3 broadcasts per day)
+
+---
+
+## Phase 4 Summary
+
+**Completed:** 2026-05-20
+
+No deviations. All tasks delivered as planned.
+
+**Specs updated:**
+- `docs/AI_STATUS.md` — updated current phase.
 
 ---
 

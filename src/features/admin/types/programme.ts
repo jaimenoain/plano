@@ -67,6 +67,40 @@ export interface InterventionFlag {
   detectedAt: string;
 }
 
+export type BroadcastType = 'announcement' | 'action_required' | 'check_in';
+export type RecipientScope = 'all' | 'country' | 'chapter';
+
+export interface AdminBroadcast {
+  id: string;
+  subject: string;
+  body: string;
+  type: BroadcastType;
+  recipientScope: RecipientScope;
+  scopeValue: string | null;
+  sentByUsername: string;
+  sentAt: string;
+  pinned: boolean;
+  recipientCount: number;
+  readCount: number;
+}
+
+export interface BroadcastReadStatus {
+  chapterId: string;
+  chapterName: string;
+  presidentUsername: string;
+  presidentUserId: string;
+  readAt: string | null;
+}
+
+export interface BroadcastBanner {
+  id: string;
+  subject: string;
+  body: string;
+  type: BroadcastType;
+  sentAt: string;
+  isPinned: boolean;
+}
+
 export interface PresidentDirectoryRow {
   presidentUserId: string;
   presidentUsername: string;

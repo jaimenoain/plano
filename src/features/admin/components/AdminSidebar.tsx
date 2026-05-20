@@ -24,6 +24,8 @@ import {
   Newspaper,
   HeartPulse,
   UsersRound,
+  Siren,
+  Megaphone,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
@@ -44,7 +46,9 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 
 const programmeItems = [
   { title: "Health Dashboard", url: "/admin/programme/health", icon: HeartPulse },
+  { title: "Interventions", url: "/admin/programme/interventions", icon: Siren },
   { title: "Presidents", url: "/admin/programme/presidents", icon: UsersRound },
+  { title: "Broadcasts", url: "/admin/programme/broadcasts", icon: Megaphone },
 ];
 
 const contentItems = [
@@ -88,6 +92,8 @@ const systemItems = [
 ];
 
 import { useSuggestions, useAwardClaimRequests } from "@/features/awards/hooks/useAwards";
+import { useQuery } from "@tanstack/react-query";
+import { fetchInterventionFlags } from "@/features/admin/api/programme";
 
 export function AdminSidebar() {
   const location = useLocation();
@@ -95,8 +101,14 @@ export function AdminSidebar() {
   const navigate = useNavigate();
   const { data: suggestions = [] }    = useSuggestions('pending');
   const { data: claimRequests = [] }  = useAwardClaimRequests('pending');
-  const pendingCount      = suggestions.length;
-  const pendingClaimCount = claimRequests.length;
+  const { data: interventionFlags = [] } = useQuery({
+    queryKey: ["admin", "intervention-flags"],
+    queryFn: fetchInterventionFlags,
+    staleTime: 5 * 60 * 1000,
+  });
+  const pendingCount         = suggestions.length;
+  const pendingClaimCount    = claimRequests.length;
+  const interventionCount    = interventionFlags.length;
 
   const handleSignOut = async () => {
     await signOut();
@@ -181,6 +193,11 @@ export function AdminSidebar() {
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
+                    {item.url === "/admin/programme/interventions" && interventionCount > 0 && (
+                      <SidebarMenuBadge className="bg-feedback-destructive text-feedback-destructive-foreground">
+                        {interventionCount}
+                      </SidebarMenuBadge>
+                    )}
                     {item.url === "/admin/awards/suggestions" && pendingCount > 0 && (
                       <SidebarMenuBadge className="bg-brand-primary text-text-inverse">
                         {pendingCount}

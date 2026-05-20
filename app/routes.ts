@@ -78,6 +78,7 @@ export default [
     route("/admin/programme/health", "features/admin/pages/ProgrammeHealth.tsx"),
     route("/admin/programme/presidents", "features/admin/pages/ProgrammePresidents.tsx"),
     route("/admin/programme/interventions", "features/admin/pages/ProgrammeInterventions.tsx"),
+    route("/admin/programme/broadcasts", "features/admin/pages/ProgrammeBroadcasts.tsx"),
     route("/admin/updates", "features/admin/pages/UpdatesList.tsx"),
     route("/admin/updates/new", "features/admin/pages/UpdateForm.tsx", { id: "admin-update-new" }),
     route("/admin/updates/:updateId", "features/admin/pages/UpdateForm.tsx", { id: "admin-update-edit" }),

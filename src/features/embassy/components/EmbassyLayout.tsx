@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation } from "react-router";
+import { Link, Outlet, useLocation, redirect, type LoaderFunctionArgs } from "react-router";
 import { AmbassadorGuard } from "./AmbassadorGuard";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { cn } from "@/lib/utils";
@@ -6,7 +6,6 @@ import { LayoutDashboard, Target, Users, Settings2, UsersRound, CheckSquare } fr
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { redirect, type LoaderFunctionArgs } from "react-router";
 import { createSupabaseServerClient } from "@/lib/supabase.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {

@@ -11,6 +11,11 @@ import type {
   InterventionFlag,
   InterventionFlagType,
   InterventionSeverity,
+  AdminBroadcast,
+  BroadcastType,
+  RecipientScope,
+  BroadcastReadStatus,
+  BroadcastBanner,
 } from "@/features/admin/types/programme";
 
 function num(v: unknown, fallback = 0): number {
@@ -135,6 +140,95 @@ export async function dismissInterventionFlag(
     p_flag_type:   flagType,
     p_entity_id:   entityId,
     p_snooze_days: snoozeDays ?? null,
+  });
+  if (error) throw new Error(error.message);
+}
+
+// ─── Broadcasts ───────────────────────────────────────────────────────────────
+
+export async function fetchBroadcasts(): Promise<AdminBroadcast[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_admin_broadcasts");
+  if (error) throw new Error(error.message);
+  if (!Array.isArray(data)) return [];
+  return (data as Record<string, unknown>[]).map((r) => ({
+    id:             String(r.id ?? ""),
+    subject:        String(r.subject ?? ""),
+    body:           String(r.body ?? ""),
+    type:           (r.type as BroadcastType) ?? "announcement",
+    recipientScope: (r.recipient_scope as RecipientScope) ?? "all",
+    scopeValue:     r.scope_value != null ? String(r.scope_value) : null,
+    sentByUsername: String(r.sent_by_username ?? ""),
+    sentAt:         String(r.sent_at ?? ""),
+    pinned:         Boolean(r.pinned),
+    recipientCount: num(r.recipient_count),
+    readCount:      num(r.read_count),
+  }));
+}
+
+export async function sendBroadcast(params: {
+  subject: string;
+  body: string;
+  type: BroadcastType;
+  recipientScope: RecipientScope;
+  scopeValue?: string | null;
+}): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("send_admin_broadcast", {
+    p_subject:          params.subject,
+    p_body:             params.body,
+    p_type:             params.type,
+    p_recipient_scope:  params.recipientScope,
+    p_scope_value:      params.scopeValue ?? null,
+  });
+  if (error) throw new Error(error.message);
+  return String(data);
+}
+
+export async function toggleBroadcastPin(broadcastId: string, pinned: boolean): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("toggle_broadcast_pin", {
+    p_broadcast_id: broadcastId,
+    p_pinned:       pinned,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function fetchBroadcastReadStatus(broadcastId: string): Promise<BroadcastReadStatus[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_broadcast_read_status", {
+    p_broadcast_id: broadcastId,
+  });
+  if (error) throw new Error(error.message);
+  if (!Array.isArray(data)) return [];
+  return (data as Record<string, unknown>[]).map((r) => ({
+    chapterId:         String(r.chapter_id ?? ""),
+    chapterName:       String(r.chapter_name ?? ""),
+    presidentUsername: String(r.president_username ?? ""),
+    presidentUserId:   String(r.president_user_id ?? ""),
+    readAt:            r.read_at != null ? String(r.read_at) : null,
+  }));
+}
+
+export async function fetchBroadcastBanners(): Promise<BroadcastBanner[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_ambassador_broadcast_banners");
+  if (error) return [];
+  if (!Array.isArray(data)) return [];
+  return (data as Record<string, unknown>[]).map((r) => ({
+    id:       String(r.id ?? ""),
+    subject:  String(r.subject ?? ""),
+    body:     String(r.body ?? ""),
+    type:     (r.type as BroadcastType) ?? "announcement",
+    sentAt:   String(r.sent_at ?? ""),
+    isPinned: Boolean(r.is_pinned),
+  }));
+}
+
+export async function markBroadcastRead(broadcastId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("mark_broadcast_read", {
+    p_broadcast_id: broadcastId,
   });
   if (error) throw new Error(error.message);
 }

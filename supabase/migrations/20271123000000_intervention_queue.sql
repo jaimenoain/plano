@@ -19,6 +19,10 @@ CREATE UNIQUE INDEX IF NOT EXISTS admin_flag_dismissals_unique_per_user
 
 ALTER TABLE public.admin_flag_dismissals ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Admins can read their own dismissals"   ON public.admin_flag_dismissals;
+DROP POLICY IF EXISTS "Admins can insert their own dismissals" ON public.admin_flag_dismissals;
+DROP POLICY IF EXISTS "Admins can update their own dismissals" ON public.admin_flag_dismissals;
+
 CREATE POLICY "Admins can read their own dismissals"
   ON public.admin_flag_dismissals FOR SELECT
   USING (dismissed_by = auth.uid() AND is_admin());

@@ -183,15 +183,11 @@ function PresidentPanel({
               Manage chapter
             </Link>
           </Button>
-          <Button
-            variant="outline"
-            className="w-full justify-start gap-2"
-            disabled
-            title="Available in Phase 4 — Broadcasts"
-          >
-            <Mail className="h-4 w-4" />
-            Send message
-            <span className="ml-auto text-xs text-text-secondary">Phase 4</span>
+          <Button asChild variant="outline" className="w-full justify-start gap-2">
+            <Link to={`/admin/programme/broadcasts?scope=chapter&chapterId=${row.chapterId}`}>
+              <Mail className="h-4 w-4" />
+              Send message
+            </Link>
           </Button>
         </div>
       </SheetContent>

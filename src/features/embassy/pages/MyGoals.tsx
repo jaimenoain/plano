@@ -41,7 +41,9 @@ export default function MyGoalsPage() {
   const [target, setTarget] = useState("10");
   const [metric, setMetric] = useState<Goal["metric"]>("edits");
 
-  // Fetch membership for chapterId (to show leaderboard)
+  // Fetch membership for chapterId (to show leaderboard).
+  // Uses maybeSingle() + status filter to avoid PGRST116 for users with
+  // multiple membership rows (e.g. past inactive + current active chapter).
   const { data: membership } = useQuery({
     queryKey: ["ambassador-membership-goals", user?.id],
     queryFn: async () => {
@@ -49,7 +51,8 @@ export default function MyGoalsPage() {
         .from("ambassador_memberships")
         .select("chapter_id, chapter:ambassador_chapters(name)")
         .eq("user_id", user?.id)
-        .single();
+        .eq("status", "active")
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
