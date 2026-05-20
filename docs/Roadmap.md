@@ -25,7 +25,7 @@ The phases below add coordination and monitoring capabilities that do not exist 
 
 ---
 
-## Phase 1 — Programme Health Dashboard
+## [x] Phase 1 — Programme Health Dashboard
 
 **Goal:** Replace the current stats overview with a dashboard the core team can open each morning and immediately know the state of the programme.
 
@@ -61,7 +61,7 @@ A new tab — **Programme Health** — at `/admin/programme/health`, containing 
 
 ---
 
-## Phase 2 — Chapter President Directory
+## [ ] Phase 2 — Chapter President Directory
 
 **Goal:** Give the core team a single place to see every chapter president, understand their chapter's health at a glance, and reach out directly.
 
@@ -93,7 +93,7 @@ A new tab — **Presidents** — at `/admin/programme/presidents`, containing:
 
 ---
 
-## Phase 3 — Intervention Queue
+## [ ] Phase 3 — Intervention Queue
 
 **Goal:** Surface issues the core team needs to act on before they become problems, without requiring manual inspection of every chapter.
 
@@ -129,7 +129,7 @@ Each flag has: a severity badge (`urgent` / `warning` / `info`), a plain-English
 
 ---
 
-## Phase 4 — Broadcast and Announcements
+## [ ] Phase 4 — Broadcast and Announcements
 
 **Goal:** Let the core team send structured messages to chapter presidents (all, by country, or individually) and confirm receipt.
 
@@ -162,7 +162,7 @@ Each flag has: a severity badge (`urgent` / `warning` / `info`), a plain-English
 
 ---
 
-## Phase 5 — Coverage Gap Prioritisation
+## [ ] Phase 5 — Coverage Gap Prioritisation
 
 **Goal:** Upgrade the existing locality coverage map into a prioritised list of where the programme should expand next, and make it actionable in one click.
 
@@ -190,7 +190,7 @@ Each flag has: a severity badge (`urgent` / `warning` / `info`), a plain-English
 
 ---
 
-## Phase 6 — Chapter Performance Ranking
+## [ ] Phase 6 — Chapter Performance Ranking
 
 **Goal:** Give the core team a ranked, side-by-side comparison of all chapters over a selectable period, to inform where to invest support and where to celebrate success.
 
@@ -223,7 +223,7 @@ A new tab — **Rankings** — at `/admin/programme/rankings`:
 
 ---
 
-## Phase 7 — President Onboarding Tracker
+## [ ] Phase 7 — President Onboarding Tracker
 
 **Goal:** Ensure newly assigned chapter presidents complete their setup, and give the core team visibility into who is stuck.
 
@@ -281,6 +281,17 @@ Added to the Presidents tab (Phase 2) as a sub-view filtered to presidents withi
 | `/admin/programme/broadcasts` | 4 | Broadcast composer and sent message history |
 | `/admin/programme/rankings` | 6 | Chapter performance ranking table |
 | `/admin/ambassadors/coverage` | 5 | Extended with Gaps tab (upgrade to existing route) |
+
+---
+
+## Phase 1 Summary
+
+**Completed:** 2026-05-20
+
+No deviations. All tasks delivered as planned.
+
+**Specs updated:**
+- `docs/DATA_CONTRACT.md` — added Phase 6 section documenting `get_programme_health_summary()` RPC, DTO shapes, and new routes.
 
 ---
 

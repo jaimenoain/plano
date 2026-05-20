@@ -256,11 +256,29 @@ The `notifications.type` check (live DB) includes:
 
 All **`SECURITY DEFINER`** with `search_path = public`; **`GRANT EXECUTE`** to `authenticated` (badge RPC additionally to `anon`).
 
+### Phase 6 — Programme Health Dashboard (`/admin/programme`)
+
+#### RPC: `get_programme_health_summary()`
+
+**Returns:** `jsonb` with four keys:
+
+- `pulse` — `{ active_chapters, forming_chapters, inactive_chapters, active_chapters_delta, forming_chapters_delta, inactive_chapters_delta, pending_applications, stale_applications }` — `*_delta` = chapters with that status created in the last 30 days; `stale_applications` = pending for > 7 days.
+- `activity_trend` — `[{ date, edits, photos }]` — 30 daily rows; `edits` = all `building_audit_logs` rows that day; `photos` = subset where `hero_image_url` changed from empty to non-empty.
+- `flagged_chapters` — `[{ chapter_id, chapter_name, country_code, flag_type, flag_detail }]` — `flag_type` one of `no_president`, `president_inactive`, `forming_stalled`.
+- `top_chapters` — `[{ chapter_id, chapter_name, country_code, member_count, contribution_count }]` — top 5 active chapters by `building_audit_logs` count in chapter scope over last 30 days.
+
+**SECURITY DEFINER.** `is_admin()` only. **`GRANT EXECUTE`** to `authenticated`.
+
+**Client:** `src/features/admin/api/programme.ts` → `fetchProgrammeHealthSummary()`, called via TanStack Query in `src/features/admin/pages/ProgrammeHealth.tsx`.
+
+**Migration:** `supabase/migrations/20271120000000_programme_health_rpc.sql`.
+
 ### App API / admin UI
 
 - **List / create:** `src/features/admin/pages/AmbassadorChapters.tsx` — table + “New chapter” dialog; Zod `ambassadorChapterCreateSchema` in `src/lib/validations/ambassador.ts`.
 - **Detail / members:** `src/features/admin/pages/AmbassadorChapterDetail.tsx` — edit chapter fields, list members, add member (username search on `profiles`), edit role/status, remove member.
 - **Routes:** `/admin/ambassadors`, `/admin/ambassadors/applications`, `/admin/ambassadors/coverage`, `/admin/ambassadors/:chapterId` in `app/routes.ts`; sidebar **Ambassadors** and **Ambassador coverage** in `AdminSidebar.tsx`.
+- **Programme platform routes:** `/admin/programme` (redirects to `/admin/programme/health`), `/admin/programme/health` — sidebar **Programme → Health Dashboard**.
 - **Public apply + Embassy:** `/become-ambassador` (`BecomeAmbassador.tsx`), `/embassy` (`Embassy.tsx` + `AmbassadorGuard.tsx` via **`has_embassy_portal_access`**).
 
 **Migrations:** `supabase/migrations/20270870000000_ambassador_foundation.sql` then **`20270870100000_ambassador_applications.sql`** then **`20270870200000_ambassador_task_feed_rpcs.sql`** then **`20270870300000_ambassador_leadership_rpcs.sql`** then **`20270870400000_ambassador_phase5_national_overview_admin_coverage.sql`** then **`20270870500000_ambassador_phase6_location_review.sql`** — apply in Supabase SQL Editor in order (then run `npm run gen-types` if the hosted project should match committed `types.ts`).

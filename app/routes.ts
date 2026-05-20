@@ -74,6 +74,8 @@ export default [
     route("/admin/system", "pages/AdminSystemPlaceholder.tsx"),
     route("/admin/feedback", "features/admin/pages/Feedback.tsx"),
     route("/admin/events", "features/admin/pages/AdminEvents.tsx"),
+    route("/admin/programme", "features/admin/pages/ProgrammeRedirect.tsx"),
+    route("/admin/programme/health", "features/admin/pages/ProgrammeHealth.tsx"),
     route("/admin/updates", "features/admin/pages/UpdatesList.tsx"),
     route("/admin/updates/new", "features/admin/pages/UpdateForm.tsx", { id: "admin-update-new" }),
     route("/admin/updates/:updateId", "features/admin/pages/UpdateForm.tsx", { id: "admin-update-edit" }),

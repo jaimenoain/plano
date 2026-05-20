@@ -22,6 +22,7 @@ import {
   Trophy,
   Target,
   Newspaper,
+  HeartPulse,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
@@ -39,6 +40,10 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+
+const programmeItems = [
+  { title: "Health Dashboard", url: "/admin/programme/health", icon: HeartPulse },
+];
 
 const contentItems = [
   { title: "Buildings", url: "/admin/buildings", icon: Building2 },
@@ -143,6 +148,7 @@ export function AdminSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
         {[
+          { label: "Programme", items: programmeItems },
           { label: "Content", items: contentItems },
           { label: "Community", items: communityItems },
           { label: "Awards", items: awardsItems },

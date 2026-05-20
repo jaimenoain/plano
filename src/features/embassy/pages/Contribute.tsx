@@ -530,11 +530,12 @@ function ResearchReviewPanel({
       if (!item.accepted) continue;
       const v = item.editedValue.trim();
       if (!v) continue;
-      if (item.field === "year_completed") {
+      if (item.field === "year_completed" || item.field === "storeys") {
         const n = parseInt(v, 10);
         if (!isNaN(n)) updates[item.field] = n;
-      } else if (item.field === "materials" || item.field === "typology") {
-        updates[item.field] = v.split(",").map((s) => s.trim()).filter(Boolean);
+      } else if (item.field === "size_sqm" || item.field === "height_m") {
+        const n = parseFloat(v);
+        if (!isNaN(n)) updates[item.field] = n;
       } else {
         updates[item.field] = v;
       }
@@ -1176,7 +1177,6 @@ function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => 
       ids.forEach((id) => next.add(id));
       return next;
     });
-    toast.success(`${ids.length} item${ids.length === 1 ? "" : "s"} approved`);
   };
 
   const handleFlag = (id: string, label: string, reason: FlagReason) => {
@@ -1725,7 +1725,13 @@ function VideosModerationTab({
           );
         })}
       </div>
-      <ApproveAllButton ids={visible.map((v) => v.id)} onApproveAll={onApproveAll} />
+      <ApproveAllButton
+        ids={visible.map((v) => v.id)}
+        onApproveAll={(ids) => {
+          onApproveAll(ids);
+          toast.success(ids.length === 1 ? "Video approved" : `${ids.length} videos approved`);
+        }}
+      />
     </div>
   );
 }
