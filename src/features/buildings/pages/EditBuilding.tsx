@@ -373,7 +373,7 @@ toast.error("Unexpected error");
                                             variant="outline"
                                             size="sm"
                                             className="h-7 text-xs border-feedback-destructive/50 text-feedback-destructive hover:bg-feedback-destructive hover:text-white"
-                                            onClick={() => navigate(`/admin/merge/${buildingId}/${d.id}`)}
+                                            onClick={() => navigate(`/admin/merge/building/${buildingId}/${d.id}`)}
                                             type="button"
                                         >
                                             Review Duplicate

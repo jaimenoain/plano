@@ -382,6 +382,7 @@ export default function Explore() {
       next.add(buildingId);
       return next;
     });
+    toast("Building hidden");
     try {
       if (!user) return;
       const { error } = await supabase.from("user_buildings").upsert(

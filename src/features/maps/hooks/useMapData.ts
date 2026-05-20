@@ -195,8 +195,17 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
   // the UI when they all resolve at once.
   const abortRef = useRef<AbortController | null>(null);
 
+  // Skip the RPC when the bounds are the all-zero fallback passed by PlanoMap
+  // before the map has loaded. A real viewport always has non-zero extent.
+  const isDegenerateBounds =
+    fetchBox.north === 0 &&
+    fetchBox.south === 0 &&
+    fetchBox.east === 0 &&
+    fetchBox.west === 0;
+
   const { data: clusters, isLoading, isFetching, error } = useQuery({
     queryKey: ['map-clusters-v3', fetchBox, zoomLevel, filterKey, mode],
+    enabled: !isDegenerateBounds,
     queryFn: async () => {
       abortRef.current?.abort();
       const controller = new AbortController();

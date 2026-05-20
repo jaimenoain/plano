@@ -1,16 +1,17 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  fetchAmbassadorBuildingsMissingMetadata, 
-  fetchAmbassadorUnclaimedFirms, 
+import {
+  fetchAmbassadorBuildingsMissingMetadata,
+  fetchAmbassadorUnclaimedFirms,
   fetchAmbassadorRecentBuildings,
   fetchAmbassadorBuildingsWithoutPhotos,
-  type AmbassadorBuildingMissingMeta, 
+  fetchModerationPhotos,
+  fetchModerationVideos,
+  fetchModerationCredits,
   type AmbassadorUnclaimedFirm,
-  type AmbassadorRecentBuilding,
-  type AmbassadorBuildingNoPhoto
 } from "@/features/embassy/api/taskFeed";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,20 +19,32 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router";
-import { 
-  Building2, Search, ArrowLeft, Filter, CheckCircle2, 
-  AlertCircle, MessageSquare, History, Check, Loader2,
-  Camera, Sparkles, UserPlus, ExternalLink, Map
+import {
+  Search, ArrowLeft, Filter, CheckCircle2,
+  AlertCircle, MessageSquare, Loader2,
+  Camera, Sparkles, UserPlus, ExternalLink, Map, List,
+  Flag, Video, Award,
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext";
 import { PlanoMap } from "@/features/maps/components/PlanoMap";
-import { List } from "lucide-react";
+
+interface OutreachLogRow {
+  id: string;
+  firm_id: string;
+  ambassador_id: string;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 type ToolType = "research" | "photography" | "outreach" | "curation" | "community" | null;
 
@@ -64,8 +77,8 @@ const ALL_TOOLS: ToolDefinition[] = [
   },
   {
     key: "curation",
-    title: "Curation",
-    description: "Review tags, group buildings into collections, and highlight gems.",
+    title: "Moderation",
+    description: "Review new buildings, photos, videos, and credits before they go live.",
     icon: <Filter className="h-6 w-6" />,
   },
   {
@@ -89,7 +102,15 @@ function sortToolsByPreference(preferred: string[] | null | undefined): ToolDefi
 
 export default function ContributePage() {
   const { user } = useAuth();
-  const [activeTool, setActiveTool] = useState<ToolType>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTool = (searchParams.get("tool") as ToolType) ?? null;
+  const setActiveTool = (tool: ToolType) => {
+    if (tool) {
+      setSearchParams({ tool }, { replace: true });
+    } else {
+      setSearchParams({}, { replace: true });
+    }
+  };
 
   // Fetch membership for chapterId and preferred_tools
   const { data: membership } = useQuery({
@@ -335,10 +356,7 @@ function ArchitectOutreachTool({ chapterId, onBack }: { chapterId: string; onBac
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [logOpen, setLogOpen] = useState(false);
-  const [selectedFirm, setSelectedFirm] = useState<AmbassadorUnclaimedFirm | null>(null);
-  const [notes, setNotes] = useState("");
-  const [status, setStatus] = useState<string>("contacted");
+  const [drawerFirm, setDrawerFirm] = useState<AmbassadorUnclaimedFirm | null>(null);
 
   const { data: firms, isLoading, error } = useQuery({
     queryKey: ["embassy-unclaimed-firms", chapterId],
@@ -346,58 +364,36 @@ function ArchitectOutreachTool({ chapterId, onBack }: { chapterId: string; onBac
     enabled: !!chapterId,
   });
 
-  const { data: outreachLogs } = useQuery({
-    queryKey: ["embassy-outreach-logs"],
+  // My most recent log per firm — used only for the status badge in the list
+  const { data: myLogs } = useQuery({
+    queryKey: ["embassy-outreach-logs", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
         .from("outreach_log")
-        .select("*")
-        .eq("ambassador_id", user?.id);
+        .select("firm_id, status, created_at")
+        .eq("ambassador_id", user?.id)
+        .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+      return data as { firm_id: string; status: string; created_at: string }[];
     },
     enabled: !!user,
   });
 
+  const myLogByFirm = useMemo(() => {
+    const map: Record<string, string> = {};
+    myLogs?.forEach(l => {
+      if (!map[l.firm_id]) map[l.firm_id] = l.status;
+    });
+    return map;
+  }, [myLogs]);
+
   const filteredFirms = useMemo(() => {
     if (!firms) return [];
-    return firms.filter(f => 
+    return firms.filter(f =>
       f.name.toLowerCase().includes(search.toLowerCase())
     );
   }, [firms, search]);
-
-  const logMutation = useMutation({
-    mutationFn: async (data: { firm_id: string, status: string, notes: string }) => {
-      const { error } = await supabase
-        .from("outreach_log")
-        .upsert({
-          firm_id: data.firm_id,
-          ambassador_id: user?.id,
-          status: data.status,
-          notes: data.notes,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'firm_id, ambassador_id' });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Outreach logged successfully");
-      setLogOpen(false);
-      setSelectedFirm(null);
-      setNotes("");
-      queryClient.invalidateQueries({ queryKey: ["embassy-outreach-logs"] });
-    },
-    onError: () => {
-      toast.error("Failed to log outreach.");
-    }
-  });
-
-  const openLog = (firm: AmbassadorUnclaimedFirm) => {
-    const existing = outreachLogs?.find(l => l.firm_id === firm.id);
-    setSelectedFirm(firm);
-    setNotes(existing?.notes || "");
-    setStatus(existing?.status || "contacted");
-    setLogOpen(true);
-  };
 
   return (
     <div className="space-y-6">
@@ -413,8 +409,8 @@ function ArchitectOutreachTool({ chapterId, onBack }: { chapterId: string; onBac
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input 
-          placeholder="Search firms..." 
+        <Input
+          placeholder="Search firms..."
           className="pl-10"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -439,110 +435,246 @@ function ArchitectOutreachTool({ chapterId, onBack }: { chapterId: string; onBac
       ) : (
         <div className="grid gap-4">
           {filteredFirms.map((f) => {
-            const log = outreachLogs?.find(l => l.firm_id === f.id);
+            const latestStatus = myLogByFirm[f.id];
             return (
-              <Card key={f.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group hover:border-brand-primary transition-all">
+              <Card
+                key={f.id}
+                className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer hover:border-brand-primary transition-all"
+                onClick={() => setDrawerFirm(f)}
+              >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold truncate">{f.name}</h3>
-                    {log && (
+                    {latestStatus && (
                       <Badge variant="secondary" className={cn(
                         "text-[10px] uppercase font-bold",
-                        log.status === 'claimed' ? "bg-green-500/10 text-green-600" : "bg-blue-500/10 text-blue-600"
+                        latestStatus === "claimed" ? "bg-green-500/10 text-green-600" :
+                        latestStatus === "declined" ? "bg-red-500/10 text-red-600" :
+                        latestStatus === "replied" ? "bg-purple-500/10 text-purple-600" :
+                        "bg-blue-500/10 text-blue-600"
                       )}>
-                        {log.status}
+                        {latestStatus}
                       </Badge>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {f.building_count} building{f.building_count === 1 ? "" : "s"} on Plano · {f.country || "Global"}
+                    {f.building_count} building{f.building_count === 1 ? "" : "s"} on Plano
+                    {f.country ? ` · ${f.country}` : ""}
                   </p>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to={`/company/${f.slug}`}>View Firm</Link>
-                  </Button>
-                  <Button size="sm" onClick={() => openLog(f)} className="gap-2">
-                    {log ? <History className="h-4 w-4" /> : <MessageSquare className="h-4 w-4" />}
-                    {log ? "Update Log" : "Log Outreach"}
-                  </Button>
-                </div>
+                <Button variant="outline" size="sm" className="shrink-0 gap-1.5">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Open
+                </Button>
               </Card>
             );
           })}
         </div>
       )}
 
-      <Dialog open={logOpen} onOpenChange={setLogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Log Outreach: {selectedFirm?.name}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <div className="flex flex-wrap gap-2">
-                {['contacted', 'replied', 'claimed', 'declined'].map((s) => (
-                  <Button
-                    key={s}
-                    variant={status === s ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setStatus(s)}
-                    className="capitalize"
-                  >
-                    {s}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="outreach-notes">Notes</Label>
-              <Textarea
-                id="outreach-notes"
-                placeholder="Details about the conversation, who you spoke to, etc."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={4}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setLogOpen(false)}>Cancel</Button>
-            <Button 
-              onClick={() => logMutation.mutate({ firm_id: selectedFirm!.id, status, notes })}
-              disabled={logMutation.isPending}
-            >
-              {logMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Log"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <FirmOutreachDrawer
+        firm={drawerFirm}
+        open={!!drawerFirm}
+        onClose={() => setDrawerFirm(null)}
+        userId={user?.id}
+        onLogSuccess={() =>
+          queryClient.invalidateQueries({ queryKey: ["embassy-outreach-logs", user?.id] })
+        }
+      />
     </div>
+  );
+}
+
+function FirmOutreachDrawer({
+  firm,
+  open,
+  onClose,
+  userId,
+  onLogSuccess,
+}: {
+  firm: AmbassadorUnclaimedFirm | null;
+  open: boolean;
+  onClose: () => void;
+  userId: string | undefined;
+  onLogSuccess: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const [notes, setNotes] = useState("");
+  const [status, setStatus] = useState("contacted");
+
+  const { data: logs, isLoading: logsLoading } = useQuery({
+    queryKey: ["embassy-firm-outreach-logs", firm?.id],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("outreach_log")
+        .select("*")
+        .eq("firm_id", firm!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as OutreachLogRow[];
+    },
+    enabled: !!firm?.id,
+  });
+
+  const logMutation = useMutation({
+    mutationFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from("outreach_log")
+        .insert({ firm_id: firm!.id, ambassador_id: userId, status, notes: notes || null });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Interaction logged");
+      setNotes("");
+      setStatus("contacted");
+      queryClient.invalidateQueries({ queryKey: ["embassy-firm-outreach-logs", firm?.id] });
+      onLogSuccess();
+    },
+    onError: () => toast.error("Failed to log interaction"),
+  });
+
+  const statusColors: Record<string, string> = {
+    claimed: "bg-green-500/10 text-green-600",
+    declined: "bg-red-500/10 text-red-600",
+    replied: "bg-purple-500/10 text-purple-600",
+    contacted: "bg-blue-500/10 text-blue-600",
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <SheetContent className="flex flex-col gap-0 p-0 w-full sm:max-w-md overflow-hidden">
+        {/* Firm header */}
+        <SheetHeader className="px-6 pt-6 pb-4 border-b shrink-0">
+          <SheetTitle className="truncate pr-6">{firm?.name}</SheetTitle>
+          <SheetDescription>
+            {firm?.building_count} building{firm?.building_count === 1 ? "" : "s"} on Plano
+            {firm?.country ? ` · ${firm.country}` : ""}
+          </SheetDescription>
+          {firm?.slug && (
+            <Button variant="outline" size="sm" asChild className="w-fit mt-1">
+              <Link to={`/company/${firm.slug}`} onClick={onClose}>
+                <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                View Firm Page
+              </Link>
+            </Button>
+          )}
+        </SheetHeader>
+
+        {/* Log new interaction */}
+        <div className="px-6 py-4 border-b shrink-0 bg-surface-muted/40 space-y-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Log Interaction</p>
+          <div className="flex flex-wrap gap-1.5">
+            {["contacted", "replied", "claimed", "declined"].map((s) => (
+              <Button
+                key={s}
+                variant={status === s ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatus(s)}
+                className="capitalize h-7 text-xs"
+              >
+                {s}
+              </Button>
+            ))}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="outreach-notes" className="text-xs">Notes</Label>
+            <Textarea
+              id="outreach-notes"
+              placeholder="Who you spoke to, what was discussed…"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              className="text-sm resize-none"
+            />
+          </div>
+          <Button
+            size="sm"
+            className="w-full"
+            onClick={() => logMutation.mutate()}
+            disabled={logMutation.isPending}
+          >
+            {logMutation.isPending
+              ? <Loader2 className="h-4 w-4 animate-spin" />
+              : "Save Interaction"}
+          </Button>
+        </div>
+
+        {/* Interaction timeline */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Interaction History</p>
+          {logsLoading ? (
+            <div className="space-y-3">
+              {[0, 1].map(i => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
+            </div>
+          ) : !logs?.length ? (
+            <div className="text-center py-8 text-sm text-muted-foreground">
+              No interactions logged yet.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {logs.map((log) => (
+                <div key={log.id} className="border rounded-lg p-3 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge
+                      variant="secondary"
+                      className={cn("text-[10px] uppercase font-bold", statusColors[log.status] ?? "bg-muted text-muted-foreground")}
+                    >
+                      {log.status}
+                    </Badge>
+                    <span className="text-[11px] text-muted-foreground">
+                      {new Date(log.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                    </span>
+                  </div>
+                  {log.notes && (
+                    <p className="text-sm text-foreground">{log.notes}</p>
+                  )}
+                  <p className="text-[11px] text-muted-foreground">
+                    {log.ambassador_id === userId ? "You" : "Another ambassador"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
 function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () => void }) {
   const [view, setView] = useState<"list" | "map">("map");
   const { state: { filters }, methods: { setFilter } } = useMapContext();
-  
+
+  // Keep refs so the effect always calls the latest setFilter / reads the
+  // latest filters without listing them as deps. Listing setFilter directly
+  // would cause the effect to re-run on every map pan/zoom because setFilter
+  // re-creates whenever filters changes (it closes over it), which triggers a
+  // redundant setMapURL call and pollutes the map init timing.
+  const setFilterRef = useRef(setFilter);
+  setFilterRef.current = setFilter;
+  const filtersRef = useRef(filters);
+  filtersRef.current = filters;
+
   const { data: buildings, isLoading, error } = useQuery({
     queryKey: ["embassy-buildings-no-photo", chapterId],
     queryFn: () => fetchAmbassadorBuildingsWithoutPhotos(chapterId),
     enabled: !!chapterId && view === "list",
   });
 
-  // Photography map is always active in Photography mode
+  // Enable/disable the photography-gap map filter when the view tab changes.
+  // Only re-runs on view change — not on every map interaction.
   useEffect(() => {
     if (view === "map") {
-      setFilter("photographyGaps", true);
-      // Default to "All gaps" if none selected
-      if (!filters.gapPhotoCounts || filters.gapPhotoCounts.length === 0) {
-        setFilter("gapPhotoCounts", [0, 1]); // Show 0 and 1-2 photos by default as "gaps"
+      setFilterRef.current("photographyGaps", true);
+      if (!filtersRef.current.gapPhotoCounts || filtersRef.current.gapPhotoCounts.length === 0) {
+        setFilterRef.current("gapPhotoCounts", [0, 1]);
       }
     } else {
-      setFilter("photographyGaps", false);
+      setFilterRef.current("photographyGaps", false);
     }
-  }, [view, setFilter]);
+  }, [view]);
 
   const gapFilters = [
     { label: "No photos", value: 0 },
@@ -659,12 +791,25 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
   );
 }
 
+type ModerationTab = "buildings" | "photos" | "videos" | "credits";
+
 function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => void }) {
-  const { data: buildings, isLoading, error } = useQuery({
-    queryKey: ["embassy-recent-buildings", chapterId],
-    queryFn: () => fetchAmbassadorRecentBuildings(chapterId),
-    enabled: !!chapterId,
-  });
+  const [tab, setTab] = useState<ModerationTab>("buildings");
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+
+  const handleApproveAll = (ids: string[]) => {
+    setDismissed((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+    toast.success(`${ids.length} item${ids.length === 1 ? "" : "s"} approved`);
+  };
+
+  const handleFlag = (id: string, label: string) => {
+    setDismissed((prev) => new Set(prev).add(id));
+    toast("Flagged for admin review", { description: label });
+  };
 
   return (
     <div className="space-y-6">
@@ -673,48 +818,409 @@ function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => 
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold tracking-tight">Curation</h1>
-          <p className="text-sm text-muted-foreground">Review recently added buildings and ensure they meet quality standards.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Moderation</h1>
+          <p className="text-sm text-muted-foreground">
+            Review new contributions and ensure they meet quality standards.
+          </p>
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="grid gap-4">
-          {[0, 1, 2].map(i => <Skeleton key={i} className="h-28 w-full rounded-xl" />)}
-        </div>
-      ) : error ? (
-        <div className="p-8 text-center border rounded-xl bg-destructive/5 text-destructive">
-          <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-          <p>Failed to load curation tasks.</p>
-        </div>
-      ) : buildings?.length === 0 ? (
-        <div className="p-12 text-center border border-dashed rounded-xl">
-          <Sparkles className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-          <p className="text-lg font-medium">Clear for now</p>
-          <p className="text-sm text-muted-foreground">No new buildings have been added recently.</p>
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {buildings?.map((b) => (
-            <Card key={b.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group hover:border-brand-primary transition-all">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold truncate">{b.name}</h3>
-                  <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground">
-                    New
+      <Tabs value={tab} onValueChange={(v) => setTab(v as ModerationTab)}>
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="buildings">Buildings</TabsTrigger>
+          <TabsTrigger value="photos">Photos</TabsTrigger>
+          <TabsTrigger value="videos">Videos</TabsTrigger>
+          <TabsTrigger value="credits">Credits</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="buildings" className="mt-6">
+          <BuildingsModerationTab
+            chapterId={chapterId}
+            dismissed={dismissed}
+            onApproveAll={handleApproveAll}
+            onFlag={handleFlag}
+          />
+        </TabsContent>
+
+        <TabsContent value="photos" className="mt-6">
+          <PhotosModerationTab
+            dismissed={dismissed}
+            onApproveAll={handleApproveAll}
+            onFlag={handleFlag}
+          />
+        </TabsContent>
+
+        <TabsContent value="videos" className="mt-6">
+          <VideosModerationTab
+            dismissed={dismissed}
+            onApproveAll={handleApproveAll}
+            onFlag={handleFlag}
+          />
+        </TabsContent>
+
+        <TabsContent value="credits" className="mt-6">
+          <CreditsModerationTab
+            dismissed={dismissed}
+            onApproveAll={handleApproveAll}
+            onFlag={handleFlag}
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function FlagButton({ id, label, onFlag }: { id: string; label: string; onFlag: (id: string, label: string) => void }) {
+  return (
+    <button
+      type="button"
+      title="Flag for review"
+      aria-label="Flag for review"
+      onClick={(e) => { e.stopPropagation(); onFlag(id, label); }}
+      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+    >
+      <Flag className="h-4 w-4" />
+    </button>
+  );
+}
+
+function ApproveAllButton({ ids, onApproveAll }: { ids: string[]; onApproveAll: (ids: string[]) => void }) {
+  if (ids.length === 0) return null;
+  return (
+    <div className="flex justify-end pt-2 border-t">
+      <Button variant="default" size="sm" onClick={() => onApproveAll(ids)}>
+        <CheckCircle2 className="h-4 w-4 mr-1.5" />
+        Approve all ({ids.length})
+      </Button>
+    </div>
+  );
+}
+
+function ModerationEmptyState({ icon, message }: { icon: React.ReactNode; message: string }) {
+  return (
+    <div className="p-12 text-center border border-dashed rounded-xl">
+      <div className="flex justify-center mb-3 text-muted-foreground">{icon}</div>
+      <p className="text-lg font-medium">All clear</p>
+      <p className="text-sm text-muted-foreground">{message}</p>
+    </div>
+  );
+}
+
+function BuildingsModerationTab({
+  chapterId,
+  dismissed,
+  onApproveAll,
+  onFlag,
+}: {
+  chapterId: string;
+  dismissed: Set<string>;
+  onApproveAll: (ids: string[]) => void;
+  onFlag: (id: string, label: string) => void;
+}) {
+  const { data: buildings, isLoading, error } = useQuery({
+    queryKey: ["embassy-recent-buildings", chapterId],
+    queryFn: () => fetchAmbassadorRecentBuildings(chapterId),
+    enabled: !!chapterId,
+  });
+
+  const visible = useMemo(
+    () => (buildings ?? []).filter((b) => !dismissed.has(b.id)),
+    [buildings, dismissed],
+  );
+
+  if (isLoading) return <ModerationSkeletons />;
+  if (error) return <ModerationError message="Failed to load buildings." />;
+  if (visible.length === 0)
+    return <ModerationEmptyState icon={<Sparkles className="h-10 w-10" />} message="No new buildings to review." />;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4">
+        {visible.map((b) => {
+          const addressLine = [b.address, b.city, b.country].filter(Boolean).join(", ");
+          const mapsUrl =
+            b.lat && b.lng
+              ? `https://www.google.com/maps/search/?api=1&query=${b.lat},${b.lng}`
+              : null;
+          return (
+            <Card key={b.id} className="overflow-hidden group hover:border-brand-primary transition-all">
+              <div className="flex flex-col sm:flex-row">
+                {b.hero_image_url ? (
+                  <div className="sm:w-36 sm:shrink-0 h-40 sm:h-auto bg-muted overflow-hidden">
+                    <img src={b.hero_image_url} alt={b.name} className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="hidden sm:flex sm:w-36 sm:shrink-0 items-center justify-center bg-muted text-muted-foreground">
+                    <Camera className="h-8 w-8 opacity-30" />
+                  </div>
+                )}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 flex-1 min-w-0">
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold truncate">{b.name}</h3>
+                      <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground shrink-0">
+                        New
+                      </Badge>
+                    </div>
+                    {addressLine && (
+                      <p className="text-xs text-muted-foreground truncate">{addressLine}</p>
+                    )}
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <p className="text-xs text-muted-foreground">
+                        Added by @{b.added_by_username || "anonymous"}
+                      </p>
+                      {mapsUrl && (
+                        <a
+                          href={mapsUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Map className="h-3 w-3" />
+                          Map
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <FlagButton id={b.id} label={b.name} onFlag={onFlag} />
+                    <Button size="sm" asChild>
+                      <Link to={getBuildingUrl(b.id, b.slug, b.short_id)}>Review</Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+      <ApproveAllButton ids={visible.map((b) => b.id)} onApproveAll={onApproveAll} />
+    </div>
+  );
+}
+
+function PhotosModerationTab({
+  dismissed,
+  onApproveAll,
+  onFlag,
+}: {
+  dismissed: Set<string>;
+  onApproveAll: (ids: string[]) => void;
+  onFlag: (id: string, label: string) => void;
+}) {
+  const { data: photos, isLoading, error } = useQuery({
+    queryKey: ["moderation-photos"],
+    queryFn: fetchModerationPhotos,
+  });
+
+  const visible = useMemo(
+    () => (photos ?? []).filter((p) => !dismissed.has(p.id)),
+    [photos, dismissed],
+  );
+
+  if (isLoading) return <ModerationSkeletons />;
+  if (error) return <ModerationError message="Failed to load photos." />;
+  if (visible.length === 0)
+    return <ModerationEmptyState icon={<Camera className="h-10 w-10" />} message="No new photos to review." />;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4">
+        {visible.map((p) => {
+          const imageUrl = getBuildingImageUrl(p.storage_path);
+          return (
+            <Card key={p.id} className="overflow-hidden group hover:border-brand-primary transition-all">
+              <div className="flex flex-col sm:flex-row">
+                <div className="sm:w-36 sm:shrink-0 h-40 sm:h-auto bg-muted overflow-hidden">
+                  {imageUrl ? (
+                    <img src={imageUrl} alt={p.caption ?? p.building_name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                      <Camera className="h-8 w-8 opacity-30" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 flex-1 min-w-0">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <h3 className="font-semibold truncate">{p.building_name}</h3>
+                    {p.caption && (
+                      <p className="text-xs text-muted-foreground truncate">{p.caption}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(p.created_at).toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <FlagButton id={p.id} label={`Photo on ${p.building_name}`} onFlag={onFlag} />
+                    <Button size="sm" asChild>
+                      <Link to={getBuildingUrl(p.building_id, p.building_slug, p.building_short_id)}>
+                        View Building
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+      <ApproveAllButton ids={visible.map((p) => p.id)} onApproveAll={onApproveAll} />
+    </div>
+  );
+}
+
+function VideosModerationTab({
+  dismissed,
+  onApproveAll,
+  onFlag,
+}: {
+  dismissed: Set<string>;
+  onApproveAll: (ids: string[]) => void;
+  onFlag: (id: string, label: string) => void;
+}) {
+  const { data: videos, isLoading, error } = useQuery({
+    queryKey: ["moderation-videos"],
+    queryFn: fetchModerationVideos,
+  });
+
+  const visible = useMemo(
+    () => (videos ?? []).filter((v) => !dismissed.has(v.id)),
+    [videos, dismissed],
+  );
+
+  if (isLoading) return <ModerationSkeletons />;
+  if (error) return <ModerationError message="Failed to load videos." />;
+  if (visible.length === 0)
+    return <ModerationEmptyState icon={<Video className="h-10 w-10" />} message="No new videos to review." />;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4">
+        {visible.map((v) => (
+          <Card key={v.id} className="p-5 group hover:border-brand-primary transition-all">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex items-center gap-2">
+                  <Video className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <h3 className="font-semibold truncate">{v.building_name}</h3>
+                </div>
+                <p className="text-xs text-muted-foreground truncate">{v.video_url}</p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(v.created_at).toLocaleDateString(undefined, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <FlagButton id={v.id} label={`Video on ${v.building_name}`} onFlag={onFlag} />
+                <Button size="sm" variant="outline" asChild>
+                  <a href={v.video_url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                    Watch
+                  </a>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link to={getBuildingUrl(v.building_id, v.building_slug, v.building_short_id)}>
+                    View Building
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+      <ApproveAllButton ids={visible.map((v) => v.id)} onApproveAll={onApproveAll} />
+    </div>
+  );
+}
+
+function CreditsModerationTab({
+  dismissed,
+  onApproveAll,
+  onFlag,
+}: {
+  dismissed: Set<string>;
+  onApproveAll: (ids: string[]) => void;
+  onFlag: (id: string, label: string) => void;
+}) {
+  const { data: credits, isLoading, error } = useQuery({
+    queryKey: ["moderation-credits"],
+    queryFn: fetchModerationCredits,
+  });
+
+  const visible = useMemo(
+    () => (credits ?? []).filter((c) => !dismissed.has(c.id)),
+    [credits, dismissed],
+  );
+
+  if (isLoading) return <ModerationSkeletons />;
+  if (error) return <ModerationError message="Failed to load credits." />;
+  if (visible.length === 0)
+    return <ModerationEmptyState icon={<Award className="h-10 w-10" />} message="No new credits to review." />;
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4">
+        {visible.map((c) => (
+          <Card key={c.id} className="p-5 group hover:border-brand-primary transition-all">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="min-w-0 flex-1 space-y-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold truncate">{c.building_name}</h3>
+                  <Badge variant="secondary" className="text-[10px] uppercase font-bold shrink-0">
+                    {c.role.replace(/_/g, " ")}
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground">Added by @{b.added_by_username || "anonymous"}</p>
+                {c.entity_name && (
+                  <p className="text-xs text-muted-foreground">{c.entity_name}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {new Date(c.created_at).toLocaleDateString(undefined, {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </p>
               </div>
-              <Button size="sm" asChild>
-                <Link to={getBuildingUrl(b.id, b.slug, b.short_id)}>
-                  Review
-                </Link>
-              </Button>
-            </Card>
-          ))}
-        </div>
-      )}
+              <div className="flex items-center gap-2 shrink-0">
+                <FlagButton id={c.id} label={`Credit on ${c.building_name}`} onFlag={onFlag} />
+                <Button size="sm" asChild>
+                  <Link to={getBuildingUrl(c.building_id, c.building_slug, c.building_short_id)}>
+                    View Building
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+      <ApproveAllButton ids={visible.map((c) => c.id)} onApproveAll={onApproveAll} />
+    </div>
+  );
+}
+
+function ModerationSkeletons() {
+  return (
+    <div className="grid gap-4">
+      {[0, 1, 2].map((i) => (
+        <Skeleton key={i} className="h-28 w-full rounded-xl" />
+      ))}
+    </div>
+  );
+}
+
+function ModerationError({ message }: { message: string }) {
+  return (
+    <div className="p-8 text-center border rounded-xl bg-destructive/5 text-destructive">
+      <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+      <p>{message}</p>
     </div>
   );
 }

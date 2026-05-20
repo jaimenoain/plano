@@ -264,9 +264,16 @@ export function DiscoveryCard({
           setIsSaved(true);
           setShowRating(true);
           saveToSupabase("pending");
+          // Snap the card back to centre so it doesn't appear frozen mid-swipe
+          // while the rating overlay is visible.
+          void animate(x, 0, { type: "spring", stiffness: 520, damping: 38 });
         }
       } else if (commitLeft && onSwipeHide) {
-        onSwipeHide();
+        void animate(x, -(el.clientWidth || 375) * 1.5, {
+          type: "tween",
+          duration: 0.22,
+          ease: [0.4, 0, 1, 1],
+        }).then(() => onSwipeHide());
       } else {
         void animate(x, 0, { type: "spring", stiffness: 520, damping: 38 });
       }

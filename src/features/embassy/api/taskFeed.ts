@@ -70,3 +70,104 @@ export async function fetchAmbassadorMyAuditTimeline(): Promise<AmbassadorAuditR
   if (error) throw error;
   return data ?? [];
 }
+
+export type ModerationPhotoItem = {
+  id: string;
+  created_at: string;
+  storage_path: string;
+  caption: string | null;
+  building_id: string;
+  building_name: string;
+  building_slug: string | null;
+  building_short_id: number | null;
+};
+
+export type ModerationVideoItem = {
+  id: string;
+  created_at: string;
+  video_url: string;
+  building_id: string;
+  building_name: string;
+  building_slug: string | null;
+  building_short_id: number | null;
+};
+
+export type ModerationCreditItem = {
+  id: string;
+  created_at: string;
+  role: string;
+  building_id: string;
+  building_name: string;
+  building_slug: string | null;
+  building_short_id: number | null;
+  entity_name: string | null;
+};
+
+export async function fetchModerationPhotos(): Promise<ModerationPhotoItem[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from("review_images")
+    .select(
+      "id, created_at, storage_path, caption, building_posts!inner(building_id, buildings!inner(id, name, slug, short_id))",
+    )
+    .order("created_at", { ascending: false })
+    .limit(EMBASSY_TASK_FEED_LIMIT);
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    created_at: row.created_at,
+    storage_path: row.storage_path,
+    caption: row.caption,
+    building_id: row.building_posts.buildings.id,
+    building_name: row.building_posts.buildings.name,
+    building_slug: row.building_posts.buildings.slug,
+    building_short_id: row.building_posts.buildings.short_id,
+  }));
+}
+
+export async function fetchModerationVideos(): Promise<ModerationVideoItem[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from("building_posts")
+    .select(
+      "id, created_at, video_url, building_id, buildings!inner(id, name, slug, short_id)",
+    )
+    .not("video_url", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(EMBASSY_TASK_FEED_LIMIT);
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    created_at: row.created_at,
+    video_url: row.video_url,
+    building_id: row.buildings.id,
+    building_name: row.buildings.name,
+    building_slug: row.buildings.slug,
+    building_short_id: row.buildings.short_id,
+  }));
+}
+
+export async function fetchModerationCredits(): Promise<ModerationCreditItem[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from("building_credits")
+    .select(
+      "id, created_at, role, building_id, buildings!inner(id, name, slug, short_id), people!building_credits_person_id_fkey(name), companies!building_credits_company_id_fkey(name)",
+    )
+    .order("created_at", { ascending: false })
+    .limit(EMBASSY_TASK_FEED_LIMIT);
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((row: any) => ({
+    id: row.id,
+    created_at: row.created_at,
+    role: row.role,
+    building_id: row.buildings.id,
+    building_name: row.buildings.name,
+    building_slug: row.buildings.slug,
+    building_short_id: row.buildings.short_id,
+    entity_name: row.people?.name ?? row.companies?.name ?? null,
+  }));
+}

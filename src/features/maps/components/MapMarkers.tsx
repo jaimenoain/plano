@@ -258,6 +258,7 @@ export function MapMarkers({
                   cluster={activeCluster}
                   onRemoveFromCollection={onRemoveFromCollection}
                   onAddCandidate={onAddCandidate}
+                  fullWidth
                 />
               </div>
             </SheetContent>

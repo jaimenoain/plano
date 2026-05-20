@@ -173,7 +173,7 @@ export function BuildingSidebar({
     placeholderData: keepPreviousData,
   });
 
-  const isLoading = findModeBuildings ? false : (browseLoading && !bounds);
+  const isLoading = findModeBuildings ? false : browseLoading;
   const isFetching = findModeBuildings ? false : browseFetching;
 
   // Infinite scroll observer (Browse mode only)

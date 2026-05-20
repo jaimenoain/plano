@@ -24,6 +24,8 @@ import { useQueryClient } from '@tanstack/react-query';
 /** Single surface for map hover card (MapLibre outer frame is reset in index.css) */
 const POPUP_PANEL =
   'relative flex w-[200px] max-w-xs flex-col overflow-hidden rounded-sm border border-border-default bg-surface-card shadow-sm';
+const SHEET_PANEL =
+  'relative flex w-full flex-col overflow-hidden bg-surface-card';
 
 interface BuildingPopupContentProps {
   cluster: ClusterResponse;
@@ -31,6 +33,8 @@ interface BuildingPopupContentProps {
   onMouseLeave?: () => void;
   onRemoveFromCollection?: (id: string) => void;
   onAddCandidate?: (id: string) => void;
+  /** When true, renders full-width (for mobile bottom sheet). Strips fixed popup dimensions. */
+  fullWidth?: boolean;
 }
 
 export function BuildingPopupContent({
@@ -38,13 +42,15 @@ export function BuildingPopupContent({
   onMouseEnter,
   onMouseLeave,
   onRemoveFromCollection,
-  onAddCandidate
+  onAddCandidate,
+  fullWidth = false,
 }: BuildingPopupContentProps) {
   const { user } = useAuth();
   const { statuses, ratings } = useUserBuildingStatuses();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { state: { filters } } = useMapContext();
+  const panelClass = fullWidth ? SHEET_PANEL : POPUP_PANEL;
   const [isSaving, setIsSaving] = useState(false);
 
   // Interaction State
@@ -238,7 +244,7 @@ export function BuildingPopupContent({
   if (cluster.is_custom_marker) {
       return (
         <div
-            className={POPUP_PANEL}
+            className={panelClass}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
@@ -332,7 +338,7 @@ export function BuildingPopupContent({
   if (cluster.is_candidate) {
       return (
         <div
-            className={POPUP_PANEL}
+            className={panelClass}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
@@ -391,7 +397,7 @@ export function BuildingPopupContent({
   // Standard Building Logic
   return (
     <div
-      className={POPUP_PANEL}
+      className={panelClass}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >

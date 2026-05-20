@@ -41,11 +41,34 @@ interface MapContextValue {
 
 const MapContext = createContext<MapContextValue | null>(null);
 
+/**
+ * Derives a rough viewport bounding box from map centre + zoom level.
+ * Uses a conservative 1280×800 px viewport assumption. The result is only
+ * used to prime both the cluster and SERP queries before the map's `onLoad`
+ * fires — real bounds replace it as soon as the map is interactive.
+ */
+function approximateBoundsFromCenter(lat: number, lng: number, zoom: number): Bounds {
+  const degsPerTile = 360 / Math.pow(2, zoom);
+  const lngHalf = (degsPerTile * 1280) / 256 / 2;
+  const latHalf = Math.min((degsPerTile * 800) / 256 / 2, 85);
+  return {
+    north: Math.min(85, lat + latHalf),
+    south: Math.max(-85, lat - latHalf),
+    east: Math.min(180, lng + lngHalf),
+    west: Math.max(-180, lng - lngHalf),
+  };
+}
+
 export const MapProvider = ({ children }: { children: ReactNode }) => {
   const { lat, lng, zoom, mode, filters, setMapURL } = useURLMapState();
   const { updateMapState } = useStableMapUpdate(setMapURL);
 
-  const [bounds, setBounds] = useState<Bounds | null>(null);
+  // Pre-compute approximate bounds from URL params so the cluster and SERP
+  // queries can fire immediately — before the map's `onLoad` event fires and
+  // sets real bounds. Real bounds replace this via setBounds on `onLoad`.
+  const [bounds, setBounds] = useState<Bounds | null>(
+    () => approximateBoundsFromCenter(lat, lng, zoom)
+  );
   const [fitBounds, setFitBounds] = useState<Bounds | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [findModeBuildings, setFindModeBuildings] = useState<BuildingSearchHit[] | null>(null);

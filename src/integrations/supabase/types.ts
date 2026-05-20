@@ -3326,11 +3326,15 @@ export type Database = {
       get_ambassador_recent_buildings: {
         Args: { p_chapter_id: string; p_limit?: number }
         Returns: {
+          added_by_username: string | null
+          address: string | null
           city: string | null
           country: string | null
           created_at: string | null
           hero_image_url: string | null
           id: string
+          lat: number | null
+          lng: number | null
           name: string
           short_id: number
           slug: string

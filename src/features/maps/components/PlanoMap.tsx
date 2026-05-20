@@ -133,6 +133,12 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
 
   const onLoad = useCallback((evt: { target: maplibregl.Map }) => {
     setIsMapLoaded(true);
+    // Force MapLibre to re-read container dimensions before reading bounds.
+    // Without this, maps rendered inside freshly-mounted flex containers (e.g.
+    // the Photography tool's fresh MapProvider) can report a degenerate
+    // bounding box on first load, causing the initial cluster query to use
+    // zero bounds and return no markers until the user interacts.
+    evt.target.resize();
     flushPendingViewport(evt.target, evt.target.getZoom());
     updateBounds(evt.target);
     if (lat === DEFAULT_LAT && lng === DEFAULT_LNG && zoom === DEFAULT_ZOOM) {
