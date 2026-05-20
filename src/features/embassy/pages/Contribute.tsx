@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router";
+import { useSearchParams, Link } from "react-router";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { Link } from "react-router";
 import {
   Search, ArrowLeft, Filter, CheckCircle2,
   AlertCircle, MessageSquare, Loader2,
@@ -26,7 +25,8 @@ import {
   Flag, Video, Award, Users,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getBuildingImageUrl } from "@/utils/image";
+import { getBuildingImageUrl, getStorageAssetUrl } from "@/utils/image";
+import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { getBuildingUrl } from "@/utils/url";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -1113,40 +1113,42 @@ function VideosModerationTab({
   return (
     <div className="space-y-4">
       <div className="grid gap-4">
-        {visible.map((v) => (
-          <Card key={v.id} className="p-5 group hover:border-brand-primary transition-all">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex items-center gap-2">
-                  <Video className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <h3 className="font-semibold truncate">{v.building_name}</h3>
+        {visible.map((v) => {
+          const resolvedUrl = getStorageAssetUrl(v.video_url) ?? v.video_url;
+          return (
+            <Card key={v.id} className="p-5 group hover:border-brand-primary transition-all">
+              <div className="space-y-4">
+                <VideoPlayer
+                  src={resolvedUrl}
+                  className="aspect-video w-full rounded-sm"
+                />
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1 space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <Video className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      <h3 className="font-semibold truncate">{v.building_name}</h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(v.created_at).toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <FlagButton id={v.id} label={`Video on ${v.building_name}`} onFlag={onFlag} />
+                    <Button size="sm" asChild>
+                      <Link to={getBuildingUrl(v.building_id, v.building_slug, v.building_short_id)}>
+                        View Building
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground truncate">{v.video_url}</p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(v.created_at).toLocaleDateString(undefined, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </p>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <FlagButton id={v.id} label={`Video on ${v.building_name}`} onFlag={onFlag} />
-                <Button size="sm" variant="outline" asChild>
-                  <a href={v.video_url} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                    Watch
-                  </a>
-                </Button>
-                <Button size="sm" asChild>
-                  <Link to={getBuildingUrl(v.building_id, v.building_slug, v.building_short_id)}>
-                    View Building
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
       <ApproveAllButton ids={visible.map((v) => v.id)} onApproveAll={onApproveAll} />
     </div>
@@ -1183,16 +1185,18 @@ function CreditsModerationTab({
         {visible.map((c) => (
           <Card key={c.id} className="p-5 group hover:border-brand-primary transition-all">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold truncate">{c.building_name}</h3>
-                  <Badge variant="secondary" className="text-[10px] uppercase font-bold shrink-0">
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-semibold truncate">
+                    {c.entity_name ?? <span className="italic text-muted-foreground">Unknown</span>}
+                  </h3>
+                  <Badge className="text-[10px] uppercase font-bold shrink-0 bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border-none">
                     {c.role.replace(/_/g, " ")}
                   </Badge>
                 </div>
-                {c.entity_name && (
-                  <p className="text-xs text-muted-foreground">{c.entity_name}</p>
-                )}
+                <p className="text-xs text-muted-foreground truncate">
+                  on {c.building_name}
+                </p>
                 <p className="text-xs text-muted-foreground">
                   {new Date(c.created_at).toLocaleDateString(undefined, {
                     year: "numeric",

@@ -7,10 +7,12 @@ import type { FeedbackRow } from "@/features/admin/feedback/feedbackTypes";
 
 interface CopyFeedbackClaudePromptButtonProps {
   row: FeedbackRow;
+  onAfterCopy?: () => void;
 }
 
 export function CopyFeedbackClaudePromptButton({
   row,
+  onAfterCopy,
 }: CopyFeedbackClaudePromptButtonProps) {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
@@ -21,6 +23,7 @@ export function CopyFeedbackClaudePromptButton({
       setCopied(true);
       toast({ title: "Claude Code prompt copied" });
       window.setTimeout(() => setCopied(false), 2000);
+      onAfterCopy?.();
     } catch {
       toast({
         variant: "destructive",

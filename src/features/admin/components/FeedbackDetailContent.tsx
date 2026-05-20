@@ -97,7 +97,14 @@ export function FeedbackDetailContent({
           <div className="rounded-sm border border-border-default bg-surface-card p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="font-medium text-text-primary">Claude Code prompt</p>
-              <CopyFeedbackClaudePromptButton row={row} />
+              <CopyFeedbackClaudePromptButton
+              row={row}
+              onAfterCopy={
+                !readOnly && row.status === "open"
+                  ? () => onStatusChange(row, "in_review")
+                  : undefined
+              }
+            />
             </div>
             <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap font-mono text-xs text-text-secondary">
               {claudePrompt}
