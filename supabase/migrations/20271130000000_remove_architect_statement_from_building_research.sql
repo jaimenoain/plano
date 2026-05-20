@@ -1,21 +1,20 @@
--- Migration: fix ambassador_apply_building_research RPC field set
+-- Migration: remove architect_statement from ambassador_apply_building_research
 --
--- The original RPC (20271108000000) applied updates to buildings.materials,
--- buildings.typology, and buildings.context — columns that do not exist on the
--- buildings table. Those fields are stored in junction tables (building_attributes,
--- building_functional_typologies) and cannot be patched via a simple UPDATE.
+-- The `architect_statement` column on `buildings` is reserved for verified
+-- architects of the building (see 20270616000000_architect_verification.sql).
+-- Only architects who have signed up and been verified for a building may set
+-- this field, via the BuildingForm flow gated by the architect guard trigger.
 --
--- This migration drops those three broken fields and adds the fields that are
--- present on the buildings table and visible in the Edit Building page:
---   access_cost, access_notes, alt_name, status, size_sqm, height_m, storeys
+-- The original AI research RPC (20271108000000) and its first fix
+-- (20271119000000) both accepted `architect_statement` in their JSONB
+-- payload, allowing ambassador-driven AI research to overwrite an architect's
+-- official statement. This migration recreates the RPC with `architect_statement`
+-- removed from both the audit snapshot and the UPDATE clause. Any future
+-- ai_research_apply payload that includes the key will simply be ignored.
 --
--- architect_statement is intentionally excluded from the AI research pipeline:
--- that column is reserved for verified architects of the building and must only
--- be set by them via the BuildingForm flow (see feedback df6fd550). Even though
--- the prior RPC `20271108000000` accepted it, this replacement removes it from
--- both the audit snapshot and the UPDATE so AI research can never write to it.
+-- All other field handling is identical to 20271119000000.
 --
--- Feedback ids: 9513bf1c-f7ba-4ea7-8785-7e0280fb4f58, df6fd550-e9f7-48b4-a9a7-7b29c5ad43b5
+-- Feedback id: df6fd550-e9f7-48b4-a9a7-7b29c5ad43b5
 
 CREATE OR REPLACE FUNCTION public.ambassador_apply_building_research(
   p_building_id uuid,
@@ -53,7 +52,7 @@ BEGIN
       USING HINT = 'Building is not in this ambassador chapter scope';
   END IF;
 
-  -- Snapshot current values for audit
+  -- Snapshot current values for audit (architect_statement intentionally omitted)
   SELECT jsonb_build_object(
     'year_completed',     year_completed,
     'status',             status,
@@ -70,7 +69,8 @@ BEGIN
     FROM buildings
    WHERE id = p_building_id;
 
-  -- Apply only the fields present in p_updates
+  -- Apply only the fields present in p_updates. architect_statement is NOT
+  -- accepted here — it remains the exclusive domain of verified architects.
   UPDATE buildings
      SET
        year_completed      = CASE WHEN p_updates ? 'year_completed'

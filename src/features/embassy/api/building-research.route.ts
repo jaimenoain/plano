@@ -64,7 +64,6 @@ Searchable fields and their value types:
 - size_sqm          → number — gross floor area in square metres (e.g. 4200)
 - height_m          → number — building height in metres to highest occupied floor or roof (e.g. 32.5)
 - storeys           → integer — number of above-ground floors (e.g. 8)
-- architect_statement → short text — a notable quote or official statement from the lead architect about the design intent. Verbatim where possible. Omit if none found.
 
 Rules:
 - Only include fields you found actual evidence for. Omit uncertain fields entirely.
@@ -168,7 +167,7 @@ export async function action({ request }: ActionFunctionArgs) {
 Name: ${building.name}
 Location: ${locationParts || "unknown"}
 
-Use web_search to find: year completed, current status, alternative name, access details (level/logistics/cost/notes), size (floor area, height, storeys), and architect statement.`;
+Use web_search to find: year completed, current status, alternative name, access details (level/logistics/cost/notes), and size (floor area, height, storeys).`;
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

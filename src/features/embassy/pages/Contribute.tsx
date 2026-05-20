@@ -14,6 +14,7 @@ import {
   approveBuilding,
   approvePhoto,
   approveCredit,
+  approveVideo,
   type AmbassadorUnclaimedFirm,
 } from "@/features/embassy/api/taskFeed";
 import type { BuildingResearchResult, ResearchDataPoint } from "@/features/embassy/api/building-research.route";
@@ -615,12 +616,13 @@ function ResearchReviewPanel({
                 </p>
 
                 {/* Editable value */}
-                {item.field === "access_logistics" ? (
+                {item.field === "access_notes" || item.field === "architect_statement" ? (
                   <Textarea
                     value={item.editedValue}
                     disabled={!item.accepted || isSaving}
                     onChange={(e) => handleValueChange(item.field, e.target.value)}
-                    className="text-sm resize-none min-h-[80px]"
+                    rows={3}
+                    className="text-sm min-h-[80px]"
                   />
                 ) : (
                   <Input
@@ -1349,18 +1351,6 @@ function FlagButton({
   );
 }
 
-function ApproveAllButton({ ids, onApproveAll }: { ids: string[]; onApproveAll: (ids: string[]) => void }) {
-  if (ids.length === 0) return null;
-  return (
-    <div className="flex justify-end pt-2 border-t">
-      <Button variant="default" size="sm" onClick={() => onApproveAll(ids)}>
-        <CheckCircle2 className="h-4 w-4 mr-1.5" />
-        Approve all ({ids.length})
-      </Button>
-    </div>
-  );
-}
-
 function ModerationEmptyState({ icon, message }: { icon: React.ReactNode; message: string }) {
   return (
     <div className="p-12 text-center border border-dashed rounded-xl">
@@ -1681,6 +1671,9 @@ function VideosModerationTab({
   onApproveAll: (ids: string[]) => void;
   onFlag: (id: string, label: string, reason: FlagReason) => void;
 }) {
+  const queryClient = useQueryClient();
+  const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set());
+
   const { data: videos, isLoading, error } = useQuery({
     queryKey: ["moderation-videos"],
     queryFn: fetchModerationVideos,
@@ -1691,16 +1684,45 @@ function VideosModerationTab({
     [videos, dismissed],
   );
 
+  async function handleApprove(ids: string[]) {
+    setApprovingIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+    const results = await Promise.allSettled(ids.map((id) => approveVideo(id)));
+    const succeeded = ids.filter((_, i) => results[i].status === "fulfilled");
+    const failed = ids.length - succeeded.length;
+    setApprovingIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.delete(id));
+      return next;
+    });
+    if (succeeded.length > 0) {
+      onApproveAll(succeeded);
+      queryClient.invalidateQueries({ queryKey: ["moderation-videos"] });
+      toast.success(
+        succeeded.length === 1 ? "Video approved" : `${succeeded.length} videos approved`,
+      );
+    }
+    if (failed > 0) {
+      toast.error(`${failed} approval${failed === 1 ? "" : "s"} failed — please retry`);
+    }
+  }
+
   if (isLoading) return <ModerationSkeletons />;
   if (error) return <ModerationError message="Failed to load videos." />;
   if (visible.length === 0)
     return <ModerationEmptyState icon={<Video className="h-10 w-10" />} message="No new videos to review." />;
+
+  const allIds = visible.map((v) => v.id);
 
   return (
     <div className="space-y-4">
       <div className="grid gap-4 lg:grid-cols-2">
         {visible.map((v) => {
           const resolvedUrl = getStorageAssetUrl(v.video_url) ?? v.video_url;
+          const isApproving = approvingIds.has(v.id);
           return (
             <Card key={v.id} className="overflow-hidden group hover:border-brand-primary transition-all">
               <div className="flex flex-col sm:flex-row">
@@ -1747,10 +1769,23 @@ function VideosModerationTab({
                   </div>
                   <div className="flex items-center gap-2">
                     <FlagButton id={v.id} label={`Video on ${v.building_name}`} onFlag={onFlag} />
-                    <Button size="sm" asChild className="flex-1">
+                    <Button size="sm" variant="outline" asChild className="flex-1">
                       <Link to={getBuildingUrl(v.building_id, v.building_slug, v.building_short_id)}>
-                        View Building
+                        View
                       </Link>
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={isApproving}
+                      onClick={() => handleApprove([v.id])}
+                      className="gap-1.5 flex-1"
+                    >
+                      {isApproving ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                      )}
+                      Approve
                     </Button>
                   </div>
                 </div>
@@ -1759,13 +1794,28 @@ function VideosModerationTab({
           );
         })}
       </div>
-      <ApproveAllButton
-        ids={visible.map((v) => v.id)}
-        onApproveAll={(ids) => {
-          onApproveAll(ids);
-          toast.success(ids.length === 1 ? "Video approved" : `${ids.length} videos approved`);
-        }}
-      />
+      {allIds.length > 0 && (
+        <div className="flex justify-end pt-2 border-t">
+          <Button
+            variant="default"
+            size="sm"
+            disabled={approvingIds.size > 0}
+            onClick={() => handleApprove(allIds)}
+          >
+            {approvingIds.size > 0 ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                Approving…
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                Approve all ({allIds.length})
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

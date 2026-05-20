@@ -61,8 +61,8 @@ type DraftIdea = {
   description: string | null;
   created_by: string;
   created_at: string;
-  ambassador_chapters: { name: string } | null;
-  profiles: { username: string } | null;
+  chapter_name: string | null;
+  author_username: string | null;
 };
 
 type FormState = {
@@ -133,17 +133,55 @@ export default function AmbassadorCampaigns() {
     chapter_scope: "all",
   });
 
-  const { data: draftIdeas = [], isLoading: ideasLoading } = useQuery({
+  const { data: draftIdeas = [], isLoading: ideasLoading, isError: ideasError } = useQuery({
     queryKey: ["admin-draft-ideas"],
     queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
+      const db = supabase as any;
+
+      // 1. Fetch all draft rows. No FK-hint joins — chapter_projects.created_by
+      //    references auth.users(id), not profiles(id), so `profiles!created_by`
+      //    fails to resolve and silently drops rows.
+      const { data: drafts, error: draftsError } = await db
         .from("chapter_projects")
-        .select("id, chapter_id, title, description, created_by, created_at, ambassador_chapters(name), profiles!created_by(username)")
+        .select("id, chapter_id, title, description, created_by, created_at")
         .eq("status", "draft")
         .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as DraftIdea[];
+      if (draftsError) throw draftsError;
+
+      const rows = (drafts ?? []) as Array<{
+        id: string;
+        chapter_id: string;
+        title: string;
+        description: string | null;
+        created_by: string;
+        created_at: string;
+      }>;
+
+      if (rows.length === 0) return [] as DraftIdea[];
+
+      const chapterIds = Array.from(new Set(rows.map((r) => r.chapter_id)));
+      const authorIds = Array.from(new Set(rows.map((r) => r.created_by)));
+
+      const [chaptersRes, profilesRes] = await Promise.all([
+        db.from("ambassador_chapters").select("id, name").in("id", chapterIds),
+        db.from("profiles").select("id, username").in("id", authorIds),
+      ]);
+
+      const chapterMap = new Map<string, string>(
+        ((chaptersRes.data ?? []) as Array<{ id: string; name: string }>).map((c) => [c.id, c.name]),
+      );
+      const profileMap = new Map<string, string>(
+        ((profilesRes.data ?? []) as Array<{ id: string; username: string | null }>)
+          .filter((p) => p.username)
+          .map((p) => [p.id, p.username as string]),
+      );
+
+      return rows.map<DraftIdea>((r) => ({
+        ...r,
+        chapter_name: chapterMap.get(r.chapter_id) ?? null,
+        author_username: profileMap.get(r.created_by) ?? null,
+      }));
     },
   });
 
@@ -275,6 +313,10 @@ export default function AmbassadorCampaigns() {
           <div className="flex justify-center py-8">
             <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
           </div>
+        ) : ideasError ? (
+          <p className="text-sm text-feedback-destructive py-4">
+            Couldn't load ambassador ideas. Check the console for details.
+          </p>
         ) : draftIdeas.length === 0 ? (
           <p className="text-sm text-text-secondary py-4">
             No pending ideas. Ambassadors can submit ideas from their chapter projects page.
@@ -313,8 +355,8 @@ export default function AmbassadorCampaigns() {
                 <div className="mt-auto pt-3 border-t border-border-default space-y-2">
                   <div className="flex items-center justify-between text-[11px] text-text-secondary">
                     <span>
-                      {idea.ambassador_chapters?.name ?? "Unknown chapter"}
-                      {idea.profiles?.username ? ` · @${idea.profiles.username}` : ""}
+                      {idea.chapter_name ?? "Unknown chapter"}
+                      {idea.author_username ? ` · @${idea.author_username}` : ""}
                     </span>
                     <span>{formatDistanceToNow(new Date(idea.created_at), { addSuffix: true })}</span>
                   </div>

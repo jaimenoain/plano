@@ -13,7 +13,7 @@ import {
   type FeedbackStatus,
 } from "@/features/admin/feedback/feedbackTypes";
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 5;
 
 interface FeedbackKanbanViewProps {
   rows: FeedbackRow[];

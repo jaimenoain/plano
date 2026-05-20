@@ -92,6 +92,14 @@ export async function approveCredit(creditId: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function approveVideo(postId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("ambassador_approve_video", {
+    p_post_id: postId,
+  });
+  if (error) throw error;
+}
+
 export async function fetchAmbassadorMyAuditTimeline(): Promise<AmbassadorAuditRow[]> {
   const { data, error } = await supabase.rpc("get_ambassador_my_audit_timeline", {
     p_limit: EMBASSY_TASK_FEED_LIMIT,
@@ -167,6 +175,7 @@ export async function fetchModerationVideos(): Promise<ModerationVideoItem[]> {
       "id, created_at, video_url, title, body, buildings!inner(id, name, slug, short_id), profiles!user_id(username)",
     )
     .not("video_url", "is", null)
+    .is("moderated_at", null)
     .order("created_at", { ascending: false })
     .limit(EMBASSY_TASK_FEED_LIMIT);
   if (error) throw error;
