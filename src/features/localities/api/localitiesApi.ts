@@ -157,6 +157,88 @@ export async function getLocalityBuildingsClient(
   return getLocalityBuildings(supabase, localityId, page, pageSize);
 }
 
+// ---------------------------------------------------------------------------
+// Editorial section data
+// ---------------------------------------------------------------------------
+
+export interface LocalityVolunteerTeamMember {
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  role: string;
+  exco_responsibility: string | null;
+}
+
+export interface LocalityContributor {
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  buildings_logged: number;
+  photos_uploaded: number;
+  reviews_written: number;
+  is_ambassador: boolean;
+}
+
+export interface LocalityCollectionItem {
+  id: string;
+  slug: string;
+  name: string;
+  owner_username: string;
+  owner_avatar_url: string | null;
+  building_count: number;
+  preview_image_urls: (string | null)[];
+}
+
+export async function getLocalityVolunteerTeam(
+  supabaseClient: AppSupabaseClient,
+  localityId: string,
+): Promise<LocalityVolunteerTeamMember[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabaseClient as any).rpc(
+    "get_locality_volunteer_team",
+    { p_locality_id: localityId },
+  );
+  if (error || !data) return [];
+  return data as LocalityVolunteerTeamMember[];
+}
+
+export async function getLocalityTopContributors(
+  supabaseClient: AppSupabaseClient,
+  localityId: string,
+  limit = 8,
+): Promise<LocalityContributor[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabaseClient as any).rpc(
+    "get_locality_top_contributors",
+    { p_locality_id: localityId, p_limit: limit },
+  );
+  if (error || !data) return [];
+  return (data as LocalityContributor[]).map((r) => ({
+    ...r,
+    buildings_logged: Number(r.buildings_logged),
+    photos_uploaded: Number(r.photos_uploaded),
+    reviews_written: Number(r.reviews_written),
+  }));
+}
+
+export async function getLocalityCollections(
+  supabaseClient: AppSupabaseClient,
+  localityId: string,
+  limit = 6,
+): Promise<LocalityCollectionItem[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabaseClient as any).rpc(
+    "get_locality_collections",
+    { p_locality_id: localityId, p_limit: limit },
+  );
+  if (error || !data) return [];
+  return (data as LocalityCollectionItem[]).map((r) => ({
+    ...r,
+    building_count: Number(r.building_count),
+    preview_image_urls: (r.preview_image_urls ?? []) as (string | null)[],
+  }));
+}
+
 /**
  * Client-side: fetch all buildings with a valid location for rendering on the map.
  * No pagination — capped at 500.

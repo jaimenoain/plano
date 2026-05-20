@@ -14,7 +14,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
-import { useMapContext } from '../providers/MapContext';
+import { useOptionalMapContext } from '../providers/MapContext';
 
 interface MapMarkersProps {
   clusters: ClusterResponse[];
@@ -32,7 +32,8 @@ export function MapMarkers({
   onAddCandidate
 }: MapMarkersProps) {
   const { current: map } = useMap();
-  const { state: { filters } } = useMapContext();
+  const mapCtx = useOptionalMapContext();
+  const photographyGaps = mapCtx?.state.filters.photographyGaps ?? false;
   const isMobile = useIsMobile();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -109,7 +110,7 @@ export function MapMarkers({
         const isCluster = cluster.is_cluster;
         const buildingUrl = !isCluster ? getBuildingUrl(String(cluster.id), cluster.slug) : '#';
 
-        let pinStyle = getPinStyle(cluster, { photographyGaps: filters.photographyGaps });
+        let pinStyle = getPinStyle(cluster, { photographyGaps });
 
         // Itinerary overrides
         const itinerarySequence = cluster.itinerary_sequence;
@@ -242,7 +243,7 @@ export function MapMarkers({
           </Marker>
         );
       }),
-    [displayClusters, map, handleMouseEnter, handleMouseLeave, highlightedId, isMobile, filters.photographyGaps]
+    [displayClusters, map, handleMouseEnter, handleMouseLeave, highlightedId, isMobile, photographyGaps]
   );
 
   return (

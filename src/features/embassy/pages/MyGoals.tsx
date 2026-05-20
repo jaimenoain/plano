@@ -194,7 +194,7 @@ export default function MyGoalsPage() {
             <Card className="p-1 overflow-hidden border-border-default">
               <div className="bg-surface-muted/50 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex justify-between">
                 <span>Ambassador</span>
-                <span>Edits (30d)</span>
+                <span>Points (30d)</span>
               </div>
               <div className="divide-y">
                 {loadingLeaderboard ? (
@@ -379,7 +379,7 @@ function LeaderboardRow({ member, rank, isCurrentUser }: {
         </p>
       </div>
       <div className="text-right tabular-nums">
-        <p className="font-bold text-sm">{member.edits_count}</p>
+        <p className="font-bold text-sm">{member.total_score}</p>
       </div>
     </div>
   );

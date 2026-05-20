@@ -33,6 +33,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
@@ -167,23 +168,21 @@ export function AdminSidebar() {
                       }
                       tooltip={item.title}
                     >
-                      <Link to={item.url} className="flex items-center justify-between w-full">
-                        <div className="flex items-center gap-2">
-                          <item.icon />
-                          <span>{item.title}</span>
-                        </div>
-                        {item.url === "/admin/awards/suggestions" && pendingCount > 0 && (
-                          <span className="bg-brand-primary text-text-inverse text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center shrink-0">
-                            {pendingCount}
-                          </span>
-                        )}
-                        {item.url === "/admin/awards/claims" && pendingClaimCount > 0 && (
-                          <span className="bg-brand-primary text-text-inverse text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center shrink-0">
-                            {pendingClaimCount}
-                          </span>
-                        )}
+                      <Link to={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
+                    {item.url === "/admin/awards/suggestions" && pendingCount > 0 && (
+                      <SidebarMenuBadge className="bg-brand-primary text-text-inverse">
+                        {pendingCount}
+                      </SidebarMenuBadge>
+                    )}
+                    {item.url === "/admin/awards/claims" && pendingClaimCount > 0 && (
+                      <SidebarMenuBadge className="bg-brand-primary text-text-inverse">
+                        {pendingClaimCount}
+                      </SidebarMenuBadge>
+                    )}
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>

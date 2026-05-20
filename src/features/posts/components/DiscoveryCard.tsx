@@ -631,7 +631,7 @@ export function DiscoveryCard({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Label */}
-          <p className="text-2xs font-medium tracking-[0.25em] uppercase text-white/30 mb-10">
+          <p className="text-2xs font-medium tracking-[0.25em] uppercase text-white/60 mb-10">
             Add points (optional)
           </p>
 
@@ -651,14 +651,14 @@ export function DiscoveryCard({
                   {val === null ? (
                     <Bookmark
                       className={`w-10 h-10 transition-colors ${
-                        isSelected ? "text-brand-primary" : "text-white/30"
+                        isSelected ? "text-brand-primary" : "text-white/70"
                       }`}
                       strokeWidth={isSelected ? 2 : 1.5}
                     />
                   ) : (
                     <span
                       className={`text-3xl sm:text-5xl font-bold leading-none tabular-nums transition-colors ${
-                        isSelected ? "text-brand-primary" : "text-white/30"
+                        isSelected ? "text-brand-primary" : "text-white/70"
                       }`}
                     >
                       {val}
@@ -671,7 +671,7 @@ export function DiscoveryCard({
                         ? "sr-only"
                         : isSelected
                           ? "text-brand-primary"
-                          : "text-white/20"
+                          : "text-white/55"
                     }`}
                   >
                     {val === null
@@ -685,7 +685,7 @@ export function DiscoveryCard({
 
           {/* Skip CTA */}
           <button
-            className="mt-12 text-xs font-medium uppercase tracking-[0.15em] text-white/20 hover:text-white/50 transition-colors"
+            className="mt-12 text-xs font-medium uppercase tracking-[0.15em] text-white/50 hover:text-white/80 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
               if (onSwipeSave) onSwipeSave();

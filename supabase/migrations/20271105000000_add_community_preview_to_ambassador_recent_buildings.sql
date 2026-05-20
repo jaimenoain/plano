@@ -52,7 +52,7 @@ BEGIN
     ST_X(b.location::geometry)::float8 AS lng,
     b.created_at,
     b.hero_image_url::text,
-    b.n::text,
+    b.community_preview_url::text AS n,
     p.username::text AS added_by_username
   FROM
     public.buildings b

@@ -4,44 +4,52 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Search, Camera, CheckCircle2, ArrowRight, Loader2, Landmark, Filter, UserPlus, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate, redirect, type LoaderFunctionArgs } from "react-router";
 import { cn } from "@/lib/utils";
 import { createSupabaseServerClient } from "@/lib/supabase.server";
+import { fetchChapterTeam, type ChapterTeamMember } from "@/features/embassy/api/leadership";
 
 type Step = 1 | 2 | 3;
-type ToolKey = "research" | "photography" | "outreach" | "curation" | "community";
+type ToolKey = "research" | "photography" | "outreach" | "moderation" | "community";
 
-const TOOLS: { key: ToolKey; title: string; description: string; icon: React.ReactNode }[] = [
+const TOOLS: { key: ToolKey; title: string; description: string; tip: string; icon: React.ReactNode }[] = [
   {
     key: "research",
     title: "Data & Research",
     description: "Complete missing metadata like architects, completion years, and styles.",
+    tip: "Start with the AI Research tool on the Contribute page — it surfaces buildings with gaps in your chapter and lets you accept or edit AI-suggested values before saving.",
     icon: <Search className="h-5 w-5" />,
   },
   {
     key: "photography",
     title: "Photography",
     description: "Find buildings that need photos and help document them visually.",
+    tip: "Use the Photography tool to find buildings near you that have no photos yet. Aim for exteriors in good light — a single clear shot makes a big difference for a building that's never been documented.",
     icon: <Camera className="h-5 w-5" />,
   },
   {
     key: "outreach",
     title: "Architect Outreach",
     description: "Help firms claim their portfolio and verify their credits.",
+    tip: "Head to the Outreach CRM on the Contribute page to see firms in your chapter with unclaimed buildings. A short, personal message explaining Plano's mission tends to get the best response.",
     icon: <CheckCircle2 className="h-5 w-5" />,
   },
   {
-    key: "curation",
-    title: "Curation",
+    key: "moderation",
+    title: "Moderation",
     description: "Review tags, group buildings into collections, and highlight gems.",
+    tip: "The Moderation tool shows the latest contributions from your chapter. Work through the queue regularly — approving or flagging a few items a day keeps the record clean.",
     icon: <Filter className="h-5 w-5" />,
   },
   {
     key: "community",
     title: "Grow Community",
     description: "Invite architects and firms in your area to join Plano.",
+    tip: "The best leads are architects and firms whose work is already in Plano but who haven't joined yet. A personal introduction from a local ambassador converts far better than a cold invite.",
     icon: <UserPlus className="h-5 w-5" />,
   },
 ];
@@ -85,7 +93,7 @@ export default function OnboardingPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ambassador_memberships")
-        .select(`*, chapter:ambassador_chapters(name)`)
+        .select(`*, chapter:ambassador_chapters(id, name)`)
         .eq("user_id", user?.id)
         .single();
       if (error) throw error;
@@ -93,6 +101,19 @@ export default function OnboardingPage() {
     },
     enabled: !!user,
   });
+
+  const chapterId = membership?.chapter?.id as string | undefined;
+
+  const { data: teamMembers } = useQuery({
+    queryKey: ["chapter-team", chapterId],
+    queryFn: () => fetchChapterTeam(chapterId!),
+    enabled: !!chapterId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const leadership = (teamMembers ?? []).filter(
+    (m: ChapterTeamMember) => m.role === "president" || m.role === "exco"
+  );
 
   const toggleTool = (key: ToolKey) => {
     setSelectedTools((prev) =>
@@ -121,7 +142,7 @@ export default function OnboardingPage() {
   const nextStep = () => setStep((s) => (s + 1) as Step);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+    <div className="min-h-[calc(100vh-5rem)] sm:min-h-[calc(100vh-6rem)] bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-xl space-y-8">
         <div className="flex justify-center mb-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-primary/10 text-brand-primary">
@@ -169,7 +190,7 @@ export default function OnboardingPage() {
             <div className="space-y-2 text-center">
               <h2 className="text-2xl font-bold tracking-tight">Pick your focus areas</h2>
               <p className="text-muted-foreground">
-                Select the tools you'd like to help with. Your first pick will appear at the top of your Contribute page.
+                Pick the areas where you'll make the most impact — tap them in priority order. Your Contribute page will be arranged to match.
               </p>
             </div>
 
@@ -226,39 +247,87 @@ export default function OnboardingPage() {
         )}
 
         {step === 3 && (
-          <div className="space-y-8 text-center animate-in fade-in slide-in-from-right-4 duration-500">
+          <div className="space-y-6 text-center animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="space-y-2">
               <h2 className="text-2xl font-bold tracking-tight">You're all set</h2>
               <p className="text-muted-foreground">
-                Your Contribute page will be ordered to match your focus areas.
+                Here's how to make the most of the areas you've chosen.
               </p>
             </div>
 
-            <div className="bg-surface-muted/30 border rounded-xl p-6 text-left space-y-4">
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Your focus areas
-                </p>
-                {selectedTools.map((key, i) => {
-                  const tool = TOOLS.find((t) => t.key === key)!;
-                  return (
-                    <div key={key} className="flex items-center gap-3">
+            {/* Focus areas with tips */}
+            <div className="text-left space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
+                Your focus areas
+              </p>
+              {selectedTools.map((key, i) => {
+                const tool = TOOLS.find((t) => t.key === key)!;
+                return (
+                  <div key={key} className="border rounded-xl p-4 space-y-2 bg-surface-muted/20">
+                    <div className="flex items-center gap-3">
                       <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-primary text-white text-xs font-bold">
                         {i + 1}
                       </div>
-                      <span className="font-medium text-sm">{tool.title}</span>
+                      <span className="font-semibold text-sm">{tool.title}</span>
                     </div>
-                  );
-                })}
+                    <p className="text-xs text-muted-foreground leading-relaxed pl-9">
+                      {tool.tip}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Leadership contacts */}
+            {leadership.length > 0 && (
+              <div className="text-left border rounded-xl p-4 space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Questions? Reach out to your leadership
+                </p>
+                <div className="space-y-2">
+                  {leadership.map((member: ChapterTeamMember) => {
+                    const initials = member.username
+                      .split(/[\s_-]/)
+                      .map((p: string) => p[0]?.toUpperCase() ?? "")
+                      .slice(0, 2)
+                      .join("");
+                    return (
+                      <div key={member.user_id} className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8 shrink-0">
+                          <AvatarImage src={member.avatar_url ?? undefined} alt={member.username} />
+                          <AvatarFallback className="text-xs font-semibold">{initials}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-sm font-medium truncate">@{member.username}</span>
+                          {member.role === "president" ? (
+                            <Badge className="text-[10px] uppercase font-bold bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border-none shrink-0">
+                              President
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="text-[10px] uppercase font-bold shrink-0">
+                              ExCo
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  You can message them directly from the{" "}
+                  <span className="font-medium text-text-primary">Team</span> tab once you're in the portal.
+                </p>
               </div>
-              <div className="flex items-start gap-4 pt-2 border-t">
-                <div className="h-8 w-8 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center shrink-0">
-                  <Landmark className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-semibold">Portal access granted</p>
-                  <p className="text-sm text-muted-foreground">All ambassador tools are now unlocked for you.</p>
-                </div>
+            )}
+
+            {/* Portal access */}
+            <div className="flex items-start gap-4 border rounded-xl p-4 text-left">
+              <div className="h-8 w-8 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center shrink-0">
+                <Landmark className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Portal access granted</p>
+                <p className="text-xs text-muted-foreground">All ambassador tools are now unlocked for you.</p>
               </div>
             </div>
 

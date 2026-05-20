@@ -37,6 +37,9 @@ export default [
   // Admin API resource routes
   route("/api/admin/events-discover", "features/admin/api/events-discover.route.ts"),
 
+  // Ambassador API resource routes
+  route("/api/embassy/building-research", "features/embassy/api/building-research.route.ts"),
+
   // Admin (AdminGuard remains as a wrapper component inside AdminLayout)
   layout("features/admin/components/AdminLayoutWithGuard.tsx", [
     route("/admin", "features/admin/pages/Dashboard.tsx"),
@@ -111,6 +114,7 @@ export default [
       }),
       route("goals", "features/embassy/pages/MyGoals.tsx"),
       route("projects", "features/embassy/pages/ChapterProjects.tsx"),
+      route("team", "features/embassy/pages/Team.tsx"),
       route("leadership", "features/embassy/pages/Leadership.tsx"),
       route("welcome", "features/embassy/pages/Onboarding.tsx"),
     ]),

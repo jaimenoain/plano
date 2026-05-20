@@ -239,3 +239,6 @@ export const useMapContext = () => {
   }
   return context;
 };
+
+/** Returns the context if a MapProvider ancestor exists, otherwise null. */
+export const useOptionalMapContext = () => useContext(MapContext);

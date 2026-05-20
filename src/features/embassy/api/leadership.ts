@@ -4,8 +4,18 @@ import type { Database } from "@/integrations/supabase/types";
 export type ChapterMetricsRow =
   Database["public"]["Functions"]["get_chapter_metrics"]["Returns"][number];
 
-export type ChapterAmbassadorActivityRow =
-  Database["public"]["Functions"]["get_chapter_ambassador_activity"]["Returns"][number];
+export interface ChapterAmbassadorActivityRow {
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  role: string;
+  edits_count: number;
+  photos_added: number;
+  visits_count: number;
+  firms_claimed_count: number;
+  total_score: number;
+  last_active_at: string | null;
+}
 
 export type ChapterMemberContactRow =
   Database["public"]["Functions"]["get_chapter_members_with_contact"]["Returns"][number];
@@ -40,12 +50,13 @@ export async function fetchChapterAmbassadorActivity(
   chapterId: string,
   days: number,
 ): Promise<ChapterAmbassadorActivityRow[]> {
-  const { data, error } = await supabase.rpc("get_chapter_ambassador_activity", {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_chapter_ambassador_activity", {
     p_chapter_id: chapterId,
     p_days: days,
   });
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []) as ChapterAmbassadorActivityRow[];
 }
 
 export async function fetchChapterMembersWithContact(

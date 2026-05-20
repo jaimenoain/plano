@@ -14,7 +14,10 @@ export type AmbassadorUnclaimedFirm =
   Database["public"]["Functions"]["get_ambassador_unclaimed_firms"]["Returns"][number];
 
 export type AmbassadorRecentBuilding =
-  Database["public"]["Functions"]["get_ambassador_recent_buildings"]["Returns"][number];
+  Database["public"]["Functions"]["get_ambassador_recent_buildings"]["Returns"][number] & {
+    moderated_at: string | null;
+    moderated_by_username: string | null;
+  };
 
 export type AmbassadorAuditRow =
   Database["public"]["Functions"]["get_ambassador_my_audit_timeline"]["Returns"][number];
@@ -60,7 +63,17 @@ export async function fetchAmbassadorRecentBuildings(
     p_limit: EMBASSY_TASK_FEED_LIMIT,
   });
   if (error) throw error;
-  return data ?? [];
+  // Cast required: generated types predate the moderated_at / moderated_by_username columns
+  // added by migration 20271110000000. Remove cast after next gen-types run.
+  return (data ?? []) as unknown as AmbassadorRecentBuilding[];
+}
+
+export async function approveBuilding(buildingId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("ambassador_approve_building", {
+    p_building_id: buildingId,
+  });
+  if (error) throw error;
 }
 
 export async function fetchAmbassadorMyAuditTimeline(): Promise<AmbassadorAuditRow[]> {
@@ -86,6 +99,9 @@ export type ModerationVideoItem = {
   id: string;
   created_at: string;
   video_url: string;
+  title: string | null;
+  body: string | null;
+  uploader_username: string | null;
   building_id: string;
   building_name: string;
   building_slug: string | null;
@@ -131,7 +147,7 @@ export async function fetchModerationVideos(): Promise<ModerationVideoItem[]> {
   const { data, error } = await (supabase as any)
     .from("building_posts")
     .select(
-      "id, created_at, video_url, building_id, buildings!inner(id, name, slug, short_id)",
+      "id, created_at, video_url, title, body, buildings!inner(id, name, slug, short_id), profiles(username)",
     )
     .not("video_url", "is", null)
     .order("created_at", { ascending: false })
@@ -142,6 +158,9 @@ export async function fetchModerationVideos(): Promise<ModerationVideoItem[]> {
     id: row.id,
     created_at: row.created_at,
     video_url: row.video_url,
+    title: row.title ?? null,
+    body: row.body ?? null,
+    uploader_username: row.profiles?.username ?? null,
     building_id: row.buildings.id,
     building_name: row.buildings.name,
     building_slug: row.buildings.slug,

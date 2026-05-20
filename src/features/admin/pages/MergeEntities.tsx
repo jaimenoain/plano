@@ -123,18 +123,18 @@ export default function MergeEntities() {
       className="w-full"
     >
       <Card className={`relative overflow-hidden border-2 transition-all duration-300 ${
-        type === "master" 
-          ? "border-green-500/20 bg-green-50/10 shadow-green-500/5" 
-          : "border-red-500/20 bg-red-50/10 shadow-red-500/5"
+        type === "master"
+          ? "border-feedback-success/20 bg-surface-card"
+          : "border-feedback-destructive/20 bg-surface-card"
       }`}>
-        <div className={`absolute top-0 left-0 w-1 h-full ${type === "master" ? "bg-green-500" : "bg-red-500"}`} />
+        <div className={`absolute top-0 left-0 w-1 h-full ${type === "master" ? "bg-feedback-success" : "bg-feedback-destructive"}`} />
         <CardHeader className="pb-3">
           <div className="flex justify-between items-start">
             <Badge variant={type === "master" ? "default" : "destructive"} className="uppercase tracking-wider text-[10px]">
               {type === "master" ? "Master (Survivor)" : "Duplicate (Merging)"}
             </Badge>
             {entity.is_verified && (
-              <Badge variant="outline" className="border-blue-500/50 text-blue-600 bg-blue-50/50">
+              <Badge variant="outline" className="border-border-strong text-text-secondary">
                 Verified
               </Badge>
             )}
@@ -177,8 +177,8 @@ export default function MergeEntities() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">
-          <Badge className="bg-brand-primary text-white hover:bg-brand-primary/90 px-3 py-0.5 rounded-full">Admin Tools</Badge>
-          <h1 className="text-5xl font-black tracking-tight text-text-primary bg-clip-text text-transparent bg-gradient-to-r from-text-primary to-text-secondary">
+          <Badge className="bg-brand-primary text-white hover:bg-brand-primary/90 px-3 py-0.5">Admin Tools</Badge>
+          <h1 className="text-4xl font-bold tracking-tight text-text-primary">
             Merge Records
           </h1>
           <p className="text-lg text-text-secondary max-w-md">
@@ -200,8 +200,8 @@ export default function MergeEntities() {
         {/* Master Selection */}
         <div className="space-y-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-600 font-bold border border-green-500/20">1</div>
-            <h2 className="text-xl font-bold">Select Master</h2>
+            <div className="w-10 h-10 rounded bg-feedback-success/10 flex items-center justify-center text-feedback-success font-bold border border-feedback-success/20">1</div>
+            <h2 className="text-xl font-semibold">Select Master</h2>
           </div>
           
           <div className="relative group">
@@ -226,12 +226,12 @@ export default function MergeEntities() {
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 5 }}
-                  className="absolute z-20 w-full mt-2 bg-surface-card border-2 rounded-xl shadow-2xl max-h-72 overflow-y-auto p-1 backdrop-blur-sm bg-surface-card/95"
+                  className="absolute z-20 w-full mt-2 bg-surface-card border-2 rounded-md shadow-lg max-h-72 overflow-y-auto p-1 bg-surface-card/95"
                 >
                   {masterResults.map(entity => (
                     <div
                       key={entity.id}
-                      className="p-3 hover:bg-surface-muted cursor-pointer flex justify-between items-center gap-3 rounded-lg transition-colors group/item"
+                      className="p-3 hover:bg-surface-muted cursor-pointer flex justify-between items-center gap-3 rounded transition-colors group/item"
                       onClick={() => { setSelectedMaster(entity); setMasterSearch(""); }}
                     >
                       <div className="flex flex-col min-w-0">
@@ -250,9 +250,9 @@ export default function MergeEntities() {
             {selectedMaster ? (
               <EntityCard entity={selectedMaster} type="master" />
             ) : (
-              <div className="w-full border-2 border-dashed border-green-500/10 rounded-2xl flex flex-col items-center justify-center text-text-secondary bg-green-50/5 p-8 text-center space-y-2">
-                <div className="w-12 h-12 rounded-full bg-green-500/5 flex items-center justify-center mb-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <div className="w-full border-2 border-dashed border-feedback-success/20 rounded-md flex flex-col items-center justify-center text-text-secondary bg-surface-muted/50 p-8 text-center space-y-2">
+                <div className="w-12 h-12 rounded flex items-center justify-center mb-2 border border-feedback-success/20 bg-feedback-success/5">
+                  <div className="w-2 h-2 rounded-full bg-feedback-success animate-pulse" />
                 </div>
                 <span className="font-medium">No Master Selected</span>
                 <span className="text-xs opacity-60">This record will survive the merge</span>
@@ -277,8 +277,8 @@ export default function MergeEntities() {
         {/* Duplicate Selection */}
         <div className="space-y-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-600 font-bold border border-red-500/20">2</div>
-            <h2 className="text-xl font-bold">Select Duplicate</h2>
+            <div className="w-10 h-10 rounded bg-feedback-destructive/10 flex items-center justify-center text-feedback-destructive font-bold border border-feedback-destructive/20">2</div>
+            <h2 className="text-xl font-semibold">Select Duplicate</h2>
           </div>
           
           <div className="relative group">
@@ -303,12 +303,12 @@ export default function MergeEntities() {
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 5 }}
-                  className="absolute z-20 w-full mt-2 bg-surface-card border-2 rounded-xl shadow-2xl max-h-72 overflow-y-auto p-1 backdrop-blur-sm bg-surface-card/95"
+                  className="absolute z-20 w-full mt-2 bg-surface-card border-2 rounded-md shadow-lg max-h-72 overflow-y-auto p-1 bg-surface-card/95"
                 >
                   {dupResults.map(entity => (
                     <div
                       key={entity.id}
-                      className="p-3 hover:bg-surface-muted cursor-pointer flex justify-between items-center gap-3 rounded-lg transition-colors group/item"
+                      className="p-3 hover:bg-surface-muted cursor-pointer flex justify-between items-center gap-3 rounded transition-colors group/item"
                       onClick={() => { setSelectedDup(entity); setDupSearch(""); }}
                     >
                       <div className="flex flex-col min-w-0">
@@ -327,9 +327,9 @@ export default function MergeEntities() {
             {selectedDup ? (
               <EntityCard entity={selectedDup} type="duplicate" />
             ) : (
-              <div className="w-full border-2 border-dashed border-red-500/10 rounded-2xl flex flex-col items-center justify-center text-text-secondary bg-red-50/5 p-8 text-center space-y-2">
-                <div className="w-12 h-12 rounded-full bg-red-500/5 flex items-center justify-center mb-2">
-                   <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <div className="w-full border-2 border-dashed border-feedback-destructive/20 rounded-md flex flex-col items-center justify-center text-text-secondary bg-surface-muted/50 p-8 text-center space-y-2">
+                <div className="w-12 h-12 rounded flex items-center justify-center mb-2 border border-feedback-destructive/20 bg-feedback-destructive/5">
+                   <div className="w-2 h-2 rounded-full bg-feedback-destructive animate-pulse" />
                 </div>
                 <span className="font-medium">No Duplicate Selected</span>
                 <span className="text-xs opacity-60">This record will be removed</span>
@@ -348,9 +348,9 @@ export default function MergeEntities() {
             exit={{ opacity: 0, y: 20 }}
             className="flex flex-col items-center py-10 space-y-6"
           >
-            <div className="bg-surface-muted/50 p-4 rounded-2xl border border-border-default max-w-xl text-center">
+            <div className="bg-surface-muted/50 p-4 rounded-md border border-border-default max-w-xl text-center">
               <p className="text-sm text-text-secondary">
-                You are about to merge <strong className="text-red-600">"{selectedDup.name}"</strong> into <strong className="text-green-600">"{selectedMaster.name}"</strong>. 
+                You are about to merge <strong className="text-feedback-destructive">"{selectedDup.name}"</strong> into <strong className="text-feedback-success">"{selectedMaster.name}"</strong>.
                 All associated records (credits, awards, events) will be reassigned.
               </p>
             </div>
@@ -359,14 +359,14 @@ export default function MergeEntities() {
               size="lg"
               disabled={selectedMaster.id === selectedDup.id}
               onClick={handleCompare}
-              className="bg-brand-primary hover:bg-brand-primary/90 text-white gap-3 px-10 h-14 rounded-2xl text-lg font-bold shadow-xl shadow-brand-primary/20 transition-all hover:scale-105 active:scale-95 group"
+              className="bg-brand-primary hover:bg-brand-primary-hover text-white gap-3 px-10 h-14 text-base font-semibold shadow-md transition-colors group"
             >
               <Merge className="h-6 w-6 transition-transform group-hover:rotate-12" />
               Compare & Unify
             </Button>
             
             {selectedMaster.id === selectedDup.id && (
-              <p className="text-red-500 text-xs font-medium bg-red-50 px-3 py-1 rounded-full border border-red-100">
+              <p className="text-feedback-destructive text-xs font-medium bg-feedback-destructive/5 px-3 py-1 rounded border border-feedback-destructive/20">
                 Cannot merge a record into itself.
               </p>
             )}
@@ -377,7 +377,7 @@ export default function MergeEntities() {
             animate={{ opacity: 1 }}
             className="flex flex-col items-center py-12 opacity-40 grayscale pointer-events-none"
           >
-             <div className="w-20 h-20 rounded-3xl bg-surface-muted flex items-center justify-center mb-4">
+             <div className="w-20 h-20 rounded-xl bg-surface-muted flex items-center justify-center mb-4">
                <Merge className="w-10 h-10" />
              </div>
              <p className="text-sm font-medium text-text-secondary uppercase tracking-widest">Select two records to begin</p>
@@ -390,7 +390,7 @@ export default function MergeEntities() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <h3 className="text-2xl font-black flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-brand-primary/10 flex items-center justify-center border border-brand-primary/20">
+              <div className="w-9 h-9 rounded bg-brand-primary/10 flex items-center justify-center border border-brand-primary/20">
                 <Search className="w-4 h-4 text-brand-primary" />
               </div>
               Duplicate Detection
@@ -418,7 +418,7 @@ export default function MergeEntities() {
         </div>
 
         {/* Query Parameters */}
-        <Card className="bg-surface-card/60 border border-border-default/60 rounded-2xl">
+        <Card className="bg-surface-card border border-border-default rounded-md">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-5 text-xs font-black text-text-secondary uppercase tracking-widest">
               <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -452,7 +452,7 @@ export default function MergeEntities() {
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-text-primary">Max Results</label>
                 <Select value={limitCount} onValueChange={setLimitCount}>
-                  <SelectTrigger className="w-28 bg-surface-card border-2 rounded-xl h-10">
+                  <SelectTrigger className="w-28 bg-surface-card border-2 h-10">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -467,7 +467,7 @@ export default function MergeEntities() {
               <Button
                 onClick={fetchPotentialDuplicates}
                 disabled={loadingPotential}
-                className="h-10 px-6 bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl font-bold gap-2 shadow-lg shadow-brand-primary/20 transition-all hover:scale-105 active:scale-95"
+                className="h-10 px-6 bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold gap-2 shadow-md transition-colors"
               >
                 {loadingPotential ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -490,7 +490,7 @@ export default function MergeEntities() {
               exit={{ opacity: 0 }}
               className="flex flex-col items-center justify-center py-16 text-text-secondary opacity-40 space-y-3"
             >
-              <div className="w-16 h-16 rounded-2xl bg-surface-muted flex items-center justify-center">
+              <div className="w-16 h-16 rounded-md bg-surface-muted flex items-center justify-center">
                 <Play className="w-7 h-7" />
               </div>
               <p className="text-sm font-medium">Configure parameters above and run the query</p>
@@ -518,7 +518,7 @@ export default function MergeEntities() {
               exit={{ opacity: 0 }}
               className="flex flex-col items-center justify-center py-14 text-text-secondary space-y-3"
             >
-              <div className="w-14 h-14 rounded-2xl bg-surface-muted flex items-center justify-center opacity-40">
+              <div className="w-14 h-14 rounded-md bg-surface-muted flex items-center justify-center opacity-40">
                 <Search className="w-6 h-6" />
               </div>
               <p className="font-medium opacity-50 text-sm">Duplicate detection is not yet available for {activeType} records.</p>
@@ -534,7 +534,7 @@ export default function MergeEntities() {
               exit={{ opacity: 0 }}
               className="flex flex-col items-center justify-center py-14 text-text-secondary space-y-3"
             >
-              <div className="w-14 h-14 rounded-2xl bg-surface-muted flex items-center justify-center opacity-40">
+              <div className="w-14 h-14 rounded-md bg-surface-muted flex items-center justify-center opacity-40">
                 <Search className="w-6 h-6" />
               </div>
               <p className="font-medium opacity-50 text-sm">No matches above {Math.round(threshold * 100)}% similarity — try lowering the threshold.</p>
@@ -548,7 +548,7 @@ export default function MergeEntities() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <ScrollArea className="h-[420px] rounded-2xl border-2 border-border-default/50 bg-surface-card/30 backdrop-blur-sm overflow-hidden">
+              <ScrollArea className="h-[420px] rounded-md border border-border-default bg-surface-card overflow-hidden">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
                   {potentialDuplicates.map((pair, idx) => (
                     <motion.div
@@ -556,7 +556,7 @@ export default function MergeEntities() {
                       initial={{ opacity: 0, scale: 0.98 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: idx * 0.03 }}
-                      className="group flex flex-col p-4 bg-surface-card border rounded-xl hover:border-brand-primary/40 hover:shadow-lg transition-all"
+                      className="group flex flex-col p-4 bg-surface-card border border-border-default rounded hover:border-border-strong hover:shadow-md transition-all"
                     >
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex flex-col max-w-[40%]">

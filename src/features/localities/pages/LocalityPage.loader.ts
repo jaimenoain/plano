@@ -1,7 +1,17 @@
 import { data, redirect, type LoaderFunctionArgs } from "react-router";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SITE_URL, localityPageStructuredData } from "@/features/buildings/utils/structuredData";
-import { getLocalityByCountryCity, getLocalityBySlug, getLocalityBuildings } from "@/features/localities/api/localitiesApi";
+import {
+  getLocalityByCountryCity,
+  getLocalityBySlug,
+  getLocalityBuildings,
+  getLocalityVolunteerTeam,
+  getLocalityTopContributors,
+  getLocalityCollections,
+  type LocalityVolunteerTeamMember,
+  type LocalityContributor,
+  type LocalityCollectionItem,
+} from "@/features/localities/api/localitiesApi";
 import type { LocalityDTO, LocalityBuildingDTO } from "@/features/localities/types";
 import { getLocalityUrl } from "@/utils/url";
 import { config } from "@/config";
@@ -14,6 +24,13 @@ export type LocalityPageLoaderData = {
   metaDescription: string;
   ogImage: string;
   structuredData: Record<string, unknown>;
+  citySlug: string;
+  countryCode: string;
+  volunteerTeam: LocalityVolunteerTeamMember[];
+  stewards: LocalityContributor[];
+  cityGuideCollections: LocalityCollectionItem[];
+  collectionsCount: number;
+  contributorsCount: number;
 };
 
 function absoluteHeroUrl(url: string | null | undefined): string | null {
@@ -52,7 +69,12 @@ export async function localityPageLoader({ request, params }: LoaderFunctionArgs
     throw redirect(getLocalityUrl(locality.country_code, locality.city_slug), 301);
   }
 
-  const initialBuildings = await getLocalityBuildings(supabase, locality.id, 0, 24);
+  const [initialBuildings, volunteerTeam, stewards, cityGuideCollections] = await Promise.all([
+    getLocalityBuildings(supabase, locality.id, 0, 24),
+    getLocalityVolunteerTeam(supabase, locality.id),
+    getLocalityTopContributors(supabase, locality.id, 8),
+    getLocalityCollections(supabase, locality.id, 6),
+  ]);
 
   const canonical = `${SITE_URL}${getLocalityUrl(locality.country_code, locality.city_slug)}`;
   const metaTitle =
@@ -76,6 +98,13 @@ export async function localityPageLoader({ request, params }: LoaderFunctionArgs
       string,
       unknown
     >,
+    citySlug: locality.city_slug,
+    countryCode: locality.country_code.toLowerCase(),
+    volunteerTeam,
+    stewards,
+    cityGuideCollections,
+    collectionsCount: cityGuideCollections.length,
+    contributorsCount: stewards.length,
   };
 
   return data(body, { headers });

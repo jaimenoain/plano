@@ -11,8 +11,10 @@ import {
   fetchModerationPhotos,
   fetchModerationVideos,
   fetchModerationCredits,
+  approveBuilding,
   type AmbassadorUnclaimedFirm,
 } from "@/features/embassy/api/taskFeed";
+import type { BuildingResearchResult, ResearchDataPoint } from "@/features/embassy/api/building-research.route";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,9 +24,10 @@ import {
   Search, ArrowLeft, Filter, CheckCircle2,
   AlertCircle, MessageSquare, Loader2,
   Camera, Sparkles, UserPlus, ExternalLink, Map, List,
-  Flag, Video, Award, Users,
+  Flag, Video, Award, Telescope, XCircle, CheckCircle,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { getBuildingImageUrl, getStorageAssetUrl } from "@/utils/image";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { getBuildingUrl } from "@/utils/url";
@@ -33,10 +36,9 @@ import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext";
 import { PlanoMap } from "@/features/maps/components/PlanoMap";
-import { fetchChapterTeam, type ChapterTeamMember } from "@/features/embassy/api/leadership";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface OutreachLogRow {
   id: string;
@@ -46,9 +48,10 @@ interface OutreachLogRow {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  profiles: { username: string; avatar_url: string | null } | null;
 }
 
-type ToolType = "research" | "photography" | "outreach" | "curation" | "community" | "team" | null;
+type ToolType = "research" | "photography" | "outreach" | "curation" | "community" | null;
 
 interface ToolDefinition {
   key: NonNullable<ToolType>;
@@ -89,12 +92,6 @@ const ALL_TOOLS: ToolDefinition[] = [
     description: "Invite architects and firms in your area to join Plano.",
     icon: <UserPlus className="h-6 w-6" />,
     asChild: true,
-  },
-  {
-    key: "team",
-    title: "Team",
-    description: "Meet your chapter's president, Executive Committee, and fellow ambassadors.",
-    icon: <Users className="h-6 w-6" />,
   },
 ];
 
@@ -156,10 +153,6 @@ export default function ContributePage() {
 
   if (activeTool === "curation" && chapterId) {
     return <CurationTool chapterId={chapterId} onBack={() => setActiveTool(null)} />;
-  }
-
-  if (activeTool === "team" && chapterId) {
-    return <TeamTool chapterId={chapterId} onBack={() => setActiveTool(null)} />;
   }
 
   return (
@@ -239,9 +232,16 @@ function ToolCard({ title, description, icon, onClick, active = true, comingSoon
   );
 }
 
+type ResearchStatus =
+  | { status: "idle" }
+  | { status: "loading"; buildingId: string }
+  | { status: "ready"; result: BuildingResearchResult }
+  | { status: "saving"; result: BuildingResearchResult };
+
 function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: () => void }) {
   const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [researchState, setResearchState] = useState<ResearchStatus>({ status: "idle" });
 
   const { data: buildings, isLoading, error } = useQuery({
     queryKey: ["embassy-missing-metadata", chapterId],
@@ -278,6 +278,65 @@ function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: ()
     { label: "Missing Style", value: "styles" },
   ];
 
+  async function handleAiResearch(buildingId: string) {
+    setResearchState({ status: "loading", buildingId });
+    try {
+      const res = await fetch("/api/embassy/building-research", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "research", building_id: buildingId }),
+      });
+      if (!res.ok) {
+        const err = (await res.json()) as { error?: string };
+        throw new Error(err.error ?? "Research failed");
+      }
+      const result = (await res.json()) as BuildingResearchResult;
+      if (result.data_points.length === 0) {
+        toast.info("No data found for this building. Try completing data manually.");
+        setResearchState({ status: "idle" });
+        return;
+      }
+      setResearchState({ status: "ready", result });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "AI research failed. Please try again.");
+      setResearchState({ status: "idle" });
+    }
+  }
+
+  // Show the review panel when results are ready
+  if (researchState.status === "ready" || researchState.status === "saving") {
+    return (
+      <ResearchReviewPanel
+        result={researchState.result}
+        isSaving={researchState.status === "saving"}
+        onBack={() => setResearchState({ status: "idle" })}
+        onSave={async (updates) => {
+          setResearchState({ status: "saving", result: researchState.result });
+          try {
+            const res = await fetch("/api/embassy/building-research", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "apply",
+                building_id: researchState.result.building_id,
+                updates,
+              }),
+            });
+            if (!res.ok) {
+              const err = (await res.json()) as { error?: string };
+              throw new Error(err.error ?? "Save failed");
+            }
+            toast.success("Research data saved successfully.");
+            setResearchState({ status: "idle" });
+          } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Failed to save. Please try again.");
+            setResearchState({ status: "ready", result: researchState.result });
+          }
+        }}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -293,8 +352,8 @@ function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: ()
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search buildings..." 
+          <Input
+            placeholder="Search buildings..."
             className="pl-10"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -332,34 +391,253 @@ function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: ()
         </div>
       ) : (
         <div className="grid gap-4">
-          {filteredBuildings.map((b) => (
-            <Card key={b.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group hover:border-brand-primary transition-all">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-semibold truncate">{b.name}</h3>
-                  <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground">
-                    {b.city || b.country || "Global"}
-                  </Badge>
-                </div>
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {b.missing_fields?.map(field => (
-                    <Badge key={field} variant="secondary" className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-none text-[10px] font-bold uppercase">
-                      {field === 'architect_credit' ? 'No Architect' : 
-                       field === 'year_completed' ? 'No Year' : 
-                       field === 'styles' ? 'No Style' : field}
+          {filteredBuildings.map((b) => {
+            const isResearching =
+              researchState.status === "loading" && researchState.buildingId === b.id;
+            return (
+              <Card
+                key={b.id}
+                className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group hover:border-brand-primary transition-all"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-semibold truncate">{b.name}</h3>
+                    <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground">
+                      {b.city || b.country || "Global"}
                     </Badge>
-                  ))}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {b.missing_fields?.map(field => (
+                      <Badge
+                        key={field}
+                        variant="secondary"
+                        className="bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-none text-[10px] font-bold uppercase"
+                      >
+                        {field === "architect_credit" ? "No Architect" :
+                         field === "year_completed" ? "No Year" :
+                         field === "styles" ? "No Style" : field}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <Button size="sm" asChild className="shrink-0">
-                <Link to={`${getBuildingUrl(b.id, b.slug, b.short_id)}/edit`}>
-                  Complete Data
-                </Link>
-              </Button>
-            </Card>
-          ))}
+                <div className="flex gap-2 shrink-0">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={researchState.status === "loading"}
+                    onClick={() => handleAiResearch(b.id)}
+                    className="gap-1.5"
+                  >
+                    {isResearching ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Researching…
+                      </>
+                    ) : (
+                      <>
+                        <Telescope className="h-3.5 w-3.5" />
+                        Research with AI
+                      </>
+                    )}
+                  </Button>
+                  <Button size="sm" asChild>
+                    <Link to={`${getBuildingUrl(b.id, b.slug, b.short_id)}/edit`}>
+                      Complete Data
+                    </Link>
+                  </Button>
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
+    </div>
+  );
+}
+
+// ---------- Research Review Panel ----------
+
+const FIELD_LABELS: Record<string, string> = {
+  year_completed: "Year Completed",
+  materials: "Materials",
+  typology: "Typology",
+  access_level: "Access Level",
+  access_logistics: "Access Logistics",
+  context: "Urban Context",
+  architect_statement: "Architect Statement",
+};
+
+type ReviewItem = ResearchDataPoint & { accepted: boolean; editedValue: string };
+
+function ResearchReviewPanel({
+  result,
+  isSaving,
+  onBack,
+  onSave,
+}: {
+  result: BuildingResearchResult;
+  isSaving: boolean;
+  onBack: () => void;
+  onSave: (updates: Record<string, unknown>) => void;
+}) {
+  const [items, setItems] = useState<ReviewItem[]>(() =>
+    result.data_points.map((dp) => ({
+      ...dp,
+      accepted: true,
+      editedValue: Array.isArray(dp.value) ? dp.value.join(", ") : String(dp.value),
+    })),
+  );
+
+  const acceptedCount = items.filter((i) => i.accepted).length;
+
+  function toggleAccepted(field: string) {
+    setItems((prev) =>
+      prev.map((i) => (i.field === field ? { ...i, accepted: !i.accepted } : i)),
+    );
+  }
+
+  function handleValueChange(field: string, raw: string) {
+    setItems((prev) =>
+      prev.map((i) => (i.field === field ? { ...i, editedValue: raw } : i)),
+    );
+  }
+
+  function handleSave() {
+    const updates: Record<string, unknown> = {};
+    for (const item of items) {
+      if (!item.accepted) continue;
+      const v = item.editedValue.trim();
+      if (!v) continue;
+      if (item.field === "year_completed") {
+        const n = parseInt(v, 10);
+        if (!isNaN(n)) updates[item.field] = n;
+      } else if (item.field === "materials" || item.field === "typology") {
+        updates[item.field] = v.split(",").map((s) => s.trim()).filter(Boolean);
+      } else {
+        updates[item.field] = v;
+      }
+    }
+    if (Object.keys(updates).length === 0) return;
+    onSave(updates);
+  }
+
+  return (
+    <div className="space-y-6 pb-24">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={onBack} disabled={isSaving}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight truncate">
+            Review: {result.building_name}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Accept or reject each data point. You can edit values inline before saving.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-4">
+        {items.map((item) => (
+          <Card
+            key={item.field}
+            className={cn(
+              "p-5 transition-all border-2",
+              item.accepted
+                ? "border-brand-primary/40 bg-brand-primary/[0.03]"
+                : "border-border-default opacity-60",
+            )}
+          >
+            <div className="flex items-start gap-4">
+              {/* Accept / Reject toggle */}
+              <button
+                type="button"
+                onClick={() => toggleAccepted(item.field)}
+                disabled={isSaving}
+                className="mt-0.5 shrink-0 focus:outline-none"
+                aria-label={item.accepted ? "Reject this data point" : "Accept this data point"}
+              >
+                {item.accepted ? (
+                  <CheckCircle className="h-5 w-5 text-brand-primary" />
+                ) : (
+                  <XCircle className="h-5 w-5 text-muted-foreground" />
+                )}
+              </button>
+
+              <div className="flex-1 min-w-0 space-y-3">
+                {/* Field label */}
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {FIELD_LABELS[item.field] ?? item.field}
+                </p>
+
+                {/* Editable value */}
+                {item.field === "context" || item.field === "architect_statement" || item.field === "access_logistics" ? (
+                  <Textarea
+                    value={item.editedValue}
+                    disabled={!item.accepted || isSaving}
+                    onChange={(e) => handleValueChange(item.field, e.target.value)}
+                    className="text-sm resize-none min-h-[80px]"
+                  />
+                ) : (
+                  <Input
+                    value={item.editedValue}
+                    disabled={!item.accepted || isSaving}
+                    onChange={(e) => handleValueChange(item.field, e.target.value)}
+                    className="text-sm"
+                  />
+                )}
+                {(item.field === "materials" || item.field === "typology") && (
+                  <p className="text-[11px] text-muted-foreground">Comma-separated values</p>
+                )}
+
+                {/* Source */}
+                {(item.source_url || item.snippet) && (
+                  <div className="rounded-md bg-muted/60 p-3 space-y-1.5 text-xs text-muted-foreground">
+                    {item.snippet && (
+                      <p className="italic leading-relaxed">&ldquo;{item.snippet}&rdquo;</p>
+                    )}
+                    {item.source_url && (
+                      <a
+                        href={item.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-brand-primary hover:underline break-all"
+                      >
+                        <ExternalLink className="h-3 w-3 shrink-0" />
+                        {item.source_url}
+                      </a>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Sticky save bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-10 bg-background/95 backdrop-blur border-t border-border-default px-4 py-4 flex items-center justify-between gap-4">
+        <p className="text-sm text-muted-foreground">
+          {acceptedCount} of {items.length} data point{items.length !== 1 ? "s" : ""} accepted
+        </p>
+        <Button
+          onClick={handleSave}
+          disabled={acceptedCount === 0 || isSaving}
+          className="gap-2"
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Saving…
+            </>
+          ) : (
+            <>
+              <CheckCircle2 className="h-4 w-4" />
+              Save {acceptedCount} accepted
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -520,7 +798,7 @@ function FirmOutreachDrawer({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("outreach_log")
-        .select("*")
+        .select("*, profiles!ambassador_id(username, avatar_url)")
         .eq("firm_id", firm!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -626,27 +904,40 @@ function FirmOutreachDrawer({
             </div>
           ) : (
             <div className="space-y-2">
-              {logs.map((log) => (
-                <div key={log.id} className="border rounded-lg p-3 space-y-1.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <Badge
-                      variant="secondary"
-                      className={cn("text-[10px] uppercase font-bold", statusColors[log.status] ?? "bg-muted text-muted-foreground")}
-                    >
-                      {log.status}
-                    </Badge>
-                    <span className="text-[11px] text-muted-foreground">
-                      {new Date(log.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
-                    </span>
+              {logs.map((log) => {
+                const profile = log.profiles;
+                const displayName = profile?.username
+                  ? (log.ambassador_id === userId ? "You" : `@${profile.username}`)
+                  : (log.ambassador_id === userId ? "You" : "Another ambassador");
+                const initials = profile?.username
+                  ? profile.username.slice(0, 2).toUpperCase()
+                  : "?";
+                return (
+                  <div key={log.id} className="border rounded-lg p-3 space-y-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <Badge
+                        variant="secondary"
+                        className={cn("text-[10px] uppercase font-bold", statusColors[log.status] ?? "bg-muted text-muted-foreground")}
+                      >
+                        {log.status}
+                      </Badge>
+                      <span className="text-[11px] text-muted-foreground">
+                        {new Date(log.created_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                      </span>
+                    </div>
+                    {log.notes && (
+                      <p className="text-sm text-foreground">{log.notes}</p>
+                    )}
+                    <div className="flex items-center gap-1.5">
+                      <Avatar className="h-5 w-5 shrink-0">
+                        <AvatarImage src={profile?.avatar_url ?? undefined} alt={profile?.username ?? ""} />
+                        <AvatarFallback className="text-[9px] font-semibold">{initials}</AvatarFallback>
+                      </Avatar>
+                      <p className="text-[11px] text-muted-foreground">{displayName}</p>
+                    </div>
                   </div>
-                  {log.notes && (
-                    <p className="text-sm text-foreground">{log.notes}</p>
-                  )}
-                  <p className="text-[11px] text-muted-foreground">
-                    {log.ambassador_id === userId ? "You" : "Another ambassador"}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -818,9 +1109,10 @@ function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => 
     toast.success(`${ids.length} item${ids.length === 1 ? "" : "s"} approved`);
   };
 
-  const handleFlag = (id: string, label: string) => {
+  const handleFlag = (id: string, label: string, reason: FlagReason) => {
     setDismissed((prev) => new Set(prev).add(id));
-    toast("Flagged for admin review", { description: label });
+    const reasonLabel = FLAG_REASONS.find((r) => r.value === reason)?.label ?? reason;
+    toast("Flagged for admin review", { description: `${label} · ${reasonLabel}` });
   };
 
   return (
@@ -882,17 +1174,73 @@ function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => 
   );
 }
 
-function FlagButton({ id, label, onFlag }: { id: string; label: string; onFlag: (id: string, label: string) => void }) {
+const FLAG_REASONS = [
+  { value: "incorrect_info",    label: "Incorrect information" },
+  { value: "low_quality",       label: "Low quality" },
+  { value: "spam",              label: "Spam or off-topic" },
+  { value: "copyright",         label: "Copyright issue" },
+  { value: "inappropriate",     label: "Inappropriate content" },
+] as const;
+
+type FlagReason = (typeof FLAG_REASONS)[number]["value"];
+
+function FlagButton({
+  id,
+  label,
+  onFlag,
+  overlay = false,
+}: {
+  id: string;
+  label: string;
+  onFlag: (id: string, label: string, reason: FlagReason) => void;
+  overlay?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const triggerClass = overlay
+    ? "p-1.5 rounded-md bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+    : "opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10";
+
   return (
-    <button
-      type="button"
-      title="Flag for review"
-      aria-label="Flag for review"
-      onClick={(e) => { e.stopPropagation(); onFlag(id, label); }}
-      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-    >
-      <Flag className="h-4 w-4" />
-    </button>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title="Flag for review"
+          aria-label="Flag for review"
+          onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+          className={triggerClass}
+        >
+          <Flag className="h-4 w-4" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-52 p-2"
+        side="left"
+        align="start"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-2 pb-1.5">
+          Reason for flagging
+        </p>
+        <div className="space-y-0.5">
+          {FLAG_REASONS.map((r) => (
+            <button
+              key={r.value}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(false);
+                onFlag(id, label, r.value);
+              }}
+              className="w-full text-left text-sm px-2 py-1.5 rounded-md hover:bg-destructive/10 hover:text-destructive transition-colors"
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -927,8 +1275,11 @@ function BuildingsModerationTab({
   chapterId: string;
   dismissed: Set<string>;
   onApproveAll: (ids: string[]) => void;
-  onFlag: (id: string, label: string) => void;
+  onFlag: (id: string, label: string, reason: FlagReason) => void;
 }) {
+  const queryClient = useQueryClient();
+  const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set());
+
   const { data: buildings, isLoading, error } = useQuery({
     queryKey: ["embassy-recent-buildings", chapterId],
     queryFn: () => fetchAmbassadorRecentBuildings(chapterId),
@@ -940,10 +1291,40 @@ function BuildingsModerationTab({
     [buildings, dismissed],
   );
 
+  async function handleApprove(ids: string[]) {
+    setApprovingIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+    const results = await Promise.allSettled(ids.map((id) => approveBuilding(id)));
+    const succeeded = ids.filter((_, i) => results[i].status === "fulfilled");
+    const failed = ids.length - succeeded.length;
+    setApprovingIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.delete(id));
+      return next;
+    });
+    if (succeeded.length > 0) {
+      onApproveAll(succeeded);
+      queryClient.invalidateQueries({ queryKey: ["embassy-recent-buildings", chapterId] });
+      toast.success(
+        succeeded.length === 1
+          ? "Building approved"
+          : `${succeeded.length} buildings approved`,
+      );
+    }
+    if (failed > 0) {
+      toast.error(`${failed} approval${failed === 1 ? "" : "s"} failed — please retry`);
+    }
+  }
+
   if (isLoading) return <ModerationSkeletons />;
   if (error) return <ModerationError message="Failed to load buildings." />;
   if (visible.length === 0)
     return <ModerationEmptyState icon={<Sparkles className="h-10 w-10" />} message="No new buildings to review." />;
+
+  const allIds = visible.map((b) => b.id);
 
   return (
     <div className="space-y-4">
@@ -955,6 +1336,7 @@ function BuildingsModerationTab({
               ? `https://www.google.com/maps/search/?api=1&query=${b.lat},${b.lng}`
               : null;
           const thumbUrl = getBuildingImageUrl(b.n ?? b.hero_image_url);
+          const isApproving = approvingIds.has(b.id);
           return (
             <Card key={b.id} className="overflow-hidden group hover:border-brand-primary transition-all">
               <div className="flex flex-col sm:flex-row">
@@ -998,8 +1380,21 @@ function BuildingsModerationTab({
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <FlagButton id={b.id} label={b.name} onFlag={onFlag} />
-                    <Button size="sm" asChild>
+                    <Button size="sm" variant="outline" asChild>
                       <Link to={getBuildingUrl(b.id, b.slug, b.short_id)}>Review</Link>
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={isApproving}
+                      onClick={() => handleApprove([b.id])}
+                      className="gap-1.5"
+                    >
+                      {isApproving ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                      )}
+                      Approve
                     </Button>
                   </div>
                 </div>
@@ -1008,7 +1403,28 @@ function BuildingsModerationTab({
           );
         })}
       </div>
-      <ApproveAllButton ids={visible.map((b) => b.id)} onApproveAll={onApproveAll} />
+      {allIds.length > 0 && (
+        <div className="flex justify-end pt-2 border-t">
+          <Button
+            variant="default"
+            size="sm"
+            disabled={approvingIds.size > 0}
+            onClick={() => handleApprove(allIds)}
+          >
+            {approvingIds.size > 0 ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                Approving…
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                Approve all ({allIds.length})
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1020,7 +1436,7 @@ function PhotosModerationTab({
 }: {
   dismissed: Set<string>;
   onApproveAll: (ids: string[]) => void;
-  onFlag: (id: string, label: string) => void;
+  onFlag: (id: string, label: string, reason: FlagReason) => void;
 }) {
   const { data: photos, isLoading, error } = useQuery({
     queryKey: ["moderation-photos"],
@@ -1053,15 +1469,12 @@ function PhotosModerationTab({
               )}
               {/* Flag button — top-right corner, appears on hover */}
               <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  type="button"
-                  title="Flag for review"
-                  aria-label="Flag for review"
-                  onClick={(e) => { e.stopPropagation(); onFlag(p.id, `Photo on ${p.building_name}`); }}
-                  className="p-1.5 rounded-md bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Flag className="h-4 w-4" />
-                </button>
+                <FlagButton
+                  id={p.id}
+                  label={`Photo on ${p.building_name}`}
+                  onFlag={onFlag}
+                  overlay
+                />
               </div>
               {/* Bottom info overlay */}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 translate-y-0">
@@ -1093,7 +1506,7 @@ function VideosModerationTab({
 }: {
   dismissed: Set<string>;
   onApproveAll: (ids: string[]) => void;
-  onFlag: (id: string, label: string) => void;
+  onFlag: (id: string, label: string, reason: FlagReason) => void;
 }) {
   const { data: videos, isLoading, error } = useQuery({
     queryKey: ["moderation-videos"],
@@ -1116,29 +1529,52 @@ function VideosModerationTab({
         {visible.map((v) => {
           const resolvedUrl = getStorageAssetUrl(v.video_url) ?? v.video_url;
           return (
-            <Card key={v.id} className="p-5 group hover:border-brand-primary transition-all">
-              <div className="space-y-4">
-                <VideoPlayer
-                  src={resolvedUrl}
-                  className="aspect-video w-full rounded-sm"
-                />
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="min-w-0 flex-1 space-y-0.5">
-                    <div className="flex items-center gap-2">
-                      <Video className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <h3 className="font-semibold truncate">{v.building_name}</h3>
+            <Card key={v.id} className="overflow-hidden group hover:border-brand-primary transition-all">
+              <div className="flex flex-col sm:flex-row">
+                <div className="sm:w-2/3 shrink-0">
+                  <VideoPlayer
+                    src={resolvedUrl}
+                    className="aspect-video w-full"
+                  />
+                </div>
+                <div className="sm:w-1/3 flex flex-col justify-between gap-4 p-4 border-t sm:border-t-0 sm:border-l border-border">
+                  <div className="space-y-3 min-w-0">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">Building</p>
+                      <p className="font-semibold text-sm leading-snug">{v.building_name}</p>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(v.created_at).toLocaleDateString(undefined, {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </p>
+                    {v.uploader_username && (
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">Uploaded by</p>
+                        <p className="text-sm">@{v.uploader_username}</p>
+                      </div>
+                    )}
+                    {v.title && (
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">Title</p>
+                        <p className="text-sm line-clamp-2">{v.title}</p>
+                      </div>
+                    )}
+                    {v.body && (
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">Caption</p>
+                        <p className="text-sm text-muted-foreground line-clamp-4">{v.body}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-0.5">Submitted</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(v.created_at).toLocaleDateString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2">
                     <FlagButton id={v.id} label={`Video on ${v.building_name}`} onFlag={onFlag} />
-                    <Button size="sm" asChild>
+                    <Button size="sm" asChild className="flex-1">
                       <Link to={getBuildingUrl(v.building_id, v.building_slug, v.building_short_id)}>
                         View Building
                       </Link>
@@ -1162,7 +1598,7 @@ function CreditsModerationTab({
 }: {
   dismissed: Set<string>;
   onApproveAll: (ids: string[]) => void;
-  onFlag: (id: string, label: string) => void;
+  onFlag: (id: string, label: string, reason: FlagReason) => void;
 }) {
   const { data: credits, isLoading, error } = useQuery({
     queryKey: ["moderation-credits"],
@@ -1181,177 +1617,39 @@ function CreditsModerationTab({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4">
+      <div className="grid gap-4 sm:grid-cols-2">
         {visible.map((c) => (
-          <Card key={c.id} className="p-5 group hover:border-brand-primary transition-all">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <Card key={c.id} className="p-4 group hover:border-brand-primary transition-all">
+            <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1 space-y-1.5">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-semibold truncate">
+                  <h3 className="font-semibold truncate text-sm">
                     {c.entity_name ?? <span className="italic text-muted-foreground">Unknown</span>}
                   </h3>
                   <Badge className="text-[10px] uppercase font-bold shrink-0 bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border-none">
                     {c.role.replace(/_/g, " ")}
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground truncate">
-                  on {c.building_name}
-                </p>
                 <p className="text-xs text-muted-foreground">
-                  {new Date(c.created_at).toLocaleDateString(undefined, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
+                  on{" "}
+                  <Link
+                    to={getBuildingUrl(c.building_id, c.building_slug, c.building_short_id)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-foreground hover:underline transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {c.building_name}
+                  </Link>
                 </p>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <FlagButton id={c.id} label={`Credit on ${c.building_name}`} onFlag={onFlag} />
-                <Button size="sm" asChild>
-                  <Link to={getBuildingUrl(c.building_id, c.building_slug, c.building_short_id)}>
-                    View Building
-                  </Link>
-                </Button>
-              </div>
+              <FlagButton id={c.id} label={`Credit on ${c.building_name}`} onFlag={onFlag} />
             </div>
           </Card>
         ))}
       </div>
       <ApproveAllButton ids={visible.map((c) => c.id)} onApproveAll={onApproveAll} />
     </div>
-  );
-}
-
-const EXCO_LABELS: Record<string, string> = {
-  content: "Content",
-  marketing: "Marketing",
-  architect_relations: "Architect relations",
-  data_quality: "Data quality",
-  community: "Community",
-};
-
-const ROLE_LABELS: Record<string, string> = {
-  president: "President",
-  exco: "Executive Committee",
-  ambassador: "Ambassador",
-};
-
-function TeamTool({ chapterId, onBack }: { chapterId: string; onBack: () => void }) {
-  const { data: members, isLoading, error } = useQuery({
-    queryKey: ["chapter-team", chapterId],
-    queryFn: () => fetchChapterTeam(chapterId),
-    enabled: !!chapterId,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const grouped = useMemo(() => {
-    if (!members) return { president: [], exco: [], ambassador: [] };
-    return {
-      president: members.filter((m) => m.role === "president"),
-      exco: members.filter((m) => m.role === "exco"),
-      ambassador: members.filter((m) => m.role === "ambassador"),
-    };
-  }, [members]);
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={onBack}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold tracking-tight">Team</h1>
-          <p className="text-sm text-muted-foreground">Your chapter's leadership and ambassadors.</p>
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="space-y-8">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="space-y-3">
-              <Skeleton className="h-4 w-32" />
-              <div className="grid gap-3">
-                {[0, 1].map((j) => <Skeleton key={j} className="h-20 w-full rounded-xl" />)}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : error ? (
-        <div className="p-8 text-center border rounded-xl bg-destructive/5 text-destructive">
-          <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-          <p>Failed to load team. Please try again.</p>
-        </div>
-      ) : !members?.length ? (
-        <div className="p-12 text-center border border-dashed rounded-xl">
-          <Users className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-          <p className="text-lg font-medium">No team members yet</p>
-          <p className="text-sm text-muted-foreground">Your chapter hasn't set up its team yet.</p>
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {(["president", "exco", "ambassador"] as const).map((role) => {
-            const group = grouped[role];
-            if (group.length === 0) return null;
-            return (
-              <div key={role} className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                    {ROLE_LABELS[role]}
-                  </h2>
-                  <div className="flex-1 border-t" />
-                  <span className="text-xs text-muted-foreground">{group.length}</span>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {group.map((member) => (
-                    <TeamMemberCard key={member.user_id} member={member} />
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function TeamMemberCard({ member }: { member: ChapterTeamMember }) {
-  const initials = member.username
-    .split(/[\s_-]/)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .slice(0, 2)
-    .join("");
-
-  return (
-    <Card className="p-4 flex items-center gap-4 hover:border-brand-primary transition-all">
-      <Avatar className="h-12 w-12 shrink-0">
-        <AvatarImage src={member.avatar_url ?? undefined} alt={member.username} />
-        <AvatarFallback className="text-sm font-semibold">{initials}</AvatarFallback>
-      </Avatar>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold truncate">@{member.username}</span>
-          {member.role === "president" && (
-            <Badge className="text-[10px] uppercase font-bold bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border-none">
-              President
-            </Badge>
-          )}
-          {member.role === "exco" && (
-            <Badge variant="secondary" className="text-[10px] uppercase font-bold">
-              ExCo
-            </Badge>
-          )}
-        </div>
-        {member.role === "exco" && member.exco_responsibility && (
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {EXCO_LABELS[member.exco_responsibility] ?? member.exco_responsibility}
-          </p>
-        )}
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Joined {new Date(member.joined_at).toLocaleDateString(undefined, { year: "numeric", month: "short" })}
-        </p>
-      </div>
-    </Card>
   );
 }
 

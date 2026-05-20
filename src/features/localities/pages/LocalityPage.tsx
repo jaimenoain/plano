@@ -34,6 +34,7 @@ import {
   getLocalityBuildingsClient,
   getLocalityMapBuildings,
   LOCALITY_BUILDINGS_PAGE_SIZE,
+  type LocalityVolunteerTeamMember,
 } from "@/features/localities/api/localitiesApi";
 import type { LocalityBuildingDTO } from "@/features/localities/types";
 import { localityPageLoader, type LocalityPageLoaderData } from "./LocalityPage.loader";
@@ -892,19 +893,13 @@ interface ActivityItem {
   createdAt: string;
 }
 
-/** Loader may gain these fields incrementally; optional until the loader implements them. */
+/** Extends LocalityPageLoaderData with optional fields not yet in the loader. */
 type LocalityPageLoaderResolved = LocalityPageLoaderData & {
-  collectionsCount?: number;
-  contributorsCount?: number;
   photosCount?: number;
-  stewards?: LocalitySteward[];
   events?: LocalityEvent[];
-  cityGuideCollections?: LocalityCollection[];
   recentActivity?: ActivityItem[];
   heroCreditUsername?: string | null;
   heroSourceBuilding?: string | null;
-  citySlug?: string;
-  countryCode?: string;
 };
 
 function timeAgo(iso: string): string {
@@ -1063,6 +1058,119 @@ function LocalityActivityStream({
 }
 
 // ---------------------------------------------------------------------------
+// LocalityVolunteerTeam — discreet editorial "meet the team" section
+// ---------------------------------------------------------------------------
+
+const EXCO_LABELS: Record<string, string> = {
+  content: "Content",
+  marketing: "Marketing",
+  architect_relations: "Architect relations",
+  data_quality: "Data quality",
+  community: "Community",
+};
+
+function VolunteerTeamMemberCard({
+  member,
+}: {
+  member: LocalityVolunteerTeamMember;
+}) {
+  const initials = member.username
+    .split(/[\s_-]/)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .slice(0, 2)
+    .join("");
+
+  const roleLabel =
+    member.role === "president"
+      ? "President"
+      : member.role === "exco"
+        ? member.exco_responsibility
+          ? EXCO_LABELS[member.exco_responsibility] ?? member.exco_responsibility
+          : "Executive committee"
+        : "Ambassador";
+
+  return (
+    <Link
+      to={`/profile/${member.username}`}
+      className="group flex items-center gap-2.5 py-2.5"
+    >
+      <Avatar className="h-7 w-7 shrink-0 border border-border-default bg-surface-muted">
+        <AvatarImage src={member.avatar_url ?? undefined} alt="" />
+        <AvatarFallback className="text-[10px] font-medium text-text-secondary">
+          {initials}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <span className="block text-sm font-medium text-text-primary transition-colors group-hover:text-brand-primary">
+          {member.username}
+        </span>
+        <span className="block text-[10px] uppercase tracking-widest text-text-disabled">
+          {roleLabel}
+        </span>
+      </div>
+    </Link>
+  );
+}
+
+function LocalityVolunteerTeam({
+  members,
+}: {
+  members: LocalityVolunteerTeamMember[];
+}) {
+  if (members.length === 0) return null;
+
+  const president = members.filter((m) => m.role === "president");
+  const exco = members.filter((m) => m.role === "exco");
+  const ambassadors = members.filter((m) => m.role === "ambassador");
+
+  return (
+    <section className="mt-16 border-t border-border-default pt-12">
+      <div className="mb-6 flex items-center gap-2">
+        <SectionLabel>Volunteer team</SectionLabel>
+      </div>
+
+      <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+        {/* President — spans first if present */}
+        {president.length > 0 && (
+          <div className="sm:col-span-2 lg:col-span-1">
+            <p className="mb-1 text-[9px] font-medium uppercase tracking-widest text-text-disabled">
+              Chapter president
+            </p>
+            {president.map((m) => (
+              <VolunteerTeamMemberCard key={m.user_id} member={m} />
+            ))}
+          </div>
+        )}
+
+        {/* ExCo */}
+        {exco.length > 0 && (
+          <div>
+            <p className="mb-1 text-[9px] font-medium uppercase tracking-widest text-text-disabled">
+              Executive committee
+            </p>
+            {exco.map((m) => (
+              <VolunteerTeamMemberCard key={m.user_id} member={m} />
+            ))}
+          </div>
+        )}
+
+        {/* Ambassadors */}
+        {ambassadors.length > 0 && (
+          <div>
+            <p className="mb-1 text-[9px] font-medium uppercase tracking-widest text-text-disabled">
+              Ambassadors
+            </p>
+            {ambassadors.map((m) => (
+              <VolunteerTeamMemberCard key={m.user_id} member={m} />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // LocalityBuildingsGrid — existing, unchanged
 // ---------------------------------------------------------------------------
 function BuildingCardSkeleton() {
@@ -1166,29 +1274,43 @@ export default function LocalityPage() {
   const loaderData = useLoaderData() as LocalityPageLoaderResolved;
   const { locality, initialBuildings } = loaderData;
 
-  // ---------------------------------------------------------------------------
-  // New section data — sourced from loader extensions.
-  // These fields are typed as optional so the page degrades gracefully while
-  // the loader is being extended. Each section checks for presence before render.
-  // ---------------------------------------------------------------------------
   const stats: LocalityStats = {
     buildingsCount: locality.buildings_count,
-    collectionsCount: loaderData.collectionsCount ?? 0,
-    contributorsCount: loaderData.contributorsCount ?? 0,
+    collectionsCount: loaderData.collectionsCount,
+    contributorsCount: loaderData.contributorsCount,
     photosCount: loaderData.photosCount ?? 0,
   };
 
-  const stewards: LocalitySteward[] = loaderData.stewards ?? [];
+  // Map snake_case API types to the page's camelCase interfaces
+  const stewards: LocalitySteward[] = loaderData.stewards.map((s) => ({
+    userId: s.user_id,
+    username: s.username,
+    avatarUrl: s.avatar_url,
+    buildingsLogged: s.buildings_logged,
+    photosUploaded: s.photos_uploaded,
+    reviewsWritten: s.reviews_written,
+    isAmbassador: s.is_ambassador,
+  }));
+
+  const collections: LocalityCollection[] = loaderData.cityGuideCollections.map((c) => ({
+    id: c.id,
+    slug: c.slug,
+    name: c.name,
+    ownerUsername: c.owner_username,
+    buildingCount: c.building_count,
+    previewImageUrls: c.preview_image_urls,
+    contributorAvatarUrls: c.owner_avatar_url ? [c.owner_avatar_url] : [],
+  }));
+
+  const volunteerTeam: LocalityVolunteerTeamMember[] = loaderData.volunteerTeam;
   const events: LocalityEvent[] = loaderData.events ?? [];
-  const collections: LocalityCollection[] = loaderData.cityGuideCollections ?? [];
   const activityItems: ActivityItem[] = loaderData.recentActivity ?? [];
 
   const heroCreditUsername: string | null = loaderData.heroCreditUsername ?? null;
   const heroSourceBuilding: string | null = loaderData.heroSourceBuilding ?? null;
 
-  const citySlug: string =
-    loaderData.citySlug ?? locality.city.toLowerCase().replace(/\s+/g, "-");
-  const countryCode: string = loaderData.countryCode ?? "";
+  const citySlug: string = loaderData.citySlug;
+  const countryCode: string = loaderData.countryCode;
 
   return (
     <AppLayout showBack>
@@ -1241,15 +1363,18 @@ export default function LocalityPage() {
         {/* ── City Guides ── */}
         <LocalityCityGuides collections={collections} />
 
+        {/* ── Volunteer Team ── */}
+        <LocalityVolunteerTeam members={volunteerTeam} />
+
+        {/* ── Local Experts & Stewards ── */}
+        <LocalityStewards stewards={stewards} />
+
         {/* ── Events ── */}
         <LocalityEvents
           events={events}
           citySlug={citySlug}
           countryCode={countryCode}
         />
-
-        {/* ── Local Experts & Stewards ── */}
-        <LocalityStewards stewards={stewards} />
 
         {/* ── Activity Stream ── */}
         <LocalityActivityStream

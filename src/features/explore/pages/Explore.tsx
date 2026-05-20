@@ -602,7 +602,7 @@ export default function Explore() {
                 onSwipeSave={() => handleSwipeSave(building.id)}
                 onSwipeHide={() => handleSwipeHide(building.id)}
                 onSkip={() => handleSkip(building.id)}
-                onInteractionStart={undefined}
+                onInteractionStart={() => setIsFilterVisible(false)}
               />
             </div>
           ))}

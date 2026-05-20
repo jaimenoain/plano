@@ -222,7 +222,7 @@ export default function MergeComparisonEntities() {
     if (!targetEntity || !sourceEntity) {
       return (
         <div className="mx-auto flex min-h-[50vh] max-w-7xl flex-col items-center justify-center space-y-4 p-8">
-          <AlertTriangle className="h-16 w-16 text-red-500 opacity-20" />
+          <AlertTriangle className="h-16 w-16 text-feedback-destructive opacity-20" />
           <h2 className="text-2xl font-bold text-text-primary">Records not found</h2>
           <p className="text-text-secondary">The records you are trying to compare might have been deleted or moved.</p>
           <Button onClick={() => navigate("/admin/merge")} className="rounded-full px-8">Return to Merge Tool</Button>
@@ -231,8 +231,8 @@ export default function MergeComparisonEntities() {
     }
 
     const renderEntityValue = (label: string, value: any, isTarget = false) => (
-      <div className={`space-y-1 p-3 rounded-lg border transition-colors ${
-        isTarget ? "bg-white/50 border-green-500/10" : "bg-red-50/50 border-red-500/10"
+      <div className={`space-y-1 p-3 rounded border transition-colors ${
+        isTarget ? "bg-surface-card border-feedback-success/20" : "bg-feedback-destructive/5 border-feedback-destructive/10"
       }`}>
         <div className="text-[10px] text-text-secondary font-black uppercase tracking-widest opacity-60">{label}</div>
         <div className={`text-sm font-medium ${!isTarget ? "line-through opacity-40" : "text-text-primary"}`}>
@@ -263,15 +263,15 @@ export default function MergeComparisonEntities() {
                   </div>
                 </div>
 
-                <div className="hidden md:flex items-center gap-8 bg-surface-muted/50 px-6 py-3 rounded-2xl border border-border-default/50">
+                <div className="hidden md:flex items-center gap-8 bg-surface-muted/50 px-6 py-3 rounded-xl border border-border-default">
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Master</span>
-                    <span className="text-sm font-bold text-green-600 truncate max-w-[150px]">{targetEntity.name || targetEntity.city}</span>
+                    <span className="text-sm font-bold text-feedback-success truncate max-w-[150px]">{targetEntity.name || targetEntity.city}</span>
                   </div>
                   <ArrowLeftRight className="w-4 h-4 text-text-secondary opacity-30" />
                   <div className="flex flex-col text-right">
                     <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Duplicate</span>
-                    <span className="text-sm font-bold text-red-600 truncate max-w-[150px]">{sourceEntity.name || sourceEntity.city}</span>
+                    <span className="text-sm font-bold text-feedback-destructive truncate max-w-[150px]">{sourceEntity.name || sourceEntity.city}</span>
                   </div>
                 </div>
             </div>
@@ -280,23 +280,23 @@ export default function MergeComparisonEntities() {
 
                 {/* TARGET COLUMN (KEEP) */}
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-                  <Card className="border-2 border-green-500/20 bg-green-50/10 overflow-hidden shadow-2xl shadow-green-500/5 rounded-3xl">
-                      <div className="bg-green-500/10 p-4 text-green-800 font-black flex justify-between items-center border-b border-green-500/10">
-                          <span className="flex items-center gap-2 uppercase tracking-tighter"><Check className="h-5 w-5" /> Surviving Record</span>
-                          <Badge className="bg-green-600 text-white border-none shadow-lg shadow-green-600/20">Target</Badge>
+                  <Card className="border-2 border-feedback-success/20 bg-surface-card overflow-hidden shadow-md rounded-xl">
+                      <div className="bg-feedback-success/10 p-4 text-text-primary font-semibold flex justify-between items-center border-b border-feedback-success/10">
+                          <span className="flex items-center gap-2 uppercase tracking-wide text-sm"><Check className="h-5 w-5 text-feedback-success" /> Surviving Record</span>
+                          <Badge className="bg-feedback-success text-white border-none">Target</Badge>
                       </div>
                       
                       <CardContent className="p-8 space-y-6">
                           <div className="flex items-center gap-4 mb-4">
-                            <div className="w-16 h-16 rounded-2xl bg-green-500/20 flex items-center justify-center text-green-600 border border-green-500/20">
+                            <div className="w-16 h-16 rounded bg-feedback-success/10 flex items-center justify-center text-feedback-success border border-feedback-success/20">
                               {entityType === 'building' && <Building2 className="w-8 h-8" />}
                               {entityType === 'person' && <User className="w-8 h-8" />}
                               {entityType === 'company' && <Briefcase className="w-8 h-8" />}
                               {entityType === 'locality' && <MapPin className="w-8 h-8" />}
                             </div>
                             <div>
-                              <h2 className="text-2xl font-black text-green-900 leading-tight">{targetEntity.name || targetEntity.city}</h2>
-                              <p className="text-sm text-green-700/60 font-medium">Master ID: {targetEntity.id.slice(0, 8)}...</p>
+                              <h2 className="text-2xl font-bold text-text-primary leading-tight">{targetEntity.name || targetEntity.city}</h2>
+                              <p className="text-sm text-text-secondary font-medium">Master ID: {targetEntity.id.slice(0, 8)}...</p>
                             </div>
                           </div>
 
@@ -310,7 +310,7 @@ export default function MergeComparisonEntities() {
                                   
                                   {/* Building Visuals */}
                                   <div className="mt-4 space-y-4">
-                                    <div className="aspect-video w-full rounded-2xl overflow-hidden bg-surface-muted border border-green-500/10">
+                                    <div className="aspect-video w-full overflow-hidden bg-surface-muted border border-feedback-success/10">
                                       {targetEntity.hero_image_url || targetEntity.community_preview_url ? (
                                         <img 
                                           src={getBuildingImageUrl(targetEntity.hero_image_url || targetEntity.community_preview_url)} 
@@ -352,8 +352,8 @@ export default function MergeComparisonEntities() {
                               )}
                           </div>
 
-                          <div className="pt-6 border-t border-green-500/10">
-                            <div className="flex items-center justify-between text-[10px] font-bold text-green-800/40 uppercase tracking-widest">
+                          <div className="pt-6 border-t border-border-default">
+                            <div className="flex items-center justify-between text-[10px] font-medium text-text-disabled uppercase tracking-widest">
                               <span>Created: {new Date(targetEntity.created_at).toLocaleDateString()}</span>
                               <span>Updated: {new Date(targetEntity.updated_at).toLocaleDateString()}</span>
                             </div>
@@ -368,7 +368,7 @@ export default function MergeComparisonEntities() {
                       <Button
                           size="icon"
                           variant="outline"
-                          className="rounded-3xl h-16 w-16 border-2 border-brand-primary/20 bg-white hover:bg-brand-primary hover:text-white shadow-2xl shadow-brand-primary/10 transition-all duration-300 group"
+                          className="rounded-xl h-16 w-16 border-2 border-brand-primary/20 bg-surface-card hover:bg-brand-primary hover:text-white shadow-md transition-all duration-300 group"
                           onClick={handleSwap}
                       >
                           <ArrowLeftRight className="h-8 w-8 transition-transform group-hover:rotate-180 duration-500" />
@@ -379,23 +379,23 @@ export default function MergeComparisonEntities() {
 
                 {/* SOURCE COLUMN (REMOVE) */}
                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-                  <Card className="border-2 border-red-500/20 bg-red-50/10 overflow-hidden shadow-2xl shadow-red-500/5 rounded-3xl opacity-80 hover:opacity-100 transition-opacity">
-                      <div className="bg-red-500/10 p-4 text-red-800 font-black flex justify-between items-center border-b border-red-500/10">
-                          <span className="flex items-center gap-2 uppercase tracking-tighter"><Trash2 className="h-5 w-5" /> Records to Purge</span>
-                          <Badge variant="destructive" className="border-none shadow-lg shadow-red-600/20">Source</Badge>
+                  <Card className="border-2 border-feedback-destructive/20 bg-surface-card overflow-hidden shadow-md rounded-xl opacity-80 hover:opacity-100 transition-opacity">
+                      <div className="bg-feedback-destructive/10 p-4 text-text-primary font-semibold flex justify-between items-center border-b border-feedback-destructive/10">
+                          <span className="flex items-center gap-2 uppercase tracking-wide text-sm"><Trash2 className="h-5 w-5 text-feedback-destructive" /> Records to Purge</span>
+                          <Badge variant="destructive" className="border-none">Source</Badge>
                       </div>
                       
                       <CardContent className="p-8 space-y-6">
                           <div className="flex items-center gap-4 mb-4 grayscale opacity-60">
-                            <div className="w-16 h-16 rounded-2xl bg-red-500/20 flex items-center justify-center text-red-600 border border-red-500/20">
+                            <div className="w-16 h-16 rounded bg-feedback-destructive/10 flex items-center justify-center text-feedback-destructive border border-feedback-destructive/20">
                               {entityType === 'building' && <Building2 className="w-8 h-8" />}
                               {entityType === 'person' && <User className="w-8 h-8" />}
                               {entityType === 'company' && <Briefcase className="w-8 h-8" />}
                               {entityType === 'locality' && <MapPin className="w-8 h-8" />}
                             </div>
                             <div>
-                              <h2 className="text-2xl font-black text-red-900 leading-tight line-through decoration-red-500/30">{sourceEntity.name || sourceEntity.city}</h2>
-                              <p className="text-sm text-red-700/60 font-medium">Source ID: {sourceEntity.id.slice(0, 8)}...</p>
+                              <h2 className="text-2xl font-bold text-text-primary leading-tight line-through decoration-feedback-destructive/30">{sourceEntity.name || sourceEntity.city}</h2>
+                              <p className="text-sm text-text-secondary font-medium">Source ID: {sourceEntity.id.slice(0, 8)}...</p>
                             </div>
                           </div>
 
@@ -409,7 +409,7 @@ export default function MergeComparisonEntities() {
 
                                   {/* Building Visuals */}
                                   <div className="mt-4 space-y-4">
-                                    <div className="aspect-video w-full rounded-2xl overflow-hidden bg-surface-muted border border-red-500/10 grayscale">
+                                    <div className="aspect-video w-full overflow-hidden bg-surface-muted border border-feedback-destructive/10 grayscale">
                                       {sourceEntity.hero_image_url || sourceEntity.community_preview_url ? (
                                         <img 
                                           src={getBuildingImageUrl(sourceEntity.hero_image_url || sourceEntity.community_preview_url)} 
@@ -451,8 +451,8 @@ export default function MergeComparisonEntities() {
                               )}
                           </div>
 
-                          <div className="pt-6 border-t border-red-500/10 opacity-40">
-                            <div className="flex items-center justify-between text-[10px] font-bold text-red-800 uppercase tracking-widest">
+                          <div className="pt-6 border-t border-border-default opacity-40">
+                            <div className="flex items-center justify-between text-[10px] font-medium text-text-secondary uppercase tracking-widest">
                               <span>Created: {new Date(sourceEntity.created_at).toLocaleDateString()}</span>
                               <span>Updated: {new Date(sourceEntity.updated_at).toLocaleDateString()}</span>
                             </div>
@@ -469,11 +469,11 @@ export default function MergeComparisonEntities() {
               transition={{ delay: 0.2 }}
               className="mt-12"
             >
-                <Card className="border-none bg-surface-card shadow-2xl rounded-[2.5rem] overflow-hidden border border-border-default/50">
+                <Card className="bg-surface-card shadow-md rounded-xl overflow-hidden border border-border-default">
                     <CardContent className="p-10">
                         <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
                             <div className="space-y-6 flex-1 text-center lg:text-left">
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 text-amber-600 rounded-full text-xs font-black uppercase tracking-widest border border-amber-500/20">
+                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-feedback-warning/10 text-feedback-warning rounded text-xs font-semibold uppercase tracking-widest border border-feedback-warning/20">
                                     <AlertTriangle className="h-4 w-4" />
                                     Consolidation Impact
                                 </div>
@@ -487,7 +487,7 @@ export default function MergeComparisonEntities() {
 
                                 <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mt-4">
                                     {Object.entries(impact).map(([key, count]) => (
-                                      <Badge key={key} variant="secondary" className="text-sm px-5 py-2 rounded-2xl bg-surface-muted text-text-primary font-bold border border-border-default transition-all hover:border-brand-primary/30">
+                                      <Badge key={key} variant="secondary" className="text-sm px-4 py-1.5 rounded bg-surface-muted text-text-primary font-semibold border border-border-default transition-all hover:border-border-strong">
                                           {impactLoading ? <Loader2 className="w-3 h-3 animate-spin mr-2" /> : count} {key.charAt(0).toUpperCase() + key.slice(1)}
                                       </Badge>
                                     ))}
@@ -516,7 +516,7 @@ export default function MergeComparisonEntities() {
                             </div>
 
                             {entityType === 'building' && (targetEntity.latitude || sourceEntity.latitude) && (
-                              <div className="w-full lg:w-[400px] aspect-square rounded-3xl overflow-hidden border border-border-default bg-surface-muted shadow-inner relative group">
+                              <div className="w-full lg:w-[400px] aspect-square rounded-xl overflow-hidden border border-border-default bg-surface-muted shadow-inner relative group">
                                 <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><Loader2 className="animate-spin" /></div>}>
                                   <BuildingMap 
                                     lat={targetEntity.latitude || sourceEntity.latitude}
@@ -526,8 +526,8 @@ export default function MergeComparisonEntities() {
                                   />
                                 </Suspense>
                                 <div className="absolute top-4 left-4 right-4 flex justify-between pointer-events-none">
-                                  <Badge className="bg-green-500/90 text-white border-none shadow-lg">Target</Badge>
-                                  <Badge className="bg-red-500/90 text-white border-none shadow-lg">Source</Badge>
+                                  <Badge className="bg-feedback-success text-white border-none shadow-md">Target</Badge>
+                                  <Badge className="bg-feedback-destructive text-white border-none shadow-md">Source</Badge>
                                 </div>
                               </div>
                             )}
@@ -537,7 +537,7 @@ export default function MergeComparisonEntities() {
                                     <AlertDialogTrigger asChild>
                                         <Button
                                             size="lg"
-                                            className="px-12 h-20 text-xl font-black rounded-3xl shadow-2xl shadow-brand-primary/20 bg-brand-primary hover:bg-brand-primary/90 text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale"
+                                            className="px-12 h-16 text-base font-semibold rounded-xl shadow-md bg-brand-primary hover:bg-brand-primary-hover text-white transition-colors disabled:opacity-50 disabled:grayscale"
                                             disabled={merging || impactLoading}
                                         >
                                             {merging ? (
@@ -553,9 +553,9 @@ export default function MergeComparisonEntities() {
                                             )}
                                         </Button>
                                     </AlertDialogTrigger>
-                                    <AlertDialogContent className="rounded-[2rem] p-8">
+                                    <AlertDialogContent className="rounded-xl p-8">
                                         <AlertDialogHeader>
-                                            <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-600 mb-4">
+                                            <div className="w-16 h-16 rounded bg-feedback-destructive/10 flex items-center justify-center text-feedback-destructive mb-4">
                                               <AlertTriangle className="w-8 h-8" />
                                             </div>
                                             <AlertDialogTitle className="text-2xl font-black">Confirm Irreversible Merge</AlertDialogTitle>
@@ -566,10 +566,10 @@ export default function MergeComparisonEntities() {
                                             </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter className="pt-8 gap-3">
-                                            <AlertDialogCancel className="rounded-2xl h-12 px-6 font-bold">Cancel</AlertDialogCancel>
-                                            <AlertDialogAction 
-                                              onClick={handleMerge} 
-                                              className="bg-red-600 hover:bg-red-700 text-white rounded-2xl h-12 px-8 font-bold shadow-lg shadow-red-600/20"
+                                            <AlertDialogCancel className="rounded-md h-12 px-6 font-medium">Cancel</AlertDialogCancel>
+                                            <AlertDialogAction
+                                              onClick={handleMerge}
+                                              className="bg-feedback-destructive hover:bg-feedback-destructive/90 text-white rounded-md h-12 px-8 font-medium shadow-md"
                                             >
                                                 Confirm & Merge
                                             </AlertDialogAction>
