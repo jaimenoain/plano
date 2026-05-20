@@ -108,13 +108,20 @@ export function FeedbackBoard({ readOnly = false }: FeedbackBoardProps) {
   const [submittingReopen, setSubmittingReopen] = useState(false);
 
   const load = useCallback(async () => {
+    if (readOnly && !user) {
+      setRows([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setLoadError(null);
-    const result = readOnly ? await loadFeedbackForTeam() : await loadFeedbackForAdmin();
+    const result = readOnly
+      ? await loadFeedbackForTeam(user!.id)
+      : await loadFeedbackForAdmin();
     if (result.error) setLoadError(result.error);
     else setRows(result.rows);
     setLoading(false);
-  }, [readOnly]);
+  }, [readOnly, user]);
 
   useEffect(() => {
     void load();
@@ -289,19 +296,21 @@ export function FeedbackBoard({ readOnly = false }: FeedbackBoardProps) {
         )}
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          <Select value={userFilter} onValueChange={setUserFilter}>
-            <SelectTrigger className="h-8 w-[140px]">
-              <SelectValue placeholder="All users" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All users</SelectItem>
-              {uniqueUsers.map((u) => (
-                <SelectItem key={u.id} value={u.id}>
-                  {u.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {!readOnly && (
+            <Select value={userFilter} onValueChange={setUserFilter}>
+              <SelectTrigger className="h-8 w-[140px]">
+                <SelectValue placeholder="All users" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All users</SelectItem>
+                {uniqueUsers.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
 
           <Select
             value={typeFilter}

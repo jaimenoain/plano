@@ -11,7 +11,7 @@ export default function FeedbackHistoryPage() {
         <div>
           <h1 className="text-2xl font-semibold text-text-primary">Feedback</h1>
           <p className="mt-1 text-sm text-text-secondary">
-            See what your team has submitted and track progress.{" "}
+            Track the feedback you've submitted.{" "}
             <Link to="/settings" className="text-brand-primary hover:underline">
               Settings
             </Link>

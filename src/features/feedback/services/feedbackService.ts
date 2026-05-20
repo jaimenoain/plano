@@ -53,11 +53,20 @@ export async function loadFeedbackForAdmin(): Promise<{
   return { rows: (data ?? []).map((r: Record<string, unknown>) => mapRow(r)), error: null };
 }
 
-export async function loadFeedbackForTeam(): Promise<{
+export async function loadFeedbackForTeam(userId: string): Promise<{
   rows: FeedbackRow[];
   error: string | null;
 }> {
-  return loadFeedbackForAdmin();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from("feedback")
+    .select(FEEDBACK_SELECT)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  if (error) return { rows: [], error: error.message };
+  return { rows: (data ?? []).map((r: Record<string, unknown>) => mapRow(r)), error: null };
 }
 
 async function shouldDebounceNotification(
