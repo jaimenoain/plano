@@ -369,7 +369,7 @@ const getNumArrayParam = (param: string | null): number[] =>
     ? param
         .split(",")
         .map((s) => parseInt(s, 10))
-        .filter((n) => Number.isInteger(n) && n >= 1)
+        .filter((n) => Number.isInteger(n) && (n >= 1 || n === 0))
     : [];
 const getBoolParam = (param: string | null, defaultVal: boolean): boolean => 
   param !== null ? param === "true" : defaultVal;

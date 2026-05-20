@@ -1,4 +1,9 @@
-import { TYPE_LABELS, type FeedbackRow, type FeedbackType } from "./feedbackTypes";
+import {
+  STATUS_LABELS,
+  TYPE_LABELS,
+  type FeedbackRow,
+  type FeedbackType,
+} from "./feedbackTypes";
 
 function formatMetadata(metadata: Record<string, unknown>): string {
   const entries = Object.entries(metadata);
@@ -45,6 +50,7 @@ ${row.message.trim()}
 
 ## Feedback classification
 - Type: ${TYPE_LABELS[row.type]}
+- Status: ${STATUS_LABELS[row.status]}
 - Feedback ID: ${row.id}
 - Submitted (UTC): ${submittedAt}
 - Reporter: ${reporter}

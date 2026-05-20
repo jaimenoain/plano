@@ -309,7 +309,7 @@ export const useURLMapState = () => {
        centuries: (() => {
          const raw = searchParams.get("centuries");
          if (!raw) return undefined;
-         const parsed = raw.split(",").map((s) => parseInt(s, 10)).filter((n) => Number.isInteger(n) && n >= 1);
+         const parsed = raw.split(",").map((s) => parseInt(s, 10)).filter((n) => Number.isInteger(n) && (n >= 1 || n === 0));
          return parsed.length > 0 ? parsed : undefined;
        })(),
     };

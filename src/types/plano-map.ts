@@ -100,7 +100,10 @@ export interface MapFilters {
   minStoreys?: number;
   maxStoreys?: number;
 
-  /** Buildings whose `century` column matches any selected value (OR). */
+  /**
+   * Century filter (OR). Positive integers match `buildings.century`.
+   * `0` means include B.C. buildings (`century < 1`).
+   */
   centuries?: number[];
 
   // Photography Gaps (Phase 2)

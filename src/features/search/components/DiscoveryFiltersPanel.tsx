@@ -26,7 +26,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { CENTURY_FILTER_ITEMS } from "@/lib/century";
+import { CENTURY_FILTER_ITEMS, parseCenturyIds } from "@/lib/century";
 import type { UserSearchResult } from "@/features/search/hooks/useUserSearch";
 
 interface MultiSelectCheckboxListProps {
@@ -429,12 +429,8 @@ export function DiscoveryFiltersPanel({
             <MultiSelectCheckboxList
               items={CENTURY_FILTER_ITEMS}
               selectedIds={selectedCenturies.map(String)}
-              onChange={(ids) =>
-                onCenturiesChange?.(
-                  ids.map((id) => parseInt(id, 10)).filter((n) => Number.isInteger(n) && n >= 1),
-                )
-              }
-              className="h-[200px]"
+              onChange={(ids) => onCenturiesChange?.(parseCenturyIds(ids))}
+              className="h-[320px]"
             />
           </AccordionContent>
         </AccordionItem>

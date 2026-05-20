@@ -219,7 +219,14 @@ BEGIN
       AND (v_typology_ids IS NULL OR cardinality(v_typology_ids) = 0 OR EXISTS (SELECT 1 FROM building_functional_typologies bft WHERE bft.building_id = b.id AND bft.typology_id = ANY(v_typology_ids)))
       AND (v_attribute_ids IS NULL OR cardinality(v_attribute_ids) = 0 OR EXISTS (SELECT 1 FROM building_attributes batt WHERE batt.building_id = b.id AND batt.attribute_id = ANY(v_attribute_ids)))
       AND (v_year IS NULL OR b.year_completed = v_year)
-      AND (v_centuries IS NULL OR cardinality(v_centuries) = 0 OR b.century = ANY(v_centuries))
+      AND (
+        v_centuries IS NULL
+        OR cardinality(v_centuries) = 0
+        OR (
+          (0 = ANY(v_centuries) AND b.century IS NOT NULL AND b.century < 1)
+          OR (b.century IS NOT NULL AND b.century > 0 AND b.century = ANY(v_centuries))
+        )
+      )
       AND (v_access_levels IS NULL OR cardinality(v_access_levels) = 0 OR b.access_level::text = ANY(v_access_levels))
       AND (v_access_logistics IS NULL OR cardinality(v_access_logistics) = 0 OR b.access_logistics::text = ANY(v_access_logistics))
       AND (v_access_costs IS NULL OR cardinality(v_access_costs) = 0 OR b.access_cost::text = ANY(v_access_costs))
@@ -484,7 +491,14 @@ BEGIN
          OR b.city = ANY(v_cities_filter))
     AND (v_country_filter IS NULL OR b.country = v_country_filter)
     AND (v_year IS NULL OR b.year_completed = v_year)
-    AND (v_centuries IS NULL OR cardinality(v_centuries) = 0 OR b.century = ANY(v_centuries))
+    AND (
+      v_centuries IS NULL
+      OR cardinality(v_centuries) = 0
+      OR (
+        (0 = ANY(v_centuries) AND b.century IS NOT NULL AND b.century < 1)
+        OR (b.century IS NOT NULL AND b.century > 0 AND b.century = ANY(v_centuries))
+      )
+    )
     AND (v_access_levels IS NULL OR cardinality(v_access_levels) = 0
          OR b.access_level::text = ANY(v_access_levels))
     AND (v_access_logistics IS NULL OR cardinality(v_access_logistics) = 0
@@ -665,7 +679,14 @@ BEGIN
     AND (v_typology_ids IS NULL OR cardinality(v_typology_ids) = 0 OR EXISTS (SELECT 1 FROM building_functional_typologies bft WHERE bft.building_id = b.id AND bft.typology_id = ANY(v_typology_ids)))
     AND (v_attribute_ids IS NULL OR cardinality(v_attribute_ids) = 0 OR EXISTS (SELECT 1 FROM building_attributes batt WHERE batt.building_id = b.id AND batt.attribute_id = ANY(v_attribute_ids)))
     AND (v_year IS NULL OR b.year_completed = v_year)
-    AND (v_centuries IS NULL OR cardinality(v_centuries) = 0 OR b.century = ANY(v_centuries))
+    AND (
+      v_centuries IS NULL
+      OR cardinality(v_centuries) = 0
+      OR (
+        (0 = ANY(v_centuries) AND b.century IS NOT NULL AND b.century < 1)
+        OR (b.century IS NOT NULL AND b.century > 0 AND b.century = ANY(v_centuries))
+      )
+    )
     AND (v_access_levels IS NULL OR cardinality(v_access_levels) = 0 OR b.access_level::text = ANY(v_access_levels))
     AND (v_access_logistics IS NULL OR cardinality(v_access_logistics) = 0 OR b.access_logistics::text = ANY(v_access_logistics))
     AND (v_access_costs IS NULL OR cardinality(v_access_costs) = 0 OR b.access_cost::text = ANY(v_access_costs))

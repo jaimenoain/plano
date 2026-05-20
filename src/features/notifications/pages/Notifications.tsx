@@ -69,7 +69,9 @@ interface Notification {
     | "ambassador_application_approved"
     | "ambassador_application_rejected"
     | "ambassador_membership_review"
-    | "award_win";
+    | "award_win"
+    | "feedback_status_updated"
+    | "feedback_notes_updated";
   is_read: boolean;
   actor_id: string;
   recommendation_id?: string | null;
@@ -97,6 +99,8 @@ interface Notification {
     reviewer_note?: string | null;
     membership_id?: string;
     member_username?: string;
+    feedback_id?: string;
+    message?: string;
   };
   recommendation?: {
     id?: string;
@@ -248,6 +252,17 @@ export default function Notifications() {
       if (notification.resource?.id) {
         navigate(`/building/${notification.resource.id}`);
       }
+    } else if (
+      notification.type === "feedback_status_updated" ||
+      notification.type === "feedback_notes_updated"
+    ) {
+      const feedbackId =
+        notification.metadata &&
+        typeof notification.metadata === "object" &&
+        "feedback_id" in notification.metadata
+          ? String((notification.metadata as { feedback_id?: string }).feedback_id)
+          : null;
+      navigate(feedbackId ? `/feedback?open=${feedbackId}` : "/feedback");
     } else if (notification.resource?.id) {
       navigate(`/review/${notification.resource.id}`);
     }
@@ -293,6 +308,9 @@ export default function Notifications() {
         return <ShieldCheck className="h-3.5 w-3.5 text-text-primary" />;
       case "award_win":
         return <Trophy className="h-3.5 w-3.5 text-amber-500" />;
+      case "feedback_status_updated":
+      case "feedback_notes_updated":
+        return <MessageCircle className="h-3.5 w-3.5 text-text-primary" />;
       default:
         return <Bell className="h-3.5 w-3.5 text-text-disabled" />;
     }
@@ -458,6 +476,14 @@ export default function Notifications() {
         return (
           <span>
             Congratulations! Your building <span className="font-medium italic">{buildingName || "a building"}</span> won an award
+          </span>
+        );
+      case "feedback_status_updated":
+      case "feedback_notes_updated":
+        return (
+          <span>
+            {n.metadata?.message ??
+              "Your feedback was updated — open Feedback to see details."}
           </span>
         );
       default:

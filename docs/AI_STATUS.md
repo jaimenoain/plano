@@ -31,4 +31,5 @@ Phase — Plano Updates feature
 
 ## Completed Tasks
 - Century global filter (2026-05-19): Added Century accordion to search page Global filters (`DiscoveryFiltersPanel`); wired URL state, map/list/search RPCs via migration `20271031000000_add_century_filter_to_search_rpcs.sql` (needs apply in Supabase SQL Editor). Also extended `useURLMapState` to parse award/size filter params into `MapContext` so map browse respects drawer filters.
+- Century filter UI (2026-05-19): Search drawer lists 21st→1st century plus B.C. checkbox; URL/RPC use `0` in `centuries` for B.C. (`century < 1`). Same migration updated if not yet applied.
 - Plano Updates (2026-05-17): Created `plano_updates` table, storage bucket, full admin CRUD (list + create/edit form with hero image upload, tags, geo scope, publish toggle), public listing and detail pages, footer link, admin sidebar entry.

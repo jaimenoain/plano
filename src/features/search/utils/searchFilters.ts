@@ -3,6 +3,7 @@ import {
   normalizeConstructionStatus,
   normalizeConstructionStatuses,
 } from '@/lib/buildingStatus';
+import { matchesCenturyFilter } from '@/lib/century';
 
 export interface BuildingFilterData {
   id: string;
@@ -196,7 +197,7 @@ export function filterLocalBuildings(
     }
 
     if (filters.centuries && filters.centuries.length > 0) {
-      if (b.century == null || !filters.centuries.includes(b.century)) {
+      if (!matchesCenturyFilter(b.century, filters.centuries)) {
         return false;
       }
     }

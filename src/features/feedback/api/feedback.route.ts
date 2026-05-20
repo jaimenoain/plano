@@ -85,6 +85,7 @@ export async function action({ request }: ActionFunctionArgs) {
       user_agent: userAgent ?? null,
       console_errors: consoleErrors ?? [],
       metadata: metadata ?? {},
+      status: "open",
     })
     .select("id")
     .single();

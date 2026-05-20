@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation, type MetaFunction } from "react-router";
-import { ArrowLeft, Loader2, Upload, Lock, Mail, Smartphone, Download, Database, LayoutTemplate } from "lucide-react";
+import { useNavigate, useLocation, Link, type MetaFunction } from "react-router";
+import { ArrowLeft, Loader2, Upload, Lock, Mail, Smartphone, Download, Database, LayoutTemplate, MessageSquare } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -447,6 +447,15 @@ toast({
         <h1 className="text-4xl font-bold tracking-tight leading-tight text-text-primary mb-8">
           Settings
         </h1>
+
+        <div className="mb-8">
+          <Button variant="outline" className="w-full justify-start gap-2" asChild>
+            <Link to="/feedback">
+              <MessageSquare className="h-4 w-4" />
+              Feedback history
+            </Link>
+          </Button>
+        </div>
 
         <div className="flex flex-col items-center mb-8">
             <Avatar className="h-24 w-24 mb-4">

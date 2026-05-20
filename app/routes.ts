@@ -154,6 +154,7 @@ export default [
       },
     ),
     route("/settings", "features/profile/pages/Settings.tsx"),
+    route("/feedback", "features/feedback/pages/FeedbackHistory.tsx"),
     route("/person/:slug", "features/credits/pages/PersonDetails.tsx"),
     route(
       "/company/:slug/dispute",

@@ -14,6 +14,10 @@ const baseRow: FeedbackRow = {
   created_at: "2026-05-19T12:00:00.000Z",
   user_id: "user-uuid",
   profiles: { username: "jane" },
+  status: "open",
+  status_changed_at: null,
+  outcome_notes: null,
+  needs_user_input: false,
 };
 
 describe("buildFeedbackClaudePrompt", () => {

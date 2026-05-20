@@ -1,6 +1,5 @@
-"use client";
-
 import { useState, useRef } from "react";
+import { Link } from "react-router";
 import { MessageCircle } from "lucide-react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { capturedErrors } from "@/components/providers/ConsoleErrorInterceptor";
@@ -73,6 +72,7 @@ export function FeedbackWidget() {
             screenHeight: window.screen.height,
             language: navigator.language,
             referrer: document.referrer,
+            page: window.location.pathname,
           },
         }),
       });
@@ -87,10 +87,17 @@ export function FeedbackWidget() {
       }
 
       setStatus("success");
+      if (typeof window.gtag === "function") {
+        window.gtag("event", "feedback_submitted", {
+          feedback_type: feedbackType,
+          has_screenshot: false,
+          page_url: window.location.pathname,
+        });
+      }
       setTimeout(() => {
         setOpen(false);
-        setTimeout(reset, 300);
-      }, 1800);
+        setTimeout(reset, 3000);
+      }, 3000);
     } catch {
       setStatus("error");
     }
@@ -155,9 +162,19 @@ export function FeedbackWidget() {
                 <div className="text-xl font-semibold text-text-primary">
                   Feedback received!
                 </div>
-                <div className="text-text-secondary text-center px-8">
+                <p className="text-text-secondary text-center px-8">
                   Thank you for helping us improve Plano.
-                </div>
+                </p>
+                <Link
+                  to="/feedback"
+                  className="text-sm font-medium text-brand-primary hover:underline"
+                  onClick={() => {
+                    setOpen(false);
+                    setTimeout(reset, 300);
+                  }}
+                >
+                  View my requests
+                </Link>
               </div>
             ) : (
               <div className="p-6 flex flex-col gap-6">
