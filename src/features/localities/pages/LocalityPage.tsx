@@ -36,6 +36,7 @@ import {
   LOCALITY_BUILDINGS_PAGE_SIZE,
   type LocalityVolunteerTeamMember,
 } from "@/features/localities/api/localitiesApi";
+import { getBuildingLocalityUrl } from "@/utils/url";
 import type { LocalityBuildingDTO } from "@/features/localities/types";
 import { localityPageLoader, type LocalityPageLoaderData } from "./LocalityPage.loader";
 
@@ -894,6 +895,122 @@ function LocalityCityGuides({
 }
 
 // ---------------------------------------------------------------------------
+// LocalityTopBuildings — editorial showcase (replaces the infinite-scroll list)
+// ---------------------------------------------------------------------------
+function LocalityTopBuildings({
+  buildings,
+  totalCount,
+  citySlug,
+  countryCode,
+}: {
+  buildings: LocalityBuildingDTO[];
+  totalCount: number;
+  citySlug: string;
+  countryCode: string;
+}) {
+  if (buildings.length === 0) return null;
+
+  const [hero, ...rest] = buildings;
+  const secondary = rest.slice(0, 5);
+
+  const heroUrl = getBuildingLocalityUrl(countryCode, citySlug, hero.id, hero.slug, hero.short_id);
+
+  return (
+    <section className="mt-16 border-t border-border-default pt-12">
+      <div className="mb-8 flex items-center justify-between gap-2">
+        <SectionLabel>Top buildings</SectionLabel>
+        <Link
+          to={`/architecture/${countryCode}/${citySlug}`}
+          className="text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
+        >
+          All {totalCount.toLocaleString()} →
+        </Link>
+      </div>
+
+      {/* Hero building — full-width feature card */}
+      <Link to={heroUrl} className="group mb-3 block overflow-hidden border border-border-default">
+        <div className="relative aspect-[16/9] overflow-hidden bg-surface-muted">
+          {hero.main_image_url ? (
+            <>
+              <img
+                src={getBuildingImageUrl(hero.main_image_url) ?? ""}
+                alt={hero.name}
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
+                {hero.year_completed ? (
+                  <p className="mb-1 text-[10px] font-medium uppercase tracking-widest text-white/55">
+                    {hero.year_completed}
+                  </p>
+                ) : null}
+                <h3 className="text-xl font-bold leading-tight tracking-tight text-white sm:text-2xl">
+                  {hero.name}
+                </h3>
+              </div>
+            </>
+          ) : (
+            <div className="flex h-full w-full flex-col justify-end bg-surface-muted p-5 sm:p-6">
+              {hero.year_completed ? (
+                <p className="mb-1 text-[10px] font-medium uppercase tracking-widest text-text-disabled">
+                  {hero.year_completed}
+                </p>
+              ) : null}
+              <h3 className="text-xl font-bold leading-tight tracking-tight text-text-primary sm:text-2xl">
+                {hero.name}
+              </h3>
+            </div>
+          )}
+        </div>
+      </Link>
+
+      {/* Secondary buildings — 2-col mobile, 3-col desktop */}
+      {secondary.length > 0 && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {secondary.map((b) => {
+            const url = getBuildingLocalityUrl(countryCode, citySlug, b.id, b.slug, b.short_id);
+            return (
+              <Link
+                key={b.id}
+                to={url}
+                className="group block overflow-hidden border border-border-default"
+              >
+                <div className="relative aspect-[4/3] overflow-hidden bg-surface-muted">
+                  {b.main_image_url ? (
+                    <>
+                      <img
+                        src={getBuildingImageUrl(b.main_image_url) ?? ""}
+                        alt={b.name}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
+                    </>
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-surface-muted">
+                      <Building2 className="h-8 w-8 text-text-disabled" />
+                    </div>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 p-3">
+                    {b.year_completed ? (
+                      <p className="text-[9px] font-medium uppercase tracking-widest text-white/55">
+                        {b.year_completed}
+                      </p>
+                    ) : null}
+                    <p className="line-clamp-2 text-xs font-semibold leading-snug text-white">
+                      {b.name}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // LocalityActivityStream — localized discovery feed
 // ---------------------------------------------------------------------------
 
@@ -1139,48 +1256,43 @@ function LocalityVolunteerTeam({
   const exco = members.filter((m) => m.role === "exco");
   const ambassadors = members.filter((m) => m.role === "ambassador");
 
-  return (
-    <section className="mt-16 border-t border-border-default pt-12">
-      <div className="mb-6 flex items-center gap-2">
-        <SectionLabel>Volunteer team</SectionLabel>
+  function InlineTeamRow({ label, group }: { label: string; group: LocalityVolunteerTeamMember[] }) {
+    if (group.length === 0) return null;
+    return (
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+        <span className="w-28 shrink-0 text-[9px] font-medium uppercase tracking-widest text-text-disabled">
+          {label}
+        </span>
+        {group.map((m) => (
+          <Link
+            key={m.user_id}
+            to={`/profile/${m.username}`}
+            className="group flex items-center gap-1.5"
+          >
+            <Avatar className="h-5 w-5 shrink-0 border border-border-default bg-surface-muted">
+              <AvatarImage src={m.avatar_url ?? undefined} alt="" />
+              <AvatarFallback className="text-[8px]">
+                {m.username.slice(0, 1).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-xs text-text-secondary transition-colors group-hover:text-text-primary">
+              {m.username}
+            </span>
+          </Link>
+        ))}
       </div>
+    );
+  }
 
-      <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
-        {/* President — spans first if present */}
-        {president.length > 0 && (
-          <div className="sm:col-span-2 lg:col-span-1">
-            <p className="mb-1 text-[9px] font-medium uppercase tracking-widest text-text-disabled">
-              Chapter president
-            </p>
-            {president.map((m) => (
-              <VolunteerTeamMemberCard key={m.user_id} member={m} />
-            ))}
-          </div>
-        )}
-
-        {/* ExCo */}
-        {exco.length > 0 && (
-          <div>
-            <p className="mb-1 text-[9px] font-medium uppercase tracking-widest text-text-disabled">
-              Executive committee
-            </p>
-            {exco.map((m) => (
-              <VolunteerTeamMemberCard key={m.user_id} member={m} />
-            ))}
-          </div>
-        )}
-
-        {/* Ambassadors */}
-        {ambassadors.length > 0 && (
-          <div>
-            <p className="mb-1 text-[9px] font-medium uppercase tracking-widest text-text-disabled">
-              Ambassadors
-            </p>
-            {ambassadors.map((m) => (
-              <VolunteerTeamMemberCard key={m.user_id} member={m} />
-            ))}
-          </div>
-        )}
+  return (
+    <section className="mt-14 border-t border-border-default pt-8">
+      <div className="mb-5 flex items-center gap-2">
+        <SectionLabel>Meet the team</SectionLabel>
+      </div>
+      <div className="space-y-3">
+        <InlineTeamRow label="President" group={president} />
+        <InlineTeamRow label="Executive committee" group={exco} />
+        <InlineTeamRow label="Ambassadors" group={ambassadors} />
       </div>
     </section>
   );
@@ -1348,6 +1460,13 @@ export default function LocalityPage() {
           <LocalityStats stats={stats} />
         </div>
 
+        {/* ── Description — editorial lead ── */}
+        {locality.description ? (
+          <p className="mt-10 max-w-2xl text-lg leading-relaxed text-text-secondary md:text-xl md:leading-relaxed">
+            {locality.description}
+          </p>
+        ) : null}
+
         {/* ── Quick Actions ── */}
         <QuickActions
           city={locality.city}
@@ -1355,35 +1474,25 @@ export default function LocalityPage() {
           countryCode={countryCode}
         />
 
-        {/* ── Description ── */}
-        {locality.description ? (
-          <p className="mt-12 max-w-2xl text-lg leading-relaxed text-text-secondary md:text-xl md:leading-relaxed">
-            {locality.description}
-          </p>
-        ) : null}
+        {/* ── Top Buildings — editorial showcase ── */}
+        <LocalityTopBuildings
+          buildings={initialBuildings.slice(0, 7)}
+          totalCount={locality.buildings_count}
+          citySlug={citySlug}
+          countryCode={countryCode}
+        />
 
-        {/* ── Map with smart filters ── */}
-        <LocalityMap localityId={locality.id} />
-
-        {/* ── Buildings ── */}
-        <section className="mt-16 border-t border-border-default pt-12">
-          <div className="mb-8">
-            <SectionLabel>Buildings</SectionLabel>
-          </div>
-          <LocalityBuildingsGrid
-            localityId={locality.id}
-            initialBuildings={initialBuildings}
-          />
-        </section>
-
-        {/* ── City Guides ── */}
+        {/* ── City Guides — collections ── */}
         <LocalityCityGuides collections={collections} />
 
-        {/* ── Volunteer Team ── */}
-        <LocalityVolunteerTeam members={volunteerTeam} />
-
-        {/* ── Local Experts & Stewards ── */}
+        {/* ── Top Contributors ── */}
         <LocalityStewards stewards={stewards} />
+
+        {/* ── Map — explore deeper ── */}
+        <LocalityMap localityId={locality.id} />
+
+        {/* ── Meet the team — discreet ── */}
+        <LocalityVolunteerTeam members={volunteerTeam} />
 
         {/* ── Events ── */}
         <LocalityEvents

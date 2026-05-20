@@ -69,6 +69,9 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
   }, [fitBounds, fitMapBounds]);
 
   const geolocateControlRef = useRef<MaplibreGeolocateControl | null>(null);
+  // Set to true if onMove fires before onLoad — user interacted with the map
+  // (e.g. tapped the GeolocateControl) before the map finished loading.
+  const hasEarlyMovedRef = useRef(false);
 
   const [viewState, setViewState] = useState({ latitude: lat, longitude: lng, zoom });
 
@@ -112,6 +115,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
   }, [bounds, updateBounds]);
 
   const onMove = useCallback((evt: ViewStateChangeEvent) => {
+    hasEarlyMovedRef.current = true;
     setViewState(evt.viewState);
     updateMapState({ lat: evt.viewState.latitude, lng: evt.viewState.longitude, zoom: evt.viewState.zoom }, false);
     scheduleViewportUpdate(evt.target, evt.viewState.zoom);
@@ -146,7 +150,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
       try { hasInteracted = sessionStorage.getItem('plano_map_interacted') === 'true'; } catch (_e) {}
       let savedState: string | null = null;
       try { savedState = localStorage.getItem(LOCAL_STORAGE_MAP_KEY); } catch {}
-      if (savedState) {
+      if (savedState && !hasEarlyMovedRef.current) {
         try {
           const { latitude, longitude, zoom: savedZoom } = JSON.parse(savedState);
           if (typeof latitude === 'number' && typeof longitude === 'number' && typeof savedZoom === 'number') {
@@ -157,7 +161,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
           }
         } catch {}
       }
-      if (!hasInteracted) geolocateControlRef.current?.trigger();
+      if (!hasInteracted && !hasEarlyMovedRef.current) geolocateControlRef.current?.trigger();
     }
   }, [updateBounds, lat, lng, zoom, updateMapState, flushPendingViewport]);
 

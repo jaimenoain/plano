@@ -1,144 +1,292 @@
-# Plano — Ambassador Portal
-## Implementation Roadmap
-Version 1.0 · May 2026
+# Plano — Core Team Management Platform: Roadmap
+
+**Purpose:** A dedicated surface for the Plano central team to monitor the health of the ambassador programme, coordinate chapter presidents, and act on issues — without digging through CRUD admin tables.
+
+**Audience:** Plano staff only (`app_admin` role). Chapter presidents and ambassadors are not affected by this work.
+
+**Route:** `/admin/programme` (new section within the existing admin shell)
+
+**Distinction from the existing admin panel:** `/admin/ambassadors` handles data operations — create chapters, manage memberships, review applications. This platform sits above that layer and answers: *Is the programme healthy? Where does it need attention? How do we communicate with the people running it?*
 
 ---
 
-## Context & guiding principles
+## What is already built
 
-This roadmap covers the build of the Plano Ambassador Portal — a dedicated space for chapter ambassadors, ExCo members, and presidents to contribute to the catalogue, track their progress, and coordinate with their chapter.
-
-It is written as a "what to build" document. Claude Code has access to the repository and will determine implementation details. This document focuses on outcomes, not code.
-
-### What the codebase already provides
-
-A thorough audit of the repository confirmed that the vast majority of data infrastructure is already in place. The portal is primarily a frontend build over existing backend RPCs and data models.
-
-| Already exists | Notes |
+| Capability | Where it lives |
 |---|---|
-| `get_ambassador_buildings_without_photos` | Primary data source for the Photography map — no new RPC needed |
-| `get_ambassador_buildings_missing_metadata` | Returns `missing_fields` array — drives Data & research filter chips directly |
-| `get_ambassador_unclaimed_firms` | Powers the Architect outreach tool — no new RPC needed |
-| `get_chapter_metrics` | Drives Leadership tab stats (member count, contribution count, etc.) |
-| `PlanoMap` + clustering + popups | Photography map is a new "gap layer" on existing map infrastructure, not a new map |
-| `ambassador_chapters`, `ambassador_memberships`, roles | Full ambassador data model exists — no schema changes needed for core portal |
-| `building_audit_logs` + `admin_audit_logs` | Leaderboard attribution is already trackable from existing logs |
-| `building_activity_rolling` (materialised view) | `photos_count` per building without a join — use for photo count thresholds |
-| `taskFeed.ts` | Existing embassy task feed RPCs — portal reuses and extends, does not replace |
+| Chapter CRUD (create, edit, status, cap) | `/admin/ambassadors` |
+| Membership management (add, role, status) | `/admin/ambassadors/:chapterId` |
+| Application review across all chapters | `/admin/ambassadors/applications` |
+| Locality coverage map | `/admin/ambassadors/coverage` |
+| Programme-wide stats (totals, by country) | `/admin/ambassadors/coverage` — Coverage tab |
+| National chapter overview | `/admin/ambassadors/coverage` — National tab |
 
-### Guiding principles
-
-- Reuse existing RPCs wherever possible. Do not duplicate backend logic.
-- The portal is a new surface (`/embassy` routes), not a replacement for existing admin tools.
-- Keep new database schema additions minimal. New tables are only introduced where clearly necessary.
-- Each phase is independently shippable — the portal should be usable after Phase 1 even without Phase 2 or 3.
-- Focus on the "what", not the "how". Implementation decisions belong with the developer.
+The phases below add coordination and monitoring capabilities that do not exist today.
 
 ---
 
-## Portal structure
+## Phase 1 — Programme Health Dashboard
 
-The portal lives at `/embassy` and comprises five screens. Role-based visibility is enforced at the component and RPC level — ambassadors cannot access leadership routes.
+**Goal:** Replace the current stats overview with a dashboard the core team can open each morning and immediately know the state of the programme.
 
-| Screen | Description & visibility |
-|---|---|
-| Onboarding `/embassy/welcome` | First-time setup. Sets contributor type preference and first goal. Shown once on first approved login. All roles. |
-| Contribute `/embassy/contribute` | Default landing page after onboarding. Hub of five contribution tools, each with the right interface for its job. All roles. |
-| My goals `/embassy/goals` | Personal contribution targets (self-set), auto-tracked from audit logs. Monthly leaderboard scoped to chapter and contribution type. All roles. |
-| Chapter projects `/embassy/projects` | Lightweight pinboard of collective campaigns and events. All ambassadors can view and join. ExCo and president can post. |
-| Leadership `/embassy/leadership` | Chapter health dashboard — member activity, pending applications, chapter priorities. ExCo and president only. |
+### What it delivers
+
+A new tab — **Programme Health** — at `/admin/programme/health`, containing four zones:
+
+**Pulse zone (top row — four stat cards)**
+- Active chapters / Forming chapters / Inactive chapters — with a 30-day delta indicator
+- Pending applications unreviewed for > 7 days — count with a warning badge if > 0
+
+**Activity zone (chart)**
+- Edits and photos contributed per day over the last 30 days, with a 7-day rolling average line
+- Sourced from `building_audit_logs`, the same data that powers the Embassy Leadership tab
+
+**Chapters needing attention (flagged list)**
+- Chapters with no president assigned
+- Chapters whose president has been inactive (no audit log entries) for > 30 days
+- Chapters in `forming` status for > 60 days
+- Each row links directly to `/admin/ambassadors/:chapterId`
+
+**Top 5 chapters this month**
+- Ranked by combined edits + photos in the last 30 days, with member count alongside
+
+### Data sources
+- `ambassador_chapters` — chapter count and status
+- `ambassador_memberships` — president identification (role = `president`, status = `active`)
+- `ambassador_applications` — pending count and submission dates
+- `building_audit_logs` — contribution activity
+
+### New RPCs needed
+- `get_programme_health_summary` — returns pulse stats, flagged chapters, and top chapters in one call
 
 ---
 
-## [x] Phase 1 — Portal foundation
+## Phase 2 — Chapter President Directory
 
-**Complexity: low — primarily frontend over existing RPCs**
+**Goal:** Give the core team a single place to see every chapter president, understand their chapter's health at a glance, and reach out directly.
 
-Phase 1 delivers a complete, working portal. Every screen is present. The only tool not yet at full capability is Photography (map view comes in Phase 2 — Phase 1 renders it as a simple list as a placeholder). All other contribution tools are fully functional.
+### What it delivers
 
-| Screen / feature | What to build | Backend | New? |
+A new tab — **Presidents** — at `/admin/programme/presidents`, containing:
+
+**Searchable, filterable table**
+- Columns: President username / avatar, chapter name, country, chapter status, member count, last active date, edits (last 30 days), open applications
+- Filter by: country, chapter status, activity (active / inactive > 30 days)
+- Search by president username or chapter name
+
+**President detail panel (slide-out)**
+- Clicking a row opens a side panel with:
+  - Profile avatar, username, chapter role, member since date
+  - Chapter health summary (same metrics as the table row, expanded)
+  - List of chapter ExCo members
+  - Contact action: **Send message** (opens the broadcast composer pre-addressed to this chapter — see Phase 4)
+  - Quick link to full chapter management at `/admin/ambassadors/:chapterId`
+
+### Data sources
+- `ambassador_memberships` joined with `profiles` — president identity and last active
+- `ambassador_chapters` — chapter metadata
+- `building_audit_logs` — per-president activity
+- `ambassador_applications` — open application count per chapter
+
+### New RPCs needed
+- `get_president_directory` — returns all presidents with their chapter and activity metrics in one call
+
+---
+
+## Phase 3 — Intervention Queue
+
+**Goal:** Surface issues the core team needs to act on before they become problems, without requiring manual inspection of every chapter.
+
+### What it delivers
+
+A new tab — **Interventions** — at `/admin/programme/interventions`, containing:
+
+**Automated flag list**
+
+Each flag has: a severity badge (`urgent` / `warning` / `info`), a plain-English description of the issue, the affected chapter name + link, and a suggested action.
+
+| Flag | Severity | Trigger condition | Suggested action |
 |---|---|---|---|
-| Portal shell | Next.js route group at `/embassy` with shared nav (tab bar: Contribute / My goals / Chapter projects / Leadership). Auth-gated to approved `ambassador_memberships`. | `ambassador_memberships` role check | New |
-| Onboarding flow | Three-step first-time screen: (1) welcome + badge confirmation, (2) contributor type picker (5 options, sets a profile preference field), (3) first goal selection from preset list. Shown once, skippable. | `contributor_type` field on `ambassador_memberships` (new field) | New |
-| Data & research tool | Filterable list of buildings with metadata gaps. Filter chips map directly onto `missing_fields` array from `get_ambassador_buildings_missing_metadata`. Click row → open building edit. Sort by `tier_rank`. | `get_ambassador_buildings_missing_metadata` (exists) | Frontend only |
-| Architect outreach tool | Filterable list of unclaimed firms and people in chapter geography. Filters: has website, 5+ buildings, active since year. Click → open profile + send claim invite. Logs outreach to prevent chapter duplicates. | `get_ambassador_unclaimed_firms` (exists). New: `outreach_log` table to track who contacted whom. | Frontend + 1 new table |
-| Curation tool | List of well-documented buildings not yet in any collection, and areas with no walking itinerary. Links directly to existing collection creator and itinerary tool. | Query on buildings joined to collections — no new RPC needed. | Frontend only |
-| Community tool | Activity feed showing new users in chapter geography and unclaimed architect profiles. Surfaces as a simple notification-style list. Links to user profile and architect profile. | Existing user location data + `get_ambassador_unclaimed_firms` | Frontend only |
-| Photography tool (placeholder) | Phase 1 renders the Photography tool as a simple list (same data as the map, without the map UI). Labelled clearly as "map coming soon". Functional — ambassadors can use it immediately. | `get_ambassador_buildings_without_photos` (exists) | Frontend only |
-| Chapter projects board | Pinboard of chapter campaigns and events. Ambassadors can view and express interest. ExCo/president can create and manage posts. Programme campaigns (from admin) appear with a distinct visual treatment. | New table: `chapter_projects`. FK to `ambassador_chapters`. Fields: title, description, type (event / campaign / outreach), dates, created_by. | New table |
-| My goals | Ambassador sets 1–3 personal goals from a preset list (e.g. "add 10 photos this month"). Progress tracked automatically from `building_audit_logs` and `review_images` inserts. No manual logging. | New table: `ambassador_goals`. Query audit logs for progress. Resets monthly. | New table + query |
-| Leaderboard | Monthly leaderboard scoped to chapter, filterable by contribution type (photography / data / outreach). Reads from `building_audit_logs` and `review_images`. Shows top contributors and the current user's rank. | Query on existing audit logs — no new tables. May benefit from a materialised view if query is slow at scale. | New query |
-| Leadership tab | Member activity table (last 30 days), pending applications list, location-flagged members, chapter priority bars. President-only actions: invite member, change role, post chapter project. | `get_chapter_metrics` (exists). `ambassador_applications` (exists). `ambassador_memberships` (exists). | Frontend only |
+| Chapter has no president | Urgent | `president` role membership does not exist for an `active` chapter | Assign a president |
+| President inactive | Warning | President has no audit log entries in > 30 days | Review or reassign |
+| Forming chapter stalled | Warning | Chapter in `forming` status for > 60 days | Follow up or close |
+| Chapter at capacity with open applications | Warning | `active_members = max_ambassadors` and `pending_applications > 0` | Review cap |
+| President location mismatch | Warning | President's profile `country_code` no longer matches chapter `country_code` | Review membership |
+| No chapter activity | Info | Chapter has had zero edits or photos in the last 30 days | Check in with president |
 
-### New database additions in Phase 1
+**Dismiss / snooze actions**
+- Each flag can be dismissed (won't reappear unless the condition recurs) or snoozed for 7 / 14 / 30 days
+- Dismissals are stored per admin user — other team members still see the flag
 
-| Table / field | Purpose |
+**Flag count badge**
+- The Interventions tab shows a count badge when there are active flags, so the core team sees it without opening the tab
+
+### New table needed
+- `admin_flag_dismissals (flag_type, entity_id, dismissed_by, dismissed_at, snooze_until)` — tracks which flags have been dismissed by whom
+
+### New RPCs needed
+- `get_programme_intervention_flags` — evaluates all flag conditions and returns the active list, excluding dismissed/snoozed entries
+
+---
+
+## Phase 4 — Broadcast and Announcements
+
+**Goal:** Let the core team send structured messages to chapter presidents (all, by country, or individually) and confirm receipt.
+
+### What it delivers
+
+**Compose broadcast** — accessible from the Presidents directory and from a new **Broadcasts** tab at `/admin/programme/broadcasts`
+
+- **Recipient scope:** All presidents / Country / Individual chapter
+- **Subject + body** (rich text, max 2000 characters)
+- **Type:** `announcement` (programme news) / `action_required` (president must do something) / `check_in` (informal)
+- **Preview** before sending
+
+**Broadcasts tab — sent messages list**
+- Columns: subject, type, recipient scope, sent date, read rate (recipients who have opened / total)
+- Clicking a row shows the full message and a per-chapter read status table
+
+**President read experience**
+- Broadcasts appear as a notification in the president's existing notification feed (using the existing `notifications` table and `notification_type` system)
+- `action_required` broadcasts also appear as a banner in the Embassy Leadership tab until acknowledged
+
+**Pinned programme notices**
+- One broadcast can be marked as `pinned` — it appears at the top of every Embassy Leadership tab for all active presidents until unpinned by the core team
+
+### New tables needed
+- `admin_broadcasts (id, subject, body, type, recipient_scope, scope_value, sent_by, sent_at, pinned)`
+- `admin_broadcast_reads (broadcast_id, recipient_user_id, read_at)`
+
+### New RPC needed
+- `send_admin_broadcast` — creates the broadcast row, resolves recipients by scope, inserts notification rows for each, enforces rate limit (max 3 broadcasts per day)
+
+---
+
+## Phase 5 — Coverage Gap Prioritisation
+
+**Goal:** Upgrade the existing locality coverage map into a prioritised list of where the programme should expand next, and make it actionable in one click.
+
+### What it delivers
+
+**Replaces** the current coverage tab's locality table with a prioritised gap view:
+
+**Gap table (filterable)**
+- Rows: cities with > 10 buildings in the catalogue that have no chapter and no forming effort
+- Columns: city, country, building count, estimated population (sourced from locality metadata if available), gap score (building count weighted)
+- Sorted by gap score descending by default
+- Filter by: country, minimum building count
+
+**Create chapter from gap row**
+- Each row has a **Create forming chapter** button
+- Clicking opens a pre-filled chapter creation dialog (name auto-suggested as "Plano [City]", type = `local`, status = `forming`, locality pre-selected)
+- After creation, the row moves out of the gap table and into the forming chapters view on the Health Dashboard
+
+**Existing coverage map**
+- The visual map view is preserved as a secondary tab for geographic orientation
+
+### Changes to existing code
+- `AmbassadorCoverage.tsx` — add a new "Gaps" tab alongside the existing tabs; the gap table is a new component
+- Reuse `get_admin_ambassador_locality_coverage` RPC if it already returns building counts; otherwise extend it to include `has_chapter` and `has_forming_chapter` booleans
+
+---
+
+## Phase 6 — Chapter Performance Ranking
+
+**Goal:** Give the core team a ranked, side-by-side comparison of all chapters over a selectable period, to inform where to invest support and where to celebrate success.
+
+### What it delivers
+
+A new tab — **Rankings** — at `/admin/programme/rankings`:
+
+**Period selector:** Last 7 days / 30 days / 90 days / All time
+
+**Ranked table**
+- Columns: rank, chapter name, country, type (local/national), member count, edits, photos added, new members, applications approved, last activity date
+- Sortable by any column
+- Row highlight for top 10% by overall score
+- Row muted for chapters with zero activity in the period
+
+**Chapter score**
+- A composite score displayed alongside each chapter: `(edits × 1) + (photos × 2) + (new members × 5)`
+- Weights are hardcoded initially; can be made configurable in a later iteration
+
+**Export**
+- CSV export of the current table view for programme reports
+
+### Data sources
+- `building_audit_logs` — edits and photos, filtered by `created_at` within the period and scoped to chapter geography
+- `ambassador_memberships` — new members (by `created_at`)
+- `ambassador_applications` — approved count
+
+### New RPC needed
+- `get_chapter_performance_ranking(period_days int)` — returns all chapters with their metrics for the given period
+
+---
+
+## Phase 7 — President Onboarding Tracker
+
+**Goal:** Ensure newly assigned chapter presidents complete their setup, and give the core team visibility into who is stuck.
+
+### What it delivers
+
+**Onboarding checklist — president view**
+A new card appears in the Embassy Leadership tab for presidents who have been in role for < 60 days and have not completed all steps:
+
+| Step | Completion condition |
 |---|---|
-| `ambassador_memberships.contributor_type` (field) | Stores contributor type preference (enum: photography / data / outreach / curation / community). Set during onboarding, editable in settings. |
-| `chapter_projects` (table) | Stores chapter-level projects and events posted by ExCo/president. Fields: id, chapter_id, title, description, type, start_date, end_date, created_by, created_at. Separate join table `chapter_project_members` for expressing interest. |
-| `ambassador_goals` (table) | Stores personal monthly goals. Fields: id, membership_id, goal_type (enum matching contribution types), target_value, month (date truncated to month). Progress computed at query time from audit logs. |
-| `outreach_log` (table) | Tracks ambassador outreach to unclaimed firms/people. Fields: id, membership_id, entity_type (person/company), entity_id, contacted_at. Prevents duplicate outreach within a chapter. |
+| Profile complete | `profiles.avatar_url` is set and `profiles.bio` is non-empty |
+| Chapter status active | `ambassador_chapters.status = 'active'` |
+| First member invited | Chapter has at least 2 active members (including president) |
+| First application reviewed | At least one application for the chapter has been approved or rejected |
+| First task reviewed | President has at least one `building_audit_log` entry |
 
-### Suggested build sequence within Phase 1
+Completed steps are checked off; incomplete steps show a direct action link.
 
-| Step | Why this order |
-|---|---|
-| [x] 1. Portal shell + auth gating | Everything else depends on the `/embassy` route group and role-based access existing first. |
-| [x] 2. Leadership tab | Highest value to chapter presidents immediately. Almost entirely a frontend build — no new tables. |
-| [x] 3. Data & research tool | Pure frontend over an existing RPC. Quick win that delivers real value to researcher ambassadors. |
-| [x] 4. Architect outreach tool | Frontend over existing RPC + one small new table (`outreach_log`). Can ship without the log table initially if needed. |
-| [x] 5. Onboarding flow | Requires `contributor_type` field on `ambassador_memberships`. Straightforward once the portal shell exists. |
-| [x] 6. Chapter projects board | Requires the `chapter_projects` table. The most "social" feature — worth getting right rather than rushing. |
-| [x] 7. My goals + leaderboard | Requires the `ambassador_goals` table and the audit log query. Can be developed in parallel with step 6. |
-| [x] 8. Curation + community tools | Simplest tools. Build last in Phase 1 to ensure the higher-value tools are solid first. |
-| [x] 9. Photography tool (list placeholder) | Trivial once the portal shell exists — same data as Data & research, different filter. Needed so the Contribute hub feels complete. |
+**Core team view — onboarding tracker table**
+Added to the Presidents tab (Phase 2) as a sub-view filtered to presidents within their first 60 days:
+- Columns: president, chapter, days in role, steps completed (e.g. 3/5), last active
+- Sorted by days in role descending so the most overdue show first
+- Clicking a row shows the full checklist state
 
----
+### Data sources
+- All completion conditions are derived from existing tables — no new data model needed
 
-## [x] Phase 2 — Photography map
-
-**Complexity: medium — new map layer on existing infrastructure**
-
-Phase 2 replaces the Photography tool placeholder with a proper map view. The underlying data already exists — this is a UI build that extends the existing `PlanoMap` infrastructure with a "gap layer".
-
-| Screen / feature | What to build | Backend | New? |
-|---|---|---|---|
-| Photography map — gap layer | Add a "gap layer" to `PlanoMap` that renders building pins coloured by photo coverage: red (0 photos), amber (1–2 photos), green (3+ photos). Threshold values from `building_activity_rolling.photos_count`. Pin colour computed server-side or client-side from photo count. | `get_ambassador_buildings_without_photos` for red pins. `building_activity_rolling` for amber/green distinction. Extend existing `PlanoMap` + `MapContext`. | New layer on existing map |
-| Filter chips on map | Three filter chips: No photos / Fewer than 3 photos / All gaps. Active filters update pin visibility without a new RPC call — filter client-side on already-fetched data within the viewport. | Client-side filter on existing data | Frontend only |
-| Cluster callout | When zoomed out, show a callout for the densest cluster of gaps (e.g. "12 unphotographed buildings in Hackney — see list"). Computed server-side using existing `get_map_clusters_v3` infrastructure, filtered to gap buildings only. | `get_map_clusters_v3` (exists) — add gap filter parameter | Extend existing RPC |
-| Mobile optimisation | Photography tool is the most mobile-used feature (ambassadors on the go). Map view should be touch-friendly: large tap targets on pins, bottom-sheet building preview on tap (reuse `BuildingPopupContent.tsx`), "Near me" filter using device geolocation for initial map centre only — not as a hard filter. | `BuildingPopupContent.tsx` (exists) | Frontend only |
-| List / map toggle | Toggle between map view and the Phase 1 list view. Persists the active filters across both views. Useful for desk-based planning vs. in-field use. | Client-side state only | Frontend only |
+### New RPC needed
+- `get_president_onboarding_status(membership_id uuid)` — evaluates and returns the checklist state for a given president membership
 
 ---
 
-## [x] Phase 3 — Campaigns
+## Implementation order and rationale
 
-**Complexity: low-to-medium — new admin UI + one new table**
-
-Phase 3 adds the Campaigns feature: a mechanism for the Plano central team to coordinate all chapters simultaneously without per-chapter admin overhead. A campaign posted in the admin panel appears automatically in every chapter's projects board with a live progress counter.
-
-> Campaigns can initially launch with manual progress reporting (a number the admin updates) and be upgraded to auto-tracking from audit logs in a later iteration. Ship the UI first.
-
-| Screen / feature | What to build | Backend | New? |
-|---|---|---|---|
-| Admin campaigns tab `/admin/ambassadors/campaigns` | New tab in the ambassador admin panel. Central team can create a campaign: name, brief text, date range, target metric type (photos / edits / outreach), target value, and scope (all chapters or specific chapters). Campaigns are published to all in-scope chapter project boards automatically. | New table: `programme_campaigns`. Fields: id, title, description, start_date, end_date, metric_type, target_value, chapter_scope (all / specific), created_by. | New table |
-| Campaign progress tracking | Progress counter on each campaign reads from `building_audit_logs` filtered by metric_type and date range. For photo campaigns: count of `review_images` inserts in the period. For edit campaigns: count of `building_audit_logs` rows. Computed at query time — no separate tracking table needed. | Query on existing audit logs scoped to campaign date range and chapter geography. | New query |
-| Campaign display in portal | Campaigns appear in the Chapter projects board with a distinct visual treatment (e.g. left border accent, "Programme campaign" label). Show chapter-scoped progress vs. target. All chapters see the same campaign; progress shown is local to the user's chapter. | Reads `programme_campaigns` + progress query | Frontend only |
-| Admin overview — chapter health | Revamp the `/admin/ambassadors` overview to surface a "Needs attention" callout (pending applications, location reviews, chapters without presidents) and a chapter health table (member count, contribution count, status). Replaces raw data tables with an action-oriented summary. | `get_chapter_metrics` (exists). `ambassador_applications` (exists). | Frontend only |
+| Phase | Priority | Rationale |
+|---|---|---|
+| 1 — Health Dashboard | Ship first | Immediate daily utility; establishes the `/admin/programme` section and the shared data patterns all later phases build on |
+| 3 — Intervention Queue | Ship second | Prevents the programme from silently degrading; high value even with a small chapter count |
+| 2 — President Directory | Ship third | The core team needs to see and contact presidents before broadcasting to them |
+| 4 — Broadcasts | Ship fourth | Requires the directory to exist (Phase 2) and the intervention flags to know who to contact (Phase 3) |
+| 5 — Coverage Gaps | Ship fifth | Strategic and valuable, but lower urgency than operational health |
+| 6 — Rankings | Ship sixth | Useful once there are enough chapters to compare meaningfully (target: 10+ active chapters) |
+| 7 — President Onboarding | Ship last | Relevant once the programme is onboarding new presidents regularly; low urgency at small scale |
 
 ---
 
-## Resolved design decisions
+## Routes summary
 
-| Question | Decision |
-|---|---|
-| Public contributor profile — how much of "My goals" is visible publicly? | Show a contribution summary (e.g. "34 photos · 61 edits · London Chapter") and the Ambassador badge. Monthly goal progress is internal only. |
-| Chapter projects — can ambassadors propose projects? | ExCo/president-only posting at launch. A proposal flow can be added in a later iteration if engagement warrants it. |
-| Inter-chapter communication — portal or external tool? | External tool (Discord or WhatsApp) for informal chat. The portal handles structured coordination only. Out of scope for the portal. |
-| Sponsorship / booster fund — where does a president request a grant? | Not in scope for the portal at launch. If adopted, a simple form in the Leadership tab pointing to an external process is sufficient. |
-| Leaderboard — all-time vs. monthly? | Monthly resets to keep it motivating for newcomers. All-time totals shown on the public profile. Both read from the same audit log data. |
-| Photography map — "near me" filter accuracy? | Use browser geolocation for initial map centre only, not as a hard filter. Ambassadors pan and zoom freely. |
+| Route | Phase | Description |
+|---|---|---|
+| `/admin/programme` | 1 | Redirects to `/admin/programme/health` |
+| `/admin/programme/health` | 1 | Programme health dashboard |
+| `/admin/programme/interventions` | 3 | Automated flag queue |
+| `/admin/programme/presidents` | 2 | President directory with slide-out detail |
+| `/admin/programme/broadcasts` | 4 | Broadcast composer and sent message history |
+| `/admin/programme/rankings` | 6 | Chapter performance ranking table |
+| `/admin/ambassadors/coverage` | 5 | Extended with Gaps tab (upgrade to existing route) |
 
 ---
 
-*Plano Ambassador Portal Roadmap · v1.0 · May 2026*
+## What this roadmap deliberately excludes
+
+- **Individual building moderation** — belongs in `/admin/moderation`, not here
+- **Ambassador-level management** — the Embassy and existing `/admin/ambassadors/:chapterId` cover this
+- **Content quality tools** — a separate concern from programme coordination
+- **Points, leaderboards, or gamification** — the ambassador rewards roadmap is a separate document

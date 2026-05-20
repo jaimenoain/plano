@@ -248,8 +248,9 @@ function SearchPageContent() {
       <div className="relative flex h-[calc(100dvh-3.5rem-5rem)] w-full min-h-0 flex-col overflow-hidden md:fixed md:inset-x-0 md:bottom-0 md:left-0 md:right-0 md:top-16 md:h-auto">
 
         {/* ── Mobile: floating search bar ── */}
+        {/* Positioned below the MobileTopBar (h-14 = 3.5rem) + safe-area-inset-top */}
         {isMobile && (
-          <div className="fixed left-4 right-4 top-4 z-40 safe-area-pt md:hidden">
+          <div className="fixed left-4 right-4 top-[calc(3.5rem+env(safe-area-inset-top,0px)+0.5rem)] z-40 md:hidden">
             {/* No shadow — frosted glass border is sufficient over the map */}
             <div className="border border-border-default bg-surface-card/95 p-1 backdrop-blur supports-[backdrop-filter]:bg-surface-card/90">
               {mobileSearchBar}

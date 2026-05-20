@@ -60,7 +60,6 @@ Searchable fields and their value types:
 - access_level     → one of: "public", "private", "restricted", "commercial"
 - access_logistics → one of: "walk-in", "booking_required", "tour_only", "exterior_only"
 - context          → comma-separated setting descriptors. Prefer from: Alpine, Coastal, Rural, Urban. Add other concise descriptors if genuinely applicable (e.g. "Suburban, Waterfront"). Only include what clearly applies.
-- architect_statement → brief description of the design intent, if found
 
 Rules:
 - Only include fields you found actual evidence for. Omit uncertain fields entirely.

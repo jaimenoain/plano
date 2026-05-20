@@ -163,14 +163,21 @@ export function DiscoveryCard({
     }
   };
 
-  // Auto-advance to the next building if the user ignores the rating overlay
+  // After 3s with no rating, animate card sliding up (mimics swipe-up) then advance
   useEffect(() => {
-    if (!showRating) return;
-    const timer = setTimeout(() => {
+    if (!showRating || rating !== null) return;
+    const timer = setTimeout(async () => {
+      await animate(y, -(typeof window !== "undefined" ? window.innerHeight : 800), {
+        duration: 0.55,
+        ease: [0.4, 0, 0.6, 1],
+      });
       if (onSwipeSave) onSwipeSave();
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [showRating, onSwipeSave]);
+    }, 3000);
+    return () => {
+      clearTimeout(timer);
+      animate(y, 0, { duration: 0 });
+    };
+  }, [showRating, rating, onSwipeSave, y]);
 
   const handleRate = async (value: number | null, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -183,6 +190,7 @@ export function DiscoveryCard({
 
   // ── Framer Motion values ──
   const x = useMotionValue(0);
+  const y = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-10, 10]);
   // Card stays fully opaque in both swipe directions — mirrors save behaviour on hide.
   // Previous: [0, 1, 1, 1, 1] faded the card to black on left swipe, hiding the stamp.
@@ -486,7 +494,7 @@ export function DiscoveryCard({
         "group/card relative w-full h-full overflow-hidden min-w-0 select-none bg-black",
         horizontalSwipeActive ? "touch-none" : "touch-pan-y"
       )}
-      style={{ x, rotate, opacity, willChange: "transform" }}
+      style={{ x, y, rotate, opacity, willChange: "transform" }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerEnd}

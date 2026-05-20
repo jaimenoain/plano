@@ -71,7 +71,8 @@ interface Notification {
     | "ambassador_membership_review"
     | "award_win"
     | "feedback_status_updated"
-    | "feedback_notes_updated";
+    | "feedback_notes_updated"
+    | "project_idea_submitted";
   is_read: boolean;
   actor_id: string;
   recommendation_id?: string | null;
@@ -101,6 +102,7 @@ interface Notification {
     member_username?: string;
     feedback_id?: string;
     message?: string;
+    idea_title?: string;
   };
   recommendation?: {
     id?: string;
@@ -245,7 +247,8 @@ export default function Notifications() {
       notification.type === "ambassador_application_received" ||
       notification.type === "ambassador_application_approved" ||
       notification.type === "ambassador_application_rejected" ||
-      notification.type === "ambassador_membership_review"
+      notification.type === "ambassador_membership_review" ||
+      notification.type === "project_idea_submitted"
     ) {
       navigate("/embassy");
     } else if (notification.type === "award_win") {
@@ -311,6 +314,8 @@ export default function Notifications() {
       case "feedback_status_updated":
       case "feedback_notes_updated":
         return <MessageCircle className="h-3.5 w-3.5 text-text-primary" />;
+      case "project_idea_submitted":
+        return <Sparkles className="h-3.5 w-3.5 text-text-primary" />;
       default:
         return <Bell className="h-3.5 w-3.5 text-text-disabled" />;
     }
@@ -486,6 +491,17 @@ export default function Notifications() {
               "Your feedback was updated — open Feedback to see details."}
           </span>
         );
+      case "project_idea_submitted": {
+        const ideaTitle = n.metadata?.idea_title?.trim();
+        return (
+          <span>
+            <span className="font-medium">{actorName}</span> submitted a project idea
+            {ideaTitle ? (
+              <>: <span className="italic">{ideaTitle}</span></>
+            ) : null}
+          </span>
+        );
+      }
       default:
         return <span>New notification</span>;
     }

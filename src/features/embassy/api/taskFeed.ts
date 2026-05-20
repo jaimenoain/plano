@@ -185,26 +185,22 @@ export async function fetchModerationVideos(): Promise<ModerationVideoItem[]> {
   }));
 }
 
-export async function fetchModerationCredits(): Promise<ModerationCreditItem[]> {
+export async function fetchModerationCredits(chapterId: string): Promise<ModerationCreditItem[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
-    .from("building_credits")
-    .select(
-      "id, created_at, role, building_id, buildings!inner(id, name, slug, short_id), people!building_credits_person_id_fkey(name), companies!building_credits_company_id_fkey(name)",
-    )
-    .is("moderated_at", null)
-    .order("created_at", { ascending: false })
-    .limit(EMBASSY_TASK_FEED_LIMIT);
+  const { data, error } = await (supabase as any).rpc("get_ambassador_moderation_credits", {
+    p_chapter_id: chapterId,
+    p_limit: EMBASSY_TASK_FEED_LIMIT,
+  });
   if (error) throw error;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data ?? []).map((row: any) => ({
     id: row.id,
     created_at: row.created_at,
     role: row.role,
-    building_id: row.buildings.id,
-    building_name: row.buildings.name,
-    building_slug: row.buildings.slug,
-    building_short_id: row.buildings.short_id,
-    entity_name: row.people?.name ?? row.companies?.name ?? null,
+    building_id: row.building_id,
+    building_name: row.building_name,
+    building_slug: row.building_slug,
+    building_short_id: row.building_short_id,
+    entity_name: row.entity_name ?? null,
   }));
 }

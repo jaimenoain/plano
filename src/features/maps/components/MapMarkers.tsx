@@ -11,7 +11,7 @@ import type { CollectionMarkerCategory } from '@/features/collections/types';
 import '../../../App.css';
 import { getBuildingUrl } from '@/utils/url';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { cn } from '@/lib/utils';
 
 import { useOptionalMapContext } from '../providers/MapContext';
@@ -251,10 +251,9 @@ export function MapMarkers({
       {markers}
       {activeCluster && (
         isMobile ? (
-          <Sheet open={!!activeCluster} onOpenChange={(open) => !open && setHighlightedId(null)}>
-            <SheetContent side="bottom" className="p-0 h-[auto] max-h-[80vh] overflow-y-auto rounded-t-2xl border-none">
-              <div className="w-12 h-1.5 bg-muted rounded-full mx-auto my-3" />
-              <div className="pb-8">
+          <Drawer open={!!activeCluster} onOpenChange={(open) => !open && setHighlightedId(null)}>
+            <DrawerContent className="border-none">
+              <div className="overflow-y-auto max-h-[70vh] pb-8">
                 <BuildingPopupContent
                   cluster={activeCluster}
                   onRemoveFromCollection={onRemoveFromCollection}
@@ -262,8 +261,8 @@ export function MapMarkers({
                   fullWidth
                 />
               </div>
-            </SheetContent>
-          </Sheet>
+            </DrawerContent>
+          </Drawer>
         ) : (
           <Popup
             longitude={activeCluster.lng}

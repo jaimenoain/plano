@@ -487,7 +487,6 @@ const FIELD_LABELS: Record<string, string> = {
   access_level: "Access Level",
   access_logistics: "Access Logistics",
   context: "Context",
-  architect_statement: "Architect Statement",
 };
 
 type ReviewItem = ResearchDataPoint & { accepted: boolean; editedValue: string };
@@ -615,7 +614,7 @@ function ResearchReviewPanel({
                 </p>
 
                 {/* Editable value */}
-                {item.field === "architect_statement" || item.field === "access_logistics" ? (
+                {item.field === "access_logistics" ? (
                   <Textarea
                     value={item.editedValue}
                     disabled={!item.accepted || isSaving}
@@ -836,17 +835,37 @@ function FirmOutreachDrawer({
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("contacted");
 
-  const { data: logs, isLoading: logsLoading, isError: logsError } = useQuery({
+  const { data: logs, isLoading: logsLoading, isError: logsError, refetch: refetchLogs } = useQuery({
     queryKey: ["embassy-firm-outreach-logs", firm?.id],
     queryFn: async () => {
+      // Fetch logs without a profiles join so this works regardless of whether the
+      // outreach_log.ambassador_id FK points to auth.users or public.profiles.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
+      const { data: logData, error: logsErr } = await (supabase as any)
         .from("outreach_log")
-        .select("*, profiles!ambassador_id(username, avatar_url)")
+        .select("*")
         .eq("firm_id", firm!.id)
         .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as OutreachLogRow[];
+      if (logsErr) throw logsErr;
+      const rows = (logData ?? []) as Omit<OutreachLogRow, "profiles">[];
+      if (rows.length === 0) return [] as OutreachLogRow[];
+
+      // Batch-fetch profiles for every unique ambassador in the result.
+      const ambassadorIds = [...new Set(rows.map((r) => r.ambassador_id))];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: profileData } = await (supabase as any)
+        .from("profiles")
+        .select("id, username, avatar_url")
+        .in("id", ambassadorIds);
+      const profileMap: Record<string, { username: string; avatar_url: string | null }> = {};
+      for (const p of profileData ?? []) {
+        profileMap[p.id] = { username: p.username, avatar_url: p.avatar_url };
+      }
+
+      return rows.map((log) => ({
+        ...log,
+        profiles: profileMap[log.ambassador_id] ?? null,
+      })) as OutreachLogRow[];
     },
     enabled: !!firm?.id,
   });
@@ -943,8 +962,11 @@ function FirmOutreachDrawer({
               {[0, 1].map(i => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
             </div>
           ) : logsError ? (
-            <div className="text-center py-8 text-sm text-destructive">
-              Failed to load interactions. Please close and reopen.
+            <div className="text-center py-8 space-y-3">
+              <p className="text-sm text-destructive">Failed to load interactions.</p>
+              <Button variant="outline" size="sm" onClick={() => refetchLogs()}>
+                Try again
+              </Button>
             </div>
           ) : !logs?.length ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
@@ -1212,6 +1234,7 @@ function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => 
 
         <TabsContent value="credits" className="mt-6">
           <CreditsModerationTab
+            chapterId={chapterId}
             dismissed={dismissed}
             onApproveAll={handleApproveAll}
             onFlag={handleFlag}
@@ -1708,10 +1731,12 @@ function VideosModerationTab({
 }
 
 function CreditsModerationTab({
+  chapterId,
   dismissed,
   onApproveAll,
   onFlag,
 }: {
+  chapterId: string | undefined;
   dismissed: Set<string>;
   onApproveAll: (ids: string[]) => void;
   onFlag: (id: string, label: string, reason: FlagReason) => void;
@@ -1720,8 +1745,9 @@ function CreditsModerationTab({
   const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set());
 
   const { data: credits, isLoading, error } = useQuery({
-    queryKey: ["moderation-credits"],
-    queryFn: fetchModerationCredits,
+    queryKey: ["moderation-credits", chapterId],
+    queryFn: () => fetchModerationCredits(chapterId!),
+    enabled: !!chapterId,
   });
 
   const visible = useMemo(
@@ -1745,7 +1771,7 @@ function CreditsModerationTab({
     });
     if (succeeded.length > 0) {
       onApproveAll(succeeded);
-      queryClient.invalidateQueries({ queryKey: ["moderation-credits"] });
+      queryClient.invalidateQueries({ queryKey: ["moderation-credits", chapterId] });
       toast.success(
         succeeded.length === 1 ? "Credit approved" : `${succeeded.length} credits approved`,
       );

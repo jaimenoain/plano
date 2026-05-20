@@ -211,7 +211,8 @@ export default function ChapterProjectsPage() {
   const submitIdeaMutation = useMutation({
     mutationFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      const db = supabase as any;
+      const { error } = await db
         .from("chapter_projects")
         .insert({
           chapter_id: chapterId!,
@@ -221,6 +222,28 @@ export default function ChapterProjectsPage() {
           created_by: user!.id,
         });
       if (error) throw error;
+
+      // Notify all chapter leaders (president + exco)
+      const { data: leaders } = await db
+        .from("ambassador_memberships")
+        .select("user_id")
+        .eq("chapter_id", chapterId!)
+        .eq("status", "active")
+        .in("role", ["president", "exco"]);
+
+      if (leaders && leaders.length > 0) {
+        const notifications = leaders
+          .filter((l: { user_id: string }) => l.user_id !== user!.id)
+          .map((l: { user_id: string }) => ({
+            user_id: l.user_id,
+            actor_id: user!.id,
+            type: "project_idea_submitted",
+            metadata: { chapter_id: chapterId, idea_title: ideaTitle },
+          }));
+        if (notifications.length > 0) {
+          await db.from("notifications").insert(notifications);
+        }
+      }
     },
     onSuccess: () => {
       toast.success("Idea submitted — your chapter's leadership will review it.");
