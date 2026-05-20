@@ -229,7 +229,8 @@ export default function ChapterProjectsPage() {
       setIdeaDescription("");
       queryClient.invalidateQueries({ queryKey: ["chapter-projects", chapterId] });
     },
-    onError: () => {
+    onError: (err) => {
+      console.error("submitIdeaMutation error:", err);
       toast.error("Failed to submit idea. Please try again.");
     },
   });

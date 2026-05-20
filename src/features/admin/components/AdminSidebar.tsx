@@ -106,7 +106,7 @@ export function AdminSidebar() {
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-brand-primary text-brand-primary-foreground">
                   <LayoutDashboard className="size-4" />
                 </div>
-                <div className="flex flex-col gap-0.5 leading-none">
+                <div className="flex flex-col gap-0.5 leading-none group-data-[collapsible=icon]:hidden">
                   <span className="font-semibold">Plano Admin</span>
                   <span className="">Console</span>
                 </div>

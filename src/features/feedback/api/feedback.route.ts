@@ -61,14 +61,14 @@ export async function action({ request }: ActionFunctionArgs) {
     screenshotDataUrl,
   } = parsed.data;
 
-  // Rate limit: max 10 submissions per user per hour
+  // Rate limit: max 20 submissions per user per hour
   const { count } = await supabase
     .from("feedback")
     .select("id", { count: "exact", head: true })
     .eq("user_id", user.id)
     .gte("created_at", new Date(Date.now() - 3_600_000).toISOString());
 
-  if ((count ?? 0) >= 10) {
+  if ((count ?? 0) >= 20) {
     return Response.json(
       { error: "Too many submissions" },
       { status: 429, headers }

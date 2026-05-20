@@ -76,6 +76,22 @@ export async function approveBuilding(buildingId: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function approvePhoto(photoId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("ambassador_approve_photo", {
+    p_photo_id: photoId,
+  });
+  if (error) throw error;
+}
+
+export async function approveCredit(creditId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("ambassador_approve_credit", {
+    p_credit_id: creditId,
+  });
+  if (error) throw error;
+}
+
 export async function fetchAmbassadorMyAuditTimeline(): Promise<AmbassadorAuditRow[]> {
   const { data, error } = await supabase.rpc("get_ambassador_my_audit_timeline", {
     p_limit: EMBASSY_TASK_FEED_LIMIT,
@@ -126,6 +142,7 @@ export async function fetchModerationPhotos(): Promise<ModerationPhotoItem[]> {
     .select(
       "id, created_at, storage_path, caption, building_posts!inner(building_id, buildings!inner(id, name, slug, short_id))",
     )
+    .is("moderated_at", null)
     .order("created_at", { ascending: false })
     .limit(EMBASSY_TASK_FEED_LIMIT);
   if (error) throw error;
@@ -147,7 +164,7 @@ export async function fetchModerationVideos(): Promise<ModerationVideoItem[]> {
   const { data, error } = await (supabase as any)
     .from("building_posts")
     .select(
-      "id, created_at, video_url, title, body, buildings!inner(id, name, slug, short_id), profiles(username)",
+      "id, created_at, video_url, title, body, buildings!inner(id, name, slug, short_id), profiles!user_id(username)",
     )
     .not("video_url", "is", null)
     .order("created_at", { ascending: false })
@@ -175,6 +192,7 @@ export async function fetchModerationCredits(): Promise<ModerationCreditItem[]> 
     .select(
       "id, created_at, role, building_id, buildings!inner(id, name, slug, short_id), people!building_credits_person_id_fkey(name), companies!building_credits_company_id_fkey(name)",
     )
+    .is("moderated_at", null)
     .order("created_at", { ascending: false })
     .limit(EMBASSY_TASK_FEED_LIMIT);
   if (error) throw error;

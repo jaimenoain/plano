@@ -486,6 +486,22 @@ function LocalityMap({ localityId }: { localityId: string }) {
     });
   }, [mapBuildings, styleFilter, accessFilter, statusFilter]);
 
+  // Annotate each building with a popularity-based tier_rank string so
+  // CollectionMapGL can apply the same priority pin styling as the search map.
+  // mapBuildings is already sorted popularity_score DESC; filteredBuildings
+  // preserves that order, so idx=0 is the most popular in the current filter.
+  const buildingsForMap = useMemo((): DiscoveryBuilding[] => {
+    const total = filteredBuildings.length;
+    return filteredBuildings.map((b, idx) => {
+      let tier_rank: string;
+      if (idx < Math.max(1, Math.ceil(total * 0.01))) tier_rank = 'Top 1%';
+      else if (idx < Math.max(2, Math.ceil(total * 0.05))) tier_rank = 'Top 5%';
+      else if (idx < Math.ceil(total * 0.20)) tier_rank = 'Top 20%';
+      else tier_rank = 'Standard';
+      return { ...b, tier_rank } as unknown as DiscoveryBuilding;
+    });
+  }, [filteredBuildings]);
+
   if (mapBuildings.length === 0) return null;
 
   const hasActiveFilter = styleFilter || accessFilter || statusFilter;
@@ -567,7 +583,7 @@ function LocalityMap({ localityId }: { localityId: string }) {
             }
           >
             <CollectionMapGL
-              buildings={filteredBuildings as unknown as DiscoveryBuilding[]}
+              buildings={buildingsForMap}
               highlightedId={highlightedId}
               setHighlightedId={setHighlightedId}
             />

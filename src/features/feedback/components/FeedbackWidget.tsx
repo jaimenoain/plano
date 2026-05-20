@@ -235,7 +235,7 @@ export function FeedbackWidget() {
                 {(status === "error" || status === "rate_limited") && (
                   <p className="text-sm text-feedback-destructive font-medium bg-feedback-destructive/10 p-3 rounded-lg">
                     {status === "rate_limited"
-                      ? "Too many submissions, please try again later."
+                      ? "For security, we have a cap on feedback submissions — please have a break and continue later. Thanks a lot for your feedback and support!"
                       : "Something went wrong. Please try again."}
                   </p>
                 )}

@@ -13,6 +13,8 @@ export interface ChapterAmbassadorActivityRow {
   photos_added: number;
   visits_count: number;
   firms_claimed_count: number;
+  moderation_count: number;
+  outreach_count: number;
   total_score: number;
   last_active_at: string | null;
 }

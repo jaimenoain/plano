@@ -163,6 +163,15 @@ export function DiscoveryCard({
     }
   };
 
+  // Auto-advance to the next building if the user ignores the rating overlay
+  useEffect(() => {
+    if (!showRating) return;
+    const timer = setTimeout(() => {
+      if (onSwipeSave) onSwipeSave();
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [showRating, onSwipeSave]);
+
   const handleRate = async (value: number | null, e: React.MouseEvent) => {
     e.stopPropagation();
     setRating(value);

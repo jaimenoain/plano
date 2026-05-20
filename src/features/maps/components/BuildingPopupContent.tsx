@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Bookmark, Check, EyeOff, Trash2, Plus, MapPin, Map, ExternalLink, Camera } from 'lucide-react';
-import { useMapContext } from '../providers/MapContext';
+import { useOptionalMapContext } from '../providers/MapContext';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -49,7 +49,8 @@ export function BuildingPopupContent({
   const { statuses, ratings } = useUserBuildingStatuses();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { state: { filters } } = useMapContext();
+  const mapCtx = useOptionalMapContext();
+  const filters = mapCtx?.state.filters ?? { photographyGaps: false } as const;
   const panelClass = fullWidth ? SHEET_PANEL : POPUP_PANEL;
   const [isSaving, setIsSaving] = useState(false);
 

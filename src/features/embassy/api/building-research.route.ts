@@ -57,9 +57,9 @@ Searchable fields and their value types:
 - year_completed   → integer year (e.g. 1998)
 - materials        → array of strings (e.g. ["reinforced concrete", "glass curtain wall"])
 - typology         → array of strings (e.g. ["residential", "mixed-use"])
-- access_level     → one of: "public", "semi-public", "private", "restricted"
-- access_logistics → short plain-text description of how visitors can access the building
-- context          → 1–2 sentence description of the urban or natural context
+- access_level     → one of: "public", "private", "restricted", "commercial"
+- access_logistics → one of: "walk-in", "booking_required", "tour_only", "exterior_only"
+- context          → comma-separated setting descriptors. Prefer from: Alpine, Coastal, Rural, Urban. Add other concise descriptors if genuinely applicable (e.g. "Suburban, Waterfront"). Only include what clearly applies.
 - architect_statement → brief description of the design intent, if found
 
 Rules:
@@ -126,6 +126,7 @@ export async function action({ request }: ActionFunctionArgs) {
       if (error.message?.includes("not_ambassador")) {
         return Response.json({ error: "Not an active ambassador" }, { status: 403, headers });
       }
+      console.error("[building-research] RPC error:", error.message, error.details, error.hint);
       return Response.json({ error: "Failed to save research data" }, { status: 500, headers });
     }
 

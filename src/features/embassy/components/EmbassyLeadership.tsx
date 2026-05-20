@@ -346,7 +346,7 @@ export function EmbassyLeadership({ chapterId, currentUserId, isPresident }: Emb
           Ambassador activity
         </h2>
         <p className="text-sm text-text-secondary">
-          Based on building edit logs in your chapter area (last {activityDays} days).
+          All ambassador activity in your chapter area (last {activityDays} days).
         </p>
         {activityQuery.isLoading ? (
           <Skeleton className="h-48 w-full rounded-sm" />
@@ -361,6 +361,10 @@ export function EmbassyLeadership({ chapterId, currentUserId, isPresident }: Emb
                   <TableHead>Role</TableHead>
                   <TableHead className="text-right">Edits</TableHead>
                   <TableHead className="text-right">Photos</TableHead>
+                  <TableHead className="text-right">Visits</TableHead>
+                  <TableHead className="text-right">Moderation</TableHead>
+                  <TableHead className="text-right">Outreach</TableHead>
+                  <TableHead className="text-right font-semibold">Points</TableHead>
                   <TableHead>Last active</TableHead>
                 </TableRow>
               </TableHeader>
@@ -392,6 +396,10 @@ export function EmbassyLeadership({ chapterId, currentUserId, isPresident }: Emb
                       <TableCell className="capitalize text-text-secondary">{row.role}</TableCell>
                       <TableCell className="text-right tabular-nums">{num(row.edits_count)}</TableCell>
                       <TableCell className="text-right tabular-nums">{num(row.photos_added)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{num(row.visits_count)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{num(row.moderation_count)}</TableCell>
+                      <TableCell className="text-right tabular-nums">{num(row.outreach_count)}</TableCell>
+                      <TableCell className="text-right tabular-nums font-semibold">{num(row.total_score)}</TableCell>
                       <TableCell className="text-sm text-text-secondary">
                         {row.last_active_at
                           ? formatDistanceToNow(new Date(row.last_active_at), { addSuffix: true })

@@ -12,6 +12,8 @@ import {
   fetchModerationVideos,
   fetchModerationCredits,
   approveBuilding,
+  approvePhoto,
+  approveCredit,
   type AmbassadorUnclaimedFirm,
 } from "@/features/embassy/api/taskFeed";
 import type { BuildingResearchResult, ResearchDataPoint } from "@/features/embassy/api/building-research.route";
@@ -118,7 +120,7 @@ export default function ContributePage() {
   };
 
   // Fetch membership for chapterId and preferred_tools
-  const { data: membership } = useQuery({
+  const { data: membership, isLoading: membershipLoading } = useQuery({
     queryKey: ["ambassador-membership", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -134,6 +136,27 @@ export default function ContributePage() {
 
   const chapterId = membership?.chapter_id;
   const sortedTools = sortToolsByPreference(membership?.preferred_tools);
+
+  // When navigating directly to a tool URL, show a loading skeleton while
+  // the membership query resolves and chapterId becomes available.
+  if (activeTool && membershipLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-9 w-9 rounded-lg" />
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+        </div>
+        <div className="grid gap-4">
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-28 w-full rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (activeTool === "research" && chapterId) {
     return <DataResearchTool chapterId={chapterId} onBack={() => setActiveTool(null)} />;
@@ -463,7 +486,7 @@ const FIELD_LABELS: Record<string, string> = {
   typology: "Typology",
   access_level: "Access Level",
   access_logistics: "Access Logistics",
-  context: "Urban Context",
+  context: "Context",
   architect_statement: "Architect Statement",
 };
 
@@ -549,20 +572,41 @@ function ResearchReviewPanel({
             )}
           >
             <div className="flex items-start gap-4">
-              {/* Accept / Reject toggle */}
-              <button
-                type="button"
-                onClick={() => toggleAccepted(item.field)}
-                disabled={isSaving}
-                className="mt-0.5 shrink-0 focus:outline-none"
-                aria-label={item.accepted ? "Reject this data point" : "Accept this data point"}
-              >
-                {item.accepted ? (
-                  <CheckCircle className="h-5 w-5 text-brand-primary" />
-                ) : (
-                  <XCircle className="h-5 w-5 text-muted-foreground" />
-                )}
-              </button>
+              {/* Accept / Reject buttons */}
+              <div className="flex shrink-0 gap-1 mt-0.5">
+                <button
+                  type="button"
+                  onClick={() => !item.accepted && toggleAccepted(item.field)}
+                  disabled={isSaving || item.accepted}
+                  aria-label="Accept this data point"
+                  aria-pressed={item.accepted}
+                  className={cn(
+                    "flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                    item.accepted
+                      ? "bg-brand-primary text-white cursor-default"
+                      : "border border-border-default text-muted-foreground hover:border-brand-primary hover:text-brand-primary",
+                  )}
+                >
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  Accept
+                </button>
+                <button
+                  type="button"
+                  onClick={() => item.accepted && toggleAccepted(item.field)}
+                  disabled={isSaving || !item.accepted}
+                  aria-label="Reject this data point"
+                  aria-pressed={!item.accepted}
+                  className={cn(
+                    "flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                    !item.accepted
+                      ? "bg-destructive text-white cursor-default"
+                      : "border border-border-default text-muted-foreground hover:border-destructive hover:text-destructive",
+                  )}
+                >
+                  <XCircle className="h-3.5 w-3.5" />
+                  Reject
+                </button>
+              </div>
 
               <div className="flex-1 min-w-0 space-y-3">
                 {/* Field label */}
@@ -571,7 +615,7 @@ function ResearchReviewPanel({
                 </p>
 
                 {/* Editable value */}
-                {item.field === "context" || item.field === "architect_statement" || item.field === "access_logistics" ? (
+                {item.field === "architect_statement" || item.field === "access_logistics" ? (
                   <Textarea
                     value={item.editedValue}
                     disabled={!item.accepted || isSaving}
@@ -586,7 +630,7 @@ function ResearchReviewPanel({
                     className="text-sm"
                   />
                 )}
-                {(item.field === "materials" || item.field === "typology") && (
+                {(item.field === "materials" || item.field === "typology" || item.field === "context") && (
                   <p className="text-[11px] text-muted-foreground">Comma-separated values</p>
                 )}
 
@@ -792,7 +836,7 @@ function FirmOutreachDrawer({
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("contacted");
 
-  const { data: logs, isLoading: logsLoading } = useQuery({
+  const { data: logs, isLoading: logsLoading, isError: logsError } = useQuery({
     queryKey: ["embassy-firm-outreach-logs", firm?.id],
     queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -897,6 +941,10 @@ function FirmOutreachDrawer({
           {logsLoading ? (
             <div className="space-y-3">
               {[0, 1].map(i => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
+            </div>
+          ) : logsError ? (
+            <div className="text-center py-8 text-sm text-destructive">
+              Failed to load interactions. Please close and reopen.
             </div>
           ) : !logs?.length ? (
             <div className="text-center py-8 text-sm text-muted-foreground">
@@ -1328,7 +1376,7 @@ function BuildingsModerationTab({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {visible.map((b) => {
           const addressLine = [b.address, b.city, b.country].filter(Boolean).join(", ");
           const mapsUrl =
@@ -1338,65 +1386,63 @@ function BuildingsModerationTab({
           const thumbUrl = getBuildingImageUrl(b.n ?? b.hero_image_url);
           const isApproving = approvingIds.has(b.id);
           return (
-            <Card key={b.id} className="overflow-hidden group hover:border-brand-primary transition-all">
-              <div className="flex flex-col sm:flex-row">
-                {thumbUrl ? (
-                  <div className="sm:w-36 sm:shrink-0 h-40 sm:h-auto bg-muted overflow-hidden">
-                    <img src={thumbUrl} alt={b.name} className="w-full h-full object-cover" />
+            <Card key={b.id} className="overflow-hidden group hover:border-brand-primary transition-all flex flex-col">
+              {thumbUrl ? (
+                <div className="h-44 bg-muted overflow-hidden shrink-0">
+                  <img src={thumbUrl} alt={b.name} className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="h-44 flex items-center justify-center bg-muted text-muted-foreground shrink-0">
+                  <Camera className="h-8 w-8 opacity-30" />
+                </div>
+              )}
+              <div className="flex flex-col flex-1 p-4 gap-3">
+                <div className="flex-1 space-y-1.5 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold truncate">{b.name}</h3>
+                    <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground shrink-0">
+                      New
+                    </Badge>
                   </div>
-                ) : (
-                  <div className="hidden sm:flex sm:w-36 sm:shrink-0 items-center justify-center bg-muted text-muted-foreground">
-                    <Camera className="h-8 w-8 opacity-30" />
-                  </div>
-                )}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 flex-1 min-w-0">
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold truncate">{b.name}</h3>
-                      <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground shrink-0">
-                        New
-                      </Badge>
-                    </div>
-                    {addressLine && (
-                      <p className="text-xs text-muted-foreground truncate">{addressLine}</p>
+                  {addressLine && (
+                    <p className="text-xs text-muted-foreground truncate">{addressLine}</p>
+                  )}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <p className="text-xs text-muted-foreground">
+                      @{b.added_by_username || "anonymous"}
+                    </p>
+                    {mapsUrl && (
+                      <a
+                        href={mapsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Map className="h-3 w-3" />
+                        Map
+                      </a>
                     )}
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <p className="text-xs text-muted-foreground">
-                        Added by @{b.added_by_username || "anonymous"}
-                      </p>
-                      {mapsUrl && (
-                        <a
-                          href={mapsUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Map className="h-3 w-3" />
-                          Map
-                        </a>
-                      )}
-                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <FlagButton id={b.id} label={b.name} onFlag={onFlag} />
-                    <Button size="sm" variant="outline" asChild>
-                      <Link to={getBuildingUrl(b.id, b.slug, b.short_id)}>Review</Link>
-                    </Button>
-                    <Button
-                      size="sm"
-                      disabled={isApproving}
-                      onClick={() => handleApprove([b.id])}
-                      className="gap-1.5"
-                    >
-                      {isApproving ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                      )}
-                      Approve
-                    </Button>
-                  </div>
+                </div>
+                <div className="flex items-center gap-2 pt-3 border-t border-border-default">
+                  <FlagButton id={b.id} label={b.name} onFlag={onFlag} />
+                  <Button size="sm" variant="outline" asChild className="flex-1">
+                    <Link to={getBuildingUrl(b.id, b.slug, b.short_id)}>Review</Link>
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={isApproving}
+                    onClick={() => handleApprove([b.id])}
+                    className="gap-1.5 flex-1"
+                  >
+                    {isApproving ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                    )}
+                    Approve
+                  </Button>
                 </div>
               </div>
             </Card>
@@ -1438,6 +1484,9 @@ function PhotosModerationTab({
   onApproveAll: (ids: string[]) => void;
   onFlag: (id: string, label: string, reason: FlagReason) => void;
 }) {
+  const queryClient = useQueryClient();
+  const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set());
+
   const { data: photos, isLoading, error } = useQuery({
     queryKey: ["moderation-photos"],
     queryFn: fetchModerationPhotos,
@@ -1448,16 +1497,45 @@ function PhotosModerationTab({
     [photos, dismissed],
   );
 
+  async function handleApprove(ids: string[]) {
+    setApprovingIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+    const results = await Promise.allSettled(ids.map((id) => approvePhoto(id)));
+    const succeeded = ids.filter((_, i) => results[i].status === "fulfilled");
+    const failed = ids.length - succeeded.length;
+    setApprovingIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.delete(id));
+      return next;
+    });
+    if (succeeded.length > 0) {
+      onApproveAll(succeeded);
+      queryClient.invalidateQueries({ queryKey: ["moderation-photos"] });
+      toast.success(
+        succeeded.length === 1 ? "Photo approved" : `${succeeded.length} photos approved`,
+      );
+    }
+    if (failed > 0) {
+      toast.error(`${failed} approval${failed === 1 ? "" : "s"} failed — please retry`);
+    }
+  }
+
   if (isLoading) return <ModerationSkeletons />;
   if (error) return <ModerationError message="Failed to load photos." />;
   if (visible.length === 0)
     return <ModerationEmptyState icon={<Camera className="h-10 w-10" />} message="No new photos to review." />;
+
+  const allIds = visible.map((p) => p.id);
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {visible.map((p) => {
           const imageUrl = getBuildingImageUrl(p.storage_path);
+          const isApproving = approvingIds.has(p.id);
           return (
             <div key={p.id} className="group relative rounded-xl overflow-hidden bg-muted aspect-square border border-border-default hover:border-brand-primary transition-all">
               {imageUrl ? (
@@ -1475,6 +1553,23 @@ function PhotosModerationTab({
                   onFlag={onFlag}
                   overlay
                 />
+              </div>
+              {/* Approve button — top-left corner, appears on hover */}
+              <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  type="button"
+                  disabled={isApproving}
+                  onClick={() => handleApprove([p.id])}
+                  className="p-1.5 rounded-md bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-feedback-success hover:bg-feedback-success/10 disabled:opacity-50 transition-colors"
+                  aria-label="Approve photo"
+                  title="Approve photo"
+                >
+                  {isApproving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4" />
+                  )}
+                </button>
               </div>
               {/* Bottom info overlay */}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 translate-y-0">
@@ -1494,7 +1589,28 @@ function PhotosModerationTab({
           );
         })}
       </div>
-      <ApproveAllButton ids={visible.map((p) => p.id)} onApproveAll={onApproveAll} />
+      {allIds.length > 0 && (
+        <div className="flex justify-end pt-2 border-t">
+          <Button
+            variant="default"
+            size="sm"
+            disabled={approvingIds.size > 0}
+            onClick={() => handleApprove(allIds)}
+          >
+            {approvingIds.size > 0 ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                Approving…
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                Approve all ({allIds.length})
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -1525,7 +1641,7 @@ function VideosModerationTab({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4">
+      <div className="grid gap-4 lg:grid-cols-2">
         {visible.map((v) => {
           const resolvedUrl = getStorageAssetUrl(v.video_url) ?? v.video_url;
           return (
@@ -1600,6 +1716,9 @@ function CreditsModerationTab({
   onApproveAll: (ids: string[]) => void;
   onFlag: (id: string, label: string, reason: FlagReason) => void;
 }) {
+  const queryClient = useQueryClient();
+  const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set());
+
   const { data: credits, isLoading, error } = useQuery({
     queryKey: ["moderation-credits"],
     queryFn: fetchModerationCredits,
@@ -1610,45 +1729,112 @@ function CreditsModerationTab({
     [credits, dismissed],
   );
 
+  async function handleApprove(ids: string[]) {
+    setApprovingIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+    const results = await Promise.allSettled(ids.map((id) => approveCredit(id)));
+    const succeeded = ids.filter((_, i) => results[i].status === "fulfilled");
+    const failed = ids.length - succeeded.length;
+    setApprovingIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.delete(id));
+      return next;
+    });
+    if (succeeded.length > 0) {
+      onApproveAll(succeeded);
+      queryClient.invalidateQueries({ queryKey: ["moderation-credits"] });
+      toast.success(
+        succeeded.length === 1 ? "Credit approved" : `${succeeded.length} credits approved`,
+      );
+    }
+    if (failed > 0) {
+      toast.error(`${failed} approval${failed === 1 ? "" : "s"} failed — please retry`);
+    }
+  }
+
   if (isLoading) return <ModerationSkeletons />;
   if (error) return <ModerationError message="Failed to load credits." />;
   if (visible.length === 0)
     return <ModerationEmptyState icon={<Award className="h-10 w-10" />} message="No new credits to review." />;
 
+  const allIds = visible.map((c) => c.id);
+
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        {visible.map((c) => (
-          <Card key={c.id} className="p-4 group hover:border-brand-primary transition-all">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1 space-y-1.5">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-semibold truncate text-sm">
-                    {c.entity_name ?? <span className="italic text-muted-foreground">Unknown</span>}
-                  </h3>
-                  <Badge className="text-[10px] uppercase font-bold shrink-0 bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border-none">
-                    {c.role.replace(/_/g, " ")}
-                  </Badge>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {visible.map((c) => {
+          const isApproving = approvingIds.has(c.id);
+          return (
+            <Card key={c.id} className="p-4 group hover:border-brand-primary transition-all">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-semibold truncate text-sm">
+                      {c.entity_name ?? <span className="italic text-muted-foreground">Unknown</span>}
+                    </h3>
+                    <Badge className="text-[10px] uppercase font-bold shrink-0 bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border-none">
+                      {c.role.replace(/_/g, " ")}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    on{" "}
+                    <Link
+                      to={getBuildingUrl(c.building_id, c.building_slug, c.building_short_id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-foreground hover:underline transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {c.building_name}
+                    </Link>
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  on{" "}
-                  <Link
-                    to={getBuildingUrl(c.building_id, c.building_slug, c.building_short_id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-foreground hover:underline transition-colors"
-                    onClick={(e) => e.stopPropagation()}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <FlagButton id={c.id} label={`Credit on ${c.building_name}`} onFlag={onFlag} />
+                  <Button
+                    size="sm"
+                    disabled={isApproving}
+                    onClick={() => handleApprove([c.id])}
+                    className="gap-1.5 h-7 px-2 text-xs"
                   >
-                    {c.building_name}
-                  </Link>
-                </p>
+                    {isApproving ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="h-3 w-3" />
+                    )}
+                    Approve
+                  </Button>
+                </div>
               </div>
-              <FlagButton id={c.id} label={`Credit on ${c.building_name}`} onFlag={onFlag} />
-            </div>
-          </Card>
-        ))}
+            </Card>
+          );
+        })}
       </div>
-      <ApproveAllButton ids={visible.map((c) => c.id)} onApproveAll={onApproveAll} />
+      {allIds.length > 0 && (
+        <div className="flex justify-end pt-2 border-t">
+          <Button
+            variant="default"
+            size="sm"
+            disabled={approvingIds.size > 0}
+            onClick={() => handleApprove(allIds)}
+          >
+            {approvingIds.size > 0 ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                Approving…
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                Approve all ({allIds.length})
+              </>
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

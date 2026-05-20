@@ -2,6 +2,7 @@ import { useRef, useState, type DragEvent } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   COLUMN_DOT,
   KANBAN_STATUSES,
@@ -11,6 +12,8 @@ import {
   type FeedbackRow,
   type FeedbackStatus,
 } from "@/features/admin/feedback/feedbackTypes";
+
+const PAGE_SIZE = 25;
 
 interface FeedbackKanbanViewProps {
   rows: FeedbackRow[];
@@ -32,6 +35,15 @@ export function FeedbackKanbanView({
   const [dragOverCol, setDragOverCol] = useState<FeedbackStatus | null>(null);
   const [draggingRowId, setDraggingRowId] = useState<string | null>(null);
   const draggingIdRef = useRef<string | null>(null);
+  const [visibleCounts, setVisibleCounts] = useState<Partial<Record<FeedbackStatus, number>>>({});
+
+  function getVisible(status: FeedbackStatus): number {
+    return visibleCounts[status] ?? PAGE_SIZE;
+  }
+
+  function loadMore(status: FeedbackStatus) {
+    setVisibleCounts((prev) => ({ ...prev, [status]: (prev[status] ?? PAGE_SIZE) + PAGE_SIZE }));
+  }
 
   const byStatus = STATUS_OPTIONS.reduce<Record<FeedbackStatus, FeedbackRow[]>>(
     (acc, { value }) => {
@@ -86,6 +98,9 @@ export function FeedbackKanbanView({
       <div className="flex min-w-max pb-4">
         {KANBAN_STATUSES.map(({ value }, i) => {
           const cards = byStatus[value];
+          const visible = getVisible(value);
+          const visibleCards = cards.slice(0, visible);
+          const remaining = cards.length - visible;
           const isDropTarget = dragOverCol === value;
 
           return (
@@ -136,7 +151,7 @@ export function FeedbackKanbanView({
               }
             >
               <div className={cn("mx-3 mb-3 h-0.5 rounded-full", COLUMN_DOT[value])} />
-              <div className="flex min-h-[80px] flex-col gap-2 px-3">
+              <div className="flex min-h-[80px] flex-col gap-2 px-3 pb-1">
                 {cards.length === 0 ? (
                   <div
                     className={cn(
@@ -149,7 +164,7 @@ export function FeedbackKanbanView({
                     {isDropTarget ? "Drop here" : "No items"}
                   </div>
                 ) : (
-                  cards.map((row) => (
+                  visibleCards.map((row) => (
                     <div
                       key={row.id}
                       draggable={!readOnly}
@@ -218,6 +233,17 @@ export function FeedbackKanbanView({
                       </button>
                     </div>
                   ))
+                )}
+                {remaining > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="mt-1 w-full text-xs text-text-secondary"
+                    onClick={() => loadMore(value)}
+                  >
+                    Load {Math.min(remaining, PAGE_SIZE)} more
+                    <span className="ml-1 text-text-disabled">({remaining} remaining)</span>
+                  </Button>
                 )}
               </div>
             </div>
