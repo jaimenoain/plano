@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams, redirect, type LoaderFunctionArgs } from "react-router";
-import { Pin, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchBroadcastBanners, markBroadcastRead } from "@/features/admin/api/programme";
 import type { BroadcastBanner } from "@/features/admin/types/programme";
@@ -16,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
+import { Loader2, Pin, X } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
@@ -157,6 +156,7 @@ export default function LeadershipPage() {
       if (error) throw error;
       toast.success("Application approved");
       setApplications((prev) => prev.filter((a) => a.id !== app.id));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       if (e.message?.includes("chapter_full")) {
         toast.error("This chapter is at capacity");

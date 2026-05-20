@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -6,7 +6,6 @@ import { fetchAmbassadorMyAuditTimeline, type AmbassadorAuditRow } from "@/featu
 import { fetchChapterAmbassadorActivity } from "@/features/embassy/api/leadership";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -67,6 +66,7 @@ export default function MyGoalsPage() {
   const { data: goals, isLoading: loadingGoals } = useQuery({
     queryKey: ["ambassador-goals", user?.id],
     queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any).rpc("get_my_ambassador_goals");
       if (error) throw error;
       return (data ?? []) as Goal[];
@@ -255,6 +255,7 @@ export default function MyGoalsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Metric</Label>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Select value={metric} onValueChange={(v: any) => setMetric(v)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -347,9 +348,10 @@ function ActivityRow({ item }: { item: AmbassadorAuditRow }) {
   );
 }
 
-function LeaderboardRow({ member, rank, isCurrentUser }: { 
-  member: any; 
-  rank: number; 
+function LeaderboardRow({ member, rank, isCurrentUser }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  member: any;
+  rank: number;
   isCurrentUser: boolean;
 }) {
   return (
