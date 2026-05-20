@@ -43,7 +43,7 @@ export default function MyGoalsPage() {
   // Fetch membership for chapterId (to show leaderboard).
   // Uses maybeSingle() + status filter to avoid PGRST116 for users with
   // multiple membership rows (e.g. past inactive + current active chapter).
-  const { data: membership } = useQuery({
+  const { data: membership, isLoading: loadingMembership } = useQuery({
     queryKey: ["ambassador-membership-goals", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -204,16 +204,16 @@ export default function MyGoalsPage() {
                 <span>Points (30d)</span>
               </div>
               <div className="divide-y">
-                {!chapterId && !loadingLeaderboard ? (
-                  <p className="px-4 py-6 text-sm text-muted-foreground text-center">
-                    You're not in a chapter yet.
-                  </p>
+                {loadingMembership || loadingLeaderboard ? (
+                  [0, 1, 2, 3, 4].map(i => <Skeleton key={i} className="h-14 w-full m-1 rounded-md" />)
                 ) : leaderboardError ? (
                   <p className="px-4 py-6 text-sm text-feedback-destructive text-center">
                     Could not load the leaderboard.
                   </p>
-                ) : loadingLeaderboard ? (
-                  [0, 1, 2, 3, 4].map(i => <Skeleton key={i} className="h-14 w-full m-1 rounded-md" />)
+                ) : !chapterId ? (
+                  <p className="px-4 py-6 text-sm text-muted-foreground text-center">
+                    You're not in a chapter yet.
+                  </p>
                 ) : !leaderboard?.length ? (
                   <p className="px-4 py-6 text-sm text-muted-foreground text-center">
                     No ambassadors in this chapter yet.

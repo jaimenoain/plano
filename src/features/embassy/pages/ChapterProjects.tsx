@@ -25,6 +25,7 @@ type Project = {
   status: "draft" | "active" | "completed" | "archived";
   created_by: string;
   created_at: string;
+  author_username?: string | null;
 };
 
 type Campaign = {
@@ -136,13 +137,38 @@ export default function ChapterProjectsPage() {
     queryKey: ["chapter-projects", chapterId],
     queryFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
+      const db = supabase as any;
+      const { data, error } = await db
         .from("chapter_projects")
         .select("*")
         .eq("chapter_id", chapterId)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as Project[];
+      const rows = data as Project[];
+
+      // Batch-fetch author usernames for draft ideas.
+      // chapter_projects.created_by → auth.users(id), not profiles(id),
+      // so FK-hint joins don't work — use a separate profiles lookup.
+      const draftAuthorIds = Array.from(
+        new Set(rows.filter((r) => r.status === "draft").map((r) => r.created_by)),
+      );
+      if (draftAuthorIds.length > 0) {
+        const { data: profileRows } = await db
+          .from("profiles")
+          .select("id, username")
+          .in("id", draftAuthorIds);
+        const profileMap = new Map<string, string>(
+          ((profileRows ?? []) as Array<{ id: string; username: string | null }>)
+            .filter((p) => p.username)
+            .map((p) => [p.id, p.username as string]),
+        );
+        return rows.map((r) =>
+          r.status === "draft"
+            ? { ...r, author_username: profileMap.get(r.created_by) ?? null }
+            : r,
+        );
+      }
+      return rows;
     },
     enabled: !!chapterId,
   });
@@ -316,14 +342,16 @@ export default function ChapterProjectsPage() {
           <p className="text-muted-foreground">Priority initiatives and goals for your chapter.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setIsIdeaOpen(true)}
-            className="gap-2"
-          >
-            <Lightbulb className="h-4 w-4" />
-            Submit Idea
-          </Button>
+          {!isLeader && (
+            <Button
+              variant="outline"
+              onClick={() => setIsIdeaOpen(true)}
+              className="gap-2"
+            >
+              <Lightbulb className="h-4 w-4" />
+              Submit Idea
+            </Button>
+          )}
           {isLeader && (
             <Button onClick={() => { resetLeaderForm(); setIsCreateOpen(true); }} className="gap-2">
               <Plus className="h-4 w-4" /> Pin Project
@@ -594,6 +622,7 @@ function DraftCard({
       <div className="mt-auto pt-4 border-t border-border-default space-y-3">
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
           Submitted {formatDistanceToNow(new Date(project.created_at), { addSuffix: true })}
+          {project.author_username ? ` · @${project.author_username}` : ""}
         </p>
         <div className="flex gap-2">
           <Button

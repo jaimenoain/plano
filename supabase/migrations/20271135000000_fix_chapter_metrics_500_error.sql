@@ -8,13 +8,18 @@
 --   audit-log transitions for photos) from prior DROP+CREATE cycles, causing every
 --   call to /embassy/leadership to return HTTP 500.
 --
+--   The original 20271133000000_fix_chapter_metrics_500_error.sql shared its
+--   timestamp with 20271133000000_fix_building_research_rpc_final.sql, so
+--   Supabase's migration tracker may have silently skipped it. This file
+--   (20271135000000) supersedes it with a unique timestamp.
+--
 -- Fix:
 --   Unconditional DROP + CREATE + REVOKE ALL + GRANT EXECUTE for get_chapter_metrics,
 --   using the definitive latest body from migration 20271128000000:
 --   photos counted from review_images (joined via building_posts → buildings),
 --   not from building_audit_logs hero_image_url transitions.
 --
--- Feedback id: 033ee938-f84f-4e69-a014-6b7c126793c8
+-- Feedback ids: 033ee938-f84f-4e69-a014-6b7c126793c8, ee2b3fd3-9b44-4f13-97b0-a0e81e698cfa
 -- Page: /embassy/leadership
 
 DROP FUNCTION IF EXISTS public.get_chapter_metrics(uuid, integer);
