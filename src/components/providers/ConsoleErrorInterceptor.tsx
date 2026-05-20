@@ -1,23 +1,60 @@
-/* eslint-disable no-console -- Monkey-patches console.error for captured diagnostics; must reference console. */
+/* eslint-disable no-console -- Monkey-patches console methods for captured diagnostics; must reference console. */
 import { useEffect } from "react";
 
 export const capturedErrors: string[] = [];
 
+function push(entry: string) {
+  capturedErrors.unshift(entry);
+  if (capturedErrors.length > 20) capturedErrors.length = 20;
+}
+
 export function ConsoleErrorInterceptor() {
   useEffect(() => {
-    const original = console.error;
+    const originalError = console.error;
+    const originalWarn = console.warn;
 
     console.error = (...args: unknown[]) => {
-      const formatted = args
-        .map((a) => (a instanceof Error ? `${a.name}: ${a.message}` : String(a)))
-        .join(" ");
-      capturedErrors.unshift(formatted);
-      if (capturedErrors.length > 10) capturedErrors.length = 10;
-      original.apply(console, args);
+      push(
+        "[error] " +
+          args
+            .map((a) => (a instanceof Error ? `${a.name}: ${a.message}` : String(a)))
+            .join(" ")
+      );
+      originalError.apply(console, args);
     };
 
+    console.warn = (...args: unknown[]) => {
+      push(
+        "[warn] " +
+          args
+            .map((a) => (a instanceof Error ? `${a.name}: ${a.message}` : String(a)))
+            .join(" ")
+      );
+      originalWarn.apply(console, args);
+    };
+
+    const handleError = (event: ErrorEvent) => {
+      const msg = event.error instanceof Error
+        ? `${event.error.name}: ${event.error.message}`
+        : event.message || "Unknown error";
+      push(`[uncaught] ${msg}`);
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason instanceof Error
+        ? `${event.reason.name}: ${event.reason.message}`
+        : String(event.reason ?? "Unknown rejection");
+      push(`[unhandledrejection] ${reason}`);
+    };
+
+    window.addEventListener("error", handleError);
+    window.addEventListener("unhandledrejection", handleUnhandledRejection);
+
     return () => {
-      console.error = original;
+      console.error = originalError;
+      console.warn = originalWarn;
+      window.removeEventListener("error", handleError);
+      window.removeEventListener("unhandledrejection", handleUnhandledRejection);
     };
   }, []);
 
