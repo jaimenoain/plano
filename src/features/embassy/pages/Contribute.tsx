@@ -218,12 +218,24 @@ function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: ()
 
   const filteredBuildings = useMemo(() => {
     if (!buildings) return [];
-    return buildings.filter(b => {
-      const matchesSearch = b.name.toLowerCase().includes(search.toLowerCase()) || 
-                            (b.city && b.city.toLowerCase().includes(search.toLowerCase()));
-      const matchesFilter = filter === "all" || b.missing_fields?.includes(filter);
-      return matchesSearch && matchesFilter;
-    });
+    const needle = search.trim().toLowerCase();
+    return buildings
+      .map((b) => {
+        const missing_fields: string[] = [];
+        if (b.year_completed == null) missing_fields.push("year_completed");
+        if (!b.has_styles) missing_fields.push("styles");
+        if (!b.has_architect_credit) missing_fields.push("architect_credit");
+        return { ...b, missing_fields };
+      })
+      .filter((b) => {
+        const matchesSearch =
+          needle.length === 0 ||
+          b.name.toLowerCase().includes(needle) ||
+          (b.city && b.city.toLowerCase().includes(needle)) ||
+          (b.country && b.country.toLowerCase().includes(needle));
+        const matchesFilter = filter === "all" || b.missing_fields.includes(filter);
+        return matchesSearch && matchesFilter;
+      });
   }, [buildings, search, filter]);
 
   const filters = [

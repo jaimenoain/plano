@@ -4,9 +4,9 @@
     {
       "name": "plano-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 8080,
-      "autoPort": true
+      "runtimeArgs": ["run", "dev", "--", "--port", "8085"],
+      "port": 8085,
+      "autoPort": false
     }
   ]
 }

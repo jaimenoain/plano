@@ -116,7 +116,7 @@ const NOTIFICATION_QUERY = `
     id,
     user_id,
     building:buildings(name),
-    user:profiles(username)
+    user:profiles!building_posts_user_id_fkey(username)
   ),
   recommendation:notifications_recommendation_id_fkey(
     id,
