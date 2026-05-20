@@ -58,6 +58,26 @@ export async function fetchChapterMembersWithContact(
   return data ?? [];
 }
 
+export interface ChapterTeamMember {
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  role: string;
+  exco_responsibility: string | null;
+  joined_at: string;
+}
+
+export async function fetchChapterTeam(
+  chapterId: string,
+): Promise<ChapterTeamMember[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_chapter_team", {
+    p_chapter_id: chapterId,
+  });
+  if (error) throw error;
+  return (data ?? []) as ChapterTeamMember[];
+}
+
 export async function presidentInviteMember(args: {
   chapterId: string;
   userId: string;

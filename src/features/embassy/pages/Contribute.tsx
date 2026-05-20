@@ -23,7 +23,7 @@ import {
   Search, ArrowLeft, Filter, CheckCircle2,
   AlertCircle, MessageSquare, Loader2,
   Camera, Sparkles, UserPlus, ExternalLink, Map, List,
-  Flag, Video, Award,
+  Flag, Video, Award, Users,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -35,6 +35,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext";
 import { PlanoMap } from "@/features/maps/components/PlanoMap";
+import { fetchChapterTeam, type ChapterTeamMember } from "@/features/embassy/api/leadership";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface OutreachLogRow {
   id: string;
@@ -46,7 +48,7 @@ interface OutreachLogRow {
   updated_at: string;
 }
 
-type ToolType = "research" | "photography" | "outreach" | "curation" | "community" | null;
+type ToolType = "research" | "photography" | "outreach" | "curation" | "community" | "team" | null;
 
 interface ToolDefinition {
   key: NonNullable<ToolType>;
@@ -87,6 +89,12 @@ const ALL_TOOLS: ToolDefinition[] = [
     description: "Invite architects and firms in your area to join Plano.",
     icon: <UserPlus className="h-6 w-6" />,
     asChild: true,
+  },
+  {
+    key: "team",
+    title: "Team",
+    description: "Meet your chapter's president, Executive Committee, and fellow ambassadors.",
+    icon: <Users className="h-6 w-6" />,
   },
 ];
 
@@ -148,6 +156,10 @@ export default function ContributePage() {
 
   if (activeTool === "curation" && chapterId) {
     return <CurationTool chapterId={chapterId} onBack={() => setActiveTool(null)} />;
+  }
+
+  if (activeTool === "team" && chapterId) {
+    return <TeamTool chapterId={chapterId} onBack={() => setActiveTool(null)} />;
   }
 
   return (
@@ -942,12 +954,13 @@ function BuildingsModerationTab({
             b.lat && b.lng
               ? `https://www.google.com/maps/search/?api=1&query=${b.lat},${b.lng}`
               : null;
+          const thumbUrl = getBuildingImageUrl(b.n ?? b.hero_image_url);
           return (
             <Card key={b.id} className="overflow-hidden group hover:border-brand-primary transition-all">
               <div className="flex flex-col sm:flex-row">
-                {b.hero_image_url ? (
+                {thumbUrl ? (
                   <div className="sm:w-36 sm:shrink-0 h-40 sm:h-auto bg-muted overflow-hidden">
-                    <img src={b.hero_image_url} alt={b.name} className="w-full h-full object-cover" />
+                    <img src={thumbUrl} alt={b.name} className="w-full h-full object-cover" />
                   </div>
                 ) : (
                   <div className="hidden sm:flex sm:w-36 sm:shrink-0 items-center justify-center bg-muted text-muted-foreground">
@@ -1026,46 +1039,45 @@ function PhotosModerationTab({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {visible.map((p) => {
           const imageUrl = getBuildingImageUrl(p.storage_path);
           return (
-            <Card key={p.id} className="overflow-hidden group hover:border-brand-primary transition-all">
-              <div className="flex flex-col sm:flex-row">
-                <div className="sm:w-36 sm:shrink-0 h-40 sm:h-auto bg-muted overflow-hidden">
-                  {imageUrl ? (
-                    <img src={imageUrl} alt={p.caption ?? p.building_name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                      <Camera className="h-8 w-8 opacity-30" />
-                    </div>
-                  )}
+            <div key={p.id} className="group relative rounded-xl overflow-hidden bg-muted aspect-square border border-border-default hover:border-brand-primary transition-all">
+              {imageUrl ? (
+                <img src={imageUrl} alt={p.caption ?? p.building_name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                  <Camera className="h-8 w-8 opacity-30" />
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 flex-1 min-w-0">
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <h3 className="font-semibold truncate">{p.building_name}</h3>
-                    {p.caption && (
-                      <p className="text-xs text-muted-foreground truncate">{p.caption}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(p.created_at).toLocaleDateString(undefined, {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <FlagButton id={p.id} label={`Photo on ${p.building_name}`} onFlag={onFlag} />
-                    <Button size="sm" asChild>
-                      <Link to={getBuildingUrl(p.building_id, p.building_slug, p.building_short_id)}>
-                        View Building
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
+              )}
+              {/* Flag button — top-right corner, appears on hover */}
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  type="button"
+                  title="Flag for review"
+                  aria-label="Flag for review"
+                  onClick={(e) => { e.stopPropagation(); onFlag(p.id, `Photo on ${p.building_name}`); }}
+                  className="p-1.5 rounded-md bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                >
+                  <Flag className="h-4 w-4" />
+                </button>
               </div>
-            </Card>
+              {/* Bottom info overlay */}
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 translate-y-0">
+                <p className="text-xs font-semibold text-white truncate leading-tight">{p.building_name}</p>
+                {p.caption && (
+                  <p className="text-[10px] text-white/70 truncate mt-0.5">{p.caption}</p>
+                )}
+                <Link
+                  to={getBuildingUrl(p.building_id, p.building_slug, p.building_short_id)}
+                  className="mt-2 text-[10px] text-white/80 hover:text-white underline underline-offset-2 block opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  View Building →
+                </Link>
+              </div>
+            </div>
           );
         })}
       </div>
@@ -1203,6 +1215,139 @@ function CreditsModerationTab({
       </div>
       <ApproveAllButton ids={visible.map((c) => c.id)} onApproveAll={onApproveAll} />
     </div>
+  );
+}
+
+const EXCO_LABELS: Record<string, string> = {
+  content: "Content",
+  marketing: "Marketing",
+  architect_relations: "Architect relations",
+  data_quality: "Data quality",
+  community: "Community",
+};
+
+const ROLE_LABELS: Record<string, string> = {
+  president: "President",
+  exco: "Executive Committee",
+  ambassador: "Ambassador",
+};
+
+function TeamTool({ chapterId, onBack }: { chapterId: string; onBack: () => void }) {
+  const { data: members, isLoading, error } = useQuery({
+    queryKey: ["chapter-team", chapterId],
+    queryFn: () => fetchChapterTeam(chapterId),
+    enabled: !!chapterId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const grouped = useMemo(() => {
+    if (!members) return { president: [], exco: [], ambassador: [] };
+    return {
+      president: members.filter((m) => m.role === "president"),
+      exco: members.filter((m) => m.role === "exco"),
+      ambassador: members.filter((m) => m.role === "ambassador"),
+    };
+  }, [members]);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={onBack}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold tracking-tight">Team</h1>
+          <p className="text-sm text-muted-foreground">Your chapter's leadership and ambassadors.</p>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-8">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="space-y-3">
+              <Skeleton className="h-4 w-32" />
+              <div className="grid gap-3">
+                {[0, 1].map((j) => <Skeleton key={j} className="h-20 w-full rounded-xl" />)}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : error ? (
+        <div className="p-8 text-center border rounded-xl bg-destructive/5 text-destructive">
+          <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+          <p>Failed to load team. Please try again.</p>
+        </div>
+      ) : !members?.length ? (
+        <div className="p-12 text-center border border-dashed rounded-xl">
+          <Users className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+          <p className="text-lg font-medium">No team members yet</p>
+          <p className="text-sm text-muted-foreground">Your chapter hasn't set up its team yet.</p>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {(["president", "exco", "ambassador"] as const).map((role) => {
+            const group = grouped[role];
+            if (group.length === 0) return null;
+            return (
+              <div key={role} className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                    {ROLE_LABELS[role]}
+                  </h2>
+                  <div className="flex-1 border-t" />
+                  <span className="text-xs text-muted-foreground">{group.length}</span>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {group.map((member) => (
+                    <TeamMemberCard key={member.user_id} member={member} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TeamMemberCard({ member }: { member: ChapterTeamMember }) {
+  const initials = member.username
+    .split(/[\s_-]/)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .slice(0, 2)
+    .join("");
+
+  return (
+    <Card className="p-4 flex items-center gap-4 hover:border-brand-primary transition-all">
+      <Avatar className="h-12 w-12 shrink-0">
+        <AvatarImage src={member.avatar_url ?? undefined} alt={member.username} />
+        <AvatarFallback className="text-sm font-semibold">{initials}</AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-semibold truncate">@{member.username}</span>
+          {member.role === "president" && (
+            <Badge className="text-[10px] uppercase font-bold bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border-none">
+              President
+            </Badge>
+          )}
+          {member.role === "exco" && (
+            <Badge variant="secondary" className="text-[10px] uppercase font-bold">
+              ExCo
+            </Badge>
+          )}
+        </div>
+        {member.role === "exco" && member.exco_responsibility && (
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {EXCO_LABELS[member.exco_responsibility] ?? member.exco_responsibility}
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Joined {new Date(member.joined_at).toLocaleDateString(undefined, { year: "numeric", month: "short" })}
+        </p>
+      </div>
+    </Card>
   );
 }
 

@@ -199,14 +199,36 @@ export default function MyGoalsPage() {
               <div className="divide-y">
                 {loadingLeaderboard ? (
                   [0, 1, 2, 3, 4].map(i => <Skeleton key={i} className="h-14 w-full m-1 rounded-md" />)
-                ) : leaderboard?.slice(0, 10).map((member, i) => (
-                  <LeaderboardRow 
-                    key={member.user_id} 
-                    member={member} 
-                    rank={i + 1} 
-                    isCurrentUser={member.user_id === user?.id} 
-                  />
-                ))}
+                ) : (() => {
+                  const top10 = leaderboard?.slice(0, 10) ?? [];
+                  const currentUserInTop10 = top10.some(m => m.user_id === user?.id);
+                  const currentUserRank = leaderboard?.findIndex(m => m.user_id === user?.id) ?? -1;
+                  const currentUserEntry = currentUserRank >= 10 ? leaderboard![currentUserRank] : null;
+                  return (
+                    <>
+                      {top10.map((member, i) => (
+                        <LeaderboardRow
+                          key={member.user_id}
+                          member={member}
+                          rank={i + 1}
+                          isCurrentUser={member.user_id === user?.id}
+                        />
+                      ))}
+                      {!currentUserInTop10 && currentUserEntry && (
+                        <>
+                          <div className="px-4 py-1 text-center text-[10px] text-muted-foreground tracking-widest bg-surface-muted/30">
+                            · · ·
+                          </div>
+                          <LeaderboardRow
+                            member={currentUserEntry}
+                            rank={currentUserRank + 1}
+                            isCurrentUser
+                          />
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </Card>
           </section>

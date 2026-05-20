@@ -3335,6 +3335,7 @@ export type Database = {
           id: string
           lat: number | null
           lng: number | null
+          n: string | null
           name: string
           short_id: number
           slug: string
