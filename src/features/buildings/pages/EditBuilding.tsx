@@ -45,7 +45,7 @@ export const meta: MetaFunction = () => [
 export default function EditBuilding() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialValues, setInitialValues] = useState<BuildingFormData | null>(null);
@@ -58,10 +58,15 @@ export default function EditBuilding() {
   const [primaryDesignCreditRowIds, setPrimaryDesignCreditRowIds] = useState<string[]>([]);
 
   useEffect(() => {
-    if (id && user) {
+    if (authLoading) return;
+    if (!user) {
+      void navigate("/login");
+      return;
+    }
+    if (id) {
       fetchBuilding();
     }
-  }, [id, user]);
+  }, [id, user, authLoading]);
 
   const fetchBuilding = async () => {
     if (!id) return;

@@ -332,7 +332,7 @@ export function useBuildingInteractions({
 
   // ── Verified architect detection ─────────────────────────────────────────
   const [verifiedClaims, setVerifiedClaims] = useState<string[]>([]);
-  const [hasVerifiedArchitect, setHasVerifiedArchitect] = useState(false);
+  const [_hasVerifiedArchitect, setHasVerifiedArchitect] = useState(false);
 
   // ── Visitor count (separate from entries — building_posts has multiple rows per user) ──
   const [visitorCount, setVisitorCount] = useState(0);
@@ -1055,6 +1055,7 @@ export function useBuildingInteractions({
       queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
       void fetchUserSpecificData();
     } catch (error: unknown) {
+      // eslint-disable-next-line no-console
       console.error("handleSaveNote failed", error);
       toast({
         variant: "destructive",
@@ -1303,7 +1304,7 @@ export function useBuildingInteractions({
   //
   // isVerifiedArchitect: true when the signed-in user has a verified architect
   // claim for one of the primary credited persons on this building.
-  const isVerifiedArchitect = useMemo(() => {
+  const _isVerifiedArchitect = useMemo(() => {
     if (verifiedClaims.length === 0) return false;
     const primaryPersonIds = visiblePrimaryCredits(buildingCredits)
       .map((c) => c.personId)
@@ -1311,10 +1312,7 @@ export function useBuildingInteractions({
     return primaryPersonIds.some((pid) => verifiedClaims.includes(pid));
   }, [verifiedClaims, buildingCredits]);
 
-  const canEditOfficialData =
-    profile?.role === "admin" ||
-    isVerifiedArchitect ||
-    (isCreator && !hasVerifiedArchitect);
+  const canEditOfficialData = !!user;
 
   const isCreditsAdmin =
     profile?.role === "admin" || profile?.role === "app_admin";

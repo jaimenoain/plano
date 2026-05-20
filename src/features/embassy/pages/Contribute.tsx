@@ -482,12 +482,16 @@ function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: ()
 // ---------- Research Review Panel ----------
 
 const FIELD_LABELS: Record<string, string> = {
-  year_completed: "Year Completed",
-  materials: "Materials",
-  typology: "Typology",
-  access_level: "Access Level",
+  year_completed:   "Year Completed",
+  status:           "Status",
+  alt_name:         "Alternative Name",
+  access_level:     "Access Level",
   access_logistics: "Access Logistics",
-  context: "Context",
+  access_cost:      "Access Cost",
+  access_notes:     "Access Notes",
+  size_sqm:         "Floor Area (sqm)",
+  height_m:         "Height (m)",
+  storeys:          "Storeys",
 };
 
 type ReviewItem = ResearchDataPoint & { accepted: boolean; editedValue: string };
@@ -609,36 +613,36 @@ function ResearchReviewPanel({
                 </button>
               </div>
 
-              <div className="flex-1 min-w-0 space-y-3">
-                {/* Field label */}
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {FIELD_LABELS[item.field] ?? item.field}
-                </p>
+              <div className="flex-1 min-w-0 flex flex-col md:flex-row md:gap-5">
+                {/* Left: label + editable value */}
+                <div className="flex-1 min-w-0 space-y-3">
+                  {/* Field label */}
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {FIELD_LABELS[item.field] ?? item.field}
+                  </p>
 
-                {/* Editable value */}
-                {item.field === "access_notes" || item.field === "architect_statement" ? (
-                  <Textarea
-                    value={item.editedValue}
-                    disabled={!item.accepted || isSaving}
-                    onChange={(e) => handleValueChange(item.field, e.target.value)}
-                    rows={3}
-                    className="text-sm min-h-[80px]"
-                  />
-                ) : (
-                  <Input
-                    value={item.editedValue}
-                    disabled={!item.accepted || isSaving}
-                    onChange={(e) => handleValueChange(item.field, e.target.value)}
-                    className="text-sm"
-                  />
-                )}
-                {(item.field === "materials" || item.field === "typology" || item.field === "context") && (
-                  <p className="text-[11px] text-muted-foreground">Comma-separated values</p>
-                )}
+                  {/* Editable value */}
+                  {item.field === "access_notes" ? (
+                    <Textarea
+                      value={item.editedValue}
+                      disabled={!item.accepted || isSaving}
+                      onChange={(e) => handleValueChange(item.field, e.target.value)}
+                      rows={3}
+                      className="text-sm min-h-[80px]"
+                    />
+                  ) : (
+                    <Input
+                      value={item.editedValue}
+                      disabled={!item.accepted || isSaving}
+                      onChange={(e) => handleValueChange(item.field, e.target.value)}
+                      className="text-sm"
+                    />
+                  )}
+                </div>
 
-                {/* Source */}
+                {/* Right: source snippet + URL */}
                 {(item.source_url || item.snippet) && (
-                  <div className="rounded-md bg-muted/60 p-3 space-y-1.5 text-xs text-muted-foreground">
+                  <div className="md:w-72 shrink-0 rounded-md bg-muted/60 p-3 space-y-1.5 text-xs text-muted-foreground mt-3 md:mt-0 self-start">
                     {item.snippet && (
                       <p className="italic leading-relaxed">&ldquo;{item.snippet}&rdquo;</p>
                     )}
