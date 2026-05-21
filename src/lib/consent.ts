@@ -14,6 +14,7 @@ export function setConsent(status: "granted" | "denied"): void {
   localStorage.setItem(CONSENT_KEY, status);
   if (status === "granted") {
     loadAnalytics();
+    window.dispatchEvent(new Event("plano-consent-granted"));
   }
 }
 

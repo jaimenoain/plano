@@ -130,16 +130,20 @@ export default function Users() {
             chapter:ambassador_chapters!ambassador_memberships_chapter_id_fkey(id, name, type, country_code, status)
           `)
           .eq("user_id", userId)
-          .maybeSingle(),
+          .eq("status", "active")
+          .order("joined_at", { ascending: false })
+          .limit(1),
         supabase
           .from("building_credits")
           .select("id", { count: "exact", head: true })
           .eq("added_by_user_id", userId),
       ]);
 
-      const rawMem = membershipRes.data as (typeof membershipRes.data & {
-        chapter: UserMembership["chapter"];
-      }) | null;
+      if (membershipRes.error) throw membershipRes.error;
+
+      const rawMem = (membershipRes.data?.[0] ?? null) as (
+        { id: string; role: string; exco_responsibility: string | null; status: string; joined_at: string; chapter: UserMembership["chapter"] }
+      ) | null;
 
       const membership: UserMembership | null = rawMem
         ? {
@@ -152,10 +156,18 @@ export default function Users() {
           }
         : null;
 
-      // Fetch per-user chapter activity if member of a chapter
-      const chapterActivity = membership?.chapter?.id
-        ? await fetchUserChapterActivity(membership.chapter.id, userId)
-        : null;
+      // Fetch per-user chapter activity if member of a chapter.
+      // Wrapped in its own try-catch so a missing GRANT EXECUTE on the RPC
+      // (or admin caller being outside the chapter scope) does not block the
+      // rest of the detail panel from loading.
+      let chapterActivity: ChapterActivityRow | null = null;
+      if (membership?.chapter?.id) {
+        try {
+          chapterActivity = await fetchUserChapterActivity(membership.chapter.id, userId);
+        } catch {
+          // Activity data unavailable — degrade gracefully, show "—" stats
+        }
+      }
 
       setUserDetail({
         membership,

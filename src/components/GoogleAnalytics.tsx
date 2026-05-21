@@ -1,15 +1,22 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { GA_MEASUREMENT_ID } from "@/lib/analytics";
 import { getConsent, loadAnalytics } from "@/lib/consent";
 
 export const GoogleAnalytics = (): null => {
   const { user, loading } = useAuth();
+  const [consentGranted, setConsentGranted] = useState(getConsent() === "granted");
+
+  useEffect(() => {
+    const handler = () => setConsentGranted(true);
+    window.addEventListener("plano-consent-granted", handler);
+    return () => window.removeEventListener("plano-consent-granted", handler);
+  }, []);
 
   useEffect((): void => {
     if (loading) return;
     if (!GA_MEASUREMENT_ID) return;
-    if (getConsent() !== "granted") return;
+    if (!consentGranted) return;
 
     loadAnalytics();
 
@@ -20,7 +27,7 @@ export const GoogleAnalytics = (): null => {
         window.gtag("config", GA_MEASUREMENT_ID);
       }
     }
-  }, [user, loading]);
+  }, [user, loading, consentGranted]);
 
   return null;
 };
