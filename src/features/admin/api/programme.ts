@@ -16,6 +16,9 @@ import type {
   RecipientScope,
   BroadcastReadStatus,
   BroadcastBanner,
+  ChapterRankingRow,
+  PresidentOnboardingStatus,
+  PresidentOnboardingListRow,
 } from "@/features/admin/types/programme";
 
 function num(v: unknown, fallback = 0): number {
@@ -231,6 +234,66 @@ export async function markBroadcastRead(broadcastId: string): Promise<void> {
     p_broadcast_id: broadcastId,
   });
   if (error) throw new Error(error.message);
+}
+
+export async function fetchChapterPerformanceRanking(periodDays: number | null): Promise<ChapterRankingRow[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_chapter_performance_ranking", {
+    p_period_days: periodDays,
+  });
+  if (error) throw new Error(error.message);
+  if (!Array.isArray(data)) return [];
+  return (data as Record<string, unknown>[]).map((r) => ({
+    chapterId:            String(r.chapter_id ?? ""),
+    chapterName:          String(r.chapter_name ?? ""),
+    countryCode:          String(r.country_code ?? ""),
+    chapterType:          String(r.chapter_type ?? ""),
+    memberCount:          num(r.member_count),
+    edits:                num(r.edits),
+    photosAdded:          num(r.photos_added),
+    newMembers:           num(r.new_members),
+    applicationsApproved: num(r.applications_approved),
+    lastActivityDate:     r.last_activity_date != null ? String(r.last_activity_date) : null,
+    score:                num(r.score),
+  }));
+}
+
+export async function fetchPresidentOnboardingStatus(membershipId: string): Promise<PresidentOnboardingStatus | null> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_president_onboarding_status", {
+    p_membership_id: membershipId,
+  });
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const r = data as Record<string, unknown>;
+  return {
+    membershipId:              String(r.membership_id ?? ""),
+    daysInRole:                num(r.days_in_role),
+    profileComplete:           Boolean(r.profile_complete),
+    chapterActive:             Boolean(r.chapter_active),
+    firstMemberInvited:        Boolean(r.first_member_invited),
+    firstApplicationReviewed:  Boolean(r.first_application_reviewed),
+    firstAuditEntry:           Boolean(r.first_audit_entry),
+  };
+}
+
+export async function fetchPresidentOnboardingList(): Promise<PresidentOnboardingListRow[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_president_onboarding_list");
+  if (error) throw new Error(error.message);
+  if (!Array.isArray(data)) return [];
+  return (data as Record<string, unknown>[]).map((r) => ({
+    membershipId:        String(r.membership_id ?? ""),
+    presidentUserId:     String(r.president_user_id ?? ""),
+    presidentUsername:   String(r.president_username ?? ""),
+    presidentAvatarUrl:  r.president_avatar_url != null ? String(r.president_avatar_url) : null,
+    chapterId:           String(r.chapter_id ?? ""),
+    chapterName:         String(r.chapter_name ?? ""),
+    countryCode:         String(r.country_code ?? ""),
+    daysInRole:          num(r.days_in_role),
+    stepsCompleted:      num(r.steps_completed),
+    lastActiveAt:        r.last_active_at != null ? String(r.last_active_at) : null,
+  }));
 }
 
 export async function fetchProgrammeHealthSummary(): Promise<ProgrammeHealthSummary> {

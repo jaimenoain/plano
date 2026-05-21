@@ -1,16 +1,33 @@
 import { useMemo, useState } from "react";
 import { Link, type MetaFunction } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchAdminAmbassadorLocalityCoverage,
   fetchAdminAmbassadorProgramStats,
   fetchNationalChapterOverview,
+  type AdminAmbassadorLocalityCoverageRow,
 } from "@/features/admin/api/ambassadorCoverage";
 import type { Json } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -31,8 +48,12 @@ import {
   MapPin,
   ChevronDown,
   ChevronRight,
+  Plus,
+  Filter,
 } from "lucide-react";
+import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { ambassadorChapterCreateSchema } from "@/lib/validations/ambassador";
 
 export const meta: MetaFunction = () => [
   { title: "Ambassador management | Plano Admin" },
@@ -168,6 +189,19 @@ function NationalChapterCard({ chapter }: { chapter: ChapterRow }) {
 }
 
 export default function AmbassadorCoverage() {
+  const queryClient = useQueryClient();
+
+  // Gap tab state
+  const [gapCountryFilter, setGapCountryFilter] = useState("");
+  const [gapMinBuildings, setGapMinBuildings] = useState(10);
+  const [gapDialogOpen, setGapDialogOpen] = useState(false);
+  const [gapRow, setGapRow] = useState<AdminAmbassadorLocalityCoverageRow | null>(null);
+  const [gapName, setGapName] = useState("");
+  const [gapParentChapterId, setGapParentChapterId] = useState<string | null>(null);
+  const [gapMaxAmbassadors, setGapMaxAmbassadors] = useState(20);
+  const [gapSaving, setGapSaving] = useState(false);
+  const [gapNationalChapters, setGapNationalChapters] = useState<ChapterRow[]>([]);
+
   const statsQuery = useQuery({
     queryKey: ["admin-ambassador-program-stats"],
     queryFn: fetchAdminAmbassadorProgramStats,
@@ -211,6 +245,95 @@ export default function AmbassadorCoverage() {
     () => (coverageQuery.data ?? []).filter((r) => r.chapter_id),
     [coverageQuery.data],
   );
+
+  // Gap tab computed values
+  const allGapCountries = useMemo(
+    () =>
+      Array.from(
+        new Map(
+          (coverageQuery.data ?? [])
+            .filter((r) => !r.chapter_id && r.buildings_count > 10)
+            .map((r) => [r.country_code, r.country]),
+        ).entries(),
+      ).sort((a, b) => a[1].localeCompare(b[1])),
+    [coverageQuery.data],
+  );
+
+  const gapLocalities = useMemo(
+    () =>
+      (coverageQuery.data ?? [])
+        .filter((r) => !r.chapter_id && r.buildings_count > 10)
+        .filter((r) => !gapCountryFilter || r.country_code === gapCountryFilter)
+        .filter((r) => r.buildings_count >= gapMinBuildings)
+        .sort((a, b) => b.buildings_count - a.buildings_count),
+    [coverageQuery.data, gapCountryFilter, gapMinBuildings],
+  );
+
+  const openGapDialog = async (row: AdminAmbassadorLocalityCoverageRow) => {
+    setGapRow(row);
+    setGapName(`Plano ${row.city}`);
+    setGapParentChapterId(null);
+    setGapMaxAmbassadors(20);
+    const { data } = await supabase
+      .from("ambassador_chapters")
+      .select("*")
+      .eq("type", "national")
+      .eq("country_code", row.country_code)
+      .order("name");
+    setGapNationalChapters(data ?? []);
+    setGapDialogOpen(true);
+  };
+
+  const handleGapCreate = async () => {
+    if (!gapRow) return;
+    if (!gapParentChapterId) {
+      toast.error("Select a national parent chapter first");
+      return;
+    }
+    const parsed = ambassadorChapterCreateSchema.safeParse({
+      name: gapName,
+      type: "local",
+      country_code: gapRow.country_code,
+      locality_id: gapRow.locality_id,
+      parent_chapter_id: gapParentChapterId,
+      max_ambassadors: gapMaxAmbassadors,
+      status: "forming",
+    });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Invalid form");
+      return;
+    }
+    setGapSaving(true);
+    try {
+      const { data: existing } = await supabase
+        .from("ambassador_chapters")
+        .select("id")
+        .eq("type", "local")
+        .eq("locality_id", gapRow.locality_id)
+        .limit(1);
+      if (existing && existing.length > 0) {
+        toast.error("A local chapter for this locality already exists");
+        return;
+      }
+      const { error } = await supabase.from("ambassador_chapters").insert({
+        name: parsed.data.name,
+        type: "local",
+        country_code: parsed.data.country_code,
+        locality_id: parsed.data.locality_id,
+        parent_chapter_id: parsed.data.parent_chapter_id,
+        max_ambassadors: parsed.data.max_ambassadors,
+        status: "forming",
+      });
+      if (error) throw error;
+      toast.success(`Forming chapter "${parsed.data.name}" created`);
+      setGapDialogOpen(false);
+      void queryClient.invalidateQueries({ queryKey: ["admin-ambassador-locality-coverage"] });
+    } catch {
+      toast.error("Could not create chapter");
+    } finally {
+      setGapSaving(false);
+    }
+  };
 
   const loading = statsQuery.isLoading;
 
@@ -286,8 +409,15 @@ export default function AmbassadorCoverage() {
       </section>
 
       {/* Tabs */}
-      <Tabs defaultValue="chapters">
+      <Tabs defaultValue="gaps">
         <TabsList>
+          <TabsTrigger value="gaps">
+            <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
+            Coverage gaps
+            {gapLocalities.length > 0 && (
+              <span className="ml-1.5 tabular-nums text-feedback-warning">({gapLocalities.length})</span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="chapters">
             <Shield className="h-3.5 w-3.5 mr-1.5" />
             National chapters
@@ -295,18 +425,101 @@ export default function AmbassadorCoverage() {
               <span className="ml-1.5 tabular-nums text-text-disabled">({nationalChaptersQuery.data.length})</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="opportunities">
-            <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
-            Opportunities
-            {opportunityLocalities.length > 0 && (
-              <span className="ml-1.5 tabular-nums text-feedback-warning">({opportunityLocalities.length})</span>
-            )}
-          </TabsTrigger>
           <TabsTrigger value="coverage">
             <MapPin className="h-3.5 w-3.5 mr-1.5" />
             All localities
           </TabsTrigger>
         </TabsList>
+
+        {/* ── COVERAGE GAPS ── */}
+        <TabsContent value="gaps" className="pt-4 space-y-4">
+          <div className="flex items-start gap-3 rounded-sm bg-surface-muted border border-border-default p-3">
+            <TrendingUp className="h-4 w-4 text-text-secondary mt-0.5 shrink-0" />
+            <p className="text-sm text-text-secondary">
+              Cities with more than 10 buildings and no chapter. Sorted by gap score (building count) — highest impact first.
+            </p>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Filter className="h-3.5 w-3.5 text-text-disabled" />
+              <span className="text-xs text-text-secondary font-medium">Filter:</span>
+            </div>
+            <Select
+              value={gapCountryFilter || "__all__"}
+              onValueChange={(v) => setGapCountryFilter(v === "__all__" ? "" : v)}
+            >
+              <SelectTrigger className="h-8 w-44 text-sm">
+                <SelectValue placeholder="All countries" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__all__">All countries</SelectItem>
+                {allGapCountries.map(([code, name]) => (
+                  <SelectItem key={code} value={code}>
+                    {name} ({code})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-text-secondary">Min buildings:</span>
+              <Input
+                type="number"
+                min={1}
+                max={9999}
+                value={gapMinBuildings}
+                onChange={(e) => setGapMinBuildings(Number.parseInt(e.target.value, 10) || 1)}
+                className="h-8 w-20 text-sm"
+              />
+            </div>
+          </div>
+
+          {coverageQuery.isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
+            </div>
+          ) : gapLocalities.length === 0 ? (
+            <p className="text-sm text-text-secondary">No coverage gaps match the current filters.</p>
+          ) : (
+            <div className="rounded-lg border border-border-default bg-surface-card overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>City</TableHead>
+                    <TableHead>Country</TableHead>
+                    <TableHead className="text-right">Buildings</TableHead>
+                    <TableHead className="text-right">Gap score</TableHead>
+                    <TableHead className="w-[180px]" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {gapLocalities.map((row) => (
+                    <TableRow key={row.locality_id}>
+                      <TableCell className="font-medium text-text-primary">{row.city}</TableCell>
+                      <TableCell className="text-text-secondary">
+                        {row.country}
+                        <span className="text-text-disabled ml-1">({row.country_code})</span>
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums font-medium">{row.buildings_count}</TableCell>
+                      <TableCell className="text-right tabular-nums text-text-secondary">{row.buildings_count}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => void openGapDialog(row)}
+                        >
+                          <Plus className="h-3.5 w-3.5 mr-1.5" />
+                          Create forming chapter
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </TabsContent>
 
         {/* ── NATIONAL CHAPTERS ── */}
         <TabsContent value="chapters" className="pt-4 space-y-3">
@@ -325,53 +538,6 @@ export default function AmbassadorCoverage() {
                 <NationalChapterCard key={ch.id} chapter={ch} />
               ))}
             </>
-          )}
-        </TabsContent>
-
-        {/* ── OPPORTUNITIES ── */}
-        <TabsContent value="opportunities" className="pt-4 space-y-4">
-          <div className="flex items-start gap-3 rounded-sm bg-surface-muted border border-border-default p-3">
-            <TrendingUp className="h-4 w-4 text-text-secondary mt-0.5 shrink-0" />
-            <p className="text-sm text-text-secondary">
-              Cities with 20+ buildings and no chapter. These are the highest-impact places to recruit or create a new chapter.
-            </p>
-          </div>
-          {coverageQuery.isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
-            </div>
-          ) : opportunityLocalities.length === 0 ? (
-            <p className="text-sm text-text-secondary">No unserved localities with significant building counts.</p>
-          ) : (
-            <div className="rounded-lg border border-border-default bg-surface-card overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>City</TableHead>
-                    <TableHead>Country</TableHead>
-                    <TableHead className="text-right">Buildings</TableHead>
-                    <TableHead className="w-[130px]" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {opportunityLocalities.map((row) => (
-                    <TableRow key={row.locality_id}>
-                      <TableCell className="font-medium text-text-primary">{row.city}</TableCell>
-                      <TableCell className="text-text-secondary">
-                        {row.country}
-                        <span className="text-text-disabled ml-1">({row.country_code})</span>
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums font-medium">{row.buildings_count}</TableCell>
-                      <TableCell>
-                        <Button variant="outline" size="sm" asChild>
-                          <Link to="/admin/ambassadors">Create chapter</Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
           )}
         </TabsContent>
 
@@ -469,6 +635,88 @@ export default function AmbassadorCoverage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Gap chapter creation dialog */}
+      <Dialog open={gapDialogOpen} onOpenChange={(o) => { if (!o) setGapDialogOpen(false); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create forming chapter</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {gapRow && (
+              <p className="text-sm text-text-secondary">
+                Creating a forming chapter for{" "}
+                <span className="font-medium text-text-primary">{gapRow.city}, {gapRow.country}</span>
+                {" "}({gapRow.buildings_count} buildings in catalogue).
+              </p>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="gap-name">Chapter name</Label>
+              <Input
+                id="gap-name"
+                value={gapName}
+                onChange={(e) => setGapName(e.target.value)}
+                placeholder="Plano City Name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>National parent chapter</Label>
+              {gapNationalChapters.length === 0 ? (
+                <p className="text-sm text-text-disabled">
+                  No national chapter found for {gapRow?.country_code}. Create one first at{" "}
+                  <Link to="/admin/ambassadors" className="underline text-text-secondary hover:text-text-primary">
+                    Ambassador chapters
+                  </Link>.
+                </p>
+              ) : (
+                <Select
+                  value={gapParentChapterId ?? ""}
+                  onValueChange={(v) => setGapParentChapterId(v || null)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select national chapter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {gapNationalChapters.map((n) => (
+                      <SelectItem key={n.id} value={n.id}>
+                        {n.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gap-max">Max ambassadors</Label>
+              <Input
+                id="gap-max"
+                type="number"
+                min={1}
+                max={500}
+                value={gapMaxAmbassadors}
+                onChange={(e) => setGapMaxAmbassadors(Number.parseInt(e.target.value, 10) || 1)}
+              />
+            </div>
+            <div className="flex items-center gap-2 text-xs text-text-disabled">
+              <Badge variant="secondary" className="font-normal">local</Badge>
+              <Badge variant="secondary" className="font-normal">forming</Badge>
+              <span>Type and status are pre-set.</span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setGapDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={gapSaving || gapNationalChapters.length === 0}
+              onClick={() => void handleGapCreate()}
+            >
+              {gapSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

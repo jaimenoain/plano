@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams, redirect, type LoaderFunctionArgs } from "react-router";
+import { Link, useSearchParams, redirect, type LoaderFunctionArgs } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchBroadcastBanners, markBroadcastRead } from "@/features/admin/api/programme";
-import type { BroadcastBanner } from "@/features/admin/types/programme";
+import { fetchBroadcastBanners, markBroadcastRead, fetchPresidentOnboardingStatus } from "@/features/admin/api/programme";
+import type { BroadcastBanner, PresidentOnboardingStatus } from "@/features/admin/types/programme";
 import { supabase } from "@/integrations/supabase/client";
 import { createSupabaseServerClient } from "@/lib/supabase.server";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -12,13 +12,141 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Pin, X } from "lucide-react";
+import { CheckCircle2, Circle, Loader2, Pin, X } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
+
+// ─── Onboarding card ─────────────────────────────────────────────────────────
+
+const ONBOARDING_STEPS: Array<{
+  key: keyof PresidentOnboardingStatus;
+  label: string;
+  detail: string;
+  actionLabel?: string;
+  actionTo?: string;
+  actionTab?: string;
+}> = [
+  {
+    key:         "profileComplete",
+    label:       "Complete your profile",
+    detail:      "Add a profile photo and bio",
+    actionLabel: "Go to settings",
+    actionTo:    "/settings",
+  },
+  {
+    key:    "chapterActive",
+    label:  "Chapter marked as active",
+    detail: "Your chapter status must be set to active",
+  },
+  {
+    key:         "firstMemberInvited",
+    label:       "Invite your first member",
+    detail:      "Chapter needs at least one member beyond you",
+    actionLabel: "Invite member",
+    actionTo:    "/embassy/leadership",
+  },
+  {
+    key:         "firstApplicationReviewed",
+    label:       "Review an application",
+    detail:      "Approve or reject at least one membership application",
+    actionLabel: "View applications",
+    actionTab:   "applications",
+  },
+  {
+    key:         "firstAuditEntry",
+    label:       "Make your first building edit",
+    detail:      "Contribute to the catalogue from the Contribute tab",
+    actionLabel: "Go to Contribute",
+    actionTo:    "/embassy/contribute",
+  },
+];
+
+function OnboardingCard({
+  membershipId,
+  onSwitchTab,
+}: {
+  membershipId: string;
+  onSwitchTab: (tab: string) => void;
+}) {
+  const { data: status, isLoading } = useQuery({
+    queryKey: ["embassy", "onboarding-status", membershipId],
+    queryFn:  () => fetchPresidentOnboardingStatus(membershipId),
+    staleTime: 60_000,
+  });
+
+  if (isLoading || !status) return null;
+
+  const stepsCompleted = ONBOARDING_STEPS.filter((s) => status[s.key] === true).length;
+  if (stepsCompleted === ONBOARDING_STEPS.length) return null;
+  if (status.daysInRole >= 60) return null;
+
+  const daysLeft = 60 - status.daysInRole;
+
+  return (
+    <Card className="border-brand-primary/30 bg-surface-muted">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold text-text-primary flex items-center justify-between">
+          <span>Getting started as president</span>
+          <span className="text-sm font-normal text-text-secondary">
+            {stepsCompleted}/{ONBOARDING_STEPS.length} done · {daysLeft}d left
+          </span>
+        </CardTitle>
+        <p className="text-sm text-text-secondary">
+          Complete these steps in your first 60 days.
+        </p>
+      </CardHeader>
+      <CardContent className="pt-0 space-y-2">
+        {ONBOARDING_STEPS.map((step) => {
+          const done = status[step.key] === true;
+          return (
+            <div
+              key={step.key}
+              className={`flex items-start gap-3 rounded-lg px-3 py-2.5 ${
+                done ? "opacity-50" : "bg-surface-default"
+              }`}
+            >
+              {done ? (
+                <CheckCircle2 className="h-5 w-5 text-feedback-success shrink-0 mt-0.5" />
+              ) : (
+                <Circle className="h-5 w-5 text-text-disabled shrink-0 mt-0.5" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-medium ${done ? "line-through text-text-secondary" : "text-text-primary"}`}>
+                  {step.label}
+                </p>
+                {!done && (
+                  <p className="text-xs text-text-secondary mt-0.5">{step.detail}</p>
+                )}
+              </div>
+              {!done && step.actionLabel && (
+                step.actionTab ? (
+                  <button
+                    className="text-xs text-brand-primary font-medium hover:underline shrink-0"
+                    onClick={() => onSwitchTab(step.actionTab!)}
+                  >
+                    {step.actionLabel}
+                  </button>
+                ) : step.actionTo ? (
+                  <Link
+                    to={step.actionTo}
+                    className="text-xs text-brand-primary font-medium hover:underline shrink-0"
+                  >
+                    {step.actionLabel}
+                  </Link>
+                ) : null
+              )}
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
 
 type MembershipRow = Database["public"]["Tables"]["ambassador_memberships"]["Row"];
 type ChapterRow = Database["public"]["Tables"]["ambassador_chapters"]["Row"];
@@ -259,7 +387,13 @@ export default function LeadershipPage() {
           )}
         </TabsList>
 
-        <TabsContent value="health" className="mt-0">
+        <TabsContent value="health" className="mt-0 space-y-6">
+          {isPresident && (
+            <OnboardingCard
+              membershipId={membership.id}
+              onSwitchTab={(tab) => setSearchParams({ tab })}
+            />
+          )}
           <EmbassyLeadership
             chapterId={membership.chapter_id}
             currentUserId={user.id}

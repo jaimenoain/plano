@@ -116,3 +116,40 @@ export interface PresidentDirectoryRow {
   memberSince: string;
   excoMembers: ExcoMember[];
 }
+
+export interface ChapterRankingRow {
+  chapterId: string;
+  chapterName: string;
+  countryCode: string;
+  chapterType: string;
+  memberCount: number;
+  edits: number;
+  photosAdded: number;
+  newMembers: number;
+  applicationsApproved: number;
+  lastActivityDate: string | null;
+  score: number;
+}
+
+export interface PresidentOnboardingStatus {
+  membershipId: string;
+  daysInRole: number;
+  profileComplete: boolean;
+  chapterActive: boolean;
+  firstMemberInvited: boolean;
+  firstApplicationReviewed: boolean;
+  firstAuditEntry: boolean;
+}
+
+export interface PresidentOnboardingListRow {
+  membershipId: string;
+  presidentUserId: string;
+  presidentUsername: string;
+  presidentAvatarUrl: string | null;
+  chapterId: string;
+  chapterName: string;
+  countryCode: string;
+  daysInRole: number;
+  stepsCompleted: number;
+  lastActiveAt: string | null;
+}

@@ -185,7 +185,7 @@ No deviations. All tasks delivered as planned.
 
 ---
 
-## [ ] Phase 5 — Coverage Gap Prioritisation
+## [x] Phase 5 — Coverage Gap Prioritisation
 
 **Goal:** Upgrade the existing locality coverage map into a prioritised list of where the programme should expand next, and make it actionable in one click.
 
@@ -213,7 +213,18 @@ No deviations. All tasks delivered as planned.
 
 ---
 
-## [ ] Phase 6 — Chapter Performance Ranking
+## Phase 5 Summary
+
+**Completed:** 2026-05-21
+
+**Deviations:**
+- Population column not included — the `localities` table has no population field; column omitted rather than showing all-zeroes.
+- Old "Opportunities" tab removed from `AmbassadorCoverage.tsx` — the new "Coverage gaps" tab supersedes it with lower threshold (> 10 buildings vs ≥ 20), filters, gap score column, and per-row chapter creation.
+- No new migration required — the existing `get_admin_ambassador_locality_coverage` RPC already returns all data needed; gap logic computed client-side.
+
+---
+
+## [x] Phase 6 — Chapter Performance Ranking
 
 **Goal:** Give the core team a ranked, side-by-side comparison of all chapters over a selectable period, to inform where to invest support and where to celebrate success.
 
@@ -246,7 +257,18 @@ A new tab — **Rankings** — at `/admin/programme/rankings`:
 
 ---
 
-## [ ] Phase 7 — President Onboarding Tracker
+## Phase 6 Summary
+
+**Completed:** 2026-05-21
+
+No deviations. All tasks delivered as planned.
+
+**Specs updated:**
+- `docs/AI_STATUS.md` — updated current phase.
+
+---
+
+## [x] Phase 7 — President Onboarding Tracker
 
 **Goal:** Ensure newly assigned chapter presidents complete their setup, and give the core team visibility into who is stuck.
 
@@ -276,6 +298,17 @@ Added to the Presidents tab (Phase 2) as a sub-view filtered to presidents withi
 
 ### New RPC needed
 - `get_president_onboarding_status(membership_id uuid)` — evaluates and returns the checklist state for a given president membership
+
+---
+
+## Phase 7 Summary
+
+**Completed:** 2026-05-21
+
+No deviations. All tasks delivered as planned.
+
+**Specs updated:**
+- `docs/AI_STATUS.md` — updated current phase.
 
 ---
 

@@ -26,6 +26,7 @@ import {
   UsersRound,
   Siren,
   Megaphone,
+  BarChart2,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
@@ -49,6 +50,7 @@ const programmeItems = [
   { title: "Interventions", url: "/admin/programme/interventions", icon: Siren },
   { title: "Presidents", url: "/admin/programme/presidents", icon: UsersRound },
   { title: "Broadcasts", url: "/admin/programme/broadcasts", icon: Megaphone },
+  { title: "Rankings", url: "/admin/programme/rankings", icon: BarChart2 },
 ];
 
 const contentItems = [

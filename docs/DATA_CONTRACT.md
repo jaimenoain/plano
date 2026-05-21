@@ -323,6 +323,66 @@ Returns tasks visible to the caller, joined with `creator_username`, `assignee_u
 
 **Migration:** `supabase/migrations/20271124000000_chapter_tasks.sql` — apply in Supabase SQL Editor.
 
+### Database: `embassy_event_discoveries`
+
+AI-discovered architecture events awaiting ambassador review on `/embassy/contribute` (Events tool). Populated by a serper.dev + Claude pipeline triggered when an active ambassador opens any `/embassy/*` page and the chapter's `ambassador_chapters.last_event_search_at` is older than 4 days. Rows transition `pending → published` (creates a real `events` row) or `pending → discarded`.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid | PK, `gen_random_uuid()` |
+| `chapter_id` | uuid | FK → `ambassador_chapters.id` ON DELETE CASCADE |
+| `locality_id` | uuid | FK → `localities.id` ON DELETE SET NULL; copied from chapter at insert time |
+| `title` | text | NOT NULL — extracted by Claude |
+| `description` | text | Optional |
+| `start_at` | timestamptz | NOT NULL |
+| `end_at` | timestamptz | Optional |
+| `address` | text | Optional |
+| `lat` / `lng` | double precision | Optional; populated when serper returns coords |
+| `external_link` | text | Organiser's canonical event URL (where to RSVP) |
+| `cover_image_url` | text | Optional; image hit from serper |
+| `source_url` | text | NOT NULL — the SERP result Claude extracted from |
+| `snippet` | text | Verbatim excerpt (max ~280 chars) for ambassador sanity-check |
+| `status` | text | `'pending'` (default) \| `'published'` \| `'discarded'`; CHECK enforced |
+| `duplicate_of_event_id` | uuid | FK → `events.id` ON DELETE SET NULL; dedup hint set at insert time when a similar live event is found |
+| `published_event_id` | uuid | FK → `events.id` ON DELETE SET NULL; set when publish RPC creates the live event |
+| `reviewed_at` | timestamptz | Set on publish/discard |
+| `reviewed_by` | uuid | FK → `profiles.id` ON DELETE SET NULL; set on publish/discard |
+| `created_at` | timestamptz | Default `now()` |
+
+**Indexes:** `(chapter_id, status, created_at DESC)`, partial `(duplicate_of_event_id) WHERE duplicate_of_event_id IS NOT NULL`, `(start_at)`.
+
+**RLS:**
+- `SELECT` — active chapter member or admin (via `public._ambassador_can_access_chapter(chapter_id)`).
+- `UPDATE` — same predicate (so ambassadors can edit title/description/dates before publishing in the Events tool).
+- `INSERT` — admin only at the RLS level; writes happen via SECURITY DEFINER search RPC (Slice 1).
+- `DELETE` — admin only.
+
+### Database: `embassy_event_search_runs`
+
+Audit log of AI event-search invocations. One row per attempt — used for "Last searched: N hours ago" UI and ops diagnostics. Read-only from the client.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | uuid | PK, `gen_random_uuid()` |
+| `chapter_id` | uuid | FK → `ambassador_chapters.id` ON DELETE CASCADE |
+| `started_at` | timestamptz | Default `now()` |
+| `completed_at` | timestamptz | Set when the RPC finishes (success or failure) |
+| `status` | text | `'running'` (default) \| `'success'` \| `'failed'`; CHECK enforced |
+| `items_found` | integer | Number of new discoveries inserted on success |
+| `error` | text | Free-text error reason on failure (e.g. `serper_not_configured`, HTTP status from serper) |
+
+**Indexes:** `(chapter_id, started_at DESC)`.
+
+**RLS:**
+- `SELECT` — active chapter member or admin (same predicate as discoveries).
+- `INSERT` / `UPDATE` / `DELETE` — admin only at the RLS level; writes happen via the SECURITY DEFINER search RPC (Slice 1).
+
+### Column: `ambassador_chapters.last_event_search_at`
+
+`timestamptz NULL`. Stamped by the event-search RPC on successful completion (and on `skipped='fresh'` no-op the stamp is left alone). The `/embassy/*` layout-level visit trigger checks this server-side via the RPC's 4-day gate — clients never read it for the gate itself; only the Events tool reads it to render "Last searched: …" copy.
+
+**Migration:** `supabase/migrations/20271140000000_embassy_event_discoveries.sql` — apply in Supabase SQL Editor. Search route + publish/discard RPCs arrive in `20271141000000` (Slice 1).
+
 ---
 
 ## Auth Domain — profiles, allowed_emails
