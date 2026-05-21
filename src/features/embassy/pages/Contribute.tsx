@@ -16,7 +16,12 @@ import {
   approvePhoto,
   approveCredit,
   approveVideo,
+  fetchPendingEventDiscoveries,
+  publishEventDiscovery,
+  discardEventDiscovery,
+  updateEventDiscovery,
   type AmbassadorUnclaimedFirm,
+  type EventDiscovery,
 } from "@/features/embassy/api/taskFeed";
 import type { BuildingResearchResult, ResearchDataPoint } from "@/features/embassy/api/building-research.route";
 import { Badge } from "@/components/ui/badge";
@@ -30,8 +35,9 @@ import {
   Camera, Sparkles, UserPlus, ExternalLink, Map, List,
   Flag, Video, Award, Telescope, XCircle, CheckCircle,
   RefreshCw, Building2, User, Briefcase, MapPin,
-  SlidersHorizontal, Play, ChevronRight,
+  SlidersHorizontal, Play, ChevronRight, CalendarClock,
 } from "lucide-react";
+import { format, formatDistanceToNow, parseISO, differenceInDays } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
@@ -61,7 +67,7 @@ interface OutreachLogRow {
   profiles: { username: string; avatar_url: string | null } | null;
 }
 
-type ToolType = "research" | "photography" | "outreach" | "curation" | "community" | null;
+type ToolType = "research" | "photography" | "outreach" | "curation" | "community" | "events" | null;
 
 interface ToolDefinition {
   key: NonNullable<ToolType>;
@@ -103,6 +109,12 @@ const ALL_TOOLS: ToolDefinition[] = [
     icon: <UserPlus className="h-6 w-6" />,
     asChild: true,
   },
+  {
+    key: "events",
+    title: "Events",
+    description: "Review architecture events found by AI in your locality. Edit details, publish, or discard.",
+    icon: <CalendarClock className="h-6 w-6" />,
+  },
 ];
 
 function sortToolsByPreference(preferred: string[] | null | undefined): ToolDefinition[] {
@@ -134,7 +146,7 @@ export default function ContributePage() {
       const { data, error } = await supabase
         .from("ambassador_memberships")
         .select("role, status, onboarded_at, chapter_id, preferred_tools")
-        .eq("user_id", user?.id)
+        .eq("user_id", user!.id)
         .single();
       if (error) throw error;
       return data;
@@ -184,6 +196,10 @@ export default function ContributePage() {
 
   if (activeTool === "curation" && chapterId) {
     return <CurationTool chapterId={chapterId} onBack={() => setActiveTool(null)} />;
+  }
+
+  if (activeTool === "events" && chapterId) {
+    return <EventsTool chapterId={chapterId} role={membership?.role} onBack={() => setActiveTool(null)} />;
   }
 
   return (
@@ -1435,18 +1451,18 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
         </div>
 
         <div className="flex items-center bg-muted p-1 rounded-lg">
-          <Button 
-            variant={view === "map" ? "background" : "ghost"} 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setView("map")}
             className={cn("gap-2", view === "map" && "bg-surface-card shadow-sm")}
           >
             <Map className="h-4 w-4" />
             Map
           </Button>
-          <Button 
-            variant={view === "list" ? "background" : "ghost"} 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setView("list")}
             className={cn("gap-2", view === "list" && "bg-surface-card shadow-sm")}
           >
@@ -2291,5 +2307,413 @@ function ModerationError({ message }: { message: string }) {
       <AlertCircle className="h-8 w-8 mx-auto mb-2" />
       <p>{message}</p>
     </div>
+  );
+}
+
+// ─── Events Tool ─────────────────────────────────────────────────────────────
+
+function EventsTool({
+  chapterId,
+  role,
+  onBack,
+}: {
+  chapterId: string;
+  role?: string | null;
+  onBack: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const [editingDiscovery, setEditingDiscovery] = useState<EventDiscovery | null>(null);
+  const [editDraft, setEditDraft] = useState<{
+    title: string;
+    description: string;
+    start_at: string;
+    end_at: string;
+    address: string;
+    external_link: string;
+  }>({ title: "", description: "", start_at: "", end_at: "", address: "", external_link: "" });
+
+  const { data: chapter } = useQuery({
+    queryKey: ["ambassador-chapter-meta", chapterId],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from("ambassador_chapters")
+        .select("last_event_search_at")
+        .eq("id", chapterId)
+        .single();
+      if (error) throw error;
+      return data as { last_event_search_at: string | null };
+    },
+    enabled: !!chapterId,
+  });
+
+  const { data: discoveries, isLoading, error, refetch } = useQuery({
+    queryKey: ["embassy-event-discoveries", chapterId],
+    queryFn: () => fetchPendingEventDiscoveries(chapterId),
+    enabled: !!chapterId,
+  });
+
+  const searchMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/embassy/event-search", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: "run", chapter_id: chapterId, force: true }),
+      });
+      if (!res.ok) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const err = (await res.json().catch(() => ({}))) as any;
+        throw new Error(err.error ?? "Search failed");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Event search complete");
+      queryClient.invalidateQueries({ queryKey: ["embassy-event-discoveries", chapterId] });
+      queryClient.invalidateQueries({ queryKey: ["ambassador-chapter-meta", chapterId] });
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Search failed"),
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: publishEventDiscovery,
+    onSuccess: () => {
+      toast.success("Event published");
+      queryClient.invalidateQueries({ queryKey: ["embassy-event-discoveries", chapterId] });
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to publish"),
+  });
+
+  const discardMutation = useMutation({
+    mutationFn: discardEventDiscovery,
+    onSuccess: () => {
+      toast("Event discarded");
+      queryClient.invalidateQueries({ queryKey: ["embassy-event-discoveries", chapterId] });
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to discard"),
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Parameters<typeof updateEventDiscovery>[1] }) =>
+      updateEventDiscovery(id, patch),
+    onSuccess: () => {
+      toast.success("Changes saved");
+      queryClient.invalidateQueries({ queryKey: ["embassy-event-discoveries", chapterId] });
+      setEditingDiscovery(null);
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to save"),
+  });
+
+  const isLeader = role === "exco" || role === "president";
+  const lastSearchedAt = chapter?.last_event_search_at ?? null;
+  const duplicateCount = (discoveries ?? []).filter((d) => d.duplicate_of_event_id).length;
+
+  function openEdit(d: EventDiscovery) {
+    setEditingDiscovery(d);
+    setEditDraft({
+      title: d.title,
+      description: d.description ?? "",
+      start_at: d.start_at ? d.start_at.slice(0, 16) : "",
+      end_at: d.end_at ? d.end_at.slice(0, 16) : "",
+      address: d.address ?? "",
+      external_link: d.external_link ?? "",
+    });
+  }
+
+  function handleSave() {
+    if (!editingDiscovery) return;
+    saveMutation.mutate({
+      id: editingDiscovery.id,
+      patch: {
+        title: editDraft.title || undefined,
+        description: editDraft.description || null,
+        start_at: editDraft.start_at || undefined,
+        end_at: editDraft.end_at || null,
+        address: editDraft.address || null,
+        external_link: editDraft.external_link || null,
+      },
+    });
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={onBack}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Events</h1>
+            <p className="text-sm text-muted-foreground">Review AI-discovered events for your chapter.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 pl-14 sm:pl-0">
+          {lastSearchedAt && (
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              Last searched: {formatDistanceToNow(parseISO(lastSearchedAt), { addSuffix: true })}
+            </span>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!isLeader || searchMutation.isPending}
+            onClick={() => searchMutation.mutate()}
+            title={!isLeader ? "Only chapter leaders can trigger a new search" : undefined}
+          >
+            {searchMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Search now
+          </Button>
+        </div>
+      </div>
+
+      {!isLoading && !error && discoveries && discoveries.length > 0 && (
+        <p className="text-sm text-muted-foreground">
+          {discoveries.length} event{discoveries.length === 1 ? "" : "s"} found
+          {duplicateCount > 0 && (
+            <>
+              {" · "}
+              <span className="text-feedback-warning">
+                {duplicateCount} possible duplicate{duplicateCount === 1 ? "" : "s"}
+              </span>
+            </>
+          )}
+        </p>
+      )}
+
+      {isLoading ? (
+        <div className="grid gap-4">
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className="h-28 w-full rounded-xl" />
+          ))}
+        </div>
+      ) : error ? (
+        <div className="p-8 text-center border rounded-xl bg-feedback-destructive/5 text-feedback-destructive">
+          <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+          <p>Failed to load events.</p>
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()}>
+            Try again
+          </Button>
+        </div>
+      ) : discoveries?.length === 0 ? (
+        <div className="p-12 text-center border border-dashed rounded-xl">
+          <CalendarClock className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+          {lastSearchedAt ? (
+            <>
+              <p className="text-lg font-medium">No new events found</p>
+              <p className="text-sm text-muted-foreground">
+                Plano will check again in{" "}
+                {Math.max(1, 4 - differenceInDays(new Date(), parseISO(lastSearchedAt)))} days.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-lg font-medium">Search in progress</p>
+              <p className="text-sm text-muted-foreground">
+                Your first event search will run shortly — check back in a minute.
+              </p>
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {discoveries?.map((d) => (
+            <EventDiscoveryCard
+              key={d.id}
+              discovery={d}
+              onEdit={() => openEdit(d)}
+              onPublish={() => publishMutation.mutate(d.id)}
+              onDiscard={() => discardMutation.mutate(d.id)}
+              isPublishing={publishMutation.isPending && publishMutation.variables === d.id}
+              isDiscarding={discardMutation.isPending && discardMutation.variables === d.id}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Server enforces the 4-day gate. This is opportunistic — never block the layout on it. */}
+      <Sheet open={!!editingDiscovery} onOpenChange={(open) => { if (!open) setEditingDiscovery(null); }}>
+        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Edit event</SheetTitle>
+            <SheetDescription>Update the details before publishing.</SheetDescription>
+          </SheetHeader>
+          <div className="space-y-4 mt-6">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-title">Title</Label>
+              <Input
+                id="edit-title"
+                value={editDraft.title}
+                onChange={(e) => setEditDraft((d) => ({ ...d, title: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                id="edit-description"
+                rows={3}
+                value={editDraft.description}
+                onChange={(e) => setEditDraft((d) => ({ ...d, description: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-start">Start</Label>
+                <Input
+                  id="edit-start"
+                  type="datetime-local"
+                  value={editDraft.start_at}
+                  onChange={(e) => setEditDraft((d) => ({ ...d, start_at: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-end">End (optional)</Label>
+                <Input
+                  id="edit-end"
+                  type="datetime-local"
+                  value={editDraft.end_at}
+                  onChange={(e) => setEditDraft((d) => ({ ...d, end_at: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-address">Address</Label>
+              <Input
+                id="edit-address"
+                value={editDraft.address}
+                onChange={(e) => setEditDraft((d) => ({ ...d, address: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-link">External link</Label>
+              <Input
+                id="edit-link"
+                type="url"
+                value={editDraft.external_link}
+                onChange={(e) => setEditDraft((d) => ({ ...d, external_link: e.target.value }))}
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <Button variant="outline" onClick={() => setEditingDiscovery(null)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} disabled={saveMutation.isPending}>
+                {saveMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                Save
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}
+
+function EventDiscoveryCard({
+  discovery: d,
+  onEdit,
+  onPublish,
+  onDiscard,
+  isPublishing,
+  isDiscarding,
+}: {
+  discovery: EventDiscovery;
+  onEdit: () => void;
+  onPublish: () => void;
+  onDiscard: () => void;
+  isPublishing: boolean;
+  isDiscarding: boolean;
+}) {
+  const isDuplicate = !!d.duplicate_of_event_id;
+
+  return (
+    <Card className={cn("p-5 transition-all", isDuplicate ? "border-feedback-warning/40" : "border-border-default")}>
+      <CardContent className="p-0">
+        <div className="flex gap-4">
+          {d.cover_image_url && (
+            <img
+              src={d.cover_image_url}
+              alt=""
+              className="w-16 h-16 rounded-lg object-cover shrink-0"
+            />
+          )}
+          <div className="min-w-0 flex-1 space-y-2">
+            <h3 className="font-semibold text-text-primary leading-snug">{d.title}</h3>
+            <div className="text-xs text-muted-foreground space-y-0.5">
+              <p>{format(parseISO(d.start_at), "EEE d MMM yyyy · HH:mm")}</p>
+              {d.address && <p>{d.address}</p>}
+            </div>
+
+            {isDuplicate && d.duplicate_of_title && (
+              <div className="flex items-start gap-1.5 rounded-md bg-feedback-warning/10 border border-feedback-warning/30 px-3 py-2 text-xs text-feedback-warning">
+                <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <span>
+                  Possible duplicate of{" "}
+                  <Link
+                    to={`/events/${d.duplicate_of_event_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 hover:opacity-80"
+                  >
+                    &ldquo;{d.duplicate_of_title}&rdquo;
+                    {d.duplicate_of_start_at && (
+                      <> ({format(parseISO(d.duplicate_of_start_at), "d MMM")})</>
+                    )}
+                  </Link>
+                </span>
+              </div>
+            )}
+
+            {d.snippet && (
+              <p className="text-xs text-muted-foreground italic line-clamp-2">&ldquo;{d.snippet}&rdquo;</p>
+            )}
+
+            <a
+              href={d.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-text-primary transition-colors"
+            >
+              Source <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 mt-4 pt-4 border-t border-border-default">
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={onEdit}>
+              Edit
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-feedback-destructive border-feedback-destructive/40 hover:bg-feedback-destructive/10"
+              disabled={isDiscarding}
+              onClick={onDiscard}
+            >
+              {isDiscarding && <Loader2 className="h-3 w-3 animate-spin" />}
+              Discard
+            </Button>
+          </div>
+          <Button
+            size="sm"
+            disabled={isPublishing}
+            onClick={onPublish}
+            variant={isDuplicate ? "ghost" : "default"}
+            className={cn(
+              isDuplicate &&
+                "border border-feedback-destructive/40 bg-feedback-destructive/10 text-feedback-destructive hover:bg-feedback-destructive/20",
+            )}
+          >
+            {isPublishing && <Loader2 className="h-3 w-3 animate-spin" />}
+            {isDuplicate ? "Publish anyway" : "Publish event"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

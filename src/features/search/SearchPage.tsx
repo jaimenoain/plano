@@ -160,7 +160,6 @@ function SearchPageContent() {
     if (query !== searchValue) {
       setSearchValue(query);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.query]);
 
   const handleSearchChange = (value: string) => {

@@ -208,7 +208,8 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
     if (!showGapCallout || !filters.photographyGaps || !clusters || clusters.length === 0 || viewState.zoom >= 12) return null;
     return clusters
       .filter(c => c.is_cluster)
-      .reduce((prev, curr) => (curr.count > (prev?.count || 0) ? curr : prev), null as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .reduce((prev: any, curr: any) => (curr.count > (prev?.count || 0) ? curr : prev), null);
   }, [clusters, filters.photographyGaps, showGapCallout, viewState.zoom]);
 
   const mapContent = (

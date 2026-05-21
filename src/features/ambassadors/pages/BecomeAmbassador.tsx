@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation, type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -7,13 +7,6 @@ import type { Database } from "@/integrations/supabase/types";
 import { SITE_URL } from "@/features/buildings/utils/structuredData";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,7 +46,7 @@ export default function BecomeAmbassador() {
     location: string | null;
   } | null>(null);
   const [chapters, setChapters] = useState<ChapterRow[]>([]);
-  const [ambassadorCounts, setAmbassadorCounts] = useState<Record<string, number>>({});
+  const [_ambassadorCounts, setAmbassadorCounts] = useState<Record<string, number>>({});
   const [membership, setMembership] = useState<MembershipWithChapter | null>(null);
   const [pending, setPending] = useState<ApplicationRow | null>(null);
   const [loadingData, setLoadingData] = useState(false);
@@ -203,13 +196,6 @@ export default function BecomeAmbassador() {
     { id: "events", label: "Organising events" },
   ];
 
-  const selectedChapter = useMemo(
-    () => chapters.find((c) => c.id === chapterId) ?? null,
-    [chapters, chapterId],
-  );
-
-  const ambassadorSlotsUsed = selectedChapter ? ambassadorCounts[selectedChapter.id] ?? 0 : 0;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = ambassadorApplicationSubmitSchema.safeParse({
@@ -226,9 +212,9 @@ export default function BecomeAmbassador() {
     setSubmitting(true);
     try {
       const { error } = await supabase.rpc("submit_ambassador_application", {
-        p_chapter_id: parsed.data.chapter_id ?? null,
-        p_motivation_text: parsed.data.motivation_text ?? null,
-        p_locality_id: parsed.data.locality_id ?? null,
+        p_chapter_id: (parsed.data.chapter_id ?? null) as string,
+        p_motivation_text: (parsed.data.motivation_text ?? null) as string,
+        p_locality_id: (parsed.data.locality_id ?? null) as string,
         p_interests: parsed.data.interests ?? null,
       });
       if (error) throw error;

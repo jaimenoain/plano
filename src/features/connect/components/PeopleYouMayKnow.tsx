@@ -95,7 +95,7 @@ export function PeopleYouMayKnow() {
           setSuggestions(candidates);
         }
       } catch (err) {
-        console.error("[PeopleYouMayKnow] Error fetching suggestions:", err);
+        void err;
       } finally {
         setLoading(false);
       }

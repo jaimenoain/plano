@@ -6,6 +6,9 @@ import type {
   AwardRecipientDTO,
   AwardAdminDTO,
   AwardClaimRequestDTO,
+  AwardSuggestionDTO,
+  AwardEditionEventDTO,
+  AwardEditionEventType,
 } from "@/features/awards/types/awards";
 
 // The awards tables are not yet in the generated Supabase types (migration pending).
@@ -121,7 +124,6 @@ function toRecipientDTO(row: any): AwardRecipientDTO {
     award: award ?? undefined,
   };
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // ── Queries ──────────────────────────────────────────────────
 
@@ -539,12 +541,6 @@ export async function searchAwards(query: string): Promise<{ id: string; name: s
 
 // ── Suggestions ──────────────────────────────────────────────
 
-import type {
-  AwardSuggestionDTO,
-  AwardEditionEventDTO,
-  AwardEditionEventType,
-} from "@/features/awards/types/awards";
-
 function toSuggestionDTO(row: any): AwardSuggestionDTO {
   return {
     id: row.id,
@@ -865,7 +861,6 @@ function toEditionEventDTO(row: any): AwardEditionEventDTO {
     createdAt: row.created_at,
   };
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export async function getEventsByEdition(editionId: string): Promise<AwardEditionEventDTO[]> {
   const { data, error } = await db
@@ -886,7 +881,6 @@ export async function getUpcomingEventsByAward(awardId: string): Promise<AwardEd
     .eq("award_id", awardId);
 
   if (edError) throw new Error(`Failed to load editions: ${edError.message}`);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const editionIds = (editions ?? []).map((e: any) => e.id as string);
   if (editionIds.length === 0) return [];
 

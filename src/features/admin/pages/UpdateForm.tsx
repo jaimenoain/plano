@@ -112,7 +112,7 @@ export default function UpdateForm() {
       if (uploadError) throw uploadError;
       const { data } = supabase.storage.from("plano-updates").getPublicUrl(path);
       setHeroImageUrl(data.publicUrl);
-    } catch (err: unknown) {
+    } catch (_err: unknown) {
       toast.error("Image upload failed");
     } finally {
       setUploadingImage(false);

@@ -10,7 +10,7 @@ export const guidesKeys = {
 export function useGuidesLocalities() {
   return useQuery({
     queryKey: guidesKeys.localities(),
-    queryFn: getGuidesLocalities,
+    queryFn: () => getGuidesLocalities(),
     staleTime: 1000 * 60 * 10, // 10 min — locality counts change slowly
   });
 }

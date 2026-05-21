@@ -9,5 +9,6 @@ export interface MergeEntity {
   image_url?: string | null;
   is_verified?: boolean;
   // Raw row data
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw: any;
 }

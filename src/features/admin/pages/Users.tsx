@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import type { MetaFunction } from "react-router";
-import { Link } from "react-router";
+import { Link, type MetaFunction } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
@@ -33,8 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
-import { fetchUserChapterActivity } from "@/features/admin/api/ambassadorCoverage";
-import type { ChapterActivityRow } from "@/features/admin/api/ambassadorCoverage";
+import { fetchUserChapterActivity, type ChapterActivityRow } from "@/features/admin/api/ambassadorCoverage";
 
 interface Profile {
   id: string;

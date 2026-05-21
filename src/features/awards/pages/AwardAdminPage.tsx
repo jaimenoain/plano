@@ -107,6 +107,7 @@ function AwardInfoTab({ awardId }: { awardId: string }) {
       { awardId, payload: { name: form.name, description: form.description || null, website: form.website || null, country: form.country || null } },
       {
         onSuccess: () => toast.success("Award updated"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError:   (e: any) => toast.error(e.message ?? "Update failed"),
       },
     );
@@ -195,6 +196,7 @@ function EditionsTab({ awardId }: { awardId: string }) {
       { award_id: awardId, year, ceremony_location: newLocation || null },
       {
         onSuccess: () => { toast.success("Edition added"); setAdding(false); setNewYear(""); setNewLocation(""); },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError:   (e: any) => toast.error(e.message),
       },
     );
@@ -315,6 +317,7 @@ function EditionsTab({ awardId }: { awardId: string }) {
                 if (!deletingId) return;
                 deleteEdition.mutate(deletingId, {
                   onSuccess: () => { toast.success("Edition deleted"); setDeletingId(null); },
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   onError:   (e: any) => toast.error(e.message),
                 });
               }}
@@ -343,6 +346,7 @@ function CategoriesTab({ awardId }: { awardId: string }) {
       { award_id: awardId, name: newName.trim() },
       {
         onSuccess: () => { toast.success("Category added"); setAdding(false); setNewName(""); },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError:   (e: any) => toast.error(e.message),
       },
     );
@@ -353,6 +357,7 @@ function CategoriesTab({ awardId }: { awardId: string }) {
       { categoryId, payload: { is_active: !isActive } },
       {
         onSuccess: () => toast.success(isActive ? "Category archived" : "Category restored"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError:   (e: any) => toast.error(e.message),
       },
     );
@@ -538,6 +543,7 @@ function RecipientsTab({ awardId }: { awardId: string }) {
                     if (!deletingId) return;
                     deleteRecipient.mutate(deletingId, {
                       onSuccess: () => { toast.success("Recipient removed"); setDeletingId(null); },
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       onError:   (e: any) => toast.error(e.message),
                     });
                   }}
@@ -627,6 +633,7 @@ function SuggestionsTab({ awardId }: { awardId: string }) {
                           onClick={() =>
                             approve.mutate(s.id, {
                               onSuccess: () => toast.success("Suggestion approved"),
+                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
                               onError:   (e: any) => toast.error(e.message),
                             })
                           }
@@ -674,6 +681,7 @@ function SuggestionsTab({ awardId }: { awardId: string }) {
                   { id: rejectingId, note: rejectNote || undefined },
                   {
                     onSuccess: () => { toast.success("Suggestion rejected"); setRejectingId(null); },
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     onError:   (e: any) => toast.error(e.message),
                   },
                 );

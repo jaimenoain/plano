@@ -49,7 +49,7 @@ export default function MyGoalsPage() {
       const { data, error } = await supabase
         .from("ambassador_memberships")
         .select("chapter_id, chapter:ambassador_chapters(name)")
-        .eq("user_id", user?.id)
+        .eq("user_id", user!.id)
         .eq("status", "active")
         .maybeSingle();
       if (error) throw error;
@@ -94,7 +94,8 @@ export default function MyGoalsPage() {
 
   const createGoalMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
         .from("ambassador_goals")
         .insert({
           user_id: user!.id,

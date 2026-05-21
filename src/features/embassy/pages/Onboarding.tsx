@@ -94,7 +94,7 @@ export default function OnboardingPage() {
       const { data, error } = await supabase
         .from("ambassador_memberships")
         .select(`*, chapter:ambassador_chapters(id, name)`)
-        .eq("user_id", user?.id)
+        .eq("user_id", user!.id)
         .single();
       if (error) throw error;
       return data;

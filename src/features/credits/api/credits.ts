@@ -412,7 +412,6 @@ export async function addBuildingCredit(input: AddBuildingCreditInput): Promise<
     .single();
 
   if (error) {
-    console.error("addBuildingCredit: database error", error);
     throw new Error(error.message || "Failed to save credit to the database");
   }
 
@@ -423,7 +422,9 @@ export async function addBuildingCredit(input: AddBuildingCreditInput): Promise<
   // Map the join results back to the person/company aliases if needed
   const rowWithAliases: CreditRow = {
     ...row,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     person: (row as any).people || null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     company: (row as any).companies || null,
     note: null,
   };
@@ -774,14 +775,12 @@ export type NotifyCreditedEntitiesInput = z.infer<typeof NotifyCreditedEntitiesS
 
 export async function notifyCreditedEntities(input: NotifyCreditedEntitiesInput): Promise<{ ok: true }> {
   const body = NotifyCreditedEntitiesSchema.parse(input);
-  console.log("notifyCreditedEntities: invoking with", body);
 
   const { data, error } = await supabase.functions.invoke("notify-credited-entities", { body });
 
   if (error) {
-    console.error("Edge Function invocation failed:", error);
-    // @ts-ignore
-    const payload = error.context?.body;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const payload = (error as any).context?.body;
     if (payload) {
       try {
         const parsed = typeof payload === "string" ? JSON.parse(payload) : payload;

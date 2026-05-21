@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, Outlet, useLocation, redirect, type LoaderFunctionArgs } from "react-router";
 import { AmbassadorGuard } from "./AmbassadorGuard";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -7,6 +8,9 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { createSupabaseServerClient } from "@/lib/supabase.server";
+
+// Module-level cache so the same SPA session doesn't re-fire on every layout remount.
+const searchTriggeredForChapters = new Set<string>();
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -48,7 +52,7 @@ export default function EmbassyLayout() {
       const { data, error } = await supabase
         .from("ambassador_memberships")
         .select("role, status, onboarded_at, chapter_id")
-        .eq("user_id", user?.id)
+        .eq("user_id", user!.id)
         .single();
       if (error) throw error;
       return data;
@@ -57,6 +61,21 @@ export default function EmbassyLayout() {
   });
 
   const isLeader = membership?.role === "exco" || membership?.role === "president";
+
+  // Server enforces the 4-day gate. This is opportunistic — never block the layout on it.
+  useEffect(() => {
+    const chapterId = membership?.chapter_id;
+    if (!membership || membership.status !== "active" || !chapterId) return;
+    if (location.pathname === "/embassy/welcome") return;
+    if (searchTriggeredForChapters.has(chapterId)) return;
+    searchTriggeredForChapters.add(chapterId);
+    fetch("/api/embassy/event-search", {
+      method: "POST",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "run", chapter_id: chapterId }),
+    }).catch(() => undefined);
+  }, [membership, location.pathname]);
 
   const navItems = [
     { label: "Contribute", href: "/embassy/contribute", icon: LayoutDashboard },

@@ -1,12 +1,10 @@
 import { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
-import { searchBuildingsV2 } from "@/features/search/api/searchBuildingsV2";
+import { searchBuildingsV2, type BuildingSearchHit, type SearchBuildingsV2Filters } from "@/features/search/api/searchBuildingsV2";
 import { searchPeopleV2 } from "@/features/search/api/searchPeopleV2";
 import { searchCompaniesV2 } from "@/features/search/api/searchCompaniesV2";
-import type { BuildingSearchHit } from "@/features/search/api/searchBuildingsV2";
 import type { PersonSummary, CompanySummary } from "@/features/credits/types";
-import type { SearchBuildingsV2Filters } from "@/features/search/api/searchBuildingsV2";
 
 export type { BuildingSearchHit };
 

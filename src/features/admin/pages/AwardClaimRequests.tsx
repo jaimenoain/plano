@@ -50,6 +50,7 @@ export default function AwardClaimRequests() {
       { requestId, approve: true },
       {
         onSuccess: () => toast.success("Claim approved — award marked as claimed."),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError:   (e: any) => toast.error(e.message ?? "Approval failed"),
       },
     );
@@ -63,6 +64,7 @@ export default function AwardClaimRequests() {
           toast.success("Claim rejected.");
           setRejectNotes((prev) => { const n = { ...prev }; delete n[requestId]; return n; });
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (e: any) => toast.error(e.message ?? "Rejection failed"),
       },
     );

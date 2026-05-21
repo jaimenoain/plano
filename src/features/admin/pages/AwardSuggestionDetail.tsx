@@ -42,6 +42,7 @@ export default function AwardSuggestionDetail() {
       await approve.mutateAsync(s.id);
       toast({ title: "Approved", description: "Award recipient created successfully." });
       navigate("/admin/awards/suggestions");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
@@ -52,6 +53,7 @@ export default function AwardSuggestionDetail() {
       await reject.mutateAsync({ id: s.id, note: rejectNote });
       toast({ title: "Rejected", description: "Suggestion marked as rejected." });
       navigate("/admin/awards/suggestions");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }

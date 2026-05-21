@@ -34,8 +34,7 @@ export async function awardLoader({ params }: LoaderFunctionArgs): Promise<Award
       description,
       canonical,
     };
-  } catch (error) {
-    console.error("Award loader error:", error);
+  } catch {
     throw new Response("Award not found", { status: 404 });
   }
 }

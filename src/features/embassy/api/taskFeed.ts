@@ -294,6 +294,27 @@ export async function discardEventDiscovery(discoveryId: string): Promise<void> 
   if (error) throw error;
 }
 
+type EventDiscoveryPatch = {
+  title?: string;
+  description?: string | null;
+  start_at?: string;
+  end_at?: string | null;
+  address?: string | null;
+  external_link?: string | null;
+};
+
+export async function updateEventDiscovery(
+  discoveryId: string,
+  patch: EventDiscoveryPatch,
+): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from("embassy_event_discoveries")
+    .update(patch)
+    .eq("id", discoveryId);
+  if (error) throw error;
+}
+
 export async function fetchModerationCredits(chapterId: string): Promise<ModerationCreditItem[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any).rpc("get_ambassador_moderation_credits", {

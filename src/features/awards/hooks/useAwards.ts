@@ -25,6 +25,23 @@ import {
   createRecipient,
   deleteRecipient,
   type RecentRecipientFilters,
+  createSuggestion,
+  getSuggestions,
+  getSuggestionById,
+  approveSuggestion,
+  rejectSuggestion,
+  getAwardsByBody,
+  getAwardAdmins,
+  isCurrentUserAwardAdmin,
+  getMyAwardClaimRequest,
+  submitAwardClaimRequest,
+  getAwardClaimRequests,
+  reviewAwardClaimRequest,
+  getEventsByEdition,
+  getUpcomingEventsByAward,
+  createEditionEvent,
+  updateEditionEvent,
+  deleteEditionEvent,
 } from "@/features/awards/api/awards";
 
 // ── Cache keys ───────────────────────────────────────────────
@@ -140,11 +157,13 @@ export function useAwardLeaderboard(awardId?: string, limit = 50) {
   return useQuery({
     queryKey: [...awardKeys.all, "leaderboard", awardId, limit],
     queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any).rpc("get_award_leaderboard", {
         p_award_id: awardId || null,
         p_limit: limit,
       });
       if (error) throw error;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return data as unknown as any[];
     },
     staleTime: STALE_TIME,
@@ -258,26 +277,6 @@ export function useDeleteRecipient() {
 
 // ── Suggestions ──────────────────────────────────────────────
 
-import {
-  createSuggestion,
-  getSuggestions,
-  getSuggestionById,
-  approveSuggestion,
-  rejectSuggestion,
-  getAwardsByBody,
-  getAwardAdmins,
-  isCurrentUserAwardAdmin,
-  getMyAwardClaimRequest,
-  submitAwardClaimRequest,
-  getAwardClaimRequests,
-  reviewAwardClaimRequest,
-  getEventsByEdition,
-  getUpcomingEventsByAward,
-  createEditionEvent,
-  updateEditionEvent,
-  deleteEditionEvent,
-} from "@/features/awards/api/awards";
-
 export const suggestionKeys = {
   all: ["award-suggestions"] as const,
   lists: (status?: string) => [...suggestionKeys.all, "list", status || "all"] as const,
@@ -363,6 +362,7 @@ export function usePersonAwardLeaderboard(awardId?: string, limit = 50) {
   return useQuery({
     queryKey: [...awardKeys.all, "person-leaderboard", awardId, limit],
     queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any).rpc("get_person_award_leaderboard", {
         p_award_id: awardId || null,
         p_limit: limit,

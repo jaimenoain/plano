@@ -1,6 +1,5 @@
-import { type MetaFunction } from "react-router";
+import { type MetaFunction, useNavigate } from "react-router";
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PeopleYouMayKnow } from "@/features/connect/components/PeopleYouMayKnow";
 import { YourContacts } from "@/features/connect/components/YourContacts";

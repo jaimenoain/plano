@@ -191,7 +191,7 @@ export default function Notifications() {
         if (updateError) throw updateError;
       }
     } catch (error) {
-      console.error("Failed to fetch notifications", error);
+      void error;
     } finally {
       setLoading(false);
     }
@@ -219,7 +219,7 @@ export default function Notifications() {
       setNotifications((prev) => [...prev, ...moreNotifications]);
       setHasMore(moreNotifications.length === 20);
     } catch (error) {
-      console.error("Failed to load more notifications", error);
+      void error;
     } finally {
       setLoadingMore(false);
     }

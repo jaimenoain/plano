@@ -23,7 +23,6 @@ import {
   Play,
   SlidersHorizontal
 } from "lucide-react";
-import { toast } from "sonner";
 import { EntityType, MergeEntity } from "../types/merge";
 import { useEntitySearch } from "../hooks/useEntitySearch";
 import { motion, AnimatePresence } from "framer-motion";
@@ -95,6 +94,7 @@ export default function MergeEntities() {
     setLoadingPotential(true);
     setDuplicateUnavailable(false);
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await supabase.rpc(rpcName as any, {
         limit_count: parseInt(limitCount),
         similarity_threshold: threshold,

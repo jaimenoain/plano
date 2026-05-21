@@ -8,8 +8,7 @@ import { AwardLeaderboardDialog } from "../components/AwardLeaderboardDialog";
 import { ClaimAwardDialog } from "../components/ClaimAwardDialog";
 import { Button } from "@/components/ui/button";
 import { useMyAwardClaimRequest, useIsAwardAdmin, useUpcomingEventsByAward } from "@/features/awards/hooks/useAwards";
-import { getEditionDisplayLabel } from "@/features/awards/types/awards";
-import { editionEventTypeLabels } from "@/features/awards/types/awards";
+import { getEditionDisplayLabel, editionEventTypeLabels } from "@/features/awards/types/awards";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 

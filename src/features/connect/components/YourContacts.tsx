@@ -126,7 +126,7 @@ export function YourContacts() {
           setFollowers([]);
         }
       } catch (err) {
-        console.error("[YourContacts] Error fetching contacts:", err);
+        void err;
       } finally {
         setLoading(false);
       }

@@ -3,8 +3,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Trophy, MapPin, Calendar, ChevronRight } from "lucide-react";
 import { awardEditionLoader, type AwardEditionLoaderData } from "./AwardEditionPage.loader";
 import { AwardRecipientCard } from "../components/AwardRecipientCard";
-import type { AwardRecipientDTO } from "../types/awards";
-import { getEditionDisplayLabel } from "../types/awards";
+import { getEditionDisplayLabel, type AwardRecipientDTO } from "../types/awards";
 
 export { awardEditionLoader as loader } from "./AwardEditionPage.loader";
 

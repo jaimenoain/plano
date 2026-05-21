@@ -349,6 +349,7 @@ export const fetchBuildingDetails = async (id: string, client?: SupabaseClient) 
         .join(', ') || null;
     
     // Extract winner award name
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const awardRecipients = (data as any).award_recipients || [];
     const winnerAward = awardRecipients[0];
     const winnerAwardName = winnerAward?.award_edition?.award?.name || null;

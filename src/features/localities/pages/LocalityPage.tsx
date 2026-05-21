@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, Suspense } from "react";
+import { useMemo, useState, Suspense } from "react";
 import {
   Link,
   useLoaderData,
@@ -7,7 +7,7 @@ import {
   isRouteErrorResponse,
   type MetaFunction,
 } from "react-router";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   Building2,
   Users,
@@ -25,15 +25,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ClientOnly } from "@/components/common/ClientOnly";
 import { BuildingHero } from "@/features/buildings/components/BuildingHero";
-import { DiscoveryBuildingCard } from "@/features/search/components/DiscoveryBuildingCard";
 import { getBuildingImageUrl } from "@/utils/image";
-import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { cn } from "@/lib/utils";
 import type { DiscoveryBuilding } from "@/features/search/components/types";
 import {
-  getLocalityBuildingsClient,
   getLocalityMapBuildings,
-  LOCALITY_BUILDINGS_PAGE_SIZE,
   type LocalityVolunteerTeamMember,
 } from "@/features/localities/api/localitiesApi";
 import { getBuildingLocalityUrl } from "@/utils/url";
@@ -1223,57 +1219,6 @@ function LocalityActivityStream({
 // LocalityVolunteerTeam — discreet editorial "meet the team" section
 // ---------------------------------------------------------------------------
 
-const EXCO_LABELS: Record<string, string> = {
-  content: "Content",
-  marketing: "Marketing",
-  architect_relations: "Architect relations",
-  data_quality: "Data quality",
-  community: "Community",
-};
-
-function VolunteerTeamMemberCard({
-  member,
-}: {
-  member: LocalityVolunteerTeamMember;
-}) {
-  const initials = member.username
-    .split(/[\s_-]/)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .slice(0, 2)
-    .join("");
-
-  const roleLabel =
-    member.role === "president"
-      ? "President"
-      : member.role === "exco"
-        ? member.exco_responsibility
-          ? EXCO_LABELS[member.exco_responsibility] ?? member.exco_responsibility
-          : "Executive committee"
-        : "Ambassador";
-
-  return (
-    <Link
-      to={`/profile/${member.username}`}
-      className="group flex items-center gap-2.5 py-2.5"
-    >
-      <Avatar className="h-7 w-7 shrink-0 border border-border-default bg-surface-muted">
-        <AvatarImage src={member.avatar_url ?? undefined} alt="" />
-        <AvatarFallback className="text-[10px] font-medium text-text-secondary">
-          {initials}
-        </AvatarFallback>
-      </Avatar>
-      <div className="min-w-0 flex-1">
-        <span className="block text-sm font-medium text-text-primary transition-colors group-hover:text-brand-primary">
-          {member.username}
-        </span>
-        <span className="block text-[10px] uppercase tracking-widest text-text-disabled">
-          {roleLabel}
-        </span>
-      </div>
-    </Link>
-  );
-}
-
 function LocalityVolunteerTeam({
   members,
 }: {
@@ -1324,103 +1269,6 @@ function LocalityVolunteerTeam({
         <InlineTeamRow label="Ambassadors" group={ambassadors} />
       </div>
     </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// LocalityBuildingsGrid — existing, unchanged
-// ---------------------------------------------------------------------------
-function BuildingCardSkeleton() {
-  return <Skeleton className="h-24 w-full" />;
-}
-
-function LocalityBuildingsGrid({
-  localityId,
-  initialBuildings,
-}: {
-  localityId: string;
-  initialBuildings: LocalityPageLoaderData["initialBuildings"];
-}) {
-  const { containerRef: loadMoreRef, isVisible: loadMoreVisible } =
-    useIntersectionObserver({ rootMargin: "200px" });
-
-  const query = useInfiniteQuery({
-    queryKey: ["localities", localityId, "buildings"],
-    queryFn: async ({ pageParam }) =>
-      getLocalityBuildingsClient(localityId, pageParam as number),
-    initialPageParam: 0,
-    initialData: {
-      pages: [initialBuildings],
-      pageParams: [0],
-    },
-    getNextPageParam: (lastPage, _pages, lastPageParam) => {
-      if (lastPage.length < LOCALITY_BUILDINGS_PAGE_SIZE) return undefined;
-      return (lastPageParam as number) + 1;
-    },
-  });
-
-  const items = useMemo(
-    () => query.data?.pages.flatMap((p) => p) ?? [],
-    [query.data],
-  );
-
-  useEffect(() => {
-    if (!loadMoreVisible) return;
-    if (query.hasNextPage && !query.isFetchingNextPage && !query.isError) {
-      void query.fetchNextPage();
-    }
-  }, [
-    loadMoreVisible,
-    query.hasNextPage,
-    query.isFetchingNextPage,
-    query.isError,
-    query.fetchNextPage,
-  ]);
-
-  if (query.isError) {
-    return (
-      <p className="mt-4 text-sm text-destructive" role="alert">
-        Buildings could not be loaded. Please try again later.
-      </p>
-    );
-  }
-
-  if (items.length === 0 && !query.isPending) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div
-          className="mb-6 flex h-24 w-24 items-center justify-center border border-border-default bg-surface-muted text-text-secondary"
-          aria-hidden
-        >
-          <Building2 className="h-12 w-12" />
-        </div>
-        <p className="max-w-sm text-text-secondary">
-          No buildings yet for this city.
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <div className="space-y-4">
-        {items.map((b) => (
-          <DiscoveryBuildingCard
-            key={b.id}
-            building={b as unknown as DiscoveryBuilding}
-            imagePosition="right"
-          />
-        ))}
-      </div>
-
-      {query.isFetchingNextPage ? (
-        <div className="mt-4 space-y-4">
-          <BuildingCardSkeleton />
-        </div>
-      ) : null}
-
-      <div ref={loadMoreRef} className="h-4 w-full" aria-hidden />
-    </div>
   );
 }
 

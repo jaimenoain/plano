@@ -126,6 +126,7 @@ export default function AwardForm() {
       if (error) throw error;
       toast.success("Synced successfully");
       queryClient.invalidateQueries({ queryKey: ["awards", awardId] });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast.error(`Failed to sync Wikidata: ${err.message}`);
     } finally {

@@ -288,7 +288,7 @@ export async function discardEventDiscovery(discoveryId: string): Promise<void>
 
 ---
 
-## 6. [ ] Slice 2 — Visit-driven trigger
+## 6. [x] Slice 2 — Visit-driven trigger
 
 ### Goal
 Any ambassador opening any `/embassy/*` page silently triggers the search; the server's 4-day gate absorbs the storm of concurrent requests.
@@ -317,7 +317,7 @@ Add a short comment above the effect explaining: "Server enforces the 4-day gate
 
 ---
 
-## 7. [ ] Slice 3 — Events review UI
+## 7. [x] Slice 3 — Events review UI
 
 ### Goal
 A new tool card on `/embassy/contribute` that opens an "Events" review screen. Same shape as Moderation: tabs disabled for now (could be `Pending | Recently published` in a follow-up), per-row inline edit, Publish / Discard actions.
@@ -419,7 +419,7 @@ When `duplicate_of_event_id` is non-null:
 
 ---
 
-## 8. [ ] Slice 4 — Verification & spec sync
+## 8. [x] Slice 4 — Verification & spec sync
 
 ### Task 4.1 — Build / typecheck / lint
 Run:

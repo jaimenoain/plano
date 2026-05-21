@@ -323,7 +323,6 @@ export default function EditNote() {
       toast({ title: "Note saved" });
       navigateBack();
     } catch (error) {
-      console.error("EditNote handleSave failed", error);
       toast({
         variant: "destructive",
         title: "Failed to save note",
@@ -369,7 +368,6 @@ export default function EditNote() {
         if (img.preview.startsWith("blob:")) URL.revokeObjectURL(img.preview);
       });
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading || authLoading) {

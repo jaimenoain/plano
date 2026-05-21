@@ -3,8 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { AwardRecipientDTO } from "../types/awards";
-import { getEditionDisplayLabel } from "../types/awards";
+import { getEditionDisplayLabel, type AwardRecipientDTO } from "../types/awards";
 import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
 

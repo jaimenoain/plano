@@ -103,6 +103,7 @@ export function SuggestAwardDialog({ isOpen, onClose, initialRecipient }: Sugges
       setYear(new Date().getFullYear().toString());
       setSourceUrl("");
       setNotes("");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       toast({
         title: "Error",

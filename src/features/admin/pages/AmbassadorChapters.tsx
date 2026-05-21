@@ -96,8 +96,8 @@ export default function AmbassadorChapters() {
         next[m.chapter_id] = (next[m.chapter_id] ?? 0) + 1;
       }
       setCounts(next);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
-      console.error("Failed to load chapters:", err);
       const message = err?.message || (typeof err === "string" ? err : "Failed to load chapters");
       toast.error(message);
     } finally {

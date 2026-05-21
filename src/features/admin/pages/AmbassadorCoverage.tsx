@@ -7,7 +7,7 @@ import {
   fetchNationalChapterOverview,
   type AdminAmbassadorLocalityCoverageRow,
 } from "@/features/admin/api/ambassadorCoverage";
-import type { Json } from "@/integrations/supabase/types";
+import type { Json, Database } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,6 @@ import {
   Filter,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { Database } from "@/integrations/supabase/types";
 import { ambassadorChapterCreateSchema } from "@/lib/validations/ambassador";
 
 export const meta: MetaFunction = () => [

@@ -4,8 +4,7 @@ import {
   getEditionBySlug,
   getRecipientsByEdition,
 } from "@/features/awards/api/awards";
-import type { AwardDTO, AwardEditionDTO, AwardRecipientDTO } from "@/features/awards/types/awards";
-import { getEditionDisplayLabel } from "@/features/awards/types/awards";
+import { getEditionDisplayLabel, type AwardDTO, type AwardEditionDTO, type AwardRecipientDTO } from "@/features/awards/types/awards";
 import type { LoaderFunctionArgs } from "react-router";
 
 export interface AwardEditionLoaderData {
@@ -49,8 +48,7 @@ export async function awardEditionLoader({ params }: LoaderFunctionArgs): Promis
       description,
       canonical,
     };
-  } catch (error) {
-    console.error("Award edition loader error:", error);
+  } catch {
     throw new Response("Award edition not found", { status: 404 });
   }
 }

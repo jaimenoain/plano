@@ -383,6 +383,18 @@ Audit log of AI event-search invocations. One row per attempt — used for "Last
 
 **Migration:** `supabase/migrations/20271140000000_embassy_event_discoveries.sql` — apply in Supabase SQL Editor. Search route + publish/discard RPCs arrive in `20271141000000` (Slice 1).
 
+### RPC: `ambassador_publish_event_discovery(p_discovery_id uuid)`
+
+SECURITY DEFINER. Called from the Events tool "Publish" button. Validates caller is an active member of the discovery's chapter (`_ambassador_can_access_chapter`), generates a unique `slug`, inserts a row into `events` (populating `locality_id`, `country_code`, `city_slug`, geography point if lat/lng present, `submitted_by_user_id = auth.uid()`, `is_self_hosted = false`, `claim_status = 'unclaimed'`), then stamps the discovery `status = 'published'`, `published_event_id`, `reviewed_at`, `reviewed_by`. Writes an audit log row. **Returns** the new `events.id uuid`.
+
+**Migration:** `supabase/migrations/20271141000000_embassy_event_search_rpcs.sql` — needs apply in Supabase SQL Editor.
+
+### RPC: `ambassador_discard_event_discovery(p_discovery_id uuid)`
+
+SECURITY DEFINER. Called from the Events tool "Discard" button. Same scope guard as publish. Stamps `status = 'discarded'`, `reviewed_at`, `reviewed_by`. **Returns** `void`.
+
+**Migration:** `supabase/migrations/20271141000000_embassy_event_search_rpcs.sql` — needs apply in Supabase SQL Editor.
+
 ---
 
 ## Auth Domain — profiles, allowed_emails

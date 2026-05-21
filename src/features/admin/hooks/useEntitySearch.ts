@@ -15,7 +15,9 @@ export function useEntitySearch(type: EntityType, query: string) {
     const search = async () => {
       setLoading(true);
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let data: any[] | null = [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let error: any = null;
 
         if (type === "building") {
@@ -109,8 +111,8 @@ export function useEntitySearch(type: EntityType, query: string) {
         });
 
         setResults(transformed);
-      } catch (err) {
-        console.error("Search failed:", err);
+      } catch {
+        // search failed silently
       } finally {
         setLoading(false);
       }

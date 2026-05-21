@@ -319,7 +319,6 @@ function BuildingMapTab({
         radius_meters: NEARBY_RADIUS_METERS,
       });
       if (error) {
-        console.error("[BuildingMapTab] find_nearby_buildings RPC error:", error);
         setNearbyError(error.message);
       } else if (data) {
         setNearbyBuildings(
@@ -1465,6 +1464,7 @@ export default function BuildingDetails() {
     profile,
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const buildingAny = building as any;
 
   // ── Tab state (URL-based) ─────────────────────────────────────────────────
