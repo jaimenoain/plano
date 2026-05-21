@@ -39,6 +39,7 @@ export default [
 
   // Ambassador API resource routes
   route("/api/embassy/building-research", "features/embassy/api/building-research.route.ts"),
+  route("/api/embassy/event-search", "features/embassy/api/event-search.route.ts"),
 
   // Admin (AdminGuard remains as a wrapper component inside AdminLayout)
   layout("features/admin/components/AdminLayoutWithGuard.tsx", [

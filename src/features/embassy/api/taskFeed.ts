@@ -194,6 +194,106 @@ export async function fetchModerationVideos(): Promise<ModerationVideoItem[]> {
   }));
 }
 
+// ─── Event discoveries ────────────────────────────────────────────────────────
+
+export type EventDiscovery = {
+  id: string;
+  chapter_id: string;
+  locality_id: string | null;
+  title: string;
+  description: string | null;
+  start_at: string;
+  end_at: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  external_link: string | null;
+  cover_image_url: string | null;
+  source_url: string;
+  snippet: string | null;
+  status: "pending" | "published" | "discarded";
+  duplicate_of_event_id: string | null;
+  duplicate_of_title: string | null;
+  duplicate_of_start_at: string | null;
+  created_at: string;
+};
+
+export async function fetchPendingEventDiscoveries(chapterId: string): Promise<EventDiscovery[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from("embassy_event_discoveries")
+    .select("*")
+    .eq("chapter_id", chapterId)
+    .eq("status", "pending")
+    .order("start_at", { ascending: true });
+  if (error) throw error;
+  const rows: EventDiscovery[] = (data ?? []).map(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (r: any): EventDiscovery => ({
+      id: r.id,
+      chapter_id: r.chapter_id,
+      locality_id: r.locality_id,
+      title: r.title,
+      description: r.description,
+      start_at: r.start_at,
+      end_at: r.end_at,
+      address: r.address,
+      lat: r.lat,
+      lng: r.lng,
+      external_link: r.external_link,
+      cover_image_url: r.cover_image_url,
+      source_url: r.source_url,
+      snippet: r.snippet,
+      status: r.status,
+      duplicate_of_event_id: r.duplicate_of_event_id ?? null,
+      duplicate_of_title: null,
+      duplicate_of_start_at: null,
+      created_at: r.created_at,
+    }),
+  );
+
+  // Batch-fetch duplicate event titles (FK-agnostic — same pattern as AmbassadorCampaigns)
+  const dupIds = [...new Set(rows.map((r) => r.duplicate_of_event_id).filter(Boolean))] as string[];
+  if (dupIds.length > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: evts } = await (supabase as any)
+      .from("events")
+      .select("id, title, start_at")
+      .in("id", dupIds);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const evtMap = new Map((evts ?? []).map((e: any) => [e.id, e]));
+    for (const row of rows) {
+      if (row.duplicate_of_event_id) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const evt = evtMap.get(row.duplicate_of_event_id) as any;
+        if (evt) {
+          row.duplicate_of_title = evt.title;
+          row.duplicate_of_start_at = evt.start_at;
+        }
+      }
+    }
+  }
+
+  return rows;
+}
+
+export async function publishEventDiscovery(discoveryId: string): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("ambassador_publish_event_discovery", {
+    p_discovery_id: discoveryId,
+  });
+  if (error) throw error;
+  return data as string;
+}
+
+export async function discardEventDiscovery(discoveryId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("ambassador_discard_event_discovery", {
+    p_discovery_id: discoveryId,
+  });
+  if (error) throw error;
+}
+
 export async function fetchModerationCredits(chapterId: string): Promise<ModerationCreditItem[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any).rpc("get_ambassador_moderation_credits", {
