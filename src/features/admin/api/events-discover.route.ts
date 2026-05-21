@@ -2,6 +2,7 @@ import { type ActionFunctionArgs } from "react-router";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
+import { logApiRequest } from "~/lib/api-logger.server";
 
 const bodySchema = z.object({
   query: z.string().min(3).max(500),
@@ -86,10 +87,13 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const client = new Anthropic({ apiKey });
 
+  const model = "claude-sonnet-4-6";
+  const aiStartMs = Date.now();
+
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await (client.messages.create as any)({
-      model: "claude-sonnet-4-6",
+      model,
       max_tokens: 4096,
       system: SYSTEM_PROMPT,
       tools: [{ type: "web_search_20250305", name: "web_search" }],
@@ -101,24 +105,68 @@ export async function action({ request }: ActionFunctionArgs) {
       ],
     });
 
+    const aiDurationMs = Date.now() - aiStartMs;
+    const usage = (response as { usage?: { input_tokens?: number; output_tokens?: number } }).usage;
+
     const textBlock = (response.content as Array<{ type: string; text?: string }>).find(
       (b) => b.type === "text",
     );
 
     if (!textBlock?.text) {
+      void logApiRequest(supabase, {
+        endpoint: "/api/admin/events-discover",
+        statusCode: 200,
+        durationMs: aiDurationMs,
+        userId: user.id,
+        model,
+        inputTokens: usage?.input_tokens ?? null,
+        outputTokens: usage?.output_tokens ?? null,
+        metadata: { query: parsed.data.query, events: 0 },
+      });
       return Response.json({ events: [] }, { headers });
     }
 
     const jsonMatch = textBlock.text.match(/\{[\s\S]*"events"[\s\S]*\}/);
     if (!jsonMatch) {
+      void logApiRequest(supabase, {
+        endpoint: "/api/admin/events-discover",
+        statusCode: 200,
+        durationMs: aiDurationMs,
+        userId: user.id,
+        model,
+        inputTokens: usage?.input_tokens ?? null,
+        outputTokens: usage?.output_tokens ?? null,
+        metadata: { query: parsed.data.query, events: 0 },
+      });
       return Response.json({ events: [] }, { headers });
     }
 
     const result = JSON.parse(jsonMatch[0]) as { events?: DiscoveredEvent[] };
     const events = Array.isArray(result.events) ? result.events : [];
 
+    void logApiRequest(supabase, {
+      endpoint: "/api/admin/events-discover",
+      statusCode: 200,
+      durationMs: aiDurationMs,
+      userId: user.id,
+      model,
+      inputTokens: usage?.input_tokens ?? null,
+      outputTokens: usage?.output_tokens ?? null,
+      metadata: { query: parsed.data.query, events: events.length },
+    });
+
     return Response.json({ events }, { headers });
   } catch (err) {
+    const durationMs = Date.now() - aiStartMs;
+    void logApiRequest(supabase, {
+      endpoint: "/api/admin/events-discover",
+      statusCode: 500,
+      durationMs,
+      userId: user.id,
+      model,
+      errorMessage: err instanceof Error ? err.message : String(err),
+      metadata: { query: parsed.data.query },
+    });
     void err;
     return Response.json(
       { error: "Search failed. Check your Anthropic API key and plan." },

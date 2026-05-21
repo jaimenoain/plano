@@ -27,6 +27,7 @@ import {
   Siren,
   Megaphone,
   BarChart2,
+  Activity,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
@@ -90,6 +91,7 @@ const mediaItems = [
 const systemItems = [
   { title: "Moderation", url: "/admin/moderation", icon: ShieldAlert },
   { title: "Audit Logs", url: "/admin/audit", icon: History },
+  { title: "API Requests", url: "/admin/api-requests", icon: Activity },
   { title: "System", url: "/admin/system", icon: Settings },
 ];
 

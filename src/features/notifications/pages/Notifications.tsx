@@ -507,6 +507,47 @@ export default function Notifications() {
     }
   };
 
+  // ── Notification title (bold label shown above body text) ──
+  const getTitle = (n: Notification): string => {
+    switch (n.type) {
+      case "architect_verification":
+        return n.metadata?.status === "approved"
+          ? "Architect Verification Approved"
+          : "Architect Verification Declined";
+      case "ambassador_application_received":
+        return "New Ambassador Application";
+      case "ambassador_application_approved":
+        return "Application Approved";
+      case "ambassador_application_rejected":
+        return "Application Declined";
+      case "ambassador_membership_review":
+        return "Membership Review";
+      case "like":
+        return "New Like";
+      case "comment":
+        return "New Comment";
+      case "follow":
+        return "New Follower";
+      case "friend_joined":
+        return "Friend Joined";
+      case "suggest_follow":
+        return "Suggested Follow";
+      case "visit_request":
+        return "Visit Request";
+      case "recommendation":
+        return "New Recommendation";
+      case "award_win":
+        return "Award";
+      case "feedback_status_updated":
+      case "feedback_notes_updated":
+        return "Feedback Update";
+      case "project_idea_submitted":
+        return "New Project Idea";
+      default:
+        return "Notification";
+    }
+  };
+
   // ── Row renderer ──
   const renderNotificationList = (list: Notification[]) => (
     <>
@@ -538,7 +579,10 @@ export default function Notifications() {
 
           {/* Text */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-text-primary leading-snug line-clamp-2">
+            <p className="text-sm font-bold text-text-primary leading-snug">
+              {getTitle(n)}
+            </p>
+            <p className="text-sm text-text-secondary leading-snug line-clamp-2 mt-0.5">
               {getText(n)}
             </p>
             <p className="text-2xs text-text-disabled mt-1.5 uppercase tracking-wide">

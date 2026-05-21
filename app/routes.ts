@@ -73,6 +73,7 @@ export default [
     route("/admin/credits/companies", "features/admin/pages/AdminCompanies.tsx"),
     route("/admin/storage-jobs", "features/admin/pages/StorageJobs.tsx"),
     route("/admin/system", "pages/AdminSystemPlaceholder.tsx"),
+    route("/admin/api-requests", "features/admin/pages/ApiRequests.tsx"),
     route("/admin/feedback", "features/admin/pages/Feedback.tsx"),
     route("/admin/events", "features/admin/pages/AdminEvents.tsx"),
     route("/admin/programme", "features/admin/pages/ProgrammeRedirect.tsx"),

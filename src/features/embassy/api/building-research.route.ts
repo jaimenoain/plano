@@ -2,6 +2,7 @@ import { type ActionFunctionArgs } from "react-router";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
+import { logApiRequest } from "~/lib/api-logger.server";
 
 // ---------- shared types (exported for the UI) ----------
 
@@ -119,7 +120,7 @@ export async function action({ request }: ActionFunctionArgs) {
     return Response.json({ error: parsed.error.flatten() }, { status: 400, headers });
   }
 
-  // ---- APPLY: save accepted data points ----
+  // ---- APPLY: save accepted data points (no AI call — no cost log needed) ----
   if (parsed.data.action === "apply") {
     const { building_id, updates } = parsed.data;
 
@@ -158,6 +159,14 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
+    void logApiRequest(supabase, {
+      endpoint: "/api/embassy/building-research",
+      statusCode: 503,
+      durationMs: 0,
+      userId: user.id,
+      errorMessage: "ANTHROPIC_API_KEY not configured",
+      metadata: { building_id },
+    });
     return Response.json(
       { error: "AI research not configured. Set ANTHROPIC_API_KEY." },
       { status: 503, headers },
@@ -165,6 +174,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   const client = new Anthropic({ apiKey });
+  const model = "claude-sonnet-4-6";
 
   const locationParts = [building.address, building.city, building.country]
     .filter(Boolean)
@@ -176,21 +186,36 @@ Location: ${locationParts || "unknown"}
 
 Use web_search to find: year completed, current status, alternative name, functional category, typologies, architectural styles, materiality, urban context, access details (level/logistics/cost/notes), and size (floor area, height, storeys).`;
 
+  const startMs = Date.now();
+
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await (client.messages.create as any)({
-      model: "claude-sonnet-4-6",
+      model,
       max_tokens: 4096,
       system: RESEARCH_SYSTEM_PROMPT,
       tools: [{ type: "web_search_20250305", name: "web_search" }],
       messages: [{ role: "user", content: userPrompt }],
     });
 
+    const durationMs = Date.now() - startMs;
+    const usage = (response as { usage?: { input_tokens?: number; output_tokens?: number } }).usage;
+
     const textBlock = (response.content as Array<{ type: string; text?: string }>).find(
       (b) => b.type === "text",
     );
 
     if (!textBlock?.text) {
+      void logApiRequest(supabase, {
+        endpoint: "/api/embassy/building-research",
+        statusCode: 200,
+        durationMs,
+        userId: user.id,
+        model,
+        inputTokens: usage?.input_tokens ?? null,
+        outputTokens: usage?.output_tokens ?? null,
+        metadata: { building_id, data_points: 0 },
+      });
       return Response.json(
         { building_id, building_name: building.name, data_points: [] } satisfies BuildingResearchResult,
         { headers },
@@ -199,6 +224,16 @@ Use web_search to find: year completed, current status, alternative name, functi
 
     const jsonMatch = textBlock.text.match(/\{[\s\S]*"data_points"[\s\S]*\}/);
     if (!jsonMatch) {
+      void logApiRequest(supabase, {
+        endpoint: "/api/embassy/building-research",
+        statusCode: 200,
+        durationMs,
+        userId: user.id,
+        model,
+        inputTokens: usage?.input_tokens ?? null,
+        outputTokens: usage?.output_tokens ?? null,
+        metadata: { building_id, data_points: 0 },
+      });
       return Response.json(
         { building_id, building_name: building.name, data_points: [] } satisfies BuildingResearchResult,
         { headers },
@@ -208,11 +243,33 @@ Use web_search to find: year completed, current status, alternative name, functi
     const raw = JSON.parse(jsonMatch[0]) as { data_points?: ResearchDataPoint[] };
     const data_points = Array.isArray(raw.data_points) ? raw.data_points : [];
 
+    void logApiRequest(supabase, {
+      endpoint: "/api/embassy/building-research",
+      statusCode: 200,
+      durationMs,
+      userId: user.id,
+      model,
+      inputTokens: usage?.input_tokens ?? null,
+      outputTokens: usage?.output_tokens ?? null,
+      metadata: { building_id, data_points: data_points.length },
+    });
+
     return Response.json(
       { building_id, building_name: building.name, data_points } satisfies BuildingResearchResult,
       { headers },
     );
-  } catch {
+  } catch (err) {
+    const durationMs = Date.now() - startMs;
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    void logApiRequest(supabase, {
+      endpoint: "/api/embassy/building-research",
+      statusCode: 500,
+      durationMs,
+      userId: user.id,
+      model,
+      errorMessage,
+      metadata: { building_id },
+    });
     return Response.json(
       { error: "AI research failed. Check your Anthropic API key and plan." },
       { status: 500, headers },

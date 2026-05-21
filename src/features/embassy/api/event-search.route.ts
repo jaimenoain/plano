@@ -2,6 +2,7 @@ import { type ActionFunctionArgs } from "react-router";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
+import { logApiRequest } from "~/lib/api-logger.server";
 
 // ⚠️  REQUIRED: Add SERPER_API_KEY to .env.local and to the Vercel project environment variables.
 //    Without it this route returns 503 and no search runs are created.
@@ -70,10 +71,9 @@ async function markRunSuccess(supabase: any, runId: string, chapterId: string, i
       .from("embassy_event_search_runs")
       .update({ status: "success", completed_at: new Date().toISOString(), items_found: itemsFound })
       .eq("id", runId),
-    supabase
-      .from("ambassador_chapters")
-      .update({ last_event_search_at: new Date().toISOString() })
-      .eq("id", chapterId),
+    // Use the SECURITY DEFINER RPC — ambassador_chapters UPDATE is admin-only,
+    // but the route already verified active chapter membership before reaching here.
+    supabase.rpc("stamp_chapter_last_event_search_at", { p_chapter_id: chapterId }),
   ]);
 }
 
@@ -205,15 +205,37 @@ export async function action({ request }: ActionFunctionArgs) {
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
     if (!anthropicKey) {
       await markRunFailed(supabase, run.id, "anthropic_not_configured");
+      void logApiRequest(supabase, {
+        endpoint: "/api/embassy/event-search",
+        statusCode: 503,
+        durationMs: 0,
+        userId: user.id,
+        errorMessage: "ANTHROPIC_API_KEY not configured",
+        metadata: { chapter_id, run_id: run.id },
+      });
       return Response.json({ error: "Event search not configured" }, { status: 503, headers });
     }
 
     const client = new Anthropic({ apiKey: anthropicKey });
+    const model = "claude-sonnet-4-6";
+    const aiStartMs = Date.now();
+
     const aiResponse = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model,
       max_tokens: 4096,
       system: EXTRACTION_SYSTEM_PROMPT,
       messages: [{ role: "user", content: JSON.stringify(serperData) }],
+    });
+
+    void logApiRequest(supabase, {
+      endpoint: "/api/embassy/event-search",
+      statusCode: 200,
+      durationMs: Date.now() - aiStartMs,
+      userId: user.id,
+      model,
+      inputTokens: aiResponse.usage?.input_tokens ?? null,
+      outputTokens: aiResponse.usage?.output_tokens ?? null,
+      metadata: { chapter_id, run_id: run.id },
     });
 
     const textBlock = aiResponse.content.find((b) => b.type === "text");
@@ -322,6 +344,14 @@ export async function action({ request }: ActionFunctionArgs) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     await markRunFailed(supabase, run.id, msg);
+    void logApiRequest(supabase, {
+      endpoint: "/api/embassy/event-search",
+      statusCode: 500,
+      durationMs: 0,
+      userId: user.id,
+      errorMessage: msg,
+      metadata: { chapter_id, run_id: run.id },
+    });
     // eslint-disable-next-line no-console
     console.error("[event-search] unexpected error:", msg);
     return Response.json({ error: "Internal server error" }, { status: 500, headers });

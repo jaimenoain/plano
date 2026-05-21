@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Plus, Pin, CheckCircle2, Archive, Loader2, AlertCircle, Trash2,
   Target, Lightbulb, CheckCheck, Inbox, Circle, Clock, CalendarDays,
-  Users, EyeOff, Pencil,
+  Users, EyeOff, Pencil, Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -96,7 +96,7 @@ const NEXT_STATUS: Record<TaskStatus, TaskStatus> = {
 };
 
 const PROJECT_STATUS_CONFIG = {
-  active:    { icon: <Pin className="h-3 w-3" />,          class: "bg-brand-primary/10 text-brand-primary border-brand-primary/20" },
+  active:    { icon: <Zap className="h-3 w-3" />,          class: "bg-brand-primary/10 text-brand-primary border-brand-primary/20" },
   planning:  { icon: <Clock className="h-3 w-3" />,        class: "bg-blue-50 text-blue-600 border-blue-200" },
   completed: { icon: <CheckCircle2 className="h-3 w-3" />, class: "bg-green-500/10 text-green-600 border-green-500/20" },
   archived:  { icon: <Archive className="h-3 w-3" />,      class: "bg-muted text-muted-foreground border-border-default" },
