@@ -32,7 +32,7 @@ type Project = {
   chapter_id: string;
   title: string;
   description: string | null;
-  status: "draft" | "active" | "completed" | "archived";
+  status: "draft" | "planning" | "active" | "completed" | "archived";
   created_by: string;
   created_at: string;
   author_username?: string | null;
@@ -97,6 +97,7 @@ const NEXT_STATUS: Record<TaskStatus, TaskStatus> = {
 
 const PROJECT_STATUS_CONFIG = {
   active:    { icon: <Pin className="h-3 w-3" />,          class: "bg-brand-primary/10 text-brand-primary border-brand-primary/20" },
+  planning:  { icon: <Clock className="h-3 w-3" />,        class: "bg-blue-50 text-blue-600 border-blue-200" },
   completed: { icon: <CheckCircle2 className="h-3 w-3" />, class: "bg-green-500/10 text-green-600 border-green-500/20" },
   archived:  { icon: <Archive className="h-3 w-3" />,      class: "bg-muted text-muted-foreground border-border-default" },
   draft:     { icon: <Lightbulb className="h-3 w-3" />,    class: "bg-amber-50 text-amber-700 border-amber-200" },
@@ -196,7 +197,7 @@ export default function ChapterProjectsPage() {
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<"active" | "completed" | "archived">("active");
+  const [status, setStatus] = useState<"planning" | "active" | "completed" | "archived">("active");
 
   // Ambassador: submit idea dialog
   const [isIdeaOpen, setIsIdeaOpen] = useState(false);
@@ -208,6 +209,11 @@ export default function ChapterProjectsPage() {
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [taskForm, setTaskForm] = useState(EMPTY_TASK_FORM);
   const [cyclingTaskId, setCyclingTaskId] = useState<string | null>(null);
+
+  // Task editing
+  const [editingTask, setEditingTask] = useState<ChapterTask | null>(null);
+  const [editTaskForm, setEditTaskForm] = useState(EMPTY_TASK_FORM);
+  const [isEditTaskOpen, setIsEditTaskOpen] = useState(false);
 
   // ── membership ──
   const { data: membership } = useQuery({
@@ -479,6 +485,33 @@ export default function ChapterProjectsPage() {
     onError: () => toast.error("Failed to update task status."),
   });
 
+  const updateTaskMutation = useMutation({
+    mutationFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from("chapter_tasks")
+        .update({
+          title: editTaskForm.title.trim(),
+          description: editTaskForm.description.trim() || null,
+          due_date: editTaskForm.due_date || null,
+          visibility: editTaskForm.visibility,
+          assigned_to: editTaskForm.assigned_to || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", editingTask!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Task updated.");
+      setIsEditTaskOpen(false);
+      setEditingTask(null);
+      setEditTaskForm(EMPTY_TASK_FORM);
+      queryClient.invalidateQueries({ queryKey: ["chapter-tasks-projects", chapterId] });
+      queryClient.invalidateQueries({ queryKey: ["chapter-tasks", chapterId] });
+    },
+    onError: () => toast.error("Failed to update task."),
+  });
+
   // ── helpers ──
 
   const resetLeaderForm = () => {
@@ -493,8 +526,20 @@ export default function ChapterProjectsPage() {
     setEditingProject(project);
     setTitle(project.title);
     setDescription(project.description || "");
-    setStatus(project.status === "draft" ? "active" : project.status);
+    setStatus(project.status === "draft" ? "active" : project.status as "planning" | "active" | "completed" | "archived");
     setIsCreateOpen(true);
+  };
+
+  const openEditTask = (task: ChapterTask) => {
+    setEditingTask(task);
+    setEditTaskForm({
+      title: task.title,
+      description: task.description ?? "",
+      due_date: task.due_date ?? "",
+      visibility: task.visibility,
+      assigned_to: task.assigned_to ?? "",
+    });
+    setIsEditTaskOpen(true);
   };
 
   const drafts = projects?.filter((p) => p.status === "draft") ?? [];
@@ -745,6 +790,7 @@ export default function ChapterProjectsPage() {
                         onStatusCycle={() =>
                           taskStatusMutation.mutate({ id: task.id, newStatus: NEXT_STATUS[task.status] })
                         }
+                        onEdit={() => openEditTask(task)}
                         isCycling={cyclingTaskId === task.id}
                       />
                     ))}
@@ -863,6 +909,111 @@ export default function ChapterProjectsPage() {
         </DialogContent>
       </Dialog>
 
+      {/* ── Edit Task dialog ── */}
+      <Dialog
+        open={isEditTaskOpen}
+        onOpenChange={(open) => { setIsEditTaskOpen(open); if (!open) { setEditingTask(null); setEditTaskForm(EMPTY_TASK_FORM); } }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Task</DialogTitle>
+            <DialogDescription>
+              Update the details for this task.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-task-title">Title</Label>
+              <Input
+                id="edit-task-title"
+                value={editTaskForm.title}
+                onChange={(e) => setEditTaskForm((f) => ({ ...f, title: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-task-description">Description (optional)</Label>
+              <Textarea
+                id="edit-task-description"
+                rows={3}
+                value={editTaskForm.description}
+                onChange={(e) => setEditTaskForm((f) => ({ ...f, description: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="edit-task-due">Due date (optional)</Label>
+                <Input
+                  id="edit-task-due"
+                  type="date"
+                  value={editTaskForm.due_date}
+                  onChange={(e) => setEditTaskForm((f) => ({ ...f, due_date: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-task-assigned">Assign to (optional)</Label>
+                <Select
+                  value={editTaskForm.assigned_to || "__none__"}
+                  onValueChange={(v) => setEditTaskForm((f) => ({ ...f, assigned_to: v === "__none__" ? "" : v }))}
+                >
+                  <SelectTrigger id="edit-task-assigned">
+                    <SelectValue placeholder="Anyone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Anyone</SelectItem>
+                    {teamMembers.map((m) => (
+                      <SelectItem key={m.user_id} value={m.user_id}>
+                        @{m.username}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-task-visibility">Visibility</Label>
+              <Select
+                value={editTaskForm.visibility}
+                onValueChange={(v: TaskVisibility) => setEditTaskForm((f) => ({ ...f, visibility: v }))}
+              >
+                <SelectTrigger id="edit-task-visibility">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="chapter">
+                    <span className="flex items-center gap-2">
+                      <Users className="h-3.5 w-3.5" /> Everyone in the chapter
+                    </span>
+                  </SelectItem>
+                  {isLeader && (
+                    <SelectItem value="leadership">
+                      <span className="flex items-center gap-2">
+                        <Users className="h-3.5 w-3.5" /> Leadership only
+                      </span>
+                    </SelectItem>
+                  )}
+                  <SelectItem value="only_me">
+                    <span className="flex items-center gap-2">
+                      <EyeOff className="h-3.5 w-3.5" /> Only me
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditTaskOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => updateTaskMutation.mutate()}
+              disabled={updateTaskMutation.isPending || !editTaskForm.title.trim()}
+            >
+              {updateTaskMutation.isPending
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Leader: create / edit published project */}
       <Dialog
         open={isCreateOpen}
@@ -899,12 +1050,13 @@ export default function ChapterProjectsPage() {
               <Label>Status</Label>
               <Select
                 value={status}
-                onValueChange={(v: "active" | "completed" | "archived") => setStatus(v)}
+                onValueChange={(v: "planning" | "active" | "completed" | "archived") => setStatus(v)}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="planning">Planning</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="archived">Archived</SelectItem>
@@ -984,11 +1136,13 @@ function DrawerTaskRow({
   task,
   canEdit,
   onStatusCycle,
+  onEdit,
   isCycling,
 }: {
   task: ChapterTask;
   canEdit: boolean;
   onStatusCycle: () => void;
+  onEdit: () => void;
   isCycling: boolean;
 }) {
   const cfg = TASK_STATUS_CONFIG[task.status];
@@ -996,7 +1150,7 @@ function DrawerTaskRow({
   return (
     <div
       className={cn(
-        "flex items-start gap-3 p-3 rounded-lg border border-border-default bg-surface-card",
+        "group flex items-start gap-3 p-3 rounded-lg border border-border-default bg-surface-card",
         task.status === "done" && "opacity-60",
       )}
     >
@@ -1041,6 +1195,16 @@ function DrawerTaskRow({
           )}
         </div>
       </div>
+
+      {canEdit && (
+        <button
+          onClick={onEdit}
+          className="mt-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+          title="Edit task"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   );
 }

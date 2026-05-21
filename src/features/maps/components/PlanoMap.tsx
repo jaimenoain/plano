@@ -212,8 +212,21 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
       .reduce((prev: any, curr: any) => (curr.count > (prev?.count || 0) ? curr : prev), null);
   }, [clusters, filters.photographyGaps, showGapCallout, viewState.zoom]);
 
+  // Trigger an explicit map.resize() whenever the fullscreen state changes so
+  // the MapLibre canvas recalculates its dimensions after the portal fires.
+  useEffect(() => {
+    if (!isMapLoaded) return;
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+    const raf = requestAnimationFrame(() => map.resize());
+    return () => cancelAnimationFrame(raf);
+  }, [isExpanded]);
+
   const mapContent = (
-    <div className={`relative h-full w-full overflow-hidden bg-surface-default ${isExpanded ? "fixed inset-0 z-[9999]" : "z-0"}`}>
+    // `relative` and `fixed` must be mutually exclusive: Tailwind generates
+    // `.relative` after `.fixed` in its output, so if both classes are present
+    // `position: relative` wins and the fixed/fullscreen overlay never works.
+    <div className={`${isExpanded ? "fixed inset-0 z-[9999]" : "relative z-0"} h-full w-full overflow-hidden bg-surface-default`}>
       <Map
         ref={mapRef}
         {...viewState}

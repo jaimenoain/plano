@@ -55,7 +55,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext";
 import { PlanoMap } from "@/features/maps/components/PlanoMap";
-import { DEFAULT_LAT, DEFAULT_LNG, DEFAULT_ZOOM } from "@/features/maps/hooks/useURLMapState";
 
 interface OutreachLogRow {
   id: string;
@@ -1392,7 +1391,15 @@ function FirmOutreachDrawer({
 
 function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () => void }) {
   const [view, setView] = useState<"list" | "map">("map");
-  const { state: { lat, lng, zoom, filters }, methods: { setFilter, moveMap } } = useMapContext();
+  const { state: { filters }, methods: { setFilter, moveMap } } = useMapContext();
+  const [searchParams] = useSearchParams();
+  // Capture at mount whether the URL already carried explicit lat/lng (e.g. a
+  // shared deep-link). If it did, preserve the position. If it didn't (user
+  // opened the tool from the tools list), always center on the chapter city —
+  // regardless of what PlanoMap.onLoad restores from localStorage afterwards.
+  const initialHasExplicitPosition = useRef(
+    searchParams.get('lat') !== null && searchParams.get('lng') !== null
+  );
 
   // Keep refs so the effect always calls the latest setFilter / reads the
   // latest filters without listing them as deps. Listing setFilter directly
@@ -1424,17 +1431,20 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
     staleTime: Infinity,
   });
 
-  // One-shot: center the map on the chapter's locality when the map view opens
-  // and the user hasn't already positioned the map (still at global defaults).
+  // One-shot: center the map on the chapter's locality when the map view opens,
+  // unless the URL already carried an explicit position at mount time.
+  // We deliberately do NOT guard on lat/lng/zoom here — PlanoMap.onLoad may
+  // restore a position from localStorage before chapterCenter resolves, which
+  // would change lat away from DEFAULT_LAT and prevent centering.
   const hasCenteredRef = useRef(false);
   useEffect(() => {
     if (hasCenteredRef.current) return;
+    if (initialHasExplicitPosition.current) return;
     if (view !== "map") return;
     if (!chapterCenter) return;
-    if (lat !== DEFAULT_LAT || lng !== DEFAULT_LNG || zoom !== DEFAULT_ZOOM) return;
     moveMapRef.current(chapterCenter.lat, chapterCenter.lng, 13);
     hasCenteredRef.current = true;
-  }, [view, chapterCenter, lat, lng, zoom]);
+  }, [view, chapterCenter]);
 
   const { data: buildings, isLoading, error } = useQuery({
     queryKey: ["embassy-buildings-no-photo", chapterId],
