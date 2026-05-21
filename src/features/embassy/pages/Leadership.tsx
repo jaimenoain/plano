@@ -176,7 +176,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (
     !membership ||
     membership.status !== "active" ||
-    (membership.role !== "exco" && membership.role !== "president")
+    !["exco", "president", "global_team", "global_leaders", "global_president"].includes(membership.role)
   ) {
     return redirect("/embassy", { headers: responseHeaders });
   }
@@ -218,7 +218,7 @@ export default function LeadershipPage() {
 
   const loadApplications = useCallback(async () => {
     if (!membership?.chapter_id) return;
-    const isLeader = membership.role === "president" || membership.role === "exco";
+    const isLeader = ["president", "exco", "global_leaders", "global_team", "global_president"].includes(membership.role);
     if (!isLeader) return;
     
     setLoadingApps(true);
@@ -247,7 +247,7 @@ export default function LeadershipPage() {
     void loadApplications();
   }, [loadApplications]);
 
-  const isPresident = membership?.role === "president";
+  const isPresident = ["president", "global_leaders", "global_president"].includes(membership?.role ?? "");
   const isNationalPresident = membership?.chapter?.type === "national" && isPresident;
 
   const activeTab = searchParams.get("tab") || "health";

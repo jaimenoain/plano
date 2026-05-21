@@ -20,6 +20,9 @@ export const ambassadorMembershipRoleSchema = z.enum([
   "president",
   "exco",
   "ambassador",
+  "global_team",
+  "global_leaders",
+  "global_president",
 ]);
 
 export const excoResponsibilitySchema = z.enum([

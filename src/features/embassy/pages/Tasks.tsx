@@ -266,7 +266,7 @@ export default function TasksPage() {
   });
 
   const chapterId = membership?.chapter_id;
-  const isLeader = membership?.role === "exco" || membership?.role === "president";
+  const isLeader = ["exco", "president", "global_team", "global_leaders", "global_president"].includes(membership?.role ?? "");
 
   // ── tasks ──
   const { data: tasks = [], isLoading, error } = useQuery({

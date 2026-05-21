@@ -60,7 +60,7 @@ export default function EmbassyLayout() {
     enabled: !!user,
   });
 
-  const isLeader = membership?.role === "exco" || membership?.role === "president";
+  const isLeader = ["exco", "president", "global_team", "global_leaders", "global_president"].includes(membership?.role ?? "");
 
   // Server enforces the 4-day gate. This is opportunistic — never block the layout on it.
   useEffect(() => {

@@ -51,9 +51,17 @@ type PendingApplication = ApplicationRow & {
   applicant: { id: string; username: string | null; avatar_url: string | null } | null;
 };
 
+const ROLE_DISPLAY: Record<string, string> = {
+  president: "President",
+  exco: "ExCo",
+  ambassador: "Ambassador",
+  global_team: "Global Team",
+  global_leaders: "Global Leaders",
+  global_president: "Global President",
+};
+
 function roleLabel(role: string) {
-  if (role === "exco") return "ExCo";
-  return role.charAt(0).toUpperCase() + role.slice(1);
+  return ROLE_DISPLAY[role] ?? (role.charAt(0).toUpperCase() + role.slice(1));
 }
 
 function taskSectionSkeleton() {
@@ -371,8 +379,7 @@ function EmbassyContent() {
   const loadApplications = useCallback(async () => {
     if (!membership?.chapter_id) return;
     if (membership.status !== "active") return;
-    const isLeader =
-      membership.role === "president" || membership.role === "exco";
+    const isLeader = ["president", "exco", "global_leaders", "global_team", "global_president"].includes(membership.role);
     if (!isLeader) return;
     setLoadingApps(true);
     try {
@@ -410,17 +417,17 @@ function EmbassyContent() {
   const isLeader = useMemo(
     () =>
       membershipActive &&
-      (membership?.role === "president" || membership?.role === "exco"),
+      ["president", "exco", "global_leaders", "global_team", "global_president"].includes(membership?.role ?? ""),
     [membershipActive, membership?.role],
   );
 
-  const isPresident = membershipActive && membership?.role === "president";
+  const isPresident = membershipActive && ["president", "global_leaders", "global_president"].includes(membership?.role ?? "");
 
   const isNationalPresident = useMemo(
     () =>
       membershipActive &&
       membership?.chapter?.type === "national" &&
-      membership?.role === "president",
+      ["president", "global_leaders", "global_president"].includes(membership?.role ?? ""),
     [membershipActive, membership?.chapter?.type, membership?.role],
   );
 

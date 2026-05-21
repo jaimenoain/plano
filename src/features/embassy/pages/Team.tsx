@@ -18,7 +18,10 @@ const EXCO_LABELS: Record<string, string> = {
 };
 
 const ROLE_LABELS: Record<string, string> = {
+  global_president: "Global President",
+  global_leaders: "Global Leaders",
   president: "President",
+  global_team: "Global Team",
   exco: "Executive Committee",
   ambassador: "Ambassador",
 };
@@ -39,9 +42,24 @@ function TeamMemberCard({ member }: { member: ChapterTeamMember }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-semibold truncate">@{member.username}</span>
+          {member.role === "global_president" && (
+            <Badge className="text-[10px] uppercase font-bold bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border-none">
+              Global President
+            </Badge>
+          )}
+          {member.role === "global_leaders" && (
+            <Badge className="text-[10px] uppercase font-bold bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border-none">
+              Global Leaders
+            </Badge>
+          )}
           {member.role === "president" && (
             <Badge className="text-[10px] uppercase font-bold bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border-none">
               President
+            </Badge>
+          )}
+          {member.role === "global_team" && (
+            <Badge variant="secondary" className="text-[10px] uppercase font-bold">
+              Global Team
             </Badge>
           )}
           {member.role === "exco" && (
@@ -90,9 +108,12 @@ export default function TeamPage() {
   });
 
   const grouped = useMemo(() => {
-    if (!members) return { president: [], exco: [], ambassador: [] };
+    if (!members) return { global_president: [], global_leaders: [], president: [], global_team: [], exco: [], ambassador: [] };
     return {
+      global_president: members.filter((m) => m.role === "global_president"),
+      global_leaders: members.filter((m) => m.role === "global_leaders"),
       president: members.filter((m) => m.role === "president"),
+      global_team: members.filter((m) => m.role === "global_team"),
       exco: members.filter((m) => m.role === "exco"),
       ambassador: members.filter((m) => m.role === "ambassador"),
     };
@@ -129,7 +150,7 @@ export default function TeamPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          {(["president", "exco", "ambassador"] as const).map((role) => {
+          {(["global_president", "global_leaders", "president", "global_team", "exco", "ambassador"] as const).map((role) => {
             const group = grouped[role];
             if (group.length === 0) return null;
             return (

@@ -132,7 +132,7 @@ const EXCO_LABEL: Record<string, string> = {
   community: "Community",
 };
 
-const ROLE_ORDER = ["president", "exco", "ambassador"] as const;
+const ROLE_ORDER = ["global_president", "global_leaders", "president", "global_team", "exco", "ambassador"] as const;
 
 export default function AmbassadorChapterDetail() {
   const { chapterId } = useParams();
@@ -145,7 +145,7 @@ export default function AmbassadorChapterDetail() {
   const [userSearch, setUserSearch] = useState("");
   const [userHits, setUserHits] = useState<{ id: string; username: string | null }[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [addRole, setAddRole] = useState<"president" | "exco" | "ambassador">("ambassador");
+  const [addRole, setAddRole] = useState<"president" | "exco" | "ambassador" | "global_team" | "global_leaders" | "global_president">("ambassador");
   const [addExco, setAddExco] = useState<
     "content" | "marketing" | "architect_relations" | "data_quality" | "community"
   >("content");
@@ -723,6 +723,9 @@ export default function AmbassadorChapterDetail() {
                               <SelectItem value="ambassador">Ambassador</SelectItem>
                               <SelectItem value="exco">ExCo</SelectItem>
                               <SelectItem value="president">President</SelectItem>
+                              <SelectItem value="global_team">Global Team</SelectItem>
+                              <SelectItem value="global_leaders">Global Leaders</SelectItem>
+                              <SelectItem value="global_president">Global President</SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>
@@ -1004,6 +1007,9 @@ export default function AmbassadorChapterDetail() {
                   <SelectItem value="ambassador">Ambassador</SelectItem>
                   <SelectItem value="exco">ExCo</SelectItem>
                   <SelectItem value="president">President</SelectItem>
+                  <SelectItem value="global_team">Global Team</SelectItem>
+                  <SelectItem value="global_leaders">Global Leaders</SelectItem>
+                  <SelectItem value="global_president">Global President</SelectItem>
                 </SelectContent>
               </Select>
             </div>

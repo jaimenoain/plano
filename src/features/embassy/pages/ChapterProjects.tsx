@@ -130,7 +130,7 @@ export default function ChapterProjectsPage() {
     enabled: !!user,
   });
 
-  const isLeader = membership?.role === "exco" || membership?.role === "president";
+  const isLeader = ["exco", "president", "global_team", "global_leaders", "global_president"].includes(membership?.role ?? "");
   const chapterId = membership?.chapter_id;
 
   const { data: projects, isLoading, error } = useQuery({
@@ -255,7 +255,7 @@ export default function ChapterProjectsPage() {
         .select("user_id")
         .eq("chapter_id", chapterId!)
         .eq("status", "active")
-        .in("role", ["president", "exco"]);
+        .in("role", ["president", "exco", "global_leaders", "global_team", "global_president"]);
 
       if (leaders && leaders.length > 0) {
         const notifications = leaders
