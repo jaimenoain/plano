@@ -10,12 +10,22 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pin, CheckCircle2, Archive, Loader2, AlertCircle, Trash2, Target, Lightbulb, CheckCheck, Inbox } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Plus, Pin, CheckCircle2, Archive, Loader2, AlertCircle, Trash2,
+  Target, Lightbulb, CheckCheck, Inbox, Circle, Clock, CalendarDays,
+  Users, EyeOff, Pencil,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { formatDistanceToNow, format, parseISO } from "date-fns";
+import { formatDistanceToNow, format, parseISO, isPast, isToday } from "date-fns";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
 
 type Project = {
   id: string;
@@ -39,10 +49,84 @@ type Campaign = {
   chapter_scope: "all" | "specific";
 };
 
-async function fetchCampaignProgress(
-  campaign: Campaign,
-  chapterId: string,
-): Promise<number> {
+type TaskVisibility = "chapter" | "leadership" | "only_me";
+type TaskStatus = "todo" | "in_progress" | "done";
+
+interface ChapterTask {
+  id: string;
+  title: string;
+  description: string | null;
+  due_date: string | null;
+  visibility: TaskVisibility;
+  status: TaskStatus;
+  created_by: string;
+  creator_username: string | null;
+  assigned_to: string | null;
+  assignee_username: string | null;
+  assignee_avatar_url: string | null;
+  project_id: string | null;
+  project_title: string | null;
+  company_id: string | null;
+  company_name: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface TeamMember {
+  user_id: string;
+  username: string;
+  avatar_url: string | null;
+  role: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TASK_STATUS_CONFIG: Record<TaskStatus, { label: string; icon: React.ReactNode; class: string }> = {
+  todo:        { label: "To do",       icon: <Circle className="h-3.5 w-3.5" />,       class: "text-muted-foreground" },
+  in_progress: { label: "In progress", icon: <Clock className="h-3.5 w-3.5" />,        class: "text-amber-600" },
+  done:        { label: "Done",        icon: <CheckCircle2 className="h-3.5 w-3.5" />, class: "text-green-600" },
+};
+
+const NEXT_STATUS: Record<TaskStatus, TaskStatus> = {
+  todo: "in_progress",
+  in_progress: "done",
+  done: "todo",
+};
+
+const PROJECT_STATUS_CONFIG = {
+  active:    { icon: <Pin className="h-3 w-3" />,          class: "bg-brand-primary/10 text-brand-primary border-brand-primary/20" },
+  completed: { icon: <CheckCircle2 className="h-3 w-3" />, class: "bg-green-500/10 text-green-600 border-green-500/20" },
+  archived:  { icon: <Archive className="h-3 w-3" />,      class: "bg-muted text-muted-foreground border-border-default" },
+  draft:     { icon: <Lightbulb className="h-3 w-3" />,    class: "bg-amber-50 text-amber-700 border-amber-200" },
+};
+
+const EMPTY_TASK_FORM = {
+  title: "",
+  description: "",
+  due_date: "",
+  visibility: "chapter" as TaskVisibility,
+  assigned_to: "",
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+function taskInitials(username: string) {
+  return username.split(/[\s_-]/).map((p) => p[0]?.toUpperCase() ?? "").slice(0, 2).join("");
+}
+
+function dueDateClass(due: string | null): string {
+  if (!due) return "";
+  const d = parseISO(due);
+  if (isPast(d) && !isToday(d)) return "text-destructive";
+  if (isToday(d)) return "text-amber-600";
+  return "text-muted-foreground";
+}
+
+async function fetchCampaignProgress(campaign: Campaign, chapterId: string): Promise<number> {
   const { start_date, end_date, metric_type } = campaign;
   const endTs = end_date + "T23:59:59Z";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -99,6 +183,10 @@ async function fetchCampaignProgress(
   return count ?? 0;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Main page
+// ─────────────────────────────────────────────────────────────────────────────
+
 export default function ChapterProjectsPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -115,6 +203,13 @@ export default function ChapterProjectsPage() {
   const [ideaTitle, setIdeaTitle] = useState("");
   const [ideaDescription, setIdeaDescription] = useState("");
 
+  // Project detail drawer
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
+  const [taskForm, setTaskForm] = useState(EMPTY_TASK_FORM);
+  const [cyclingTaskId, setCyclingTaskId] = useState<string | null>(null);
+
+  // ── membership ──
   const { data: membership } = useQuery({
     queryKey: ["ambassador-membership-projects", user?.id],
     queryFn: async () => {
@@ -133,6 +228,7 @@ export default function ChapterProjectsPage() {
   const isLeader = ["exco", "president", "global_team", "global_leaders", "global_president"].includes(membership?.role ?? "");
   const chapterId = membership?.chapter_id;
 
+  // ── projects (all owner usernames batch-fetched) ──
   const { data: projects, isLoading, error } = useQuery({
     queryKey: ["chapter-projects", chapterId],
     queryFn: async () => {
@@ -146,33 +242,27 @@ export default function ChapterProjectsPage() {
       if (error) throw error;
       const rows = data as Project[];
 
-      // Batch-fetch author usernames for draft ideas.
       // chapter_projects.created_by → auth.users(id), not profiles(id),
       // so FK-hint joins don't work — use a separate profiles lookup.
-      const draftAuthorIds = Array.from(
-        new Set(rows.filter((r) => r.status === "draft").map((r) => r.created_by)),
-      );
-      if (draftAuthorIds.length > 0) {
+      const authorIds = Array.from(new Set(rows.map((r) => r.created_by)));
+      if (authorIds.length > 0) {
         const { data: profileRows } = await db
           .from("profiles")
           .select("id, username")
-          .in("id", draftAuthorIds);
+          .in("id", authorIds);
         const profileMap = new Map<string, string>(
           ((profileRows ?? []) as Array<{ id: string; username: string | null }>)
             .filter((p) => p.username)
             .map((p) => [p.id, p.username as string]),
         );
-        return rows.map((r) =>
-          r.status === "draft"
-            ? { ...r, author_username: profileMap.get(r.created_by) ?? null }
-            : r,
-        );
+        return rows.map((r) => ({ ...r, author_username: profileMap.get(r.created_by) ?? null }));
       }
       return rows;
     },
     enabled: !!chapterId,
   });
 
+  // ── campaigns ──
   const { data: campaigns = [] } = useQuery({
     queryKey: ["programme-campaigns-portal", chapterId],
     queryFn: async () => {
@@ -198,11 +288,41 @@ export default function ChapterProjectsPage() {
     enabled: !!chapterId && campaigns.length > 0,
   });
 
-  // Leader: create or edit a published project
+  // ── tasks (for project detail drawer) ──
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["chapter-tasks-projects", chapterId],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc("get_chapter_tasks", {
+        p_chapter_id: chapterId,
+      });
+      if (error) throw error;
+      return (data ?? []) as ChapterTask[];
+    },
+    enabled: !!chapterId,
+    staleTime: 30_000,
+  });
+
+  // ── team members (for assignee dropdown in task creation) ──
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ["chapter-team-projects", chapterId],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any).rpc("get_chapter_team", {
+        p_chapter_id: chapterId,
+      });
+      return (data ?? []) as TeamMember[];
+    },
+    enabled: !!chapterId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // ── project mutations ──
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabase as any;
+      const db = supabase as any;
       if (editingProject) {
         const { error } = await db
           .from("chapter_projects")
@@ -223,7 +343,7 @@ export default function ChapterProjectsPage() {
       }
     },
     onSuccess: () => {
-      toast.success(editingProject ? "Project updated" : "Project pinned");
+      toast.success(editingProject ? "Project updated" : "Project created");
       setIsCreateOpen(false);
       resetLeaderForm();
       queryClient.invalidateQueries({ queryKey: ["chapter-projects", chapterId] });
@@ -233,7 +353,6 @@ export default function ChapterProjectsPage() {
     },
   });
 
-  // Ambassador: submit an idea as a draft
   const submitIdeaMutation = useMutation({
     mutationFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -249,7 +368,6 @@ export default function ChapterProjectsPage() {
         });
       if (error) throw error;
 
-      // Notify all chapter leaders (president + exco)
       const { data: leaders } = await db
         .from("ambassador_memberships")
         .select("user_id")
@@ -285,7 +403,6 @@ export default function ChapterProjectsPage() {
     },
   });
 
-  // Leader: publish a draft (set status to active)
   const publishMutation = useMutation({
     mutationFn: async (id: string) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -316,6 +433,54 @@ export default function ChapterProjectsPage() {
     },
   });
 
+  // ── task mutations ──
+
+  const createTaskMutation = useMutation({
+    mutationFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).from("chapter_tasks").insert({
+        chapter_id: chapterId!,
+        title: taskForm.title.trim(),
+        description: taskForm.description.trim() || null,
+        due_date: taskForm.due_date || null,
+        visibility: taskForm.visibility,
+        assigned_to: taskForm.assigned_to || null,
+        project_id: selectedProject!.id,
+        created_by: user!.id,
+        updated_at: new Date().toISOString(),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Task added to project.");
+      setIsAddTaskOpen(false);
+      setTaskForm(EMPTY_TASK_FORM);
+      queryClient.invalidateQueries({ queryKey: ["chapter-tasks-projects", chapterId] });
+      queryClient.invalidateQueries({ queryKey: ["chapter-tasks", chapterId] });
+    },
+    onError: () => toast.error("Failed to create task."),
+  });
+
+  const taskStatusMutation = useMutation({
+    mutationFn: async ({ id, newStatus }: { id: string; newStatus: TaskStatus }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from("chapter_tasks")
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onMutate: ({ id }) => setCyclingTaskId(id),
+    onSettled: () => setCyclingTaskId(null),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chapter-tasks-projects", chapterId] });
+      queryClient.invalidateQueries({ queryKey: ["chapter-tasks", chapterId] });
+    },
+    onError: () => toast.error("Failed to update task status."),
+  });
+
+  // ── helpers ──
+
   const resetLeaderForm = () => {
     setTitle("");
     setDescription("");
@@ -323,7 +488,8 @@ export default function ChapterProjectsPage() {
     setEditingProject(null);
   };
 
-  const openEdit = (project: Project) => {
+  const openEdit = (project: Project, e: React.MouseEvent) => {
+    e.stopPropagation();
     setEditingProject(project);
     setTitle(project.title);
     setDescription(project.description || "");
@@ -333,9 +499,13 @@ export default function ChapterProjectsPage() {
 
   const drafts = projects?.filter((p) => p.status === "draft") ?? [];
   const published = projects?.filter((p) => p.status !== "draft") ?? [];
+  const projectTasks = selectedProject
+    ? tasks.filter((t) => t.project_id === selectedProject.id)
+    : [];
 
   return (
     <div className="space-y-8">
+      {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-3xl font-bold tracking-tight">Chapter Projects</h1>
@@ -354,7 +524,7 @@ export default function ChapterProjectsPage() {
           )}
           {isLeader && (
             <Button onClick={() => { resetLeaderForm(); setIsCreateOpen(true); }} className="gap-2">
-              <Plus className="h-4 w-4" /> Pin Project
+              <Plus className="h-4 w-4" /> Create Project
             </Button>
           )}
         </div>
@@ -427,7 +597,7 @@ export default function ChapterProjectsPage() {
                 key={project.id}
                 project={project}
                 onPublish={() => publishMutation.mutate(project.id)}
-                onEdit={() => openEdit(project)}
+                onEdit={(e) => openEdit(project, e)}
                 onDelete={() => { if (confirm("Delete this idea?")) deleteMutation.mutate(project.id); }}
                 isPublishing={publishMutation.isPending}
               />
@@ -458,8 +628,8 @@ export default function ChapterProjectsPage() {
             <p className="text-xl font-medium">No projects yet</p>
             <p className="text-muted-foreground">
               {isLeader
-                ? "Pin priorities here, or publish an idea from the inbox above."
-                : "No projects have been pinned yet. Submit an idea using the button above."}
+                ? "Create projects here, or publish an idea from the inbox above."
+                : "No projects have been created yet. Submit an idea using the button above."}
             </p>
           </div>
           {isLeader && (
@@ -470,23 +640,237 @@ export default function ChapterProjectsPage() {
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {published.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              isLeader={isLeader}
-              onEdit={() => openEdit(project)}
-              onDelete={() => { if (confirm("Remove this project?")) deleteMutation.mutate(project.id); }}
-            />
-          ))}
+          {published.map((project) => {
+            const taskCount = tasks.filter((t) => t.project_id === project.id).length;
+            return (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                taskCount={taskCount}
+                isLeader={isLeader}
+                onOpen={() => setSelectedProject(project)}
+                onEdit={(e) => openEdit(project, e)}
+                onDelete={(e) => {
+                  e.stopPropagation();
+                  if (confirm("Remove this project?")) deleteMutation.mutate(project.id);
+                }}
+              />
+            );
+          })}
         </div>
       )}
 
+      {/* ── Project detail Sheet ── */}
+      <Sheet open={!!selectedProject} onOpenChange={(open) => { if (!open) setSelectedProject(null); }}>
+        <SheetContent className="w-full sm:max-w-xl flex flex-col overflow-y-auto gap-0 p-0">
+          {selectedProject && (
+            <>
+              <SheetHeader className="px-6 pt-6 pb-4 border-b border-border-default">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1 min-w-0">
+                    <SheetTitle className="text-xl font-bold leading-tight">{selectedProject.title}</SheetTitle>
+                    {selectedProject.description && (
+                      <SheetDescription className="text-sm text-muted-foreground leading-relaxed">
+                        {selectedProject.description}
+                      </SheetDescription>
+                    )}
+                  </div>
+                  {isLeader && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={(e) => openEdit(selectedProject, e)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+
+                {/* Project meta */}
+                <div className="flex flex-wrap items-center gap-3 pt-3 text-sm text-muted-foreground">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "gap-1 px-2 py-0.5 capitalize font-medium text-xs",
+                      PROJECT_STATUS_CONFIG[selectedProject.status].class,
+                    )}
+                  >
+                    {PROJECT_STATUS_CONFIG[selectedProject.status].icon}
+                    {selectedProject.status}
+                  </Badge>
+                  {selectedProject.author_username && (
+                    <span className="flex items-center gap-1.5">
+                      <Avatar className="h-5 w-5">
+                        <AvatarFallback className="text-[10px] bg-muted">
+                          {selectedProject.author_username[0]?.toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs">@{selectedProject.author_username}</span>
+                    </span>
+                  )}
+                  <span className="text-xs">
+                    Created {formatDistanceToNow(new Date(selectedProject.created_at), { addSuffix: true })}
+                  </span>
+                </div>
+              </SheetHeader>
+
+              {/* Tasks section */}
+              <div className="flex-1 px-6 py-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-text-secondary flex items-center gap-2">
+                    Tasks
+                    {projectTasks.length > 0 && (
+                      <Badge variant="secondary" className="text-xs font-normal">{projectTasks.length}</Badge>
+                    )}
+                  </h3>
+                  <Button size="sm" className="gap-1.5" onClick={() => setIsAddTaskOpen(true)}>
+                    <Plus className="h-3.5 w-3.5" />
+                    Add Task
+                  </Button>
+                </div>
+
+                {projectTasks.length === 0 ? (
+                  <div className="py-12 text-center border border-dashed rounded-lg space-y-2">
+                    <Circle className="h-8 w-8 mx-auto text-muted-foreground/40" />
+                    <p className="text-sm text-muted-foreground">No tasks yet — add the first one above.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {projectTasks.map((task) => (
+                      <DrawerTaskRow
+                        key={task.id}
+                        task={task}
+                        canEdit={task.created_by === user?.id || isLeader}
+                        onStatusCycle={() =>
+                          taskStatusMutation.mutate({ id: task.id, newStatus: NEXT_STATUS[task.status] })
+                        }
+                        isCycling={cyclingTaskId === task.id}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* ── Add Task dialog (opens from inside the Sheet) ── */}
+      <Dialog
+        open={isAddTaskOpen}
+        onOpenChange={(open) => { setIsAddTaskOpen(open); if (!open) setTaskForm(EMPTY_TASK_FORM); }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Task</DialogTitle>
+            <DialogDescription>
+              Task will be added to &ldquo;{selectedProject?.title}&rdquo;.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="add-task-title">Title</Label>
+              <Input
+                id="add-task-title"
+                placeholder="e.g. Photograph the north façade"
+                value={taskForm.title}
+                onChange={(e) => setTaskForm((f) => ({ ...f, title: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="add-task-description">Description (optional)</Label>
+              <Textarea
+                id="add-task-description"
+                placeholder="Any important context?"
+                rows={3}
+                value={taskForm.description}
+                onChange={(e) => setTaskForm((f) => ({ ...f, description: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="add-task-due">Due date (optional)</Label>
+                <Input
+                  id="add-task-due"
+                  type="date"
+                  value={taskForm.due_date}
+                  onChange={(e) => setTaskForm((f) => ({ ...f, due_date: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="add-task-assigned">Assign to (optional)</Label>
+                <Select
+                  value={taskForm.assigned_to}
+                  onValueChange={(v) => setTaskForm((f) => ({ ...f, assigned_to: v === "__none__" ? "" : v }))}
+                >
+                  <SelectTrigger id="add-task-assigned">
+                    <SelectValue placeholder="Anyone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Anyone</SelectItem>
+                    {teamMembers.map((m) => (
+                      <SelectItem key={m.user_id} value={m.user_id}>
+                        @{m.username}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="add-task-visibility">Visibility</Label>
+              <Select
+                value={taskForm.visibility}
+                onValueChange={(v: TaskVisibility) => setTaskForm((f) => ({ ...f, visibility: v }))}
+              >
+                <SelectTrigger id="add-task-visibility">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="chapter">
+                    <span className="flex items-center gap-2">
+                      <Users className="h-3.5 w-3.5" /> Everyone in the chapter
+                    </span>
+                  </SelectItem>
+                  {isLeader && (
+                    <SelectItem value="leadership">
+                      <span className="flex items-center gap-2">
+                        <Users className="h-3.5 w-3.5" /> Leadership only
+                      </span>
+                    </SelectItem>
+                  )}
+                  <SelectItem value="only_me">
+                    <span className="flex items-center gap-2">
+                      <EyeOff className="h-3.5 w-3.5" /> Only me
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddTaskOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => createTaskMutation.mutate()}
+              disabled={createTaskMutation.isPending || !taskForm.title.trim()}
+            >
+              {createTaskMutation.isPending
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : "Add Task"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Leader: create / edit published project */}
-      <Dialog open={isCreateOpen} onOpenChange={(open) => { setIsCreateOpen(open); if (!open) resetLeaderForm(); }}>
+      <Dialog
+        open={isCreateOpen}
+        onOpenChange={(open) => { setIsCreateOpen(open); if (!open) resetLeaderForm(); }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingProject ? "Edit Project" : "Pin a New Priority"}</DialogTitle>
+            <DialogTitle>{editingProject ? "Edit Project" : "Create Project"}</DialogTitle>
             <DialogDescription>
               This will be visible to all members of your chapter.
             </DialogDescription>
@@ -513,7 +897,10 @@ export default function ChapterProjectsPage() {
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
-              <Select value={status} onValueChange={(v: "active" | "completed" | "archived") => setStatus(v)}>
+              <Select
+                value={status}
+                onValueChange={(v: "active" | "completed" | "archived") => setStatus(v)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -531,19 +918,24 @@ export default function ChapterProjectsPage() {
               onClick={() => saveMutation.mutate()}
               disabled={saveMutation.isPending || !title.trim()}
             >
-              {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (editingProject ? "Update" : "Pin Project")}
+              {saveMutation.isPending
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : (editingProject ? "Update" : "Create Project")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Ambassador: submit idea dialog */}
-      <Dialog open={isIdeaOpen} onOpenChange={(open) => { setIsIdeaOpen(open); if (!open) { setIdeaTitle(""); setIdeaDescription(""); } }}>
+      <Dialog
+        open={isIdeaOpen}
+        onOpenChange={(open) => { setIsIdeaOpen(open); if (!open) { setIdeaTitle(""); setIdeaDescription(""); } }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Submit a Project Idea</DialogTitle>
             <DialogDescription>
-              Your idea will be sent to your chapter's president and executive committee as a draft. They can publish, edit, or decline it.
+              Your idea will be sent to your chapter&rsquo;s president and executive committee as a draft. They can publish, edit, or decline it.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -573,7 +965,9 @@ export default function ChapterProjectsPage() {
               onClick={() => submitIdeaMutation.mutate()}
               disabled={submitIdeaMutation.isPending || !ideaTitle.trim()}
             >
-              {submitIdeaMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit Idea"}
+              {submitIdeaMutation.isPending
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : "Submit Idea"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -581,6 +975,79 @@ export default function ChapterProjectsPage() {
     </div>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DrawerTaskRow — lightweight task row inside the project detail Sheet
+// ─────────────────────────────────────────────────────────────────────────────
+
+function DrawerTaskRow({
+  task,
+  canEdit,
+  onStatusCycle,
+  isCycling,
+}: {
+  task: ChapterTask;
+  canEdit: boolean;
+  onStatusCycle: () => void;
+  isCycling: boolean;
+}) {
+  const cfg = TASK_STATUS_CONFIG[task.status];
+
+  return (
+    <div
+      className={cn(
+        "flex items-start gap-3 p-3 rounded-lg border border-border-default bg-surface-card",
+        task.status === "done" && "opacity-60",
+      )}
+    >
+      <button
+        onClick={onStatusCycle}
+        disabled={isCycling || !canEdit}
+        className={cn(
+          "mt-0.5 shrink-0 transition-colors",
+          cfg.class,
+          canEdit && "hover:text-brand-primary cursor-pointer",
+          !canEdit && "cursor-default",
+        )}
+        title={canEdit ? `Mark as ${TASK_STATUS_CONFIG[NEXT_STATUS[task.status]].label}` : cfg.label}
+      >
+        {isCycling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : cfg.icon}
+      </button>
+
+      <div className="min-w-0 flex-1">
+        <p className={cn("text-sm font-medium leading-snug", task.status === "done" && "line-through")}>
+          {task.title}
+        </p>
+        {task.description && (
+          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">{task.description}</p>
+        )}
+        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+          {task.due_date && (
+            <span className={cn("flex items-center gap-1 text-xs", dueDateClass(task.due_date))}>
+              <CalendarDays className="h-3 w-3" />
+              {format(parseISO(task.due_date), "d MMM yyyy")}
+            </span>
+          )}
+          {task.assignee_username && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Avatar className="h-4 w-4">
+                <AvatarImage src={task.assignee_avatar_url ?? undefined} />
+                <AvatarFallback className="text-[8px] bg-muted">
+                  {taskInitials(task.assignee_username)}
+                </AvatarFallback>
+              </Avatar>
+              <span>@{task.assignee_username}</span>
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DraftCard
+// ─────────────────────────────────────────────────────────────────────────────
 
 function DraftCard({
   project,
@@ -591,7 +1058,7 @@ function DraftCard({
 }: {
   project: Project;
   onPublish: () => void;
-  onEdit: () => void;
+  onEdit: (e: React.MouseEvent) => void;
   onDelete: () => void;
   isPublishing: boolean;
 }) {
@@ -647,23 +1114,32 @@ function DraftCard({
   );
 }
 
-function ProjectCard({ project, isLeader, onEdit, onDelete }: {
-  project: Project;
-  isLeader: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  const statusConfig = {
-    active: { icon: <Pin className="h-3 w-3" />, class: "bg-brand-primary/10 text-brand-primary border-brand-primary/20" },
-    completed: { icon: <CheckCircle2 className="h-3 w-3" />, class: "bg-green-500/10 text-green-600 border-green-500/20" },
-    archived: { icon: <Archive className="h-3 w-3" />, class: "bg-muted text-muted-foreground border-border-default" },
-    draft: { icon: <Lightbulb className="h-3 w-3" />, class: "bg-amber-50 text-amber-700 border-amber-200" },
-  };
+// ─────────────────────────────────────────────────────────────────────────────
+// ProjectCard — clickable card that opens the detail drawer
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const config = statusConfig[project.status];
+function ProjectCard({
+  project,
+  taskCount,
+  isLeader,
+  onOpen,
+  onEdit,
+  onDelete,
+}: {
+  project: Project;
+  taskCount: number;
+  isLeader: boolean;
+  onOpen: () => void;
+  onEdit: (e: React.MouseEvent) => void;
+  onDelete: (e: React.MouseEvent) => void;
+}) {
+  const config = PROJECT_STATUS_CONFIG[project.status];
 
   return (
-    <Card className="flex flex-col p-6 hover:shadow-md transition-all group relative">
+    <Card
+      className="flex flex-col p-6 hover:shadow-md transition-all group relative cursor-pointer"
+      onClick={onOpen}
+    >
       <div className="flex items-start justify-between mb-4">
         <Badge variant="outline" className={cn("gap-1 px-2 py-0.5 capitalize font-medium", config.class)}>
           {config.icon}
@@ -671,17 +1147,31 @@ function ProjectCard({ project, isLeader, onEdit, onDelete }: {
         </Badge>
         {isLeader && (
           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit}>
-              <Plus className="h-4 w-4" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={onEdit}
+              title="Edit project"
+            >
+              <Pencil className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={onDelete}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-destructive hover:text-destructive"
+              onClick={onDelete}
+              title="Remove project"
+            >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         )}
       </div>
 
-      <h3 className="text-xl font-bold mb-2 group-hover:text-brand-primary transition-colors">{project.title}</h3>
+      <h3 className="text-xl font-bold mb-2 group-hover:text-brand-primary transition-colors">
+        {project.title}
+      </h3>
       {project.description && (
         <p className="text-sm text-muted-foreground line-clamp-4 flex-1 mb-6 leading-relaxed">
           {project.description}
@@ -690,8 +1180,13 @@ function ProjectCard({ project, isLeader, onEdit, onDelete }: {
 
       <div className="mt-auto pt-4 border-t border-border-default flex items-center justify-between">
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-          Pinned {formatDistanceToNow(new Date(project.created_at), { addSuffix: true })}
+          Created {formatDistanceToNow(new Date(project.created_at), { addSuffix: true })}
         </p>
+        {taskCount > 0 && (
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            {taskCount} {taskCount === 1 ? "task" : "tasks"}
+          </span>
+        )}
       </div>
     </Card>
   );

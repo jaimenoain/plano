@@ -53,7 +53,9 @@ export default function EmbassyLayout() {
         .from("ambassador_memberships")
         .select("role, status, onboarded_at, chapter_id")
         .eq("user_id", user!.id)
-        .single();
+        .eq("status", "active")
+        .order("joined_at", { ascending: false })
+        .maybeSingle();
       if (error) throw error;
       return data;
     },

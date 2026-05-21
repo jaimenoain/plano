@@ -1440,7 +1440,7 @@ export default function BuildingDetails() {
     coordinates,
     accessSynthesis: _accessSynthesis,
     accessBadgeVariant: _accessBadgeVariant,
-    canEditOfficialData,
+    canEditOfficialData: _canEditOfficialData,
     isCreditsAdmin,
     handleStatusChange,
     handleRate,
@@ -1994,13 +1994,11 @@ export default function BuildingDetails() {
                   <Button variant="outline" size="sm" className="h-9 gap-1.5">
                     <Share2 className="h-3.5 w-3.5" /> Share
                   </Button>
-                  {canEditOfficialData && (
-                    <Button variant="outline" size="sm" className="h-9 gap-1.5" asChild>
-                      <Link to={`${buildingUrl}/edit`}>
-                        <Pencil className="h-3.5 w-3.5" /> Edit
-                      </Link>
-                    </Button>
-                  )}
+                  <Button variant="outline" size="sm" className="h-9 gap-1.5" asChild>
+                    <Link to={`${buildingUrl}/edit`}>
+                      <Pencil className="h-3.5 w-3.5" /> Edit
+                    </Link>
+                  </Button>
                 </div>
               </div>
 

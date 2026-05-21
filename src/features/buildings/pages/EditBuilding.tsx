@@ -60,7 +60,7 @@ export default function EditBuilding() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      void navigate("/login");
+      void navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
       return;
     }
     if (id) {

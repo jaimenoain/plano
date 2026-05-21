@@ -55,6 +55,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext";
 import { PlanoMap } from "@/features/maps/components/PlanoMap";
+import { DEFAULT_LAT, DEFAULT_LNG, DEFAULT_ZOOM } from "@/features/maps/hooks/useURLMapState";
 
 interface OutreachLogRow {
   id: string;
@@ -199,7 +200,7 @@ export default function ContributePage() {
   }
 
   if (activeTool === "events" && chapterId) {
-    return <EventsTool chapterId={chapterId} role={membership?.role} onBack={() => setActiveTool(null)} />;
+    return <EventsTool chapterId={chapterId} onBack={() => setActiveTool(null)} />;
   }
 
   return (
@@ -1391,7 +1392,7 @@ function FirmOutreachDrawer({
 
 function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () => void }) {
   const [view, setView] = useState<"list" | "map">("map");
-  const { state: { filters }, methods: { setFilter } } = useMapContext();
+  const { state: { lat, lng, zoom, filters }, methods: { setFilter, moveMap } } = useMapContext();
 
   // Keep refs so the effect always calls the latest setFilter / reads the
   // latest filters without listing them as deps. Listing setFilter directly
@@ -1402,6 +1403,38 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
   setFilterRef.current = setFilter;
   const filtersRef = useRef(filters);
   filtersRef.current = filters;
+  const moveMapRef = useRef(moveMap);
+  moveMapRef.current = moveMap;
+
+  // Fetch the chapter's locality center so we can auto-position the map.
+  const { data: chapterCenter } = useQuery({
+    queryKey: ["chapter-locality-center", chapterId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ambassador_chapters")
+        .select("localities(lat, lng)")
+        .eq("id", chapterId)
+        .single();
+      if (error) throw error;
+      const locality = data?.localities as { lat: number | null; lng: number | null } | null;
+      if (!locality?.lat || !locality?.lng) return null;
+      return { lat: locality.lat, lng: locality.lng };
+    },
+    enabled: !!chapterId,
+    staleTime: Infinity,
+  });
+
+  // One-shot: center the map on the chapter's locality when the map view opens
+  // and the user hasn't already positioned the map (still at global defaults).
+  const hasCenteredRef = useRef(false);
+  useEffect(() => {
+    if (hasCenteredRef.current) return;
+    if (view !== "map") return;
+    if (!chapterCenter) return;
+    if (lat !== DEFAULT_LAT || lng !== DEFAULT_LNG || zoom !== DEFAULT_ZOOM) return;
+    moveMapRef.current(chapterCenter.lat, chapterCenter.lng, 13);
+    hasCenteredRef.current = true;
+  }, [view, chapterCenter, lat, lng, zoom]);
 
   const { data: buildings, isLoading, error } = useQuery({
     queryKey: ["embassy-buildings-no-photo", chapterId],
@@ -2314,11 +2347,9 @@ function ModerationError({ message }: { message: string }) {
 
 function EventsTool({
   chapterId,
-  role,
   onBack,
 }: {
   chapterId: string;
-  role?: string | null;
   onBack: () => void;
 }) {
   const queryClient = useQueryClient();
@@ -2345,35 +2376,19 @@ function EventsTool({
       return data as { last_event_search_at: string | null };
     },
     enabled: !!chapterId,
+    // Poll until the search completes (last_event_search_at gets stamped by the server)
+    refetchInterval: (query) => {
+      const d = query.state.data as { last_event_search_at: string | null } | undefined;
+      return !d?.last_event_search_at ? 20_000 : false;
+    },
   });
 
   const { data: discoveries, isLoading, error, refetch } = useQuery({
     queryKey: ["embassy-event-discoveries", chapterId],
     queryFn: () => fetchPendingEventDiscoveries(chapterId),
     enabled: !!chapterId,
-  });
-
-  const searchMutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/embassy/event-search", {
-        method: "POST",
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "run", chapter_id: chapterId, force: true }),
-      });
-      if (!res.ok) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const err = (await res.json().catch(() => ({}))) as any;
-        throw new Error(err.error ?? "Search failed");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      toast.success("Event search complete");
-      queryClient.invalidateQueries({ queryKey: ["embassy-event-discoveries", chapterId] });
-      queryClient.invalidateQueries({ queryKey: ["ambassador-chapter-meta", chapterId] });
-    },
-    onError: (err) => toast.error(err instanceof Error ? err.message : "Search failed"),
+    // Keep polling in sync with the chapter meta poll
+    refetchInterval: !chapter?.last_event_search_at ? 20_000 : false,
   });
 
   const publishMutation = useMutation({
@@ -2405,7 +2420,6 @@ function EventsTool({
     onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to save"),
   });
 
-  const isLeader = role === "exco" || role === "president";
   const lastSearchedAt = chapter?.last_event_search_at ?? null;
   const duplicateCount = (discoveries ?? []).filter((d) => d.duplicate_of_event_id).length;
 
@@ -2448,27 +2462,11 @@ function EventsTool({
             <p className="text-sm text-muted-foreground">Review AI-discovered events for your chapter.</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 pl-14 sm:pl-0">
-          {lastSearchedAt && (
-            <span className="text-xs text-muted-foreground whitespace-nowrap">
-              Last searched: {formatDistanceToNow(parseISO(lastSearchedAt), { addSuffix: true })}
-            </span>
-          )}
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={!isLeader || searchMutation.isPending}
-            onClick={() => searchMutation.mutate()}
-            title={!isLeader ? "Only chapter leaders can trigger a new search" : undefined}
-          >
-            {searchMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            Search now
-          </Button>
-        </div>
+        {lastSearchedAt && (
+          <span className="text-xs text-muted-foreground pl-14 sm:pl-0 whitespace-nowrap">
+            Last searched: {formatDistanceToNow(parseISO(lastSearchedAt), { addSuffix: true })}
+          </span>
+        )}
       </div>
 
       {!isLoading && !error && discoveries && discoveries.length > 0 && (
