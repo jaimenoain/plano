@@ -802,7 +802,7 @@ export function useBuildingInteractions({
         queryClient.invalidateQueries({
           queryKey: ["user-building-statuses"],
         });
-        queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
+        queryClient.invalidateQueries({ queryKey: ["map-clusters-v3"] });
         toast({ title });
       } catch (_error) {
         toast({ variant: "destructive", title: "Failed to save status" });
@@ -843,7 +843,7 @@ export function useBuildingInteractions({
         queryClient.invalidateQueries({
           queryKey: ["user-building-statuses"],
         });
-        queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
+        queryClient.invalidateQueries({ queryKey: ["map-clusters-v3"] });
         if (rating >= 2)
           toast({
             title: "You just boosted this building's rank!",
@@ -1052,7 +1052,7 @@ export function useBuildingInteractions({
 
       toast({ title: "Note saved" });
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-      queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
+      queryClient.invalidateQueries({ queryKey: ["map-clusters-v3"] });
       void fetchUserSpecificData();
     } catch (error: unknown) {
       // eslint-disable-next-line no-console
@@ -1118,7 +1118,7 @@ export function useBuildingInteractions({
         return [];
       });
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-      queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
+      queryClient.invalidateQueries({ queryKey: ["map-clusters-v3"] });
       toast({ title: "Removed from list" });
     } catch (_error) {
       toast({ variant: "destructive", title: "Failed to remove" });

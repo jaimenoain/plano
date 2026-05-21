@@ -55,9 +55,9 @@ const ROLE_DISPLAY: Record<string, string> = {
   president: "President",
   exco: "ExCo",
   ambassador: "Ambassador",
-  global_team: "Global Team",
-  global_leaders: "Global Leaders",
-  global_president: "Global President",
+  global_team: "Ambassador",
+  global_leaders: "Ambassador",
+  global_president: "Ambassador",
 };
 
 function roleLabel(role: string) {

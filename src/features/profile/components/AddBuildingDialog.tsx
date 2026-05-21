@@ -58,7 +58,7 @@ export function AddBuildingDialog({ onBuildingAdded, className }: AddBuildingDia
 
       // Invalidate queries to refresh data across the app
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-      queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
+      queryClient.invalidateQueries({ queryKey: ["map-clusters-v3"] });
 
       // Notify parent component to refresh local state if needed
       onBuildingAdded?.();

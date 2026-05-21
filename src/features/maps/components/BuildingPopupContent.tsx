@@ -106,7 +106,7 @@ export function BuildingPopupContent({
       }
 
       queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-      queryClient.invalidateQueries({ queryKey: ["map-clusters"] });
+      queryClient.invalidateQueries({ queryKey: ["map-clusters-v3"] });
     } catch {
       toast({ variant: "destructive", title: "Failed to update status" });
     } finally {
