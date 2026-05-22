@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { fetchAmbassadorMyAuditTimeline, type AmbassadorAuditRow } from "@/features/embassy/api/taskFeed";
-import { fetchChapterAmbassadorActivity } from "@/features/embassy/api/leadership";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -14,11 +13,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Target, History, Plus, Loader2, ArrowUpRight, TrendingUp, Medal, Star, CheckSquare, Circle, Clock, CheckCircle2, CalendarDays, FolderOpen } from "lucide-react";
+import { Target, History, Plus, Loader2, ArrowUpRight, TrendingUp, Star, CheckSquare, Circle, Clock, CheckCircle2, CalendarDays, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow, isPast, isToday, parseISO } from "date-fns";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type Goal = {
   id: string;
@@ -70,9 +68,9 @@ export default function MyGoalsPage() {
 
   // Reuse the membership query already fired by EmbassyLayout (same queryKey).
   // When this component mounts the cache is already populated, so chapterId
-  // resolves synchronously — the leaderboard and tasks queries start in the
-  // same network round-trip rather than waiting for a separate membership fetch.
-  const { data: membership, isLoading: loadingMembership } = useQuery({
+  // resolves synchronously — the tasks query starts in the same network
+  // round-trip rather than waiting for a separate membership fetch.
+  const { data: membership } = useQuery({
     queryKey: ["ambassador-membership", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -104,20 +102,6 @@ export default function MyGoalsPage() {
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
-  });
-
-  // Fetch leaderboard — retry: 0 prevents multiple 500 hammer calls if the
-  // RPC is missing its GRANT EXECUTE (e.g. migration not yet applied).
-  const {
-    data: leaderboard,
-    isLoading: loadingLeaderboard,
-    isError: leaderboardError,
-  } = useQuery({
-    queryKey: ["chapter-leaderboard", chapterId],
-    queryFn: () => fetchChapterAmbassadorActivity(chapterId!, 30),
-    enabled: !!chapterId,
-    retry: 0,
-    staleTime: 2 * 60 * 1000,
   });
 
   // Fetch open chapter tasks (todo + in_progress) for the dashboard summary
@@ -230,103 +214,57 @@ export default function MyGoalsPage() {
         </section>
       )}
 
-      <div className="grid gap-12 lg:grid-cols-3">
-        {/* ─── Personal Goals (Left/Main) ─── */}
-        <div className="lg:col-span-2 space-y-8">
-          <section className="space-y-6">
-            <div className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-brand-primary" />
-              <h2 className="text-xl font-bold">Active Goals</h2>
+      <div className="space-y-8">
+        <section className="space-y-6">
+          <div className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-brand-primary" />
+            <h2 className="text-xl font-bold">Active Goals</h2>
+          </div>
+
+          {loadingGoals ? (
+            <div className="grid gap-4">
+              {[0, 1].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
             </div>
-
-            {loadingGoals ? (
-              <div className="grid gap-4">
-                {[0, 1].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
+          ) : goals?.filter(g => g.status === 'active').length === 0 ? (
+            <Card className="p-8 text-center border-dashed border-2 flex flex-col items-center justify-center space-y-4">
+              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                <Star className="h-6 w-6 text-muted-foreground" />
               </div>
-            ) : goals?.filter(g => g.status === 'active').length === 0 ? (
-              <Card className="p-8 text-center border-dashed border-2 flex flex-col items-center justify-center space-y-4">
-                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                  <Star className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <div className="space-y-1">
-                  <p className="font-medium">No active goals</p>
-                  <p className="text-sm text-muted-foreground">Set a target to keep yourself motivated.</p>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => setIsGoalOpen(true)}>Set your first goal</Button>
-              </Card>
-            ) : (
-              <div className="grid gap-4">
-                {goals?.filter(g => g.status === 'active').map((goal) => (
-                  <GoalCard key={goal.id} goal={goal} />
-                ))}
+              <div className="space-y-1">
+                <p className="font-medium">No active goals</p>
+                <p className="text-sm text-muted-foreground">Set a target to keep yourself motivated.</p>
               </div>
-            )}
-          </section>
-
-          <section className="space-y-6">
-            <div className="flex items-center gap-2">
-              <History className="h-5 w-5 text-brand-primary" />
-              <h2 className="text-xl font-bold">Recent Contributions</h2>
-            </div>
-
-            {loadingTimeline ? (
-              <div className="space-y-3">
-                {[0, 1, 2].map(i => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
-              </div>
-            ) : timeline?.length === 0 ? (
-              <p className="text-muted-foreground text-sm py-4">No recent activity logged.</p>
-            ) : (
-              <div className="space-y-3">
-                {timeline?.map((item, i) => (
-                  <ActivityRow key={i} item={item} />
-                ))}
-              </div>
-            )}
-          </section>
-        </div>
-
-        {/* ─── Chapter Leaderboard (Right) ─── */}
-        <div className="space-y-8">
-          <section className="space-y-6">
-            <div className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-amber-500" />
-              <h2 className="text-xl font-bold">Leaderboard</h2>
-            </div>
-
-            <Card className="p-1 overflow-hidden border-border-default">
-              <div className="bg-surface-muted/50 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex justify-between">
-                <span>Ambassador</span>
-                <span>Points (30d)</span>
-              </div>
-              <div className="divide-y">
-                {loadingMembership || loadingLeaderboard ? (
-                  [0, 1, 2, 3, 4].map(i => <Skeleton key={i} className="h-14 w-full m-1 rounded-md" />)
-                ) : leaderboardError ? (
-                  <p className="px-4 py-6 text-sm text-feedback-destructive text-center">
-                    Could not load the leaderboard.
-                  </p>
-                ) : !chapterId ? (
-                  <p className="px-4 py-6 text-sm text-muted-foreground text-center">
-                    You're not in a chapter yet.
-                  </p>
-                ) : !leaderboard?.length ? (
-                  <p className="px-4 py-6 text-sm text-muted-foreground text-center">
-                    No ambassadors in this chapter yet.
-                  </p>
-                ) : (
-                  leaderboard.map((member, i) => (
-                    <LeaderboardRow
-                      key={member.user_id}
-                      member={member}
-                      rank={i + 1}
-                      isCurrentUser={member.user_id === user?.id}
-                    />
-                  ))
-                )}
-              </div>
+              <Button variant="outline" size="sm" onClick={() => setIsGoalOpen(true)}>Set your first goal</Button>
             </Card>
-          </section>
-        </div>
+          ) : (
+            <div className="grid gap-4">
+              {goals?.filter(g => g.status === 'active').map((goal) => (
+                <GoalCard key={goal.id} goal={goal} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-6">
+          <div className="flex items-center gap-2">
+            <History className="h-5 w-5 text-brand-primary" />
+            <h2 className="text-xl font-bold">Recent Contributions</h2>
+          </div>
+
+          {loadingTimeline ? (
+            <div className="space-y-3">
+              {[0, 1, 2].map(i => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
+            </div>
+          ) : timeline?.length === 0 ? (
+            <p className="text-muted-foreground text-sm py-4">No recent activity logged.</p>
+          ) : (
+            <div className="space-y-3">
+              {timeline?.map((item, i) => (
+                <ActivityRow key={i} item={item} />
+              ))}
+            </div>
+          )}
+        </section>
       </div>
 
       <Dialog open={isGoalOpen} onOpenChange={(open) => { setIsGoalOpen(open); if(!open) resetForm(); }}>
@@ -467,40 +405,3 @@ function ActivityRow({ item }: { item: AmbassadorAuditRow }) {
   );
 }
 
-function LeaderboardRow({ member, rank, isCurrentUser }: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  member: any;
-  rank: number;
-  isCurrentUser: boolean;
-}) {
-  return (
-    <div className={cn(
-      "flex items-center gap-3 px-4 py-3 transition-colors",
-      isCurrentUser ? "bg-brand-primary/5" : "hover:bg-surface-muted/30"
-    )}>
-      <div className="w-6 text-center font-bold text-xs text-muted-foreground">
-        {rank === 1 ? <Medal className="h-4 w-4 text-amber-500 mx-auto" /> : 
-         rank === 2 ? <Medal className="h-4 w-4 text-slate-400 mx-auto" /> :
-         rank === 3 ? <Medal className="h-4 w-4 text-amber-700 mx-auto" /> : rank}
-      </div>
-      <Avatar className="h-8 w-8">
-        <AvatarImage src={member.avatar_url} />
-        <AvatarFallback className="text-[10px] font-bold">
-          {member.username?.charAt(0).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
-      <div className="flex-1 min-w-0">
-        <p className={cn("text-sm font-semibold truncate", isCurrentUser && "text-brand-primary")}>
-          @{member.username}
-          {isCurrentUser && <span className="ml-2 text-[10px] font-normal text-muted-foreground">(You)</span>}
-        </p>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-tight">
-          {member.role}
-        </p>
-      </div>
-      <div className="text-right tabular-nums">
-        <p className="font-bold text-sm">{member.total_score}</p>
-      </div>
-    </div>
-  );
-}
