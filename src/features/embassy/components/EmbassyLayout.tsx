@@ -36,7 +36,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 
   if (url.pathname === "/embassy" || url.pathname === "/embassy/") {
-    return redirect("/embassy/contribute", { headers: responseHeaders });
+    return redirect("/embassy/goals", { headers: responseHeaders });
   }
   return null;
 }
@@ -80,8 +80,8 @@ export default function EmbassyLayout() {
   }, [membership, location.pathname]);
 
   const navItems = [
+    { label: "Dashboard", href: "/embassy/goals", icon: Target },
     { label: "Contribute", href: "/embassy/contribute", icon: LayoutDashboard },
-    { label: "My Goals", href: "/embassy/goals", icon: Target },
     { label: "Chapter Projects", href: "/embassy/projects", icon: Users },
     { label: "Team", href: "/embassy/team", icon: UsersRound },
     { label: "Tasks", href: "/embassy/tasks", icon: CheckSquare },
@@ -97,7 +97,7 @@ export default function EmbassyLayout() {
             <div className="container flex h-14 items-center overflow-x-auto no-scrollbar">
               <nav className="flex items-center space-x-6 text-sm font-medium">
                 {navItems.map((item) => {
-                  const isActive = location.pathname === item.href || (item.href === "/embassy/contribute" && location.pathname === "/embassy");
+                  const isActive = location.pathname === item.href || (item.href === "/embassy/goals" && location.pathname === "/embassy");
                   return (
                     <Link
                       key={item.href}

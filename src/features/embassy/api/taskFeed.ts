@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 export const EMBASSY_TASK_FEED_LIMIT = 20;
+export const EMBASSY_PHOTO_MODERATION_LIMIT = 100;
 export const EMBASSY_SEARCH_FEED_LIMIT = 500;
 
 export type AmbassadorBuildingNoPhoto =
@@ -152,7 +153,7 @@ export async function fetchModerationPhotos(): Promise<ModerationPhotoItem[]> {
     )
     .is("moderated_at", null)
     .order("created_at", { ascending: false })
-    .limit(EMBASSY_TASK_FEED_LIMIT);
+    .limit(EMBASSY_PHOTO_MODERATION_LIMIT);
   if (error) throw error;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data ?? []).map((row: any) => ({

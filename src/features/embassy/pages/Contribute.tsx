@@ -139,15 +139,17 @@ export default function ContributePage() {
     }
   };
 
-  // Fetch membership for chapterId and preferred_tools
+  // Separate key from EmbassyLayout so preferred_tools is always fetched by this queryFn
   const { data: membership, isLoading: membershipLoading } = useQuery({
-    queryKey: ["ambassador-membership", user?.id],
+    queryKey: ["ambassador-membership-contribute", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ambassador_memberships")
         .select("role, status, onboarded_at, chapter_id, preferred_tools")
         .eq("user_id", user!.id)
-        .single();
+        .eq("status", "active")
+        .order("joined_at", { ascending: false })
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -1609,7 +1611,7 @@ function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => 
         <div className="flex-1">
           <h1 className="text-2xl font-bold tracking-tight">Moderation</h1>
           <p className="text-sm text-muted-foreground">
-            Review new contributions and ensure they meet quality standards.
+            You don&apos;t need to verify copyright or accuracy — users flag those issues. Just check that submissions don&apos;t contain anything inappropriate, which you can do at a glance.
           </p>
         </div>
       </div>
@@ -2379,26 +2381,29 @@ function EventsTool({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("ambassador_chapters")
-        .select("last_event_search_at")
+        .select("last_event_search_at, locality_id")
         .eq("id", chapterId)
         .single();
       if (error) throw error;
-      return data as { last_event_search_at: string | null };
+      return data as { last_event_search_at: string | null; locality_id: string | null };
     },
     enabled: !!chapterId,
-    // Poll until the search completes (last_event_search_at gets stamped by the server)
+    // Poll until search completes; skip polling for national (no-locality) chapters
     refetchInterval: (query) => {
-      const d = query.state.data as { last_event_search_at: string | null } | undefined;
+      const d = query.state.data as { last_event_search_at: string | null; locality_id: string | null } | undefined;
+      if (d !== undefined && !d.locality_id) return false;
       return !d?.last_event_search_at ? 20_000 : false;
     },
   });
+
+  const isNationalChapter = chapter !== undefined && !chapter.locality_id;
 
   const { data: discoveries, isLoading, error, refetch } = useQuery({
     queryKey: ["embassy-event-discoveries", chapterId],
     queryFn: () => fetchPendingEventDiscoveries(chapterId),
     enabled: !!chapterId,
-    // Keep polling in sync with the chapter meta poll
-    refetchInterval: !chapter?.last_event_search_at ? 20_000 : false,
+    // Poll in sync with chapter meta; stop for national chapters and once search completes
+    refetchInterval: !chapter?.last_event_search_at && !isNationalChapter ? 20_000 : false,
   });
 
   const publishMutation = useMutation({
@@ -2432,6 +2437,7 @@ function EventsTool({
 
   const lastSearchedAt = chapter?.last_event_search_at ?? null;
   const duplicateCount = (discoveries ?? []).filter((d) => d.duplicate_of_event_id).length;
+
 
   function openEdit(d: EventDiscovery) {
     setEditingDiscovery(d);
@@ -2510,7 +2516,14 @@ function EventsTool({
       ) : discoveries?.length === 0 ? (
         <div className="p-12 text-center border border-dashed rounded-xl">
           <CalendarClock className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-          {lastSearchedAt ? (
+          {isNationalChapter ? (
+            <>
+              <p className="text-lg font-medium">Events not available</p>
+              <p className="text-sm text-muted-foreground">
+                Event discovery is only available for city-based chapters.
+              </p>
+            </>
+          ) : lastSearchedAt ? (
             <>
               <p className="text-lg font-medium">No new events found</p>
               <p className="text-sm text-muted-foreground">

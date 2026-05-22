@@ -131,8 +131,12 @@ export async function action({ request }: ActionFunctionArgs) {
     return Response.json({ error: "Chapter not found" }, { status: 404, headers });
   }
 
-  // National (no locality) chapters skip event search
+  // National (no locality) chapters skip event search; stamp the timestamp so the client stops polling
   if (!chapter.locality_id) {
+    // Best-effort — only works once migration 20271148000000 is applied
+    try {
+      await supabase.rpc("stamp_chapter_last_event_search_at", { p_chapter_id: chapter_id });
+    } catch { /* no-op */ }
     return Response.json({ ok: true, skipped: "no_locality" }, { headers });
   }
 

@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { fetchAmbassadorMyAuditTimeline, type AmbassadorAuditRow } from "@/features/embassy/api/taskFeed";
 import { fetchChapterAmbassadorActivity } from "@/features/embassy/api/leadership";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,10 +14,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, Target, History, Plus, Loader2, ArrowUpRight, TrendingUp, Medal, Star } from "lucide-react";
+import { Trophy, Target, History, Plus, Loader2, ArrowUpRight, TrendingUp, Medal, Star, CheckSquare, Circle, Clock, CheckCircle2, CalendarDays, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow, isPast, isToday, parseISO } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type Goal = {
@@ -29,6 +31,32 @@ type Goal = {
   due_date: string | null;
   created_at: string;
 };
+
+type TaskStatus = "todo" | "in_progress" | "done";
+
+interface ChapterTask {
+  id: string;
+  title: string;
+  description: string | null;
+  due_date: string | null;
+  status: TaskStatus;
+  created_by: string;
+  project_title: string | null;
+}
+
+const TASK_STATUS_CONFIG: Record<TaskStatus, { icon: React.ReactNode; class: string }> = {
+  todo:        { icon: <Circle className="h-3.5 w-3.5" />,        class: "text-muted-foreground" },
+  in_progress: { icon: <Clock className="h-3.5 w-3.5" />,         class: "text-amber-600" },
+  done:        { icon: <CheckCircle2 className="h-3.5 w-3.5" />,  class: "text-green-600" },
+};
+
+function openTaskDueDateClass(due: string | null): string {
+  if (!due) return "";
+  const d = parseISO(due);
+  if (isPast(d) && !isToday(d)) return "text-destructive";
+  if (isToday(d)) return "text-amber-600";
+  return "text-muted-foreground";
+}
 
 export default function MyGoalsPage() {
   const { user } = useAuth();
@@ -85,6 +113,23 @@ export default function MyGoalsPage() {
     enabled: !!chapterId,
   });
 
+  // Fetch open chapter tasks (todo + in_progress) for the dashboard summary
+  const { data: allTasks = [], isLoading: loadingTasks } = useQuery({
+    queryKey: ["chapter-tasks", chapterId],
+    queryFn: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any).rpc("get_chapter_tasks", {
+        p_chapter_id: chapterId,
+      });
+      if (error) throw error;
+      return (data ?? []) as ChapterTask[];
+    },
+    enabled: !!chapterId,
+    staleTime: 30_000,
+  });
+
+  const openTasks = allTasks.filter((t) => t.status === "todo" || t.status === "in_progress");
+
   // Fetch personal activity timeline
   const { data: timeline, isLoading: loadingTimeline } = useQuery({
     queryKey: ["ambassador-timeline", user?.id],
@@ -128,13 +173,54 @@ export default function MyGoalsPage() {
       {/* ─── Header ─── */}
       <div className="flex items-center justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Goals & Performance</h1>
-          <p className="text-muted-foreground">Track your impact and see how you rank in {membership?.chapter?.name}.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Welcome back. Here's what's on your plate for {membership?.chapter?.name ?? "your chapter"}.
+          </p>
         </div>
         <Button onClick={() => setIsGoalOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" /> Set a Goal
         </Button>
       </div>
+
+      {/* ─── Open Tasks ─── */}
+      {(loadingTasks || openTasks.length > 0) && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <CheckSquare className="h-5 w-5 text-brand-primary" />
+              <h2 className="text-xl font-bold">Open Tasks</h2>
+              {!loadingTasks && openTasks.length > 0 && (
+                <Badge variant="secondary" className="rounded-full px-2 py-0 text-2xs font-normal tabular-nums">
+                  {openTasks.length}
+                </Badge>
+              )}
+            </div>
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/embassy/tasks">View all tasks</Link>
+            </Button>
+          </div>
+          {loadingTasks ? (
+            <div className="space-y-2">
+              {[0, 1].map((i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {openTasks.slice(0, 5).map((task) => (
+                <OpenTaskRow key={task.id} task={task} />
+              ))}
+              {openTasks.length > 5 && (
+                <p className="text-sm text-muted-foreground pl-1">
+                  +{openTasks.length - 5} more —{" "}
+                  <Link to="/embassy/tasks" className="underline underline-offset-2">
+                    view all
+                  </Link>
+                </p>
+              )}
+            </div>
+          )}
+        </section>
+      )}
 
       <div className="grid gap-12 lg:grid-cols-3">
         {/* ─── Personal Goals (Left/Main) ─── */}
@@ -291,6 +377,30 @@ export default function MyGoalsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function OpenTaskRow({ task }: { task: ChapterTask }) {
+  const cfg = TASK_STATUS_CONFIG[task.status];
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-lg border border-border-default hover:bg-surface-muted/50 transition-colors">
+      <span className={cn("shrink-0", cfg.class)}>{cfg.icon}</span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium truncate">{task.title}</p>
+        {task.project_title && (
+          <p className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+            <FolderOpen className="h-3 w-3" />
+            {task.project_title}
+          </p>
+        )}
+      </div>
+      {task.due_date && (
+        <span className={cn("flex items-center gap-1 text-xs shrink-0", openTaskDueDateClass(task.due_date))}>
+          <CalendarDays className="h-3 w-3" />
+          {format(parseISO(task.due_date), "d MMM")}
+        </span>
+      )}
     </div>
   );
 }
