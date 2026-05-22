@@ -45,13 +45,15 @@ export default function EmbassyLayout() {
   const { user } = useAuth();
   const location = useLocation();
 
-  // Fetch membership to check roles for Leadership tab visibility
+  // Fetch membership to check roles for Leadership tab visibility.
+  // Also selects chapter name so /embassy/goals can share this cache entry
+  // without an extra round-trip (same queryKey = TanStack Query deduplicates).
   const { data: membership } = useQuery({
     queryKey: ["ambassador-membership", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ambassador_memberships")
-        .select("role, status, onboarded_at, chapter_id")
+        .select("role, status, onboarded_at, chapter_id, chapter:ambassador_chapters(name)")
         .eq("user_id", user!.id)
         .eq("status", "active")
         .order("joined_at", { ascending: false })
@@ -60,6 +62,7 @@ export default function EmbassyLayout() {
       return data;
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000,
   });
 
   const isLeader = ["exco", "president", "global_team", "global_leaders", "global_president"].includes(membership?.role ?? "");

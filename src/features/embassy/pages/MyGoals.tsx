@@ -68,22 +68,25 @@ export default function MyGoalsPage() {
   const [target, setTarget] = useState("10");
   const [metric, setMetric] = useState<Goal["metric"]>("edits");
 
-  // Fetch membership for chapterId (to show leaderboard).
-  // Uses maybeSingle() + status filter to avoid PGRST116 for users with
-  // multiple membership rows (e.g. past inactive + current active chapter).
+  // Reuse the membership query already fired by EmbassyLayout (same queryKey).
+  // When this component mounts the cache is already populated, so chapterId
+  // resolves synchronously — the leaderboard and tasks queries start in the
+  // same network round-trip rather than waiting for a separate membership fetch.
   const { data: membership, isLoading: loadingMembership } = useQuery({
-    queryKey: ["ambassador-membership-goals", user?.id],
+    queryKey: ["ambassador-membership", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ambassador_memberships")
-        .select("chapter_id, chapter:ambassador_chapters(name)")
+        .select("role, status, onboarded_at, chapter_id, chapter:ambassador_chapters(name)")
         .eq("user_id", user!.id)
         .eq("status", "active")
+        .order("joined_at", { ascending: false })
         .maybeSingle();
       if (error) throw error;
       return data;
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000,
   });
 
   const chapterId = membership?.chapter_id;
@@ -100,6 +103,7 @@ export default function MyGoalsPage() {
       return (data ?? []) as Goal[];
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Fetch leaderboard — retry: 0 prevents multiple 500 hammer calls if the
@@ -113,6 +117,7 @@ export default function MyGoalsPage() {
     queryFn: () => fetchChapterAmbassadorActivity(chapterId!, 30),
     enabled: !!chapterId,
     retry: 0,
+    staleTime: 2 * 60 * 1000,
   });
 
   // Fetch open chapter tasks (todo + in_progress) for the dashboard summary
@@ -137,6 +142,7 @@ export default function MyGoalsPage() {
     queryKey: ["ambassador-timeline", user?.id],
     queryFn: () => fetchAmbassadorMyAuditTimeline(),
     enabled: !!user,
+    staleTime: 2 * 60 * 1000,
   });
 
   const createGoalMutation = useMutation({

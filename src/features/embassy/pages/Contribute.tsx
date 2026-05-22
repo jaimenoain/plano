@@ -20,6 +20,7 @@ import {
   publishEventDiscovery,
   discardEventDiscovery,
   updateEventDiscovery,
+  EMBASSY_PHOTO_MODERATION_BATCH_SIZE,
   type AmbassadorUnclaimedFirm,
   type EventDiscovery,
 } from "@/features/embassy/api/taskFeed";
@@ -1622,6 +1623,7 @@ function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => 
       ids.forEach((id) => next.add(id));
       return next;
     });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleApproveRevert = (ids: string[]) => {
@@ -1937,9 +1939,17 @@ function PhotosModerationTab({
     queryFn: () => fetchModerationPhotos(chapterId),
   });
 
-  const visible = useMemo(
+  // All non-dismissed photos from the current server fetch (up to 2× batch size)
+  const allVisible = useMemo(
     () => (photos ?? []).filter((p) => !dismissed.has(p.id)),
     [photos, dismissed],
+  );
+
+  // Show only one batch at a time; the second half of the fetch is pre-loaded in
+  // memory so approving the first batch reveals the second instantly (no refetch).
+  const visibleBatch = useMemo(
+    () => allVisible.slice(0, EMBASSY_PHOTO_MODERATION_BATCH_SIZE),
+    [allVisible],
   );
 
   async function handleApprove(ids: string[]) {
@@ -1953,21 +1963,23 @@ function PhotosModerationTab({
         `${failedIds.length} approval${failedIds.length === 1 ? "" : "s"} failed — please retry`,
       );
     } else {
+      // Trigger the next server fetch in the background while the user is already
+      // viewing the second client-side batch (which was pre-loaded with the first fetch).
       queryClient.invalidateQueries({ queryKey: ["moderation-photos", chapterId] });
     }
   }
 
   if (isLoading) return <ModerationSkeletons />;
   if (error) return <ModerationError message="Failed to load photos." />;
-  if (visible.length === 0)
+  if (visibleBatch.length === 0)
     return <ModerationEmptyState icon={<Camera className="h-10 w-10" />} message="No new photos to review." />;
 
-  const allIds = visible.map((p) => p.id);
+  const allIds = visibleBatch.map((p) => p.id);
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {visible.map((p) => {
+        {visibleBatch.map((p) => {
           const imageUrl = getBuildingImageUrl(p.storage_path);
           return (
             <div key={p.id} className="group relative rounded-xl overflow-hidden bg-muted aspect-square border border-border-default hover:border-brand-primary transition-all">

@@ -2,7 +2,10 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
 export const EMBASSY_TASK_FEED_LIMIT = 20;
-export const EMBASSY_PHOTO_MODERATION_LIMIT = 100;
+// Fetch 2× what we display so the second client-side batch is already in cache
+// when the user approves the first — makes the transition instant.
+export const EMBASSY_PHOTO_MODERATION_LIMIT = 200;
+export const EMBASSY_PHOTO_MODERATION_BATCH_SIZE = 100;
 export const EMBASSY_SEARCH_FEED_LIMIT = 500;
 
 export type AmbassadorBuildingNoPhoto =
