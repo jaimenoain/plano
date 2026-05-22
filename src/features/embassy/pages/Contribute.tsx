@@ -1647,6 +1647,7 @@ function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => 
 
         <TabsContent value="photos" className="mt-6">
           <PhotosModerationTab
+            chapterId={chapterId}
             dismissed={dismissed}
             onApproveAll={handleApproveAll}
             onFlag={handleFlag}
@@ -1655,6 +1656,7 @@ function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => 
 
         <TabsContent value="videos" className="mt-6">
           <VideosModerationTab
+            chapterId={chapterId}
             dismissed={dismissed}
             onApproveAll={handleApproveAll}
             onFlag={handleFlag}
@@ -1916,10 +1918,12 @@ function BuildingsModerationTab({
 }
 
 function PhotosModerationTab({
+  chapterId,
   dismissed,
   onApproveAll,
   onFlag,
 }: {
+  chapterId: string;
   dismissed: Set<string>;
   onApproveAll: (ids: string[]) => void;
   onFlag: (id: string, label: string, reason: FlagReason) => void;
@@ -1928,8 +1932,8 @@ function PhotosModerationTab({
   const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set());
 
   const { data: photos, isLoading, error } = useQuery({
-    queryKey: ["moderation-photos"],
-    queryFn: fetchModerationPhotos,
+    queryKey: ["moderation-photos", chapterId],
+    queryFn: () => fetchModerationPhotos(chapterId),
   });
 
   const visible = useMemo(
@@ -1953,7 +1957,7 @@ function PhotosModerationTab({
     });
     if (succeeded.length > 0) {
       onApproveAll(succeeded);
-      queryClient.invalidateQueries({ queryKey: ["moderation-photos"] });
+      queryClient.invalidateQueries({ queryKey: ["moderation-photos", chapterId] });
       toast.success(
         succeeded.length === 1 ? "Photo approved" : `${succeeded.length} photos approved`,
       );
@@ -2056,10 +2060,12 @@ function PhotosModerationTab({
 }
 
 function VideosModerationTab({
+  chapterId,
   dismissed,
   onApproveAll,
   onFlag,
 }: {
+  chapterId: string;
   dismissed: Set<string>;
   onApproveAll: (ids: string[]) => void;
   onFlag: (id: string, label: string, reason: FlagReason) => void;
@@ -2068,8 +2074,8 @@ function VideosModerationTab({
   const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set());
 
   const { data: videos, isLoading, error } = useQuery({
-    queryKey: ["moderation-videos"],
-    queryFn: fetchModerationVideos,
+    queryKey: ["moderation-videos", chapterId],
+    queryFn: () => fetchModerationVideos(chapterId),
   });
 
   const visible = useMemo(
@@ -2093,7 +2099,7 @@ function VideosModerationTab({
     });
     if (succeeded.length > 0) {
       onApproveAll(succeeded);
-      queryClient.invalidateQueries({ queryKey: ["moderation-videos"] });
+      queryClient.invalidateQueries({ queryKey: ["moderation-videos", chapterId] });
       toast.success(
         succeeded.length === 1 ? "Video approved" : `${succeeded.length} videos approved`,
       );
