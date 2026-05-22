@@ -257,25 +257,36 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     // 10. Serper search
+    // NOTE: Serper's free tier rejects queries that use operators like
+    // `OR` combined with quoted phrases (HTTP 400 "Query pattern not
+    // allowed for free accounts"). Keep the query plain — Google handles
+    // morphological variants of "architecture" without needing OR.
     const currentYear = new Date().getFullYear();
-    const query = `"architecture" OR "architectural" events ${locality.city} ${currentYear}`;
+    const query = `architecture events ${locality.city} ${currentYear}`;
     stats.query = query;
+
+    const serperBody: { q: string; num: number; gl?: string } = { q: query, num: 20 };
+    if (chapter.country_code) {
+      serperBody.gl = chapter.country_code.toLowerCase();
+    }
 
     const serperResp = await fetch("https://google.serper.dev/search", {
       method: "POST",
       headers: { "X-API-KEY": serperKey, "Content-Type": "application/json" },
-      body: JSON.stringify({ q: query, num: 20 }),
+      body: JSON.stringify(serperBody),
       signal: AbortSignal.timeout(30_000),
     });
 
     if (!serperResp.ok) {
-      await markRunFailed(supabase, run.id, `serper_http_${serperResp.status}`);
+      const errorBody = await serperResp.text().catch(() => "");
+      stats.serper_error_body = errorBody.slice(0, 500);
+      await markRunFailed(supabase, run.id, `serper_http_${serperResp.status}: ${errorBody.slice(0, 200)}`);
       void logApiRequest(supabase, {
         endpoint: "/api/embassy/event-search",
         statusCode: 502,
         durationMs: Date.now() - requestStartMs,
         userId: user.id,
-        errorMessage: `serper_http_${serperResp.status}`,
+        errorMessage: `serper_http_${serperResp.status}: ${errorBody.slice(0, 200)}`,
         metadata: stats,
       });
       return Response.json({ error: "Search provider error" }, { status: 502, headers });
