@@ -50,6 +50,20 @@ export function PwaProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
+    // With registerType:'autoUpdate', Workbox calls skipWaiting() automatically but
+    // does NOT reload the page. controllerchange fires when the new SW takes over;
+    // reloading here gives users the fresh assets immediately.
+    // hadController guards against reloading on first-ever SW install (no prior controller).
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    let reloading = false;
+    const onControllerChange = () => {
+      if (hadController && !reloading) {
+        reloading = true;
+        window.location.reload();
+      }
+    };
+    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+
     const checkForUpdate = () => {
       void navigator.serviceWorker.getRegistration().then((reg) => {
         void reg?.update();
@@ -68,6 +82,7 @@ export function PwaProvider({ children }: { children: ReactNode }) {
     const intervalId = window.setInterval(checkForUpdate, 60 * 60 * 1000);
 
     return () => {
+      navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
       document.removeEventListener("visibilitychange", onVisibility);
       window.clearInterval(intervalId);
     };
