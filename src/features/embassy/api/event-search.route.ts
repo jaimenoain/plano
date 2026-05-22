@@ -145,6 +145,18 @@ export async function action({ request }: ActionFunctionArgs) {
   if (!force && chapter.last_event_search_at) {
     const age = Date.now() - new Date(chapter.last_event_search_at).getTime();
     if (age < FOUR_DAYS_MS) {
+      void logApiRequest(supabase, {
+        endpoint: "/api/embassy/event-search",
+        statusCode: 200,
+        durationMs: 0,
+        userId: user.id,
+        metadata: {
+          chapter_id,
+          exit_reason: "skipped_fresh",
+          last_run_at: chapter.last_event_search_at,
+          age_hours: Math.round(age / 3_600_000),
+        },
+      });
       return Response.json(
         { ok: true, skipped: "fresh", last_run_at: chapter.last_event_search_at },
         { headers },
@@ -158,14 +170,32 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   // 7. Fetch locality name for query
-  const { data: locality } = await supabase
+  // NOTE: the localities table column is `city`, not `name`. Selecting a
+  // non-existent column makes PostgREST return an error and `data: null`,
+  // which previously caused every call to silently early-return with
+  // skipped: "locality_not_found" — no run row, no log, no stamp, UI stuck
+  // on "Search in progress" forever.
+  const { data: locality, error: localityError } = await supabase
     .from("localities")
-    .select("name, city_slug")
+    .select("city, city_slug")
     .eq("id", chapter.locality_id)
     .single();
 
-  if (!locality) {
-    return Response.json({ ok: true, skipped: "locality_not_found" }, { headers });
+  if (localityError || !locality) {
+    // eslint-disable-next-line no-console
+    console.error("[event-search] locality fetch failed:", localityError?.message ?? "no row");
+    void logApiRequest(supabase, {
+      endpoint: "/api/embassy/event-search",
+      statusCode: 200,
+      durationMs: 0,
+      userId: user.id,
+      errorMessage: localityError?.message ?? "locality_not_found",
+      metadata: { chapter_id, locality_id: chapter.locality_id },
+    });
+    return Response.json(
+      { ok: true, skipped: "locality_not_found", reason: localityError?.message ?? null },
+      { headers },
+    );
   }
 
   // 8. Insert run row
@@ -176,6 +206,24 @@ export async function action({ request }: ActionFunctionArgs) {
     .single();
 
   if (runInsertError || !run) {
+    // Most common cause historically: RLS blocking the INSERT for non-admin
+    // ambassadors (migration 20271148000000 fixes this). Log explicitly so the
+    // failure is visible in the API Requests admin page instead of silently
+    // leaving the UI on "Search in progress".
+    void logApiRequest(supabase, {
+      endpoint: "/api/embassy/event-search",
+      statusCode: 500,
+      durationMs: 0,
+      userId: user.id,
+      errorMessage: `run_insert_failed: ${runInsertError?.message ?? "unknown"}`,
+      metadata: {
+        chapter_id,
+        exit_reason: "run_insert_failed",
+        pg_code: runInsertError?.code ?? null,
+        pg_details: runInsertError?.details ?? null,
+        pg_hint: runInsertError?.hint ?? null,
+      },
+    });
     return Response.json({ error: "Failed to create run record" }, { status: 500, headers });
   }
 
@@ -183,13 +231,35 @@ export async function action({ request }: ActionFunctionArgs) {
   const serperKey = process.env.SERPER_API_KEY;
   if (!serperKey) {
     await markRunFailed(supabase, run.id, "serper_not_configured");
+    void logApiRequest(supabase, {
+      endpoint: "/api/embassy/event-search",
+      statusCode: 503,
+      durationMs: 0,
+      userId: user.id,
+      errorMessage: "SERPER_API_KEY not configured",
+      metadata: { chapter_id, run_id: run.id, exit_reason: "serper_not_configured" },
+    });
     return Response.json({ error: "Event search not configured" }, { status: 503, headers });
   }
+
+  // Diagnostic counters — emitted to api_request_logs at the end so failures
+  // and "found 0" runs can be debugged from the admin API Requests page.
+  const stats: Record<string, unknown> = {
+    chapter_id,
+    run_id: run.id,
+    locality_name: locality.city,
+    force,
+  };
+  const requestStartMs = Date.now();
+  let model: string | null = null;
+  let inputTokens: number | null = null;
+  let outputTokens: number | null = null;
 
   try {
     // 10. Serper search
     const currentYear = new Date().getFullYear();
-    const query = `"architecture" OR "architectural" events ${locality.name} ${currentYear}`;
+    const query = `"architecture" OR "architectural" events ${locality.city} ${currentYear}`;
+    stats.query = query;
 
     const serperResp = await fetch("https://google.serper.dev/search", {
       method: "POST",
@@ -200,10 +270,20 @@ export async function action({ request }: ActionFunctionArgs) {
 
     if (!serperResp.ok) {
       await markRunFailed(supabase, run.id, `serper_http_${serperResp.status}`);
+      void logApiRequest(supabase, {
+        endpoint: "/api/embassy/event-search",
+        statusCode: 502,
+        durationMs: Date.now() - requestStartMs,
+        userId: user.id,
+        errorMessage: `serper_http_${serperResp.status}`,
+        metadata: stats,
+      });
       return Response.json({ error: "Search provider error" }, { status: 502, headers });
     }
 
     const serperData = await serperResp.json();
+    stats.serper_organic_count = Array.isArray(serperData?.organic) ? serperData.organic.length : 0;
+    stats.serper_knowledge_graph = !!serperData?.knowledgeGraph;
 
     // 11. Claude extraction
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
@@ -212,17 +292,16 @@ export async function action({ request }: ActionFunctionArgs) {
       void logApiRequest(supabase, {
         endpoint: "/api/embassy/event-search",
         statusCode: 503,
-        durationMs: 0,
+        durationMs: Date.now() - requestStartMs,
         userId: user.id,
         errorMessage: "ANTHROPIC_API_KEY not configured",
-        metadata: { chapter_id, run_id: run.id },
+        metadata: stats,
       });
       return Response.json({ error: "Event search not configured" }, { status: 503, headers });
     }
 
     const client = new Anthropic({ apiKey: anthropicKey });
-    const model = "claude-sonnet-4-6";
-    const aiStartMs = Date.now();
+    model = "claude-sonnet-4-6";
 
     const aiResponse = await client.messages.create({
       model,
@@ -230,43 +309,120 @@ export async function action({ request }: ActionFunctionArgs) {
       system: EXTRACTION_SYSTEM_PROMPT,
       messages: [{ role: "user", content: JSON.stringify(serperData) }],
     });
-
-    void logApiRequest(supabase, {
-      endpoint: "/api/embassy/event-search",
-      statusCode: 200,
-      durationMs: Date.now() - aiStartMs,
-      userId: user.id,
-      model,
-      inputTokens: aiResponse.usage?.input_tokens ?? null,
-      outputTokens: aiResponse.usage?.output_tokens ?? null,
-      metadata: { chapter_id, run_id: run.id },
-    });
+    inputTokens = aiResponse.usage?.input_tokens ?? null;
+    outputTokens = aiResponse.usage?.output_tokens ?? null;
 
     const textBlock = aiResponse.content.find((b) => b.type === "text");
-    if (!textBlock || textBlock.type !== "text" || !textBlock.text) {
+    const claudeText = textBlock && textBlock.type === "text" ? textBlock.text : "";
+    stats.claude_text_length = claudeText.length;
+    if (!claudeText) {
+      stats.exit_reason = "empty_ai_response";
       await markRunSuccess(supabase, run.id, chapter_id, 0);
+      void logApiRequest(supabase, {
+        endpoint: "/api/embassy/event-search",
+        statusCode: 200,
+        durationMs: Date.now() - requestStartMs,
+        userId: user.id,
+        model,
+        inputTokens,
+        outputTokens,
+        metadata: stats,
+      });
       return Response.json({ ok: true, inserted: 0, skipped: 0, duplicates_flagged: 0 }, { headers });
     }
 
-    const jsonMatch = textBlock.text.match(/\{[\s\S]*"events"[\s\S]*\}/);
+    const jsonMatch = claudeText.match(/\{[\s\S]*"events"[\s\S]*\}/);
     if (!jsonMatch) {
+      stats.exit_reason = "no_json_match";
+      stats.claude_text_preview = claudeText.slice(0, 500);
       await markRunSuccess(supabase, run.id, chapter_id, 0);
+      void logApiRequest(supabase, {
+        endpoint: "/api/embassy/event-search",
+        statusCode: 200,
+        durationMs: Date.now() - requestStartMs,
+        userId: user.id,
+        model,
+        inputTokens,
+        outputTokens,
+        metadata: stats,
+      });
       return Response.json({ ok: true, inserted: 0, skipped: 0, duplicates_flagged: 0 }, { headers });
     }
 
-    const raw = JSON.parse(jsonMatch[0]) as { events?: RawCandidate[] };
+    // Greedy match can capture trailing prose after the JSON object. If parse
+    // fails on the full match, retry against a shrinking tail until either we
+    // find a parseable object or we give up. Avoids the previous behaviour of
+    // bubbling to the outer catch (which marks failed but does NOT stamp
+    // last_event_search_at — leaving the UI polling forever in-session).
+    let raw: { events?: RawCandidate[] } | null = null;
+    let parseError: string | null = null;
+    try {
+      raw = JSON.parse(jsonMatch[0]) as { events?: RawCandidate[] };
+    } catch (e) {
+      parseError = e instanceof Error ? e.message : String(e);
+      const lastBrace = jsonMatch[0].lastIndexOf("}");
+      if (lastBrace > 0) {
+        try {
+          raw = JSON.parse(jsonMatch[0].slice(0, lastBrace + 1)) as { events?: RawCandidate[] };
+          parseError = null;
+        } catch {
+          /* fall through with parseError set */
+        }
+      }
+    }
+
+    if (!raw) {
+      stats.exit_reason = "parse_error";
+      stats.parse_error = parseError;
+      stats.claude_text_preview = claudeText.slice(0, 500);
+      // Stamp anyway so the UI exits the polling state. Manual retry (force=true)
+      // gives leadership a way to re-run without waiting 4 days.
+      await markRunSuccess(supabase, run.id, chapter_id, 0);
+      void logApiRequest(supabase, {
+        endpoint: "/api/embassy/event-search",
+        statusCode: 200,
+        durationMs: Date.now() - requestStartMs,
+        userId: user.id,
+        model,
+        inputTokens,
+        outputTokens,
+        errorMessage: `claude_parse_error: ${parseError}`,
+        metadata: stats,
+      });
+      return Response.json({ ok: true, inserted: 0, skipped: 0, duplicates_flagged: 0 }, { headers });
+    }
+
     const allCandidates: RawCandidate[] = Array.isArray(raw.events) ? raw.events : [];
+    stats.raw_candidate_count = allCandidates.length;
 
     // 12. Filter out events in the past (older than yesterday)
     const yesterday = new Date(Date.now() - 86_400_000);
+    let droppedMissingFields = 0;
+    let droppedPast = 0;
     const futureCandidates = allCandidates.filter((c) => {
-      if (!c.title || !c.start_at || !c.source_url) return false;
+      if (!c.title || !c.start_at || !c.source_url) {
+        droppedMissingFields++;
+        return false;
+      }
       try {
-        return new Date(c.start_at) >= yesterday;
+        const d = new Date(c.start_at);
+        if (isNaN(d.getTime())) {
+          droppedMissingFields++;
+          return false;
+        }
+        if (d < yesterday) {
+          droppedPast++;
+          return false;
+        }
+        return true;
       } catch {
+        droppedMissingFields++;
         return false;
       }
     });
+    stats.dropped_missing_fields = droppedMissingFields;
+    stats.dropped_past = droppedPast;
+    stats.future_candidate_count = futureCandidates.length;
 
     // 13. Dedup: fetch existing events for this locality
     const { data: existingEvents } = await supabase
@@ -283,14 +439,19 @@ export async function action({ request }: ActionFunctionArgs) {
       .eq("chapter_id", chapter_id)
       .eq("status", "pending");
 
+    stats.existing_events_count = existingEvents?.length ?? 0;
+    stats.pending_discoveries_count = pendingDiscoveries?.length ?? 0;
+
     const normalise = (s: string) => s.toLowerCase().replace(/\s+/g, " ").trim();
 
     type ExistingEvent = { id: string; title: string; start_at: string };
     const existing: ExistingEvent[] = existingEvents ?? [];
 
     let inserted = 0;
-    let skipped = 0;
+    let skipped_already_pending = 0;
+    let insert_errors = 0;
     let duplicates_flagged = 0;
+    const insertErrorMessages: string[] = [];
 
     for (const candidate of futureCandidates) {
       const candidateStart = new Date(candidate.start_at!);
@@ -304,7 +465,7 @@ export async function action({ request }: ActionFunctionArgs) {
         );
       });
       if (alreadyPending) {
-        skipped++;
+        skipped_already_pending++;
         continue;
       }
 
@@ -337,24 +498,52 @@ export async function action({ request }: ActionFunctionArgs) {
       if (!insertError) {
         inserted++;
       } else {
+        insert_errors++;
+        insertErrorMessages.push(insertError.message);
         // eslint-disable-next-line no-console
         console.error("[event-search] insert error:", insertError.message);
-        skipped++;
       }
     }
 
+    stats.inserted = inserted;
+    stats.skipped_already_pending = skipped_already_pending;
+    stats.duplicates_flagged = duplicates_flagged;
+    stats.insert_errors = insert_errors;
+    if (insertErrorMessages.length > 0) {
+      stats.insert_error_sample = insertErrorMessages.slice(0, 3);
+    }
+    stats.exit_reason = "ok";
+
     await markRunSuccess(supabase, run.id, chapter_id, inserted);
-    return Response.json({ ok: true, inserted, skipped, duplicates_flagged }, { headers });
+    void logApiRequest(supabase, {
+      endpoint: "/api/embassy/event-search",
+      statusCode: 200,
+      durationMs: Date.now() - requestStartMs,
+      userId: user.id,
+      model,
+      inputTokens,
+      outputTokens,
+      errorMessage: insert_errors > 0 ? `insert_errors=${insert_errors}` : null,
+      metadata: stats,
+    });
+    return Response.json(
+      { ok: true, inserted, skipped: skipped_already_pending, duplicates_flagged },
+      { headers },
+    );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    stats.exit_reason = "exception";
     await markRunFailed(supabase, run.id, msg);
     void logApiRequest(supabase, {
       endpoint: "/api/embassy/event-search",
       statusCode: 500,
-      durationMs: 0,
+      durationMs: Date.now() - requestStartMs,
       userId: user.id,
+      model,
+      inputTokens,
+      outputTokens,
       errorMessage: msg,
-      metadata: { chapter_id, run_id: run.id },
+      metadata: stats,
     });
     // eslint-disable-next-line no-console
     console.error("[event-search] unexpected error:", msg);

@@ -1,34 +1,4 @@
-import {
-  LayoutDashboard,
-  Building2,
-  Users,
-  Settings,
-  LogOut,
-  Merge,
-  ShieldAlert,
-  Image,
-  Map,
-  History,
-  Trash2,
-  FileCheck,
-  Flag,
-  UserCircle,
-  Factory,
-  Home,
-  MessageSquare,
-  CalendarDays,
-  Shield,
-  Globe2,
-  Trophy,
-  Target,
-  Newspaper,
-  HeartPulse,
-  UsersRound,
-  Siren,
-  Megaphone,
-  BarChart2,
-  Activity,
-} from "lucide-react";
+import { LayoutDashboard, LogOut, Home } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
   Sidebar,
@@ -45,55 +15,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-
-const programmeItems = [
-  { title: "Health Dashboard", url: "/admin/programme/health", icon: HeartPulse },
-  { title: "Interventions", url: "/admin/programme/interventions", icon: Siren },
-  { title: "Presidents", url: "/admin/programme/presidents", icon: UsersRound },
-  { title: "Broadcasts", url: "/admin/programme/broadcasts", icon: Megaphone },
-  { title: "Rankings", url: "/admin/programme/rankings", icon: BarChart2 },
-];
-
-const contentItems = [
-  { title: "Buildings", url: "/admin/buildings", icon: Building2 },
-  { title: "Events", url: "/admin/events", icon: CalendarDays },
-  { title: "Updates", url: "/admin/updates", icon: Newspaper },
-  { title: "Merge Duplicates", url: "/admin/merge", icon: Merge },
-];
-
-const communityItems = [
-  { title: "Users", url: "/admin/users", icon: Users },
-  { title: "Ambassadors", url: "/admin/ambassadors", icon: Shield },
-  { title: "Ambassador Coverage", url: "/admin/ambassadors/coverage", icon: Globe2 },
-  { title: "Campaigns", url: "/admin/ambassadors/campaigns", icon: Target },
-  { title: "Feedback", url: "/admin/feedback", icon: MessageSquare },
-];
-
-const awardsItems = [
-  { title: "Awards", url: "/admin/awards", icon: Trophy },
-  { title: "Award Claims", url: "/admin/awards/claims", icon: Trophy },
-  { title: "Award Suggestions", url: "/admin/awards/suggestions", icon: Trophy },
-];
-
-const creditsItems = [
-  { title: "People", url: "/admin/credits/people", icon: UserCircle },
-  { title: "Companies", url: "/admin/credits/companies", icon: Factory },
-  { title: "Entity Claims", url: "/admin/claims", icon: FileCheck },
-  { title: "Flagged Credits", url: "/admin/credits/flagged", icon: Flag },
-];
-
-const mediaItems = [
-  { title: "Image Wall", url: "/admin/images", icon: Image },
-  { title: "Photo Analytics", url: "/admin/photos", icon: Map },
-  { title: "Storage Jobs", url: "/admin/storage-jobs", icon: Trash2 },
-];
-
-const systemItems = [
-  { title: "Moderation", url: "/admin/moderation", icon: ShieldAlert },
-  { title: "Audit Logs", url: "/admin/audit", icon: History },
-  { title: "API Requests", url: "/admin/api-requests", icon: Activity },
-  { title: "System", url: "/admin/system", icon: Settings },
-];
+import { adminNavGroups } from "@/features/admin/components/adminNavItems";
 
 import { useSuggestions, useAwardClaimRequests } from "@/features/awards/hooks/useAwards";
 import { useQuery } from "@tanstack/react-query";
@@ -165,15 +87,7 @@ export function AdminSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        {[
-          { label: "Programme", items: programmeItems },
-          { label: "Content", items: contentItems },
-          { label: "Community", items: communityItems },
-          { label: "Awards", items: awardsItems },
-          { label: "Credits", items: creditsItems },
-          { label: "Media", items: mediaItems },
-          { label: "System", items: systemItems },
-        ].map(({ label, items }) => (
+        {adminNavGroups.map(({ label, items }) => (
           <SidebarGroup key={label}>
             <SidebarGroupLabel>{label}</SidebarGroupLabel>
             <SidebarGroupContent>

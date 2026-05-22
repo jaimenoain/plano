@@ -201,7 +201,13 @@ export default function ContributePage() {
   }
 
   if (activeTool === "events" && chapterId) {
-    return <EventsTool chapterId={chapterId} onBack={() => setActiveTool(null)} />;
+    return (
+      <EventsTool
+        chapterId={chapterId}
+        role={membership?.role ?? null}
+        onBack={() => setActiveTool(null)}
+      />
+    );
   }
 
   return (
@@ -1608,6 +1614,14 @@ function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => 
     });
   };
 
+  const handleApproveRevert = (ids: string[]) => {
+    setDismissed((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.delete(id));
+      return next;
+    });
+  };
+
   const handleFlag = (id: string, label: string, reason: FlagReason) => {
     setDismissed((prev) => new Set(prev).add(id));
     const reasonLabel = FLAG_REASONS.find((r) => r.value === reason)?.label ?? reason;
@@ -1641,6 +1655,7 @@ function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => 
             chapterId={chapterId}
             dismissed={dismissed}
             onApproveAll={handleApproveAll}
+            onApproveRevert={handleApproveRevert}
             onFlag={handleFlag}
           />
         </TabsContent>
@@ -1650,6 +1665,7 @@ function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => 
             chapterId={chapterId}
             dismissed={dismissed}
             onApproveAll={handleApproveAll}
+            onApproveRevert={handleApproveRevert}
             onFlag={handleFlag}
           />
         </TabsContent>
@@ -1659,6 +1675,7 @@ function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => 
             chapterId={chapterId}
             dismissed={dismissed}
             onApproveAll={handleApproveAll}
+            onApproveRevert={handleApproveRevert}
             onFlag={handleFlag}
           />
         </TabsContent>
@@ -1668,6 +1685,7 @@ function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => 
             chapterId={chapterId}
             dismissed={dismissed}
             onApproveAll={handleApproveAll}
+            onApproveRevert={handleApproveRevert}
             onFlag={handleFlag}
           />
         </TabsContent>
@@ -1760,15 +1778,16 @@ function BuildingsModerationTab({
   chapterId,
   dismissed,
   onApproveAll,
+  onApproveRevert,
   onFlag,
 }: {
   chapterId: string;
   dismissed: Set<string>;
   onApproveAll: (ids: string[]) => void;
+  onApproveRevert: (ids: string[]) => void;
   onFlag: (id: string, label: string, reason: FlagReason) => void;
 }) {
   const queryClient = useQueryClient();
-  const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set());
 
   const { data: buildings, isLoading, error } = useQuery({
     queryKey: ["embassy-recent-buildings", chapterId],
@@ -1782,30 +1801,17 @@ function BuildingsModerationTab({
   );
 
   async function handleApprove(ids: string[]) {
-    setApprovingIds((prev) => {
-      const next = new Set(prev);
-      ids.forEach((id) => next.add(id));
-      return next;
-    });
+    // Optimistic dismiss — UI updates instantly; RPCs run in the background.
+    onApproveAll(ids);
     const results = await Promise.allSettled(ids.map((id) => approveBuilding(id)));
-    const succeeded = ids.filter((_, i) => results[i].status === "fulfilled");
-    const failed = ids.length - succeeded.length;
-    setApprovingIds((prev) => {
-      const next = new Set(prev);
-      ids.forEach((id) => next.delete(id));
-      return next;
-    });
-    if (succeeded.length > 0) {
-      onApproveAll(succeeded);
-      queryClient.invalidateQueries({ queryKey: ["embassy-recent-buildings", chapterId] });
-      toast.success(
-        succeeded.length === 1
-          ? "Building approved"
-          : `${succeeded.length} buildings approved`,
+    const failedIds = ids.filter((_, i) => results[i].status === "rejected");
+    if (failedIds.length > 0) {
+      onApproveRevert(failedIds);
+      toast.error(
+        `${failedIds.length} approval${failedIds.length === 1 ? "" : "s"} failed — please retry`,
       );
-    }
-    if (failed > 0) {
-      toast.error(`${failed} approval${failed === 1 ? "" : "s"} failed — please retry`);
+    } else {
+      queryClient.invalidateQueries({ queryKey: ["embassy-recent-buildings", chapterId] });
     }
   }
 
@@ -1826,7 +1832,6 @@ function BuildingsModerationTab({
               ? `https://www.google.com/maps/search/?api=1&query=${b.lat},${b.lng}`
               : null;
           const thumbUrl = getBuildingImageUrl(b.n ?? b.hero_image_url);
-          const isApproving = approvingIds.has(b.id);
           return (
             <Card key={b.id} className="overflow-hidden group hover:border-brand-primary transition-all flex flex-col">
               {thumbUrl ? (
@@ -1874,15 +1879,10 @@ function BuildingsModerationTab({
                   </Button>
                   <Button
                     size="sm"
-                    disabled={isApproving}
                     onClick={() => handleApprove([b.id])}
                     className="gap-1.5 flex-1"
                   >
-                    {isApproving ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                    )}
+                    <CheckCircle2 className="h-3.5 w-3.5" />
                     Approve
                   </Button>
                 </div>
@@ -1896,20 +1896,10 @@ function BuildingsModerationTab({
           <Button
             variant="default"
             size="sm"
-            disabled={approvingIds.size > 0}
             onClick={() => handleApprove(allIds)}
           >
-            {approvingIds.size > 0 ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                Approving…
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                Approve all ({allIds.length})
-              </>
-            )}
+            <CheckCircle2 className="h-4 w-4 mr-1.5" />
+            Approve all ({allIds.length})
           </Button>
         </div>
       )}
@@ -1921,15 +1911,16 @@ function PhotosModerationTab({
   chapterId,
   dismissed,
   onApproveAll,
+  onApproveRevert,
   onFlag,
 }: {
   chapterId: string;
   dismissed: Set<string>;
   onApproveAll: (ids: string[]) => void;
+  onApproveRevert: (ids: string[]) => void;
   onFlag: (id: string, label: string, reason: FlagReason) => void;
 }) {
   const queryClient = useQueryClient();
-  const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set());
 
   const { data: photos, isLoading, error } = useQuery({
     queryKey: ["moderation-photos", chapterId],
@@ -1942,28 +1933,17 @@ function PhotosModerationTab({
   );
 
   async function handleApprove(ids: string[]) {
-    setApprovingIds((prev) => {
-      const next = new Set(prev);
-      ids.forEach((id) => next.add(id));
-      return next;
-    });
+    // Optimistic dismiss — UI updates instantly; RPCs run in the background.
+    onApproveAll(ids);
     const results = await Promise.allSettled(ids.map((id) => approvePhoto(id)));
-    const succeeded = ids.filter((_, i) => results[i].status === "fulfilled");
-    const failed = ids.length - succeeded.length;
-    setApprovingIds((prev) => {
-      const next = new Set(prev);
-      ids.forEach((id) => next.delete(id));
-      return next;
-    });
-    if (succeeded.length > 0) {
-      onApproveAll(succeeded);
-      queryClient.invalidateQueries({ queryKey: ["moderation-photos", chapterId] });
-      toast.success(
-        succeeded.length === 1 ? "Photo approved" : `${succeeded.length} photos approved`,
+    const failedIds = ids.filter((_, i) => results[i].status === "rejected");
+    if (failedIds.length > 0) {
+      onApproveRevert(failedIds);
+      toast.error(
+        `${failedIds.length} approval${failedIds.length === 1 ? "" : "s"} failed — please retry`,
       );
-    }
-    if (failed > 0) {
-      toast.error(`${failed} approval${failed === 1 ? "" : "s"} failed — please retry`);
+    } else {
+      queryClient.invalidateQueries({ queryKey: ["moderation-photos", chapterId] });
     }
   }
 
@@ -1979,7 +1959,6 @@ function PhotosModerationTab({
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {visible.map((p) => {
           const imageUrl = getBuildingImageUrl(p.storage_path);
-          const isApproving = approvingIds.has(p.id);
           return (
             <div key={p.id} className="group relative rounded-xl overflow-hidden bg-muted aspect-square border border-border-default hover:border-brand-primary transition-all">
               {imageUrl ? (
@@ -2002,17 +1981,12 @@ function PhotosModerationTab({
               <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   type="button"
-                  disabled={isApproving}
                   onClick={() => handleApprove([p.id])}
-                  className="p-1.5 rounded-md bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-feedback-success hover:bg-feedback-success/10 disabled:opacity-50 transition-colors"
+                  className="p-1.5 rounded-md bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-feedback-success hover:bg-feedback-success/10 transition-colors"
                   aria-label="Approve photo"
                   title="Approve photo"
                 >
-                  {isApproving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="h-4 w-4" />
-                  )}
+                  <CheckCircle2 className="h-4 w-4" />
                 </button>
               </div>
               {/* Bottom info overlay */}
@@ -2038,20 +2012,10 @@ function PhotosModerationTab({
           <Button
             variant="default"
             size="sm"
-            disabled={approvingIds.size > 0}
             onClick={() => handleApprove(allIds)}
           >
-            {approvingIds.size > 0 ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                Approving…
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                Approve all ({allIds.length})
-              </>
-            )}
+            <CheckCircle2 className="h-4 w-4 mr-1.5" />
+            Approve all ({allIds.length})
           </Button>
         </div>
       )}
@@ -2063,15 +2027,16 @@ function VideosModerationTab({
   chapterId,
   dismissed,
   onApproveAll,
+  onApproveRevert,
   onFlag,
 }: {
   chapterId: string;
   dismissed: Set<string>;
   onApproveAll: (ids: string[]) => void;
+  onApproveRevert: (ids: string[]) => void;
   onFlag: (id: string, label: string, reason: FlagReason) => void;
 }) {
   const queryClient = useQueryClient();
-  const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set());
 
   const { data: videos, isLoading, error } = useQuery({
     queryKey: ["moderation-videos", chapterId],
@@ -2084,28 +2049,17 @@ function VideosModerationTab({
   );
 
   async function handleApprove(ids: string[]) {
-    setApprovingIds((prev) => {
-      const next = new Set(prev);
-      ids.forEach((id) => next.add(id));
-      return next;
-    });
+    // Optimistic dismiss — UI updates instantly; RPCs run in the background.
+    onApproveAll(ids);
     const results = await Promise.allSettled(ids.map((id) => approveVideo(id)));
-    const succeeded = ids.filter((_, i) => results[i].status === "fulfilled");
-    const failed = ids.length - succeeded.length;
-    setApprovingIds((prev) => {
-      const next = new Set(prev);
-      ids.forEach((id) => next.delete(id));
-      return next;
-    });
-    if (succeeded.length > 0) {
-      onApproveAll(succeeded);
-      queryClient.invalidateQueries({ queryKey: ["moderation-videos", chapterId] });
-      toast.success(
-        succeeded.length === 1 ? "Video approved" : `${succeeded.length} videos approved`,
+    const failedIds = ids.filter((_, i) => results[i].status === "rejected");
+    if (failedIds.length > 0) {
+      onApproveRevert(failedIds);
+      toast.error(
+        `${failedIds.length} approval${failedIds.length === 1 ? "" : "s"} failed — please retry`,
       );
-    }
-    if (failed > 0) {
-      toast.error(`${failed} approval${failed === 1 ? "" : "s"} failed — please retry`);
+    } else {
+      queryClient.invalidateQueries({ queryKey: ["moderation-videos", chapterId] });
     }
   }
 
@@ -2121,7 +2075,6 @@ function VideosModerationTab({
       <div className="grid gap-4 lg:grid-cols-2">
         {visible.map((v) => {
           const resolvedUrl = getStorageAssetUrl(v.video_url) ?? v.video_url;
-          const isApproving = approvingIds.has(v.id);
           return (
             <Card key={v.id} className="overflow-hidden group hover:border-brand-primary transition-all">
               <div className="flex flex-col sm:flex-row">
@@ -2175,15 +2128,10 @@ function VideosModerationTab({
                     </Button>
                     <Button
                       size="sm"
-                      disabled={isApproving}
                       onClick={() => handleApprove([v.id])}
                       className="gap-1.5 flex-1"
                     >
-                      {isApproving ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="h-3.5 w-3.5" />
-                      )}
+                      <CheckCircle2 className="h-3.5 w-3.5" />
                       Approve
                     </Button>
                   </div>
@@ -2198,20 +2146,10 @@ function VideosModerationTab({
           <Button
             variant="default"
             size="sm"
-            disabled={approvingIds.size > 0}
             onClick={() => handleApprove(allIds)}
           >
-            {approvingIds.size > 0 ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                Approving…
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                Approve all ({allIds.length})
-              </>
-            )}
+            <CheckCircle2 className="h-4 w-4 mr-1.5" />
+            Approve all ({allIds.length})
           </Button>
         </div>
       )}
@@ -2223,15 +2161,16 @@ function CreditsModerationTab({
   chapterId,
   dismissed,
   onApproveAll,
+  onApproveRevert,
   onFlag,
 }: {
   chapterId: string | undefined;
   dismissed: Set<string>;
   onApproveAll: (ids: string[]) => void;
+  onApproveRevert: (ids: string[]) => void;
   onFlag: (id: string, label: string, reason: FlagReason) => void;
 }) {
   const queryClient = useQueryClient();
-  const [approvingIds, setApprovingIds] = useState<Set<string>>(new Set());
 
   const { data: credits, isLoading, error } = useQuery({
     queryKey: ["moderation-credits", chapterId],
@@ -2245,28 +2184,17 @@ function CreditsModerationTab({
   );
 
   async function handleApprove(ids: string[]) {
-    setApprovingIds((prev) => {
-      const next = new Set(prev);
-      ids.forEach((id) => next.add(id));
-      return next;
-    });
+    // Optimistic dismiss — UI updates instantly; RPCs run in the background.
+    onApproveAll(ids);
     const results = await Promise.allSettled(ids.map((id) => approveCredit(id)));
-    const succeeded = ids.filter((_, i) => results[i].status === "fulfilled");
-    const failed = ids.length - succeeded.length;
-    setApprovingIds((prev) => {
-      const next = new Set(prev);
-      ids.forEach((id) => next.delete(id));
-      return next;
-    });
-    if (succeeded.length > 0) {
-      onApproveAll(succeeded);
-      queryClient.invalidateQueries({ queryKey: ["moderation-credits", chapterId] });
-      toast.success(
-        succeeded.length === 1 ? "Credit approved" : `${succeeded.length} credits approved`,
+    const failedIds = ids.filter((_, i) => results[i].status === "rejected");
+    if (failedIds.length > 0) {
+      onApproveRevert(failedIds);
+      toast.error(
+        `${failedIds.length} approval${failedIds.length === 1 ? "" : "s"} failed — please retry`,
       );
-    }
-    if (failed > 0) {
-      toast.error(`${failed} approval${failed === 1 ? "" : "s"} failed — please retry`);
+    } else {
+      queryClient.invalidateQueries({ queryKey: ["moderation-credits", chapterId] });
     }
   }
 
@@ -2281,7 +2209,6 @@ function CreditsModerationTab({
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {visible.map((c) => {
-          const isApproving = approvingIds.has(c.id);
           return (
             <Card key={c.id} className="p-4 group hover:border-brand-primary transition-all">
               <div className="flex items-start justify-between gap-3">
@@ -2311,15 +2238,10 @@ function CreditsModerationTab({
                   <FlagButton id={c.id} label={`Credit on ${c.building_name}`} onFlag={onFlag} />
                   <Button
                     size="sm"
-                    disabled={isApproving}
                     onClick={() => handleApprove([c.id])}
                     className="gap-1.5 h-7 px-2 text-xs"
                   >
-                    {isApproving ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <CheckCircle2 className="h-3 w-3" />
-                    )}
+                    <CheckCircle2 className="h-3 w-3" />
                     Approve
                   </Button>
                 </div>
@@ -2333,20 +2255,10 @@ function CreditsModerationTab({
           <Button
             variant="default"
             size="sm"
-            disabled={approvingIds.size > 0}
             onClick={() => handleApprove(allIds)}
           >
-            {approvingIds.size > 0 ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                Approving…
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="h-4 w-4 mr-1.5" />
-                Approve all ({allIds.length})
-              </>
-            )}
+            <CheckCircle2 className="h-4 w-4 mr-1.5" />
+            Approve all ({allIds.length})
           </Button>
         </div>
       )}
@@ -2377,12 +2289,15 @@ function ModerationError({ message }: { message: string }) {
 
 function EventsTool({
   chapterId,
+  role,
   onBack,
 }: {
   chapterId: string;
+  role: string | null;
   onBack: () => void;
 }) {
   const queryClient = useQueryClient();
+  const canForceSearch = role === "exco" || role === "president";
   const [editingDiscovery, setEditingDiscovery] = useState<EventDiscovery | null>(null);
   const [editDraft, setEditDraft] = useState<{
     title: string;
@@ -2453,6 +2368,35 @@ function EventsTool({
     onError: (err) => toast.error(err instanceof Error ? err.message : "Failed to save"),
   });
 
+  // Manual re-run (leadership only). Bypasses the 4-day stale gate; useful when a
+  // previous run found nothing or failed silently.
+  const forceSearchMutation = useMutation({
+    mutationFn: async () => {
+      const resp = await fetch("/api/embassy/event-search", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: "run", chapter_id: chapterId, force: true }),
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error((data as { error?: string }).error ?? `Search failed (${resp.status})`);
+      }
+      return data as { inserted?: number; skipped?: number; duplicates_flagged?: number };
+    },
+    onSuccess: (data) => {
+      const n = data.inserted ?? 0;
+      if (n > 0) {
+        toast.success(`Found ${n} new event${n === 1 ? "" : "s"}`);
+      } else {
+        toast("Search complete — no new events found");
+      }
+      queryClient.invalidateQueries({ queryKey: ["ambassador-chapter-meta", chapterId] });
+      queryClient.invalidateQueries({ queryKey: ["embassy-event-discoveries", chapterId] });
+    },
+    onError: (err) => toast.error(err instanceof Error ? err.message : "Search failed"),
+  });
+
   const lastSearchedAt = chapter?.last_event_search_at ?? null;
   const duplicateCount = (discoveries ?? []).filter((d) => d.duplicate_of_event_id).length;
 
@@ -2496,11 +2440,24 @@ function EventsTool({
             <p className="text-sm text-muted-foreground">Review AI-discovered events for your chapter.</p>
           </div>
         </div>
-        {lastSearchedAt && (
-          <span className="text-xs text-muted-foreground pl-14 sm:pl-0 whitespace-nowrap">
-            Last searched: {formatDistanceToNow(parseISO(lastSearchedAt), { addSuffix: true })}
-          </span>
-        )}
+        <div className="flex items-center gap-3 pl-14 sm:pl-0">
+          {lastSearchedAt && (
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+              Last searched: {formatDistanceToNow(parseISO(lastSearchedAt), { addSuffix: true })}
+            </span>
+          )}
+          {canForceSearch && !isNationalChapter && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => forceSearchMutation.mutate()}
+              disabled={forceSearchMutation.isPending}
+            >
+              <RefreshCw className={cn("mr-2 h-3.5 w-3.5", forceSearchMutation.isPending && "animate-spin")} />
+              {forceSearchMutation.isPending ? "Searching…" : "Search now"}
+            </Button>
+          )}
+        </div>
       </div>
 
       {!isLoading && !error && discoveries && discoveries.length > 0 && (
@@ -2548,6 +2505,18 @@ function EventsTool({
                 Plano will check again in{" "}
                 {Math.max(1, 4 - differenceInDays(new Date(), parseISO(lastSearchedAt)))} days.
               </p>
+              {canForceSearch && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => forceSearchMutation.mutate()}
+                  disabled={forceSearchMutation.isPending}
+                >
+                  <RefreshCw className={cn("mr-2 h-3.5 w-3.5", forceSearchMutation.isPending && "animate-spin")} />
+                  {forceSearchMutation.isPending ? "Searching…" : "Search again now"}
+                </Button>
+              )}
             </>
           ) : (
             <>
