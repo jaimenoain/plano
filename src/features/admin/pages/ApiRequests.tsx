@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { formatDistanceToNow, subHours } from "date-fns";
+import { formatDistanceToNow, format, subHours } from "date-fns";
 import {
   Activity,
   CheckCircle2,
@@ -9,6 +9,10 @@ import {
   DollarSign,
   RefreshCw,
   AlertTriangle,
+  Clock,
+  Cpu,
+  Hash,
+  ChevronRight,
 } from "lucide-react";
 import {
   Table,
@@ -27,6 +31,13 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -103,6 +114,145 @@ function EndpointLabel({ endpoint }: { endpoint: string }) {
   const short = endpoint.replace("/api/", "");
   return (
     <span className="font-mono text-xs text-text-primary">{short}</span>
+  );
+}
+
+// ─── Detail drawer ────────────────────────────────────────────────────────────
+
+function DetailRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
+        {label}
+      </span>
+      <div className="text-sm text-text-primary">{children}</div>
+    </div>
+  );
+}
+
+function ApiRequestDetailSheet({
+  log,
+  onClose,
+}: {
+  log: ApiRequestLog;
+  onClose: () => void;
+}) {
+  const success = isSuccess(log.status_code);
+  const hasMetadata = log.metadata && Object.keys(log.metadata).length > 0;
+
+  return (
+    <Sheet open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <SheetContent className="w-full sm:max-w-lg overflow-y-auto flex flex-col gap-0 p-0">
+        <SheetHeader className="px-6 py-4 border-b border-border-default">
+          <SheetTitle className="text-base font-semibold text-text-primary truncate">
+            {log.endpoint}
+          </SheetTitle>
+          <div className="flex items-center gap-2 mt-1">
+            <StatusBadge code={log.status_code} />
+            <span className="text-xs text-text-secondary font-mono">{log.method}</span>
+            <span className="text-xs text-text-disabled">
+              {format(new Date(log.created_at), "dd MMM yyyy, HH:mm:ss")}
+            </span>
+          </div>
+        </SheetHeader>
+
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          {/* ── Performance ── */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-surface-subtle border border-border-default p-3 flex items-center gap-3">
+              <Clock className="h-4 w-4 text-text-secondary shrink-0" strokeWidth={1.5} />
+              <div>
+                <p className="text-2xs uppercase tracking-widest text-text-secondary font-medium">Duration</p>
+                <p className="text-sm font-semibold text-text-primary tabular-nums">
+                  {log.duration_ms > 0 ? `${log.duration_ms.toLocaleString()} ms` : "—"}
+                </p>
+              </div>
+            </div>
+            <div className="bg-surface-subtle border border-border-default p-3 flex items-center gap-3">
+              <DollarSign className="h-4 w-4 text-text-secondary shrink-0" strokeWidth={1.5} />
+              <div>
+                <p className="text-2xs uppercase tracking-widest text-text-secondary font-medium">Cost</p>
+                <p className="text-sm font-semibold text-text-primary tabular-nums">
+                  {formatCost(log.cost_usd)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* ── Model & tokens ── */}
+          <div className="space-y-3">
+            {log.model && (
+              <DetailRow label="Model">
+                <div className="flex items-center gap-1.5">
+                  <Cpu className="h-3.5 w-3.5 text-text-secondary" strokeWidth={1.5} />
+                  <span className="font-mono text-sm">{log.model}</span>
+                </div>
+              </DetailRow>
+            )}
+            {(log.input_tokens != null || log.output_tokens != null) && (
+              <DetailRow label="Tokens (input / output)">
+                <div className="flex items-center gap-1.5">
+                  <Hash className="h-3.5 w-3.5 text-text-secondary" strokeWidth={1.5} />
+                  <span className="font-mono tabular-nums">
+                    {(log.input_tokens ?? 0).toLocaleString()} in &nbsp;/&nbsp; {(log.output_tokens ?? 0).toLocaleString()} out
+                  </span>
+                </div>
+              </DetailRow>
+            )}
+            {log.user_id && (
+              <DetailRow label="User ID">
+                <span className="font-mono text-xs text-text-secondary break-all">{log.user_id}</span>
+              </DetailRow>
+            )}
+            <DetailRow label="Log ID">
+              <span className="font-mono text-xs text-text-secondary break-all">{log.id}</span>
+            </DetailRow>
+          </div>
+
+          {/* ── Error ── */}
+          {log.error_message && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <p className="text-2xs font-medium uppercase tracking-widest text-feedback-destructive">
+                  Error
+                </p>
+                <div className="bg-feedback-destructive/5 border border-feedback-destructive/20 p-3">
+                  <p className="text-sm text-feedback-destructive font-mono break-words whitespace-pre-wrap">
+                    {log.error_message}
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ── API Response / Metadata ── */}
+          {hasMetadata && (
+            <>
+              <Separator />
+              <div className="space-y-2">
+                <p className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
+                  {success ? "Response metadata" : "Debug metadata"}
+                </p>
+                <div className="bg-surface-subtle border border-border-default p-3 overflow-auto max-h-[420px]">
+                  <pre className="text-xs text-text-primary font-mono whitespace-pre-wrap break-words leading-relaxed">
+                    {JSON.stringify(log.metadata, null, 2)}
+                  </pre>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -187,6 +337,7 @@ const ENDPOINT_OPTIONS = [
 export default function ApiRequests() {
   const [endpointFilter, setEndpointFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedLog, setSelectedLog] = useState<ApiRequestLog | null>(null);
 
   const { data: logs = [], isLoading, isError, dataUpdatedAt, refetch, isFetching } = useQuery({
     queryKey: ["admin", "api-request-logs", endpointFilter, statusFilter],
@@ -283,8 +434,9 @@ export default function ApiRequests() {
         </Select>
 
         {logs.length > 0 && (
-          <span className="text-xs text-text-disabled ml-auto">
+          <span className="text-xs text-text-disabled ml-auto flex items-center gap-2">
             {logs.length} row{logs.length !== 1 ? "s" : ""}
+            <span className="hidden sm:inline">· click a row to inspect</span>
           </span>
         )}
       </div>
@@ -321,17 +473,19 @@ export default function ApiRequests() {
                 <TableHead className="w-[160px] text-right">Tokens (in/out)</TableHead>
                 <TableHead className="w-[110px] text-right">Cost</TableHead>
                 <TableHead className="w-[80px] text-right">Duration</TableHead>
+                <TableHead className="w-6" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {logs.map((log) => (
                 <TableRow
                   key={log.id}
-                  className={
-                    !isSuccess(log.status_code)
-                      ? "bg-feedback-destructive/5"
-                      : undefined
-                  }
+                  onClick={() => setSelectedLog(log)}
+                  className={[
+                    "cursor-pointer hover:bg-surface-subtle transition-colors",
+                    !isSuccess(log.status_code) ? "bg-feedback-destructive/5" : "",
+                    selectedLog?.id === log.id ? "bg-surface-subtle" : "",
+                  ].join(" ")}
                 >
                   <TableCell className="text-xs text-text-secondary whitespace-nowrap">
                     {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
@@ -365,11 +519,22 @@ export default function ApiRequests() {
                   <TableCell className="text-right text-xs text-text-secondary tabular-nums">
                     {log.duration_ms > 0 ? `${log.duration_ms.toLocaleString()}ms` : "—"}
                   </TableCell>
+                  <TableCell className="w-6 pl-0 text-text-disabled">
+                    <ChevronRight className="h-3.5 w-3.5" strokeWidth={1.5} />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {/* ── Detail drawer ── */}
+      {selectedLog && (
+        <ApiRequestDetailSheet
+          log={selectedLog}
+          onClose={() => setSelectedLog(null)}
+        />
       )}
     </div>
   );

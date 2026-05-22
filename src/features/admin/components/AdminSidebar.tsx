@@ -1,4 +1,4 @@
-import { LayoutDashboard, LogOut, Home } from "lucide-react";
+import { LayoutDashboard, LogOut, Home, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
   Sidebar,
@@ -12,7 +12,7 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { adminNavGroups } from "@/features/admin/components/adminNavItems";
@@ -20,6 +20,24 @@ import { adminNavGroups } from "@/features/admin/components/adminNavItems";
 import { useSuggestions, useAwardClaimRequests } from "@/features/awards/hooks/useAwards";
 import { useQuery } from "@tanstack/react-query";
 import { fetchInterventionFlags } from "@/features/admin/api/programme";
+
+function SidebarCollapseChevron() {
+  const { toggleSidebar, open, isMobile } = useSidebar();
+  if (isMobile) return null;
+  return (
+    <button
+      onClick={toggleSidebar}
+      aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
+      className="absolute right-0 top-[60px] z-20 flex h-5 w-5 translate-x-1/2 items-center justify-center rounded-full border border-border-default bg-surface-card shadow-sm transition-colors hover:bg-surface-muted"
+    >
+      {open ? (
+        <ChevronLeft className="size-3 text-text-secondary" />
+      ) : (
+        <ChevronRight className="size-3 text-text-secondary" />
+      )}
+    </button>
+  );
+}
 
 export function AdminSidebar() {
   const location = useLocation();
@@ -143,7 +161,7 @@ export function AdminSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
-      <SidebarRail />
+      <SidebarCollapseChevron />
     </Sidebar>
   );
 }

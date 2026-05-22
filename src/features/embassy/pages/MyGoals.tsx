@@ -102,7 +102,8 @@ export default function MyGoalsPage() {
     enabled: !!user,
   });
 
-  // Fetch leaderboard
+  // Fetch leaderboard — retry: 0 prevents multiple 500 hammer calls if the
+  // RPC is missing its GRANT EXECUTE (e.g. migration not yet applied).
   const {
     data: leaderboard,
     isLoading: loadingLeaderboard,
@@ -111,6 +112,7 @@ export default function MyGoalsPage() {
     queryKey: ["chapter-leaderboard", chapterId],
     queryFn: () => fetchChapterAmbassadorActivity(chapterId!, 30),
     enabled: !!chapterId,
+    retry: 0,
   });
 
   // Fetch open chapter tasks (todo + in_progress) for the dashboard summary

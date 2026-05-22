@@ -1474,11 +1474,21 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
 
   // Enable/disable the photography-gap map filter when the view tab changes.
   // Only re-runs on view change — not on every map interaction.
+  const PHOTO_GAP_FILTER_KEY = "plano:photography:gapPhotoCounts";
+
+  const readStoredGapCounts = (): number[] => {
+    try {
+      const raw = localStorage.getItem(PHOTO_GAP_FILTER_KEY);
+      if (raw) return JSON.parse(raw) as number[];
+    } catch {}
+    return [0, 1];
+  };
+
   useEffect(() => {
     if (view === "map") {
       setFilterRef.current("photographyGaps", true);
       if (!filtersRef.current.gapPhotoCounts || filtersRef.current.gapPhotoCounts.length === 0) {
-        setFilterRef.current("gapPhotoCounts", [0, 1]);
+        setFilterRef.current("gapPhotoCounts", readStoredGapCounts());
       }
     } else {
       setFilterRef.current("photographyGaps", false);
@@ -1493,11 +1503,11 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
 
   const toggleGapFilter = (val: number) => {
     const current = filters.gapPhotoCounts || [];
-    if (current.includes(val)) {
-      setFilter("gapPhotoCounts", current.filter(v => v !== val));
-    } else {
-      setFilter("gapPhotoCounts", [...current, val]);
-    }
+    const next = current.includes(val)
+      ? current.filter(v => v !== val)
+      : [...current, val];
+    setFilter("gapPhotoCounts", next);
+    try { localStorage.setItem(PHOTO_GAP_FILTER_KEY, JSON.stringify(next)); } catch {}
   };
 
   return (
@@ -1509,7 +1519,7 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
           </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Photography</h1>
-            <p className="text-sm text-muted-foreground">Find buildings that need images.</p>
+            <p className="text-sm text-muted-foreground">Find buildings that need images. Feel free to mark as hidden any building that is not interesting enough.</p>
           </div>
         </div>
 
