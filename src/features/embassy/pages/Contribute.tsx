@@ -1433,20 +1433,32 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
     staleTime: Infinity,
   });
 
-  // One-shot: center the map on the chapter's locality when the map view opens,
-  // unless the URL already carried an explicit position at mount time.
-  // We deliberately do NOT guard on lat/lng/zoom here — PlanoMap.onLoad may
-  // restore a position from localStorage before chapterCenter resolves, which
-  // would change lat away from DEFAULT_LAT and prevent centering.
+  // Resolve the user's geolocation once on mount (silently — no toast).
+  // Stored as 'pending' until the browser responds, then null or a coordinate.
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null | "pending">("pending");
+  useEffect(() => {
+    if (initialHasExplicitPosition.current) { setUserLocation(null); return; }
+    if (!navigator.geolocation) { setUserLocation(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => setUserLocation(null),
+    );
+  }, []);
+
+  // One-shot: center the map on the user's location (preferred) or the chapter
+  // locality (fallback), unless the URL already carried an explicit position.
+  // We wait for geolocation to settle before falling back so we don't jump twice.
   const hasCenteredRef = useRef(false);
   useEffect(() => {
     if (hasCenteredRef.current) return;
     if (initialHasExplicitPosition.current) return;
     if (view !== "map") return;
-    if (!chapterCenter) return;
-    moveMapRef.current(chapterCenter.lat, chapterCenter.lng, 13);
+    if (userLocation === "pending") return;
+    const target = userLocation ?? chapterCenter;
+    if (!target) return;
+    moveMapRef.current(target.lat, target.lng, 13);
     hasCenteredRef.current = true;
-  }, [view, chapterCenter]);
+  }, [view, userLocation, chapterCenter]);
 
   const { data: buildings, isLoading, error } = useQuery({
     queryKey: ["embassy-buildings-no-photo", chapterId],

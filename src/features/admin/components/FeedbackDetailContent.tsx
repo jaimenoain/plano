@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Loader2, RotateCcw } from "lucide-react";
+import { CheckCircle2, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -143,6 +143,19 @@ export function FeedbackDetailContent({
               )}
             </div>
           ) : (
+            <div className="space-y-3">
+              {row.status !== "resolved" && (
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={savingId === row.id}
+                  onClick={() => onStatusChange(row, "resolved")}
+                  className="w-full bg-feedback-success text-white hover:bg-feedback-success/90"
+                >
+                  <CheckCircle2 className="mr-1.5 h-4 w-4" />
+                  Mark as Resolved
+                </Button>
+              )}
             <div className="flex flex-wrap gap-1.5">
               {STATUS_OPTIONS.map((opt) => {
                 const isActive = row.status === opt.value;
@@ -165,6 +178,7 @@ export function FeedbackDetailContent({
                   </button>
                 );
               })}
+            </div>
             </div>
           )}
           {savingId === row.id && (
