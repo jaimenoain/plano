@@ -48,6 +48,8 @@ import type { EntityType } from "@/features/admin/types/merge";
 import { getBuildingImageUrl, getStorageAssetUrl } from "@/utils/image";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { getBuildingUrl } from "@/utils/url";
+import { resizeImage } from "@/lib/image-compression";
+import { uploadFile } from "@/utils/upload";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
@@ -2328,7 +2330,10 @@ function EventsTool({
     end_at: string;
     address: string;
     external_link: string;
-  }>({ title: "", description: "", start_at: "", end_at: "", address: "", external_link: "" });
+    cover_image_url: string;
+  }>({ title: "", description: "", start_at: "", end_at: "", address: "", external_link: "", cover_image_url: "" });
+  const [coverUploading, setCoverUploading] = useState(false);
+  const coverFileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: chapter } = useQuery({
     queryKey: ["ambassador-chapter-meta", chapterId],
@@ -2432,7 +2437,27 @@ function EventsTool({
       end_at: d.end_at ? d.end_at.slice(0, 16) : "",
       address: d.address ?? "",
       external_link: d.external_link ?? "",
+      cover_image_url: d.cover_image_url ?? "",
     });
+  }
+
+  async function handleCoverFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return;
+    setCoverUploading(true);
+    try {
+      const resized = await resizeImage(file, 1920, 1080, 0.88);
+      const key = await uploadFile(resized, "event-covers");
+      const url = getStorageAssetUrl(key);
+      if (!url) { toast.error("Could not resolve the uploaded image URL."); return; }
+      setEditDraft((d) => ({ ...d, cover_image_url: url }));
+    } catch {
+      toast.error("Cover upload failed. Try a smaller image or check your connection.");
+    } finally {
+      setCoverUploading(false);
+    }
   }
 
   function handleSave() {
@@ -2446,6 +2471,7 @@ function EventsTool({
         end_at: editDraft.end_at || null,
         address: editDraft.address || null,
         external_link: editDraft.external_link || null,
+        cover_image_url: editDraft.cover_image_url || null,
       },
     });
   }
@@ -2627,11 +2653,60 @@ function EventsTool({
                 onChange={(e) => setEditDraft((d) => ({ ...d, external_link: e.target.value }))}
               />
             </div>
+            <div className="space-y-1.5">
+              <Label>Cover image</Label>
+              <input
+                ref={coverFileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={handleCoverFileChange}
+              />
+              {editDraft.cover_image_url && (
+                <div className="overflow-hidden rounded-md border border-border-default">
+                  <img
+                    src={editDraft.cover_image_url}
+                    alt=""
+                    className="max-h-36 w-full object-cover"
+                  />
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={coverUploading}
+                  onClick={() => coverFileInputRef.current?.click()}
+                >
+                  {coverUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                      Uploading…
+                    </>
+                  ) : editDraft.cover_image_url ? (
+                    "Replace image"
+                  ) : (
+                    "Upload cover image"
+                  )}
+                </Button>
+                {editDraft.cover_image_url && !coverUploading && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditDraft((d) => ({ ...d, cover_image_url: "" }))}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </div>
+            </div>
             <div className="flex justify-end gap-3 pt-2">
               <Button variant="outline" onClick={() => setEditingDiscovery(null)}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={saveMutation.isPending}>
+              <Button onClick={handleSave} disabled={saveMutation.isPending || coverUploading}>
                 {saveMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                 Save
               </Button>
@@ -2698,18 +2773,41 @@ function EventDiscoveryCard({
               </div>
             )}
 
-            {d.snippet && (
-              <p className="text-xs text-muted-foreground italic line-clamp-2">&ldquo;{d.snippet}&rdquo;</p>
+            {d.description && (
+              <p className="text-sm text-text-primary/80 leading-snug">{d.description}</p>
             )}
 
-            <a
-              href={d.source_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-text-primary transition-colors"
-            >
-              Source <ExternalLink className="h-3 w-3" />
-            </a>
+            <div className="flex items-center gap-3 flex-wrap">
+              {d.external_link ? (
+                <a
+                  href={d.external_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-text-primary hover:opacity-70 transition-opacity"
+                >
+                  View event <ExternalLink className="h-3 w-3" />
+                </a>
+              ) : (
+                <a
+                  href={d.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-text-primary hover:opacity-70 transition-opacity"
+                >
+                  View event <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+              {d.external_link && d.source_url !== d.external_link && (
+                <a
+                  href={d.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-text-primary transition-colors"
+                >
+                  Source <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+            </div>
           </div>
         </div>
 

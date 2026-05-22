@@ -14,35 +14,42 @@ const bodySchema = z.object({
   force: z.boolean().optional(),
 });
 
-const EXTRACTION_SYSTEM_PROMPT = `You are an architectural-events extractor. You are given a Google search result
-payload (organic results, knowledge graph, related searches) and you must
-extract ALL clearly described upcoming architecture events.
+const EXTRACTION_SYSTEM_PROMPT = `You are an architectural-events extractor. You are given merged Google search
+result payloads from multiple queries and must extract ALL clearly described
+upcoming architecture events relevant to architects and architecture enthusiasts.
 
 Return ONLY a JSON object — no markdown, no commentary:
 {
   "events": [
     {
-      "title": "string",
-      "description": "string or null",
+      "title": "string — the event's official name",
+      "description": "string or null — 1–2 sentence plain-language summary: what the event is, what attendees will experience, and why it is relevant to architects or architecture enthusiasts. Do NOT restate the title. Write as if briefing a busy professional.",
       "start_at": "ISO 8601 timestamp with timezone, e.g. 2026-06-04T18:00:00+02:00",
       "end_at":   "ISO 8601 timestamp or null",
       "address":  "street + city or null",
-      "external_link": "the event organiser's canonical URL",
+      "external_link": "the event's own dedicated page (organiser site, Eventbrite, RIBA, Meetup, etc.) — NOT a listing or aggregator page unless no dedicated page is discoverable",
       "source_url":    "the SERP result URL where you found the event",
-      "snippet":       "verbatim or near-verbatim excerpt (max 280 chars)"
+      "snippet":       "verbatim or near-verbatim excerpt from the search result (max 280 chars)"
     }
   ]
 }
 
-Rules:
-- ONLY include events. Skip articles, news, retrospectives, calls for entries,
-  podcast episodes, online courses, exhibitions with no end date, and
-  permanent installations.
-- Skip events older than today.
-- If a result mentions multiple events, emit one object per event.
-- If you cannot determine a real start_at with at least day precision, omit
-  the event.
-- If unsure, omit. Do not fabricate dates, addresses, or organisers.
+Qualifying events — include ALL that match:
+- Architecture talks, lectures, keynotes, panel discussions, symposia, conferences, workshops
+- Architecture exhibitions and shows with a stated run period (even if end date is absent from the snippet)
+- Architecture walks, guided tours, and open house events
+- Award ceremonies and prize announcements for architects
+- Any event explicitly aimed at architects or design / architecture enthusiasts
+
+Exclusion rules:
+- Skip articles, news write-ups, retrospectives, and calls for entries.
+- Skip podcast episodes and online-only courses.
+- Skip events that have clearly already passed (start date before today).
+- Skip permanent or indefinite installations with no stated open/close period.
+- If a result lists multiple qualifying events, emit one object per event.
+- If you cannot determine a start date with at least day precision, omit the event.
+- When unsure whether an event qualifies, include it rather than omitting it.
+- Do not fabricate dates, addresses, or organisers.
 - Return {"events": []} if no qualifying events are found.`;
 
 type RawCandidate = {
@@ -169,6 +176,28 @@ export async function action({ request }: ActionFunctionArgs) {
     return Response.json({ error: "Force search requires leadership role" }, { status: 403, headers });
   }
 
+  // 6.5. Concurrent-run guard — multiple browser tabs (or rapid page refreshes before
+  // last_event_search_at is stamped) can all pass the 4-day stale gate simultaneously.
+  // Bail out if a search is already in flight for this chapter so we don't fan out
+  // duplicate Serper + Claude calls.
+  const { data: activeRun } = await supabase
+    .from("embassy_event_search_runs")
+    .select("id")
+    .eq("chapter_id", chapter_id)
+    .eq("status", "running")
+    .maybeSingle();
+
+  if (activeRun) {
+    void logApiRequest(supabase, {
+      endpoint: "/api/embassy/event-search",
+      statusCode: 200,
+      durationMs: 0,
+      userId: user.id,
+      metadata: { chapter_id, exit_reason: "skipped_concurrent_run", active_run_id: activeRun.id },
+    });
+    return Response.json({ ok: true, skipped: "already_running" }, { headers });
+  }
+
   // 7. Fetch locality name for query
   // NOTE: the localities table column is `city`, not `name`. Selecting a
   // non-existent column makes PostgREST return an error and `data: null`,
@@ -256,45 +285,64 @@ export async function action({ request }: ActionFunctionArgs) {
   let outputTokens: number | null = null;
 
   try {
-    // 10. Serper search
-    // NOTE: Serper's free tier rejects queries that use operators like
-    // `OR` combined with quoted phrases (HTTP 400 "Query pattern not
-    // allowed for free accounts"). Keep the query plain — Google handles
-    // morphological variants of "architecture" without needing OR.
+    // 10. Serper search — 3 parallel queries for broader coverage:
+    //   (a) general events, (b) talks/lectures/symposia, (c) exhibitions/open-house/tours.
+    // Serper's free tier rejects OR-with-quoted-phrases; keep queries plain.
     const currentYear = new Date().getFullYear();
-    const query = `architecture events ${locality.city} ${currentYear}`;
-    stats.query = query;
+    const gl = chapter.country_code ? chapter.country_code.toLowerCase() : undefined;
 
-    const serperBody: { q: string; num: number; gl?: string } = { q: query, num: 20 };
-    if (chapter.country_code) {
-      serperBody.gl = chapter.country_code.toLowerCase();
-    }
+    const searchQueries = [
+      `architecture events ${locality.city} ${currentYear}`,
+      `architecture lecture talk symposium ${locality.city} ${currentYear}`,
+      `architecture exhibition open house tour ${locality.city} ${currentYear}`,
+    ];
+    stats.queries = searchQueries;
 
-    const serperResp = await fetch("https://google.serper.dev/search", {
-      method: "POST",
-      headers: { "X-API-KEY": serperKey, "Content-Type": "application/json" },
-      body: JSON.stringify(serperBody),
-      signal: AbortSignal.timeout(30_000),
-    });
+    const serperFetches = await Promise.all(
+      searchQueries.map((q) =>
+        fetch("https://google.serper.dev/search", {
+          method: "POST",
+          headers: { "X-API-KEY": serperKey, "Content-Type": "application/json" },
+          body: JSON.stringify({ q, num: 10, ...(gl ? { gl } : {}) }),
+          signal: AbortSignal.timeout(30_000),
+        }),
+      ),
+    );
 
-    if (!serperResp.ok) {
-      const errorBody = await serperResp.text().catch(() => "");
+    const failedFetch = serperFetches.find((r) => !r.ok);
+    if (failedFetch) {
+      const errorBody = await failedFetch.text().catch(() => "");
       stats.serper_error_body = errorBody.slice(0, 500);
-      await markRunFailed(supabase, run.id, `serper_http_${serperResp.status}: ${errorBody.slice(0, 200)}`);
+      await markRunFailed(supabase, run.id, `serper_http_${failedFetch.status}: ${errorBody.slice(0, 200)}`);
       void logApiRequest(supabase, {
         endpoint: "/api/embassy/event-search",
         statusCode: 502,
         durationMs: Date.now() - requestStartMs,
         userId: user.id,
-        errorMessage: `serper_http_${serperResp.status}: ${errorBody.slice(0, 200)}`,
+        errorMessage: `serper_http_${failedFetch.status}: ${errorBody.slice(0, 200)}`,
         metadata: stats,
       });
       return Response.json({ error: "Search provider error" }, { status: 502, headers });
     }
 
-    const serperData = await serperResp.json();
-    stats.serper_organic_count = Array.isArray(serperData?.organic) ? serperData.organic.length : 0;
-    stats.serper_knowledge_graph = !!serperData?.knowledgeGraph;
+    const serperPayloads = await Promise.all(serperFetches.map((r) => r.json()));
+
+    // Merge organic results across all three queries, deduplicate by URL.
+    const seenUrls = new Set<string>();
+    const mergedOrganic: unknown[] = [];
+    for (const payload of serperPayloads) {
+      if (!Array.isArray((payload as Record<string, unknown>)?.organic)) continue;
+      for (const item of (payload as Record<string, unknown[]>).organic) {
+        const url = (item as Record<string, unknown>)?.link as string | undefined;
+        if (url && !seenUrls.has(url)) {
+          seenUrls.add(url);
+          mergedOrganic.push(item);
+        }
+      }
+    }
+    const combinedData = { organic: mergedOrganic };
+    stats.serper_organic_count = mergedOrganic.length;
+    stats.serper_knowledge_graph = false;
 
     // 11. Claude extraction
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
@@ -318,7 +366,7 @@ export async function action({ request }: ActionFunctionArgs) {
       model,
       max_tokens: 4096,
       system: EXTRACTION_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: JSON.stringify(serperData) }],
+      messages: [{ role: "user", content: JSON.stringify(combinedData) }],
     });
     inputTokens = aiResponse.usage?.input_tokens ?? null;
     outputTokens = aiResponse.usage?.output_tokens ?? null;

@@ -274,6 +274,7 @@ type EventDiscoveryPatch = {
   end_at?: string | null;
   address?: string | null;
   external_link?: string | null;
+  cover_image_url?: string | null;
 };
 
 export async function updateEventDiscovery(
