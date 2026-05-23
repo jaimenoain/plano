@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 /** After the auto install prompt is shown, suppress it again for this long. */
@@ -30,39 +30,78 @@ export function PwaProvider({ children }: { children: ReactNode }) {
   const [showIOSDrawer, setShowIOSDrawer] = useState(false);
   const [isInstallable, setIsInstallable] = useState(false);
 
-  // Register the service worker and auto-activate any new version as soon as it
-  // installs. `updateServiceWorker(true)` sends SKIP_WAITING to the waiting worker
-  // and reloads the page once it takes control. Trade-off: a user mid-typing can
-  // get interrupted. Accepted because otherwise installed PWAs (especially mobile)
-  // can sit on a stale shell whose hashed asset URLs no longer exist on the server,
-  // which presents as "the site is broken."
+  // Shared reload guard — set to true before the first reload to prevent concurrent
+  // triggers (updatefound, controllerchange, and version-check can all fire at once).
+  const reloading = useRef(false);
+
+  // ─── Layer 1: updatefound + statechange ────────────────────────────────────
+  // When a new SW finishes installing and transitions to 'activated', reload.
+  // This fires regardless of whether clientsClaim() is called, making it more
+  // reliable than controllerchange alone. Captured in onRegistered so it is wired
+  // directly to the registration object before any update check runs.
   const { updateServiceWorker } = useRegisterSW({
-    onRegistered() {},
+    onRegistered(reg) {
+      if (!reg) return;
+      reg.addEventListener("updatefound", () => {
+        const newSW = reg.installing;
+        if (!newSW) return;
+        // Snapshot controller at the moment updatefound fires. If there was already
+        // an active SW (i.e. this is an upgrade, not first install) we reload.
+        const hadController = Boolean(navigator.serviceWorker.controller);
+        newSW.addEventListener("statechange", () => {
+          if (newSW.state === "activated" && hadController && !reloading.current) {
+            reloading.current = true;
+            window.location.reload();
+          }
+        });
+      });
+    },
     onRegisterError() {},
+    // onNeedRefresh is only called in 'prompt' mode; kept as a safety net in case
+    // registerType is ever switched away from 'autoUpdate'.
     onNeedRefresh() {
       void updateServiceWorker(true);
     },
   });
 
-  // Long-lived installed PWAs (especially mobile) may not re-check the service worker
-  // until a cold start. Probing on resume + periodically helps them pick up new sw.js
-  // (also pair with `Cache-Control` on `/sw.js` in vercel.json so the check is not stale).
+  // ─── Layer 2: controllerchange + Layer 3: version poll ─────────────────────
+  // controllerchange: backup for when the new SW calls clientsClaim() on open tabs
+  // without the updatefound path catching it first.
+  //
+  // Version poll: hits /api/version (no-store, SSR, never cached by the SW) and
+  // reloads if the server version differs from the build-time constant. This is the
+  // ultimate fallback — it works even for users stuck on old code that has no
+  // updatefound or controllerchange listener, as long as a newer deployment of this
+  // file has since been served at least once to that device.
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
-    // With registerType:'autoUpdate', Workbox calls skipWaiting() automatically but
-    // does NOT reload the page. controllerchange fires when the new SW takes over;
-    // reloading here gives users the fresh assets immediately.
-    // hadController guards against reloading on first-ever SW install (no prior controller).
     const hadController = Boolean(navigator.serviceWorker.controller);
-    let reloading = false;
     const onControllerChange = () => {
-      if (hadController && !reloading) {
-        reloading = true;
+      if (hadController && !reloading.current) {
+        reloading.current = true;
         window.location.reload();
       }
     };
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+
+    let lastVersionCheckAt = 0;
+    const checkVersion = () => {
+      const now = Date.now();
+      if (now - lastVersionCheckAt < 5 * 60 * 1000) return; // at most once per 5 min
+      lastVersionCheckAt = now;
+      void fetch("/api/version", { cache: "no-store" })
+        .then((res) => res.json() as Promise<{ version: string }>)
+        .then(({ version }) => {
+          if (version !== __APP_VERSION__ && !reloading.current) {
+            reloading.current = true;
+            window.location.reload();
+          }
+        })
+        .catch(() => {
+          // Best-effort — ignore offline / transient errors
+        });
+    };
 
     const checkForUpdate = () => {
       void navigator.serviceWorker.getRegistration().then((reg) => {
@@ -71,15 +110,22 @@ export function PwaProvider({ children }: { children: ReactNode }) {
     };
 
     const onVisibility = () => {
-      if (document.visibilityState === "visible") checkForUpdate();
+      if (document.visibilityState === "visible") {
+        checkForUpdate();
+        checkVersion();
+      }
     };
 
     void navigator.serviceWorker.ready.then(() => {
       checkForUpdate();
+      checkVersion();
     });
 
     document.addEventListener("visibilitychange", onVisibility);
-    const intervalId = window.setInterval(checkForUpdate, 60 * 60 * 1000);
+    const intervalId = window.setInterval(() => {
+      checkForUpdate();
+      checkVersion();
+    }, 60 * 60 * 1000);
 
     return () => {
       navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);

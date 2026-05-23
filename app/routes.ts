@@ -31,6 +31,9 @@ export default [
     "features/admin/pages/MergeComparisonEntities.tsx",
   ),
 
+  // App version — used by the client to detect stale SW caches and force reload
+  route("/api/version", "api/version.route.ts"),
+
   // Feedback API resource route
   route("/api/feedback", "features/feedback/api/feedback.route.ts"),
 

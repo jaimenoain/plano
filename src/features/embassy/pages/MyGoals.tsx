@@ -10,10 +10,12 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Target, History, Plus, Loader2, ArrowUpRight, TrendingUp, Star, CheckSquare, Circle, Clock, CheckCircle2, CalendarDays, FolderOpen } from "lucide-react";
+import { Target, History, Plus, Loader2, ArrowUpRight, TrendingUp, Star, CheckSquare, Circle, Clock, CheckCircle2, CalendarDays, FolderOpen, Building2, Eye, EyeOff, Users } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow, isPast, isToday, parseISO } from "date-fns";
@@ -37,15 +39,31 @@ interface ChapterTask {
   title: string;
   description: string | null;
   due_date: string | null;
+  visibility: "chapter" | "leadership" | "only_me";
   status: TaskStatus;
   created_by: string;
+  creator_username: string | null;
+  assigned_to: string | null;
+  assignee_username: string | null;
+  assignee_avatar_url: string | null;
+  project_id: string | null;
   project_title: string | null;
+  company_id: string | null;
+  company_name: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
-const TASK_STATUS_CONFIG: Record<TaskStatus, { icon: React.ReactNode; class: string }> = {
-  todo:        { icon: <Circle className="h-3.5 w-3.5" />,        class: "text-muted-foreground" },
-  in_progress: { icon: <Clock className="h-3.5 w-3.5" />,         class: "text-amber-600" },
-  done:        { icon: <CheckCircle2 className="h-3.5 w-3.5" />,  class: "text-green-600" },
+const TASK_STATUS_CONFIG: Record<TaskStatus, { label: string; icon: React.ReactNode; class: string }> = {
+  todo:        { label: "To do",       icon: <Circle className="h-3.5 w-3.5" />,        class: "text-muted-foreground" },
+  in_progress: { label: "In progress", icon: <Clock className="h-3.5 w-3.5" />,         class: "text-amber-600" },
+  done:        { label: "Done",        icon: <CheckCircle2 className="h-3.5 w-3.5" />,  class: "text-green-600" },
+};
+
+const VISIBILITY_CONFIG: Record<"chapter" | "leadership" | "only_me", { label: string; icon: React.ReactNode }> = {
+  chapter:    { label: "Everyone",   icon: <Users className="h-3 w-3" /> },
+  leadership: { label: "Leadership", icon: <Eye className="h-3 w-3" /> },
+  only_me:    { label: "Only me",    icon: <EyeOff className="h-3 w-3" /> },
 };
 
 function openTaskDueDateClass(due: string | null): string {
@@ -56,10 +74,19 @@ function openTaskDueDateClass(due: string | null): string {
   return "text-muted-foreground";
 }
 
+function initials(username: string) {
+  return username
+    .split(/[\s_-]/)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .slice(0, 2)
+    .join("");
+}
+
 export default function MyGoalsPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isGoalOpen, setIsGoalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<ChapterTask | null>(null);
 
   // Form state
   const [title, setTitle] = useState("");
@@ -88,6 +115,7 @@ export default function MyGoalsPage() {
   });
 
   const chapterId = membership?.chapter_id;
+  const isLeader = ["exco", "president", "global_team", "global_leaders", "global_president"].includes(membership?.role ?? "");
 
   // Fetch personal goals — RPC derives current_value at read time from
   // review_images / building_audit_logs / user_buildings / company_stewards,
@@ -199,7 +227,7 @@ export default function MyGoalsPage() {
           ) : (
             <div className="space-y-2">
               {openTasks.slice(0, 5).map((task) => (
-                <OpenTaskRow key={task.id} task={task} />
+                <OpenTaskRow key={task.id} task={task} onClick={() => setSelectedTask(task)} />
               ))}
               {openTasks.length > 5 && (
                 <p className="text-sm text-muted-foreground pl-1">
@@ -267,6 +295,121 @@ export default function MyGoalsPage() {
         </section>
       </div>
 
+      {/* Task detail Sheet */}
+      <Sheet open={!!selectedTask} onOpenChange={(open) => { if (!open) setSelectedTask(null); }}>
+        <SheetContent className="w-full sm:max-w-md flex flex-col overflow-y-auto gap-0 p-0">
+          {selectedTask && (() => {
+            const task = selectedTask;
+            const cfg = TASK_STATUS_CONFIG[task.status];
+            const vis = VISIBILITY_CONFIG[task.visibility] ?? VISIBILITY_CONFIG["chapter"];
+            const canEdit = task.created_by === user?.id || isLeader;
+            return (
+              <>
+                <SheetHeader className="px-6 pt-6 pb-4 border-b border-border-default">
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <SheetTitle className={cn("text-xl font-bold leading-tight", task.status === "done" && "line-through opacity-60")}>
+                      {task.title}
+                    </SheetTitle>
+                    {task.description ? (
+                      <SheetDescription className="text-sm text-muted-foreground leading-relaxed">
+                        {task.description}
+                      </SheetDescription>
+                    ) : (
+                      <SheetDescription className="sr-only">Task detail</SheetDescription>
+                    )}
+                  </div>
+                </SheetHeader>
+
+                <div className="px-6 py-5 space-y-5 flex-1">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground w-24 shrink-0">Status</span>
+                    <Badge variant="outline" className={cn("gap-1.5", cfg.class)}>
+                      {cfg.icon}
+                      {cfg.label}
+                    </Badge>
+                  </div>
+
+                  {task.due_date && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground w-24 shrink-0">Due</span>
+                      <span className={cn("flex items-center gap-1.5 text-sm", openTaskDueDateClass(task.due_date))}>
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        {format(parseISO(task.due_date), "d MMMM yyyy")}
+                      </span>
+                    </div>
+                  )}
+
+                  {task.assigned_to && task.assignee_username && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground w-24 shrink-0">Assigned to</span>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={task.assignee_avatar_url ?? undefined} />
+                          <AvatarFallback className="text-[9px]">{initials(task.assignee_username)}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm">@{task.assignee_username}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {task.project_title && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground w-24 shrink-0">Project</span>
+                      <span className="flex items-center gap-1.5 text-sm">
+                        <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" />
+                        {task.project_title}
+                      </span>
+                    </div>
+                  )}
+
+                  {task.company_name && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground w-24 shrink-0">Firm</span>
+                      <span className="flex items-center gap-1.5 text-sm">
+                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        {task.company_name}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground w-24 shrink-0">Visibility</span>
+                    <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      {vis.icon}
+                      {vis.label}
+                    </span>
+                  </div>
+
+                  {task.creator_username && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground w-24 shrink-0">Created by</span>
+                      <span className="text-sm">@{task.creator_username}</span>
+                    </div>
+                  )}
+
+                  {task.created_at && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground w-24 shrink-0">Created</span>
+                      <span className="text-sm text-muted-foreground">
+                        {format(parseISO(task.created_at), "d MMM yyyy")}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {canEdit && (
+                  <div className="px-6 py-4 border-t border-border-default flex justify-end">
+                    <Button variant="outline" size="sm" asChild>
+                      <Link to="/embassy/tasks">Edit in Tasks</Link>
+                    </Button>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+        </SheetContent>
+      </Sheet>
+
       <Dialog open={isGoalOpen} onOpenChange={(open) => { setIsGoalOpen(open); if(!open) resetForm(); }}>
         <DialogContent>
           <DialogHeader>
@@ -327,10 +470,16 @@ export default function MyGoalsPage() {
   );
 }
 
-function OpenTaskRow({ task }: { task: ChapterTask }) {
+function OpenTaskRow({ task, onClick }: { task: ChapterTask; onClick: () => void }) {
   const cfg = TASK_STATUS_CONFIG[task.status];
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg border border-border-default hover:bg-surface-muted/50 transition-colors">
+    <div
+      className="flex items-center gap-3 p-3 rounded-lg border border-border-default hover:bg-surface-muted/50 transition-colors cursor-pointer"
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onClick(); }}
+    >
       <span className={cn("shrink-0", cfg.class)}>{cfg.icon}</span>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium truncate">{task.title}</p>
