@@ -4,17 +4,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Plus, CheckCircle2, Circle, Clock, AlertCircle, Loader2, Trash2,
   Eye, EyeOff, Users, Lock, CalendarDays, FolderOpen, Building2,
-  ChevronRight,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -116,7 +118,7 @@ function TaskCard({
   isOwner,
   isLeader,
   onStatusCycle,
-  onEdit,
+  onOpen,
   onDelete,
   isCycling,
 }: {
@@ -124,7 +126,7 @@ function TaskCard({
   isOwner: boolean;
   isLeader: boolean;
   onStatusCycle: () => void;
-  onEdit: () => void;
+  onOpen: () => void;
   onDelete: () => void;
   isCycling: boolean;
 }) {
@@ -133,15 +135,18 @@ function TaskCard({
   const canEdit = isOwner || isLeader;
 
   return (
-    <Card className={cn(
-      "group flex flex-col gap-3 p-4 transition-all hover:shadow-sm",
-      task.status === "done" && "opacity-60",
-    )}>
+    <Card
+      className={cn(
+        "group flex flex-col gap-3 p-4 transition-all hover:shadow-sm cursor-pointer",
+        task.status === "done" && "opacity-60",
+      )}
+      onClick={onOpen}
+    >
       {/* Header row */}
       <div className="flex items-start gap-3">
         {/* Status toggle */}
         <button
-          onClick={onStatusCycle}
+          onClick={(e) => { e.stopPropagation(); onStatusCycle(); }}
           disabled={isCycling || !canEdit}
           className={cn(
             "mt-0.5 shrink-0 transition-colors",
@@ -192,17 +197,14 @@ function TaskCard({
           </div>
         </div>
 
-        {/* Actions (visible on hover to owners/leaders) */}
+        {/* Delete (visible on hover to owners/leaders) */}
         {canEdit && (
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit}>
-              <ChevronRight className="h-3.5 w-3.5" />
-            </Button>
             <Button
               variant="ghost"
               size="icon"
               className="h-7 w-7 text-destructive hover:text-destructive"
-              onClick={onDelete}
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
@@ -248,6 +250,7 @@ export default function TasksPage() {
   const [editingTask, setEditingTask] = useState<ChapterTask | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [cyclingId, setCyclingId] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<ChapterTask | null>(null);
 
   // ── membership ──
   const { data: membership } = useQuery({
@@ -363,6 +366,7 @@ export default function TasksPage() {
     onSuccess: () => {
       toast.success(editingTask ? "Task updated" : "Task created");
       closeDialog();
+      setSelectedTask(null);
       queryClient.invalidateQueries({ queryKey: ["chapter-tasks", chapterId] });
     },
     onError: () => toast.error("Failed to save task. Please try again."),
@@ -512,7 +516,7 @@ export default function TasksPage() {
                       onStatusCycle={() =>
                         statusMutation.mutate({ id: task.id, status: NEXT_STATUS[task.status] })
                       }
-                      onEdit={() => openEdit(task)}
+                      onOpen={() => setSelectedTask(task)}
                       onDelete={() => {
                         if (confirm("Delete this task?")) deleteMutation.mutate(task.id);
                       }}
@@ -525,6 +529,150 @@ export default function TasksPage() {
           })}
         </div>
       )}
+
+      {/* Task detail Sheet */}
+      <Sheet open={!!selectedTask} onOpenChange={(open) => { if (!open) setSelectedTask(null); }}>
+        <SheetContent className="w-full sm:max-w-md flex flex-col overflow-y-auto gap-0 p-0">
+          {selectedTask && (() => {
+            const task = selectedTask;
+            const cfg = STATUS_CONFIG[task.status];
+            const vis = VISIBILITY_CONFIG[task.visibility];
+            const canEdit = task.created_by === user?.id || isLeader;
+            return (
+              <>
+                <SheetHeader className="px-6 pt-6 pb-4 border-b border-border-default">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <SheetTitle className={cn("text-xl font-bold leading-tight", task.status === "done" && "line-through opacity-60")}>
+                        {task.title}
+                      </SheetTitle>
+                      {task.description && (
+                        <SheetDescription className="text-sm text-muted-foreground leading-relaxed">
+                          {task.description}
+                        </SheetDescription>
+                      )}
+                    </div>
+                    {canEdit && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="shrink-0 gap-1.5"
+                        onClick={() => openEdit(task)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Edit
+                      </Button>
+                    )}
+                  </div>
+                </SheetHeader>
+
+                <div className="px-6 py-5 space-y-5 flex-1">
+                  {/* Status */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground w-24 shrink-0">Status</span>
+                    <Badge variant="outline" className={cn("gap-1.5", cfg.class)}>
+                      {cfg.icon}
+                      {cfg.label}
+                    </Badge>
+                  </div>
+
+                  {/* Due date */}
+                  {task.due_date && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground w-24 shrink-0">Due</span>
+                      <span className={cn("flex items-center gap-1.5 text-sm", dueDateClass(task.due_date))}>
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        {format(parseISO(task.due_date), "d MMMM yyyy")}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Assignee */}
+                  {task.assigned_to && task.assignee_username && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground w-24 shrink-0">Assigned to</span>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={task.assignee_avatar_url ?? undefined} />
+                          <AvatarFallback className="text-[9px]">{initials(task.assignee_username)}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm">@{task.assignee_username}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Project */}
+                  {task.project_title && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground w-24 shrink-0">Project</span>
+                      <span className="flex items-center gap-1.5 text-sm">
+                        <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" />
+                        {task.project_title}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Company */}
+                  {task.company_name && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground w-24 shrink-0">Firm</span>
+                      <span className="flex items-center gap-1.5 text-sm">
+                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        {task.company_name}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Visibility */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground w-24 shrink-0">Visibility</span>
+                    <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      {vis.icon}
+                      {vis.label}
+                    </span>
+                  </div>
+
+                  {/* Creator */}
+                  {task.creator_username && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground w-24 shrink-0">Created by</span>
+                      <span className="text-sm">@{task.creator_username}</span>
+                    </div>
+                  )}
+
+                  {/* Created at */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground w-24 shrink-0">Created</span>
+                    <span className="text-sm text-muted-foreground">
+                      {format(parseISO(task.created_at), "d MMM yyyy")}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Footer actions for owners/leaders */}
+                {canEdit && (
+                  <div className="px-6 py-4 border-t border-border-default flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive gap-1.5"
+                      onClick={() => {
+                        if (confirm("Delete this task?")) {
+                          setSelectedTask(null);
+                          deleteMutation.mutate(task.id);
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete
+                    </Button>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+        </SheetContent>
+      </Sheet>
 
       {/* Create / Edit dialog */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeDialog(); }}>
