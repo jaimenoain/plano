@@ -32,13 +32,15 @@ const applySchema = z.object({
   building_id: z.string().uuid(),
   // Only the accepted subset, keyed by field name
   updates: z.record(z.union([z.string(), z.number(), z.array(z.string())])),
+  // Optional: queue item to mark as applied after saving
+  queue_id: z.string().uuid().optional(),
 });
 
 const bodySchema = z.discriminatedUnion("action", [researchSchema, applySchema]);
 
 // ---------- system prompt ----------
 
-const RESEARCH_SYSTEM_PROMPT = `You are an architectural research assistant.
+export const RESEARCH_SYSTEM_PROMPT = `You are an architectural research assistant.
 Given a building name, address, and location, use web_search to find reliable facts about it.
 Return ONLY a JSON object — no markdown, no explanation — in this exact structure:
 
@@ -122,7 +124,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   // ---- APPLY: save accepted data points (no AI call — no cost log needed) ----
   if (parsed.data.action === "apply") {
-    const { building_id, updates } = parsed.data;
+    const { building_id, updates, queue_id } = parsed.data;
 
     const { error } = await supabase.rpc("ambassador_apply_building_research", {
       p_building_id: building_id,
@@ -139,6 +141,18 @@ export async function action({ request }: ActionFunctionArgs) {
       // eslint-disable-next-line no-console
       console.error("[building-research] RPC error:", error.message, error.details, error.hint);
       return Response.json({ error: "Failed to save research data" }, { status: 500, headers });
+    }
+
+    // Mark the queue item as applied so it leaves the pending queue
+    if (queue_id) {
+      await supabase
+        .from("ambassador_building_research_queue")
+        .update({
+          status: "applied",
+          reviewed_by: user.id,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq("id", queue_id);
     }
 
     return Response.json({ ok: true }, { headers });

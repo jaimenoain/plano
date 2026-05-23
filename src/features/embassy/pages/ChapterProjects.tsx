@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -209,6 +209,10 @@ export default function ChapterProjectsPage() {
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const [taskForm, setTaskForm] = useState(EMPTY_TASK_FORM);
   const [cyclingTaskId, setCyclingTaskId] = useState<string | null>(null);
+
+  // Project inline editing (in detail Sheet)
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [fieldDraft, setFieldDraft] = useState("");
 
   // Task editing
   const [editingTask, setEditingTask] = useState<ChapterTask | null>(null);
@@ -512,6 +516,35 @@ export default function ChapterProjectsPage() {
     onError: () => toast.error("Failed to update task."),
   });
 
+  const patchProjectMutation = useMutation({
+    mutationFn: async ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: Partial<Pick<Project, "title" | "description" | "status">>;
+    }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from("chapter_projects")
+        .update({ ...patch, updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onMutate: ({ patch }) => {
+      setSelectedProject((p) => (p ? { ...p, ...patch } : p));
+      setEditingField(null);
+      setFieldDraft("");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chapter-projects", chapterId] });
+    },
+    onError: () => {
+      toast.error("Failed to save changes.");
+      queryClient.invalidateQueries({ queryKey: ["chapter-projects", chapterId] });
+    },
+  });
+
   // ── helpers ──
 
   const resetLeaderForm = () => {
@@ -519,6 +552,11 @@ export default function ChapterProjectsPage() {
     setDescription("");
     setStatus("active");
     setEditingProject(null);
+  };
+
+  const commitProjectField = (patch: Partial<Pick<Project, "title" | "description" | "status">>) => {
+    if (!selectedProject) return;
+    patchProjectMutation.mutate({ id: selectedProject.id, patch });
   };
 
   const openEdit = (project: Project, e: React.MouseEvent) => {
@@ -706,44 +744,114 @@ export default function ChapterProjectsPage() {
       )}
 
       {/* ── Project detail Sheet ── */}
-      <Sheet open={!!selectedProject} onOpenChange={(open) => { if (!open) setSelectedProject(null); }}>
+      <Sheet open={!!selectedProject} onOpenChange={(open) => { if (!open) { setSelectedProject(null); setEditingField(null); setFieldDraft(""); } }}>
         <SheetContent className="w-full sm:max-w-xl flex flex-col overflow-y-auto gap-0 p-0">
           {selectedProject && (
             <>
-              <SheetHeader className="px-6 pt-6 pb-4 border-b border-border-default">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1 min-w-0">
-                    <SheetTitle className="text-xl font-bold leading-tight">{selectedProject.title}</SheetTitle>
-                    {selectedProject.description && (
-                      <SheetDescription className="text-sm text-muted-foreground leading-relaxed">
-                        {selectedProject.description}
-                      </SheetDescription>
+              <SheetHeader className="px-6 pt-6 pb-4 border-b border-border-default space-y-2">
+                {/* Title — click to edit (leaders only) */}
+                {editingField === "title" ? (
+                  <input
+                    autoFocus
+                    aria-label="Project title"
+                    className="w-full bg-transparent border-0 outline-none ring-0 text-xl font-bold leading-tight text-text-primary placeholder:text-muted-foreground/60"
+                    value={fieldDraft}
+                    onChange={(e) => setFieldDraft(e.target.value)}
+                    onBlur={() => {
+                      const v = fieldDraft.trim();
+                      if (v && v !== selectedProject.title) commitProjectField({ title: v });
+                      else { setEditingField(null); setFieldDraft(""); }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                      if (e.key === "Escape") { setEditingField(null); setFieldDraft(""); }
+                    }}
+                  />
+                ) : (
+                  <SheetTitle
+                    className={cn(
+                      "text-xl font-bold leading-tight text-left",
+                      isLeader && "cursor-text rounded px-1 -mx-1 hover:bg-muted/50 transition-colors",
                     )}
-                  </div>
-                  {isLeader && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0"
-                      onClick={(e) => openEdit(selectedProject, e)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
+                    onClick={() => {
+                      if (isLeader) { setEditingField("title"); setFieldDraft(selectedProject.title); }
+                    }}
+                  >
+                    {selectedProject.title}
+                  </SheetTitle>
+                )}
+
+                {/* Description — click to edit (leaders only) */}
+                {editingField === "description" ? (
+                  <textarea
+                    autoFocus
+                    aria-label="Project description"
+                    rows={3}
+                    className="w-full bg-transparent border-0 outline-none ring-0 text-sm text-muted-foreground leading-relaxed resize-none placeholder:text-muted-foreground/50"
+                    placeholder="Add description…"
+                    value={fieldDraft}
+                    onChange={(e) => setFieldDraft(e.target.value)}
+                    onBlur={() => {
+                      const v = fieldDraft.trim() || null;
+                      if (v !== selectedProject.description) commitProjectField({ description: v });
+                      else { setEditingField(null); setFieldDraft(""); }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") { setEditingField(null); setFieldDraft(""); }
+                    }}
+                  />
+                ) : (
+                  <p
+                    className={cn(
+                      "text-sm text-muted-foreground leading-relaxed text-left",
+                      isLeader && "cursor-text rounded px-1 -mx-1 hover:bg-muted/50 transition-colors",
+                      !selectedProject.description && "italic text-muted-foreground/50",
+                    )}
+                    onClick={() => {
+                      if (isLeader) { setEditingField("description"); setFieldDraft(selectedProject.description ?? ""); }
+                    }}
+                  >
+                    {selectedProject.description || (isLeader ? "Add description…" : "")}
+                  </p>
+                )}
 
                 {/* Project meta */}
                 <div className="flex flex-wrap items-center gap-3 pt-3 text-sm text-muted-foreground">
-                  <Badge
-                    variant="outline"
-                    className={cn(
-                      "gap-1 px-2 py-0.5 capitalize font-medium text-xs",
-                      PROJECT_STATUS_CONFIG[selectedProject.status].class,
-                    )}
-                  >
-                    {PROJECT_STATUS_CONFIG[selectedProject.status].icon}
-                    {selectedProject.status}
-                  </Badge>
+                  {/* Status — click to edit (leaders only) */}
+                  {editingField === "status" ? (
+                    <Select
+                      value={selectedProject.status}
+                      onValueChange={(v) => commitProjectField({ status: v as Project["status"] })}
+                      onOpenChange={(open) => { if (!open && editingField === "status") setEditingField(null); }}
+                      open
+                    >
+                      <SelectTrigger className="h-7 w-36 text-xs" onClick={(e) => e.stopPropagation()}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(["planning", "active", "completed", "archived"] as const).map((s) => (
+                          <SelectItem key={s} value={s}>
+                            <span className={cn("flex items-center gap-1.5 capitalize", PROJECT_STATUS_CONFIG[s].class)}>
+                              {PROJECT_STATUS_CONFIG[s].icon}{s}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "gap-1 px-2 py-0.5 capitalize font-medium text-xs",
+                        PROJECT_STATUS_CONFIG[selectedProject.status].class,
+                        isLeader && "cursor-pointer hover:ring-1 hover:ring-border-default transition-all",
+                      )}
+                      onClick={() => { if (isLeader) setEditingField("status"); }}
+                    >
+                      {PROJECT_STATUS_CONFIG[selectedProject.status].icon}
+                      {selectedProject.status}
+                    </Badge>
+                  )}
                   {selectedProject.author_username && (
                     <span className="flex items-center gap-1.5">
                       <Avatar className="h-5 w-5">

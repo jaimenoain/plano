@@ -9,8 +9,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { createSupabaseServerClient } from "@/lib/supabase.server";
 
-// Module-level cache so the same SPA session doesn't re-fire on every layout remount.
+// Module-level caches so the same SPA session doesn't re-fire on every layout remount.
 const searchTriggeredForChapters = new Set<string>();
+const researchQueueTriggeredForChapters = new Set<string>();
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
@@ -79,6 +80,22 @@ export default function EmbassyLayout() {
       credentials: "include",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ action: "run", chapter_id: chapterId }),
+    }).catch(() => undefined);
+  }, [membership, location.pathname]);
+
+  // Fire-and-forget: fill the research queue up to 10 items per chapter per session.
+  // The server returns immediately if the queue is already full (cheap check).
+  useEffect(() => {
+    const chapterId = membership?.chapter_id;
+    if (!membership || membership.status !== "active" || !chapterId) return;
+    if (location.pathname === "/embassy/welcome") return;
+    if (researchQueueTriggeredForChapters.has(chapterId)) return;
+    researchQueueTriggeredForChapters.add(chapterId);
+    fetch("/api/embassy/research-queue", {
+      method: "POST",
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "fill", chapter_id: chapterId }),
     }).catch(() => undefined);
   }, [membership, location.pathname]);
 

@@ -10,13 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Plus, CheckCircle2, Circle, Clock, AlertCircle, Loader2, Trash2,
   Eye, EyeOff, Users, Lock, CalendarDays, FolderOpen, Building2,
-  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -88,6 +87,12 @@ const NEXT_STATUS: Record<TaskStatus, TaskStatus> = {
   in_progress: "done",
   done: "todo",
 };
+
+// DB-writable columns on chapter_tasks (excludes RPC-derived join fields)
+const DB_FIELDS = new Set([
+  "title", "description", "due_date", "status", "visibility",
+  "assigned_to", "project_id", "company_id",
+]);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -247,10 +252,14 @@ export default function TasksPage() {
   const queryClient = useQueryClient();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<ChapterTask | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [cyclingId, setCyclingId] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<ChapterTask | null>(null);
+
+  // Inline editing state
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [fieldDraft, setFieldDraft] = useState("");
+  const [inlineCompanyQuery, setInlineCompanyQuery] = useState("");
 
   // ── membership ──
   const { data: membership } = useQuery({
@@ -318,7 +327,7 @@ export default function TasksPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // ── company search ──
+  // ── company search (create dialog) ──
   const { data: companyResults = [], isFetching: isSearching } = useQuery({
     queryKey: ["company-search-tasks", form.company_query],
     queryFn: async () => {
@@ -336,12 +345,31 @@ export default function TasksPage() {
     staleTime: 60_000,
   });
 
+  // ── company search (inline edit in drawer) ──
+  const { data: inlineCompanyResults = [], isFetching: isInlineSearching } = useQuery({
+    queryKey: ["company-search-inline", inlineCompanyQuery],
+    queryFn: async () => {
+      if (inlineCompanyQuery.length < 2) return [] as CompanyOption[];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any)
+        .from("companies")
+        .select("id, name")
+        .ilike("name", `%${inlineCompanyQuery}%`)
+        .order("name")
+        .limit(8);
+      return (data ?? []) as CompanyOption[];
+    },
+    enabled: editingField === "company" && inlineCompanyQuery.length >= 2,
+    staleTime: 60_000,
+  });
+
   // ── mutations ──
+
+  // Create-only mutation for the New Task dialog
   const saveMutation = useMutation({
     mutationFn: async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const db = supabase as any;
-      const payload = {
+      const { error } = await (supabase as any).from("chapter_tasks").insert({
         title: form.title.trim(),
         description: form.description.trim() || null,
         due_date: form.due_date || null,
@@ -349,27 +377,40 @@ export default function TasksPage() {
         assigned_to: form.assigned_to || null,
         project_id: form.project_id || null,
         company_id: form.company_id || null,
+        chapter_id: chapterId!,
+        created_by: user!.id,
         updated_at: new Date().toISOString(),
-      };
-      if (editingTask) {
-        const { error } = await db.from("chapter_tasks").update(payload).eq("id", editingTask.id);
-        if (error) throw error;
-      } else {
-        const { error } = await db.from("chapter_tasks").insert({
-          ...payload,
-          chapter_id: chapterId!,
-          created_by: user!.id,
-        });
-        if (error) throw error;
-      }
+      });
+      if (error) throw error;
     },
     onSuccess: () => {
-      toast.success(editingTask ? "Task updated" : "Task created");
+      toast.success("Task created");
       closeDialog();
-      setSelectedTask(null);
       queryClient.invalidateQueries({ queryKey: ["chapter-tasks", chapterId] });
     },
-    onError: () => toast.error("Failed to save task. Please try again."),
+    onError: () => toast.error("Failed to create task. Please try again."),
+  });
+
+  // Inline per-field patch mutation
+  const patchMutation = useMutation({
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<ChapterTask> }) => {
+      const dbPatch = Object.fromEntries(
+        Object.entries(patch).filter(([k]) => DB_FIELDS.has(k))
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from("chapter_tasks")
+        .update({ ...dbPatch, updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_, { patch }) => {
+      setSelectedTask((t) => t ? { ...t, ...patch } : t);
+      setEditingField(null);
+      setInlineCompanyQuery("");
+      queryClient.invalidateQueries({ queryKey: ["chapter-tasks", chapterId] });
+    },
+    onError: () => toast.error("Failed to save."),
   });
 
   const statusMutation = useMutation({
@@ -383,7 +424,10 @@ export default function TasksPage() {
     },
     onMutate: ({ id }) => setCyclingId(id),
     onSettled: () => setCyclingId(null),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["chapter-tasks", chapterId] }),
+    onSuccess: (_, { id, status }) => {
+      setSelectedTask((t) => t?.id === id ? { ...t, status } : t);
+      queryClient.invalidateQueries({ queryKey: ["chapter-tasks", chapterId] });
+    },
     onError: () => toast.error("Failed to update status."),
   });
 
@@ -402,35 +446,38 @@ export default function TasksPage() {
 
   // ── dialog helpers ──
   function openCreate() {
-    setEditingTask(null);
     setForm(EMPTY_FORM);
-    setIsDialogOpen(true);
-  }
-
-  function openEdit(task: ChapterTask) {
-    setEditingTask(task);
-    setForm({
-      title: task.title,
-      description: task.description ?? "",
-      due_date: task.due_date ?? "",
-      visibility: task.visibility,
-      assigned_to: task.assigned_to ?? "",
-      project_id: task.project_id ?? "",
-      company_query: task.company_name ?? "",
-      company_id: task.company_id ?? "",
-      company_name: task.company_name ?? "",
-    });
     setIsDialogOpen(true);
   }
 
   function closeDialog() {
     setIsDialogOpen(false);
-    setEditingTask(null);
     setForm(EMPTY_FORM);
   }
 
   function patchForm(patch: Partial<typeof EMPTY_FORM>) {
     setForm((f) => ({ ...f, ...patch }));
+  }
+
+  // ── inline edit helpers ──
+  function startEdit(field: string, draft: string) {
+    if (patchMutation.isPending) return;
+    setEditingField(field);
+    setFieldDraft(draft);
+    if (field === "company") {
+      setInlineCompanyQuery(selectedTask?.company_name ?? "");
+    }
+  }
+
+  function commitField(patch: Partial<ChapterTask>) {
+    if (!selectedTask) return;
+    patchMutation.mutate({ id: selectedTask.id, patch });
+  }
+
+  function cancelEdit() {
+    setEditingField(null);
+    setFieldDraft("");
+    setInlineCompanyQuery("");
   }
 
   // ── grouped tasks ──
@@ -516,7 +563,7 @@ export default function TasksPage() {
                       onStatusCycle={() =>
                         statusMutation.mutate({ id: task.id, status: NEXT_STATUS[task.status] })
                       }
-                      onOpen={() => setSelectedTask(task)}
+                      onOpen={() => { setSelectedTask(task); setEditingField(null); }}
                       onDelete={() => {
                         if (confirm("Delete this task?")) deleteMutation.mutate(task.id);
                       }}
@@ -530,67 +577,216 @@ export default function TasksPage() {
         </div>
       )}
 
-      {/* Task detail Sheet */}
-      <Sheet open={!!selectedTask} onOpenChange={(open) => { if (!open) setSelectedTask(null); }}>
+      {/* Task detail Sheet — inline editable */}
+      <Sheet
+        open={!!selectedTask}
+        onOpenChange={(open) => {
+          if (!open) { setSelectedTask(null); cancelEdit(); }
+        }}
+      >
         <SheetContent className="w-full sm:max-w-md flex flex-col overflow-y-auto gap-0 p-0">
           {selectedTask && (() => {
             const task = selectedTask;
             const cfg = STATUS_CONFIG[task.status];
             const vis = VISIBILITY_CONFIG[task.visibility];
             const canEdit = task.created_by === user?.id || isLeader;
+            const isSaving = patchMutation.isPending;
+
+            // Shared class for editable rows
+            const editableRowCls = (field: string) =>
+              cn(
+                "flex items-start gap-3 rounded-md -mx-2 px-2 py-1 transition-colors",
+                canEdit && editingField !== field && "cursor-pointer hover:bg-muted/50",
+              );
+
             return (
               <>
-                <SheetHeader className="px-6 pt-6 pb-4 border-b border-border-default">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <SheetTitle className={cn("text-xl font-bold leading-tight", task.status === "done" && "line-through opacity-60")}>
-                        {task.title}
-                      </SheetTitle>
-                      {task.description && (
-                        <SheetDescription className="text-sm text-muted-foreground leading-relaxed">
-                          {task.description}
-                        </SheetDescription>
+                {/* ── Header: title + description ── */}
+                <SheetHeader className="px-6 pt-6 pb-4 border-b border-border-default space-y-2">
+                  {/* Title */}
+                  {editingField === "title" ? (
+                    <input
+                      autoFocus
+                      aria-label="Task title"
+                      className="w-full bg-transparent border-0 outline-none ring-0 text-xl font-bold leading-tight text-text-primary placeholder:text-muted-foreground/60"
+                      value={fieldDraft}
+                      onChange={(e) => setFieldDraft(e.target.value)}
+                      onBlur={() => {
+                        const v = fieldDraft.trim();
+                        if (v && v !== task.title) commitField({ title: v });
+                        else cancelEdit();
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                        if (e.key === "Escape") cancelEdit();
+                      }}
+                    />
+                  ) : (
+                    <SheetTitle
+                      className={cn(
+                        "text-xl font-bold leading-tight text-left",
+                        task.status === "done" && "line-through opacity-60",
+                        canEdit && "cursor-text rounded px-1 -mx-1 hover:bg-muted/50 transition-colors",
                       )}
-                    </div>
-                    {canEdit && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="shrink-0 gap-1.5"
-                        onClick={() => openEdit(task)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                        Edit
-                      </Button>
-                    )}
-                  </div>
+                      onClick={() => canEdit && startEdit("title", task.title)}
+                    >
+                      {task.title}
+                    </SheetTitle>
+                  )}
+
+                  {/* Description */}
+                  {editingField === "description" ? (
+                    <textarea
+                      autoFocus
+                      aria-label="Task description"
+                      rows={3}
+                      className="w-full bg-transparent border-0 outline-none ring-0 text-sm text-muted-foreground leading-relaxed resize-none placeholder:text-muted-foreground/50"
+                      placeholder="Add description…"
+                      value={fieldDraft}
+                      onChange={(e) => setFieldDraft(e.target.value)}
+                      onBlur={() => {
+                        const v = fieldDraft.trim() || null;
+                        if (v !== task.description) commitField({ description: v });
+                        else cancelEdit();
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") cancelEdit();
+                      }}
+                    />
+                  ) : (
+                    <p
+                      className={cn(
+                        "text-sm text-muted-foreground leading-relaxed text-left",
+                        canEdit && "cursor-text rounded px-1 -mx-1 hover:bg-muted/50 transition-colors",
+                        !task.description && "italic text-muted-foreground/50",
+                      )}
+                      onClick={() => canEdit && startEdit("description", task.description ?? "")}
+                    >
+                      {task.description || (canEdit ? "Add description…" : "")}
+                    </p>
+                  )}
                 </SheetHeader>
 
-                <div className="px-6 py-5 space-y-5 flex-1">
+                {/* ── Metadata rows ── */}
+                <div className="px-6 py-5 space-y-1 flex-1">
+
                   {/* Status */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground w-24 shrink-0">Status</span>
-                    <Badge variant="outline" className={cn("gap-1.5", cfg.class)}>
-                      {cfg.icon}
-                      {cfg.label}
-                    </Badge>
+                  <div
+                    className={editableRowCls("status")}
+                    onClick={() => { if (canEdit && editingField !== "status") setEditingField("status"); }}
+                  >
+                    <span className="text-sm text-muted-foreground w-24 shrink-0 pt-0.5">Status</span>
+                    {editingField === "status" ? (
+                      <Select
+                        value={task.status}
+                        onValueChange={(v: TaskStatus) => commitField({ status: v })}
+                        onOpenChange={(open) => { if (!open && editingField === "status") setEditingField(null); }}
+                        open
+                      >
+                        <SelectTrigger className="h-7 w-36 text-xs" onClick={(e) => e.stopPropagation()}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(Object.entries(STATUS_CONFIG) as [TaskStatus, typeof STATUS_CONFIG[TaskStatus]][]).map(([k, v]) => (
+                            <SelectItem key={k} value={k}>
+                              <span className={cn("flex items-center gap-1.5", v.class)}>
+                                {v.icon}{v.label}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Badge variant="outline" className={cn("gap-1.5", cfg.class)}>
+                        {isSaving && editingField === "status"
+                          ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          : cfg.icon}
+                        {cfg.label}
+                      </Badge>
+                    )}
                   </div>
 
                   {/* Due date */}
-                  {task.due_date && (
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-muted-foreground w-24 shrink-0">Due</span>
+                  <div
+                    className={editableRowCls("due_date")}
+                    onClick={() => { if (canEdit && editingField !== "due_date") startEdit("due_date", task.due_date ?? ""); }}
+                  >
+                    <span className="text-sm text-muted-foreground w-24 shrink-0 pt-0.5">Due</span>
+                    {editingField === "due_date" ? (
+                      <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
+                        <Input
+                          autoFocus
+                          type="date"
+                          className="h-7 text-xs w-36"
+                          value={fieldDraft}
+                          onChange={(e) => setFieldDraft(e.target.value)}
+                          onBlur={() => {
+                            const v = fieldDraft || null;
+                            if (v !== task.due_date) commitField({ due_date: v });
+                            else cancelEdit();
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Escape") cancelEdit();
+                          }}
+                        />
+                        {(fieldDraft || task.due_date) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-muted-foreground"
+                            onClick={() => commitField({ due_date: null })}
+                          >
+                            Clear
+                          </Button>
+                        )}
+                      </div>
+                    ) : task.due_date ? (
                       <span className={cn("flex items-center gap-1.5 text-sm", dueDateClass(task.due_date))}>
                         <CalendarDays className="h-3.5 w-3.5" />
                         {format(parseISO(task.due_date), "d MMMM yyyy")}
                       </span>
-                    </div>
-                  )}
+                    ) : (
+                      <span className={cn("text-sm", canEdit ? "text-muted-foreground/50 italic" : "text-muted-foreground")}>
+                        {canEdit ? "Add due date…" : "—"}
+                      </span>
+                    )}
+                  </div>
 
                   {/* Assignee */}
-                  {task.assigned_to && task.assignee_username && (
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-muted-foreground w-24 shrink-0">Assigned to</span>
+                  <div
+                    className={editableRowCls("assigned_to")}
+                    onClick={() => { if (canEdit && editingField !== "assigned_to") setEditingField("assigned_to"); }}
+                  >
+                    <span className="text-sm text-muted-foreground w-24 shrink-0 pt-0.5">Assigned to</span>
+                    {editingField === "assigned_to" ? (
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Select
+                          value={task.assigned_to ?? "__none__"}
+                          onValueChange={(v) => {
+                            const member = teamMembers.find((m) => m.user_id === v);
+                            commitField({
+                              assigned_to: v === "__none__" ? null : v,
+                              assignee_username: member?.username ?? null,
+                              assignee_avatar_url: member?.avatar_url ?? null,
+                            });
+                          }}
+                          onOpenChange={(open) => { if (!open && editingField === "assigned_to") setEditingField(null); }}
+                          open
+                        >
+                          <SelectTrigger className="h-7 w-40 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none__">Anyone</SelectItem>
+                            {teamMembers.map((m) => (
+                              <SelectItem key={m.user_id} value={m.user_id}>
+                                @{m.username}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : task.assigned_to && task.assignee_username ? (
                       <div className="flex items-center gap-2">
                         <Avatar className="h-5 w-5">
                           <AvatarImage src={task.assignee_avatar_url ?? undefined} />
@@ -598,58 +794,187 @@ export default function TasksPage() {
                         </Avatar>
                         <span className="text-sm">@{task.assignee_username}</span>
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <span className={cn("text-sm", canEdit ? "text-muted-foreground/50 italic" : "text-muted-foreground")}>
+                        {canEdit ? "Assign someone…" : "Unassigned"}
+                      </span>
+                    )}
+                  </div>
 
                   {/* Project */}
-                  {task.project_title && (
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-muted-foreground w-24 shrink-0">Project</span>
+                  <div
+                    className={editableRowCls("project_id")}
+                    onClick={() => { if (canEdit && editingField !== "project_id") setEditingField("project_id"); }}
+                  >
+                    <span className="text-sm text-muted-foreground w-24 shrink-0 pt-0.5">Project</span>
+                    {editingField === "project_id" ? (
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Select
+                          value={task.project_id ?? "__none__"}
+                          onValueChange={(v) => {
+                            const project = projects.find((p) => p.id === v);
+                            commitField({
+                              project_id: v === "__none__" ? null : v,
+                              project_title: project?.title ?? null,
+                            });
+                          }}
+                          onOpenChange={(open) => { if (!open && editingField === "project_id") setEditingField(null); }}
+                          open
+                        >
+                          <SelectTrigger className="h-7 w-44 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none__">No project</SelectItem>
+                            {projects.map((p) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.title}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : task.project_title ? (
                       <span className="flex items-center gap-1.5 text-sm">
                         <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" />
                         {task.project_title}
                       </span>
-                    </div>
-                  )}
+                    ) : (
+                      <span className={cn("text-sm", canEdit ? "text-muted-foreground/50 italic" : "text-muted-foreground")}>
+                        {canEdit ? "Link a project…" : "—"}
+                      </span>
+                    )}
+                  </div>
 
-                  {/* Company */}
-                  {task.company_name && (
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-muted-foreground w-24 shrink-0">Firm</span>
+                  {/* Company / Firm */}
+                  <div
+                    className={editableRowCls("company")}
+                    onClick={() => { if (canEdit && editingField !== "company") startEdit("company", task.company_name ?? ""); }}
+                  >
+                    <span className="text-sm text-muted-foreground w-24 shrink-0 pt-0.5">Firm</span>
+                    {editingField === "company" ? (
+                      <div className="flex-1 space-y-1" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            autoFocus
+                            placeholder="Search by firm name…"
+                            className="h-7 text-xs flex-1"
+                            value={inlineCompanyQuery}
+                            onChange={(e) => setInlineCompanyQuery(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Escape") cancelEdit(); }}
+                          />
+                          {task.company_id && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-2 text-xs text-muted-foreground shrink-0"
+                              onClick={() => commitField({ company_id: null, company_name: null })}
+                            >
+                              Clear
+                            </Button>
+                          )}
+                        </div>
+                        {inlineCompanyQuery.length >= 2 && (
+                          <div className="border rounded-md divide-y max-h-36 overflow-y-auto">
+                            {isInlineSearching ? (
+                              <div className="p-2 text-xs text-muted-foreground flex items-center gap-2">
+                                <Loader2 className="h-3 w-3 animate-spin" /> Searching…
+                              </div>
+                            ) : inlineCompanyResults.length === 0 ? (
+                              <div className="p-2 text-xs text-muted-foreground">No firms found</div>
+                            ) : (
+                              inlineCompanyResults.map((co) => (
+                                <button
+                                  key={co.id}
+                                  className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors flex items-center gap-2"
+                                  onClick={() => commitField({ company_id: co.id, company_name: co.name })}
+                                >
+                                  <Building2 className="h-3 w-3 text-muted-foreground shrink-0" />
+                                  {co.name}
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ) : task.company_name ? (
                       <span className="flex items-center gap-1.5 text-sm">
                         <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                         {task.company_name}
                       </span>
-                    </div>
-                  )}
-
-                  {/* Visibility */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground w-24 shrink-0">Visibility</span>
-                    <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      {vis.icon}
-                      {vis.label}
-                    </span>
+                    ) : (
+                      <span className={cn("text-sm", canEdit ? "text-muted-foreground/50 italic" : "text-muted-foreground")}>
+                        {canEdit ? "Link a firm…" : "—"}
+                      </span>
+                    )}
                   </div>
 
-                  {/* Creator */}
+                  {/* Visibility */}
+                  <div
+                    className={editableRowCls("visibility")}
+                    onClick={() => { if (canEdit && editingField !== "visibility") setEditingField("visibility"); }}
+                  >
+                    <span className="text-sm text-muted-foreground w-24 shrink-0 pt-0.5">Visibility</span>
+                    {editingField === "visibility" ? (
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Select
+                          value={task.visibility}
+                          onValueChange={(v: TaskVisibility) => commitField({ visibility: v })}
+                          onOpenChange={(open) => { if (!open && editingField === "visibility") setEditingField(null); }}
+                          open
+                        >
+                          <SelectTrigger className="h-7 w-36 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="chapter">
+                              <span className="flex items-center gap-1.5"><Users className="h-3 w-3" /> Everyone</span>
+                            </SelectItem>
+                            {isLeader && (
+                              <SelectItem value="leadership">
+                                <span className="flex items-center gap-1.5"><Eye className="h-3 w-3" /> Leadership</span>
+                              </SelectItem>
+                            )}
+                            <SelectItem value="only_me">
+                              <span className="flex items-center gap-1.5"><EyeOff className="h-3 w-3" /> Only me</span>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        {vis.icon}
+                        {vis.label}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Created by — read-only */}
                   {task.creator_username && (
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 px-2 py-1">
                       <span className="text-sm text-muted-foreground w-24 shrink-0">Created by</span>
                       <span className="text-sm">@{task.creator_username}</span>
                     </div>
                   )}
 
-                  {/* Created at */}
-                  <div className="flex items-center gap-3">
+                  {/* Created at — read-only */}
+                  <div className="flex items-center gap-3 px-2 py-1">
                     <span className="text-sm text-muted-foreground w-24 shrink-0">Created</span>
                     <span className="text-sm text-muted-foreground">
                       {format(parseISO(task.created_at), "d MMM yyyy")}
                     </span>
                   </div>
+
+                  {/* Saving indicator */}
+                  {isSaving && (
+                    <div className="flex items-center gap-1.5 px-2 pt-1 text-xs text-muted-foreground">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Saving…
+                    </div>
+                  )}
                 </div>
 
-                {/* Footer actions for owners/leaders */}
+                {/* Footer — delete */}
                 {canEdit && (
                   <div className="px-6 py-4 border-t border-border-default flex justify-end">
                     <Button
@@ -674,15 +999,13 @@ export default function TasksPage() {
         </SheetContent>
       </Sheet>
 
-      {/* Create / Edit dialog */}
+      {/* Create dialog */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeDialog(); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingTask ? "Edit Task" : "New Task"}</DialogTitle>
+            <DialogTitle>New Task</DialogTitle>
             <DialogDescription>
-              {editingTask
-                ? "Update this task's details."
-                : "Tasks are visible to your whole chapter by default."}
+              Tasks are visible to your whole chapter by default.
             </DialogDescription>
           </DialogHeader>
 
@@ -745,9 +1068,7 @@ export default function TasksPage() {
 
             {/* Visibility */}
             <div className="space-y-2">
-              <Label htmlFor="task-visibility">
-                Visibility
-              </Label>
+              <Label htmlFor="task-visibility">Visibility</Label>
               <Select
                 value={form.visibility}
                 onValueChange={(v: TaskVisibility) => patchForm({ visibility: v })}
@@ -862,7 +1183,7 @@ export default function TasksPage() {
             >
               {saveMutation.isPending
                 ? <Loader2 className="h-4 w-4 animate-spin" />
-                : editingTask ? "Update Task" : "Create Task"}
+                : "Create Task"}
             </Button>
           </DialogFooter>
         </DialogContent>

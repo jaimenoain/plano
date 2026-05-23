@@ -26,12 +26,24 @@ export type AmbassadorRecentBuilding =
 export type AmbassadorAuditRow =
   Database["public"]["Functions"]["get_ambassador_my_audit_timeline"]["Returns"][number];
 
+// Research queue — manual type because generated types predate this table.
+export type BuildingResearchQueueItem = {
+  id: string;
+  building_id: string;
+  building_name: string;
+  data_points: import("@/features/embassy/api/building-research.route").ResearchDataPoint[];
+  current_values: Record<string, unknown>;
+  status: "pending" | "applied" | "dismissed";
+  researched_at: string;
+};
+
 export async function fetchAmbassadorBuildingsWithoutPhotos(
   chapterId: string,
+  limit = EMBASSY_TASK_FEED_LIMIT,
 ): Promise<AmbassadorBuildingNoPhoto[]> {
   const { data, error } = await supabase.rpc("get_ambassador_buildings_without_photos", {
     p_chapter_id: chapterId,
-    p_limit: EMBASSY_TASK_FEED_LIMIT,
+    p_limit: limit,
   });
   if (error) throw error;
   return data ?? [];
@@ -286,6 +298,103 @@ export async function updateEventDiscovery(
     .from("embassy_event_discoveries")
     .update(patch)
     .eq("id", discoveryId);
+  if (error) throw error;
+}
+
+// ─── Building research queue ──────────────────────────────────────────────────
+
+export async function fetchBuildingResearchQueue(
+  chapterId: string,
+): Promise<BuildingResearchQueueItem[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_ambassador_research_queue", {
+    p_chapter_id: chapterId,
+    p_limit: 10,
+  });
+  if (error) throw error;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((row: any): BuildingResearchQueueItem => ({
+    id: row.id,
+    building_id: row.building_id,
+    building_name: row.building_name,
+    data_points: Array.isArray(row.data_points) ? row.data_points : [],
+    current_values: (row.current_values ?? {}) as Record<string, unknown>,
+    status: row.status,
+    researched_at: row.researched_at,
+  }));
+}
+
+export async function dismissResearchQueueItem(queueId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("ambassador_dismiss_queued_research", {
+    p_queue_id: queueId,
+  });
+  if (error) throw error;
+}
+
+// ─── Global moderation batch (cross-chapter, uncharted locations first) ───────
+
+export async function fetchGlobalModerationPhotos(
+  excludeChapterId: string,
+): Promise<ModerationPhotoItem[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_global_moderation_photos", {
+    p_exclude_chapter_id: excludeChapterId,
+    p_limit: EMBASSY_PHOTO_MODERATION_LIMIT,
+  });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchGlobalModerationVideos(
+  excludeChapterId: string,
+): Promise<ModerationVideoItem[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_global_moderation_videos", {
+    p_exclude_chapter_id: excludeChapterId,
+    p_limit: EMBASSY_TASK_FEED_LIMIT,
+  });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchGlobalModerationCredits(
+  excludeChapterId: string,
+): Promise<ModerationCreditItem[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_global_moderation_credits", {
+    p_exclude_chapter_id: excludeChapterId,
+    p_limit: EMBASSY_TASK_FEED_LIMIT,
+  });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchGlobalModerationBuildings(
+  excludeChapterId: string,
+): Promise<AmbassadorRecentBuilding[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any).rpc("get_global_moderation_buildings", {
+    p_exclude_chapter_id: excludeChapterId,
+    p_limit: EMBASSY_TASK_FEED_LIMIT,
+  });
+  if (error) throw error;
+  return (data ?? []) as unknown as AmbassadorRecentBuilding[];
+}
+
+export async function approveBuildingGlobal(buildingId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("ambassador_approve_building_global", {
+    p_building_id: buildingId,
+  });
+  if (error) throw error;
+}
+
+export async function approveCreditGlobal(creditId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc("ambassador_approve_credit_global", {
+    p_credit_id: creditId,
+  });
   if (error) throw error;
 }
 
