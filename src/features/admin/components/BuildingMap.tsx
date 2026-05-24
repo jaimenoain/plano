@@ -60,22 +60,22 @@ export function BuildingMap({
 
   const isApproximate = locationPrecision === 'approximate';
 
-  let strokeClass = "text-gray-500";
+  let strokeClass = "text-text-secondary";
   let fillClass = "fill-background";
-  let dotBgClass = "bg-gray-500";
+  let dotBgClass = "bg-text-secondary";
 
   if (status === 'visited') {
-    strokeClass = "text-gray-600";
-    fillClass = "fill-gray-600";
-    dotBgClass = "bg-gray-600";
+    strokeClass = "text-text-primary";
+    fillClass = "fill-text-primary";
+    dotBgClass = "bg-text-primary";
   } else if (status === 'pending') {
-    strokeClass = "text-gray-500";
+    strokeClass = "text-text-secondary";
     fillClass = "fill-brand-primary";
     dotBgClass = "bg-brand-primary";
   } else if (socialContext) {
-    strokeClass = "text-gray-500";
-    fillClass = "fill-gray-300"; // Light Grey
-    dotBgClass = "bg-gray-300";
+    strokeClass = "text-text-disabled";
+    fillClass = "fill-text-disabled";
+    dotBgClass = "bg-text-disabled";
   }
 
   if (isSatellite) {
@@ -128,8 +128,8 @@ export function BuildingMap({
             style={{ zIndex: 1 }}
           >
             <div className="relative flex items-center justify-center">
-              <div className="w-8 h-8 bg-blue-500/20 absolute rounded-full animate-pulse" />
-              <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg relative z-10" />
+              <div className="w-8 h-8 bg-brand-primary/20 absolute rounded-full animate-pulse" />
+              <div className="w-4 h-4 bg-brand-primary rounded-full border-2 border-surface-card relative z-10" />
             </div>
           </Marker>
         )}
@@ -179,7 +179,7 @@ export function BuildingMap({
               // since BuildingPoint doesn't have status info currently.
               // We could potentially pass a lookup map for status if needed, but requirements didn't specify.
 
-              const listPinColor = isSelected ? "text-brand-primary fill-background" : "text-gray-500 fill-background";
+              const listPinColor = isSelected ? "text-brand-primary fill-background" : "text-text-secondary fill-background";
 
               return (
                 <Marker

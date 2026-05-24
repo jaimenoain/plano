@@ -453,7 +453,7 @@ export function BuildingPopupContent({
           >
             <Button
                 variant={isVisited ? "default" : "ghost"}
-                className={`flex-1 h-12 rounded-none ${isVisited ? 'bg-green-600 hover:bg-green-700 text-white' : 'text-text-secondary hover:bg-brand-primary/10'}`}
+                className={`flex-1 h-12 rounded-none ${isVisited ? 'bg-brand-primary hover:bg-brand-primary-hover text-brand-primary-foreground' : 'text-text-secondary hover:bg-surface-muted'}`}
                 onClick={handleVisit}
                 title="Mark as visited"
                 disabled={isSaving}
@@ -504,7 +504,7 @@ export function BuildingPopupContent({
              onTouchStart={(e) => e.stopPropagation()}
            >
               {/* Status Indicator Circle */}
-              <div className="h-8 w-8 rounded-full bg-green-600 flex items-center justify-center text-white shadow-sm">
+              <div className="h-8 w-8 rounded-full bg-brand-primary flex items-center justify-center text-brand-primary-foreground">
                   {justInteracted === 'saved' ? (
                       <Bookmark className="h-4 w-4 fill-current" />
                   ) : (

@@ -295,7 +295,7 @@ export default function Post() {
               {existingEntryId ? (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <button className="text-sm text-red-500 hover:text-red-600 hover:underline">
+                    <button className="text-sm text-feedback-destructive hover:opacity-80 hover:underline">
                       Delete
                     </button>
                   </AlertDialogTrigger>

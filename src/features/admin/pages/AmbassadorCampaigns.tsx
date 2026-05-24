@@ -236,8 +236,8 @@ export default function AmbassadorCampaigns() {
   const statusBadge = (c: Campaign) => {
     const s = campaignStatus(c);
     const variants = {
-      active: "bg-green-500/10 text-green-700 border-green-500/20",
-      upcoming: "bg-blue-500/10 text-blue-700 border-blue-500/20",
+      active: "bg-feedback-success/10 text-feedback-success border-feedback-success/20",
+      upcoming: "bg-surface-muted text-text-primary border-border-default",
       ended: "bg-muted text-muted-foreground border-border-default",
     };
     return (

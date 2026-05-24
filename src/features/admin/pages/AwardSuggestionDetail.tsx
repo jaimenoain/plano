@@ -35,7 +35,7 @@ export default function AwardSuggestionDetail() {
   const reject = useRejectSuggestion();
 
   if (isLoading) return <div className="p-8 text-center">Loading...</div>;
-  if (!s) return <div className="p-8 text-center text-red-500">Suggestion not found</div>;
+  if (!s) return <div className="p-8 text-center text-feedback-destructive">Suggestion not found</div>;
 
   const handleApprove = async () => {
     try {
@@ -81,9 +81,9 @@ export default function AwardSuggestionDetail() {
             variant="secondary" 
             className={cn(
               "rounded-none text-[10px] uppercase tracking-widest",
-              s.status === 'pending' ? "bg-amber-100 text-amber-900" :
-              s.status === 'approved' ? "bg-emerald-100 text-emerald-900" :
-              "bg-red-100 text-red-900"
+              s.status === 'pending' ? "bg-feedback-warning/10 text-feedback-warning" :
+              s.status === 'approved' ? "bg-feedback-success/10 text-feedback-success" :
+              "bg-feedback-destructive/10 text-feedback-destructive"
             )}
           >
             {s.status}
@@ -96,7 +96,7 @@ export default function AwardSuggestionDetail() {
           <div className="flex gap-3">
             <Button 
               variant="outline" 
-              className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 rounded-sm"
+              className="border-feedback-destructive/30 text-feedback-destructive hover:bg-feedback-destructive/10 hover:text-feedback-destructive rounded-none"
               onClick={() => setShowRejectForm(true)}
             >
               <XCircle className="mr-2 h-4 w-4" /> Reject
@@ -177,13 +177,13 @@ export default function AwardSuggestionDetail() {
           </section>
 
           {showRejectForm && (
-            <section className="p-6 border border-red-200 rounded-sm bg-red-50 space-y-4">
-              <h2 className="text-sm font-bold text-red-900">Reject Suggestion</h2>
+            <section className="p-6 border border-feedback-destructive/30 rounded-none bg-feedback-destructive/5 space-y-4">
+              <h2 className="text-sm font-bold text-feedback-destructive">Reject Suggestion</h2>
               <div className="space-y-2">
-                <p className="text-xs text-red-800">Provide a reason for rejection (optional). This will be saved for audit.</p>
+                <p className="text-xs text-text-secondary">Provide a reason for rejection (optional). This will be saved for audit.</p>
                 <Textarea 
                   placeholder="e.g. Duplicate entry, incorrect verification link..."
-                  className="border-red-200 bg-white min-h-[100px] rounded-sm"
+                  className="border-border-default bg-surface-card min-h-[100px] rounded-none"
                   value={rejectNote}
                   onChange={(e) => setRejectNote(e.target.value)}
                 />
@@ -192,7 +192,7 @@ export default function AwardSuggestionDetail() {
                 <Button variant="ghost" size="sm" onClick={() => setShowRejectForm(false)}>Cancel</Button>
                 <Button 
                   size="sm" 
-                  className="bg-red-600 text-white hover:bg-red-700 rounded-sm"
+                  className="bg-feedback-destructive text-feedback-destructive-foreground hover:opacity-90 rounded-none"
                   onClick={handleReject}
                   disabled={reject.isPending}
                 >

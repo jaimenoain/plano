@@ -124,6 +124,7 @@ export interface RawFeedRow {
   edited_at?: string | null;
   status?: string | null;
   user_id?: string;
+  building_id?: string;
   user_data?: RawFeedUserData | null;
   building_data?: RawFeedBuildingData | null;
   likes_count?: number | null;

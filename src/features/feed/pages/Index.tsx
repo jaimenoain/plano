@@ -1,15 +1,14 @@
-import { useEffect } from "react";
-import { Link, useNavigate, type MetaFunction } from "react-router";
-import { useQuery } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
+import { useEffect, useRef } from "react";
+import { useNavigate, type MetaFunction } from "react-router";
 import { Loader2 } from "lucide-react";
 
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useExploreShell } from "@/components/layout/ExploreShellContext";
-import { supabase } from "@/integrations/supabase/client";
 import { SITE_URL } from "@/features/buildings/utils/structuredData";
-import { getBuildingImageUrl, getStorageAssetUrl } from "@/utils/image";
+import { ReviewCardFeed } from "@/features/posts/components/ReviewCardFeed";
+import { useHomeFeed } from "@/features/feed/hooks/useHomeFeed";
+import { Button } from "@/components/ui/button";
 
 import { LandingHero } from "../components/landing/LandingHero";
 import { LandingMarquee } from "../components/landing/LandingMarquee";
@@ -38,47 +37,6 @@ export const meta: MetaFunction = () => [
   { name: "twitter:image", content: INDEX_OG_IMAGE },
   { tagName: "link", rel: "canonical", href: INDEX_CANONICAL },
 ];
-
-type FeedNote = {
-  id: string;
-  title: string | null;
-  body: string | null;
-  created_at: string;
-  user: {
-    username: string | null;
-    avatar_url: string | null;
-  } | null;
-  building: {
-    id: string;
-    slug: string | null;
-    name: string;
-    city: string | null;
-    country: string | null;
-  } | null;
-  images: { id: string; storage_path: string }[];
-};
-
-async function fetchFeed(): Promise<FeedNote[]> {
-  const { data, error } = await supabase
-    .from("building_posts")
-    .select(
-      `
-      id,
-      title,
-      body,
-      created_at,
-      user:profiles!building_posts_user_id_fkey(username, avatar_url),
-      building:buildings!building_posts_building_id_fkey(id, slug, name, city, country),
-      images:review_images(id, storage_path)
-    `,
-    )
-    .eq("visibility", "public")
-    .order("created_at", { ascending: false })
-    .limit(30);
-
-  if (error) throw error;
-  return (data ?? []) as unknown as FeedNote[];
-}
 
 function Landing() {
   const { setLandingHideTopChrome } = useExploreShell();
@@ -110,150 +68,15 @@ function Landing() {
   );
 }
 
-function NoteImages({
-  images,
-  noteHref,
-}: {
-  images: FeedNote["images"];
-  noteHref: string;
-}) {
-  if (images.length === 0) return null;
-
-  if (images.length === 1) {
-    return (
-      <Link to={noteHref} className="block mt-4 overflow-hidden rounded-none">
-        <img
-          src={getBuildingImageUrl(images[0].storage_path)}
-          alt=""
-          loading="lazy"
-          className="w-full max-h-[680px] object-cover bg-surface-muted"
-        />
-      </Link>
-    );
-  }
-
-  const visible = images.slice(0, 4);
-  const overflow = images.length - visible.length;
-
-  return (
-    <Link to={noteHref} className="mt-4 grid grid-cols-2 gap-1">
-      {visible.map((img, i) => (
-        <div key={img.id} className="relative aspect-square overflow-hidden rounded-none bg-surface-muted">
-          <img
-            src={getBuildingImageUrl(img.storage_path)}
-            alt=""
-            loading="lazy"
-            className="w-full h-full object-cover"
-          />
-          {i === visible.length - 1 && overflow > 0 && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-lg font-medium">
-              +{overflow}
-            </div>
-          )}
-        </div>
-      ))}
-    </Link>
-  );
-}
-
-function NoteCard({ note }: { note: FeedNote }) {
-  const author = note.user;
-  const building = note.building;
-  const images = note.images ?? [];
-
-  const time = formatDistanceToNow(new Date(note.created_at), {
-    addSuffix: true,
-  });
-
-  const profileHref = author?.username ? `/profile/${author.username}` : null;
-  const buildingHref = building
-    ? `/building/${building.id}${building.slug ? `/${building.slug}` : ""}`
-    : null;
-  const noteHref = `/review/${note.id}`;
-
-  const authorAvatar = author?.avatar_url
-    ? getStorageAssetUrl(author.avatar_url)
-    : undefined;
-  const authorName = author?.username ?? "Someone";
-
-  const hasText = Boolean(note.title || note.body);
-  const hasImages = images.length > 0;
-  if (!hasText && !hasImages) return null;
-
-  return (
-    <article className="border-b border-border-default py-8 first:pt-2">
-      <header className="flex items-center gap-3 mb-4">
-        {authorAvatar ? (
-          <img
-            src={authorAvatar}
-            alt=""
-            className="w-9 h-9 rounded-full object-cover bg-surface-muted"
-          />
-        ) : (
-          <div className="w-9 h-9 rounded-full bg-surface-muted" />
-        )}
-        <div className="flex-1 min-w-0 text-sm leading-tight">
-          <div className="text-text-primary truncate">
-            {profileHref ? (
-              <Link to={profileHref} className="font-medium hover:underline">
-                {authorName}
-              </Link>
-            ) : (
-              <span className="font-medium">{authorName}</span>
-            )}
-            {building && buildingHref && (
-              <>
-                <span className="text-text-disabled"> · </span>
-                <Link
-                  to={buildingHref}
-                  className="text-text-secondary hover:underline"
-                >
-                  {building.name}
-                </Link>
-              </>
-            )}
-          </div>
-          <div className="text-xs text-text-disabled mt-0.5">{time}</div>
-        </div>
-      </header>
-
-      {hasText && (
-        <Link to={noteHref} className="block group">
-          {note.title && (
-            <h2 className="text-lg font-semibold text-text-primary mb-1 group-hover:underline">
-              {note.title}
-            </h2>
-          )}
-          {note.body && (
-            <p className="text-text-secondary whitespace-pre-wrap leading-relaxed line-clamp-6">
-              {note.body}
-            </p>
-          )}
-        </Link>
-      )}
-
-      <NoteImages images={images} noteHref={noteHref} />
-    </article>
-  );
-}
-
 function FeedSkeleton() {
   return (
-    <div>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="border-b border-border-default py-8 first:pt-2 animate-pulse">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-full bg-surface-muted" />
-            <div className="flex-1 space-y-1.5">
-              <div className="h-3 w-32 rounded bg-surface-muted" />
-              <div className="h-2.5 w-16 rounded bg-surface-muted" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <div className="h-4 w-3/4 rounded bg-surface-muted" />
-            <div className="h-3 w-full rounded bg-surface-muted" />
-            <div className="h-3 w-5/6 rounded bg-surface-muted" />
-          </div>
+    <div className="space-y-16">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="animate-pulse space-y-4 border-b border-border-default pb-16">
+          <div className="h-3 w-40 rounded-none bg-surface-muted" />
+          <div className="h-12 w-4/5 max-w-lg rounded-none bg-surface-muted" />
+          <div className="h-4 w-32 rounded-none bg-surface-muted" />
+          <div className="aspect-card-hero w-full rounded-none bg-surface-muted" />
         </div>
       ))}
     </div>
@@ -261,40 +84,97 @@ function FeedSkeleton() {
 }
 
 function Feed() {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["feed-v3"],
-    queryFn: fetchFeed,
-    staleTime: 5 * 60 * 1000,
-  });
+  const {
+    reviews,
+    isLoading,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    toggleLike,
+    toggleImageLike,
+  } = useHomeFeed();
+
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el || !hasNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !isFetchingNextPage) {
+          void fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   return (
     <AppLayout>
       <div className="mx-auto w-full max-w-[960px] px-4 md:px-6 pt-10 pb-32 md:flex md:items-start md:gap-8">
         <main className="w-full md:flex-1 md:min-w-0">
-          <h1 className="text-2xl font-semibold text-text-primary mb-8 tracking-tight">
-            Latest
-          </h1>
+          <header className="mb-10 border-b border-border-default pb-6">
+            <p className="text-2xs-plus font-mono font-normal uppercase tracking-[0.2em] text-text-disabled mb-2">
+              Your feed
+            </p>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary">
+              Latest
+            </h1>
+          </header>
 
           {isLoading ? (
             <FeedSkeleton />
-          ) : error ? (
-            <div className="text-text-secondary text-sm py-12">
-              Couldn't load the feed. Please refresh.
+          ) : isError ? (
+            <div
+              className="rounded-none border border-border-default bg-surface-card px-6 py-12 text-center"
+              role="alert"
+            >
+              <p className="text-sm text-text-secondary">
+                Couldn&apos;t load the feed. Please refresh.
+              </p>
             </div>
-          ) : (data?.length ?? 0) === 0 ? (
-            <div className="text-text-secondary text-sm py-12">
-              No posts yet. Be the first to share.
+          ) : reviews.length === 0 ? (
+            <div className="rounded-none border border-border-default bg-surface-card px-6 py-12 text-center">
+              <p className="text-sm text-text-secondary">
+                No posts yet. Follow people or share a building visit to fill your feed.
+              </p>
             </div>
           ) : (
-            <div>
-              {data!.map((note) => (
-                <NoteCard key={note.id} note={note} />
+            <div className="space-y-16">
+              {reviews.map((entry) => (
+                <ReviewCardFeed
+                  key={entry.id}
+                  entry={entry}
+                  onLike={toggleLike}
+                  onImageLike={toggleImageLike}
+                />
               ))}
+              <div ref={loadMoreRef} className="flex justify-center py-8">
+                {isFetchingNextPage ? (
+                  <Loader2
+                    className="h-6 w-6 animate-spin text-text-secondary"
+                    aria-label="Loading more"
+                  />
+                ) : hasNextPage ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-none"
+                    onClick={() => void fetchNextPage()}
+                  >
+                    Load more
+                  </Button>
+                ) : null}
+              </div>
             </div>
           )}
         </main>
 
-        {/* ── Secondary column (1/3) — desktop only ── */}
         <aside className="hidden md:block md:w-1/3 md:shrink-0">
           <div className="sticky top-20">
             <FeedSidebar />

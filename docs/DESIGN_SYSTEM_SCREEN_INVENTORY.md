@@ -37,6 +37,10 @@ This inventory is the execution baseline for the design-system rollout across th
 | `/remove-credit/:token` | `src/features/credits/pages/RemoveCredit.tsx` | L | Token flow |
 | `/verify-company-claim/:token` | `src/features/credits/pages/VerifyCompanyClaim.tsx` | L | Token flow |
 | `/approve-steward-request/:token` | `src/features/credits/pages/ApproveStewardRequest.tsx` | L | Token flow |
+| `/accept-company-steward` | `src/features/credits/pages/AcceptCompanySteward.tsx` | L | Token flow |
+| `/company/:slug/dispute` | `src/features/credits/pages/CompanyClaimDispute.tsx` | M | Token flow |
+| `/portfolio`, `/company-portfolio` | `PersonDashboard.tsx`, `CompanyDashboard.tsx` | M | Credits |
+| `/ambassador-portal` | `src/features/ambassadors/pages/AmbassadorPortal.tsx` | M | Ambassadors |
 
 ## Main app pages (inside MainLayout)
 
@@ -89,6 +93,7 @@ This inventory is the execution baseline for the design-system rollout across th
 | Awards admin | `/admin/awards*` | `AwardsList.tsx`, `AwardForm.tsx`, `AwardDetail.tsx`, `EditionForm.tsx`, `EditionDetail.tsx`, `AwardClaimRequests.tsx`, `AwardSuggestions.tsx`, `AwardSuggestionDetail.tsx` | H |
 | Updates CMS | `/admin/updates*` | `UpdatesList.tsx`, `UpdateForm.tsx` | M |
 | API + system | `/admin/api-requests`, `/admin/system`, `/admin/storage-jobs`, `/admin/feedback` | `ApiRequests.tsx`, `AdminSystemPlaceholder.tsx`, `StorageJobs.tsx`, `Feedback.tsx` | M |
+| Events admin | `/admin/events` | `AdminEvents.tsx` | M |
 | Merge tools | `/admin/merge*` | `MergeEntities.tsx`, `MergeComparisonEntities.tsx` | H |
 | Unauthorized | `/admin/unauthorized` | `Unauthorized.tsx` | L |
 
@@ -98,10 +103,10 @@ Use this table during implementation to mark rollout progress.
 
 | Family | Status |
 |---|---|
-| Global shell + nav | planned |
-| Editorial core (landing/feed/building detail) | planned |
-| Discovery/map/geography | planned |
-| Identity/content ecosystems | planned |
-| Embassy workspace | planned |
-| Admin console | planned |
-| QA + hardening | planned |
+| Global shell + nav | complete |
+| Editorial core (landing/feed/building detail) | complete |
+| Discovery/map/geography | complete |
+| Identity/content ecosystems | complete |
+| Embassy workspace | complete |
+| Admin console | complete |
+| QA + hardening | complete |

@@ -171,7 +171,7 @@ toast.error("Failed to create style. It might already exist.");
                         value={inputValue}
                         onSelect={handleCreate}
                         disabled={isCreating}
-                        className="text-blue-500 font-medium"
+                        className="text-text-primary font-medium"
                      >
                         + Create "{inputValue}"
                      </CommandItem>

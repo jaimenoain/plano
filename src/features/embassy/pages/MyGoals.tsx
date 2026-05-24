@@ -57,7 +57,7 @@ interface ChapterTask {
 const TASK_STATUS_CONFIG: Record<TaskStatus, { label: string; icon: React.ReactNode; class: string }> = {
   todo:        { label: "To do",       icon: <Circle className="h-3.5 w-3.5" />,        class: "text-muted-foreground" },
   in_progress: { label: "In progress", icon: <Clock className="h-3.5 w-3.5" />,         class: "text-amber-600" },
-  done:        { label: "Done",        icon: <CheckCircle2 className="h-3.5 w-3.5" />,  class: "text-green-600" },
+  done:        { label: "Done",        icon: <CheckCircle2 className="h-3.5 w-3.5" />,  class: "text-feedback-success" },
 };
 
 const VISIBILITY_CONFIG: Record<"chapter" | "leadership" | "only_me", { label: string; icon: React.ReactNode }> = {

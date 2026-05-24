@@ -86,7 +86,7 @@ export default function AwardSuggestions() {
                         "rounded-none text-[10px] uppercase tracking-widest",
                         s.status === 'pending' ? "bg-amber-100 text-amber-900" :
                         s.status === 'approved' ? "bg-emerald-100 text-emerald-900" :
-                        "bg-red-100 text-red-900"
+                        "bg-feedback-destructive/10 text-feedback-destructive"
                       )}
                     >
                       {s.status}

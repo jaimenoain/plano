@@ -86,7 +86,7 @@ interface TeamMember {
 const TASK_STATUS_CONFIG: Record<TaskStatus, { label: string; icon: React.ReactNode; class: string }> = {
   todo:        { label: "To do",       icon: <Circle className="h-3.5 w-3.5" />,       class: "text-muted-foreground" },
   in_progress: { label: "In progress", icon: <Clock className="h-3.5 w-3.5" />,        class: "text-amber-600" },
-  done:        { label: "Done",        icon: <CheckCircle2 className="h-3.5 w-3.5" />, class: "text-green-600" },
+  done:        { label: "Done",        icon: <CheckCircle2 className="h-3.5 w-3.5" />, class: "text-feedback-success" },
 };
 
 const NEXT_STATUS: Record<TaskStatus, TaskStatus> = {
@@ -97,8 +97,8 @@ const NEXT_STATUS: Record<TaskStatus, TaskStatus> = {
 
 const PROJECT_STATUS_CONFIG = {
   active:    { icon: <Zap className="h-3 w-3" />,          class: "bg-brand-primary/10 text-brand-primary border-brand-primary/20" },
-  planning:  { icon: <Clock className="h-3 w-3" />,        class: "bg-blue-50 text-blue-600 border-blue-200" },
-  completed: { icon: <CheckCircle2 className="h-3 w-3" />, class: "bg-green-500/10 text-green-600 border-green-500/20" },
+  planning:  { icon: <Clock className="h-3 w-3" />,        class: "bg-surface-muted text-text-primary border-border-default" },
+  completed: { icon: <CheckCircle2 className="h-3 w-3" />, class: "bg-feedback-success/10 text-feedback-success border-feedback-success/20" },
   archived:  { icon: <Archive className="h-3 w-3" />,      class: "bg-muted text-muted-foreground border-border-default" },
   draft:     { icon: <Lightbulb className="h-3 w-3" />,    class: "bg-amber-50 text-amber-700 border-amber-200" },
 };

@@ -902,7 +902,7 @@ toast.error("Failed to add attribute");
                           type="button"
                           size="icon"
                           variant="ghost"
-                          className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                          className="h-8 w-8 text-feedback-success hover:text-feedback-success hover:bg-feedback-success/10"
                           onClick={handleAddAttribute}
                           disabled={isAddingAttributeLoading}
                         >

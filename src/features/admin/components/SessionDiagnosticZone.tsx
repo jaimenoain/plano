@@ -86,7 +86,7 @@ export function SessionDiagnosticZone() {
               </Button>
             </div>
             {testResult.message && (
-              <div className={`text-sm p-2 rounded ${testResult.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              <div className={`text-sm p-2 rounded-none ${testResult.status === 'success' ? 'bg-feedback-success/10 text-feedback-success' : 'bg-feedback-destructive/10 text-feedback-destructive'}`}>
                 {testResult.message}
               </div>
             )}

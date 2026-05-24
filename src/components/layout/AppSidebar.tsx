@@ -123,7 +123,7 @@ function UserMenu() {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-56 bg-zinc-900 border border-white/10 text-white"
+            className="w-56 bg-surface-inverse border border-white/10 text-text-inverse"
             side={isMobile ? "bottom" : "right"}
             align="end"
             sideOffset={4}
@@ -185,7 +185,7 @@ function UserMenu() {
             <DropdownMenuSeparator className="bg-white/10" />
             <DropdownMenuItem
               onClick={handleSignOut}
-              className="gap-2 cursor-pointer text-red-400 focus:text-red-300 focus:bg-white/10"
+              className="gap-2 cursor-pointer text-destructive focus:text-destructive-foreground focus:bg-white/10"
             >
               <LogOut className="h-4 w-4" />
               Sign out
@@ -312,7 +312,7 @@ export function AppSidebar() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
-                        className="min-w-56 bg-zinc-900 border border-white/10 text-white"
+                        className="min-w-56 bg-surface-inverse border border-white/10 text-text-inverse"
                         side={isMobile ? "bottom" : "right"}
                         align="start"
                         sideOffset={4}

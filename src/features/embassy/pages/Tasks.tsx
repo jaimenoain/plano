@@ -72,8 +72,8 @@ interface CompanyOption {
 
 const STATUS_CONFIG: Record<TaskStatus, { label: string; icon: React.ReactNode; class: string }> = {
   todo:        { label: "To do",       icon: <Circle className="h-3.5 w-3.5" />,      class: "text-muted-foreground" },
-  in_progress: { label: "In progress", icon: <Clock className="h-3.5 w-3.5" />,       class: "text-amber-600" },
-  done:        { label: "Done",        icon: <CheckCircle2 className="h-3.5 w-3.5" />, class: "text-green-600" },
+  in_progress: { label: "In progress", icon: <Clock className="h-3.5 w-3.5" />,       class: "text-feedback-warning" },
+  done:        { label: "Done",        icon: <CheckCircle2 className="h-3.5 w-3.5" />, class: "text-feedback-success" },
 };
 
 const VISIBILITY_CONFIG: Record<TaskVisibility, { label: string; icon: React.ReactNode }> = {
@@ -110,7 +110,7 @@ function dueDateClass(due: string | null): string {
   if (!due) return "";
   const d = parseISO(due);
   if (isPast(d) && !isToday(d)) return "text-destructive";
-  if (isToday(d)) return "text-amber-600";
+  if (isToday(d)) return "text-feedback-warning";
   return "text-muted-foreground";
 }
 

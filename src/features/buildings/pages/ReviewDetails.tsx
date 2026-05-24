@@ -710,7 +710,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                       size="sm"
                       className={cn(
                         "gap-2 px-2 h-8 text-text-secondary hover:text-text-primary",
-                        review.is_liked && "text-red-500 hover:text-red-600 hover:bg-red-500/10",
+                        review.is_liked && "text-text-primary hover:text-text-primary hover:bg-surface-muted",
                       )}
                       onClick={handleLikeReview}
                     >
@@ -833,7 +833,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                           onClick={() => handleLikeComment(comment.id)}
                           className={cn(
                             "text-xs flex items-center gap-1.5 transition-colors hover:text-text-primary",
-                            comment.is_liked ? "text-red-500" : "text-text-secondary",
+                            comment.is_liked ? "text-text-primary" : "text-text-secondary",
                           )}
                         >
                           <Heart
@@ -1014,7 +1014,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                           size="icon"
                           className={cn(
                             "h-8 w-8 text-text-secondary",
-                            link.is_liked && "text-red-500",
+                            link.is_liked && "text-text-primary",
                           )}
                           onClick={() => handleLikeLink(link.id)}
                         >

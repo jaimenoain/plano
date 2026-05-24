@@ -503,7 +503,7 @@ export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading..." showHeader shellProvidesTopInset>
       <Skeleton className="h-56 max-h-[50vh] sm:max-h-none sm:h-64 lg:h-80 w-full rounded-none" />
-      <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-8 space-y-8">
             <div className="space-y-3">
@@ -1893,7 +1893,7 @@ export default function BuildingDetails() {
 
         {/* ── HERO — full-bleed only when a hero image exists (no empty band) ── */}
         {heroImageUrl ? (
-          <div className="relative h-56 max-h-[50vh] sm:max-h-none sm:h-64 lg:h-80 w-screen overflow-hidden bg-surface-muted">
+          <div className="relative h-[clamp(220px,45vh,560px)] w-screen overflow-hidden bg-surface-muted">
             <motion.img
               key={heroImageUrl}
               initial={{ opacity: 0, scale: 1.03 }}
@@ -1905,12 +1905,16 @@ export default function BuildingDetails() {
               fetchPriority="high"
               loading="eager"
             />
+            <div
+              className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent pointer-events-none"
+              aria-hidden
+            />
           </div>
         ) : null}
 
         {/* ── BUILDING HEADER — title, metadata row, stats ── */}
         <div className="border-b border-border-default">
-          <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
 
               {/* Title & metadata */}
@@ -1928,7 +1932,7 @@ export default function BuildingDetails() {
                       </span>
                     )}
                     {buildingAny.winner_award_name && (
-                      <span className="inline-block px-2 py-0.5 bg-amber-500/10 text-amber-600 text-[10px] font-bold uppercase tracking-[0.2em] rounded-none border border-amber-500/20 flex items-center gap-1">
+                      <span className="inline-block px-2 py-0.5 bg-feedback-warning/10 text-feedback-warning text-[10px] font-bold uppercase tracking-[0.2em] rounded-none border border-feedback-warning/20 flex items-center gap-1">
                         <Medal className="h-3 w-3" />
                         Winner: {buildingAny.winner_award_name}
                       </span>
@@ -1936,7 +1940,7 @@ export default function BuildingDetails() {
                   </div>
                 )}
 
-                <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-text-primary leading-tight">
+                <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-text-primary leading-[0.98]">
                   {building.name}
                 </h1>
 
@@ -2016,7 +2020,7 @@ export default function BuildingDetails() {
             isTabBarSticky && "sticky top-0 z-30 shadow-sm",
           )}
         >
-          <div className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center -mb-px overflow-x-scroll-touch">
                 {TABS.map((tab) => (
@@ -2052,7 +2056,7 @@ export default function BuildingDetails() {
 
         {/* ── TAB CONTENT ── */}
         <div className={cn(
-          activeTab === "map" ? "" : "max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 py-10",
+          activeTab === "map" ? "" : "max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10",
         )}>
           <div className={cn(
             activeTab !== "map" && "grid grid-cols-1 lg:grid-cols-12 gap-12",

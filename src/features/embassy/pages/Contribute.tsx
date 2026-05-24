@@ -1260,10 +1260,10 @@ function ArchitectOutreachTool({ chapterId, onBack }: { chapterId: string; onBac
                     {latestStatus && (
                       <Badge variant="secondary" className={cn(
                         "text-[10px] uppercase font-bold",
-                        latestStatus === "claimed" ? "bg-green-500/10 text-green-600" :
-                        latestStatus === "declined" ? "bg-red-500/10 text-red-600" :
-                        latestStatus === "replied" ? "bg-purple-500/10 text-purple-600" :
-                        "bg-blue-500/10 text-blue-600"
+                        latestStatus === "claimed" ? "bg-feedback-success/10 text-feedback-success" :
+                        latestStatus === "declined" ? "bg-feedback-destructive/10 text-feedback-destructive" :
+                        latestStatus === "replied" ? "bg-surface-muted text-text-primary" :
+                        "bg-surface-muted text-text-secondary"
                       )}>
                         {latestStatus}
                       </Badge>
@@ -1373,10 +1373,10 @@ function FirmOutreachDrawer({
   });
 
   const statusColors: Record<string, string> = {
-    claimed: "bg-green-500/10 text-green-600",
-    declined: "bg-red-500/10 text-red-600",
-    replied: "bg-purple-500/10 text-purple-600",
-    contacted: "bg-blue-500/10 text-blue-600",
+    claimed: "bg-feedback-success/10 text-feedback-success",
+    declined: "bg-feedback-destructive/10 text-feedback-destructive",
+    replied: "bg-surface-muted text-text-primary",
+    contacted: "bg-surface-muted text-text-secondary",
   };
 
   return (

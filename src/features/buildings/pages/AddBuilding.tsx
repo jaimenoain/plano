@@ -481,7 +481,7 @@ toast.error("Location search failed. Please click on the map to set the location
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+                  <Badge variant="secondary" className="bg-surface-muted text-text-primary hover:bg-surface-muted">
                     {duplicates.length}
                   </Badge>
                   Nearby Buildings
@@ -630,7 +630,7 @@ toast.error("Location search failed. Please click on the map to set the location
                 {/* Duplicates */}
                 {duplicates.map((building) => {
                   const status = userBuildingsMap?.get(building.id);
-                  const pinColor = status === 'visited' ? 'bg-green-500' : status === 'pending' ? 'bg-yellow-500' : 'bg-blue-500';
+                  const pinColor = status === 'visited' ? 'bg-brand-primary' : status === 'pending' ? 'bg-feedback-warning' : 'bg-text-secondary';
                   const label = status === 'visited' ? 'V' : status === 'pending' ? 'P' : 'B';
 
                   return (
@@ -674,7 +674,7 @@ toast.error("Location search failed. Please click on the map to set the location
                      <span>Selected Location</span>
                  </div>
                  <div className="flex items-center gap-2">
-                     <div className="w-3 h-3 rounded-full bg-blue-500 border border-white"></div>
+                     <div className="w-3 h-3 rounded-full bg-text-secondary border border-surface-card"></div>
                      <span>Existing Building</span>
                  </div>
                  {checkingDuplicates && (

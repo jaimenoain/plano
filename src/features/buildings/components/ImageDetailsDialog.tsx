@@ -370,7 +370,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={`flex items-center gap-1.5 px-2 ${isLiked ? 'text-red-500 hover:text-red-600' : 'text-text-secondary'}`}
+                    className={`flex items-center gap-1.5 px-2 ${isLiked ? 'text-text-primary hover:text-text-primary' : 'text-text-secondary'}`}
                     onClick={handleLike}
                   >
                     <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
