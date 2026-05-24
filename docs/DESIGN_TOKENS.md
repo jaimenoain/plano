@@ -3,6 +3,25 @@
 > **Authoritative source for all visual design decisions.**
 > Token values are reflected in `tailwind.config.ts` at the repository root. Update this file when changing design decisions, then sync `tailwind.config.ts` to match.
 
+## Design-System Source Alignment (mandatory)
+
+The `design-system/` folder is a required first-class input when defining or reviewing tokens and visual behavior.
+
+Use these files as mandatory references for every design update:
+
+- `design-system/colors_and_type.css` (token baseline)
+- `design-system/README.md` (brand and visual intent)
+- `design-system/preview/*` (foundational specimen references)
+- `design-system/ui_kits/website/*` (canonical landing/feed/detail visual examples)
+
+Source-of-truth order for implementation changes:
+
+1. `tailwind.config.ts` + `src/index.css` (runtime implementation)
+2. `docs/DESIGN_TOKENS.md` (this document)
+3. `design-system/` references (visual and token reference package)
+
+When any of these drift, update them in the same task. Do not defer sync.
+
 ---
 
 ## 1. Design Intent

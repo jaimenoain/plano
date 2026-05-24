@@ -15,6 +15,26 @@
 > A component derived this way will be visually consistent and
 > behaviourally intentional. That is the standard.
 
+## Design-System Source Alignment (mandatory)
+
+All component work must be reviewed against the `design-system/` reference package, not only against this document.
+
+Required references:
+
+- `design-system/README.md` (voice, visual intent, iconography)
+- `design-system/colors_and_type.css` (token definitions and semantic classes)
+- `design-system/preview/*` (component and foundation specimens)
+- `design-system/ui_kits/website/*` (canonical screen-level treatment for landing/feed/building detail)
+
+Component implementation source order:
+
+1. Runtime components in `src/components` + `src/features`
+2. `docs/COMPONENT_SPEC.md` (this file)
+3. `docs/DESIGN_TOKENS.md`
+4. `design-system/` references
+
+If any mismatch is found between implementation, this spec, and `design-system/`, resolve it immediately in the same change set.
+
 ---
 
 ## How to read this document
