@@ -21,6 +21,7 @@ alwaysApply: true
 - **Auth session in UI:** React Context (and Supabase auth listener) — not a global store for domain data
 - **Validation:** Zod — always, for form payloads and any structured input before writes
 - **Shared DB types:** `src/integrations/supabase/types.ts` (generated; never hand-edit — regenerate via `npm run gen-types` when schema changes)
+- **Docs file naming (minor convention):** root-level informational files in `docs/` (e.g. `ROADMAP.md`, `README.md`, `PRD.md`, `DATA_CONTRACT.md`, `DESIGN_TOKENS.md`, `AI_STATUS.md`) use ALL CAPS. Preserve their exact casing when referencing, linking, or creating these files — do not rewrite as `Roadmap.md` or `readme.md`.
 
 ## Forbidden Patterns (hard rules — never violate)
 

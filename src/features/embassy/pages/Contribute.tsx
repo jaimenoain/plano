@@ -1668,52 +1668,51 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
         </div>
       </div>
 
-      <div className="flex items-center gap-3 mb-4 shrink-0">
-        {view === "list" ? (
-          <>
-            <span className="text-xs text-muted-foreground flex items-center gap-1.5 shrink-0">
-              <SlidersHorizontal className="h-3.5 w-3.5" />
-              Popularity
-            </span>
-            <div className="w-44 flex flex-col gap-1.5">
-              <Slider
-                min={0}
-                max={3}
-                step={1}
-                value={[popularityStep]}
-                onValueChange={([v]) => setPopularityStep(v)}
-              />
-              <div className="flex justify-between">
-                {PHOTOGRAPHY_POPULARITY_STEPS.map((s, i) => (
-                  <span key={i} className="text-xs text-muted-foreground">{s.label}</span>
-                ))}
-              </div>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 mb-4 shrink-0 flex-wrap">
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-muted-foreground flex items-center gap-1.5 shrink-0">
+            <SlidersHorizontal className="h-3.5 w-3.5" />
+            Popularity
+          </span>
+          <div className="w-44 flex flex-col gap-1.5">
+            <Slider
+              min={0}
+              max={3}
+              step={1}
+              value={[popularityStep]}
+              onValueChange={([v]) => setPopularityStep(v)}
+            />
+            <div className="flex justify-between">
+              {PHOTOGRAPHY_POPULARITY_STEPS.map((s, i) => (
+                <span key={i} className="text-xs text-muted-foreground">{s.label}</span>
+              ))}
             </div>
+          </div>
+          {view === "list" && (
             <Badge variant="secondary" className="shrink-0 tabular-nums">
               {filteredBuildings.length}
             </Badge>
-          </>
-        ) : (
-          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-            {gapFilters.map((f) => (
-              <Button
-                key={f.value}
-                variant={filters.gapPhotoCounts?.includes(f.value) ? "default" : "outline"}
-                size="sm"
-                onClick={() => toggleGapFilter(f.value)}
-                className="whitespace-nowrap rounded-full"
-              >
-                <div className="flex items-center gap-2">
-                  <div className={cn(
-                    "w-2 h-2 rounded-full",
-                    f.value === 0 ? "bg-[#EF4444]" : f.value === 1 ? "bg-[#F59E0B]" : "bg-[#10B981]"
-                  )} />
-                  {f.label}
-                </div>
-              </Button>
-            ))}
-          </div>
-        )}
+          )}
+        </div>
+        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+          {gapFilters.map((f) => (
+            <Button
+              key={f.value}
+              variant={filters.gapPhotoCounts?.includes(f.value) ? "default" : "outline"}
+              size="sm"
+              onClick={() => toggleGapFilter(f.value)}
+              className="whitespace-nowrap rounded-full"
+            >
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "w-2 h-2 rounded-full",
+                  f.value === 0 ? "bg-[#EF4444]" : f.value === 1 ? "bg-[#F59E0B]" : "bg-[#10B981]"
+                )} />
+                {f.label}
+              </div>
+            </Button>
+          ))}
+        </div>
       </div>
 
       {view === "map" ? (
