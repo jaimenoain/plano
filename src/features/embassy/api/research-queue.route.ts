@@ -100,10 +100,18 @@ export async function action({ request }: ActionFunctionArgs) {
 
   // ── 1. Check current pending count ─────────────────────────────────────────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: queueRows } = await (supabase as any).rpc(
+  const { data: queueRows, error: queueCountError } = await (supabase as any).rpc(
     "get_ambassador_research_queue",
     { p_chapter_id: chapter_id, p_limit: TARGET_QUEUE_SIZE },
   );
+  if (queueCountError) {
+    // Migration not yet applied or function unavailable — bail early rather
+    // than falling through to the candidates RPC which will also fail.
+    return Response.json(
+      { error: "Research queue unavailable", code: "db_error" },
+      { status: 503, headers },
+    );
+  }
   const currentPendingCount = Array.isArray(queueRows) ? queueRows.length : 0;
 
   if (currentPendingCount >= TARGET_QUEUE_SIZE) {
@@ -230,7 +238,7 @@ Use web_search to find: year completed, current status, alternative name, functi
   };
 
   // Insert into queue (ON CONFLICT DO NOTHING to handle race conditions)
-  await supabase
+  const { error: upsertError } = await supabase
     .from("ambassador_building_research_queue")
     .upsert(
       {
@@ -244,4 +252,5 @@ Use web_search to find: year completed, current status, alternative name, functi
       },
       { onConflict: "chapter_id,building_id", ignoreDuplicates: true },
     );
+  if (upsertError) throw upsertError;
 }

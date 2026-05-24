@@ -6,6 +6,8 @@ export const EMBASSY_TASK_FEED_LIMIT = 20;
 // when the user approves the first — makes the transition instant.
 export const EMBASSY_PHOTO_MODERATION_LIMIT = 200;
 export const EMBASSY_PHOTO_MODERATION_BATCH_SIZE = 100;
+export const EMBASSY_CREDITS_MODERATION_LIMIT = 40;
+export const EMBASSY_CREDITS_MODERATION_BATCH_SIZE = 20;
 export const EMBASSY_SEARCH_FEED_LIMIT = 500;
 
 export type AmbassadorBuildingNoPhoto =
@@ -402,7 +404,7 @@ export async function fetchModerationCredits(chapterId: string): Promise<Moderat
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any).rpc("get_ambassador_moderation_credits", {
     p_chapter_id: chapterId,
-    p_limit: EMBASSY_TASK_FEED_LIMIT,
+    p_limit: EMBASSY_CREDITS_MODERATION_LIMIT,
   });
   if (error) throw error;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

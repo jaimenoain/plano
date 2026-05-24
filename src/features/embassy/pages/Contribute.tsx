@@ -28,6 +28,7 @@ import {
   approveBuildingGlobal,
   approveCreditGlobal,
   EMBASSY_PHOTO_MODERATION_BATCH_SIZE,
+  EMBASSY_CREDITS_MODERATION_BATCH_SIZE,
   EMBASSY_SEARCH_FEED_LIMIT,
   type AmbassadorUnclaimedFirm,
   type EventDiscovery,
@@ -307,11 +308,20 @@ function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: ()
   const [tab, setTab] = useState<ResearchTab>("data-completion");
   const [activeItem, setActiveItem] = useState<BuildingResearchQueueItem | null>(null);
 
-  const { data: queue = [], isLoading, error } = useQuery({
+  const { data: queue = [], isLoading, error, refetch } = useQuery({
     queryKey: ["embassy-research-queue", chapterId],
     queryFn: () => fetchBuildingResearchQueue(chapterId),
     enabled: !!chapterId,
     staleTime: 60 * 1000,
+    // Fail fast so the error banner shows immediately instead of oscillating
+    // between skeletons and the empty state during TanStack Query's retry backoffs.
+    retry: 0,
+    // Poll every 30 s while the queue is empty so the view updates as soon as
+    // the background fill route finishes inserting items.
+    refetchInterval: (query) => {
+      const d = query.state.data;
+      return Array.isArray(d) && d.length === 0 && !query.state.error ? 30_000 : false;
+    },
   });
 
   const dismissMutation = useMutation({
@@ -386,15 +396,22 @@ function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: ()
           ) : error ? (
             <div className="p-8 text-center border rounded-xl bg-destructive/5 text-destructive">
               <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-              <p>Failed to load research queue. Please try again.</p>
+              <p>Failed to load research queue.</p>
+              <Button variant="outline" size="sm" className="mt-3" onClick={() => void refetch()}>
+                Try again
+              </Button>
             </div>
           ) : queue.length === 0 ? (
             <div className="p-12 text-center border border-dashed rounded-xl">
               <Clock className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
               <p className="text-lg font-medium">Building your research queue…</p>
               <p className="text-sm text-muted-foreground mt-1">
-                AI is researching buildings in your chapter. Check back soon — up to 10 will appear here ready to review.
+                AI is researching buildings in your chapter. This may take a minute — the view will refresh automatically.
               </p>
+              <Button variant="ghost" size="sm" className="mt-4 gap-2 text-muted-foreground" onClick={() => void refetch()}>
+                <RefreshCw className="h-4 w-4" />
+                Refresh now
+              </Button>
             </div>
           ) : (
             <>
@@ -1651,9 +1668,33 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
         </div>
       </div>
 
-      {view === "map" ? (
-        <div className="flex-1 flex flex-col gap-4 min-h-0">
-          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar shrink-0">
+      <div className="flex items-center gap-3 mb-4 shrink-0">
+        {view === "list" ? (
+          <>
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5 shrink-0">
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Popularity
+            </span>
+            <div className="w-44 flex flex-col gap-1.5">
+              <Slider
+                min={0}
+                max={3}
+                step={1}
+                value={[popularityStep]}
+                onValueChange={([v]) => setPopularityStep(v)}
+              />
+              <div className="flex justify-between">
+                {PHOTOGRAPHY_POPULARITY_STEPS.map((s, i) => (
+                  <span key={i} className="text-xs text-muted-foreground">{s.label}</span>
+                ))}
+              </div>
+            </div>
+            <Badge variant="secondary" className="shrink-0 tabular-nums">
+              {filteredBuildings.length}
+            </Badge>
+          </>
+        ) : (
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
             {gapFilters.map((f) => (
               <Button
                 key={f.value}
@@ -1672,9 +1713,12 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
               </Button>
             ))}
           </div>
-          <div className="flex-1 border rounded-2xl overflow-hidden shadow-inner bg-surface-muted relative">
-            <PlanoMap showGapCallout />
-          </div>
+        )}
+      </div>
+
+      {view === "map" ? (
+        <div className="flex-1 min-h-0 border rounded-2xl overflow-hidden shadow-inner bg-surface-muted relative">
+          <PlanoMap showGapCallout />
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto pr-2">
@@ -1694,45 +1738,20 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
               <p className="text-sm text-muted-foreground">Every building in your chapter has at least one photo.</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 px-1">
-                <span className="text-xs text-muted-foreground flex items-center gap-1.5 shrink-0">
-                  <SlidersHorizontal className="h-3.5 w-3.5" />
-                  Popularity
-                </span>
-                <div className="flex-1 flex flex-col gap-1.5">
-                  <Slider
-                    min={0}
-                    max={3}
-                    step={1}
-                    value={[popularityStep]}
-                    onValueChange={([v]) => setPopularityStep(v)}
-                  />
-                  <div className="flex justify-between">
-                    {PHOTOGRAPHY_POPULARITY_STEPS.map((s, i) => (
-                      <span key={i} className="text-xs text-muted-foreground">{s.label}</span>
-                    ))}
+            <div className="grid gap-4">
+              {filteredBuildings.map((b) => (
+                <Card key={b.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group hover:border-brand-primary transition-all">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold truncate">{b.name}</h3>
+                    <p className="text-xs text-muted-foreground">{b.city || b.country || "Global"}</p>
                   </div>
-                </div>
-                <Badge variant="secondary" className="shrink-0 tabular-nums">
-                  {filteredBuildings.length}
-                </Badge>
-              </div>
-              <div className="grid gap-4">
-                {filteredBuildings.map((b) => (
-                  <Card key={b.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group hover:border-brand-primary transition-all">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold truncate">{b.name}</h3>
-                      <p className="text-xs text-muted-foreground">{b.city || b.country || "Global"}</p>
-                    </div>
-                    <Button size="sm" asChild>
-                      <Link to={getBuildingUrl(b.id, b.slug, b.short_id)}>
-                        View Building
-                      </Link>
-                    </Button>
-                  </Card>
-                ))}
-              </div>
+                  <Button size="sm" asChild>
+                    <Link to={getBuildingUrl(b.id, b.slug, b.short_id)}>
+                      View Building
+                    </Link>
+                  </Button>
+                </Card>
+              ))}
             </div>
           )}
         </div>
@@ -2403,9 +2422,14 @@ function CreditsModerationTab({
     enabled: !!chapterId,
   });
 
-  const visible = useMemo(
+  const allVisible = useMemo(
     () => (credits ?? []).filter((c) => !dismissed.has(c.id)),
     [credits, dismissed],
+  );
+
+  const visibleBatch = useMemo(
+    () => allVisible.slice(0, EMBASSY_CREDITS_MODERATION_BATCH_SIZE),
+    [allVisible],
   );
 
   async function handleApprove(ids: string[]) {
@@ -2429,7 +2453,7 @@ function CreditsModerationTab({
 
   if (isLoading) return <ModerationSkeletons />;
   if (error) return <ModerationError message="Failed to load credits." />;
-  if (visible.length === 0)
+  if (visibleBatch.length === 0)
     return (
       <ModerationEmptyState
         icon={<Award className="h-10 w-10" />}
@@ -2438,7 +2462,7 @@ function CreditsModerationTab({
       />
     );
 
-  const allIds = visible.map((c) => c.id);
+  const allIds = visibleBatch.map((c) => c.id);
 
   return (
     <div className="space-y-4">
@@ -2446,7 +2470,7 @@ function CreditsModerationTab({
         <GlobalModerationBanner onBack={() => setShowGlobal(false)} />
       )}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {visible.map((c) => {
+        {visibleBatch.map((c) => {
           return (
             <Card key={c.id} className="p-4 group hover:border-brand-primary transition-all">
               <div className="flex items-start justify-between gap-3">

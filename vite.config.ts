@@ -5,9 +5,20 @@ import { VitePWA } from "vite-plugin-pwa";
 import pkg from "./package.json";
 
 // https://vitejs.dev/config/
+// Per-build identifier used by the client to detect when a new deployment
+// has landed. On Vercel this is the git SHA (changes every deploy); locally
+// it falls back to a timestamp so each `vite build` produces a new id.
+// Must NOT be pkg.version — that is only bumped on semantic releases and
+// would defeat the staleness check between deploys.
+const buildId =
+  process.env.VERCEL_GIT_COMMIT_SHA ??
+  process.env.GITHUB_SHA ??
+  `local-${Date.now()}`;
+
 export default defineConfig(() => ({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
+    __BUILD_ID__: JSON.stringify(buildId),
   },
   server: {
     host: "::",

@@ -91,9 +91,9 @@ export function PwaProvider({ children }: { children: ReactNode }) {
       if (now - lastVersionCheckAt < 5 * 60 * 1000) return; // at most once per 5 min
       lastVersionCheckAt = now;
       void fetch("/api/version", { cache: "no-store" })
-        .then((res) => res.json() as Promise<{ version: string }>)
-        .then(({ version }) => {
-          if (version !== __APP_VERSION__ && !reloading.current) {
+        .then((res) => res.json() as Promise<{ buildId: string }>)
+        .then(({ buildId }) => {
+          if (buildId && buildId !== __BUILD_ID__ && !reloading.current) {
             reloading.current = true;
             window.location.reload();
           }
