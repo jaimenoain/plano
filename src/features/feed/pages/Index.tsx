@@ -93,6 +93,7 @@ function Feed() {
     isFetchingNextPage,
     toggleLike,
     toggleImageLike,
+    refetch,
   } = useHomeFeed();
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -131,12 +132,20 @@ function Feed() {
             <FeedSkeleton />
           ) : isError ? (
             <div
-              className="rounded-none border border-border-default bg-surface-card px-6 py-12 text-center"
+              className="rounded-none border border-border-default bg-surface-card px-6 py-12 text-center space-y-4"
               role="alert"
             >
               <p className="text-sm text-text-secondary">
-                Couldn&apos;t load the feed. Please refresh.
+                Couldn&apos;t load the feed. Please try again.
               </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-none"
+                onClick={() => void refetch()}
+              >
+                Retry
+              </Button>
             </div>
           ) : reviews.length === 0 ? (
             <div className="rounded-none border border-border-default bg-surface-card px-6 py-12 text-center">
