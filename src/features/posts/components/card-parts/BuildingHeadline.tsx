@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 export interface BuildingHeadlineProps {
   name: string;
-  size: "xl" | "lg" | "md";
+  size: "xl" | "lg" | "md" | "feed";
   className?: string;
 }
 
@@ -13,6 +13,8 @@ const sizeClass: Record<BuildingHeadlineProps["size"], string> = {
   lg: "text-[clamp(2.25rem,4vw,3rem)] leading-[0.95] line-clamp-2",
   /** 28px — single-line clamp (e.g. FeedCardC) */
   md: "text-[1.75rem] line-clamp-1",
+  /** Signed-in home feed — `FeedPage.jsx` title scale */
+  feed: "text-[clamp(2.375rem,5.4vw,4rem)] leading-[0.96] line-clamp-2",
 };
 
 /**

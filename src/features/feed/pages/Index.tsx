@@ -7,6 +7,9 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useExploreShell } from "@/components/layout/ExploreShellContext";
 import { SITE_URL } from "@/features/buildings/utils/structuredData";
 import { ReviewCardFeed } from "@/features/posts/components/ReviewCardFeed";
+import { EditorialFeedPost } from "@/features/feed/components/EditorialFeedPost";
+import { resolveCardType } from "@/features/posts/utils/resolveCardType";
+import type { FeedHomeEntry, FeedReview } from "@/types/feed";
 import { useHomeFeed } from "@/features/feed/hooks/useHomeFeed";
 import { Button } from "@/components/ui/button";
 
@@ -70,17 +73,48 @@ function Landing() {
 
 function FeedSkeleton() {
   return (
-    <div className="space-y-16">
+    <div>
       {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="animate-pulse space-y-4 border-b border-border-default pb-16">
-          <div className="h-3 w-40 rounded-none bg-surface-muted" />
-          <div className="h-12 w-4/5 max-w-lg rounded-none bg-surface-muted" />
-          <div className="h-4 w-32 rounded-none bg-surface-muted" />
-          <div className="aspect-card-hero w-full rounded-none bg-surface-muted" />
+        <div
+          key={i}
+          className="animate-pulse space-y-4 border-b border-border-default py-[26px] pb-7"
+        >
+          <div className="h-3 w-48 rounded-none bg-surface-muted" />
+          <div className="h-14 w-4/5 max-w-lg rounded-none bg-surface-muted" />
+          <div className="h-6 w-3/4 max-w-md rounded-none bg-surface-muted" />
+          <div className="aspect-video w-full rounded-none bg-surface-muted" />
+          <div className="h-4 w-40 rounded-none bg-surface-muted" />
         </div>
       ))}
     </div>
   );
+}
+
+function isEventAttendanceEntry(entry: FeedHomeEntry): boolean {
+  return "rowType" in entry && entry.rowType === "event_attendance";
+}
+
+function isFeedReviewEntry(entry: FeedHomeEntry): entry is FeedReview {
+  return !isEventAttendanceEntry(entry);
+}
+
+function HomeFeedEntry({
+  entry,
+  onLike,
+  onImageLike,
+}: {
+  entry: FeedHomeEntry;
+  onLike: (reviewId: string) => void;
+  onImageLike: (reviewId: string, imageId: string) => void;
+}) {
+  if (isEventAttendanceEntry(entry)) {
+    return <ReviewCardFeed entry={entry} onLike={onLike} onImageLike={onImageLike} />;
+  }
+  if (!isFeedReviewEntry(entry)) return null;
+  if (resolveCardType(entry) === "activity") {
+    return <ReviewCardFeed entry={entry} onLike={onLike} onImageLike={onImageLike} />;
+  }
+  return <EditorialFeedPost entry={entry} onLike={onLike} onImageLike={onImageLike} />;
 }
 
 function Feed() {
@@ -117,14 +151,12 @@ function Feed() {
 
   return (
     <AppLayout>
-      <div className="mx-auto w-full max-w-[960px] px-4 md:px-6 pt-10 pb-32 md:flex md:items-start md:gap-8">
-        <main className="w-full md:flex-1 md:min-w-0">
-          <header className="mb-10 border-b border-border-default pb-6">
-            <p className="text-2xs-plus font-mono font-normal uppercase tracking-[0.2em] text-text-disabled mb-2">
-              Your feed
-            </p>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary">
-              Latest
+      <div className="mx-auto flex w-full max-w-[1080px] items-start gap-10 px-5 pb-24 pt-10 md:gap-14 md:px-8">
+        <main className="min-w-0 flex-1">
+          <header className="mb-8 flex items-baseline justify-between border-b border-text-primary pb-2.5">
+            <h1 className="m-0 text-[11px] font-medium uppercase tracking-[0.15em] text-text-primary">
+              <span className="mr-2.5 font-mono text-text-disabled">§ 01</span>
+              Latest from your circle
             </h1>
           </header>
 
@@ -154,9 +186,9 @@ function Feed() {
               </p>
             </div>
           ) : (
-            <div className="space-y-16">
+            <div>
               {reviews.map((entry) => (
-                <ReviewCardFeed
+                <HomeFeedEntry
                   key={entry.id}
                   entry={entry}
                   onLike={toggleLike}
@@ -184,8 +216,8 @@ function Feed() {
           )}
         </main>
 
-        <aside className="hidden md:block md:w-1/3 md:shrink-0">
-          <div className="sticky top-20">
+        <aside className="hidden w-[280px] shrink-0 md:block">
+          <div className="sticky top-[88px]">
             <FeedSidebar />
           </div>
         </aside>

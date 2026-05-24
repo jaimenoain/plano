@@ -16,6 +16,8 @@ export interface CardFooterProps {
   onComment: () => void;
   /** When set, renders Save button with Supabase save. Omit to hide (e.g. building detail cards). */
   buildingId?: string | null;
+  /** When false, Save is omitted (editorial home feed uses FeedPostByline for save). Default true. */
+  showSave?: boolean;
   bookmarkHoverGroup?: CardBookmarkHoverGroup;
   className?: string;
 }
@@ -27,6 +29,7 @@ export function CardFooter({
   onLike,
   onComment,
   buildingId,
+  showSave = true,
   className,
 }: CardFooterProps) {
   const { user } = useAuth();
@@ -102,7 +105,7 @@ export function CardFooter({
       </div>
 
       {/* Right: Save */}
-      {buildingId ? (
+      {showSave && buildingId ? (
         <button
           type="button"
           onClick={handleSave}

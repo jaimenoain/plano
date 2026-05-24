@@ -32,7 +32,7 @@ export function ReviewCardFeed({
 }: ReviewCardFeedProps) {
   if (isEventAttendanceEntry(entry)) {
     return (
-      <div className="contents" data-testid={`review-card-feed-${entry.id}`}>
+      <div className="min-w-0 w-full" data-testid={`review-card-feed-${entry.id}`}>
         <FeedEventAttendanceRow entry={entry} />
       </div>
     );
@@ -43,7 +43,7 @@ export function ReviewCardFeed({
 
   if (t === "activity") {
     return (
-      <div className="contents" data-testid={`review-card-feed-${review.id}`}>
+      <div className="min-w-0 w-full" data-testid={`review-card-feed-${review.id}`}>
         <FeedActivityRow
           entry={review}
           activityStatus={review.status === "pending" ? "pending" : "visited"}
@@ -63,7 +63,7 @@ export function ReviewCardFeed({
   };
 
   return (
-    <div className="contents" data-testid={`review-card-feed-${review.id}`}>
+    <div className="min-w-0 w-full" data-testid={`review-card-feed-${review.id}`}>
       <SuggestedContentBlock isSuggested={review.is_suggested} suggestionReason={review.suggestion_reason}>
         {t === "A" ? (
           <FeedCardA entry={review} {...shared} />

@@ -131,7 +131,7 @@ export function FeedCardB({
     >
       <div className="grid w-full min-w-0 grid-cols-1 gap-0 md:grid-cols-2 md:gap-16 md:items-start">
         {/* Photo column */}
-        <div className={cn("order-1 min-w-0", imageOnLeft ? "md:order-1" : "md:order-2")}>
+        <div className={cn("order-2 min-w-0", imageOnLeft ? "md:order-1" : "md:order-2")}>
           <CardImage
             items={mediaItems}
             height={isMdUp ? undefined : CARD_C_IMAGE_HEIGHT}
@@ -146,7 +146,7 @@ export function FeedCardB({
         {/* Text column */}
         <div
           className={cn(
-            "order-2 flex min-w-0 flex-col gap-0 py-8 md:py-0",
+            "order-1 flex min-w-0 flex-col gap-0 pb-8 md:pb-0",
             imageOnLeft ? "md:order-2" : "md:order-1",
           )}
         >

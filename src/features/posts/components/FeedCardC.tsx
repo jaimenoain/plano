@@ -84,29 +84,17 @@ export function FeedCardC({
         isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-6",
       )}
     >
-      <div className="flex flex-col gap-0 mb-10">
-        {!hideBuildingInfo && (
-          <CardMeta
-            city={entry.building.city}
-            architect={entry.building.creditedEntities?.[0]?.name}
-            year={entry.building.year_completed}
-            className="mb-4"
-          />
-        )}
-        {!hideBuildingInfo && (
-          <BuildingHeadline name={mainTitle} size="lg" className="mb-2" />
-        )}
-        {!hideUser && (
-          <CardAuthor
-            username={username}
-            avatarUrl={data.avatarUrl}
-            timestamp={entry.created_at}
-            rating={entry.rating}
-            className="mt-3"
-            onUsernameClick={() => navigate(`/profile/${username}`)}
-          />
-        )}
-      </div>
+      {!hideBuildingInfo && (
+        <CardMeta
+          city={entry.building.city}
+          architect={entry.building.creditedEntities?.[0]?.name}
+          year={entry.building.year_completed}
+          className="mb-[10px]"
+        />
+      )}
+      {!hideBuildingInfo && (
+        <BuildingHeadline name={mainTitle} size="lg" className="mb-2" />
+      )}
 
       <CardImage
         items={mediaItems}
@@ -114,11 +102,22 @@ export function FeedCardC({
         reviewId={entry.id}
         onImageLike={onImageLike}
         firstMediaOnly
-        className="transition-transform duration-700 group-hover/card:scale-[1.01]"
+        className="mt-9 transition-transform duration-700 group-hover/card:scale-[1.01]"
       />
 
+      {!hideUser && (
+        <CardAuthor
+          username={username}
+          avatarUrl={data.avatarUrl}
+          timestamp={entry.created_at}
+          rating={entry.rating}
+          className="mt-[14px]"
+          onUsernameClick={() => navigate(`/profile/${username}`)}
+        />
+      )}
+
       <CardFooter
-        className="pt-10"
+        className="mt-8"
         likesCount={entry.likes_count}
         commentsCount={entry.comments_count}
         isLiked={Boolean(entry.is_liked)}
