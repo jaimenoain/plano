@@ -2,6 +2,8 @@
 
 This inventory is the execution baseline for the design-system rollout across the web app.
 
+**Refinement programme:** After rollout, each family is reviewed again for editorial polish (layout, type rhythm, kit fidelity). Track progress in [ROADMAP.md](ROADMAP.md) — rollout “complete” ≠ visually refined. Agent-autonomous; verification at end of roadmap only.
+
 ## Complexity legend
 
 - `L` (low): mostly static content or simple list/detail UI
@@ -99,9 +101,9 @@ This inventory is the execution baseline for the design-system rollout across th
 
 ## Route-family completion tracker
 
-Use this table during implementation to mark rollout progress.
+**Rollout** (tokens + wiring, 2026-05-24):
 
-| Family | Status |
+| Family | Rollout |
 |---|---|
 | Global shell + nav | complete |
 | Editorial core (landing/feed/building detail) | complete |
@@ -110,3 +112,18 @@ Use this table during implementation to mark rollout progress.
 | Embassy workspace | complete |
 | Admin console | complete |
 | QA + hardening | complete |
+
+**Refinement** (layout + typography + kit fidelity — see [ROADMAP.md](ROADMAP.md)):
+
+| Family | Refinement |
+|---|---|
+| Programme setup (R0) | complete |
+| Global shell + nav | refined (R1) |
+| Editorial core (landing/feed/building detail) | refined (R2) |
+| Discovery/map/geography | refined (R3) |
+| Identity/content ecosystems | refined (R4) |
+| Events / awards / collections | refined (R5) |
+| Auth / token flows | refined (R6) |
+| Embassy workspace | refined (R7) |
+| Admin console | refined (R8) |
+| QA + hardening | complete (R9) |

@@ -207,7 +207,7 @@ export function FeedbackKanbanView({
                           </span>
                           <div className="flex items-center gap-1">
                             {row.needs_user_input && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-2xs font-semibold text-amber-800">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-feedback-warning/10 px-1.5 py-0.5 text-2xs font-semibold text-feedback-warning">
                                 Needs input
                               </span>
                             )}

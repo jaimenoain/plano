@@ -238,7 +238,7 @@ export default function ProgrammeInterventions() {
   return (
     <div className="space-y-8 p-4 sm:p-6 lg:p-8">
       <div>
-        <h1 className="text-4xl font-bold tracking-tight text-text-primary">Intervention Queue</h1>
+        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Intervention Queue</h1>
         <p className="mt-1 text-sm text-text-secondary">
           Automated flags that need attention. Dismissals are per-user — your teammates still see
           flags you dismiss.

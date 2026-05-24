@@ -2,12 +2,17 @@ import {
   Activity,
   BookOpen,
   CalendarDays,
+  CheckSquare,
   Landmark,
+  LayoutDashboard,
   Play,
   Search,
+  Settings2,
+  Target,
   Trophy,
   User,
   Users,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 
@@ -91,4 +96,32 @@ export function isNavItemActive(item: AppNavItem, pathname: string): boolean {
     return item.isActive(pathname);
   }
   return pathname === item.path;
+}
+
+/** Embassy workspace tab bar — single source for `EmbassyLayout`. */
+export type EmbassyNavItem = {
+  label: string;
+  path: string;
+  icon: LucideIcon;
+  leaderOnly?: boolean;
+};
+
+export const embassyNavItems: EmbassyNavItem[] = [
+  { label: "Dashboard", path: "/embassy/goals", icon: Target },
+  { label: "Contribute", path: "/embassy/contribute", icon: LayoutDashboard },
+  { label: "Chapter Projects", path: "/embassy/projects", icon: Users },
+  { label: "Team", path: "/embassy/team", icon: UsersRound },
+  { label: "Tasks", path: "/embassy/tasks", icon: CheckSquare },
+  { label: "Leadership", path: "/embassy/leadership", icon: Settings2, leaderOnly: true },
+];
+
+export function embassyNavItemsFor(isLeader: boolean): EmbassyNavItem[] {
+  return embassyNavItems.filter((item) => !item.leaderOnly || isLeader);
+}
+
+export function isEmbassyNavItemActive(item: EmbassyNavItem, pathname: string): boolean {
+  return (
+    pathname === item.path ||
+    (item.path === "/embassy/goals" && (pathname === "/embassy" || pathname === "/embassy/"))
+  );
 }

@@ -498,7 +498,7 @@ export default function ProgrammeBroadcasts() {
   return (
     <div className="space-y-8 p-4 sm:p-6 lg:p-8">
       <div>
-        <h1 className="text-4xl font-bold tracking-tight text-text-primary">Broadcasts</h1>
+        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Broadcasts</h1>
         <p className="mt-1 text-sm text-text-secondary">
           Send structured messages to chapter presidents. Rate limit: 3 per day.
         </p>

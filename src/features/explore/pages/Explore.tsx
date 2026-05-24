@@ -420,7 +420,7 @@ export default function Explore() {
       {/* Immersive panel: viewport between fixed app nav (top) and tab bar (bottom, mobile). */}
       <div
         className={cn(
-          "fixed left-0 right-0 z-[5] flex min-h-0 flex-col overflow-hidden bg-[#0A0A0A] text-white",
+          "fixed left-0 right-0 z-[5] flex min-h-0 flex-col overflow-hidden bg-surface-inverse text-white",
           showTutorial === false
             ? "top-[env(safe-area-inset-top,0px)] bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:top-0 md:bottom-0"
             : "top-[calc(3.5rem+env(safe-area-inset-top,0px))] bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:top-16 md:bottom-0"
@@ -445,7 +445,7 @@ export default function Explore() {
                   "inline-flex items-center gap-2 min-h-11 px-3 text-xs font-medium uppercase tracking-widest transition-all sm:px-4",
                   locationFilter.label
                     ? "bg-brand-primary text-brand-primary-foreground"
-                    : "bg-black/70 backdrop-blur-md text-white/70 border border-white/15 hover:bg-black/90 hover:text-white/90"
+                    : "bg-surface-inverse/80 backdrop-blur-md text-white/70 border border-white/15 hover:bg-surface-inverse hover:text-white/90"
                 )}
               >
                 <MapPin
@@ -501,7 +501,7 @@ export default function Explore() {
                 <ScrollArea className="min-h-0 flex-1">
                   <div className="space-y-6 px-4 pb-8 pt-4 md:px-6">
                     <div className="space-y-3">
-                      <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
+                      <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
                         Location
                       </p>
                       <DiscoverySearchInput

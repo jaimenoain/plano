@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AdminFormLabel, AdminPageHeader } from "@/features/admin/components/admin-ui";
 
 export const meta: MetaFunction = () => [{ title: "Award Form | Plano Admin" }];
 
@@ -143,15 +144,12 @@ export default function AwardForm() {
   }
 
   return (
-    <div className="p-8 max-w-2xl space-y-6">
-      <h1 className="text-4xl font-bold tracking-tight text-text-primary">
-        {isEdit ? "Edit Award" : "New Award"}
-      </h1>
+    <div className="max-w-2xl space-y-6">
+      <AdminPageHeader title={isEdit ? "Edit award" : "New award"} eyebrow="Awards" />
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Name */}
+      <form onSubmit={handleSubmit} className="space-y-6 border-t border-border-default pt-6">
         <div className="space-y-2">
-          <Label htmlFor="award-name">Name</Label>
+          <AdminFormLabel htmlFor="award-name">Name</AdminFormLabel>
           <Input
             id="award-name"
             value={name}

@@ -116,9 +116,9 @@ toast.error(`Failed to queue job: ${error instanceof Error ? error.message : "Un
   };
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="space-y-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-bold tracking-tight text-text-primary">Storage Management</h1>
+        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Storage Management</h1>
         <p className="text-sm text-text-secondary">
           Manage background jobs for recursive storage deletion.
         </p>

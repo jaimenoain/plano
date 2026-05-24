@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -7,7 +7,6 @@ import { CalendarIcon, Loader2, MapPin, X } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LocationInput } from "@/components/ui/LocationInput";
@@ -36,6 +35,15 @@ type BuildingSearchRow = {
 };
 
 type SelectedBuilding = { id: string; name: string };
+
+function FormSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="space-y-4 border-t border-border-default pt-8 first:border-t-0 first:pt-0">
+      <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">{title}</h2>
+      {children}
+    </section>
+  );
+}
 
 type FormValues = {
   title: string;
@@ -347,7 +355,7 @@ export default function SubmitEvent() {
       return (
         <AppLayout title={pageTitle} showBack>
           <div className="mx-auto max-w-2xl px-4 py-8 text-center">
-            <p className="text-sm text-destructive" role="alert">
+            <p className="text-sm text-feedback-destructive" role="alert">
               {msg}
             </p>
             <Button asChild variant="outline" className="mt-6">
@@ -389,11 +397,7 @@ export default function SubmitEvent() {
         </p>
 
         <form onSubmit={onSubmit} className="mt-8 space-y-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Basics</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <FormSection title="Basics">
               <div className="space-y-2">
                 <Label htmlFor="event-title">Title *</Label>
                 <Input id="event-title" autoComplete="off" {...form.register("title")} />
@@ -402,14 +406,9 @@ export default function SubmitEvent() {
                 <Label htmlFor="event-description">Description</Label>
                 <Textarea id="event-description" rows={5} {...form.register("description")} />
               </div>
-            </CardContent>
-          </Card>
+          </FormSection>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>When</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <FormSection title="When">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Start date *</Label>
@@ -459,14 +458,9 @@ export default function SubmitEvent() {
                   <Input id="end-time" type="time" {...form.register("endTime")} disabled={!endDay} />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+          </FormSection>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Where</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <FormSection title="Where">
               <div className="space-y-2">
                 <Label>Address</Label>
                 <LocationInput
@@ -488,14 +482,9 @@ export default function SubmitEvent() {
                   <Input id="lng" inputMode="decimal" placeholder="Optional" {...form.register("lng")} />
                 </div>
               </div>
-            </CardContent>
-          </Card>
+          </FormSection>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Link buildings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <FormSection title="Link buildings">
               <div className="space-y-2">
                 <Label htmlFor="building-search">Search buildings</Label>
                 <Input
@@ -556,14 +545,9 @@ export default function SubmitEvent() {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+          </FormSection>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Links & organiser</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+          <FormSection title="Links & organiser">
               <div className="space-y-2">
                 <Label htmlFor="external-link">External link</Label>
                 <Input id="external-link" type="url" placeholder="https://…" {...form.register("externalLink")} />
@@ -626,11 +610,10 @@ export default function SubmitEvent() {
                   )}
                 />
               </div>
-            </CardContent>
-          </Card>
+          </FormSection>
 
           {formError && (
-            <p className="text-sm text-destructive" role="alert">
+            <p className="border border-feedback-destructive/30 bg-feedback-destructive/5 px-4 py-3 text-sm text-feedback-destructive" role="alert">
               {formError}
             </p>
           )}

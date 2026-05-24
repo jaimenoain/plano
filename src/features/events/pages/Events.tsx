@@ -3,7 +3,6 @@ import { Link, type MetaFunction } from "react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { CalendarDays } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Button } from "@/components/ui/button";
 import { EventCard, EventCardSkeleton } from "@/features/events/components/EventCard";
 import { getUpcomingEvents, UPCOMING_EVENTS_PAGE_SIZE } from "@/features/events/api/eventsApi";
 import type { EventCardDTO } from "@/features/events/types";
@@ -65,21 +64,31 @@ export default function Events() {
 
   return (
     <AppLayout title="Events" showBack={false}>
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-3xl font-bold tracking-tight text-text-primary">Upcoming events</h1>
-          <Button asChild className="w-full shrink-0 sm:w-auto">
-            <Link to="/events/new">Share an event</Link>
-          </Button>
-        </div>
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+        <header className="mb-10 flex flex-col gap-4 border-b border-border-default pb-8 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="mb-2 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+              Community calendar
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary sm:text-4xl">
+              Upcoming events
+            </h1>
+          </div>
+          <Link
+            to="/events/new"
+            className="text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
+          >
+            Share an event →
+          </Link>
+        </header>
 
         {query.isError ? (
-          <p className="mt-8 text-sm text-destructive" role="alert">
+          <p className="text-sm text-feedback-destructive" role="alert">
             Events could not be loaded. Please try again later.
           </p>
         ) : null}
 
-        <div className="mt-8 space-y-4">
+        <div className="divide-y divide-border-default border-y border-border-default">
           {showInitialSkeleton ? (
             <>
               <EventCardSkeleton />
@@ -87,17 +96,15 @@ export default function Events() {
               <EventCardSkeleton />
             </>
           ) : items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div
-                className="mb-6 flex h-24 w-24 items-center justify-center rounded-full border border-border-default bg-surface-muted text-text-secondary"
-                aria-hidden
+            <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
+              <CalendarDays className="mb-4 h-10 w-10 text-text-disabled" aria-hidden />
+              <p className="max-w-sm text-sm text-text-secondary">No upcoming events yet.</p>
+              <Link
+                to="/events/new"
+                className="mt-6 text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
               >
-                <CalendarDays className="h-12 w-12" />
-              </div>
-              <p className="max-w-sm text-text-secondary">No upcoming events yet.</p>
-              <Button asChild className="mt-6">
-                <Link to="/events/new">Share the first event</Link>
-              </Button>
+                Share the first event →
+              </Link>
             </div>
           ) : (
             items.map((ev) => <EventCard key={ev.id} event={ev} />)

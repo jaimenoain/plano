@@ -492,7 +492,7 @@ export default function ProgrammePresidents() {
 
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8">
-      <h1 className="text-4xl font-bold tracking-tight text-text-primary">Chapter Presidents</h1>
+      <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Chapter Presidents</h1>
 
       <Tabs defaultValue="all">
         <TabsList className="mb-4">

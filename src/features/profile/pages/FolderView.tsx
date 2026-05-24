@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, type MetaFunction } from "react-router";
-import { Loader2, ArrowLeft, Folder } from "lucide-react";
+import { Loader2, Folder } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -181,7 +181,7 @@ setError("Failed to load folder");
   if (loading || authLoading) {
       return (
           <div className="flex justify-center items-center h-screen">
-              <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+              <Loader2 className="h-4 w-4 animate-spin text-text-disabled" />
           </div>
       );
   }
@@ -207,21 +207,26 @@ setError("Failed to load folder");
 
   return (
     <AppLayout title={folder.name} showLogo={false} showBack>
-       <div className="max-w-4xl mx-auto px-4 py-6">
-           {/* Header */}
-           <div className="mb-8">
-               <div className="flex items-center gap-2 text-sm text-text-secondary mb-2 cursor-pointer hover:text-text-primary w-fit" onClick={handleBack}>
-                   <ArrowLeft className="h-4 w-4" />
-                   Back to {username}'s Profile
-               </div>
-               <div className="flex items-start justify-between">
-                   <div>
-                       <h1 className="text-4xl font-bold tracking-tight leading-tight mb-2 flex items-center gap-3 text-text-primary">
-                           <Folder className="h-8 w-8 text-text-secondary" />
+       <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+           <header className="mb-10 border-b border-border-default pb-8">
+               <button
+                 type="button"
+                 className="mb-4 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors hover:text-text-primary"
+                 onClick={handleBack}
+               >
+                 ← Back to {username}&apos;s profile
+               </button>
+               <div className="flex items-start justify-between gap-4">
+                   <div className="min-w-0">
+                       <p className="mb-2 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+                         Collection folder
+                       </p>
+                       <h1 className="mb-2 flex items-center gap-3 text-3xl font-bold tracking-tight leading-none text-text-primary sm:text-4xl">
+                           <Folder className="h-7 w-7 shrink-0 text-text-secondary" aria-hidden />
                            {folder.name}
                        </h1>
                        {folder.description && (
-                           <p className="text-text-secondary max-w-2xl text-lg">
+                           <p className="max-w-2xl text-base leading-relaxed text-text-secondary">
                                {folder.description}
                            </p>
                        )}
@@ -232,11 +237,10 @@ setError("Failed to load folder");
                        </Button>
                    )}
                </div>
-           </div>
+           </header>
 
-           {/* Content */}
            {collections.length > 0 ? (
-               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
+               <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3">
                    {collections.map(collection => (
                        <CollectionCard
                            key={collection.id}
@@ -247,7 +251,7 @@ setError("Failed to load folder");
                    ))}
                </div>
            ) : (
-               <div className="py-20 text-center border-2 border-dashed border-border-default/50 rounded-xl bg-surface-muted/10">
+               <div className="py-20 text-center border-2 border-dashed border-border-default/50 rounded-none bg-surface-muted/10">
                    <div className="w-16 h-16 bg-surface-muted/30 rounded-full flex items-center justify-center mx-auto mb-4">
                        <Folder className="h-8 w-8 text-text-secondary/50" />
                    </div>

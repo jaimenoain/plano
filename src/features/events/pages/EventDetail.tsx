@@ -252,7 +252,7 @@ export default function EventDetail() {
 
             {/* ── IDENTITY ── */}
             <div className="space-y-3 py-8">
-              <span className="block text-2xs font-medium uppercase tracking-widest text-text-secondary">
+              <span className="block text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
                 Event{event.address ? ` · ${event.address.split(",").pop()?.trim() ?? ""}` : ""}
               </span>
 
@@ -263,7 +263,7 @@ export default function EventDetail() {
                 {canEdit ? (
                   <Link
                     to={`/events/${event.slug}/edit`}
-                    className="mt-2 inline-flex shrink-0 items-center gap-1 text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary active:text-text-primary"
+                    className="mt-2 inline-flex shrink-0 items-center gap-1 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors hover:text-text-primary active:text-text-primary"
                   >
                     <Pencil className="h-3 w-3" aria-hidden />
                     Edit
@@ -291,7 +291,7 @@ export default function EventDetail() {
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                 {user ? (
                   <>
-                    <span className="text-2xs font-medium uppercase tracking-widest text-text-disabled">RSVP</span>
+                    <span className="text-2xs font-medium uppercase tracking-[0.15em] text-text-disabled">RSVP</span>
                     <button
                       type="button"
                       disabled={attendance.isLoading || attendance.isSaving}
@@ -303,7 +303,7 @@ export default function EventDetail() {
                         }
                       }}
                       className={cn(
-                        "inline-flex min-h-[44px] items-center gap-1 px-1 text-xs font-medium uppercase tracking-widest transition-colors disabled:opacity-50",
+                        "inline-flex min-h-[44px] items-center gap-1 px-1 text-xs font-medium uppercase tracking-[0.15em] transition-colors disabled:opacity-50",
                         attendance.status === "going"
                           ? "text-text-primary"
                           : "text-text-secondary hover:text-text-primary active:text-text-primary",
@@ -325,7 +325,7 @@ export default function EventDetail() {
                         }
                       }}
                       className={cn(
-                        "inline-flex min-h-[44px] items-center gap-1 px-1 text-xs font-medium uppercase tracking-widest transition-colors disabled:opacity-50",
+                        "inline-flex min-h-[44px] items-center gap-1 px-1 text-xs font-medium uppercase tracking-[0.15em] transition-colors disabled:opacity-50",
                         attendance.status === "interested"
                           ? "text-text-primary"
                           : "text-text-secondary hover:text-text-primary active:text-text-primary",
@@ -340,7 +340,7 @@ export default function EventDetail() {
                 ) : (
                   <Link
                     to={`/login?redirect=${encodeURIComponent(loginRedirectPath)}`}
-                    className="inline-flex min-h-[44px] items-center text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary active:text-text-primary"
+                    className="inline-flex min-h-[44px] items-center text-xs font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors hover:text-text-primary active:text-text-primary"
                   >
                     Log in to RSVP →
                   </Link>
@@ -358,7 +358,7 @@ export default function EventDetail() {
                       navigate(`/login?redirect=${encodeURIComponent(loginRedirectPath)}`);
                     }
                   }}
-                  className="inline-flex min-h-[44px] items-center text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary active:text-text-primary"
+                  className="inline-flex min-h-[44px] items-center text-xs font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors hover:text-text-primary active:text-text-primary"
                 >
                   Recommend →
                 </button>
@@ -368,13 +368,13 @@ export default function EventDetail() {
             {/* ── DESCRIPTION ── */}
             {description ? (
               <section aria-label="About" className="border-b border-border-default py-8">
-                <h2 className="mb-4 text-2xs font-medium uppercase tracking-widest text-text-secondary">About</h2>
+                <h2 className="mb-4 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">About</h2>
                 <p className="whitespace-pre-wrap text-base leading-relaxed text-text-primary">{descriptionShown}</p>
                 {descLong ? (
                   <button
                     type="button"
                     onClick={() => setDescExpanded((v) => !v)}
-                    className="mt-4 inline-flex min-h-[44px] items-center text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary active:text-brand-primary"
+                    className="mt-4 inline-flex min-h-[44px] items-center text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-colors hover:text-text-secondary active:text-text-secondary"
                   >
                     {descExpanded ? "Show less" : "Read more →"}
                   </button>
@@ -384,7 +384,7 @@ export default function EventDetail() {
 
             {/* ── ORGANISER ── */}
             <section aria-label="Organiser" className="border-b border-border-default py-8">
-              <h2 className="mb-4 text-2xs font-medium uppercase tracking-widest text-text-secondary">Organiser</h2>
+              <h2 className="mb-4 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Organiser</h2>
               {event.claimStatus === "unclaimed" && !event.organiser ? (
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10 rounded-full border border-border-default">
@@ -432,7 +432,7 @@ export default function EventDetail() {
                       ) : null}
                     </div>
                     {event.isSelfHosted && event.claimStatus === "claimed" ? (
-                      <p className="mt-0.5 text-2xs font-medium uppercase tracking-widest text-text-disabled">Host</p>
+                      <p className="mt-0.5 text-2xs font-medium uppercase tracking-[0.15em] text-text-disabled">Host</p>
                     ) : null}
                   </div>
                 </div>
@@ -464,7 +464,7 @@ export default function EventDetail() {
             {/* ── RELATED BUILDINGS ── */}
             {event.buildings.length > 0 ? (
               <section aria-label="Related buildings" className="border-b border-border-default py-8">
-                <h2 className="mb-4 text-2xs font-medium uppercase tracking-widest text-text-secondary">Buildings</h2>
+                <h2 className="mb-4 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Buildings</h2>
                 <div className="flex gap-3 overflow-x-scroll-touch pb-1">
                   {event.buildings.map((b) => (
                     <Link
@@ -492,7 +492,7 @@ export default function EventDetail() {
                   href={event.externalLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-[44px] items-center gap-1.5 text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary active:text-brand-primary"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-colors hover:text-text-secondary active:text-text-secondary"
                 >
                   Get tickets / Register
                   <ExternalLink className="h-3 w-3" aria-hidden />

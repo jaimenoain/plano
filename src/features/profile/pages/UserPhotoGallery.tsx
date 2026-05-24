@@ -254,7 +254,7 @@ export default function UserPhotoGallery() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
+        <Loader2 className="h-4 w-4 animate-spin text-text-disabled" />
       </div>
     );
   }
@@ -271,10 +271,15 @@ export default function UserPhotoGallery() {
 
   return (
     <AppLayout title={`${profileUsername}'s Photos`} showBack showLogo={false}>
-      <div className="p-4 sm:p-6 lg:p-8">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight leading-tight text-text-primary mb-6">
-          Photos
-        </h1>
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+        <header className="mb-8 border-b border-border-default pb-6">
+          <p className="mb-2 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+            {profileUsername}
+          </p>
+          <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary md:text-4xl">
+            Photos
+          </h1>
+        </header>
         {photos.length > 0 && (
           <div className="flex justify-end mb-4">
             <Select value={sortOrder} onValueChange={handleSortChange}>
@@ -290,14 +295,12 @@ export default function UserPhotoGallery() {
         )}
 
         {photos.length === 0 ? (
-           <div className="flex flex-col items-center justify-center min-h-[40vh] text-text-secondary gap-2">
-             <div className="bg-surface-muted/50 p-4 rounded-sm">
-                <ImageIcon className="h-8 w-8 opacity-50" />
-             </div>
-             <p>No photos uploaded yet.</p>
+           <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 border border-dashed border-border-default px-6 py-16 text-center text-text-secondary">
+             <ImageIcon className="h-8 w-8 text-text-disabled" aria-hidden />
+             <p className="text-sm">No photos uploaded yet.</p>
            </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-[1.5px] bg-border-default md:grid-cols-3 lg:grid-cols-4">
             {photos.map((photo) => {
                const imageUrl = getBuildingImageUrl(photo.storage_path);
                // Locality URL not available: Photo.building does not include locality_country_code/city_slug or short_id — requires photo gallery query to join localities table

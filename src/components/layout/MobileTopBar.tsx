@@ -47,9 +47,9 @@ export function MobileTopBar() {
         <Link
           to="/"
           className="absolute left-1/2 -translate-x-1/2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border-default rounded-sm"
-          aria-label="Home"
+          aria-label="Plano · Home"
         >
-          <PlanoLogo className="text-xl text-text-primary" />
+          <PlanoLogo className="text-base text-text-primary" />
         </Link>
 
         {/* Right: signed-in — Bell + Avatar; signed-out — waitlist + Log in */}
@@ -63,7 +63,7 @@ export function MobileTopBar() {
               >
                 <Bell className="h-5 w-5" />
                 {showBadge && (
-                  <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-full bg-feedback-destructive border border-surface-default" />
+                  <span className="absolute top-2 right-2 h-[7px] w-[7px] rounded-full bg-brand-accent border-[1.5px] border-surface-default" />
                 )}
               </Link>
               <Link

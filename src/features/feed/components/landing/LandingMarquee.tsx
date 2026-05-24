@@ -1,47 +1,76 @@
-import { motion } from "framer-motion";
+const MARQUEE_SEEDS = [
+  { initials: "FL", dark: false },
+  { initials: "ZH", dark: true },
+  { initials: "RP", dark: false },
+  { initials: "HM", dark: false },
+  { initials: "AG", dark: true },
+  { initials: "NK", dark: false },
+  { initials: "DL", dark: false },
+  { initials: "MV", dark: true },
+  { initials: "IP", dark: false },
+  { initials: "BC", dark: true },
+  { initials: "GD", dark: false },
+  { initials: "SO", dark: false },
+  { initials: "YT", dark: false },
+  { initials: "DH", dark: false },
+] as const;
 
-const CREDITS = [
-  { building: "Fallingwater", architect: "Frank Lloyd Wright" },
-  { building: "Heydar Aliyev Center", architect: "Zaha Hadid Architects" },
-  { building: "The Shard", architect: "Renzo Piano Building Workshop" },
-  { building: "Tate Modern", architect: "Herzog & de Meuron" },
-  { building: "CCTV Headquarters", architect: "OMA / Rem Koolhaas" },
-  { building: "Sagrada Família", architect: "Antoni Gaudí" },
-  { building: "Nakagin Capsule Tower", architect: "Kisho Kurokawa" },
-  { building: "Jewish Museum Berlin", architect: "Daniel Libeskind" },
-  { building: "Seagram Building", architect: "Mies van der Rohe" },
-  { building: "Louvre Pyramid", architect: "I.M. Pei" },
-];
+function MarqueeAvatar({
+  initials,
+  dark,
+}: {
+  initials: string;
+  dark?: boolean;
+}) {
+  return (
+    <span
+      className={
+        dark
+          ? "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-primary text-[10px] font-bold text-text-inverse"
+          : "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-muted text-[10px] font-bold text-text-primary"
+      }
+      aria-hidden
+    >
+      {initials}
+    </span>
+  );
+}
 
 export const LandingMarquee = () => {
+  const line = [...MARQUEE_SEEDS, ...MARQUEE_SEEDS, ...MARQUEE_SEEDS];
+
   return (
-    <div className="w-0 min-w-full overflow-hidden border-t border-border-default py-4">
-      <div className="relative flex w-full items-center">
-        <motion.div
-          className="flex flex-nowrap gap-0"
-          animate={{ x: "-50%" }}
-          transition={{
-            repeat: Infinity,
-            ease: "linear",
-            duration: 40,
-          }}
-          style={{ width: "max-content" }}
-        >
-          {[...CREDITS, ...CREDITS].map((item, index) => (
-            <div
-              key={`${item.building}-${index}`}
-              className="flex items-center gap-2 whitespace-nowrap"
-            >
-              <span className="text-xs text-text-secondary">
-                <span className="font-medium text-text-primary">{item.building}</span>
-                <span className="text-text-disabled mx-1.5">by</span>
-                {item.architect}
-              </span>
-              <span className="mx-7 text-text-disabled text-xs">·</span>
-            </div>
-          ))}
-        </motion.div>
+    <section className="relative w-full overflow-hidden border-y border-border-default py-5">
+      <style>{`
+        @keyframes plano-marquee {
+          0% { transform: translate3d(0, 0, 0); }
+          100% { transform: translate3d(-33.333%, 0, 0); }
+        }
+      `}</style>
+      <div
+        className="flex w-max items-center gap-6"
+        style={{ animation: "plano-marquee 60s linear infinite" }}
+      >
+        {line.map((seed, idx) => (
+          <div
+            key={`${seed.initials}-${idx}`}
+            className="inline-flex shrink-0 items-center gap-2.5"
+          >
+            <MarqueeAvatar initials={seed.initials} dark={seed.dark} />
+            <span className="font-mono text-[11px] tracking-[0.04em] text-text-disabled">
+              {(idx * 12 + 17).toString(36).toUpperCase()}
+            </span>
+          </div>
+        ))}
       </div>
-    </div>
+      <div
+        className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-surface-default to-transparent"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-surface-default to-transparent"
+        aria-hidden
+      />
+    </section>
   );
 };

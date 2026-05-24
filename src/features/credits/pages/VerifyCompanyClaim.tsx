@@ -1,6 +1,12 @@
-import { Link, ScrollRestoration, useLoaderData, type MetaFunction } from "react-router";
-import { Button } from "@/components/ui/button";
+import { ScrollRestoration, useLoaderData, type MetaFunction } from "react-router";
 import type { RedeemCompanyClaimTokenError } from "@/features/credits/api/companies";
+import {
+  TokenFlowHeadline,
+  TokenFlowLayout,
+  TokenFlowMessage,
+  TokenFlowPrimaryLink,
+  TokenFlowSecondaryLink,
+} from "@/components/layout/TokenFlowLayout";
 import {
   verifyCompanyClaimLoader,
   type VerifyCompanyClaimLoaderData,
@@ -40,44 +46,37 @@ export default function VerifyCompanyClaim() {
   const d = useLoaderData() as VerifyCompanyClaimLoaderData;
 
   return (
-    <div className="min-h-screen bg-surface-default text-text-primary">
+    <>
       <ScrollRestoration />
-      <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12 text-center">
+      <TokenFlowLayout>
         {d.outcome === "invalid_format" ? (
           <>
-            <h1 className="mb-2 text-xl font-semibold text-text-primary">Invalid link</h1>
-            <p className="mb-6 text-sm text-text-secondary">
+            <TokenFlowHeadline>Invalid link</TokenFlowHeadline>
+            <TokenFlowMessage>
               Open the verification link from your email, or contact us if you need help.
-            </p>
-            <Button asChild variant="outline" className="min-w-[200px]">
-              <a href={`mailto:${SUPPORT_MAIL}`}>Contact support</a>
-            </Button>
+            </TokenFlowMessage>
+            <TokenFlowPrimaryLink href={`mailto:${SUPPORT_MAIL}`}>Contact support →</TokenFlowPrimaryLink>
           </>
         ) : d.outcome === "needs_auth" ? (
           <>
-            <h1 className="mb-2 text-xl font-semibold text-text-primary">Sign in to continue</h1>
-            <p className="mb-6 text-sm text-text-secondary">
-              Use the same Plano account you used when you entered your work email on the company page.
-            </p>
-            <Button asChild variant="default" className="min-w-[200px]">
-              <Link to={`/auth?redirect=${encodeURIComponent(d.returnPath)}`}>Log in</Link>
-            </Button>
+            <TokenFlowHeadline>Sign in to continue</TokenFlowHeadline>
+            <TokenFlowMessage>
+              Use the same Plano account you used when you entered your work email on the company
+              page.
+            </TokenFlowMessage>
+            <TokenFlowPrimaryLink to={`/auth?redirect=${encodeURIComponent(d.returnPath)}`}>
+              Log in →
+            </TokenFlowPrimaryLink>
           </>
         ) : (
           <>
-            <h1 className="mb-2 text-xl font-semibold text-text-primary">We could not verify your claim</h1>
-            <p className="mb-6 text-sm text-text-secondary">{errorMessage(d.error)}</p>
-            <div className="flex flex-col items-center gap-3">
-              <Button asChild variant="outline" className="min-w-[200px]">
-                <a href={`mailto:${SUPPORT_MAIL}`}>Contact support</a>
-              </Button>
-              <Button asChild variant="ghost" className="text-text-secondary">
-                <Link to="/">Home</Link>
-              </Button>
-            </div>
+            <TokenFlowHeadline>We could not verify your claim</TokenFlowHeadline>
+            <TokenFlowMessage>{errorMessage(d.error)}</TokenFlowMessage>
+            <TokenFlowPrimaryLink href={`mailto:${SUPPORT_MAIL}`}>Contact support →</TokenFlowPrimaryLink>
+            <TokenFlowSecondaryLink to="/">Home</TokenFlowSecondaryLink>
           </>
         )}
-      </div>
-    </div>
+      </TokenFlowLayout>
+    </>
   );
 }

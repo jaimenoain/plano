@@ -53,8 +53,8 @@ export const meta: MetaFunction = () => [{ title: "Admin Events | Plano" }];
 
 export default function AdminEvents() {
   return (
-    <div className="space-y-6 p-8">
-      <h1 className="text-4xl font-bold tracking-tight text-text-primary">Events</h1>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Events</h1>
       <Tabs defaultValue="discover">
         <TabsList>
           <TabsTrigger value="discover">Discover</TabsTrigger>

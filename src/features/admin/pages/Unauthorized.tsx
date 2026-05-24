@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { Link, type MetaFunction } from "react-router";
 import { ShieldAlert } from "lucide-react";
 
@@ -9,19 +8,20 @@ export const meta: MetaFunction = () => [
 
 export default function Unauthorized() {
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-surface-default p-4 text-center">
-      <div className="rounded-full bg-feedback-destructive/10 p-4">
-        <ShieldAlert className="h-12 w-12 text-feedback-destructive" />
+    <div className="flex min-h-dvh w-full flex-col items-center justify-center gap-4 bg-surface-default px-4 py-8 text-center safe-area-pt safe-area-pb">
+      <div className="flex h-14 w-14 items-center justify-center rounded-sm border border-border-default bg-feedback-destructive/10">
+        <ShieldAlert className="h-7 w-7 text-feedback-destructive" aria-hidden />
       </div>
-      <h1 className="text-3xl font-bold tracking-tight">Permission Denied</h1>
-      <p className="text-text-secondary max-w-md">
-        You do not have permission to access the Admin Console. If you believe this is an error, please contact the system administrator.
+      <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Permission denied</h1>
+      <p className="max-w-md text-sm text-text-secondary">
+        You do not have permission to access the admin console. If you believe this is an error, contact the system administrator.
       </p>
-      <div className="flex gap-4">
-        <Link to="/">
-          <Button variant="outline">Return Home</Button>
-        </Link>
-      </div>
+      <Link
+        to="/"
+        className="text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
+      >
+        Return home →
+      </Link>
     </div>
   );
 }

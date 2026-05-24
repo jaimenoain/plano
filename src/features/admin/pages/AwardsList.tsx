@@ -67,9 +67,9 @@ export default function AwardsList() {
   };
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-4xl font-bold tracking-tight text-text-primary">Awards</h1>
+        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Awards</h1>
         <div className="flex gap-2">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-text-secondary" />

@@ -181,7 +181,7 @@ export default function Post() {
               {paramImage ? (
                 <img src={paramImage} alt={mainTitle} className="w-32 h-auto aspect-[2/3] object-cover rounded-none shadow-none flex-shrink-0" loading="lazy" />
               ) : (
-                <div className="w-32 h-auto aspect-[2/3] bg-surface-muted rounded-md flex-shrink-0" />
+                <div className="w-32 h-auto aspect-[2/3] bg-surface-muted rounded-none flex-shrink-0" />
               )}
               <div className="flex flex-col justify-center">
                 <h2 className="text-xl font-bold leading-tight">{mainTitle}</h2>
@@ -198,7 +198,7 @@ export default function Post() {
 
             <div className="flex gap-2 py-4">
               {(["review", "bucket_list"] as PostType[]).map((type) => (
-                <button key={type} onClick={() => setPostType(type)} className={cn("flex-1 py-2 rounded-md text-sm font-medium capitalize", postType === type ? "bg-brand-primary text-brand-primary-foreground" : "bg-surface-muted text-text-secondary")}>
+                <button key={type} onClick={() => setPostType(type)} className={cn("flex-1 py-2 rounded-sm text-sm font-medium capitalize", postType === type ? "bg-brand-primary text-brand-primary-foreground" : "bg-surface-muted text-text-secondary")}>
                   {type === "bucket_list" ? "Bucket List" : "Review"}
                 </button>
               ))}
@@ -223,9 +223,9 @@ export default function Post() {
                         >
                           <Circle className={cn(
                             "h-6 w-6 md:h-7 md:w-7 transition-colors",
-                            isHighlighted 
-                              ? "fill-[#595959] text-[#595959]" // Active: Signature gray
-                              : "text-text-secondary/20" // Inactive: Transparent fill, lighter outline
+                            isHighlighted
+                              ? "fill-text-primary text-text-primary"
+                              : "text-text-secondary/20"
                           )} />
                         </button>
                       );
@@ -245,7 +245,7 @@ export default function Post() {
                 placeholder={postType === "review" ? "Write your thoughts..." : "Why do you want to visit this?"}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="min-h-[120px] bg-surface-muted/20 border border-border-default rounded-md p-3 resize-none focus-visible:ring-1 focus-visible:ring-brand-primary text-base"
+                className="min-h-[120px] resize-none rounded-sm border border-border-default bg-surface-muted/20 p-3 text-base focus-visible:ring-1 focus-visible:ring-brand-primary"
               />
             </div>
 

@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import { fetchUserChapterActivity, type ChapterActivityRow } from "@/features/admin/api/ambassadorCoverage";
+import { AdminPageHeader, adminTableHeadClass } from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 interface Profile {
   id: string;
@@ -236,25 +238,31 @@ export default function Users() {
   };
 
   return (
-    <div className="space-y-6 p-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-4xl font-bold tracking-tight text-text-primary">User Roster</h1>
-        <Input
-          placeholder="Search users..."
-          className="max-w-xs"
-          value={searchQuery}
-          onChange={(e) => { setPage(1); setSearchQuery(e.target.value); }}
-        />
-      </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        eyebrow="Users"
+        title="Roster"
+        actions={
+          <Input
+            placeholder="Search users…"
+            className="max-w-xs min-h-11"
+            value={searchQuery}
+            onChange={(e) => {
+              setPage(1);
+              setSearchQuery(e.target.value);
+            }}
+          />
+        }
+      />
 
       <div className="rounded-sm border border-border-default bg-surface-card">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>User</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Joined</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className={adminTableHeadClass}>User</TableHead>
+              <TableHead className={adminTableHeadClass}>Role</TableHead>
+              <TableHead className={adminTableHeadClass}>Joined</TableHead>
+              <TableHead className={cn(adminTableHeadClass, "text-right")}>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

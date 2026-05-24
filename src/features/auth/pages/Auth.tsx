@@ -218,8 +218,8 @@ export default function Auth() {
           <PlanoLogo className="text-2xl text-text-primary shrink-0" />
           <div className="w-full bg-surface-card border border-border-default rounded-sm shadow-none p-6 md:p-8 flex flex-col gap-4 md:gap-6 text-center">
             <div className="flex justify-center">
-              <div className="h-16 w-16 bg-brand-secondary/30 rounded-sm flex items-center justify-center">
-                <Mail className="h-8 w-8 text-brand-primary" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-sm border border-border-default bg-surface-muted">
+                <Mail className="h-7 w-7 text-text-secondary" aria-hidden />
               </div>
             </div>
 
@@ -274,7 +274,7 @@ export default function Auth() {
                     </Avatar>
                   ))}
 
-                  <Avatar className="h-14 w-14 border-2 border-surface-default -ml-3 z-10 shadow-lg ring-2 ring-surface-default">
+                  <Avatar className="h-14 w-14 border-2 border-surface-default -ml-3 z-10 ring-2 ring-surface-default">
                     <AvatarImage src={inviterProfile.avatar_url || undefined} />
                     <AvatarFallback className="bg-brand-secondary/30 text-brand-primary text-lg">
                       {inviterProfile.username?.[0]?.toUpperCase()}
@@ -356,7 +356,7 @@ export default function Auth() {
                     I accept the{" "}
                     <Link
                       to="/terms"
-                      className="font-medium text-text-primary hover:underline decoration-brand-primary decoration-2 underline-offset-4"
+                      className="font-medium text-text-primary underline-offset-2 hover:underline"
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -371,7 +371,7 @@ export default function Auth() {
                     onClick={() => {
                       setIsResetPassword(true);
                     }}
-                    className="text-sm text-text-secondary hover:text-text-primary hover:underline decoration-brand-primary decoration-2 underline-offset-4"
+                    className="text-sm text-text-secondary underline-offset-2 hover:text-text-primary hover:underline"
                   >
                     Forgot password?
                   </button>
@@ -403,7 +403,7 @@ export default function Auth() {
               onClick={() => {
                 setIsResetPassword(false);
               }}
-              className="text-text-primary hover:underline decoration-brand-primary decoration-2 underline-offset-4 font-medium"
+              className="font-medium text-text-primary underline-offset-2 hover:underline"
             >
               Back to Sign In
             </button>
@@ -415,7 +415,7 @@ export default function Auth() {
                 onClick={() => {
                   setIsSignUp(!isSignUp);
                 }}
-                className="text-text-primary hover:underline decoration-brand-primary decoration-2 underline-offset-4 font-medium"
+                className="font-medium text-text-primary underline-offset-2 hover:underline"
               >
                 {isSignUp ? "Sign In" : "Sign Up"}
               </button>

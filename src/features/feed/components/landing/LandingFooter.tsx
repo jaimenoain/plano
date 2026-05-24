@@ -2,8 +2,8 @@ import { Link } from "react-router";
 
 export function LandingFooter() {
   return (
-    <footer className="border-t border-border-default py-8 px-5 md:px-8">
-      <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <footer className="border-t border-border-default px-5 py-8 md:px-8">
+      <div className="mx-auto flex max-w-[1080px] flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-6">
           <span className="text-[11px] text-text-disabled tracking-wide">
             © {new Date().getFullYear()} Plano

@@ -19,6 +19,10 @@ import { Target, History, Plus, Loader2, ArrowUpRight, TrendingUp, Star, CheckSq
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow, isPast, isToday, parseISO } from "date-fns";
+import {
+  EmbassyPageHeader,
+  EMBASSY_SKELETON_ROUNDED,
+} from "@/features/embassy/components/embassy-ui";
 
 type Goal = {
   id: string;
@@ -56,7 +60,7 @@ interface ChapterTask {
 
 const TASK_STATUS_CONFIG: Record<TaskStatus, { label: string; icon: React.ReactNode; class: string }> = {
   todo:        { label: "To do",       icon: <Circle className="h-3.5 w-3.5" />,        class: "text-muted-foreground" },
-  in_progress: { label: "In progress", icon: <Clock className="h-3.5 w-3.5" />,         class: "text-amber-600" },
+  in_progress: { label: "In progress", icon: <Clock className="h-3.5 w-3.5" />,         class: "text-feedback-warning" },
   done:        { label: "Done",        icon: <CheckCircle2 className="h-3.5 w-3.5" />,  class: "text-feedback-success" },
 };
 
@@ -70,7 +74,7 @@ function openTaskDueDateClass(due: string | null): string {
   if (!due) return "";
   const d = parseISO(due);
   if (isPast(d) && !isToday(d)) return "text-destructive";
-  if (isToday(d)) return "text-amber-600";
+  if (isToday(d)) return "text-feedback-warning";
   return "text-muted-foreground";
 }
 
@@ -191,25 +195,24 @@ export default function MyGoalsPage() {
   return (
     <div className="space-y-12 pb-20">
       {/* ─── Header ─── */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back. Here's what's on your plate for {membership?.chapter?.name ?? "your chapter"}.
-          </p>
-        </div>
-        <Button onClick={() => setIsGoalOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" /> Set a Goal
-        </Button>
-      </div>
+      <EmbassyPageHeader
+        eyebrow="Goals"
+        title="Dashboard"
+        description={`Welcome back. Here's what's on your plate for ${membership?.chapter?.name ?? "your chapter"}.`}
+        actions={
+          <Button onClick={() => setIsGoalOpen(true)} className="gap-2 min-h-11">
+            <Plus className="h-4 w-4" /> Set a goal
+          </Button>
+        }
+      />
 
       {/* ─── Open Tasks ─── */}
       {(loadingTasks || openTasks.length > 0) && (
         <section className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <CheckSquare className="h-5 w-5 text-brand-primary" />
-              <h2 className="text-xl font-bold">Open Tasks</h2>
+              <CheckSquare className="h-5 w-5 text-text-secondary" aria-hidden />
+              <h2 className="text-lg font-semibold tracking-tight text-text-primary">Open tasks</h2>
               {!loadingTasks && openTasks.length > 0 && (
                 <Badge variant="secondary" className="rounded-full px-2 py-0 text-2xs font-normal tabular-nums">
                   {openTasks.length}
@@ -245,13 +248,13 @@ export default function MyGoalsPage() {
       <div className="space-y-8">
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-brand-primary" />
-            <h2 className="text-xl font-bold">Active Goals</h2>
+            <Target className="h-5 w-5 text-text-secondary" aria-hidden />
+            <h2 className="text-lg font-semibold tracking-tight text-text-primary">Active goals</h2>
           </div>
 
           {loadingGoals ? (
             <div className="grid gap-4">
-              {[0, 1].map(i => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
+              {[0, 1].map(i => <Skeleton key={i} className={cn("h-32 w-full", EMBASSY_SKELETON_ROUNDED)} />)}
             </div>
           ) : goals?.filter(g => g.status === 'active').length === 0 ? (
             <Card className="p-8 text-center border-dashed border-2 flex flex-col items-center justify-center space-y-4">
@@ -275,8 +278,8 @@ export default function MyGoalsPage() {
 
         <section className="space-y-6">
           <div className="flex items-center gap-2">
-            <History className="h-5 w-5 text-brand-primary" />
-            <h2 className="text-xl font-bold">Recent Contributions</h2>
+            <History className="h-5 w-5 text-text-secondary" aria-hidden />
+            <h2 className="text-lg font-semibold tracking-tight text-text-primary">Recent contributions</h2>
           </div>
 
           {loadingTimeline ? (
@@ -511,24 +514,24 @@ function GoalCard({ goal }: { goal: Goal }) {
   };
 
   return (
-    <Card className="p-6 space-y-4 hover:border-brand-primary transition-all">
-      <div className="flex items-start justify-between">
+    <Card className="space-y-4 border-border-default p-6 transition-colors hover:border-border-strong">
+      <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
-          <h3 className="font-bold text-lg">{goal.title}</h3>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
+          <h3 className="text-lg font-semibold text-text-primary">{goal.title}</h3>
+          <p className="text-xs text-text-secondary">
             {goal.current_value} / {goal.target_value} {metricLabels[goal.metric]}
           </p>
         </div>
-        <div className="h-10 w-10 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center">
-          <TrendingUp className="h-5 w-5" />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-border-default bg-surface-muted text-text-secondary">
+          <TrendingUp className="h-5 w-5" aria-hidden />
         </div>
       </div>
-      
+
       <div className="space-y-2">
-        <Progress value={progress} className="h-2" />
-        <div className="flex justify-between text-[10px] text-muted-foreground font-bold">
-          <span>{Math.round(progress)}% COMPLETE</span>
-          <span>STARTED {formatDistanceToNow(new Date(goal.created_at), { addSuffix: true }).toUpperCase()}</span>
+        <Progress value={progress} className="h-1.5 bg-surface-muted" />
+        <div className="flex justify-between text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+          <span>{Math.round(progress)}% complete</span>
+          <span>Started {formatDistanceToNow(new Date(goal.created_at), { addSuffix: true })}</span>
         </div>
       </div>
     </Card>
@@ -543,7 +546,7 @@ function ActivityRow({ item }: { item: AmbassadorAuditRow }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">
-          <span className="text-brand-primary font-bold">{item.operation.toUpperCase()}</span> · {item.building_name}
+          <span className="font-semibold text-text-primary">{item.operation}</span> · {item.building_name}
         </p>
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
           {item.created_at ? formatDistanceToNow(new Date(item.created_at), { addSuffix: true }) : ""}

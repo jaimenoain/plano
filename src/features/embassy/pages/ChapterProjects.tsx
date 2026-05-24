@@ -21,6 +21,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  EmbassyPageHeader,
+  EmbassySectionLabel,
+} from "@/features/embassy/components/embassy-ui";
 import { formatDistanceToNow, format, parseISO, isPast, isToday } from "date-fns";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -85,7 +89,7 @@ interface TeamMember {
 
 const TASK_STATUS_CONFIG: Record<TaskStatus, { label: string; icon: React.ReactNode; class: string }> = {
   todo:        { label: "To do",       icon: <Circle className="h-3.5 w-3.5" />,       class: "text-muted-foreground" },
-  in_progress: { label: "In progress", icon: <Clock className="h-3.5 w-3.5" />,        class: "text-amber-600" },
+  in_progress: { label: "In progress", icon: <Clock className="h-3.5 w-3.5" />,        class: "text-feedback-warning" },
   done:        { label: "Done",        icon: <CheckCircle2 className="h-3.5 w-3.5" />, class: "text-feedback-success" },
 };
 
@@ -96,11 +100,11 @@ const NEXT_STATUS: Record<TaskStatus, TaskStatus> = {
 };
 
 const PROJECT_STATUS_CONFIG = {
-  active:    { icon: <Zap className="h-3 w-3" />,          class: "bg-brand-primary/10 text-brand-primary border-brand-primary/20" },
+  active:    { icon: <Zap className="h-3 w-3" />,          class: "bg-surface-muted text-text-primary border-border-default" },
   planning:  { icon: <Clock className="h-3 w-3" />,        class: "bg-surface-muted text-text-primary border-border-default" },
   completed: { icon: <CheckCircle2 className="h-3 w-3" />, class: "bg-feedback-success/10 text-feedback-success border-feedback-success/20" },
   archived:  { icon: <Archive className="h-3 w-3" />,      class: "bg-muted text-muted-foreground border-border-default" },
-  draft:     { icon: <Lightbulb className="h-3 w-3" />,    class: "bg-amber-50 text-amber-700 border-amber-200" },
+  draft:     { icon: <Lightbulb className="h-3 w-3" />,    class: "bg-surface-muted text-text-secondary border-border-default" },
 };
 
 const EMPTY_TASK_FORM = {
@@ -134,7 +138,7 @@ function dueDateClass(due: string | null): string {
   if (!due) return "";
   const d = parseISO(due);
   if (isPast(d) && !isToday(d)) return "text-destructive";
-  if (isToday(d)) return "text-amber-600";
+  if (isToday(d)) return "text-feedback-warning";
   return "text-muted-foreground";
 }
 
@@ -620,29 +624,31 @@ export default function ChapterProjectsPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Chapter Projects</h1>
-          <p className="text-muted-foreground">Priority initiatives and goals for your chapter.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {!isLeader && (
-            <Button
-              variant="outline"
-              onClick={() => setIsIdeaOpen(true)}
-              className="gap-2"
-            >
-              <Lightbulb className="h-4 w-4" />
-              Submit Idea
-            </Button>
-          )}
-          {isLeader && (
-            <Button onClick={() => { resetLeaderForm(); setIsCreateOpen(true); }} className="gap-2">
-              <Plus className="h-4 w-4" /> Create Project
-            </Button>
-          )}
-        </div>
-      </div>
+      <EmbassyPageHeader
+        title="Chapter projects"
+        description="Priority initiatives and goals for your chapter."
+        actions={
+          <div className="flex items-center gap-2">
+            {!isLeader && (
+              <Button variant="outline" onClick={() => setIsIdeaOpen(true)} className="min-h-11 gap-2">
+                <Lightbulb className="h-4 w-4" />
+                Submit idea
+              </Button>
+            )}
+            {isLeader && (
+              <Button
+                onClick={() => {
+                  resetLeaderForm();
+                  setIsCreateOpen(true);
+                }}
+                className="min-h-11 gap-2"
+              >
+                <Plus className="h-4 w-4" /> Create project
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       {/* Programme campaigns */}
       {campaigns.length > 0 && (
@@ -700,9 +706,7 @@ export default function ChapterProjectsPage() {
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Inbox className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
-              Ideas inbox
-            </h2>
+            <EmbassySectionLabel>Ideas inbox</EmbassySectionLabel>
             <Badge variant="secondary" className="text-xs">{drafts.length}</Badge>
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -723,16 +727,16 @@ export default function ChapterProjectsPage() {
       {/* Published projects */}
       {isLoading ? (
         <div className="grid gap-6 md:grid-cols-2">
-          {[0, 1, 2].map(i => <Skeleton key={i} className="h-48 w-full rounded-xl" />)}
+          {[0, 1, 2].map(i => <Skeleton key={i} className="h-48 w-full rounded-sm" />)}
         </div>
       ) : error ? (
-        <div className="p-12 text-center border rounded-xl bg-destructive/5 text-destructive">
+        <div className="rounded-sm border border-border-default bg-feedback-destructive/5 p-12 text-center text-feedback-destructive">
           <AlertCircle className="h-10 w-10 mx-auto mb-3" />
           <p className="text-lg font-medium">Could not load projects</p>
           <p className="text-sm opacity-80">Check your database migrations or try again later.</p>
         </div>
       ) : published.length === 0 ? (
-        <div className="p-20 text-center border border-dashed rounded-xl space-y-4">
+        <div className="p-20 text-center border border-dashed rounded-sm space-y-4">
           <div className="flex justify-center">
             <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
               <Pin className="h-6 w-6 text-muted-foreground" />
@@ -1624,7 +1628,7 @@ function DraftCard({
   return (
     <Card className="flex flex-col p-6 border border-dashed bg-muted/30 relative">
       <div className="flex items-start justify-between mb-4">
-        <Badge variant="outline" className="gap-1 px-2 py-0.5 text-xs font-medium bg-amber-50 text-amber-700 border-amber-200">
+        <Badge variant="outline" className="gap-1 border-border-default bg-surface-muted px-2 py-0.5 text-xs font-medium text-text-secondary">
           <Lightbulb className="h-3 w-3" />
           Draft idea
         </Badge>
@@ -1728,7 +1732,7 @@ function ProjectCard({
         )}
       </div>
 
-      <h3 className="text-xl font-bold mb-2 group-hover:text-brand-primary transition-colors">
+      <h3 className="mb-2 text-xl font-bold transition-colors group-hover:text-text-primary">
         {project.title}
       </h3>
       {project.description && (

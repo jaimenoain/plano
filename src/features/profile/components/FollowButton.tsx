@@ -4,6 +4,7 @@ import { UserCheck, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 interface FollowButtonProps {
   userId: string;
@@ -100,9 +101,13 @@ export function FollowButton({ userId, initialIsFollowing, isFollower, className
 
   return (
     <Button
-      variant={isFollowing ? "secondary" : "default"}
+      variant="outline"
       size="sm"
-      className={className}
+      className={cn(
+        "rounded-sm border-border-default uppercase tracking-[0.15em] text-xs font-medium",
+        isFollowing && "bg-surface-muted",
+        className,
+      )}
       onClick={handleToggleFollow}
       disabled={isLoading}
       onMouseEnter={() => setIsHovering(true)}

@@ -44,7 +44,7 @@ function UpdateCard({ update }: { update: PlanoUpdate }) {
   return (
     <article className="group flex flex-col border-t border-border-default pt-8">
       {update.heroImageUrl && (
-        <Link to={`/updates/${update.slug}`} className="block mb-5 overflow-hidden rounded-lg">
+        <Link to={`/updates/${update.slug}`} className="mb-5 block overflow-hidden">
           <img
             src={update.heroImageUrl}
             alt={update.title}
@@ -88,7 +88,7 @@ export default function Updates() {
     <div className="min-h-screen bg-surface-default text-text-primary">
       <div className="container mx-auto py-16 px-4 max-w-3xl">
         <header className="mb-16 space-y-4">
-          <p className="text-xs font-medium uppercase tracking-widest text-text-secondary">
+          <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
             Updates
           </p>
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Plano Updates</h1>
@@ -102,7 +102,9 @@ export default function Updates() {
             <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
           </div>
         ) : updates.length === 0 ? (
-          <p className="text-text-secondary py-12 text-center">No updates yet — check back soon.</p>
+          <p className="border border-dashed border-border-default py-16 text-center text-sm text-text-secondary">
+            No updates yet — check back soon.
+          </p>
         ) : (
           <div className="space-y-12">
             {updates.map((u) => (

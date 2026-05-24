@@ -162,7 +162,7 @@ export default function ProgrammeRankings() {
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-4xl font-bold tracking-tight text-text-primary">Chapter Rankings</h1>
+        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Chapter Rankings</h1>
         <div className="flex items-center gap-3">
           <Select value={periodValue} onValueChange={setPeriodValue}>
             <SelectTrigger className="w-36">

@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { Button } from "@/components/ui/button";
+import { useNavigate, useSearchParams } from "react-router";
+import {
+  TokenFlowHeadline,
+  TokenFlowLayout,
+  TokenFlowMessage,
+  TokenFlowPrimaryLink,
+  TokenFlowSecondaryLink,
+} from "@/components/layout/TokenFlowLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { redeemCompanyStewardInvite } from "@/features/credits/api/companies";
 
@@ -59,65 +64,57 @@ export default function AcceptCompanySteward() {
 
   const loginHref = `/auth?redirect=${encodeURIComponent(`/accept-company-steward?token=${encodeURIComponent(token)}`)}`;
 
-  if (authLoading) {
+  if (authLoading || (user && status !== "error" && token.length === 64)) {
     return (
-      <AppLayout showBack title="Company invite">
-        <div className="mx-auto max-w-md px-4 py-12 text-center">
-          <p className="text-sm text-text-secondary">Loading…</p>
-        </div>
-      </AppLayout>
+      <TokenFlowLayout>
+        <TokenFlowHeadline>
+          {authLoading ? "Loading" : "Accepting invite"}
+        </TokenFlowHeadline>
+        <TokenFlowMessage className="mb-0">
+          {authLoading ? "One moment…" : "Joining the company workspace…"}
+        </TokenFlowMessage>
+      </TokenFlowLayout>
     );
   }
 
   if (!token || token.length !== 64) {
     return (
-      <AppLayout showBack title="Company invite">
-        <div className="mx-auto max-w-md px-4 py-12 text-center">
-          <h1 className="mb-2 text-xl font-semibold text-text-primary">Missing invite</h1>
-          <p className="mb-6 text-sm text-text-secondary">Open the link from your invitation email.</p>
-          <Button asChild variant="default">
-            <Link to="/">Home</Link>
-          </Button>
-        </div>
-      </AppLayout>
+      <TokenFlowLayout>
+        <TokenFlowHeadline>Missing invite</TokenFlowHeadline>
+        <TokenFlowMessage>Open the link from your invitation email.</TokenFlowMessage>
+        <TokenFlowPrimaryLink to="/">Home →</TokenFlowPrimaryLink>
+      </TokenFlowLayout>
     );
   }
 
   if (!user) {
     return (
-      <AppLayout showBack title="Company invite">
-        <div className="mx-auto max-w-md px-4 py-12 text-center">
-          <h1 className="mb-2 text-xl font-semibold text-text-primary">Sign in to accept</h1>
-          <p className="mb-6 text-sm text-text-secondary">
-            Sign in with the email address that received the invite, then you’ll join the company automatically.
-          </p>
-          <Button asChild variant="default" className="min-w-[200px]">
-            <Link to={loginHref}>Sign in</Link>
-          </Button>
-        </div>
-      </AppLayout>
+      <TokenFlowLayout>
+        <TokenFlowHeadline>Sign in to accept</TokenFlowHeadline>
+        <TokenFlowMessage>
+          Sign in with the email address that received the invite. We will add you as a steward
+          automatically.
+        </TokenFlowMessage>
+        <TokenFlowPrimaryLink to={loginHref}>Sign in →</TokenFlowPrimaryLink>
+      </TokenFlowLayout>
     );
   }
 
   if (status === "error") {
     return (
-      <AppLayout showBack title="Company invite">
-        <div className="mx-auto max-w-md px-4 py-12 text-center">
-          <h1 className="mb-2 text-xl font-semibold text-text-primary">Invite couldn’t be accepted</h1>
-          <p className="mb-6 text-sm text-text-secondary">{message}</p>
-          <Button asChild variant="default">
-            <Link to="/">Home</Link>
-          </Button>
-        </div>
-      </AppLayout>
+      <TokenFlowLayout>
+        <TokenFlowHeadline>Invite couldn’t be accepted</TokenFlowHeadline>
+        <TokenFlowMessage>{message}</TokenFlowMessage>
+        <TokenFlowPrimaryLink to="/">Home →</TokenFlowPrimaryLink>
+        <TokenFlowSecondaryLink to={loginHref}>Try another account</TokenFlowSecondaryLink>
+      </TokenFlowLayout>
     );
   }
 
   return (
-    <AppLayout showBack title="Company invite">
-      <div className="mx-auto max-w-md px-4 py-12 text-center">
-        <p className="text-sm text-text-secondary">Accepting invite…</p>
-      </div>
-    </AppLayout>
+    <TokenFlowLayout>
+      <TokenFlowHeadline>Accepting invite</TokenFlowHeadline>
+      <TokenFlowMessage className="mb-0">Joining the company workspace…</TokenFlowMessage>
+    </TokenFlowLayout>
   );
 }

@@ -143,7 +143,7 @@ export function PeopleYouMayKnow() {
 
   return (
     <div>
-      <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-4">
+      <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-4">
         People you may know
       </p>
       <div>

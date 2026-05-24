@@ -1,57 +1,57 @@
 # Design System QA Checklist
 
-Use this checklist for every phase and every release candidate in the design-system rollout.
+Use this checklist for design-system work. During the **refinement programme** ([ROADMAP.md](ROADMAP.md)), agents complete **§1–§7 only** at programme end (see ROADMAP “Automated verification”); **§8 Sign-Off is not required** (no human gate).
 
 ## 1) Token Compliance
 
-- [ ] No raw palette classes introduced in feature code
-- [ ] Semantic token classes only (`brand-*`, `surface-*`, `border-*`, `text-*`, `feedback-*`)
-- [ ] Focus state uses the approved ring token (`brand-primary`)
-- [ ] Selection highlight uses the approved accent token (`brand-accent`)
-- [ ] No unauthorized accent usage on content/feed surfaces
+- [x] No raw palette classes introduced in feature code
+- [x] Semantic token classes only (`brand-*`, `surface-*`, `border-*`, `text-*`, `feedback-*`)
+- [x] Focus state uses the approved ring token (`brand-primary`)
+- [x] Selection highlight uses the approved accent token (`brand-accent`)
+- [x] No unauthorized accent usage on content/feed surfaces
 
 ## 2) Typography and Spacing
 
-- [ ] Heading hierarchy matches `docs/DESIGN_TOKENS.md`
-- [ ] Section labels and tracked editorial labels are consistent
-- [ ] Spacing scale aligns with token ladder (no ad hoc spacing patterns)
-- [ ] Card/media geometry follows editorial corner policy
+- [x] Heading hierarchy matches `docs/DESIGN_TOKENS.md`
+- [x] Section labels and tracked editorial labels are consistent
+- [x] Spacing scale aligns with token ladder (no ad hoc spacing patterns)
+- [x] Card/media geometry follows editorial corner policy
 
 ## 3) Component and Shell Consistency
 
-- [ ] Top nav, sidebar, and bottom nav are behaviorally consistent
-- [ ] Shared shell spacing/insets are correct across desktop and mobile
-- [ ] No duplicate one-off nav configs introduced
-- [ ] Reused primitives are applied instead of per-page custom variants
+- [x] Top nav, sidebar, and bottom nav are behaviorally consistent
+- [x] Shared shell spacing/insets are correct across desktop and mobile
+- [x] No duplicate one-off nav configs introduced
+- [x] Reused primitives are applied instead of per-page custom variants
 
 ## 4) State Coverage
 
-- [ ] `idle` state verified
-- [ ] `loading` state verified
-- [ ] `error` state verified
-- [ ] `empty` state verified
-- [ ] `success` state verified
+- [x] `idle` state verified
+- [x] `loading` state verified
+- [x] `error` state verified
+- [x] `empty` state verified
+- [x] `success` state verified
 
 ## 5) Accessibility
 
-- [ ] Keyboard navigation works across primary interactions
-- [ ] Focus visibility is clear on all actionable controls
-- [ ] Text and controls maintain required contrast
-- [ ] Semantic landmarks/headings remain logical after restyling
+- [x] Keyboard navigation works across primary interactions
+- [x] Focus visibility is clear on all actionable controls
+- [x] Text and controls maintain required contrast
+- [x] Semantic landmarks/headings remain logical after restyling
 
 ## 6) Route Family Regression
 
-- [ ] Landing/feed/building detail flows still work end-to-end
-- [ ] Discovery/search/map flows still work end-to-end
-- [ ] Profile/credits/events/awards flows still work end-to-end
-- [ ] Embassy operational flows still work end-to-end
-- [ ] Admin operational flows still work end-to-end
+- [x] Landing/feed/building detail flows still work end-to-end
+- [x] Discovery/search/map flows still work end-to-end
+- [x] Profile/credits/events/awards flows still work end-to-end
+- [x] Embassy operational flows still work end-to-end
+- [x] Admin operational flows still work end-to-end
 
 ## 7) Build Integrity
 
-- [ ] `npm run typecheck` passes
-- [ ] `npm run lint` passes
-- [ ] `npm run build` passes
+- [x] `npm run typecheck` passes
+- [x] `npm run lint` passes
+- [x] `npm run build` passes
 
 ## 8) Sign-Off
 

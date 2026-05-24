@@ -342,10 +342,10 @@ export default function AmbassadorChapters() {
       </div>
 
       {hasAttention && attention && (
-        <div className="rounded-lg border border-amber-500/30 bg-amber-50/50 dark:bg-amber-950/20 p-4">
+        <div className="rounded-sm border border-feedback-warning/30 bg-feedback-warning/10 p-4">
           <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-            <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+            <AlertTriangle className="h-4 w-4 text-feedback-warning" />
+            <span className="text-sm font-semibold text-feedback-warning">
               Needs attention
             </span>
           </div>
@@ -353,7 +353,7 @@ export default function AmbassadorChapters() {
             {attention.pendingApplications > 0 && (
               <Link
                 to="/admin/ambassadors/applications"
-                className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300 hover:underline"
+                className="flex items-center gap-2 text-sm text-feedback-warning hover:underline"
               >
                 <Users className="h-4 w-4" />
                 {attention.pendingApplications} pending application
@@ -361,7 +361,7 @@ export default function AmbassadorChapters() {
               </Link>
             )}
             {attention.chaptersWithoutPresident > 0 && (
-              <span className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300">
+              <span className="flex items-center gap-2 text-sm text-feedback-warning">
                 <Crown className="h-4 w-4" />
                 {attention.chaptersWithoutPresident} active chapter
                 {attention.chaptersWithoutPresident !== 1 ? "s" : ""} without a president

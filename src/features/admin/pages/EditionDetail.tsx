@@ -137,7 +137,7 @@ export default function EditionDetail() {
   const editionLabel = edition.editionLabel ?? edition.year?.toString() ?? edition.editionDate ?? "Edition";
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -146,7 +146,7 @@ export default function EditionDetail() {
               ← {award?.name ?? "Award"}
             </Link>
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-text-primary">
+          <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">
             {editionLabel}
           </h1>
           {edition.ceremonyLocation && (

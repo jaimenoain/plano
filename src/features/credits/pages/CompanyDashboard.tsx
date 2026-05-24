@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -256,7 +255,7 @@ export default function CompanyDashboard() {
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <header className="mb-10 space-y-5">
           <div className="space-y-2">
-            <p className="text-xs font-medium uppercase tracking-widest text-text-secondary">{selected.name}</p>
+            <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">{selected.name}</p>
             <h1 className="text-3xl font-bold tracking-tight text-text-primary md:text-4xl">Company portfolio</h1>
             <p className="max-w-2xl text-sm leading-relaxed text-text-secondary md:text-base">
               Curate how your studio appears: edit credits, add projects from the catalogue, list new buildings, and set
@@ -267,7 +266,7 @@ export default function CompanyDashboard() {
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-8 sm:gap-y-2">
             <Link
               to={`/company/${selected.slug}`}
-              className="group/pub inline-flex items-baseline gap-1 text-xs font-medium uppercase tracking-widest text-text-primary"
+              className="group/pub inline-flex items-baseline gap-1 text-xs font-medium uppercase tracking-[0.15em] text-text-primary"
             >
               <span className="transition-colors group-hover/pub:text-text-secondary">View public company</span>
               <span className="transition-transform group-hover/pub:translate-x-0.5" aria-hidden>
@@ -276,7 +275,7 @@ export default function CompanyDashboard() {
             </Link>
             <Link
               to={`/company/${selected.slug}?edit=1`}
-              className="group/edit inline-flex items-baseline gap-1 text-xs font-medium uppercase tracking-widest text-text-primary"
+              className="group/edit inline-flex items-baseline gap-1 text-xs font-medium uppercase tracking-[0.15em] text-text-primary"
             >
               <span className="transition-colors group-hover/edit:text-text-secondary">Edit company profile</span>
               <span className="transition-transform group-hover/edit:translate-x-0.5" aria-hidden>
@@ -287,7 +286,7 @@ export default function CompanyDashboard() {
 
           {list.length > 1 ? (
             <div className="max-w-md border-t border-border-default pt-5">
-              <label className="mb-2 block text-xs font-medium uppercase tracking-widest text-text-secondary">
+              <label className="mb-2 block text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
                 Company
               </label>
               <Select
@@ -317,12 +316,11 @@ export default function CompanyDashboard() {
           <section className="mb-12" aria-labelledby="pending-access-heading">
             <h2
               id="pending-access-heading"
-              className="mb-4 text-xs font-medium uppercase tracking-widest text-text-secondary"
+              className="mb-4 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary"
             >
               Pending access requests
             </h2>
-            <Card className="overflow-hidden border border-border-default">
-              <ul className="divide-y divide-border-default">
+            <ul className="divide-y divide-border-default border-y border-border-default">
                 {pendingQuery.data.map((req) => (
                   <li key={req.id} className="px-4 py-5 sm:px-6">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -369,8 +367,7 @@ export default function CompanyDashboard() {
                     </div>
                   </li>
                 ))}
-              </ul>
-            </Card>
+            </ul>
           </section>
         ) : null}
 
@@ -381,51 +378,43 @@ export default function CompanyDashboard() {
             <Skeleton className="h-28" />
           </div>
         ) : portfolioQuery.isError ? null : (
-          <div className="mb-8 grid gap-4 md:grid-cols-3">
-            <Card className="border border-border-default">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Buildings credited</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold tabular-nums">{companyStats.buildingCount}</div>
-                <CardDescription className="text-xs normal-case tracking-normal text-text-secondary">
-                  Distinct buildings in this portfolio
-                </CardDescription>
-              </CardContent>
-            </Card>
-            <Card className="border border-border-default">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Roles</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold tabular-nums">{companyStats.roleCount}</div>
-                <CardDescription className="text-xs normal-case tracking-normal text-text-secondary">
-                  Distinct credit roles
-                </CardDescription>
-              </CardContent>
-            </Card>
-            <Card className="border border-border-default">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Year span</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold tabular-nums">
-                  {companyStats.yearMin != null && companyStats.yearMax != null
-                    ? companyStats.yearMin === companyStats.yearMax
-                      ? String(companyStats.yearMin)
-                      : `${companyStats.yearMin}–${companyStats.yearMax}`
-                    : "—"}
-                </div>
-                <CardDescription className="text-xs normal-case tracking-normal text-text-secondary">
-                  From credit years and completion dates
-                </CardDescription>
-              </CardContent>
-            </Card>
+          <div className="mb-8 grid grid-cols-1 gap-px border border-border-default bg-border-default sm:grid-cols-3">
+            <div className="bg-surface-default px-5 py-6">
+              <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+                Buildings credited
+              </p>
+              <p className="mt-2 text-2xl font-bold tabular-nums text-text-primary">
+                {companyStats.buildingCount}
+              </p>
+              <p className="mt-1 text-xs text-text-secondary">
+                Distinct buildings in this portfolio
+              </p>
+            </div>
+            <div className="bg-surface-default px-5 py-6">
+              <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Roles</p>
+              <p className="mt-2 text-2xl font-bold tabular-nums text-text-primary">
+                {companyStats.roleCount}
+              </p>
+              <p className="mt-1 text-xs text-text-secondary">Distinct credit roles</p>
+            </div>
+            <div className="bg-surface-default px-5 py-6">
+              <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Year span</p>
+              <p className="mt-2 text-2xl font-bold tabular-nums text-text-primary">
+                {companyStats.yearMin != null && companyStats.yearMax != null
+                  ? companyStats.yearMin === companyStats.yearMax
+                    ? String(companyStats.yearMin)
+                    : `${companyStats.yearMin}–${companyStats.yearMax}`
+                  : "—"}
+              </p>
+              <p className="mt-1 text-xs text-text-secondary">
+                From credit years and completion dates
+              </p>
+            </div>
           </div>
         )}
 
-        <div className="mb-6 border border-border-default bg-surface-card px-4 py-4 sm:flex sm:items-end sm:justify-between sm:px-5 sm:py-5">
-          <h2 className="mb-3 text-xs font-medium uppercase tracking-widest text-text-secondary sm:mb-0">Portfolio</h2>
+        <div className="mb-6 flex flex-col gap-4 border-b border-border-default pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <h2 className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">Portfolio</h2>
           <div className="w-full sm:w-56">
             <Select
               value={roleFilter}

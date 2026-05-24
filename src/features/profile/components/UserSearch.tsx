@@ -59,7 +59,7 @@ export function UserSearch({ onSelect, excludeIds = [] }: UserSearchProps) {
           {results.map((u) => (
             <div
               key={u.id}
-              className="flex items-center gap-3 p-3 hover:bg-brand-secondary cursor-pointer transition-colors"
+              className="flex items-center gap-3 p-3 hover:bg-surface-muted/50 cursor-pointer transition-colors"
               onClick={() => {
                 onSelect(u.id, u.username ?? "");
                 setQuery("");

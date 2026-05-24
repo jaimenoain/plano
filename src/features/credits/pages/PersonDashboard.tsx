@@ -3,7 +3,6 @@ import { Link, useNavigate, type MetaFunction } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
@@ -60,7 +59,7 @@ function DashboardTierSection({
   if (sorted.length === 0) return null;
   return (
     <section className="mt-12 first:mt-0">
-      <h2 className="mb-6 text-xs font-medium uppercase tracking-widest text-text-secondary">
+      <h2 className="mb-6 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
         {tierLabel(tier)} credits
       </h2>
       <div>
@@ -186,44 +185,34 @@ export default function PersonDashboard() {
           <p className="text-sm text-text-secondary">Could not load credits. Try again later.</p>
         ) : (
           <>
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Buildings credited</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.buildingCount}</div>
-                  <p className="text-xs text-text-secondary">Distinct buildings in your portfolio</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Roles</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.roleCount}</div>
-                  <p className="text-xs text-text-secondary">Distinct credit roles</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Year span</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {stats.yearMin != null && stats.yearMax != null
-                      ? stats.yearMin === stats.yearMax
-                        ? String(stats.yearMin)
-                        : `${stats.yearMin}–${stats.yearMax}`
-                      : "—"}
-                  </div>
-                  <p className="text-xs text-text-secondary">From credit years and completion dates</p>
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-1 gap-px border border-border-default bg-border-default sm:grid-cols-3">
+              <div className="bg-surface-default px-5 py-6">
+                <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+                  Buildings credited
+                </p>
+                <p className="mt-2 text-2xl font-bold tabular-nums text-text-primary">{stats.buildingCount}</p>
+                <p className="mt-1 text-xs text-text-secondary">Distinct buildings in your portfolio</p>
+              </div>
+              <div className="bg-surface-default px-5 py-6">
+                <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Roles</p>
+                <p className="mt-2 text-2xl font-bold tabular-nums text-text-primary">{stats.roleCount}</p>
+                <p className="mt-1 text-xs text-text-secondary">Distinct credit roles</p>
+              </div>
+              <div className="bg-surface-default px-5 py-6">
+                <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Year span</p>
+                <p className="mt-2 text-2xl font-bold tabular-nums text-text-primary">
+                  {stats.yearMin != null && stats.yearMax != null
+                    ? stats.yearMin === stats.yearMax
+                      ? String(stats.yearMin)
+                      : `${stats.yearMin}–${stats.yearMax}`
+                    : "—"}
+                </p>
+                <p className="mt-1 text-xs text-text-secondary">From credit years and completion dates</p>
+              </div>
             </div>
 
             <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">Sort within each tier</h2>
+              <h2 className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">Sort within each tier</h2>
               <ToggleGroup
                 type="single"
                 value={sortMode}

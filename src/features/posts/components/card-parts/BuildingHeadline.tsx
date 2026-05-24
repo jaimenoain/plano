@@ -13,8 +13,8 @@ const sizeClass: Record<BuildingHeadlineProps["size"], string> = {
   lg: "text-[clamp(2.25rem,4vw,3rem)] leading-[0.95] line-clamp-2",
   /** 28px — single-line clamp (e.g. FeedCardC) */
   md: "text-[1.75rem] line-clamp-1",
-  /** Signed-in home feed — `FeedPage.jsx` title scale */
-  feed: "text-[clamp(2.375rem,5.4vw,4rem)] leading-[0.96] line-clamp-2",
+  /** Signed-in home feed — `FeedPage.jsx` title scale; leading ≥1.02 avoids descender clip with line-clamp */
+  feed: "text-[clamp(2.375rem,5.4vw,4rem)] leading-[1.05] line-clamp-2 pb-[0.07em]",
 };
 
 /**

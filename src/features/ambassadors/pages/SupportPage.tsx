@@ -72,7 +72,7 @@ export default function SupportPage() {
           {/* ── Hero ──────────────────────────────────────────────────────── */}
           <section className="border-b border-border-default">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20">
-              <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-8">
+              <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-8">
                 Ambassador programme
               </p>
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-tight text-text-primary">
@@ -86,14 +86,14 @@ export default function SupportPage() {
                 The programme is open to anyone who cares about architecture where they live.
               </p>
               <div className="mt-10 flex items-center gap-6">
-                <Button asChild variant="accent" size="lg" className="tracking-widest uppercase text-xs font-bold px-10">
+                <Button asChild variant="outline" size="lg" className="rounded-sm tracking-[0.15em] uppercase text-xs font-medium px-10">
                   <Link to="/become-ambassador">
                     Apply now
                   </Link>
                 </Button>
                 <Link
                   to="/become-ambassador"
-                  className="text-xs font-medium tracking-widest uppercase text-text-secondary hover:text-text-primary transition-colors py-4 px-2"
+                  className="text-xs font-medium tracking-[0.15em] uppercase text-text-secondary hover:text-text-primary transition-colors py-4 px-2"
                 >
                   Learn more ↓
                 </Link>
@@ -110,7 +110,7 @@ export default function SupportPage() {
                     <p className="text-4xl font-bold tracking-tight leading-tight text-text-primary">
                       {stat}
                     </p>
-                    <p className="mt-1 text-2xs font-medium tracking-widest uppercase text-text-secondary">
+                    <p className="mt-1 text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary">
                       {label}
                     </p>
                   </div>
@@ -122,7 +122,7 @@ export default function SupportPage() {
           {/* ── What ambassadors do ───────────────────────────────────────── */}
           <section className="border-b border-border-default">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-              <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-2">
+              <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-2">
                 The role
               </p>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight leading-snug text-text-primary mb-16">
@@ -132,7 +132,7 @@ export default function SupportPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-14">
                 {responsibilities.map(({ index, heading, body }) => (
                   <div key={index}>
-                    <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-4">
+                    <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-disabled mb-4">
                       {index}
                     </p>
                     <h3 className="text-xl font-semibold text-text-primary mb-3">
@@ -157,7 +157,7 @@ export default function SupportPage() {
                 "Every building that exists in the world deserves to be documented.
                 Ambassadors are the reason that is possible."
               </p>
-              <p className="mt-8 text-2xs font-medium tracking-widest uppercase text-white/40">
+              <p className="mt-8 text-2xs font-medium tracking-[0.15em] uppercase text-white/40">
                 Plano team
               </p>
             </div>
@@ -166,7 +166,7 @@ export default function SupportPage() {
           {/* ── Chapter structure ─────────────────────────────────────────── */}
           <section className="border-b border-border-default">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-              <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-2">
+              <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-2">
                 Structure
               </p>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight leading-snug text-text-primary mb-14">
@@ -179,7 +179,7 @@ export default function SupportPage() {
                 {chapterTypes.map(({ type, description }) => (
                   <div key={type} className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-6 py-10">
                     <div>
-                      <p className="text-xs font-medium tracking-widest uppercase text-text-primary">
+                      <p className="text-xs font-medium tracking-[0.15em] uppercase text-text-primary">
                         {type}
                       </p>
                     </div>
@@ -195,7 +195,7 @@ export default function SupportPage() {
           {/* ── What you get ──────────────────────────────────────────────── */}
           <section className="border-b border-border-default">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-              <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-2">
+              <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-2">
                 Benefits
               </p>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight leading-snug text-text-primary mb-14">
@@ -236,7 +236,7 @@ export default function SupportPage() {
           {/* ── Apply CTA ─────────────────────────────────────────────────── */}
           <section>
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-              <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-6">
+              <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-6">
                 Join the programme
               </p>
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight text-text-primary mb-10">
@@ -254,7 +254,7 @@ export default function SupportPage() {
                 </Button>
                 <Link
                   to="/embassy"
-                  className="group inline-flex items-center gap-2 text-xs font-medium tracking-widest uppercase text-text-secondary hover:text-text-primary transition-colors"
+                  className="group inline-flex items-center gap-2 text-xs font-medium tracking-[0.15em] uppercase text-text-secondary hover:text-text-primary transition-colors"
                 >
                   Already an ambassador?
                   <span className="transition-transform group-hover:translate-x-0.5">→</span>

@@ -491,7 +491,7 @@ export function DiscoveryCard({
     <motion.div
       ref={setCardRootRef}
       className={cn(
-        "group/card relative w-full h-full overflow-hidden min-w-0 select-none bg-black",
+        "group/card relative w-full h-full overflow-hidden min-w-0 select-none bg-surface-inverse",
         horizontalSwipeActive ? "touch-none" : "touch-pan-y"
       )}
       style={{ x, y, rotate, opacity, willChange: "transform" }}
@@ -527,7 +527,7 @@ export function DiscoveryCard({
             draggable={false}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-neutral-900">
+          <div className="w-full h-full flex items-center justify-center bg-surface-muted">
             <span className="text-xs font-medium uppercase tracking-widest text-white/20">
               No image
             </span>
@@ -668,14 +668,14 @@ export function DiscoveryCard({
                   {val === null ? (
                     <Bookmark
                       className={`w-10 h-10 transition-colors ${
-                        isSelected ? "text-brand-primary" : "text-white/70"
+                        isSelected ? "text-white" : "text-white/70"
                       }`}
                       strokeWidth={isSelected ? 2 : 1.5}
                     />
                   ) : (
                     <span
                       className={`text-3xl sm:text-5xl font-bold leading-none tabular-nums transition-colors ${
-                        isSelected ? "text-brand-primary" : "text-white/70"
+                        isSelected ? "text-white" : "text-white/70"
                       }`}
                     >
                       {val}
@@ -687,7 +687,7 @@ export function DiscoveryCard({
                       val === null
                         ? "sr-only"
                         : isSelected
-                          ? "text-brand-primary"
+                          ? "text-white"
                           : "text-white/55"
                     }`}
                   >

@@ -1,6 +1,12 @@
-import { Link, ScrollRestoration, useLoaderData, type MetaFunction } from "react-router";
-import { Button } from "@/components/ui/button";
+import { ScrollRestoration, useLoaderData, type MetaFunction } from "react-router";
 import type { RemoveCreditByTokenError } from "@/features/credits/api/credits";
+import {
+  TokenFlowHeadline,
+  TokenFlowLayout,
+  TokenFlowMessage,
+  TokenFlowPrimaryLink,
+  TokenFlowSecondaryLink,
+} from "@/components/layout/TokenFlowLayout";
 import {
   removeCreditLoader,
   type RemoveCreditLoaderData,
@@ -34,55 +40,38 @@ export default function RemoveCredit() {
   const d = useLoaderData() as RemoveCreditLoaderData;
 
   return (
-    <div className="min-h-screen bg-surface-default text-text-primary">
+    <>
       <ScrollRestoration />
-      <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12 text-center">
+      <TokenFlowLayout>
         {d.outcome === "success" ? (
           <>
-            <h1 className="mb-2 text-xl font-semibold text-text-primary">
-              Credit removed — thank you
-            </h1>
-            <p className="mb-6 text-sm text-text-secondary">
+            <TokenFlowHeadline>Credit removed</TokenFlowHeadline>
+            <TokenFlowMessage>
               Your credit has been removed from{" "}
-              <span className="text-text-primary">{d.buildingName}</span> on Plano.
-            </p>
-            {d.buildingHref ? (
-              <Button asChild variant="default" className="min-w-[200px]">
-                <Link to={d.buildingHref}>View building</Link>
-              </Button>
-            ) : (
-              <Button asChild variant="default" className="min-w-[200px]">
-                <Link to="/">Back to Plano</Link>
-              </Button>
-            )}
+              <span className="text-text-primary">{d.buildingName}</span> on Plano. Thank you for
+              letting us know.
+            </TokenFlowMessage>
+            <TokenFlowPrimaryLink to={d.buildingHref ?? "/"}>
+              {d.buildingHref ? "View building →" : "Back to Plano →"}
+            </TokenFlowPrimaryLink>
           </>
         ) : d.outcome === "invalid_format" ? (
           <>
-            <h1 className="mb-2 text-xl font-semibold text-text-primary">Invalid link</h1>
-            <p className="mb-6 text-sm text-text-secondary">
+            <TokenFlowHeadline>Invalid link</TokenFlowHeadline>
+            <TokenFlowMessage>
               Open the remove link from your email, or contact us if you need help.
-            </p>
-            <Button asChild variant="outline" className="min-w-[200px]">
-              <a href={`mailto:${SUPPORT_MAIL}`}>Contact support</a>
-            </Button>
+            </TokenFlowMessage>
+            <TokenFlowPrimaryLink href={`mailto:${SUPPORT_MAIL}`}>Contact support →</TokenFlowPrimaryLink>
           </>
         ) : (
           <>
-            <h1 className="mb-2 text-xl font-semibold text-text-primary">
-              We could not remove the credit
-            </h1>
-            <p className="mb-6 text-sm text-text-secondary">{errorMessage(d.error)}</p>
-            <div className="flex flex-col items-center gap-3">
-              <Button asChild variant="outline" className="min-w-[200px]">
-                <a href={`mailto:${SUPPORT_MAIL}`}>Contact support</a>
-              </Button>
-              <Button asChild variant="ghost" className="text-text-secondary">
-                <Link to="/">Home</Link>
-              </Button>
-            </div>
+            <TokenFlowHeadline>We could not remove the credit</TokenFlowHeadline>
+            <TokenFlowMessage>{errorMessage(d.error)}</TokenFlowMessage>
+            <TokenFlowPrimaryLink href={`mailto:${SUPPORT_MAIL}`}>Contact support →</TokenFlowPrimaryLink>
+            <TokenFlowSecondaryLink to="/">Home</TokenFlowSecondaryLink>
           </>
         )}
-      </div>
-    </div>
+      </TokenFlowLayout>
+    </>
   );
 }

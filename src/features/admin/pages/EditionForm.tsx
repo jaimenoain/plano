@@ -109,7 +109,7 @@ export default function EditionForm() {
 
   return (
     <div className="p-8 max-w-2xl space-y-6">
-      <h1 className="text-4xl font-bold tracking-tight text-text-primary">
+      <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">
         {isEdit ? "Edit Edition" : "New Edition"}
       </h1>
 

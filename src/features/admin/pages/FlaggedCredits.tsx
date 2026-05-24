@@ -95,7 +95,7 @@ export default function FlaggedCredits() {
   return (
     <div className="flex flex-col gap-6 p-6">
       <div>
-        <h1 className="text-2xl font-semibold text-text-primary">Flagged credits</h1>
+        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Flagged credits</h1>
         <p className="mt-1 text-sm text-text-secondary">
           Review community reports. Verify confirms the credit; dismiss returns it to active; hide removes it
           from the public building page.

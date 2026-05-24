@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
-import { getBuildingImageUrl, getStorageAssetUrl } from "@/utils/image";
+import { getBuildingImageUrl } from "@/utils/image";
 
 type TrendingArchitect = {
   id: string;
@@ -95,7 +95,7 @@ async function fetchRecentBuildings(): Promise<RecentBuilding[]> {
 
 function ModuleHeader({ title }: { title: string }) {
   return (
-    <h2 className="mb-4 text-[11px] font-medium uppercase tracking-[0.2em] text-text-disabled">
+    <h2 className="mb-3.5 text-[11px] font-medium uppercase tracking-[0.15em] text-text-disabled">
       {title}
     </h2>
   );
@@ -109,10 +109,10 @@ function TrendingArchitectsModule() {
   });
 
   return (
-    <section className="border-t border-border-default pt-5">
+    <section className="border-t border-border-default pt-9">
       <ModuleHeader title="Trending architects" />
       {isLoading ? (
-        <ul className="space-y-3">
+        <ul>
           {Array.from({ length: 4 }).map((_, i) => (
             <li key={i} className="flex items-center gap-3 animate-pulse">
               <div className="h-8 w-8 rounded-full bg-surface-muted shrink-0" />
@@ -128,45 +128,39 @@ function TrendingArchitectsModule() {
           No activity yet this week.
         </p>
       ) : (
-        <ul className="space-y-3">
-          {data.map((architect) => {
+        <ul>
+          {data.map((architect, index) => {
             const href = architect.slug ? `/person/${architect.slug}` : null;
-            const avatar = architect.avatar_url
-              ? getStorageAssetUrl(architect.avatar_url)
-              : undefined;
-            const inner = (
-              <>
-                {avatar ? (
-                  <img
-                    src={avatar}
-                    alt=""
-                    className="h-8 w-8 rounded-full object-cover bg-surface-muted shrink-0"
-                  />
-                ) : (
-                  <div className="h-8 w-8 rounded-full bg-surface-muted shrink-0" />
-                )}
-                <div className="flex-1 min-w-0 leading-tight">
-                  <div className="text-sm font-medium text-text-primary truncate">
+            const row = (
+              <div className="flex min-w-0 flex-1 items-baseline gap-3 py-2.5">
+                <span className="shrink-0 font-mono text-[11px] tracking-[0.04em] text-text-disabled">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[13px] font-semibold leading-snug text-text-primary">
                     {architect.name}
                   </div>
-                  <div className="text-xs text-text-disabled mt-0.5">
+                  <div className="mt-0.5 text-[11px] text-text-secondary">
                     {architect.building_count}{" "}
-                    {architect.building_count === 1 ? "building" : "buildings"} posted
+                    {architect.building_count === 1 ? "building" : "buildings"}
                   </div>
                 </div>
-              </>
+              </div>
             );
             return (
-              <li key={architect.id}>
+              <li
+                key={architect.id}
+                className="border-b border-border-default last:border-b-0"
+              >
                 {href ? (
                   <Link
                     to={href}
-                    className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                    className="block transition-opacity hover:opacity-80"
                   >
-                    {inner}
+                    {row}
                   </Link>
                 ) : (
-                  <div className="flex items-center gap-3">{inner}</div>
+                  row
                 )}
               </li>
             );
@@ -221,7 +215,7 @@ function RecentBuildingsModule() {
                       src={image}
                       alt=""
                       loading="lazy"
-                      className="h-12 w-12 rounded object-cover bg-surface-muted shrink-0"
+                      className="h-12 w-12 shrink-0 rounded-none object-cover bg-surface-muted"
                     />
                   ) : (
                     <div className="h-12 w-12 rounded bg-surface-muted shrink-0" />

@@ -185,7 +185,7 @@ function UserMenu() {
             <DropdownMenuSeparator className="bg-white/10" />
             <DropdownMenuItem
               onClick={handleSignOut}
-              className="gap-2 cursor-pointer text-destructive focus:text-destructive-foreground focus:bg-white/10"
+              className="gap-2 cursor-pointer text-feedback-destructive focus:text-feedback-destructive focus:bg-white/10"
             >
               <LogOut className="h-4 w-4" />
               Sign out
@@ -235,7 +235,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       collapsible="offcanvas"
-      className="md:hidden border-r-0 text-white"
+      className="md:hidden border-r-0 bg-surface-inverse text-text-inverse"
       style={{ "--sidebar-background": "0 0% 0%" } as React.CSSProperties}
     >
       {/* ── Header: logo + close ── */}
@@ -270,6 +270,9 @@ export function AppSidebar() {
 
         {showAccountExtras ? (
           <SidebarGroup className="!p-0 mt-6 pt-6 border-t border-white/10">
+            <p className="px-8 pb-2 text-[11px] font-medium uppercase tracking-[0.15em] text-white/40">
+              Account
+            </p>
             <SidebarGroupContent>
               <SidebarMenu className="gap-0">
                 {claimedPersonNav ? (

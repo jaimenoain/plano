@@ -130,7 +130,7 @@ function LocalityCard({
   return (
     <Link
       to={href}
-      className="group flex flex-col overflow-hidden rounded-none border border-border-default bg-surface-default transition-shadow hover:shadow-md"
+      className="group flex flex-col overflow-hidden rounded-none border border-border-default bg-surface-default transition-colors hover:border-text-primary"
     >
       {absoluteUrl ? (
         <div className="h-36 w-full overflow-hidden bg-surface-muted">
@@ -242,7 +242,7 @@ export default function CountryPage() {
 
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <section>
-          <h2 className="mb-6 text-xs font-medium uppercase tracking-widest text-text-secondary">
+          <h2 className="mb-6 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
             Cities
           </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

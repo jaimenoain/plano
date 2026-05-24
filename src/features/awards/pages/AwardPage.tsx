@@ -89,7 +89,7 @@ export default function AwardPage() {
                       {award.country}
                     </div>
                   )}
-                  <Badge variant="secondary" className="uppercase tracking-widest text-[10px] font-bold px-2 py-0.5 bg-surface-muted text-text-secondary border-none h-auto">
+                  <Badge variant="secondary" className="uppercase tracking-[0.15em] text-[10px] font-bold px-2 py-0.5 bg-surface-muted text-text-secondary border-none h-auto">
                     {award.frequency.replace('_', ' ')}
                   </Badge>
 
@@ -97,7 +97,7 @@ export default function AwardPage() {
                   {award.claimStatus !== "unclaimed" && (
                     <Badge
                       variant="secondary"
-                      className="gap-1 uppercase tracking-widest text-[10px] font-bold px-2 py-0.5 bg-feedback-success/10 text-feedback-success border-none h-auto"
+                      className="gap-1 uppercase tracking-[0.15em] text-[10px] font-bold px-2 py-0.5 bg-feedback-success/10 text-feedback-success border-none h-auto"
                     >
                       <Shield className="h-2.5 w-2.5" />
                       {award.claimStatus === "verified" ? "Verified" : "Official"}
@@ -111,7 +111,7 @@ export default function AwardPage() {
                     href={award.website.startsWith('http') ? award.website : `https://${award.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-widest text-text-primary hover:underline"
+                    className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.15em] text-text-primary hover:underline"
                   >
                     Official Website
                     <ExternalLink className="h-3 w-3" />
@@ -123,7 +123,7 @@ export default function AwardPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-2 text-xs font-bold uppercase tracking-widest h-9"
+                  className="gap-2 text-xs font-bold uppercase tracking-[0.15em] h-9"
                   onClick={() => setLeaderboardOpen(true)}
                 >
                   <LayoutList className="h-4 w-4" />
@@ -135,7 +135,7 @@ export default function AwardPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-2 text-xs font-bold uppercase tracking-widest h-9"
+                    className="gap-2 text-xs font-bold uppercase tracking-[0.15em] h-9"
                     asChild
                   >
                     <Link to={`/award/${award.slug}/admin`}>
@@ -150,7 +150,7 @@ export default function AwardPage() {
                   myRequest?.status === "pending" ? (
                     <Badge
                       variant="secondary"
-                      className="gap-1.5 text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-surface-muted text-text-secondary border-none self-start"
+                      className="gap-1.5 text-[10px] font-bold uppercase tracking-[0.15em] px-2 py-1 bg-surface-muted text-text-secondary border-none self-start"
                     >
                       <Shield className="h-3 w-3" />
                       Claim under review
@@ -159,7 +159,7 @@ export default function AwardPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="gap-2 text-xs font-medium uppercase tracking-widest h-9 text-text-secondary hover:text-text-primary"
+                      className="gap-2 text-xs font-medium uppercase tracking-[0.15em] h-9 text-text-secondary hover:text-text-primary"
                       onClick={() => setClaimOpen(true)}
                     >
                       <Shield className="h-4 w-4" />
@@ -181,7 +181,7 @@ export default function AwardPage() {
         {/* What's Next — only shown when there are upcoming events */}
         {upcomingEvents.length > 0 && (
           <section className="mt-10 border-b border-border-default pb-10">
-            <h2 className="mb-6 text-xs font-medium uppercase tracking-widest text-text-secondary">
+            <h2 className="mb-6 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
               What's Next
             </h2>
             <div className="divide-y divide-border-default">
@@ -193,7 +193,7 @@ export default function AwardPage() {
                       <div className="text-2xl font-bold tabular-nums text-text-primary leading-none">
                         {d.toLocaleDateString(undefined, { day: "numeric" })}
                       </div>
-                      <div className="text-xs uppercase tracking-widest text-text-secondary mt-0.5">
+                      <div className="text-xs uppercase tracking-[0.15em] text-text-secondary mt-0.5">
                         {d.toLocaleDateString(undefined, { month: "short" })}
                       </div>
                       <div className="text-xs text-text-secondary">
@@ -222,7 +222,7 @@ export default function AwardPage() {
         )}
 
         <section className="mt-12">
-          <h2 className="mb-8 text-xs font-medium uppercase tracking-widest text-text-secondary">
+          <h2 className="mb-8 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
             Editions ({editions.length})
           </h2>
 
@@ -266,7 +266,7 @@ export default function AwardPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="text-xs font-medium uppercase tracking-widest text-text-secondary group-hover:text-text-primary transition-colors">
+                  <div className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary group-hover:text-text-primary transition-colors">
                     View →
                   </div>
                 </Link>

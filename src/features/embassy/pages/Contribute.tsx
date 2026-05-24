@@ -62,6 +62,10 @@ import { getBuildingUrl } from "@/utils/url";
 import { resizeImage } from "@/lib/image-compression";
 import { uploadFile } from "@/utils/upload";
 import { cn } from "@/lib/utils";
+import {
+  EmbassyPageHeader,
+  EMBASSY_SKELETON_ROUNDED,
+} from "@/features/embassy/components/embassy-ui";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -187,7 +191,7 @@ export default function ContributePage() {
         </div>
         <div className="grid gap-4">
           {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-28 w-full rounded-xl" />
+            <Skeleton key={i} className={cn("h-28 w-full", EMBASSY_SKELETON_ROUNDED)} />
           ))}
         </div>
       </div>
@@ -226,12 +230,10 @@ export default function ContributePage() {
 
   return (
     <div className="space-y-8 pb-20">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Contribute</h1>
-        <p className="text-muted-foreground">
-          Select a tool to help build the catalogue in your chapter.
-        </p>
-      </div>
+      <EmbassyPageHeader
+        title="Contribute"
+        description="Select a tool to help build the catalogue in your chapter."
+      />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {sortedTools.map((tool) => (
@@ -263,38 +265,42 @@ function ToolCard({ title, description, icon, onClick, active = true, comingSoon
   asChild?: boolean;
 }) {
   return (
-    <Card 
+    <Card
       className={cn(
-        "relative flex flex-col p-6 transition-all",
-        active ? "hover:border-brand-primary cursor-pointer border-border-default shadow-sm" : "opacity-60 border-dashed"
+        "relative flex flex-col border-border-default p-6 transition-colors",
+        active ? "cursor-pointer hover:border-border-strong" : "border-dashed opacity-60",
       )}
       onClick={!asChild && active ? onClick : undefined}
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className={cn(
-          "p-2 rounded-lg",
-          active ? "bg-brand-primary/10 text-brand-primary" : "bg-muted text-muted-foreground"
-        )}>
+      <div className="mb-4 flex items-start justify-between">
+        <div
+          className={cn(
+            "rounded-sm p-2",
+            active ? "bg-surface-muted text-text-primary" : "bg-surface-muted text-text-secondary",
+          )}
+        >
           {icon}
         </div>
         {comingSoon && (
-          <Badge variant="outline" className="text-[10px] uppercase tracking-wider">Coming Soon</Badge>
+          <Badge variant="outline" className="text-[10px] uppercase tracking-[0.15em]">
+            Coming soon
+          </Badge>
         )}
       </div>
-      <h3 className="text-lg font-semibold mb-2">{title}</h3>
-      <p className="text-sm text-muted-foreground mb-6 flex-1">{description}</p>
+      <h3 className="mb-2 text-lg font-semibold text-text-primary">{title}</h3>
+      <p className="mb-6 flex-1 text-sm text-text-secondary">{description}</p>
       {asChild ? (
-        <Button asChild variant="default" size="sm" className="w-full mt-auto">
+        <Button asChild variant="outline" size="sm" className="mt-auto w-full min-h-11">
           {children}
         </Button>
       ) : (
-        <Button 
-          variant={active ? "default" : "secondary"} 
-          size="sm" 
-          className="w-full mt-auto"
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-auto w-full min-h-11"
           disabled={!active}
         >
-          {active ? "Open Tool" : "Locked"}
+          {active ? "Open tool →" : "Locked"}
         </Button>
       )}
     </Card>
@@ -391,10 +397,10 @@ function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: ()
         <TabsContent value="data-completion" className="mt-6 space-y-4">
           {isLoading ? (
             <div className="grid gap-4">
-              {[0, 1, 2, 3].map(i => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
+              {[0, 1, 2, 3].map(i => <Skeleton key={i} className="h-24 w-full rounded-sm" />)}
             </div>
           ) : error ? (
-            <div className="p-8 text-center border rounded-xl bg-destructive/5 text-destructive">
+            <div className="p-8 text-center border rounded-sm bg-feedback-destructive/5 text-feedback-destructive">
               <AlertCircle className="h-8 w-8 mx-auto mb-2" />
               <p>Failed to load research queue.</p>
               <Button variant="outline" size="sm" className="mt-3" onClick={() => void refetch()}>
@@ -402,7 +408,7 @@ function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: ()
               </Button>
             </div>
           ) : queue.length === 0 ? (
-            <div className="p-12 text-center border border-dashed rounded-xl">
+            <div className="p-12 text-center border border-dashed rounded-sm">
               <Clock className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
               <p className="text-lg font-medium">Building your research queue…</p>
               <p className="text-sm text-muted-foreground mt-1">
@@ -433,7 +439,7 @@ function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: ()
                   return (
                     <Card
                       key={item.id}
-                      className="p-4 flex items-center justify-between gap-4 cursor-pointer hover:border-brand-primary transition-all group"
+                      className="p-4 flex items-center justify-between gap-4 cursor-pointer hover:border-border-strong transition-all group"
                       onClick={() => setActiveItem(item)}
                     >
                       <div className="min-w-0 flex-1">
@@ -445,7 +451,7 @@ function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: ()
                             </Badge>
                           )}
                           {conflictCount > 0 && (
-                            <Badge variant="secondary" className="text-[10px] font-bold uppercase bg-amber-500/10 text-amber-600 border-none">
+                            <Badge variant="secondary" className="text-[10px] font-bold uppercase bg-feedback-warning/10 text-feedback-warning border-none">
                               {conflictCount} updated value{conflictCount !== 1 ? "s" : ""}
                             </Badge>
                           )}
@@ -906,7 +912,7 @@ function ResearchReviewPanel({
           "p-5 transition-all border-2",
           item.accepted
             ? isConflict
-              ? "border-amber-500/50 bg-amber-500/[0.03]"
+              ? "border-feedback-warning/50 bg-feedback-warning/[0.03]"
               : "border-brand-primary/40 bg-brand-primary/[0.03]"
             : "border-border-default opacity-60",
         )}
@@ -923,8 +929,8 @@ function ResearchReviewPanel({
               className={cn(
                 "flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
                 item.accepted
-                  ? isConflict ? "bg-amber-500 text-white cursor-default" : "bg-brand-primary text-white cursor-default"
-                  : "border border-border-default text-muted-foreground hover:border-brand-primary hover:text-brand-primary",
+                  ? isConflict ? "bg-feedback-warning text-text-primary cursor-default" : "bg-text-primary text-surface-default cursor-default"
+                  : "border border-border-default text-muted-foreground hover:border-border-strong hover:text-brand-primary",
               )}
             >
               <CheckCircle className="h-3.5 w-3.5" />
@@ -952,11 +958,11 @@ function ResearchReviewPanel({
             {/* Left: label + current value + editable AI value */}
             <div className="flex-1 min-w-0 space-y-2">
               <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
                   {FIELD_LABELS[item.field] ?? item.field}
                 </p>
                 {isConflict && (
-                  <Badge variant="outline" className="text-[10px] font-bold uppercase border-amber-500/50 text-amber-600">
+                  <Badge variant="outline" className="text-[10px] font-bold uppercase border-feedback-warning/50 text-feedback-warning">
                     Updated value
                   </Badge>
                 )}
@@ -1042,7 +1048,7 @@ function ResearchReviewPanel({
       {/* New data (empty → AI filled) */}
       {newItems.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
             New data found
           </h2>
           <div className="grid gap-4">{newItems.map(renderItem)}</div>
@@ -1052,7 +1058,7 @@ function ResearchReviewPanel({
       {/* Conflicting data (existing ≠ AI suggestion) */}
       {conflictItems.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-amber-600 flex items-center gap-1.5">
+          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-feedback-warning flex items-center gap-1.5">
             <AlertCircle className="h-3.5 w-3.5" />
             AI suggests different values
           </h2>
@@ -1064,7 +1070,7 @@ function ResearchReviewPanel({
       )}
 
       {actionableItems.length === 0 && confirmedItems.length === 0 && (
-        <div className="p-12 text-center border border-dashed rounded-xl">
+        <div className="p-12 text-center border border-dashed rounded-sm">
           <CheckCircle2 className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
           <p className="text-lg font-medium">No changes to review.</p>
         </div>
@@ -1073,7 +1079,7 @@ function ResearchReviewPanel({
       {/* Confirmed data (AI matches existing) — collapsed at bottom */}
       {confirmedItems.length > 0 && (
         <section className="mt-6 pt-6 border-t border-border-default space-y-3 opacity-60">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary flex items-center gap-1.5">
             <CheckCircle className="h-3.5 w-3.5 text-feedback-success" />
             AI confirms existing values ({confirmedItems.length})
           </h2>
@@ -1231,15 +1237,15 @@ function ArchitectOutreachTool({ chapterId, onBack }: { chapterId: string; onBac
 
       {isLoading ? (
         <div className="grid gap-4">
-          {[0, 1, 2].map(i => <Skeleton key={i} className="h-28 w-full rounded-xl" />)}
+          {[0, 1, 2].map(i => <Skeleton key={i} className="h-28 w-full rounded-sm" />)}
         </div>
       ) : error ? (
-        <div className="p-8 text-center border rounded-xl bg-destructive/5 text-destructive">
+        <div className="p-8 text-center border rounded-sm bg-feedback-destructive/5 text-feedback-destructive">
           <AlertCircle className="h-8 w-8 mx-auto mb-2" />
           <p>Failed to load firms. Please try again.</p>
         </div>
       ) : filteredFirms.length === 0 ? (
-        <div className="p-12 text-center border border-dashed rounded-xl">
+        <div className="p-12 text-center border border-dashed rounded-sm">
           <MessageSquare className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
           <p className="text-lg font-medium">No firms found</p>
           <p className="text-sm text-muted-foreground">All firms in your area have been claimed or contacted.</p>
@@ -1251,7 +1257,7 @@ function ArchitectOutreachTool({ chapterId, onBack }: { chapterId: string; onBac
             return (
               <Card
                 key={f.id}
-                className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer hover:border-brand-primary transition-all"
+                className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer hover:border-border-strong transition-all"
                 onClick={() => setDrawerFirm(f)}
               >
                 <div className="min-w-0 flex-1">
@@ -1723,15 +1729,15 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
         <div className="flex-1 overflow-y-auto pr-2">
           {isLoading ? (
             <div className="grid gap-4">
-              {[0, 1, 2].map(i => <Skeleton key={i} className="h-28 w-full rounded-xl" />)}
+              {[0, 1, 2].map(i => <Skeleton key={i} className="h-28 w-full rounded-sm" />)}
             </div>
           ) : error ? (
-            <div className="p-8 text-center border rounded-xl bg-destructive/5 text-destructive">
+            <div className="p-8 text-center border rounded-sm bg-feedback-destructive/5 text-feedback-destructive">
               <AlertCircle className="h-8 w-8 mx-auto mb-2" />
               <p>Failed to load photography tasks.</p>
             </div>
           ) : buildings?.length === 0 ? (
-            <div className="p-12 text-center border border-dashed rounded-xl">
+            <div className="p-12 text-center border border-dashed rounded-sm">
               <Camera className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
               <p className="text-lg font-medium">All photographed!</p>
               <p className="text-sm text-muted-foreground">Every building in your chapter has at least one photo.</p>
@@ -1739,7 +1745,7 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
           ) : (
             <div className="grid gap-4">
               {filteredBuildings.map((b) => (
-                <Card key={b.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group hover:border-brand-primary transition-all">
+                <Card key={b.id} className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6 group hover:border-border-strong transition-all">
                   <div className="min-w-0 flex-1">
                     <h3 className="font-semibold truncate">{b.name}</h3>
                     <p className="text-xs text-muted-foreground">{b.city || b.country || "Global"}</p>
@@ -1803,11 +1809,31 @@ function CurationTool({ chapterId, onBack }: { chapterId: string; onBack: () => 
       </div>
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as ModerationTab)}>
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="buildings">Buildings</TabsTrigger>
-          <TabsTrigger value="photos">Photos</TabsTrigger>
-          <TabsTrigger value="videos">Videos</TabsTrigger>
-          <TabsTrigger value="credits">Credits</TabsTrigger>
+        <TabsList className="mb-2 h-auto w-full gap-4 border-b border-border-default bg-transparent p-0 sm:w-auto">
+          <TabsTrigger
+            value="buildings"
+            className="rounded-none border-b-2 border-transparent px-0 pb-3 data-[state=active]:border-text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          >
+            Buildings
+          </TabsTrigger>
+          <TabsTrigger
+            value="photos"
+            className="rounded-none border-b-2 border-transparent px-0 pb-3 data-[state=active]:border-text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          >
+            Photos
+          </TabsTrigger>
+          <TabsTrigger
+            value="videos"
+            className="rounded-none border-b-2 border-transparent px-0 pb-3 data-[state=active]:border-text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          >
+            Videos
+          </TabsTrigger>
+          <TabsTrigger
+            value="credits"
+            className="rounded-none border-b-2 border-transparent px-0 pb-3 data-[state=active]:border-text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          >
+            Credits
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="buildings" className="mt-6">
@@ -1934,7 +1960,7 @@ function ModerationEmptyState({
   onShowGlobal?: () => void;
 }) {
   return (
-    <div className="p-12 text-center border border-dashed rounded-xl">
+    <div className="p-12 text-center border border-dashed rounded-sm">
       <div className="flex justify-center mb-3 text-muted-foreground">{icon}</div>
       <p className="text-lg font-medium">All clear</p>
       <p className="text-sm text-muted-foreground">{message}</p>
@@ -2029,7 +2055,7 @@ function BuildingsModerationTab({
               : null;
           const thumbUrl = getBuildingImageUrl(b.n ?? b.hero_image_url);
           return (
-            <Card key={b.id} className="overflow-hidden group hover:border-brand-primary transition-all flex flex-col">
+            <Card key={b.id} className="overflow-hidden group hover:border-border-strong transition-all flex flex-col">
               {thumbUrl ? (
                 <div className="h-44 bg-muted overflow-hidden shrink-0">
                   <img src={thumbUrl} alt={b.name} className="w-full h-full object-cover" />
@@ -2179,7 +2205,7 @@ function PhotosModerationTab({
         {visibleBatch.map((p) => {
           const imageUrl = getBuildingImageUrl(p.storage_path);
           return (
-            <div key={p.id} className="group relative rounded-xl overflow-hidden bg-muted aspect-square border border-border-default hover:border-brand-primary transition-all">
+            <div key={p.id} className="group relative rounded-sm overflow-hidden bg-muted aspect-square border border-border-default hover:border-border-strong transition-all">
               {imageUrl ? (
                 <img src={imageUrl} alt={p.caption ?? p.building_name} className="w-full h-full object-cover" />
               ) : (
@@ -2313,7 +2339,7 @@ function VideosModerationTab({
         {visible.map((v) => {
           const resolvedUrl = getStorageAssetUrl(v.video_url) ?? v.video_url;
           return (
-            <Card key={v.id} className="overflow-hidden group hover:border-brand-primary transition-all">
+            <Card key={v.id} className="overflow-hidden group hover:border-border-strong transition-all">
               <div className="flex flex-col sm:flex-row">
                 <div className="sm:w-2/3 shrink-0">
                   <VideoPlayer
@@ -2471,7 +2497,7 @@ function CreditsModerationTab({
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {visibleBatch.map((c) => {
           return (
-            <Card key={c.id} className="p-4 group hover:border-brand-primary transition-all">
+            <Card key={c.id} className="p-4 group hover:border-border-strong transition-all">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -2548,7 +2574,7 @@ function ModerationSkeletons() {
   return (
     <div className="grid gap-4">
       {[0, 1, 2].map((i) => (
-        <Skeleton key={i} className="h-28 w-full rounded-xl" />
+        <Skeleton key={i} className="h-28 w-full rounded-sm" />
       ))}
     </div>
   );
@@ -2556,7 +2582,7 @@ function ModerationSkeletons() {
 
 function ModerationError({ message }: { message: string }) {
   return (
-    <div className="p-8 text-center border rounded-xl bg-destructive/5 text-destructive">
+    <div className="p-8 text-center border rounded-sm bg-feedback-destructive/5 text-feedback-destructive">
       <AlertCircle className="h-8 w-8 mx-auto mb-2" />
       <p>{message}</p>
     </div>
@@ -2779,11 +2805,11 @@ function EventsTool({
       {isLoading ? (
         <div className="grid gap-4">
           {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-28 w-full rounded-xl" />
+            <Skeleton key={i} className={cn("h-28 w-full", EMBASSY_SKELETON_ROUNDED)} />
           ))}
         </div>
       ) : error ? (
-        <div className="p-8 text-center border rounded-xl bg-feedback-destructive/5 text-feedback-destructive">
+        <div className="p-8 text-center border rounded-sm bg-feedback-destructive/5 text-feedback-destructive">
           <AlertCircle className="h-8 w-8 mx-auto mb-2" />
           <p>Failed to load events.</p>
           <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()}>
@@ -2791,7 +2817,7 @@ function EventsTool({
           </Button>
         </div>
       ) : discoveries?.length === 0 ? (
-        <div className="p-12 text-center border border-dashed rounded-xl">
+        <div className="p-12 text-center border border-dashed rounded-sm">
           <CalendarClock className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
           {isNationalChapter ? (
             <>

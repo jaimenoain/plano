@@ -225,7 +225,7 @@ export default function AdminPeople() {
   return (
     <div className="mx-auto max-w-7xl space-y-10">
       <div>
-        <h1 className="text-4xl font-bold tracking-tight text-text-primary">People</h1>
+        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">People</h1>
         <p className="text-sm text-text-secondary">
           Search people, adjust claim status, or merge duplicates (credits move to the target; source row is removed).
         </p>

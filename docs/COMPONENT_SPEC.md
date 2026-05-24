@@ -211,6 +211,18 @@ Responsive: below 900px the rail collapses and horizontal padding reduces to 24p
 
 **Default:** Center column horizontal padding is `px-16` (64px). Legitimate exception: a full-bleed photo or map view that intentionally bleeds to the column edge.
 
+### Operational page shells (Embassy, Admin, token flows)
+
+Dense operational surfaces (embassy workspace, admin console, email token pages) reuse shared layout primitives instead of inventing per-page chrome:
+
+| Module | Path | Use |
+|---|---|---|
+| `EmbassyPageHeader` / `EmbassySectionLabel` | `src/features/embassy/components/embassy-ui.tsx` | Embassy routes: uppercase eyebrow, `text-3xl` title, tracked section labels, table head class |
+| `AdminPageHeader` / `AdminSectionLabel` / `AdminFormLabel` | `src/features/admin/components/admin-ui.tsx` | Admin routes: same head pattern; form fields use `AdminFormLabel` |
+| `TokenFlowLayout` | `src/components/layout/TokenFlowLayout.tsx` | Email deep links: centered logo, editorial headline, text primary CTAs |
+
+**Token assembly (operational heads):** eyebrow `text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary`; title `text-3xl font-bold tracking-tight leading-none text-text-primary`; table headers `text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary`. Tabs use hairline underline active state (`border-text-primary`), not filled pills. `rounded-sm` is permitted on dense controls per embassy/admin phases.
+
 ---
 
 ## 2. Card

@@ -181,12 +181,12 @@ export function AppTopNav() {
         <Link
           to="/"
           className="shrink-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border-default rounded-sm"
-          aria-label="Home"
+          aria-label="Plano · Home"
         >
-          <PlanoLogo className="text-xl text-text-primary" />
+          <PlanoLogo className="text-base text-text-primary" />
         </Link>
 
-        <nav className="flex items-center gap-5">
+        <nav className="flex items-center gap-[22px]">
           {topNavItems.map((item) => {
             const isActive = isNavItemActive(item, location.pathname);
             return (
@@ -224,7 +224,7 @@ export function AppTopNav() {
             >
               <Bell className="h-4 w-4" />
               {showBadge && (
-                <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-full bg-feedback-destructive border border-surface-default" />
+                <span className="absolute top-2 right-2 h-[7px] w-[7px] rounded-full bg-brand-accent border-[1.5px] border-surface-default" />
               )}
             </Link>
           </>

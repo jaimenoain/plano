@@ -336,7 +336,7 @@ export default function ProgrammeHealth() {
 
   return (
     <div className="space-y-8 p-4 sm:p-6 lg:p-8">
-      <h1 className="text-4xl font-bold tracking-tight text-text-primary">Programme Health</h1>
+      <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Programme Health</h1>
 
       {/* Pulse */}
       <section className="space-y-4">

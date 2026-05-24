@@ -154,7 +154,10 @@ export function AdminSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleSignOut}>
+            <SidebarMenuButton
+              onClick={handleSignOut}
+              className="text-feedback-destructive hover:text-feedback-destructive hover:bg-feedback-destructive/10"
+            >
               <LogOut />
               <span>Sign out</span>
             </SidebarMenuButton>

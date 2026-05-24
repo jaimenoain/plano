@@ -58,7 +58,7 @@ export function MultiSelectCheckboxList({
 
   return (
     <ScrollArea
-      className={cn("h-[200px] w-full border rounded-md p-2", className)}
+      className={cn("h-[200px] w-full border rounded-sm p-2", className)}
     >
       <div className="space-y-2">
         {items.map((item) => (

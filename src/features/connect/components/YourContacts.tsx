@@ -2,7 +2,7 @@
  * YourContacts.tsx — Redesigned with A24 editorial aesthetic
  *
  * Changes:
- *  - Section label: text-2xs uppercase tracking-widest (no Users icon)
+ *  - Section label: text-2xs uppercase tracking-[0.15em] (no Users icon)
  *  - Shadcn <Tabs> replaced with a custom metric tab strip identical to the
  *    Profile.tsx pattern: large bold count above a tiny uppercase label,
  *    border-b-2 active indicator, no filled pill background
@@ -153,7 +153,7 @@ export function YourContacts() {
   return (
     <div>
       {/* Section label */}
-      <p className="text-2xs font-medium tracking-widest uppercase text-text-secondary mb-6">
+      <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-6">
         Your contacts
       </p>
 
@@ -180,7 +180,7 @@ export function YourContacts() {
                 {tab.count.toLocaleString()}
               </div>
               <div
-                className={`text-2xs font-medium tracking-widest uppercase mt-0.5 ${
+                className={`text-2xs font-medium tracking-[0.15em] uppercase mt-0.5 ${
                   isActive ? "text-text-secondary" : "text-text-disabled"
                 }`}
               >

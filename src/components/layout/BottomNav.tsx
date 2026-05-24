@@ -12,7 +12,7 @@ export function BottomNav() {
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50 safe-area-pb border-t",
         isExplore
-          ? "bg-[#0A0A0A] border-white/10 backdrop-blur-xl" /* palette-neutral-950 */
+          ? "bg-surface-inverse border-white/10 backdrop-blur-xl"
           : "bg-surface-default border-border-default"
       )}
     >

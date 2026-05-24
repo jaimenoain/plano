@@ -53,7 +53,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
@@ -937,7 +936,7 @@ export default function Profile() {
                         <Link to="/settings" className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors">
                           Settings →
                         </Link>
-                        <button type="button" onClick={handleSignOut} className="inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-8 md:min-w-8 text-text-disabled hover:text-text-primary active:text-text-primary transition-colors" aria-label="Sign out">
+                        <button type="button" onClick={handleSignOut} className="inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-8 md:min-w-8 text-text-disabled hover:text-feedback-destructive active:text-feedback-destructive transition-colors" aria-label="Sign out">
                           <LogOut className="w-3.5 h-3.5" />
                         </button>
                       </>
@@ -1008,12 +1007,12 @@ export default function Profile() {
               {/* Followers / following — secondary row */}
               <div className="flex items-center gap-5">
                 <button onClick={() => openUserList("followers")} className="text-left hover:opacity-60 active:opacity-60 transition-opacity">
-                  <span className="text-sm font-semibold text-text-primary">{stats.followers}</span>
-                  <span className="text-xs text-text-disabled ml-1.5">followers</span>
+                  <span className="text-2xl font-bold tabular-nums leading-none text-text-primary">{stats.followers}</span>
+                  <span className="text-2xs font-medium uppercase tracking-[0.15em] text-text-disabled ml-2">followers</span>
                 </button>
                 <button onClick={() => openUserList("following")} className="text-left hover:opacity-60 active:opacity-60 transition-opacity">
-                  <span className="text-sm font-semibold text-text-primary">{stats.following}</span>
-                  <span className="text-xs text-text-disabled ml-1.5">following</span>
+                  <span className="text-2xl font-bold tabular-nums leading-none text-text-primary">{stats.following}</span>
+                  <span className="text-2xs font-medium uppercase tracking-[0.15em] text-text-disabled ml-2">following</span>
                 </button>
               </div>
             </div>
@@ -1042,8 +1041,8 @@ export default function Profile() {
 
         {isOwnProfile && claimedPersonForProfile ? (
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-            <div className="rounded-sm border border-border-default bg-surface-muted px-4 py-4 sm:px-5">
-              <p className="text-2xs font-medium uppercase tracking-widest text-text-secondary mb-2">
+            <div className="rounded-none border border-border-default bg-surface-muted px-4 py-4 sm:px-5">
+              <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary mb-2">
                 Professional profile
               </p>
               <Link
@@ -1079,12 +1078,12 @@ export default function Profile() {
                         <div className={`text-base font-bold tracking-tight leading-none ${isActive ? "text-text-primary" : "text-text-disabled"}`}>
                           {tab.count.toLocaleString()}
                         </div>
-                        <div className={`text-2xs font-medium tracking-widest uppercase mt-0.5 ${isActive ? "text-text-secondary" : "text-text-disabled"}`}>
+                        <div className={`text-2xs font-medium tracking-[0.15em] uppercase mt-0.5 ${isActive ? "text-text-secondary" : "text-text-disabled"}`}>
                           {tab.label}
                         </div>
                       </>
                     ) : (
-                      <div className={`text-xs font-medium tracking-widest uppercase leading-none py-1 ${isActive ? "text-text-primary" : "text-text-disabled"}`}>
+                      <div className={`text-xs font-medium tracking-[0.15em] uppercase leading-none py-1 ${isActive ? "text-text-primary" : "text-text-disabled"}`}>
                         {tab.label}
                       </div>
                     )}
@@ -1109,13 +1108,19 @@ export default function Profile() {
                       : "View this member’s credited work on their public professional profile."}
                   </p>
                   {isOwnProfile ? (
-                    <Button asChild size="lg" className="min-w-[220px]">
-                      <Link to="/portfolio">Open portfolio dashboard</Link>
-                    </Button>
+                    <Link
+                      to="/portfolio"
+                      className="inline-block text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
+                    >
+                      Open portfolio dashboard →
+                    </Link>
                   ) : (
-                    <Button asChild size="lg" variant="outline" className="min-w-[220px]">
-                      <Link to={`/person/${claimedPersonForProfile.slug}`}>View public portfolio</Link>
-                    </Button>
+                    <Link
+                      to={`/person/${claimedPersonForProfile.slug}`}
+                      className="inline-block text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
+                    >
+                      View public portfolio →
+                    </Link>
                   )}
                 </div>
               </WidgetErrorBoundary>
@@ -1207,7 +1212,7 @@ export default function Profile() {
                                 <ProfileKanbanView kanbanData={kanbanData} showCommunityImages={showCommunityImages} updatingItemId={updatingItemId} isDragEnabled={isOwnProfile} />
                                 <DragOverlay dropAnimation={null}>
                                   {activeId ? (
-                                    <div className="w-[280px] scale-105 shadow-lg z-50 cursor-grabbing bg-surface-card border border-border-default overflow-hidden opacity-90">
+                                    <div className="w-[280px] scale-105 z-50 cursor-grabbing border border-border-default bg-surface-default overflow-hidden opacity-95">
                                       {(() => {
                                       const activeItem = content.find((i) => i.id === activeId);
                                       return activeItem ? (
@@ -1258,7 +1263,7 @@ export default function Profile() {
                     <CollectionsGrid userId={targetUserId} username={profile?.username || null} isOwnProfile={isOwnProfile} onCreate={isOwnProfile ? () => setShowCreateCollection(true) : undefined} refreshKey={collectionsRefreshKey} />
                     <DragOverlay dropAnimation={null}>
                       {activeCollectionData ? (
-                        <div className="inline-block cursor-grabbing overflow-hidden border border-border-default bg-surface-card opacity-90 shadow-lg">
+                        <div className="inline-block cursor-grabbing overflow-hidden border border-border-default bg-surface-default opacity-95">
                           <div className="flex h-[120px] w-[min(92vw,280px)] flex-col justify-between p-5">
                             <h4 className="line-clamp-2 text-base font-semibold leading-tight tracking-tight text-text-primary">{activeCollectionData.name}</h4>
                           </div>

@@ -11,7 +11,7 @@ export const LandingHero = () => {
 
         {/* Eyebrow label */}
         <motion.p
-          className="text-[11px] font-medium tracking-[0.2em] uppercase text-text-disabled mb-8"
+          className="mb-8 text-[11px] font-medium uppercase tracking-[0.2em] text-text-disabled"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
@@ -21,19 +21,19 @@ export const LandingHero = () => {
 
         {/* Headline */}
         <motion.h1
-          className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-text-primary leading-[1.05] mb-8"
+          className="mb-8 text-[clamp(2.75rem,7vw,5.5rem)] font-bold tracking-[-0.035em] text-text-primary leading-[0.98]"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
         >
-          The world's
+          The world&apos;s
           <br />
           architecture database.
         </motion.h1>
 
         {/* Subheadline */}
         <motion.p
-          className="text-base md:text-xl text-text-secondary max-w-2xl leading-relaxed mb-12"
+          className="mb-12 max-w-[40rem] text-[clamp(0.9375rem,1.4vw,1.1875rem)] leading-[1.6] text-text-secondary"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
@@ -58,7 +58,7 @@ export const LandingHero = () => {
 
         {/* Feature triptych */}
         <motion.div
-          className="flex items-center gap-4 md:gap-8 mt-12 text-xs font-medium tracking-[0.15em] uppercase text-text-disabled"
+          className="mt-12 flex items-center gap-6 text-[11px] font-medium uppercase tracking-[0.15em] text-text-disabled md:gap-8"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.5 }}

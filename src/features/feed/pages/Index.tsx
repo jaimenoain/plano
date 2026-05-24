@@ -54,12 +54,12 @@ function Landing() {
       <main className="flex-1 w-full min-w-0 overflow-x-hidden">
         <LandingHero />
         <LandingMarquee />
-        <section className="max-w-5xl mx-auto py-24 px-5 md:px-8">
-          <div className="mb-16 space-y-3">
-            <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-text-disabled">
-              What we're building
+        <section className="mx-auto max-w-[1080px] px-5 py-[120px] md:px-8">
+          <div className="mb-20 space-y-3.5">
+            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-text-disabled">
+              What we&apos;re building
             </p>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-text-primary max-w-xl">
+            <h2 className="max-w-xl text-[clamp(1.875rem,4.2vw,3rem)] font-bold leading-[1.05] tracking-[-0.025em] text-text-primary">
               A permanent record of the built world.
             </h2>
           </div>
@@ -152,7 +152,7 @@ function Feed() {
   return (
     <AppLayout>
       <div className="mx-auto flex w-full max-w-[1080px] items-start gap-10 px-5 pb-24 pt-10 md:gap-14 md:px-8">
-        <main className="min-w-0 flex-1">
+        <main className="min-w-0 flex-1 border-r border-border-default pr-10 md:pr-14">
           <header className="mb-8 flex items-baseline justify-between border-b border-text-primary pb-2.5">
             <h1 className="m-0 text-[11px] font-medium uppercase tracking-[0.15em] text-text-primary">
               <span className="mr-2.5 font-mono text-text-disabled">§ 01</span>
@@ -164,7 +164,7 @@ function Feed() {
             <FeedSkeleton />
           ) : isError ? (
             <div
-              className="rounded-none border border-border-default bg-surface-card px-6 py-12 text-center space-y-4"
+              className="space-y-4 border-t border-border-default py-16 text-center"
               role="alert"
             >
               <p className="text-sm text-text-secondary">
@@ -180,7 +180,7 @@ function Feed() {
               </Button>
             </div>
           ) : reviews.length === 0 ? (
-            <div className="rounded-none border border-border-default bg-surface-card px-6 py-12 text-center">
+            <div className="border-t border-border-default py-16 text-center">
               <p className="text-sm text-text-secondary">
                 No posts yet. Follow people or share a building visit to fill your feed.
               </p>

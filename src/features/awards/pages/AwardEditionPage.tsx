@@ -42,7 +42,7 @@ export default function AwardEditionPage() {
     <AppLayout showBack title={`${award.name} ${displayLabel}`} showHeader>
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <header className="mb-12">
-          <nav className="flex items-center gap-1.5 text-2xs font-bold uppercase tracking-widest text-text-secondary mb-6">
+          <nav className="flex items-center gap-1.5 text-2xs font-bold uppercase tracking-[0.15em] text-text-secondary mb-6">
             <Link to="/" className="hover:text-text-primary">Home</Link>
             <ChevronRight className="w-3 h-3" />
             <Link to={`/award/${award.slug}`} className="hover:text-text-primary truncate max-w-[200px]">
@@ -87,7 +87,7 @@ export default function AwardEditionPage() {
             categories.map((categoryName) => (
               <section key={categoryName}>
                 {categoryName !== 'Main Award' && (
-                  <h2 className="mb-6 text-xs font-medium uppercase tracking-widest text-text-secondary border-b border-border-default pb-3">
+                  <h2 className="mb-6 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary border-b border-border-default pb-3">
                     {categoryName}
                   </h2>
                 )}

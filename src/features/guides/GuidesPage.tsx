@@ -18,7 +18,7 @@ import { getCountryUrl } from '@/utils/url';
 function CardSkeleton({ aspectRatio = '4/3' }: { aspectRatio?: string }) {
   return (
     <div
-      className="rounded-sm bg-surface-muted animate-pulse"
+      className="rounded-none bg-surface-muted animate-pulse"
       style={{ aspectRatio }}
     />
   );
@@ -27,10 +27,10 @@ function CardSkeleton({ aspectRatio = '4/3' }: { aspectRatio?: string }) {
 function CollectionSkeleton() {
   return (
     <div className="border-b border-border-default pb-6 last:border-0 space-y-3">
-      <div className="rounded-sm bg-surface-muted animate-pulse" style={{ aspectRatio: '16/7' }} />
+      <div className="rounded-none bg-surface-muted animate-pulse" style={{ aspectRatio: '16/7' }} />
       <div className="space-y-1.5">
-        <div className="h-4 bg-surface-muted rounded-sm animate-pulse w-3/4" />
-        <div className="h-3 bg-surface-muted rounded-sm animate-pulse w-1/2" />
+        <div className="h-4 bg-surface-muted rounded-none animate-pulse w-3/4" />
+        <div className="h-3 bg-surface-muted rounded-none animate-pulse w-1/2" />
       </div>
     </div>
   );
@@ -40,7 +40,7 @@ function CollectionSkeleton() {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
+    <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
       {children}
     </p>
   );

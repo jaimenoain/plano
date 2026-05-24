@@ -87,7 +87,7 @@ export function AwardLeaderboardDialog({
                         {b.building_name}
                       </Link>
                       {b.win_count > 0 && (
-                        <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-500/20 gap-1 px-1.5 py-0">
+                        <Badge variant="secondary" className="bg-surface-muted text-text-secondary border-border-default gap-1 px-1.5 py-0">
                           <Medal className="h-3 w-3" />
                           {b.win_count}
                         </Badge>

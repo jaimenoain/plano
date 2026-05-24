@@ -10,7 +10,7 @@
  *
  * Section labels ("New" / "Earlier"):
  *   text-xs font-semibold bg-surface-card/95 sticky → text-2xs font-medium
- *   tracking-widest uppercase text-text-secondary sticky bg-surface-default.
+ *   tracking-[0.15em] uppercase text-text-secondary sticky bg-surface-default.
  *   Matches the section label pattern used across the rest of the app.
  *
  * Notification rows:
@@ -647,7 +647,7 @@ export default function Notifications() {
               {/* ── New ── */}
               {newNotifications.length > 0 && (
                 <div>
-                  <p className="px-4 sm:px-6 pt-8 pb-3 text-2xs font-medium tracking-widest uppercase text-text-secondary sticky top-0 bg-surface-default z-10">
+                  <p className="px-4 sm:px-6 pt-8 pb-3 text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary sticky top-0 bg-surface-default z-10">
                     New
                   </p>
                   {renderNotificationList(newNotifications)}
@@ -659,7 +659,7 @@ export default function Notifications() {
                 <div>
                   <p
                     className={cn(
-                      "px-4 sm:px-6 pb-3 text-2xs font-medium tracking-widest uppercase text-text-secondary sticky top-0 bg-surface-default z-10",
+                      "px-4 sm:px-6 pb-3 text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary sticky top-0 bg-surface-default z-10",
                       newNotifications.length > 0 ? "pt-8" : "pt-8"
                     )}
                   >
@@ -676,7 +676,7 @@ export default function Notifications() {
                     type="button"
                     onClick={handleLoadMore}
                     disabled={loadingMore}
-                    className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity disabled:opacity-30 flex items-center gap-2"
+                    className="text-xs font-medium uppercase tracking-[0.15em] text-text-primary hover:opacity-60 transition-opacity disabled:opacity-30 flex items-center gap-2"
                   >
                     {loadingMore && (
                       <Loader2 className="h-3 w-3 animate-spin" />

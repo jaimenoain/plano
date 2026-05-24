@@ -101,9 +101,12 @@ export function ErrorBoundary() {
             ) : null}
             . The link may be wrong or the page was removed.
           </p>
-          <Button asChild size="lg" variant="default" className="min-w-[200px]">
-            <Link to="/explore">Browse buildings</Link>
-          </Button>
+          <Link
+            to="/explore"
+            className="text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
+          >
+            Browse buildings →
+          </Link>
         </div>
       </AppLayout>
     );
@@ -132,7 +135,7 @@ function CreditTierSection({
   if (credits.length === 0) return null;
   return (
     <section className="mt-12 first:mt-0">
-      <h2 className="mb-6 text-xs font-medium uppercase tracking-widest text-text-secondary">
+      <h2 className="mb-6 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
         {tierLabel(tier)} credits
       </h2>
       <div>
@@ -282,21 +285,19 @@ export default function PersonDetails() {
         </header>
 
         {showUnclaimedBanner ? (
-          <div className="mt-10 rounded-sm border border-border-default bg-surface-muted px-4 py-4 sm:px-5">
+          <div className="mt-10 rounded-none border border-border-default bg-surface-muted px-4 py-4 sm:px-5">
             <p className="mb-2 text-sm font-medium text-text-primary">This profile hasn&apos;t been claimed yet</p>
             <p className="mb-3 text-sm text-text-secondary">
               If this is you or you represent this person, you can link this profile to your Plano account.
             </p>
             {user ? (
-              <Button
+              <button
                 type="button"
-                variant="default"
-                size="default"
-                className="text-xs font-medium uppercase tracking-widest"
+                className="text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
                 onClick={() => setClaimOpen(true)}
               >
-                Claim this profile
-              </Button>
+                Claim this profile →
+              </button>
             ) : (
               <Link
                 to={`/auth?redirect=${encodeURIComponent(`/person/${slug}`)}`}
@@ -311,7 +312,7 @@ export default function PersonDetails() {
         <PersonAwardsSection personId={person.id} personName={person.name} />
 
         <div className="mt-12">
-          <h2 className="mb-2 text-xs font-medium uppercase tracking-widest text-text-secondary">Credits</h2>
+          <h2 className="mb-2 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">Credits</h2>
           {credits.length === 0 ? (
             <p className="mt-4 text-sm text-text-secondary">No public credits on Plano yet.</p>
           ) : (

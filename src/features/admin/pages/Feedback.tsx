@@ -7,7 +7,7 @@ export default function FeedbackAdminPage() {
   return (
     <div className="space-y-4 p-6">
       <div>
-        <h1 className="text-xl font-semibold text-text-primary">Feedback</h1>
+        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Feedback</h1>
         <p className="text-sm text-text-secondary">
           Review and triage user feedback.
         </p>

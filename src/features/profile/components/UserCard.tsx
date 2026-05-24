@@ -189,7 +189,7 @@ export function UserCard({
 function StatItem({ label, value, onClick }: { label: string, value: number, onClick: () => void }) {
     return (
         <button onClick={onClick} className="flex flex-col md:flex-row items-center gap-1 group">
-            <span className="text-xl font-semibold text-text-primary group-hover:text-brand-primary transition-colors">
+            <span className="text-xl font-semibold text-text-primary group-hover:text-text-secondary transition-colors">
                 {formatStatValue(value)}
             </span>
             <span className="text-xs text-text-secondary capitalize">

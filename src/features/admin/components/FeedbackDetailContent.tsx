@@ -197,7 +197,7 @@ export function FeedbackDetailContent({
           </p>
           {readOnly ? (
             row.needs_user_input ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-800">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-feedback-warning/10 px-2.5 py-1 text-xs font-semibold text-feedback-warning">
                 Needs your input
               </span>
             ) : (
@@ -211,8 +211,8 @@ export function FeedbackDetailContent({
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-all",
                 row.needs_user_input
-                  ? "bg-amber-500/15 text-amber-800 ring-2 ring-amber-500/30 ring-offset-1"
-                  : "bg-surface-muted text-text-disabled hover:bg-amber-500/10 hover:text-amber-800",
+                  ? "bg-feedback-warning/10 text-feedback-warning ring-2 ring-feedback-warning/30 ring-offset-1"
+                  : "bg-surface-muted text-text-disabled hover:bg-feedback-warning/10 hover:text-feedback-warning",
               )}
             >
               Needs user input

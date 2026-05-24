@@ -281,7 +281,7 @@ export default function AdminCompanies() {
   return (
     <div className="mx-auto max-w-7xl space-y-10">
       <div>
-        <h1 className="text-4xl font-bold tracking-tight text-text-primary">Companies</h1>
+        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Companies</h1>
         <p className="text-sm text-text-secondary">
           Search companies, adjust claim status, inspect stewards, or merge duplicates (credits and stewards consolidate
           into the target; source company is removed).

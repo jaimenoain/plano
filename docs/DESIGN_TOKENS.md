@@ -38,7 +38,7 @@ When any of these drift, update them in the same task. Do not defer sync.
 
 **Single-column editorial layout:** Content detail pages (building detail, profile, architect profile) use a single-column `max-w-4xl` layout. No right sidebars on content pages. The sidebar pattern is restricted to admin and settings contexts.
 
-**CTA pattern:** In editorial contexts, calls to action are rendered as uppercase tracked text with a `→` arrow — never a filled button. Format: `text-xs font-medium uppercase tracking-widest`. On hover, the label text dims to `text-secondary` and the `→` arrow remains `text-primary`. This applies to all in-page action links (review, save, follow, directions, etc.) outside of modal and form contexts.
+**CTA pattern:** In editorial contexts, calls to action are rendered as uppercase tracked text with a `→` arrow — never a filled button. Format: `text-xs font-medium uppercase tracking-widest` (operational shells may use `tracking-[0.15em]` for section labels — see `embassy-ui` / `admin-ui`). On hover, the label text dims to `text-secondary` and the `→` arrow remains `text-primary`. This applies to all in-page action links (review, save, follow, directions, etc.) outside of modal and form contexts.
 
 **App shell:** The application uses a **horizontal sticky top navigation bar** (logo + nav links + search + primary CTA + bell + avatar), not a left sidebar. The body is a two-column grid: a fluid center feed column and a 320px sticky right rail.
 

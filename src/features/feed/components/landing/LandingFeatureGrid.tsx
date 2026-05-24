@@ -41,7 +41,7 @@ const features = [
 
 export const LandingFeatureGrid = () => {
   return (
-    <div className="grid grid-cols-1 gap-16 md:grid-cols-3 md:gap-10">
+    <div className="grid grid-cols-1 gap-16 md:grid-cols-3 md:gap-10 lg:gap-[2.5rem]">
       {features.map(({ tag, icon: Icon, title, description, items }) => (
         <div key={tag} className="space-y-8">
           {/* Header */}

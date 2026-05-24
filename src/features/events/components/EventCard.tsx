@@ -27,7 +27,7 @@ export function EventCardSkeleton({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "flex gap-4 rounded-sm border border-border-default bg-surface-card p-4 animate-pulse",
+        "flex gap-4 py-5 animate-pulse",
         className,
       )}
     >
@@ -49,7 +49,7 @@ export function EventCard({ event }: { event: EventCardDTO }) {
   return (
     <Link
       to={getEventUrl(event)}
-      className="flex min-h-11 touch-manipulation gap-4 rounded-sm border border-border-default bg-surface-card p-4 transition-colors hover:bg-surface-muted active:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
+      className="flex min-h-11 touch-manipulation gap-4 px-1 py-5 transition-colors hover:bg-surface-muted/50 active:bg-surface-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
     >
       <div className="min-w-0 flex-1 space-y-2 py-1">
         <div className="flex flex-wrap items-start gap-2">

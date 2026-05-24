@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { AdminPageHeader, adminTableHeadClass } from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 interface Report {
   id: string;
@@ -176,21 +178,19 @@ toast.error("Failed to delete content");
   };
 
   return (
-    <div className="space-y-6 p-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-4xl font-bold tracking-tight text-text-primary">Moderation Queue</h1>
-      </div>
+    <div className="space-y-6">
+      <AdminPageHeader eyebrow="Moderation" title="Queue" description="Review and resolve user reports." />
 
       <div className="rounded-sm border border-border-default bg-surface-card">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Type</TableHead>
-              <TableHead>Reason</TableHead>
-              <TableHead>Content Snippet</TableHead>
-              <TableHead>Reporter</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className={adminTableHeadClass}>Type</TableHead>
+              <TableHead className={adminTableHeadClass}>Reason</TableHead>
+              <TableHead className={adminTableHeadClass}>Content</TableHead>
+              <TableHead className={adminTableHeadClass}>Reporter</TableHead>
+              <TableHead className={adminTableHeadClass}>Date</TableHead>
+              <TableHead className={cn(adminTableHeadClass, "text-right")}>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

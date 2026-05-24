@@ -44,7 +44,9 @@ import {
 } from "@/components/ui/table";
 import { Loader2, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { embassyTableHeadClass } from "@/features/embassy/components/embassy-ui";
 
 const inviteSchema = z
   .object({
@@ -359,15 +361,15 @@ export function EmbassyLeadership({ chapterId, currentUserId, isPresident }: Emb
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Member</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead className="text-right">Edits</TableHead>
-                  <TableHead className="text-right">Photos</TableHead>
-                  <TableHead className="text-right">Visits</TableHead>
-                  <TableHead className="text-right">Moderation</TableHead>
-                  <TableHead className="text-right">Outreach</TableHead>
-                  <TableHead className="text-right font-semibold">Points</TableHead>
-                  <TableHead>Last active</TableHead>
+                  <TableHead className={embassyTableHeadClass}>Member</TableHead>
+                  <TableHead className={embassyTableHeadClass}>Role</TableHead>
+                  <TableHead className={cn(embassyTableHeadClass, "text-right")}>Edits</TableHead>
+                  <TableHead className={cn(embassyTableHeadClass, "text-right")}>Photos</TableHead>
+                  <TableHead className={cn(embassyTableHeadClass, "text-right")}>Visits</TableHead>
+                  <TableHead className={cn(embassyTableHeadClass, "text-right")}>Moderation</TableHead>
+                  <TableHead className={cn(embassyTableHeadClass, "text-right")}>Outreach</TableHead>
+                  <TableHead className={cn(embassyTableHeadClass, "text-right")}>Points</TableHead>
+                  <TableHead className={embassyTableHeadClass}>Last active</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -436,13 +438,15 @@ export function EmbassyLeadership({ chapterId, currentUserId, isPresident }: Emb
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Member</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>ExCo area</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Joined</TableHead>
-                  {isPresident ? <TableHead className="text-right">Actions</TableHead> : null}
+                  <TableHead className={embassyTableHeadClass}>Member</TableHead>
+                  <TableHead className={embassyTableHeadClass}>Email</TableHead>
+                  <TableHead className={embassyTableHeadClass}>Role</TableHead>
+                  <TableHead className={embassyTableHeadClass}>ExCo area</TableHead>
+                  <TableHead className={embassyTableHeadClass}>Status</TableHead>
+                  <TableHead className={embassyTableHeadClass}>Joined</TableHead>
+                  {isPresident ? (
+                    <TableHead className={cn(embassyTableHeadClass, "text-right")}>Actions</TableHead>
+                  ) : null}
                 </TableRow>
               </TableHeader>
               <TableBody>

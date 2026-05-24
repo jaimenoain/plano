@@ -10,9 +10,9 @@ export function PulseZone({ stats }: PulseZoneProps) {
   return (
     <div className="grid gap-4 md:grid-cols-4">
       {/* User Metrics */}
-      <Card>
+      <Card className="border-border-default shadow-none">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+          <CardTitle className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Total users</CardTitle>
           <Users className="h-4 w-4 text-text-secondary" />
         </CardHeader>
         <CardContent>
@@ -21,9 +21,9 @@ export function PulseZone({ stats }: PulseZoneProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-border-default shadow-none">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">New Users</CardTitle>
+          <CardTitle className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">New Users</CardTitle>
           <UserPlus className="h-4 w-4 text-text-secondary" />
         </CardHeader>
         <CardContent>
@@ -33,9 +33,9 @@ export function PulseZone({ stats }: PulseZoneProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-border-default shadow-none">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+          <CardTitle className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Active Users</CardTitle>
           <Activity className="h-4 w-4 text-text-secondary" />
         </CardHeader>
         <CardContent>
@@ -47,9 +47,9 @@ export function PulseZone({ stats }: PulseZoneProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-border-default shadow-none">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Network Density</CardTitle>
+          <CardTitle className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Network Density</CardTitle>
           <Share2 className="h-4 w-4 text-text-secondary" />
         </CardHeader>
         <CardContent>
@@ -59,9 +59,9 @@ export function PulseZone({ stats }: PulseZoneProps) {
       </Card>
 
       {/* Content Metrics */}
-      <Card>
+      <Card className="border-border-default shadow-none">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Buildings</CardTitle>
+          <CardTitle className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Total Buildings</CardTitle>
           <Building2 className="h-4 w-4 text-text-secondary" />
         </CardHeader>
         <CardContent>
@@ -70,9 +70,9 @@ export function PulseZone({ stats }: PulseZoneProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-border-default shadow-none">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Text logs</CardTitle>
+          <CardTitle className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Text logs</CardTitle>
           <MessageSquare className="h-4 w-4 text-text-secondary" />
         </CardHeader>
         <CardContent>
@@ -83,9 +83,9 @@ export function PulseZone({ stats }: PulseZoneProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="border-border-default shadow-none">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Buildings with hero image</CardTitle>
+          <CardTitle className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Buildings with hero image</CardTitle>
           <Image className="h-4 w-4 text-text-secondary" />
         </CardHeader>
         <CardContent>
@@ -95,9 +95,9 @@ export function PulseZone({ stats }: PulseZoneProps) {
       </Card>
 
       {/* System Health */}
-      <Card>
+      <Card className="border-border-default shadow-none">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Pending Reports</CardTitle>
+          <CardTitle className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Pending Reports</CardTitle>
           <AlertCircle className={`h-4 w-4 ${stats.pending_reports > 0 ? "text-feedback-destructive" : "text-text-secondary"}`} />
         </CardHeader>
         <CardContent>

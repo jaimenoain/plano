@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Link, type MetaFunction } from "react-router";
-import { ArrowLeft, Loader2, Upload, Lock, Mail, Smartphone, Download, Database, LayoutTemplate, MessageSquare } from "lucide-react";
+import { Loader2, Upload, Mail, Download } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import { sanitizeUsername } from "@/lib/utils";
 import { profileUpdateSchema } from "@/lib/validations/profile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import { usePwaInstall } from "@/hooks/usePwaInstall";
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { LocationInput } from "@/components/ui/LocationInput";
@@ -435,26 +434,28 @@ toast({
       <NavigationBlocker isDirty={isDirty} />
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="max-w-2xl mx-auto">
-        <Button 
-          variant="ghost" 
-          className="mb-6 pl-0 hover:bg-transparent" 
+        <button
+          type="button"
           onClick={() => navigate("/profile")}
+          className="mb-8 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors hover:text-text-primary"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Profile
-        </Button>
+          ← Back to profile
+        </button>
 
-        <h1 className="text-4xl font-bold tracking-tight leading-tight text-text-primary mb-8">
+        <h1 className="mb-2 text-3xl font-bold tracking-tight leading-none text-text-primary sm:text-4xl">
           Settings
         </h1>
+        <p className="mb-10 text-sm text-text-secondary">
+          Account, profile, and privacy preferences.
+        </p>
 
-        <div className="mb-8">
-          <Button variant="outline" className="w-full justify-start gap-2" asChild>
-            <Link to="/feedback">
-              <MessageSquare className="h-4 w-4" />
-              Feedback history
-            </Link>
-          </Button>
+        <div className="mb-10 border-b border-border-default pb-10">
+          <Link
+            to="/feedback"
+            className="text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
+          >
+            Feedback history →
+          </Link>
         </div>
 
         <div className="flex flex-col items-center mb-8">
@@ -489,7 +490,7 @@ toast({
         <form onSubmit={handleUpdateProfile} className="space-y-6">
           {/* Public Profile Section */}
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-text-primary mb-6">Public Profile</h2>
+            <h2 className="mb-6 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Public profile</h2>
             
             <div className="space-y-1.5">
               <Label htmlFor="username">Username</Label>
@@ -536,24 +537,23 @@ toast({
 
           {/* Profile Content Section */}
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-text-primary mb-6 flex items-center gap-2">
-              <LayoutTemplate className="h-4 w-4" /> Profile Customization
+            <h2 className="mb-6 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+              Profile customization
             </h2>
-            <div className="p-4 border border-border-default rounded-sm bg-surface-card text-text-primary shadow-none space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-0 divide-y divide-border-default border-y border-border-default">
+              <div className="flex flex-wrap items-center justify-between gap-3 py-5">
                 <div className="min-w-0 flex-1">
-                   <h3 className="font-medium text-text-primary">All-time Favourites</h3>
+                   <h3 className="font-medium text-text-primary">All-time favourites</h3>
                    <p className="text-sm text-text-secondary">Select up to 6 buildings to showcase on your profile.</p>
                 </div>
-                <Button type="button" variant="outline" className="shrink-0" onClick={() => setShowManageFavorites(true)}>Manage</Button>
+                <Button type="button" variant="outline" className="shrink-0 rounded-sm" onClick={() => setShowManageFavorites(true)}>Manage</Button>
               </div>
-              <Separator />
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 py-5">
                 <div className="min-w-0 flex-1">
                    <h3 className="font-medium text-text-primary">Highlights</h3>
                    <p className="text-sm text-text-secondary">Add favorite styles, people, and quotes.</p>
                 </div>
-                <Button type="button" variant="outline" className="shrink-0" onClick={() => setShowManageHighlights(true)}>Manage</Button>
+                <Button type="button" variant="outline" className="shrink-0 rounded-sm" onClick={() => setShowManageHighlights(true)}>Manage</Button>
               </div>
             </div>
           </div>
@@ -562,21 +562,19 @@ toast({
             <>
               <div className="mt-12 border-t border-border-default pt-8" />
               <div className="space-y-4">
-                <h2 className="text-xl font-semibold text-text-primary mb-6 flex items-center gap-2">
-                  <Smartphone className="h-4 w-4" /> App Experience
+                <h2 className="mb-6 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+                  App experience
                 </h2>
-                <div className="p-4 border border-border-default rounded-sm bg-surface-card text-text-primary shadow-none">
-                   <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-y border-border-default py-5">
                       <div className="min-w-0 flex-1">
-                        <h3 className="font-medium text-text-primary">Install App</h3>
+                        <h3 className="font-medium text-text-primary">Install app</h3>
                         <p className="text-sm text-text-secondary">
                           Add Plano to your home screen for easier access.
                         </p>
                       </div>
-                      <Button type="button" variant="outline" className="shrink-0" onClick={promptInstall}>
+                      <Button type="button" variant="outline" className="shrink-0 rounded-sm" onClick={promptInstall}>
                         Install
                       </Button>
-                   </div>
                 </div>
               </div>
             </>
@@ -586,8 +584,8 @@ toast({
 
           {/* Account Security Section */}
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-text-primary mb-6 flex items-center gap-2">
-              <Lock className="h-4 w-4" /> Account & Security
+            <h2 className="mb-6 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+              Account &amp; security
             </h2>
 
             <div className="space-y-1.5">
@@ -645,13 +643,12 @@ toast({
 
           {/* Data & Privacy Section */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-text-primary mb-6 flex items-center gap-2">
-              <Database className="h-4 w-4" /> Data & Privacy
+            <h2 className="mb-6 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+              Data &amp; privacy
             </h2>
-            <div className="p-4 border border-border-default rounded-sm bg-surface-card text-text-primary shadow-none">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-y border-border-default py-5">
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-medium text-text-primary">Download My Data</h3>
+                  <h3 className="font-medium text-text-primary">Download my data</h3>
                   <p className="text-sm text-text-secondary">
                     Export your ratings, reviews, and bucket list to a CSV file.
                   </p>
@@ -659,7 +656,7 @@ toast({
                 <Button
                   type="button"
                   variant="outline"
-                  className="shrink-0"
+                  className="shrink-0 rounded-sm"
                   onClick={handleExportData}
                   disabled={exporting}
                 >
@@ -670,7 +667,6 @@ toast({
                   )}
                   Export
                 </Button>
-              </div>
             </div>
           </div>
 

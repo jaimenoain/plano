@@ -187,7 +187,7 @@ function RecentTab() {
               type="button"
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="mt-6 text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity disabled:opacity-30"
+              className="mt-6 text-xs font-medium uppercase tracking-[0.15em] text-text-primary hover:opacity-60 transition-opacity disabled:opacity-30"
             >
               {isFetchingNextPage ? "Loading…" : "Show more →"}
             </button>
@@ -228,7 +228,7 @@ function LeaderboardTab() {
     <div className="space-y-10">
       {/* Award selector */}
       <div className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-widest text-text-secondary">
+        <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
           Filter by award
         </p>
         <AwardFilterSelect
@@ -240,7 +240,7 @@ function LeaderboardTab() {
 
       {/* Buildings */}
       <div className="space-y-3">
-        <h3 className="text-xs font-medium uppercase tracking-widest text-text-secondary">
+        <h3 className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
           Buildings
         </h3>
         {buildingsLoading ? (
@@ -268,7 +268,7 @@ function LeaderboardTab() {
                 <span
                   className={cn(
                     "w-7 text-center text-sm font-bold shrink-0",
-                    i === 0 ? "text-amber-500" : "text-text-secondary",
+                    i === 0 ? "text-text-primary" : "text-text-secondary",
                   )}
                 >
                   {i + 1}
@@ -301,7 +301,7 @@ function LeaderboardTab() {
                   {b.win_count > 0 && (
                     <Badge
                       variant="secondary"
-                      className="bg-amber-500/10 text-amber-600 border-amber-500/20 gap-1 px-1.5 py-0 text-[10px]"
+                      className="bg-surface-muted text-text-secondary border-border-default gap-1 px-1.5 py-0 text-[10px]"
                     >
                       <Medal className="h-2.5 w-2.5" />
                       {b.win_count}
@@ -319,7 +319,7 @@ function LeaderboardTab() {
 
       {/* People */}
       <div className="space-y-3">
-        <h3 className="text-xs font-medium uppercase tracking-widest text-text-secondary">
+        <h3 className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
           People
         </h3>
         {peopleLoading ? (
@@ -347,7 +347,7 @@ function LeaderboardTab() {
                 <span
                   className={cn(
                     "w-7 text-center text-sm font-bold shrink-0",
-                    i === 0 ? "text-amber-500" : "text-text-secondary",
+                    i === 0 ? "text-text-primary" : "text-text-secondary",
                   )}
                 >
                   {i + 1}
@@ -372,7 +372,7 @@ function LeaderboardTab() {
                 {p.win_count > 0 && (
                   <Badge
                     variant="secondary"
-                    className="bg-amber-500/10 text-amber-600 border-amber-500/20 gap-1 px-1.5 py-0 text-[10px] shrink-0"
+                    className="bg-surface-muted text-text-secondary border-border-default gap-1 px-1.5 py-0 text-[10px] shrink-0"
                   >
                     <Medal className="h-2.5 w-2.5" />
                     {p.win_count}
@@ -501,7 +501,7 @@ function RightRail({
             <p className="text-2xl font-bold text-text-primary">
               {stats.awardCount}
             </p>
-            <p className="text-2xs uppercase tracking-widest text-text-secondary mt-1">
+            <p className="text-2xs uppercase tracking-[0.15em] text-text-secondary mt-1">
               Awards tracked
             </p>
           </div>
@@ -509,7 +509,7 @@ function RightRail({
             <p className="text-2xl font-bold text-text-primary">
               {stats.recipientCount.toLocaleString()}
             </p>
-            <p className="text-2xs uppercase tracking-widest text-text-secondary mt-1">
+            <p className="text-2xs uppercase tracking-[0.15em] text-text-secondary mt-1">
               Recipients
             </p>
           </div>
@@ -520,7 +520,7 @@ function RightRail({
       {topBuildings.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
+            <h3 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
               Most awarded buildings
             </h3>
             <button
@@ -567,7 +567,7 @@ function RightRail({
       {topPeople.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
+            <h3 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
               Most awarded people
             </h3>
             <button
@@ -607,7 +607,7 @@ function RightRail({
       {prestigiousAwards.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
+            <h3 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
               Prestigious awards
             </h3>
             <button

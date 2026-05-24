@@ -188,7 +188,7 @@ interface LocalityStats {
 // ---------------------------------------------------------------------------
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
+    <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
       {children}
     </h2>
   );
@@ -647,7 +647,7 @@ function StewardCard({
       </Avatar>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-          <span className="truncate text-sm font-medium text-text-primary transition-colors group-hover:text-brand-primary">
+          <span className="truncate text-sm font-medium text-text-primary transition-colors group-hover:text-text-secondary">
             {steward.username}
           </span>
           {steward.isAmbassador ? (
@@ -764,7 +764,7 @@ function LocalityEvents({
 
               {/* Event info */}
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-text-primary transition-colors group-hover:text-brand-primary">
+                <p className="text-sm font-medium text-text-primary transition-colors group-hover:text-text-secondary">
                   {event.name}
                 </p>
                 <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -821,31 +821,31 @@ function CollectionPreviewMosaic({
     <>
       {/* Mobile: single hero — avoids ~50px thumbnail strip beside a 2fr/1fr grid */}
       <div className="aspect-[4/3] w-full overflow-hidden bg-surface-muted md:hidden">
-        <img src={mainSrc} alt={name} className="h-full w-full object-cover" />
+        <img src={mainSrc} alt={name} className="h-full w-full rounded-none object-cover" />
       </div>
 
-      <div className="hidden aspect-[4/3] w-full grid-cols-[2fr_1fr] gap-0.5 overflow-hidden bg-surface-muted md:grid">
-        <div className="overflow-hidden">
-          <img src={mainSrc} alt={name} className="h-full w-full object-cover" />
+      <div className="hidden aspect-[4/3] w-full grid-cols-[2fr_1fr] gap-[1.5px] overflow-hidden bg-border-default md:grid">
+        <div className="overflow-hidden bg-surface-muted">
+          <img src={mainSrc} alt={name} className="h-full w-full rounded-none object-cover" />
         </div>
-        <div className="grid grid-rows-2 gap-0.5">
+        <div className="grid grid-rows-2 gap-[1.5px]">
           {second ? (
-            <div className="overflow-hidden">
+            <div className="overflow-hidden bg-surface-muted">
               <img
                 src={getBuildingImageUrl(second) ?? ""}
                 alt=""
-                className="h-full w-full object-cover"
+                className="h-full w-full rounded-none object-cover"
               />
             </div>
           ) : (
             <div className="bg-surface-muted" />
           )}
           {third ? (
-            <div className="overflow-hidden">
+            <div className="overflow-hidden bg-surface-muted">
               <img
                 src={getBuildingImageUrl(third) ?? ""}
                 alt=""
-                className="h-full w-full object-cover"
+                className="h-full w-full rounded-none object-cover"
               />
             </div>
           ) : (
@@ -890,7 +890,7 @@ function LocalityCityGuides({
               />
             </div>
             <div className="mt-3 space-y-1">
-              <p className="text-sm font-medium leading-snug text-text-primary transition-colors group-hover:text-brand-primary">
+              <p className="text-sm font-medium leading-snug text-text-primary transition-colors group-hover:text-text-secondary">
                 {col.name}
               </p>
               <p className="text-[11px] text-text-disabled">
@@ -1161,7 +1161,7 @@ function ActivityItemRow({ item }: { item: ActivityItem }) {
         <p className="text-sm leading-snug text-text-secondary">
           <Link
             to={`/profile/${item.username}`}
-            className="font-medium text-text-primary transition-colors hover:text-brand-primary"
+            className="font-medium text-text-primary transition-colors hover:text-text-secondary"
           >
             {item.username}
           </Link>{" "}

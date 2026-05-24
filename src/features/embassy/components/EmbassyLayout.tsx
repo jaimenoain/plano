@@ -3,7 +3,10 @@ import { Link, Outlet, useLocation, redirect, type LoaderFunctionArgs } from "re
 import { AmbassadorGuard } from "./AmbassadorGuard";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Target, Users, Settings2, UsersRound, CheckSquare } from "lucide-react";
+import {
+  embassyNavItemsFor,
+  isEmbassyNavItemActive,
+} from "@/components/layout/navigation";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -99,14 +102,7 @@ export default function EmbassyLayout() {
     }).catch(() => undefined);
   }, [membership, location.pathname]);
 
-  const navItems = [
-    { label: "Dashboard", href: "/embassy/goals", icon: Target },
-    { label: "Contribute", href: "/embassy/contribute", icon: LayoutDashboard },
-    { label: "Chapter Projects", href: "/embassy/projects", icon: Users },
-    { label: "Team", href: "/embassy/team", icon: UsersRound },
-    { label: "Tasks", href: "/embassy/tasks", icon: CheckSquare },
-    ...(isLeader ? [{ label: "Leadership", href: "/embassy/leadership", icon: Settings2 }] : []),
-  ];
+  const navItems = embassyNavItemsFor(isLeader);
 
   return (
     <AmbassadorGuard>
@@ -117,15 +113,15 @@ export default function EmbassyLayout() {
             <div className="container flex h-14 items-center overflow-x-auto no-scrollbar">
               <nav className="flex items-center space-x-6 text-sm font-medium">
                 {navItems.map((item) => {
-                  const isActive = location.pathname === item.href || (item.href === "/embassy/goals" && location.pathname === "/embassy");
+                  const isActive = isEmbassyNavItemActive(item, location.pathname);
                   return (
                     <Link
-                      key={item.href}
-                      to={item.href}
+                      key={item.path}
+                      to={item.path}
                       className={cn(
                         "flex items-center gap-2 transition-colors hover:text-text-primary py-4 border-b-2",
-                        isActive 
-                          ? "border-brand-primary text-text-primary" 
+                        isActive
+                          ? "border-text-primary text-text-primary"
                           : "border-transparent text-text-secondary"
                       )}
                     >

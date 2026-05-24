@@ -125,7 +125,7 @@ export function Header({
     >
       <Bell className="h-6 w-6" />
       {showBadge && (
-        <span className="absolute top-2 right-2 h-2.5 w-2.5 rounded-full bg-feedback-destructive border-2 border-surface-card" />
+        <span className="absolute top-2 right-2 h-[7px] w-[7px] rounded-full bg-brand-accent border-[1.5px] border-surface-card" />
       )}
     </Link>
   );

@@ -8,7 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -595,17 +594,18 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
   return (
     <>
       <AppLayout title="Visit Log" showBack>
-        <div className="max-w-2xl mx-auto px-4 py-6">
-          <h1 className="text-4xl font-bold tracking-tight leading-tight text-text-primary mb-6">
-            Visit Log
-          </h1>
+        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+          <header className="mb-8 border-b border-text-primary pb-2.5">
+            <h1 className="m-0 text-[11px] font-medium uppercase tracking-[0.15em] text-text-primary">
+              <span className="mr-2.5 font-mono text-text-disabled">§ 01</span>
+              Visit log
+            </h1>
+          </header>
 
           <div className="space-y-8">
             {/* --- Review Content --- */}
             <div className="space-y-6">
-              {/* Header Card */}
-              <Card className="border-border-default/50 shadow-sm bg-surface-card/50 backdrop-blur-sm">
-                <CardHeader className="p-4 pb-0">
+              <article className="border-b border-border-default pb-8">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <Link to={`/profile/${review.user.username || review.user_id}`}>
@@ -655,7 +655,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                             className={cn(
                               "h-4 w-4",
                               i < review.rating!
-                                ? "fill-[#595959] text-[#595959]"
+                                ? "fill-text-primary text-text-primary"
                                 : "text-text-secondary/20",
                             )}
                           />
@@ -663,9 +663,8 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                       </div>
                     )}
                   </div>
-                </CardHeader>
 
-                <CardContent className="p-4 space-y-4">
+                <div className="mt-6 space-y-4">
                   {/* Text Content */}
                   {review.content && (
                     <div className="text-lg md:text-xl text-text-primary/90 leading-relaxed font-normal">
@@ -794,8 +793,8 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                       </button>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </article>
 
               {/* Comments Section */}
               <div className="space-y-4 pl-0 md:pl-2">
@@ -885,10 +884,9 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
               </div>
             </div>
 
-            {/* Building Card */}
-            <Card className="overflow-hidden border-border-default/50 shadow-sm">
+            <section className="border-t border-border-default pt-8">
               <div
-                className="aspect-[4/3] bg-surface-muted relative group cursor-pointer"
+                className="group relative aspect-[4/3] cursor-pointer overflow-hidden rounded-none bg-surface-muted"
                 // Locality URL not available: review.building does not include locality_country_code/city_slug — requires review detail query to join localities table
                 onClick={() => navigate(getBuildingUrl(review.building_id))}
               >
@@ -905,12 +903,12 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
                 <div className="absolute bottom-3 left-3 right-3 text-white">
-                  <h3 className="font-bold text-lg leading-tight shadow-sm">
+                  <h3 className="text-lg font-bold leading-tight">
                     {review.building.name}
                   </h3>
                 </div>
               </div>
-              <CardContent className="p-4 space-y-4">
+              <div className="space-y-4 pt-5">
                 <div className="space-y-2 text-sm">
                   {review.building.address && (
                     <div className="flex items-start gap-2 text-text-secondary">
@@ -939,21 +937,20 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                       </div>
                     )}
                 </div>
-                <Button
-                  className="w-full"
-                  variant="outline"
-                  // Locality URL not available: review.building does not include locality_country_code/city_slug — requires review detail query to join localities table
+                <button
+                  type="button"
+                  className="text-sm font-medium text-text-primary transition-opacity hover:opacity-70"
                   onClick={() => navigate(getBuildingUrl(review.building_id))}
                 >
-                  View Building Details
-                </Button>
-              </CardContent>
-            </Card>
+                  View building details →
+                </button>
+              </div>
+            </section>
 
             {/* Also Visited By */}
             {relatedReviews.length > 0 && (
-              <div className="bg-surface-card/30 rounded-lg p-4 border border-border-default/50">
-                <h4 className="text-xs font-semibold uppercase text-text-secondary mb-3 tracking-wider">
+              <div className="border-t border-border-default pt-6">
+                <h4 className="mb-3 text-[11px] font-medium uppercase tracking-[0.15em] text-text-disabled">
                   Also visited by
                 </h4>
                 <div className="flex flex-wrap gap-2">

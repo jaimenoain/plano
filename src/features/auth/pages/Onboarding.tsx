@@ -265,7 +265,7 @@ export default function Onboarding() {
 
   if (authLoading || loadingInitialData)
     return (
-      <div className="flex h-screen items-center justify-center bg-surface-default">
+      <div className="flex min-h-dvh items-center justify-center bg-surface-default safe-area-pt safe-area-pb">
         <Loader2 className="animate-spin text-text-secondary" />
       </div>
     );
@@ -274,12 +274,9 @@ export default function Onboarding() {
     <div className="min-h-dvh bg-surface-default flex flex-col items-center justify-start md:justify-center overflow-y-auto safe-area-pt safe-area-pb px-4 py-4 md:py-8">
       <PlanoLogo className="text-2xl text-text-primary mb-4 md:mb-6 shrink-0" />
       <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-6 md:p-8 flex flex-col gap-4 md:gap-6 text-center">
-        {/* Step indicator */}
-        <div className="flex items-center justify-center gap-1.5 md:gap-2">
-          <div className="h-1.5 w-10 md:w-12 rounded-sm bg-brand-primary" />
-          <div className="h-1.5 w-10 md:w-12 rounded-sm bg-surface-muted" />
-          <div className="h-1.5 w-10 md:w-12 rounded-sm bg-surface-muted" />
-        </div>
+        <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+          Step 1 of 3 · Profile
+        </p>
 
         <div className="space-y-2">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-text-primary">Welcome!</h1>
@@ -337,7 +334,7 @@ export default function Onboarding() {
             />
             <Label
               htmlFor="avatar-upload"
-              className="cursor-pointer inline-flex min-h-11 items-center justify-center gap-2 rounded-sm border-2 border-dashed border-border-default px-4 py-2 text-sm text-text-secondary hover:border-brand-primary"
+              className="cursor-pointer inline-flex min-h-11 items-center justify-center gap-2 rounded-sm border-2 border-dashed border-border-default px-4 py-2 text-sm text-text-secondary hover:border-border-strong"
             >
               {uploading ? (
                 <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
@@ -385,9 +382,13 @@ export default function Onboarding() {
           <Button onClick={handleSave} disabled={saving} className="w-full h-11 min-h-11 font-medium rounded-sm">
             {saving ? "Saving..." : "Save and Continue"}
           </Button>
-          <Button variant="ghost" onClick={handleSkip} className="w-full min-h-11">
+          <button
+            type="button"
+            onClick={() => void handleSkip()}
+            className="min-h-11 w-full text-xs font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors hover:text-text-primary"
+          >
             Skip for now
-          </Button>
+          </button>
         </div>
       </div>
     </div>

@@ -14,12 +14,19 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Plus, CheckCircle2, Circle, Clock, AlertCircle, Loader2, Trash2,
+  Plus, CheckCircle2, Circle, Clock, Loader2, Trash2,
   Eye, EyeOff, Users, Lock, CalendarDays, FolderOpen, Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format, isPast, isToday, parseISO } from "date-fns";
+import {
+  EmbassyEmptyState,
+  EmbassyErrorState,
+  EmbassyPageHeader,
+  EmbassySectionLabel,
+  EMBASSY_SKELETON_ROUNDED,
+} from "@/features/embassy/components/embassy-ui";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -142,7 +149,7 @@ function TaskCard({
   return (
     <Card
       className={cn(
-        "group flex flex-col gap-3 p-4 transition-all hover:shadow-sm cursor-pointer",
+        "group flex cursor-pointer flex-col gap-3 border-border-default p-4 transition-colors hover:border-border-strong",
         task.status === "done" && "opacity-60",
       )}
       onClick={onOpen}
@@ -156,7 +163,7 @@ function TaskCard({
           className={cn(
             "mt-0.5 shrink-0 transition-colors",
             cfg.class,
-            canEdit && "hover:text-brand-primary cursor-pointer",
+            canEdit && "cursor-pointer hover:text-text-primary",
             !canEdit && "cursor-default",
           )}
           title={canEdit ? `Mark as ${STATUS_CONFIG[NEXT_STATUS[task.status]].label}` : cfg.label}
@@ -494,18 +501,16 @@ export default function TasksPage() {
   return (
     <div className="space-y-8 pb-20">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Tasks</h1>
-          <p className="text-muted-foreground">
-            Chapter tasks — create, assign, and track work across your team.
-          </p>
-        </div>
-        <Button onClick={openCreate} className="gap-2 shrink-0">
-          <Plus className="h-4 w-4" />
-          New Task
-        </Button>
-      </div>
+      <EmbassyPageHeader
+        title="Tasks"
+        description="Chapter tasks — create, assign, and track work across your team."
+        actions={
+          <Button onClick={openCreate} className="min-h-11 shrink-0 gap-2">
+            <Plus className="h-4 w-4" />
+            New task
+          </Button>
+        }
+      />
 
       {/* Body */}
       {isLoading ? (
@@ -514,30 +519,25 @@ export default function TasksPage() {
             <div key={g} className="space-y-3">
               <Skeleton className="h-4 w-24" />
               <div className="grid gap-3 sm:grid-cols-2">
-                {[0, 1].map((i) => <Skeleton key={i} className="h-24 w-full rounded-xl" />)}
+                {[0, 1].map((i) => (
+                  <Skeleton key={i} className={cn("h-24 w-full", EMBASSY_SKELETON_ROUNDED)} />
+                ))}
               </div>
             </div>
           ))}
         </div>
       ) : error ? (
-        <div className="p-12 text-center border rounded-xl bg-destructive/5 text-destructive">
-          <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-          <p className="font-medium">Failed to load tasks</p>
-          <p className="text-sm opacity-80 mt-1">Check your database migrations or try again.</p>
-        </div>
+        <EmbassyErrorState message="Failed to load tasks. Check your database migrations or try again." />
       ) : tasks.length === 0 ? (
-        <div className="p-20 text-center border border-dashed rounded-xl space-y-4">
-          <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto">
-            <CheckCircle2 className="h-6 w-6 text-muted-foreground" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-xl font-medium">No tasks yet</p>
-            <p className="text-muted-foreground text-sm">
-              Create a task and assign it to a team member to get started.
-            </p>
-          </div>
-          <Button variant="outline" onClick={openCreate}>Create the first task</Button>
-        </div>
+        <EmbassyEmptyState
+          icon={<CheckCircle2 className="h-10 w-10" />}
+          title="No tasks yet"
+          description="Create a task and assign it to a team member to get started."
+        >
+          <Button variant="outline" className="mt-2" onClick={openCreate}>
+            Create the first task
+          </Button>
+        </EmbassyEmptyState>
       ) : (
         <div className="space-y-10">
           {groups.map(({ key, label, items }) => {
@@ -546,10 +546,10 @@ export default function TasksPage() {
             return (
               <div key={key} className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <span className={cn("flex items-center gap-1.5 text-sm font-semibold uppercase tracking-wider", cfg.class)}>
+                  <EmbassySectionLabel className={cn("flex items-center gap-1.5", cfg.class)}>
                     {cfg.icon}
                     {label}
-                  </span>
+                  </EmbassySectionLabel>
                   <div className="flex-1 border-t border-border-default" />
                   <span className="text-xs text-muted-foreground">{items.length}</span>
                 </div>

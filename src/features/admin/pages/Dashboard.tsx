@@ -21,6 +21,7 @@ import {
   CommandShortcut,
 } from "@/components/ui/command";
 import { adminNavGroups } from "@/features/admin/components/adminNavItems";
+import { AdminPageHeader, AdminSectionLabel } from "@/features/admin/components/admin-ui";
 
 export const meta: MetaFunction = () => [
   { title: "Admin | Plano" },
@@ -89,22 +90,24 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <div className="space-y-8 p-4 sm:p-6 lg:p-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-4xl font-bold tracking-tight text-text-primary">Admin Dashboard</h1>
-          <button
-            type="button"
-            onClick={() => setPaletteOpen(true)}
-            className="inline-flex h-10 w-full items-center gap-2 rounded-sm border border-border-default bg-surface-muted px-3 text-sm text-text-secondary transition-colors duration-200 hover:border-border-strong hover:shadow-sm focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary sm:w-80"
-            aria-label="Search admin pages"
-          >
-            <Search className="h-4 w-4 shrink-0 opacity-50" />
-            <span className="flex-1 text-left">Search admin pages...</span>
-            <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border border-border-default bg-surface-default px-1.5 font-mono text-[10px] font-medium text-text-secondary sm:inline-flex">
-              <span className="text-xs">⌘</span>K
-            </kbd>
-          </button>
-        </div>
+      <div className="space-y-8">
+        <AdminPageHeader
+          title="Dashboard"
+          actions={
+            <button
+              type="button"
+              onClick={() => setPaletteOpen(true)}
+              className="inline-flex h-10 w-full items-center gap-2 rounded-sm border border-border-default bg-surface-muted px-3 text-sm text-text-secondary transition-colors hover:border-border-strong focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary sm:w-80"
+              aria-label="Search admin pages"
+            >
+              <Search className="h-4 w-4 shrink-0 opacity-50" aria-hidden />
+              <span className="flex-1 text-left">Search admin pages…</span>
+              <kbd className="pointer-events-none hidden h-5 select-none items-center gap-1 rounded border border-border-default bg-surface-default px-1.5 font-mono text-[10px] font-medium text-text-secondary sm:inline-flex">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </button>
+          }
+        />
 
         <CommandDialog open={paletteOpen} onOpenChange={setPaletteOpen}>
           <CommandInput placeholder="Search admin pages..." />
@@ -129,50 +132,55 @@ export default function AdminDashboard() {
         </CommandDialog>
 
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsList className="h-auto gap-4 border-b border-border-default bg-transparent p-0">
+            <TabsTrigger
+              value="overview"
+              className="rounded-none border-b-2 border-transparent px-0 pb-3 data-[state=active]:border-text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
+              Overview
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-12">
             {/* Zone 1: The Pulse */}
             <section className="space-y-4">
-              <h2 className="text-3xl font-semibold tracking-tight text-text-primary">The Pulse</h2>
+              <AdminSectionLabel>The pulse</AdminSectionLabel>
               <PulseZone stats={stats.pulse} />
             </section>
 
             {/* Zone 1.5: Retention Analysis */}
             <section className="space-y-4">
-              <h2 className="text-3xl font-semibold tracking-tight text-text-primary">User Retention</h2>
+              <AdminSectionLabel>User retention</AdminSectionLabel>
               <RetentionZone data={stats.retention_analysis} />
             </section>
 
             {/* Zone 2: Activity Trends */}
             <section className="space-y-4">
-              <h2 className="text-3xl font-semibold tracking-tight text-text-primary">Activity Trends</h2>
+              <AdminSectionLabel>Activity trends</AdminSectionLabel>
               <ActivityTrendsZone data={stats.activity_trends} />
             </section>
 
             {/* Zone 4: Content Intelligence */}
             <section className="space-y-4">
-              <h2 className="text-3xl font-semibold tracking-tight text-text-primary">Content Intelligence</h2>
+              <AdminSectionLabel>Content intelligence</AdminSectionLabel>
               <ContentIntelligenceZone trendingBuildings={stats.content_intelligence.trending_buildings} />
             </section>
 
             {/* Zone 4.5: Notification Intelligence */}
             <section className="space-y-4">
-              <h2 className="text-3xl font-semibold tracking-tight text-text-primary">Notification Intelligence</h2>
+              <AdminSectionLabel>Notification intelligence</AdminSectionLabel>
               <NotificationIntelligenceZone data={stats.notification_intelligence} />
             </section>
 
             {/* Zone 5: User Leaderboard */}
             <section className="space-y-4">
-              <h2 className="text-3xl font-semibold tracking-tight text-text-primary">User Leaderboard</h2>
+              <AdminSectionLabel>User leaderboard</AdminSectionLabel>
               <UserLeaderboardZone data={stats.user_leaderboard} />
             </section>
 
             {/* Zone 6: Session Diagnostics & Health */}
             <section className="space-y-4">
-              <h2 className="text-3xl font-semibold tracking-tight text-text-primary">Diagnostics & Health</h2>
+              <AdminSectionLabel>Diagnostics & health</AdminSectionLabel>
               <SessionDiagnosticZone />
             </section>
           </TabsContent>

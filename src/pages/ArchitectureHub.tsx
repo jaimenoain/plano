@@ -207,7 +207,7 @@ export default function ArchitectureHub() {
 
         {/* ── Section 1: Hero ─────────────────────────────────────────── */}
         <section className="py-12 md:py-24">
-          <p className="mb-4 text-2xs font-medium uppercase tracking-widest text-text-secondary">
+          <p className="mb-4 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
             Explore by location
           </p>
           <h1 className="mb-6 text-3xl font-bold leading-tight tracking-tight text-text-primary md:text-6xl">
@@ -219,7 +219,7 @@ export default function ArchitectureHub() {
           </p>
           <Link
             to="/search"
-            className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary"
+            className="text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-colors hover:text-text-secondary"
           >
             → Start exploring
           </Link>
@@ -231,7 +231,7 @@ export default function ArchitectureHub() {
             <dd className="font-mono text-3xl font-bold tracking-tight text-text-primary md:text-4xl">
               {totalBuildings.toLocaleString()}
             </dd>
-            <dt className="mt-1 text-2xs font-medium uppercase tracking-widest text-text-secondary">
+            <dt className="mt-1 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
               Buildings
             </dt>
           </div>
@@ -239,7 +239,7 @@ export default function ArchitectureHub() {
             <dd className="font-mono text-3xl font-bold tracking-tight text-text-primary md:text-4xl">
               {totalCountries}
             </dd>
-            <dt className="mt-1 text-2xs font-medium uppercase tracking-widest text-text-secondary">
+            <dt className="mt-1 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
               Countries
             </dt>
           </div>
@@ -247,7 +247,7 @@ export default function ArchitectureHub() {
             <dd className="font-mono text-3xl font-bold tracking-tight text-text-primary md:text-4xl">
               Community
             </dd>
-            <dt className="mt-1 text-2xs font-medium uppercase tracking-widest text-text-secondary">
+            <dt className="mt-1 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
               Reviewed
             </dt>
           </div>
@@ -255,7 +255,7 @@ export default function ArchitectureHub() {
 
         {/* ── Section 3: Country grid ─────────────────────────────────── */}
         <section className="mt-16">
-          <p className="mb-6 text-2xs font-medium uppercase tracking-widest text-text-secondary">
+          <p className="mb-6 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
             Browse by country
           </p>
           {countries.length > 0 ? (
@@ -274,7 +274,7 @@ export default function ArchitectureHub() {
           <>
             <div className="mt-16 border-t border-border-default" />
             <section className="mt-16 pb-24">
-              <p className="mb-8 text-2xs font-medium uppercase tracking-widest text-text-secondary">
+              <p className="mb-8 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
                 Popular destinations
               </p>
               <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-3">

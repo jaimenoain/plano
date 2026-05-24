@@ -10,6 +10,7 @@ import { Search, Camera, CheckCircle2, ArrowRight, Loader2, Landmark, Filter, Us
 import { toast } from "sonner";
 import { useNavigate, redirect, type LoaderFunctionArgs } from "react-router";
 import { cn } from "@/lib/utils";
+import { EmbassySectionLabel } from "@/features/embassy/components/embassy-ui";
 import { createSupabaseServerClient } from "@/lib/supabase.server";
 import { fetchChapterTeam, type ChapterTeamMember } from "@/features/embassy/api/leadership";
 
@@ -145,24 +146,14 @@ export default function OnboardingPage() {
     <div className="min-h-[calc(100vh-5rem)] sm:min-h-[calc(100vh-6rem)] bg-background flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-xl space-y-8">
         <div className="flex justify-center mb-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-primary/10 text-brand-primary">
+          <div className="flex h-12 w-12 items-center justify-center rounded-sm border border-border-default bg-surface-muted text-text-secondary">
             <Landmark className="h-6 w-6" />
           </div>
         </div>
 
-        <div className="space-y-2 text-center">
-          <div className="flex justify-center gap-1 mb-6">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className={cn(
-                  "h-1 w-12 rounded-full transition-colors",
-                  step >= i ? "bg-brand-primary" : "bg-muted"
-                )}
-              />
-            ))}
-          </div>
-        </div>
+        <p className="mb-6 text-center text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+          Step {step} of 3 · Embassy welcome
+        </p>
 
         {step === 1 && (
           <div className="space-y-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -204,8 +195,8 @@ export default function OnboardingPage() {
                     className={cn(
                       "p-4 flex items-center gap-4 cursor-pointer transition-all border-2",
                       selected
-                        ? "border-brand-primary bg-brand-primary/5"
-                        : "border-transparent hover:border-muted"
+                        ? "border-text-primary bg-surface-muted"
+                        : "border-border-default hover:border-border-strong"
                     )}
                     onClick={() => toggleTool(tool.key)}
                   >
@@ -213,8 +204,8 @@ export default function OnboardingPage() {
                       className={cn(
                         "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors",
                         selected
-                          ? "bg-brand-primary text-white"
-                          : "bg-muted text-muted-foreground"
+                          ? "bg-text-primary text-surface-default"
+                          : "bg-surface-muted text-text-secondary"
                       )}
                     >
                       {selected ? (
@@ -228,7 +219,7 @@ export default function OnboardingPage() {
                       <p className="text-xs text-muted-foreground">{tool.description}</p>
                     </div>
                     {selected && (
-                      <Check className="h-4 w-4 text-brand-primary shrink-0" />
+                      <Check className="h-4 w-4 shrink-0 text-text-primary" aria-hidden />
                     )}
                   </Card>
                 );
@@ -257,15 +248,13 @@ export default function OnboardingPage() {
 
             {/* Focus areas with tips */}
             <div className="text-left space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1">
-                Your focus areas
-              </p>
+              <EmbassySectionLabel className="px-1">Your focus areas</EmbassySectionLabel>
               {selectedTools.map((key, i) => {
                 const tool = TOOLS.find((t) => t.key === key)!;
                 return (
-                  <div key={key} className="border rounded-xl p-4 space-y-2 bg-surface-muted/20">
+                  <div key={key} className="space-y-2 rounded-sm border border-border-default bg-surface-muted/30 p-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-primary text-white text-xs font-bold">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm border border-border-default bg-surface-default text-xs font-bold text-text-primary">
                         {i + 1}
                       </div>
                       <span className="font-semibold text-sm">{tool.title}</span>
@@ -280,10 +269,8 @@ export default function OnboardingPage() {
 
             {/* Leadership contacts */}
             {leadership.length > 0 && (
-              <div className="text-left border rounded-xl p-4 space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Questions? Reach out to your leadership
-                </p>
+              <div className="space-y-3 rounded-sm border border-border-default p-4 text-left">
+                <EmbassySectionLabel>Questions? Reach out to your leadership</EmbassySectionLabel>
                 <div className="space-y-2">
                   {leadership.map((member: ChapterTeamMember) => {
                     const initials = member.username
@@ -300,7 +287,10 @@ export default function OnboardingPage() {
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-sm font-medium truncate">@{member.username}</span>
                           {member.role === "president" ? (
-                            <Badge className="text-[10px] uppercase font-bold bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border-none shrink-0">
+                            <Badge
+                              variant="outline"
+                              className="shrink-0 border-border-default bg-surface-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.15em] text-text-primary"
+                            >
                               President
                             </Badge>
                           ) : (
@@ -321,8 +311,8 @@ export default function OnboardingPage() {
             )}
 
             {/* Portal access */}
-            <div className="flex items-start gap-4 border rounded-xl p-4 text-left">
-              <div className="h-8 w-8 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center shrink-0">
+            <div className="flex items-start gap-4 rounded-sm border border-border-default p-4 text-left">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm border border-border-default bg-surface-muted text-text-secondary">
                 <Landmark className="h-5 w-5" />
               </div>
               <div>

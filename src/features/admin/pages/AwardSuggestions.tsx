@@ -84,7 +84,7 @@ export default function AwardSuggestions() {
                       variant="secondary" 
                       className={cn(
                         "rounded-none text-[10px] uppercase tracking-widest",
-                        s.status === 'pending' ? "bg-amber-100 text-amber-900" :
+                        s.status === 'pending' ? "bg-feedback-warning/10 text-feedback-warning" :
                         s.status === 'approved' ? "bg-emerald-100 text-emerald-900" :
                         "bg-feedback-destructive/10 text-feedback-destructive"
                       )}

@@ -40,6 +40,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings, isLngLatInBounds, type Bounds } from "@/utils/map";
 import { getBuildingUrl } from "@/utils/url";
+import { getBuildingImageUrl } from "@/utils/image";
 import { collectionStructuredData, SITE_URL } from "@/features/buildings/utils/structuredData";
 import { Loader2, Settings, Plus, ExternalLink, Star, ListFilter, MapPinPlus, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -817,6 +818,15 @@ export default function CollectionMap() {
     return buildingNodes;
   }, [items, markers, collection, statsData, memberIds, shouldFetchStats, userInteractionMap, photos]);
 
+  const coverMosaicUrls = useMemo(() => {
+    if (!items) return [];
+    return items
+      .filter((item) => !item.is_hidden)
+      .map((item) => item.building.hero_image_url || item.building.community_preview_url)
+      .filter((url): url is string => Boolean(url))
+      .slice(0, 4);
+  }, [items]);
+
   const allMapBuildings = useMemo(() => {
     if (showSavedCandidates && savedCandidates) {
       const filteredCandidates = savedCandidates.filter(
@@ -1169,7 +1179,22 @@ toast({
           viewMode === 'list' ? "order-2 flex h-full lg:order-2" : "hidden lg:flex lg:order-2",
         )}
         >
-            <div className="p-4 border-b flex items-center justify-between gap-4">
+            <div className="border-b">
+                {coverMosaicUrls.length >= 4 && (
+                  <div className="grid grid-cols-4 gap-[1.5px] bg-border-default">
+                    {coverMosaicUrls.map((url, index) => (
+                      <div key={index} className="aspect-[4/5] overflow-hidden bg-surface-muted">
+                        <img
+                          src={getBuildingImageUrl(url) ?? url}
+                          alt=""
+                          className="h-full w-full rounded-none object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center justify-between gap-4 p-4">
                 <div className="min-w-0 flex-1">
                     <h1 className="font-bold text-xl truncate">{collection.name}</h1>
                     <div className="text-sm text-text-secondary mb-1">
@@ -1217,6 +1242,7 @@ toast({
                         </Button>
                     </div>
                 )}
+                </div>
             </div>
 
             <div className="flex-1 overflow-hidden flex flex-col justify-start">

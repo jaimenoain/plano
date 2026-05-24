@@ -20,6 +20,7 @@ import { CheckCircle2, Circle, Loader2, Pin, X } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import type { Database } from "@/integrations/supabase/types";
+import { EmbassyPageHeader } from "@/features/embassy/components/embassy-ui";
 
 // ─── Onboarding card ─────────────────────────────────────────────────────────
 
@@ -88,7 +89,7 @@ function OnboardingCard({
   const daysLeft = 60 - status.daysInRole;
 
   return (
-    <Card className="border-brand-primary/30 bg-surface-muted">
+    <Card className="border-border-default bg-surface-muted">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold text-text-primary flex items-center justify-between">
           <span>Getting started as president</span>
@@ -126,7 +127,7 @@ function OnboardingCard({
               {!done && step.actionLabel && (
                 step.actionTab ? (
                   <button
-                    className="text-xs text-brand-primary font-medium hover:underline shrink-0"
+                    className="shrink-0 text-xs font-medium text-text-primary underline-offset-2 hover:underline"
                     onClick={() => onSwitchTab(step.actionTab!)}
                   >
                     {step.actionLabel}
@@ -134,7 +135,7 @@ function OnboardingCard({
                 ) : step.actionTo ? (
                   <Link
                     to={step.actionTo}
-                    className="text-xs text-brand-primary font-medium hover:underline shrink-0"
+                    className="shrink-0 text-xs font-medium text-text-primary underline-offset-2 hover:underline"
                   >
                     {step.actionLabel}
                   </Link>
@@ -364,17 +365,24 @@ export default function LeadershipPage() {
         </div>
       )}
 
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Leadership</h1>
-        <p className="text-muted-foreground">
-          Chapter health dashboard and member management for {membership.chapter.name}.
-        </p>
-      </div>
+      <EmbassyPageHeader
+        eyebrow="Leadership"
+        title="Chapter dashboard"
+        description={`Chapter health and member management for ${membership.chapter.name}.`}
+      />
 
       <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v })} className="w-full">
-        <TabsList className="mb-6 h-auto gap-1 bg-transparent p-0">
-          <TabsTrigger value="health" className="data-[state=active]:bg-muted">Chapter Health</TabsTrigger>
-          <TabsTrigger value="applications" className="gap-2 data-[state=active]:bg-muted">
+        <TabsList className="mb-6 h-auto gap-1 border-b border-border-default bg-transparent p-0">
+          <TabsTrigger
+            value="health"
+            className="rounded-none border-b-2 border-transparent px-0 pb-3 data-[state=active]:border-text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          >
+            Chapter health
+          </TabsTrigger>
+          <TabsTrigger
+            value="applications"
+            className="gap-2 rounded-none border-b-2 border-transparent px-0 pb-3 data-[state=active]:border-text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          >
             Applications
             {applications.length > 0 && (
               <Badge variant="secondary" className="px-1.5 py-0 text-[10px]">
@@ -383,7 +391,12 @@ export default function LeadershipPage() {
             )}
           </TabsTrigger>
           {isNationalPresident && (
-            <TabsTrigger value="national" className="data-[state=active]:bg-muted">National Overview</TabsTrigger>
+            <TabsTrigger
+              value="national"
+              className="rounded-none border-b-2 border-transparent px-0 pb-3 data-[state=active]:border-text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
+              National overview
+            </TabsTrigger>
           )}
         </TabsList>
 
@@ -408,13 +421,13 @@ export default function LeadershipPage() {
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : applications.length === 0 ? (
-              <div className="rounded-xl border border-dashed p-12 text-center text-muted-foreground">
+              <div className="rounded-sm border border-dashed border-border-default p-12 text-center text-text-secondary">
                 No pending applications.
               </div>
             ) : (
-              <div className="grid gap-4">
+              <div className="divide-y divide-border-default border-y border-border-default">
                 {applications.map((app) => (
-                  <div key={app.id} className="rounded-xl border bg-card p-6 space-y-4">
+                  <div key={app.id} className="space-y-4 px-1 py-6">
                     <div className="flex items-start gap-4">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={app.applicant?.avatar_url || undefined} />

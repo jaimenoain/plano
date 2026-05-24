@@ -46,8 +46,8 @@ export default function PhotoAnalytics() {
   }
 
   return (
-    <div className="space-y-8 p-8">
-      <h1 className="text-4xl font-bold tracking-tight text-text-primary">Photo Analytics</h1>
+    <div className="space-y-8">
+      <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Photo Analytics</h1>
 
       <PhotoCoverageStatsRow stats={coverageStats} />
 

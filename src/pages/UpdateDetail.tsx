@@ -55,12 +55,12 @@ export default function UpdateDetail() {
 
   return (
     <div className="min-h-screen bg-surface-default text-text-primary">
-      <div className="container mx-auto py-12 px-4 max-w-3xl">
+      <div className="container mx-auto max-w-2xl px-4 py-12">
         <Link
           to="/updates"
-          className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors mb-10"
+          className="mb-10 inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors hover:text-text-primary"
         >
-          <ArrowLeft className="h-3.5 w-3.5" />
+          <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
           All updates
         </Link>
 
@@ -97,7 +97,7 @@ export default function UpdateDetail() {
           </header>
 
           {update.body && (
-            <div className="prose prose-sm max-w-none text-text-secondary leading-relaxed whitespace-pre-wrap">
+            <div className="max-w-prose text-base leading-relaxed text-text-secondary whitespace-pre-wrap">
               {update.body}
             </div>
           )}

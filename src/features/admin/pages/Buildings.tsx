@@ -287,9 +287,9 @@ toast.error("Failed to update building");
   };
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-4xl font-bold tracking-tight text-text-primary">Building Registry</h1>
+        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Building Registry</h1>
         <div className="flex gap-2">
             <Input
                 placeholder="Search buildings..."

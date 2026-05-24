@@ -87,7 +87,7 @@ export const STATUS_LABELS: Record<FeedbackStatus, string> = {
 };
 
 export const STATUS_COLORS: Record<FeedbackStatus, string> = {
-  open: "bg-amber-500/10 text-amber-800 border-amber-500/30",
+  open: "bg-feedback-warning/10 text-feedback-warning border-feedback-warning/30",
   in_review: "bg-brand-primary/10 text-brand-primary border-brand-primary/30",
   testing: "bg-violet-500/10 text-violet-800 border-violet-500/30",
   resolved: "bg-feedback-success/10 text-feedback-success border-feedback-success/30",
@@ -97,7 +97,7 @@ export const STATUS_COLORS: Record<FeedbackStatus, string> = {
 };
 
 export const COLUMN_DOT: Record<FeedbackStatus, string> = {
-  open: "bg-amber-400",
+  open: "bg-feedback-warning",
   in_review: "bg-brand-primary",
   testing: "bg-violet-400",
   resolved: "bg-feedback-success",

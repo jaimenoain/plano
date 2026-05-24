@@ -178,7 +178,7 @@ export default function MergeEntities() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">
           <Badge className="bg-brand-primary text-white hover:bg-brand-primary/90 px-3 py-0.5">Admin Tools</Badge>
-          <h1 className="text-4xl font-bold tracking-tight text-text-primary">
+          <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">
             Merge Records
           </h1>
           <p className="text-lg text-text-secondary max-w-md">

@@ -38,7 +38,7 @@ export const ArchitectStatement = ({
   return (
     <div className={className || ""}>
       {/* Editorial blockquote: neon left rule, no card box */}
-      <div className="border-l-[3px] border-text-primary pl-5 py-0.5">
+      <div className="border-l-2 border-text-primary pl-5 py-0.5">
         {isEditing ? (
           <Textarea
             value={statement}

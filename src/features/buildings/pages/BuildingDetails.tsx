@@ -1683,7 +1683,7 @@ export default function BuildingDetails() {
         const img = images[0];
         if (!img) return null;
         return (
-          <div key={block.key} className="rounded-none border border-border-default overflow-hidden bg-surface-card shadow-sm">
+          <div key={block.key} className="space-y-4 border-b border-border-default pb-10">
             <div
               className="group relative aspect-[16/10] cursor-pointer overflow-hidden bg-surface-muted"
               onClick={() => setSelectedImage(img)}
@@ -1720,7 +1720,7 @@ export default function BuildingDetails() {
 
       if (blockType === "mosaic") {
         return (
-          <div key={block.key} className="rounded-none border border-border-default overflow-hidden bg-surface-card shadow-sm">
+          <div key={block.key} className="space-y-4 border-b border-border-default pb-10">
             <div className={cn("grid gap-px bg-border-default", images.length >= 4 ? "grid-cols-2" : "grid-cols-2")}>
               {images.slice(0, 4).map((img, i) => (
                 <div
@@ -1761,7 +1761,7 @@ export default function BuildingDetails() {
         const img = images[0];
         if (!img) return null;
         return (
-          <div key={block.key} className="rounded-none border border-border-default overflow-hidden bg-surface-card shadow-sm">
+          <div key={block.key} className="space-y-4 border-b border-border-default pb-10">
             <div
               className="group relative aspect-[4/3] cursor-pointer overflow-hidden bg-surface-muted"
               onClick={() => setSelectedImage(img)}
@@ -1793,7 +1793,7 @@ export default function BuildingDetails() {
         if (!img) return null;
         const isTall = topLikes >= 10;
         return (
-          <div key={block.key} className="group rounded-none border border-border-default overflow-hidden bg-surface-card shadow-sm">
+          <div key={block.key} className="group space-y-4 border-b border-border-default pb-10">
             <div
               className={cn(
                 "relative cursor-pointer overflow-hidden bg-surface-muted",
@@ -1818,7 +1818,7 @@ export default function BuildingDetails() {
       if (blockType === "text-only") {
         if (!preview) return null;
         return (
-          <div key={block.key} className="rounded-none border border-border-default bg-surface-card shadow-sm p-5 space-y-3">
+          <div key={block.key} className="space-y-3 border-b border-border-default pb-10">
             {authorAttribution}
             <Link to={`/review/${block.entryId}`} className="group/r block">
               <p className="text-sm leading-relaxed text-text-secondary italic group-hover/r:text-text-primary">
@@ -1893,7 +1893,7 @@ export default function BuildingDetails() {
 
         {/* ── HERO — full-bleed only when a hero image exists (no empty band) ── */}
         {heroImageUrl ? (
-          <div className="relative h-[clamp(220px,45vh,560px)] w-screen overflow-hidden bg-surface-muted">
+          <div className="relative h-[clamp(360px,55vh,560px)] w-screen overflow-hidden bg-surface-muted">
             <motion.img
               key={heroImageUrl}
               initial={{ opacity: 0, scale: 1.03 }}
@@ -1906,9 +1906,63 @@ export default function BuildingDetails() {
               loading="eager"
             />
             <div
-              className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent pointer-events-none"
+              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent"
               aria-hidden
             />
+            <div className="absolute inset-0 flex flex-col justify-end px-5 pb-9 pt-8 sm:px-10">
+              <div className="mx-auto w-full max-w-4xl space-y-3">
+                {(building.tier_rank || isStatusBuilding) && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {building.tier_rank && (
+                      <span className="inline-block rounded-none bg-text-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-text-inverse">
+                        {building.tier_rank}
+                      </span>
+                    )}
+                    {isStatusBuilding && building.status && (
+                      <span className="inline-block rounded-none border border-white/30 bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white">
+                        {formatBuildingStatusForDisplay(building.status)}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {building.short_id ? (
+                  <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-white/70">
+                    PLN-{String(building.short_id).padStart(5, "0")}
+                  </p>
+                ) : null}
+                <h1 className="font-display text-[clamp(3rem,7vw,5.5rem)] font-bold leading-[0.98] tracking-[-0.038em] text-white">
+                  {building.name}.
+                </h1>
+                <p className="text-sm text-white/80">
+                  {primaryName ? (
+                    <span className="font-medium text-white">
+                      <PrimaryCreditsLinks
+                        credits={buildingCredits}
+                        linkClassName="text-white font-medium hover:underline underline-offset-2"
+                      />
+                    </span>
+                  ) : null}
+                  {(building.year_completed || buildingAny.century) && (
+                    <>
+                      {primaryName ? <span aria-hidden> · </span> : null}
+                      <span>
+                        {building.year_completed
+                          ? building.year_completed
+                          : `${buildingAny.century}th c.`}
+                      </span>
+                    </>
+                  )}
+                  {(building.city || building.country) && (
+                    <>
+                      <span aria-hidden> · </span>
+                      <span>
+                        {[building.city, building.country].filter(Boolean).join(", ")}
+                      </span>
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
           </div>
         ) : null}
 
@@ -1918,6 +1972,7 @@ export default function BuildingDetails() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
 
               {/* Title & metadata */}
+              {!heroImageUrl ? (
               <div className="lg:col-span-8 space-y-2">
                 {(building.tier_rank || isStatusBuilding) && (
                   <div className="flex flex-wrap items-center gap-2">
@@ -1932,7 +1987,7 @@ export default function BuildingDetails() {
                       </span>
                     )}
                     {buildingAny.winner_award_name && (
-                      <span className="inline-block px-2 py-0.5 bg-feedback-warning/10 text-feedback-warning text-[10px] font-bold uppercase tracking-[0.2em] rounded-none border border-feedback-warning/20 flex items-center gap-1">
+                      <span className="inline-block px-2 py-0.5 border border-border-default text-[10px] font-bold uppercase tracking-[0.2em] rounded-none text-text-primary flex items-center gap-1">
                         <Medal className="h-3 w-3" />
                         Winner: {buildingAny.winner_award_name}
                       </span>
@@ -1941,7 +1996,7 @@ export default function BuildingDetails() {
                 )}
 
                 <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-text-primary leading-[0.98]">
-                  {building.name}
+                  {building.name}.
                 </h1>
 
                 {building.alt_name && (
@@ -1979,9 +2034,22 @@ export default function BuildingDetails() {
                   )}
                 </div>
               </div>
+              ) : (
+                <div className="lg:col-span-8 space-y-1">
+                  {building.alt_name && (
+                    <p className="text-base text-text-secondary">{building.alt_name}</p>
+                  )}
+                  {buildingAny.winner_award_name && (
+                    <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-text-primary">
+                      <Medal className="h-3 w-3" />
+                      Winner: {buildingAny.winner_award_name}
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Stats & actions */}
-              <div className="lg:col-span-4 flex items-center gap-4 justify-start lg:justify-end">
+              <div className={cn("flex items-center gap-4 justify-start", heroImageUrl ? "lg:col-span-12 lg:justify-end" : "lg:col-span-4 lg:justify-end")}>
                 <div className="flex items-center gap-5 pr-5 border-r border-border-default">
                   <div>
                     <div className="text-xl font-bold font-display tabular-nums">{visitorCount}</div>
@@ -2029,7 +2097,7 @@ export default function BuildingDetails() {
                     type="button"
                     onClick={() => setTab(tab.id)}
                     className={cn(
-                      "px-5 py-3.5 text-sm font-medium border-b-2 shrink-0 transition-colors duration-150 whitespace-nowrap",
+                      "px-5 py-3.5 text-[12px] font-medium uppercase tracking-[0.15em] border-b-2 shrink-0 transition-colors duration-150 whitespace-nowrap",
                       activeTab === tab.id
                         ? "border-text-primary text-text-primary"
                         : "border-transparent text-text-secondary hover:text-text-primary",
@@ -2109,12 +2177,22 @@ export default function BuildingDetails() {
 
                   {/* Architect statement */}
                   {building.architect_statement && (
-                    <ArchitectStatement
-                      statement={building.architect_statement}
-                      isEditing={false}
-                      onChange={() => {}}
-                      architectName={leadAttributionFromCredits(buildingCredits)}
-                    />
+                    <section>
+                      <div className="mb-6 flex items-baseline gap-3 border-b border-text-primary pb-2">
+                        <span className="font-mono text-[11px] tracking-[0.06em] text-text-disabled">
+                          § 01
+                        </span>
+                        <span className="text-[11px] font-medium uppercase tracking-[0.15em] text-text-primary">
+                          Architect statement
+                        </span>
+                      </div>
+                      <ArchitectStatement
+                        statement={building.architect_statement}
+                        isEditing={false}
+                        onChange={() => {}}
+                        architectName={leadAttributionFromCredits(buildingCredits)}
+                      />
+                    </section>
                   )}
 
                   {/* Editorial stream — full list, infinite scroll (client-chunked) */}
@@ -2226,7 +2304,7 @@ export default function BuildingDetails() {
                         {filteredMediaImages.map((img) => (
                           <div
                             key={img.id}
-                            className="group relative break-inside-avoid mb-3 cursor-pointer overflow-hidden rounded-none bg-surface-muted shadow-sm"
+                            className="group relative mb-3 break-inside-avoid cursor-pointer overflow-hidden rounded-none bg-surface-muted"
                             onClick={() => setSelectedImage(img)}
                           >
                             {img.type === "video" ? (
