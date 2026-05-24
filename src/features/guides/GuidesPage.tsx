@@ -106,7 +106,7 @@ export default function GuidesPage() {
       />
 
       <AppLayout>
-      <div className="min-h-screen bg-surface-default">
+      <div className="mx-auto min-h-screen w-full max-w-[1440px] bg-surface-default">
 
         {/* ── Zone 1: Hero ─────────────────────────────────────── */}
         <section className="border-b border-border-default px-4 sm:px-8 py-16 sm:py-20">

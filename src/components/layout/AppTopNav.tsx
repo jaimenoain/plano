@@ -28,26 +28,7 @@ import { useStewardCompaniesForNav } from "@/features/credits/hooks/useStewardCo
 import { useAmbassadorNavAccess } from "@/features/ambassadors/hooks/useAmbassadorNavAccess";
 import { supabase } from "@/integrations/supabase/client";
 import { useWaitlistSignup } from "@/features/waitlist/WaitlistSignupProvider";
-
-// ─── Nav items ────────────────────────────────────────────────────────────────
-
-const mainNavItems = [
-  { label: "Feed", path: "/" },
-  {
-    label: "Events",
-    path: "/events",
-    isActive: (p: string) => p === "/events" || p.startsWith("/events/"),
-  },
-  { label: "Explore", path: "/explore" },
-  { label: "Guides", path: "/guides" },
-  { label: "Search", path: "/search" },
-  { label: "Connect", path: "/connect" },
-  {
-    label: "Support",
-    path: "/support",
-    isActive: (p: string) => p === "/support" || p.startsWith("/become-ambassador"),
-  },
-];
+import { isNavItemActive, navItemsFor } from "./navigation";
 
 function TopNavLink({
   label,
@@ -191,6 +172,7 @@ export function AppTopNav() {
   }, [user, location.pathname]);
 
   const showBadge = hasUnread && location.pathname !== "/notifications";
+  const topNavItems = navItemsFor("top");
 
   return (
     <header className="hidden md:flex fixed top-0 inset-x-0 z-50 h-16 items-center justify-between px-8 bg-[rgba(250,250,250,0.92)] backdrop-blur-md border-b border-border-default">
@@ -205,10 +187,8 @@ export function AppTopNav() {
         </Link>
 
         <nav className="flex items-center gap-5">
-          {mainNavItems.map((item) => {
-            const isActive = item.isActive
-              ? item.isActive(location.pathname)
-              : location.pathname === item.path;
+          {topNavItems.map((item) => {
+            const isActive = isNavItemActive(item, location.pathname);
             return (
               <TopNavLink
                 key={item.path}

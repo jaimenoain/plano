@@ -109,7 +109,7 @@ function TrendingArchitectsModule() {
   });
 
   return (
-    <section className="border border-border-default bg-surface-default p-5 rounded-md">
+    <section className="border-t border-border-default pt-5">
       <ModuleHeader title="Trending architects" />
       {isLoading ? (
         <ul className="space-y-3">
@@ -185,7 +185,7 @@ function RecentBuildingsModule() {
   });
 
   return (
-    <section className="border border-border-default bg-surface-default p-5 rounded-md">
+    <section className="border-t border-border-default pt-5">
       <ModuleHeader title="Recently added" />
       {isLoading ? (
         <ul className="space-y-3">

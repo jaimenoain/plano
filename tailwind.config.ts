@@ -58,13 +58,12 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Barlow', 'system-ui', 'sans-serif'],
         mono: ['Space Mono', 'monospace'],
       },
       colors: {
         border: "var(--border-default)",
         input: "var(--border-default)",
-        ring: "var(--brand-accent)",
+        ring: "var(--brand-primary)",
         background: "var(--surface-default)",
         foreground: "var(--text-primary)",
         primary: {
@@ -105,10 +104,6 @@ export default {
           border:               "var(--border-default)",
           ring:                 "var(--brand-primary)",
         },
-        lime: {
-          high: "#eeff41",
-          DEFAULT: "#eeff41",
-        },
         /* Plano semantic tokens */
         'brand-primary':              'var(--brand-primary)',
         'brand-primary-hover':        'var(--brand-primary-hover)',
@@ -122,8 +117,10 @@ export default {
         'surface-card':               'var(--surface-card)',
         'surface-overlay':            'var(--surface-overlay)',
         'surface-muted':              'var(--surface-muted)',
+        'surface-inverse':            'var(--surface-inverse)',
         'border-default':             'var(--border-default)',
         'border-strong':              'var(--border-strong)',
+        'border-hairline':            'var(--border-hairline)',
         'text-primary':               'var(--text-primary)',
         'text-secondary':             'var(--text-secondary)',
         'text-disabled':              'var(--text-disabled)',

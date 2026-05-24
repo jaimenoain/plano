@@ -65,7 +65,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="twitter:card" content="summary_large_image" />
         <Meta />
       </head>
-      <body>
+      <body className="ds-rollout">
         {children}
         <ScrollRestoration />
         <Scripts />

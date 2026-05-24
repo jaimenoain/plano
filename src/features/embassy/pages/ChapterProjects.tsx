@@ -648,7 +648,7 @@ export default function ChapterProjectsPage() {
       {campaigns.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <Target className="h-4 w-4 text-brand-accent" />
+            <Target className="h-4 w-4 text-text-primary" />
             <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
               Programme campaigns
             </h2>
@@ -660,12 +660,12 @@ export default function ChapterProjectsPage() {
               return (
                 <Card
                   key={c.id}
-                  className="flex flex-col p-5 border-l-4 border-l-brand-accent"
+                  className="flex flex-col p-5 border-l-4 border-l-text-primary"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <Badge
                       variant="outline"
-                      className="gap-1 px-2 py-0.5 text-xs font-medium bg-brand-accent/10 text-brand-accent border-brand-accent/20"
+                      className="gap-1 px-2 py-0.5 text-xs font-medium bg-surface-muted text-text-primary border-border-default"
                     >
                       <Target className="h-3 w-3" />
                       Programme campaign

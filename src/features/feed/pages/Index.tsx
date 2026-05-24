@@ -121,7 +121,7 @@ function NoteImages({
 
   if (images.length === 1) {
     return (
-      <Link to={noteHref} className="block mt-4 overflow-hidden rounded-md">
+      <Link to={noteHref} className="block mt-4 overflow-hidden rounded-none">
         <img
           src={getBuildingImageUrl(images[0].storage_path)}
           alt=""
@@ -138,7 +138,7 @@ function NoteImages({
   return (
     <Link to={noteHref} className="mt-4 grid grid-cols-2 gap-1">
       {visible.map((img, i) => (
-        <div key={img.id} className="relative aspect-square overflow-hidden rounded-md bg-surface-muted">
+        <div key={img.id} className="relative aspect-square overflow-hidden rounded-none bg-surface-muted">
           <img
             src={getBuildingImageUrl(img.storage_path)}
             alt=""

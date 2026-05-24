@@ -111,9 +111,9 @@ export default function EmbassyLayout() {
   return (
     <AmbassadorGuard>
       <AppLayout title="Embassy" showLogo={false}>
-        <div className="flex flex-col min-h-screen bg-background">
+        <div className="flex flex-col min-h-screen bg-surface-default">
           {/* Shared Navigation Tab Bar */}
-          <header className="sticky top-0 z-40 w-full border-b border-border-default bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <header className="sticky top-0 z-40 w-full border-b border-border-default bg-surface-default/95 backdrop-blur supports-[backdrop-filter]:bg-surface-default/70">
             <div className="container flex h-14 items-center overflow-x-auto no-scrollbar">
               <nav className="flex items-center space-x-6 text-sm font-medium">
                 {navItems.map((item) => {
@@ -123,10 +123,10 @@ export default function EmbassyLayout() {
                       key={item.href}
                       to={item.href}
                       className={cn(
-                        "flex items-center gap-2 transition-colors hover:text-foreground/80 py-4 border-b-2",
+                        "flex items-center gap-2 transition-colors hover:text-text-primary py-4 border-b-2",
                         isActive 
-                          ? "border-brand-primary text-foreground" 
-                          : "border-transparent text-foreground/60"
+                          ? "border-brand-primary text-text-primary" 
+                          : "border-transparent text-text-secondary"
                       )}
                     >
                       <item.icon className="h-4 w-4" />

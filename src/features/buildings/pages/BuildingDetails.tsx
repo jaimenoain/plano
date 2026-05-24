@@ -1691,13 +1691,13 @@ export default function BuildingDetails() {
               <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-300" />
               {isOfficial && (
-                <span className="absolute left-4 top-4 bg-brand-accent px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-brand-accent-foreground rounded-none">
+                <span className="absolute left-4 top-4 bg-text-primary px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-text-inverse rounded-none">
                   Official
                 </span>
               )}
               {img.likes_count > 0 && (
                 <span className="absolute bottom-4 right-4 flex items-center gap-1.5 text-[11px] font-bold text-white drop-shadow-md">
-                  <Heart className="h-3.5 w-3.5 fill-brand-accent text-brand-accent" aria-hidden />
+                  <Heart className="h-3.5 w-3.5 fill-white text-white" aria-hidden />
                   {img.likes_count}
                 </span>
               )}
@@ -1918,7 +1918,7 @@ export default function BuildingDetails() {
                 {(building.tier_rank || isStatusBuilding) && (
                   <div className="flex flex-wrap items-center gap-2">
                     {building.tier_rank && (
-                      <span className="inline-block px-2 py-0.5 bg-brand-accent text-brand-accent-foreground text-[10px] font-bold uppercase tracking-[0.2em] rounded-none">
+                      <span className="inline-block px-2 py-0.5 bg-text-primary text-text-inverse text-[10px] font-bold uppercase tracking-[0.2em] rounded-none">
                         {building.tier_rank}
                       </span>
                     )}
@@ -2370,7 +2370,7 @@ export default function BuildingDetails() {
                               {userStatus === "visited" ? (
                                 <Check className="h-4 w-4 text-feedback-success" />
                               ) : userStatus === "pending" ? (
-                                <Bookmark className="h-4 w-4 text-brand-accent fill-current" />
+                                <Bookmark className="h-4 w-4 text-text-primary fill-current" />
                               ) : (
                                 <Circle className="h-4 w-4 text-text-disabled" />
                               )}
@@ -2468,7 +2468,7 @@ export default function BuildingDetails() {
                               className={cn(
                                 "h-7 w-7 transition-all duration-200",
                                 filled
-                                  ? "fill-brand-accent text-brand-accent"
+                                  ? "fill-text-primary text-text-primary"
                                   : "fill-transparent text-text-disabled opacity-50",
                               )}
                             />

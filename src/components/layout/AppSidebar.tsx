@@ -11,13 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import {
-  Activity,
-  BookOpen,
-  CalendarDays,
-  Users,
   User as UserIcon,
-  Play,
-  Search,
   Settings,
   LogOut,
   Bell,
@@ -26,7 +20,6 @@ import {
   Building2,
   ChevronDown,
   Landmark,
-  Trophy,
   type LucideIcon,
 } from "lucide-react";
 import { useLocation, Link, useNavigate } from "react-router";
@@ -44,37 +37,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useClaimedPersonForNav } from "@/features/credits/hooks/useClaimedPersonForNav";
 import { useStewardCompaniesForNav } from "@/features/credits/hooks/useStewardCompaniesForNav";
 import { useAmbassadorNavAccess } from "@/features/ambassadors/hooks/useAmbassadorNavAccess";
-
-// ─── Nav data ────────────────────────────────────────────────────────────────
-type MainNavItem = {
-  icon: LucideIcon;
-  label: string;
-  path: string;
-  /** Defaults to exact `pathname === path`. */
-  isActive?: (pathname: string) => boolean;
-};
-
-const mainNavItems: MainNavItem[] = [
-  { icon: Activity, label: "Feed", path: "/" },
-  {
-    icon: CalendarDays,
-    label: "Events",
-    path: "/events",
-    isActive: (pathname) => pathname === "/events" || pathname.startsWith("/events/"),
-  },
-  { icon: Play, label: "Explore", path: "/explore" },
-  { icon: BookOpen, label: "Guides", path: "/guides" },
-  { icon: Search, label: "Search", path: "/search" },
-  { icon: Users, label: "Connect", path: "/connect" },
-  {
-    icon: Trophy,
-    label: "Awards",
-    path: "/awards",
-    isActive: (pathname) =>
-      pathname === "/awards" ||
-      pathname.startsWith("/award/"),
-  },
-];
+import { isNavItemActive, navItemsFor } from "./navigation";
 
 // ─── NavItem ─────────────────────────────────────────────────────────────────
 interface NavItemProps {
@@ -264,6 +227,7 @@ function CloseButton() {
 export function AppSidebar() {
   const location = useLocation();
   const { isMobile } = useSidebar();
+  const sidebarNavItems = navItemsFor("sidebar");
   const { data: claimedPersonNav } = useClaimedPersonForNav();
   const { data: stewardCompanies = [] } = useStewardCompaniesForNav();
   const showAccountExtras = Boolean(claimedPersonNav) || stewardCompanies.length > 0;
@@ -291,12 +255,13 @@ export function AppSidebar() {
         <SidebarGroup className="!p-0">
           <SidebarGroupContent>
             <SidebarMenu className="gap-0">
-              {mainNavItems.map((item) => (
+              {sidebarNavItems.map((item) => (
                 <NavItem
                   key={item.path}
                   label={item.label}
                   path={item.path}
-                  isActive={(item.isActive ?? ((p) => p === item.path))(location.pathname)}
+                  isActive={isNavItemActive(item, location.pathname)}
+                  icon={item.icon}
                 />
               ))}
             </SidebarMenu>

@@ -9,7 +9,7 @@ export default function AdminLayout() {
     <SidebarProvider>
       <AdminSidebar />
       <SidebarInset className="flex min-h-screen flex-col bg-surface-default">
-        <main className="flex-1 overflow-y-auto p-8">
+        <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
           <Outlet />
         </main>
       </SidebarInset>
