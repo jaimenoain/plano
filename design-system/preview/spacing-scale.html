@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Plano · Spacing · 4px base</title>
+<link rel="stylesheet" href="../colors_and_type.css" />
+<style>
+  html, body { margin: 0; padding: 0; background: #FAFAFA; }
+  .card { padding: 22px 26px; }
+  .head { display:flex; align-items:baseline; justify-content: space-between; margin-bottom: 16px; }
+  .meta { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-disabled); text-transform: uppercase;}
+  .row { display: grid; grid-template-columns: 70px 60px 1fr; gap: 14px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-default);}
+  .row:last-child { border-bottom: 0; }
+  .row .tok { font-family: var(--font-mono); font-size: 11px; color: var(--text-primary); letter-spacing: 0.04em; }
+  .row .val { font-family: var(--font-mono); font-size: 10px; color: var(--text-disabled); letter-spacing: 0.04em; text-align: right;}
+  .row .bar { background: #171717; height: 12px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="head">
+    <span class="eyebrow">Spacing · 4px base · prefer the upper end</span>
+    <span class="meta">spacing-{n}</span>
+  </div>
+  <div class="row"><span class="tok">spacing-1</span><span class="val">4px</span><div class="bar" style="width:4px"></div></div>
+  <div class="row"><span class="tok">spacing-2</span><span class="val">8px</span><div class="bar" style="width:8px"></div></div>
+  <div class="row"><span class="tok">spacing-3</span><span class="val">12px</span><div class="bar" style="width:12px"></div></div>
+  <div class="row"><span class="tok">spacing-4</span><span class="val">16px</span><div class="bar" style="width:16px"></div></div>
+  <div class="row"><span class="tok">spacing-6</span><span class="val">24px</span><div class="bar" style="width:24px"></div></div>
+  <div class="row"><span class="tok">spacing-8</span><span class="val">32px</span><div class="bar" style="width:32px"></div></div>
+  <div class="row"><span class="tok">spacing-12</span><span class="val">48px</span><div class="bar" style="width:48px"></div></div>
+  <div class="row"><span class="tok">spacing-16</span><span class="val">64px</span><div class="bar" style="width:64px"></div></div>
+  <div class="row"><span class="tok">spacing-24</span><span class="val">96px</span><div class="bar" style="width:96px"></div></div>
+</div>
+</body>
+</html>

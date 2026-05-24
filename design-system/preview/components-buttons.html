@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Plano · Components · Buttons</title>
+<link rel="stylesheet" href="../colors_and_type.css" />
+<style>
+  html, body { margin: 0; padding: 0; background: #FAFAFA; }
+  .card { padding: 22px 26px; }
+  .head { display:flex; align-items:baseline; justify-content: space-between; margin-bottom: 16px; }
+  .meta { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-disabled); text-transform: uppercase;}
+  .grid { display: grid; grid-template-columns: 84px 1fr; gap: 14px 18px; align-items: center; }
+  .lbl { font-family: var(--font-mono); font-size: 10px; color: var(--text-disabled); letter-spacing: 0.06em; text-transform: uppercase; }
+  .row { display:flex; gap: 10px; align-items: center; flex-wrap: wrap;}
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 2px; font-family: var(--font-sans); font-size: 14px; font-weight: 500; line-height: 1; transition: background 120ms ease, color 120ms ease, border-color 120ms ease; cursor: pointer; border: 0;}
+  .btn-primary  { background: #171717; color: #FFFFFF;}
+  .btn-secondary { background: #F5F5F5; color: #171717; border: 1px solid #E5E5E5;}
+  .btn-outline   { background: #FFFFFF; color: #171717; border: 1px solid #E5E5E5;}
+  .btn-ghost     { background: transparent; color: #171717;}
+  .btn-destructive { background: #EF4444; color: #FFFFFF;}
+  .btn-sm { height: 32px; padding: 0 12px; font-size: 13px; }
+  .btn-lg { height: 48px; padding: 0 24px; font-size: 14px; }
+  .btn[data-state="hover"].btn-primary { background: #000000; }
+  .btn[data-state="hover"].btn-outline { background: #F5F5F5;}
+  .btn[data-state="hover"].btn-secondary { background: #EDEDED;}
+  .btn:focus-visible { outline: 2px solid #171717; outline-offset: 2px; }
+  .btn svg { width: 14px; height: 14px; stroke-width: 2; fill: none; stroke: currentColor; }
+  .cta { font-size: 12px; font-weight:500; letter-spacing: 0.15em; text-transform: uppercase; color: #171717; text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="head">
+    <span class="eyebrow">Buttons · variants &amp; states</span>
+    <span class="meta">height 40 · radius 2 · weight 500</span>
+  </div>
+  <div class="grid">
+    <span class="lbl">Default</span>
+    <div class="row">
+      <button class="btn btn-primary">Join the waiting list</button>
+      <button class="btn btn-secondary">Save to collection</button>
+      <button class="btn btn-outline">Log a visit</button>
+      <button class="btn btn-ghost">Cancel</button>
+      <button class="btn btn-destructive">Delete</button>
+    </div>
+    <span class="lbl">Hover</span>
+    <div class="row">
+      <button class="btn btn-primary" data-state="hover">Join the waiting list</button>
+      <button class="btn btn-secondary" data-state="hover">Save to collection</button>
+      <button class="btn btn-outline" data-state="hover">Log a visit</button>
+    </div>
+    <span class="lbl">Size</span>
+    <div class="row">
+      <button class="btn btn-primary btn-sm">Small · 32</button>
+      <button class="btn btn-primary">Default · 40</button>
+      <button class="btn btn-primary btn-lg">Large · 48</button>
+    </div>
+    <span class="lbl">With icon</span>
+    <div class="row">
+      <button class="btn btn-primary">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+        Add building
+      </button>
+      <a href="#" class="cta">Read review&nbsp;→</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>

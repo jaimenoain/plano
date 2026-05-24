@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Plano · Components · Distinctions</title>
+<link rel="stylesheet" href="../colors_and_type.css" />
+<style>
+  html, body { margin: 0; padding: 0; background: #FAFAFA; }
+  .frame { padding: 20px 26px 24px;}
+  .head { display:flex; align-items:baseline; justify-content: space-between; margin-bottom: 18px;}
+  .meta-h { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-disabled); text-transform: uppercase;}
+
+  .grid { display:grid; grid-template-columns: repeat(4, 1fr); gap: 0;}
+  .tier { padding: 18px 18px 18px; border-right: 1px solid var(--border-default); display: flex; flex-direction: column; min-height: 200px;}
+  .tier:last-child { border-right: 0;}
+  .tier:first-child { padding-left: 0;}
+  .tier:last-child { padding-right: 0;}
+
+  .dots { display:flex; gap: 5px; height: 14px; margin-bottom: 16px; align-items: center;}
+  .dot  { width: 14px; height: 14px; border-radius: 50%; background: #171717;}
+  /* "Worth a visit" tier shows nothing — the empty space is the design. */
+  .tier.default .dots::before {
+    content: "—";
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--text-disabled);
+    letter-spacing: 0.04em;
+  }
+
+  .tname { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); margin: 0 0 6px;}
+  .tdesc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0; flex: 1;}
+  .nums { font-family: var(--font-mono); font-size: 10px; color: var(--text-disabled); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border-default);}
+
+  .note { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-default); font-size: 12px; color: var(--text-secondary); line-height: 1.5;}
+  .note b { color: var(--text-primary); font-weight: 600;}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="head">
+    <span class="eyebrow">Distinctions · the three-dot ladder</span>
+    <span class="meta-h">awarded · not scored · empty is the default</span>
+  </div>
+  <div class="grid">
+
+    <div class="tier default">
+      <div class="dots"></div>
+      <h3 class="tname">Worth a visit</h3>
+      <p class="tdesc">The default for any building someone has logged. No distinction — just a record that you've been.</p>
+      <div class="nums">— · 1.18M logged</div>
+    </div>
+
+    <div class="tier">
+      <div class="dots"><span class="dot"></span></div>
+      <h3 class="tname">Impressive</h3>
+      <p class="tdesc">Worth visiting if you're in town. A solid example of its style and era.</p>
+      <div class="nums">● · 18,402 awarded</div>
+    </div>
+
+    <div class="tier">
+      <div class="dots"><span class="dot"></span><span class="dot"></span></div>
+      <h3 class="tname">Essential</h3>
+      <p class="tdesc">Worth a detour. A defining work — you'll remember the visit.</p>
+      <div class="nums">●● · 6,118 awarded</div>
+    </div>
+
+    <div class="tier">
+      <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <h3 class="tname">Masterpiece</h3>
+      <p class="tdesc">Worth a journey. One of the finest examples of the built world.</p>
+      <div class="nums">●●● · 412 awarded</div>
+    </div>
+  </div>
+
+  <p class="note"><b>Never render empty / outline dots.</b> They would imply a rating scale where the building is missing input. The dots are an award, like Michelin stars — the absence of dots is the normal state, not an incomplete one.</p>
+</div>
+</body>
+</html>

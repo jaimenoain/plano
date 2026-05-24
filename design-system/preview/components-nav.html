@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Plano · Components · Top navigation</title>
+<link rel="stylesheet" href="../colors_and_type.css" />
+<style>
+  html, body { margin: 0; padding: 0; background: #FAFAFA; }
+  .frame { padding: 18px 22px 26px;}
+  .head { display:flex; align-items:baseline; justify-content: space-between; margin-bottom: 14px;}
+  .meta { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-disabled); text-transform: uppercase;}
+  .nav { height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; background: rgba(250,250,250,0.92); backdrop-filter: blur(8px); border-bottom: 1px solid #E5E5E5;}
+  .left { display:flex; align-items: center; gap: 28px; }
+  .logo { height: 18px; color: #171717;}
+  .links { display:flex; gap: 22px; align-items: center;}
+  .link { font-size: 14px; font-weight: 500; color: #525252; text-decoration: none; position: relative; padding: 4px 0;}
+  .link.active { color: #171717; font-weight: 700;}
+  .link.active::after { content: ""; position: absolute; left: 0; bottom: -2px; width: 100%; height: 1px; background: #171717;}
+  .link:hover { color: #171717;}
+  .right { display:flex; align-items: center; gap: 6px; }
+  .icon-btn { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; color: #525252; background: transparent; border: 0; cursor: pointer; position: relative;}
+  .icon-btn:hover { color: #171717; }
+  .icon-btn svg { width: 16px; height: 16px; stroke-width: 2; fill: none; stroke: currentColor;}
+  .dot { position: absolute; top: 8px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: #BEFF00; border: 1.5px solid #FAFAFA;}
+  .cta-btn { height: 32px; padding: 0 12px; background: transparent; color: #171717; font-size: 13px; font-weight: 500; border: 0; cursor: pointer;}
+  .cta-btn:hover { background: #F5F5F5;}
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: #F5F5F5; border: 1px solid #E5E5E5; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #171717;}
+  .annot { display:flex; gap: 18px; margin-top: 16px; padding: 0 4px;}
+  .annot .item { font-size: 11px; color: var(--text-secondary); line-height: 1.5;}
+  .annot .item b { color: var(--text-primary); font-weight: 600;}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="head">
+    <span class="eyebrow">Top navigation · the app shell</span>
+    <span class="meta">h-64 · sticky top · z-50</span>
+  </div>
+  <nav class="nav">
+    <div class="left">
+      <svg class="logo" viewBox="0 0 338.087 74.709" fill="currentColor"><g fill-rule="nonzero"><path d="M 0 73.731 L 0 0.977 L 28.369 0.977 Q 36.67 0.977 42.48 4.127 Q 48.291 7.276 51.343 12.818 Q 54.395 18.36 54.395 25.538 Q 54.395 32.765 51.294 38.258 Q 48.193 43.751 42.31 46.852 Q 36.426 49.952 28.027 49.952 L 14.893 49.952 L 14.893 73.731 L 0 73.731 Z"/><path d="M 111.084 73.731 L 64.795 73.731 L 64.795 0.977 L 79.688 0.977 L 79.688 61.378 L 111.084 61.378 L 111.084 73.731 Z"/><path d="M 117.139 73.731 L 141.992 0.977 L 161.523 0.977 L 187.012 73.731 L 170.459 73.731 L 164.845 56.837 L 132.666 56.837 L 138.994 56.837 L 133.594 73.731"/><path d="M 195.996 73.731 L 195.996 0.977 L 212.598 0.977 L 235.596 37.794 Q 237.354 40.626 239.16 43.946 Q 240.967 47.267 242.847 51.319 Q 244.727 55.372 246.582 60.45 L 245.068 60.45 Q 244.727 56.397 244.458 51.808 Q 244.189 47.218 243.994 43.018 Q 243.799 38.819 243.994 35.89 L 243.799 0.977 L 259.033 0.977 L 259.033 73.731 L 242.383 73.731 L 221.484 40.333 Q 219.189 36.573 217.236 33.033 Q 215.283 29.493 213.159 25.221 Q 211.035 20.948 208.105 14.991 L 210.01 14.991 Q 210.303 20.265 210.596 25.099 Q 210.889 29.933 211.06 33.863 Q 211.23 37.794 211.23 40.284 L 211.23 73.731 Z"/><path d="M 304.15 74.708 Q 294.531 74.708 286.841 70.313 Q 279.15 65.919 274.683 57.569 Q 270.215 49.22 270.215 37.403 Q 270.215 25.538 274.683 17.164 Q 279.15 8.79 286.841 4.395 Q 294.531 0.001 304.15 0.001 Q 313.818 0.001 321.484 4.395 Q 329.15 8.79 333.618 17.164 Q 338.086 25.538 338.086 37.403 Q 338.086 49.22 333.618 57.569 Q 329.15 65.919 321.484 70.313 Q 313.818 74.708 304.15 74.708 Z"/></g></svg>
+      <div class="links">
+        <a href="#" class="link active">Feed</a>
+        <a href="#" class="link">Events</a>
+        <a href="#" class="link">Explore</a>
+        <a href="#" class="link">Guides</a>
+        <a href="#" class="link">Search</a>
+        <a href="#" class="link">Connect</a>
+      </div>
+    </div>
+    <div class="right">
+      <button class="icon-btn"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
+      <button class="cta-btn">Log a visit</button>
+      <button class="icon-btn">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="dot"></span>
+      </button>
+      <div class="avatar">J</div>
+    </div>
+  </nav>
+  <div class="annot">
+    <div class="item"><b>Active link</b> — bold weight + 1px underline; never coloured.</div>
+    <div class="item"><b>The notification dot</b> — the only lime allowed on this surface.</div>
+    <div class="item"><b>92% opaque + backdrop-blur-md</b>; content fades through on scroll.</div>
+  </div>
+</div>
+</body>
+</html>

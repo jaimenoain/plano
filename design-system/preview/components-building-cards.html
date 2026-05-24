@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Plano · Components · Building cards</title>
+<link rel="stylesheet" href="../colors_and_type.css" />
+<style>
+  html, body { margin: 0; padding: 0; background: #FAFAFA; }
+  .frame { padding: 20px 26px 24px;}
+  .head { display:flex; align-items:baseline; justify-content: space-between; margin-bottom: 16px;}
+  .meta-h { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-disabled); text-transform: uppercase;}
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px;}
+  .b-card { display: flex; flex-direction: column;}
+  .img { aspect-ratio: 4/3; background: #E5E5E5; position: relative; overflow: hidden;}
+  .img .ph { position: absolute; inset: 0;}
+  .img .badge { position: absolute; top: 10px; left: 10px; padding: 2px 8px; background: #171717; color: #FFFFFF; font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;}
+  .img .badge.alt { background: rgba(255,255,255,0.9); color: #171717; backdrop-filter: blur(4px);}
+  .b-card .title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin: 12px 0 4px; line-height: 1.2;}
+  .b-card .meta { font-size: 12px; color: var(--text-secondary); line-height: 1.4;}
+  .b-card .arch { font-family: var(--font-sans); font-weight: 500; color: var(--text-primary);}
+  .id-row { font-family: var(--font-mono); font-size: 10px; color: var(--text-disabled); letter-spacing: 0.06em; margin-top: 6px; text-transform: uppercase;}
+  /* placeholder textures — flat blocks, no SVG drawings */
+  .img1 .ph { background: linear-gradient(180deg, #C5C5C5 0%, #A8A8A8 60%, #8C8C8C 100%); }
+  .img2 .ph { background: linear-gradient(155deg, #2A2A2A 0%, #404040 50%, #1A1A1A 100%); }
+  .img3 .ph { background: linear-gradient(180deg, #D4D4D4 0%, #BFBFBF 100%);}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="head">
+    <span class="eyebrow">Building cards · catalogue thumbnails</span>
+    <span class="meta-h">4:3 · 0px radius · no border · no shadow</span>
+  </div>
+  <div class="grid">
+    <article class="b-card">
+      <div class="img img1">
+        <div class="ph"></div>
+        <span class="badge">TOP 1%</span>
+      </div>
+      <h3 class="title">Unité d'Habitation</h3>
+      <div class="meta"><span class="arch">Le Corbusier</span> · 1952</div>
+      <div class="meta">Marseille · France</div>
+      <div class="id-row">PLN-04812</div>
+    </article>
+    <article class="b-card">
+      <div class="img img2">
+        <div class="ph"></div>
+        <span class="badge alt">VISITED</span>
+      </div>
+      <h3 class="title">Barbican Centre</h3>
+      <div class="meta"><span class="arch">Chamberlin, Powell &amp; Bon</span> · 1982</div>
+      <div class="meta">London · United Kingdom</div>
+      <div class="id-row">PLN-00219</div>
+    </article>
+    <article class="b-card">
+      <div class="img img3">
+        <div class="ph"></div>
+      </div>
+      <h3 class="title">Fallingwater</h3>
+      <div class="meta"><span class="arch">Frank Lloyd Wright</span> · 1939</div>
+      <div class="meta">Mill Run, PA · United States</div>
+      <div class="id-row">PLN-00088</div>
+    </article>
+  </div>
+</div>
+</body>
+</html>

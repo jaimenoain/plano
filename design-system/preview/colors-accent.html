@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Plano · Color · Accent (the one colour)</title>
+<link rel="stylesheet" href="../colors_and_type.css" />
+<style>
+  html, body { margin: 0; padding: 0; background: #FAFAFA; }
+  .wrap { display: grid; grid-template-columns: 1.05fr 1fr; gap: 0; min-height: 260px; }
+  .left  { padding: 22px 26px; display: flex; flex-direction: column; gap: 16px;}
+  .right { background: #BEFF00; display: flex; flex-direction: column; justify-content: space-between; padding: 22px 24px; }
+  .heading-row { display: flex; align-items: baseline; justify-content: space-between; }
+  .meta { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-disabled); text-transform: uppercase;}
+
+  /* Right panel: the colour itself */
+  .right .one { color: #171717; font-family: var(--font-sans); font-size: 76px; font-weight: 700; letter-spacing: -0.045em; line-height: 1; margin: 0; }
+  .right .meta { color: #171717; opacity: 0.6;}
+  .right .role { color: #171717; font-size: 11px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase;}
+
+  /* Left panel layout */
+  .ok-list { display: grid; grid-template-columns: auto 1fr; gap: 14px 16px; align-items: center;}
+
+  /* Use 1: text selection */
+  .sel-demo { font-size: 15px; color: var(--text-primary); line-height: 1.4;}
+  .sel-demo .picked {
+    background: #BEFF00;
+    color: #171717;
+    padding: 0 1px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  .label { font-size: 12px; color: var(--text-secondary); line-height: 1.45;}
+  .label b { color: var(--text-primary); font-weight: 600;}
+
+  /* Use 2: notification dot — shown at production scale on a real bell */
+  .bell-scene { display: flex; align-items: center; gap: 18px;}
+  .bell-frame { position: relative; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; }
+  .bell-frame svg { stroke: #525252; stroke-width: 2; fill: none; width: 18px; height: 18px;}
+  .bell-frame .dot {
+    position: absolute;
+    top: 7px; right: 7px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #BEFF00;
+    /* A 1.5px border of the surrounding surface separates the dot from the bell;
+       this is how production lifts contrast against the page rather than the bell stroke. */
+    border: 1.5px solid #FAFAFA;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.06); /* hairline lift so the lime reads */
+  }
+  .bell-frame .pulse {
+    position: absolute;
+    top: 7px; right: 7px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    border: 1px solid #BEFF00;
+    animation: plano-ping 2.4s cubic-bezier(0,0,0.2,1) infinite;
+  }
+  @keyframes plano-ping { 75%, 100% { transform: scale(2.4); opacity: 0; } }
+
+  /* Warning row */
+  .warn {
+    margin-top: 4px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-default);
+    border-left: 2px solid #171717;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #FFFFFF;
+  }
+  .warn .ic { flex-shrink: 0; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; color: #171717;}
+  .warn .ic svg { stroke: currentColor; stroke-width: 2; fill: none; width: 14px; height: 14px;}
+  .warn .copy { font-size: 11px; color: var(--text-secondary); line-height: 1.5;}
+  .warn .copy b { color: var(--text-primary); font-weight: 600;}
+  .warn .bad-row { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px;}
+  .warn .bad-chip {
+    display: inline-block;
+    height: 10px;
+    background: #BEFF00;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .warn .bad-chip.thin { width: 1px; height: 14px;}
+  .warn .bad-chip.tiny { width: 4px; height: 4px; border-radius: 50%;}
+  .warn .ok-chip {
+    display: inline-block;
+    height: 14px; width: 36px;
+    background: #BEFF00;
+    margin-left: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="left">
+    <div class="heading-row">
+      <span class="eyebrow">Brand accent · the one colour</span>
+      <span class="meta">brand-500 · BEFF00</span>
+    </div>
+
+    <!-- USE 1 — selection -->
+    <div class="ok-list">
+      <div style="font-size: 11px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-primary); white-space: nowrap;">Use 1 · ::selection</div>
+      <div class="sel-demo">A building photo will be <span class="picked">the most colourful thing</span> on screen.</div>
+
+      <!-- USE 2 — bell dot -->
+      <div style="font-size: 11px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-primary); white-space: nowrap;">Use 2 · bell dot</div>
+      <div class="bell-scene">
+        <div class="bell-frame">
+          <span class="pulse"></span>
+          <span class="dot"></span>
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        </div>
+        <span class="label"><b>8px dot, 1.5px surface ring.</b> The ring is what gives the lime enough contrast against the page — never let the dot touch the bell stroke.</span>
+      </div>
+    </div>
+
+    <!-- CONTRAST WARNING -->
+    <div class="warn">
+      <div class="ic">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+      </div>
+      <div class="copy">
+        <b>Low luminance contrast on light surfaces.</b> Lime fails WCAG against #FAFAFA at small sizes. Never use for body text, thin strokes, tiny dots, focus rings, or anything &lt;8px.
+        <span class="bad-row">
+          Avoid:
+          <span class="bad-chip thin"></span>
+          <span class="bad-chip tiny"></span>
+          → use only as a fill block
+          <span class="ok-chip"></span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div>
+      <div class="role">brand-accent</div>
+      <div class="meta" style="margin-top: 6px;">hue 75° · lum 0.95</div>
+    </div>
+    <div class="one">1</div>
+    <div class="meta" style="margin-top: 6px; text-align: right;">colour</div>
+  </div>
+</div>
+</body>
+</html>
