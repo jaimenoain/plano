@@ -7,7 +7,6 @@ import { useAward, useCreateAward, useUpdateAward } from "@/features/awards/hook
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -161,7 +160,7 @@ export default function AwardForm() {
 
         {/* Slug */}
         <div className="space-y-2">
-          <Label htmlFor="award-slug">Slug</Label>
+          <AdminFormLabel htmlFor="award-slug">Slug</AdminFormLabel>
           <Input
             id="award-slug"
             value={slug}
@@ -179,7 +178,7 @@ export default function AwardForm() {
 
         {/* Description */}
         <div className="space-y-2">
-          <Label htmlFor="award-description">Description</Label>
+          <AdminFormLabel htmlFor="award-description">Description</AdminFormLabel>
           <Textarea
             id="award-description"
             value={description}
@@ -191,7 +190,7 @@ export default function AwardForm() {
 
         {/* Website */}
         <div className="space-y-2">
-          <Label htmlFor="award-website">Website</Label>
+          <AdminFormLabel htmlFor="award-website">Website</AdminFormLabel>
           <Input
             id="award-website"
             type="url"
@@ -203,7 +202,7 @@ export default function AwardForm() {
 
         {/* Wikidata QID */}
         <div className="space-y-2">
-          <Label htmlFor="award-wikidata-qid">Wikidata QID</Label>
+          <AdminFormLabel htmlFor="award-wikidata-qid">Wikidata QID</AdminFormLabel>
           <div className="flex items-center gap-2">
             <Input
               id="award-wikidata-qid"
@@ -230,7 +229,7 @@ export default function AwardForm() {
 
         {/* Country */}
         <div className="space-y-2">
-          <Label htmlFor="award-country">Country</Label>
+          <AdminFormLabel htmlFor="award-country">Country</AdminFormLabel>
           <Input
             id="award-country"
             value={country}
@@ -241,7 +240,7 @@ export default function AwardForm() {
 
         {/* Frequency */}
         <div className="space-y-2">
-          <Label>Frequency</Label>
+          <AdminFormLabel>Frequency</AdminFormLabel>
           <Select value={frequency} onValueChange={setFrequency}>
             <SelectTrigger>
               <SelectValue />
@@ -257,7 +256,7 @@ export default function AwardForm() {
 
         {/* Awarding body type */}
         <div className="space-y-2">
-          <Label>Awarding body type</Label>
+          <AdminFormLabel>Awarding body type</AdminFormLabel>
           <Select value={bodyType} onValueChange={setBodyType}>
             <SelectTrigger>
               <SelectValue placeholder="None" />
@@ -272,7 +271,7 @@ export default function AwardForm() {
 
         {/* Awarding body name (free text fallback) */}
         <div className="space-y-2">
-          <Label htmlFor="award-body-name">Awarding body name</Label>
+          <AdminFormLabel htmlFor="award-body-name">Awarding body name</AdminFormLabel>
           <Input
             id="award-body-name"
             value={bodyName}
@@ -287,7 +286,7 @@ export default function AwardForm() {
         {/* Active */}
         <div className="flex items-center gap-3">
           <Switch id="award-active" checked={isActive} onCheckedChange={setIsActive} />
-          <Label htmlFor="award-active">Active</Label>
+          <AdminFormLabel htmlFor="award-active">Active</AdminFormLabel>
         </div>
 
         {/* Submit */}

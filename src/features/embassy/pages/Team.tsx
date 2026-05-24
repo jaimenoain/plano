@@ -24,10 +24,21 @@ const EXCO_LABELS: Record<string, string> = {
   community: "Community",
 };
 
-const ROLE_LABELS: Record<string, string> = {
+const ROLE_SECTIONS: { key: string; label: string }[] = [
+  { key: "global_president", label: "Global president" },
+  { key: "global_leaders", label: "Global leaders" },
+  { key: "global_team", label: "Global team" },
+  { key: "president", label: "President" },
+  { key: "exco", label: "Executive committee" },
+  { key: "ambassador", label: "Ambassadors" },
+];
+
+const ROLE_BADGE_LABELS: Record<string, string> = {
   president: "President",
-  exco: "Executive Committee",
-  ambassador: "Ambassador",
+  exco: "ExCo",
+  global_president: "Global president",
+  global_leaders: "Global leaders",
+  global_team: "Global team",
 };
 
 function TeamMemberRow({ member }: { member: ChapterTeamMember }) {
@@ -46,20 +57,12 @@ function TeamMemberRow({ member }: { member: ChapterTeamMember }) {
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="truncate font-semibold text-text-primary">@{member.username}</span>
-          {member.role === "president" && (
+          {ROLE_BADGE_LABELS[member.role] && (
             <Badge
               variant="outline"
               className="border-border-default bg-surface-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.15em] text-text-primary"
             >
-              President
-            </Badge>
-          )}
-          {member.role === "exco" && (
-            <Badge
-              variant="outline"
-              className="border-border-default bg-surface-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary"
-            >
-              ExCo
+              {ROLE_BADGE_LABELS[member.role]}
             </Badge>
           )}
         </div>
@@ -103,13 +106,13 @@ export default function TeamPage() {
   });
 
   const grouped = useMemo(() => {
-    if (!members) return { president: [], exco: [], ambassador: [] };
-    const globalRoles = new Set(["global_president", "global_leaders", "global_team"]);
-    return {
-      president: members.filter((m) => m.role === "president"),
-      exco: members.filter((m) => m.role === "exco"),
-      ambassador: members.filter((m) => m.role === "ambassador" || globalRoles.has(m.role)),
-    };
+    if (!members) return {} as Record<string, ChapterTeamMember[]>;
+    return Object.fromEntries(
+      ROLE_SECTIONS.map((section) => [
+        section.key,
+        members.filter((m) => m.role === section.key),
+      ]),
+    );
   }, [members]);
 
   return (
@@ -142,13 +145,13 @@ export default function TeamPage() {
         />
       ) : (
         <div className="space-y-8">
-          {(["president", "exco", "ambassador"] as const).map((role) => {
-            const group = grouped[role];
+          {ROLE_SECTIONS.map((section) => {
+            const group = grouped[section.key] ?? [];
             if (group.length === 0) return null;
             return (
-              <section key={role} className="space-y-3">
+              <section key={section.key} className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <EmbassySectionLabel>{ROLE_LABELS[role]}</EmbassySectionLabel>
+                  <EmbassySectionLabel>{section.label}</EmbassySectionLabel>
                   <div className="flex-1 border-t border-border-default" />
                   <span className="text-xs tabular-nums text-text-secondary">{group.length}</span>
                 </div>

@@ -36,6 +36,12 @@ import { parseLocation } from "@/utils/location";
 import type { CreditedEntityTag } from "@/features/credits/components/CreditedEntitiesSelect";
 import { replacePrimaryDesignCredits } from "@/features/credits/api/credits";
 import { cn } from "@/lib/utils";
+import {
+  AdminPageHeader,
+  AdminFormLabel,
+  AdminEmptyState,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
 
 export const meta: MetaFunction = () => [{ title: "Admin Buildings | Plano" }];
 
@@ -288,40 +294,57 @@ toast.error("Failed to update building");
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Building Registry</h1>
-        <div className="flex gap-2">
-            <Input
-                placeholder="Search buildings..."
-                className="max-w-xs"
+      <AdminPageHeader
+        eyebrow="Entities"
+        title="Building registry"
+        description="Search catalogue records, verify status, and edit location or metadata."
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-2">
+              <AdminFormLabel htmlFor="building-registry-search">Search</AdminFormLabel>
+              <Input
+                id="building-registry-search"
+                placeholder="Search buildings…"
+                className="max-w-xs rounded-sm"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <Select
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <AdminFormLabel>Status</AdminFormLabel>
+              <Select
                 value={statusFilter}
                 onValueChange={(val: string) => setStatusFilter(val as "all" | "verified" | "pending" | "deleted")}
-            >
-                <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Status" />
+              >
+                <SelectTrigger className="w-[180px] rounded-sm">
+                  <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="verified">Verified</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="deleted">Deleted</SelectItem>
+                  <SelectItem value="all">All status</SelectItem>
+                  <SelectItem value="verified">Verified</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="deleted">Deleted</SelectItem>
                 </SelectContent>
-            </Select>
-        </div>
-      </div>
+              </Select>
+            </div>
+          </div>
+        }
+      />
 
+      {!loading && buildings.length === 0 ? (
+        <AdminEmptyState
+          title="No buildings found"
+          description="Try a different search term or status filter."
+        />
+      ) : (
       <div className="rounded-sm border border-border-default bg-surface-card">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className={adminTableHeadClass}>Name</TableHead>
+              <TableHead className={adminTableHeadClass}>Location</TableHead>
+              <TableHead className={adminTableHeadClass}>Status</TableHead>
+              <TableHead className={cn(adminTableHeadClass, "text-right")}>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -332,12 +355,6 @@ toast.error("Failed to update building");
                             <Loader2 className="h-6 w-6 animate-spin mr-2 text-text-secondary" />
                             Loading...
                         </div>
-                    </TableCell>
-                </TableRow>
-            ) : buildings.length === 0 ? (
-                <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center text-text-secondary">
-                        No buildings found.
                     </TableCell>
                 </TableRow>
             ) : (
@@ -399,6 +416,7 @@ toast.error("Failed to update building");
           </TableBody>
         </Table>
       </div>
+      )}
 
       <div className="flex justify-center gap-2">
          <Button

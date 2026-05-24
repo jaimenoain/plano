@@ -354,8 +354,11 @@ export default function SubmitEvent() {
         : "This event could not be loaded.";
       return (
         <AppLayout title={pageTitle} showBack>
-          <div className="mx-auto max-w-2xl px-4 py-8 text-center">
-            <p className="text-sm text-feedback-destructive" role="alert">
+          <div className="mx-auto max-w-2xl px-4 py-8">
+            <p
+              className="border border-feedback-destructive/30 bg-feedback-destructive/5 px-4 py-3 text-sm text-feedback-destructive"
+              role="alert"
+            >
               {msg}
             </p>
             <Button asChild variant="outline" className="mt-6">
@@ -389,12 +392,17 @@ export default function SubmitEvent() {
   return (
     <AppLayout title={pageTitle} showBack>
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <h1 className="text-3xl font-bold tracking-tight text-text-primary">{pageTitle}</h1>
-        <p className="mt-2 text-text-secondary">
-          {isEditMode
-            ? "Only the member who submitted this event can change these details."
-            : "Add a community event to the map. Fields marked * are required."}
-        </p>
+        <header className="space-y-2">
+          <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+            {isEditMode ? "Edit event" : "New event"}
+          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-text-primary">{pageTitle}</h1>
+          <p className="text-sm text-text-secondary">
+            {isEditMode
+              ? "Only the member who submitted this event can change these details."
+              : "Add a community event to the map. Fields marked * are required."}
+          </p>
+        </header>
 
         <form onSubmit={onSubmit} className="mt-8 space-y-8">
           <FormSection title="Basics">

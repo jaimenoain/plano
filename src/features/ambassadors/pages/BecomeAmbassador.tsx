@@ -6,8 +6,12 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { SITE_URL } from "@/features/buildings/utils/structuredData";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  AmbassadorMarketingEyebrow,
+  AmbassadorMarketingLabel,
+  AmbassadorMarketingSection,
+} from "@/features/ambassadors/components/ambassador-marketing-ui";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
@@ -188,6 +192,24 @@ export default function BecomeAmbassador() {
     return () => window.clearTimeout(t);
   }, [localityQuery]);
 
+  const responsibilitySteps = [
+    {
+      index: "01",
+      heading: "Document",
+      body: "Spot buildings missing photos or key facts in your area and help keep the catalogue accurate.",
+    },
+    {
+      index: "02",
+      heading: "Welcome",
+      body: "Greet newcomers, flag duplicates, and keep data quality high alongside your chapter.",
+    },
+    {
+      index: "03",
+      heading: "Coordinate",
+      body: "Work with your chapter president and leadership on local priorities and outreach.",
+    },
+  ];
+
   const interestOptions = [
     { id: "photos", label: "Taking photos of buildings in your area" },
     { id: "data", label: "Reviewing data entries" },
@@ -243,12 +265,15 @@ export default function BecomeAmbassador() {
   return (
     <div className="w-full">
       <AppLayout title="Become an ambassador" showLogo={false}>
-        <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
-          <header className="pt-10 pb-10 border-b border-border-default space-y-4">
-            <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-text-primary leading-none">
-              Become an ambassador
+        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+          <header className="pt-16 pb-20 border-b border-border-default">
+            <AmbassadorMarketingEyebrow>Ambassador programme</AmbassadorMarketingEyebrow>
+            <h1 className="mt-8 text-5xl sm:text-6xl font-bold tracking-tight leading-tight text-text-primary">
+              Become an
+              <br />
+              ambassador
             </h1>
-            <p className="text-text-secondary">
+            <p className="mt-8 max-w-xl text-base sm:text-lg leading-relaxed text-text-secondary">
               Ambassadors help grow and refine Plano&apos;s building data in a specific city or country:
               photos, metadata, and community outreach. It is a volunteer role with a light, steady
               rhythm — chapter leaders coordinate priorities.
@@ -256,19 +281,27 @@ export default function BecomeAmbassador() {
           </header>
 
           {fromEmbassy ? (
-            <p className="mt-8 text-sm text-text-secondary border border-border-default rounded-sm p-4 bg-surface-muted/30">
+            <p className="mt-10 text-sm text-text-secondary border border-border-default rounded-sm p-4 bg-surface-muted/30">
               You need an active ambassador membership to open the Embassy. Apply below or contact your
               chapter if you believe this is a mistake.
             </p>
           ) : null}
 
-          <section className="mt-10 space-y-6">
-            <h2 className="text-xl font-semibold text-text-primary">What you will do</h2>
-            <ul className="list-disc pl-5 space-y-2 text-text-secondary">
-              <li>Spot buildings missing photos or key facts in your area</li>
-              <li>Welcome newcomers and keep data quality high</li>
-              <li>Coordinate with your chapter&apos;s president and ExCo on priorities</li>
-            </ul>
+          <section className="border-b border-border-default py-16 space-y-10">
+            <AmbassadorMarketingEyebrow>What you will do</AmbassadorMarketingEyebrow>
+            <div className="space-y-10">
+              {responsibilitySteps.map((step) => (
+                <div key={step.index} className="grid gap-4 sm:grid-cols-[3rem_1fr]">
+                  <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+                    {step.index}
+                  </p>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-bold tracking-tight text-text-primary">{step.heading}</h3>
+                    <p className="text-sm leading-relaxed text-text-secondary">{step.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </section>
 
           {authLoading ? (
@@ -276,64 +309,58 @@ export default function BecomeAmbassador() {
               <Loader2 className="h-8 w-8 animate-spin text-text-disabled" aria-hidden />
             </div>
           ) : !user ? (
-            <section className="mt-12 space-y-4 border-t border-border-default pt-10">
-              <h2 className="text-xl font-semibold text-text-primary">Apply</h2>
+            <AmbassadorMarketingSection eyebrow="Apply" title="Join the programme">
               <p className="text-text-secondary">
                 Create an account or sign in to apply to a chapter. The programme is open to anyone who
                 cares about architecture where they live.
               </p>
-              <Button asChild>
+              <Button asChild variant="outline" size="lg" className="rounded-sm tracking-[0.15em] uppercase text-xs font-medium px-10">
                 <Link to="/auth">Log in or register</Link>
               </Button>
-            </section>
+            </AmbassadorMarketingSection>
           ) : loadingData ? (
             <div className="flex justify-center py-16">
               <Loader2 className="h-8 w-8 animate-spin text-text-disabled" aria-hidden />
             </div>
           ) : membership?.chapter && membership.status === "active" ? (
-            <section className="mt-12 space-y-4 border-t border-border-default pt-10">
-              <h2 className="text-xl font-semibold text-text-primary">Your ambassador status</h2>
+            <AmbassadorMarketingSection eyebrow="Status" title="Your ambassador membership">
               <p className="text-text-secondary">
                 You are already an active member of{" "}
                 <span className="font-medium text-text-primary">{membership.chapter.name}</span> as{" "}
                 <span className="font-medium text-text-primary">{membership.role}</span>.
               </p>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="rounded-sm tracking-[0.15em] uppercase text-xs font-medium">
                 <Link to="/embassy">Open Embassy</Link>
               </Button>
-            </section>
+            </AmbassadorMarketingSection>
           ) : membership?.chapter && membership.status === "pending_review" ? (
-            <section className="mt-12 space-y-4 border-t border-border-default pt-10">
-              <h2 className="text-xl font-semibold text-text-primary">Membership under review</h2>
+            <AmbassadorMarketingSection eyebrow="Status" title="Membership under review">
               <p className="text-text-secondary">
                 Your role with{" "}
                 <span className="font-medium text-text-primary">{membership.chapter.name}</span> is on hold
                 after a location change. Chapter leaders will confirm whether you still belong in this
                 chapter. You can open the Embassy for updates.
               </p>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="rounded-sm tracking-[0.15em] uppercase text-xs font-medium">
                 <Link to="/embassy">Open Embassy</Link>
               </Button>
-            </section>
+            </AmbassadorMarketingSection>
           ) : pending ? (
-            <section className="mt-12 space-y-4 border-t border-border-default pt-10">
-              <h2 className="text-xl font-semibold text-text-primary">Application pending</h2>
+            <AmbassadorMarketingSection eyebrow="Status" title="Application pending">
               <p className="text-text-secondary">
                 Your application is waiting for chapter leaders to review it. You will receive a
                 notification when there is a decision.
               </p>
-            </section>
+            </AmbassadorMarketingSection>
           ) : chapters.length === 0 ? (
-            <section className="mt-12 space-y-4 border-t border-border-default pt-10">
-              <h2 className="text-xl font-semibold text-text-primary">Apply</h2>
+            <AmbassadorMarketingSection eyebrow="Apply" title="Applications paused">
               <p className="text-text-secondary">
                 There are no chapters accepting applications yet. Check back soon or contact the Plano
                 team.
               </p>
-            </section>
+            </AmbassadorMarketingSection>
           ) : (
-            <section className="mt-12 space-y-6 border-t border-border-default pt-10">
-              <h2 className="text-xl font-semibold text-text-primary">Apply</h2>
+            <AmbassadorMarketingSection eyebrow="Apply" title="Submit your application" className="space-y-6">
               {profileFields &&
               !(profileFields.country?.trim() || profileFields.location?.trim()) ? (
                 <p className="text-sm text-text-secondary border border-border-default rounded-sm p-4 bg-surface-muted/30">
@@ -346,7 +373,7 @@ export default function BecomeAmbassador() {
               ) : null}
               <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="locality">Where are you based?</Label>
+                  <AmbassadorMarketingLabel htmlFor="locality">Where are you based?</AmbassadorMarketingLabel>
                   <div className="relative w-full max-w-md">
                     <Input
                       id="locality"
@@ -362,7 +389,7 @@ export default function BecomeAmbassador() {
                       </div>
                     )}
                     {localityHits.length > 0 && (
-                      <div className="absolute top-full left-0 w-full z-10 mt-1 bg-surface-overlay border border-border-default rounded-sm shadow-lg overflow-hidden">
+                      <div className="absolute top-full left-0 w-full z-10 mt-1 bg-surface-overlay border border-border-default rounded-sm overflow-hidden">
                         <ul className="divide-y divide-border-default max-h-48 overflow-y-auto">
                           {localityHits.map((loc) => (
                             <li key={loc.id}>
@@ -396,7 +423,7 @@ export default function BecomeAmbassador() {
                 </div>
 
                 <div className="space-y-3">
-                  <Label>What could you help with?</Label>
+                  <AmbassadorMarketingLabel>What could you help with?</AmbassadorMarketingLabel>
                   <ToggleGroup
                     type="multiple"
                     variant="outline"
@@ -408,7 +435,7 @@ export default function BecomeAmbassador() {
                       <ToggleGroupItem
                         key={opt.id}
                         value={opt.label}
-                        className="h-auto py-1.5 px-3 rounded-full text-sm data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground border-border-default"
+                        className="h-auto rounded-full border-border-default px-3 py-1.5 text-sm data-[state=on]:border-text-primary data-[state=on]:bg-surface-card data-[state=on]:text-text-primary"
                       >
                         {opt.label}
                       </ToggleGroupItem>
@@ -417,7 +444,9 @@ export default function BecomeAmbassador() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="motivation">Why do you want to be an ambassador? (Optional)</Label>
+                  <AmbassadorMarketingLabel htmlFor="motivation">
+                    Why do you want to be an ambassador? (optional)
+                  </AmbassadorMarketingLabel>
                   <Textarea
                     id="motivation"
                     value={motivation}
@@ -427,7 +456,12 @@ export default function BecomeAmbassador() {
                     placeholder="Tell us a bit about your interest in architecture and Plano."
                   />
                 </div>
-                <Button type="submit" disabled={submitting || !localityId}>
+                <Button
+                  type="submit"
+                  variant="outline"
+                  className="rounded-sm tracking-[0.15em] uppercase text-xs font-medium"
+                  disabled={submitting || !localityId}
+                >
                   {submitting ? (
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                   ) : (
@@ -435,7 +469,7 @@ export default function BecomeAmbassador() {
                   )}
                 </Button>
               </form>
-            </section>
+            </AmbassadorMarketingSection>
           )}
         </div>
       </AppLayout>

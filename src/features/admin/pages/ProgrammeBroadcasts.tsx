@@ -9,8 +9,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AdminPageHeader,
+  AdminSectionLabel,
+  AdminFormLabel,
+  AdminEmptyState,
+  AdminErrorState,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -160,7 +168,7 @@ function ComposeForm({ defaultScope, defaultChapterId, onSent }: {
       <CardContent className="space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="bc-type">Type</Label>
+            <AdminFormLabel htmlFor="bc-type">Type</AdminFormLabel>
             <Select value={type} onValueChange={(v) => setType(v as BroadcastType)}>
               <SelectTrigger id="bc-type">
                 <SelectValue />
@@ -174,7 +182,7 @@ function ComposeForm({ defaultScope, defaultChapterId, onSent }: {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="bc-scope">Recipients</Label>
+            <AdminFormLabel htmlFor="bc-scope">Recipients</AdminFormLabel>
             <Select value={scope} onValueChange={(v) => setScope(v as RecipientScope)}>
               <SelectTrigger id="bc-scope">
                 <SelectValue />
@@ -190,7 +198,7 @@ function ComposeForm({ defaultScope, defaultChapterId, onSent }: {
 
         {scope === "country" && (
           <div className="space-y-1.5">
-            <Label htmlFor="bc-country">Country code (ISO 2-letter, e.g. GB)</Label>
+            <AdminFormLabel htmlFor="bc-country">Country code (ISO 2-letter, e.g. GB)</AdminFormLabel>
             <Input
               id="bc-country"
               value={countryCode}
@@ -204,7 +212,7 @@ function ComposeForm({ defaultScope, defaultChapterId, onSent }: {
 
         {scope === "chapter" && (
           <div className="space-y-1.5">
-            <Label htmlFor="bc-chapter">Chapter</Label>
+            <AdminFormLabel htmlFor="bc-chapter">Chapter</AdminFormLabel>
             <Select value={chapterId} onValueChange={setChapterId}>
               <SelectTrigger id="bc-chapter">
                 <SelectValue placeholder="Select a chapter…" />
@@ -221,7 +229,7 @@ function ComposeForm({ defaultScope, defaultChapterId, onSent }: {
         )}
 
         <div className="space-y-1.5">
-          <Label htmlFor="bc-subject">Subject</Label>
+          <AdminFormLabel htmlFor="bc-subject">Subject</AdminFormLabel>
           <Input
             id="bc-subject"
             value={subject}
@@ -232,12 +240,12 @@ function ComposeForm({ defaultScope, defaultChapterId, onSent }: {
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="bc-body">
+          <AdminFormLabel htmlFor="bc-body">
             Message
-            <span className="ml-2 text-xs text-text-secondary font-normal">
+            <span className="ml-2 normal-case tracking-normal text-xs text-text-secondary font-normal">
               {body.length}/2000
             </span>
-          </Label>
+          </AdminFormLabel>
           <Textarea
             id="bc-body"
             value={body}
@@ -382,9 +390,9 @@ function ReadStatusDialog({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border-default">
-                  <th className="text-left py-2 text-xs font-medium text-text-secondary">President</th>
-                  <th className="text-left py-2 text-xs font-medium text-text-secondary">Chapter</th>
-                  <th className="text-left py-2 text-xs font-medium text-text-secondary">Read</th>
+                  <th className={cn("text-left py-2", adminTableHeadClass)}>President</th>
+                  <th className={cn("text-left py-2", adminTableHeadClass)}>Chapter</th>
+                  <th className={cn("text-left py-2", adminTableHeadClass)}>Read</th>
                 </tr>
               </thead>
               <tbody>
@@ -435,18 +443,18 @@ function SentList({ onSelect }: { onSelect: (b: AdminBroadcast) => void }) {
 
   if (error) {
     return (
-      <p className="text-sm text-feedback-destructive">
-        {error instanceof Error ? error.message : "Failed to load broadcasts."}
-      </p>
+      <AdminErrorState
+        message={error instanceof Error ? error.message : "Failed to load broadcasts."}
+      />
     );
   }
 
   if (broadcasts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-        <Megaphone className="h-8 w-8 text-text-secondary opacity-40" />
-        <p className="text-sm text-text-secondary">No broadcasts sent yet.</p>
-      </div>
+      <AdminEmptyState
+        title="No broadcasts sent yet"
+        description="Compose a message above to reach chapter presidents."
+      />
     );
   }
 
@@ -496,13 +504,12 @@ export default function ProgrammeBroadcasts() {
   const defaultChapterId = searchParams.get("chapterId") ?? undefined;
 
   return (
-    <div className="space-y-8 p-4 sm:p-6 lg:p-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Broadcasts</h1>
-        <p className="mt-1 text-sm text-text-secondary">
-          Send structured messages to chapter presidents. Rate limit: 3 per day.
-        </p>
-      </div>
+    <div className="space-y-8">
+      <AdminPageHeader
+        eyebrow="Programme"
+        title="Broadcasts"
+        description="Send structured messages to chapter presidents. Rate limit: 3 per day."
+      />
 
       <ComposeForm
         defaultScope={defaultScope}
@@ -511,9 +518,7 @@ export default function ProgrammeBroadcasts() {
       />
 
       <section>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-text-secondary mb-3">
-          Sent
-        </h2>
+        <AdminSectionLabel className="mb-3 block">Sent</AdminSectionLabel>
         <SentList onSelect={setSelectedBroadcast} />
       </section>
 

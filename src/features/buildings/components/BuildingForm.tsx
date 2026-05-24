@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useHoneypot } from "@/hooks/useHoneypot";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { BuildingFormLabel, BuildingFormSection } from "@/features/buildings/components/building-form-ui";
 import { buildingSchema, editBuildingSchema } from "@/lib/validations/building";
 import { Loader2, Plus, X, Check, Info } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -25,7 +25,6 @@ import {
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import { TagInput } from "@/components/ui/tag-input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -383,10 +382,10 @@ toast.error("Failed to add attribute");
 
   return (
     <div className="max-w-2xl mx-auto w-full">
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-2">
+      <BuildingFormSection title="Basics">
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
+          <BuildingFormLabel htmlFor="name">Name</BuildingFormLabel>
           <Input
             id="name"
             value={name}
@@ -396,7 +395,7 @@ toast.error("Failed to add attribute");
             className="max-w-md"
           />
           {isSlugCollision && (
-            <div className="flex items-center gap-1.5 mt-1 text-xs text-amber-600 dark:text-amber-500">
+            <div className="flex items-center gap-1.5 mt-1 text-xs text-feedback-warning">
               <Info className="h-3.5 w-3.5" />
               <span>
                 A building with this name already exists — a unique suffix will be appended to its URL.
@@ -408,7 +407,7 @@ toast.error("Failed to add attribute");
 
 
         <div className="space-y-2">
-          <Label>Status</Label>
+          <BuildingFormLabel>Status</BuildingFormLabel>
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger>
               <SelectValue placeholder="Select status" />
@@ -421,12 +420,12 @@ toast.error("Failed to add attribute");
           </Select>
         </div>
 
-        <div className="space-y-4 border border-border-default rounded-sm p-4 bg-surface-muted/30">
-          <h3 className="text-sm font-semibold">Access & Entry Logistics</h3>
+      </BuildingFormSection>
 
+      <BuildingFormSection title="Access & entry">
           <div className="flex flex-col gap-6">
             <div className="space-y-2">
-              <Label>Level</Label>
+              <BuildingFormLabel>Level</BuildingFormLabel>
               <SegmentedControl
                 options={ACCESS_LEVEL_OPTIONS}
                 value={access_level || ""}
@@ -436,7 +435,7 @@ toast.error("Failed to add attribute");
             </div>
 
             <div className="space-y-2">
-              <Label>Logistics</Label>
+              <BuildingFormLabel>Logistics</BuildingFormLabel>
               <SegmentedControl
                 options={ACCESS_LOGISTICS_OPTIONS}
                 value={access_logistics || ""}
@@ -446,7 +445,7 @@ toast.error("Failed to add attribute");
             </div>
 
             <div className="space-y-2">
-              <Label>Cost</Label>
+              <BuildingFormLabel>Cost</BuildingFormLabel>
               <SegmentedControl
                 options={ACCESS_COST_OPTIONS}
                 value={access_cost || ""}
@@ -457,7 +456,7 @@ toast.error("Failed to add attribute");
           </div>
 
           <div className="space-y-2">
-            <Label>Access Notes</Label>
+            <BuildingFormLabel>Access notes</BuildingFormLabel>
             <Textarea
               value={access_notes}
               onChange={(e) => setAccessNotes(e.target.value)}
@@ -472,12 +471,10 @@ toast.error("Failed to add attribute");
               {access_notes.length}/500
             </div>
           </div>
-        </div>
+      </BuildingFormSection>
 
-        {/* Size */}
-        <div className="space-y-4 border border-border-default rounded-sm p-4 bg-surface-muted/30">
+      <BuildingFormSection title="Size">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold">Size</h3>
             <Popover>
               <PopoverTrigger asChild>
                 <button
@@ -514,7 +511,7 @@ toast.error("Failed to add attribute");
           </div>
 
           <div className="space-y-2">
-            <Label>Category</Label>
+            <BuildingFormLabel>Category</BuildingFormLabel>
             <Select value={size_category} onValueChange={setSizeCategory}>
               <SelectTrigger className="max-w-xs">
                 <SelectValue placeholder="Select size category" />
@@ -529,7 +526,7 @@ toast.error("Failed to add attribute");
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="size_sqm">Floor Area (m²)</Label>
+              <BuildingFormLabel htmlFor="size_sqm">Floor area (m²)</BuildingFormLabel>
               <Input
                 id="size_sqm"
                 type="number"
@@ -541,7 +538,7 @@ toast.error("Failed to add attribute");
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="storeys">Storeys</Label>
+              <BuildingFormLabel htmlFor="storeys">Storeys</BuildingFormLabel>
               <Input
                 id="storeys"
                 type="number"
@@ -554,7 +551,7 @@ toast.error("Failed to add attribute");
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="height_m">Height (m)</Label>
+              <BuildingFormLabel htmlFor="height_m">Height (m)</BuildingFormLabel>
               <Input
                 id="height_m"
                 type="number"
@@ -566,13 +563,12 @@ toast.error("Failed to add attribute");
               />
             </div>
           </div>
-        </div>
+      </BuildingFormSection>
 
-        {/* Alt Name & Aliases */}
-        {showAliases && (
-          <>
+      {showAliases && (
+        <BuildingFormSection title="Names & search">
             <div className="space-y-2">
-              <Label htmlFor="alt_name">Alternative Name (English)</Label>
+              <BuildingFormLabel htmlFor="alt_name">Alternative name (English)</BuildingFormLabel>
               <Input
                 id="alt_name"
                 value={alt_name}
@@ -586,7 +582,7 @@ toast.error("Failed to add attribute");
             </div>
 
             <div className="space-y-2">
-              <Label>Search Aliases (Hidden)</Label>
+              <BuildingFormLabel>Search aliases (hidden)</BuildingFormLabel>
               <TagInput
                 placeholder="Add alias..."
                 tags={aliases}
@@ -596,14 +592,14 @@ toast.error("Failed to add attribute");
                 Nicknames or alternate spellings for search only (e.g. 'Iron Lady'). Press Enter to add.
               </p>
             </div>
-          </>
-        )}
+        </BuildingFormSection>
+      )}
 
-        {/* Year Built + Century */}
-        {showYear && (
+      {showYear && (
+        <BuildingFormSection title="Year built">
           <div className="flex flex-wrap items-end gap-4">
             <div className="space-y-2">
-              <Label htmlFor="year_completed">Year Built</Label>
+              <BuildingFormLabel htmlFor="year_completed">Year built</BuildingFormLabel>
               <Input
                 id="year_completed"
                 type="number"
@@ -615,12 +611,12 @@ toast.error("Failed to add attribute");
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="century">
+              <BuildingFormLabel htmlFor="century">
                 Century
                 {year_completed && !isNaN(parseInt(year_completed, 10)) && (
                   <span className="ml-1.5 text-xs font-normal text-text-secondary">(auto)</span>
                 )}
-              </Label>
+              </BuildingFormLabel>
               <Input
                 id="century"
                 type="number"
@@ -643,13 +639,13 @@ toast.error("Failed to add attribute");
               />
             </div>
           </div>
-        )}
+        </BuildingFormSection>
+      )}
 
-        {/* Primary design credits (people / companies) */}
         {(showDesignCredits || isVerifiedCreditClaim) && (
-          <div className="space-y-4">
+          <BuildingFormSection title="Design credits">
             <div className="space-y-2">
-              <Label>Design credits</Label>
+              <BuildingFormLabel>Primary credits</BuildingFormLabel>
               <CreditedEntitiesSelect
                 selected={designCreditEntities}
                 onChange={setDesignCreditEntities}
@@ -669,10 +665,9 @@ toast.error("Failed to add attribute");
                 />
               </div>
             )}
-          </div>
+          </BuildingFormSection>
         )}
 
-        {/* Add Buttons Row (edit mode only; creation forms show all sections by default) */}
         {mode !== "create" && (!showYear || !showDesignCredits || !showAliases) && (
             <div className="flex gap-2 flex-wrap">
                 {!showAliases && (
@@ -710,20 +705,13 @@ toast.error("Failed to add attribute");
                 )}
             </div>
         )}
-      </div>
 
-      <Separator />
-
-      {/* Functional Classification */}
-      <div className="space-y-6">
-        <div>
-          <h3 className="text-base font-semibold">Functional Classification</h3>
-          <p className="text-sm text-text-secondary">Define the primary purpose of the building.</p>
-        </div>
-
-        <div className="space-y-6">
+      <BuildingFormSection
+        title="Functional classification"
+        description="Define the primary purpose of the building."
+      >
           <div className="space-y-1.5">
-            <Label htmlFor="category-select">Category</Label>
+            <BuildingFormLabel htmlFor="category-select">Category</BuildingFormLabel>
             {isLoadingCategories ? (
                <Skeleton className="h-10 w-full" />
             ) : (
@@ -743,7 +731,7 @@ toast.error("Failed to add attribute");
           </div>
 
           <div className="space-y-1.5">
-            <Label>Typology</Label>
+            <BuildingFormLabel>Typology</BuildingFormLabel>
             {isLoadingTypologies ? (
                <div className="flex flex-wrap gap-2">
                  <Skeleton className="h-8 w-24" />
@@ -830,18 +818,12 @@ toast.error("Failed to add attribute");
                  <p className="text-sm text-text-secondary">No typologies found for this category.</p>
             )}
           </div>
-        </div>
-      </div>
+      </BuildingFormSection>
 
-      <Separator />
-
-      {/* Characteristics / Attributes */}
-      <div className="space-y-6">
-        <div>
-          <h3 className="text-base font-semibold">Characteristics</h3>
-          <p className="text-sm text-text-secondary">Add tags to describe the building's features.</p>
-        </div>
-
+      <BuildingFormSection
+        title="Characteristics"
+        description="Add tags to describe the building's features."
+      >
         {isLoadingGroups || isLoadingAttributes ? (
           <div className="space-y-4">
             <Skeleton className="h-4 w-32" />
@@ -860,9 +842,9 @@ toast.error("Failed to add attribute");
 
               return (
                 <div key={group.id} className="space-y-3">
-                  <Label className="text-xs uppercase text-text-secondary tracking-wider font-semibold">
+                  <BuildingFormLabel className="block">
                     {group.name}
-                  </Label>
+                  </BuildingFormLabel>
                   <ToggleGroup
                     type="multiple"
                     variant="outline"
@@ -938,7 +920,7 @@ toast.error("Failed to add attribute");
             })}
           </div>
         )}
-      </div>
+      </BuildingFormSection>
 
       <input {...honeypotProps} />
 

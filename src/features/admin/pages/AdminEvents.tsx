@@ -36,6 +36,13 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { makeEventSlug } from "@/features/events/utils/eventSlug";
 import type { DiscoveredEvent } from "@/features/admin/api/events-discover.route";
+import {
+  AdminPageHeader,
+  adminHairlineTabsListClass,
+  adminHairlineTabTriggerClass,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 type ManagedEvent = {
   id: string;
@@ -54,11 +61,15 @@ export const meta: MetaFunction = () => [{ title: "Admin Events | Plano" }];
 export default function AdminEvents() {
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Events</h1>
+      <AdminPageHeader eyebrow="Content" title="Events" />
       <Tabs defaultValue="discover">
-        <TabsList>
-          <TabsTrigger value="discover">Discover</TabsTrigger>
-          <TabsTrigger value="manage">Manage</TabsTrigger>
+        <TabsList className={cn(adminHairlineTabsListClass)}>
+          <TabsTrigger value="discover" className={cn(adminHairlineTabTriggerClass)}>
+            Discover
+          </TabsTrigger>
+          <TabsTrigger value="manage" className={cn(adminHairlineTabTriggerClass)}>
+            Manage
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="discover" className="mt-6">
           <DiscoverTab />
@@ -323,15 +334,15 @@ function ManageTab() {
     <div className="space-y-4">
       <div className="rounded-sm border border-border-default bg-surface-card">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
+            <TableHeader>
+              <TableRow>
+                <TableHead className={cn(adminTableHeadClass)}>Title</TableHead>
+                <TableHead className={cn(adminTableHeadClass)}>Date</TableHead>
+                <TableHead className={cn(adminTableHeadClass)}>Location</TableHead>
+                <TableHead className={cn(adminTableHeadClass)}>Status</TableHead>
+                <TableHead className={cn(adminTableHeadClass, "text-right")}>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>

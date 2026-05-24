@@ -15,6 +15,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { fetchChapterPerformanceRanking } from "@/features/admin/api/programme";
 import type { ChapterRankingRow } from "@/features/admin/types/programme";
+import {
+  AdminPageHeader,
+  AdminEmptyState,
+  AdminErrorState,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [
   { title: "Chapter Rankings | Plano Admin" },
@@ -91,9 +98,12 @@ function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; s
 
 function LoadingSkeleton() {
   return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <Skeleton className="h-9 w-56" />
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-24 rounded-sm" />
+          <Skeleton className="h-9 w-64 rounded-sm" />
+        </div>
         <Skeleton className="h-9 w-36" />
       </div>
       <Skeleton className="h-[480px]" />
@@ -146,72 +156,84 @@ export default function ProgrammeRankings() {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center gap-4 p-6">
-        <p className="text-feedback-destructive text-center max-w-lg">
-          {error instanceof Error ? error.message : "Failed to load chapter rankings."}
-        </p>
-        <p className="text-sm text-text-secondary text-center max-w-md">
-          Apply migration{" "}
-          <code className="font-mono text-xs">20271136000000_chapter_performance_ranking_rpc.sql</code>{" "}
-          in the Supabase SQL Editor, then reload.
-        </p>
+      <div className="space-y-6">
+        <AdminPageHeader
+          eyebrow="Programme"
+          title="Chapter Rankings"
+          description="Sortable performance table with CSV export."
+        />
+        <AdminErrorState
+          message={
+            error instanceof Error
+              ? error.message
+              : "Failed to load chapter rankings. Apply migration 20271136000000_chapter_performance_ranking_rpc.sql in the Supabase SQL Editor, then reload."
+          }
+        />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Chapter Rankings</h1>
-        <div className="flex items-center gap-3">
-          <Select value={periodValue} onValueChange={setPeriodValue}>
-            <SelectTrigger className="w-36">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PERIOD_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => exportCsv(sorted)}
-            disabled={sorted.length === 0}
-          >
-            <Download className="h-4 w-4 mr-1.5" />
-            Export CSV
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        eyebrow="Programme"
+        title="Chapter Rankings"
+        description="Score = edits × 1 + photos × 2 + new members × 5"
+        actions={
+          <>
+            <Select value={periodValue} onValueChange={setPeriodValue}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PERIOD_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportCsv(sorted)}
+              disabled={sorted.length === 0}
+            >
+              <Download className="h-4 w-4 mr-1.5" />
+              Export CSV
+            </Button>
+          </>
+        }
+      />
 
-      <Card>
+      <Card className="border-border-default shadow-none">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-text-secondary">
-            {sorted.length} chapter{sorted.length !== 1 ? "s" : ""} · Score = edits × 1 + photos × 2 + new members × 5
+            {sorted.length} chapter{sorted.length !== 1 ? "s" : ""}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           {sorted.length === 0 ? (
-            <p className="text-sm text-text-secondary text-center py-12">No chapters found.</p>
+            <AdminEmptyState title="No chapters found" />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border-default">
-                    <th className="text-left px-4 py-2.5 text-xs font-medium text-text-secondary tracking-wide uppercase w-10">#</th>
+                    <th className={cn("text-left px-4 py-2.5 w-10", adminTableHeadClass)}>#</th>
                     {COLUMNS.map((col) => (
                       <th
                         key={col.key}
-                        className={`px-4 py-2.5 text-xs font-medium text-text-secondary tracking-wide uppercase cursor-pointer select-none hover:text-text-primary ${col.align === "right" ? "text-right" : "text-left"}`}
+                        className={cn(
+                          "px-4 py-2.5 cursor-pointer select-none hover:text-text-primary",
+                          adminTableHeadClass,
+                          col.align === "right" ? "text-right" : "text-left",
+                        )}
                         onClick={() => handleSort(col.key)}
                       >
                         {col.label}
                         <SortIcon col={col.key} sortKey={sortKey} sortDir={sortDir} />
                       </th>
                     ))}
-                    <th className="text-right px-4 py-2.5 text-xs font-medium text-text-secondary tracking-wide uppercase">Last active</th>
+                    <th className={cn("text-right px-4 py-2.5", adminTableHeadClass)}>Last active</th>
                     <th className="w-8" />
                   </tr>
                 </thead>

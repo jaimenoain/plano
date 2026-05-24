@@ -16,6 +16,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchProgrammeHealthSummary } from "@/features/admin/api/programme";
+import {
+  AdminPageHeader,
+  AdminSectionLabel,
+  AdminEmptyState,
+  AdminErrorState,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+
+/** Recharts needs resolved colors; values match design tokens in `src/index.css`. */
+const CHART_COLORS = {
+  grid: "#E5E5E5",
+  axis: "#525252",
+  edits: "#171717",
+  photos: "#A3A3A3",
+  rollingAvg: "#F59E0B",
+} as const;
 import type {
   ProgrammePulse,
   ProgrammeActivityDay,
@@ -113,9 +129,12 @@ function ActivityZone({ trend }: { trend: ProgrammeActivityDay[] }) {
 
   if (chartData.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center h-48 text-text-secondary text-sm">
-          No activity data in the last 30 days.
+      <Card className="border-border-default shadow-none">
+        <CardContent className="p-0">
+          <AdminEmptyState
+            title="No activity in the last 30 days"
+            description="Contribution data will appear here once chapters are active."
+          />
         </CardContent>
       </Card>
     );
@@ -129,31 +148,31 @@ function ActivityZone({ trend }: { trend: ProgrammeActivityDay[] }) {
       <CardContent>
         <ResponsiveContainer width="100%" height={240}>
           <ComposedChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E5E5E5" />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.grid} />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 11, fill: "#525252" }}
+              tick={{ fontSize: 11, fill: CHART_COLORS.axis }}
               tickLine={false}
               axisLine={false}
               interval={4}
             />
             <YAxis
-              tick={{ fontSize: 11, fill: "#525252" }}
+              tick={{ fontSize: 11, fill: CHART_COLORS.axis }}
               tickLine={false}
               axisLine={false}
               width={32}
             />
             <Tooltip
-              contentStyle={{ fontSize: 12, borderRadius: 2, border: "1px solid #E5E5E5" }}
+              contentStyle={{ fontSize: 12, borderRadius: 2, border: `1px solid ${CHART_COLORS.grid}` }}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Bar dataKey="edits"  name="Edits"  fill="#171717" maxBarSize={16} />
-            <Bar dataKey="photos" name="Photos" fill="#A3A3A3" maxBarSize={16} />
+            <Bar dataKey="edits"  name="Edits"  fill={CHART_COLORS.edits} maxBarSize={16} />
+            <Bar dataKey="photos" name="Photos" fill={CHART_COLORS.photos} maxBarSize={16} />
             <Line
               type="monotone"
               dataKey="rollingAvg"
               name="7-day avg"
-              stroke="#F59E0B"
+              stroke={CHART_COLORS.rollingAvg}
               strokeWidth={2}
               dot={false}
             />
@@ -211,9 +230,9 @@ function FlagRow({ flag }: { flag: FlaggedChapter }) {
 function FlaggedZone({ flags }: { flags: FlaggedChapter[] }) {
   if (flags.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center h-24 text-text-secondary text-sm">
-          No chapters need attention right now.
+      <Card className="border-border-default shadow-none">
+        <CardContent className="p-0">
+          <AdminEmptyState title="No chapters need attention" />
         </CardContent>
       </Card>
     );
@@ -243,9 +262,9 @@ function FlaggedZone({ flags }: { flags: FlaggedChapter[] }) {
 function TopChaptersZone({ chapters }: { chapters: TopChapter[] }) {
   if (chapters.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center h-24 text-text-secondary text-sm">
-          No chapter activity recorded this month.
+      <Card className="border-border-default shadow-none">
+        <CardContent className="p-0">
+          <AdminEmptyState title="No chapter activity this month" />
         </CardContent>
       </Card>
     );
@@ -260,11 +279,11 @@ function TopChaptersZone({ chapters }: { chapters: TopChapter[] }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border-default">
-              <th className="text-left py-2 text-xs font-medium text-text-secondary tracking-wide uppercase">#</th>
-              <th className="text-left py-2 text-xs font-medium text-text-secondary tracking-wide uppercase">Chapter</th>
-              <th className="text-left py-2 text-xs font-medium text-text-secondary tracking-wide uppercase">Country</th>
-              <th className="text-right py-2 text-xs font-medium text-text-secondary tracking-wide uppercase">Members</th>
-              <th className="text-right py-2 text-xs font-medium text-text-secondary tracking-wide uppercase">Contributions</th>
+              <th className={`text-left py-2 ${adminTableHeadClass}`}>#</th>
+              <th className={`text-left py-2 ${adminTableHeadClass}`}>Chapter</th>
+              <th className={`text-left py-2 ${adminTableHeadClass}`}>Country</th>
+              <th className={`text-right py-2 ${adminTableHeadClass}`}>Members</th>
+              <th className={`text-right py-2 ${adminTableHeadClass}`}>Contributions</th>
             </tr>
           </thead>
           <tbody>
@@ -295,8 +314,11 @@ function TopChaptersZone({ chapters }: { chapters: TopChapter[] }) {
 
 function LoadingSkeleton() {
   return (
-    <div className="space-y-8 p-4 sm:p-6 lg:p-8">
-      <Skeleton className="h-9 w-56" />
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <Skeleton className="h-3 w-24 rounded-sm" />
+        <Skeleton className="h-9 w-64 rounded-sm" />
+      </div>
       <div className="grid gap-4 md:grid-cols-4">
         {[...Array(4)].map((_, i) => (
           <Skeleton key={i} className="h-24" />
@@ -322,43 +344,49 @@ export default function ProgrammeHealth() {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center gap-4 p-6">
-        <p className="text-feedback-destructive text-center max-w-lg">
-          {error instanceof Error ? error.message : "Failed to load programme health data."}
-        </p>
-        <p className="text-sm text-text-secondary text-center max-w-md">
-          Apply migration <code className="font-mono text-xs">20271120000000_programme_health_rpc.sql</code> in
-          the Supabase SQL Editor, then reload.
-        </p>
+      <div className="space-y-6">
+        <AdminPageHeader
+          eyebrow="Programme"
+          title="Programme Health"
+          description="Pulse metrics, contribution activity, and chapters needing attention."
+        />
+        <AdminErrorState
+          message={
+            error instanceof Error
+              ? error.message
+              : "Failed to load programme health data. Apply migration 20271120000000_programme_health_rpc.sql in the Supabase SQL Editor, then reload."
+          }
+        />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Programme Health</h1>
+    <div className="space-y-8">
+      <AdminPageHeader
+        eyebrow="Programme"
+        title="Programme Health"
+        description="Pulse metrics, contribution activity, and chapters needing attention."
+      />
 
-      {/* Pulse */}
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold tracking-tight text-text-primary">Pulse</h2>
+        <AdminSectionLabel>Pulse</AdminSectionLabel>
         <PulseZone pulse={data.pulse} />
       </section>
 
-      {/* Activity */}
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold tracking-tight text-text-primary">Contribution Activity</h2>
+        <AdminSectionLabel>Contribution activity</AdminSectionLabel>
         <ActivityZone trend={data.activityTrend} />
       </section>
 
-      {/* Flagged + Top side by side on large screens */}
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold tracking-tight text-text-primary">Needs Attention</h2>
+          <AdminSectionLabel>Needs attention</AdminSectionLabel>
           <FlaggedZone flags={data.flaggedChapters} />
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold tracking-tight text-text-primary">Top 5 This Month</h2>
+          <AdminSectionLabel>Top 5 this month</AdminSectionLabel>
           <TopChaptersZone chapters={data.topChapters} />
         </section>
       </div>

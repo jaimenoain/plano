@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  BuildingFormSection,
+  BuildingPageHeader,
+} from "@/features/buildings/components/building-form-ui";
 import { BuildingForm, BuildingFormData } from "../components/BuildingForm";
 import { BuildingLocationPicker } from "../components/BuildingLocationPicker";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -323,9 +326,9 @@ toast.error("Unexpected error");
 
   if (loading) {
     return (
-      <AppLayout>
-        <div className="flex items-center justify-center h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin" />
+      <AppLayout title="Edit Building" showBack>
+        <div className="flex items-center justify-center h-[50vh] text-text-secondary">
+          <Loader2 className="h-8 w-8 animate-spin" aria-label="Loading building" />
         </div>
       </AppLayout>
     );
@@ -335,17 +338,13 @@ toast.error("Unexpected error");
 
   return (
     <AppLayout title="Edit Building" showBack>
-      <div className="w-full min-w-0 p-4 sm:p-6 lg:p-8 space-y-8">
-        <h1 className="text-4xl font-bold tracking-tight leading-snug text-text-primary">
-          Edit Building
-        </h1>
+      <div className="w-full min-w-0 max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+        <BuildingPageHeader
+          title="Edit Building"
+          description="Update location and catalogue details for this building."
+        />
 
-        {/* Location Section */}
-        <Card>
-            <CardHeader>
-                <CardTitle>Location</CardTitle>
-            </CardHeader>
-            <CardContent>
+        <BuildingFormSection title="Location">
                 <BuildingLocationPicker
                     initialLocation={{
                         lat: locationData.lat,
@@ -371,7 +370,7 @@ toast.error("Unexpected error");
                             Changing the location here puts it very close to these existing buildings:
                             <ul className="mt-2 space-y-2">
                                 {duplicates.slice(0, 3).map(d => (
-                                    <li key={d.id} className="flex items-center justify-between gap-2 bg-white/50 p-2 rounded text-sm">
+                                    <li key={d.id} className="flex items-center justify-between gap-2 bg-surface-default/80 p-2 rounded-sm text-sm">
                                         <span>{d.name} ({d.dist_meters.toFixed(0)}m away)</span>
                                         <Button
                                             variant="outline"
@@ -389,15 +388,9 @@ toast.error("Unexpected error");
                         </div>
                     </div>
                 )}
-            </CardContent>
-        </Card>
+        </BuildingFormSection>
 
-        {/* Details Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Building Details</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <BuildingFormSection title="Building details">
             <BuildingForm
               initialValues={initialValues}
               onSubmit={handleSubmit}
@@ -407,8 +400,7 @@ toast.error("Unexpected error");
               buildingId={buildingId ?? undefined}
               shortId={buildingShortId}
             />
-          </CardContent>
-        </Card>
+        </BuildingFormSection>
       </div>
     </AppLayout>
   );

@@ -28,6 +28,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ManageCategoriesDialog } from "@/features/admin/components/ManageCategoriesDialog";
+import {
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminSectionLabel,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [{ title: "Award Detail | Plano Admin" }];
 
@@ -68,62 +75,65 @@ export default function AwardDetail() {
 
   if (!award) {
     return (
-      <div className="p-8 text-text-secondary">
-        Award not found. <Link to="/admin/awards" className="underline">Back to list</Link>
+      <div className="space-y-4 text-text-secondary">
+        <AdminEmptyState title="Award not found" />
+        <p className="text-center text-sm">
+          <Link to="/admin/awards" className="underline underline-offset-4">
+            Back to list
+          </Link>
+        </p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">{award.name}</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-text-secondary">
-            <Badge variant="outline">{frequencyLabel[award.frequency] ?? award.frequency}</Badge>
-            {award.country && <span>{award.country}</span>}
-            {award.awardingBodyCompany && (
-              <span>by {award.awardingBodyCompany.name}</span>
-            )}
-            {!award.awardingBodyCompany && award.awardingBodyName && (
-              <span>by {award.awardingBodyName}</span>
-            )}
-            {!award.isActive && <Badge variant="secondary">Inactive</Badge>}
-          </div>
-          {award.description && (
-            <p className="mt-3 max-w-2xl text-sm text-text-secondary leading-relaxed">
-              {award.description}
-            </p>
-          )}
-        </div>
-        <div className="flex gap-2 shrink-0">
-          <Button variant="outline" size="sm" onClick={() => setShowCategories(true)}>
-            <ListChecks className="mr-2 h-4 w-4" />
-            Categories
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to={`/admin/awards/${awardId}/edit`}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </Link>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-feedback-destructive"
-            onClick={() => setShowDeleteConfirm(true)}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
-          </Button>
-        </div>
+      <AdminPageHeader
+        eyebrow="Awards"
+        title={award.name}
+        actions={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setShowCategories(true)}>
+              <ListChecks className="mr-2 h-4 w-4" />
+              Categories
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link to={`/admin/awards/${awardId}/edit`}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-feedback-destructive"
+              onClick={() => setShowDeleteConfirm(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          </>
+        }
+      />
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="outline">{frequencyLabel[award.frequency] ?? award.frequency}</Badge>
+        {award.country ? <span className="text-sm text-text-secondary">{award.country}</span> : null}
+        {award.awardingBodyCompany ? (
+          <span className="text-sm text-text-secondary">by {award.awardingBodyCompany.name}</span>
+        ) : null}
+        {!award.awardingBodyCompany && award.awardingBodyName ? (
+          <span className="text-sm text-text-secondary">by {award.awardingBodyName}</span>
+        ) : null}
+        {!award.isActive ? <Badge variant="secondary">Inactive</Badge> : null}
       </div>
+      {award.description ? (
+        <p className="max-w-2xl text-sm text-text-secondary leading-relaxed">{award.description}</p>
+      ) : null}
 
       {/* Editions */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-text-primary">Editions</h2>
+        <div className="flex items-center justify-between gap-4">
+          <AdminSectionLabel>Editions</AdminSectionLabel>
           <Button size="sm" asChild>
             <Link to={`/admin/awards/${awardId}/editions/new`}>
               <Plus className="mr-2 h-4 w-4" />
@@ -132,31 +142,25 @@ export default function AwardDetail() {
           </Button>
         </div>
 
-        <div className="rounded-sm border border-border-default bg-surface-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Year / Date</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead className="text-center">Recipients</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loadingEditions ? (
+        {loadingEditions ? (
+          <div className="rounded-sm border border-border-default bg-surface-card px-6 py-12 text-center text-text-secondary">
+            <Loader2 className="mx-auto h-5 w-5 animate-spin" />
+          </div>
+        ) : (editions ?? []).length === 0 ? (
+          <AdminEmptyState title="No editions yet" description="Add the first edition for this award." />
+        ) : (
+          <div className="rounded-sm border border-border-default bg-surface-card">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center text-text-secondary">
-                    <Loader2 className="mx-auto h-5 w-5 animate-spin" />
-                  </TableCell>
+                  <TableHead className={adminTableHeadClass}>Year / Date</TableHead>
+                  <TableHead className={adminTableHeadClass}>Location</TableHead>
+                  <TableHead className={cn(adminTableHeadClass, "text-center")}>Recipients</TableHead>
+                  <TableHead className={cn(adminTableHeadClass, "text-right")}>Actions</TableHead>
                 </TableRow>
-              ) : (editions ?? []).length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center text-text-secondary">
-                    No editions yet. Add the first one.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                (editions ?? []).map((edition) => (
+              </TableHeader>
+              <TableBody>
+                {(editions ?? []).map((edition) => (
                   <TableRow key={edition.id}>
                     <TableCell className="font-medium text-sm">
                       {edition.editionLabel ?? edition.year ?? edition.editionDate ?? "—"}
@@ -175,11 +179,11 @@ export default function AwardDetail() {
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </div>
 
       {/* Delete confirmation */}

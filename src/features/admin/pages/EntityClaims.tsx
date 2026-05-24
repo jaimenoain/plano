@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Check, X, ShieldCheck, Scale } from "lucide-react";
+import { Loader2, Check, X, Scale } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -24,6 +24,12 @@ import {
   resolveCompanyClaimDispute,
   type OpenCompanyClaimDisputeRow,
 } from "@/features/admin/api/entity-management";
+import {
+  AdminPageHeader,
+  AdminEmptyState,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 type ArchitectVerificationNotifInsert =
   Database["public"]["Tables"]["notifications"]["Insert"] & {
@@ -215,18 +221,31 @@ export default function EntityClaims() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Entity claims</h1>
-      </div>
+      <AdminPageHeader
+        eyebrow="Entities"
+        title="Entity claims"
+        description="Review pending architect verifications and open company claim disputes."
+      />
 
       <Tabs defaultValue="people" className="w-full">
-        <TabsList className="flex flex-wrap gap-2">
-          <TabsTrigger value="people">Legacy architect claims</TabsTrigger>
-          <TabsTrigger value="companies" className="gap-2">
-            <Scale className="h-4 w-4" />
+        <TabsList className="h-auto rounded-none border-0 bg-transparent p-0">
+          <TabsTrigger
+            value="people"
+            className="rounded-none border-b-2 border-transparent px-4 pb-2 pt-0 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary data-[state=active]:border-text-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none"
+          >
+            Legacy architect claims
+          </TabsTrigger>
+          <TabsTrigger
+            value="companies"
+            className="gap-2 rounded-none border-b-2 border-transparent px-4 pb-2 pt-0 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary data-[state=active]:border-text-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none"
+          >
+            <Scale className="h-4 w-4" aria-hidden />
             Company disputes
             {disputes.length > 0 ? (
-              <Badge variant="secondary" className="ml-1">
+              <Badge
+                variant="outline"
+                className="ml-1 border-feedback-warning/40 bg-feedback-warning/10 text-feedback-warning"
+              >
                 {disputes.length}
               </Badge>
             ) : null}
@@ -241,11 +260,11 @@ export default function EntityClaims() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Target architect</TableHead>
-                  <TableHead>Proof of affiliation</TableHead>
-                  <TableHead>Submitted</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className={adminTableHeadClass}>User</TableHead>
+                  <TableHead className={adminTableHeadClass}>Target architect</TableHead>
+                  <TableHead className={adminTableHeadClass}>Proof of affiliation</TableHead>
+                  <TableHead className={adminTableHeadClass}>Submitted</TableHead>
+                  <TableHead className={cn(adminTableHeadClass, "text-right")}>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -260,11 +279,8 @@ export default function EntityClaims() {
                   </TableRow>
                 ) : claims.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center text-text-secondary">
-                      <div className="flex flex-col items-center gap-2">
-                        <ShieldCheck className="h-8 w-8 opacity-20" />
-                        <p>No pending architect verification claims.</p>
-                      </div>
+                    <TableCell colSpan={5} className="p-0">
+                      <AdminEmptyState title="No pending architect claims" />
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -313,8 +329,8 @@ export default function EntityClaims() {
                           </Button>
                           <Button
                             size="sm"
-                            variant="default"
-                            className="bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary/90"
+                            variant="outline"
+                            className="rounded-sm border-text-primary text-text-primary hover:bg-surface-muted"
                             onClick={() => handleApprove(claim)}
                             disabled={processingArchitectId === claim.id}
                           >
@@ -349,12 +365,12 @@ export default function EntityClaims() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Disputant</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Evidence</TableHead>
-                  <TableHead>Submitted</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className={adminTableHeadClass}>Company</TableHead>
+                  <TableHead className={adminTableHeadClass}>Disputant</TableHead>
+                  <TableHead className={adminTableHeadClass}>Reason</TableHead>
+                  <TableHead className={adminTableHeadClass}>Evidence</TableHead>
+                  <TableHead className={adminTableHeadClass}>Submitted</TableHead>
+                  <TableHead className={cn(adminTableHeadClass, "text-right")}>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -366,8 +382,8 @@ export default function EntityClaims() {
                   </TableRow>
                 ) : disputes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-text-secondary">
-                      No open company disputes.
+                    <TableCell colSpan={6} className="p-0">
+                      <AdminEmptyState title="No open company disputes" />
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -376,7 +392,7 @@ export default function EntityClaims() {
                       <TableCell>
                         <Link
                           to={`/company/${d.companySlug}`}
-                          className="font-medium text-brand-primary underline-offset-4 hover:underline"
+                          className="font-medium text-text-primary underline-offset-4 hover:underline"
                           target="_blank"
                           rel="noreferrer"
                         >
@@ -395,7 +411,7 @@ export default function EntityClaims() {
                             href={d.evidenceUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-brand-primary underline-offset-4 hover:underline"
+                            className="text-sm text-text-primary underline-offset-4 hover:underline"
                           >
                             Link
                           </a>

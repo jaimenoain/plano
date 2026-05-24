@@ -9,8 +9,8 @@ import { useUpdateById, useCreateUpdate, useUpdateUpdate } from "@/features/upda
 import type { GeoScope } from "@/features/updates/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { AdminFormLabel, AdminPageHeader } from "@/features/admin/components/admin-ui";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -186,15 +186,16 @@ export default function UpdateForm() {
   }
 
   return (
-    <div className="p-8 max-w-2xl space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">
-        {isEdit ? "Edit Update" : "New Update"}
-      </h1>
+    <div className="max-w-2xl space-y-6">
+      <AdminPageHeader
+        eyebrow="Updates"
+        title={isEdit ? "Edit update" : "New update"}
+      />
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6 border-t border-border-default pt-6">
         {/* Title */}
         <div className="space-y-2">
-          <Label htmlFor="title">Title</Label>
+          <AdminFormLabel htmlFor="title">Title</AdminFormLabel>
           <Input
             id="title"
             value={title}
@@ -206,7 +207,7 @@ export default function UpdateForm() {
 
         {/* Slug */}
         <div className="space-y-2">
-          <Label htmlFor="slug">Slug</Label>
+          <AdminFormLabel htmlFor="slug">Slug</AdminFormLabel>
           <Input
             id="slug"
             value={slug}
@@ -219,7 +220,7 @@ export default function UpdateForm() {
 
         {/* Excerpt */}
         <div className="space-y-2">
-          <Label htmlFor="excerpt">Excerpt</Label>
+          <AdminFormLabel htmlFor="excerpt">Excerpt</AdminFormLabel>
           <Textarea
             id="excerpt"
             value={excerpt}
@@ -231,7 +232,7 @@ export default function UpdateForm() {
 
         {/* Body */}
         <div className="space-y-2">
-          <Label htmlFor="body">Body</Label>
+          <AdminFormLabel htmlFor="body">Body</AdminFormLabel>
           <Textarea
             id="body"
             value={body}
@@ -243,7 +244,7 @@ export default function UpdateForm() {
 
         {/* Hero image */}
         <div className="space-y-2">
-          <Label>Hero image</Label>
+          <AdminFormLabel>Hero image</AdminFormLabel>
           {heroImageUrl ? (
             <div className="relative w-full aspect-[16/7] rounded-md overflow-hidden border border-border-default">
               <img src={heroImageUrl} alt="Hero preview" className="w-full h-full object-cover" />
@@ -251,7 +252,7 @@ export default function UpdateForm() {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white"
+                className="absolute top-2 right-2 bg-surface-inverse/55 text-text-inverse hover:bg-surface-inverse/75"
                 onClick={() => setHeroImageUrl("")}
               >
                 <X className="h-3.5 w-3.5" />
@@ -284,7 +285,7 @@ export default function UpdateForm() {
 
         {/* Tags */}
         <div className="space-y-2">
-          <Label htmlFor="tags">Tags</Label>
+          <AdminFormLabel htmlFor="tags">Tags</AdminFormLabel>
           <Input
             id="tags"
             value={tagsRaw}
@@ -296,7 +297,7 @@ export default function UpdateForm() {
         {/* Geographic scope */}
         <div className="space-y-4 border border-border-default rounded-lg p-4">
           <div className="space-y-2">
-            <Label>Geographic scope</Label>
+            <AdminFormLabel>Geographic scope</AdminFormLabel>
             <Select value={geoScope} onValueChange={(v) => setGeoScope(v as GeoScope)}>
               <SelectTrigger>
                 <SelectValue />
@@ -311,7 +312,9 @@ export default function UpdateForm() {
 
           {(geoScope === "national" || geoScope === "local") && (
             <div className="space-y-2">
-              <Label htmlFor="country-code">Country code (ISO-3166-1 alpha-2)</Label>
+              <AdminFormLabel htmlFor="country-code">
+                Country code (ISO-3166-1 alpha-2)
+              </AdminFormLabel>
               <Input
                 id="country-code"
                 value={countryCode}
@@ -324,7 +327,7 @@ export default function UpdateForm() {
 
           {geoScope === "local" && (
             <div className="space-y-2">
-              <Label htmlFor="locality-search">City</Label>
+              <AdminFormLabel htmlFor="locality-search">City</AdminFormLabel>
               <Input
                 id="locality-search"
                 value={localitySearch}
@@ -368,9 +371,9 @@ export default function UpdateForm() {
         {/* Published toggle */}
         <div className="flex items-center gap-3">
           <Switch id="published" checked={published} onCheckedChange={setPublished} />
-          <Label htmlFor="published">
+          <AdminFormLabel htmlFor="published">
             {published ? "Published" : "Draft"}
-          </Label>
+          </AdminFormLabel>
         </div>
 
         {/* Actions */}

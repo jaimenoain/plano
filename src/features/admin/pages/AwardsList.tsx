@@ -15,6 +15,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AdminPageHeader,
+  AdminEmptyState,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [{ title: "Awards | Plano Admin" }];
 
@@ -27,7 +33,10 @@ const frequencyLabel: Record<string, string> = {
 
 export default function AwardsList() {
   const [search, setSearch] = useState("");
-  const [sortConfig, setSortConfig] = useState<{ key: 'name' | 'wikidata', direction: 'asc' | 'desc' }>({ key: 'wikidata', direction: 'desc' });
+  const [sortConfig, setSortConfig] = useState<{ key: "name" | "wikidata"; direction: "asc" | "desc" }>({
+    key: "wikidata",
+    direction: "desc",
+  });
   const { data: awards, isLoading } = useAwards();
   const updateAward = useUpdateAward();
 
@@ -36,23 +45,22 @@ export default function AwardsList() {
   );
 
   const sorted = [...filtered].sort((a, b) => {
-    if (sortConfig.key === 'name') {
-      return sortConfig.direction === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
-    } else {
-      const aSitelinks = a.wikidataSitelinks ?? -1;
-      const bSitelinks = b.wikidataSitelinks ?? -1;
-      if (aSitelinks !== bSitelinks) {
-        return sortConfig.direction === 'asc' ? aSitelinks - bSitelinks : bSitelinks - aSitelinks;
-      }
-      return a.name.localeCompare(b.name);
+    if (sortConfig.key === "name") {
+      return sortConfig.direction === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
     }
+    const aSitelinks = a.wikidataSitelinks ?? -1;
+    const bSitelinks = b.wikidataSitelinks ?? -1;
+    if (aSitelinks !== bSitelinks) {
+      return sortConfig.direction === "asc" ? aSitelinks - bSitelinks : bSitelinks - aSitelinks;
+    }
+    return a.name.localeCompare(b.name);
   });
 
-  const toggleSort = (key: 'name' | 'wikidata') => {
+  const toggleSort = (key: "name" | "wikidata") => {
     if (sortConfig.key === key) {
-      setSortConfig({ key, direction: sortConfig.direction === 'asc' ? 'desc' : 'asc' });
+      setSortConfig({ key, direction: sortConfig.direction === "asc" ? "desc" : "asc" });
     } else {
-      setSortConfig({ key, direction: key === 'name' ? 'asc' : 'desc' });
+      setSortConfig({ key, direction: key === "name" ? "asc" : "desc" });
     }
   };
 
@@ -68,65 +76,83 @@ export default function AwardsList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Awards</h1>
-        <div className="flex gap-2">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-text-secondary" />
-            <Input
-              placeholder="Search awards…"
-              className="pl-8 max-w-xs"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <Button asChild>
-            <Link to="/admin/awards/new">
-              <Plus className="mr-2 h-4 w-4" />
-              New Award
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <AdminPageHeader
+        eyebrow="Awards"
+        title="Awards"
+        description="Catalogue of architecture awards, editions, and claim status."
+        actions={
+          <>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-text-secondary" aria-hidden />
+              <Input
+                placeholder="Search awards…"
+                className="pl-8 max-w-xs"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                aria-label="Search awards"
+              />
+            </div>
+            <Button asChild>
+              <Link to="/admin/awards/new">
+                <Plus className="mr-2 h-4 w-4" aria-hidden />
+                New award
+              </Link>
+            </Button>
+          </>
+        }
+      />
 
       <div className="rounded-sm border border-border-default bg-surface-card">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>
-                <Button variant="ghost" onClick={() => toggleSort('name')} className="-ml-4 h-8 data-[active=true]:text-text-primary" data-active={sortConfig.key === 'name'}>
+              <TableHead className={adminTableHeadClass}>
+                <Button
+                  variant="ghost"
+                  onClick={() => toggleSort("name")}
+                  className="-ml-4 h-8 data-[active=true]:text-text-primary"
+                  data-active={sortConfig.key === "name"}
+                >
                   Name
-                  <ArrowUpDown className="ml-2 h-3 w-3" />
+                  <ArrowUpDown className="ml-2 h-3 w-3" aria-hidden />
                 </Button>
               </TableHead>
-              <TableHead>Awarding Body</TableHead>
-              <TableHead>Frequency</TableHead>
-              <TableHead>
-                <Button variant="ghost" onClick={() => toggleSort('wikidata')} className="-ml-4 h-8 data-[active=true]:text-text-primary" data-active={sortConfig.key === 'wikidata'}>
+              <TableHead className={adminTableHeadClass}>Awarding body</TableHead>
+              <TableHead className={adminTableHeadClass}>Frequency</TableHead>
+              <TableHead className={adminTableHeadClass}>
+                <Button
+                  variant="ghost"
+                  onClick={() => toggleSort("wikidata")}
+                  className="-ml-4 h-8 data-[active=true]:text-text-primary"
+                  data-active={sortConfig.key === "wikidata"}
+                >
                   Wikidata
-                  <ArrowUpDown className="ml-2 h-3 w-3" />
+                  <ArrowUpDown className="ml-2 h-3 w-3" aria-hidden />
                 </Button>
               </TableHead>
-              <TableHead className="text-center">Editions</TableHead>
-              <TableHead>Claim</TableHead>
-              <TableHead className="text-center">Active</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className={cn(adminTableHeadClass, "text-center")}>Editions</TableHead>
+              <TableHead className={adminTableHeadClass}>Claim</TableHead>
+              <TableHead className={cn(adminTableHeadClass, "text-center")}>Active</TableHead>
+              <TableHead className={cn(adminTableHeadClass, "text-right")}>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
                 <TableCell colSpan={8} className="h-24 text-center text-text-secondary">
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                  <p className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
                     Loading…
-                  </div>
+                  </p>
                 </TableCell>
               </TableRow>
             ) : sorted.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center text-text-secondary">
-                  {search ? "No awards match your search." : "No awards yet. Create one to get started."}
+                <TableCell colSpan={8} className="p-0">
+                  <AdminEmptyState
+                    title={search ? "No awards match your search" : "No awards yet"}
+                    description={search ? undefined : "Create one to get started."}
+                  />
                 </TableCell>
               </TableRow>
             ) : (
@@ -176,13 +202,14 @@ export default function AwardsList() {
                     ) : (
                       <Badge
                         variant="secondary"
-                        className={`gap-1 text-[10px] font-bold uppercase tracking-widest border-none h-auto ${
+                        className={cn(
+                          "gap-1 text-2xs font-bold uppercase tracking-[0.15em] border-none h-auto",
                           award.claimStatus === "verified"
                             ? "bg-feedback-success/15 text-feedback-success"
-                            : "bg-brand-primary/10 text-brand-primary"
-                        }`}
+                            : "bg-brand-primary/10 text-brand-primary",
+                        )}
                       >
-                        <Shield className="h-2.5 w-2.5" />
+                        <Shield className="h-2.5 w-2.5" aria-hidden />
                         {award.claimStatus}
                       </Badge>
                     )}
@@ -196,7 +223,7 @@ export default function AwardsList() {
                   </TableCell>
                   <TableCell className="text-right">
                     <Button size="icon" variant="ghost" asChild>
-                      <Link to={`/admin/awards/${award.id}/edit`}>
+                      <Link to={`/admin/awards/${award.id}/edit`} aria-label={`Edit ${award.name}`}>
                         <Pencil className="h-4 w-4" />
                       </Link>
                     </Button>

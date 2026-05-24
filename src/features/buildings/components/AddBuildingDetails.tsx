@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { BuildingPageHeader } from "@/features/buildings/components/building-form-ui";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -172,30 +172,24 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 mb-8">
-        <Button variant="ghost" size="icon" onClick={onBack}>
+      <div className="flex items-start gap-3">
+        <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back to location">
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-4xl font-bold tracking-tight text-text-primary">Add Details</h1>
+        <BuildingPageHeader
+          eyebrow="Step 2"
+          title="Building details"
+          description={`Tell us more about ${locationData.name || locationData.address}.`}
+        />
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Building Information</CardTitle>
-          <CardDescription>
-            Tell us more about {locationData.name || locationData.address}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <BuildingForm
-            initialValues={initialValues}
-            onSubmit={handleFormSubmit}
-            isSubmitting={isSubmitting}
-            submitLabel="Save Building"
-            mode="create"
-          />
-        </CardContent>
-      </Card>
+      <BuildingForm
+        initialValues={initialValues}
+        onSubmit={handleFormSubmit}
+        isSubmitting={isSubmitting}
+        submitLabel="Save Building"
+        mode="create"
+      />
     </div>
   );
 }

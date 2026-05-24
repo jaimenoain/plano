@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
@@ -15,15 +14,18 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Plus, Pin, CheckCircle2, Archive, Loader2, AlertCircle, Trash2,
+  Plus, Pin, CheckCircle2, Archive, Loader2, Trash2,
   Target, Lightbulb, CheckCheck, Inbox, Circle, Clock, CalendarDays,
   Users, Eye, EyeOff, Pencil, Zap, Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
+  EmbassyEmptyState,
+  EmbassyErrorState,
   EmbassyPageHeader,
   EmbassySectionLabel,
+  EMBASSY_SKELETON_ROUNDED,
 } from "@/features/embassy/components/embassy-ui";
 import { formatDistanceToNow, format, parseISO, isPast, isToday } from "date-fns";
 
@@ -88,7 +90,7 @@ interface TeamMember {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const TASK_STATUS_CONFIG: Record<TaskStatus, { label: string; icon: React.ReactNode; class: string }> = {
-  todo:        { label: "To do",       icon: <Circle className="h-3.5 w-3.5" />,       class: "text-muted-foreground" },
+  todo:        { label: "To do",       icon: <Circle className="h-3.5 w-3.5" />,       class: "text-text-secondary" },
   in_progress: { label: "In progress", icon: <Clock className="h-3.5 w-3.5" />,        class: "text-feedback-warning" },
   done:        { label: "Done",        icon: <CheckCircle2 className="h-3.5 w-3.5" />, class: "text-feedback-success" },
 };
@@ -103,7 +105,7 @@ const PROJECT_STATUS_CONFIG = {
   active:    { icon: <Zap className="h-3 w-3" />,          class: "bg-surface-muted text-text-primary border-border-default" },
   planning:  { icon: <Clock className="h-3 w-3" />,        class: "bg-surface-muted text-text-primary border-border-default" },
   completed: { icon: <CheckCircle2 className="h-3 w-3" />, class: "bg-feedback-success/10 text-feedback-success border-feedback-success/20" },
-  archived:  { icon: <Archive className="h-3 w-3" />,      class: "bg-muted text-muted-foreground border-border-default" },
+  archived:  { icon: <Archive className="h-3 w-3" />,      class: "bg-surface-muted text-text-secondary border-border-default" },
   draft:     { icon: <Lightbulb className="h-3 w-3" />,    class: "bg-surface-muted text-text-secondary border-border-default" },
 };
 
@@ -137,9 +139,9 @@ function taskInitials(username: string) {
 function dueDateClass(due: string | null): string {
   if (!due) return "";
   const d = parseISO(due);
-  if (isPast(d) && !isToday(d)) return "text-destructive";
+  if (isPast(d) && !isToday(d)) return "text-feedback-destructive";
   if (isToday(d)) return "text-feedback-warning";
-  return "text-muted-foreground";
+  return "text-text-secondary";
 }
 
 async function fetchCampaignProgress(campaign: Campaign, chapterId: string): Promise<number> {
@@ -653,20 +655,15 @@ export default function ChapterProjectsPage() {
       {/* Programme campaigns */}
       {campaigns.length > 0 && (
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Target className="h-4 w-4 text-text-primary" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
-              Programme campaigns
-            </h2>
-          </div>
+          <EmbassySectionLabel>Programme campaigns</EmbassySectionLabel>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {campaigns.map((c) => {
               const progress = campaignProgress[c.id] ?? 0;
               const pct = Math.min(100, Math.round((progress / c.target_value) * 100));
               return (
-                <Card
+                <div
                   key={c.id}
-                  className="flex flex-col p-5 border-l-4 border-l-text-primary"
+                  className="flex flex-col rounded-sm border border-border-default border-l-4 border-l-text-primary bg-surface-card p-5"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <Badge
@@ -680,7 +677,7 @@ export default function ChapterProjectsPage() {
                   </div>
                   <h3 className="text-base font-bold mb-1">{c.title}</h3>
                   {c.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                    <p className="text-sm text-text-secondary line-clamp-2 mb-3">
                       {c.description}
                     </p>
                   )}
@@ -694,7 +691,7 @@ export default function ChapterProjectsPage() {
                       {format(parseISO(c.start_date), "d MMM")} – {format(parseISO(c.end_date), "d MMM yyyy")}
                     </p>
                   </div>
-                </Card>
+                </div>
               );
             })}
           </div>
@@ -705,7 +702,7 @@ export default function ChapterProjectsPage() {
       {isLeader && drafts.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <Inbox className="h-4 w-4 text-muted-foreground" />
+            <Inbox className="h-4 w-4 text-text-secondary" />
             <EmbassySectionLabel>Ideas inbox</EmbassySectionLabel>
             <Badge variant="secondary" className="text-xs">{drafts.length}</Badge>
           </div>
@@ -727,35 +724,28 @@ export default function ChapterProjectsPage() {
       {/* Published projects */}
       {isLoading ? (
         <div className="grid gap-6 md:grid-cols-2">
-          {[0, 1, 2].map(i => <Skeleton key={i} className="h-48 w-full rounded-sm" />)}
+          {[0, 1, 2].map((i) => (
+            <Skeleton key={i} className={cn("h-48 w-full", EMBASSY_SKELETON_ROUNDED)} />
+          ))}
         </div>
       ) : error ? (
-        <div className="rounded-sm border border-border-default bg-feedback-destructive/5 p-12 text-center text-feedback-destructive">
-          <AlertCircle className="h-10 w-10 mx-auto mb-3" />
-          <p className="text-lg font-medium">Could not load projects</p>
-          <p className="text-sm opacity-80">Check your database migrations or try again later.</p>
-        </div>
+        <EmbassyErrorState message="Could not load projects. Check your database migrations or try again later." />
       ) : published.length === 0 ? (
-        <div className="p-20 text-center border border-dashed rounded-sm space-y-4">
-          <div className="flex justify-center">
-            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-              <Pin className="h-6 w-6 text-muted-foreground" />
-            </div>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xl font-medium">No projects yet</p>
-            <p className="text-muted-foreground">
-              {isLeader
-                ? "Create projects here, or publish an idea from the inbox above."
-                : "No projects have been created yet. Submit an idea using the button above."}
-            </p>
-          </div>
+        <EmbassyEmptyState
+          icon={<Pin className="h-10 w-10" />}
+          title="No projects yet"
+          description={
+            isLeader
+              ? "Create projects here, or publish an idea from the inbox above."
+              : "No projects have been created yet. Submit an idea using the button above."
+          }
+        >
           {isLeader && (
-            <Button variant="outline" onClick={() => { resetLeaderForm(); setIsCreateOpen(true); }}>
+            <Button variant="outline" className="mt-2" onClick={() => { resetLeaderForm(); setIsCreateOpen(true); }}>
               Create the first project
             </Button>
           )}
-        </div>
+        </EmbassyEmptyState>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {published.map((project) => {
@@ -789,7 +779,7 @@ export default function ChapterProjectsPage() {
                   <input
                     autoFocus
                     aria-label="Project title"
-                    className="w-full bg-transparent border-0 outline-none ring-0 text-xl font-bold leading-tight text-text-primary placeholder:text-muted-foreground/60"
+                    className="w-full bg-transparent border-0 outline-none ring-0 text-xl font-bold leading-tight text-text-primary placeholder:text-text-secondary/60"
                     value={fieldDraft}
                     onChange={(e) => setFieldDraft(e.target.value)}
                     onBlur={() => {
@@ -806,7 +796,7 @@ export default function ChapterProjectsPage() {
                   <SheetTitle
                     className={cn(
                       "text-xl font-bold leading-tight text-left",
-                      isLeader && "cursor-text rounded px-1 -mx-1 hover:bg-muted/50 transition-colors",
+                      isLeader && "cursor-text rounded px-1 -mx-1 hover:bg-surface-muted/50 transition-colors",
                     )}
                     onClick={() => {
                       if (isLeader) { setEditingField("title"); setFieldDraft(selectedProject.title); }
@@ -822,7 +812,7 @@ export default function ChapterProjectsPage() {
                     autoFocus
                     aria-label="Project description"
                     rows={3}
-                    className="w-full bg-transparent border-0 outline-none ring-0 text-sm text-muted-foreground leading-relaxed resize-none placeholder:text-muted-foreground/50"
+                    className="w-full bg-transparent border-0 outline-none ring-0 text-sm text-text-secondary leading-relaxed resize-none placeholder:text-text-secondary/50"
                     placeholder="Add description…"
                     value={fieldDraft}
                     onChange={(e) => setFieldDraft(e.target.value)}
@@ -838,9 +828,9 @@ export default function ChapterProjectsPage() {
                 ) : (
                   <p
                     className={cn(
-                      "text-sm text-muted-foreground leading-relaxed text-left",
-                      isLeader && "cursor-text rounded px-1 -mx-1 hover:bg-muted/50 transition-colors",
-                      !selectedProject.description && "italic text-muted-foreground/50",
+                      "text-sm text-text-secondary leading-relaxed text-left",
+                      isLeader && "cursor-text rounded px-1 -mx-1 hover:bg-surface-muted/50 transition-colors",
+                      !selectedProject.description && "italic text-text-secondary/50",
                     )}
                     onClick={() => {
                       if (isLeader) { setEditingField("description"); setFieldDraft(selectedProject.description ?? ""); }
@@ -851,7 +841,7 @@ export default function ChapterProjectsPage() {
                 )}
 
                 {/* Project meta */}
-                <div className="flex flex-wrap items-center gap-3 pt-3 text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-3 pt-3 text-sm text-text-secondary">
                   {/* Status — click to edit (leaders only) */}
                   {editingField === "status" ? (
                     <Select
@@ -920,8 +910,8 @@ export default function ChapterProjectsPage() {
 
                 {projectTasks.length === 0 ? (
                   <div className="py-12 text-center border border-dashed rounded-lg space-y-2">
-                    <Circle className="h-8 w-8 mx-auto text-muted-foreground/40" />
-                    <p className="text-sm text-muted-foreground">No tasks yet — add the first one above.</p>
+                    <Circle className="h-8 w-8 mx-auto text-text-secondary/40" />
+                    <p className="text-sm text-text-secondary">No tasks yet — add the first one above.</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -961,7 +951,7 @@ export default function ChapterProjectsPage() {
             const editableRowCls = (field: string) =>
               cn(
                 "flex items-start gap-3 rounded-md -mx-2 px-2 py-1 transition-colors",
-                canEdit && taskEditingField !== field && "cursor-pointer hover:bg-muted/50",
+                canEdit && taskEditingField !== field && "cursor-pointer hover:bg-surface-muted/50",
               );
 
             return (
@@ -971,7 +961,7 @@ export default function ChapterProjectsPage() {
                     <input
                       autoFocus
                       aria-label="Task title"
-                      className="w-full bg-transparent border-0 outline-none ring-0 text-xl font-bold leading-tight text-text-primary placeholder:text-muted-foreground/60"
+                      className="w-full bg-transparent border-0 outline-none ring-0 text-xl font-bold leading-tight text-text-primary placeholder:text-text-secondary/60"
                       value={taskFieldDraft}
                       onChange={(e) => setTaskFieldDraft(e.target.value)}
                       onBlur={() => {
@@ -989,7 +979,7 @@ export default function ChapterProjectsPage() {
                       className={cn(
                         "text-xl font-bold leading-tight text-left",
                         task.status === "done" && "line-through opacity-60",
-                        canEdit && "cursor-text rounded px-1 -mx-1 hover:bg-muted/50 transition-colors",
+                        canEdit && "cursor-text rounded px-1 -mx-1 hover:bg-surface-muted/50 transition-colors",
                       )}
                       onClick={() => canEdit && startTaskEdit("title", task.title)}
                     >
@@ -1002,7 +992,7 @@ export default function ChapterProjectsPage() {
                       autoFocus
                       aria-label="Task description"
                       rows={3}
-                      className="w-full bg-transparent border-0 outline-none ring-0 text-sm text-muted-foreground leading-relaxed resize-none placeholder:text-muted-foreground/50"
+                      className="w-full bg-transparent border-0 outline-none ring-0 text-sm text-text-secondary leading-relaxed resize-none placeholder:text-text-secondary/50"
                       placeholder="Add description…"
                       value={taskFieldDraft}
                       onChange={(e) => setTaskFieldDraft(e.target.value)}
@@ -1016,9 +1006,9 @@ export default function ChapterProjectsPage() {
                   ) : (
                     <p
                       className={cn(
-                        "text-sm text-muted-foreground leading-relaxed text-left",
-                        canEdit && "cursor-text rounded px-1 -mx-1 hover:bg-muted/50 transition-colors",
-                        !task.description && "italic text-muted-foreground/50",
+                        "text-sm text-text-secondary leading-relaxed text-left",
+                        canEdit && "cursor-text rounded px-1 -mx-1 hover:bg-surface-muted/50 transition-colors",
+                        !task.description && "italic text-text-secondary/50",
                       )}
                       onClick={() => canEdit && startTaskEdit("description", task.description ?? "")}
                     >
@@ -1033,7 +1023,7 @@ export default function ChapterProjectsPage() {
                     className={editableRowCls("status")}
                     onClick={() => { if (canEdit && taskEditingField !== "status") setTaskEditingField("status"); }}
                   >
-                    <span className="text-sm text-muted-foreground w-24 shrink-0 pt-0.5">Status</span>
+                    <span className="text-sm text-text-secondary w-24 shrink-0 pt-0.5">Status</span>
                     {taskEditingField === "status" ? (
                       <Select
                         value={task.status}
@@ -1069,7 +1059,7 @@ export default function ChapterProjectsPage() {
                     className={editableRowCls("due_date")}
                     onClick={() => { if (canEdit && taskEditingField !== "due_date") startTaskEdit("due_date", task.due_date ?? ""); }}
                   >
-                    <span className="text-sm text-muted-foreground w-24 shrink-0 pt-0.5">Due</span>
+                    <span className="text-sm text-text-secondary w-24 shrink-0 pt-0.5">Due</span>
                     {taskEditingField === "due_date" ? (
                       <div className="flex items-center gap-2 flex-1" onClick={(e) => e.stopPropagation()}>
                         <Input
@@ -1089,7 +1079,7 @@ export default function ChapterProjectsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-7 px-2 text-xs text-muted-foreground"
+                            className="h-7 px-2 text-xs text-text-secondary"
                             onClick={() => commitTaskField({ due_date: null })}
                           >
                             Clear
@@ -1102,7 +1092,7 @@ export default function ChapterProjectsPage() {
                         {format(parseISO(task.due_date), "d MMMM yyyy")}
                       </span>
                     ) : (
-                      <span className={cn("text-sm", canEdit ? "text-muted-foreground/50 italic" : "text-muted-foreground")}>
+                      <span className={cn("text-sm", canEdit ? "text-text-secondary/50 italic" : "text-text-secondary")}>
                         {canEdit ? "Add due date…" : "—"}
                       </span>
                     )}
@@ -1113,7 +1103,7 @@ export default function ChapterProjectsPage() {
                     className={editableRowCls("assigned_to")}
                     onClick={() => { if (canEdit && taskEditingField !== "assigned_to") setTaskEditingField("assigned_to"); }}
                   >
-                    <span className="text-sm text-muted-foreground w-24 shrink-0 pt-0.5">Assigned to</span>
+                    <span className="text-sm text-text-secondary w-24 shrink-0 pt-0.5">Assigned to</span>
                     {taskEditingField === "assigned_to" ? (
                       <div onClick={(e) => e.stopPropagation()}>
                         <Select
@@ -1151,7 +1141,7 @@ export default function ChapterProjectsPage() {
                         <span className="text-sm">@{task.assignee_username}</span>
                       </div>
                     ) : (
-                      <span className={cn("text-sm", canEdit ? "text-muted-foreground/50 italic" : "text-muted-foreground")}>
+                      <span className={cn("text-sm", canEdit ? "text-text-secondary/50 italic" : "text-text-secondary")}>
                         {canEdit ? "Assign someone…" : "Unassigned"}
                       </span>
                     )}
@@ -1162,7 +1152,7 @@ export default function ChapterProjectsPage() {
                     className={editableRowCls("company")}
                     onClick={() => { if (canEdit && taskEditingField !== "company") startTaskEdit("company", task.company_name ?? ""); }}
                   >
-                    <span className="text-sm text-muted-foreground w-24 shrink-0 pt-0.5">Firm</span>
+                    <span className="text-sm text-text-secondary w-24 shrink-0 pt-0.5">Firm</span>
                     {taskEditingField === "company" ? (
                       <div className="flex-1 space-y-1" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-2">
@@ -1178,7 +1168,7 @@ export default function ChapterProjectsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 px-2 text-xs text-muted-foreground shrink-0"
+                              className="h-7 px-2 text-xs text-text-secondary shrink-0"
                               onClick={() => commitTaskField({ company_id: null, company_name: null })}
                             >
                               Clear
@@ -1188,11 +1178,11 @@ export default function ChapterProjectsPage() {
                         {inlineCompanyQuery.length >= 2 && (
                           <div className="border rounded-md divide-y max-h-36 overflow-y-auto">
                             {isInlineSearching ? (
-                              <div className="p-2 text-xs text-muted-foreground flex items-center gap-2">
+                              <div className="p-2 text-xs text-text-secondary flex items-center gap-2">
                                 <Loader2 className="h-3 w-3 animate-spin" /> Searching…
                               </div>
                             ) : inlineCompanyResults.length === 0 ? (
-                              <div className="p-2 text-xs text-muted-foreground">No firms found</div>
+                              <div className="p-2 text-xs text-text-secondary">No firms found</div>
                             ) : (
                               inlineCompanyResults.map((co) => (
                                 <button
@@ -1200,7 +1190,7 @@ export default function ChapterProjectsPage() {
                                   className="w-full text-left px-3 py-2 text-xs hover:bg-muted transition-colors flex items-center gap-2"
                                   onClick={() => commitTaskField({ company_id: co.id, company_name: co.name })}
                                 >
-                                  <Building2 className="h-3 w-3 text-muted-foreground shrink-0" />
+                                  <Building2 className="h-3 w-3 text-text-secondary shrink-0" />
                                   {co.name}
                                 </button>
                               ))
@@ -1210,11 +1200,11 @@ export default function ChapterProjectsPage() {
                       </div>
                     ) : task.company_name ? (
                       <span className="flex items-center gap-1.5 text-sm">
-                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        <Building2 className="h-3.5 w-3.5 text-text-secondary" />
                         {task.company_name}
                       </span>
                     ) : (
-                      <span className={cn("text-sm", canEdit ? "text-muted-foreground/50 italic" : "text-muted-foreground")}>
+                      <span className={cn("text-sm", canEdit ? "text-text-secondary/50 italic" : "text-text-secondary")}>
                         {canEdit ? "Link a firm…" : "—"}
                       </span>
                     )}
@@ -1225,7 +1215,7 @@ export default function ChapterProjectsPage() {
                     className={editableRowCls("visibility")}
                     onClick={() => { if (canEdit && taskEditingField !== "visibility") setTaskEditingField("visibility"); }}
                   >
-                    <span className="text-sm text-muted-foreground w-24 shrink-0 pt-0.5">Visibility</span>
+                    <span className="text-sm text-text-secondary w-24 shrink-0 pt-0.5">Visibility</span>
                     {taskEditingField === "visibility" ? (
                       <div onClick={(e) => e.stopPropagation()}>
                         <Select
@@ -1253,7 +1243,7 @@ export default function ChapterProjectsPage() {
                         </Select>
                       </div>
                     ) : (
-                      <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1.5 text-sm text-text-secondary">
                         {vis.icon}
                         {vis.label}
                       </span>
@@ -1263,21 +1253,21 @@ export default function ChapterProjectsPage() {
                   {/* Created by — read-only */}
                   {task.creator_username && (
                     <div className="flex items-center gap-3 px-2 py-1">
-                      <span className="text-sm text-muted-foreground w-24 shrink-0">Created by</span>
+                      <span className="text-sm text-text-secondary w-24 shrink-0">Created by</span>
                       <span className="text-sm">@{task.creator_username}</span>
                     </div>
                   )}
 
                   {/* Created — read-only */}
                   <div className="flex items-center gap-3 px-2 py-1">
-                    <span className="text-sm text-muted-foreground w-24 shrink-0">Created</span>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-text-secondary w-24 shrink-0">Created</span>
+                    <span className="text-sm text-text-secondary">
                       {format(parseISO(task.created_at), "d MMM yyyy")}
                     </span>
                   </div>
 
                   {isSaving && (
-                    <div className="flex items-center gap-1.5 px-2 pt-1 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5 px-2 pt-1 text-xs text-text-secondary">
                       <Loader2 className="h-3 w-3 animate-spin" />
                       Saving…
                     </div>
@@ -1289,7 +1279,7 @@ export default function ChapterProjectsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-destructive hover:text-destructive gap-1.5"
+                      className="text-feedback-destructive hover:text-feedback-destructive gap-1.5"
                       onClick={async () => {
                         if (!confirm("Delete this task?")) return;
                         setSelectedTask(null);
@@ -1582,7 +1572,7 @@ function DrawerTaskRow({
           {task.title}
         </p>
         {task.description && (
-          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">{task.description}</p>
+          <p className="mt-0.5 text-xs text-text-secondary line-clamp-1">{task.description}</p>
         )}
         <div className="mt-1.5 flex flex-wrap items-center gap-2">
           {task.due_date && (
@@ -1592,7 +1582,7 @@ function DrawerTaskRow({
             </span>
           )}
           {task.assignee_username && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1 text-xs text-text-secondary">
               <Avatar className="h-4 w-4">
                 <AvatarImage src={task.assignee_avatar_url ?? undefined} />
                 <AvatarFallback className="text-[8px] bg-muted">
@@ -1626,7 +1616,7 @@ function DraftCard({
   isPublishing: boolean;
 }) {
   return (
-    <Card className="flex flex-col p-6 border border-dashed bg-muted/30 relative">
+    <div className="relative flex flex-col rounded-sm border border-dashed border-border-default bg-surface-muted/30 p-6">
       <div className="flex items-start justify-between mb-4">
         <Badge variant="outline" className="gap-1 border-border-default bg-surface-muted px-2 py-0.5 text-xs font-medium text-text-secondary">
           <Lightbulb className="h-3 w-3" />
@@ -1635,7 +1625,7 @@ function DraftCard({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-destructive hover:text-destructive"
+          className="h-8 w-8 text-feedback-destructive hover:text-feedback-destructive"
           onClick={onDelete}
         >
           <Trash2 className="h-4 w-4" />
@@ -1644,13 +1634,13 @@ function DraftCard({
 
       <h3 className="text-xl font-bold mb-2">{project.title}</h3>
       {project.description && (
-        <p className="text-sm text-muted-foreground line-clamp-4 flex-1 mb-6 leading-relaxed">
+        <p className="text-sm text-text-secondary line-clamp-4 flex-1 mb-6 leading-relaxed">
           {project.description}
         </p>
       )}
 
       <div className="mt-auto pt-4 border-t border-border-default space-y-3">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+        <p className="text-[10px] text-text-secondary uppercase tracking-wider">
           Submitted {formatDistanceToNow(new Date(project.created_at), { addSuffix: true })}
           {project.author_username ? ` · @${project.author_username}` : ""}
         </p>
@@ -1673,7 +1663,7 @@ function DraftCard({
           </Button>
         </div>
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -1699,9 +1689,17 @@ function ProjectCard({
   const config = PROJECT_STATUS_CONFIG[project.status];
 
   return (
-    <Card
-      className="flex flex-col p-6 hover:shadow-md transition-all group relative cursor-pointer"
+    <div
+      role="button"
+      tabIndex={0}
+      className="group relative flex cursor-pointer flex-col rounded-sm border border-border-default bg-surface-card p-6 transition-colors hover:border-border-strong"
       onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
     >
       <div className="flex items-start justify-between mb-4">
         <Badge variant="outline" className={cn("gap-1 px-2 py-0.5 capitalize font-medium", config.class)}>
@@ -1722,7 +1720,7 @@ function ProjectCard({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-destructive hover:text-destructive"
+              className="h-8 w-8 text-feedback-destructive hover:text-feedback-destructive"
               onClick={onDelete}
               title="Remove project"
             >
@@ -1736,21 +1734,21 @@ function ProjectCard({
         {project.title}
       </h3>
       {project.description && (
-        <p className="text-sm text-muted-foreground line-clamp-4 flex-1 mb-6 leading-relaxed">
+        <p className="text-sm text-text-secondary line-clamp-4 flex-1 mb-6 leading-relaxed">
           {project.description}
         </p>
       )}
 
       <div className="mt-auto pt-4 border-t border-border-default flex items-center justify-between">
-        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+        <p className="text-[10px] text-text-secondary uppercase tracking-wider">
           Created {formatDistanceToNow(new Date(project.created_at), { addSuffix: true })}
         </p>
         {taskCount > 0 && (
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+          <span className="text-[10px] text-text-secondary uppercase tracking-wider">
             {taskCount} {taskCount === 1 ? "task" : "tasks"}
           </span>
         )}
       </div>
-    </Card>
+    </div>
   );
 }

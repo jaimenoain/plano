@@ -25,6 +25,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { Json } from "@/integrations/supabase/types";
+import {
+  AdminPageHeader,
+  AdminFormLabel,
+  AdminEmptyState,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [{ title: "Building Audit | Plano" }];
 
@@ -294,7 +301,7 @@ export default function BuildingAudit() {
     );
   };
 
-  const subtitle = useMemo(() => {
+  const pageDescription = useMemo(() => {
     if (buildingFilterId) {
       return "Building edits plus credit events for the selected building (set via ?building= UUID).";
     }
@@ -313,31 +320,27 @@ export default function BuildingAudit() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Audit Logs</h1>
-        <p className="text-sm text-text-secondary">{subtitle}</p>
-      </div>
+      <AdminPageHeader eyebrow="Moderation" title="Building audit" description={pageDescription} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="flex flex-1 flex-col gap-2">
-          <label htmlFor="building-audit-filter" className="text-sm font-medium text-text-primary">
-            Building UUID filter
-          </label>
+          <AdminFormLabel htmlFor="building-audit-filter">Building UUID filter</AdminFormLabel>
           <Input
             id="building-audit-filter"
             value={draftBuildingId}
             onChange={(e) => setDraftBuildingId(e.target.value)}
             placeholder="Paste building UUID…"
-            className="max-w-xl font-mono text-sm"
+            className="max-w-xl rounded-sm font-mono text-sm"
           />
         </div>
         <div className="flex gap-2">
-          <Button type="button" onClick={applyBuildingFilter}>
+          <Button type="button" className="rounded-sm" onClick={applyBuildingFilter}>
             Apply
           </Button>
           <Button
             type="button"
             variant="outline"
+            className="rounded-sm"
             onClick={() => {
               setDraftBuildingId("");
               setSearchParams((prev) => {
@@ -352,15 +355,25 @@ export default function BuildingAudit() {
         </div>
       </div>
 
+      {logs.length === 0 ? (
+        <AdminEmptyState
+          title="No audit logs found"
+          description={
+            buildingFilterId
+              ? "No building or credit events match this UUID."
+              : "Changes will appear here as editors update catalogue records."
+          }
+        />
+      ) : (
       <div className="rounded-sm border border-border-default bg-surface-card">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Building</TableHead>
-              <TableHead>Change</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className={adminTableHeadClass}>Date</TableHead>
+              <TableHead className={adminTableHeadClass}>User</TableHead>
+              <TableHead className={adminTableHeadClass}>Building</TableHead>
+              <TableHead className={adminTableHeadClass}>Change</TableHead>
+              <TableHead className={cn(adminTableHeadClass, "text-right")}>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -424,16 +437,10 @@ export default function BuildingAudit() {
                 </TableRow>
               ),
             )}
-            {logs.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center text-text-secondary">
-                  No logs found.
-                </TableCell>
-              </TableRow>
-            )}
           </TableBody>
         </Table>
       </div>
+      )}
     </div>
   );
 }

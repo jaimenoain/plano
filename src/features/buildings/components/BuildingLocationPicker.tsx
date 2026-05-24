@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { LocationInput } from "@/components/ui/LocationInput";
 import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
-import { Layers } from "lucide-react";
+import { Layers, MapPin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BuildingFormLabel } from "@/features/buildings/components/building-form-ui";
 import Map, { Marker, NavigationControl, MapMouseEvent, type MarkerDragEvent } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { extractLocationDetails } from "@/lib/location-utils";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
 
@@ -209,7 +210,7 @@ updateLocation(lat, lng, selectedAddress, { city: null, country: null, countryCo
     <div className="grid gap-6 md:grid-cols-[350px_1fr]">
        <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Location Search</Label>
+            <BuildingFormLabel>Location search</BuildingFormLabel>
             <LocationInput
               value={selectedAddress}
               onLocationSelected={handleLocationSelected}
@@ -229,12 +230,12 @@ updateLocation(lat, lng, selectedAddress, { city: null, country: null, countryCo
                 onCheckedChange={handlePrecisionChange}
             />
             <div className="grid gap-1.5 leading-none">
-                <Label
+                <BuildingFormLabel
                     htmlFor="approximate-location-picker"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    className="normal-case tracking-normal text-sm text-text-primary"
                 >
-                    Approximate Location
-                </Label>
+                    Approximate location
+                </BuildingFormLabel>
                 <p className="text-xs text-text-secondary">
                     Check this if the exact location is unknown. The pin will represent a general area (e.g. city center).
                 </p>
@@ -242,7 +243,7 @@ updateLocation(lat, lng, selectedAddress, { city: null, country: null, countryCo
           </div>
        </div>
 
-       <div className="h-[400px] rounded-xl overflow-hidden border shadow-sm relative bg-surface-muted">
+       <div className="h-[400px] rounded-sm overflow-hidden border border-border-default relative bg-surface-muted">
           <Map
             {...viewState}
             onMove={evt => setViewState(evt.viewState)}
@@ -263,45 +264,33 @@ updateLocation(lat, lng, selectedAddress, { city: null, country: null, countryCo
               >
                   <div className="flex flex-col items-center">
                     {locationPrecision === 'approximate' ? (
-                        <div
-                          className="w-7 h-7 rounded-full bg-white border-2 border-brand-primary transition-transform"
-                          style={{ boxShadow: '0 2px 10px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.25)' }}
-                        />
+                        <div className="w-7 h-7 rounded-full bg-text-primary border-[3px] border-surface-card drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] transition-transform" />
                     ) : (
-                        <svg
-                          width="32"
-                          height="40"
-                          viewBox="0 0 32 40"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          style={{ filter: 'drop-shadow(0 3px 10px rgba(0,0,0,0.55))' }}
-                        >
-                          <path
-                            d="M16 1C7.716 1 1 7.716 1 16c0 10.5 15 23 15 23S31 26.5 31 16C31 7.716 24.284 1 16 1z"
-                            fill="white"
-                            stroke="#171717"
-                            strokeWidth="2"
-                          />
-                          <circle cx="16" cy="16" r="5" fill="#171717" />
-                        </svg>
+                        <MapPin
+                          className="h-9 w-9 text-surface-card fill-text-primary drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] transition-colors"
+                          strokeWidth={1.5}
+                        />
                     )}
                   </div>
               </Marker>
             )}
           </Map>
 
-          <button
-            onClick={(e) => {
+          <div className="absolute bottom-4 left-4 z-10">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={(e) => {
                 e.stopPropagation();
                 setIsSatellite(!isSatellite);
-            }}
-            className="absolute top-2 left-2 p-2 bg-surface-default/90 backdrop-blur rounded-md border shadow-sm hover:bg-surface-muted transition-colors z-10 flex items-center gap-2"
-            title={isSatellite ? "Show Map" : "Show Satellite"}
-            type="button"
-          >
-            <Layers className="w-4 h-4" />
-            <span className="text-xs font-medium">{isSatellite ? "Map" : "Satellite"}</span>
-          </button>
+              }}
+              className="bg-surface-default/90 backdrop-blur border border-border-default hover:bg-surface-muted"
+            >
+              <Layers className="h-4 w-4 mr-2" />
+              {isSatellite ? "Map" : "Satellite"}
+            </Button>
+          </div>
        </div>
     </div>
   );

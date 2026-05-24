@@ -20,7 +20,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -53,6 +52,17 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { ambassadorChapterCreateSchema } from "@/lib/validations/ambassador";
+import {
+  AdminPageHeader,
+  AdminSectionLabel,
+  AdminFormLabel,
+  AdminEmptyState,
+  AdminErrorState,
+  adminTableHeadClass,
+  adminHairlineTabsListClass,
+  adminHairlineTabTriggerClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [
   { title: "Ambassador management | Plano Admin" },
@@ -80,7 +90,7 @@ function parseMembersByCountry(raw: Json | null | undefined): CountryBreakdownRo
 function StatCard({ label, value, sub }: { label: string; value: React.ReactNode; sub?: string }) {
   return (
     <Card className="border border-border-default rounded-sm p-4 space-y-1">
-      <p className="text-2xs text-text-disabled uppercase tracking-widest">{label}</p>
+      <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">{label}</p>
       <p className="text-2xl font-semibold text-text-primary tabular-nums">{value}</p>
       {sub && <p className="text-xs text-text-secondary">{sub}</p>}
     </Card>
@@ -140,13 +150,13 @@ function NationalChapterCard({ chapter }: { chapter: ChapterRow }) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Local chapter</TableHead>
-                  <TableHead>President</TableHead>
-                  <TableHead className="text-right">Members</TableHead>
-                  <TableHead className="text-right">Photos (30d)</TableHead>
-                  <TableHead className="text-right">Edits (30d)</TableHead>
-                  <TableHead>Last activity</TableHead>
-                  <TableHead className="w-[80px]" />
+                  <TableHead className={adminTableHeadClass}>Local chapter</TableHead>
+                  <TableHead className={adminTableHeadClass}>President</TableHead>
+                  <TableHead className={cn(adminTableHeadClass, "text-right")}>Members</TableHead>
+                  <TableHead className={cn(adminTableHeadClass, "text-right")}>Photos (30d)</TableHead>
+                  <TableHead className={cn(adminTableHeadClass, "text-right")}>Edits (30d)</TableHead>
+                  <TableHead className={adminTableHeadClass}>Last activity</TableHead>
+                  <TableHead className={cn(adminTableHeadClass, "w-[80px]")} />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -336,45 +346,36 @@ export default function AmbassadorCoverage() {
 
   const loading = statsQuery.isLoading;
 
+  const coverageErrorMessage =
+    "Could not load coverage data. Ensure migration 20270870400000_ambassador_phase5_national_overview_admin_coverage.sql has been applied, then reload.";
+
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <Globe2 className="h-8 w-8 text-text-secondary shrink-0" aria-hidden />
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-text-primary">Ambassador management</h1>
-            <p className="text-sm text-text-secondary mt-1">
-              Program health, chapter coverage, and growth opportunities.
-            </p>
+      <AdminPageHeader
+        eyebrow="Ambassadors"
+        title="Ambassador management"
+        description="Program health, chapter coverage, and growth opportunities."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Globe2 className="hidden h-7 w-7 text-text-secondary sm:block shrink-0" aria-hidden />
+            <Button variant="outline" type="button" asChild>
+              <Link to="/admin/ambassadors">
+                <Shield className="h-4 w-4 mr-2" aria-hidden />
+                Chapters
+              </Link>
+            </Button>
+            <Button variant="outline" type="button" asChild>
+              <Link to="/admin/ambassadors/applications">Applications</Link>
+            </Button>
           </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" type="button" asChild>
-            <Link to="/admin/ambassadors">
-              <Shield className="h-4 w-4 mr-2" aria-hidden />
-              Chapters
-            </Link>
-          </Button>
-          <Button variant="outline" type="button" asChild>
-            <Link to="/admin/ambassadors/applications">Applications</Link>
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
-      {(statsQuery.error || coverageQuery.error) && (
-        <p className="text-sm text-feedback-destructive">
-          Could not load coverage data. Ensure migration{" "}
-          <code className="text-2xs bg-surface-muted px-1 rounded-sm">
-            20270870400000_ambassador_phase5_national_overview_admin_coverage.sql
-          </code>{" "}
-          has been applied, then reload.
-        </p>
-      )}
+      {(statsQuery.error || coverageQuery.error) && <AdminErrorState message={coverageErrorMessage} />}
 
       {/* Program stats */}
       <section className="space-y-4">
-        <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-widest">Program summary</h2>
+        <AdminSectionLabel>Program summary</AdminSectionLabel>
         {loading ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[0, 1, 2, 3].map((k) => <Skeleton key={k} className="h-24 w-full" />)}
@@ -389,7 +390,7 @@ export default function AmbassadorCoverage() {
               sub={`${statsQuery.data.chapters_forming} forming · ${statsQuery.data.chapters_inactive} inactive`}
             />
             <Card className="border border-border-default rounded-sm p-4 space-y-2">
-              <p className="text-2xs text-text-disabled uppercase tracking-widest">Top countries</p>
+              <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Top countries</p>
               {countryRows.length === 0 ? (
                 <p className="text-sm text-text-secondary">No active memberships yet.</p>
               ) : (
@@ -409,23 +410,26 @@ export default function AmbassadorCoverage() {
 
       {/* Tabs */}
       <Tabs defaultValue="gaps">
-        <TabsList>
-          <TabsTrigger value="gaps">
-            <TrendingUp className="h-3.5 w-3.5 mr-1.5" />
+        <TabsList className={cn("mb-4", adminHairlineTabsListClass)}>
+          <TabsTrigger value="gaps" className={cn(adminHairlineTabTriggerClass, "inline-flex items-center gap-1.5")}>
+            <TrendingUp className="h-3.5 w-3.5 shrink-0" />
             Coverage gaps
             {gapLocalities.length > 0 && (
-              <span className="ml-1.5 tabular-nums text-feedback-warning">({gapLocalities.length})</span>
+              <span className="tabular-nums text-feedback-warning">({gapLocalities.length})</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="chapters">
-            <Shield className="h-3.5 w-3.5 mr-1.5" />
+          <TabsTrigger
+            value="chapters"
+            className={cn(adminHairlineTabTriggerClass, "inline-flex items-center gap-1.5")}
+          >
+            <Shield className="h-3.5 w-3.5 shrink-0" />
             National chapters
             {nationalChaptersQuery.data && (
-              <span className="ml-1.5 tabular-nums text-text-disabled">({nationalChaptersQuery.data.length})</span>
+              <span className="tabular-nums text-text-disabled">({nationalChaptersQuery.data.length})</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="coverage">
-            <MapPin className="h-3.5 w-3.5 mr-1.5" />
+          <TabsTrigger value="coverage" className={cn(adminHairlineTabTriggerClass, "inline-flex items-center gap-1.5")}>
+            <MapPin className="h-3.5 w-3.5 shrink-0" />
             All localities
           </TabsTrigger>
         </TabsList>
@@ -442,8 +446,8 @@ export default function AmbassadorCoverage() {
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <Filter className="h-3.5 w-3.5 text-text-disabled" />
-              <span className="text-xs text-text-secondary font-medium">Filter:</span>
+              <Filter className="h-3.5 w-3.5 text-text-disabled" aria-hidden />
+              <span className="text-xs font-medium text-text-secondary">Filter</span>
             </div>
             <Select
               value={gapCountryFilter || "__all__"}
@@ -479,17 +483,20 @@ export default function AmbassadorCoverage() {
               <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
             </div>
           ) : gapLocalities.length === 0 ? (
-            <p className="text-sm text-text-secondary">No coverage gaps match the current filters.</p>
+            <AdminEmptyState
+              title="No coverage gaps match the current filters."
+              description="Adjust country or minimum building count."
+            />
           ) : (
             <div className="rounded-lg border border-border-default bg-surface-card overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>City</TableHead>
-                    <TableHead>Country</TableHead>
-                    <TableHead className="text-right">Buildings</TableHead>
-                    <TableHead className="text-right">Gap score</TableHead>
-                    <TableHead className="w-[180px]" />
+                    <TableHead className={adminTableHeadClass}>City</TableHead>
+                    <TableHead className={adminTableHeadClass}>Country</TableHead>
+                    <TableHead className={cn(adminTableHeadClass, "text-right")}>Buildings</TableHead>
+                    <TableHead className={cn(adminTableHeadClass, "text-right")}>Gap score</TableHead>
+                    <TableHead className={cn(adminTableHeadClass, "w-[180px]")} />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -527,7 +534,7 @@ export default function AmbassadorCoverage() {
               {[0, 1, 2].map((k) => <Skeleton key={k} className="h-14 w-full" />)}
             </div>
           ) : (nationalChaptersQuery.data ?? []).length === 0 ? (
-            <p className="text-sm text-text-secondary">No national chapters yet.</p>
+            <AdminEmptyState title="No national chapters yet." />
           ) : (
             <>
               <p className="text-xs text-text-secondary">
@@ -561,24 +568,24 @@ export default function AmbassadorCoverage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>City</TableHead>
-                    <TableHead>Country</TableHead>
-                    <TableHead className="text-right">Buildings</TableHead>
-                    <TableHead>Chapter</TableHead>
-                    <TableHead className="text-right">
+                    <TableHead className={adminTableHeadClass}>City</TableHead>
+                    <TableHead className={adminTableHeadClass}>Country</TableHead>
+                    <TableHead className={cn(adminTableHeadClass, "text-right")}>Buildings</TableHead>
+                    <TableHead className={adminTableHeadClass}>Chapter</TableHead>
+                    <TableHead className={cn(adminTableHeadClass, "text-right")}>
                       <span className="flex items-center justify-end gap-1">
-                        <Users className="h-3.5 w-3.5" />
+                        <Users className="h-3.5 w-3.5" aria-hidden />
                         Members
                       </span>
                     </TableHead>
-                    <TableHead className="w-[100px]" />
+                    <TableHead className={cn(adminTableHeadClass, "w-[100px]")} />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {(coverageQuery.data ?? []).length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-text-secondary py-12">
-                        No localities in the database yet.
+                      <TableCell colSpan={6} className="p-0">
+                        <AdminEmptyState title="No localities in the database yet." />
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -650,7 +657,7 @@ export default function AmbassadorCoverage() {
               </p>
             )}
             <div className="space-y-2">
-              <Label htmlFor="gap-name">Chapter name</Label>
+              <AdminFormLabel htmlFor="gap-name">Chapter name</AdminFormLabel>
               <Input
                 id="gap-name"
                 value={gapName}
@@ -659,7 +666,7 @@ export default function AmbassadorCoverage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>National parent chapter</Label>
+              <AdminFormLabel>National parent chapter</AdminFormLabel>
               {gapNationalChapters.length === 0 ? (
                 <p className="text-sm text-text-disabled">
                   No national chapter found for {gapRow?.country_code}. Create one first at{" "}
@@ -686,7 +693,7 @@ export default function AmbassadorCoverage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="gap-max">Max ambassadors</Label>
+              <AdminFormLabel htmlFor="gap-max">Max ambassadors</AdminFormLabel>
               <Input
                 id="gap-max"
                 type="number"

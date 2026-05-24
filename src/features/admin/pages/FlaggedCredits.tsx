@@ -28,6 +28,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  AdminPageHeader,
+  AdminEmptyState,
+  AdminErrorState,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [{ title: "Flagged credits | Plano Admin" }];
 
@@ -86,41 +93,40 @@ export default function FlaggedCredits() {
 
   if (error) {
     return (
-      <div className="p-6">
-        <p className="text-feedback-destructive text-sm">Failed to load flagged credits.</p>
+      <div className="space-y-6">
+        <AdminPageHeader eyebrow="Credits" title="Flagged credits" />
+        <AdminErrorState message="Failed to load flagged credits." />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Flagged credits</h1>
-        <p className="mt-1 text-sm text-text-secondary">
-          Review community reports. Verify confirms the credit; dismiss returns it to active; hide removes it
-          from the public building page.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        eyebrow="Credits"
+        title="Flagged credits"
+        description="Review community reports. Verify confirms the credit; dismiss returns it to active; hide removes it from the public building page."
+      />
 
       {isLoading ? (
-        <div className="flex items-center gap-2 text-text-secondary text-sm">
+        <div className="flex items-center gap-2 text-sm text-text-secondary">
           <Loader2 className="size-4 animate-spin" aria-hidden />
           Loading…
         </div>
       ) : !rows?.length ? (
-        <p className="text-sm text-text-secondary">No flagged credits in the queue.</p>
+        <AdminEmptyState title="No flagged credits in the queue" />
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-border-muted">
+        <div className="overflow-x-auto rounded-sm border border-border-default bg-surface-card">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Flagged</TableHead>
-                <TableHead>Reason / notes</TableHead>
-                <TableHead>Building</TableHead>
-                <TableHead>Credited</TableHead>
-                <TableHead>Added by</TableHead>
-                <TableHead>Auto-hide info</TableHead>
-                <TableHead className="text-right w-48">Actions</TableHead>
+                <TableHead className={adminTableHeadClass}>Flagged</TableHead>
+                <TableHead className={adminTableHeadClass}>Reason / notes</TableHead>
+                <TableHead className={adminTableHeadClass}>Building</TableHead>
+                <TableHead className={adminTableHeadClass}>Credited</TableHead>
+                <TableHead className={adminTableHeadClass}>Added by</TableHead>
+                <TableHead className={adminTableHeadClass}>Auto-hide info</TableHead>
+                <TableHead className={cn(adminTableHeadClass, "w-48 text-right")}>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -177,7 +183,7 @@ export default function FlaggedCredits() {
                           credit.building.slug,
                           credit.building.shortId,
                         )}
-                        className="text-sm font-medium text-brand-primary hover:underline"
+                        className="text-sm font-medium text-text-primary hover:underline"
                       >
                         {credit.building.name}
                       </Link>
@@ -187,7 +193,7 @@ export default function FlaggedCredits() {
                         {credit.person ? (
                           <Link
                             to={`/person/${credit.person.slug}`}
-                            className="text-brand-primary hover:underline w-fit"
+                            className="w-fit text-text-primary hover:underline"
                           >
                             {credit.person.name}
                           </Link>
@@ -195,7 +201,7 @@ export default function FlaggedCredits() {
                         {credit.company ? (
                           <Link
                             to={`/company/${credit.company.slug}`}
-                            className="text-brand-primary hover:underline w-fit"
+                            className="w-fit text-text-primary hover:underline"
                           >
                             {credit.company.name}
                           </Link>
@@ -207,7 +213,7 @@ export default function FlaggedCredits() {
                       {credit.addedByUserId && credit.addedByUsername ? (
                         <Link
                           to={`/profile/${credit.addedByUsername}`}
-                          className="text-brand-primary hover:underline"
+                          className="text-text-primary hover:underline"
                         >
                           @{credit.addedByUsername}
                         </Link>
@@ -231,7 +237,8 @@ export default function FlaggedCredits() {
                         <Button
                           type="button"
                           size="sm"
-                          variant="default"
+                          variant="outline"
+                          className="rounded-sm"
                           disabled={busy}
                           onClick={() =>
                             runModeration(credit, "verified", "Credit marked verified.")

@@ -17,15 +17,15 @@ export function AwardRecipientCard({ recipient, className, showAwardName = false
   const isWinner = recipient.outcome === 'winner';
 
   const renderBadge = () => {
-    const outcomeLabel = recipient.outcome.replace('_', ' ');
+    const outcomeLabel = recipient.outcome.replace(/_/g, " ");
     return (
       <Badge
-        variant={isWinner ? "default" : "secondary"}
+        variant="outline"
         className={cn(
-          "uppercase tracking-wider text-[10px] font-bold px-2 py-0.5 h-auto",
-          isWinner 
-            ? "bg-surface-card text-text-primary border border-brand-primary" 
-            : "bg-surface-muted text-text-secondary border-none"
+          "uppercase tracking-[0.15em] text-2xs font-medium px-2 py-0.5 h-auto border",
+          isWinner
+            ? "bg-surface-card text-text-primary border-border-default"
+            : "bg-surface-muted text-text-secondary border-transparent",
         )}
       >
         {outcomeLabel}
@@ -112,7 +112,7 @@ export function AwardRecipientCard({ recipient, className, showAwardName = false
         {showAwardName && recipient.award && (
           <Link 
             to={`/award/${recipient.award.slug}`}
-            className="text-2xs-plus font-bold text-brand-primary hover:opacity-75 transition-opacity uppercase tracking-wide mb-0.5"
+            className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary hover:text-text-primary transition-colors mb-0.5"
           >
             {recipient.award.name}
           </Link>

@@ -71,8 +71,8 @@ export default function AwardEditionPage() {
                 </div>
               )}
               <div className="flex items-center gap-1.5">
-                <Trophy className="w-3.5 h-3.5" />
-                {recipients.length} Recipients
+                <Trophy className="w-3.5 h-3.5 text-text-secondary" aria-hidden />
+                {recipients.length} recipient{recipients.length !== 1 ? "s" : ""}
               </div>
             </div>
           </div>
@@ -87,7 +87,7 @@ export default function AwardEditionPage() {
             categories.map((categoryName) => (
               <section key={categoryName}>
                 {categoryName !== 'Main Award' && (
-                  <h2 className="mb-6 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary border-b border-border-default pb-3">
+                  <h2 className="mb-6 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary border-b border-border-default pb-3">
                     {categoryName}
                   </h2>
                 )}

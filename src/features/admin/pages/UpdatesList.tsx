@@ -24,6 +24,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { PlanoUpdate } from "@/features/updates/types";
+import {
+  AdminEmptyState,
+  AdminPageHeader,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [{ title: "Plano Updates | Admin" }];
 
@@ -65,31 +71,37 @@ export default function UpdatesList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Plano Updates</h1>
-        <Button asChild>
-          <Link to="/admin/updates/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New post
-          </Link>
-        </Button>
-      </div>
+      <AdminPageHeader
+        eyebrow="Content"
+        title="Plano Updates"
+        actions={
+          <Button asChild>
+            <Link to="/admin/updates/new">
+              <Plus className="mr-2 h-4 w-4" />
+              New post
+            </Link>
+          </Button>
+        }
+      />
 
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
         </div>
       ) : updates.length === 0 ? (
-        <p className="text-text-secondary py-12 text-center">No updates yet.</p>
+        <AdminEmptyState
+          title="No updates yet"
+          description="Create a post to show it in the public updates feed."
+        />
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Tags</TableHead>
-              <TableHead>Scope</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-20" />
+              <TableHead className={cn(adminTableHeadClass)}>Title</TableHead>
+              <TableHead className={cn(adminTableHeadClass)}>Tags</TableHead>
+              <TableHead className={cn(adminTableHeadClass)}>Scope</TableHead>
+              <TableHead className={cn(adminTableHeadClass)}>Status</TableHead>
+              <TableHead className={cn(adminTableHeadClass, "w-20")} />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -115,7 +127,7 @@ export default function UpdatesList() {
                 </TableCell>
                 <TableCell>
                   {u.publishedAt ? (
-                    <Badge variant="default" className="text-xs bg-feedback-success text-white">
+                    <Badge className="border-0 text-xs bg-feedback-success text-feedback-success-foreground">
                       Published
                     </Badge>
                   ) : (

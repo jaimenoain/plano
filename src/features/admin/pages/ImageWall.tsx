@@ -3,10 +3,12 @@ import type { MetaFunction } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Trash2, RefreshCw } from "lucide-react";
+import { Trash2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AdminPageHeader, AdminEmptyState } from "@/features/admin/components/admin-ui";
 
 type ProfileImageRow = Pick<
   Database["public"]["Tables"]["profiles"]["Row"],
@@ -112,55 +114,73 @@ toast.error("Failed to delete images");
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Image Wall</h1>
-        <div className="flex gap-2">
-            <Button variant="outline" onClick={fetchImages}>
-                <RefreshCw className="h-4 w-4 mr-2" /> Refresh
+      <AdminPageHeader
+        eyebrow="Media"
+        title="Image Wall"
+        description="Recent profile avatars. Select tiles to clear avatar URLs in bulk."
+        actions={
+          <>
+            <Button variant="outline" className="rounded-sm" onClick={fetchImages} disabled={loading}>
+              <RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />
+              Refresh
             </Button>
-            {selectedKeys.size > 0 && (
-                <Button variant="destructive" onClick={handleDeleteSelected}>
-                    <Trash2 className="h-4 w-4 mr-2" /> Delete ({selectedKeys.size})
-                </Button>
-            )}
-        </div>
-      </div>
+            {selectedKeys.size > 0 ? (
+              <Button variant="destructive" className="rounded-sm" onClick={handleDeleteSelected}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete ({selectedKeys.size})
+              </Button>
+            ) : null}
+          </>
+        }
+      />
 
       {loading ? (
-        <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <Skeleton key={i} className="aspect-square w-full rounded-sm" />
+          ))}
         </div>
       ) : images.length === 0 ? (
-        <div className="text-center text-text-secondary py-12">No images found.</div>
+        <AdminEmptyState title="No images found" description="Profile avatars will appear here when users upload them." />
       ) : (
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-6">
-            {images.map(img => (
-                <div
-                    key={img.uniqueKey}
-                    className={cn(
-                      "relative group aspect-square cursor-pointer overflow-hidden rounded-none border border-border-default transition-all",
-                      selectedKeys.has(img.uniqueKey)
-                        ? "ring-2 ring-brand-primary border-brand-primary"
-                        : "hover:border-border-strong"
-                    )}
-                    onClick={() => toggleSelect(img.uniqueKey)}
-                >
-                    <img src={img.url} alt={img.name} className="w-full h-full object-cover" loading="lazy" />
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
+          {images.map((img) => (
+            <div
+              key={img.uniqueKey}
+              role="button"
+              tabIndex={0}
+              className={cn(
+                "group relative aspect-square cursor-pointer overflow-hidden rounded-sm border border-border-default transition-colors",
+                selectedKeys.has(img.uniqueKey)
+                  ? "border-text-primary ring-2 ring-text-primary"
+                  : "hover:border-border-strong",
+              )}
+              onClick={() => toggleSelect(img.uniqueKey)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  toggleSelect(img.uniqueKey);
+                }
+              }}
+            >
+              <img src={img.url} alt={img.name} className="h-full w-full object-cover" loading="lazy" />
 
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
-                        <div className="text-white text-xs font-medium truncate">{img.name}</div>
-                        <div className="text-white/70 text-[10px] capitalize">{img.type}</div>
-                    </div>
+              <div className="absolute inset-0 flex flex-col justify-end bg-surface-inverse/50 p-2 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="truncate text-xs font-medium text-text-inverse">{img.name}</div>
+                <div className="text-2xs capitalize text-text-inverse/70">{img.type}</div>
+              </div>
 
-                    <div className="absolute top-2 right-2">
-                        <Checkbox
-                            checked={selectedKeys.has(img.uniqueKey)}
-                            onCheckedChange={() => toggleSelect(img.uniqueKey)}
-                            className="bg-white/90 border-transparent data-[state=checked]:bg-brand-primary data-[state=checked]:text-brand-primary-foreground"
-                        />
-                    </div>
-                </div>
-            ))}
+              <div className="absolute right-2 top-2">
+                <Checkbox
+                  checked={selectedKeys.has(img.uniqueKey)}
+                  onCheckedChange={() => toggleSelect(img.uniqueKey)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="border-border-default bg-surface-default data-[state=checked]:border-text-primary data-[state=checked]:bg-text-primary data-[state=checked]:text-surface-default"
+                  aria-label={`Select ${img.name}`}
+                />
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -9,8 +9,8 @@ import {
 } from "@/features/awards/hooks/useAwards";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { AdminFormLabel, AdminPageHeader } from "@/features/admin/components/admin-ui";
 
 export const meta: MetaFunction = () => [{ title: "Edition Form | Plano Admin" }];
 
@@ -108,15 +108,12 @@ export default function EditionForm() {
   }
 
   return (
-    <div className="p-8 max-w-2xl space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">
-        {isEdit ? "Edit Edition" : "New Edition"}
-      </h1>
+    <div className="max-w-2xl space-y-6">
+      <AdminPageHeader title={isEdit ? "Edit edition" : "New edition"} eyebrow="Editions" />
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Year */}
+      <form onSubmit={handleSubmit} className="space-y-6 border-t border-border-default pt-6">
         <div className="space-y-2">
-          <Label htmlFor="edition-year">Year</Label>
+          <AdminFormLabel htmlFor="edition-year">Year</AdminFormLabel>
           <Input
             id="edition-year"
             type="number"
@@ -128,9 +125,8 @@ export default function EditionForm() {
           />
         </div>
 
-        {/* Edition label */}
         <div className="space-y-2">
-          <Label htmlFor="edition-label">Edition label</Label>
+          <AdminFormLabel htmlFor="edition-label">Edition label</AdminFormLabel>
           <Input
             id="edition-label"
             value={editionLabel}
@@ -142,9 +138,8 @@ export default function EditionForm() {
           </p>
         </div>
 
-        {/* Edition number */}
         <div className="space-y-2">
-          <Label htmlFor="edition-number">Edition number</Label>
+          <AdminFormLabel htmlFor="edition-number">Edition number</AdminFormLabel>
           <Input
             id="edition-number"
             type="number"
@@ -158,9 +153,8 @@ export default function EditionForm() {
           </p>
         </div>
 
-        {/* Slug */}
         <div className="space-y-2">
-          <Label htmlFor="edition-slug">URL slug</Label>
+          <AdminFormLabel htmlFor="edition-slug">URL slug</AdminFormLabel>
           <Input
             id="edition-slug"
             value={slug}
@@ -172,9 +166,8 @@ export default function EditionForm() {
           </p>
         </div>
 
-        {/* Edition date */}
         <div className="space-y-2">
-          <Label htmlFor="edition-date">Ceremony date</Label>
+          <AdminFormLabel htmlFor="edition-date">Ceremony date</AdminFormLabel>
           <Input
             id="edition-date"
             type="date"
@@ -183,9 +176,8 @@ export default function EditionForm() {
           />
         </div>
 
-        {/* Ceremony location */}
         <div className="space-y-2">
-          <Label htmlFor="edition-location">Ceremony location</Label>
+          <AdminFormLabel htmlFor="edition-location">Ceremony location</AdminFormLabel>
           <Input
             id="edition-location"
             value={ceremonyLocation}
@@ -194,18 +186,11 @@ export default function EditionForm() {
           />
         </div>
 
-        {/* Notes */}
         <div className="space-y-2">
-          <Label htmlFor="edition-notes">Notes</Label>
-          <Textarea
-            id="edition-notes"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-          />
+          <AdminFormLabel htmlFor="edition-notes">Notes</AdminFormLabel>
+          <Textarea id="edition-notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
         </div>
 
-        {/* Submit */}
         <div className="flex gap-3 pt-4">
           <Button type="submit" disabled={saving}>
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

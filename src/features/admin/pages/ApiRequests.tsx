@@ -8,7 +8,6 @@ import {
   XCircle,
   DollarSign,
   RefreshCw,
-  AlertTriangle,
   Clock,
   Cpu,
   Hash,
@@ -38,6 +37,14 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import {
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminErrorState,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -128,7 +135,7 @@ function DetailRow({
 }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
+      <span className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
         {label}
       </span>
       <div className="text-sm text-text-primary">{children}</div>
@@ -358,28 +365,27 @@ export default function ApiRequests() {
       : "—";
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       {/* ── Header ── */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary tracking-tight">
-            API Requests
-          </h1>
-          <p className="text-sm text-text-secondary mt-1">
-            LLM call logs, outcomes, token usage, and cost estimates
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => void refetch()}
-          className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
-        >
-          <RefreshCw className={`h-3 w-3 ${isFetching ? "animate-spin" : ""}`} />
-          {dataUpdatedAt
-            ? `Updated ${formatDistanceToNow(new Date(dataUpdatedAt), { addSuffix: true })}`
-            : "Refresh"}
-        </button>
-      </div>
+      <AdminPageHeader
+        eyebrow="Admin"
+        title="API Requests"
+        description="LLM call logs, outcomes, token usage, and cost estimates"
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="text-2xs font-medium uppercase tracking-[0.15em]"
+            onClick={() => void refetch()}
+          >
+            <RefreshCw className={`mr-2 h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
+            {dataUpdatedAt
+              ? `Updated ${formatDistanceToNow(new Date(dataUpdatedAt), { addSuffix: true })}`
+              : "Refresh"}
+          </Button>
+        }
+      />
 
       {/* ── Stat cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -443,10 +449,7 @@ export default function ApiRequests() {
 
       {/* ── Table ── */}
       {isError ? (
-        <div className="flex items-center gap-2 text-sm text-feedback-destructive py-8">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          Failed to load logs. Check that you have admin access and the migration has been applied.
-        </div>
+        <AdminErrorState message="Failed to load logs. Check that you have admin access and the migration has been applied." />
       ) : isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -454,26 +457,27 @@ export default function ApiRequests() {
           ))}
         </div>
       ) : logs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 gap-3">
-          <Activity className="h-6 w-6 text-text-disabled" strokeWidth={1.5} />
-          <p className="text-sm text-text-secondary">No API requests logged yet.</p>
-          <p className="text-xs text-text-disabled max-w-xs text-center">
-            Logs appear here after the migration is applied and an instrumented endpoint is called.
-          </p>
-        </div>
+        <AdminEmptyState
+          title="No API requests logged yet"
+          description="Logs appear here after the migration is applied and an instrumented endpoint is called."
+        />
       ) : (
         <div className="border border-border-default overflow-auto">
           <Table>
             <TableHeader>
-              <TableRow className="text-xs uppercase tracking-wide text-text-secondary">
-                <TableHead className="w-[160px]">Time</TableHead>
-                <TableHead>Endpoint</TableHead>
-                <TableHead className="w-[70px]">Status</TableHead>
-                <TableHead className="w-[100px]">Model</TableHead>
-                <TableHead className="w-[160px] text-right">Tokens (in/out)</TableHead>
-                <TableHead className="w-[110px] text-right">Cost</TableHead>
-                <TableHead className="w-[80px] text-right">Duration</TableHead>
-                <TableHead className="w-6" />
+              <TableRow>
+                <TableHead className={cn(adminTableHeadClass, "w-[160px]")}>Time</TableHead>
+                <TableHead className={cn(adminTableHeadClass)}>Endpoint</TableHead>
+                <TableHead className={cn(adminTableHeadClass, "w-[70px]")}>Status</TableHead>
+                <TableHead className={cn(adminTableHeadClass, "w-[100px]")}>Model</TableHead>
+                <TableHead className={cn(adminTableHeadClass, "w-[160px] text-right")}>
+                  Tokens (in/out)
+                </TableHead>
+                <TableHead className={cn(adminTableHeadClass, "w-[110px] text-right")}>Cost</TableHead>
+                <TableHead className={cn(adminTableHeadClass, "w-[80px] text-right")}>
+                  Duration
+                </TableHead>
+                <TableHead className={cn(adminTableHeadClass, "w-6")} />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -481,11 +485,11 @@ export default function ApiRequests() {
                 <TableRow
                   key={log.id}
                   onClick={() => setSelectedLog(log)}
-                  className={[
+                  className={cn(
                     "cursor-pointer hover:bg-surface-subtle transition-colors",
-                    !isSuccess(log.status_code) ? "bg-feedback-destructive/5" : "",
-                    selectedLog?.id === log.id ? "bg-surface-subtle" : "",
-                  ].join(" ")}
+                    !isSuccess(log.status_code) ? "bg-feedback-destructive/5" : undefined,
+                    selectedLog?.id === log.id ? "bg-surface-subtle" : undefined,
+                  )}
                 >
                   <TableCell className="text-xs text-text-secondary whitespace-nowrap">
                     {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}

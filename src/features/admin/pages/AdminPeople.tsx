@@ -42,6 +42,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  AdminPageHeader,
+  AdminSectionLabel,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [
   { title: "People | Plano Admin" },
@@ -224,16 +230,15 @@ export default function AdminPeople() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-10">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">People</h1>
-        <p className="text-sm text-text-secondary">
-          Search people, adjust claim status, or merge duplicates (credits move to the target; source row is removed).
-        </p>
-      </div>
+      <AdminPageHeader
+        eyebrow="Credits"
+        title="People"
+        description="Search people, adjust claim status, or merge duplicates (credits move to the target; source row is removed)."
+      />
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-start">
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-text-primary">1. Select target (keep)</h2>
+          <AdminSectionLabel>1. Select target (keep)</AdminSectionLabel>
           <div className="relative">
             <Input
               placeholder="Search person to keep…"
@@ -250,7 +255,7 @@ export default function AdminPeople() {
                   <button
                     key={p.id}
                     type="button"
-                    className="flex w-full items-center justify-between gap-2 p-2 text-left hover:bg-brand-secondary"
+                    className="flex w-full items-center justify-between gap-2 p-2 text-left hover:bg-surface-muted"
                     onClick={() => {
                       setSelectedTarget(p);
                       setMasterSearch("");
@@ -283,7 +288,7 @@ export default function AdminPeople() {
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-text-primary">2. Select source (remove)</h2>
+          <AdminSectionLabel>2. Select source (remove)</AdminSectionLabel>
           <div className="relative">
             <Input
               placeholder="Search duplicate to remove…"
@@ -300,7 +305,7 @@ export default function AdminPeople() {
                   <button
                     key={p.id}
                     type="button"
-                    className="flex w-full items-center justify-between gap-2 p-2 text-left hover:bg-brand-secondary"
+                    className="flex w-full items-center justify-between gap-2 p-2 text-left hover:bg-surface-muted"
                     onClick={() => {
                       setSelectedSource(p);
                       setDupSearch("");
@@ -341,7 +346,8 @@ export default function AdminPeople() {
               disabled={
                 !selectedTarget || !selectedSource || isMerging || selectedTarget.id === selectedSource.id
               }
-              className="gap-2 bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary/90"
+              className="gap-2 rounded-sm"
+              variant="destructive"
             >
               {isMerging ? <Loader2 className="h-5 w-5 animate-spin" /> : <Merge className="h-5 w-5" />}
               Merge people
@@ -366,10 +372,7 @@ export default function AdminPeople() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={runMerge}
-                className="bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary/90"
-              >
+              <AlertDialogAction onClick={runMerge} className="bg-feedback-destructive text-feedback-destructive-foreground hover:bg-feedback-destructive/90">
                 Confirm merge
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -384,7 +387,7 @@ export default function AdminPeople() {
       <div className="space-y-4 border-t border-border-default pt-10">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-text-primary">Directory search</h2>
+            <AdminSectionLabel>Directory search</AdminSectionLabel>
             <p className="text-sm text-text-secondary">Type at least two characters to search by name or slug.</p>
           </div>
           <div className="relative w-full max-w-md">
@@ -410,11 +413,11 @@ export default function AdminPeople() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Profile</TableHead>
-                <TableHead>Credits</TableHead>
-                <TableHead>Claim status</TableHead>
-                <TableHead className="text-right">Merge</TableHead>
+                <TableHead className={adminTableHeadClass}>Name</TableHead>
+                <TableHead className={adminTableHeadClass}>Profile</TableHead>
+                <TableHead className={adminTableHeadClass}>Credits</TableHead>
+                <TableHead className={adminTableHeadClass}>Claim status</TableHead>
+                <TableHead className={cn(adminTableHeadClass, "text-right")}>Merge</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -443,7 +446,7 @@ export default function AdminPeople() {
                     <TableCell>
                       <Link
                         to={`/person/${p.slug}`}
-                        className="text-brand-primary underline-offset-4 hover:underline"
+                        className="text-text-primary underline-offset-4 hover:underline"
                         target="_blank"
                         rel="noreferrer"
                       >

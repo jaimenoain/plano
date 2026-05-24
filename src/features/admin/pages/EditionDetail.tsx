@@ -33,6 +33,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AddRecipientDialog } from "@/features/admin/components/AddRecipientDialog";
 import { EditionEventsSection } from "@/features/awards/components/EditionEventsSection";
+import {
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminSectionLabel,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [{ title: "Edition Detail | Plano Admin" }];
 
@@ -128,8 +135,13 @@ export default function EditionDetail() {
 
   if (!edition) {
     return (
-      <div className="p-8 text-text-secondary">
-        Edition not found. <Link to={`/admin/awards/${awardId}`} className="underline">Back to award</Link>
+      <div className="space-y-4 text-text-secondary">
+        <AdminEmptyState title="Edition not found" />
+        <p className="text-center text-sm">
+          <Link to={`/admin/awards/${awardId}`} className="underline underline-offset-4">
+            Back to award
+          </Link>
+        </p>
       </div>
     );
   }
@@ -138,40 +150,39 @@ export default function EditionDetail() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <div className="text-sm text-text-secondary mb-1">
-            <Link to={`/admin/awards/${awardId}`} className="hover:underline underline-offset-4">
-              ← {award?.name ?? "Award"}
-            </Link>
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">
-            {editionLabel}
-          </h1>
-          {edition.ceremonyLocation && (
-            <p className="mt-1 text-sm text-text-secondary">{edition.ceremonyLocation}</p>
-          )}
-          {edition.notes && (
-            <p className="mt-2 max-w-2xl text-sm text-text-secondary leading-relaxed">{edition.notes}</p>
-          )}
-        </div>
-        <div className="flex gap-2 shrink-0">
-          <Button size="sm" onClick={() => setShowAddRecipient(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Recipient
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-feedback-destructive"
-            onClick={() => setShowDeleteEdition(true)}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete Edition
-          </Button>
-        </div>
+      <div className="space-y-4">
+        <p className="text-sm text-text-secondary">
+          <Link to={`/admin/awards/${awardId}`} className="hover:underline underline-offset-4">
+            ← {award?.name ?? "Award"}
+          </Link>
+        </p>
+        <AdminPageHeader
+          eyebrow="Edition"
+          title={editionLabel}
+          description={edition.ceremonyLocation ?? undefined}
+          actions={
+            <>
+              <Button size="sm" onClick={() => setShowAddRecipient(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Recipient
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-feedback-destructive"
+                onClick={() => setShowDeleteEdition(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Edition
+              </Button>
+            </>
+          }
+        />
       </div>
+
+      {edition.notes ? (
+        <p className="max-w-2xl text-sm text-text-secondary leading-relaxed">{edition.notes}</p>
+      ) : null}
 
       {/* Recipients by category */}
       {loadingRecipients ? (
@@ -179,26 +190,20 @@ export default function EditionDetail() {
           <Loader2 className="h-5 w-5 animate-spin text-text-secondary" />
         </div>
       ) : (recipients ?? []).length === 0 ? (
-        <div className="rounded-sm border border-border-default bg-surface-card p-8 text-center text-text-secondary">
-          No recipients yet. Add the first one.
-        </div>
+        <AdminEmptyState title="No recipients yet" description="Add the first recipient to this edition." />
       ) : (
         Array.from(grouped.entries()).map(([catName, catRecipients]) => (
           <div key={catName} className="space-y-2">
-            {grouped.size > 1 && (
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                {catName}
-              </h3>
-            )}
+            {grouped.size > 1 ? <AdminSectionLabel className="text-left">{catName}</AdminSectionLabel> : null}
             <div className="rounded-sm border border-border-default bg-surface-card">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Recipient</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Outcome</TableHead>
-                    <TableHead>Notes</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className={adminTableHeadClass}>Recipient</TableHead>
+                    <TableHead className={adminTableHeadClass}>Type</TableHead>
+                    <TableHead className={adminTableHeadClass}>Outcome</TableHead>
+                    <TableHead className={adminTableHeadClass}>Notes</TableHead>
+                    <TableHead className={cn(adminTableHeadClass, "text-right")}>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

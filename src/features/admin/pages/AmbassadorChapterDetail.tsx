@@ -13,7 +13,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -77,6 +76,16 @@ import {
   fetchChapterNewCredits,
   type ChapterActivityRow,
 } from "@/features/admin/api/ambassadorCoverage";
+import {
+  AdminPageHeader,
+  AdminSectionLabel,
+  AdminFormLabel,
+  AdminEmptyState,
+  adminTableHeadClass,
+  adminHairlineTabsListClass,
+  adminHairlineTabTriggerClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [
   { title: "Chapter detail | Plano Admin" },
@@ -115,7 +124,7 @@ function MetricCard({
   return (
     <Card className="border border-border-default rounded-sm p-4 space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-2xs text-text-disabled uppercase tracking-widest">{label}</p>
+        <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">{label}</p>
         <Icon className="h-4 w-4 text-text-disabled" aria-hidden />
       </div>
       <p className="text-2xl font-semibold text-text-primary tabular-nums">{current}</p>
@@ -407,7 +416,7 @@ export default function AmbassadorChapterDetail() {
   const typeLabel: Record<string, string> = useMemo(() => ({ local: "Local", national: "National" }), []);
 
   if (!chapterId || !isValidId) {
-    return <p className="text-text-secondary">Missing or invalid chapter id.</p>;
+    return <AdminEmptyState title="Missing or invalid chapter id." />;
   }
 
   if (loading) {
@@ -424,7 +433,7 @@ export default function AmbassadorChapterDetail() {
         <Button variant="ghost" asChild>
           <Link to="/admin/ambassadors"><ArrowLeft className="h-4 w-4 mr-2" />Back to chapters</Link>
         </Button>
-        <p className="text-text-secondary">Chapter not found.</p>
+        <AdminEmptyState title="Chapter not found." />
       </div>
     );
   }
@@ -433,19 +442,23 @@ export default function AmbassadorChapterDetail() {
 
   return (
     <div className="space-y-6 max-w-5xl">
-      {/* Header */}
-      <div className="flex flex-wrap items-center gap-4">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/admin/ambassadors"><ArrowLeft className="h-4 w-4 mr-2" />Chapters</Link>
-        </Button>
-        <h1 className="text-3xl font-bold tracking-tight text-text-primary flex-1 min-w-0">
-          {chapter.name}
-        </h1>
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="capitalize">{chapter.type}</Badge>
-          <Badge variant="secondary" className="capitalize">{chapter.status}</Badge>
-        </div>
-      </div>
+      <AdminPageHeader
+        eyebrow="Ambassadors"
+        title={chapter.name}
+        description={`${typeLabel[chapter.type] ?? chapter.type} · ${chapter.country_code}`}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/admin/ambassadors" className="gap-2">
+                <ArrowLeft className="h-4 w-4" aria-hidden />
+                Chapters
+              </Link>
+            </Button>
+            <Badge variant="secondary" className="capitalize">{chapter.type}</Badge>
+            <Badge variant="secondary" className="capitalize">{chapter.status}</Badge>
+          </div>
+        }
+      />
 
       {/* Metrics row */}
       {metricsQuery.isLoading ? (
@@ -489,29 +502,29 @@ export default function AmbassadorChapterDetail() {
 
       {/* Tabs */}
       <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="members">
+        <TabsList className={cn("mb-4", adminHairlineTabsListClass)}>
+          <TabsTrigger value="overview" className={adminHairlineTabTriggerClass}>Overview</TabsTrigger>
+          <TabsTrigger value="members" className={cn(adminHairlineTabTriggerClass, "inline-flex items-center gap-1.5")}>
             Members
-            <span className="ml-1.5 tabular-nums text-text-disabled">({members.length}/{chapter.max_ambassadors})</span>
+            <span className="tabular-nums text-text-disabled">({members.length}/{chapter.max_ambassadors})</span>
           </TabsTrigger>
-          <TabsTrigger value="quality">
+          <TabsTrigger value="quality" className={cn(adminHairlineTabTriggerClass, "inline-flex items-center gap-1.5")}>
             Data quality
             {(noPhotosQuery.data?.length ?? 0) + (missingMetaQuery.data?.length ?? 0) > 0 && (
-              <AlertTriangle className="ml-1.5 h-3.5 w-3.5 text-feedback-warning" />
+              <AlertTriangle className="h-3.5 w-3.5 text-feedback-warning shrink-0" aria-hidden />
             )}
           </TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="settings" className={adminHairlineTabTriggerClass}>Settings</TabsTrigger>
         </TabsList>
 
         {/* ── OVERVIEW ── */}
         <TabsContent value="overview" className="space-y-8 pt-4">
           {/* Leadership */}
           <section className="space-y-4">
-            <h2 className="text-base font-semibold text-text-primary flex items-center gap-2">
-              <Crown className="h-4 w-4 text-text-secondary" />
-              Leadership
-            </h2>
+            <div className="flex items-center gap-2">
+              <Crown className="h-4 w-4 text-text-secondary shrink-0" aria-hidden />
+              <AdminSectionLabel>Leadership</AdminSectionLabel>
+            </div>
             {president || exco.length > 0 ? (
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {president && (
@@ -526,7 +539,7 @@ export default function AmbassadorChapterDetail() {
                       <p className="text-sm font-medium text-text-primary truncate">
                         @{president.member_profile?.username ?? president.user_id.slice(0, 8)}
                       </p>
-                      <p className="text-2xs text-text-disabled uppercase tracking-widest">President</p>
+                      <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">President</p>
                     </div>
                   </div>
                 )}
@@ -542,7 +555,7 @@ export default function AmbassadorChapterDetail() {
                       <p className="text-sm font-medium text-text-primary truncate">
                         @{m.member_profile?.username ?? m.user_id.slice(0, 8)}
                       </p>
-                      <p className="text-2xs text-text-disabled uppercase tracking-widest">
+                      <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
                         ExCo · {m.exco_responsibility ? (EXCO_LABEL[m.exco_responsibility] ?? m.exco_responsibility) : "—"}
                       </p>
                     </div>
@@ -550,32 +563,32 @@ export default function AmbassadorChapterDetail() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-text-secondary">No leadership assigned yet.</p>
+              <AdminEmptyState title="No leadership assigned yet." />
             )}
           </section>
 
           {/* Ambassador activity */}
           <section className="space-y-4">
-            <h2 className="text-base font-semibold text-text-primary flex items-center gap-2">
-              <Users className="h-4 w-4 text-text-secondary" />
-              Ambassador activity (30 days)
-            </h2>
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-text-secondary shrink-0" aria-hidden />
+              <AdminSectionLabel>Ambassador activity (30 days)</AdminSectionLabel>
+            </div>
             {activityQuery.isLoading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
               </div>
             ) : (activityQuery.data ?? []).length === 0 ? (
-              <p className="text-sm text-text-secondary">No activity recorded yet.</p>
+              <AdminEmptyState title="No activity recorded yet." />
             ) : (
               <div className="rounded-lg border border-border-default overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Ambassador</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead className="text-right">Photos</TableHead>
-                      <TableHead className="text-right">Edits</TableHead>
-                      <TableHead>Last active</TableHead>
+                      <TableHead className={adminTableHeadClass}>Ambassador</TableHead>
+                      <TableHead className={adminTableHeadClass}>Role</TableHead>
+                      <TableHead className={cn(adminTableHeadClass, "text-right")}>Photos</TableHead>
+                      <TableHead className={cn(adminTableHeadClass, "text-right")}>Edits</TableHead>
+                      <TableHead className={adminTableHeadClass}>Last active</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -608,24 +621,24 @@ export default function AmbassadorChapterDetail() {
 
           {/* Recent buildings */}
           <section className="space-y-4">
-            <h2 className="text-base font-semibold text-text-primary flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-text-secondary" />
-              Recently added buildings
-            </h2>
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-text-secondary shrink-0" aria-hidden />
+              <AdminSectionLabel>Recently added buildings</AdminSectionLabel>
+            </div>
             {recentBuildingsQuery.isLoading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
               </div>
             ) : (recentBuildingsQuery.data ?? []).length === 0 ? (
-              <p className="text-sm text-text-secondary">No buildings added recently.</p>
+              <AdminEmptyState title="No buildings added recently." />
             ) : (
               <div className="rounded-lg border border-border-default overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Building</TableHead>
-                      <TableHead>City</TableHead>
-                      <TableHead>Added</TableHead>
+                      <TableHead className={adminTableHeadClass}>Building</TableHead>
+                      <TableHead className={adminTableHeadClass}>City</TableHead>
+                      <TableHead className={adminTableHeadClass}>Added</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -670,21 +683,21 @@ export default function AmbassadorChapterDetail() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>ExCo area</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Photos</TableHead>
-                  <TableHead className="text-right">Edits</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead className="w-[160px]" />
+                  <TableHead className={adminTableHeadClass}>User</TableHead>
+                  <TableHead className={adminTableHeadClass}>Role</TableHead>
+                  <TableHead className={adminTableHeadClass}>ExCo area</TableHead>
+                  <TableHead className={adminTableHeadClass}>Status</TableHead>
+                  <TableHead className={cn(adminTableHeadClass, "text-right")}>Photos</TableHead>
+                  <TableHead className={cn(adminTableHeadClass, "text-right")}>Edits</TableHead>
+                  <TableHead className={adminTableHeadClass}>Joined</TableHead>
+                  <TableHead className={cn(adminTableHeadClass, "w-[160px]")} />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {sortedMembers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-text-secondary py-10">
-                      No members yet.
+                    <TableCell colSpan={8} className="p-0">
+                      <AdminEmptyState title="No members yet." />
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -797,27 +810,27 @@ export default function AmbassadorChapterDetail() {
         <TabsContent value="quality" className="pt-4 space-y-8">
           {/* Buildings without photos */}
           <section className="space-y-4">
-            <h2 className="text-base font-semibold text-text-primary flex items-center gap-2">
-              <ImageOff className="h-4 w-4 text-text-secondary" />
-              Buildings without photos
+            <div className="flex flex-wrap items-center gap-2">
+              <ImageOff className="h-4 w-4 text-text-secondary shrink-0" aria-hidden />
+              <AdminSectionLabel>Buildings without photos</AdminSectionLabel>
               {(noPhotosQuery.data?.length ?? 0) > 0 && (
-                <Badge variant="destructive" className="text-2xs font-normal ml-1">
+                <Badge variant="destructive" className="text-2xs font-normal">
                   {noPhotosQuery.data!.length}
                 </Badge>
               )}
-            </h2>
+            </div>
             {noPhotosQuery.isLoading ? (
               <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-text-disabled" /></div>
             ) : (noPhotosQuery.data ?? []).length === 0 ? (
-              <p className="text-sm text-text-secondary">All buildings have at least one photo.</p>
+              <AdminEmptyState title="All buildings have at least one photo." />
             ) : (
               <div className="rounded-lg border border-border-default overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Building</TableHead>
-                      <TableHead>City</TableHead>
-                      <TableHead className="text-right">Popularity</TableHead>
+                      <TableHead className={adminTableHeadClass}>Building</TableHead>
+                      <TableHead className={adminTableHeadClass}>City</TableHead>
+                      <TableHead className={cn(adminTableHeadClass, "text-right")}>Popularity</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -843,29 +856,29 @@ export default function AmbassadorChapterDetail() {
 
           {/* Buildings missing metadata */}
           <section className="space-y-4">
-            <h2 className="text-base font-semibold text-text-primary flex items-center gap-2">
-              <FileWarning className="h-4 w-4 text-text-secondary" />
-              Buildings missing credits or styles
+            <div className="flex flex-wrap items-center gap-2">
+              <FileWarning className="h-4 w-4 text-text-secondary shrink-0" aria-hidden />
+              <AdminSectionLabel>Buildings missing credits or styles</AdminSectionLabel>
               {(missingMetaQuery.data?.length ?? 0) > 0 && (
-                <Badge variant="destructive" className="text-2xs font-normal ml-1">
+                <Badge variant="destructive" className="text-2xs font-normal">
                   {missingMetaQuery.data!.length}
                 </Badge>
               )}
-            </h2>
+            </div>
             {missingMetaQuery.isLoading ? (
               <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-text-disabled" /></div>
             ) : (missingMetaQuery.data ?? []).length === 0 ? (
-              <p className="text-sm text-text-secondary">All buildings have architect credits and styles.</p>
+              <AdminEmptyState title="All buildings have architect credits and styles." />
             ) : (
               <div className="rounded-lg border border-border-default overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Building</TableHead>
-                      <TableHead>City</TableHead>
-                      <TableHead>Architect credit</TableHead>
-                      <TableHead>Styles</TableHead>
-                      <TableHead className="text-right">Popularity</TableHead>
+                      <TableHead className={adminTableHeadClass}>Building</TableHead>
+                      <TableHead className={adminTableHeadClass}>City</TableHead>
+                      <TableHead className={adminTableHeadClass}>Architect credit</TableHead>
+                      <TableHead className={adminTableHeadClass}>Styles</TableHead>
+                      <TableHead className={cn(adminTableHeadClass, "text-right")}>Popularity</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -903,10 +916,10 @@ export default function AmbassadorChapterDetail() {
         {/* ── SETTINGS ── */}
         <TabsContent value="settings" className="pt-4">
           <div className="rounded-lg border border-border-default bg-surface-card p-6 space-y-4 max-w-lg">
-            <h2 className="text-base font-semibold text-text-primary">Chapter settings</h2>
+            <AdminSectionLabel>Chapter settings</AdminSectionLabel>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Name</Label>
+                <AdminFormLabel htmlFor="edit-name">Name</AdminFormLabel>
                 <Input
                   id="edit-name"
                   value={chapterDraft.name ?? ""}
@@ -914,7 +927,7 @@ export default function AmbassadorChapterDetail() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Status</Label>
+                <AdminFormLabel>Status</AdminFormLabel>
                 <Select
                   value={chapterDraft.status ?? "active"}
                   onValueChange={(v) =>
@@ -930,11 +943,11 @@ export default function AmbassadorChapterDetail() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Type</Label>
+                <AdminFormLabel>Type</AdminFormLabel>
                 <Input readOnly value={typeLabel[chapter.type] ?? chapter.type} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-cc">Country code</Label>
+                <AdminFormLabel htmlFor="edit-cc">Country code</AdminFormLabel>
                 <Input
                   id="edit-cc"
                   value={chapterDraft.country_code ?? ""}
@@ -945,7 +958,7 @@ export default function AmbassadorChapterDetail() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-max">Max ambassadors</Label>
+                <AdminFormLabel htmlFor="edit-max">Max ambassadors</AdminFormLabel>
                 <Input
                   id="edit-max"
                   type="number"
@@ -974,7 +987,7 @@ export default function AmbassadorChapterDetail() {
           <DialogHeader><DialogTitle>Add member</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="user-q">Search by username</Label>
+              <AdminFormLabel htmlFor="user-q">Search by username</AdminFormLabel>
               <Input
                 id="user-q"
                 value={userSearch}
@@ -1000,7 +1013,7 @@ export default function AmbassadorChapterDetail() {
               )}
             </div>
             <div className="space-y-2">
-              <Label>Role</Label>
+              <AdminFormLabel>Role</AdminFormLabel>
               <Select value={addRole} onValueChange={(v) => setAddRole(v as typeof addRole)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -1015,7 +1028,7 @@ export default function AmbassadorChapterDetail() {
             </div>
             {addRole === "exco" && (
               <div className="space-y-2">
-                <Label>ExCo responsibility</Label>
+                <AdminFormLabel>ExCo responsibility</AdminFormLabel>
                 <Select value={addExco} onValueChange={(v) => setAddExco(v as typeof addExco)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>

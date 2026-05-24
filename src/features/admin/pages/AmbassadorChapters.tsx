@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -28,13 +27,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Plus, Shield, ClipboardList, AlertTriangle, Users, Crown, Target } from "lucide-react";
+import { Loader2, Plus, ClipboardList, AlertTriangle, Users, Crown, Target } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
 import {
   ambassadorChapterCreateSchema,
   type AmbassadorChapterCreateInput,
 } from "@/lib/validations/ambassador";
+import {
+  AdminPageHeader,
+  AdminFormLabel,
+  AdminEmptyState,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [
   { title: "Ambassador chapters | Plano Admin" },
@@ -306,40 +312,34 @@ export default function AmbassadorChapters() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <Shield className="h-8 w-8 text-text-secondary" />
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-text-primary">
-              Ambassador chapters
-            </h1>
-            <p className="text-sm text-text-secondary mt-1">
-              Create and manage geographic chapters for the ambassador program.
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" type="button" asChild>
-            <Link to="/admin/ambassadors/coverage">Coverage</Link>
-          </Button>
-          <Button variant="outline" type="button" asChild>
-            <Link to="/admin/ambassadors/campaigns">
-              <Target className="h-4 w-4 mr-2" aria-hidden />
-              Campaigns
-            </Link>
-          </Button>
-          <Button variant="outline" type="button" asChild>
-            <Link to="/admin/ambassadors/applications">
-              <ClipboardList className="h-4 w-4 mr-2" aria-hidden />
-              Applications
-            </Link>
-          </Button>
-          <Button type="button" onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" aria-hidden />
-            New chapter
-          </Button>
-        </div>
-      </div>
+      <AdminPageHeader
+        eyebrow="Ambassadors"
+        title="Ambassador chapters"
+        description="Create and manage geographic chapters for the ambassador program."
+        actions={
+          <>
+            <Button variant="outline" type="button" asChild>
+              <Link to="/admin/ambassadors/coverage">Coverage</Link>
+            </Button>
+            <Button variant="outline" type="button" asChild>
+              <Link to="/admin/ambassadors/campaigns">
+                <Target className="h-4 w-4 mr-2" aria-hidden />
+                Campaigns
+              </Link>
+            </Button>
+            <Button variant="outline" type="button" asChild>
+              <Link to="/admin/ambassadors/applications">
+                <ClipboardList className="h-4 w-4 mr-2" aria-hidden />
+                Applications
+              </Link>
+            </Button>
+            <Button type="button" onClick={() => setDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" aria-hidden />
+              New chapter
+            </Button>
+          </>
+        }
+      />
 
       {hasAttention && attention && (
         <div className="rounded-sm border border-feedback-warning/30 bg-feedback-warning/10 p-4">
@@ -380,19 +380,19 @@ export default function AmbassadorChapters() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Country</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Members</TableHead>
+                <TableHead className={adminTableHeadClass}>Name</TableHead>
+                <TableHead className={adminTableHeadClass}>Type</TableHead>
+                <TableHead className={adminTableHeadClass}>Country</TableHead>
+                <TableHead className={adminTableHeadClass}>Status</TableHead>
+                <TableHead className={cn(adminTableHeadClass, "text-right")}>Members</TableHead>
                 <TableHead className="w-[100px]" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {chapters.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-text-secondary py-12">
-                    No chapters yet. Create one to get started.
+                  <TableCell colSpan={6} className="p-0">
+                    <AdminEmptyState title="No chapters yet" description="Create one to get started." />
                   </TableCell>
                 </TableRow>
               ) : (
@@ -427,7 +427,7 @@ export default function AmbassadorChapters() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label>Type</Label>
+              <AdminFormLabel>Type</AdminFormLabel>
               <Select
                 value={form.type}
                 onValueChange={(v) =>
@@ -450,7 +450,7 @@ export default function AmbassadorChapters() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Country</Label>
+              <AdminFormLabel>Country</AdminFormLabel>
               <Select
                 value={form.country_code}
                 onValueChange={(v) =>
@@ -472,7 +472,7 @@ export default function AmbassadorChapters() {
             {form.type === "local" && (
               <>
                 <div className="space-y-2">
-                  <Label>Parent national chapter</Label>
+                  <AdminFormLabel>Parent national chapter</AdminFormLabel>
                   <Select
                     value={form.parent_chapter_id ?? ""}
                     onValueChange={(v) =>
@@ -492,7 +492,7 @@ export default function AmbassadorChapters() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="loc-q">Locality search</Label>
+                  <AdminFormLabel htmlFor="loc-q">Locality search</AdminFormLabel>
                   <Input
                     id="loc-q"
                     value={localityQuery}
@@ -529,7 +529,7 @@ export default function AmbassadorChapters() {
               </>
             )}
             <div className="space-y-2">
-              <Label htmlFor="ch-max">Max ambassadors</Label>
+              <AdminFormLabel htmlFor="ch-max">Max ambassadors</AdminFormLabel>
               <Input
                 id="ch-max"
                 type="number"
@@ -545,7 +545,7 @@ export default function AmbassadorChapters() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Status</Label>
+              <AdminFormLabel>Status</AdminFormLabel>
               <Select
                 value={form.status}
                 onValueChange={(v) =>

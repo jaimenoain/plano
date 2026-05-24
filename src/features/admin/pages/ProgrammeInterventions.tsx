@@ -1,6 +1,6 @@
 import { type MetaFunction, Link } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, XCircle, Info, ChevronDown, ExternalLink, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, XCircle, Info, ChevronDown, ExternalLink } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { fetchInterventionFlags, dismissInterventionFlag } from "@/features/admin/api/programme";
 import type { InterventionFlag, InterventionSeverity } from "@/features/admin/types/programme";
+import {
+  AdminPageHeader,
+  AdminSectionLabel,
+  AdminEmptyState,
+  AdminErrorState,
+} from "@/features/admin/components/admin-ui";
 
 export const meta: MetaFunction = () => [
   { title: "Intervention Queue | Plano Admin" },
@@ -150,10 +156,10 @@ function SeveritySection({
 
   return (
     <section>
-      <h2 className={`text-sm font-semibold uppercase tracking-wide mb-3 ${config.headingClass}`}>
+      <AdminSectionLabel className={config.headingClass}>
         {config.label} · {flags.length}
-      </h2>
-      <div className="space-y-2">
+      </AdminSectionLabel>
+      <div className="space-y-2 mt-3">
         {flags.map((flag) => (
           <FlagCard
             key={`${flag.flagType}-${flag.chapterId}`}
@@ -172,8 +178,11 @@ function SeveritySection({
 
 function LoadingSkeleton() {
   return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
-      <Skeleton className="h-9 w-56" />
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <Skeleton className="h-3 w-24 rounded-sm" />
+        <Skeleton className="h-9 w-64 rounded-sm" />
+      </div>
       <Skeleton className="h-4 w-72" />
       <div className="space-y-2">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -214,15 +223,19 @@ export default function ProgrammeInterventions() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center gap-4 p-6">
-        <p className="text-feedback-destructive text-center max-w-lg">
-          {error instanceof Error ? error.message : "Failed to load intervention flags."}
-        </p>
-        <p className="text-sm text-text-secondary text-center max-w-md">
-          Apply migration{" "}
-          <code className="font-mono text-xs">20271123000000_intervention_queue.sql</code> in the
-          Supabase SQL Editor, then reload.
-        </p>
+      <div className="space-y-6">
+        <AdminPageHeader
+          eyebrow="Programme"
+          title="Intervention Queue"
+          description="Automated flags that need attention. Dismissals are per-user."
+        />
+        <AdminErrorState
+          message={
+            error instanceof Error
+              ? error.message
+              : "Failed to load intervention flags. Apply migration 20271123000000_intervention_queue.sql in the Supabase SQL Editor, then reload."
+          }
+        />
       </div>
     );
   }
@@ -236,24 +249,18 @@ export default function ProgrammeInterventions() {
   );
 
   return (
-    <div className="space-y-8 p-4 sm:p-6 lg:p-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Intervention Queue</h1>
-        <p className="mt-1 text-sm text-text-secondary">
-          Automated flags that need attention. Dismissals are per-user — your teammates still see
-          flags you dismiss.
-        </p>
-      </div>
+    <div className="space-y-8">
+      <AdminPageHeader
+        eyebrow="Programme"
+        title="Intervention Queue"
+        description="Automated flags that need attention. Dismissals are per-user — your teammates still see flags you dismiss."
+      />
 
       {flags.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
-          <CheckCircle2 className="h-10 w-10 text-feedback-success" />
-          <p className="text-lg font-semibold text-text-primary">No active flags</p>
-          <p className="text-sm text-text-secondary max-w-sm">
-            The programme is healthy. Check back later or after applying the migration if you
-            expected flags to appear.
-          </p>
-        </div>
+        <AdminEmptyState
+          title="No active flags"
+          description="The programme is healthy. Check back later if you expected flags to appear."
+        />
       ) : (
         <div className="space-y-8">
           {SEVERITY_ORDER.map((severity) => (

@@ -33,6 +33,15 @@ import type {
   PresidentOnboardingListRow,
   PresidentOnboardingStatus,
 } from "@/features/admin/types/programme";
+import {
+  AdminPageHeader,
+  AdminEmptyState,
+  AdminErrorState,
+  adminTableHeadClass,
+  adminHairlineTabsListClass,
+  adminHairlineTabTriggerClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [
   { title: "Chapter Presidents | Plano Admin" },
@@ -354,17 +363,18 @@ function OnboardingTrackerView() {
 
   if (error) {
     return (
-      <p className="text-feedback-destructive text-sm">
-        {error instanceof Error ? error.message : "Failed to load onboarding tracker."}
-      </p>
+      <AdminErrorState
+        message={error instanceof Error ? error.message : "Failed to load onboarding tracker."}
+      />
     );
   }
 
   if (rows.length === 0) {
     return (
-      <div className="flex items-center justify-center h-32 text-text-secondary text-sm">
-        No presidents in their first 60 days.
-      </div>
+      <AdminEmptyState
+        title="No presidents in their first 60 days"
+        description="New presidents will appear here during onboarding."
+      />
     );
   }
 
@@ -376,12 +386,12 @@ function OnboardingTrackerView() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border-default">
-                  <th className="text-left py-3 px-4 text-xs font-medium text-text-secondary tracking-wide uppercase">President</th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-text-secondary tracking-wide uppercase">Chapter</th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-text-secondary tracking-wide uppercase">Country</th>
-                  <th className="text-right py-3 px-4 text-xs font-medium text-text-secondary tracking-wide uppercase">Day</th>
-                  <th className="text-right py-3 px-4 text-xs font-medium text-text-secondary tracking-wide uppercase">Steps</th>
-                  <th className="text-right py-3 px-4 text-xs font-medium text-text-secondary tracking-wide uppercase">Last Active</th>
+                  <th className={cn("text-left py-3 px-4", adminTableHeadClass)}>President</th>
+                  <th className={cn("text-left py-3 px-4", adminTableHeadClass)}>Chapter</th>
+                  <th className={cn("text-left py-3 px-4", adminTableHeadClass)}>Country</th>
+                  <th className={cn("text-right py-3 px-4", adminTableHeadClass)}>Day</th>
+                  <th className={cn("text-right py-3 px-4", adminTableHeadClass)}>Steps</th>
+                  <th className={cn("text-right py-3 px-4", adminTableHeadClass)}>Last Active</th>
                 </tr>
               </thead>
               <tbody>
@@ -438,8 +448,11 @@ function OnboardingTrackerView() {
 
 function LoadingSkeleton() {
   return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
-      <Skeleton className="h-9 w-56" />
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <Skeleton className="h-3 w-24 rounded-sm" />
+        <Skeleton className="h-9 w-64 rounded-sm" />
+      </div>
       <div className="flex gap-3">
         <Skeleton className="h-9 flex-1 max-w-xs" />
         <Skeleton className="h-9 w-32" />
@@ -478,26 +491,39 @@ export default function ProgrammePresidents() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-surface-default flex flex-col items-center justify-center gap-4 p-6">
-        <p className="text-feedback-destructive text-center max-w-lg">
-          {error instanceof Error ? error.message : "Failed to load president directory."}
-        </p>
-        <p className="text-sm text-text-secondary text-center max-w-md">
-          Apply migration <code className="font-mono text-xs">20271122000000_president_directory_rpc.sql</code> in
-          the Supabase SQL Editor, then reload.
-        </p>
+      <div className="space-y-6">
+        <AdminPageHeader
+          eyebrow="Programme"
+          title="Chapter Presidents"
+          description="Directory of chapter presidents with onboarding tracker for new leaders."
+        />
+        <AdminErrorState
+          message={
+            error instanceof Error
+              ? error.message
+              : "Failed to load president directory. Apply migration 20271122000000_president_directory_rpc.sql in the Supabase SQL Editor, then reload."
+          }
+        />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
-      <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Chapter Presidents</h1>
+    <div className="space-y-6">
+      <AdminPageHeader
+        eyebrow="Programme"
+        title="Chapter Presidents"
+        description="Directory of chapter presidents with onboarding tracker for new leaders."
+      />
 
       <Tabs defaultValue="all">
-        <TabsList className="mb-4">
-          <TabsTrigger value="all">All Presidents</TabsTrigger>
-          <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
+        <TabsList className={cn("mb-4", adminHairlineTabsListClass)}>
+          <TabsTrigger value="all" className={adminHairlineTabTriggerClass}>
+            All presidents
+          </TabsTrigger>
+          <TabsTrigger value="onboarding" className={adminHairlineTabTriggerClass}>
+            Onboarding
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="mt-0 space-y-6">
@@ -559,22 +585,22 @@ export default function ProgrammePresidents() {
           <Card>
             <CardContent className="p-0">
               {filtered.length === 0 ? (
-                <div className="flex items-center justify-center h-32 text-text-secondary text-sm">
-                  {rows.length === 0 ? "No chapter presidents found." : "No results match your filters."}
-                </div>
+                <AdminEmptyState
+                  title={rows.length === 0 ? "No chapter presidents found" : "No results match your filters"}
+                />
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-border-default">
-                        <th className="text-left py-3 px-4 text-xs font-medium text-text-secondary tracking-wide uppercase">President</th>
-                        <th className="text-left py-3 px-4 text-xs font-medium text-text-secondary tracking-wide uppercase">Chapter</th>
-                        <th className="text-left py-3 px-4 text-xs font-medium text-text-secondary tracking-wide uppercase">Country</th>
-                        <th className="text-left py-3 px-4 text-xs font-medium text-text-secondary tracking-wide uppercase">Status</th>
-                        <th className="text-right py-3 px-4 text-xs font-medium text-text-secondary tracking-wide uppercase">Members</th>
-                        <th className="text-right py-3 px-4 text-xs font-medium text-text-secondary tracking-wide uppercase">Last Active</th>
-                        <th className="text-right py-3 px-4 text-xs font-medium text-text-secondary tracking-wide uppercase">Edits (30d)</th>
-                        <th className="text-right py-3 px-4 text-xs font-medium text-text-secondary tracking-wide uppercase">Open Apps</th>
+                        <th className={cn("text-left py-3 px-4", adminTableHeadClass)}>President</th>
+                        <th className={cn("text-left py-3 px-4", adminTableHeadClass)}>Chapter</th>
+                        <th className={cn("text-left py-3 px-4", adminTableHeadClass)}>Country</th>
+                        <th className={cn("text-left py-3 px-4", adminTableHeadClass)}>Status</th>
+                        <th className={cn("text-right py-3 px-4", adminTableHeadClass)}>Members</th>
+                        <th className={cn("text-right py-3 px-4", adminTableHeadClass)}>Last Active</th>
+                        <th className={cn("text-right py-3 px-4", adminTableHeadClass)}>Edits (30d)</th>
+                        <th className={cn("text-right py-3 px-4", adminTableHeadClass)}>Open Apps</th>
                       </tr>
                     </thead>
                     <tbody>

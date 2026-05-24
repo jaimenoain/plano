@@ -220,9 +220,9 @@ export default function MergeComparisonEntities() {
         return (
           <div className="flex flex-col items-center justify-center h-screen space-y-4">
             <div className="relative">
-              <Loader2 className="h-12 w-12 animate-spin text-brand-primary" />
+              <Loader2 className="h-12 w-12 animate-spin text-text-primary" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <Merge className="h-4 w-4 text-brand-primary" />
+                <Merge className="h-4 w-4 text-text-primary" />
               </div>
             </div>
             <p className="text-text-secondary animate-pulse font-medium">Preparing comparison...</p>
@@ -270,15 +270,17 @@ export default function MergeComparisonEntities() {
                   </Button>
                   <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge className="bg-brand-primary text-white capitalize">{entityType}</Badge>
+                        <Badge variant="outline" className="capitalize border-border-default text-text-secondary">
+                          {entityType}
+                        </Badge>
                         <ChevronRight className="w-4 h-4 text-text-secondary" />
                         <span className="text-xs font-mono text-text-secondary">Consolidation Engine</span>
                       </div>
-                      <h1 className="text-3xl font-black tracking-tight">Review & Unify</h1>
+                      <h1 className="text-3xl font-bold tracking-tight text-text-primary">Review & unify</h1>
                   </div>
                 </div>
 
-                <div className="hidden md:flex items-center gap-8 bg-surface-muted/50 px-6 py-3 rounded-xl border border-border-default">
+                <div className="hidden md:flex items-center gap-8 rounded-sm border border-border-default bg-surface-muted/50 px-6 py-3">
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Master</span>
                     <span className="text-sm font-bold text-feedback-success truncate max-w-[150px]">{targetEntity.name || targetEntity.city}</span>
@@ -295,7 +297,7 @@ export default function MergeComparisonEntities() {
 
                 {/* TARGET COLUMN (KEEP) */}
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-                  <Card className="border-2 border-feedback-success/20 bg-surface-card overflow-hidden shadow-md rounded-xl">
+                  <Card className="overflow-hidden rounded-sm border-2 border-feedback-success/20 bg-surface-card shadow-none">
                       <div className="bg-feedback-success/10 p-4 text-text-primary font-semibold flex justify-between items-center border-b border-feedback-success/10">
                           <span className="flex items-center gap-2 uppercase tracking-wide text-sm"><Check className="h-5 w-5 text-feedback-success" /> Surviving Record</span>
                           <Badge className="bg-feedback-success text-white border-none">Target</Badge>
@@ -383,7 +385,7 @@ export default function MergeComparisonEntities() {
                       <Button
                           size="icon"
                           variant="outline"
-                          className="rounded-xl h-16 w-16 border-2 border-brand-primary/20 bg-surface-card hover:bg-brand-primary hover:text-white shadow-md transition-all duration-300 group"
+                          className="group h-16 w-16 rounded-sm border-2 border-border-default bg-surface-card transition-colors hover:border-text-primary"
                           onClick={handleSwap}
                       >
                           <ArrowLeftRight className="h-8 w-8 transition-transform group-hover:rotate-180 duration-500" />
@@ -394,7 +396,7 @@ export default function MergeComparisonEntities() {
 
                 {/* SOURCE COLUMN (REMOVE) */}
                 <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-                  <Card className="border-2 border-feedback-destructive/20 bg-surface-card overflow-hidden shadow-md rounded-xl opacity-80 hover:opacity-100 transition-opacity">
+                  <Card className="overflow-hidden rounded-sm border-2 border-feedback-destructive/20 bg-surface-card opacity-80 shadow-none transition-opacity hover:opacity-100">
                       <div className="bg-feedback-destructive/10 p-4 text-text-primary font-semibold flex justify-between items-center border-b border-feedback-destructive/10">
                           <span className="flex items-center gap-2 uppercase tracking-wide text-sm"><Trash2 className="h-5 w-5 text-feedback-destructive" /> Records to Purge</span>
                           <Badge variant="destructive" className="border-none">Source</Badge>
@@ -484,7 +486,7 @@ export default function MergeComparisonEntities() {
               transition={{ delay: 0.2 }}
               className="mt-12"
             >
-                <Card className="bg-surface-card shadow-md rounded-xl overflow-hidden border border-border-default">
+                <Card className="overflow-hidden rounded-sm border border-border-default bg-surface-card shadow-none">
                     <CardContent className="p-10">
                         <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
                             <div className="space-y-6 flex-1 text-center lg:text-left">
@@ -494,7 +496,7 @@ export default function MergeComparisonEntities() {
                                 </div>
                                 
                                 <div className="space-y-2">
-                                  <h3 className="text-3xl font-black text-text-primary">Ready to unify?</h3>
+                                  <h3 className="text-3xl font-bold tracking-tight text-text-primary">Ready to unify?</h3>
                                   <p className="text-text-secondary text-lg max-w-xl">
                                       Merging will permanently reassign the following dependencies from the source to the target record.
                                   </p>
@@ -531,7 +533,7 @@ export default function MergeComparisonEntities() {
                             </div>
 
                             {entityType === 'building' && (targetEntity.latitude || sourceEntity.latitude) && (
-                              <div className="w-full lg:w-[400px] aspect-square rounded-xl overflow-hidden border border-border-default bg-surface-muted shadow-inner relative group">
+                              <div className="relative aspect-square w-full overflow-hidden rounded-sm border border-border-default bg-surface-muted lg:w-[400px] group">
                                 <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><Loader2 className="animate-spin" /></div>}>
                                   <BuildingMap 
                                     lat={targetEntity.latitude || sourceEntity.latitude}
@@ -553,7 +555,8 @@ export default function MergeComparisonEntities() {
                                     <AlertDialogTrigger asChild>
                                         <Button
                                             size="lg"
-                                            className="px-12 h-16 text-base font-semibold rounded-xl shadow-md bg-brand-primary hover:bg-brand-primary-hover text-white transition-colors disabled:opacity-50 disabled:grayscale"
+                                            variant="destructive"
+                                            className="h-16 rounded-sm px-12 text-base font-semibold disabled:opacity-50"
                                             disabled={merging || impactLoading}
                                         >
                                             {merging ? (
@@ -569,12 +572,12 @@ export default function MergeComparisonEntities() {
                                             )}
                                         </Button>
                                     </AlertDialogTrigger>
-                                    <AlertDialogContent className="rounded-xl p-8">
+                                    <AlertDialogContent className="rounded-sm p-8">
                                         <AlertDialogHeader>
                                             <div className="w-16 h-16 rounded bg-feedback-destructive/10 flex items-center justify-center text-feedback-destructive mb-4">
                                               <AlertTriangle className="w-8 h-8" />
                                             </div>
-                                            <AlertDialogTitle className="text-2xl font-black">Confirm Irreversible Merge</AlertDialogTitle>
+                                            <AlertDialogTitle className="text-2xl font-bold tracking-tight">Confirm irreversible merge</AlertDialogTitle>
                                             <AlertDialogDescription className="text-base pt-2">
                                                 You are merging <strong className="text-text-primary">"{sourceEntity.name || sourceEntity.city}"</strong> into <strong className="text-text-primary">"{targetEntity.name || targetEntity.city}"</strong>.
                                                 <br/><br/>

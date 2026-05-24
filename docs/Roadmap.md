@@ -585,3 +585,9 @@ Start the Vite dev server if not running. For each route, `browser_navigate` →
 ---
 
 *Last updated: 2026-05-24 — Design refinement programme complete (R0–R9).*
+
+---
+
+## Successor programme
+
+Per-page and out-of-scope routes are tracked in **[REMAINING_SURFACES_ROADMAP.md](REMAINING_SURFACES_ROADMAP.md)** (Phases P0–P10). Use [EXECUTOR_PROMPT.md](EXECUTOR_PROMPT.md) to run that programme after R9 is complete.

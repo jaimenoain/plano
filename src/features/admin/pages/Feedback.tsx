@@ -1,17 +1,17 @@
 import type { MetaFunction } from "react-router";
 import { FeedbackBoard } from "@/features/admin/components/FeedbackBoard";
+import { AdminPageHeader } from "@/features/admin/components/admin-ui";
 
 export const meta: MetaFunction = () => [{ title: "Admin Feedback | Plano" }];
 
 export default function FeedbackAdminPage() {
   return (
-    <div className="space-y-4 p-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">Feedback</h1>
-        <p className="text-sm text-text-secondary">
-          Review and triage user feedback.
-        </p>
-      </div>
+    <div className="space-y-4">
+      <AdminPageHeader
+        eyebrow="Content"
+        title="Feedback"
+        description="Review and triage user feedback."
+      />
       <FeedbackBoard readOnly={false} />
     </div>
   );

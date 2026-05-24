@@ -26,6 +26,7 @@ import {
 import { EntityType, MergeEntity } from "../types/merge";
 import { useEntitySearch } from "../hooks/useEntitySearch";
 import { motion, AnimatePresence } from "framer-motion";
+import { AdminPageHeader } from "@/features/admin/components/admin-ui";
 
 export const meta: MetaFunction = () => [
   { title: "Duplicates Management | Plano Admin" },
@@ -173,25 +174,39 @@ export default function MergeEntities() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-10 p-8 pt-12 min-h-screen pb-24">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-2">
-          <Badge className="bg-brand-primary text-white hover:bg-brand-primary/90 px-3 py-0.5">Admin Tools</Badge>
-          <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">
-            Merge Records
-          </h1>
-          <p className="text-lg text-text-secondary max-w-md">
-            Consolidate duplicate entities across the platform to maintain data integrity.
-          </p>
-        </div>
-        
-        <Tabs value={activeType} onValueChange={(v) => setActiveType(v as EntityType)} className="w-full md:w-auto">
-          <TabsList className="grid grid-cols-2 md:flex bg-surface-muted p-1">
-            <TabsTrigger value="building" className="px-6">{typeIcons.building} Buildings</TabsTrigger>
-            <TabsTrigger value="person" className="px-6">{typeIcons.person} Architects</TabsTrigger>
-            <TabsTrigger value="company" className="px-6">{typeIcons.company} Companies</TabsTrigger>
-            <TabsTrigger value="locality" className="px-6">{typeIcons.locality} Localities</TabsTrigger>
+    <div className="mx-auto max-w-6xl space-y-10 min-h-screen pb-24">
+      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+        <AdminPageHeader
+          eyebrow="Entities"
+          title="Merge records"
+          description="Consolidate duplicate entities across the platform to maintain data integrity."
+        />
+        <Tabs value={activeType} onValueChange={(v) => setActiveType(v as EntityType)} className="w-full shrink-0 md:w-auto">
+          <TabsList className="h-auto rounded-none border-0 bg-transparent p-0">
+            <TabsTrigger
+              value="building"
+              className="gap-2 rounded-none border-b-2 border-transparent px-4 pb-2 pt-0 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary data-[state=active]:border-text-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none"
+            >
+              {typeIcons.building} Buildings
+            </TabsTrigger>
+            <TabsTrigger
+              value="person"
+              className="gap-2 rounded-none border-b-2 border-transparent px-4 pb-2 pt-0 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary data-[state=active]:border-text-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none"
+            >
+              {typeIcons.person} Architects
+            </TabsTrigger>
+            <TabsTrigger
+              value="company"
+              className="gap-2 rounded-none border-b-2 border-transparent px-4 pb-2 pt-0 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary data-[state=active]:border-text-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none"
+            >
+              {typeIcons.company} Companies
+            </TabsTrigger>
+            <TabsTrigger
+              value="locality"
+              className="gap-2 rounded-none border-b-2 border-transparent px-4 pb-2 pt-0 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary data-[state=active]:border-text-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none"
+            >
+              {typeIcons.locality} Localities
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -205,18 +220,18 @@ export default function MergeEntities() {
           </div>
           
           <div className="relative group">
-            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-text-secondary group-focus-within:text-brand-primary transition-colors">
+            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-text-secondary group-focus-within:text-text-primary transition-colors">
               <Search className="w-4 h-4" />
             </div>
             <Input
               placeholder={`Search ${activeType}s...`}
               value={masterSearch}
               onChange={e => setMasterSearch(e.target.value)}
-              className="pl-10 h-12 bg-surface-card border-2 focus:border-brand-primary/50 transition-all shadow-sm"
+              className="pl-10 h-12 bg-surface-card border-2 focus:border-text-primary/50 transition-all shadow-sm"
             />
             {loadingMaster && (
               <div className="absolute right-3 top-3.5">
-                <Loader2 className="h-5 w-5 animate-spin text-brand-primary" />
+                <Loader2 className="h-5 w-5 animate-spin text-text-primary" />
               </div>
             )}
 
@@ -235,7 +250,7 @@ export default function MergeEntities() {
                       onClick={() => { setSelectedMaster(entity); setMasterSearch(""); }}
                     >
                       <div className="flex flex-col min-w-0">
-                        <span className="truncate font-semibold text-sm group-hover/item:text-brand-primary transition-colors">{entity.name}</span>
+                        <span className="truncate font-semibold text-sm group-hover/item:text-text-primary transition-colors">{entity.name}</span>
                         <span className="text-text-secondary text-[11px] truncate">{entity.subtitle}</span>
                       </div>
                       <ChevronRight className="w-4 h-4 text-text-secondary opacity-0 group-hover/item:opacity-100 transition-all -translate-x-2 group-hover/item:translate-x-0" />
@@ -266,7 +281,7 @@ export default function MergeEntities() {
           <div className="w-px h-12 bg-gradient-to-b from-transparent via-border-default to-border-default hidden lg:block" />
           <div className={`p-4 rounded-full border-2 transition-all duration-500 ${
             selectedMaster && selectedDup 
-              ? "bg-brand-primary text-white border-brand-primary shadow-lg shadow-brand-primary/20 scale-110" 
+              ? "border-text-primary bg-text-primary text-surface-default ring-2 ring-text-primary scale-105"
               : "bg-surface-muted text-text-secondary border-border-default opacity-40"
           }`}>
             <ArrowRightLeft className={`w-6 h-6 ${selectedMaster && selectedDup ? "animate-pulse" : ""}`} />
@@ -282,18 +297,18 @@ export default function MergeEntities() {
           </div>
           
           <div className="relative group">
-            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-text-secondary group-focus-within:text-brand-primary transition-colors">
+            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-text-secondary group-focus-within:text-text-primary transition-colors">
               <Search className="w-4 h-4" />
             </div>
             <Input
               placeholder={`Search ${activeType}s...`}
               value={dupSearch}
               onChange={e => setDupSearch(e.target.value)}
-              className="pl-10 h-12 bg-surface-card border-2 focus:border-brand-primary/50 transition-all shadow-sm"
+              className="pl-10 h-12 bg-surface-card border-2 focus:border-text-primary/50 transition-all shadow-sm"
             />
             {loadingDup && (
               <div className="absolute right-3 top-3.5">
-                <Loader2 className="h-5 w-5 animate-spin text-brand-primary" />
+                <Loader2 className="h-5 w-5 animate-spin text-text-primary" />
               </div>
             )}
 
@@ -312,7 +327,7 @@ export default function MergeEntities() {
                       onClick={() => { setSelectedDup(entity); setDupSearch(""); }}
                     >
                       <div className="flex flex-col min-w-0">
-                        <span className="truncate font-semibold text-sm group-hover/item:text-brand-primary transition-colors">{entity.name}</span>
+                        <span className="truncate font-semibold text-sm group-hover/item:text-text-primary transition-colors">{entity.name}</span>
                         <span className="text-text-secondary text-[11px] truncate">{entity.subtitle}</span>
                       </div>
                       <ChevronRight className="w-4 h-4 text-text-secondary opacity-0 group-hover/item:opacity-100 transition-all -translate-x-2 group-hover/item:translate-x-0" />
@@ -357,9 +372,10 @@ export default function MergeEntities() {
             
             <Button
               size="lg"
+              variant="outline"
               disabled={selectedMaster.id === selectedDup.id}
               onClick={handleCompare}
-              className="bg-brand-primary hover:bg-brand-primary-hover text-white gap-3 px-10 h-14 text-base font-semibold shadow-md transition-colors group"
+              className="gap-3 rounded-sm border-text-primary px-10 h-14 text-base font-semibold tracking-[0.15em] uppercase group"
             >
               <Merge className="h-6 w-6 transition-transform group-hover:rotate-12" />
               Compare & Unify
@@ -390,8 +406,8 @@ export default function MergeEntities() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
             <h3 className="text-2xl font-black flex items-center gap-3">
-              <div className="w-9 h-9 rounded bg-brand-primary/10 flex items-center justify-center border border-brand-primary/20">
-                <Search className="w-4 h-4 text-brand-primary" />
+              <div className="w-9 h-9 rounded bg-text-primary/10 flex items-center justify-center border border-text-primary/20">
+                <Search className="w-4 h-4 text-text-primary" />
               </div>
               Duplicate Detection
               {duplicateQueryRan && !duplicateUnavailable && (
@@ -430,7 +446,7 @@ export default function MergeEntities() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-semibold text-text-primary">Similarity Threshold</label>
-                  <span className="text-sm font-black tabular-nums text-brand-primary bg-brand-primary/10 px-2.5 py-0.5 rounded-full border border-brand-primary/20">
+                  <span className="text-sm font-black tabular-nums text-text-primary bg-text-primary/10 px-2.5 py-0.5 rounded-full border border-text-primary/20">
                     {Math.round(threshold * 100)}%
                   </span>
                 </div>
@@ -467,7 +483,8 @@ export default function MergeEntities() {
               <Button
                 onClick={fetchPotentialDuplicates}
                 disabled={loadingPotential}
-                className="h-10 px-6 bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold gap-2 shadow-md transition-colors"
+                variant="outline"
+                className="h-10 gap-2 rounded-sm px-6 font-semibold"
               >
                 {loadingPotential ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -505,7 +522,7 @@ export default function MergeEntities() {
               exit={{ opacity: 0 }}
               className="flex flex-col items-center justify-center py-16 space-y-4"
             >
-              <Loader2 className="w-10 h-10 animate-spin text-brand-primary" />
+              <Loader2 className="w-10 h-10 animate-spin text-text-primary" />
               <p className="text-sm font-medium text-text-secondary animate-pulse">Scanning {activeType} records for similar names…</p>
             </motion.div>
           )}
@@ -565,8 +582,8 @@ export default function MergeEntities() {
                         </div>
 
                         <div className="flex flex-col items-center">
-                          <div className="text-[10px] font-black text-brand-primary uppercase tracking-tighter mb-0.5">Similarity</div>
-                          <div className="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-xs font-black border border-brand-primary/20">
+                          <div className="text-[10px] font-black text-text-primary uppercase tracking-tighter mb-0.5">Similarity</div>
+                          <div className="px-3 py-1 bg-text-primary/10 text-text-primary rounded-full text-xs font-black border border-text-primary/20">
                             {Math.round(pair.score * 100)}%
                           </div>
                         </div>
@@ -578,7 +595,8 @@ export default function MergeEntities() {
                       </div>
 
                       <Button
-                        className="w-full h-9 bg-surface-muted hover:bg-brand-primary hover:text-white text-text-primary text-xs font-bold transition-all border-none"
+                        variant="outline"
+                        className="w-full h-9 rounded-sm text-xs font-medium"
                         onClick={() => navigate(`/admin/merge/${activeType}/${pair.id1}/${pair.id2}`)}
                       >
                         Analyze & Merge

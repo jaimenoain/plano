@@ -2,7 +2,9 @@ import { useState, useMemo } from "react";
 import Map, { Source, Layer, NavigationControl, type LayerProps, type MapLayerMouseEvent } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { AdminFormLabel, adminTableHeadClass } from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,7 +21,7 @@ const CIRCLE_LAYER: LayerProps = {
   type: "circle",
   paint: {
     "circle-radius": 6,
-    "circle-color": "#FF0000",
+    "circle-color": "#EF4444",
     "circle-stroke-color": "#ffffff",
     "circle-stroke-width": 1,
     "circle-opacity": 0.8
@@ -63,10 +65,9 @@ export function ZeroPhotoBuildingsZone({ data }: ZeroPhotoBuildingsZoneProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border-border-default shadow-none">
+      <CardHeader className="border-b border-border-default">
         <div className="flex items-center justify-between">
-          <CardTitle>Buildings Without Photos</CardTitle>
           <span className="text-sm text-text-secondary">
             {filtered.length !== data.length
               ? `${filtered.length} of ${data.length} shown`
@@ -75,13 +76,19 @@ export function ZeroPhotoBuildingsZone({ data }: ZeroPhotoBuildingsZoneProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex gap-3">
-          <Input
-            placeholder="Search by name..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="max-w-xs"
-          />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex flex-1 flex-col gap-2">
+            <AdminFormLabel htmlFor="zero-photo-search">Search</AdminFormLabel>
+            <Input
+              id="zero-photo-search"
+              placeholder="Search by name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="max-w-xs rounded-sm"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <AdminFormLabel>Country</AdminFormLabel>
           <Select value={countryFilter} onValueChange={setCountryFilter}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="All countries" />
@@ -93,15 +100,16 @@ export function ZeroPhotoBuildingsZone({ data }: ZeroPhotoBuildingsZoneProps) {
               ))}
             </SelectContent>
           </Select>
+          </div>
         </div>
 
         <div className="rounded-sm border border-border-default bg-surface-card max-h-72 overflow-y-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="pl-4">Building</TableHead>
-                <TableHead>City</TableHead>
-                <TableHead>Country</TableHead>
+                <TableHead className={cn(adminTableHeadClass, "pl-4")}>Building</TableHead>
+                <TableHead className={adminTableHeadClass}>City</TableHead>
+                <TableHead className={adminTableHeadClass}>Country</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -117,7 +125,7 @@ export function ZeroPhotoBuildingsZone({ data }: ZeroPhotoBuildingsZoneProps) {
                     <TableCell className="pl-4">
                       <Link
                         to={getBuildingUrl(b.id, b.slug ?? undefined)}
-                        className="font-medium hover:underline"
+                        className="font-medium text-text-primary hover:underline"
                         target="_blank"
                         rel="noopener noreferrer"
                       >

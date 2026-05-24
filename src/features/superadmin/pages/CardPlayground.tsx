@@ -30,7 +30,7 @@ type PlaygroundBackgroundId = "feed-light" | "feed-dark" | "building-panel" | "p
 
 const PLAYGROUND_BACKGROUNDS: { id: PlaygroundBackgroundId; label: string; surfaceClass: string }[] = [
   { id: "feed-light", label: "Feed (light)", surfaceClass: "bg-surface-default" },
-  { id: "feed-dark", label: "Feed (dark canvas)", surfaceClass: "bg-black" },
+  { id: "feed-dark", label: "Feed (dark canvas)", surfaceClass: "bg-surface-inverse" },
   { id: "building-panel", label: "Building detail panel", surfaceClass: "bg-surface-muted" },
   { id: "profile", label: "Profile", surfaceClass: "bg-surface-default" },
 ];
@@ -646,9 +646,14 @@ function CardPlaygroundInner() {
   return (
     <div className="flex min-h-screen w-full flex-col bg-background md:min-h-0 md:flex-row">
       <aside className="flex w-full shrink-0 flex-col border-b border-border-default md:h-full md:w-72 md:border-b-0 md:border-r">
+        <div className="border-b border-border-default bg-surface-muted/40 px-4 py-2">
+          <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+            Internal tool · not production UI
+          </p>
+        </div>
         <div className="border-b border-border-default px-4 py-3">
           <h1 className="text-sm font-semibold text-text-primary">Card playground</h1>
-          <p className="text-2xs text-text-secondary mt-0.5">Superadmin · fixtures + card types</p>
+          <p className="mt-0.5 text-2xs text-text-secondary">Superadmin · feed card fixture lab</p>
         </div>
         <div className="flex gap-2 border-b border-border-default px-3 py-2">
           <Button

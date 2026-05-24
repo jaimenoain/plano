@@ -28,13 +28,20 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+  AdminPageHeader,
+  adminHairlineTabTriggerClass,
+  adminHairlineTabsListClass,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [{ title: "Award Claim Requests | Plano Admin" }];
 
 const STATUS_BADGE: Record<string, string> = {
-  pending:  "bg-feedback-warning/15 text-feedback-warning border-none",
+  pending: "bg-feedback-warning/15 text-feedback-warning border-none",
   approved: "bg-feedback-success/15 text-feedback-success border-none",
-  rejected: "bg-feedback-error/15   text-feedback-error   border-none",
+  rejected: "bg-feedback-destructive/15 text-feedback-destructive border-none",
 };
 
 export default function AwardClaimRequests() {
@@ -71,21 +78,25 @@ export default function AwardClaimRequests() {
   };
 
   return (
-    <div className="p-8 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Award Claim Requests</h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Review requests from organisations claiming ownership of an award.
-        </p>
-      </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        eyebrow="Awards"
+        title="Award claim requests"
+        description="Review requests from organisations claiming ownership of an award."
+      />
 
       {/* Status tabs */}
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
-        <TabsList>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="approved">Approved</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
+        <TabsList className={cn(adminHairlineTabsListClass, "gap-6")}>
+          <TabsTrigger className={adminHairlineTabTriggerClass} value="pending">
+            Pending
+          </TabsTrigger>
+          <TabsTrigger className={adminHairlineTabTriggerClass} value="approved">
+            Approved
+          </TabsTrigger>
+          <TabsTrigger className={adminHairlineTabTriggerClass} value="rejected">
+            Rejected
+          </TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -99,16 +110,16 @@ export default function AwardClaimRequests() {
           <Table>
             <TableHeader>
               <TableRow className="bg-surface-muted/50 hover:bg-surface-muted/50 border-border-default">
-                <TableHead className="w-[180px]">Award</TableHead>
-                <TableHead className="w-[140px]">Requester</TableHead>
-                <TableHead>Reason</TableHead>
-                <TableHead className="w-[120px]">Submitted</TableHead>
-                <TableHead className="w-[60px]">Status</TableHead>
+                <TableHead className={cn(adminTableHeadClass, "w-[180px]")}>Award</TableHead>
+                <TableHead className={cn(adminTableHeadClass, "w-[140px]")}>Requester</TableHead>
+                <TableHead className={adminTableHeadClass}>Reason</TableHead>
+                <TableHead className={cn(adminTableHeadClass, "w-[120px]")}>Submitted</TableHead>
+                <TableHead className={cn(adminTableHeadClass, "w-[60px]")}>Status</TableHead>
                 {tab === "pending" && (
-                  <TableHead className="text-right w-[180px]">Actions</TableHead>
+                  <TableHead className={cn(adminTableHeadClass, "text-right w-[180px]")}>Actions</TableHead>
                 )}
                 {tab !== "pending" && (
-                  <TableHead className="w-[140px]">Reviewer note</TableHead>
+                  <TableHead className={cn(adminTableHeadClass, "w-[140px]")}>Reviewer note</TableHead>
                 )}
               </TableRow>
             </TableHeader>
@@ -184,7 +195,7 @@ export default function AwardClaimRequests() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-7 gap-1 text-xs text-feedback-error border-feedback-error/30 hover:bg-feedback-error/10"
+                                className="h-7 gap-1 text-xs text-feedback-destructive border-feedback-destructive/30 hover:bg-feedback-destructive/10"
                                 disabled={review.isPending}
                               >
                                 <XCircle className="h-3.5 w-3.5" />

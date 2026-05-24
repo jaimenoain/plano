@@ -27,10 +27,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import {
+  AdminPageHeader,
+  AdminSectionLabel,
+  AdminFormLabel,
+  AdminEmptyState,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [
   { title: "Ambassador applications | Plano Admin" },
@@ -174,50 +181,54 @@ export default function AmbassadorApplications() {
   };
 
   return (
-    <div className="space-y-6 p-4 md:p-8">
-      <div className="flex flex-wrap items-center gap-4">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/admin/ambassadors" className="gap-2">
-            <ArrowLeft className="h-4 w-4" aria-hidden />
-            Chapters
-          </Link>
-        </Button>
-      </div>
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-text-primary">Ambassador applications</h1>
-        <p className="text-sm text-text-secondary mt-1">Review and filter applications across all chapters.</p>
-      </div>
+    <div className="space-y-6">
+      <AdminPageHeader
+        eyebrow="Ambassadors"
+        title="Ambassador applications"
+        description="Review and filter applications across all chapters."
+        actions={
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/admin/ambassadors" className="gap-2">
+              <ArrowLeft className="h-4 w-4" aria-hidden />
+              Chapters
+            </Link>
+          </Button>
+        }
+      />
 
-      <div className="flex flex-wrap gap-4">
-        <div className="w-40">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger aria-label="Filter by status">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
+      <section className="space-y-3">
+        <AdminSectionLabel>Filters</AdminSectionLabel>
+        <div className="flex flex-wrap gap-4">
+          <div className="w-40">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger aria-label="Filter by status">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="w-56">
+            <Select value={chapterFilter} onValueChange={setChapterFilter}>
+              <SelectTrigger aria-label="Filter by chapter">
+                <SelectValue placeholder="Chapter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All chapters</SelectItem>
+                {chapters.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="w-56">
-          <Select value={chapterFilter} onValueChange={setChapterFilter}>
-            <SelectTrigger aria-label="Filter by chapter">
-              <SelectValue placeholder="Chapter" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All chapters</SelectItem>
-              {chapters.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      </section>
 
       {loading ? (
         <div className="flex justify-center py-12">
@@ -228,18 +239,21 @@ export default function AmbassadorApplications() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Applicant</TableHead>
-                <TableHead>Chapter</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Applied</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className={adminTableHeadClass}>Applicant</TableHead>
+                <TableHead className={adminTableHeadClass}>Chapter</TableHead>
+                <TableHead className={adminTableHeadClass}>Status</TableHead>
+                <TableHead className={adminTableHeadClass}>Applied</TableHead>
+                <TableHead className={cn(adminTableHeadClass, "text-right")}>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-text-secondary text-center py-8">
-                    No applications match these filters.
+                  <TableCell colSpan={5} className="p-0">
+                    <AdminEmptyState
+                      title="No applications match these filters."
+                      description="Try changing status or chapter filters."
+                    />
                   </TableCell>
                 </TableRow>
               ) : (
@@ -270,6 +284,7 @@ export default function AmbassadorApplications() {
                           <Button
                             type="button"
                             size="sm"
+                            variant="outline"
                             onClick={() => handleApprove(app)}
                             disabled={actionId === app.id}
                           >
@@ -314,7 +329,7 @@ export default function AmbassadorApplications() {
             This application has no chapter selected. Choose a chapter before approving.
           </p>
           <div className="space-y-2">
-            <Label htmlFor="admin-approve-chapter">Chapter</Label>
+            <AdminFormLabel htmlFor="admin-approve-chapter">Chapter</AdminFormLabel>
             <Select value={approveChapterId} onValueChange={setApproveChapterId}>
               <SelectTrigger id="admin-approve-chapter" aria-label="Select chapter">
                 <SelectValue placeholder="Select a chapter" />
@@ -334,6 +349,7 @@ export default function AmbassadorApplications() {
             </Button>
             <Button
               type="button"
+              variant="outline"
               onClick={() => void handleApproveConfirm()}
               disabled={!approveChapterId || (approveTarget ? actionId === approveTarget.id : false)}
             >
@@ -353,7 +369,7 @@ export default function AmbassadorApplications() {
             <DialogTitle>Reject application</DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="admin-reject-note">Optional note</Label>
+            <AdminFormLabel htmlFor="admin-reject-note">Optional note</AdminFormLabel>
             <Textarea
               id="admin-reject-note"
               value={rejectNote}

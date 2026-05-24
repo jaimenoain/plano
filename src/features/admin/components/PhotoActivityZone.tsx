@@ -2,12 +2,14 @@ import { useMemo } from "react";
 import Map, { Source, Layer, type LayerProps } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Link } from "react-router";
 import type { TopPhotoBuilding } from "@/features/admin/types/admin";
 import { getBuildingUrl } from "@/utils/url";
+import { adminTableHeadClass } from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 interface PhotoActivityZoneProps {
   data: TopPhotoBuilding[];
@@ -27,12 +29,11 @@ const HEATMAP_LAYER: LayerProps = {
     "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 0, 1, 9, 3],
     "heatmap-color": [
       "interpolate", ["linear"], ["heatmap-density"],
-      0,   "rgba(33,102,172,0)",
-      0.2, "rgb(103,169,207)",
-      0.4, "rgb(209,229,240)",
-      0.6, "rgb(253,219,199)",
-      0.8, "rgb(239,138,98)",
-      1,   "rgb(178,24,43)"
+      0,   "rgba(23,23,23,0)",
+      0.25, "rgba(23,23,23,0.2)",
+      0.5, "rgba(23,23,23,0.45)",
+      0.75, "rgba(23,23,23,0.7)",
+      1,   "rgba(23,23,23,0.95)"
     ],
     "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 0, 8, 9, 20],
     "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 7, 1, 9, 0]
@@ -50,9 +51,9 @@ const CIRCLE_LAYER: LayerProps = {
       1, 4,
       50, 16
     ],
-    "circle-color": "rgb(178,24,43)",
+    "circle-color": "rgb(23,23,23)",
     "circle-opacity": ["interpolate", ["linear"], ["zoom"], 7, 0, 8, 0.9],
-    "circle-stroke-color": "white",
+    "circle-stroke-color": "#ffffff",
     "circle-stroke-width": 1
   }
 };
@@ -70,13 +71,22 @@ export function PhotoActivityZone({ data }: PhotoActivityZoneProps) {
   }), [data]);
 
   return (
-    <Card>
+    <Card className="border-border-default shadow-none">
       <Tabs defaultValue="table">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle>Photo Activity</CardTitle>
-          <TabsList>
-            <TabsTrigger value="table">Top Buildings</TabsTrigger>
-            <TabsTrigger value="map">Heatmap</TabsTrigger>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border-default pb-4">
+          <TabsList className="h-auto rounded-none border-0 bg-transparent p-0">
+            <TabsTrigger
+              value="table"
+              className="rounded-none border-b-2 border-transparent px-4 pb-2 pt-0 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary data-[state=active]:border-text-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none"
+            >
+              Top buildings
+            </TabsTrigger>
+            <TabsTrigger
+              value="map"
+              className="rounded-none border-b-2 border-transparent px-4 pb-2 pt-0 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary data-[state=active]:border-text-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none"
+            >
+              Heatmap
+            </TabsTrigger>
           </TabsList>
         </CardHeader>
         <CardContent className="p-0">
@@ -85,11 +95,11 @@ export function PhotoActivityZone({ data }: PhotoActivityZoneProps) {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-12 pl-6">#</TableHead>
-                    <TableHead>Building</TableHead>
-                    <TableHead>City</TableHead>
-                    <TableHead>Country</TableHead>
-                    <TableHead className="text-right pr-6">Photos</TableHead>
+                    <TableHead className={cn(adminTableHeadClass, "w-12 pl-6")}>#</TableHead>
+                    <TableHead className={adminTableHeadClass}>Building</TableHead>
+                    <TableHead className={adminTableHeadClass}>City</TableHead>
+                    <TableHead className={adminTableHeadClass}>Country</TableHead>
+                    <TableHead className={cn(adminTableHeadClass, "pr-6 text-right")}>Photos</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -99,7 +109,7 @@ export function PhotoActivityZone({ data }: PhotoActivityZoneProps) {
                       <TableCell>
                         <Link
                           to={getBuildingUrl(b.id, b.slug ?? undefined)}
-                          className="font-medium hover:underline"
+                          className="font-medium text-text-primary hover:underline"
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -128,7 +138,7 @@ export function PhotoActivityZone({ data }: PhotoActivityZoneProps) {
             </div>
           </TabsContent>
           <TabsContent value="map" className="mt-0">
-            <div className="h-[500px] overflow-hidden rounded-b-lg">
+            <div className="h-[500px] overflow-hidden rounded-b-sm">
               <Map
                 initialViewState={{ latitude: 20, longitude: 0, zoom: 1.5 }}
                 style={{ width: "100%", height: "100%" }}

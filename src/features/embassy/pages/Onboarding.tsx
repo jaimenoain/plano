@@ -3,14 +3,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Search, Camera, CheckCircle2, ArrowRight, Loader2, Landmark, Filter, UserPlus, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate, redirect, type LoaderFunctionArgs } from "react-router";
 import { cn } from "@/lib/utils";
-import { EmbassySectionLabel } from "@/features/embassy/components/embassy-ui";
+import { EmbassyPageHeader, EmbassySectionLabel } from "@/features/embassy/components/embassy-ui";
 import { createSupabaseServerClient } from "@/lib/supabase.server";
 import { fetchChapterTeam, type ChapterTeamMember } from "@/features/embassy/api/leadership";
 
@@ -112,8 +111,8 @@ export default function OnboardingPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const leadership = (teamMembers ?? []).filter(
-    (m: ChapterTeamMember) => m.role === "president" || m.role === "exco"
+  const leadership = (teamMembers ?? []).filter((m: ChapterTeamMember) =>
+    ["president", "exco", "global_president", "global_leaders", "global_team"].includes(m.role),
   );
 
   const toggleTool = (key: ToolKey) => {
@@ -142,8 +141,10 @@ export default function OnboardingPage() {
 
   const nextStep = () => setStep((s) => (s + 1) as Step);
 
+  const chapterName = membership?.chapter?.name || "your chapter";
+
   return (
-    <div className="min-h-[calc(100vh-5rem)] sm:min-h-[calc(100vh-6rem)] bg-background flex flex-col items-center justify-center p-6">
+    <div className="min-h-[calc(100vh-5rem)] sm:min-h-[calc(100vh-6rem)] bg-surface-default flex flex-col items-center justify-center p-6">
       <div className="w-full max-w-xl space-y-8">
         <div className="flex justify-center mb-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-sm border border-border-default bg-surface-muted text-text-secondary">
@@ -156,49 +157,53 @@ export default function OnboardingPage() {
         </p>
 
         {step === 1 && (
-          <div className="space-y-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight">Welcome to the Embassy</h1>
-              <p className="text-muted-foreground text-lg">
-                You're now a verified ambassador for{" "}
-                <span className="text-text-primary font-semibold">
-                  {membership?.chapter?.name || "your chapter"}
-                </span>.
-              </p>
-            </div>
-            <p className="text-muted-foreground leading-relaxed">
-              Plano depends on local experts like you to ensure our architectural record is accurate,
-              complete, and vibrant. This portal is your headquarters.
-            </p>
-            <Button size="lg" className="w-full h-12 text-base gap-2" onClick={nextStep}>
-              Get Started <ArrowRight className="h-4 w-4" />
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <EmbassyPageHeader
+              eyebrow="Embassy welcome"
+              title="Welcome to the Embassy"
+              description={`You're now a verified ambassador for ${chapterName}. Plano depends on local experts like you to keep the architectural record accurate, complete, and vibrant.`}
+            />
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full h-12 rounded-sm tracking-[0.15em] uppercase text-xs font-medium gap-2"
+              onClick={nextStep}
+            >
+              Get started <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
         )}
 
         {step === 2 && (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-            <div className="space-y-2 text-center">
-              <h2 className="text-2xl font-bold tracking-tight">Pick your focus areas</h2>
-              <p className="text-muted-foreground">
-                Pick the areas where you'll make the most impact — tap them in priority order. Your Contribute page will be arranged to match.
-              </p>
-            </div>
+            <EmbassyPageHeader
+              eyebrow="Step 2 of 3"
+              title="Pick your focus areas"
+              description="Pick the areas where you'll make the most impact — tap them in priority order. Your Contribute page will be arranged to match."
+            />
 
             <div className="grid gap-3">
               {TOOLS.map((tool) => {
                 const selected = selectedTools.includes(tool.key);
                 const order = selectedTools.indexOf(tool.key) + 1;
                 return (
-                  <Card
+                  <div
                     key={tool.key}
+                    role="button"
+                    tabIndex={0}
                     className={cn(
-                      "p-4 flex items-center gap-4 cursor-pointer transition-all border-2",
+                      "flex cursor-pointer items-center gap-4 rounded-sm border-2 p-4 transition-colors",
                       selected
                         ? "border-text-primary bg-surface-muted"
-                        : "border-border-default hover:border-border-strong"
+                        : "border-border-default hover:border-border-strong",
                     )}
                     onClick={() => toggleTool(tool.key)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggleTool(tool.key);
+                      }
+                    }}
                   >
                     <div
                       className={cn(
@@ -216,35 +221,35 @@ export default function OnboardingPage() {
                     </div>
                     <div className="text-left flex-1">
                       <p className="font-bold">{tool.title}</p>
-                      <p className="text-xs text-muted-foreground">{tool.description}</p>
+                      <p className="text-xs text-text-secondary">{tool.description}</p>
                     </div>
                     {selected && (
                       <Check className="h-4 w-4 shrink-0 text-text-primary" aria-hidden />
                     )}
-                  </Card>
+                  </div>
                 );
               })}
             </div>
 
             <Button
               size="lg"
-              className="w-full h-12 text-base mt-4"
+              variant="outline"
+              className="w-full h-12 rounded-sm tracking-[0.15em] uppercase text-xs font-medium mt-4"
               onClick={nextStep}
               disabled={selectedTools.length === 0}
             >
-              Next Step
+              Next step
             </Button>
           </div>
         )}
 
         {step === 3 && (
           <div className="space-y-6 text-center animate-in fade-in slide-in-from-right-4 duration-500">
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold tracking-tight">You're all set</h2>
-              <p className="text-muted-foreground">
-                Here's how to make the most of the areas you've chosen.
-              </p>
-            </div>
+            <EmbassyPageHeader
+              eyebrow="Step 3 of 3"
+              title="You're all set"
+              description="Here's how to make the most of the areas you've chosen."
+            />
 
             {/* Focus areas with tips */}
             <div className="text-left space-y-3">
@@ -259,7 +264,7 @@ export default function OnboardingPage() {
                       </div>
                       <span className="font-semibold text-sm">{tool.title}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed pl-9">
+                    <p className="text-xs text-text-secondary leading-relaxed pl-9">
                       {tool.tip}
                     </p>
                   </div>
@@ -286,26 +291,24 @@ export default function OnboardingPage() {
                         </Avatar>
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="text-sm font-medium truncate">@{member.username}</span>
-                          {member.role === "president" ? (
-                            <Badge
-                              variant="outline"
-                              className="shrink-0 border-border-default bg-surface-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.15em] text-text-primary"
-                            >
-                              President
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="text-[10px] uppercase font-bold shrink-0">
-                              ExCo
-                            </Badge>
-                          )}
+                          <Badge
+                            variant="outline"
+                            className="shrink-0 border-border-default bg-surface-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.15em] text-text-primary"
+                          >
+                            {member.role === "president"
+                              ? "President"
+                              : member.role === "exco"
+                                ? "ExCo"
+                                : member.role.replace(/_/g, " ")}
+                          </Badge>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-text-secondary">
                   You can message them directly from the{" "}
-                  <span className="font-medium text-text-primary">Team</span> tab once you're in the portal.
+                  <span className="font-medium text-text-primary">Team</span> tab once you&apos;re in the portal.
                 </p>
               </div>
             )}
@@ -317,20 +320,21 @@ export default function OnboardingPage() {
               </div>
               <div>
                 <p className="font-semibold text-sm">Portal access granted</p>
-                <p className="text-xs text-muted-foreground">All ambassador tools are now unlocked for you.</p>
+                <p className="text-xs text-text-secondary">All ambassador tools are now unlocked for you.</p>
               </div>
             </div>
 
             <Button
               size="lg"
-              className="w-full h-12 text-base gap-2"
+              variant="outline"
+              className="w-full h-12 rounded-sm tracking-[0.15em] uppercase text-xs font-medium gap-2"
               onClick={() => onboardingMutation.mutate()}
               disabled={onboardingMutation.isPending}
             >
               {onboardingMutation.isPending ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                "Enter the Portal"
+                "Enter the portal"
               )}
             </Button>
           </div>

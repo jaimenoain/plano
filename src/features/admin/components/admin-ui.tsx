@@ -63,6 +63,13 @@ export function AdminFormLabel({
 export const adminTableHeadClass =
   "text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary font-normal";
 
+/** Hairline tab strip — use on `TabsList` + `TabsTrigger` in admin operational pages. */
+export const adminHairlineTabsListClass =
+  "h-auto rounded-none border-0 bg-transparent p-0";
+
+export const adminHairlineTabTriggerClass =
+  "rounded-none border-b-2 border-transparent px-4 pb-2 pt-0 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary data-[state=active]:border-text-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none";
+
 export function AdminEmptyState({
   title,
   description,

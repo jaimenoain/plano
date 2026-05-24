@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useLoaderData, Link, type MetaFunction } from "react-router";
 import { toast } from "sonner";
 import {
-  Settings,
   Trophy,
   Calendar,
   LayoutList,
@@ -64,9 +63,16 @@ import {
   useRecipientsByEdition,
   useDeleteRecipient,
 } from "@/features/awards/hooks/useAwards";
+import { cn } from "@/lib/utils";
 import { awardAdminLoader, type AwardAdminLoaderData } from "./AwardAdminPage.loader";
+import { AdminFormLabel } from "@/features/admin/components/admin-ui";
 import { AddRecipientDialog } from "@/features/admin/components/AddRecipientDialog";
 import { EditionEventsSection } from "@/features/awards/components/EditionEventsSection";
+import {
+  AwardAdminPageHeader,
+  awardAdminTableHeadClass,
+  outcomeBadgeClassName,
+} from "@/features/awards/components/award-admin-ui";
 
 export { awardAdminLoader as loader } from "./AwardAdminPage.loader";
 
@@ -122,7 +128,7 @@ function AwardInfoTab({ awardId }: { awardId: string }) {
   return (
     <div className="max-w-lg space-y-5 py-2">
       <div className="space-y-1.5">
-        <Label htmlFor="ai-name">Award name</Label>
+        <AdminFormLabel htmlFor="ai-name">Award name</AdminFormLabel>
         <Input
           id="ai-name"
           value={form.name}
@@ -132,7 +138,7 @@ function AwardInfoTab({ awardId }: { awardId: string }) {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="ai-desc">Description</Label>
+        <AdminFormLabel htmlFor="ai-desc">Description</AdminFormLabel>
         <Textarea
           id="ai-desc"
           rows={4}
@@ -144,7 +150,7 @@ function AwardInfoTab({ awardId }: { awardId: string }) {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="ai-website">Official website</Label>
+        <AdminFormLabel htmlFor="ai-website">Official website</AdminFormLabel>
         <Input
           id="ai-website"
           type="url"
@@ -156,7 +162,7 @@ function AwardInfoTab({ awardId }: { awardId: string }) {
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="ai-country">Country</Label>
+        <AdminFormLabel htmlFor="ai-country">Country</AdminFormLabel>
         <Input
           id="ai-country"
           placeholder="e.g. United Kingdom"
@@ -240,10 +246,10 @@ function EditionsTab({ awardId }: { awardId: string }) {
         <Table>
           <TableHeader>
             <TableRow className="bg-surface-muted/50 hover:bg-surface-muted/50 border-border-default">
-              <TableHead>Year</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead className="text-center">Recipients</TableHead>
-              <TableHead className="w-24" />
+              <TableHead className={awardAdminTableHeadClass}>Year</TableHead>
+              <TableHead className={awardAdminTableHeadClass}>Location</TableHead>
+              <TableHead className={cn(awardAdminTableHeadClass, "text-center")}>Recipients</TableHead>
+              <TableHead className={cn(awardAdminTableHeadClass, "w-24")} />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -273,7 +279,7 @@ function EditionsTab({ awardId }: { awardId: string }) {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-7 w-7 text-text-secondary hover:text-feedback-error"
+                        className="h-7 w-7 text-text-secondary hover:text-feedback-destructive"
                         onClick={() => setDeletingId(ed.id)}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -312,7 +318,7 @@ function EditionsTab({ awardId }: { awardId: string }) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-feedback-error hover:bg-feedback-error/90"
+              className="bg-feedback-destructive hover:bg-feedback-destructive/90"
               onClick={() => {
                 if (!deletingId) return;
                 deleteEdition.mutate(deletingId, {
@@ -393,8 +399,8 @@ function CategoriesTab({ awardId }: { awardId: string }) {
         <Table>
           <TableHeader>
             <TableRow className="bg-surface-muted/50 hover:bg-surface-muted/50 border-border-default">
-              <TableHead>Name</TableHead>
-              <TableHead className="text-center">Active</TableHead>
+              <TableHead className={awardAdminTableHeadClass}>Name</TableHead>
+              <TableHead className={cn(awardAdminTableHeadClass, "text-center")}>Active</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -439,9 +445,9 @@ function RecipientsTab({ awardId }: { awardId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Label htmlFor="edition-select" className="text-xs font-medium uppercase tracking-widest shrink-0">
+        <AdminFormLabel htmlFor="edition-select" className="shrink-0">
           Edition
-        </Label>
+        </AdminFormLabel>
         <select
           id="edition-select"
           value={selectedEditionId}
@@ -472,10 +478,10 @@ function RecipientsTab({ awardId }: { awardId: string }) {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-surface-muted/50 hover:bg-surface-muted/50 border-border-default">
-                    <TableHead>Recipient</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Outcome</TableHead>
-                    <TableHead className="w-10" />
+                    <TableHead className={awardAdminTableHeadClass}>Recipient</TableHead>
+                    <TableHead className={awardAdminTableHeadClass}>Category</TableHead>
+                    <TableHead className={awardAdminTableHeadClass}>Outcome</TableHead>
+                    <TableHead className={cn(awardAdminTableHeadClass, "w-10")} />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -496,7 +502,10 @@ function RecipientsTab({ awardId }: { awardId: string }) {
                           <TableCell className="font-medium text-sm">{name ?? "—"}</TableCell>
                           <TableCell className="text-text-secondary text-sm">{r.category?.name ?? "—"}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="capitalize text-xs">
+                            <Badge
+                              variant="outline"
+                              className={cn("capitalize text-2xs", outcomeBadgeClassName(r.outcome))}
+                            >
                               {r.outcome.replace(/_/g, " ")}
                             </Badge>
                           </TableCell>
@@ -504,7 +513,7 @@ function RecipientsTab({ awardId }: { awardId: string }) {
                             <Button
                               size="icon"
                               variant="ghost"
-                              className="h-7 w-7 text-text-secondary hover:text-feedback-error"
+                              className="h-7 w-7 text-text-secondary hover:text-feedback-destructive"
                               onClick={() => setDeletingId(r.id)}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -538,7 +547,7 @@ function RecipientsTab({ awardId }: { awardId: string }) {
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  className="bg-feedback-error hover:bg-feedback-error/90"
+                  className="bg-feedback-destructive hover:bg-feedback-destructive/90"
                   onClick={() => {
                     if (!deletingId) return;
                     deleteRecipient.mutate(deletingId, {
@@ -583,11 +592,11 @@ function SuggestionsTab({ awardId }: { awardId: string }) {
           <Table>
             <TableHeader>
               <TableRow className="bg-surface-muted/50 hover:bg-surface-muted/50 border-border-default">
-                <TableHead>Recipient</TableHead>
-                <TableHead>Year / Outcome</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Submitted by</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className={awardAdminTableHeadClass}>Recipient</TableHead>
+                <TableHead className={awardAdminTableHeadClass}>Year / outcome</TableHead>
+                <TableHead className={awardAdminTableHeadClass}>Source</TableHead>
+                <TableHead className={awardAdminTableHeadClass}>Submitted by</TableHead>
+                <TableHead className={cn(awardAdminTableHeadClass, "text-right")}>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -602,7 +611,10 @@ function SuggestionsTab({ awardId }: { awardId: string }) {
                     <TableCell className="text-sm text-text-secondary">
                       {s.year ?? "—"}
                       <br />
-                      <Badge variant="outline" className="capitalize text-xs mt-1">
+                      <Badge
+                        variant="outline"
+                        className={cn("capitalize text-2xs mt-1", outcomeBadgeClassName(s.outcome))}
+                      >
                         {s.outcome.replace(/_/g, " ")}
                       </Badge>
                     </TableCell>
@@ -628,7 +640,7 @@ function SuggestionsTab({ awardId }: { awardId: string }) {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-7 gap-1 text-xs text-feedback-success border-feedback-success/30 hover:bg-feedback-success/10"
+                          className="h-7 gap-1 text-2xs text-feedback-success border-feedback-success/30 hover:bg-feedback-success/10"
                           disabled={approve.isPending}
                           onClick={() =>
                             approve.mutate(s.id, {
@@ -643,7 +655,7 @@ function SuggestionsTab({ awardId }: { awardId: string }) {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-7 gap-1 text-xs text-feedback-error border-feedback-error/30 hover:bg-feedback-error/10"
+                          className="h-7 gap-1 text-2xs text-feedback-destructive border-feedback-destructive/30 hover:bg-feedback-destructive/10"
                           onClick={() => { setRejectingId(s.id); setRejectNote(""); }}
                         >
                           <X className="h-3.5 w-3.5" />Reject
@@ -674,7 +686,7 @@ function SuggestionsTab({ awardId }: { awardId: string }) {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-feedback-error hover:bg-feedback-error/90"
+              className="bg-feedback-destructive hover:bg-feedback-destructive/90"
               onClick={() => {
                 if (!rejectingId) return;
                 reject.mutate(
@@ -709,9 +721,9 @@ function TeamTab({ awardId }: { awardId: string }) {
         <Table>
           <TableHeader>
             <TableRow className="bg-surface-muted/50 hover:bg-surface-muted/50 border-border-default">
-              <TableHead>User</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Since</TableHead>
+              <TableHead className={awardAdminTableHeadClass}>User</TableHead>
+              <TableHead className={awardAdminTableHeadClass}>Role</TableHead>
+              <TableHead className={awardAdminTableHeadClass}>Since</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -728,7 +740,15 @@ function TeamTab({ awardId }: { awardId: string }) {
                     {admin.profile?.username ?? admin.userId}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={admin.role === "owner" ? "default" : "secondary"} className="capitalize text-xs">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "capitalize text-2xs",
+                        admin.role === "owner"
+                          ? "border-border-default bg-surface-card text-text-primary"
+                          : "border-transparent bg-surface-muted text-text-secondary",
+                      )}
+                    >
                       {admin.role}
                     </Badge>
                   </TableCell>
@@ -756,44 +776,54 @@ export default function AwardAdminPage() {
   return (
     <AppLayout showBack title={`Manage ${awardName}`} showHeader>
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8 flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Settings className="h-5 w-5 text-text-secondary" />
-              <span className="text-xs font-medium uppercase tracking-widest text-text-secondary">
-                Award administration
-              </span>
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-text-primary">{awardName}</h1>
-          </div>
-          <Button variant="outline" size="sm" asChild className="gap-1.5 shrink-0">
-            <Link to={`/award/${awardSlug}`}>
-              <Trophy className="h-4 w-4" />
-              View public page
-            </Link>
-          </Button>
-        </div>
+        <AwardAdminPageHeader
+          title={awardName}
+          actions={
+            <Button variant="outline" size="sm" asChild className="gap-1.5">
+              <Link to={`/award/${awardSlug}`}>
+                <Trophy className="h-4 w-4" />
+                View public page
+              </Link>
+            </Button>
+          }
+        />
 
-        {/* Tabs */}
         <Tabs defaultValue="info">
-          <TabsList className="mb-6">
-            <TabsTrigger value="info" className="gap-1.5">
+          <TabsList className="mb-6 h-auto w-full justify-start gap-4 overflow-x-auto rounded-none border-b border-border-default bg-transparent p-0">
+            <TabsTrigger
+              value="info"
+              className="gap-1.5 rounded-none border-b-2 border-transparent px-0 pb-3 data-[state=active]:border-text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
               <Trophy className="h-3.5 w-3.5" />Award info
             </TabsTrigger>
-            <TabsTrigger value="editions" className="gap-1.5">
+            <TabsTrigger
+              value="editions"
+              className="gap-1.5 rounded-none border-b-2 border-transparent px-0 pb-3 data-[state=active]:border-text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
               <Calendar className="h-3.5 w-3.5" />Editions
             </TabsTrigger>
-            <TabsTrigger value="categories" className="gap-1.5">
+            <TabsTrigger
+              value="categories"
+              className="gap-1.5 rounded-none border-b-2 border-transparent px-0 pb-3 data-[state=active]:border-text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
               <LayoutList className="h-3.5 w-3.5" />Categories
             </TabsTrigger>
-            <TabsTrigger value="recipients" className="gap-1.5">
+            <TabsTrigger
+              value="recipients"
+              className="gap-1.5 rounded-none border-b-2 border-transparent px-0 pb-3 data-[state=active]:border-text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
               <LayoutList className="h-3.5 w-3.5" />Recipients
             </TabsTrigger>
-            <TabsTrigger value="suggestions" className="gap-1.5">
+            <TabsTrigger
+              value="suggestions"
+              className="gap-1.5 rounded-none border-b-2 border-transparent px-0 pb-3 data-[state=active]:border-text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
               <Lightbulb className="h-3.5 w-3.5" />Suggestions
             </TabsTrigger>
-            <TabsTrigger value="team" className="gap-1.5">
+            <TabsTrigger
+              value="team"
+              className="gap-1.5 rounded-none border-b-2 border-transparent px-0 pb-3 data-[state=active]:border-text-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
               <Users className="h-3.5 w-3.5" />Team
             </TabsTrigger>
           </TabsList>

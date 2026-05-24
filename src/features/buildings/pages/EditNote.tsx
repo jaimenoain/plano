@@ -389,8 +389,8 @@ export default function EditNote() {
         {/* Building context */}
         {buildingName && (
           <div className="mb-6">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-text-disabled">Note for</p>
-            <h1 className="text-2xl font-bold text-text-primary mt-0.5">{buildingName}</h1>
+            <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Note for</p>
+            <h1 className="text-3xl font-bold tracking-tight text-text-primary mt-0.5">{buildingName}</h1>
           </div>
         )}
 
@@ -416,13 +416,13 @@ export default function EditNote() {
 
           {/* Tags */}
           <div className="space-y-2">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-text-disabled">Tags</p>
+            <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Tags</p>
             <TagInput tags={tags} setTags={setTags} placeholder="Add tags and press Enter…" />
           </div>
 
           {/* Attachments */}
           <div className="space-y-2">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-text-disabled">Attachments</p>
+            <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Attachments</p>
 
             <input
               ref={imageInputRef}
@@ -507,7 +507,7 @@ export default function EditNote() {
 
           {/* Links */}
           <div className="space-y-2">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-text-disabled">Links</p>
+            <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Links</p>
 
             {/* Existing links */}
             {links.length > 0 && (

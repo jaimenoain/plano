@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Card } from "@/components/ui/card";
@@ -35,6 +34,15 @@ import { toast } from "sonner";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { format, formatDistanceToNow, parseISO, isAfter, isBefore } from "date-fns";
 import type { MetaFunction } from "react-router";
+import {
+  AdminPageHeader,
+  AdminSectionLabel,
+  AdminFormLabel,
+  AdminEmptyState,
+  AdminErrorState,
+  adminTableHeadClass,
+} from "@/features/admin/components/admin-ui";
+import { cn } from "@/lib/utils";
 
 export const meta: MetaFunction = () => [
   { title: "Programme campaigns | Plano Admin" },
@@ -238,7 +246,7 @@ export default function AmbassadorCampaigns() {
     const variants = {
       active: "bg-feedback-success/10 text-feedback-success border-feedback-success/20",
       upcoming: "bg-surface-muted text-text-primary border-border-default",
-      ended: "bg-muted text-muted-foreground border-border-default",
+      ended: "bg-surface-muted text-text-secondary border-border-default",
     };
     return (
       <Badge variant="outline" className={variants[s]}>
@@ -249,32 +257,23 @@ export default function AmbassadorCampaigns() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <Target className="h-8 w-8 text-text-secondary" />
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-text-primary">
-              Programme campaigns
-            </h1>
-            <p className="text-sm text-text-secondary mt-1">
-              Coordinate all chapters with a single campaign. Appears automatically in every
-              chapter's project board.
-            </p>
-          </div>
-        </div>
-        <Button onClick={() => setIsOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" aria-hidden />
-          New campaign
-        </Button>
-      </div>
+      <AdminPageHeader
+        eyebrow="Ambassadors"
+        title="Programme campaigns"
+        description="Coordinate all chapters with a single campaign. Appears automatically in every chapter's project board."
+        actions={
+          <Button onClick={() => setIsOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" aria-hidden />
+            New campaign
+          </Button>
+        }
+      />
 
       {/* Draft ideas submitted by ambassadors */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Inbox className="h-4 w-4 text-text-secondary" />
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
-            Ambassador ideas inbox
-          </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <Inbox className="h-4 w-4 text-text-secondary shrink-0" aria-hidden />
+          <AdminSectionLabel>Ambassador ideas inbox</AdminSectionLabel>
           {draftIdeas.length > 0 && (
             <Badge variant="secondary" className="text-xs">{draftIdeas.length}</Badge>
           )}
@@ -285,17 +284,16 @@ export default function AmbassadorCampaigns() {
             <Loader2 className="h-5 w-5 animate-spin text-text-disabled" />
           </div>
         ) : ideasError ? (
-          <p className="text-sm text-feedback-destructive py-4">
-            Couldn't load ambassador ideas. Check the console for details.
-          </p>
+          <AdminErrorState message="Could not load ambassador ideas. Check the console for details." />
         ) : draftIdeas.length === 0 ? (
-          <p className="text-sm text-text-secondary py-4">
-            No pending ideas. Ambassadors can submit ideas from their chapter projects page.
-          </p>
+          <AdminEmptyState
+            title="No pending ideas."
+            description="Ambassadors can submit ideas from their chapter projects page."
+          />
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {draftIdeas.map((idea) => (
-              <Card key={idea.id} className="flex flex-col p-5 border border-dashed bg-muted/20">
+              <Card key={idea.id} className="flex flex-col p-5 border border-dashed bg-surface-muted/50 border-border-default">
                 <div className="mb-3">
                   <Badge
                     variant="outline"
@@ -314,7 +312,7 @@ export default function AmbassadorCampaigns() {
                 )}
 
                 <div className="mt-auto pt-3 border-t border-border-default">
-                  <div className="flex items-center justify-between text-[11px] text-text-secondary">
+                  <div className="flex items-center justify-between text-2xs text-text-secondary">
                     <span>
                       {idea.chapter_name ?? "Unknown chapter"}
                       {idea.author_username ? ` · @${idea.author_username}` : ""}
@@ -329,11 +327,9 @@ export default function AmbassadorCampaigns() {
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Target className="h-4 w-4 text-text-secondary" />
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-text-secondary">
-            Programme campaigns
-          </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <Target className="h-4 w-4 text-text-secondary shrink-0" aria-hidden />
+          <AdminSectionLabel>Programme campaigns</AdminSectionLabel>
         </div>
       <div className="rounded-lg border border-border-default bg-surface-card overflow-hidden">
         {isLoading ? (
@@ -344,19 +340,22 @@ export default function AmbassadorCampaigns() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Campaign</TableHead>
-                <TableHead>Metric</TableHead>
-                <TableHead>Dates</TableHead>
-                <TableHead>Scope</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[200px]">Progress</TableHead>
+                <TableHead className={adminTableHeadClass}>Campaign</TableHead>
+                <TableHead className={adminTableHeadClass}>Metric</TableHead>
+                <TableHead className={adminTableHeadClass}>Dates</TableHead>
+                <TableHead className={adminTableHeadClass}>Scope</TableHead>
+                <TableHead className={adminTableHeadClass}>Status</TableHead>
+                <TableHead className={cn(adminTableHeadClass, "w-[200px]")}>Progress</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {campaigns.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-text-secondary py-12">
-                    No campaigns yet. Create one to coordinate all chapters.
+                  <TableCell colSpan={6} className="p-0">
+                    <AdminEmptyState
+                      title="No campaigns yet."
+                      description="Create one to coordinate all chapters."
+                    />
                   </TableCell>
                 </TableRow>
               ) : (
@@ -408,7 +407,7 @@ export default function AmbassadorCampaigns() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="camp-title">Title</Label>
+              <AdminFormLabel htmlFor="camp-title">Title</AdminFormLabel>
               <Input
                 id="camp-title"
                 value={form.title}
@@ -417,7 +416,7 @@ export default function AmbassadorCampaigns() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="camp-desc">Description (optional)</Label>
+              <AdminFormLabel htmlFor="camp-desc">Description (optional)</AdminFormLabel>
               <Textarea
                 id="camp-desc"
                 rows={3}
@@ -428,7 +427,7 @@ export default function AmbassadorCampaigns() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="camp-start">Start date</Label>
+                <AdminFormLabel htmlFor="camp-start">Start date</AdminFormLabel>
                 <Input
                   id="camp-start"
                   type="date"
@@ -437,7 +436,7 @@ export default function AmbassadorCampaigns() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="camp-end">End date</Label>
+                <AdminFormLabel htmlFor="camp-end">End date</AdminFormLabel>
                 <Input
                   id="camp-end"
                   type="date"
@@ -447,7 +446,7 @@ export default function AmbassadorCampaigns() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Metric type</Label>
+              <AdminFormLabel>Metric type</AdminFormLabel>
               <Select
                 value={form.metric_type}
                 onValueChange={(v) =>
@@ -465,7 +464,7 @@ export default function AmbassadorCampaigns() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="camp-target">Target value</Label>
+              <AdminFormLabel htmlFor="camp-target">Target value</AdminFormLabel>
               <Input
                 id="camp-target"
                 type="number"
@@ -480,7 +479,7 @@ export default function AmbassadorCampaigns() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Chapter scope</Label>
+              <AdminFormLabel>Chapter scope</AdminFormLabel>
               <Select
                 value={form.chapter_scope}
                 onValueChange={(v) =>
