@@ -1901,12 +1901,13 @@ export default function BuildingDetails() {
               transition={{ duration: 0.8 }}
               src={heroImageUrl}
               alt={heroAlt}
-              className="absolute inset-0 h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover grayscale brightness-90"
               fetchPriority="high"
               loading="eager"
             />
+            {/* Bottom-weighted gradient for title legibility */}
             <div
-              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent"
+              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10"
               aria-hidden
             />
             <div className="absolute inset-0 flex flex-col justify-end px-5 pb-9 pt-8 sm:px-10">
@@ -1925,11 +1926,6 @@ export default function BuildingDetails() {
                     )}
                   </div>
                 )}
-                {building.short_id ? (
-                  <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-white/70">
-                    PLN-{String(building.short_id).padStart(5, "0")}
-                  </p>
-                ) : null}
                 <h1 className="font-display text-[clamp(3rem,7vw,5.5rem)] font-bold leading-[0.98] tracking-[-0.038em] text-white">
                   {building.name}.
                 </h1>
