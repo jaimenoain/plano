@@ -45,17 +45,13 @@ import {
   AlertCircle, MessageSquare, Loader2,
   Camera, Sparkles, UserPlus, ExternalLink, Map, List,
   Flag, Video, Award, XCircle, CheckCircle,
-  RefreshCw, Building2, User, Briefcase, MapPin,
-  SlidersHorizontal, Play, ChevronRight, CalendarClock,
+  RefreshCw, SlidersHorizontal, ChevronRight, CalendarClock,
   Clock, SkipForward,
 } from "lucide-react";
 import { format, formatDistanceToNow, parseISO, differenceInDays } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import type { EntityType } from "@/features/admin/types/merge";
 import { getBuildingImageUrl, getStorageAssetUrl } from "@/utils/image";
 import { VideoPlayer } from "@/components/ui/VideoPlayer";
 import { getBuildingUrl } from "@/utils/url";
@@ -313,6 +309,8 @@ function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: ()
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<ResearchTab>("data-completion");
   const [activeItem, setActiveItem] = useState<BuildingResearchQueueItem | null>(null);
+  const [queueStalled, setQueueStalled] = useState(false);
+  const [isRefilling, setIsRefilling] = useState(false);
 
   const { data: queue = [], isLoading, error, refetch } = useQuery({
     queryKey: ["embassy-research-queue", chapterId],
@@ -329,6 +327,34 @@ function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: ()
       return Array.isArray(d) && d.length === 0 && !query.state.error ? 30_000 : false;
     },
   });
+
+  // After 90 s of an empty, non-erroring queue assume the fill either timed out
+  // or found no candidates — switch to the "stalled" message and offer a retry.
+  useEffect(() => {
+    if (!isLoading && !error && queue.length === 0) {
+      const t = setTimeout(() => setQueueStalled(true), 90_000);
+      return () => clearTimeout(t);
+    }
+    setQueueStalled(false);
+    return undefined;
+  }, [isLoading, error, queue.length]);
+
+  async function handleRetryFill() {
+    setIsRefilling(true);
+    setQueueStalled(false);
+    try {
+      await fetch("/api/embassy/research-queue", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ action: "fill", chapter_id: chapterId }),
+      });
+    } catch {
+      // fire-and-forget; ignore network errors
+    }
+    setIsRefilling(false);
+    void refetch();
+  }
 
   const dismissMutation = useMutation({
     mutationFn: dismissResearchQueueItem,
@@ -409,15 +435,35 @@ function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: ()
             </div>
           ) : queue.length === 0 ? (
             <div className="p-12 text-center border border-dashed rounded-sm">
-              <Clock className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-              <p className="text-lg font-medium">Building your research queue…</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                AI is researching buildings in your chapter. This may take a minute — the view will refresh automatically.
-              </p>
-              <Button variant="ghost" size="sm" className="mt-4 gap-2 text-muted-foreground" onClick={() => void refetch()}>
-                <RefreshCw className="h-4 w-4" />
-                Refresh now
-              </Button>
+              {queueStalled ? (
+                <>
+                  <Sparkles className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-lg font-medium">No buildings ready for AI research</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    All buildings in your chapter are either up to date or have already been researched. Check back after your chapter's buildings are updated.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Clock className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-lg font-medium">Building your research queue…</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    AI is researching buildings in your chapter. This may take a minute — the view will refresh automatically.
+                  </p>
+                </>
+              )}
+              <div className="flex items-center justify-center gap-2 mt-4">
+                <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground" onClick={() => void refetch()}>
+                  <RefreshCw className="h-4 w-4" />
+                  Refresh now
+                </Button>
+                {queueStalled && (
+                  <Button variant="outline" size="sm" className="gap-2" onClick={() => void handleRetryFill()} disabled={isRefilling}>
+                    {isRefilling ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                    Check for new buildings
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             <>
@@ -472,7 +518,7 @@ function DataResearchTool({ chapterId, onBack }: { chapterId: string; onBack: ()
         </TabsContent>
 
         <TabsContent value="duplicates" className="mt-6">
-          <DuplicateDetectionPanel />
+          <DuplicateDetectionPanel chapterId={chapterId} />
         </TabsContent>
       </Tabs>
     </div>
@@ -489,179 +535,88 @@ type PotentialDuplicate = {
   score: number;
 };
 
-const RPC_NAME_FOR_ENTITY_TYPE: Partial<Record<EntityType, string>> = {
-  building: "get_potential_duplicates",
-  person: "get_potential_duplicate_people",
-  company: "get_potential_duplicate_companies",
-  locality: "get_potential_duplicate_localities",
-};
+async function fetchPotentialDuplicateBuildings(chapterId: string): Promise<PotentialDuplicate[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await supabase.rpc("get_potential_duplicate_buildings" as any, {
+    p_chapter_id: chapterId,
+    p_limit: 20,
+  });
+  if (error) throw error;
+  return (data as PotentialDuplicate[]) ?? [];
+}
 
-function DuplicateDetectionPanel() {
+async function dismissDuplicatePair(id1: string, id2: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await supabase.rpc("dismiss_building_duplicate_pair" as any, {
+    p_id1: id1,
+    p_id2: id2,
+  });
+  if (error) throw error;
+}
+
+function DuplicateDetectionPanel({ chapterId }: { chapterId: string }) {
   const navigate = useNavigate();
-  const [activeType, setActiveType] = useState<EntityType>("building");
-  const [potentialDuplicates, setPotentialDuplicates] = useState<PotentialDuplicate[]>([]);
-  const [loadingPotential, setLoadingPotential] = useState(false);
-  const [duplicateQueryRan, setDuplicateQueryRan] = useState(false);
-  const [duplicateUnavailable, setDuplicateUnavailable] = useState(false);
-  const [threshold, setThreshold] = useState(0.7);
-  const [limitCount, setLimitCount] = useState("20");
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    setPotentialDuplicates([]);
-    setDuplicateQueryRan(false);
-    setDuplicateUnavailable(false);
-  }, [activeType]);
+  const { data: pairs = [], isLoading, isError, refetch } = useQuery({
+    queryKey: ["building-duplicate-suggestions", chapterId],
+    queryFn: () => fetchPotentialDuplicateBuildings(chapterId),
+    enabled: !!chapterId,
+    staleTime: 5 * 60 * 1000,
+    retry: 0,
+  });
 
-  const fetchPotentialDuplicates = async () => {
-    const rpcName = RPC_NAME_FOR_ENTITY_TYPE[activeType];
-    if (!rpcName) {
-      setDuplicateUnavailable(true);
-      return;
-    }
-
-    setLoadingPotential(true);
-    setDuplicateUnavailable(false);
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await supabase.rpc(rpcName as any, {
-        limit_count: parseInt(limitCount),
-        similarity_threshold: threshold,
-      });
-      if (error) throw error;
-      setPotentialDuplicates((data as PotentialDuplicate[]) ?? []);
-    } catch (_error) {
-      setDuplicateUnavailable(true);
-      setPotentialDuplicates([]);
-    } finally {
-      setLoadingPotential(false);
-      setDuplicateQueryRan(true);
-    }
-  };
-
-  const typeIcons = {
-    building: <Building2 className="w-4 h-4 mr-2" />,
-    person: <User className="w-4 h-4 mr-2" />,
-    company: <Briefcase className="w-4 h-4 mr-2" />,
-    locality: <MapPin className="w-4 h-4 mr-2" />,
-  };
+  const dismissMutation = useMutation({
+    mutationFn: ({ id1, id2 }: { id1: string; id2: string }) => dismissDuplicatePair(id1, id2),
+    onMutate: async ({ id1, id2 }) => {
+      await queryClient.cancelQueries({ queryKey: ["building-duplicate-suggestions", chapterId] });
+      const previous = queryClient.getQueryData<PotentialDuplicate[]>(["building-duplicate-suggestions", chapterId]);
+      queryClient.setQueryData<PotentialDuplicate[]>(
+        ["building-duplicate-suggestions", chapterId],
+        (old) => (old ?? []).filter((p) => !(p.id1 === id1 && p.id2 === id2)),
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["building-duplicate-suggestions", chapterId], context.previous);
+      }
+      toast.error("Could not save dismissal — please try again.");
+    },
+  });
 
   return (
     <div className="space-y-6">
-      <Tabs value={activeType} onValueChange={(v) => setActiveType(v as EntityType)} className="w-full md:w-auto">
-        <TabsList className="grid grid-cols-2 md:flex bg-surface-muted p-1">
-          <TabsTrigger value="building" className="px-4">{typeIcons.building} Buildings</TabsTrigger>
-          <TabsTrigger value="person" className="px-4">{typeIcons.person} Architects</TabsTrigger>
-          <TabsTrigger value="company" className="px-4">{typeIcons.company} Companies</TabsTrigger>
-          <TabsTrigger value="locality" className="px-4">{typeIcons.locality} Localities</TabsTrigger>
-        </TabsList>
-      </Tabs>
-
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <h3 className="text-2xl font-black flex items-center gap-3">
             <div className="w-9 h-9 rounded bg-brand-primary/10 flex items-center justify-center border border-brand-primary/20">
               <Search className="w-4 h-4 text-brand-primary" />
             </div>
-            Duplicate Detection
-            {duplicateQueryRan && !duplicateUnavailable && (
-              <Badge variant="outline" className="ml-1 font-mono">{potentialDuplicates.length} found</Badge>
+            Potential Duplicates
+            {!isLoading && !isError && (
+              <Badge variant="outline" className="ml-1 font-mono">{pairs.length} found</Badge>
             )}
           </h3>
           <p className="text-sm text-text-secondary">
-            Run a name-similarity scan across {activeType} records to surface potential duplicates.
+            Buildings in your chapter with very similar names — review each pair and merge or dismiss.
           </p>
         </div>
-
-        {duplicateQueryRan && !duplicateUnavailable && (
+        {!isLoading && (
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchPotentialDuplicates}
-            disabled={loadingPotential}
+            onClick={() => void refetch()}
             className="rounded-full h-9 shrink-0"
           >
-            <RefreshCw className={`mr-2 h-3.5 w-3.5 ${loadingPotential ? "animate-spin" : ""}`} />
-            Re-run
+            <RefreshCw className="mr-2 h-3.5 w-3.5" />
+            Refresh
           </Button>
         )}
       </div>
 
-      <Card className="bg-surface-card border border-border-default rounded-md">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-2 mb-5 text-xs font-black text-text-secondary uppercase tracking-widest">
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            Query Parameters
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-[1fr,auto,auto] gap-6 items-end">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <label className="text-sm font-semibold text-text-primary">Similarity Threshold</label>
-                <span className="text-sm font-black tabular-nums text-brand-primary bg-brand-primary/10 px-2.5 py-0.5 rounded-full border border-brand-primary/20">
-                  {Math.round(threshold * 100)}%
-                </span>
-              </div>
-              <Slider
-                min={0.5}
-                max={0.99}
-                step={0.01}
-                value={[threshold]}
-                onValueChange={([v]) => setThreshold(v)}
-                className="w-full"
-              />
-              <div className="flex justify-between text-[10px] text-text-secondary opacity-50">
-                <span>50% — more results</span>
-                <span>99% — near-exact only</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-text-primary">Max Results</label>
-              <Select value={limitCount} onValueChange={setLimitCount}>
-                <SelectTrigger className="w-28 bg-surface-card border-2 h-10">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {["10", "20", "50", "100"].map(v => (
-                    <SelectItem key={v} value={v}>{v} pairs</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Button
-              onClick={fetchPotentialDuplicates}
-              disabled={loadingPotential}
-              className="h-10 px-6 bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold gap-2 shadow-md transition-colors"
-            >
-              {loadingPotential ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Play className="w-4 h-4" />
-              )}
-              {loadingPotential ? "Scanning..." : "Run Query"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       <AnimatePresence mode="wait">
-        {!duplicateQueryRan && !loadingPotential && (
-          <motion.div
-            key="idle"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex flex-col items-center justify-center py-16 text-text-secondary opacity-40 space-y-3"
-          >
-            <div className="w-16 h-16 rounded-md bg-surface-muted flex items-center justify-center">
-              <Play className="w-7 h-7" />
-            </div>
-            <p className="text-sm font-medium">Configure parameters above and run the query</p>
-          </motion.div>
-        )}
-
-        {loadingPotential && (
+        {isLoading && (
           <motion.div
             key="loading"
             initial={{ opacity: 0 }}
@@ -670,27 +625,27 @@ function DuplicateDetectionPanel() {
             className="flex flex-col items-center justify-center py-16 space-y-4"
           >
             <Loader2 className="w-10 h-10 animate-spin text-brand-primary" />
-            <p className="text-sm font-medium text-text-secondary animate-pulse">Scanning {activeType} records for similar names…</p>
+            <p className="text-sm font-medium text-text-secondary animate-pulse">Scanning buildings for similar names…</p>
           </motion.div>
         )}
 
-        {duplicateQueryRan && !loadingPotential && duplicateUnavailable && (
+        {!isLoading && isError && (
           <motion.div
-            key="unavailable"
+            key="error"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="flex flex-col items-center justify-center py-14 text-text-secondary space-y-3"
+            className="p-8 text-center border rounded-sm bg-feedback-destructive/5 text-feedback-destructive"
           >
-            <div className="w-14 h-14 rounded-md bg-surface-muted flex items-center justify-center opacity-40">
-              <Search className="w-6 h-6" />
-            </div>
-            <p className="font-medium opacity-50 text-sm">Duplicate detection is not yet available for {activeType} records.</p>
-            <p className="text-xs opacity-30">A <code className="font-mono">get_potential_duplicate_{activeType}s</code> database function is needed.</p>
+            <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+            <p>Failed to load duplicate suggestions.</p>
+            <Button variant="outline" size="sm" className="mt-3" onClick={() => void refetch()}>
+              Try again
+            </Button>
           </motion.div>
         )}
 
-        {duplicateQueryRan && !loadingPotential && !duplicateUnavailable && potentialDuplicates.length === 0 && (
+        {!isLoading && !isError && pairs.length === 0 && (
           <motion.div
             key="empty"
             initial={{ opacity: 0, y: 8 }}
@@ -699,59 +654,70 @@ function DuplicateDetectionPanel() {
             className="flex flex-col items-center justify-center py-14 text-text-secondary space-y-3"
           >
             <div className="w-14 h-14 rounded-md bg-surface-muted flex items-center justify-center opacity-40">
-              <Search className="w-6 h-6" />
+              <CheckCircle2 className="w-6 h-6" />
             </div>
-            <p className="font-medium opacity-50 text-sm">No matches above {Math.round(threshold * 100)}% similarity — try lowering the threshold.</p>
+            <p className="font-medium opacity-50 text-sm">No potential duplicates found in your chapter.</p>
           </motion.div>
         )}
 
-        {duplicateQueryRan && !loadingPotential && !duplicateUnavailable && potentialDuplicates.length > 0 && (
+        {!isLoading && !isError && pairs.length > 0 && (
           <motion.div
             key="results"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <ScrollArea className="h-[420px] rounded-md border border-border-default bg-surface-card overflow-hidden">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
-                {potentialDuplicates.map((pair, idx) => (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: idx * 0.03 }}
-                    className="group flex flex-col p-4 bg-surface-card border border-border-default rounded hover:border-border-strong hover:shadow-md transition-all"
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex flex-col max-w-[40%]">
-                        <span className="text-sm font-bold truncate text-text-primary">{pair.name1}</span>
-                        <span className="text-[10px] font-mono text-text-secondary">{pair.id1.slice(0, 8)}</span>
-                      </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {pairs.map((pair, idx) => (
+                <motion.div
+                  key={`${pair.id1}-${pair.id2}`}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: idx * 0.03 }}
+                  className="flex flex-col p-4 bg-surface-card border border-border-default rounded hover:border-border-strong transition-all"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col max-w-[40%]">
+                      <span className="text-sm font-bold truncate text-text-primary">{pair.name1}</span>
+                      <span className="text-[10px] font-mono text-text-secondary">{pair.id1.slice(0, 8)}</span>
+                    </div>
 
-                      <div className="flex flex-col items-center">
-                        <div className="text-[10px] font-black text-brand-primary uppercase tracking-tighter mb-0.5">Similarity</div>
-                        <div className="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-xs font-black border border-brand-primary/20">
-                          {Math.round(pair.score * 100)}%
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col max-w-[40%] text-right">
-                        <span className="text-sm font-bold truncate text-text-primary">{pair.name2}</span>
-                        <span className="text-[10px] font-mono text-text-secondary">{pair.id2.slice(0, 8)}</span>
+                    <div className="flex flex-col items-center">
+                      <div className="text-[10px] font-black text-brand-primary uppercase tracking-tighter mb-0.5">Match</div>
+                      <div className="px-3 py-1 bg-brand-primary/10 text-brand-primary rounded-full text-xs font-black border border-brand-primary/20">
+                        {Math.round(pair.score * 100)}%
                       </div>
                     </div>
 
+                    <div className="flex flex-col max-w-[40%] text-right">
+                      <span className="text-sm font-bold truncate text-text-primary">{pair.name2}</span>
+                      <span className="text-[10px] font-mono text-text-secondary">{pair.id2.slice(0, 8)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
                     <Button
-                      className="w-full h-9 bg-surface-muted hover:bg-brand-primary hover:text-white text-text-primary text-xs font-bold transition-all border-none"
-                      onClick={() => navigate(`/admin/merge/${activeType}/${pair.id1}/${pair.id2}`)}
+                      className="flex-1 h-9 bg-surface-muted hover:bg-brand-primary hover:text-white text-text-primary text-xs font-bold transition-all border-none"
+                      onClick={() => navigate(`/admin/merge/building/${pair.id1}/${pair.id2}`)}
                     >
                       Analyze & Merge
                       <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
-                  </motion.div>
-                ))}
-              </div>
-            </ScrollArea>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 px-3 text-xs text-text-secondary hover:text-feedback-destructive shrink-0"
+                      disabled={dismissMutation.isPending}
+                      onClick={() => dismissMutation.mutate({ id1: pair.id1, id2: pair.id2 })}
+                      title="Not a duplicate — hide this suggestion"
+                    >
+                      <XCircle className="w-4 h-4 mr-1" />
+                      Not a duplicate
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -983,6 +983,24 @@ CREATE POLICY "building_audit_logs_insert" ON building_audit_logs
 
 -- No UPDATE/DELETE policy: audit logs are append-only.
 
+### building_duplicate_dismissals
+
+Per-user "not a duplicate" decisions for the embassy duplicate-detection tool. Created by migration `20271155000000_building_duplicate_detection.sql` (feedback 570af7a4).
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid PK | `gen_random_uuid()` |
+| `user_id` | uuid FK → `auth.users` | CASCADE on delete |
+| `building_id_1` | uuid FK → `buildings` | Always the lesser of the two UUIDs (enforced by CHECK) |
+| `building_id_2` | uuid FK → `buildings` | Always the greater of the two UUIDs |
+| `created_at` | timestamptz | `now()` |
+
+**Constraints:** `CHECK (building_id_1 < building_id_2)`; `UNIQUE (user_id, building_id_1, building_id_2)`.
+
+**RLS:** SELECT and INSERT scoped to `user_id = auth.uid()`. No UPDATE or DELETE — dismissals are permanent per user.
+
+**Business rule:** Dismissals are per-user, not global. Two ambassadors may independently evaluate the same pair. A dismissed pair is re-surfaced if the user's row is deleted (CASCADE on `auth.users`).
+
 ### RLS: import_buildings
 
 **Tenancy model:** not tenant-scoped
@@ -4251,6 +4269,8 @@ CREATE TABLE public.spatial_ref_sys (
 | Buildings | `update_building_tiers` | admin | Assign tier ranks |
 | Buildings | `check_slug_availability` | authenticated | Verify slug uniqueness |
 | Buildings | `merge_buildings` | admin | Merge duplicate records |
+| Buildings | `get_potential_duplicate_buildings` | ambassador | Chapter-scoped name-similarity pairs (threshold 0.75), excluding the caller's dismissed pairs — see `building_duplicate_dismissals` |
+| Buildings | `dismiss_building_duplicate_pair` | ambassador | Records a per-user "not a duplicate" dismissal for a pair into `building_duplicate_dismissals` |
 | Collections | `get_collection_stats` | authenticated | Collection analytics |
 | Collections | `get_collection_buildings` | authenticated | Buildings with coordinates |
 | Collections | `get_collections_feed` | authenticated | Home feed: public collections owned by followed users |

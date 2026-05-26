@@ -97,6 +97,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import MapGL, { Marker, NavigationControl, GeolocateControl } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
+import { MapPin as MapPinMarker } from "@/features/maps/components/MapPin";
+import { getPinStyle } from "@/features/maps/utils/pinStyling";
+import type { ClusterResponse } from "@/features/maps/hooks/useMapData";
 
 export { buildingLoader as loader } from "./BuildingDetails.loader";
 
@@ -283,6 +286,8 @@ interface NearbyBuilding {
   location_lng: number;
   dist_meters: number;
   main_image_url: string | null;
+  tier_rank_label: string | null;
+  location_approximate: boolean;
 }
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
@@ -322,7 +327,7 @@ function BuildingMapTab({
         setNearbyError(error.message);
       } else if (data) {
         setNearbyBuildings(
-          (data as NearbyBuilding[]).filter((b) => b.id !== buildingId),
+          (data as unknown as NearbyBuilding[]).filter((b) => b.id !== buildingId),
         );
       }
     } finally {
@@ -360,39 +365,43 @@ function BuildingMapTab({
         {/* Nearby building markers */}
         {showNearby && nearbyBuildings
           .filter(b => typeof b.location_lat === 'number' && typeof b.location_lng === 'number')
-          .map((b) => (
-          <Marker
-            key={b.id}
-            longitude={b.location_lng}
-            latitude={b.location_lat}
-            anchor="bottom"
-            style={{ zIndex: hoveredId === b.id ? 30 : 10 }}
-          >
-            <Link
-              to={b.slug ? `/building/${b.short_id}/${b.slug}` : `/building/${b.id}`}
-              onMouseEnter={() => setHoveredId(b.id)}
-              onMouseLeave={() => setHoveredId(null)}
-              className="flex flex-col items-center gap-0 group"
-            >
-              <div
-                className={cn(
-                  "text-[10px] font-medium px-2 py-0.5 whitespace-nowrap max-w-[120px] truncate shadow-sm transition-colors",
-                  hoveredId === b.id
-                    ? "bg-text-primary text-surface-default"
-                    : "bg-surface-default text-text-primary border border-border-default",
-                )}
+          .map((b) => {
+            const pinData: ClusterResponse = {
+              id: b.id,
+              lat: b.location_lat,
+              lng: b.location_lng,
+              is_cluster: false,
+              count: 1,
+              rating: null,
+              status: null,
+              name: b.name,
+              slug: b.slug ?? undefined,
+              tier_rank_label: b.tier_rank_label,
+              location_approximate: b.location_approximate,
+            };
+            const pinStyle = getPinStyle(pinData);
+            const isHovered = hoveredId === b.id;
+            const MAP_MARKER_Z_MAX = 28;
+            const zIndex = isHovered ? 30 : Math.min(pinStyle.zIndex, MAP_MARKER_Z_MAX);
+            return (
+              <Marker
+                key={b.id}
+                longitude={b.location_lng}
+                latitude={b.location_lat}
+                anchor="center"
+                style={{ zIndex }}
               >
-                {b.name}
-              </div>
-              <div
-                className={cn(
-                  "w-2.5 h-2.5 rotate-45 -mt-1 shadow-sm transition-colors",
-                  hoveredId === b.id ? "bg-text-primary" : "bg-surface-default border border-border-default",
-                )}
-              />
-            </Link>
-          </Marker>
-        ))}
+                <Link
+                  to={b.slug ? `/building/${b.short_id}/${b.slug}` : `/building/${b.id}`}
+                  onMouseEnter={() => setHoveredId(b.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  aria-label={b.name}
+                >
+                  <MapPinMarker style={pinStyle} isHovered={isHovered} />
+                </Link>
+              </Marker>
+            );
+          })}
       </MapGL>
 
       {/* Show nearby buildings button */}
@@ -503,7 +512,7 @@ export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading..." showHeader shellProvidesTopInset>
       <Skeleton className="h-56 max-h-[50vh] sm:max-h-none sm:h-64 lg:h-80 w-full rounded-none" />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-8 space-y-8">
             <div className="space-y-3">
@@ -1901,17 +1910,17 @@ export default function BuildingDetails() {
               transition={{ duration: 0.8 }}
               src={heroImageUrl}
               alt={heroAlt}
-              className="absolute inset-0 h-full w-full object-cover grayscale brightness-90"
+              className="absolute inset-0 h-full w-full object-cover grayscale brightness-75 contrast-90"
               fetchPriority="high"
               loading="eager"
             />
-            {/* Bottom-weighted gradient for title legibility */}
+            {/* Bottom-weighted gradient for title legibility — strengthened mid-stop hides low-quality images */}
             <div
-              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10"
+              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20"
               aria-hidden
             />
             <div className="absolute inset-0 flex flex-col justify-end px-5 pb-9 pt-8 sm:px-10">
-              <div className="mx-auto w-full max-w-4xl space-y-3">
+              <div className="mx-auto w-full max-w-5xl space-y-3">
                 {(building.tier_rank || isStatusBuilding) && (
                   <div className="flex flex-wrap items-center gap-2">
                     {building.tier_rank && (
@@ -1964,7 +1973,7 @@ export default function BuildingDetails() {
 
         {/* ── BUILDING HEADER — title, metadata row, stats ── */}
         <div className="border-b border-border-default">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
 
               {/* Title & metadata */}
@@ -2084,7 +2093,7 @@ export default function BuildingDetails() {
             isTabBarSticky && "sticky top-0 z-30 shadow-sm",
           )}
         >
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center -mb-px overflow-x-scroll-touch">
                 {TABS.map((tab) => (
@@ -2120,7 +2129,7 @@ export default function BuildingDetails() {
 
         {/* ── TAB CONTENT ── */}
         <div className={cn(
-          activeTab === "map" ? "" : "max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10",
+          activeTab === "map" ? "" : "max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10",
         )}>
           <div className={cn(
             activeTab !== "map" && "grid grid-cols-1 lg:grid-cols-12 gap-12",
@@ -2775,7 +2784,7 @@ export default function BuildingDetails() {
                 <div className="bg-surface-card border border-border-default rounded-none overflow-hidden shadow-sm">
                   <div className="aspect-square relative">
                     {coordinates ? (
-                      <div className="h-full w-full grayscale-[0.4] hover:grayscale-0 transition-all duration-700">
+                      <div className={cn("h-full w-full transition-all duration-700", !isMapExpanded && "grayscale-[0.4] hover:grayscale-0")}>
                         <BuildingLocationMap
                           lat={coordinates.lat}
                           lng={coordinates.lng}
