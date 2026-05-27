@@ -11,10 +11,12 @@ async function redirectLegacyProfileId(
 ) {
   const headers = new Headers();
   const supabase = createSupabaseServerClient(request, headers);
-  headers.set(
-    "Cache-Control",
-    "public, s-maxage=600, stale-while-revalidate=86400",
-  );
+  if (new URL(request.url).pathname.endsWith(".data")) {
+    headers.set(
+      "Cache-Control",
+      "public, s-maxage=600, stale-while-revalidate=86400",
+    );
+  }
   const suffix = withEditQuery ? "?edit=1" : "";
 
   const { data: person, error: personErr } = await supabase

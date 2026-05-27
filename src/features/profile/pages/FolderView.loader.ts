@@ -56,11 +56,8 @@ export async function folderLoader({ request, params }: LoaderFunctionArgs) {
 
   if (!folderRow.is_public) {
     headers.set("Cache-Control", "private, no-store");
-  } else {
-    headers.set(
-      "Cache-Control",
-      "public, s-maxage=300, stale-while-revalidate=3600",
-    );
+  } else if (new URL(request.url).pathname.endsWith(".data")) {
+    headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
   }
 
   return data(

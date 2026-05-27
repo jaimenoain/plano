@@ -46,7 +46,9 @@ function absoluteHeroUrl(url: string | null | undefined): string | null {
 export async function localityPageLoader({ request, params }: LoaderFunctionArgs) {
   const headers = new Headers();
   const supabase = createSupabaseServerClient(request, headers);
-  headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
+  if (new URL(request.url).pathname.endsWith(".data")) {
+    headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
+  }
 
   const { cc, city } = params;
   if (!cc?.trim() || !city?.trim()) throw new Response("Not found", { status: 404 });

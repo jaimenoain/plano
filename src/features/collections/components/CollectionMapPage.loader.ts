@@ -93,7 +93,7 @@ export async function collectionMapPageLoader({
 
   if (!collectionRow.is_public) {
     headers.set("Cache-Control", "private, no-store");
-  } else {
+  } else if (new URL(request.url).pathname.endsWith(".data")) {
     headers.set(
       "Cache-Control",
       "public, s-maxage=300, stale-while-revalidate=3600",

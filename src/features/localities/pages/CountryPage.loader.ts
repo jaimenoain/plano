@@ -20,7 +20,9 @@ export type CountryPageLoaderData = {
 export async function countryPageLoader({ request, params }: LoaderFunctionArgs) {
   const headers = new Headers();
   const supabase = createSupabaseServerClient(request, headers);
-  headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
+  if (new URL(request.url).pathname.endsWith(".data")) {
+    headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
+  }
 
   const cc = params.cc?.trim().toUpperCase();
   if (!cc) throw new Response("Not found", { status: 404 });

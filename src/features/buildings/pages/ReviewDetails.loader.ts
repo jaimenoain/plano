@@ -6,10 +6,9 @@ import { SITE_URL } from "@/features/buildings/utils/structuredData";
 export async function reviewLoader({ request, params }: LoaderFunctionArgs) {
   const headers = new Headers();
   const supabase = createSupabaseServerClient(request, headers);
-  headers.set(
-    "Cache-Control",
-    "public, s-maxage=300, stale-while-revalidate=3600",
-  );
+  if (new URL(request.url).pathname.endsWith(".data")) {
+    headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
+  }
 
   const id = params.id;
   if (!id) {

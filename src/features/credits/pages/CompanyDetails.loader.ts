@@ -26,7 +26,9 @@ function absoluteCompanyLogo(url: string | null | undefined): string | null {
 export async function companyDetailsLoader({ request, params }: LoaderFunctionArgs) {
   const headers = new Headers();
   const supabase = createSupabaseServerClient(request, headers);
-  headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
+  if (new URL(request.url).pathname.endsWith(".data")) {
+    headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
+  }
 
   const slug = params.slug?.trim();
   if (!slug) throw new Response("Not found", { status: 404 });

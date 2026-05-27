@@ -13,10 +13,9 @@ export async function profileLoader({ request, params }: LoaderFunctionArgs) {
   }
 
   const supabase = createSupabaseServerClient(request, headers);
-  headers.set(
-    "Cache-Control",
-    "public, s-maxage=60, stale-while-revalidate=300",
-  );
+  if (new URL(request.url).pathname.endsWith(".data")) {
+    headers.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+  }
   const usernameParam = params.username;
   const isUuid =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(

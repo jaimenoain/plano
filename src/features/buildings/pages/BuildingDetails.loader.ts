@@ -12,10 +12,12 @@ import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
 export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
   const headers = new Headers();
   const supabase = createSupabaseServerClient(request, headers);
-  headers.set(
-    "Cache-Control",
-    "public, s-maxage=300, stale-while-revalidate=3600",
-  );
+  // Only CDN-cache data requests (React Router client-side nav appends .data).
+  // HTML document responses embed <script> chunk URLs — caching those causes
+  // users to load stale JS after a new deploy. See AI_STATUS.md 2026-05-27.
+  if (new URL(request.url).pathname.endsWith(".data")) {
+    headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
+  }
 
   let building: Awaited<ReturnType<typeof fetchBuildingDetails>>;
   try {

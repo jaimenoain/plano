@@ -39,7 +39,12 @@ export interface ArchitectureHubLoaderData {
 export async function architectureHubLoader({ request }: LoaderFunctionArgs) {
   const headers = new Headers();
   const supabase = createSupabaseServerClient(request, headers);
-  headers.set("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
+  // Only CDN-cache data requests (React Router client-side nav appends .data).
+  // HTML document responses embed <script> chunk URLs — caching those causes
+  // users to load stale JS after a new deploy.
+  if (new URL(request.url).pathname.endsWith(".data")) {
+    headers.set("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
+  }
 
   let localities: {
     country_code: string;
