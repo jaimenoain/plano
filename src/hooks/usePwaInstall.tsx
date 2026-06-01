@@ -85,6 +85,38 @@ export function PwaProvider({ children }: { children: ReactNode }) {
     };
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
 
+    // ─── Escape hatch ──────────────────────────────────────────────────────
+    // CRITICAL: a plain window.location.reload() re-enters the controlling
+    // service worker. If a stale SW is serving a stale app shell (older builds
+    // used Workbox's default navigation handling before navigateFallback:null
+    // landed), the reload returns the SAME stale page — which is exactly why
+    // every prior reload-based fix failed and only a hard refresh worked.
+    // To guarantee fresh content we delete every cache and unregister every
+    // service worker FIRST, so the post-reload navigation goes straight to the
+    // network. A persisted one-shot guard rules out any reload loop.
+    const hardReloadEscape = async () => {
+      if (reloading.current) return;
+      try {
+        const last = Number(sessionStorage.getItem("sw_escape_at") || "0");
+        if (Date.now() - last < 60_000) return; // never escape twice within a minute
+        sessionStorage.setItem("sw_escape_at", String(Date.now()));
+      } catch {
+        /* sessionStorage unavailable (private mode) — proceed without the guard */
+      }
+      reloading.current = true;
+      try {
+        if ("caches" in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      } catch {
+        /* best-effort — reload regardless */
+      }
+      window.location.reload();
+    };
+
     let lastVersionCheckAt = 0;
     const checkVersion = () => {
       const now = Date.now();
@@ -93,9 +125,8 @@ export function PwaProvider({ children }: { children: ReactNode }) {
       void fetch("/api/version", { cache: "no-store" })
         .then((res) => res.json() as Promise<{ buildId: string }>)
         .then(({ buildId }) => {
-          if (buildId && buildId !== __BUILD_ID__ && !reloading.current) {
-            reloading.current = true;
-            window.location.reload();
+          if (buildId && buildId !== __BUILD_ID__) {
+            void hardReloadEscape();
           }
         })
         .catch(() => {

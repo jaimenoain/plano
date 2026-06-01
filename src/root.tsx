@@ -67,10 +67,29 @@ export async function loader({ request }: LoaderFunctionArgs) {
   );
 }
 
+// Stale-bundle kill switch. Rendered server-side into every fresh document and
+// executed before hydration. If THIS document was served stale (an out-of-date
+// service worker or CDN edge handed back an old shell whose build id no longer
+// matches the server), it purges all caches + service workers and reloads once
+// so the next navigation is fresh from the network. A plain reload alone never
+// escapes a stale SW — see hardReloadEscape() in usePwaInstall.tsx. Build id is
+// inlined at build time via the __BUILD_ID__ define.
+const STALE_BUNDLE_KILL_SWITCH =
+  `(function(){try{if(!('serviceWorker'in navigator))return;var B=${JSON.stringify(__BUILD_ID__)};` +
+  `fetch('/api/version',{cache:'no-store'}).then(function(r){return r.ok?r.json():null}).then(function(d){` +
+  `if(!d||!d.buildId||d.buildId===B)return;var k='sw_escape_at',last=0;` +
+  `try{last=+(sessionStorage.getItem(k)||0)}catch(e){}if(Date.now()-last<60000)return;` +
+  `try{sessionStorage.setItem(k,String(Date.now()))}catch(e){}` +
+  `var fin=function(){location.reload()};var j=[];` +
+  `if(window.caches)j.push(caches.keys().then(function(a){return Promise.all(a.map(function(x){return caches.delete(x)}))}));` +
+  `j.push(navigator.serviceWorker.getRegistrations().then(function(a){return Promise.all(a.map(function(s){return s.unregister()}))}));` +
+  `Promise.all(j).then(fin,fin);}).catch(function(){});}catch(e){}})();`;
+
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: STALE_BUNDLE_KILL_SWITCH }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link
