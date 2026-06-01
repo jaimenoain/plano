@@ -33,6 +33,7 @@ import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle
 
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 const LOCAL_STORAGE_MAP_KEY = 'plano_map_view_state';
+const DEFAULT_GEOLOCATE_ZOOM = 8;
 
 interface PlanoMapProps {
   showEmptyMessage?: boolean;
@@ -69,6 +70,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
   }, [fitBounds, fitMapBounds]);
 
   const geolocateControlRef = useRef<MaplibreGeolocateControl | null>(null);
+  const initialGeolocateAdjustedRef = useRef(false);
   // Set to true if onMove fires before onLoad — user interacted with the map
   // (e.g. tapped the GeolocateControl) before the map finished loading.
   const hasEarlyMovedRef = useRef(false);
@@ -165,6 +167,30 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
     }
   }, [updateBounds, lat, lng, zoom, updateMapState, flushPendingViewport]);
 
+  const onGeolocate = useCallback(
+    (position: GeolocationPosition) => {
+      // Only tune zoom for the first automatic geolocate on the untouched default map.
+      if (initialGeolocateAdjustedRef.current) return;
+      if (!(lat === DEFAULT_LAT && lng === DEFAULT_LNG && zoom === DEFAULT_ZOOM)) return;
+
+      initialGeolocateAdjustedRef.current = true;
+      const nextLat = position.coords.latitude;
+      const nextLng = position.coords.longitude;
+
+      setViewState((prev) => ({
+        ...prev,
+        latitude: nextLat,
+        longitude: nextLng,
+        zoom: DEFAULT_GEOLOCATE_ZOOM,
+      }));
+      updateMapState(
+        { lat: nextLat, lng: nextLng, zoom: DEFAULT_GEOLOCATE_ZOOM },
+        true
+      );
+    },
+    [lat, lng, zoom, updateMapState]
+  );
+
   const clusterBounds = clusterViewport?.bounds ?? bounds;
   const clusterZoom = clusterViewport?.zoom ?? viewState.zoom;
 
@@ -248,6 +274,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
           positionOptions={{ enableHighAccuracy: true }}
           trackUserLocation={true}
           showUserLocation={true}
+          onGeolocate={onGeolocate}
         />
         <NavigationControl position="bottom-right" />
         {bounds && (
