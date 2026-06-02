@@ -211,7 +211,6 @@ export async function action({ request }: ActionFunctionArgs) {
     .single();
 
   if (localityError || !locality) {
-    // eslint-disable-next-line no-console
     console.error("[event-search] locality fetch failed:", localityError?.message ?? "no row");
     void logApiRequest(supabase, {
       endpoint: "/api/embassy/event-search",
@@ -559,7 +558,6 @@ export async function action({ request }: ActionFunctionArgs) {
       } else {
         insert_errors++;
         insertErrorMessages.push(insertError.message);
-        // eslint-disable-next-line no-console
         console.error("[event-search] insert error:", insertError.message);
       }
     }
@@ -604,7 +602,6 @@ export async function action({ request }: ActionFunctionArgs) {
       errorMessage: msg,
       metadata: stats,
     });
-    // eslint-disable-next-line no-console
     console.error("[event-search] unexpected error:", msg);
     return Response.json({ error: "Internal server error" }, { status: 500, headers });
   }

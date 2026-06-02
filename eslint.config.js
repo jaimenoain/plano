@@ -34,8 +34,8 @@ export default tseslint.config(
       "react-hooks/exhaustive-deps": "off",
       "react-refresh/only-export-components": ["off", { allowConstantExport: true }],
 
-      // Prevent Phase 0 regressions
-      "no-console": "error",
+      // Prevent Phase 0 regressions. Allow warn/error (legitimate operational logging); ban log/info/debug.
+      "no-console": ["error", { allow: ["warn", "error"] }],
 
       // Prevent Phase 1 regressions
       "@typescript-eslint/no-explicit-any": "error",
@@ -85,13 +85,6 @@ export default tseslint.config(
     ],
     rules: {
       "react-refresh/only-export-components": "off",
-    },
-  },
-  {
-    files: ["src/features/admin/api/diagnostics.ts"],
-    rules: {
-      // Last-resort logging when Supabase diagnostic insert fails (cannot recurse into logDiagnosticError)
-      "no-console": "off",
     },
   },
 );
