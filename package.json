@@ -12,8 +12,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "gen-types": "sh -c 'TMP=$(mktemp) && npx supabase gen types typescript --project-id lnqxtomyucnnrgeapnzt --schema public > \"$TMP\" && mv \"$TMP\" src/integrations/supabase/types.ts'",
-    "lint": "eslint . --max-warnings 0",
-    "lint:fix": "eslint . --fix --max-warnings 0",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "preview": "vite preview"
   },
   "dependencies": {

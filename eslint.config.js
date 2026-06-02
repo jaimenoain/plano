@@ -30,8 +30,9 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      // Many screens intentionally pin effect deps to avoid refetch loops; fix incrementally per screen.
-      "react-hooks/exhaustive-deps": "off",
+      // Surfaced as a warning for visibility. Many screens intentionally pin effect deps to avoid refetch
+      // loops, so fixes are a deliberate per-screen follow-up — not a blocking gate (CI tolerates warnings).
+      "react-hooks/exhaustive-deps": "warn",
       "react-refresh/only-export-components": ["off", { allowConstantExport: true }],
 
       // Prevent Phase 0 regressions. Allow warn/error (legitimate operational logging); ban log/info/debug.
