@@ -49,12 +49,15 @@ describe("removeCreditLoader (QA 6.4)", () => {
       buildingId: BUILDING_ID,
       buildingName: "Test Tower",
       buildingSlug: "test-tower",
+      // Canonical building URLs are /building/{shortId}/{slug}; getBuildingUrl only
+      // applies the slug when a short_id is present (the redeem RPC returns one).
+      buildingShortId: 4242,
     });
     const out = await removeCreditLoader(args(HEX_64));
     expect((out as { data: unknown }).data).toEqual({
       outcome: "success",
       buildingName: "Test Tower",
-      buildingHref: `/building/${BUILDING_ID}/test-tower`,
+      buildingHref: `/building/4242/test-tower`,
     });
     expect(removeCreditByTokenWithClient).toHaveBeenCalledWith(
       { tag: "mock-supabase" },

@@ -47,9 +47,11 @@ afterEach(() => {
 
 describe('ProfileKanbanView', () => {
   it('renders columns with correct items from kanbanData', () => {
+    // created_at must be a valid date — the card renders a relative timestamp
+    // (FeedActivityRow → formatDistanceToNow), which throws on an empty string.
     const mockItem = (id: string, rating: number | null): FeedReview => ({
         id, rating,
-        content: null, created_at: '', likes_count: 0, comments_count: 0, is_liked: false,
+        content: null, created_at: '2023-01-01T00:00:00.000Z', likes_count: 0, comments_count: 0, is_liked: false,
         user: { username: 'u', avatar_url: null, followers_count: null },
         building: { id: 'b', name: 'B', creditedEntities: [] }
     });

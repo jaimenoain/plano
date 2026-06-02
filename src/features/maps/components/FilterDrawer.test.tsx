@@ -182,7 +182,8 @@ describe('FilterDrawer', () => {
 
     render(<FilterDrawer />);
 
-    expect(screen.getByText('Curators & Friends')).toBeDefined();
+    // Heading now renders as "Curators & friends" (lowercase f) in DiscoveryFiltersPanel.
+    expect(screen.getByText('Curators & friends')).toBeDefined();
     expect(screen.getByTestId('contact-picker')).toBeDefined();
   });
 
@@ -196,7 +197,7 @@ describe('FilterDrawer', () => {
 
     render(<FilterDrawer />);
 
-    expect(screen.queryByText('Curators & Friends')).toBeNull();
+    expect(screen.queryByText('Curators & friends')).toBeNull();
     expect(screen.queryByTestId('contact-picker')).toBeNull();
   });
 
@@ -210,8 +211,11 @@ describe('FilterDrawer', () => {
       expect(screen.getByText('Company')).toBeDefined();
       expect(screen.getByText('Role')).toBeDefined();
       expect(screen.getByTestId('company-map-filter')).toBeDefined();
-      expect(screen.getByText('Structural Engineer')).toBeDefined();
-      expect(screen.getByText('Design Architect')).toBeDefined();
+      // Role labels are derived from CREDIT_ROLES via formatCreditRoleLabel
+      // (split on "_", capitalize each word): structural_engineering →
+      // "Structural Engineering", design_architecture → "Design Architecture".
+      expect(screen.getByText('Structural Engineering')).toBeDefined();
+      expect(screen.getByText('Design Architecture')).toBeDefined();
     });
   });
 });

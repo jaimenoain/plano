@@ -85,8 +85,10 @@ describe("architectIdRedirectLoader (QA 3.3)", () => {
       { data: null, error: null },
     );
 
+    // Use the `.data` single-fetch URL: the loader only sets Cache-Control on `.data`
+    // requests (the cached client-navigation path), which this test asserts below.
     const caught = await architectIdRedirectLoader(
-      args(VALID_PERSON_UUID),
+      args(VALID_PERSON_UUID, ".data"),
     ).catch((e: unknown) => e);
 
     expect(caught).toBeInstanceOf(Response);

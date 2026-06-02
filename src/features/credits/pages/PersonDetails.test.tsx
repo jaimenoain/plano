@@ -204,7 +204,9 @@ describe("PersonDetails (QA 3.1 unclaimed)", () => {
     const website = screen.getByRole("link", { name: /website/i });
     expect(website).toHaveAttribute("href", "https://example.com");
 
-    expect(screen.getByText("JD")).toBeInTheDocument();
+    // No avatarUrl: the component renders no avatar image (initials fallback was
+    // removed in commit 8ee1047c — avatars now show only when an image URL exists).
+    expect(screen.queryByRole("img", { name: "Jane Doe" })).not.toBeInTheDocument();
   });
 
   it("shows unclaimed banner and Claim this profile when logged in", () => {

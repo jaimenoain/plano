@@ -35,6 +35,7 @@ const mocks = vi.hoisted(() => {
 
   const mockSupabase = {
       from: vi.fn().mockReturnValue(mockChain),
+      rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
       storage: { from: vi.fn().mockReturnValue({ getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: '' } }) }) },
   };
 
@@ -301,24 +302,39 @@ describe('Profile Verification', () => {
   });
 
   it('should trigger pagination when scrolled to bottom', async () => {
-      // Mock return 15 items to trigger hasMore=true
-      const manyItems = Array(15).fill(mockBuildings[0]).map((b, i) => ({ ...b, id: `review-${i}` }));
+      // Pagination is now client-side over the deduplicated post IDs
+      // (uniqueLatestPostIds.slice(page*15, +15)), keyed by building_id — not a
+      // Supabase .range() call. Provide >15 DISTINCT buildings so page 0 sets
+      // hasMore=true and a scroll fetches page 1 (post IDs review-15…review-19).
+      const manyItems = Array(20).fill(mockBuildings[0]).map((b, i) => ({
+          ...b,
+          id: `review-${i}`,
+          building_id: `b${i}`,
+          building: { ...b.building, id: `b${i}` },
+      }));
       mocks.mockChain.then = (resolve: any) => resolve({ data: manyItems, error: null });
 
       const { rerender } = renderProfile();
       await screen.findByTestId('review-card-review-0');
 
-      // Verify initial fetch
+      // Verify initial fetch reads the user's buildings, and page 0 requests the
+      // first 15 post IDs (review-0…review-14) via building_posts .in('id', …) —
+      // review-15 is NOT yet fetched.
       expect(mocks.mockSupabase.from).toHaveBeenCalledWith('user_buildings');
-      expect(mocks.mockChain.range).toHaveBeenCalledWith(0, 14);
+      const fetchedPage2Posts = () =>
+          mocks.mockChain.in.mock.calls.some(
+              ([col, ids]) =>
+                  col === 'id' && Array.isArray(ids) && ids.includes('review-15'),
+          );
+      expect(fetchedPage2Posts()).toBe(false);
 
       // Simulate Scroll to bottom (Intersection Observer visible)
       mockIsVisible = true;
       rerender(<QueryClientProvider client={queryClient}>{profileTree()}</QueryClientProvider>);
 
+      // Page 1 fetches the next slice of post IDs (review-15…review-19).
       await waitFor(() => {
-          // Check if range(15, 29) was called
-          expect(mocks.mockChain.range).toHaveBeenCalledWith(15, 29);
+          expect(fetchedPage2Posts()).toBe(true);
       });
   });
 

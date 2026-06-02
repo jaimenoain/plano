@@ -120,16 +120,21 @@ vi.mock('@/features/profile/hooks/useProfileComparison', () => ({
 
 // Supabase Mock
 vi.mock('@/integrations/supabase/client', () => {
+  // Profile content is now loaded via user_buildings (status/rating) joined to
+  // building_posts (the review rows) → buildings. Mock each table to match that
+  // multi-step query flow so a single review (id "review-1") renders.
   const userBuildingsData = [
+    { building_id: 'b1', rating: 4, status: 'visited' },
+  ];
+
+  const buildingPostsData = [
     {
       id: 'review-1',
-      content: 'Great place',
-      rating: 4,
+      body: 'Great place',
       created_at: '2023-01-01',
-      edited_at: '2023-01-01',
+      updated_at: '2023-01-01',
       user_id: 'user-123',
       building_id: 'b1',
-      status: 'visited',
       building: {
         id: 'b1',
         name: 'Test Building',
@@ -137,14 +142,15 @@ vi.mock('@/integrations/supabase/client', () => {
         city: 'Metropolis',
         country: 'USA',
         year_completed: 2000,
-        main_image_url: 'img.jpg',
+        hero_image_url: 'img.jpg',
+        community_preview_url: null,
         slug: 'test-building',
-        short_id: 'tb',
+        short_id: 1,
         building_credits: [
-          { status: 'active', credit_tier: 'primary', person: { name: 'Arch One', id: 'a1' }, company: null },
-        ]
-      }
-    }
+          { status: 'active', credit_tier: 'primary', person: { id: 'a1', name: 'Arch One' }, company: null },
+        ],
+      },
+    },
   ];
 
   const profileData = { id: 'user-123', username: 'testuser', avatar_url: null, bio: 'Bio', favorites: [] };
@@ -157,6 +163,8 @@ vi.mock('@/integrations/supabase/client', () => {
        result = { data: profileData, error: null };
     } else if (table === 'user_buildings') {
        result = { data: userBuildingsData, error: null };
+    } else if (table === 'building_posts') {
+       result = { data: buildingPostsData, error: null };
     }
 
     // Builder object with then() for await support
@@ -210,6 +218,7 @@ vi.mock('@/integrations/supabase/client', () => {
   return {
     supabase: {
       from: (table: string) => createQueryBuilder(table),
+      rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
       storage: {
           from: () => ({
               getPublicUrl: () => ({ data: { publicUrl: '' } })

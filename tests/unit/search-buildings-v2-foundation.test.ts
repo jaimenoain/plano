@@ -4,11 +4,14 @@ import { join } from "node:path";
 
 const migrationsDir = join(process.cwd(), "supabase/migrations");
 
-function latestMigrationDefining(fnName: string): string {
+// The Phase 1 foundation migration is the one that FIRST defines the function and sets up its
+// schema (search_vector column, GIN/trigram indexes, trigger, backfill). Later migrations
+// CREATE OR REPLACE the function body without repeating that one-time setup, so this suite must
+// validate the earliest defining migration, not the latest.
+function foundationMigrationDefining(fnName: string): string {
   const files = readdirSync(migrationsDir)
     .filter((f) => f.endsWith(".sql"))
-    .sort()
-    .reverse();
+    .sort(); // ascending — earliest (foundation) migration first
   for (const f of files) {
     const body = readFileSync(join(migrationsDir, f), "utf8");
     if (
@@ -22,7 +25,7 @@ function latestMigrationDefining(fnName: string): string {
 }
 
 describe("search_buildings_v2 migration (Phase 1)", () => {
-  const sql = latestMigrationDefining("search_buildings_v2");
+  const sql = foundationMigrationDefining("search_buildings_v2");
 
   it("migration exists and defines search_buildings_v2", () => {
     expect(sql.length).toBeGreaterThan(0);
@@ -96,7 +99,7 @@ describe("search_buildings_v2 migration (Phase 1)", () => {
 });
 
 describe("update_building_search_vector trigger function (Phase 1)", () => {
-  const sql = latestMigrationDefining("update_building_search_vector");
+  const sql = foundationMigrationDefining("update_building_search_vector");
 
   it("migration defines the trigger function", () => {
     expect(sql).toMatch(/FUNCTION public\.update_building_search_vector/);

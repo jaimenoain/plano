@@ -112,7 +112,7 @@ describe("EntityClaims (QA 8.2)", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await screen.findByText(/No pending architect verification claims/i);
+    await screen.findByText(/No pending architect claims/i);
 
     await user.click(screen.getByRole("tab", { name: /Company disputes/i }));
 

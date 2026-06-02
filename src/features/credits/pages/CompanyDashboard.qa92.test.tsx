@@ -332,7 +332,7 @@ describe("CompanyDashboard (QA 9.2)", () => {
     const roleCombo = screen.getByRole("combobox", { name: /filter by credit role/i });
     await user.click(roleCombo);
     const listbox = await screen.findByRole("listbox");
-    await user.click(within(listbox).getByRole("option", { name: "Structural Engineer" }));
+    await user.click(within(listbox).getByRole("option", { name: "Structural Engineering" }));
 
     await waitFor(() => {
       expect(mocks.getCompanyPortfolio).toHaveBeenCalledWith("co-1", "structural_engineering");

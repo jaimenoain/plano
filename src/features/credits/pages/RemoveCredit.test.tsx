@@ -45,7 +45,8 @@ describe("RemoveCredit (QA 6.4)", () => {
       buildingHref: `/building/${BUILDING_ID}/gherkin`,
     };
     renderPage();
-    expect(screen.getByRole("heading", { name: /credit removed — thank you/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^credit removed$/i })).toBeInTheDocument();
+    expect(screen.getByText(/thank you for letting us know/i)).toBeInTheDocument();
     expect(screen.getByText("Gherkin Hall")).toBeInTheDocument();
     const link = screen.getByRole("link", { name: /view building/i });
     expect(link).toHaveAttribute("href", `/building/${BUILDING_ID}/gherkin`);

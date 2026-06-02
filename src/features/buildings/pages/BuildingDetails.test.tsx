@@ -140,6 +140,7 @@ vi.mock('@/integrations/supabase/client', () => {
     });
     builder.in = vi.fn().mockReturnThis();
     builder.order = vi.fn().mockReturnThis();
+    builder.limit = vi.fn().mockReturnThis();
     builder.maybeSingle = vi.fn().mockResolvedValue(singleResult);
 
     // Update/Upsert setup
@@ -220,9 +221,10 @@ describe('BuildingDetails Interaction', () => {
       </TooltipProvider>
     );
 
-    // Wait for building name to load
+    // Wait for building name to load. The title H1 renders the name with a
+    // trailing period ("Test Building.").
     await waitFor(async () => {
-        const elements = await screen.findAllByText('Test Building');
+        const elements = await screen.findAllByText('Test Building.');
         expect(elements.length).toBeGreaterThan(0);
     }, { timeout: 3000 });
 
@@ -230,9 +232,12 @@ describe('BuildingDetails Interaction', () => {
         expect(screen.getByRole("button", { name: /visited/i })).toBeTruthy();
     });
 
+    // Open the status dropdown (trigger shows "Visited") and pick the pending
+    // option. That option is now labelled "Wishlist" (was "Save"); it still
+    // calls handleStatusChange("pending").
     await user.click(screen.getByRole("button", { name: /visited/i }));
-    const saveItem = await screen.findByRole("menuitem", { name: /^save$/i });
-    await user.click(saveItem);
+    const wishlistItem = await screen.findByRole("menuitem", { name: /wishlist/i });
+    await user.click(wishlistItem);
 
     // Verify Supabase upsert call
     await waitFor(() => {
@@ -246,10 +251,9 @@ describe('BuildingDetails Interaction', () => {
         );
     });
 
-    // Optimistic Update: Should see "Saved" now (in place of Visited badge)
+    // Optimistic Update: the status trigger now reflects "Saved" (pending).
     await waitFor(() => {
-        const saveTrigger = screen.getByRole("button", { name: /^save$/i });
-        expect(saveTrigger.className).toContain("text-text-primary");
+        expect(screen.getByRole("button", { name: /saved/i })).toBeTruthy();
     });
   });
 
@@ -286,14 +290,16 @@ describe('BuildingDetails Interaction', () => {
     );
 
     await waitFor(async () => {
-        const elements = await screen.findAllByText('Test Lost Building');
+        const elements = await screen.findAllByText('Test Lost Building.');
         expect(elements.length).toBeGreaterThan(0);
     }, { timeout: 3000 });
 
-    // Assert that the lost building message appears
-    expect(screen.getByText('This building is lost to time. It no longer stands at this location.')).toBeTruthy();
+    // Assert that the lost building message appears (copy was shortened).
+    expect(screen.getByText('This building no longer stands at this location.')).toBeTruthy();
 
-    // Assert that the directions button says "Navigate to Site"
-    expect(screen.getByRole("button", { name: /Navigate to Site/i })).toBeTruthy();
+    // The primary directions affordance is still offered for lost buildings.
+    // (The "Navigate to Site" wording now lives only inside the approximate-
+    // location confirmation dialog; the always-visible CTA is "Directions".)
+    expect(screen.getByRole("button", { name: /Directions/i })).toBeTruthy();
   });
 });

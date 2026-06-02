@@ -264,7 +264,10 @@ describe("CompanyDetails (QA 4.1 unclaimed)", () => {
     const website = screen.getByRole("link", { name: /website/i });
     expect(website).toHaveAttribute("href", "https://structco.example");
 
-    expect(screen.getByText("S")).toBeInTheDocument();
+    // No logoUrl: the company logo (and its initial fallback) is not rendered.
+    // The initial fallback was removed in commit 8ee1047c — logos show only when
+    // an image URL exists.
+    expect(screen.queryByRole("img", { name: /StructCo GmbH logo/i })).not.toBeInTheDocument();
   });
 
   it("shows unclaimed banner and Claim this company when logged in", () => {
@@ -325,7 +328,7 @@ describe("CompanyDetails (QA 4.1 unclaimed)", () => {
     expect(screen.getByRole("link", { name: "Bridge Hall" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("combobox", { name: /filter credits by role/i }));
-    await user.click(await screen.findByRole("option", { name: "Structural Engineer" }));
+    await user.click(await screen.findByRole("option", { name: "Structural Engineering" }));
 
     expect(screen.queryByRole("link", { name: "Design Tower" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Bridge Hall" })).toBeInTheDocument();

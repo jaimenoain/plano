@@ -40,6 +40,7 @@ const mocks = vi.hoisted(() => {
 
   const mockSupabase = {
     from: vi.fn().mockReturnValue(mockChain),
+    rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
     storage: { from: vi.fn().mockReturnValue({ getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: "" } }) }) },
   };
 

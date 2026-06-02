@@ -52,6 +52,10 @@ vi.mock('@/features/credits/hooks/useStewardCompaniesForNav', () => ({
   useStewardCompaniesForNav: () => ({ data: [] }),
 }));
 
+vi.mock('@/features/ambassadors/hooks/useAmbassadorNavAccess', () => ({
+  useAmbassadorNavAccess: () => ({ data: false }),
+}));
+
 // Mock UI components to avoid Portal issues
 vi.mock('@/components/ui/dropdown-menu', () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

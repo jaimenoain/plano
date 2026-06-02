@@ -102,6 +102,7 @@ vi.mock('@/integrations/supabase/client', () => {
     builder.eq = vi.fn().mockReturnThis();
     builder.in = vi.fn().mockReturnThis();
     builder.order = vi.fn().mockReturnThis();
+    builder.limit = vi.fn().mockReturnThis();
     builder.maybeSingle = vi.fn().mockResolvedValue(singleResult);
     builder.single = vi.fn().mockResolvedValue(singleResult);
     builder.upsert = vi.fn().mockResolvedValue({ data: null, error: null });
@@ -223,15 +224,22 @@ describe('BuildingDetails Gallery', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getAllByText("Test Building").length).toBeGreaterThan(0);
+        // The page title H1 renders the name with a trailing period ("Test Building.").
+        expect(screen.getAllByText("Test Building.").length).toBeGreaterThan(0);
       });
 
+      // The overview editorial stream renders the loaded reviews + photos.
+      // (The old "Reviews & photography" header component is no longer used;
+      // the stream now renders each review/photo block inline.) Proving the
+      // mocked get_building_reviews data flowed through: the review content
+      // appears and the "No photos yet" empty state is gone.
       await waitFor(
         () => {
-          expect(screen.getByText(/Reviews & photography/)).toBeTruthy();
+          expect(screen.getByText(/Review 1/)).toBeTruthy();
         },
         { timeout: 10_000 },
       );
+      expect(screen.queryByText("No photos yet")).toBeNull();
     },
     15_000,
   );
