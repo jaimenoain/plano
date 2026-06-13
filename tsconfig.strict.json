@@ -1,0 +1,30 @@
+{
+  /*
+   * Incremental TypeScript strict flip (Phase 1, Theme C).
+   *
+   * The whole app still typechecks in lenient mode (tsconfig.app.json: strict:false,
+   * noImplicitAny:false) because of a large `as any` backlog. Rather than flip the whole tree at
+   * once, this config typechecks a CURATED ALLOWLIST of files under full `strict`. It is green by
+   * construction: only files proven strict-clean are listed.
+   *
+   * To add a file: append its path to `include`, run `npm run typecheck:strict`, and if it passes
+   * (including its imports), commit. CI then protects it from regressing. See docs/migrations.md.
+   *
+   * `include` here OVERRIDES the base `include` (it does not merge), so only these files are
+   * checked. `extends` still inherits paths/baseUrl/lib from tsconfig.app.json.
+   */
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true
+  },
+  "include": [
+    "src/vite-env.d.ts",
+    "src/integrations/supabase/client.ts",
+    "src/config.ts",
+    "src/lib/utils.ts",
+    "src/lib/century.ts",
+    "src/lib/buildingStatus.ts",
+    "src/lib/trigram-similarity.ts"
+  ]
+}

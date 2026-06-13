@@ -1,0 +1,37 @@
+-- ============================================================================
+-- RPC MIGRATION TEMPLATE  (Phase 1, Theme E)
+-- ============================================================================
+-- This is a TEMPLATE, not a runnable migration. The `.sql.txt` extension keeps
+-- it out of the Supabase migration runner. To use it:
+--
+--   1. Copy it to a NEW file named  YYYYMMDDHHmmss_<verb>_<noun>.sql
+--      (a UNIQUE 14-digit UTC timestamp — `node scripts/check-migrations.mjs`
+--       fails on collisions).
+--   2. Fill in the function name, args, and body below.
+--   3. After applying, run `npm run gen-types` and commit the regenerated
+--      src/integrations/supabase/types.ts in the SAME PR (see docs/migrations.md).
+--
+-- Why this template exists — three recurring incident classes it prevents:
+--   * GRANT loss on DROP+CREATE: re-creating a function resets its privileges,
+--     causing 403/500s. ALWAYS re-REVOKE/GRANT after defining the function.
+--   * search_path hijacking: pin `set search_path = ''` (schema-qualify names).
+--   * statement_timeout on per-row SECURITY DEFINER loops: prefer SET-BASED
+--     bodies (one INSERT/UPDATE ... SELECT) over row-by-row PL/pgSQL loops.
+-- ============================================================================
+
+create or replace function public.<fn_name>(<arg_name> <arg_type>)
+returns <return_type>
+language sql                       -- prefer `sql` (set-based); use `plpgsql` only when needed
+security invoker                   -- use `security definer` ONLY with explicit justification
+set search_path = ''               -- always pin; schema-qualify every object reference
+as $$
+  -- SET-BASED body. Example shape:
+  -- select ...
+  -- from public.<table> t
+  -- where t.<col> = <arg_name>;
+$$;
+
+-- Re-assert privileges every time (DROP/CREATE resets them). Default-deny, then grant narrowly.
+revoke execute on function public.<fn_name>(<arg_type>) from public;
+grant  execute on function public.<fn_name>(<arg_type>) to authenticated;
+-- grant execute on function public.<fn_name>(<arg_type>) to anon;   -- only if truly public

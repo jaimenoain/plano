@@ -33,11 +33,29 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      # Strict typecheck over a curated allowlist (tsconfig.strict.json). The list grows as files
+      # are proven strict-clean; this blocks regressions on already-strict files. Green by
+      # construction — it never includes a file that does not pass.
+      - name: Typecheck (strict allowlist)
+        run: npm run typecheck:strict
+
       # `npm run lint` is `eslint .` (no --max-warnings). ESLint exits non-zero on errors but
       # tolerates warnings, so this blocks on lint errors while letting the intentionally-deferred
-      # react-hooks/exhaustive-deps warnings surface without failing CI.
+      # react-hooks/exhaustive-deps and no-restricted-imports boundary warnings surface without
+      # failing CI.
       - name: Lint
         run: npm run lint
+
+      # Migration guardrail: fails only on NEW timestamp collisions / non-conforming filenames
+      # (the 33+2 pre-existing ones are baselined). Does NOT apply migrations to the database —
+      # migrations are applied manually and deliberately.
+      - name: Migration check
+        run: node scripts/check-migrations.mjs
+
+      # Advisory (non-blocking): reminds when a migration changes but generated types do not.
+      - name: gen-types staleness reminder
+        continue-on-error: true
+        run: node scripts/check-types-staleness.mjs
 
       - name: Unit tests
         run: npm run test
@@ -48,3 +66,9 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_SENTRY_DSN: ""
+
+      # Advisory (non-blocking): reports source files over their soft LOC budget as a
+      # decomposition signal. Always exits 0; never fails CI.
+      - name: File size report (advisory)
+        continue-on-error: true
+        run: node scripts/check-file-sizes.mjs

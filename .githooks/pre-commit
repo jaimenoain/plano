@@ -1,0 +1,12 @@
+#!/bin/sh
+# Plano pre-commit hook (Phase 1, Theme E).
+# Wired via the `prepare` npm script: `git config core.hooksPath .githooks`.
+# Runs the migration collision/sanity check only when staged changes touch migrations,
+# so ordinary commits stay fast. Bypass in an emergency with `git commit --no-verify`.
+
+if git diff --cached --name-only | grep -q '^supabase/migrations/'; then
+  echo "• Staged changes touch supabase/migrations/ — running migration check…"
+  node scripts/check-migrations.mjs || exit 1
+fi
+
+exit 0

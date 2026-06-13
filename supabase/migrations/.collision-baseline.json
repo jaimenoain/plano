@@ -1,0 +1,42 @@
+{
+  "comment": "Pre-existing migration filename problems that are ALREADY APPLIED to production and must not be renamed (renaming would make Supabase replay them). The collision checker treats these as accepted exceptions and only fails on NEW collisions / NEW non-conforming names. Do not add entries here unless a file is already live in production and cannot be safely renamed.",
+  "allowedDuplicatePrefixes": [
+    "20240523000000",
+    "20260220000000",
+    "20260221000000",
+    "20260222000000",
+    "20260224000000",
+    "20260226000000",
+    "20260226120000",
+    "20260228000000",
+    "20260302000000",
+    "20260305000000",
+    "20260306000000",
+    "20260415000000",
+    "20260423000000",
+    "20260427000000",
+    "20260427000001",
+    "20260501000000",
+    "20260604000000",
+    "20260702000000",
+    "20260703000000",
+    "20260711000000",
+    "20260715000000",
+    "20260720000000",
+    "20260808000000",
+    "20260901000000",
+    "20270513000000",
+    "20270517000000",
+    "20270803000000",
+    "20270864000000",
+    "20270902000000",
+    "20271105000000",
+    "20271116000000",
+    "20271141000000",
+    "20271151000000"
+  ],
+  "allowedNonTimestamped": [
+    "20250218_add_location_to_profiles.sql",
+    "add_slug_to_groups.sql"
+  ]
+}
