@@ -88,7 +88,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
         try {
           const hasInteracted = sessionStorage.getItem('plano_map_interacted');
           if (hasInteracted) return prev;
-        } catch (_e) {}
+        } catch (_e) { /* sessionStorage unavailable (private mode / quota): fall through to default view */ }
       }
       return { latitude: lat, longitude: lng, zoom };
     });
@@ -111,7 +111,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
         try {
           const b = map.getBounds();
           if (b && (b.getNorth() !== b.getSouth())) updateBounds(map);
-        } catch (_e) {}
+        } catch (_e) { /* map not ready / degenerate bounds: skip; bounds resolve on next move */ }
       }
     }
   }, [bounds, updateBounds]);
@@ -125,14 +125,14 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
 
   const onMoveEnd = useCallback((evt: ViewStateChangeEvent) => {
     updateMapState({ lat: evt.viewState.latitude, lng: evt.viewState.longitude, zoom: evt.viewState.zoom }, true);
-    try { sessionStorage.setItem('plano_map_interacted', 'true'); } catch (_e) {}
+    try { sessionStorage.setItem('plano_map_interacted', 'true'); } catch (_e) { /* sessionStorage unavailable (private mode / quota): interaction flag is best-effort */ }
     try {
       localStorage.setItem(LOCAL_STORAGE_MAP_KEY, JSON.stringify({
         latitude: evt.viewState.latitude,
         longitude: evt.viewState.longitude,
         zoom: evt.viewState.zoom,
       }));
-    } catch {}
+    } catch { /* localStorage unavailable (private mode / quota): persisting last view is best-effort */ }
     flushPendingViewport(evt.target, evt.viewState.zoom);
     updateBounds(evt.target);
   }, [updateMapState, updateBounds, flushPendingViewport]);
@@ -149,9 +149,9 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
     updateBounds(evt.target);
     if (lat === DEFAULT_LAT && lng === DEFAULT_LNG && zoom === DEFAULT_ZOOM) {
       let hasInteracted = false;
-      try { hasInteracted = sessionStorage.getItem('plano_map_interacted') === 'true'; } catch (_e) {}
+      try { hasInteracted = sessionStorage.getItem('plano_map_interacted') === 'true'; } catch (_e) { /* sessionStorage unavailable: treat as not-yet-interacted */ }
       let savedState: string | null = null;
-      try { savedState = localStorage.getItem(LOCAL_STORAGE_MAP_KEY); } catch {}
+      try { savedState = localStorage.getItem(LOCAL_STORAGE_MAP_KEY); } catch { /* localStorage unavailable: no saved view to restore */ }
       if (savedState && !hasEarlyMovedRef.current) {
         try {
           const { latitude, longitude, zoom: savedZoom } = JSON.parse(savedState);
@@ -161,7 +161,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
             updateMapState({ lat: latitude, lng: longitude, zoom: savedZoom }, true);
             return;
           }
-        } catch {}
+        } catch { /* corrupt/invalid persisted JSON: ignore and fall back to geolocate */ }
       }
       if (!hasInteracted && !hasEarlyMovedRef.current) geolocateControlRef.current?.trigger();
     }
