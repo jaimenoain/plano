@@ -79,7 +79,7 @@ Cursor performs a full documentation sync before closing the phase:
 Every implementation task MUST contain:
 
 **Migration File (if schema changes):**
-Cursor writes a timestamped SQL file to `supabase/migrations/`. Lists all tables, fields, relationships, and RLS policies. The human operator applies it via the Supabase SQL Editor before UAT. Never `supabase db push`.
+The agent writes a timestamped SQL file to `supabase/migrations/`. Lists all tables, fields, relationships, and RLS policies. The agent then applies it itself with the Supabase MCP `apply_migration` tool (credentials in `.env.local`) — do not hand it to the user to run in the Supabase SQL Editor. See the Migration-as-Code Mandate in `01-database.mdc`.
 
 **Data & Security Layer:**
 Explicitly list all RLS access patterns. Apply the full RLS checklist from `01-database.mdc`. Default Deny. Predicate Distinction. Sub-select auth form. Tenant isolation check for all tenant-scoped tables.

@@ -1,5 +1,4 @@
 import { type ActionFunctionArgs } from "react-router";
-import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { logApiRequest } from "~/lib/api-logger.server";
@@ -359,6 +358,8 @@ export async function action({ request }: ActionFunctionArgs) {
       return Response.json({ error: "Event search not configured" }, { status: 503, headers });
     }
 
+    // Lazy-load the SDK so early-return paths never pay its cold-start import cost.
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
     const client = new Anthropic({ apiKey: anthropicKey });
     model = "claude-sonnet-4-6";
 
@@ -512,55 +513,72 @@ export async function action({ request }: ActionFunctionArgs) {
     let duplicates_flagged = 0;
     const insertErrorMessages: string[] = [];
 
-    for (const candidate of futureCandidates) {
-      const candidateStart = new Date(candidate.start_at!);
-      const candidateTitle = normalise(candidate.title!);
-
-      // Skip if already pending for this chapter
-      const alreadyPending = (pendingDiscoveries ?? []).some((d) => {
-        return (
-          normalise(d.title) === candidateTitle &&
-          Math.abs(new Date(d.start_at).getTime() - candidateStart.getTime()) < 2 * 86_400_000
+    // First pass: run the in-memory dedup/pending checks and build every row to
+    // insert. The DB write is then a SINGLE batch insert instead of one INSERT
+    // round-trip per candidate (these run from London → Supabase, so N serial
+    // round-trips dominated this route's tail latency).
+    const rows = futureCandidates
+      .filter((candidate) => {
+        const candidateStart = new Date(candidate.start_at!).getTime();
+        const candidateTitle = normalise(candidate.title!);
+        const alreadyPending = (pendingDiscoveries ?? []).some(
+          (d) =>
+            normalise(d.title) === candidateTitle &&
+            Math.abs(new Date(d.start_at).getTime() - candidateStart) < 2 * 86_400_000,
         );
-      });
-      if (alreadyPending) {
-        skipped_already_pending++;
-        continue;
-      }
-
-      // Check for duplicates in events table
-      const TWO_DAYS_MS = 2 * 86_400_000;
-      const duplicate = existing.find((e) => {
-        const sameTitle = normalise(e.title) === candidateTitle;
-        const nearDate =
-          Math.abs(new Date(e.start_at).getTime() - candidateStart.getTime()) < TWO_DAYS_MS;
-        return sameTitle && nearDate;
-      });
-
-      if (duplicate) duplicates_flagged++;
-
-      const { error: insertError } = await supabase.from("embassy_event_discoveries").insert({
-        chapter_id,
-        locality_id: chapter.locality_id,
-        title: candidate.title!,
-        description: candidate.description ?? null,
-        start_at: candidate.start_at!,
-        end_at: candidate.end_at ?? null,
-        address: candidate.address ?? null,
-        external_link: candidate.external_link ?? null,
-        source_url: candidate.source_url!,
-        snippet: candidate.snippet ?? null,
-        status: "pending",
-        duplicate_of_event_id: duplicate?.id ?? null,
+        if (alreadyPending) skipped_already_pending++;
+        return !alreadyPending;
+      })
+      .map((candidate) => {
+        const candidateStart = new Date(candidate.start_at!).getTime();
+        const candidateTitle = normalise(candidate.title!);
+        const TWO_DAYS_MS = 2 * 86_400_000;
+        const duplicate = existing.find(
+          (e) =>
+            normalise(e.title) === candidateTitle &&
+            Math.abs(new Date(e.start_at).getTime() - candidateStart) < TWO_DAYS_MS,
+        );
+        if (duplicate) duplicates_flagged++;
+        return {
+          chapter_id,
+          locality_id: chapter.locality_id,
+          title: candidate.title!,
+          description: candidate.description ?? null,
+          start_at: candidate.start_at!,
+          end_at: candidate.end_at ?? null,
+          address: candidate.address ?? null,
+          external_link: candidate.external_link ?? null,
+          source_url: candidate.source_url!,
+          snippet: candidate.snippet ?? null,
+          status: "pending",
+          duplicate_of_event_id: duplicate?.id ?? null,
+        };
       });
 
-      if (!insertError) {
-        inserted++;
+    if (rows.length > 0) {
+      const { error: batchError } = await supabase
+        .from("embassy_event_discoveries")
+        .insert(rows);
+
+      if (!batchError) {
+        inserted = rows.length;
       } else {
-        insert_errors++;
-        insertErrorMessages.push(insertError.message);
-        // eslint-disable-next-line no-console
-        console.error("[event-search] insert error:", insertError.message);
+        // Batch failed as a unit (e.g. a single row tripped a constraint). Fall
+        // back to per-row inserts so one bad candidate can't sink the whole run
+        // and we retain per-row error attribution.
+        for (const row of rows) {
+          const { error: insertError } = await supabase
+            .from("embassy_event_discoveries")
+            .insert(row);
+          if (!insertError) {
+            inserted++;
+          } else {
+            insert_errors++;
+            insertErrorMessages.push(insertError.message);
+            // eslint-disable-next-line no-console
+            console.error("[event-search] insert error:", insertError.message);
+          }
+        }
       }
     }
 

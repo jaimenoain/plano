@@ -29,12 +29,24 @@ export default async function handler(request: Request): Promise<Response> {
 
   const token = process.env.SITEMAP_INTERNAL_TOKEN ?? "";
 
-  const upstreamResponse = await fetch(upstreamUrl.toString(), {
-    method: "GET",
-    headers: {
-      "x-sitemap-token": token,
-    },
-  });
+  // Bound the upstream call so a slow/wedged Supabase Edge Function can't hang
+  // this proxy (and tie up serverless capacity on crawler traffic) up to the
+  // platform limit. 10s is generous for a sitemap render; past that, 504.
+  let upstreamResponse: Response;
+  try {
+    upstreamResponse = await fetch(upstreamUrl.toString(), {
+      method: "GET",
+      headers: {
+        "x-sitemap-token": token,
+      },
+      signal: AbortSignal.timeout(10_000),
+    });
+  } catch {
+    return new Response("Sitemap upstream timed out", {
+      status: 504,
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
 
   // Forward the XML body and relevant headers back to the client unchanged.
   const contentType =

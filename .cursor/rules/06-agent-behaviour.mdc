@@ -532,7 +532,7 @@ If you genuinely need a side-effecting per-file action, make it a separate, expl
 
 **Do not curl Supabase REST/RPC endpoints with the service role key.** Sourcing `.env.local` and attaching `$SUPABASE_SERVICE_ROLE_KEY` to a `curl` against `$NEXT_PUBLIC_SUPABASE_URL/rest/v1/...` is precisely the "bypass RLS / use service role keys" pattern §3 requires you to challenge. The legitimate alternatives:
 
-- To verify a SQL function or schema object exists: query `pg_proc` / `information_schema` via a migration test or the Supabase SQL editor.
+- To verify a SQL function or schema object exists: query `pg_proc` / `information_schema` with the Supabase MCP `execute_sql` tool (or `list_tables` / `list_migrations`) — no service-role key in your shell, no Dashboard round-trip.
 - To exercise an RPC end-to-end: write an integration test against the **local** Supabase instance with the **anon** key, not prod env vars.
 - If the user explicitly asks for a one-off service-role probe, follow the ask protocol in §3 — name the user-visible risk in plain English, propose the safer alternative as the default, get a yes/no, then run the single call (not a generated allowlist pattern).
 

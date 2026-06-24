@@ -1,7 +1,7 @@
 import { data, type LoaderFunctionArgs } from "react-router";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SITE_URL, countryPageStructuredData } from "@/features/buildings/utils/structuredData";
-import { getCountryLocalities, getCountryStats } from "@/features/localities/api/localitiesApi";
+import { getCountryLocalities } from "@/features/localities/api/localitiesApi";
 import type { LocalityDTO } from "@/features/localities/types";
 import { getCountryUrl } from "@/utils/url";
 
@@ -27,14 +27,16 @@ export async function countryPageLoader({ request, params }: LoaderFunctionArgs)
   const cc = params.cc?.trim().toUpperCase();
   if (!cc) throw new Response("Not found", { status: 404 });
 
-  const [localities, stats] = await Promise.all([
-    getCountryLocalities(supabase, cc),
-    getCountryStats(supabase, cc),
-  ]);
+  const localities = await getCountryLocalities(supabase, cc);
 
   if (localities.length === 0) throw new Response("Not found", { status: 404 });
 
-  const { countryName, totalBuildings } = stats;
+  // Derive country-level stats from the localities already in hand instead of a
+  // second round-trip to the same table (getCountryStats re-scanned `localities`
+  // for `country, buildings_count`, both present on every LocalityDTO). Localities
+  // are ordered buildings_count desc, so [0].country is the canonical name.
+  const countryName = localities[0]?.country ?? "";
+  const totalBuildings = localities.reduce((sum, l) => sum + (l.buildings_count ?? 0), 0);
   const canonical = `${SITE_URL}${getCountryUrl(cc)}`;
   const metaTitle = `Architecture in ${countryName} — ${totalBuildings} Buildings on Plano`;
   const metaDescription = `Explore ${totalBuildings} buildings across ${localities.length} cities in ${countryName} on Plano — the world's architecture, cataloged.`;

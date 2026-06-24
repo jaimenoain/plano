@@ -33,7 +33,7 @@ Then load the domain-specific rule file for the work at hand:
 - **No mock data or boolean auth flags.** Every feature connects to real Supabase.
 - **No raw Tailwind palette colors** (`bg-blue-500`). Use design token aliases only.
 - **No global state for domain data.** React Query for server state; URL params for UI state.
-- **No direct schema changes** via Supabase Dashboard. Migrations only.
+- **No direct schema changes** via Supabase Dashboard. Migrations only — the agent writes the timestamped migration file and applies it itself with the Supabase MCP `apply_migration` tool (credentials in `.env.local`); never ask the user to run it in the Supabase UI.
 - **No npm installs** without explicit user permission.
 - **Services own all Supabase queries.** Components never call `supabase.from()` directly.
 - **Every Server Action** must call `getUser()` and derive identity server-side — never from the request payload.

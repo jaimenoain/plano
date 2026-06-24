@@ -48,6 +48,12 @@ function makeQueryClient() {
         staleTime: 5 * 60 * 1000,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
+        // Fail fast. The default (3 retries w/ exponential backoff) stalls the
+        // UI for several seconds on a failing query before the error surfaces —
+        // a poor experience for transient Supabase errors. One retry covers a
+        // genuine blip without the multi-second backoff storm. Individual
+        // queries opt into more (e.g. retry: 0 to show an error banner instantly).
+        retry: 1,
       },
     },
   });

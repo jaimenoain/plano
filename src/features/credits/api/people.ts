@@ -579,27 +579,25 @@ export async function updatePerson(id: string, input: UpdatePersonInput): Promis
 export async function getPersonPortfolio(personId: string): Promise<PersonPortfolioByTier> {
   const empty: PersonPortfolioByTier = { primary: [], contributor: [], ancillary: [] };
 
-  const { data: personRow, error: pErr } = await supabase
-    .from("people")
-    .select("id, name, slug")
-    .eq("id", personId)
-    .maybeSingle();
+  // The person row and the credits both key off `personId` (not off each
+  // other), so fetch them concurrently instead of as a 2-step waterfall.
+  const [
+    { data: personRow, error: pErr },
+    { data: creditRows, error: cErr },
+  ] = await Promise.all([
+    supabase.from("people").select("id, name, slug").eq("id", personId).maybeSingle(),
+    supabase.from("building_credits").select(PERSON_BUILDING_CREDIT_SELECT).eq("person_id", personId),
+  ]);
 
   if (pErr) throw pErr;
   if (!personRow) return empty;
+  if (cErr) throw cErr;
 
   const personSummary = {
     id: personRow.id as string,
     name: personRow.name as string,
     slug: personRow.slug as string,
   };
-
-  const { data: creditRows, error: cErr } = await supabase
-    .from("building_credits")
-    .select(PERSON_BUILDING_CREDIT_SELECT)
-    .eq("person_id", personId);
-
-  if (cErr) throw cErr;
 
   const sorted = sortCreditRows((creditRows || []) as CreditRow[]);
 

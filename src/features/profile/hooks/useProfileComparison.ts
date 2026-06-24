@@ -41,65 +41,43 @@ export function useProfileComparison(currentUserId: string | undefined, targetUs
 
         setLoading(true);
         try {
-            // Fetch target user's following (for mutual affinity)
-            const { data: targetFollowing } = await supabase
-                .from('follows')
-                .select('following_id')
-                .eq('follower_id', targetUserId);
+            // These three `follows` reads are independent of one another — run
+            // them concurrently instead of as a 3-deep waterfall (saves ~2 RTTs
+            // on every profile-comparison render).
+            const [
+                { data: targetFollowing },
+                { data: myFollowing },
+                { data: targetFollowers },
+            ] = await Promise.all([
+                supabase.from('follows').select('following_id').eq('follower_id', targetUserId),
+                supabase.from('follows').select('following_id').eq('follower_id', currentUserId),
+                supabase.from('follows').select('follower_id').eq('following_id', targetUserId),
+            ]);
 
             const targetFollowingIds = new Set(targetFollowing?.map(f => f.following_id));
-
-            // Fetch current user's following (for both)
-            const { data: myFollowing } = await supabase
-                .from('follows')
-                .select('following_id')
-                .eq('follower_id', currentUserId);
-
             const myFollowingIds = new Set(myFollowing?.map(f => f.following_id));
-
-            // Mutual Affinity (We both follow them)
-            const mutualIds = [...targetFollowingIds].filter(id => myFollowingIds.has(id));
-            let mutualUsers: MutualAffinityUser[] = [];
-
-            if (mutualIds.length > 0) {
-                 const { data: mutualProfiles } = await supabase
-                    .from('profiles')
-                    .select('id, username, avatar_url')
-                    .in('id', mutualIds)
-                    .limit(10);
-
-                if (mutualProfiles) {
-                    mutualUsers = mutualProfiles.map(p => ({
-                        ...p,
-                        combined_score: 0.7 + (Math.random() * 0.3) // Mock score for affinity
-                    }));
-                }
-            }
-
-            // Common Followers (I follow them, they follow target)
-            // Need target's followers
-            const { data: targetFollowers } = await supabase
-                .from('follows')
-                .select('follower_id')
-                .eq('following_id', targetUserId);
-
             const targetFollowerIds = new Set(targetFollowers?.map(f => f.follower_id));
 
-            // Intersection: I follow them (myFollowingIds) AND they follow target (targetFollowerIds)
+            // Mutual Affinity (we both follow them); Common Followers (I follow
+            // them AND they follow the target).
+            const mutualIds = [...targetFollowingIds].filter(id => myFollowingIds.has(id));
             const commonFollowerIds = [...targetFollowerIds].filter(id => myFollowingIds.has(id));
-            let commonFollowersUsers: SimpleProfile[] = [];
 
-            if (commonFollowerIds.length > 0) {
-                 const { data: cfProfiles } = await supabase
-                    .from('profiles')
-                    .select('id, username, avatar_url')
-                    .in('id', commonFollowerIds)
-                    .limit(3); // Limit to 3 for facepile
+            // The two profile hydrations are independent — fetch in parallel.
+            const [{ data: mutualProfiles }, { data: cfProfiles }] = await Promise.all([
+                mutualIds.length > 0
+                    ? supabase.from('profiles').select('id, username, avatar_url').in('id', mutualIds).limit(10)
+                    : Promise.resolve({ data: null }),
+                commonFollowerIds.length > 0
+                    ? supabase.from('profiles').select('id, username, avatar_url').in('id', commonFollowerIds).limit(3)
+                    : Promise.resolve({ data: null }),
+            ]);
 
-                 if (cfProfiles) {
-                    commonFollowersUsers = cfProfiles;
-                 }
-            }
+            const mutualUsers: MutualAffinityUser[] = (mutualProfiles ?? []).map(p => ({
+                ...p,
+                combined_score: 0.7 + (Math.random() * 0.3) // Mock score for affinity
+            }));
+            const commonFollowersUsers: SimpleProfile[] = cfProfiles ?? [];
 
             setProfileComparison({
                 mutualAffinityUsers: mutualUsers,

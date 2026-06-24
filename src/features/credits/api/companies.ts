@@ -505,29 +505,30 @@ export async function getCompanyPortfolio(
   const emptyByTier: CompanyPortfolioByTier = { primary: [], contributor: [], ancillary: [] };
   const empty: CompanyPortfolioPayload = { byTier: emptyByTier, orderedFlat: [] };
 
-  const { data: companyRow, error: coErr } = await supabase
-    .from("companies")
-    .select("id, name, slug")
-    .eq("id", companyId)
-    .maybeSingle();
+  let creditsQuery = supabase.from("building_credits").select(creditSelectWithJoins).eq("company_id", companyId);
+  if (roleFilter !== undefined) {
+    creditsQuery = creditsQuery.eq("role", roleFilter);
+  }
+
+  // The company row and the credits both key off `companyId` (not off each
+  // other), so fetch them concurrently instead of as a 2-step waterfall.
+  const [
+    { data: companyRow, error: coErr },
+    { data: creditRows, error: crErr },
+  ] = await Promise.all([
+    supabase.from("companies").select("id, name, slug").eq("id", companyId).maybeSingle(),
+    creditsQuery,
+  ]);
 
   if (coErr) throw coErr;
   if (!companyRow) return empty;
+  if (crErr) throw crErr;
 
   const companySummary = {
     id: companyRow.id as string,
     name: companyRow.name as string,
     slug: companyRow.slug as string,
   };
-
-  let creditsQuery = supabase.from("building_credits").select(creditSelectWithJoins).eq("company_id", companyId);
-  if (roleFilter !== undefined) {
-    creditsQuery = creditsQuery.eq("role", roleFilter);
-  }
-
-  const { data: creditRows, error: crErr } = await creditsQuery;
-
-  if (crErr) throw crErr;
 
   const sorted = sortCreditRows((creditRows || []) as CreditRow[]);
   const flatItems: CompanyPortfolioItem[] = [];

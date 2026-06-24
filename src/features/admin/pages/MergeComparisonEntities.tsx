@@ -55,7 +55,12 @@ export default function MergeComparisonEntities() {
     const [merging, setMerging] = useState(false);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [entities, setEntities] = useState<any[]>([]);
-    
+
+    // Editable fields for the surviving (target) record. Seeded from the target
+    // row on load and re-seeded on swap; persisted to the target before merging.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [edits, setEdits] = useState<Record<string, any>>({});
+
     // Pointers to IDs
     const [targetPointer, setTargetPointer] = useState<string | null>(targetId || null);
     const [sourcePointer, setSourcePointer] = useState<string | null>(sourceId || null);
@@ -78,6 +83,22 @@ export default function MergeComparisonEntities() {
         }
     }, [targetPointer, sourcePointer, entityType]);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const buildEditsFromEntity = (e: any) => ({
+        name: e?.name ?? "",
+        city: e?.city ?? "",
+        year_completed: e?.year_completed ?? "",
+        address: e?.address ?? "",
+        nationality: e?.nationality ?? "",
+        birth_year: e?.birth_year ?? "",
+        death_year: e?.death_year ?? "",
+        slug: e?.slug ?? "",
+        country: e?.country ?? "",
+        country_code: e?.country_code ?? "",
+        founded_year: e?.founded_year ?? "",
+        website: e?.website ?? "",
+    });
+
     const fetchEntities = async () => {
         setLoading(true);
         try {
@@ -98,6 +119,7 @@ export default function MergeComparisonEntities() {
               // If IDs are the same, data might have length 1
               if (targetPointer === sourcePointer) {
                  setEntities([data[0], data[0]]);
+                 setEdits(buildEditsFromEntity(data[0]));
               } else {
                 toast.error("Could not find both records");
               }
@@ -105,6 +127,9 @@ export default function MergeComparisonEntities() {
             }
 
             setEntities(data);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const targetRow = data.find((e: any) => e.id === targetPointer) ?? data[0];
+            setEdits(buildEditsFromEntity(targetRow));
         } catch (error) {
             toast.error("Failed to load records");
             void error;
@@ -165,6 +190,9 @@ export default function MergeComparisonEntities() {
         const temp = targetPointer;
         setTargetPointer(sourcePointer);
         setSourcePointer(temp);
+        // The promoted record becomes the new surviving record; reset the form to its values.
+        const newTarget = entities.find((e) => e.id === sourcePointer);
+        if (newTarget) setEdits(buildEditsFromEntity(newTarget));
     };
 
     const handleMerge = async () => {
@@ -172,6 +200,45 @@ export default function MergeComparisonEntities() {
 
         setMerging(true);
         try {
+            // 1. Persist any edits to the surviving (target) record so the merged
+            //    result keeps the corrected data. Runs before the merge so a failed
+            //    write aborts the whole operation.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const toNum = (v: any) => {
+              if (v === "" || v === null || v === undefined) return null;
+              const n = Number(v);
+              return Number.isFinite(n) ? n : null;
+            };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const toStr = (v: any) => {
+              const s = (v ?? "").toString().trim();
+              return s === "" ? null : s;
+            };
+
+            let table = "";
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let updatePayload: Record<string, any> = {};
+            if (entityType === "building") {
+              table = "buildings";
+              updatePayload = { name: toStr(edits.name), city: toStr(edits.city), year_completed: toNum(edits.year_completed), address: toStr(edits.address) };
+            } else if (entityType === "person") {
+              table = "people";
+              updatePayload = { name: toStr(edits.name), nationality: toStr(edits.nationality), birth_year: toNum(edits.birth_year), death_year: toNum(edits.death_year), slug: toStr(edits.slug) };
+            } else if (entityType === "company") {
+              table = "companies";
+              updatePayload = { name: toStr(edits.name), country: toStr(edits.country), founded_year: toNum(edits.founded_year), website: toStr(edits.website) };
+            } else if (entityType === "locality") {
+              table = "localities";
+              updatePayload = { city: toStr(edits.city), country: toStr(edits.country), country_code: toStr(edits.country_code), slug: toStr(edits.slug) };
+            }
+
+            if (table) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const { error: updateError } = await (supabase as any).from(table).update(updatePayload).eq("id", targetPointer);
+              if (updateError) throw updateError;
+            }
+
+            // 2. Run the consolidation RPC (reassigns dependencies, removes the source).
             let rpcName = "";
             if (entityType === "building") rpcName = "merge_buildings";
             else if (entityType === "person") rpcName = "admin_merge_people";
@@ -233,6 +300,9 @@ export default function MergeComparisonEntities() {
     const targetEntity = entities.find(e => e.id === targetPointer);
     const sourceEntity = entities.find(e => e.id === sourcePointer);
 
+    // Surviving-record name, reflecting any live edits (falls back to stored values).
+    const targetDisplayName = edits.name || edits.city || targetEntity?.name || targetEntity?.city;
+
     if (!targetEntity || !sourceEntity) {
       return (
         <div className="mx-auto flex min-h-[50vh] max-w-7xl flex-col items-center justify-center space-y-4 p-8">
@@ -253,6 +323,21 @@ export default function MergeComparisonEntities() {
         <div className={`text-sm font-medium ${!isTarget ? "line-through opacity-40" : "text-text-primary"}`}>
           {value || <span className="opacity-30">—</span>}
         </div>
+      </div>
+    );
+
+    // Editable field for the surviving (target) record. Bound to `edits[field]`.
+    const renderEditableValue = (label: string, field: string, type: "text" | "number" = "text") => (
+      <div className="space-y-1 p-3 rounded border bg-surface-card border-feedback-success/20 transition-colors focus-within:border-feedback-success/50">
+        <label htmlFor={`edit-${field}`} className="block text-[10px] text-text-secondary font-black uppercase tracking-widest opacity-60">{label}</label>
+        <input
+          id={`edit-${field}`}
+          type={type}
+          value={edits[field] ?? ""}
+          onChange={(e) => setEdits((prev) => ({ ...prev, [field]: e.target.value }))}
+          placeholder="—"
+          className="w-full border-0 bg-transparent p-0 text-sm font-medium text-text-primary placeholder:text-text-secondary/30 focus:outline-none focus:ring-0"
+        />
       </div>
     );
 
@@ -283,7 +368,7 @@ export default function MergeComparisonEntities() {
                 <div className="hidden md:flex items-center gap-8 rounded-sm border border-border-default bg-surface-muted/50 px-6 py-3">
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Master</span>
-                    <span className="text-sm font-bold text-feedback-success truncate max-w-[150px]">{targetEntity.name || targetEntity.city}</span>
+                    <span className="text-sm font-bold text-feedback-success truncate max-w-[150px]">{targetDisplayName}</span>
                   </div>
                   <ArrowLeftRight className="w-4 h-4 text-text-secondary opacity-30" />
                   <div className="flex flex-col text-right">
@@ -312,7 +397,7 @@ export default function MergeComparisonEntities() {
                               {entityType === 'locality' && <MapPin className="w-8 h-8" />}
                             </div>
                             <div>
-                              <h2 className="text-2xl font-bold text-text-primary leading-tight">{targetEntity.name || targetEntity.city}</h2>
+                              <h2 className="text-2xl font-bold text-text-primary leading-tight">{targetDisplayName}</h2>
                               <p className="text-sm text-text-secondary font-medium">Master ID: {targetEntity.id.slice(0, 8)}...</p>
                             </div>
                           </div>
@@ -320,11 +405,11 @@ export default function MergeComparisonEntities() {
                           <div className="grid grid-cols-1 gap-3">
                               {entityType === 'building' && (
                                 <>
-                                  {renderEntityValue("Display Name", targetEntity.name, true)}
-                                  {renderEntityValue("City", targetEntity.city, true)}
-                                  {renderEntityValue("Year Completed", targetEntity.year_completed, true)}
-                                  {renderEntityValue("Address", targetEntity.address, true)}
-                                  
+                                  {renderEditableValue("Display Name", "name")}
+                                  {renderEditableValue("City", "city")}
+                                  {renderEditableValue("Year Completed", "year_completed", "number")}
+                                  {renderEditableValue("Address", "address")}
+
                                   {/* Building Visuals */}
                                   <div className="mt-4 space-y-4">
                                     <div className="aspect-video w-full overflow-hidden bg-surface-muted border border-feedback-success/10">
@@ -345,26 +430,27 @@ export default function MergeComparisonEntities() {
                               )}
                               {entityType === 'person' && (
                                 <>
-                                  {renderEntityValue("Full Name", targetEntity.name, true)}
-                                  {renderEntityValue("Nationality", targetEntity.nationality, true)}
-                                  {renderEntityValue("Birth/Death", `${targetEntity.birth_year || '?'} - ${targetEntity.death_year || '?'}`, true)}
-                                  {renderEntityValue("Slug", targetEntity.slug, true)}
+                                  {renderEditableValue("Full Name", "name")}
+                                  {renderEditableValue("Nationality", "nationality")}
+                                  {renderEditableValue("Birth Year", "birth_year", "number")}
+                                  {renderEditableValue("Death Year", "death_year", "number")}
+                                  {renderEditableValue("Slug", "slug")}
                                 </>
                               )}
                               {entityType === 'company' && (
                                 <>
-                                  {renderEntityValue("Company Name", targetEntity.name, true)}
-                                  {renderEntityValue("Country", targetEntity.country, true)}
-                                  {renderEntityValue("Founded", targetEntity.founded_year, true)}
-                                  {renderEntityValue("Website", targetEntity.website, true)}
+                                  {renderEditableValue("Company Name", "name")}
+                                  {renderEditableValue("Country", "country")}
+                                  {renderEditableValue("Founded", "founded_year", "number")}
+                                  {renderEditableValue("Website", "website")}
                                 </>
                               )}
                               {entityType === 'locality' && (
                                 <>
-                                  {renderEntityValue("City Name", targetEntity.city, true)}
-                                  {renderEntityValue("Country", targetEntity.country, true)}
-                                  {renderEntityValue("ISO Code", targetEntity.country_code, true)}
-                                  {renderEntityValue("Slug", targetEntity.slug, true)}
+                                  {renderEditableValue("City Name", "city")}
+                                  {renderEditableValue("Country", "country")}
+                                  {renderEditableValue("ISO Code", "country_code")}
+                                  {renderEditableValue("Slug", "slug")}
                                 </>
                               )}
                           </div>
@@ -579,7 +665,7 @@ export default function MergeComparisonEntities() {
                                             </div>
                                             <AlertDialogTitle className="text-2xl font-bold tracking-tight">Confirm irreversible merge</AlertDialogTitle>
                                             <AlertDialogDescription className="text-base pt-2">
-                                                You are merging <strong className="text-text-primary">"{sourceEntity.name || sourceEntity.city}"</strong> into <strong className="text-text-primary">"{targetEntity.name || targetEntity.city}"</strong>.
+                                                You are merging <strong className="text-text-primary">"{sourceEntity.name || sourceEntity.city}"</strong> into <strong className="text-text-primary">"{targetDisplayName}"</strong>.
                                                 <br/><br/>
                                                 The source record will be {entityType === 'building' ? 'soft-deleted' : 'permanently deleted'}. This action cannot be undone through the admin interface.
                                             </AlertDialogDescription>

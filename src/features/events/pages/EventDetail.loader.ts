@@ -1,4 +1,4 @@
-import { redirect, type LoaderFunctionArgs } from "react-router";
+import { data, redirect, type LoaderFunctionArgs } from "react-router";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { getEventUrl } from "@/utils/url";
 
@@ -12,6 +12,12 @@ interface EventConsistencyRow {
 export async function eventDetailLoader({ request, params }: LoaderFunctionArgs) {
   const headers = new Headers();
   const supabase = createSupabaseServerClient(request, headers);
+  // Public event content. Cache the data-only response at the CDN (gated to
+  // `.data` so the HTML document is never CDN-cached — see the stale-content
+  // post-mortem in docs/AI_STATUS.md). Mirrors the locality/company loaders.
+  if (new URL(request.url).pathname.endsWith(".data")) {
+    headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
+  }
 
   const slug = params.slug!;
   // Present on the locality-scoped route (/events/:cc/:city/:slug); absent on /events/:slug.
@@ -29,7 +35,7 @@ export async function eventDetailLoader({ request, params }: LoaderFunctionArgs)
 
   if (!row) {
     // Let the component render the not-found state.
-    return {};
+    return data({}, { headers });
   }
 
   const eventRow = row as EventConsistencyRow;
@@ -53,5 +59,5 @@ export async function eventDetailLoader({ request, params }: LoaderFunctionArgs)
     }
   }
 
-  return {};
+  return data({}, { headers });
 }

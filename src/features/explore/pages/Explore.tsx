@@ -338,8 +338,8 @@ export default function Explore() {
   );
 
   const handleSkip = async (buildingId: string) => {
+    if (!user) return;
     try {
-      if (!user) return;
       const { error } = await supabase.from("user_buildings").upsert(
         {
           user_id: user.id,
@@ -349,18 +349,28 @@ export default function Explore() {
         { onConflict: "user_id, building_id" }
       );
       if (error) throw error;
-    } catch (_error) {}
+    } catch (error) {
+      // "Skip" is a passive gesture — it fires when a viewed card scrolls out of
+      // frame (see DiscoveryCard), not from an explicit user action — so we don't
+      // interrupt scrolling with a toast. The write is best-effort: a failed skip
+      // just means the building may resurface in a later session. We still log it so
+      // the failure is captured for diagnostics (see ConsoleErrorInterceptor) rather
+      // than vanishing silently.
+      // eslint-disable-next-line no-console
+      console.warn("Failed to persist skip:", error);
+    }
   };
 
   const handleSwipeSave = async (buildingId: string) => {
+    if (!user) return;
+    // Optimistically hide the card so the swipe feels instant; roll back below if the
+    // write fails so we never claim success for a building that wasn't actually saved.
     setHiddenBuildingIds((prev) => {
       const next = new Set(prev);
       next.add(buildingId);
       return next;
     });
-    toast.success("Saved to your list");
     try {
-      if (!user) return;
       const { error } = await supabase.from("user_buildings").upsert(
         {
           user_id: user.id,
@@ -370,21 +380,32 @@ export default function Explore() {
         { onConflict: "user_id, building_id" }
       );
       if (error) throw error;
+      toast.success("Saved to your list");
       queryClient.invalidateQueries({ queryKey: ["discovery_feed"] });
-    } catch (_error) {
+    } catch (error) {
+      // Persist failed: un-hide the card so the building returns to the feed instead of
+      // being silently dropped, and tell the user the save didn't take.
+      setHiddenBuildingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(buildingId);
+        return next;
+      });
+      // eslint-disable-next-line no-console
+      console.error("Failed to save building:", error);
       toast.error("Failed to save");
     }
   };
 
   const handleSwipeHide = async (buildingId: string) => {
+    if (!user) return;
+    // Optimistically hide the card so the swipe feels instant; roll back below if the
+    // write fails so a building that wasn't actually hidden isn't lost from the feed.
     setHiddenBuildingIds((prev) => {
       const next = new Set(prev);
       next.add(buildingId);
       return next;
     });
-    toast("Building hidden");
     try {
-      if (!user) return;
       const { error } = await supabase.from("user_buildings").upsert(
         {
           user_id: user.id,
@@ -394,8 +415,18 @@ export default function Explore() {
         { onConflict: "user_id, building_id" }
       );
       if (error) throw error;
+      toast("Building hidden");
       queryClient.invalidateQueries({ queryKey: ["discovery_feed"] });
-    } catch (_error) {
+    } catch (error) {
+      // Persist failed: un-hide the card so the building returns to the feed instead of
+      // being silently dropped, and tell the user the action didn't take.
+      setHiddenBuildingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(buildingId);
+        return next;
+      });
+      // eslint-disable-next-line no-console
+      console.error("Failed to hide building:", error);
       toast.error("Failed to hide building");
     }
   };

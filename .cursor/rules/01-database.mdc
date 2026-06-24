@@ -14,11 +14,12 @@ ALL schema changes MUST be a new, timestamped SQL file in `supabase/migrations/`
 supabase/migrations/20240901120000_add_user_profiles.sql
 ```
 
-- **Never** apply schema changes via the Supabase Dashboard directly.
-- **Never** run `supabase db push` autonomously.
-- **Write the migration file. Stop. The human operator applies it via the Supabase SQL Editor before UAT.**
-- If a subsequent task in the same Cursor batch only writes code files and doesn't query the live DB, the migration application may be deferred — annotate it as `[DEFERRABLE]`.
-- Migrations must be applied in chronological timestamp order when batching.
+- **Write the migration file first, then apply it yourself using the Supabase MCP `apply_migration` tool.** Do **not** ask the user to paste it into the Supabase SQL Editor or apply it through the Dashboard — applying migrations is the agent's job. Pass the migration name and SQL body to `apply_migration` so it is recorded in the project's migration history.
+- The Supabase MCP server is already configured in `.mcp.json` (project ref `lnqxtomyucnnrgeapnzt`), and the credentials it relies on (`SUPABASE_PERSONAL_ACCESS_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL`, …) live in `.env.local`. You do not need to ask the user for project access — it is available.
+- **Never make ad-hoc schema changes through the Supabase Dashboard UI.** Every change is a migration file in the repo that is then applied via MCP, so the committed file and the live schema never diverge.
+- After applying, confirm it landed with the MCP `list_migrations` tool, then regenerate types (see [Type Regeneration](#type-regeneration)).
+- Surface a manual instruction to the user **only** as a fallback — if the `apply_migration` call fails (e.g. missing or invalid credentials, a permissions error) and you cannot resolve it yourself. `supabase db push` (CLI) is an acceptable fallback when MCP is unavailable, but MCP `apply_migration` is the default.
+- When batching multiple migrations, apply them in chronological timestamp order.
 
 ## Naming Conventions
 
@@ -137,7 +138,7 @@ Do NOT construct predicates from the schema alone or from reasoning about what "
 
 ### 8. RLS Smoke Test (run after every migration containing new policies)
 
-After the migration is applied, verify each new policy passes both checks in the Supabase SQL Editor before marking the task complete.
+After the migration is applied (via MCP `apply_migration`), verify each new policy passes both checks using the MCP `execute_sql` tool before marking the task complete.
 
 **Positive test** — confirm an owner can read their own row:
 
@@ -196,7 +197,7 @@ interface UserDTO {
 
 ## Type Regeneration
 
-After any migration is applied, regenerate types:
+After any migration is applied, regenerate types. Prefer the Supabase MCP `generate_typescript_types` tool and write its output to the generated types file. The CLI is the fallback when MCP is unavailable:
 
 ```bash
 npx supabase gen types typescript --project-id YOUR_PROJECT_ID \

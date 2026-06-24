@@ -89,28 +89,6 @@ export async function getCountryLocalities(
   return data.map(mapLocalityRowToDto);
 }
 
-/** Server-side: aggregate stats for a country — total buildings, locality count, country name. */
-export async function getCountryStats(
-  supabaseClient: AppSupabaseClient,
-  countryCode: string,
-): Promise<{ totalBuildings: number; localityCount: number; countryName: string }> {
-  const { data, error } = await supabaseClient
-    .from("localities")
-    .select("country, buildings_count")
-    .eq("country_code", countryCode.toUpperCase());
-
-  if (error || !data || data.length === 0) {
-    return { totalBuildings: 0, localityCount: 0, countryName: "" };
-  }
-
-  const totalBuildings = data.reduce((sum, row) => sum + (row.buildings_count ?? 0), 0);
-  return {
-    totalBuildings,
-    localityCount: data.length,
-    countryName: data[0].country ?? "",
-  };
-}
-
 /** Server-side: fetch a locality by its slug. Returns null if not found. */
 export async function getLocalityBySlug(
   supabaseClient: AppSupabaseClient,

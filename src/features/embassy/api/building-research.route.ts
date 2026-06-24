@@ -1,5 +1,4 @@
 import { type ActionFunctionArgs } from "react-router";
-import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { logApiRequest } from "~/lib/api-logger.server";
@@ -187,6 +186,9 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
+  // Lazy-load the SDK so early-return paths (unauthorized / no key / rate
+  // limited) never pay its cold-start import cost.
+  const { default: Anthropic } = await import("@anthropic-ai/sdk");
   const client = new Anthropic({ apiKey });
   const model = "claude-sonnet-4-6";
 

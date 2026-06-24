@@ -5,7 +5,7 @@ import {
   getRecipientsByEdition,
 } from "@/features/awards/api/awards";
 import { getEditionDisplayLabel, type AwardDTO, type AwardEditionDTO, type AwardRecipientDTO } from "@/features/awards/types/awards";
-import type { LoaderFunctionArgs } from "react-router";
+import { data, type LoaderFunctionArgs } from "react-router";
 
 export interface AwardEditionLoaderData {
   award: AwardDTO;
@@ -16,9 +16,16 @@ export interface AwardEditionLoaderData {
   canonical: string;
 }
 
-export async function awardEditionLoader({ params }: LoaderFunctionArgs): Promise<AwardEditionLoaderData> {
+export async function awardEditionLoader({ request, params }: LoaderFunctionArgs) {
   const { slug, editionSlug } = params;
   if (!slug || !editionSlug) throw new Response("Award slug and edition slug required", { status: 400 });
+
+  // Public award catalog content — CDN-cache the data-only response (see
+  // AwardPage.loader / the stale-content post-mortem in docs/AI_STATUS.md).
+  const headers = new Headers();
+  if (new URL(request.url).pathname.endsWith(".data")) {
+    headers.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
+  }
 
   try {
     const award = await getAwardBySlug(slug);
@@ -40,7 +47,7 @@ export async function awardEditionLoader({ params }: LoaderFunctionArgs): Promis
     const description = `Discover all winners and recipients of the ${award.name} ${displayLabel} on Plano.`;
     const canonical = `https://plano.archi/award/${slug}/${edition.slug ?? editionSlug}`;
 
-    return {
+    const body: AwardEditionLoaderData = {
       award,
       edition,
       recipients,
@@ -48,6 +55,7 @@ export async function awardEditionLoader({ params }: LoaderFunctionArgs): Promis
       description,
       canonical,
     };
+    return data(body, { headers });
   } catch {
     throw new Response("Award edition not found", { status: 404 });
   }
