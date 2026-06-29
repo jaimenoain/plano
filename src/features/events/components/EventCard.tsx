@@ -4,7 +4,6 @@ import { format, parseISO } from "date-fns";
 import { enGB } from "date-fns/locale";
 import type { EventCardDTO } from "@/features/events/types";
 import { getEventUrl } from "@/utils/url";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 function formatEventListWhen(iso: string): string {
@@ -52,14 +51,7 @@ export function EventCard({ event }: { event: EventCardDTO }) {
       className="flex min-h-11 touch-manipulation gap-4 px-1 py-5 transition-colors hover:bg-surface-muted/50 active:bg-surface-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
     >
       <div className="min-w-0 flex-1 space-y-2 py-1">
-        <div className="flex flex-wrap items-start gap-2">
-          <h2 className="line-clamp-2 min-w-0 flex-1 text-base font-black text-text-primary">{event.title}</h2>
-          {event.claimStatus === "unclaimed" ? (
-            <Badge variant="secondary" className="shrink-0">
-              Claim
-            </Badge>
-          ) : null}
-        </div>
+        <h2 className="line-clamp-2 text-base font-black text-text-primary">{event.title}</h2>
         <p className="text-sm text-text-secondary">{formatEventListWhen(event.startAt)}</p>
         {event.address ? (
           <p className="truncate text-sm text-text-secondary">{event.address}</p>

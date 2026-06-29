@@ -3,11 +3,13 @@ import type { Tables } from "@/integrations/supabase/types";
 import type {
   EventBuilding,
   EventCardDTO,
+  EventClaimIdentity,
   EventClaimStatus,
   EventDTO,
   EventOrganiser,
   EventSubmitter,
   EventsApiError,
+  ManageableOrganiser,
 } from "@/features/events/types";
 import { parseLocation } from "@/utils/location";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -310,6 +312,92 @@ export async function getEventBySlug(slug: string): Promise<EventDTO> {
   const buildings = mapBuildings(typed.event_buildings);
 
   return rowToEventDTO(typed, profiles, peopleMap, companiesMap, buildings, typed.organiser_person, typed.organiser_company);
+}
+
+function parseClaimRpcPayload(raw: unknown): { ok: boolean; error?: string } {
+  if (!raw || typeof raw !== "object") return { ok: false, error: "rpc_error" };
+  const o = raw as Record<string, unknown>;
+  if (o.ok === true) return { ok: true };
+  const err = o.error;
+  if (typeof err === "string") return { ok: false, error: err };
+  return { ok: false, error: "rpc_error" };
+}
+
+/**
+ * Claim an unclaimed event for the signed-in user via the `claim_event` RPC, then return the
+ * refreshed event. `identity` selects whether the caller claims as themselves (host) or links the
+ * event to a person/company they manage. Errors are surfaced as typed `EventsApiError`.
+ */
+export async function claimEvent(
+  eventId: string,
+  slug: string,
+  identity: EventClaimIdentity,
+): Promise<EventDTO> {
+  const id = eventId.trim();
+  if (!id) throwApiError("invalid_event", "Event id is required.");
+
+  const organiserId = identity.kind === "user" ? null : identity.id;
+
+  const { data: rpcRaw, error: rpcError } = await supabase.rpc("claim_event", {
+    p_event_id: id,
+    p_organiser_kind: identity.kind,
+    p_organiser_id: organiserId ?? undefined,
+  });
+
+  if (rpcError) throwApiError("rpc_error", rpcError.message);
+
+  const parsed = parseClaimRpcPayload(rpcRaw);
+  if (!parsed.ok) {
+    const code = parsed.error ?? "rpc_error";
+    const messages: Record<string, string> = {
+      not_authenticated: "Sign in to claim this event.",
+      not_found: "This event could not be found.",
+      not_claimable: "This event has already been claimed.",
+      not_authorized: "You are not allowed to claim on behalf of that organiser.",
+      invalid_kind: "Invalid organiser type.",
+      rpc_error: "Something went wrong. Try again in a moment.",
+    };
+    throwApiError(code, messages[code] ?? messages.rpc_error);
+  }
+
+  return getEventBySlug(slug);
+}
+
+/**
+ * Organiser entities (people + companies) the current signed-in user may claim an event on behalf
+ * of: people they have claimed and companies where they are a steward. Returns [] when signed out.
+ */
+export async function getManageableOrganisers(): Promise<ManageableOrganiser[]> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const [peopleRes, stewardRes] = await Promise.all([
+    supabase.from("people").select("id, name, avatar_url").eq("claimed_by_user_id", user.id),
+    supabase
+      .from("company_stewards")
+      .select("companies ( id, name, logo_url )")
+      .eq("user_id", user.id),
+  ]);
+
+  const out: ManageableOrganiser[] = [];
+
+  if (!peopleRes.error) {
+    for (const p of peopleRes.data ?? []) {
+      out.push({ kind: "person", id: p.id, name: p.name, avatarUrl: p.avatar_url });
+    }
+  }
+
+  if (!stewardRes.error) {
+    type StewardJoinRow = { companies: Pick<CompanyRow, "id" | "name" | "logo_url"> | null };
+    for (const row of (stewardRes.data ?? []) as unknown as StewardJoinRow[]) {
+      const c = row.companies;
+      if (c?.id) out.push({ kind: "company", id: c.id, name: c.name, avatarUrl: c.logo_url });
+    }
+  }
+
+  return out;
 }
 
 export async function getEventsByBuilding(buildingId: string): Promise<EventCardDTO[]> {

@@ -8,6 +8,7 @@ import { useTrackNoteView } from "@/features/posts/hooks/useTrackNoteView";
 import { countWords } from "@/features/posts/utils/resolveCardType";
 import { BuildingHeadline, CardFooter, CardImage } from "@/features/posts/components/card-parts";
 import { SuggestedContentBlock } from "@/features/posts/components/SuggestedContentBlock";
+import { CommonFollowersFacepile } from "@/features/profile/components/CommonFollowersFacepile";
 import { FeedEditorialEyebrow } from "./FeedEditorialEyebrow";
 import { FeedPostByline } from "./FeedPostByline";
 
@@ -87,6 +88,13 @@ export function EditorialFeedPost({
         isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-6",
       )}
     >
+      {entry.connectors && entry.connectors.length > 0 ? (
+        <CommonFollowersFacepile
+          users={entry.connectors}
+          count={entry.connectors_count ?? entry.connectors.length}
+        />
+      ) : null}
+
       <FeedEditorialEyebrow
         contextLabel={contextLabel}
         architect={architect}
@@ -146,10 +154,21 @@ export function EditorialFeedPost({
     </article>
   );
 
+  // When the "Followed by XYZ" facepile is shown, don't repeat it in the badge —
+  // fall back to the location reason (or no reason) so the two don't duplicate.
+  const hasConnectors = Boolean(entry.connectors && entry.connectors.length > 0);
+  const badgeReason = hasConnectors
+    ? entry.location_match === "city"
+      ? "In your city"
+      : entry.location_match === "country"
+        ? "In your country"
+        : undefined
+    : entry.suggestion_reason;
+
   return (
     <SuggestedContentBlock
       isSuggested={entry.is_suggested}
-      suggestionReason={entry.suggestion_reason}
+      suggestionReason={badgeReason}
     >
       {article}
     </SuggestedContentBlock>

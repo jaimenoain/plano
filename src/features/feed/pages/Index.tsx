@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useNavigate, type MetaFunction } from "react-router";
 import { Loader2 } from "lucide-react";
 
@@ -7,10 +7,13 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useExploreShell } from "@/components/layout/ExploreShellContext";
 import { SITE_URL } from "@/features/buildings/utils/structuredData";
 import { ReviewCardFeed } from "@/features/posts/components/ReviewCardFeed";
+import { FeedActivitySummaryRow } from "@/features/posts/components/FeedActivitySummaryRow";
 import { EditorialFeedPost } from "@/features/feed/components/EditorialFeedPost";
 import { resolveCardType } from "@/features/posts/utils/resolveCardType";
+import { groupHomeFeedEntries } from "@/features/feed/utils/groupActivitySummary";
 import type { FeedHomeEntry, FeedReview } from "@/types/feed";
 import { useHomeFeed } from "@/features/feed/hooks/useHomeFeed";
+import { useCommunityFeed } from "@/features/feed/hooks/useCommunityFeed";
 import { Button } from "@/components/ui/button";
 
 import { LandingHero } from "../components/landing/LandingHero";
@@ -117,20 +120,74 @@ function HomeFeedEntry({
   return <EditorialFeedPost entry={entry} onLike={onLike} onImageLike={onImageLike} />;
 }
 
-function Feed() {
-  const {
-    reviews,
-    isLoading,
-    isError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    toggleLike,
-    toggleImageLike,
-    refetch,
-  } = useHomeFeed();
+function SectionHeader({ index, title }: { index: string; title: string }) {
+  return (
+    <header className="mb-8 flex items-baseline justify-between border-b border-text-primary pb-2.5">
+      <h2 className="m-0 text-[11px] font-medium uppercase tracking-[0.15em] text-text-primary">
+        <span className="mr-2.5 font-mono text-text-disabled">{index}</span>
+        {title}
+      </h2>
+    </header>
+  );
+}
 
+function FeedErrorBlock({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div
+      className="space-y-4 border-t border-border-default py-16 text-center"
+      role="alert"
+    >
+      <p className="text-sm text-text-secondary">
+        Couldn&apos;t load the feed. Please try again.
+      </p>
+      <Button
+        type="button"
+        variant="outline"
+        className="rounded-none"
+        onClick={onRetry}
+      >
+        Retry
+      </Button>
+    </div>
+  );
+}
+
+/** Renders grouped feed entries (activity summaries + cards) for one section. */
+function FeedEntries({
+  reviews,
+  onLike,
+  onImageLike,
+}: {
+  reviews: FeedReview[];
+  onLike: (reviewId: string) => void;
+  onImageLike: (reviewId: string, imageId: string) => void;
+}) {
+  const items = useMemo(() => groupHomeFeedEntries(reviews), [reviews]);
+  return (
+    <>
+      {items.map((item) =>
+        item.kind === "activity-summary" ? (
+          <FeedActivitySummaryRow key={item.key} entries={item.entries} />
+        ) : (
+          <HomeFeedEntry
+            key={item.entry.id}
+            entry={item.entry}
+            onLike={onLike}
+            onImageLike={onImageLike}
+          />
+        ),
+      )}
+    </>
+  );
+}
+
+function Feed() {
+  const following = useHomeFeed();
+  const community = useCommunityFeed();
+
+  // The community section is the unbounded one, so it drives infinite scroll.
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const { fetchNextPage, hasNextPage, isFetchingNextPage } = community;
 
   useEffect(() => {
     const el = loadMoreRef.current;
@@ -153,60 +210,59 @@ function Feed() {
     <AppLayout>
       <div className="mx-auto flex w-full max-w-[1080px] items-start gap-10 px-5 pb-24 pt-10 md:gap-14 md:px-8">
         <main className="min-w-0 flex-1 border-r border-border-default pr-10 md:pr-14">
-          <header className="mb-8 flex items-baseline justify-between border-b border-text-primary pb-2.5">
-            <h1 className="m-0 text-[11px] font-medium uppercase tracking-[0.15em] text-text-primary">
-              <span className="mr-2.5 font-mono text-text-disabled">§ 01</span>
-              Latest from your circle
-            </h1>
-          </header>
-
-          {isLoading ? (
+          {/* §01 — new, unseen updates from people you follow */}
+          <SectionHeader index="§ 01" title="New from people you follow" />
+          {following.isLoading ? (
             <FeedSkeleton />
-          ) : isError ? (
-            <div
-              className="space-y-4 border-t border-border-default py-16 text-center"
-              role="alert"
-            >
+          ) : following.isError ? (
+            <FeedErrorBlock onRetry={() => void following.refetch()} />
+          ) : following.reviews.length === 0 ? (
+            <div className="border-t border-border-default py-12 text-center">
               <p className="text-sm text-text-secondary">
-                Couldn&apos;t load the feed. Please try again.
+                You&apos;re all caught up — nothing new from people you follow.
               </p>
-              <Button
-                type="button"
-                variant="outline"
-                className="rounded-none"
-                onClick={() => void refetch()}
-              >
-                Retry
-              </Button>
             </div>
-          ) : reviews.length === 0 ? (
-            <div className="border-t border-border-default py-16 text-center">
+          ) : (
+            <FeedEntries
+              reviews={following.reviews}
+              onLike={following.toggleLike}
+              onImageLike={following.toggleImageLike}
+            />
+          )}
+
+          {/* §02 — discovery from the rest of the community */}
+          <div className="mt-16">
+            <SectionHeader index="§ 02" title="Discover from the community" />
+          </div>
+          {community.isLoading ? (
+            <FeedSkeleton />
+          ) : community.isError ? (
+            <FeedErrorBlock onRetry={() => void community.refetch()} />
+          ) : community.reviews.length === 0 ? (
+            <div className="border-t border-border-default py-12 text-center">
               <p className="text-sm text-text-secondary">
-                No posts yet. Follow people or share a building visit to fill your feed.
+                Nothing to discover right now. Check back soon.
               </p>
             </div>
           ) : (
             <div>
-              {reviews.map((entry) => (
-                <HomeFeedEntry
-                  key={entry.id}
-                  entry={entry}
-                  onLike={toggleLike}
-                  onImageLike={toggleImageLike}
-                />
-              ))}
+              <FeedEntries
+                reviews={community.reviews}
+                onLike={community.toggleLike}
+                onImageLike={community.toggleImageLike}
+              />
               <div ref={loadMoreRef} className="flex justify-center py-8">
-                {isFetchingNextPage ? (
+                {community.isFetchingNextPage ? (
                   <Loader2
                     className="h-6 w-6 animate-spin text-text-secondary"
                     aria-label="Loading more"
                   />
-                ) : hasNextPage ? (
+                ) : community.hasNextPage ? (
                   <Button
                     type="button"
                     variant="outline"
                     className="rounded-none"
-                    onClick={() => void fetchNextPage()}
+                    onClick={() => void community.fetchNextPage()}
                   >
                     Load more
                   </Button>

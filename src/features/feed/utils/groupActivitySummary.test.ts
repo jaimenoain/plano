@@ -1,0 +1,147 @@
+import { describe, it, expect } from "vitest";
+import { groupHomeFeedEntries } from "@/features/feed/utils/groupActivitySummary";
+import type { FeedEventAttendance, FeedReview, ReviewBuilding } from "@/types/feed";
+
+const building = (id: string): ReviewBuilding => ({
+  id,
+  name: `Building ${id}`,
+  main_image_url: `https://img/${id}.jpg`,
+  community_preview_url: null,
+});
+
+function visit(
+  partial: Pick<FeedReview, "id"> & Partial<FeedReview>,
+): FeedReview {
+  const uid = partial.user_id ?? "u1";
+  return {
+    id: partial.id,
+    content: partial.content ?? null,
+    rating: partial.rating ?? null,
+    created_at: partial.created_at ?? "2026-06-29T12:00:00Z",
+    edited_at: partial.edited_at ?? null,
+    status: partial.status ?? "visited",
+    user_id: uid,
+    user: partial.user ?? {
+      username: `user-${uid}`,
+      avatar_url: null,
+      followers_count: null,
+    },
+    building: partial.building ?? building(partial.id),
+    likes_count: 0,
+    comments_count: 0,
+    is_liked: false,
+    images: partial.images,
+    video_url: partial.video_url ?? null,
+  };
+}
+
+function eventAttendance(id: string): FeedEventAttendance {
+  return {
+    id,
+    rowType: "event_attendance",
+    eventId: id,
+    title: `Event ${id}`,
+    slug: id,
+    startAt: "2026-06-29T18:00:00Z",
+    endAt: null,
+    address: null,
+    coverImageUrl: null,
+    claimStatus: "claimed",
+    actors: [],
+    createdAt: "2026-06-29T11:00:00Z",
+  };
+}
+
+describe("groupHomeFeedEntries", () => {
+  it("collapses a run of 3+ same-user light visits into one summary", () => {
+    const items = groupHomeFeedEntries([
+      visit({ id: "a" }),
+      visit({ id: "b" }),
+      visit({ id: "c" }),
+    ]);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ kind: "activity-summary", key: "activity-a" });
+    if (items[0].kind === "activity-summary") {
+      expect(items[0].entries.map((e) => e.id)).toEqual(["a", "b", "c"]);
+    }
+  });
+
+  it("keeps a run of 2 as individual entries", () => {
+    const items = groupHomeFeedEntries([visit({ id: "a" }), visit({ id: "b" })]);
+    expect(items).toHaveLength(2);
+    expect(items.every((i) => i.kind === "entry")).toBe(true);
+  });
+
+  it("breaks the run on a different user", () => {
+    const items = groupHomeFeedEntries([
+      visit({ id: "a", user_id: "u1" }),
+      visit({ id: "b", user_id: "u1" }),
+      visit({ id: "c", user_id: "u2" }),
+    ]);
+    // u1 run is only 2 → individual; u2 has 1 → individual.
+    expect(items).toHaveLength(3);
+    expect(items.every((i) => i.kind === "entry")).toBe(true);
+  });
+
+  it("breaks the run on a different status", () => {
+    const items = groupHomeFeedEntries([
+      visit({ id: "a", status: "visited" }),
+      visit({ id: "b", status: "visited" }),
+      visit({ id: "c", status: "pending" }),
+    ]);
+    expect(items.some((i) => i.kind === "activity-summary")).toBe(false);
+  });
+
+  it("breaks the run across calendar days", () => {
+    const items = groupHomeFeedEntries([
+      visit({ id: "a", created_at: "2026-06-29T23:00:00Z" }),
+      visit({ id: "b", created_at: "2026-06-29T22:00:00Z" }),
+      visit({ id: "c", created_at: "2026-06-28T22:00:00Z" }),
+    ]);
+    expect(items.some((i) => i.kind === "activity-summary")).toBe(false);
+  });
+
+  it("does not absorb a post with a photo into the summary", () => {
+    const items = groupHomeFeedEntries([
+      visit({ id: "a" }),
+      visit({ id: "b" }),
+      visit({
+        id: "photo",
+        images: [{ id: "i1", url: "https://img/1.jpg", likes_count: 0, is_liked: false }],
+      }),
+      visit({ id: "c" }),
+    ]);
+    // No run reaches 3 consecutive light visits.
+    expect(items.some((i) => i.kind === "activity-summary")).toBe(false);
+    expect(items).toHaveLength(4);
+  });
+
+  it("breaks the run on an interleaved event-attendance row", () => {
+    const items = groupHomeFeedEntries([
+      visit({ id: "a" }),
+      visit({ id: "b" }),
+      eventAttendance("e1"),
+      visit({ id: "c" }),
+      visit({ id: "d" }),
+      visit({ id: "e" }),
+    ]);
+    // First run (a,b) = 2 → individual; event passes through; second run (c,d,e) = 3 → summary.
+    const summaries = items.filter((i) => i.kind === "activity-summary");
+    expect(summaries).toHaveLength(1);
+    if (summaries[0].kind === "activity-summary") {
+      expect(summaries[0].entries.map((e) => e.id)).toEqual(["c", "d", "e"]);
+    }
+  });
+
+  it("preserves order with summaries interleaved among rich entries", () => {
+    const items = groupHomeFeedEntries([
+      visit({ id: "review", content: "Great building" }),
+      visit({ id: "a" }),
+      visit({ id: "b" }),
+      visit({ id: "c" }),
+    ]);
+    expect(items).toHaveLength(2);
+    expect(items[0]).toMatchObject({ kind: "entry" });
+    expect(items[1]).toMatchObject({ kind: "activity-summary" });
+  });
+});

@@ -3092,6 +3092,14 @@ export type Database = {
         Args: { exclude_id?: string; target_slug: string }
         Returns: boolean
       }
+      claim_event: {
+        Args: {
+          p_event_id: string
+          p_organiser_kind: string
+          p_organiser_id?: string
+        }
+        Returns: Json
+      }
       claim_person: { Args: { p_person_id: string }; Returns: Json }
       country_name_to_code: { Args: { p_country: string }; Returns: string }
       disablelongtransactions: { Args: never; Returns: string }

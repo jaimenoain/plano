@@ -1,9 +1,23 @@
--- PostGIS `public.spatial_ref_sys` is exposed to PostgREST. Enabling RLS often fails on hosted Supabase with:
---   ERROR 42501: must be owner of table spatial_ref_sys
--- because the table is owned by `supabase_admin`, not the SQL Editor role.
--- Recommended workaround: revoke access from API roles (same outcome for clients — no direct table access).
--- https://github.com/supabase/supabase/issues/29122#issuecomment-2334780778
+-- SUPERSEDED -- do not act on this file.
 --
--- Run in Dashboard → SQL with role **postgres** (bottom of editor). If REVOKE still fails, contact Supabase support.
-REVOKE ALL PRIVILEGES ON TABLE public.spatial_ref_sys FROM anon, authenticated;
-REVOKE ALL PRIVILEGES ON TABLE public.spatial_ref_sys FROM PUBLIC;
+-- This migration originally contained manual REVOKE instructions for the PostGIS
+-- `public.spatial_ref_sys` table ("run in the Dashboard SQL editor as postgres"). That
+-- workaround does NOT work on this project: the table is owned by `supabase_admin`, and the
+-- `postgres` role (which both this migration role AND the Dashboard SQL editor run as) is
+-- not a member of `supabase_admin`, so it can neither ENABLE RLS nor REVOKE the owner's
+-- grants. The REVOKE silently no-ops.
+--
+-- Superseded by:
+--   * 20260624202125_revoke_spatial_ref_sys_api_access.sql      (correct REVOKE; effective
+--                                                                 only when run by Supabase
+--                                                                 Support as supabase_admin)
+--   * 20260624202545_guard_spatial_ref_sys_writes_from_api_roles.sql
+--                                                                (write-guard trigger that
+--                                                                 actually blocks anon/
+--                                                                 authenticated writes today)
+--
+-- The advisor lint `rls_disabled_in_public` for this table can only be cleared by
+-- supabase_admin (Supabase Support) enabling RLS or revoking grants.
+
+-- intentionally no-op
+select 1;

@@ -31,7 +31,6 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Map as MapIcon, List as ListIcon, Loader2 } from "lucide-react";
 import { ClientOnly } from "@/components/common/ClientOnly";
-import { useDebounce } from "@/hooks/useDebounce";
 import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
 import { Bounds, getBoundsFromBuildings } from "@/utils/map";
 import { useNavigate } from "react-router";
@@ -68,8 +67,33 @@ function SearchPageContent() {
     methods: { setFilter, moveMap, fitMapBounds, setFindModeBuildings },
   } = useMapContext();
 
-  const [searchValue, setSearchValue] = useState(filters.query || "");
-  const debouncedSearchValue = useDebounce(searchValue, 300);
+  const [searchValue, setSearchValueState] = useState(filters.query || "");
+  const [debouncedSearchValue, setDebouncedSearchValue] = useState(filters.query || "");
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Resettable 300ms debounce (replaces useDebounce so we can flush synchronously).
+  // Typing path: update the box immediately, debounce the downstream query.
+  const setSearchValue = (val: string) => {
+    setSearchValueState(val);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => setDebouncedSearchValue(val), 300);
+  };
+
+  // Clear EVERY hop of the query chain in one synchronous step and drop back to
+  // browse mode. Forcing debouncedSearchValue to "" on the same tick is the key:
+  // isFindMode is false on the next render, so the sync effects can't resurrect
+  // the stale text and the map falls through to browseClusters for the new viewport.
+  const clearSearchToBrowse = () => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    setSearchValueState("");
+    setDebouncedSearchValue("");
+    setFilter("query", undefined);
+    setFindModeBuildings(null);
+  };
+
+  useEffect(() => () => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+  }, []);
   const [viewMode, setViewMode] = useState<"list" | "map">("map");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
@@ -170,6 +194,10 @@ function SearchPageContent() {
     location: { lat: number; lng: number },
     bounds?: Bounds
   ) => {
+    // Single choke point for every location navigation (inline autocomplete +
+    // sidebar location row). Reset the whole query chain so the page browses the
+    // new viewport instead of staying stuck in empty find mode with stale text.
+    clearSearchToBrowse();
     if (bounds) {
       fitMapBounds(bounds);
     } else {
@@ -209,7 +237,6 @@ function SearchPageContent() {
       }
 
       handleLocationSelect({ lat, lng }, bounds);
-      setSearchValue("");
     } catch {}
   };
 

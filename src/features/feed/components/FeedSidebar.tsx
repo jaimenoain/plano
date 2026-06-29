@@ -3,6 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 import { getBuildingImageUrl } from "@/utils/image";
+import { PeopleYouMayKnow } from "@/features/connect/components/PeopleYouMayKnow";
+
+import { FeedPassportCard } from "./FeedPassportCard";
 
 type TrendingArchitect = {
   id: string;
@@ -241,11 +244,42 @@ function RecentBuildingsModule() {
   );
 }
 
+function SidebarFooter() {
+  const links: Array<{ to: string; label: string }> = [
+    { to: "/about", label: "About" },
+    { to: "/connect", label: "Find people" },
+    { to: "/explore", label: "Explore" },
+    { to: "/updates", label: "Updates" },
+  ];
+
+  return (
+    <section className="border-t border-border-default pt-5 pb-2">
+      <nav className="flex flex-wrap gap-x-3.5 gap-y-1.5 text-[11px] text-text-disabled">
+        {links.map((link) => (
+          <Link
+            key={link.to}
+            to={link.to}
+            className="transition-colors hover:text-text-primary"
+          >
+            {link.label}
+          </Link>
+        ))}
+      </nav>
+      <p className="mt-3 text-[10px] uppercase tracking-[0.12em] text-text-disabled">
+        Plano · 2026
+      </p>
+    </section>
+  );
+}
+
 export function FeedSidebar() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-0">
+      <FeedPassportCard />
+      <PeopleYouMayKnow layout="stacked" />
       <TrendingArchitectsModule />
       <RecentBuildingsModule />
+      <SidebarFooter />
     </div>
   );
 }

@@ -5,7 +5,7 @@
  * A24 editorial aesthetic — flat border-separated list, no card chrome,
  * no carousel. Reuses UserRow from the connect feature.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { UserRow } from "@/features/connect/components/UserRow";
@@ -32,7 +32,21 @@ type MutualFollowRow = {
     | null;
 };
 
-export function PeopleYouMayKnow() {
+interface PeopleYouMayKnowProps {
+  /**
+   * `default` — full-page list (e.g. /connect). `stacked` — narrow feed sidebar rail:
+   * forwards `layout="stacked"` to UserRow and wraps itself in a bordered `<section>`
+   * so the module (and its top divider) disappears cleanly when there are no suggestions.
+   */
+  layout?: "default" | "stacked";
+  /** Section heading text. */
+  heading?: string;
+}
+
+export function PeopleYouMayKnow({
+  layout = "default",
+  heading = "People you may know",
+}: PeopleYouMayKnowProps) {
   const { user } = useAuth();
   const [suggestions, setSuggestions] = useState<SuggestionUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,9 +129,32 @@ export function PeopleYouMayKnow() {
     }
   };
 
+  const isStacked = layout === "stacked";
+
+  // In the sidebar rail, the module owns its own top divider so it vanishes (border and all)
+  // when there are no suggestions; on the full page Connect provides the surrounding section.
+  const wrap = (content: ReactNode) =>
+    isStacked ? (
+      <section className="border-t border-border-default pt-9">{content}</section>
+    ) : (
+      content
+    );
+
+  const headingEl = (
+    <p
+      className={
+        isStacked
+          ? "mb-3.5 text-[11px] font-medium uppercase tracking-[0.15em] text-text-disabled"
+          : "text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-4"
+      }
+    >
+      {heading}
+    </p>
+  );
+
   // ── Loading skeleton — rectangular blocks, no rounded corners ──
   if (loading) {
-    return (
+    return wrap(
       <div className="space-y-4">
         <div className="h-2.5 w-32 bg-surface-muted animate-pulse" />
         <div>
@@ -135,29 +172,28 @@ export function PeopleYouMayKnow() {
             </div>
           ))}
         </div>
-      </div>
+      </div>,
     );
   }
 
   if (suggestions.length === 0) return null;
 
-  return (
+  return wrap(
     <div>
-      <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-4">
-        People you may know
-      </p>
+      {headingEl}
       <div>
         {suggestions.map((u) => (
           <UserRow
             key={u.id}
             user={u}
             showFollowButton
+            layout={layout}
             isFollower={u.is_follows_me}
             mutualFollows={u.mutual_follows}
             onHide={() => handleHide(u.id)}
           />
         ))}
       </div>
-    </div>
+    </div>,
   );
 }

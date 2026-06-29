@@ -103,3 +103,17 @@ export type EventsApiError = {
   code: string;
   message: string;
 };
+
+/** Identity a signed-in user can claim an event as (maps to the `claim_event` RPC). */
+export type EventClaimIdentity =
+  | { kind: "user" }
+  | { kind: "person"; id: string }
+  | { kind: "company"; id: string };
+
+/** An organiser entity the current user is allowed to claim an event on behalf of. */
+export type ManageableOrganiser = {
+  kind: "person" | "company";
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+};

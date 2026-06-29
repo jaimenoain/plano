@@ -41,6 +41,17 @@ export interface WatchWithUser {
   username: string | null;
 }
 
+/**
+ * A first-degree contact who follows a community post's author — the
+ * "Followed by XYZ" facepile. Shape matches `SimpleProfile` so it can be passed
+ * straight to {@link CommonFollowersFacepile}.
+ */
+export interface FeedConnector {
+  id: string;
+  username: string | null;
+  avatar_url: string | null;
+}
+
 export interface FeedReview {
   id: string;
   content: string | null;
@@ -62,6 +73,17 @@ export interface FeedReview {
   watch_with_users?: WatchWithUser[];
   is_suggested?: boolean;
   suggestion_reason?: string;
+  /**
+   * Discovery-feed relationship ring: 'direct' for followed-feed items;
+   * 2 (second-degree contact) or 3 (wider community) from `get_community_feed_ranked`.
+   */
+  ring?: number | string;
+  /** First-degree contacts who follow this author (community feed only). */
+  connectors?: FeedConnector[];
+  /** Total such contacts (may exceed `connectors.length`, which is capped at 3). */
+  connectors_count?: number;
+  /** Why this community post matched the viewer's location, if at all. */
+  location_match?: "city" | "country" | null;
 }
 
 /** JSON payload from `get_feed` / `get_suggested_posts` RPCs. */
@@ -135,6 +157,11 @@ export interface RawFeedRow {
   is_suggested?: boolean;
   suggestion_reason?: string | null;
   group_id?: string | null;
+  /** From `get_community_feed_ranked`: 2 (second-degree) | 3 (community), or 'direct' from `get_feed_ranked`. */
+  ring?: number | string | null;
+  connectors?: FeedConnector[] | null;
+  connectors_count?: number | null;
+  location_match?: "city" | "country" | null;
 }
 
 /** Preview row from `get_collections_feed` buildings subquery (snake_case). */
