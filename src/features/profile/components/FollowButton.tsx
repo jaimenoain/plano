@@ -12,9 +12,10 @@ interface FollowButtonProps {
   isFollower?: boolean;
   className?: string;
   hideIfFollowing?: boolean;
+  variant?: "outline" | "primary";
 }
 
-export function FollowButton({ userId, initialIsFollowing, isFollower, className, hideIfFollowing }: FollowButtonProps) {
+export function FollowButton({ userId, initialIsFollowing, isFollower, className, hideIfFollowing, variant = "outline" }: FollowButtonProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing ?? false);
@@ -99,12 +100,15 @@ export function FollowButton({ userId, initialIsFollowing, isFollower, className
   if (!user || user.id === userId) return null;
   if (isFollowing && hideIfFollowing) return null;
 
+  const useFilled = variant === "primary" && !isFollowing;
+
   return (
     <Button
-      variant="outline"
+      variant={useFilled ? "default" : "outline"}
       size="sm"
       className={cn(
-        "rounded-sm border-border-default uppercase tracking-[0.15em] text-xs font-medium",
+        "rounded-sm uppercase tracking-[0.15em] text-xs font-medium",
+        !useFilled && "border-border-default",
         isFollowing && "bg-surface-muted",
         className,
       )}

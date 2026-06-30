@@ -3,7 +3,7 @@ import { useForm, Controller } from "react-hook-form";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
-import { CalendarIcon, Loader2, MapPin, X } from "lucide-react";
+import { CalendarIcon, Loader2, MapPin, Plus, X } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -42,6 +42,18 @@ function FormSection({ title, children }: { title: string; children: ReactNode }
       <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">{title}</h2>
       {children}
     </section>
+  );
+}
+
+function AddLink({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-1 text-sm font-medium text-text-secondary hover:text-text-primary"
+    >
+      <Plus className="h-3.5 w-3.5" aria-hidden /> {label}
+    </button>
   );
 }
 
@@ -130,6 +142,12 @@ export default function SubmitEvent() {
   const [coverUploading, setCoverUploading] = useState(false);
   const coverFileInputRef = useRef<HTMLInputElement>(null);
 
+  const [showEnd, setShowEnd] = useState(false);
+  const [showLocation, setShowLocation] = useState(false);
+  const [showBuildings, setShowBuildings] = useState(false);
+  const [showLinks, setShowLinks] = useState(false); // external link + cover
+  const [showOrganiser, setShowOrganiser] = useState(false);
+
   const form = useForm<FormValues>({
     defaultValues: {
       title: "",
@@ -188,6 +206,11 @@ export default function SubmitEvent() {
     setEndDay(event.endAt ? parseISO(event.endAt) : undefined);
     setAddress(event.address ?? "");
     setSelectedBuildings(event.buildings.map((b) => ({ id: b.buildingId, name: b.name })));
+    setShowEnd(Boolean(event.endAt));
+    setShowLocation(Boolean(event.address) || event.lat != null || event.lng != null);
+    setShowBuildings(event.buildings.length > 0);
+    setShowLinks(Boolean(event.externalLink) || Boolean(event.coverImageUrl));
+    setShowOrganiser(event.isSelfHosted);
     setEditHydratedKey(nextKey);
   }, [isEditMode, editSlug, event, user, form, editHydratedKey]);
 
@@ -441,33 +464,38 @@ export default function SubmitEvent() {
                   <Input id="start-time" type="time" {...form.register("startTime")} />
                 </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>End date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button type="button" variant="outline" className={cn("w-full justify-start text-left font-normal")}>
-                        <CalendarIcon className="mr-2 h-4 w-4" aria-hidden />
-                        {endDay ? format(endDay, "PPP") : "Optional"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={endDay}
-                        onSelect={(d) => setEndDay(d ?? undefined)}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+              {showEnd ? (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>End date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button type="button" variant="outline" className={cn("w-full justify-start text-left font-normal")}>
+                          <CalendarIcon className="mr-2 h-4 w-4" aria-hidden />
+                          {endDay ? format(endDay, "PPP") : "Optional"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={endDay}
+                          onSelect={(d) => setEndDay(d ?? undefined)}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="end-time">End time</Label>
+                    <Input id="end-time" type="time" {...form.register("endTime")} disabled={!endDay} />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="end-time">End time</Label>
-                  <Input id="end-time" type="time" {...form.register("endTime")} disabled={!endDay} />
-                </div>
-              </div>
+              ) : (
+                <AddLink label="Add end time" onClick={() => setShowEnd(true)} />
+              )}
           </FormSection>
 
+          {showLocation && (
           <FormSection title="Where">
               <div className="space-y-2">
                 <Label>Address</Label>
@@ -491,7 +519,9 @@ export default function SubmitEvent() {
                 </div>
               </div>
           </FormSection>
+          )}
 
+          {showBuildings && (
           <FormSection title="Link buildings">
               <div className="space-y-2">
                 <Label htmlFor="building-search">Search buildings</Label>
@@ -554,8 +584,10 @@ export default function SubmitEvent() {
                 </div>
               )}
           </FormSection>
+          )}
 
-          <FormSection title="Links & organiser">
+          {showLinks && (
+          <FormSection title="Links & media">
               <div className="space-y-2">
                 <Label htmlFor="external-link">External link</Label>
                 <Input id="external-link" type="url" placeholder="https://…" {...form.register("externalLink")} />
@@ -605,6 +637,11 @@ export default function SubmitEvent() {
                   </div>
                 ) : null}
               </div>
+          </FormSection>
+          )}
+
+          {showOrganiser && (
+          <FormSection title="Organiser">
               <div className="flex items-center justify-between gap-4 rounded-sm border border-border-default bg-surface-muted px-4 py-3">
                 <div>
                   <p className="text-sm font-medium text-text-primary">I&apos;m the organiser</p>
@@ -619,6 +656,16 @@ export default function SubmitEvent() {
                 />
               </div>
           </FormSection>
+          )}
+
+          {(!showLocation || !showBuildings || !showLinks || !showOrganiser) && (
+            <div className="flex flex-col items-start gap-3">
+              {!showLocation && <AddLink label="Add location" onClick={() => setShowLocation(true)} />}
+              {!showBuildings && <AddLink label="Add buildings" onClick={() => setShowBuildings(true)} />}
+              {!showLinks && <AddLink label="Add links & media" onClick={() => setShowLinks(true)} />}
+              {!showOrganiser && <AddLink label="Add organiser" onClick={() => setShowOrganiser(true)} />}
+            </div>
+          )}
 
           {formError && (
             <p className="border border-feedback-destructive/30 bg-feedback-destructive/5 px-4 py-3 text-sm text-feedback-destructive" role="alert">

@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { groupHomeFeedEntries } from "@/features/feed/utils/groupActivitySummary";
+import {
+  collapseCompactRuns,
+  groupHomeFeedEntries,
+} from "@/features/feed/utils/groupActivitySummary";
 import type { FeedEventAttendance, FeedReview, ReviewBuilding } from "@/types/feed";
 
 const building = (id: string): ReviewBuilding => ({
@@ -143,5 +146,92 @@ describe("groupHomeFeedEntries", () => {
     expect(items).toHaveLength(2);
     expect(items[0]).toMatchObject({ kind: "entry" });
     expect(items[1]).toMatchObject({ kind: "activity-summary" });
+  });
+});
+
+describe("collapseCompactRuns", () => {
+  // Distinct users so groupHomeFeedEntries leaves each as an individual compact `entry`
+  // (per-person summaries only form for 3+ same-user visits).
+  const distinctVisits = (ids: string[]) =>
+    ids.map((id) => visit({ id, user_id: `u-${id}` }));
+
+  it("wraps 5+ consecutive compact rows into one compact-run block", () => {
+    const blocks = collapseCompactRuns(
+      groupHomeFeedEntries(distinctVisits(["a", "b", "c", "d", "e"])),
+    );
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].kind).toBe("compact-run");
+    if (blocks[0].kind === "compact-run") {
+      expect(blocks[0].items).toHaveLength(5);
+      expect(blocks[0].key).toBe("compact-run-a");
+    }
+  });
+
+  it("leaves a run of exactly 4 compact rows as individual item blocks", () => {
+    const blocks = collapseCompactRuns(
+      groupHomeFeedEntries(distinctVisits(["a", "b", "c", "d"])),
+    );
+    expect(blocks).toHaveLength(4);
+    expect(blocks.every((b) => b.kind === "item")).toBe(true);
+  });
+
+  it("breaks the run on an interleaved rich entry", () => {
+    const blocks = collapseCompactRuns(
+      groupHomeFeedEntries([
+        ...distinctVisits(["a", "b", "c"]),
+        visit({ id: "review", user_id: "u-review", content: "Great building" }),
+        ...distinctVisits(["d", "e", "f"]),
+      ]),
+    );
+    // Each side is only 3 compact rows (<= 4) → no wrapping; rich entry separates them.
+    expect(blocks).toHaveLength(7);
+    expect(blocks.every((b) => b.kind === "item")).toBe(true);
+  });
+
+  it("breaks the run on an interleaved event-attendance row", () => {
+    const blocks = collapseCompactRuns(
+      groupHomeFeedEntries([
+        ...distinctVisits(["a", "b", "c"]),
+        eventAttendance("e1"),
+        ...distinctVisits(["d", "e", "f"]),
+      ]),
+    );
+    expect(blocks.some((b) => b.kind === "compact-run")).toBe(false);
+    expect(blocks).toHaveLength(7);
+  });
+
+  it("counts activity-summary and individual activity rows together toward the threshold", () => {
+    const blocks = collapseCompactRuns(
+      groupHomeFeedEntries([
+        // 3 same-user visits → one activity-summary (counts as one compact row).
+        visit({ id: "s1", user_id: "u1" }),
+        visit({ id: "s2", user_id: "u1" }),
+        visit({ id: "s3", user_id: "u1" }),
+        // 4 distinct-user visits → 4 individual compact rows.
+        ...distinctVisits(["a", "b", "c", "d"]),
+      ]),
+    );
+    // 1 summary + 4 entries = 5 compact rows → wrapped.
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].kind).toBe("compact-run");
+    if (blocks[0].kind === "compact-run") {
+      expect(blocks[0].items).toHaveLength(5);
+      expect(blocks[0].items[0].kind).toBe("activity-summary");
+    }
+  });
+
+  it("preserves order and passes non-compact blocks through untouched", () => {
+    const blocks = collapseCompactRuns(
+      groupHomeFeedEntries([
+        visit({ id: "review", user_id: "u-review", content: "Great building" }),
+        ...distinctVisits(["a", "b", "c", "d", "e"]),
+      ]),
+    );
+    expect(blocks).toHaveLength(2);
+    expect(blocks[0]).toMatchObject({ kind: "item" });
+    if (blocks[0].kind === "item") {
+      expect(blocks[0].item).toMatchObject({ kind: "entry" });
+    }
+    expect(blocks[1].kind).toBe("compact-run");
   });
 });

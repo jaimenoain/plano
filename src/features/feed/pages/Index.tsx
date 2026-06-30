@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, type MetaFunction } from "react-router";
 import { Loader2 } from "lucide-react";
 
@@ -10,7 +10,12 @@ import { ReviewCardFeed } from "@/features/posts/components/ReviewCardFeed";
 import { FeedActivitySummaryRow } from "@/features/posts/components/FeedActivitySummaryRow";
 import { EditorialFeedPost } from "@/features/feed/components/EditorialFeedPost";
 import { resolveCardType } from "@/features/posts/utils/resolveCardType";
-import { groupHomeFeedEntries } from "@/features/feed/utils/groupActivitySummary";
+import {
+  COMPACT_RUN_VISIBLE,
+  collapseCompactRuns,
+  groupHomeFeedEntries,
+  type HomeFeedRenderItem,
+} from "@/features/feed/utils/groupActivitySummary";
 import type { FeedHomeEntry, FeedReview } from "@/types/feed";
 import { useHomeFeed } from "@/features/feed/hooks/useHomeFeed";
 import { useCommunityFeed } from "@/features/feed/hooks/useCommunityFeed";
@@ -152,6 +157,36 @@ function FeedErrorBlock({ onRetry }: { onRetry: () => void }) {
   );
 }
 
+/**
+ * Wraps a long run of consecutive compact activity rows: shows the first
+ * {@link COMPACT_RUN_VISIBLE}, then a "Show N more" link that reveals the rest inline in place.
+ */
+function CompactActivityRun({
+  items,
+  renderItem,
+}: {
+  items: HomeFeedRenderItem[];
+  renderItem: (item: HomeFeedRenderItem) => React.ReactNode;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? items : items.slice(0, COMPACT_RUN_VISIBLE);
+  const hiddenCount = items.length - COMPACT_RUN_VISIBLE;
+  return (
+    <>
+      {visible.map(renderItem)}
+      {!expanded && hiddenCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="w-full border-t border-border-default py-4 text-left font-mono text-[10px] uppercase tracking-[0.08em] text-text-secondary transition-colors hover:text-text-primary"
+        >
+          Show {hiddenCount} more
+        </button>
+      )}
+    </>
+  );
+}
+
 /** Renders grouped feed entries (activity summaries + cards) for one section. */
 function FeedEntries({
   reviews,
@@ -162,19 +197,32 @@ function FeedEntries({
   onLike: (reviewId: string) => void;
   onImageLike: (reviewId: string, imageId: string) => void;
 }) {
-  const items = useMemo(() => groupHomeFeedEntries(reviews), [reviews]);
+  const blocks = useMemo(
+    () => collapseCompactRuns(groupHomeFeedEntries(reviews)),
+    [reviews],
+  );
+  const renderItem = (item: HomeFeedRenderItem) =>
+    item.kind === "activity-summary" ? (
+      <FeedActivitySummaryRow key={item.key} entries={item.entries} />
+    ) : (
+      <HomeFeedEntry
+        key={item.entry.id}
+        entry={item.entry}
+        onLike={onLike}
+        onImageLike={onImageLike}
+      />
+    );
   return (
     <>
-      {items.map((item) =>
-        item.kind === "activity-summary" ? (
-          <FeedActivitySummaryRow key={item.key} entries={item.entries} />
-        ) : (
-          <HomeFeedEntry
-            key={item.entry.id}
-            entry={item.entry}
-            onLike={onLike}
-            onImageLike={onImageLike}
+      {blocks.map((block) =>
+        block.kind === "compact-run" ? (
+          <CompactActivityRun
+            key={block.key}
+            items={block.items}
+            renderItem={renderItem}
           />
+        ) : (
+          renderItem(block.item)
         ),
       )}
     </>

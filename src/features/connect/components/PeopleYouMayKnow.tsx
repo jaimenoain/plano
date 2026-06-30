@@ -154,6 +154,30 @@ export function PeopleYouMayKnow({
 
   // ── Loading skeleton — rectangular blocks, no rounded corners ──
   if (loading) {
+    if (isStacked) {
+      return wrap(
+        <div className="space-y-4">
+          <div className="h-2.5 w-32 bg-surface-muted animate-pulse" />
+          <div>
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="flex flex-col gap-3 p-4 border-b border-border-default last:border-0"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="h-12 w-12 bg-surface-muted animate-pulse shrink-0" />
+                  <div className="flex-1 space-y-2 pr-5">
+                    <div className="h-3 w-28 bg-surface-muted animate-pulse" />
+                    <div className="h-2.5 w-20 bg-surface-muted/60 animate-pulse" />
+                  </div>
+                </div>
+                <div className="h-9 w-full bg-surface-muted animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </div>,
+      );
+    }
     return wrap(
       <div className="space-y-4">
         <div className="h-2.5 w-32 bg-surface-muted animate-pulse" />

@@ -3,7 +3,8 @@ import { Link, type MetaFunction } from "react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { CalendarDays } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { EventCard, EventCardSkeleton } from "@/features/events/components/EventCard";
+import { EventGridCard, EventGridCardSkeleton } from "@/features/events/components/EventGridCard";
+import { EventHeroCard, EventHeroCardSkeleton } from "@/features/events/components/EventHeroCard";
 import { getUpcomingEvents, UPCOMING_EVENTS_PAGE_SIZE } from "@/features/events/api/eventsApi";
 import type { EventCardDTO } from "@/features/events/types";
 import { eventKeys } from "@/features/events/queryKeys";
@@ -52,6 +53,16 @@ export default function Events() {
     return [...flat].sort(sortEventsForListing);
   }, [query.data]);
 
+  const { featured, rest } = useMemo(() => {
+    const featuredIndex = items.findIndex(eventHasCoverImage);
+    if (featuredIndex === -1) return { featured: null, rest: items };
+    const featuredEvent = items[featuredIndex];
+    return {
+      featured: featuredEvent,
+      rest: items.filter((_, i) => i !== featuredIndex),
+    };
+  }, [items]);
+
   useEffect(() => {
     if (!loadMoreVisible) return;
     if (query.hasNextPage && !query.isFetchingNextPage && !query.isError) {
@@ -64,7 +75,7 @@ export default function Events() {
 
   return (
     <AppLayout title="Events" showBack={false}>
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <header className="mb-10 flex flex-col gap-4 border-b border-border-default pb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="mb-2 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
@@ -88,32 +99,44 @@ export default function Events() {
           </p>
         ) : null}
 
-        <div className="divide-y divide-border-default border-y border-border-default">
-          {showInitialSkeleton ? (
-            <>
-              <EventCardSkeleton />
-              <EventCardSkeleton />
-              <EventCardSkeleton />
-            </>
-          ) : items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center px-4 py-16 text-center">
-              <CalendarDays className="mb-4 h-10 w-10 text-text-disabled" aria-hidden />
-              <p className="max-w-sm text-sm text-text-secondary">No upcoming events yet.</p>
-              <Link
-                to="/events/new"
-                className="mt-6 text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
-              >
-                Share the first event →
-              </Link>
+        {showInitialSkeleton ? (
+          <div className="space-y-10">
+            <EventHeroCardSkeleton />
+            <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+              <EventGridCardSkeleton />
+              <EventGridCardSkeleton />
+              <EventGridCardSkeleton />
             </div>
-          ) : (
-            items.map((ev) => <EventCard key={ev.id} event={ev} />)
-          )}
-        </div>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center border-y border-border-default px-4 py-16 text-center">
+            <CalendarDays className="mb-4 h-10 w-10 text-text-disabled" aria-hidden />
+            <p className="max-w-sm text-sm text-text-secondary">No upcoming events yet.</p>
+            <Link
+              to="/events/new"
+              className="mt-6 text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
+            >
+              Share the first event →
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-10">
+            {featured ? <EventHeroCard event={featured} /> : null}
+            {rest.length > 0 ? (
+              <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+                {rest.map((ev) => (
+                  <EventGridCard key={ev.id} event={ev} />
+                ))}
+              </div>
+            ) : null}
+          </div>
+        )}
 
         {query.isFetchingNextPage ? (
-          <div className="mt-4 space-y-4">
-            <EventCardSkeleton />
+          <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+            <EventGridCardSkeleton />
+            <EventGridCardSkeleton />
+            <EventGridCardSkeleton />
           </div>
         ) : null}
 

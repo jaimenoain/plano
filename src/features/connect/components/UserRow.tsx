@@ -126,11 +126,49 @@ export function UserRow({
   if (layout === "stacked") {
     return (
       <div
-        className="flex min-w-0 flex-col gap-2 border-b border-border-default p-3 transition-colors hover:bg-brand-secondary cursor-pointer relative group"
+        className="group relative flex flex-col gap-3 border-b border-border-default p-4 transition-colors hover:bg-brand-secondary cursor-pointer"
         onClick={() => navigate(`/profile/${user.username?.toLowerCase() || user.id}`)}
       >
-        {identityBlock}
-        <div className="flex min-w-0 justify-end">{actions}</div>
+        {onHide && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onHide();
+            }}
+            className="absolute right-2 top-2 rounded-sm p-1 text-text-disabled opacity-0 transition-opacity hover:bg-surface-muted group-hover:opacity-100 focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-border-strong"
+            title="Hide suggestion"
+          >
+            <X className="h-4 w-4" aria-hidden />
+          </button>
+        )}
+
+        <div className="flex min-w-0 items-start gap-3">
+          <Avatar className="h-12 w-12 shrink-0 border border-border-default">
+            <AvatarImage src={avatarUrl} />
+            <AvatarFallback>{user.username?.charAt(0).toUpperCase() || "?"}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1 pr-5">
+            <span
+              className="block text-sm font-semibold text-text-primary line-clamp-2"
+              title={displayName}
+            >
+              {displayName}
+            </span>
+            {mutualFollows && mutualFollows.length > 0 ? (
+              <MutualFacepile users={mutualFollows} />
+            ) : null}
+          </div>
+        </div>
+
+        {showFollowButton && (
+          <FollowButton
+            userId={user.id}
+            isFollower={isFollower}
+            variant="primary"
+            className="w-full h-9 text-2xs"
+          />
+        )}
       </div>
     );
   }
