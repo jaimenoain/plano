@@ -8,19 +8,18 @@
  *            drawer content; the selected pin stays highlighted behind it.
  *   Mobile:  a bottom sheet (vaul Drawer), matching the rest of the app.
  *
- * Replaces the old behaviour where a pin click opened the full building page in
- * a NEW TAB. Navigation to the full page is now an explicit "View full details"
- * link inside the drawer (same tab).
- *
- * The visual card (image, name, save/visit/hide actions) is the existing,
- * battle-tested BuildingPopupContent, reused with `hideCardLink` so the card
- * itself no longer opens a new tab.
+ * Standard buildings render the redesigned BuildingDrawerBody (photo gallery,
+ * architect/year, labelled visit/save/hide + rating, inline note & collection
+ * quick-actions, your notes, a composed summary, and a sticky "Open full
+ * profile" footer). Custom markers and candidates keep the compact, battle-
+ * tested BuildingPopupContent card (LegacyDetailBody below).
  */
 import { Link } from "react-router";
 import { X, ArrowRight } from "lucide-react";
 import { ClusterResponse } from "../hooks/useMapData";
 import { BuildingPopupContent } from "./BuildingPopupContent";
-import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import { BuildingDrawerBody } from "./BuildingDrawerBody";
+import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
 import { getBuildingUrl } from "@/utils/url";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -30,8 +29,8 @@ interface BuildingDetailDrawerProps {
   onClose: () => void;
 }
 
-/** Shared inner content: the building card + a "View full details" link. */
-function DetailBody({
+/** Legacy card path — custom markers & candidates keep the compact popup card. */
+function LegacyDetailBody({
   cluster,
   onClose,
 }: {
@@ -60,14 +59,23 @@ function DetailBody({
 
 export function BuildingDetailDrawer({ cluster, onClose }: BuildingDetailDrawerProps) {
   const isMobile = useIsMobile();
+  const isSpecial = !!(cluster?.is_custom_marker || cluster?.is_candidate);
 
   if (isMobile) {
     return (
       <Drawer open={!!cluster} onOpenChange={(open) => !open && onClose()}>
         <DrawerContent className="border-none">
-          <div className="overflow-y-auto max-h-[75vh] pb-8">
-            {cluster && <DetailBody cluster={cluster} onClose={onClose} />}
-          </div>
+          <DrawerTitle className="sr-only">
+            {cluster?.name || "Building details"}
+          </DrawerTitle>
+          {cluster &&
+            (isSpecial ? (
+              <div className="overflow-y-auto max-h-[75vh] pb-8">
+                <LegacyDetailBody cluster={cluster} onClose={onClose} />
+              </div>
+            ) : (
+              <BuildingDrawerBody cluster={cluster} onClose={onClose} layout="sheet" />
+            ))}
         </DrawerContent>
       </Drawer>
     );
@@ -75,25 +83,38 @@ export function BuildingDetailDrawer({ cluster, onClose }: BuildingDetailDrawerP
 
   // Desktop: non-modal right panel anchored inside the map container.
   if (!cluster) return null;
+
+  if (isSpecial) {
+    return (
+      <div
+        className="absolute right-0 top-0 z-[70] flex h-full w-full max-w-sm flex-col border-l border-border-default bg-surface-card animate-in slide-in-from-right-8 duration-200"
+        role="dialog"
+        aria-label={cluster.name || "Building details"}
+      >
+        <div className="flex items-center justify-end border-b border-border-default p-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors"
+            aria-label="Close details"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <LegacyDetailBody cluster={cluster} onClose={onClose} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className="absolute right-0 top-0 z-[70] flex h-full w-full max-w-sm flex-col border-l border-border-default bg-surface-card animate-in slide-in-from-right-8 duration-200"
+      className="absolute right-0 top-0 z-[70] flex h-full w-full max-w-md flex-col border-l border-border-default bg-surface-card animate-in slide-in-from-right-8 duration-200"
       role="dialog"
       aria-label={cluster.name || "Building details"}
     >
-      <div className="flex items-center justify-end border-b border-border-default p-2">
-        <button
-          type="button"
-          onClick={onClose}
-          className="p-2 text-text-secondary hover:bg-surface-muted hover:text-text-primary transition-colors"
-          aria-label="Close details"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <DetailBody cluster={cluster} onClose={onClose} />
-      </div>
+      <BuildingDrawerBody cluster={cluster} onClose={onClose} layout="panel" />
     </div>
   );
 }

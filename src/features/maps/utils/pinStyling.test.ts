@@ -178,4 +178,40 @@ describe('getPinStyle', () => {
       expect(style.classes).not.toContain('border-2');
     });
   });
+
+  describe('Suite 6: Construction Status Treatment', () => {
+    it('fades Lost pins (and legacy Demolished)', () => {
+      expect(getPinStyle(createMockBuilding({ construction_status: 'Lost' })).classes).toContain('opacity-50');
+      expect(getPinStyle(createMockBuilding({ construction_status: 'Demolished' })).classes).toContain('opacity-50');
+    });
+
+    it('dashes Unbuilt and Under Construction pins', () => {
+      expect(getPinStyle(createMockBuilding({ construction_status: 'Unbuilt' })).classes).toContain('border-dashed');
+      expect(getPinStyle(createMockBuilding({ construction_status: 'Under Construction' })).classes).toContain('border-dashed');
+    });
+
+    it('leaves standing / Temporary / unknown pins unmodified', () => {
+      const base = getPinStyle(createMockBuilding({})).classes;
+      expect(getPinStyle(createMockBuilding({ construction_status: 'Built' })).classes).toBe(base);
+      expect(getPinStyle(createMockBuilding({ construction_status: 'Temporary' })).classes).toBe(base);
+      expect(getPinStyle(createMockBuilding({ construction_status: null })).classes).toBe(base);
+    });
+
+    it('preserves the underlying tier when fading (rated Lost building keeps Tier S)', () => {
+      const style = getPinStyle(createMockBuilding({ rating: 3, status: 'visited', construction_status: 'Lost' }));
+      expect(style.tier).toBe('S');
+      expect(style.classes).toContain('opacity-50');
+    });
+
+    it('never modifies clusters, even with a construction status present', () => {
+      const style = getPinStyle(createMockBuilding({ is_cluster: true, max_tier: 3, count: 12, construction_status: 'Lost' }));
+      expect(style.classes).not.toContain('opacity-50');
+      expect(style.classes).not.toContain('border-dashed');
+    });
+
+    it('does not apply the treatment in photography-gap mode', () => {
+      const style = getPinStyle(createMockBuilding({ construction_status: 'Lost' }), { photographyGaps: true });
+      expect(style.classes).not.toContain('opacity-50');
+    });
+  });
 });

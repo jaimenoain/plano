@@ -594,15 +594,27 @@ export function DiscoveryCard({
         className="absolute inset-0 pointer-events-none"
       />
 
-      {/* ── Main image — object-cover: cinematic, fills the frame ── */}
+      {/* ── Main image — show the whole photo (object-contain) over a blurred
+           fill so off-ratio shots still fill the cinematic frame ── */}
       <div className="absolute inset-0 z-10">
         {uniqueImages.length > 0 ? (
-          <img
-            src={uniqueImages[currentImageIndex]}
-            alt={`${building.name} — view ${currentImageIndex + 1}`}
-            className="w-full h-full object-cover"
-            draggable={false}
-          />
+          <>
+            {/* Blurred ambient fill — decorative, hides the letterbox */}
+            <img
+              src={uniqueImages[currentImageIndex]}
+              alt=""
+              aria-hidden
+              className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl"
+              draggable={false}
+            />
+            {/* The actual photo — full, uncropped */}
+            <img
+              src={uniqueImages[currentImageIndex]}
+              alt={`${building.name} — view ${currentImageIndex + 1}`}
+              className="relative w-full h-full object-contain"
+              draggable={false}
+            />
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-surface-muted">
             <span className="text-xs font-medium uppercase tracking-widest text-white/20">

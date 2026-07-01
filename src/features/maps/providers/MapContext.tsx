@@ -8,6 +8,7 @@ import { createMapStore, type MapStore } from '../stores/useMapStore';
 import { MapMode, MapFilters, MapState } from '@/types/plano-map';
 import { Bounds } from '@/utils/map';
 import type { BuildingSearchHit } from '@/features/search/api/searchBuildingsV2';
+import type { ClusterResponse } from '../hooks/useMapData';
 
 interface Contact {
   id: string;
@@ -25,6 +26,12 @@ interface MapContextMethods {
   setHighlightedId: (id: string | null) => void;
   /** Deliberate click selection — drives the detail drawer. Separate from hover (highlightedId). */
   setSelectedId: (id: string | null) => void;
+  /**
+   * Select a building AND carry its data payload for the detail drawer. Used by
+   * the SERP rows (and map pins), so the drawer opens even when the building
+   * isn't among the map's own clusters at the current zoom.
+   */
+  selectBuilding: (building: ClusterResponse) => void;
   setFindModeBuildings: (buildings: BuildingSearchHit[] | null) => void;
 }
 
@@ -39,6 +46,7 @@ interface MapContextValue {
     fitBounds: Bounds | null;
     highlightedId: string | null;
     selectedId: string | null;
+    selectedBuilding: ClusterResponse | null;
     findModeBuildings: BuildingSearchHit[] | null;
   };
   methods: MapContextMethods;
@@ -70,7 +78,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
 
   // Reactive view of the store.
   const s = useStore(store);
-  const { lat, lng, zoom, mode, filters, bounds, highlightedId, selectedId, findModeBuildings, fitBoundsRequest } = s;
+  const { lat, lng, zoom, mode, filters, bounds, highlightedId, selectedId, selectedBuilding, findModeBuildings, fitBoundsRequest } = s;
 
   const [hydratedContacts, setHydratedContacts] = useState<Record<string, Contact>>({});
 
@@ -185,6 +193,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
   const setBounds = useCallback((b: Bounds) => store.getState().setBounds(b), [store]);
   const setHighlightedId = useCallback((id: string | null) => store.getState().setHighlightedId(id), [store]);
   const setSelectedId = useCallback((id: string | null) => store.getState().setSelectedId(id), [store]);
+  const selectBuilding = useCallback((b: ClusterResponse) => store.getState().selectBuilding(b), [store]);
   const setFindModeBuildings = useCallback(
     (b: BuildingSearchHit[] | null) => store.getState().setFindModeBuildings(b),
     [store]
@@ -213,6 +222,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
         fitBounds: fitBoundsRequest?.bounds ?? null,
         highlightedId,
         selectedId,
+        selectedBuilding,
         findModeBuildings,
       },
       methods: {
@@ -224,10 +234,11 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
         setBounds,
         setHighlightedId,
         setSelectedId,
+        selectBuilding,
         setFindModeBuildings,
       },
     }),
-    [lat, lng, zoom, mode, mergedFilters, bounds, fitBoundsRequest, highlightedId, selectedId, findModeBuildings, moveMap, fitMapBounds, setMode, setFilter, setMapState, setBounds, setHighlightedId, setSelectedId, setFindModeBuildings]
+    [lat, lng, zoom, mode, mergedFilters, bounds, fitBoundsRequest, highlightedId, selectedId, selectedBuilding, findModeBuildings, moveMap, fitMapBounds, setMode, setFilter, setMapState, setBounds, setHighlightedId, setSelectedId, selectBuilding, setFindModeBuildings]
   );
 
   return <MapContext.Provider value={value}>{children}</MapContext.Provider>;

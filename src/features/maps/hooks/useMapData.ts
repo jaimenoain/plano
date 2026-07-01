@@ -1,10 +1,7 @@
 import { useMemo, useRef } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import {
-  DEFAULT_EXCLUDED_CONSTRUCTION_STATUSES,
-  SHOW_LOST_EXCLUDED_CONSTRUCTION_STATUSES,
-} from '@/lib/buildingStatus';
+import { resolveConstructionStatuses } from '@/lib/buildingStatus';
 import { Bounds } from '@/utils/map';
 import { MapFilters, MapMode } from '@/types/plano-map';
 
@@ -38,6 +35,8 @@ export interface ClusterResponse {
   itinerary_day_index?: number;
   photos_count?: number;
   city?: string;
+  /** Raw construction status (buildings.status: Built/Lost/Unbuilt/Under Construction/Temporary). Distinct from `status` (user library status). Null for clusters. */
+  construction_status?: string | null;
 }
 
 export interface UseMapDataProps {
@@ -54,15 +53,6 @@ const MIN_LAT = -85;
 const MAX_LNG = 180;
 const MIN_LNG = -180;
 
-/**
- * Phase 3 — default status set used when the caller hasn't picked an explicit
- * `constructionStatuses` filter. Preserves today's user-perceived default
- * ("non-built buildings stay hidden") while exposing the toggle.
- *
- * Encoded as an *exclusion* list rather than an inclusion list so legacy
- * rows with `b.status IS NULL` still render — a strict `status = ANY([...])`
- * inclusion filter drops NULL rows entirely (`NULL = ANY([...])` is NULL).
- */
 function calculateFetchBox(bounds: Bounds): Bounds {
   const latSpan = bounds.north - bounds.south;
   const lngSpan = bounds.east - bounds.west;
@@ -76,26 +66,6 @@ function calculateFetchBox(bounds: Bounds): Bounds {
   const west = Math.max(MIN_LNG, bounds.west - lngBuffer);
 
   return { north, south, east, west };
-}
-
-interface ConstructionStatusFilter {
-  construction_statuses?: string[];
-  exclude_construction_statuses?: string[];
-}
-
-function resolveConstructionStatuses(filters: MapFilters): ConstructionStatusFilter {
-  // Explicit picks from the Building status filter override the toggle.
-  // Strict inclusion semantics — NULL-status rows are intentionally excluded
-  // when the user has hand-picked statuses.
-  if (filters.constructionStatuses && filters.constructionStatuses.length > 0) {
-    return { construction_statuses: filters.constructionStatuses };
-  }
-  // Default / "Show lost" toggle paths use an exclusion list so legacy
-  // rows with NULL status stay visible (matches pre-Phase 3 behaviour).
-  if (filters.showLost) {
-    return { exclude_construction_statuses: [...SHOW_LOST_EXCLUDED_CONSTRUCTION_STATUSES] };
-  }
-  return { exclude_construction_statuses: [...DEFAULT_EXCLUDED_CONSTRUCTION_STATUSES] };
 }
 
 /** Row shape from `get_map_clusters_v3` RPC (subset used for tier logic). */
@@ -163,6 +133,7 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
       ratedBy: filters.contacts?.map((c) => c.name) ?? filters.ratedBy ?? null,
       filterContacts: filters.filterContacts ?? null,
       collections: filters.collections?.map((c) => c.id) ?? null,
+      folders: filters.folderIds ?? null,
       hideVisited: filters.hideVisited ?? null,
       hideSaved: filters.hideSaved ?? null,
       hideWithoutImages: filters.hideWithoutImages ?? null,
@@ -229,6 +200,7 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
         rated_by: filters.contacts?.map((c) => c.name) || filters.ratedBy,
         filter_contacts: filters.filterContacts,
         collections: filters.collections?.map((c) => c.id),
+        folders: filters.folderIds,
         hide_visited: filters.hideVisited,
         hide_saved: filters.hideSaved,
         hide_without_images: filters.hideWithoutImages,
