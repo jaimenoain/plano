@@ -227,24 +227,24 @@ export default function ArchitectureHub() {
 
         {/* ── Section 2: Stats strip ──────────────────────────────────── */}
         <dl className="grid grid-cols-3 gap-2 border-b border-t border-border-default py-10 sm:gap-4 md:gap-8">
-          <div>
-            <dd className="font-mono text-3xl font-bold tracking-tight text-text-primary md:text-4xl">
+          <div className="min-w-0">
+            <dd className="font-mono text-xl font-bold tracking-tight text-text-primary sm:text-3xl md:text-4xl">
               {totalBuildings.toLocaleString()}
             </dd>
             <dt className="mt-1 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
               Buildings
             </dt>
           </div>
-          <div>
-            <dd className="font-mono text-3xl font-bold tracking-tight text-text-primary md:text-4xl">
+          <div className="min-w-0">
+            <dd className="font-mono text-xl font-bold tracking-tight text-text-primary sm:text-3xl md:text-4xl">
               {totalCountries}
             </dd>
             <dt className="mt-1 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
               Countries
             </dt>
           </div>
-          <div>
-            <dd className="font-mono text-3xl font-bold tracking-tight text-text-primary md:text-4xl">
+          <div className="min-w-0">
+            <dd className="font-mono text-xl font-bold tracking-tight text-text-primary sm:text-3xl md:text-4xl">
               Community
             </dd>
             <dt className="mt-1 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">

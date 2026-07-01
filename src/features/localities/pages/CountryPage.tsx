@@ -183,7 +183,7 @@ function CountryMap({ localities }: { localities: CountryPageLoaderData["localit
       <h2 className="mb-4 text-xs font-medium uppercase tracking-widest text-text-secondary">
         Map
       </h2>
-      <div className="h-[480px] overflow-hidden rounded-sm border border-border-default">
+      <div className="h-[360px] overflow-hidden rounded-sm border border-border-default md:h-[480px]">
         <ClientOnly
           fallback={
             <div className="flex h-full w-full items-center justify-center bg-surface-muted">

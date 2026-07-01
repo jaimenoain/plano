@@ -358,7 +358,7 @@ export function BuildingPopupContent({
                   aria-label={`View details for ${cluster.name || 'Building'}`}
               />
             )}
-            <div className="relative h-[200px] w-full bg-surface-muted">
+            <div className="relative h-[140px] sm:h-[200px] w-full bg-surface-muted">
                 {cluster.image_url ? (
                 <img
                     src={getBuildingImageUrl(cluster.image_url)}
@@ -421,7 +421,7 @@ export function BuildingPopupContent({
       )}
 
       {/* Image */}
-      <div className="relative h-[200px] w-full bg-surface-muted">
+      <div className="relative h-[140px] sm:h-[200px] w-full bg-surface-muted">
         {cluster.image_url ? (
           <img
             src={getBuildingImageUrl(cluster.image_url)}

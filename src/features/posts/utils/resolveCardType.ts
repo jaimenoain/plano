@@ -65,7 +65,7 @@ function reviewMediaCount(entry: FeedReview): number {
   return countUsableReviewImages(entry.images) + (hasReviewVideo(entry) ? 1 : 0);
 }
 
-function hasReviewMedia(entry: FeedReview): boolean {
+export function hasReviewMedia(entry: FeedReview): boolean {
   return reviewMediaCount(entry) > 0;
 }
 

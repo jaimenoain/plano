@@ -38,16 +38,41 @@ import {
 import { DiscoveryBuilding, type CreditSummary } from "@/features/search/components/types";
 import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl, getBuildingLocalityUrl } from "@/utils/url";
-import { Bookmark } from "lucide-react";
+import { Bookmark, X } from "lucide-react";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { toast } from "sonner";
 import { DiscoveryFeedItem } from "../hooks/useDiscoveryFeed";
 import { Link } from "react-router";
-import { animate, motion, useMotionValue, useTransform } from "framer-motion";
+import {
+  animate,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useTransform,
+} from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ContactFacepile } from "./ContactFacepile";
+import {
+  applyElasticPull,
+  computeElasticLimit,
+  computeRotationDeg,
+  computeStampOpacity,
+  computeSwipeThresholds,
+  computeVelocity,
+  decideAxis,
+  resolveSwipeCommit,
+  type MoveSample,
+} from "../utils/swipeGesture";
+
+/** Fallback card width before the first pointerdown captures a real measurement. */
+const FALLBACK_CARD_WIDTH = 375;
+/**
+ * Lower than the old hard-coded 0.04s so a fast, short flick still registers a
+ * velocity instead of springing back and feeling dead (see computeVelocity).
+ */
+const VELOCITY_DT_GATE = 0.016;
 
 interface DiscoveryCardProps {
   building: DiscoveryBuilding | DiscoveryFeedItem;
@@ -163,34 +188,74 @@ export function DiscoveryCard({
     }
   };
 
+  const prefersReducedMotion = useReducedMotion() ?? false;
+
+  // Detect a fine, hovering pointer (mouse/trackpad) — these devices get explicit
+  // Save/Hide buttons and a grab cursor since a full-card drag isn't discoverable.
+  const [hasFinePointer, setHasFinePointer] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const update = () => setHasFinePointer(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  /** Last measured card width — feeds width-proportional rotation/elastic/stamps. */
+  const cardWidthRef = useRef(FALLBACK_CARD_WIDTH);
+
   // ── Framer Motion values ──
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const rotate = useTransform(x, [-200, 200], [-10, 10]);
-  // Card stays fully opaque in both swipe directions — mirrors save behaviour on hide.
-  // Previous: [0, 1, 1, 1, 1] faded the card to black on left swipe, hiding the stamp.
-  const opacity = useTransform(x, [-200, -100, 0, 100, 200], [1, 1, 1, 1, 1]);
-  // Stamps: symmetric — both appear starting at ±20px, fully visible at ±100px (threshold)
-  const likeOpacity = useTransform(x, [20, 100], [0, 1]);
-  const nopeOpacity = useTransform(x, [-100, -20], [1, 0]);
-  const likeOverlayOpacity = useTransform(x, [20, 100], [0, 0.35]);
-  const nopeOverlayOpacity = useTransform(x, [-100, -20], [0.35, 0]);
+  // Rotation, elastic pull and stamp reveal all scale with card width so the gesture
+  // feels the same on a phone and on a centered desktop column (see swipeGesture.ts).
+  const rotate = useTransform(x, (latest) =>
+    prefersReducedMotion ? 0 : computeRotationDeg(latest, cardWidthRef.current)
+  );
+  const likeOpacity = useTransform(x, (latest) =>
+    computeStampOpacity(latest, cardWidthRef.current, "like")
+  );
+  const nopeOpacity = useTransform(x, (latest) =>
+    computeStampOpacity(latest, cardWidthRef.current, "nope")
+  );
+  const likeOverlayOpacity = useTransform(
+    x,
+    (latest) => computeStampOpacity(latest, cardWidthRef.current, "like") * 0.35
+  );
+  const nopeOverlayOpacity = useTransform(
+    x,
+    (latest) => computeStampOpacity(latest, cardWidthRef.current, "nope") * 0.35
+  );
 
-  // After 5s with no rating, animate card sliding up (mimics swipe-up) then advance
+  // Guards the awaited auto-advance callback from firing after the card unmounts
+  // (card scrolled away / hidden mid-animation), which could double-save.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  // After 5s with no rating, advance (keeping the save). With motion the card
+  // slides up first; with reduced motion we skip the slide but still auto-save.
   useEffect(() => {
     if (!showRating || rating !== null) return;
     const timer = setTimeout(async () => {
-      await animate(y, -(typeof window !== "undefined" ? window.innerHeight : 800), {
-        duration: 0.55,
-        ease: [0.4, 0, 0.6, 1],
-      });
-      if (onSwipeSave) onSwipeSave();
+      if (!prefersReducedMotion) {
+        await animate(y, -(typeof window !== "undefined" ? window.innerHeight : 800), {
+          duration: 0.55,
+          ease: [0.4, 0, 0.6, 1],
+        });
+      }
+      if (mountedRef.current && onSwipeSave) onSwipeSave();
     }, 5000);
     return () => {
       clearTimeout(timer);
       animate(y, 0, { duration: 0 });
     };
-  }, [showRating, rating, onSwipeSave, y]);
+  }, [showRating, rating, onSwipeSave, y, prefersReducedMotion]);
 
   const handleRate = async (value: number | null, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -200,16 +265,6 @@ export function DiscoveryCard({
       if (onSwipeSave) onSwipeSave();
     }, 500);
   };
-
-  /**
-   * Commit thresholds scale with the card width so a tablet doesn't trip a save/hide
-   * on a small horizontal drift during vertical scroll. 18% of width, clamped to a
-   * phone-friendly minimum and a tablet-friendly maximum.
-   */
-  const computeSwipeThresholds = useCallback((widthPx: number) => {
-    const offset = Math.max(88, Math.min(180, widthPx * 0.18));
-    return { offset, velocity: 480 };
-  }, []);
 
   /**
    * Custom pointer swipe (replaces Framer `drag="x"` + `dragDirectionLock`).
@@ -231,7 +286,9 @@ export function DiscoveryCard({
     axis: "undecided" | "horizontal" | "vertical";
     originX: number;
     originY: number;
-    moveSamples: { t: number; x: number }[];
+    /** timeStamp of pointerdown — seeds the velocity baseline for fast flicks. */
+    originT: number;
+    moveSamples: MoveSample[];
     /** Card width captured at gesture start — feeds the scaled commit thresholds. */
     width: number;
   }>({
@@ -239,58 +296,63 @@ export function DiscoveryCard({
     axis: "undecided",
     originX: 0,
     originY: 0,
+    originT: 0,
     moveSamples: [],
     width: 0,
   });
 
-  const applyElasticPull = useCallback((rawDx: number) => {
-    const limit = 200;
-    const abs = Math.abs(rawDx);
-    if (abs <= limit) return rawDx;
-    const over = abs - limit;
-    return Math.sign(rawDx) * (limit + over * 0.32);
-  }, []);
+  /**
+   * Shared save/hide commit paths, called by both the swipe gesture and the
+   * pointer/keyboard affordances (buttons, arrow keys) so every input route
+   * behaves identically.
+   */
+  const triggerSave = useCallback(() => {
+    if (showRating) {
+      onSwipeSave?.();
+      return;
+    }
+    setIsSaved(true);
+    setShowRating(true);
+    saveToSupabase("pending");
+    // Snap the card back to centre so it doesn't appear frozen mid-swipe while the
+    // rating overlay is visible.
+    if (prefersReducedMotion) x.set(0);
+    else void animate(x, 0, { type: "spring", stiffness: 520, damping: 38 });
+  }, [showRating, onSwipeSave, saveToSupabase, prefersReducedMotion, x]);
+
+  const triggerHide = useCallback(
+    (el?: HTMLElement | null) => {
+      if (!onSwipeHide) return;
+      if (prefersReducedMotion) {
+        onSwipeHide();
+        return;
+      }
+      const width = el?.clientWidth || cardWidthRef.current || FALLBACK_CARD_WIDTH;
+      void animate(x, -width * 1.5, {
+        type: "tween",
+        duration: 0.22,
+        ease: [0.4, 0, 1, 1],
+      }).then(() => onSwipeHide());
+    },
+    [onSwipeHide, prefersReducedMotion, x]
+  );
 
   const finishHorizontalSwipe = useCallback(
     (el: HTMLElement) => {
       const s = swipeSessionRef.current;
       const pull = x.get();
-      let vx = 0;
-      const samples = s.moveSamples;
-      if (samples.length >= 2) {
-        const last = samples[samples.length - 1];
-        const first = samples[0];
-        const dt = (last.t - first.t) / 1000;
-        if (dt > 0.04) vx = (last.x - first.x) / dt;
-      }
-
-      const { offset: SWIPE_OFFSET_PX, velocity: SWIPE_VELOCITY_PX } =
-        computeSwipeThresholds(s.width || el.clientWidth || 375);
-
-      const commitRight =
-        pull > SWIPE_OFFSET_PX || vx > SWIPE_VELOCITY_PX;
-      const commitLeft =
-        pull < -SWIPE_OFFSET_PX || vx < -SWIPE_VELOCITY_PX;
+      const width = s.width || el.clientWidth || FALLBACK_CARD_WIDTH;
+      const vx = computeVelocity(s.moveSamples, VELOCITY_DT_GATE);
+      const commit = resolveSwipeCommit(pull, vx, computeSwipeThresholds(width));
 
       if (Math.abs(pull) > 12) blockImageTapRef.current = true;
 
-      if (commitRight) {
-        if (showRating) {
-          if (onSwipeSave) onSwipeSave();
-        } else {
-          setIsSaved(true);
-          setShowRating(true);
-          saveToSupabase("pending");
-          // Snap the card back to centre so it doesn't appear frozen mid-swipe
-          // while the rating overlay is visible.
-          void animate(x, 0, { type: "spring", stiffness: 520, damping: 38 });
-        }
-      } else if (commitLeft && onSwipeHide) {
-        void animate(x, -(el.clientWidth || 375) * 1.5, {
-          type: "tween",
-          duration: 0.22,
-          ease: [0.4, 0, 1, 1],
-        }).then(() => onSwipeHide());
+      if (commit === "right") {
+        triggerSave();
+      } else if (commit === "left" && onSwipeHide) {
+        triggerHide(el);
+      } else if (prefersReducedMotion) {
+        x.set(0);
       } else {
         void animate(x, 0, { type: "spring", stiffness: 520, damping: 38 });
       }
@@ -310,14 +372,7 @@ export function DiscoveryCard({
       horizontalSwipeActiveRef.current = false;
       setHorizontalSwipeActive(false);
     },
-    [
-      computeSwipeThresholds,
-      onSwipeHide,
-      onSwipeSave,
-      saveToSupabase,
-      showRating,
-      x,
-    ]
+    [onSwipeHide, prefersReducedMotion, triggerHide, triggerSave, x]
   );
 
   const onPointerDown = useCallback(
@@ -331,8 +386,10 @@ export function DiscoveryCard({
       s.axis = "undecided";
       s.originX = e.clientX;
       s.originY = e.clientY;
+      s.originT = e.timeStamp;
       s.moveSamples = [{ t: e.timeStamp, x: e.clientX }];
       s.width = e.currentTarget.clientWidth;
+      cardWidthRef.current = e.currentTarget.clientWidth || FALLBACK_CARD_WIDTH;
       blockImageTapRef.current = false;
     },
     [showRating]
@@ -346,36 +403,30 @@ export function DiscoveryCard({
 
       const dx = e.clientX - s.originX;
       const dy = e.clientY - s.originY;
-      const absDx = Math.abs(dx);
-      const absDy = Math.abs(dy);
-      const touch = e.pointerType === "touch";
-      // Touch arms widened + horizontal lock made stricter so a tablet user's finger
-      // drift during a vertical fling doesn't get misread as a save/hide swipe.
-      // Vertical lock made easier (lower ratio) so the feed scroll always wins ties.
-      const armH = touch ? 32 : 12;
-      const armV = touch ? 18 : 10;
-      const hRatio = touch ? 1.7 : 1.2;
-      const vRatio = touch ? 1.25 : 1.2;
+      const elasticLimit = computeElasticLimit(s.width || FALLBACK_CARD_WIDTH);
 
       if (s.axis === "vertical") return;
 
       if (s.axis === "undecided") {
-        if (absDx < 8 && absDy < 8) return;
-
-        if (absDy >= armV && absDy > absDx * vRatio) {
+        const axis = decideAxis({ dx, dy, pointerType: e.pointerType });
+        if (axis === "vertical") {
           s.axis = "vertical";
           return;
         }
-
-        if (absDx >= armH && absDx > absDy * hRatio) {
+        if (axis === "horizontal") {
           s.axis = "horizontal";
           onInteractionStart?.();
           horizontalSwipeActiveRef.current = true;
           setHorizontalSwipeActive(true);
           e.currentTarget.setPointerCapture(e.pointerId);
-          s.moveSamples = [{ t: e.timeStamp, x: e.clientX }];
+          // Seed the velocity buffer from the gesture origin so a fast, short flick
+          // still has two timestamped samples to measure against.
+          s.moveSamples = [
+            { t: s.originT, x: s.originX },
+            { t: e.timeStamp, x: e.clientX },
+          ];
           e.preventDefault();
-          x.set(applyElasticPull(dx));
+          x.set(applyElasticPull(dx, elasticLimit));
         }
         return;
       }
@@ -383,14 +434,9 @@ export function DiscoveryCard({
       e.preventDefault();
       s.moveSamples.push({ t: e.timeStamp, x: e.clientX });
       if (s.moveSamples.length > 8) s.moveSamples.shift();
-      x.set(applyElasticPull(dx));
+      x.set(applyElasticPull(dx, elasticLimit));
     },
-    [
-      applyElasticPull,
-      onInteractionStart,
-      showRating,
-      x,
-    ]
+    [onInteractionStart, showRating, x]
   );
 
   const onPointerEnd = useCallback(
@@ -432,6 +478,44 @@ export function DiscoveryCard({
       el.removeEventListener("touchmove", preventTouchScroll);
     };
   }, []);
+
+  /**
+   * Keyboard control for the in-view card — the accessible/desktop equivalent of the
+   * swipe, since keyboard/AT users can't drag. Exactly one card is ≥60% visible at a
+   * time (isViewVisible), so only it responds. ArrowRight/S → save, ArrowLeft/H → hide,
+   * Escape → dismiss the rating overlay (advancing, not navigating away). Typing in a
+   * form field is ignored.
+   */
+  useEffect(() => {
+    if (!isViewVisible) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (showRating) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          onSwipeSave?.();
+        }
+        return;
+      }
+      if (e.key === "ArrowRight" || e.key === "s" || e.key === "S") {
+        e.preventDefault();
+        triggerSave();
+      } else if (e.key === "ArrowLeft" || e.key === "h" || e.key === "H") {
+        e.preventDefault();
+        triggerHide(cardRootRef.current);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isViewVisible, showRating, onSwipeSave, triggerSave, triggerHide]);
 
   const nextImage = (e: React.MouseEvent) => {
     if (blockImageTapRef.current) {
@@ -490,11 +574,15 @@ export function DiscoveryCard({
   return (
     <motion.div
       ref={setCardRootRef}
+      role="group"
+      aria-roledescription="Discovery card"
+      aria-label={`${building.name}. Press arrow right to save, arrow left to hide.`}
       className={cn(
-        "group/card relative w-full h-full overflow-hidden min-w-0 select-none bg-surface-inverse",
-        horizontalSwipeActive ? "touch-none" : "touch-pan-y"
+        "group/card relative w-full h-full overflow-hidden min-w-0 select-none bg-surface-inverse overscroll-x-contain",
+        horizontalSwipeActive ? "touch-none" : "touch-pan-y",
+        hasFinePointer && "cursor-grab active:cursor-grabbing"
       )}
-      style={{ x, y, rotate, opacity, willChange: "transform" }}
+      style={{ x, y, rotate, willChange: "transform" }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerEnd}
@@ -505,17 +593,6 @@ export function DiscoveryCard({
         ref={viewTrackerRef as RefCallback<HTMLDivElement>}
         className="absolute inset-0 pointer-events-none"
       />
-
-      {/* ── Blurred background layer (depth for portrait images) ── */}
-      {uniqueImages[currentImageIndex] && (
-        <div
-          className="absolute inset-0 bg-cover bg-center blur-3xl opacity-30 scale-110"
-          style={{
-            backgroundImage: `url("${uniqueImages[currentImageIndex]}")`,
-          }}
-          aria-hidden="true"
-        />
-      )}
 
       {/* ── Main image — object-cover: cinematic, fills the frame ── */}
       <div className="absolute inset-0 z-10">
@@ -595,6 +672,36 @@ export function DiscoveryCard({
         </div>
       )}
 
+      {/* ── Save / Hide buttons — mouse & keyboard affordance (fine pointers only) ── */}
+      {hasFinePointer && !showRating && (
+        <div className="absolute bottom-6 right-5 z-40 flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="Hide building"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              triggerHide(cardRootRef.current);
+            }}
+            className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-surface-inverse/70 text-white/80 backdrop-blur-md transition-colors hover:bg-feedback-destructive hover:text-white"
+          >
+            <X className="h-5 w-5" strokeWidth={2} aria-hidden />
+          </button>
+          <button
+            type="button"
+            aria-label="Save building"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              triggerSave();
+            }}
+            className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-surface-inverse/70 text-white/80 backdrop-blur-md transition-colors hover:bg-feedback-success hover:text-white"
+          >
+            <Bookmark className="h-5 w-5" strokeWidth={2} aria-hidden />
+          </button>
+        </div>
+      )}
+
       {/* ── Bottom gradient — tall and dark for large type ── */}
       <div className="absolute bottom-0 left-0 right-0 h-3/4 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-20 pointer-events-none" />
 
@@ -629,7 +736,7 @@ export function DiscoveryCard({
                   )
                 : getBuildingUrl(building.id, building.slug, (building as { short_id?: number | null }).short_id)
             }
-            className="pointer-events-auto hover:opacity-80 active:opacity-80 transition-opacity block"
+            className="pointer-events-auto block cursor-pointer hover:opacity-80 active:opacity-80 transition-opacity"
           >
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-none">
               {building.name}
@@ -641,6 +748,7 @@ export function DiscoveryCard({
       {/* ── Rating overlay — typographic, no button boxes ── */}
       {showRating && (
         <motion.div
+          data-explore-overlay="open"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2 }}

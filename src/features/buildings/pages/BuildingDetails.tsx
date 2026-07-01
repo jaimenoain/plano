@@ -337,11 +337,11 @@ function BuildingMapTab({
   }, [lat, lng, buildingId, showNearby]);
 
   if (!isClient) {
-    return <div className="h-[600px] bg-surface-muted" />;
+    return <div className="h-[420px] md:h-[600px] bg-surface-muted" />;
   }
 
   return (
-    <div className="relative h-[600px] w-full">
+    <div className="relative h-[420px] md:h-[600px] w-full">
       <MapGL
         initialViewState={{ longitude: lng, latitude: lat, zoom: 15 }}
         mapLib={maplibregl}

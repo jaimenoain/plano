@@ -14,6 +14,7 @@ import {
   COMPACT_RUN_VISIBLE,
   collapseCompactRuns,
   groupHomeFeedEntries,
+  promoteFirstMediaEntry,
   type HomeFeedRenderItem,
 } from "@/features/feed/utils/groupActivitySummary";
 import type { FeedHomeEntry, FeedReview } from "@/types/feed";
@@ -233,6 +234,23 @@ function Feed() {
   const following = useHomeFeed();
   const community = useCommunityFeed();
 
+  // The page's first card should always lead with media. §01 is the top section, so
+  // float its first photo/video entry up; §02 keeps its rank order unless §01 has no
+  // visible entries, in which case §02 becomes the page's first card.
+  const followingHasEntries =
+    !following.isLoading && !following.isError && following.reviews.length > 0;
+  const followingReviews = useMemo(
+    () => promoteFirstMediaEntry(following.reviews),
+    [following.reviews],
+  );
+  const communityReviews = useMemo(
+    () =>
+      followingHasEntries
+        ? community.reviews
+        : promoteFirstMediaEntry(community.reviews),
+    [followingHasEntries, community.reviews],
+  );
+
   // The community section is the unbounded one, so it drives infinite scroll.
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const { fetchNextPage, hasNextPage, isFetchingNextPage } = community;
@@ -257,7 +275,7 @@ function Feed() {
   return (
     <AppLayout>
       <div className="mx-auto flex w-full max-w-[1080px] items-start gap-10 px-5 pb-24 pt-10 md:gap-14 md:px-8">
-        <main className="min-w-0 flex-1 border-r border-border-default pr-10 md:pr-14">
+        <main className="min-w-0 flex-1 border-r border-border-default pr-4 md:pr-14">
           {/* §01 — new, unseen updates from people you follow */}
           <SectionHeader index="§ 01" title="New from people you follow" />
           {following.isLoading ? (
@@ -272,7 +290,7 @@ function Feed() {
             </div>
           ) : (
             <FeedEntries
-              reviews={following.reviews}
+              reviews={followingReviews}
               onLike={following.toggleLike}
               onImageLike={following.toggleImageLike}
             />
@@ -295,7 +313,7 @@ function Feed() {
           ) : (
             <div>
               <FeedEntries
-                reviews={community.reviews}
+                reviews={communityReviews}
                 onLike={community.toggleLike}
                 onImageLike={community.toggleImageLike}
               />

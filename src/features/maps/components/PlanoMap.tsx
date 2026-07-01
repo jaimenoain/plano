@@ -21,9 +21,8 @@ import Map, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef 
 import maplibregl, { type GeolocateControl as MaplibreGeolocateControl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Camera, Layers, Maximize2, Minimize2 } from "lucide-react";
-import { useURLMapState, DEFAULT_LAT, DEFAULT_LNG, DEFAULT_ZOOM } from '@/features/maps/hooks/useURLMapState';
+import { DEFAULT_LAT, DEFAULT_LNG, DEFAULT_ZOOM } from '@/features/maps/hooks/useURLMapState';
 import { useMapWheelZoomCapture } from '@/features/maps/hooks/useMapWheelZoomCapture';
-import { useStableMapUpdate } from '@/features/maps/hooks/useStableMapUpdate';
 import { useMapClusterViewport } from '@/features/maps/hooks/useMapClusterViewport';
 import { MapErrorBoundary } from './MapErrorBoundary';
 import { useMapContext } from '../providers/MapContext';
@@ -43,15 +42,17 @@ interface PlanoMapProps {
 }
 
 function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
-  const { lat, lng, zoom, setMapURL } = useURLMapState();
-  const { updateMapState } = useStableMapUpdate(setMapURL);
-
   const [isSatellite, setIsSatellite] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // Viewport lives in the map store now (Stage B). PlanoMap reads lat/lng/zoom
+  // from context and writes them back via `moveMap` on gesture end only — there
+  // is no longer a second useURLMapState/setMapURL writer racing the store's one
+  // URL sync (useMapUrlSync). See the store/useMapUrlSync for the single-writer
+  // model.
   const {
-    methods: { setBounds, setHighlightedId, setSelectedId, fitMapBounds },
-    state: { highlightedId, selectedId, filters, bounds, mode, fitBounds, findModeBuildings },
+    methods: { setBounds, setHighlightedId, setSelectedId, fitMapBounds, moveMap },
+    state: { lat, lng, zoom, highlightedId, selectedId, filters, bounds, mode, fitBounds, findModeBuildings },
   } = useMapContext();
   const isMobile = useIsMobile();
 
@@ -62,14 +63,38 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
 
   useMapWheelZoomCapture(mapRef, isMapLoaded);
 
+  // Fit-bounds command channel. Clamp the target zoom to [2, 16]: an unbounded
+  // fit on a globe-spanning result set (e.g. "Lever") makes maplibre pick a
+  // degenerate near-negative zoom that jitters the camera into a
+  // viewport→URL→viewport feedback loop. We compute the camera with
+  // cameraForBounds, clamp, then easeTo. The settled camera is persisted to the
+  // store by onMoveEnd (one discrete URL write) — we deliberately do NOT moveMap
+  // here, which would prop-jump and cut the animation short.
   useEffect(() => {
-    if (fitBounds && mapRef.current) {
-      mapRef.current.fitBounds(
-        [[fitBounds.west, fitBounds.south], [fitBounds.east, fitBounds.north]],
-        { padding: 50, duration: 1000 }
-      );
-      fitMapBounds(null);
+    if (!fitBounds) return;
+    const map = mapRef.current?.getMap();
+    if (!map) { fitMapBounds(null); return; }
+
+    const { west, south, east, north } = fitBounds;
+    const finite = [west, south, east, north].every((n) => Number.isFinite(n));
+    const zeroArea = Math.abs(north - south) < 1e-6 && Math.abs(east - west) < 1e-6;
+    const clampZoom = (z: number) => Math.min(16, Math.max(2, z));
+
+    if (finite && !zeroArea) {
+      const camera = map.cameraForBounds([[west, south], [east, north]], { padding: 50 });
+      if (camera?.center && typeof camera.zoom === 'number') {
+        const { lng: cLng, lat: cLat } = maplibregl.LngLat.convert(camera.center);
+        map.easeTo({ center: [cLng, cLat], zoom: clampZoom(camera.zoom), duration: 1000 });
+      }
+    } else if (finite) {
+      // Zero-area bounds (single result) — centre without an extreme zoom.
+      map.easeTo({
+        center: [(west + east) / 2, (south + north) / 2],
+        zoom: clampZoom(map.getZoom()),
+        duration: 600,
+      });
     }
+    fitMapBounds(null);
   }, [fitBounds, fitMapBounds]);
 
   const geolocateControlRef = useRef<MaplibreGeolocateControl | null>(null);
@@ -122,12 +147,20 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
   const onMove = useCallback((evt: ViewStateChangeEvent) => {
     hasEarlyMovedRef.current = true;
     setViewState(evt.viewState);
-    updateMapState({ lat: evt.viewState.latitude, lng: evt.viewState.longitude, zoom: evt.viewState.zoom }, false);
+    // No URL/store write per frame — that per-frame writer fed the feedback loop.
+    // The single discrete viewport write happens on gesture end (onMoveEnd). Here
+    // we only keep the controlled camera and the cluster viewport in step.
     scheduleViewportUpdate(evt.target, evt.viewState.zoom);
-  }, [updateMapState, scheduleViewportUpdate]);
+  }, [scheduleViewportUpdate]);
 
   const onMoveEnd = useCallback((evt: ViewStateChangeEvent) => {
-    updateMapState({ lat: evt.viewState.latitude, lng: evt.viewState.longitude, zoom: evt.viewState.zoom }, true);
+    flushPendingViewport(evt.target, evt.viewState.zoom);
+    updateBounds(evt.target);
+    // The one discrete viewport write: store → useMapUrlSync → URL. It writes the
+    // *settled* camera, which `viewState` already equals — so the store's equality
+    // guard and the viewState epsilon-compare make this a no-op for programmatic
+    // settles (fitBounds/hydrate), which is why it cannot loop.
+    moveMap(evt.viewState.latitude, evt.viewState.longitude, evt.viewState.zoom);
     try { sessionStorage.setItem('plano_map_interacted', 'true'); } catch (_e) {}
     try {
       localStorage.setItem(LOCAL_STORAGE_MAP_KEY, JSON.stringify({
@@ -136,9 +169,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
         zoom: evt.viewState.zoom,
       }));
     } catch {}
-    flushPendingViewport(evt.target, evt.viewState.zoom);
-    updateBounds(evt.target);
-  }, [updateMapState, updateBounds, flushPendingViewport]);
+  }, [moveMap, updateBounds, flushPendingViewport]);
 
   const onLoad = useCallback((evt: { target: maplibregl.Map }) => {
     setIsMapLoaded(true);
@@ -161,14 +192,14 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
           if (typeof latitude === 'number' && typeof longitude === 'number' && typeof savedZoom === 'number') {
             const map = mapRef.current?.getMap() || evt.target;
             map.jumpTo({ center: [longitude, latitude], zoom: savedZoom });
-            updateMapState({ lat: latitude, lng: longitude, zoom: savedZoom }, true);
+            moveMap(latitude, longitude, savedZoom);
             return;
           }
         } catch {}
       }
       if (!hasInteracted && !hasEarlyMovedRef.current) geolocateControlRef.current?.trigger();
     }
-  }, [updateBounds, lat, lng, zoom, updateMapState, flushPendingViewport]);
+  }, [updateBounds, lat, lng, zoom, moveMap, flushPendingViewport]);
 
   const onGeolocate = useCallback(
     (position: GeolocationPosition) => {
@@ -186,12 +217,9 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
         longitude: nextLng,
         zoom: DEFAULT_GEOLOCATE_ZOOM,
       }));
-      updateMapState(
-        { lat: nextLat, lng: nextLng, zoom: DEFAULT_GEOLOCATE_ZOOM },
-        true
-      );
+      moveMap(nextLat, nextLng, DEFAULT_GEOLOCATE_ZOOM);
     },
-    [lat, lng, zoom, updateMapState]
+    [lat, lng, zoom, moveMap]
   );
 
   const clusterBounds = clusterViewport?.bounds ?? bounds;
@@ -385,7 +413,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
                 duration: 1000
               });
             }}
-            className="p-3 bg-brand-primary text-brand-primary-foreground border border-brand-primary shadow-lg animate-in slide-in-from-left-4 duration-500 max-w-[200px] text-left"
+            className="p-3 bg-brand-primary text-brand-primary-foreground border border-brand-primary shadow-lg animate-in slide-in-from-left-4 duration-500 max-w-[140px] sm:max-w-[200px] text-left"
           >
             <div className="flex items-start gap-2">
               <Camera className="w-4 h-4 shrink-0 mt-0.5" />

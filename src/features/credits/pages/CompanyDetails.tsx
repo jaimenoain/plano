@@ -166,7 +166,7 @@ export function ErrorBoundary() {
             ) : null}
             . The link may be wrong or the page was removed.
           </p>
-          <Button asChild size="lg" variant="default" className="min-w-[200px]">
+          <Button asChild size="lg" variant="default" className="w-full sm:w-auto sm:min-w-[200px]">
             <Link to="/explore">Browse buildings</Link>
           </Button>
         </div>

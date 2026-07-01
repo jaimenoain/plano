@@ -243,7 +243,7 @@ updateLocation(lat, lng, selectedAddress, { city: null, country: null, countryCo
           </div>
        </div>
 
-       <div className="h-[400px] rounded-sm overflow-hidden border border-border-default relative bg-surface-muted">
+       <div className="h-[300px] md:h-[400px] rounded-sm overflow-hidden border border-border-default relative bg-surface-muted">
           <Map
             {...viewState}
             onMove={evt => setViewState(evt.viewState)}

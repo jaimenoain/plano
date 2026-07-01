@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   collapseCompactRuns,
   groupHomeFeedEntries,
+  promoteFirstMediaEntry,
 } from "@/features/feed/utils/groupActivitySummary";
 import type { FeedEventAttendance, FeedReview, ReviewBuilding } from "@/types/feed";
 
@@ -146,6 +147,58 @@ describe("groupHomeFeedEntries", () => {
     expect(items).toHaveLength(2);
     expect(items[0]).toMatchObject({ kind: "entry" });
     expect(items[1]).toMatchObject({ kind: "activity-summary" });
+  });
+});
+
+describe("promoteFirstMediaEntry", () => {
+  const photo = (id: string): FeedReview =>
+    visit({
+      id,
+      images: [{ id: `i-${id}`, url: `https://img/${id}.jpg`, likes_count: 0, is_liked: false }],
+    });
+  const video = (id: string): FeedReview => visit({ id, video_url: `https://vid/${id}.mp4` });
+
+  it("floats the first photo entry to the front, preserving the rest of the order", () => {
+    const out = promoteFirstMediaEntry([
+      visit({ id: "a" }),
+      visit({ id: "b" }),
+      photo("p"),
+      visit({ id: "c" }),
+    ]);
+    expect(out.map((e) => e.id)).toEqual(["p", "a", "b", "c"]);
+  });
+
+  it("treats a video-only entry as media", () => {
+    const out = promoteFirstMediaEntry([visit({ id: "a" }), video("v"), visit({ id: "b" })]);
+    expect(out.map((e) => e.id)).toEqual(["v", "a", "b"]);
+  });
+
+  it("returns the array unchanged when the first entry already has media", () => {
+    const input = [photo("p"), visit({ id: "a" })];
+    const out = promoteFirstMediaEntry(input);
+    expect(out).toBe(input);
+    expect(out.map((e) => e.id)).toEqual(["p", "a"]);
+  });
+
+  it("returns the array unchanged when no entry has media", () => {
+    const input = [visit({ id: "a" }), visit({ id: "b" })];
+    const out = promoteFirstMediaEntry(input);
+    expect(out).toBe(input);
+  });
+
+  it("does not treat an event-attendance row as media", () => {
+    const out = promoteFirstMediaEntry([
+      visit({ id: "a" }),
+      eventAttendance("e1"),
+      photo("p"),
+    ]);
+    expect(out.map((e) => e.id)).toEqual(["p", "a", "e1"]);
+  });
+
+  it("does not mutate the input array", () => {
+    const input = [visit({ id: "a" }), photo("p")];
+    promoteFirstMediaEntry(input);
+    expect(input.map((e) => e.id)).toEqual(["a", "p"]);
   });
 });
 
