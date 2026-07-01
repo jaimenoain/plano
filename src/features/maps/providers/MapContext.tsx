@@ -21,6 +21,8 @@ interface MapContextMethods {
   setMapState: (state: Partial<MapState>) => void;
   setBounds: (bounds: Bounds) => void;
   setHighlightedId: (id: string | null) => void;
+  /** Deliberate click selection — drives the detail drawer. Separate from hover (highlightedId). */
+  setSelectedId: (id: string | null) => void;
   setFindModeBuildings: (buildings: BuildingSearchHit[] | null) => void;
 }
 
@@ -34,6 +36,7 @@ interface MapContextValue {
     bounds: Bounds | null;
     fitBounds: Bounds | null;
     highlightedId: string | null;
+    selectedId: string | null;
     findModeBuildings: BuildingSearchHit[] | null;
   };
   methods: MapContextMethods;
@@ -71,6 +74,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
   );
   const [fitBounds, setFitBounds] = useState<Bounds | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [findModeBuildings, setFindModeBuildings] = useState<BuildingSearchHit[] | null>(null);
   const [hydratedContacts, setHydratedContacts] = useState<Record<string, Contact>>({});
 
@@ -213,6 +217,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
         bounds,
         fitBounds,
         highlightedId,
+        selectedId,
         findModeBuildings,
       },
       methods: {
@@ -223,10 +228,11 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
         setMapState,
         setBounds,
         setHighlightedId,
+        setSelectedId,
         setFindModeBuildings,
       },
     }),
-    [lat, lng, zoom, mode, mergedFilters, bounds, fitBounds, highlightedId, findModeBuildings, moveMap, fitMapBounds, setMode, setFilter, setMapState, setFindModeBuildings]
+    [lat, lng, zoom, mode, mergedFilters, bounds, fitBounds, highlightedId, selectedId, findModeBuildings, moveMap, fitMapBounds, setMode, setFilter, setMapState, setFindModeBuildings]
   );
 
   return <MapContext.Provider value={value}>{children}</MapContext.Provider>;

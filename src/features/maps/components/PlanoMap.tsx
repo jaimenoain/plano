@@ -27,8 +27,10 @@ import { useStableMapUpdate } from '@/features/maps/hooks/useStableMapUpdate';
 import { useMapClusterViewport } from '@/features/maps/hooks/useMapClusterViewport';
 import { MapErrorBoundary } from './MapErrorBoundary';
 import { useMapContext } from '../providers/MapContext';
-import { useMapData } from '../hooks/useMapData';
+import { useMapData, ClusterResponse } from '../hooks/useMapData';
 import { MapMarkers } from './MapMarkers';
+import { BuildingDetailDrawer } from './BuildingDetailDrawer';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
 
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
@@ -48,9 +50,10 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const {
-    methods: { setBounds, setHighlightedId, fitMapBounds },
-    state: { highlightedId, filters, bounds, mode, fitBounds, findModeBuildings },
+    methods: { setBounds, setHighlightedId, setSelectedId, fitMapBounds },
+    state: { highlightedId, selectedId, filters, bounds, mode, fitBounds, findModeBuildings },
   } = useMapContext();
+  const isMobile = useIsMobile();
 
   const mapRef = useRef<MapRef>(null);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
@@ -222,6 +225,51 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
   const isLoading = findModeBuildings ? false : browseLoading;
   const isFetching = findModeBuildings ? false : browseFetching;
 
+  // Resolve the selected building for the detail drawer. Retain the last known
+  // cluster so the drawer survives a cluster refetch (e.g. saving a building can
+  // momentarily drop it from the results) or panning the pin off-screen.
+  const retainedSelectedRef = useRef<ClusterResponse | null>(null);
+  const selectedCluster = useMemo(() => {
+    if (!selectedId) {
+      retainedSelectedRef.current = null;
+      return null;
+    }
+    const found = (clusters || []).find(
+      (c) => !c.is_cluster && String(c.id) === String(selectedId)
+    );
+    if (found) {
+      retainedSelectedRef.current = found as ClusterResponse;
+      return found as ClusterResponse;
+    }
+    return retainedSelectedRef.current;
+  }, [clusters, selectedId]);
+
+  const handleSelectBuilding = useCallback(
+    (cluster: ClusterResponse) => {
+      setSelectedId(String(cluster.id));
+      setHighlightedId(String(cluster.id));
+      // "Map stays" — only nudge when the pin would sit behind the right-hand
+      // detail panel (desktop). If it's already visible, leave the map put.
+      if (isMobile) return;
+      const map = mapRef.current?.getMap();
+      if (!map || cluster.lng == null || cluster.lat == null) return;
+      const PANEL_W = 384; // Tailwind max-w-sm
+      const MARGIN = 24;
+      const width = map.getContainer().clientWidth;
+      const pt = map.project([cluster.lng, cluster.lat]);
+      const overlap = pt.x - (width - PANEL_W - MARGIN);
+      if (overlap > 0) {
+        map.panBy([overlap, 0], { duration: 300 });
+      }
+    },
+    [setSelectedId, setHighlightedId, isMobile]
+  );
+
+  const handleCloseDetail = useCallback(() => {
+    setSelectedId(null);
+    setHighlightedId(null);
+  }, [setSelectedId, setHighlightedId]);
+
   const visibleClustersCount = useMemo(() => {
     if (!clusters || !bounds) return 0;
     return clusters.filter(c =>
@@ -266,7 +314,10 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
         mapLib={maplibregl}
         mapStyle={isSatellite ? SATELLITE_MAP_STYLE : MAP_STYLE}
         attributionControl={false}
-        onClick={() => setHighlightedId(null)}
+        onClick={() => {
+          setHighlightedId(null);
+          setSelectedId(null);
+        }}
       >
         <GeolocateControl
           ref={geolocateControlRef}
@@ -282,9 +333,14 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
             clusters={clusters || []}
             highlightedId={highlightedId}
             setHighlightedId={setHighlightedId}
+            selectedId={selectedId}
+            onSelectBuilding={handleSelectBuilding}
           />
         )}
       </Map>
+
+      {/* Detail drawer — slides from the right (desktop) / bottom (mobile) on pin click */}
+      <BuildingDetailDrawer cluster={selectedCluster} onClose={handleCloseDetail} />
 
       {showEmptyMessage && !isLoading && !isFetching && bounds && visibleClustersCount === 0 && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-surface-card/95 backdrop-blur-sm border border-border-default p-5 text-center max-w-xs animate-in fade-in zoom-in duration-300">

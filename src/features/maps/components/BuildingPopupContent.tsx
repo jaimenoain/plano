@@ -35,6 +35,11 @@ interface BuildingPopupContentProps {
   onAddCandidate?: (id: string) => void;
   /** When true, renders full-width (for mobile bottom sheet). Strips fixed popup dimensions. */
   fullWidth?: boolean;
+  /**
+   * When true, omits the full-card "open in new tab" anchor overlay. Used inside the
+   * detail drawer, where navigation is an explicit "View full details" link instead.
+   */
+  hideCardLink?: boolean;
 }
 
 export function BuildingPopupContent({
@@ -44,6 +49,7 @@ export function BuildingPopupContent({
   onRemoveFromCollection,
   onAddCandidate,
   fullWidth = false,
+  hideCardLink = false,
 }: BuildingPopupContentProps) {
   const { user } = useAuth();
   const { statuses, ratings } = useUserBuildingStatuses();
@@ -343,13 +349,15 @@ export function BuildingPopupContent({
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
-            <a
-                href={buildingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="absolute inset-0 z-10"
-                aria-label={`View details for ${cluster.name || 'Building'}`}
-            />
+            {!hideCardLink && (
+              <a
+                  href={buildingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute inset-0 z-10"
+                  aria-label={`View details for ${cluster.name || 'Building'}`}
+              />
+            )}
             <div className="relative h-[200px] w-full bg-surface-muted">
                 {cluster.image_url ? (
                 <img
@@ -402,13 +410,15 @@ export function BuildingPopupContent({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >
-      <a
-        href={buildingUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="absolute inset-0 z-10"
-        aria-label={`View details for ${cluster.name || 'Building'}`}
-      />
+      {!hideCardLink && (
+        <a
+          href={buildingUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute inset-0 z-10"
+          aria-label={`View details for ${cluster.name || 'Building'}`}
+        />
+      )}
 
       {/* Image */}
       <div className="relative h-[200px] w-full bg-surface-muted">

@@ -126,9 +126,13 @@ function SearchPageContent() {
     return Object.keys(f).length > 0 ? f : undefined;
   }, [filters]);
 
-  // Find mode — three parallel RPCs, no bbox
+  // Find mode — three parallel RPCs, no bbox.
+  // Pass the RAW input value: useUnifiedSearch debounces `query` internally
+  // (useDebounce 300ms), so feeding it the already-debounced value stacked two
+  // 300ms delays (~600ms) before results appeared. The page's debounced value is
+  // still used for isFindMode gating and the URL/fit-bounds effects below.
   const findResults = useUnifiedSearch({
-    query: debouncedSearchValue,
+    query: searchValue,
     filters: findModeFilters,
     minLength: 2,
   });
