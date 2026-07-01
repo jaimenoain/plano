@@ -1,5 +1,5 @@
 import { isSameDay } from "date-fns";
-import { resolveCardType } from "@/features/posts/utils/resolveCardType";
+import { hasReviewMedia, resolveCardType } from "@/features/posts/utils/resolveCardType";
 import type { FeedEventAttendance, FeedHomeEntry, FeedReview } from "@/types/feed";
 
 /** Minimum number of consecutive "light" visits before they collapse into a summary row. */
@@ -27,6 +27,22 @@ export type HomeFeedRenderBlock =
 
 function isEventAttendanceEntry(entry: FeedHomeEntry): entry is FeedEventAttendance {
   return "rowType" in entry && entry.rowType === "event_attendance";
+}
+
+/**
+ * Returns a copy of `entries` with the first media-bearing entry (photo or video) moved to
+ * the front, preserving the relative order of everything else. If no entry has media, the
+ * original order is returned unchanged. Event-attendance rows never count as media.
+ */
+export function promoteFirstMediaEntry<T extends FeedHomeEntry>(entries: T[]): T[] {
+  const idx = entries.findIndex(
+    (e) => !isEventAttendanceEntry(e) && hasReviewMedia(e as FeedReview),
+  );
+  if (idx <= 0) return entries; // already first, or none found
+  const next = entries.slice();
+  const [media] = next.splice(idx, 1);
+  next.unshift(media);
+  return next;
 }
 
 /** A "light" update: a review-shaped entry that resolves to the activity card (no text, no media). */

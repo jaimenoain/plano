@@ -1646,7 +1646,7 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
             <SlidersHorizontal className="h-3.5 w-3.5" />
             Popularity
           </span>
-          <div className="w-44 flex flex-col gap-1.5">
+          <div className="w-full sm:w-44 flex flex-col gap-1.5">
             <Slider
               min={0}
               max={3}

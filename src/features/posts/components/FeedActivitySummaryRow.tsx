@@ -70,7 +70,7 @@ export function FeedActivitySummaryRow({ entries }: FeedActivitySummaryRowProps)
       </button>
 
       {expanded && (
-        <div className="divide-y divide-border-default pl-8">
+        <div className="divide-y divide-border-default pl-4 md:pl-8">
           {entries.map((entry) => (
             <FeedActivityRow key={entry.id} entry={entry} hideUser className="border-0" />
           ))}

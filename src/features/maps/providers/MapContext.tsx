@@ -1,9 +1,11 @@
-import { createContext, useContext, useMemo, ReactNode, useCallback, useState, useEffect } from 'react';
+import { createContext, useContext, useMemo, ReactNode, useCallback, useState, useEffect, useRef } from 'react';
+import { useStore } from 'zustand';
+import { useSearchParams } from 'react-router';
 import { supabase } from '@/integrations/supabase/client';
-import { useURLMapState } from '../hooks/useURLMapState';
-import { useStableMapUpdate } from '../hooks/useStableMapUpdate';
+import { parseMapStateFromParams } from '../hooks/useURLMapState';
+import { useMapUrlSync } from '../hooks/useMapUrlSync';
+import { createMapStore, type MapStore } from '../stores/useMapStore';
 import { MapMode, MapFilters, MapState } from '@/types/plano-map';
-import type { MapState as URLMapState } from '@/features/maps/hooks/useURLMapState';
 import { Bounds } from '@/utils/map';
 import type { BuildingSearchHit } from '@/features/search/api/searchBuildingsV2';
 
@@ -45,37 +47,31 @@ interface MapContextValue {
 const MapContext = createContext<MapContextValue | null>(null);
 
 /**
- * Derives a rough viewport bounding box from map centre + zoom level.
- * Uses a conservative 1280×800 px viewport assumption. The result is only
- * used to prime both the cluster and SERP queries before the map's `onLoad`
- * fires — real bounds replace it as soon as the map is interactive.
+ * MapProvider — now a thin adapter over a per-provider zustand store
+ * (`createMapStore`). The store is the single source of truth; `useMapUrlSync`
+ * is the one place it talks to the URL. This provider preserves the EXACT
+ * `{state, methods}` surface the rest of the app depends on (BuildingSidebar,
+ * MapMarkers, BuildingPopupContent, PhotographyTool, etc.), so nothing else
+ * changes. The `hydratedContacts` cache (ratedBy → profile) is preserved.
  */
-function approximateBoundsFromCenter(lat: number, lng: number, zoom: number): Bounds {
-  const degsPerTile = 360 / Math.pow(2, zoom);
-  const lngHalf = (degsPerTile * 1280) / 256 / 2;
-  const latHalf = Math.min((degsPerTile * 800) / 256 / 2, 85);
-  return {
-    north: Math.min(85, lat + latHalf),
-    south: Math.max(-85, lat - latHalf),
-    east: Math.min(180, lng + lngHalf),
-    west: Math.max(-180, lng - lngHalf),
-  };
-}
-
 export const MapProvider = ({ children }: { children: ReactNode }) => {
-  const { lat, lng, zoom, mode, filters, setMapURL } = useURLMapState();
-  const { updateMapState } = useStableMapUpdate(setMapURL);
+  const [searchParams] = useSearchParams();
 
-  // Pre-compute approximate bounds from URL params so the cluster and SERP
-  // queries can fire immediately — before the map's `onLoad` event fires and
-  // sets real bounds. Real bounds replace this via setBounds on `onLoad`.
-  const [bounds, setBounds] = useState<Bounds | null>(
-    () => approximateBoundsFromCenter(lat, lng, zoom)
-  );
-  const [fitBounds, setFitBounds] = useState<Bounds | null>(null);
-  const [highlightedId, setHighlightedId] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [findModeBuildings, setFindModeBuildings] = useState<BuildingSearchHit[] | null>(null);
+  // One store instance per provider (search vs PhotographyTool must not share a
+  // viewport). Seeded once from the URL.
+  const storeRef = useRef<MapStore | null>(null);
+  if (storeRef.current === null) {
+    storeRef.current = createMapStore(parseMapStateFromParams(searchParams));
+  }
+  const store = storeRef.current;
+
+  // The one URL sync unit (mounted once).
+  useMapUrlSync(store);
+
+  // Reactive view of the store.
+  const s = useStore(store);
+  const { lat, lng, zoom, mode, filters, bounds, highlightedId, selectedId, findModeBuildings, fitBoundsRequest } = s;
+
   const [hydratedContacts, setHydratedContacts] = useState<Record<string, Contact>>({});
 
   // Fetch missing contacts if we have ratedBy param but no contacts (or partial)
@@ -120,33 +116,6 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [filters.ratedBy, hydratedContacts]);
 
-  const moveMap = useCallback(
-    (lat: number, lng: number, zoom: number) => {
-      // Immediate update via useStableMapUpdate to ensure responsive map jumps
-      updateMapState({ lat, lng, zoom }, true);
-    },
-    [updateMapState]
-  );
-
-  const fitMapBounds = useCallback(
-    (bounds: Bounds | null) => {
-        setFitBounds(bounds);
-    },
-    []
-  );
-
-  // We keep setMode as a no-op or proxy for backward compatibility if needed,
-  // but FilterDrawer and others should use `setMode` from `useBuildingSearch`
-  const setMode = useCallback(
-    (mode: MapMode) => {
-      // MapContext now relies on useBuildingSearch to set the mode URL param.
-      // We can leave this as a no-op or just update the map state directly if needed.
-      // But URL will be the source of truth anyway.
-      setMapURL({ mode });
-    },
-    [setMapURL]
-  );
-
   // Helper to prime cache when setting contacts
   const primeContactCache = useCallback((contacts: Contact[]) => {
     if (!contacts || contacts.length === 0) return;
@@ -163,47 +132,73 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
     });
   }, []);
 
+  const moveMap = useCallback(
+    (lat: number, lng: number, zoom: number) => {
+      store.getState().setViewport({ lat, lng, zoom });
+    },
+    [store]
+  );
+
+  const fitMapBounds = useCallback(
+    (bounds: Bounds | null) => {
+      if (bounds) store.getState().requestFitBounds(bounds);
+      else store.getState().clearFitBoundsRequest();
+    },
+    [store]
+  );
+
+  const setMode = useCallback(
+    (mode: MapMode) => {
+      store.getState().setMode(mode);
+    },
+    [store]
+  );
+
   const setFilter = useCallback(
     <K extends keyof MapFilters>(key: K, value: MapFilters[K]) => {
-      // Cast the inferred Zod type to MapFilters to ensure type safety in merge
-      const currentFilters = filters as unknown as MapFilters;
-      const newFilters = { ...currentFilters, [key]: value };
-
       if (key === 'contacts' && Array.isArray(value)) {
-          primeContactCache(value as Contact[]);
+        primeContactCache(value as Contact[]);
       }
-
-      setMapURL({ filters: newFilters });
+      store.getState().setFilter(key, value);
     },
-    [filters, setMapURL, primeContactCache]
+    [store, primeContactCache]
   );
 
   const setMapState = useCallback(
     (state: Partial<MapState>) => {
+      const st = store.getState();
       if (state.filters) {
-          const f = state.filters as MapFilters;
-          if (f.contacts && Array.isArray(f.contacts)) {
-              primeContactCache(f.contacts);
-          }
+        const f = state.filters as MapFilters;
+        if (f.contacts && Array.isArray(f.contacts)) {
+          primeContactCache(f.contacts);
+        }
+        st.setFilters(f);
       }
-      setMapURL(state as Partial<URLMapState>);
+      if (state.mode !== undefined) st.setMode(state.mode);
+      if (state.lat !== undefined && state.lng !== undefined && state.zoom !== undefined) {
+        st.setViewport({ lat: state.lat, lng: state.lng, zoom: state.zoom });
+      }
     },
-    [setMapURL, primeContactCache]
+    [store, primeContactCache]
   );
 
-  // Merge hydrated contacts into filters
+  const setBounds = useCallback((b: Bounds) => store.getState().setBounds(b), [store]);
+  const setHighlightedId = useCallback((id: string | null) => store.getState().setHighlightedId(id), [store]);
+  const setSelectedId = useCallback((id: string | null) => store.getState().setSelectedId(id), [store]);
+  const setFindModeBuildings = useCallback(
+    (b: BuildingSearchHit[] | null) => store.getState().setFindModeBuildings(b),
+    [store]
+  );
+
+  // Merge hydrated contacts into filters (preserved from the previous impl).
   const mergedFilters = useMemo(() => {
-    const baseFilters = filters as unknown as MapFilters;
-
-    // If we have ratedBy but no contacts (or empty), try to populate from cache
-    if (baseFilters.ratedBy && baseFilters.ratedBy.length > 0 && (!baseFilters.contacts || baseFilters.contacts.length === 0)) {
-       const contacts = baseFilters.ratedBy.map(name => hydratedContacts[name]).filter(Boolean);
-       if (contacts.length > 0) {
-           return { ...baseFilters, contacts };
-       }
+    if (filters.ratedBy && filters.ratedBy.length > 0 && (!filters.contacts || filters.contacts.length === 0)) {
+      const contacts = filters.ratedBy.map(name => hydratedContacts[name]).filter(Boolean);
+      if (contacts.length > 0) {
+        return { ...filters, contacts };
+      }
     }
-
-    return baseFilters;
+    return filters;
   }, [filters, hydratedContacts]);
 
   const value = useMemo(
@@ -215,7 +210,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
         mode,
         filters: mergedFilters,
         bounds,
-        fitBounds,
+        fitBounds: fitBoundsRequest?.bounds ?? null,
         highlightedId,
         selectedId,
         findModeBuildings,
@@ -232,7 +227,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
         setFindModeBuildings,
       },
     }),
-    [lat, lng, zoom, mode, mergedFilters, bounds, fitBounds, highlightedId, selectedId, findModeBuildings, moveMap, fitMapBounds, setMode, setFilter, setMapState, setFindModeBuildings]
+    [lat, lng, zoom, mode, mergedFilters, bounds, fitBoundsRequest, highlightedId, selectedId, findModeBuildings, moveMap, fitMapBounds, setMode, setFilter, setMapState, setBounds, setHighlightedId, setSelectedId, setFindModeBuildings]
   );
 
   return <MapContext.Provider value={value}>{children}</MapContext.Provider>;

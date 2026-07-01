@@ -75,7 +75,7 @@ export default function SupportPage() {
               <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-8">
                 Ambassador programme
               </p>
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-tight text-text-primary">
+              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-tight text-text-primary">
                 Build the map
                 <br />
                 of architecture

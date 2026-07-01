@@ -79,18 +79,34 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     /* Prevent text resizing on mobile rotation which disorients seniors */
-    -webkit-text-size-adjust: 100%; 
+    -webkit-text-size-adjust: 100%;
     overflow-x: hidden;
+    /* Stop a horizontal trackpad/touch gesture from triggering browser back/forward
+       (e.g. two-finger swipe over the Explore feed). */
+    overscroll-behavior-x: none;
     width: 100%;
   }
 
   body {
     @apply bg-surface-default text-text-primary;
     /* Base font size 16px is critical for legibility */
-    font-size: 16px; 
+    font-size: 16px;
     line-height: 1.5;
     overflow-x: hidden;
+    overscroll-behavior-x: none;
     width: 100%;
+  }
+
+  /* Respect reduced-motion for state transitions (pills, stamps, hovers). Scoped to
+     transitions only — keyframe animations like loading spinners keep running. The
+     card's large gesture motion is gated separately via framer-motion useReducedMotion. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   ::selection {

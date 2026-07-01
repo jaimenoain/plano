@@ -36,10 +36,10 @@ export function SiteFooter() {
       <div className="px-8 md:px-12 pt-16 pb-10">
 
         {/* ── Top grid ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-12 pb-14 border-b border-text-inverse/10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 md:gap-12 pb-14 border-b border-text-inverse/10">
 
           {/* Brand — same wordmark as header (PlanoLogo), inverse colour */}
-          <div className="col-span-2 md:col-span-1">
+          <div className="col-span-1 sm:col-span-2 md:col-span-1">
             <Link
               to="/"
               className="inline-block mb-4 text-text-inverse hover:opacity-80 transition-opacity duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-text-inverse/40 rounded-sm"

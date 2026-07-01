@@ -157,6 +157,14 @@ export default function Explore() {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (isLocationSheetOpen) return;
+      // Defer to an open card rating overlay — the card consumes Escape to advance,
+      // so Escape shouldn't also yank the user out of Explore on the same keypress.
+      if (
+        typeof document !== "undefined" &&
+        document.querySelector('[data-explore-overlay="open"]')
+      ) {
+        return;
+      }
       navigate("/", { replace: true });
     };
     window.addEventListener("keydown", onKeyDown);
@@ -337,6 +345,31 @@ export default function Explore() {
     [allBuildings, hiddenBuildingIds]
   );
 
+  // Undo a save/hide: return the card to the feed and clear its user_buildings row.
+  const undoBuildingAction = useCallback(
+    async (buildingId: string) => {
+      setHiddenBuildingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(buildingId);
+        return next;
+      });
+      if (!user) return;
+      try {
+        const { error } = await supabase
+          .from("user_buildings")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("building_id", buildingId);
+        if (error) throw error;
+        queryClient.invalidateQueries({ queryKey: ["discovery_feed"] });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error("Failed to undo:", error);
+      }
+    },
+    [user, queryClient]
+  );
+
   const handleSkip = async (buildingId: string) => {
     if (!user) return;
     try {
@@ -380,7 +413,9 @@ export default function Explore() {
         { onConflict: "user_id, building_id" }
       );
       if (error) throw error;
-      toast.success("Saved to your list");
+      toast.success("Saved to your list", {
+        action: { label: "Undo", onClick: () => undoBuildingAction(buildingId) },
+      });
       queryClient.invalidateQueries({ queryKey: ["discovery_feed"] });
     } catch (error) {
       // Persist failed: un-hide the card so the building returns to the feed instead of
@@ -415,7 +450,9 @@ export default function Explore() {
         { onConflict: "user_id, building_id" }
       );
       if (error) throw error;
-      toast("Building hidden");
+      toast("Building hidden", {
+        action: { label: "Undo", onClick: () => undoBuildingAction(buildingId) },
+      });
       queryClient.invalidateQueries({ queryKey: ["discovery_feed"] });
     } catch (error) {
       // Persist failed: un-hide the card so the building returns to the feed instead of
@@ -576,7 +613,7 @@ export default function Explore() {
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
-            className="min-h-0 flex-1 w-full touch-pan-y overflow-y-scroll overscroll-y-contain snap-y snap-mandatory no-scrollbar"
+            className="min-h-0 flex-1 w-full touch-pan-y overflow-y-scroll overscroll-y-contain overscroll-x-contain snap-y snap-mandatory no-scrollbar"
           >
           {/* Loading */}
           {status === "pending" && (
@@ -621,20 +658,23 @@ export default function Explore() {
             </div>
           )}
 
-          {/* Cards */}
+          {/* Cards — full-bleed on phones; a centered poster column on md+ so a
+              mouse/keyboard swipe stays in a comfortable, discoverable band. */}
           {buildings.map((building) => (
             <div
               key={building.id}
-              className="h-full w-full snap-start snap-always"
+              className="h-full w-full snap-start snap-always flex justify-center"
               style={{ contain: "layout paint" }}
             >
-              <DiscoveryCard
-                building={building}
-                onSwipeSave={() => handleSwipeSave(building.id)}
-                onSwipeHide={() => handleSwipeHide(building.id)}
-                onSkip={() => handleSkip(building.id)}
-                onInteractionStart={() => setIsFilterVisible(false)}
-              />
+              <div className="relative h-full w-full md:max-w-md md:border-x md:border-white/5">
+                <DiscoveryCard
+                  building={building}
+                  onSwipeSave={() => handleSwipeSave(building.id)}
+                  onSwipeHide={() => handleSwipeHide(building.id)}
+                  onSkip={() => handleSkip(building.id)}
+                  onInteractionStart={() => setIsFilterVisible(false)}
+                />
+              </div>
             </div>
           ))}
 

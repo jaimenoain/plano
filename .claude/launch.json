@@ -7,6 +7,13 @@
       "runtimeArgs": ["run", "dev", "--", "--port", "8085"],
       "port": 8085,
       "autoPort": false
+    },
+    {
+      "name": "plano-dev-mobile",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "8086"],
+      "port": 8086,
+      "autoPort": true
     }
   ]
 }

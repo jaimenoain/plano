@@ -306,7 +306,7 @@ export function FilterDrawer() {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[340px] sm:w-[380px] overflow-y-auto">
+      <SheetContent side="right" className="w-[min(340px,calc(100vw-2rem))] sm:w-[380px] overflow-y-auto">
         <SheetHeader className="flex flex-row items-center justify-between space-y-0">
           <SheetTitle>Filters</SheetTitle>
           {activeFilterCount > 0 && (

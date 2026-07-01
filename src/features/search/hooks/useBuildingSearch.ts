@@ -724,14 +724,10 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     setSearchParams((prevParams) => {
       const params = new URLSearchParams(prevParams);
 
-      if (debouncedQuery) {
-        params.set("q", debouncedQuery);
-      } else if (!prevParams.get("q")) {
-        // Only remove ?q= if there's no existing value. An external owner
-        // (e.g. SearchPage via MapContext) may have set it — deleting it when
-        // our own debouncedQuery is empty causes an infinite write-delete loop.
-        params.delete("q");
-      }
+      // `q` is owned solely by the map store / useMapUrlSync (SearchPage drives it
+      // via setFilter("query")). This writer must NOT touch `q`: its debouncedQuery
+      // is frozen at mount and would clobber the store-owned value (the stale-`q`
+      // bug). Starting from `prevParams` preserves `q` verbatim.
 
       // Location
       if (!params.has("lat")) params.set("lat", userLocation.lat.toString());
@@ -871,7 +867,6 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   }, [
     isLoadingRatedBy,
     ratedByParam,
-    debouncedQuery,
     userLocation,
     viewMode,
     mode,

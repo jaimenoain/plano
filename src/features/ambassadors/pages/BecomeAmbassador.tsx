@@ -268,7 +268,7 @@ export default function BecomeAmbassador() {
         <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
           <header className="pt-16 pb-20 border-b border-border-default">
             <AmbassadorMarketingEyebrow>Ambassador programme</AmbassadorMarketingEyebrow>
-            <h1 className="mt-8 text-5xl sm:text-6xl font-bold tracking-tight leading-tight text-text-primary">
+            <h1 className="mt-8 text-4xl sm:text-6xl font-bold tracking-tight leading-tight text-text-primary">
               Become an
               <br />
               ambassador

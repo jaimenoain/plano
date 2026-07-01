@@ -1212,7 +1212,7 @@ export default function Profile() {
                                 <ProfileKanbanView kanbanData={kanbanData} showCommunityImages={showCommunityImages} updatingItemId={updatingItemId} isDragEnabled={isOwnProfile} />
                                 <DragOverlay dropAnimation={null}>
                                   {activeId ? (
-                                    <div className="w-[280px] scale-105 z-50 cursor-grabbing border border-border-default bg-surface-default overflow-hidden opacity-95">
+                                    <div className="w-[min(92vw,280px)] scale-105 z-50 cursor-grabbing border border-border-default bg-surface-default overflow-hidden opacity-95">
                                       {(() => {
                                       const activeItem = content.find((i) => i.id === activeId);
                                       return activeItem ? (

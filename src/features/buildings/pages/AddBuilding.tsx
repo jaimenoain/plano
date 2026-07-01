@@ -562,7 +562,7 @@ toast.error("Location search failed. Please click on the map to set the location
         </div>
 
         {/* Map Area */}
-        <div className="h-[600px] rounded-sm overflow-hidden border border-border-default relative bg-surface-muted">
+        <div className="h-[360px] md:h-[600px] rounded-sm overflow-hidden border border-border-default relative bg-surface-muted">
           {!isMapClient ? (
             <div className="flex h-full w-full items-center justify-center" aria-hidden>
               <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
