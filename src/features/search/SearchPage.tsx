@@ -36,6 +36,7 @@ import { Bounds, getBoundsFromBuildings } from "@/utils/map";
 import { useNavigate } from "react-router";
 import type { SearchBuildingsV2Filters } from "@/features/search/api/searchBuildingsV2";
 
+import { resolveConstructionStatuses } from "@/lib/buildingStatus";
 import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext";
 import { PlanoMap } from "@/features/maps/components/PlanoMap";
 import { BuildingSidebar } from "@/features/maps/components/BuildingSidebar";
@@ -109,7 +110,12 @@ function SearchPageContent() {
     if (filters.category) f.category_id = filters.category;
     if (filters.typologies?.length) f.typology_ids = filters.typologies;
     if (filters.attributes?.length) f.attribute_ids = filters.attributes;
-    if (filters.constructionStatuses?.length) f.construction_statuses = filters.constructionStatuses;
+    // Construction status: mirror the Browse surfaces exactly (explicit picks →
+    // inclusion; Show-lost / default → exclusion) so the Building-status filter
+    // behaves identically in Find mode.
+    const construction = resolveConstructionStatuses(filters);
+    if (construction.construction_statuses) f.construction_statuses = construction.construction_statuses;
+    if (construction.exclude_construction_statuses) f.exclude_construction_statuses = construction.exclude_construction_statuses;
     if (filters.sizeCategories?.length) f.size_categories = filters.sizeCategories;
     if (filters.minSizeSqm) f.min_size_sqm = filters.minSizeSqm;
     if (filters.maxSizeSqm) f.max_size_sqm = filters.maxSizeSqm;
@@ -123,6 +129,14 @@ function SearchPageContent() {
     if (filters.accessLogistics?.length) f.access_logistics = filters.accessLogistics;
     if (filters.accessCosts?.length) f.access_costs = filters.accessCosts;
     if (filters.centuries?.length) f.centuries = filters.centuries;
+    // Library filters — Folders/Collections and Curators & friends — so Find mode
+    // narrows to the same set as Browse.
+    if (filters.collections?.length) f.collections = filters.collections.map((c) => c.id);
+    if (filters.folderIds?.length) f.folders = filters.folderIds;
+    const ratedBy = filters.contacts?.map((c) => c.name) ?? filters.ratedBy;
+    if (ratedBy?.length) f.rated_by = ratedBy;
+    if (filters.filterContacts) f.filter_contacts = true;
+    if (filters.contactMinRating) f.contact_min_rating = filters.contactMinRating;
     return Object.keys(f).length > 0 ? f : undefined;
   }, [filters]);
 

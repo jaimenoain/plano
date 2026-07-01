@@ -15,11 +15,7 @@ import {
 import { ClusterResponse } from '../hooks/useMapData';
 import { getBuildingImageUrl } from '@/utils/image';
 import { getBuildingUrl } from '@/utils/url';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useUserBuildingStatuses } from '@/features/profile/hooks/useUserBuildingStatuses';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { useQueryClient } from '@tanstack/react-query';
+import { useBuildingStatusActions } from '../hooks/useBuildingStatusActions';
 
 /** Single surface for map hover card (MapLibre outer frame is reset in index.css) */
 const POPUP_PANEL =
@@ -51,164 +47,31 @@ export function BuildingPopupContent({
   fullWidth = false,
   hideCardLink = false,
 }: BuildingPopupContentProps) {
-  const { user } = useAuth();
-  const { statuses, ratings } = useUserBuildingStatuses();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const mapCtx = useOptionalMapContext();
   const filters = mapCtx?.state.filters ?? { photographyGaps: false } as const;
   const panelClass = fullWidth ? SHEET_PANEL : POPUP_PANEL;
-  const [isSaving, setIsSaving] = useState(false);
 
-  // Interaction State
-  const [justInteracted, setJustInteracted] = useState<'saved' | 'visited' | null>(null);
-  const [optimisticRating, setOptimisticRating] = useState<number | null>(null);
-  const [hoverRating, setHoverRating] = useState<number | null>(null);
-
-  // Confirmation State
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmTitle, setConfirmTitle] = useState("");
-  const [confirmMessage, setConfirmMessage] = useState("");
-  const [pendingDeletion, setPendingDeletion] = useState<(() => void) | null>(null);
-
-  // Convert cluster ID to string for status lookup
   const buildingId = String(cluster.id);
-  const viewerStatus = statuses[buildingId];
+  const {
+    user,
+    isSaved,
+    isVisited,
+    isIgnored,
+    currentRating,
+    isSaving,
+    justInteracted,
+    handleSave,
+    handleVisit,
+    handleHide,
+    handleRate,
+    confirmOpen,
+    setConfirmOpen,
+    confirmTitle,
+    confirmMessage,
+    confirmDelete,
+  } = useBuildingStatusActions(buildingId);
 
-  const isSaved = viewerStatus === 'pending';
-  const isVisited = viewerStatus === 'visited';
-  const isIgnored = viewerStatus === 'ignored';
-
-  const performUpdate = async (
-    status: 'pending' | 'visited' | 'ignored',
-    successMessage: string,
-    removeMessage: string
-  ) => {
-    if (!user) return;
-
-    setIsSaving(true);
-    try {
-      if (viewerStatus === status) {
-        // Toggle off (delete)
-        const { error } = await supabase
-          .from("user_buildings")
-          .delete()
-          .match({ user_id: user.id, building_id: buildingId });
-
-        if (error) throw error;
-        toast({ title: removeMessage });
-        setJustInteracted(null);
-      } else {
-        // Set new status
-        const { error } = await supabase.from("user_buildings").upsert({
-          user_id: user.id,
-          building_id: buildingId,
-          status: status,
-        }, { onConflict: 'user_id, building_id' });
-
-        if (error) throw error;
-        toast({ title: successMessage });
-        setJustInteracted(status === 'pending' ? 'saved' : (status === 'visited' ? 'visited' : null));
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-      queryClient.invalidateQueries({ queryKey: ["map-clusters-v3"] });
-    } catch {
-      toast({ variant: "destructive", title: "Failed to update status" });
-    } finally {
-      setIsSaving(false);
-      setConfirmOpen(false); // Ensure dialog is closed
-    }
-  };
-
-  const handleAction = async (
-    status: 'pending' | 'visited' | 'ignored',
-    successMessage: string,
-    removeMessage: string
-  ) => {
-    if (!user) {
-      toast({ title: "Please log in first" });
-      return;
-    }
-
-    // If we are REMOVING the status (toggling off)
-    if (viewerStatus === status) {
-        // Check for content (reviews, images)
-        setIsSaving(true);
-        try {
-            const { data: postsData } = await supabase
-                .from('building_posts')
-                .select('id, body')
-                .eq('user_id', user.id)
-                .eq('building_id', buildingId);
-
-            const hasReview = postsData?.some(p => p.body && p.body.trim().length > 0);
-            const postIds = (postsData ?? []).map(p => p.id);
-            let imageCount = 0;
-            if (postIds.length > 0) {
-                // Separate count query — PostgREST `review_images(count)` embed
-                // returns 0 in production after the 20270872 FK swap.
-                const { count } = await supabase
-                    .from('review_images')
-                    .select('id', { count: 'exact', head: true })
-                    .in('review_id', postIds);
-                imageCount = count ?? 0;
-            }
-
-            if (hasReview || imageCount > 0) {
-                let msg = "You are about to remove this building from your list.";
-                if (hasReview && imageCount > 0) {
-                    msg += ` This will permanently delete your review and ${imageCount} attached photo${imageCount > 1 ? 's' : ''}.`;
-                } else if (hasReview) {
-                    msg += " This will permanently delete your written review.";
-                } else if (imageCount > 0) {
-                    msg += ` This will permanently delete ${imageCount} attached photo${imageCount > 1 ? 's' : ''}.`;
-                }
-
-                setConfirmTitle("Delete building data?");
-                setConfirmMessage(msg);
-            } else {
-                setConfirmTitle("Remove from list?");
-                setConfirmMessage("Are you sure you want to remove this building from your list?");
-            }
-
-            setPendingDeletion(() => () => performUpdate(status, successMessage, removeMessage));
-            setConfirmOpen(true);
-            setIsSaving(false); // Stop loading so dialog can show
-            return;
-
-        } catch {
-            // Fallback to confirming anyway or just proceeding? Better to confirm safe.
-            setConfirmTitle("Remove from list?");
-            setConfirmMessage("Are you sure you want to remove this building?");
-            setPendingDeletion(() => () => performUpdate(status, successMessage, removeMessage));
-            setConfirmOpen(true);
-            setIsSaving(false);
-            return;
-        }
-    }
-
-    // Otherwise, just do it (Upsert)
-    performUpdate(status, successMessage, removeMessage);
-  };
-
-  const handleSave = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    handleAction('pending', "Saved to your list", "Removed from your list");
-  };
-
-  const handleVisit = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    handleAction('visited', "Marked as visited", "Removed from visited");
-  };
-
-  const handleHide = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    handleAction('ignored', "Building hidden", "Building unhidden");
-  };
+  const [hoverRating, setHoverRating] = useState<number | null>(null);
 
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -223,25 +86,6 @@ export function BuildingPopupContent({
     e.preventDefault();
     if (onAddCandidate) {
         onAddCandidate(buildingId);
-    }
-  };
-
-  const handleRate = async (rating: number) => {
-    if (!user) return;
-    setOptimisticRating(rating);
-    try {
-      const { error } = await supabase
-        .from("user_buildings")
-        .update({ rating: rating })
-        .eq("user_id", user.id)
-        .eq("building_id", buildingId);
-
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-    } catch {
-      toast({ variant: "destructive", title: "Failed to update rating" });
-      setOptimisticRating(null); // Revert on error
     }
   };
 
@@ -524,7 +368,6 @@ export function BuildingPopupContent({
 
               {/* Rating Circles */}
               {[1, 2, 3].map((rating) => {
-                  const currentRating = optimisticRating !== null ? optimisticRating : (ratings[buildingId] || 0);
                   const activeRating = hoverRating !== null ? hoverRating : currentRating;
                   const isFilled = activeRating >= rating;
 
@@ -569,7 +412,7 @@ export function BuildingPopupContent({
             <AlertDialogFooter>
                 <AlertDialogCancel onClick={() => setConfirmOpen(false)}>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                    onClick={() => pendingDeletion && pendingDeletion()}
+                    onClick={confirmDelete}
                     className="bg-feedback-destructive text-feedback-destructive-foreground hover:bg-feedback-destructive/90"
                 >
                     Confirm Delete

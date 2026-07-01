@@ -48,9 +48,11 @@ import { Suggestion } from '@/features/search/components/DiscoverySearchInput';
 import { SmartFilterSuggestions } from '@/features/search/components/SmartFilterSuggestions';
 import type { CompanySummary, PersonSummary } from '@/features/credits/types';
 import type { BuildingSearchHit } from '@/features/search/api/searchBuildingsV2';
+import type { ClusterResponse } from '../hooks/useMapData';
 import { getBoundsFromBuildings } from '@/utils/map';
 import { cn } from '@/lib/utils';
 import { resolveBuildingUrl } from '@/utils/url';
+import { resolveConstructionStatuses } from '@/lib/buildingStatus';
 
 interface Building {
   id: string;
@@ -105,7 +107,7 @@ export function BuildingSidebar({
 }: BuildingSidebarProps = {}) {
   const {
     state: { bounds, filters },
-    methods: { setHighlightedId, fitMapBounds },
+    methods: { setHighlightedId, selectBuilding, fitMapBounds },
   } = useMapContext();
   const observerTarget = useRef<HTMLDivElement>(null);
   const lastZoomedQuery = useRef<string | null>(null);
@@ -137,6 +139,7 @@ export function BuildingSidebar({
         rated_by: filters.contacts?.map((c) => c.name) || filters.ratedBy,
         filter_contacts: filters.filterContacts,
         collections: filters.collections?.map((c) => c.id),
+        folders: filters.folderIds,
         hide_visited: filters.hideVisited,
         hide_saved: filters.hideSaved,
         hide_hidden: false,
@@ -152,6 +155,19 @@ export function BuildingSidebar({
         max_storeys: filters.maxStoreys || undefined,
         centuries:
           filters.centuries && filters.centuries.length > 0 ? filters.centuries : undefined,
+        // Parity with the map pins (get_map_clusters_v3): construction status +
+        // Show-lost, awards, and access must shape the SERP list identically.
+        ...resolveConstructionStatuses(filters),
+        award_id: filters.awardId || undefined,
+        award_outcome: filters.awardOutcome || undefined,
+        award_year_from: filters.awardYearFrom || undefined,
+        award_year_to: filters.awardYearTo || undefined,
+        access_levels:
+          filters.accessLevels && filters.accessLevels.length > 0 ? filters.accessLevels : undefined,
+        access_logistics:
+          filters.accessLogistics && filters.accessLogistics.length > 0 ? filters.accessLogistics : undefined,
+        access_costs:
+          filters.accessCosts && filters.accessCosts.length > 0 ? filters.accessCosts : undefined,
       };
       const { data, error } = await supabase.rpc('get_buildings_list', {
         min_lat: bounds.south,
@@ -347,6 +363,22 @@ export function BuildingSidebar({
             <>
               {buildings.map((building) => {
                 const imageUrl = getBuildingImageUrl(building.image_url);
+                // The drawer's data payload, derived from the SERP row. Mirrors
+                // the shape a map pin would supply so BuildingPopupContent (the
+                // shared card) renders identically from either entry point.
+                const cluster: ClusterResponse = {
+                  id: building.id,
+                  lat: building.lat,
+                  lng: building.lng,
+                  is_cluster: false,
+                  count: 1,
+                  rating: building.rating ?? null,
+                  status: building.status ?? null,
+                  name: building.name,
+                  slug: building.slug,
+                  image_url: building.image_url ?? undefined,
+                  city: building.city ?? undefined,
+                };
                 return (
                   <Link
                     to={resolveBuildingUrl(building)}
@@ -354,6 +386,14 @@ export function BuildingSidebar({
                     className="group flex pl-4 pr-3 py-3 border-b border-border-default last:border-0 hover:bg-surface-muted/30 transition-colors"
                     onMouseEnter={() => setHighlightedId(building.id)}
                     onMouseLeave={() => setHighlightedId(null)}
+                    onClick={(e) => {
+                      // Plain click opens the detail drawer instead of navigating
+                      // to the full building page. Modified clicks (⌘/ctrl/shift/
+                      // alt) fall through so "open in new tab" still works.
+                      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                      e.preventDefault();
+                      selectBuilding(cluster);
+                    }}
                   >
                     {/* Text content */}
                     <div className="flex-1 min-w-0 pr-3 flex flex-col justify-center min-h-[72px]">

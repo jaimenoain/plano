@@ -2,6 +2,7 @@ import { createStore } from 'zustand/vanilla';
 import type { MapFilters, MapMode } from '@/types/plano-map';
 import type { Bounds } from '@/utils/map';
 import type { BuildingSearchHit } from '@/features/search/api/searchBuildingsV2';
+import type { ClusterResponse } from '../hooks/useMapData';
 
 /**
  * useMapStore — the SINGLE source of truth for the /search (and PhotographyTool)
@@ -36,6 +37,14 @@ export interface MapStoreState extends SerializableMapState {
   query: string;
   /** Deliberate click selection — drives the detail drawer. */
   selectedId: string | null;
+  /**
+   * Data payload for the current selection. The detail drawer renders from the
+   * map's own clusters when the selected building is among them, and falls back
+   * to this payload when it isn't (e.g. a SERP row whose building is aggregated
+   * into a cluster at the current zoom, so no individual pin exists to match).
+   * Kept in lockstep with `selectedId`.
+   */
+  selectedBuilding: ClusterResponse | null;
   /** Transient hover emphasis. */
   highlightedId: string | null;
   /** Find-mode result pins pushed by SearchPage (null == browse mode). */
@@ -55,6 +64,8 @@ export interface MapStoreState extends SerializableMapState {
   setFilters: (patch: Partial<MapFilters>) => void;
   setMode: (mode: MapMode) => void;
   setSelectedId: (id: string | null) => void;
+  /** Select a building AND carry its full data payload for the detail drawer. */
+  selectBuilding: (building: ClusterResponse) => void;
   setHighlightedId: (id: string | null) => void;
   setFindModeBuildings: (list: BuildingSearchHit[] | null) => void;
   requestFitBounds: (bounds: Bounds) => void;
@@ -91,6 +102,7 @@ export function createMapStore(initial: SerializableMapState) {
     bounds: approximateBoundsFromCenter(initial.lat, initial.lng, initial.zoom),
     query: initial.filters.query ?? '',
     selectedId: null,
+    selectedBuilding: null,
     highlightedId: null,
     findModeBuildings: null,
     fitBoundsRequest: null,
@@ -129,7 +141,19 @@ export function createMapStore(initial: SerializableMapState) {
       }),
 
     setMode: (mode) => set((s) => (s.mode === mode ? s : { mode })),
-    setSelectedId: (id) => set((s) => (s.selectedId === id ? s : { selectedId: id })),
+    setSelectedId: (id) =>
+      set((s) => {
+        if (s.selectedId === id) return s;
+        // Keep the data payload only if it still matches the new selection. A
+        // deselect (null) or a bare-id selection drops it, so the drawer either
+        // closes or resolves fresh data from the map's clusters rather than
+        // showing a stale building.
+        const keepPayload =
+          id != null && s.selectedBuilding != null && String(s.selectedBuilding.id) === id;
+        return { selectedId: id, selectedBuilding: keepPayload ? s.selectedBuilding : null };
+      }),
+    selectBuilding: (building) =>
+      set({ selectedId: String(building.id), selectedBuilding: building }),
     setHighlightedId: (id) => set((s) => (s.highlightedId === id ? s : { highlightedId: id })),
     setFindModeBuildings: (list) =>
       set((s) => {

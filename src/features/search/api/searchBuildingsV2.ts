@@ -27,6 +27,7 @@ export interface SearchBuildingsV2Filters {
   credit_company_id?: string;
   credit_roles?: string[];
   construction_statuses?: string[];
+  exclude_construction_statuses?: string[];
   size_categories?: string[];
   min_size_sqm?: number;
   max_size_sqm?: number;
@@ -43,6 +44,11 @@ export interface SearchBuildingsV2Filters {
   access_logistics?: string[];
   access_costs?: string[];
   centuries?: number[];
+  collections?: string[];
+  folders?: string[];
+  rated_by?: string[];
+  filter_contacts?: boolean;
+  contact_min_rating?: number;
 }
 
 export interface SearchBuildingsV2Options {

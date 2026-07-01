@@ -51,8 +51,8 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
   // URL sync (useMapUrlSync). See the store/useMapUrlSync for the single-writer
   // model.
   const {
-    methods: { setBounds, setHighlightedId, setSelectedId, fitMapBounds, moveMap },
-    state: { lat, lng, zoom, highlightedId, selectedId, filters, bounds, mode, fitBounds, findModeBuildings },
+    methods: { setBounds, setHighlightedId, setSelectedId, selectBuilding, fitMapBounds, moveMap },
+    state: { lat, lng, zoom, highlightedId, selectedId, selectedBuilding, filters, bounds, mode, fitBounds, findModeBuildings },
   } = useMapContext();
   const isMobile = useIsMobile();
 
@@ -269,12 +269,21 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
       retainedSelectedRef.current = found as ClusterResponse;
       return found as ClusterResponse;
     }
+    // Not among the map's clusters (e.g. a SERP row aggregated into a cluster at
+    // this zoom, or a pin panned off-screen) — fall back to the payload carried
+    // by whoever set the selection.
+    if (selectedBuilding && String(selectedBuilding.id) === String(selectedId)) {
+      retainedSelectedRef.current = selectedBuilding;
+      return selectedBuilding;
+    }
     return retainedSelectedRef.current;
-  }, [clusters, selectedId]);
+  }, [clusters, selectedId, selectedBuilding]);
 
   const handleSelectBuilding = useCallback(
     (cluster: ClusterResponse) => {
-      setSelectedId(String(cluster.id));
+      // Carry the full cluster so the drawer survives the pin being aggregated
+      // away (zoom-out) or panned off-screen — same path the SERP rows use.
+      selectBuilding(cluster);
       setHighlightedId(String(cluster.id));
       // "Map stays" — only nudge when the pin would sit behind the right-hand
       // detail panel (desktop). If it's already visible, leave the map put.
@@ -290,7 +299,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
         map.panBy([overlap, 0], { duration: 300 });
       }
     },
-    [setSelectedId, setHighlightedId, isMobile]
+    [selectBuilding, setHighlightedId, isMobile]
   );
 
   const handleCloseDetail = useCallback(() => {
