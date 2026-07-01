@@ -243,6 +243,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
           count: 1,
           rating: null,
           status: null,
+          construction_status: b.construction_status ?? null,
           name: b.name,
           slug: b.slug,
           image_url: b.hero_image_url ?? undefined,

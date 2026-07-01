@@ -53,6 +53,10 @@ import {
 import { CollectionSelector } from '@/features/collections/components/CollectionSelector';
 import { ArchitectStatement } from '@/features/buildings/components/ArchitectStatement';
 import { ClusterResponse } from '../hooks/useMapData';
+import {
+  shouldFlagConstructionStatus,
+  formatBuildingStatusForDisplay,
+} from '@/lib/buildingStatus';
 import { getBuildingImageUrl } from '@/utils/image';
 import { getBuildingUrl } from '@/utils/url';
 import { useBuildingStatusActions } from '../hooks/useBuildingStatusActions';
@@ -275,10 +279,19 @@ export function BuildingDrawerBody({ cluster, onClose, layout }: BuildingDrawerB
 
         <div className="p-4">
           {/* ── 2. Identity ── */}
-          {cluster.tier_rank_label && (
-            <span className="mb-2 inline-block text-2xs font-medium uppercase tracking-widest text-text-disabled">
-              {cluster.tier_rank_label}
-            </span>
+          {(cluster.tier_rank_label || shouldFlagConstructionStatus(cluster.construction_status)) && (
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              {cluster.tier_rank_label && (
+                <span className="text-2xs font-medium uppercase tracking-widest text-text-disabled">
+                  {cluster.tier_rank_label}
+                </span>
+              )}
+              {shouldFlagConstructionStatus(cluster.construction_status) && (
+                <span className="border border-border-default px-1.5 py-0.5 text-2xs font-medium uppercase tracking-wide text-text-secondary">
+                  {formatBuildingStatusForDisplay(cluster.construction_status!)}
+                </span>
+              )}
+            </div>
           )}
           <h2 className="text-xl font-semibold leading-tight text-text-primary">
             {cluster.name || 'Building'}

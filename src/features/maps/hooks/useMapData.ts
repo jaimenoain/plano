@@ -35,6 +35,8 @@ export interface ClusterResponse {
   itinerary_day_index?: number;
   photos_count?: number;
   city?: string;
+  /** Raw construction status (buildings.status: Built/Lost/Unbuilt/Under Construction/Temporary). Distinct from `status` (user library status). Null for clusters. */
+  construction_status?: string | null;
 }
 
 export interface UseMapDataProps {

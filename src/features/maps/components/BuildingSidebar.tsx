@@ -52,7 +52,11 @@ import type { ClusterResponse } from '../hooks/useMapData';
 import { getBoundsFromBuildings } from '@/utils/map';
 import { cn } from '@/lib/utils';
 import { resolveBuildingUrl } from '@/utils/url';
-import { resolveConstructionStatuses } from '@/lib/buildingStatus';
+import {
+  resolveConstructionStatuses,
+  shouldFlagConstructionStatus,
+  formatBuildingStatusForDisplay,
+} from '@/lib/buildingStatus';
 
 interface Building {
   id: string;
@@ -61,6 +65,8 @@ interface Building {
   image_url: string | null;
   rating: number;
   status: string | null;
+  /** Raw construction status (Built/Lost/Unbuilt/Under Construction/Temporary). Distinct from `status` (user library status). */
+  construction_status?: string | null;
   lat: number;
   lng: number;
   credit_names: string[];
@@ -239,6 +245,7 @@ export function BuildingSidebar({
         image_url: h.hero_image_url,
         rating: 0,
         status: null,
+        construction_status: h.construction_status ?? null,
         lat: h.lat ?? 0,
         lng: h.lng ?? 0,
         credit_names: h.credit_names,
@@ -374,6 +381,7 @@ export function BuildingSidebar({
                   count: 1,
                   rating: building.rating ?? null,
                   status: building.status ?? null,
+                  construction_status: building.construction_status ?? null,
                   name: building.name,
                   slug: building.slug,
                   image_url: building.image_url ?? undefined,
@@ -421,9 +429,16 @@ export function BuildingSidebar({
                         ) : null}
                       </div>
 
-                      {/* Status + rating */}
-                      {((building.status && building.status !== 'none') || building.rating > 0) && (
+                      {/* Construction status + library status + rating */}
+                      {(shouldFlagConstructionStatus(building.construction_status) ||
+                        (building.status && building.status !== 'none') ||
+                        building.rating > 0) && (
                         <div className="mt-1.5 flex items-center gap-3">
+                          {shouldFlagConstructionStatus(building.construction_status) && (
+                            <span className="border border-border-default px-1.5 py-0.5 text-2xs font-medium uppercase tracking-wide text-text-secondary">
+                              {formatBuildingStatusForDisplay(building.construction_status!)}
+                            </span>
+                          )}
                           {building.status && building.status !== 'none' && (
                             <span className="text-2xs font-medium uppercase tracking-wide text-text-disabled capitalize">
                               {building.status}

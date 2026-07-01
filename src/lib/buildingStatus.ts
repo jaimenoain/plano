@@ -24,6 +24,48 @@ export function formatBuildingStatusForDisplay(status: string): string {
 }
 
 /**
+ * Visual treatment bucket for a building's construction status, used to give
+ * non-standing / not-yet-standing buildings a distinct map pin and list/drawer
+ * chip. `Built` (and NULL) are the standing default and get no treatment.
+ */
+export type ConstructionPinTreatment =
+  | 'lost'
+  | 'unbuilt'
+  | 'under-construction'
+  | 'temporary';
+
+/**
+ * Map a raw `buildings.status` value to its visual treatment, or `null` when it
+ * should render as an ordinary standing building. Legacy `Demolished` is
+ * normalized to `Lost` first, so both map to `'lost'`.
+ */
+export function getConstructionTreatment(
+  status: string | null | undefined,
+): ConstructionPinTreatment | null {
+  if (!status) return null;
+  switch (normalizeConstructionStatus(status)) {
+    case LOST_BUILDING_STATUS:
+      return 'lost';
+    case 'Unbuilt':
+      return 'unbuilt';
+    case 'Under Construction':
+      return 'under-construction';
+    case 'Temporary':
+      return 'temporary';
+    default:
+      // Built, or any unknown value → no flag.
+      return null;
+  }
+}
+
+/** Whether a construction status warrants a chip in the list/drawer. */
+export function shouldFlagConstructionStatus(
+  status: string | null | undefined,
+): boolean {
+  return getConstructionTreatment(status) !== null;
+}
+
+/**
  * Construction statuses hidden by default in browse/search.
  * Includes legacy `Demolished` so rows not yet migrated stay hidden.
  */

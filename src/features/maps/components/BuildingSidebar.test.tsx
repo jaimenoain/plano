@@ -83,4 +83,49 @@ describe('BuildingSidebar', () => {
     expect(dots[0].className).toContain('bg-text-primary');
     expect(dots[0].className).not.toContain('bg-yellow-400');
   });
+
+  const renderWithBuilding = (building: Record<string, unknown>) => {
+    (MapContext.useMapContext as any).mockReturnValue({
+      state: { bounds: { north: 10, south: 0, east: 10, west: 0 }, filters: {} },
+      methods: { setHighlightedId: vi.fn(), selectBuilding: vi.fn(), fitMapBounds: vi.fn() },
+    });
+    (ReactQuery.useInfiniteQuery as any).mockReturnValue({
+      data: { pages: [[building]], pageParams: [1] },
+      isLoading: false,
+      isError: false,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      fetchNextPage: vi.fn(),
+    });
+    return render(
+      <MemoryRouter>
+        <BuildingSidebar />
+      </MemoryRouter>
+    );
+  };
+
+  const baseBuilding = {
+    id: '1',
+    name: 'Test Building',
+    rating: 0,
+    status: 'none',
+    credit_names: [],
+    image_url: null,
+    slug: 'test-slug',
+    lat: 0,
+    lng: 0,
+    year_completed: 2020,
+    city: 'Test City',
+    country: 'Test Country',
+  };
+
+  it('renders a construction-status chip for a Lost building', () => {
+    renderWithBuilding({ ...baseBuilding, construction_status: 'Lost' });
+    expect(screen.getByText('Lost')).toBeDefined();
+  });
+
+  it('renders no construction-status chip for a Built building', () => {
+    renderWithBuilding({ ...baseBuilding, construction_status: 'Built' });
+    expect(screen.queryByText('Built')).toBeNull();
+  });
 });

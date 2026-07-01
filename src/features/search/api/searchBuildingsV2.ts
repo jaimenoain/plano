@@ -13,6 +13,8 @@ export interface BuildingSearchHit {
   year_completed: number | null;
   popularity_score: number | null;
   tier_rank: string | null;
+  /** Raw construction status (buildings.status: Built/Lost/Unbuilt/Under Construction/Temporary). */
+  construction_status?: string | null;
   credit_names: string[];
   rank_score: number;
   short_id?: number | null;

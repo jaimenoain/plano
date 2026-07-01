@@ -1,5 +1,6 @@
 import { ClusterResponse } from '../hooks/useMapData';
 import { MAP_MARKER_FILL } from '../constants/mapMarkerFills';
+import { getConstructionTreatment } from '@/lib/buildingStatus';
 
 export type PinTier = 'S' | 'A' | 'B' | 'C' | 'Cluster';
 export type PinShape = 'pin' | 'circle';
@@ -19,7 +20,34 @@ export interface PinOptions {
   photographyGaps?: boolean;
 }
 
+/**
+ * Overlay a de-emphasized treatment for non-standing / not-yet-standing
+ * buildings on top of the computed tier style, so e.g. a Lost building the user
+ * rated keeps its tier shape/size but reads as historic. Standing buildings
+ * (Built / Temporary / NULL) and clusters are returned unchanged.
+ *
+ *   lost               → faded ghost pin
+ *   unbuilt            → dashed outline (proposed / never realized)
+ *   under-construction → dashed outline (in progress)
+ */
+function applyConstructionTreatment(
+  style: PinStyle,
+  item: ClusterResponse,
+  options?: PinOptions,
+): PinStyle {
+  if (item.is_cluster || options?.photographyGaps) return style;
+  const treatment = getConstructionTreatment(item.construction_status);
+  if (!treatment || treatment === 'temporary') return style;
+  const modifier =
+    treatment === 'lost' ? 'opacity-50' : 'border-dashed';
+  return { ...style, classes: `${style.classes} ${modifier}` };
+}
+
 export function getPinStyle(item: ClusterResponse, options?: PinOptions): PinStyle {
+  return applyConstructionTreatment(getBasePinStyle(item, options), item, options);
+}
+
+function getBasePinStyle(item: ClusterResponse, options?: PinOptions): PinStyle {
   // Step 0: Gap Layer Check (Phase 2)
   const shape: PinShape = item.location_approximate ? 'circle' : 'pin';
 
