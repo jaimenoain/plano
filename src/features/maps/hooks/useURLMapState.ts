@@ -114,7 +114,7 @@ export const MapStateSchema = z.object({
 
 export type MapState = Omit<z.infer<typeof MapStateSchema>, 'filters'> & { filters: MapFilters };
 
-function syncFilterParams(newParams: URLSearchParams, filters: MapFilters) {
+export function syncFilterParams(newParams: URLSearchParams, filters: MapFilters) {
   const setOrDelete = (key: string, value?: string | null) => {
     if (value == null || value === '') {
       newParams.delete(key);
@@ -235,10 +235,12 @@ function syncFilterParams(newParams: URLSearchParams, filters: MapFilters) {
   else newParams.delete('maxStoreys');
 }
 
-export const useURLMapState = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const mapState = useMemo(() => {
+/**
+ * Parse the full map state (lat/lng/zoom/mode + all filters) out of a
+ * URLSearchParams. Extracted so the store's URL-sync (useMapUrlSync) and the
+ * legacy useURLMapState hook share ONE parser — no logic fork.
+ */
+export function parseMapStateFromParams(searchParams: URLSearchParams): MapState {
     // specific construct to handle standard params
     const raw = {
       lat: searchParams.get('lat'),
@@ -315,7 +317,12 @@ export const useURLMapState = () => {
     };
 
     return { ...parsed, filters } as MapState;
-  }, [searchParams]);
+}
+
+export const useURLMapState = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const mapState = useMemo(() => parseMapStateFromParams(searchParams), [searchParams]);
 
   const setMapURL = useCallback((updates: Partial<MapState>) => {
     setSearchParams((prev) => {
