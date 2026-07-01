@@ -20,6 +20,15 @@ interface MapMarkersProps {
   clusters: ClusterResponse[];
   highlightedId?: string | null;
   setHighlightedId: (id: string | null) => void;
+  /** Currently selected building id — keeps its pin emphasised while the detail drawer is open. */
+  selectedId?: string | null;
+  /**
+   * When provided, a building-pin click selects the building (opening the detail
+   * drawer) instead of opening the full page in a new tab, and the inline hover
+   * popup is suppressed. The search map passes this; collection maps do not, so
+   * they keep their original hover-popup + open-in-new-tab behaviour.
+   */
+  onSelectBuilding?: (cluster: ClusterResponse) => void;
   onRemoveFromCollection?: (id: string) => void;
   onAddCandidate?: (id: string) => void;
 }
@@ -28,6 +37,8 @@ export function MapMarkers({
   clusters,
   highlightedId,
   setHighlightedId,
+  selectedId,
+  onSelectBuilding,
   onRemoveFromCollection,
   onAddCandidate
 }: MapMarkersProps) {
@@ -128,7 +139,8 @@ export function MapMarkers({
              };
         }
 
-        const isHovered = String(highlightedId) === String(cluster.id);
+        const isSelected = selectedId != null && String(selectedId) === String(cluster.id);
+        const isHovered = String(highlightedId) === String(cluster.id) || isSelected;
 
         // Keep markers below map chrome (e.g. CollectionMapGL / PlanoMap overlays at z-40–z-60)
         // while preserving tier ordering (5 < 20 < 100 → capped relative ranks).
@@ -213,6 +225,20 @@ export function MapMarkers({
           >
             {isCluster ? (
                 interactiveContent
+            ) : onSelectBuilding ? (
+                <button
+                  type="button"
+                  className={cn("block text-inherit cursor-pointer", isMobile && "p-2 -m-2")}
+                  aria-label={`View details for ${cluster.name || 'Building'}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectBuilding(cluster);
+                  }}
+                  onMouseEnter={() => handleMouseEnter(String(cluster.id))}
+                  onMouseLeave={() => handleMouseLeave()}
+                >
+                  {content}
+                </button>
             ) : (
                 <a
                   href={buildingUrl}
@@ -243,13 +269,15 @@ export function MapMarkers({
           </Marker>
         );
       }),
-    [displayClusters, map, handleMouseEnter, handleMouseLeave, highlightedId, isMobile, photographyGaps]
+    [displayClusters, map, handleMouseEnter, handleMouseLeave, highlightedId, selectedId, onSelectBuilding, isMobile, photographyGaps]
   );
 
   return (
     <>
       {markers}
-      {activeCluster && (
+      {/* Inline hover popup/drawer — only when NOT in selection mode (the search
+          map renders its own BuildingDetailDrawer driven by selectedId instead). */}
+      {!onSelectBuilding && activeCluster && (
         isMobile ? (
           <Drawer open={!!activeCluster} onOpenChange={(open) => !open && setHighlightedId(null)}>
             <DrawerContent className="border-none">
