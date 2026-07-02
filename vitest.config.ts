@@ -16,9 +16,36 @@ export default defineConfig({
     exclude: ["node_modules/**", "dist/**", "build/**"],
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
+    // Placeholder Supabase credentials so `createBrowserClient` (invoked at
+    // module load in src/integrations/supabase/client.ts) doesn't throw when
+    // .env.local is absent, e.g. in CI. Tests mock the client, so these values
+    // are never used for real requests.
+    env: {
+      VITE_SUPABASE_URL: "http://localhost:54321",
+      VITE_SUPABASE_PUBLISHABLE_KEY: "test-anon-key",
+    },
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "~": path.resolve(__dirname, "./src"),
+    },
+    coverage: {
+      provider: "v8",
+      // text-summary prints to the CI log; html + lcov are uploaded as an artifact.
+      reporter: ["text", "text-summary", "html", "lcov"],
+      reportsDirectory: "./coverage",
+      // Measure only the app source. Supabase edge functions (api/, app/,
+      // supabase/functions/) run on Deno and aren't exercised by these tests.
+      include: ["src/**"],
+      // No thresholds yet — reporting only. Enable a `thresholds` block once the
+      // suite is fully green so coverage can't silently erode.
+      exclude: [
+        "**/*.config.{js,ts,mjs,cjs}",
+        "**/*.d.ts",
+        "src/test/**",
+        "**/*.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+        // Auto-generated Supabase types — nothing to cover.
+        "src/integrations/supabase/types.ts",
+      ],
     },
   },
 });

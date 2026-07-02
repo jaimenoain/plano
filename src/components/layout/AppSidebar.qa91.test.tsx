@@ -43,6 +43,10 @@ vi.mock("@/features/credits/hooks/useStewardCompaniesForNav", () => ({
   useStewardCompaniesForNav: () => ({ data: [] }),
 }));
 
+vi.mock("@/features/ambassadors/hooks/useAmbassadorNavAccess", () => ({
+  useAmbassadorNavAccess: () => ({ data: false }),
+}));
+
 vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

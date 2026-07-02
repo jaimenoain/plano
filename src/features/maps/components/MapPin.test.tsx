@@ -52,7 +52,7 @@ describe('MapPin Component', () => {
   it('applies hover styles when isHovered is true', () => {
     render(<MapPin style={defaultStyle} isHovered={true} />);
     const pin = screen.getByTestId('map-pin-container');
-    expect(pin.className).toContain('scale-125');
+    expect(pin.className).toContain('scale-[1.3]');
     expect(pin.className).toContain('z-50');
   });
 

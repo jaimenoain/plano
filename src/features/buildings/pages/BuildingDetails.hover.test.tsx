@@ -124,6 +124,7 @@ vi.mock('@/integrations/supabase/client', () => {
     });
     builder.in = vi.fn().mockReturnThis();
     builder.order = vi.fn().mockReturnThis();
+    builder.limit = vi.fn().mockReturnThis();
     builder.maybeSingle = vi.fn().mockResolvedValue(singleResult);
     builder.upsert = mocks.upsert.mockResolvedValue({ data: null, error: null });
     builder.insert = vi.fn().mockResolvedValue({ data: null, error: null });
@@ -206,18 +207,17 @@ describe('BuildingDetails Rating Hover', () => {
       expect(screen.getByRole("button", { name: /visited/i })).toBeTruthy();
     });
 
-    // Find the 3 circles. We can look for the SVG circles or the wrapper div.
-    // The circles are Lucide 'Circle' components which render as <svg><circle .../></svg>
-    // But they have class 'w-4 h-4 ...'
-    // Let's use querySelectorAll on the container.
-    // The circles have 'cursor-pointer' class.
+    // Find the 3 rating circles. They are Lucide 'Circle' components rendered
+    // as <svg class="h-7 w-7 ..."> inside <button class="cursor-pointer"> in the
+    // "My Rating" control. onMouseEnter lives on the button; onMouseLeave on the
+    // wrapping flex container.
 
     await waitFor(() => {
-        const circles = container.querySelectorAll('svg.w-4.h-4.cursor-pointer');
+        const circles = container.querySelectorAll('button.cursor-pointer svg.h-7.w-7');
         expect(circles.length).toBe(3);
     });
 
-    const circles = container.querySelectorAll('svg.w-4.h-4.cursor-pointer');
+    const circles = container.querySelectorAll('button.cursor-pointer svg.h-7.w-7');
     const circle1 = circles[0];
     const circle2 = circles[1];
     const circle3 = circles[2];
@@ -227,8 +227,8 @@ describe('BuildingDetails Rating Hover', () => {
     expect(circle2.getAttribute('class')).toContain('fill-transparent');
     expect(circle3.getAttribute('class')).toContain('fill-transparent');
 
-    // Hover over 2nd circle
-    fireEvent.mouseEnter(circle2);
+    // Hover over 2nd circle — mouseEnter is handled on the wrapping button.
+    fireEvent.mouseEnter(circle2.parentElement!);
 
     // Expect 1st and 2nd to be filled, 3rd to be transparent
     // Wait for re-render
@@ -238,12 +238,9 @@ describe('BuildingDetails Rating Hover', () => {
         expect(circle3.getAttribute('class')).toContain('fill-transparent');
     });
 
-    // Mouse leave (simulate by mouse enter on parent or just leave)
-    // Actually we need to check how mouse leave is implemented.
-    // My plan puts onMouseLeave on the parent div.
-    // I need to find the parent div of these circles.
-    const parentDiv = circle1.parentElement;
-    if (parentDiv) fireEvent.mouseLeave(parentDiv);
+    // Mouse leave is handled on the flex container that wraps all three buttons.
+    const ratingContainer = circle1.closest('button')!.parentElement;
+    if (ratingContainer) fireEvent.mouseLeave(ratingContainer);
 
     // Should return to empty
     await waitFor(() => {

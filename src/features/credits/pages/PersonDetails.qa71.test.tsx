@@ -186,7 +186,7 @@ describe("PersonDetails (QA 7.1 claim flow)", () => {
     const user = userEvent.setup();
     renderPage();
 
-    await user.click(screen.getByRole("button", { name: /^Claim this profile$/i }));
+    await user.click(screen.getByRole("button", { name: /^Claim this profile →$/i }));
     expect(await screen.findByRole("dialog")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /claim this profile/i })).toBeInTheDocument();
 

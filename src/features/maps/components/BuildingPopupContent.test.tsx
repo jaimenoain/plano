@@ -22,17 +22,20 @@ vi.mock('@/features/auth/hooks/useAuth', () => ({
 
 // Hoisted mocks for Supabase
 const mocks = vi.hoisted(() => {
-    const mockSingle = vi.fn();
     const mockMatch = vi.fn();
     const mockUpsert = vi.fn();
 
-    // Define the chain object
-    const mockSelectChain: any = {
-        single: mockSingle
-    };
-    // Add eq method that returns the chain itself
-    const mockEq = vi.fn().mockReturnValue(mockSelectChain);
-    mockSelectChain.eq = mockEq;
+    // building_posts: .select('id, body').eq(...).eq(...) resolves to { data: [...] }
+    // The chain is thenable so `await ...eq().eq()` resolves to postsResult.
+    const postsResult: { current: any } = { current: { data: [], error: null } };
+    const postsChain: any = {};
+    const mockPostsEq = vi.fn().mockReturnValue(postsChain);
+    postsChain.eq = mockPostsEq;
+    postsChain.then = (resolve: (v: any) => void) => resolve(postsResult.current);
+
+    // review_images: .select('id', { count }).in(...) resolves to { count }
+    const imagesResult: { current: any } = { current: { count: 0, error: null } };
+    const mockIn = vi.fn().mockResolvedValue(undefined);
 
     const mockDeleteChain = {
         match: mockMatch
@@ -40,11 +43,13 @@ const mocks = vi.hoisted(() => {
 
     return {
         mockSupabaseHandlers: {
-            mockSingle,
-            mockEq,
+            mockPostsEq,
+            mockIn,
             mockMatch,
             mockUpsert,
-            mockSelectChain,
+            postsChain,
+            postsResult,
+            imagesResult,
             mockDeleteChain
         }
     };
@@ -75,7 +80,21 @@ vi.mock('@/integrations/supabase/client', () => ({
         return {
           upsert: mocks.mockSupabaseHandlers.mockUpsert,
           delete: () => mocks.mockSupabaseHandlers.mockDeleteChain,
-          select: () => mocks.mockSupabaseHandlers.mockSelectChain
+        };
+      }
+      if (table === 'building_posts') {
+        return {
+          select: () => mocks.mockSupabaseHandlers.postsChain,
+        };
+      }
+      if (table === 'review_images') {
+        return {
+          select: () => ({
+            in: (...args: unknown[]) => {
+              mocks.mockSupabaseHandlers.mockIn(...args);
+              return Promise.resolve(mocks.mockSupabaseHandlers.imagesResult.current);
+            },
+          }),
         };
       }
       return {};
@@ -101,7 +120,8 @@ describe('BuildingPopupContent', () => {
     rating: 0,
   };
 
-  const { mockUpsert, mockMatch, mockSingle, mockEq, mockSelectChain } = mocks.mockSupabaseHandlers;
+  const { mockUpsert, mockMatch, mockPostsEq, mockIn, postsChain, postsResult, imagesResult } =
+    mocks.mockSupabaseHandlers;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -109,14 +129,15 @@ describe('BuildingPopupContent', () => {
     mockUpsert.mockResolvedValue({ error: null });
     mockMatch.mockResolvedValue({ error: null });
 
-    // Ensure chain is preserved/restored
-    mockEq.mockReturnValue(mockSelectChain);
+    // Ensure chain is preserved/restored after clearAllMocks
+    mockPostsEq.mockReturnValue(postsChain);
 
-    // Default: No content
-    mockSingle.mockResolvedValue({ data: { content: null, review_images: [] }, error: null });
+    // Default: no review posts and no images
+    postsResult.current = { data: [], error: null };
+    imagesResult.current = { count: 0, error: null };
 
-    // Default statuses (Saved/pending)
-    mockUseUserBuildingStatuses.mockReturnValue({ statuses: { '123': 'pending' } });
+    // Default statuses (Saved/pending). Hook also reads ratings.
+    mockUseUserBuildingStatuses.mockReturnValue({ statuses: { '123': 'pending' }, ratings: {} });
   });
 
   afterEach(() => {
@@ -125,33 +146,29 @@ describe('BuildingPopupContent', () => {
   });
 
   it('verifies mock chain structure', () => {
-      expect(mockSelectChain).toBeDefined();
-      expect(mockSelectChain.eq).toBeDefined();
-      expect(mockSelectChain.single).toBeDefined();
-      expect(mockEq).toBeDefined();
+      expect(postsChain).toBeDefined();
+      expect(postsChain.eq).toBeDefined();
+      expect(mockPostsEq).toBeDefined();
 
-      // Test chaining
-      const chained = mockSelectChain.eq('test', 'value');
-      expect(chained).toBe(mockSelectChain);
+      // Test chaining: .eq() returns the chain itself so it can be called twice
+      const chained = postsChain.eq('test', 'value');
+      expect(chained).toBe(postsChain);
 
       const chained2 = chained.eq('another', 'value');
-      expect(chained2).toBe(mockSelectChain);
+      expect(chained2).toBe(postsChain);
   });
 
   it('shows generic confirmation when unsaving a building without content', async () => {
-    mockUseUserBuildingStatuses.mockReturnValue({ statuses: { '123': 'pending' } });
+    mockUseUserBuildingStatuses.mockReturnValue({ statuses: { '123': 'pending' }, ratings: {} });
     render(<BuildingPopupContent cluster={mockCluster} />);
 
     const saveButton = screen.getByTitle('Save');
     fireEvent.click(saveButton);
 
-    // Verify eq is called
+    // Verify building_posts is queried by user_id then building_id (two .eq calls)
     await waitFor(() => {
-        expect(mockEq).toHaveBeenCalledTimes(2);
+        expect(mockPostsEq).toHaveBeenCalledTimes(2);
     });
-
-    // Verify single is called
-    expect(mockSingle).toHaveBeenCalled();
 
     // Wait for dialog
     await waitFor(() => {
@@ -169,22 +186,20 @@ describe('BuildingPopupContent', () => {
   });
 
   it('shows specific warning when unsaving a building with review and images', async () => {
-    mockUseUserBuildingStatuses.mockReturnValue({ statuses: { '123': 'pending' } });
+    mockUseUserBuildingStatuses.mockReturnValue({ statuses: { '123': 'pending' }, ratings: {} });
 
-    // Use implementation to be sure
-    mockSingle.mockImplementation(async () => ({
-        data: { content: "Great building", review_images: [{ count: 2 }] },
-        error: null
-    }));
+    // A review post exists (non-empty body) with 2 attached photos.
+    postsResult.current = { data: [{ id: 'post-1', body: 'Great building' }], error: null };
+    imagesResult.current = { count: 2, error: null };
 
     render(<BuildingPopupContent cluster={mockCluster} />);
 
     const saveButton = screen.getByTitle('Save');
     fireEvent.click(saveButton);
 
-    // Verify call
+    // Verify review_images is queried with the post ids
     await waitFor(() => {
-        expect(mockSingle).toHaveBeenCalled();
+        expect(mockIn).toHaveBeenCalledWith('review_id', ['post-1']);
     });
 
     await waitFor(() => {

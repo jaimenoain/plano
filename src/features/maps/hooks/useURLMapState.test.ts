@@ -34,7 +34,7 @@ describe('MapStateSchema', () => {
     expect(result.lat).toBe(DEFAULT_LAT);
     expect(result.lng).toBe(DEFAULT_LNG);
     expect(result.zoom).toBe(DEFAULT_ZOOM);
-    expect(result.mode).toBe('discover'); // Default mode
+    expect(result.mode).toBe(null); // Default mode (DEFAULT_MODE is null)
     expect(result.filters).toEqual({});
   });
 

@@ -41,7 +41,8 @@ vi.mock('react-router', async (importOriginal) => {
     useParams: () => {
         return { id: 'b1' };
     },
-    useSearchParams: () => [new URLSearchParams(), vi.fn()],
+    // Photos now live under the "Media" tab (URL-driven).
+    useSearchParams: () => [new URLSearchParams('tab=media'), vi.fn()],
     useLoaderData: () => mocks.loaderData,
   };
 });
@@ -102,6 +103,7 @@ vi.mock('@/integrations/supabase/client', () => {
     builder.eq = vi.fn().mockReturnThis();
     builder.in = vi.fn().mockReturnThis();
     builder.order = vi.fn().mockReturnThis();
+    builder.limit = vi.fn().mockReturnThis();
     builder.maybeSingle = vi.fn().mockResolvedValue(singleResult);
     builder.single = vi.fn().mockResolvedValue(singleResult);
     builder.upsert = vi.fn().mockResolvedValue({ data: null, error: null });
@@ -210,7 +212,7 @@ describe('BuildingDetails Gallery', () => {
   it(
     "renders Photos section after load",
     async () => {
-      render(
+      const { container } = render(
         <TooltipProvider>
           <QueryClientProvider client={queryClient}>
             <BrowserRouter>
@@ -223,12 +225,24 @@ describe('BuildingDetails Gallery', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getAllByText("Test Building").length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/Test Building/).length).toBeGreaterThan(0);
       });
 
+      // Photos now render under the "Media" tab.
       await waitFor(
         () => {
-          expect(screen.getByText(/Reviews & photography/)).toBeTruthy();
+          expect(screen.getByRole("heading", { name: "Media" })).toBeTruthy();
+        },
+        { timeout: 10_000 },
+      );
+
+      // The three review images from get_building_reviews render in the grid.
+      await waitFor(
+        () => {
+          const imgs = Array.from(
+            container.querySelectorAll('img[src^="http://img/"]'),
+          );
+          expect(imgs.length).toBeGreaterThan(0);
         },
         { timeout: 10_000 },
       );

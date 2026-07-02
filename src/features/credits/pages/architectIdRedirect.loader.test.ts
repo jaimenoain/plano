@@ -86,7 +86,7 @@ describe("architectIdRedirectLoader (QA 3.3)", () => {
     );
 
     const caught = await architectIdRedirectLoader(
-      args(VALID_PERSON_UUID),
+      args(VALID_PERSON_UUID, ".data"),
     ).catch((e: unknown) => e);
 
     expect(caught).toBeInstanceOf(Response);

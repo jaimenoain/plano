@@ -57,7 +57,7 @@ describe('DiscoveryBuildingCard', () => {
       </BrowserRouter>
     );
 
-    const img = screen.getByRole('img', { name: 'Test Building' });
+    const img = screen.getByRole('img', { name: 'Test Building, Test City' });
     expect(img).toBeDefined();
     expect(img.getAttribute('src')).toBe('test-image.jpg');
 

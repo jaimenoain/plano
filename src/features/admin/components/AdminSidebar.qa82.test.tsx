@@ -1,8 +1,10 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { createTestQueryClient } from "@/test/utils";
 import { AdminSidebar } from "./AdminSidebar";
 
 vi.mock("@/features/auth/hooks/useAuth", () => ({
@@ -27,12 +29,15 @@ describe("AdminSidebar (QA 8.2 entity claims)", () => {
   });
 
   it("lists Entity claims → /admin/claims and does not reference Architect claims", () => {
+    const queryClient = createTestQueryClient();
     render(
-      <MemoryRouter>
-        <SidebarProvider>
-          <AdminSidebar />
-        </SidebarProvider>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <SidebarProvider>
+            <AdminSidebar />
+          </SidebarProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     const link = screen.getByRole("link", { name: /Entity claims/i });

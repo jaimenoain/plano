@@ -23,7 +23,7 @@ interface MapContextMethods {
   setFilter: <K extends keyof MapFilters>(key: K, value: MapFilters[K]) => void;
   setMapState: (state: Partial<MapState>) => void;
   setBounds: (bounds: Bounds) => void;
-  setHighlightedId: (id: string | null) => void;
+  setHighlightedId: (id: string | null, point?: { lat: number; lng: number } | null) => void;
   /** Deliberate click selection — drives the detail drawer. Separate from hover (highlightedId). */
   setSelectedId: (id: string | null) => void;
   /**
@@ -45,6 +45,7 @@ interface MapContextValue {
     bounds: Bounds | null;
     fitBounds: Bounds | null;
     highlightedId: string | null;
+    highlightedPoint: { lat: number; lng: number } | null;
     selectedId: string | null;
     selectedBuilding: ClusterResponse | null;
     findModeBuildings: BuildingSearchHit[] | null;
@@ -78,7 +79,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
 
   // Reactive view of the store.
   const s = useStore(store);
-  const { lat, lng, zoom, mode, filters, bounds, highlightedId, selectedId, selectedBuilding, findModeBuildings, fitBoundsRequest } = s;
+  const { lat, lng, zoom, mode, filters, bounds, highlightedId, highlightedPoint, selectedId, selectedBuilding, findModeBuildings, fitBoundsRequest } = s;
 
   const [hydratedContacts, setHydratedContacts] = useState<Record<string, Contact>>({});
 
@@ -191,7 +192,10 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const setBounds = useCallback((b: Bounds) => store.getState().setBounds(b), [store]);
-  const setHighlightedId = useCallback((id: string | null) => store.getState().setHighlightedId(id), [store]);
+  const setHighlightedId = useCallback(
+    (id: string | null, point?: { lat: number; lng: number } | null) => store.getState().setHighlightedId(id, point),
+    [store]
+  );
   const setSelectedId = useCallback((id: string | null) => store.getState().setSelectedId(id), [store]);
   const selectBuilding = useCallback((b: ClusterResponse) => store.getState().selectBuilding(b), [store]);
   const setFindModeBuildings = useCallback(
@@ -221,6 +225,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
         bounds,
         fitBounds: fitBoundsRequest?.bounds ?? null,
         highlightedId,
+        highlightedPoint,
         selectedId,
         selectedBuilding,
         findModeBuildings,
@@ -238,7 +243,7 @@ export const MapProvider = ({ children }: { children: ReactNode }) => {
         setFindModeBuildings,
       },
     }),
-    [lat, lng, zoom, mode, mergedFilters, bounds, fitBoundsRequest, highlightedId, selectedId, selectedBuilding, findModeBuildings, moveMap, fitMapBounds, setMode, setFilter, setMapState, setBounds, setHighlightedId, setSelectedId, selectBuilding, setFindModeBuildings]
+    [lat, lng, zoom, mode, mergedFilters, bounds, fitBoundsRequest, highlightedId, highlightedPoint, selectedId, selectedBuilding, findModeBuildings, moveMap, fitMapBounds, setMode, setFilter, setMapState, setBounds, setHighlightedId, setSelectedId, selectBuilding, setFindModeBuildings]
   );
 
   return <MapContext.Provider value={value}>{children}</MapContext.Provider>;

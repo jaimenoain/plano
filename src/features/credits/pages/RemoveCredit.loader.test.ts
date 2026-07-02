@@ -49,12 +49,13 @@ describe("removeCreditLoader (QA 6.4)", () => {
       buildingId: BUILDING_ID,
       buildingName: "Test Tower",
       buildingSlug: "test-tower",
+      buildingShortId: 42,
     });
     const out = await removeCreditLoader(args(HEX_64));
     expect((out as { data: unknown }).data).toEqual({
       outcome: "success",
       buildingName: "Test Tower",
-      buildingHref: `/building/${BUILDING_ID}/test-tower`,
+      buildingHref: `/building/42/test-tower`,
     });
     expect(removeCreditByTokenWithClient).toHaveBeenCalledWith(
       { tag: "mock-supabase" },

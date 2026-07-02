@@ -392,7 +392,7 @@ export function BuildingSidebar({
                     to={resolveBuildingUrl(building)}
                     key={building.id}
                     className="group flex pl-4 pr-3 py-3 border-b border-border-default last:border-0 hover:bg-surface-muted/30 transition-colors"
-                    onMouseEnter={() => setHighlightedId(building.id)}
+                    onMouseEnter={() => setHighlightedId(building.id, { lat: building.lat, lng: building.lng })}
                     onMouseLeave={() => setHighlightedId(null)}
                     onClick={(e) => {
                       // Plain click opens the detail drawer instead of navigating

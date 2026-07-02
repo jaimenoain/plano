@@ -140,6 +140,7 @@ vi.mock('@/integrations/supabase/client', () => {
     });
     builder.in = vi.fn().mockReturnThis();
     builder.order = vi.fn().mockReturnThis();
+    builder.limit = vi.fn().mockReturnThis();
     builder.maybeSingle = vi.fn().mockResolvedValue(singleResult);
 
     // Update/Upsert setup
@@ -220,9 +221,9 @@ describe('BuildingDetails Interaction', () => {
       </TooltipProvider>
     );
 
-    // Wait for building name to load
+    // Wait for building name to load (heading renders "Test Building.")
     await waitFor(async () => {
-        const elements = await screen.findAllByText('Test Building');
+        const elements = await screen.findAllByText(/Test Building/);
         expect(elements.length).toBeGreaterThan(0);
     }, { timeout: 3000 });
 
@@ -231,7 +232,8 @@ describe('BuildingDetails Interaction', () => {
     });
 
     await user.click(screen.getByRole("button", { name: /visited/i }));
-    const saveItem = await screen.findByRole("menuitem", { name: /^save$/i });
+    // Menu item that sets status to "pending" is labelled "Wishlist"
+    const saveItem = await screen.findByRole("menuitem", { name: /wishlist/i });
     await user.click(saveItem);
 
     // Verify Supabase upsert call
@@ -246,10 +248,9 @@ describe('BuildingDetails Interaction', () => {
         );
     });
 
-    // Optimistic Update: Should see "Saved" now (in place of Visited badge)
+    // Optimistic Update: trigger now shows "Saved" in place of "Visited"
     await waitFor(() => {
-        const saveTrigger = screen.getByRole("button", { name: /^save$/i });
-        expect(saveTrigger.className).toContain("text-text-primary");
+        expect(screen.getByRole("button", { name: /saved/i })).toBeTruthy();
     });
   });
 
@@ -286,14 +287,14 @@ describe('BuildingDetails Interaction', () => {
     );
 
     await waitFor(async () => {
-        const elements = await screen.findAllByText('Test Lost Building');
+        const elements = await screen.findAllByText(/Test Lost Building/);
         expect(elements.length).toBeGreaterThan(0);
     }, { timeout: 3000 });
 
     // Assert that the lost building message appears
-    expect(screen.getByText('This building is lost to time. It no longer stands at this location.')).toBeTruthy();
+    expect(screen.getByText('This building no longer stands at this location.')).toBeTruthy();
 
-    // Assert that the directions button says "Navigate to Site"
-    expect(screen.getByRole("button", { name: /Navigate to Site/i })).toBeTruthy();
+    // Assert that the directions button is present in the map card
+    expect(screen.getByRole("button", { name: /Directions/i })).toBeTruthy();
   });
 });
