@@ -31,7 +31,19 @@ describe("QA 11.3 — SEO / sitemap / meta (automated)", () => {
   it("public/robots.txt does not broadly block /person/ or /company/ (edit paths only)", () => {
     const robots = readFileSync(join(root, "public/robots.txt"), "utf8");
     const lines = robots.split("\n").map((l) => l.trim());
+
+    // Only the general `User-agent: *` group governs indexing of real content by
+    // search engines. Scoped scraper groups (e.g. FacebookBot) may block content
+    // paths wholesale without deindexing from Google — so restrict the check to
+    // the `*` group's Disallow rules.
+    let inWildcardGroup = false;
     for (const line of lines) {
+      const uaMatch = /^user-agent:\s*(.+)$/i.exec(line);
+      if (uaMatch) {
+        inWildcardGroup = uaMatch[1]!.trim() === "*";
+        continue;
+      }
+      if (!inWildcardGroup) continue;
       if (!/^disallow:/i.test(line)) continue;
       const path = line.replace(/^disallow:\s*/i, "").trim();
       if (path.startsWith("/person")) {

@@ -133,14 +133,23 @@ describe("QA 2.1 — people API (mocked supabase client)", () => {
 
   it("getPersonPortfolio returns empty tiers when person id is unknown", async () => {
     mockFrom.mockImplementation((table: string) => {
-      if (table !== "people") throw new Error(`unexpected ${table}`);
-      return {
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      if (table === "people") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            })),
           })),
-        })),
-      };
+        };
+      }
+      if (table === "building_credits") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+          })),
+        };
+      }
+      throw new Error(`unexpected ${table}`);
     });
 
     const out = await getPersonPortfolio("00000000-0000-4000-8000-000000000000");

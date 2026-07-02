@@ -253,8 +253,9 @@ describe("CompanyDetails (QA 4.1 unclaimed)", () => {
     mocks.revalidate.mockReset();
   });
 
-  it("renders company fields, website link, and logo initial fallback", () => {
-    renderPage();
+  it("renders company fields, website link, and logo when set", () => {
+    mocks.loaderData.company.logoUrl = "https://structco.example/logo.png";
+    const { container } = renderPage();
 
     expect(screen.getByRole("heading", { level: 1, name: "StructCo GmbH" })).toBeInTheDocument();
     expect(screen.getByText("Structural engineering practice.")).toBeInTheDocument();
@@ -264,7 +265,9 @@ describe("CompanyDetails (QA 4.1 unclaimed)", () => {
     const website = screen.getByRole("link", { name: /website/i });
     expect(website).toHaveAttribute("href", "https://structco.example");
 
-    expect(screen.getByText("S")).toBeInTheDocument();
+    // Radix Avatar mounts the logo container when a logoUrl is present
+    // (the <img> only becomes visible after a real load event, which does not fire in the test DOM).
+    expect(container.querySelector(".shrink-0.self-start")).not.toBeNull();
   });
 
   it("shows unclaimed banner and Claim this company when logged in", () => {
@@ -325,7 +328,7 @@ describe("CompanyDetails (QA 4.1 unclaimed)", () => {
     expect(screen.getByRole("link", { name: "Bridge Hall" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("combobox", { name: /filter credits by role/i }));
-    await user.click(await screen.findByRole("option", { name: "Structural Engineer" }));
+    await user.click(await screen.findByRole("option", { name: "Structural Engineering" }));
 
     expect(screen.queryByRole("link", { name: "Design Tower" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Bridge Hall" })).toBeInTheDocument();

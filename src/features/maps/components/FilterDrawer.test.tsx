@@ -177,16 +177,16 @@ describe('FilterDrawer', () => {
     cleanup();
   });
 
-  it('renders "Curators & Friends" section in Discover mode', () => {
+  it('renders "Curators & friends" section in Discover mode', () => {
     (MapContext.useMapContext as Mock).mockReturnValue(defaultMapContext);
 
     render(<FilterDrawer />);
 
-    expect(screen.getByText('Curators & Friends')).toBeDefined();
+    expect(screen.getByText('Curators & friends')).toBeDefined();
     expect(screen.getByTestId('contact-picker')).toBeDefined();
   });
 
-  it('hides "Curators & Friends" section in Library mode', () => {
+  it('hides "Curators & friends" section in Library mode', () => {
     (MapContext.useMapContext as Mock).mockReturnValue(defaultMapContext);
 
     (BuildingSearch.useBuildingSearch as Mock).mockReturnValue({
@@ -196,7 +196,7 @@ describe('FilterDrawer', () => {
 
     render(<FilterDrawer />);
 
-    expect(screen.queryByText('Curators & Friends')).toBeNull();
+    expect(screen.queryByText('Curators & friends')).toBeNull();
     expect(screen.queryByTestId('contact-picker')).toBeNull();
   });
 
@@ -210,8 +210,8 @@ describe('FilterDrawer', () => {
       expect(screen.getByText('Company')).toBeDefined();
       expect(screen.getByText('Role')).toBeDefined();
       expect(screen.getByTestId('company-map-filter')).toBeDefined();
-      expect(screen.getByText('Structural Engineer')).toBeDefined();
-      expect(screen.getByText('Design Architect')).toBeDefined();
+      expect(screen.getByText('Structural Engineering')).toBeDefined();
+      expect(screen.getByText('Design Architecture')).toBeDefined();
     });
   });
 });

@@ -32,6 +32,7 @@ const mocks = vi.hoisted(() => {
 
   const mockSupabase = {
       from: vi.fn().mockReturnValue(mockChain),
+      rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
       storage: { from: vi.fn().mockReturnValue({ getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: '' } }) }) },
   };
 
@@ -144,6 +145,12 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 // Mock building data
+// Rows are shaped to satisfy both queries the Profile page now runs:
+//   1. user_buildings → { building_id, rating, status }
+//   2. building_posts → { id, building_id, building: { ... } }
+// The single mockChain returns this same array for every table, so each row
+// carries the union of the fields both queries read (building_id ties them
+// together — that is how ratings/status flow into the kanban columns).
 const mockBuildings = [
     {
         id: 'review-1',
@@ -152,6 +159,8 @@ const mockBuildings = [
         status: 'visited',
         created_at: '2023-01-01',
         edited_at: '2023-01-02',
+        updated_at: '2023-01-02',
+        building_id: 'b1',
         building: { id: 'b1', name: 'Empire State', address: 'NYC' }
     },
     {
@@ -161,6 +170,8 @@ const mockBuildings = [
         status: 'visited',
         created_at: '2023-01-03',
         edited_at: '2023-01-04',
+        updated_at: '2023-01-04',
+        building_id: 'b2',
         building: { id: 'b2', name: 'Chrysler Building', address: 'NYC' }
     },
     {
@@ -170,6 +181,8 @@ const mockBuildings = [
         status: 'pending',
         created_at: '2023-01-05',
         edited_at: null,
+        updated_at: null,
+        building_id: 'b3',
         building: { id: 'b3', name: 'Burj Khalifa', address: 'Dubai' }
     }
 ];

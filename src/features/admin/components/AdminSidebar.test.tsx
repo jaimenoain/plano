@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AdminSidebar } from './AdminSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BrowserRouter } from 'react-router';
@@ -33,12 +34,17 @@ describe('AdminSidebar Sign Out', () => {
   });
 
   it('should call signOut and navigate to / when sign out is clicked', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
     render(
-      <BrowserRouter>
-        <SidebarProvider>
-          <AdminSidebar />
-        </SidebarProvider>
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <SidebarProvider>
+            <AdminSidebar />
+          </SidebarProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
     );
 
     const signOutButton = await screen.findByText('Sign out');

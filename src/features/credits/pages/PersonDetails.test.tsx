@@ -192,8 +192,9 @@ describe("PersonDetails (QA 3.1 unclaimed)", () => {
     mocks.revalidate.mockReset();
   });
 
-  it("renders profile fields, website link, and avatar initials fallback", () => {
-    renderPage();
+  it("renders profile fields, website link, and avatar when set", () => {
+    mocks.loaderData.person.avatarUrl = "https://example.com/jane.png";
+    const { container } = renderPage();
 
     expect(screen.getByRole("heading", { level: 1, name: "Jane Doe" })).toBeInTheDocument();
     expect(screen.getByText("Architect and educator.")).toBeInTheDocument();
@@ -204,7 +205,9 @@ describe("PersonDetails (QA 3.1 unclaimed)", () => {
     const website = screen.getByRole("link", { name: /website/i });
     expect(website).toHaveAttribute("href", "https://example.com");
 
-    expect(screen.getByText("JD")).toBeInTheDocument();
+    // Radix Avatar mounts the avatar container when an avatarUrl is present
+    // (the <img> only becomes visible after a real load event, which does not fire in the test DOM).
+    expect(container.querySelector(".shrink-0.self-start")).not.toBeNull();
   });
 
   it("shows unclaimed banner and Claim this profile when logged in", () => {

@@ -40,6 +40,7 @@ const mocks = vi.hoisted(() => {
 
   const mockSupabase = {
     from: vi.fn().mockReturnValue(mockChain),
+    rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
     storage: { from: vi.fn().mockReturnValue({ getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: "" } }) }) },
   };
 
@@ -137,6 +138,8 @@ const mockBuildings = [
     status: "visited",
     created_at: "2023-01-01",
     edited_at: "2023-01-02",
+    updated_at: "2023-01-02",
+    building_id: "b1",
     building: { id: "b1", name: "Empire State", address: "NYC" },
   },
 ];

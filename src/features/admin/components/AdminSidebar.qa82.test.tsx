@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AdminSidebar } from "./AdminSidebar";
@@ -27,12 +28,17 @@ describe("AdminSidebar (QA 8.2 entity claims)", () => {
   });
 
   it("lists Entity claims → /admin/claims and does not reference Architect claims", () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
     render(
-      <MemoryRouter>
-        <SidebarProvider>
-          <AdminSidebar />
-        </SidebarProvider>
-      </MemoryRouter>,
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <SidebarProvider>
+            <AdminSidebar />
+          </SidebarProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
     );
 
     const link = screen.getByRole("link", { name: /Entity claims/i });

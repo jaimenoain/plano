@@ -65,12 +65,13 @@ vi.mock('@/integrations/supabase/client', () => {
         builder.single.mockResolvedValue({ data: mockProfile, error: null });
     } else if (table === 'review_images') {
         // Generate mock images
+        // The gallery now embeds the building via building_posts (was user_buildings).
         const generateImages = (count: number) => Array.from({ length: count }).map((_, i) => ({
              id: `img-${i}`,
              storage_path: `path-${i}.jpg`,
              likes_count: 0,
              review_id: `rev-${i}`,
-             user_buildings: {
+             building_posts: {
                  building: { id: `b-${i}`, name: `Building ${i}`, slug: `building-${i}` }
              }
         }));

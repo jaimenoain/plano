@@ -207,14 +207,34 @@ describe("QA 2.2 — companies API (mocked supabase client)", () => {
 
   it("getCompanyPortfolio returns empty tiers when company id is unknown", async () => {
     mockFrom.mockImplementation((table: string) => {
-      if (table !== "companies") throw new Error(`unexpected ${table}`);
-      return {
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+      if (table === "companies") {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            })),
           })),
-        })),
-      };
+        };
+      }
+      if (table === "building_credits") {
+        return {
+          select: vi.fn(() => {
+            const builder = {
+              eq() {
+                return builder;
+              },
+              then(
+                onFulfilled?: (value: { data: never[]; error: null }) => unknown,
+                onRejected?: (reason: unknown) => unknown,
+              ) {
+                return Promise.resolve({ data: [], error: null }).then(onFulfilled, onRejected);
+              },
+            };
+            return builder;
+          }),
+        };
+      }
+      throw new Error(`unexpected ${table}`);
     });
 
     const out = await getCompanyPortfolio("00000000-0000-4000-8000-000000000000");

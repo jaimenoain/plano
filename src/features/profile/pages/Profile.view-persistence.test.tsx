@@ -35,6 +35,7 @@ const mocks = vi.hoisted(() => {
 
   const mockSupabase = {
       from: vi.fn().mockReturnValue(mockChain),
+      rpc: vi.fn().mockResolvedValue({ data: [], error: null }),
       storage: { from: vi.fn().mockReturnValue({ getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: '' } }) }) },
   };
 
@@ -171,6 +172,9 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 // Mock building data
+// Rows carry the union of fields read by both the user_buildings query
+// ({ building_id, rating, status }) and the building_posts query
+// ({ id, building_id, building }); building_id ties the two together.
 const mockBuildings = [
     {
         id: 'review-1',
@@ -179,6 +183,8 @@ const mockBuildings = [
         status: 'visited',
         created_at: '2023-01-01',
         edited_at: '2023-01-02',
+        updated_at: '2023-01-02',
+        building_id: 'b1',
         building: { id: 'b1', name: 'Empire State', address: 'NYC' }
     },
     {
@@ -188,6 +194,8 @@ const mockBuildings = [
         status: 'visited',
         created_at: '2023-01-03',
         edited_at: '2023-01-04',
+        updated_at: '2023-01-04',
+        building_id: 'b2',
         building: { id: 'b2', name: 'Chrysler Building', address: 'NYC' }
     },
     {
@@ -197,6 +205,8 @@ const mockBuildings = [
         status: 'pending',
         created_at: '2023-01-05',
         edited_at: null,
+        updated_at: null,
+        building_id: 'b3',
         building: { id: 'b3', name: 'Burj Khalifa', address: 'Dubai' }
     }
 ];
@@ -301,24 +311,39 @@ describe('Profile Verification', () => {
   });
 
   it('should trigger pagination when scrolled to bottom', async () => {
-      // Mock return 15 items to trigger hasMore=true
-      const manyItems = Array(15).fill(mockBuildings[0]).map((b, i) => ({ ...b, id: `review-${i}` }));
+      // Pagination is now performed by slicing the deduplicated building_posts id
+      // list in ITEMS_PER_PAGE (15) chunks — no Supabase .range() call. Return 16
+      // unique buildings so uniqueLatestPostIds.length (16) > 15 → hasMore = true.
+      const manyItems = Array(16).fill(mockBuildings[0]).map((b, i) => ({
+          ...b,
+          id: `review-${i}`,
+          building_id: `b-${i}`,
+          building: { ...b.building, id: `b-${i}`, name: `Building ${i}` },
+      }));
       mocks.mockChain.then = (resolve: any) => resolve({ data: manyItems, error: null });
 
       const { rerender } = renderProfile();
       await screen.findByTestId('review-card-review-0');
 
-      // Verify initial fetch
+      // Verify initial fetch happened against the new data path (user_buildings +
+      // building_posts) rather than the legacy range-based query.
       expect(mocks.mockSupabase.from).toHaveBeenCalledWith('user_buildings');
-      expect(mocks.mockChain.range).toHaveBeenCalledWith(0, 14);
+      expect(mocks.mockSupabase.from).toHaveBeenCalledWith('building_posts');
 
-      // Simulate Scroll to bottom (Intersection Observer visible)
+      const buildingPostsCallsBefore = mocks.mockSupabase.from.mock.calls.filter(
+          (c) => c[0] === 'building_posts',
+      ).length;
+
+      // Simulate Scroll to bottom (Intersection Observer visible) → triggers the
+      // next-page fetch, which re-queries building_posts for the second slice.
       mockIsVisible = true;
       rerender(<QueryClientProvider client={queryClient}>{profileTree()}</QueryClientProvider>);
 
       await waitFor(() => {
-          // Check if range(15, 29) was called
-          expect(mocks.mockChain.range).toHaveBeenCalledWith(15, 29);
+          const buildingPostsCallsAfter = mocks.mockSupabase.from.mock.calls.filter(
+              (c) => c[0] === 'building_posts',
+          ).length;
+          expect(buildingPostsCallsAfter).toBeGreaterThan(buildingPostsCallsBefore);
       });
   });
 

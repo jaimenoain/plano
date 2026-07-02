@@ -293,7 +293,7 @@ describe("PersonDashboard (QA 9.1)", () => {
 
     renderDashboard();
     await screen.findByText("Garden Pavilion");
-    expect(screen.getByText("Landscape Architect")).toBeInTheDocument();
+    expect(screen.getByText("Landscape Architecture")).toBeInTheDocument();
     const co = screen.getByRole("link", { name: "Green Fields Ltd" });
     expect(co).toHaveAttribute("href", "/company/green-fields");
   });
