@@ -255,7 +255,7 @@ function SearchPageContent() {
       }
 
       handleLocationSelect({ lat, lng }, bounds);
-    } catch {}
+    } catch { /* geocode failed (no result / network / API error): leave current view unchanged */ }
   };
 
   const toggleViewMode = () => {

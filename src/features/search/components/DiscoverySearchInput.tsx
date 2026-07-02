@@ -156,7 +156,7 @@ function DiscoverySearchInputInner({
           ),
         ]);
         setScriptLoaded(true);
-      } catch {}
+      } catch { /* Google Maps load failed/timed out: scriptLoaded stays false → plain <Input> fallback */ }
     };
     initMap();
   }, []);
@@ -228,7 +228,7 @@ function DiscoverySearchInputInner({
       }
       onLocationSelect({ lat, lng }, bounds);
       await onPlaceDetails?.(results[0]);
-    } catch {}
+    } catch { /* geocode failed (no result / network / API error): leave selection unchanged */ }
   };
 
   // Pre-hydration fallback with correct height

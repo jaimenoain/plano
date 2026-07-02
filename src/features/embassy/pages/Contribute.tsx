@@ -1575,7 +1575,7 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
     try {
       const raw = localStorage.getItem(PHOTO_GAP_FILTER_KEY);
       if (raw) return JSON.parse(raw) as number[];
-    } catch {}
+    } catch { /* localStorage unavailable or corrupt JSON: fall back to default gap counts */ }
     return [0, 1];
   };
 
@@ -1602,7 +1602,7 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
       ? current.filter(v => v !== val)
       : [...current, val];
     setFilter("gapPhotoCounts", next);
-    try { localStorage.setItem(PHOTO_GAP_FILTER_KEY, JSON.stringify(next)); } catch {}
+    try { localStorage.setItem(PHOTO_GAP_FILTER_KEY, JSON.stringify(next)); } catch { /* localStorage unavailable (private mode / quota): persisting filter prefs is best-effort */ }
   };
 
   return (

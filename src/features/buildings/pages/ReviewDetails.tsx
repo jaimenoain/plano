@@ -982,7 +982,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                     let domain = "";
                     try {
                       domain = new URL(link.url).hostname;
-                    } catch {}
+                    } catch { /* malformed link URL: leave domain empty */ }
                     return (
                       <div
                         key={link.id}
