@@ -16,6 +16,14 @@ export default defineConfig({
     exclude: ["node_modules/**", "dist/**", "build/**"],
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
+    // Placeholder Supabase credentials so `createBrowserClient` (invoked at
+    // module load in src/integrations/supabase/client.ts) doesn't throw when
+    // .env.local is absent, e.g. in CI. Tests mock the client, so these values
+    // are never used for real requests.
+    env: {
+      VITE_SUPABASE_URL: "http://localhost:54321",
+      VITE_SUPABASE_PUBLISHABLE_KEY: "test-anon-key",
+    },
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "~": path.resolve(__dirname, "./src"),
