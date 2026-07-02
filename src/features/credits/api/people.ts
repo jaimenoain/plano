@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { getDistanceFromLatLonInM } from "@/utils/map";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import type {
   BuildingCreditWithEntities,
   BuildingSummaryForPersonCredit,
@@ -567,7 +568,7 @@ export async function updatePerson(id: string, input: UpdatePersonInput): Promis
   if (data.locationNote !== undefined) patch.location_note = data.locationNote;
   if (data.avatarUrl !== undefined) patch.avatar_url = data.avatarUrl;
 
-  const { data: row, error } = await supabase.from("people").update(patch).eq("id", id).select("*").maybeSingle();
+  const { data: row, error } = await supabase.from("people").update(patch as TablesUpdate<"people">).eq("id", id).select("*").maybeSingle();
 
   if (error) throw error;
   return row ? mapPerson(row as PersonRow) : null;

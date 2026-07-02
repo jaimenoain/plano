@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { slugifyPersonName } from "@/features/credits/api/people";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { insertEntityAuditLog } from "@/features/credits/api/entity-audit-log";
 import { getDistanceFromLatLonInM } from "@/utils/map";
 import type {
@@ -487,7 +488,7 @@ export async function updateCompany(id: string, input: UpdateCompanyInput): Prom
   if (data.website !== undefined) patch.website = data.website;
   if (data.verifiedDomain !== undefined) patch.verified_domain = data.verifiedDomain;
 
-  const { data: row, error } = await supabase.from("companies").update(patch).eq("id", id).select("*").maybeSingle();
+  const { data: row, error } = await supabase.from("companies").update(patch as TablesUpdate<"companies">).eq("id", id).select("*").maybeSingle();
 
   if (error) throw error;
   return row ? mapCompany(row as CompanyRow) : null;

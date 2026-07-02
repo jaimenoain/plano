@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { insertEntityAuditLog } from "@/features/credits/api/entity-audit-log";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import type {
   BuildingCreditWithEntities,
   CreditNote,
@@ -464,7 +465,7 @@ export async function updateBuildingCredit(
 
   const { data: row, error } = await supabase
     .from("building_credits")
-    .update(patch)
+    .update(patch as TablesUpdate<"building_credits">)
     .eq("id", creditId)
     .select(
       `

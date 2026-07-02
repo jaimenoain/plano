@@ -59,6 +59,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { ProfileReviewCard } from "@/features/profile/components/ProfileReviewCard";
 import {
   Dialog,
@@ -732,7 +733,7 @@ export default function Profile() {
       });
     }
     try {
-      const { error } = await supabase.from("user_buildings").update({ ...updates }).eq("id", id);
+      const { error } = await supabase.from("user_buildings").update({ ...updates } as unknown as TablesUpdate<"user_buildings">).eq("id", id);
       if (error) throw error;
       if (updates.status) toast({ description: "Status updated" });
     } catch (_error) {

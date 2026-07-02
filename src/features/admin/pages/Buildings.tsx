@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { MetaFunction } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { AdminBuilding } from "@/features/admin/types/admin_building";
 import {
   Table,
@@ -256,7 +257,7 @@ toast.error("Failed to load buildings");
           country: locationData.country,
           location: `POINT(${locationData.lng} ${locationData.lat})` as unknown,
           location_precision: locationData.precision,
-        })
+        } as unknown as TablesUpdate<"buildings">)
         .eq('id', editingBuilding.id);
 
       if (error) throw error;

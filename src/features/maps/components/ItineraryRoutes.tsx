@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import type { GeoJSON } from 'geojson';
 import { Source, Layer, useMap } from 'react-map-gl/maplibre';
 import { useItineraryStore } from '@/features/itinerary/stores/useItineraryStore';
 import { DAY_COLORS } from '@/features/maps/constants';
@@ -45,7 +46,7 @@ export function ItineraryRoutes() {
           key={`route-source-${day.dayNumber}`}
           id={`route-source-${day.dayNumber}`}
           type="geojson"
-          data={day.routeGeometry}
+          data={day.routeGeometry as GeoJSON}
         >
           <Layer
             id={`route-layer-${day.dayNumber}`}
