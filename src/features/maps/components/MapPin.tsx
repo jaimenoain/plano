@@ -17,8 +17,9 @@ export const MapPin: React.FC<MapPinProps> = ({ style, children, isHovered }) =>
     ? 'rounded-full rounded-br-none rotate-45'
     : 'rounded-full';
 
-  // Apply scale and z-index on hover
-  const hoverClasses = isHovered ? 'scale-125 z-50' : '';
+  // Apply scale, z-index and a soft shadow on hover so the pin (or cluster) pops
+  // against a dense map — used for both direct pin-hover and SERP-row hover.
+  const hoverClasses = isHovered ? 'scale-[1.3] z-50 drop-shadow-md' : '';
 
   const containerStyle: React.CSSProperties = {
     width: `${style.size}px`,
@@ -32,7 +33,7 @@ export const MapPin: React.FC<MapPinProps> = ({ style, children, isHovered }) =>
     <div
       className={`
         relative flex items-center justify-center
-        transition-transform duration-150 ease-out
+        transition-[transform,filter] duration-150 ease-out
         ${style.classes}
         ${shapeClasses}
         ${hoverClasses}

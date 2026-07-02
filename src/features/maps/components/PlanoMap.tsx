@@ -52,7 +52,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
   // model.
   const {
     methods: { setBounds, setHighlightedId, setSelectedId, selectBuilding, fitMapBounds, moveMap },
-    state: { lat, lng, zoom, highlightedId, selectedId, selectedBuilding, filters, bounds, mode, fitBounds, findModeBuildings },
+    state: { lat, lng, zoom, highlightedId, highlightedPoint, selectedId, selectedBuilding, filters, bounds, mode, fitBounds, findModeBuildings },
   } = useMapContext();
   const isMobile = useIsMobile();
 
@@ -308,6 +308,30 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
     setHighlightedId(null);
   }, [setSelectedId, setHighlightedId]);
 
+  // Slide the bottom-right map controls clear of the detail drawer so they stay
+  // usable while it is open. Desktop only — on mobile the drawer is a modal bottom
+  // sheet with a full-screen overlay, so the controls are covered regardless. The
+  // safe-area bottom margin lifts the geolocate button above the home indicator
+  // (parity with CollectionMapGL).
+  const mapControlStyle = useMemo(() => {
+    const drawerOpen = !isMobile && !!selectedCluster;
+    const isSpecial = !!(selectedCluster?.is_custom_marker || selectedCluster?.is_candidate);
+    const panelWidth = isSpecial ? 384 : 448; // max-w-sm / max-w-md, matches BuildingDetailDrawer
+    // Use translateX rather than margin: the control lives in an absolutely
+    // positioned, shrink-wrapped `.maplibregl-ctrl-bottom-right` float, where a
+    // large right margin doesn't reliably push it left. transform always moves it.
+    // The value must always be present — react-map-gl merges this style onto the
+    // element via Object.assign and never clears removed keys, so an omitted
+    // transform would leave the shifted value stuck after the drawer closes.
+    // No CSS transition here: react-map-gl re-applies the control style on every
+    // map render, which restarts a transition mid-flight so it never settles —
+    // the controls snap to position instead (the drawer itself animates).
+    return {
+      marginBottom: "env(safe-area-inset-bottom, 0px)",
+      transform: drawerOpen ? `translateX(-${panelWidth + 16}px)` : "translateX(0)",
+    };
+  }, [isMobile, selectedCluster]);
+
   const visibleClustersCount = useMemo(() => {
     if (!clusters || !bounds) return 0;
     return clusters.filter(c =>
@@ -364,12 +388,14 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
           trackUserLocation={true}
           showUserLocation={true}
           onGeolocate={onGeolocate}
+          style={mapControlStyle}
         />
-        <NavigationControl position="bottom-right" />
+        <NavigationControl position="bottom-right" style={mapControlStyle} />
         {bounds && (
           <MapMarkers
             clusters={clusters || []}
             highlightedId={highlightedId}
+            highlightedPoint={highlightedPoint}
             setHighlightedId={setHighlightedId}
             selectedId={selectedId}
             onSelectBuilding={handleSelectBuilding}

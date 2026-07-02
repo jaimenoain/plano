@@ -19,6 +19,12 @@ import { useOptionalMapContext } from '../providers/MapContext';
 interface MapMarkersProps {
   clusters: ClusterResponse[];
   highlightedId?: string | null;
+  /**
+   * Coordinates of the highlighted building when the highlight came from a SERP
+   * row. When set and no individual pin matches `highlightedId` (browse mode,
+   * grouped), the nearest containing cluster is emphasised instead.
+   */
+  highlightedPoint?: { lat: number; lng: number } | null;
   setHighlightedId: (id: string | null) => void;
   /** Currently selected building id — keeps its pin emphasised while the detail drawer is open. */
   selectedId?: string | null;
@@ -36,6 +42,7 @@ interface MapMarkersProps {
 export function MapMarkers({
   clusters,
   highlightedId,
+  highlightedPoint,
   setHighlightedId,
   selectedId,
   onSelectBuilding,
@@ -110,6 +117,32 @@ export function MapMarkers({
       return clusters;
   }, [clusters, activeCluster]);
 
+  // When the highlight comes from a SERP row whose building has no individual
+  // pin (it's grouped into a cluster at this zoom), emphasise the containing
+  // cluster instead. Resolve it by nearest screen-pixel distance to the point,
+  // capped so we never light up a far-away cluster.
+  const hoveredClusterId = useMemo(() => {
+    if (!highlightedPoint || !map) return null;
+    const hasIndividual = displayClusters.some(
+      (c) => !c.is_cluster && String(c.id) === String(highlightedId)
+    );
+    if (hasIndividual) return null;
+
+    const target = map.project([highlightedPoint.lng, highlightedPoint.lat]);
+    let bestId: string | null = null;
+    let bestDist = Infinity;
+    for (const c of displayClusters) {
+      if (!c.is_cluster) continue;
+      const p = map.project([c.lng, c.lat]);
+      const d = Math.hypot(p.x - target.x, p.y - target.y);
+      if (d < bestDist) {
+        bestDist = d;
+        bestId = String(c.id);
+      }
+    }
+    return bestDist <= 80 ? bestId : null;
+  }, [highlightedPoint, highlightedId, displayClusters, map]);
+
   const markers = useMemo(
     () =>
       displayClusters.map((cluster) => {
@@ -140,7 +173,9 @@ export function MapMarkers({
         }
 
         const isSelected = selectedId != null && String(selectedId) === String(cluster.id);
-        const isHovered = String(highlightedId) === String(cluster.id) || isSelected;
+        const isClusterHovered =
+          cluster.is_cluster && hoveredClusterId != null && String(cluster.id) === hoveredClusterId;
+        const isHovered = String(highlightedId) === String(cluster.id) || isSelected || isClusterHovered;
 
         // Keep markers below map chrome (e.g. CollectionMapGL / PlanoMap overlays at z-40–z-60)
         // while preserving tier ordering (5 < 20 < 100 → capped relative ranks).
@@ -269,7 +304,7 @@ export function MapMarkers({
           </Marker>
         );
       }),
-    [displayClusters, map, handleMouseEnter, handleMouseLeave, highlightedId, selectedId, onSelectBuilding, isMobile, photographyGaps]
+    [displayClusters, map, handleMouseEnter, handleMouseLeave, highlightedId, hoveredClusterId, selectedId, onSelectBuilding, isMobile, photographyGaps]
   );
 
   return (

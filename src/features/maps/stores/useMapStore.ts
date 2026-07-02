@@ -47,6 +47,12 @@ export interface MapStoreState extends SerializableMapState {
   selectedBuilding: ClusterResponse | null;
   /** Transient hover emphasis. */
   highlightedId: string | null;
+  /**
+   * Coordinates of the currently highlighted building, when the highlight comes
+   * from a SERP row. Lets the map react the *containing cluster* when the
+   * building has no individual pin at the current zoom (browse mode, grouped).
+   */
+  highlightedPoint: { lat: number; lng: number } | null;
   /** Find-mode result pins pushed by SearchPage (null == browse mode). */
   findModeBuildings: BuildingSearchHit[] | null;
   /**
@@ -66,7 +72,7 @@ export interface MapStoreState extends SerializableMapState {
   setSelectedId: (id: string | null) => void;
   /** Select a building AND carry its full data payload for the detail drawer. */
   selectBuilding: (building: ClusterResponse) => void;
-  setHighlightedId: (id: string | null) => void;
+  setHighlightedId: (id: string | null, point?: { lat: number; lng: number } | null) => void;
   setFindModeBuildings: (list: BuildingSearchHit[] | null) => void;
   requestFitBounds: (bounds: Bounds) => void;
   clearFitBoundsRequest: () => void;
@@ -104,6 +110,7 @@ export function createMapStore(initial: SerializableMapState) {
     selectedId: null,
     selectedBuilding: null,
     highlightedId: null,
+    highlightedPoint: null,
     findModeBuildings: null,
     fitBoundsRequest: null,
 
@@ -154,7 +161,8 @@ export function createMapStore(initial: SerializableMapState) {
       }),
     selectBuilding: (building) =>
       set({ selectedId: String(building.id), selectedBuilding: building }),
-    setHighlightedId: (id) => set((s) => (s.highlightedId === id ? s : { highlightedId: id })),
+    setHighlightedId: (id, point) =>
+      set((s) => (s.highlightedId === id ? s : { highlightedId: id, highlightedPoint: point ?? null })),
     setFindModeBuildings: (list) =>
       set((s) => {
         const cur = s.findModeBuildings;
