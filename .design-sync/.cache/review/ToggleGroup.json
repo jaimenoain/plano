@@ -1,0 +1,17 @@
+{
+  "gradeKey": "96a11c13248d0231",
+  "sourceKey": "2ebe63947f8ae537",
+  "keyRecipe": 7,
+  "cells": [
+    "LabelledFilter",
+    "MultiSelect",
+    "SingleSelect"
+  ],
+  "pendingGrade": false,
+  "shots": [
+    "LabelledFilter",
+    "MultiSelect",
+    "SingleSelect"
+  ],
+  "pageErrs": []
+}

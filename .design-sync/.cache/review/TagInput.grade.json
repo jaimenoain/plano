@@ -1,0 +1,7 @@
+{
+  "cells": {
+    "Empty": { "verdict": "good", "note": "Empty state shows only placeholder input, sharp corners." },
+    "ManyTags": { "verdict": "good", "note": "Six uppercase tracked badges wrap cleanly with X remove controls above the input." },
+    "WithTags": { "verdict": "good", "note": "Three style tags (Brutalism/Concrete/1960s) as monochrome uppercase badges, sharp corners." }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "cells": {
+    "Default": { "verdict": "good", "note": "Active tab has surface-card fill and semibold text, sharp corners, muted list bg; editorial Plano content." },
+    "Disabled": { "verdict": "good", "note": "Disabled Archived trigger correctly dimmed and non-interactive; other tabs styled normally." },
+    "TwoTabs": { "verdict": "good", "note": "Clean two-tab case, active state clear, monochrome." }
+  }
+}

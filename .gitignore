@@ -29,3 +29,4 @@ coverage/
 .react-router/
 .vercel
 build/
+.design-sync/ds-styles.css

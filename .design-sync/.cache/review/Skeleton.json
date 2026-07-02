@@ -1,0 +1,15 @@
+{
+  "gradeKey": "b9127d3171e82a86",
+  "sourceKey": "39a2835d9a5ab145",
+  "keyRecipe": 7,
+  "cells": [
+    "BuildingCard",
+    "ListRow"
+  ],
+  "pendingGrade": false,
+  "shots": [
+    "BuildingCard",
+    "ListRow"
+  ],
+  "pageErrs": []
+}

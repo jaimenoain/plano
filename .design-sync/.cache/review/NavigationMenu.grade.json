@@ -1,0 +1,1 @@
+{"cells":{"ArchiveNav":{"verdict":"good","note":"Static open collapses the Radix viewport height to 0, so rendered as the closed nav BAR with Explore/Cities/Architects dropdown triggers (chevrons) plus an Archive link. Fully styled, monochrome, sharp corners. Limitation noted in learnings."}}}

@@ -1,0 +1,7 @@
+{
+  "cells": {
+    "Default": { "verdict": "good", "note": "June 1962 month, outside days dimmed, monochrome, bordered frame, sharp corners." },
+    "RangeSelection": { "verdict": "good", "note": "Range 8-19 shows black endpoints with grey middle fill, monochrome." },
+    "WithSelection": { "verdict": "good", "note": "Single day 14 selected as solid black cell, clear monochrome treatment." }
+  }
+}

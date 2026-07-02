@@ -1,0 +1,17 @@
+{
+  "gradeKey": "68a9f96d6b668080",
+  "sourceKey": "e7b61a4f7e056a7c",
+  "keyRecipe": 7,
+  "cells": [
+    "Default",
+    "RangeSelection",
+    "WithSelection"
+  ],
+  "pendingGrade": false,
+  "shots": [
+    "Default",
+    "RangeSelection",
+    "WithSelection"
+  ],
+  "pageErrs": []
+}

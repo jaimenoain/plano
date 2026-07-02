@@ -1,0 +1,6 @@
+{
+  "cells": {
+    "Default": { "verdict": "good", "note": "Filled selected dot, unselected rings, labels aligned, monochrome." },
+    "Disabled": { "verdict": "good", "note": "Whole group dimmed with selection preserved." }
+  }
+}

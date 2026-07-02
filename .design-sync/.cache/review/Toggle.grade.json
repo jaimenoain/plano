@@ -1,0 +1,8 @@
+{
+  "cells": {
+    "Sizes": { "verdict": "good", "note": "sm/default/lg sizing distinct, outline pressed state shows grey fill, sharp corners." },
+    "States": { "verdict": "good", "note": "Bold off (transparent) vs Italic on (grey fill) reads clearly, monochrome icons." },
+    "Variants": { "verdict": "good", "note": "Default and outline pressed vs unpressed all legible with borders-not-shadows." },
+    "WithText": { "verdict": "good", "note": "Icon+label toggles, disabled dimmed; all sharp-cornered and monochrome." }
+  }
+}

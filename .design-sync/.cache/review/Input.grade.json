@@ -1,0 +1,8 @@
+{
+  "cells": {
+    "Default": { "verdict": "good", "note": "Sharp corners, muted fill, disabled placeholder color correct; monochrome." },
+    "Labeled": { "verdict": "good", "note": "Label + filled value render cleanly, proper spacing." },
+    "Types": { "verdict": "good", "note": "email/number/password variants all render; password masked with dots." },
+    "Disabled": { "verdict": "good", "note": "Disabled input dimmed with label, on-brand." }
+  }
+}

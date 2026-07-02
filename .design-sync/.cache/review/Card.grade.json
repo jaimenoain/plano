@@ -1,0 +1,4 @@
+{"cells": {
+  "Editorial": {"verdict": "good", "note": "Borderless editorial default: mono eyebrow, font-black title, muted body, footer buttons."},
+  "Bordered": {"verdict": "good", "note": "Hairline-bordered variant via inline var(--border-default); composes header/content/footer/button."}
+}}

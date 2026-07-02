@@ -1,0 +1,6 @@
+{"cells": {
+  "Variants": {"verdict": "good", "note": "All 7 variants render on-brand: black default, grey secondary, outline, ghost, red destructive, link."},
+  "Sizes": {"verdict": "good", "note": "sm/default/lg sizes distinct and correct."},
+  "WithIcons": {"verdict": "good", "note": "Leading/trailing lucide icons + icon-only button render with correct gap and 16px svg."},
+  "Disabled": {"verdict": "good", "note": "Disabled opacity applied to solid and outline."}
+}}

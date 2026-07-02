@@ -1,0 +1,17 @@
+{
+  "gradeKey": "8aab40b464643d06",
+  "sourceKey": "bf16127b204f568c",
+  "keyRecipe": 7,
+  "cells": [
+    "Default",
+    "Standalone",
+    "WithCheckbox"
+  ],
+  "pendingGrade": false,
+  "shots": [
+    "Default",
+    "Standalone",
+    "WithCheckbox"
+  ],
+  "pageErrs": []
+}

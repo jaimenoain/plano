@@ -1,0 +1,15 @@
+{
+  "gradeKey": "299c9aed22651f5b",
+  "sourceKey": "925ecf35ea84bc26",
+  "keyRecipe": 7,
+  "cells": [
+    "Default",
+    "WithEllipsis"
+  ],
+  "pendingGrade": false,
+  "shots": [
+    "Default",
+    "WithEllipsis"
+  ],
+  "pageErrs": []
+}

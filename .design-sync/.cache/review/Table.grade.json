@@ -1,0 +1,4 @@
+{"cells": {
+  "Buildings": {"verdict": "good", "note": "Bordered table, uppercase tracked headers, mono years, realistic building rows."},
+  "WithSelection": {"verdict": "good", "note": "Selected row highlighted with brand-secondary fill."}
+}}

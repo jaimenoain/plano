@@ -1,0 +1,7 @@
+{
+  "cells": {
+    "States": { "verdict": "good", "note": "Off (grey track) and On (black track) with white thumb, correct." },
+    "Setting": { "verdict": "good", "note": "Settings-row layout with title/description and switch, well spaced." },
+    "Disabled": { "verdict": "good", "note": "Disabled off + on both dimmed correctly." }
+  }
+}

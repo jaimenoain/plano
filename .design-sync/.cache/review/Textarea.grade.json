@@ -1,0 +1,7 @@
+{
+  "cells": {
+    "Default": { "verdict": "good", "note": "Sharp-cornered textarea, placeholder in disabled/muted tone, resize handle visible." },
+    "Labeled": { "verdict": "good", "note": "Label + multi-line filled value wraps correctly, monochrome." },
+    "Disabled": { "verdict": "good", "note": "Disabled textarea dimmed with label, consistent." }
+  }
+}

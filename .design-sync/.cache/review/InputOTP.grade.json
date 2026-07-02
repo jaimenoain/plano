@@ -1,0 +1,6 @@
+{
+  "cells": {
+    "SixDigit": { "verdict": "good", "note": "Six filled slots (481627), sharp-cornered connected group with hairline dividers." },
+    "Grouped": { "verdict": "good", "note": "Two 3-slot groups with dot separator; first group filled (203), label present." }
+  }
+}

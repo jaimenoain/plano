@@ -1,0 +1,7 @@
+{
+  "cells": {
+    "LabelledFilter": { "verdict": "good", "note": "Style-filter labels (Brutalism selected) grouped with 1px gap, sharp corners, pressed grey fill." },
+    "MultiSelect": { "verdict": "good", "note": "Bold+Italic pressed simultaneously, Underline off; monochrome icons." },
+    "SingleSelect": { "verdict": "good", "note": "Align-center selected, single-select behaviour clear; outline variant borders." }
+  }
+}

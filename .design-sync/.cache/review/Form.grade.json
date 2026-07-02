@@ -1,0 +1,6 @@
+{
+  "cells": {
+    "Default": { "verdict": "good", "note": "Label + input + description + primary Save button; clean react-hook-form composition, monochrome, sharp corners." },
+    "WithError": { "verdict": "good", "note": "Error state shows red FormLabel and red FormMessage (semantic destructive) below invalid input; correct feedback color." }
+  }
+}

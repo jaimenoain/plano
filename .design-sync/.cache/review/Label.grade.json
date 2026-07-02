@@ -1,0 +1,7 @@
+{
+  "cells": {
+    "Default": { "verdict": "good", "note": "Label pairs with Input, correct weight/size." },
+    "WithCheckbox": { "verdict": "good", "note": "Label sits inline with a checked checkbox, aligned." },
+    "Standalone": { "verdict": "good", "note": "Label above a value, editorial reading pattern." }
+  }
+}

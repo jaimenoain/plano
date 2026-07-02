@@ -1,0 +1,1 @@
+{"cells": {"BuildingList": {"verdict": "good", "note": "Fixed-height scroll region with mono header and long building list clipped at the fold, signaling scrollability. On-brand bordered."}, "Prose": {"verdict": "good", "note": "Scrollable prose block, text clipped at container bottom indicating overflow. Editorial and clean."}}}

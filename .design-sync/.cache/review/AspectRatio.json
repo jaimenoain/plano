@@ -1,0 +1,17 @@
+{
+  "gradeKey": "d3806f796ff68a1c",
+  "sourceKey": "26a39a196319f1df",
+  "keyRecipe": 7,
+  "cells": [
+    "Landscape",
+    "Portrait",
+    "Square"
+  ],
+  "pendingGrade": false,
+  "shots": [
+    "Landscape",
+    "Portrait",
+    "Square"
+  ],
+  "pageErrs": []
+}

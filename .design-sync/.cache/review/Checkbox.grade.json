@@ -1,0 +1,7 @@
+{
+  "cells": {
+    "States": { "verdict": "good", "note": "Unchecked square + black checked with white tick, sharp corners." },
+    "List": { "verdict": "good", "note": "Filter list, mixed checked/unchecked, monochrome and aligned." },
+    "Disabled": { "verdict": "good", "note": "Disabled off + on both dimmed correctly." }
+  }
+}

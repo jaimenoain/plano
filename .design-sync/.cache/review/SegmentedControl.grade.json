@@ -1,0 +1,7 @@
+{
+  "cells": {
+    "Default": { "verdict": "good", "note": "Active segment = white card + black text, inactive grey; indicator under Map." },
+    "TwoOptions": { "verdict": "good", "note": "Two-segment variant, active Buildings highlighted correctly." },
+    "Selections": { "verdict": "good", "note": "Two controls show indicator under Modern and Contemporary respectively." }
+  }
+}

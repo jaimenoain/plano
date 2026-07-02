@@ -1,0 +1,1 @@
+{"cells": {"Default": {"verdict": "good", "note": "Prev/1/2/3/Next with active page 2 as outlined button, others ghost. Clean monochrome nav."}, "WithEllipsis": {"verdict": "good", "note": "Long-range pagination 1 ... 11 12 13 ... 36 with active 12 outlined and two ellipses. Realistic large result set."}}}

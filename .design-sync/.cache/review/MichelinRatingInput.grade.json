@@ -1,0 +1,6 @@
+{
+  "cells": {
+    "Disabled": { "verdict": "good", "note": "Disabled two-star state shows greyed circles at reduced opacity." },
+    "Ratings": { "verdict": "good", "note": "0/1/2/3 rating sweep with solid black filled circles for active and outlined for inactive; monochrome." }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "cells": {
+    "Default": { "verdict": "good", "note": "Black filled range, white thumb with brand ring border, muted track." },
+    "Labeled": { "verdict": "good", "note": "Label + value readout above slider, editorial." },
+    "Range": { "verdict": "good", "note": "Two-thumb range renders with filled span between, on-brand." },
+    "Disabled": { "verdict": "good", "note": "Disabled slider dimmed correctly." }
+  }
+}

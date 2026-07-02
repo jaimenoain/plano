@@ -1,0 +1,19 @@
+{
+  "gradeKey": "f0801d50230510af",
+  "sourceKey": "e022c2c0ed49b54e",
+  "keyRecipe": 7,
+  "cells": [
+    "Default",
+    "Disabled",
+    "Labeled",
+    "Range"
+  ],
+  "pendingGrade": false,
+  "shots": [
+    "Default",
+    "Disabled",
+    "Labeled",
+    "Range"
+  ],
+  "pageErrs": []
+}

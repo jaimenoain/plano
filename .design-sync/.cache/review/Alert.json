@@ -1,0 +1,19 @@
+{
+  "gradeKey": "ed5bef6869e5d868",
+  "sourceKey": "1b244a0e5b9d0ce4",
+  "keyRecipe": 7,
+  "cells": [
+    "Default",
+    "Destructive",
+    "Success",
+    "Warning"
+  ],
+  "pendingGrade": false,
+  "shots": [
+    "Default",
+    "Destructive",
+    "Success",
+    "Warning"
+  ],
+  "pageErrs": []
+}

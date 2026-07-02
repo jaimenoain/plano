@@ -1,0 +1,1 @@
+{"cells": {"BuildingCard": {"verdict": "good", "note": "Realistic loading building card: image block plus four text bars of varying width in bordered container. On-brand grey muted."}, "ListRow": {"verdict": "good", "note": "Three loading list rows with circular avatar placeholder plus two bars each. Reads clearly as loading state."}}}

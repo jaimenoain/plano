@@ -1,0 +1,6 @@
+{"cells": {
+  "Default": {"verdict": "good", "note": "Icon + title + description, correct absolute-positioned svg layout."},
+  "Destructive": {"verdict": "good", "note": "Red border/text/icon variant correct."},
+  "Success": {"verdict": "good", "note": "Green success variant correct."},
+  "Warning": {"verdict": "good", "note": "Amber warning variant correct."}
+}}
