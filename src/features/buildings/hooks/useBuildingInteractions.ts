@@ -1055,7 +1055,6 @@ export function useBuildingInteractions({
       queryClient.invalidateQueries({ queryKey: ["map-clusters-v3"] });
       void fetchUserSpecificData();
     } catch (error: unknown) {
-      // eslint-disable-next-line no-console
       console.error("handleSaveNote failed", error);
       toast({
         variant: "destructive",

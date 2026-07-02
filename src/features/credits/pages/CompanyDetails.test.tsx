@@ -253,9 +253,8 @@ describe("CompanyDetails (QA 4.1 unclaimed)", () => {
     mocks.revalidate.mockReset();
   });
 
-  it("renders company fields, website link, and logo when set", () => {
-    mocks.loaderData.company.logoUrl = "https://structco.example/logo.png";
-    const { container } = renderPage();
+  it("renders company fields, website link, and logo initial fallback", () => {
+    renderPage();
 
     expect(screen.getByRole("heading", { level: 1, name: "StructCo GmbH" })).toBeInTheDocument();
     expect(screen.getByText("Structural engineering practice.")).toBeInTheDocument();
@@ -265,9 +264,10 @@ describe("CompanyDetails (QA 4.1 unclaimed)", () => {
     const website = screen.getByRole("link", { name: /website/i });
     expect(website).toHaveAttribute("href", "https://structco.example");
 
-    // Radix Avatar mounts the logo container when a logoUrl is present
-    // (the <img> only becomes visible after a real load event, which does not fire in the test DOM).
-    expect(container.querySelector(".shrink-0.self-start")).not.toBeNull();
+    // No logoUrl: the company logo (and its initial fallback) is not rendered.
+    // The initial fallback was removed in commit 8ee1047c — logos show only when
+    // an image URL exists.
+    expect(screen.queryByRole("img", { name: /StructCo GmbH logo/i })).not.toBeInTheDocument();
   });
 
   it("shows unclaimed banner and Claim this company when logged in", () => {

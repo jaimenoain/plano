@@ -443,7 +443,6 @@ export default function ChapterProjectsPage() {
       queryClient.invalidateQueries({ queryKey: ["chapter-projects", chapterId] });
     },
     onError: (err) => {
-      // eslint-disable-next-line no-console
       console.error("submitIdeaMutation error:", err);
       toast.error("Failed to submit idea. Please try again.");
     },

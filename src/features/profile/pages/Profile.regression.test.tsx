@@ -144,45 +144,48 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: mocks.mockSupabase,
 }));
 
-// Mock building data
-// Rows are shaped to satisfy both queries the Profile page now runs:
-//   1. user_buildings → { building_id, rating, status }
-//   2. building_posts → { id, building_id, building: { ... } }
-// The single mockChain returns this same array for every table, so each row
-// carries the union of the fields both queries read (building_id ties them
-// together — that is how ratings/status flow into the kanban columns).
+// Mock building data.
+// Content now joins user_buildings (building_id + rating + status) to
+// building_posts (the review rows) → buildings. The shared mock chain returns
+// this one dataset for every table, so each row carries both the user_buildings
+// fields (building_id, rating, status) and the building_posts fields (id, body,
+// created_at, updated_at, embedded building). `building_id` is required so each
+// review maps back to its own rating instead of collapsing onto one Map key.
 const mockBuildings = [
     {
         id: 'review-1',
+        building_id: 'b1',
+        body: 'Great place',
         content: 'Great place',
         rating: 3,
         status: 'visited',
         created_at: '2023-01-01',
-        edited_at: '2023-01-02',
         updated_at: '2023-01-02',
-        building_id: 'b1',
+        edited_at: '2023-01-02',
         building: { id: 'b1', name: 'Empire State', address: 'NYC' }
     },
     {
         id: 'review-2',
+        building_id: 'b2',
+        body: 'Nice view',
         content: 'Nice view',
         rating: 2,
         status: 'visited',
         created_at: '2023-01-03',
-        edited_at: '2023-01-04',
         updated_at: '2023-01-04',
-        building_id: 'b2',
+        edited_at: '2023-01-04',
         building: { id: 'b2', name: 'Chrysler Building', address: 'NYC' }
     },
     {
         id: 'review-3',
+        building_id: 'b3',
+        body: '',
         content: '',
         rating: null,
         status: 'pending',
         created_at: '2023-01-05',
-        edited_at: null,
         updated_at: null,
-        building_id: 'b3',
+        edited_at: null,
         building: { id: 'b3', name: 'Burj Khalifa', address: 'Dubai' }
     }
 ];

@@ -8,13 +8,14 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Mock IntersectionObserver
-const intersectionObserverMock = () => ({
-  observe: () => null,
-  unobserve: () => null,
-  disconnect: () => null
-});
-window.IntersectionObserver = vi.fn().mockImplementation(intersectionObserverMock);
+// Mock IntersectionObserver. Must be a real constructor so `new
+// IntersectionObserver(...)` works under Vitest v4 (an arrow-function
+// mockImplementation is not construct-callable there).
+window.IntersectionObserver = vi.fn(function (this: IntersectionObserver) {
+  this.observe = () => null;
+  this.unobserve = () => null;
+  this.disconnect = () => null;
+}) as unknown as typeof IntersectionObserver;
 
 vi.mock('framer-motion', async (importOriginal) => {
   const actual = await importOriginal<typeof import('framer-motion')>();
@@ -120,13 +121,13 @@ vi.mock('@/features/profile/hooks/useProfileComparison', () => ({
 
 // Supabase Mock
 vi.mock('@/integrations/supabase/client', () => {
-  // user_buildings now returns the lightweight { building_id, rating, status }
-  // rows; the Profile page joins these against building_posts by building_id.
+  // Profile content is now loaded via user_buildings (status/rating) joined to
+  // building_posts (the review rows) → buildings. Mock each table to match that
+  // multi-step query flow so a single review (id "review-1") renders.
   const userBuildingsData = [
-    { building_id: 'b1', rating: 4, status: 'visited', user_id: 'user-123' },
+    { building_id: 'b1', rating: 4, status: 'visited' },
   ];
 
-  // building_posts carries the review body + embedded building.
   const buildingPostsData = [
     {
       id: 'review-1',
@@ -147,10 +148,10 @@ vi.mock('@/integrations/supabase/client', () => {
         slug: 'test-building',
         short_id: 1,
         building_credits: [
-          { status: 'active', credit_tier: 'primary', person: { name: 'Arch One', id: 'a1' }, company: null },
-        ]
-      }
-    }
+          { status: 'active', credit_tier: 'primary', person: { id: 'a1', name: 'Arch One' }, company: null },
+        ],
+      },
+    },
   ];
 
   const profileData = { id: 'user-123', username: 'testuser', avatar_url: null, bio: 'Bio', favorites: [] };

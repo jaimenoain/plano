@@ -64,15 +64,16 @@ vi.mock('@/integrations/supabase/client', () => {
         builder.maybeSingle.mockResolvedValue({ data: mockProfile, error: null });
         builder.single.mockResolvedValue({ data: mockProfile, error: null });
     } else if (table === 'review_images') {
-        // Generate mock images
-        // The gallery now embeds the building via building_posts (was user_buildings).
+        // Generate mock images. The gallery now joins the building via
+        // building_posts (review_images → building_posts → buildings), so the
+        // embedded key must be `building_posts`, not the old `user_buildings`.
         const generateImages = (count: number) => Array.from({ length: count }).map((_, i) => ({
              id: `img-${i}`,
              storage_path: `path-${i}.jpg`,
              likes_count: 0,
              review_id: `rev-${i}`,
              building_posts: {
-                 building: { id: `b-${i}`, name: `Building ${i}`, slug: `building-${i}` }
+                 building: { id: `b-${i}`, short_id: i + 1, name: `Building ${i}`, slug: `building-${i}` }
              }
         }));
 

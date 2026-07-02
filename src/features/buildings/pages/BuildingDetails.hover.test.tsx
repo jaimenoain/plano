@@ -8,13 +8,14 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as supabaseFallback from '@/utils/supabaseFallback';
 
-// Mock IntersectionObserver
-const intersectionObserverMock = () => ({
-  observe: () => null,
-  unobserve: () => null,
-  disconnect: () => null
-});
-window.IntersectionObserver = vi.fn().mockImplementation(intersectionObserverMock);
+// Mock IntersectionObserver. Must be a real constructor so `new
+// IntersectionObserver(...)` works under Vitest v4 (an arrow-function
+// mockImplementation is not construct-callable there).
+window.IntersectionObserver = vi.fn(function (this: IntersectionObserver) {
+  this.observe = () => null;
+  this.unobserve = () => null;
+  this.disconnect = () => null;
+}) as unknown as typeof IntersectionObserver;
 
 const mocks = vi.hoisted(() => {
   return {
@@ -207,17 +208,16 @@ describe('BuildingDetails Rating Hover', () => {
       expect(screen.getByRole("button", { name: /visited/i })).toBeTruthy();
     });
 
-    // Find the 3 rating circles. They are Lucide 'Circle' components rendered
-    // as <svg class="h-7 w-7 ..."> inside <button class="cursor-pointer"> in the
-    // "My Rating" control. onMouseEnter lives on the button; onMouseLeave on the
-    // wrapping flex container.
-
+    // The 3 rating circles are Lucide 'Circle' SVGs, now sized `h-7 w-7`
+    // (uniquely — the only h-7 w-7 svgs on the page). Each sits inside a
+    // `cursor-pointer` <button> that owns the onMouseEnter handler; the
+    // wrapping flex container owns onMouseLeave.
     await waitFor(() => {
-        const circles = container.querySelectorAll('button.cursor-pointer svg.h-7.w-7');
+        const circles = container.querySelectorAll('svg.h-7.w-7');
         expect(circles.length).toBe(3);
     });
 
-    const circles = container.querySelectorAll('button.cursor-pointer svg.h-7.w-7');
+    const circles = container.querySelectorAll('svg.h-7.w-7');
     const circle1 = circles[0];
     const circle2 = circles[1];
     const circle3 = circles[2];
@@ -227,8 +227,10 @@ describe('BuildingDetails Rating Hover', () => {
     expect(circle2.getAttribute('class')).toContain('fill-transparent');
     expect(circle3.getAttribute('class')).toContain('fill-transparent');
 
-    // Hover over 2nd circle — mouseEnter is handled on the wrapping button.
-    fireEvent.mouseEnter(circle2.parentElement!);
+    // Hover over the 2nd circle's button (mouseenter does not bubble, so it
+    // must be dispatched on the element that carries the handler).
+    const button2 = circle2.closest('button')!;
+    fireEvent.mouseEnter(button2);
 
     // Expect 1st and 2nd to be filled, 3rd to be transparent
     // Wait for re-render
@@ -238,9 +240,9 @@ describe('BuildingDetails Rating Hover', () => {
         expect(circle3.getAttribute('class')).toContain('fill-transparent');
     });
 
-    // Mouse leave is handled on the flex container that wraps all three buttons.
-    const ratingContainer = circle1.closest('button')!.parentElement;
-    if (ratingContainer) fireEvent.mouseLeave(ratingContainer);
+    // Mouse leave is handled on the flex container that wraps the 3 buttons.
+    const ratingRow = button2.parentElement!;
+    fireEvent.mouseLeave(ratingRow);
 
     // Should return to empty
     await waitFor(() => {

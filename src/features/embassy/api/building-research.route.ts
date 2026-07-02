@@ -137,7 +137,6 @@ export async function action({ request }: ActionFunctionArgs) {
       if (error.message?.includes("not_ambassador")) {
         return Response.json({ error: "Not an active ambassador" }, { status: 403, headers });
       }
-      // eslint-disable-next-line no-console
       console.error("[building-research] RPC error:", error.message, error.details, error.hint);
       return Response.json({ error: "Failed to save research data" }, { status: 500, headers });
     }

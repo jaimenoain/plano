@@ -57,6 +57,7 @@ describe('DiscoveryBuildingCard', () => {
       </BrowserRouter>
     );
 
+    // Alt text now combines name + city: `[name, city].filter(Boolean).join(", ")`.
     const img = screen.getByRole('img', { name: 'Test Building, Test City' });
     expect(img).toBeDefined();
     expect(img.getAttribute('src')).toBe('test-image.jpg');

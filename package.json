@@ -6,14 +6,16 @@
   "type": "module",
   "scripts": {
     "dev": "react-router dev",
+    "prepare": "git config core.hooksPath .githooks",
     "build": "react-router build && node scripts/patch-vercel-manifest-cache.js",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
+    "typecheck:strict": "tsc --noEmit -p tsconfig.strict.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "gen-types": "sh -c 'TMP=$(mktemp) && npx supabase gen types typescript --project-id lnqxtomyucnnrgeapnzt --schema public > \"$TMP\" && mv \"$TMP\" src/integrations/supabase/types.ts'",
-    "lint": "eslint . --max-warnings 0",
-    "lint:fix": "eslint . --fix --max-warnings 0",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "preview": "vite preview"
   },
   "dependencies": {

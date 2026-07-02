@@ -34,7 +34,9 @@ describe('MapStateSchema', () => {
     expect(result.lat).toBe(DEFAULT_LAT);
     expect(result.lng).toBe(DEFAULT_LNG);
     expect(result.zoom).toBe(DEFAULT_ZOOM);
-    expect(result.mode).toBe(null); // Default mode (DEFAULT_MODE is null)
+    // Default mode is now null (no `mode` param yields the unselected state):
+    // DEFAULT_MODE = null and MapModeSchema = enum(['discover','library']).nullable().catch(null).
+    expect(result.mode).toBe(null);
     expect(result.filters).toEqual({});
   });
 

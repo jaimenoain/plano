@@ -30,12 +30,13 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      // Many screens intentionally pin effect deps to avoid refetch loops; fix incrementally per screen.
-      "react-hooks/exhaustive-deps": "off",
+      // Surfaced as a warning for visibility. Many screens intentionally pin effect deps to avoid refetch
+      // loops, so fixes are a deliberate per-screen follow-up — not a blocking gate (CI tolerates warnings).
+      "react-hooks/exhaustive-deps": "warn",
       "react-refresh/only-export-components": ["off", { allowConstantExport: true }],
 
-      // Prevent Phase 0 regressions
-      "no-console": "error",
+      // Prevent Phase 0 regressions. Allow warn/error (legitimate operational logging); ban log/info/debug.
+      "no-console": ["error", { allow: ["warn", "error"] }],
 
       // Prevent Phase 1 regressions
       "@typescript-eslint/no-explicit-any": "error",
@@ -62,6 +63,49 @@ export default tseslint.config(
       eqeqeq: ["error", "always", { null: "ignore" }],
       "no-duplicate-imports": "error",
       "no-empty": ["error", { allowEmptyCatch: true }],
+
+      // Phase 1 guardrails (Theme D + G). WARN-level on purpose: there is a large existing
+      // backlog (163 direct-client imports, 939 deep cross-feature imports). CI tolerates
+      // warnings, so this surfaces the boundary in review and gates new code without breaking
+      // the build. Burn the backlog down per-directory, then ratchet to "error" in a later phase.
+      "no-restricted-imports": [
+        "warn",
+        {
+          paths: [
+            {
+              name: "@/integrations/supabase/client",
+              message:
+                "The Supabase browser client belongs in a feature api/ module (src/features/*/api/**) or a route loader. Components and hooks should call a typed function there instead of querying Supabase directly.",
+            },
+            {
+              name: "~/integrations/supabase/client",
+              message:
+                "The Supabase browser client belongs in a feature api/ module (src/features/*/api/**) or a route loader. Components and hooks should call a typed function there instead of querying Supabase directly.",
+            },
+          ],
+          patterns: [
+            {
+              // Deep cross-feature imports reach into another feature's internals. Import from
+              // the feature barrel (@/features/<feature>) or its public api/ instead.
+              regex: "^[@~]/features/[^/]+/(?!(index|api)(/|$)).+",
+              message:
+                "Avoid deep cross-feature imports. Import from the feature barrel (@/features/<feature>) or its public api/ instead.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // The Supabase browser client and deep imports are legitimate inside feature api/ modules,
+    // route loaders, and the client definition itself. Turn the boundary rule off there.
+    files: [
+      "src/features/*/api/**/*.{ts,tsx}",
+      "src/**/*.loader.ts",
+      "src/integrations/supabase/client.ts",
+    ],
+    rules: {
+      "no-restricted-imports": "off",
     },
   },
   {
@@ -85,13 +129,6 @@ export default tseslint.config(
     ],
     rules: {
       "react-refresh/only-export-components": "off",
-    },
-  },
-  {
-    files: ["src/features/admin/api/diagnostics.ts"],
-    rules: {
-      // Last-resort logging when Supabase diagnostic insert fails (cannot recurse into logDiagnosticError)
-      "no-console": "off",
     },
   },
 );

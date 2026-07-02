@@ -9,13 +9,14 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as supabaseFallback from '@/utils/supabaseFallback';
 
-// Mock IntersectionObserver
-const intersectionObserverMock = () => ({
-  observe: () => null,
-  unobserve: () => null,
-  disconnect: () => null
-});
-window.IntersectionObserver = vi.fn().mockImplementation(intersectionObserverMock);
+// Mock IntersectionObserver. Must be a real constructor so `new
+// IntersectionObserver(...)` works under Vitest v4 (an arrow-function
+// mockImplementation is not construct-callable there).
+window.IntersectionObserver = vi.fn(function (this: IntersectionObserver) {
+  this.observe = () => null;
+  this.unobserve = () => null;
+  this.disconnect = () => null;
+}) as unknown as typeof IntersectionObserver;
 
 const mocks = vi.hoisted(() => {
   return {
@@ -221,9 +222,10 @@ describe('BuildingDetails Interaction', () => {
       </TooltipProvider>
     );
 
-    // Wait for building name to load (heading renders "Test Building.")
+    // Wait for building name to load. The title H1 renders the name with a
+    // trailing period ("Test Building.").
     await waitFor(async () => {
-        const elements = await screen.findAllByText(/Test Building/);
+        const elements = await screen.findAllByText('Test Building.');
         expect(elements.length).toBeGreaterThan(0);
     }, { timeout: 3000 });
 
@@ -231,10 +233,12 @@ describe('BuildingDetails Interaction', () => {
         expect(screen.getByRole("button", { name: /visited/i })).toBeTruthy();
     });
 
+    // Open the status dropdown (trigger shows "Visited") and pick the pending
+    // option. That option is now labelled "Wishlist" (was "Save"); it still
+    // calls handleStatusChange("pending").
     await user.click(screen.getByRole("button", { name: /visited/i }));
-    // Menu item that sets status to "pending" is labelled "Wishlist"
-    const saveItem = await screen.findByRole("menuitem", { name: /wishlist/i });
-    await user.click(saveItem);
+    const wishlistItem = await screen.findByRole("menuitem", { name: /wishlist/i });
+    await user.click(wishlistItem);
 
     // Verify Supabase upsert call
     await waitFor(() => {
@@ -248,7 +252,7 @@ describe('BuildingDetails Interaction', () => {
         );
     });
 
-    // Optimistic Update: trigger now shows "Saved" in place of "Visited"
+    // Optimistic Update: the status trigger now reflects "Saved" (pending).
     await waitFor(() => {
         expect(screen.getByRole("button", { name: /saved/i })).toBeTruthy();
     });
@@ -287,14 +291,16 @@ describe('BuildingDetails Interaction', () => {
     );
 
     await waitFor(async () => {
-        const elements = await screen.findAllByText(/Test Lost Building/);
+        const elements = await screen.findAllByText('Test Lost Building.');
         expect(elements.length).toBeGreaterThan(0);
     }, { timeout: 3000 });
 
-    // Assert that the lost building message appears
+    // Assert that the lost building message appears (copy was shortened).
     expect(screen.getByText('This building no longer stands at this location.')).toBeTruthy();
 
-    // Assert that the directions button is present in the map card
+    // The primary directions affordance is still offered for lost buildings.
+    // (The "Navigate to Site" wording now lives only inside the approximate-
+    // location confirmation dialog; the always-visible CTA is "Directions".)
     expect(screen.getByRole("button", { name: /Directions/i })).toBeTruthy();
   });
 });

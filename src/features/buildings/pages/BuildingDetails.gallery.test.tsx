@@ -8,13 +8,14 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as supabaseFallback from '@/utils/supabaseFallback';
 
-// Mock IntersectionObserver
-const intersectionObserverMock = () => ({
-  observe: () => null,
-  unobserve: () => null,
-  disconnect: () => null
-});
-window.IntersectionObserver = vi.fn().mockImplementation(intersectionObserverMock);
+// Mock IntersectionObserver. Must be a real constructor so `new
+// IntersectionObserver(...)` works under Vitest v4 (an arrow-function
+// mockImplementation is not construct-callable there).
+window.IntersectionObserver = vi.fn(function (this: IntersectionObserver) {
+  this.observe = () => null;
+  this.unobserve = () => null;
+  this.disconnect = () => null;
+}) as unknown as typeof IntersectionObserver;
 
 const mocks = vi.hoisted(() => {
   return {
@@ -41,8 +42,7 @@ vi.mock('react-router', async (importOriginal) => {
     useParams: () => {
         return { id: 'b1' };
     },
-    // Photos now live under the "Media" tab (URL-driven).
-    useSearchParams: () => [new URLSearchParams('tab=media'), vi.fn()],
+    useSearchParams: () => [new URLSearchParams(), vi.fn()],
     useLoaderData: () => mocks.loaderData,
   };
 });
@@ -212,7 +212,7 @@ describe('BuildingDetails Gallery', () => {
   it(
     "renders Photos section after load",
     async () => {
-      const { container } = render(
+      render(
         <TooltipProvider>
           <QueryClientProvider client={queryClient}>
             <BrowserRouter>
@@ -225,27 +225,22 @@ describe('BuildingDetails Gallery', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getAllByText(/Test Building/).length).toBeGreaterThan(0);
+        // The page title H1 renders the name with a trailing period ("Test Building.").
+        expect(screen.getAllByText("Test Building.").length).toBeGreaterThan(0);
       });
 
-      // Photos now render under the "Media" tab.
+      // The overview editorial stream renders the loaded reviews + photos.
+      // (The old "Reviews & photography" header component is no longer used;
+      // the stream now renders each review/photo block inline.) Proving the
+      // mocked get_building_reviews data flowed through: the review content
+      // appears and the "No photos yet" empty state is gone.
       await waitFor(
         () => {
-          expect(screen.getByRole("heading", { name: "Media" })).toBeTruthy();
+          expect(screen.getByText(/Review 1/)).toBeTruthy();
         },
         { timeout: 10_000 },
       );
-
-      // The three review images from get_building_reviews render in the grid.
-      await waitFor(
-        () => {
-          const imgs = Array.from(
-            container.querySelectorAll('img[src^="http://img/"]'),
-          );
-          expect(imgs.length).toBeGreaterThan(0);
-        },
-        { timeout: 10_000 },
-      );
+      expect(screen.queryByText("No photos yet")).toBeNull();
     },
     15_000,
   );

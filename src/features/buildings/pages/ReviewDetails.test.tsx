@@ -38,10 +38,12 @@ describe("ReviewDetails", () => {
   });
 
   it("renders review details correctly", async () => {
-    // The review "post" now lives in `building_posts` (body, not content), with the
-    // rating/status pulled from a separate `user_buildings` lookup. The building embed
-    // uses `hero_image_url` and `people`/`companies` credit joins.
-    const mockPost = {
+    // The review is now fetched from `building_posts` (not user_buildings):
+    //   - text lives in `body` (component maps body → content)
+    //   - building is embedded as buildings(..., hero_image_url, building_credits)
+    //   - images embedded as review_images(id, storage_path, is_generated, caption)
+    //   - rating/status come from a SEPARATE user_buildings.maybeSingle()
+    const mockReviewPost = {
       id: "test-review-id",
       body: "Test review content",
       tags: ["test-tag"],
@@ -54,7 +56,7 @@ describe("ReviewDetails", () => {
       },
       building: {
         id: "test-building-id",
-        short_id: 42,
+        short_id: 1,
         slug: "test-building",
         name: "Test Building",
         year_completed: 2020,
@@ -70,19 +72,13 @@ describe("ReviewDetails", () => {
         ],
       },
       images: [
-        { id: "img-1", storage_path: "path/to/img1.jpg", is_generated: false, caption: null },
-        { id: "img-2", storage_path: "path/to/img2.jpg", is_generated: true, caption: null },
+        { id: "img-1", storage_path: "path/to/img1.jpg", is_generated: false },
+        { id: "img-2", storage_path: "path/to/img2.jpg", is_generated: true },
       ],
     };
 
-    // Robust chainable mock builder.
-    //  - `singleData` is what a terminal `.single()` / `.maybeSingle()` resolves to.
-    //  - `listData` is what an awaited chain (`then`) resolves to (list queries).
-    const createMockChain = (
-        singleData: any = null,
-        listData: any = [],
-        extra: any = {},
-    ) => {
+    // Robust mock builder
+    const createMockChain = (data: any = { data: [] }, extra: any = {}) => {
         const chain: any = {
             select: vi.fn(() => chain),
             eq: vi.fn(() => chain),
@@ -90,34 +86,54 @@ describe("ReviewDetails", () => {
             in: vi.fn(() => chain),
             order: vi.fn(() => chain),
             limit: vi.fn(() => chain),
-            single: vi.fn(() => Promise.resolve({ data: singleData, error: null, ...extra })),
-            maybeSingle: vi.fn(() => Promise.resolve({ data: singleData, error: null, ...extra })),
-            delete: vi.fn(() => chain),
-            insert: vi.fn(() => Promise.resolve({ data: null, error: null })),
-            then: (resolve: any) => Promise.resolve({ data: listData, error: null, count: 0, ...extra }).then(resolve)
+            single: vi.fn(() => Promise.resolve({ data, error: null, ...extra })),
+            maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })),
+            then: (resolve: any) => Promise.resolve({ data, error: null, count: 0, ...extra }).then(resolve)
         };
         return chain;
     };
 
     // @ts-ignore
     supabase.from.mockImplementation((table: string) => {
-        // building_posts: the main review fetch uses `.single()` → the post; the
-        // related-review queries are awaited lists → empty.
         if (table === "building_posts") {
-            return createMockChain(mockPost, []);
+            // Main fetch resolves via .single() → the review post. Related-review
+            // queries on the same table are awaited (then) and must yield an array.
+            const chain: any = {
+                select: vi.fn(() => chain),
+                eq: vi.fn(() => chain),
+                neq: vi.fn(() => chain),
+                in: vi.fn(() => chain),
+                order: vi.fn(() => chain),
+                limit: vi.fn(() => chain),
+                single: vi.fn(() => Promise.resolve({ data: mockReviewPost, error: null })),
+                maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })),
+                then: (resolve: any) => Promise.resolve({ data: [], error: null }).then(resolve),
+            };
+            return chain;
         }
 
-        // rating/status lookup (.maybeSingle) + related-review ratings (awaited list).
         if (table === "user_buildings") {
-            return createMockChain({ rating: 5, status: "visited" }, []);
+            // rating/status lookup (.maybeSingle()); related-rating lookups await []
+            const chain: any = {
+                select: vi.fn(() => chain),
+                eq: vi.fn(() => chain),
+                neq: vi.fn(() => chain),
+                in: vi.fn(() => chain),
+                order: vi.fn(() => chain),
+                limit: vi.fn(() => chain),
+                delete: vi.fn(() => chain),
+                maybeSingle: vi.fn(() => Promise.resolve({ data: { rating: 5, status: "visited" }, error: null })),
+                single: vi.fn(() => Promise.resolve({ data: null, error: null })),
+                then: (resolve: any) => Promise.resolve({ data: [], error: null }).then(resolve),
+            };
+            return chain;
         }
 
-        // Count / like queries resolve empty with a count.
         if (table === "likes" || table === "comments") {
-             return createMockChain(null, [], { count: 0 });
+             return createMockChain([], { count: 0 });
         }
 
-        return createMockChain(null, []);
+        return createMockChain([]);
     });
 
     render(

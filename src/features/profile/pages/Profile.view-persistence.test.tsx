@@ -172,9 +172,6 @@ vi.mock('@/integrations/supabase/client', () => ({
 }));
 
 // Mock building data
-// Rows carry the union of fields read by both the user_buildings query
-// ({ building_id, rating, status }) and the building_posts query
-// ({ id, building_id, building }); building_id ties the two together.
 const mockBuildings = [
     {
         id: 'review-1',
@@ -183,8 +180,6 @@ const mockBuildings = [
         status: 'visited',
         created_at: '2023-01-01',
         edited_at: '2023-01-02',
-        updated_at: '2023-01-02',
-        building_id: 'b1',
         building: { id: 'b1', name: 'Empire State', address: 'NYC' }
     },
     {
@@ -194,8 +189,6 @@ const mockBuildings = [
         status: 'visited',
         created_at: '2023-01-03',
         edited_at: '2023-01-04',
-        updated_at: '2023-01-04',
-        building_id: 'b2',
         building: { id: 'b2', name: 'Chrysler Building', address: 'NYC' }
     },
     {
@@ -205,8 +198,6 @@ const mockBuildings = [
         status: 'pending',
         created_at: '2023-01-05',
         edited_at: null,
-        updated_at: null,
-        building_id: 'b3',
         building: { id: 'b3', name: 'Burj Khalifa', address: 'Dubai' }
     }
 ];
@@ -311,39 +302,39 @@ describe('Profile Verification', () => {
   });
 
   it('should trigger pagination when scrolled to bottom', async () => {
-      // Pagination is now performed by slicing the deduplicated building_posts id
-      // list in ITEMS_PER_PAGE (15) chunks — no Supabase .range() call. Return 16
-      // unique buildings so uniqueLatestPostIds.length (16) > 15 → hasMore = true.
-      const manyItems = Array(16).fill(mockBuildings[0]).map((b, i) => ({
+      // Pagination is now client-side over the deduplicated post IDs
+      // (uniqueLatestPostIds.slice(page*15, +15)), keyed by building_id — not a
+      // Supabase .range() call. Provide >15 DISTINCT buildings so page 0 sets
+      // hasMore=true and a scroll fetches page 1 (post IDs review-15…review-19).
+      const manyItems = Array(20).fill(mockBuildings[0]).map((b, i) => ({
           ...b,
           id: `review-${i}`,
-          building_id: `b-${i}`,
-          building: { ...b.building, id: `b-${i}`, name: `Building ${i}` },
+          building_id: `b${i}`,
+          building: { ...b.building, id: `b${i}` },
       }));
       mocks.mockChain.then = (resolve: any) => resolve({ data: manyItems, error: null });
 
       const { rerender } = renderProfile();
       await screen.findByTestId('review-card-review-0');
 
-      // Verify initial fetch happened against the new data path (user_buildings +
-      // building_posts) rather than the legacy range-based query.
+      // Verify initial fetch reads the user's buildings, and page 0 requests the
+      // first 15 post IDs (review-0…review-14) via building_posts .in('id', …) —
+      // review-15 is NOT yet fetched.
       expect(mocks.mockSupabase.from).toHaveBeenCalledWith('user_buildings');
-      expect(mocks.mockSupabase.from).toHaveBeenCalledWith('building_posts');
+      const fetchedPage2Posts = () =>
+          mocks.mockChain.in.mock.calls.some(
+              ([col, ids]) =>
+                  col === 'id' && Array.isArray(ids) && ids.includes('review-15'),
+          );
+      expect(fetchedPage2Posts()).toBe(false);
 
-      const buildingPostsCallsBefore = mocks.mockSupabase.from.mock.calls.filter(
-          (c) => c[0] === 'building_posts',
-      ).length;
-
-      // Simulate Scroll to bottom (Intersection Observer visible) → triggers the
-      // next-page fetch, which re-queries building_posts for the second slice.
+      // Simulate Scroll to bottom (Intersection Observer visible)
       mockIsVisible = true;
       rerender(<QueryClientProvider client={queryClient}>{profileTree()}</QueryClientProvider>);
 
+      // Page 1 fetches the next slice of post IDs (review-15…review-19).
       await waitFor(() => {
-          const buildingPostsCallsAfter = mocks.mockSupabase.from.mock.calls.filter(
-              (c) => c[0] === 'building_posts',
-          ).length;
-          expect(buildingPostsCallsAfter).toBeGreaterThan(buildingPostsCallsBefore);
+          expect(fetchedPage2Posts()).toBe(true);
       });
   });
 

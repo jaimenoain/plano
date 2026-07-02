@@ -177,16 +177,17 @@ describe('FilterDrawer', () => {
     cleanup();
   });
 
-  it('renders "Curators & friends" section in Discover mode', () => {
+  it('renders "Curators & Friends" section in Discover mode', () => {
     (MapContext.useMapContext as Mock).mockReturnValue(defaultMapContext);
 
     render(<FilterDrawer />);
 
+    // Heading now renders as "Curators & friends" (lowercase f) in DiscoveryFiltersPanel.
     expect(screen.getByText('Curators & friends')).toBeDefined();
     expect(screen.getByTestId('contact-picker')).toBeDefined();
   });
 
-  it('hides "Curators & friends" section in Library mode', () => {
+  it('hides "Curators & Friends" section in Library mode', () => {
     (MapContext.useMapContext as Mock).mockReturnValue(defaultMapContext);
 
     (BuildingSearch.useBuildingSearch as Mock).mockReturnValue({
@@ -210,6 +211,9 @@ describe('FilterDrawer', () => {
       expect(screen.getByText('Company')).toBeDefined();
       expect(screen.getByText('Role')).toBeDefined();
       expect(screen.getByTestId('company-map-filter')).toBeDefined();
+      // Role labels are derived from CREDIT_ROLES via formatCreditRoleLabel
+      // (split on "_", capitalize each word): structural_engineering →
+      // "Structural Engineering", design_architecture → "Design Architecture".
       expect(screen.getByText('Structural Engineering')).toBeDefined();
       expect(screen.getByText('Design Architecture')).toBeDefined();
     });
