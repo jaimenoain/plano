@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { createTestQueryClient } from "@/test/utils";
 import { AdminSidebar } from "./AdminSidebar";
 
 vi.mock("@/features/auth/hooks/useAuth", () => ({
@@ -28,9 +29,7 @@ describe("AdminSidebar (QA 8.2 entity claims)", () => {
   });
 
   it("lists Entity claims → /admin/claims and does not reference Architect claims", () => {
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
-    });
+    const queryClient = createTestQueryClient();
     render(
       <QueryClientProvider client={queryClient}>
         <MemoryRouter>

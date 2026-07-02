@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { AdminSidebar } from './AdminSidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { createTestQueryClient } from '@/test/utils';
 import { BrowserRouter } from 'react-router';
 
 const mocks = vi.hoisted(() => {
@@ -34,9 +35,7 @@ describe('AdminSidebar Sign Out', () => {
   });
 
   it('should call signOut and navigate to / when sign out is clicked', async () => {
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false } },
-    });
+    const queryClient = createTestQueryClient();
     render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>

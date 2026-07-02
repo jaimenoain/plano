@@ -4,31 +4,17 @@ import { join } from "node:path";
 
 const migrationsDir = join(process.cwd(), "supabase/migrations");
 
-function latestMigrationDefining(fnName: string): string {
-  const files = readdirSync(migrationsDir)
-    .filter((f) => f.endsWith(".sql"))
-    .sort()
-    .reverse();
-  for (const f of files) {
-    const body = readFileSync(join(migrationsDir, f), "utf8");
-    if (
-      body.includes(`FUNCTION public.${fnName}`) ||
-      body.includes(`FUNCTION ${fnName}`)
-    ) {
-      return body;
-    }
-  }
-  return "";
-}
-
-// The one-time foundation DDL (search_vector column, GIN/trigram indexes, backfill
-// trigger) lives only in the EARLIEST migration that first defines the function.
-// Later migrations legitimately CREATE OR REPLACE search_buildings_v2 without
-// re-declaring that DDL, so structural assertions must target the foundation file.
-function earliestMigrationDefining(fnName: string): string {
+// Returns the body of a migration that defines `fnName`. `order: "latest"` finds
+// the most recent definition (the live function body); `order: "earliest"` finds
+// the foundation migration. The one-time foundation DDL (search_vector column,
+// GIN/trigram indexes, backfill trigger) lives only in the EARLIEST migration —
+// later migrations legitimately CREATE OR REPLACE the function without re-declaring
+// it — so structural assertions must target the foundation file.
+function migrationDefining(fnName: string, order: "earliest" | "latest"): string {
   const files = readdirSync(migrationsDir)
     .filter((f) => f.endsWith(".sql"))
     .sort();
+  if (order === "latest") files.reverse();
   for (const f of files) {
     const body = readFileSync(join(migrationsDir, f), "utf8");
     if (
@@ -42,8 +28,8 @@ function earliestMigrationDefining(fnName: string): string {
 }
 
 describe("search_buildings_v2 migration (Phase 1)", () => {
-  const sql = latestMigrationDefining("search_buildings_v2");
-  const foundationSql = earliestMigrationDefining("search_buildings_v2");
+  const sql = migrationDefining("search_buildings_v2", "latest");
+  const foundationSql = migrationDefining("search_buildings_v2", "earliest");
 
   it("migration exists and defines search_buildings_v2", () => {
     expect(sql.length).toBeGreaterThan(0);
@@ -96,10 +82,14 @@ describe("search_buildings_v2 migration (Phase 1)", () => {
   });
 
   it("is SECURITY DEFINER with correct search_path", () => {
-    // Every definition must stay SECURITY DEFINER; the foundation pins the exact
-    // `SET search_path = public, extensions` form (later migrations restate it
-    // using the equivalent `SET search_path TO 'public', 'extensions'` syntax).
+    // Every definition must stay SECURITY DEFINER AND pin search_path (a mutable
+    // search_path on a SECURITY DEFINER function is a search-path-injection hazard).
+    // The latest definition must still pin it in some form — foundation uses
+    // `SET search_path = public, extensions`, later migrations the equivalent
+    // `SET search_path TO 'public', 'extensions'` — so the live function is never
+    // allowed to ship without it.
     expect(sql).toMatch(/SECURITY DEFINER/);
+    expect(sql).toMatch(/SET search_path\s*(=|TO)\s/i);
     expect(foundationSql).toMatch(/SET search_path = public, extensions/);
   });
 
@@ -123,7 +113,7 @@ describe("search_buildings_v2 migration (Phase 1)", () => {
 });
 
 describe("update_building_search_vector trigger function (Phase 1)", () => {
-  const sql = latestMigrationDefining("update_building_search_vector");
+  const sql = migrationDefining("update_building_search_vector", "latest");
 
   it("migration defines the trigger function", () => {
     expect(sql).toMatch(/FUNCTION public\.update_building_search_vector/);

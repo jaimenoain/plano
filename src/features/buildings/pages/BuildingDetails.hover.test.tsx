@@ -213,11 +213,11 @@ describe('BuildingDetails Rating Hover', () => {
     // wrapping flex container.
 
     await waitFor(() => {
-        const circles = container.querySelectorAll('svg.h-7.w-7');
+        const circles = container.querySelectorAll('button.cursor-pointer svg.h-7.w-7');
         expect(circles.length).toBe(3);
     });
 
-    const circles = container.querySelectorAll('svg.h-7.w-7');
+    const circles = container.querySelectorAll('button.cursor-pointer svg.h-7.w-7');
     const circle1 = circles[0];
     const circle2 = circles[1];
     const circle3 = circles[2];

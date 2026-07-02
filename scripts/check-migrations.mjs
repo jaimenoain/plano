@@ -7,27 +7,36 @@
  *   - timestamp is 8 digits (YYYYMMDD) or 14 digits (YYYYMMDDhhmmss)
  *   - description is lowercase alphanumeric + underscores
  *
- * Warn-only (never fails the build): duplicate timestamps and non-monotonic
- * ordering. These already exist in the repo's history and renaming an applied
- * migration is unsafe — so we surface them without blocking.
+ * Warn-only (never fails the build): duplicate timestamps. These already exist
+ * in the repo's history and renaming an applied migration is unsafe — so we
+ * surface them without blocking.
  *
  * LEGACY_EXCEPTIONS grandfathers pre-existing files that predate the convention.
  * Do NOT add to this list to sidestep the check for new migrations — name them
  * correctly instead.
  */
 
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 const MIGRATIONS_DIR = resolve("supabase/migrations");
+
+if (!existsSync(MIGRATIONS_DIR)) {
+  console.error(
+    `[check-migrations] ${MIGRATIONS_DIR} not found — run this from the repo root.`,
+  );
+  process.exit(1);
+}
 
 // Pre-existing files (before the naming convention) that we deliberately allow.
 const LEGACY_EXCEPTIONS = new Set(["add_slug_to_groups.sql"]);
 
 const NAME_RE = /^\d{8}(\d{6})?_[a-z0-9_]+\.sql$/;
 
-const files = readdirSync(MIGRATIONS_DIR)
-  .filter((f) => f.endsWith(".sql"))
+// Only regular files — a directory named "*.sql" must not be treated as a migration.
+const files = readdirSync(MIGRATIONS_DIR, { withFileTypes: true })
+  .filter((entry) => entry.isFile() && entry.name.endsWith(".sql"))
+  .map((entry) => entry.name)
   .sort();
 
 const violations = [];
