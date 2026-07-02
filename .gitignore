@@ -23,6 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 test-results/
+coverage/
 *.tsbuildinfo
 .env
 .react-router/
