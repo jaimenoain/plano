@@ -30,3 +30,7 @@ coverage/
 .vercel
 build/
 .design-sync/ds-styles.css
+
+# Design-sync local scratch output
+.ds-sync/
+ds-bundle/
