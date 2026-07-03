@@ -2,6 +2,15 @@
 
 Repo-specific gotchas and decisions for syncing `src/components/ui/` (shadcn/ui) to Claude Design.
 
+## ▶ STATUS FOR THE NEXT RUN (read this first)
+
+The full sync is **already built, authored, verified, and committed** — only the **upload** is left (it was blocked by missing Claude Design auth in a headless session). When re-run from an authorized interactive terminal:
+
+- `config.json` is complete but has **no `projectId`** → still a **first-time upload**: create a NEW Claude Design project and push into it.
+- **Do NOT re-author or re-grade.** All 50 `previews/*.tsx` and all 50 `.cache/review/*.grade.json` are committed; `package-capture` carries every grade forward (sources unchanged). Just: re-stage scripts (`cp -r`) + `npm i` in `.ds-sync/`, run `cfg.buildCmd`, run the driver (`resync.mjs`, no `--remote`), confirm `ok:true`/`bad:0`, then create project + upload.
+- Last local driver verdict: `ok:true`, 50/50 render clean, 0 floor cards, `upload.any:true`, `deletePaths:[]`.
+- ⚠️ A concurrent **Tailwind v4 migration** exists on branch `chore/tailwind-v4`. This sync targets **Tailwind v3.4** (`tailwind.ds.config.ts` + v3 CLI). If v4 lands on main, `cfg.buildCmd` and the DS Tailwind config must be reworked for v4 before re-syncing.
+
 ## Setup / architecture
 
 - **Not a published package.** The DS is the app's shadcn/ui library at `src/components/ui/*.tsx`, using `@/` path aliases. There is no dist library entry, so we bundle via a **barrel entry** at `.design-sync/entry.mjs` (`export *` from each ui file). Build with `--entry ./.design-sync/entry.mjs`; this also anchors `PKG_DIR` at the repo root (walk-up finds package.json name "plano"). Do NOT drop `--entry` (synth mode then resolves `PKG_DIR=node_modules/plano`, which doesn't exist).
