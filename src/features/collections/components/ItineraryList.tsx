@@ -266,7 +266,7 @@ function ItinerarySegment({
           {readOnlyPopoverOpen ? (
             <Popover>
               <PopoverTrigger asChild>
-                <button className="shrink-0 bg-surface-default border border-border-default rounded-full p-1 shadow-sm cursor-help">
+                <button className="shrink-0 bg-surface-default border border-border-default rounded-full p-1 shadow-xs cursor-help">
                   <Icon className="w-3 h-3 text-brand-primary" />
                 </button>
               </PopoverTrigger>
@@ -295,7 +295,7 @@ function ItinerarySegment({
               </PopoverContent>
             </Popover>
           ) : (
-            <div className="shrink-0 bg-surface-default border border-border-default rounded-full p-1 shadow-sm">
+            <div className="shrink-0 bg-surface-default border border-border-default rounded-full p-1 shadow-xs">
               <Icon className="w-3 h-3 text-text-secondary" />
             </div>
           )}
@@ -329,7 +329,7 @@ function ItinerarySegment({
 
         <Popover open={isOpen} onOpenChange={handleOpenChange}>
           <PopoverTrigger asChild>
-            <button className="shrink-0 bg-surface-default border border-border-default rounded-full p-1 shadow-sm hover:bg-surface-muted cursor-pointer">
+            <button className="shrink-0 bg-surface-default border border-border-default rounded-full p-1 shadow-xs hover:bg-surface-muted cursor-pointer">
               <Icon className="w-3 h-3 text-text-secondary" />
             </button>
           </PopoverTrigger>

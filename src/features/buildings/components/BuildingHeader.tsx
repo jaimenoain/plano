@@ -111,7 +111,7 @@ export const BuildingHeader = ({
                             type="number"
                             value={yearValue}
                             onChange={(e) => onYearChange?.(parseInt(e.target.value))}
-                            className="w-24 max-w-[8rem] h-8 text-sm"
+                            className="w-24 max-w-32 h-8 text-sm"
                             placeholder="Year"
                         />
                     </div>

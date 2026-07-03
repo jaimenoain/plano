@@ -136,7 +136,7 @@ export function BuildingMap({
 
         {/* Loading Indicator */}
         {isLoading && (
-            <div className="absolute top-0 left-0 right-0 h-1 bg-surface-default z-[100] overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-surface-default z-100 overflow-hidden">
                 <div className="h-full w-full bg-brand-primary animate-pulse origin-left" />
             </div>
         )}
@@ -162,7 +162,7 @@ export function BuildingMap({
                   }}
                 >
                   <div
-                    className={`${sizeClass} rounded-full bg-brand-primary text-brand-primary-foreground shadow-lg flex items-center justify-center font-bold transition-transform duration-200 hover:scale-110 hover:z-[50] cursor-pointer`}
+                    className={`${sizeClass} rounded-full bg-brand-primary text-brand-primary-foreground shadow-lg flex items-center justify-center font-bold transition-transform duration-200 hover:scale-110 hover:z-50 cursor-pointer`}
                   >
                     {cluster.count >= 1000 ? `${(cluster.count / 1000).toFixed(1)}k` : cluster.count}
                   </div>
@@ -225,7 +225,7 @@ export function BuildingMap({
                 e.stopPropagation();
                 setIsSatellite(!isSatellite);
             }}
-            className="absolute top-2 left-2 p-2 bg-surface-default/90 backdrop-blur rounded-md border shadow-sm hover:bg-surface-muted transition-colors z-10 flex items-center gap-2"
+            className="absolute top-2 left-2 p-2 bg-surface-default/90 backdrop-blur-sm rounded-md border shadow-xs hover:bg-surface-muted transition-colors z-10 flex items-center gap-2"
             title={isSatellite ? "Show Map" : "Show Satellite"}
         >
             <Layers className="w-4 h-4" />
@@ -239,7 +239,7 @@ export function BuildingMap({
                 e.stopPropagation();
                 onToggleExpand();
             }}
-            className="absolute top-2 right-2 p-2 bg-surface-default/90 backdrop-blur rounded-md border shadow-sm hover:bg-surface-muted transition-colors z-10"
+            className="absolute top-2 right-2 p-2 bg-surface-default/90 backdrop-blur-sm rounded-md border shadow-xs hover:bg-surface-muted transition-colors z-10"
             title={isExpanded ? "Collapse Map" : "Expand Map"}
         >
             {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}

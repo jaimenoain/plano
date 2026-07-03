@@ -33,7 +33,7 @@ export function EventDateTile({ iso, className }: { iso: string; className?: str
 export function EventGridCardSkeleton({ className }: { className?: string }) {
   return (
     <div className={cn("animate-pulse", className)}>
-      <div className="aspect-[4/3] w-full bg-surface-muted" />
+      <div className="aspect-4/3 w-full bg-surface-muted" />
       <div className="space-y-2 pt-3">
         <div className="h-5 w-3/4 rounded-sm bg-surface-muted" />
         <div className="h-4 w-1/2 rounded-sm bg-surface-muted" />
@@ -51,9 +51,9 @@ export function EventGridCard({ event }: { event: EventCardDTO }) {
   return (
     <Link
       to={getEventUrl(event)}
-      className="group flex flex-col touch-manipulation transition-colors hover:bg-surface-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
+      className="group flex flex-col touch-manipulation transition-colors hover:bg-surface-muted/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-muted">
+      <div className="relative aspect-4/3 w-full overflow-hidden bg-surface-muted">
         {showCover ? (
           <>
             <img

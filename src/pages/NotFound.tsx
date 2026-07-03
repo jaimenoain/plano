@@ -14,7 +14,7 @@ export const meta: MetaFunction = () => [
 ];
 
 const ScopeReductionGraphic = () => (
-  <div className="relative mx-auto mb-8 aspect-[4/3] w-full max-w-[320px]">
+  <div className="relative mx-auto mb-8 aspect-4/3 w-full max-w-[320px]">
     <svg
       viewBox="0 0 400 300"
       className="h-full w-full overflow-visible text-text-primary"

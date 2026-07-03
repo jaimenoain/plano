@@ -87,7 +87,7 @@ export function BuildingDetailDrawer({ cluster, onClose }: BuildingDetailDrawerP
   if (isSpecial) {
     return (
       <div
-        className="absolute right-0 top-0 z-[70] flex h-full w-full max-w-sm flex-col border-l border-border-default bg-surface-card animate-in slide-in-from-right-8 duration-200"
+        className="absolute right-0 top-0 z-70 flex h-full w-full max-w-sm flex-col border-l border-border-default bg-surface-card animate-in slide-in-from-right-8 duration-200"
         role="dialog"
         aria-label={cluster.name || "Building details"}
       >
@@ -110,7 +110,7 @@ export function BuildingDetailDrawer({ cluster, onClose }: BuildingDetailDrawerP
 
   return (
     <div
-      className="absolute right-0 top-0 z-[70] flex h-full w-full max-w-md flex-col border-l border-border-default bg-surface-card animate-in slide-in-from-right-8 duration-200"
+      className="absolute right-0 top-0 z-70 flex h-full w-full max-w-md flex-col border-l border-border-default bg-surface-card animate-in slide-in-from-right-8 duration-200"
       role="dialog"
       aria-label={cluster.name || "Building details"}
     >

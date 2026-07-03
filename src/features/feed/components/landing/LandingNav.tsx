@@ -8,7 +8,7 @@ export function LandingNav() {
   const navigate = useNavigate();
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-border-default bg-[rgba(250,250,250,0.95)] px-5 backdrop-blur-sm md:px-8">
+    <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-border-default bg-[rgba(250,250,250,0.95)] px-5 backdrop-blur-xs md:px-8">
       <Link
         to="/"
         aria-label="Plano · Home"

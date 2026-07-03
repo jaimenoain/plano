@@ -95,7 +95,7 @@ export function InlineReviewEditor({ initialContent, isOwnProfile, onSave }: Inl
                 <span className="truncate block cursor-default">{content}</span>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-sm text-xs z-50">
-                <p className="whitespace-normal break-words">{content}</p>
+                <p className="whitespace-normal wrap-break-word">{content}</p>
                 </TooltipContent>
             </Tooltip>
           ) : (

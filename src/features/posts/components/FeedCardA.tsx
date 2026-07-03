@@ -138,7 +138,7 @@ export function FeedCardA({
       {isPullQuote ? (
         /* Pull-quote layout: meta → blockquote → author → footer */
         <>
-          <blockquote className="mt-6 text-[clamp(1.75rem,3vw,2.5rem)] font-medium leading-[1.15] tracking-[-0.025em] text-text-primary max-w-[24ch]">
+          <blockquote className="mt-6 text-[clamp(1.75rem,3vw,2.5rem)] font-medium leading-[1.15] tracking-tight text-text-primary max-w-[24ch]">
             <span className="text-text-disabled mr-[0.05em]" aria-hidden>&#x201C;</span>
             {entry.content}
             <span

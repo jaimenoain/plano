@@ -236,7 +236,7 @@ export function BuildingDrawerBody({ cluster, onClose, layout }: BuildingDrawerB
         type="button"
         onClick={onClose}
         aria-label="Close details"
-        className="absolute right-2 top-2 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-border-default bg-surface-card/80 text-text-secondary backdrop-blur transition-colors hover:bg-surface-muted hover:text-text-primary"
+        className="absolute right-2 top-2 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-border-default bg-surface-card/80 text-text-secondary backdrop-blur-sm transition-colors hover:bg-surface-muted hover:text-text-primary"
       >
         <X className="h-4 w-4" />
       </button>
@@ -246,9 +246,9 @@ export function BuildingDrawerBody({ cluster, onClose, layout }: BuildingDrawerB
         <div className="relative w-full bg-surface-muted">
           {slides.length > 0 ? (
             <Carousel opts={{ align: 'start' }} setApi={setApi} className="w-full">
-              <CarouselContent className="!ml-0">
+              <CarouselContent className="ml-0!">
                 {slides.map((img) => (
-                  <CarouselItem key={img.id} className="!pl-0">
+                  <CarouselItem key={img.id} className="pl-0!">
                     <div className="h-64 w-full bg-surface-muted sm:h-72">
                       <img
                         src={img.url}
@@ -262,9 +262,9 @@ export function BuildingDrawerBody({ cluster, onClose, layout }: BuildingDrawerB
               </CarouselContent>
               {slides.length > 1 && (
                 <>
-                  <CarouselPrevious className="left-2 h-8 w-8 border border-border-default bg-surface-card/80 text-text-primary backdrop-blur hover:bg-surface-card" />
-                  <CarouselNext className="right-2 h-8 w-8 border border-border-default bg-surface-card/80 text-text-primary backdrop-blur hover:bg-surface-card" />
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full border border-border-default bg-surface-card/80 px-2.5 py-0.5 text-2xs text-text-secondary backdrop-blur">
+                  <CarouselPrevious className="left-2 h-8 w-8 border border-border-default bg-surface-card/80 text-text-primary backdrop-blur-sm hover:bg-surface-card" />
+                  <CarouselNext className="right-2 h-8 w-8 border border-border-default bg-surface-card/80 text-text-primary backdrop-blur-sm hover:bg-surface-card" />
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full border border-border-default bg-surface-card/80 px-2.5 py-0.5 text-2xs text-text-secondary backdrop-blur-sm">
                     {slideIndex + 1} / {slides.length}
                   </div>
                 </>

@@ -20,7 +20,7 @@ export function ContentIntelligenceZone({ trendingBuildings }: ContentIntelligen
             );
             return (
             <div key={building.building_id} className="flex flex-col items-center text-center space-y-2">
-              <div className="relative aspect-[2/3] w-full overflow-hidden rounded-none bg-surface-muted">
+              <div className="relative aspect-2/3 w-full overflow-hidden rounded-none bg-surface-muted">
                 {imageUrl ? (
                   <img
                     src={imageUrl}

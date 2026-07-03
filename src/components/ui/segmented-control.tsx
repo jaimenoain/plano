@@ -28,7 +28,7 @@ export function SegmentedControl({ options, value, onValueChange, className, nam
             key={option.value}
             onClick={() => onValueChange(option.value)}
             className={cn(
-              "relative z-10 flex-1 px-3 py-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+              "relative z-10 flex-1 px-3 py-1 text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
               isActive ? "text-text-primary" : "text-text-secondary hover:text-text-primary",
             )}
             type="button"
@@ -36,7 +36,7 @@ export function SegmentedControl({ options, value, onValueChange, className, nam
             {isActive && (
               <motion.div
                 layoutId={layoutId}
-                className="absolute inset-0 z-[-1] rounded-sm bg-surface-card shadow-sm"
+                className="absolute inset-0 z-[-1] rounded-sm bg-surface-card shadow-xs"
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
               />
             )}

@@ -334,7 +334,7 @@ function CollectionMapGLContent({
   }
 
   const mapContent = (
-    <div className={`relative h-full w-full overflow-hidden bg-surface-default ${isExpanded ? "fixed inset-0 z-[9999]" : ""}`}>
+    <div className={`relative h-full w-full overflow-hidden bg-surface-default ${isExpanded ? "fixed inset-0 z-9999" : ""}`}>
         <MapGL
             ref={mapRef}
             {...viewState}
@@ -380,7 +380,7 @@ function CollectionMapGLContent({
                 e.stopPropagation();
                 setIsSatellite(!isSatellite);
             }}
-            className="flex items-center gap-2 rounded-sm border border-border-default bg-surface-card/90 p-2 shadow-md backdrop-blur-sm transition-colors hover:bg-surface-muted"
+            className="flex items-center gap-2 rounded-sm border border-border-default bg-surface-card/90 p-2 shadow-md backdrop-blur-xs transition-colors hover:bg-surface-muted"
             title={isSatellite ? "Show Map" : "Show Satellite"}
           >
             <Layers className="h-4 w-4 shrink-0" />
@@ -400,7 +400,7 @@ function CollectionMapGLContent({
                 e.stopPropagation();
                 setIsExpanded(!isExpanded);
             }}
-            className="absolute top-2 right-2 z-40 rounded-sm border border-border-default bg-surface-card/90 p-2 shadow-md backdrop-blur-sm transition-colors hover:bg-surface-muted"
+            className="absolute top-2 right-2 z-40 rounded-sm border border-border-default bg-surface-card/90 p-2 shadow-md backdrop-blur-xs transition-colors hover:bg-surface-muted"
             title={isExpanded ? "Collapse Map" : "Expand Map"}
         >
             {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}

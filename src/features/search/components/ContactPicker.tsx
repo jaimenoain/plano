@@ -107,7 +107,7 @@ export function ContactPicker({
               {contact.username}
               <button
                 type="button"
-                className="ml-1 rounded-full outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2"
+                className="ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-brand-primary focus:ring-offset-2"
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -133,7 +133,7 @@ export function ContactPicker({
                     }}
                     placeholder={placeholder}
                     autoComplete="off"
-                    className="ml-2 flex-1 bg-transparent outline-none placeholder:text-text-secondary min-w-[50px]"
+                    className="ml-2 flex-1 bg-transparent outline-hidden placeholder:text-text-secondary min-w-[50px]"
                   />
                 </div>
               </div>

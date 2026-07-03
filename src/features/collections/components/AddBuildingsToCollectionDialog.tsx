@@ -156,7 +156,7 @@ function PlacesAutocompleteFields({
             placeholder="Search for a place to add…"
             autoComplete="off"
             className={cn(
-              "flex h-10 w-full rounded-sm border-0 bg-brand-secondary pl-9 pr-3 py-2 text-sm shadow-none outline-none ring-0",
+              "flex h-10 w-full rounded-sm border-0 bg-brand-secondary pl-9 pr-3 py-2 text-sm shadow-none outline-hidden ring-0",
               "placeholder:text-text-secondary focus-visible:ring-1 focus-visible:ring-brand-primary focus-visible:ring-offset-0",
               "disabled:cursor-not-allowed disabled:opacity-50",
             )}
@@ -168,7 +168,7 @@ function PlacesAutocompleteFields({
         {status === "OK" || status === "ZERO_RESULTS" ? (
           <CommandList className="max-h-none overflow-visible p-0">
             {status === "OK" && data.length > 0 ? (
-              <CommandGroup heading="Suggestions" className="[&_[cmdk-group-heading]]:px-0 [&_[cmdk-group-heading]]:pb-2">
+              <CommandGroup heading="Suggestions" className="**:[[cmdk-group-heading]]:px-0 **:[[cmdk-group-heading]]:pb-2">
                 {data.map(({ place_id, description, structured_formatting }) => (
                   <CommandItem
                     key={place_id}
@@ -707,7 +707,7 @@ toast.error("Failed to add building");
                         <Button
                           size="sm"
                           variant={isAdded ? "secondary" : "default"}
-                          className="h-8 w-8 p-0 shrink-0 shadow-sm"
+                          className="h-8 w-8 p-0 shrink-0 shadow-xs"
                           disabled={isAdded || addMutation.isPending || hideMutation.isPending}
                           onClick={(e) => {
                             e.stopPropagation();

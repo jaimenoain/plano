@@ -362,7 +362,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
     // `relative` and `fixed` must be mutually exclusive: Tailwind generates
     // `.relative` after `.fixed` in its output, so if both classes are present
     // `position: relative` wins and the fixed/fullscreen overlay never works.
-    <div className={`${isExpanded ? "fixed inset-0 z-[9999]" : "relative z-0"} h-full w-full overflow-hidden bg-surface-default`}>
+    <div className={`${isExpanded ? "fixed inset-0 z-9999" : "relative z-0"} h-full w-full overflow-hidden bg-surface-default`}>
       <Map
         ref={mapRef}
         {...viewState}
@@ -407,7 +407,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
       <BuildingDetailDrawer cluster={selectedCluster} onClose={handleCloseDetail} />
 
       {showEmptyMessage && !isLoading && !isFetching && bounds && visibleClustersCount === 0 && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-surface-card/95 backdrop-blur-sm border border-border-default p-5 text-center max-w-xs animate-in fade-in zoom-in duration-300">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-surface-card/95 backdrop-blur-xs border border-border-default p-5 text-center max-w-xs animate-in fade-in zoom-in duration-300">
           <p className="text-sm text-text-primary mb-3">
             No buildings in this area
           </p>
@@ -422,14 +422,14 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
       )}
 
       {/* ── Top-left: Satellite toggle & Gap Callout ── */}
-      <div className="absolute top-2 left-2 flex flex-col gap-2 z-[60]">
+      <div className="absolute top-2 left-2 flex flex-col gap-2 z-60">
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             setIsSatellite(!isSatellite);
           }}
-          className="p-2 bg-surface-card/90 backdrop-blur-sm border border-border-default hover:bg-surface-muted transition-colors flex items-center gap-2"
+          className="p-2 bg-surface-card/90 backdrop-blur-xs border border-border-default hover:bg-surface-muted transition-colors flex items-center gap-2"
           title={isSatellite ? "Show Map" : "Show Satellite"}
         >
           <Layers className="w-4 h-4" strokeWidth={1.5} />
@@ -473,7 +473,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
           e.stopPropagation();
           setIsExpanded(!isExpanded);
         }}
-        className="absolute top-2 right-2 p-2 bg-surface-card/90 backdrop-blur-sm border border-border-default hover:bg-surface-muted transition-colors z-[60]"
+        className="absolute top-2 right-2 p-2 bg-surface-card/90 backdrop-blur-xs border border-border-default hover:bg-surface-muted transition-colors z-60"
         title={isExpanded ? "Collapse Map" : "Expand Map"}
       >
         {isExpanded ? (

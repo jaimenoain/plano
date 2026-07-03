@@ -371,7 +371,7 @@ toast({ variant: "destructive", description: "Failed to delete folder." });
               ) : folders.length === 0 ? (
                 <p className="text-center py-8 text-text-secondary">No folders found.</p>
               ) : (
-                <ScrollArea className="h-[40vh] [&>[data-radix-scroll-area-viewport]>div]:!block">
+                <ScrollArea className="h-[40vh] [&>[data-radix-scroll-area-viewport]>div]:block!">
                   <div className="space-y-2 p-1">
                     {folders.map(f => (
                       <div
@@ -409,7 +409,7 @@ toast({ variant: "destructive", description: "Failed to delete folder." });
                          <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
                      </div>
                  ) : (
-                     <ScrollArea className="h-[50vh] pr-4 [&>[data-radix-scroll-area-viewport]>div]:!block">
+                     <ScrollArea className="h-[50vh] pr-4 [&>[data-radix-scroll-area-viewport]>div]:block!">
                          <div className="space-y-2">
                              {availableCollections.length === 0 ? (
                                  <p className="text-center text-text-secondary py-4">No collections found.</p>

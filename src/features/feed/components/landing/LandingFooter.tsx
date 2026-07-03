@@ -26,7 +26,7 @@ export function LandingFooter() {
             href="https://www.instagram.com/plano_map/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[11px] font-medium tracking-[0.1em] uppercase text-text-disabled hover:text-text-secondary transition-colors"
+            className="text-[11px] font-medium tracking-widest uppercase text-text-disabled hover:text-text-secondary transition-colors"
           >
             Instagram
           </a>
@@ -35,7 +35,7 @@ export function LandingFooter() {
             href="https://x.com/planoapp"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[11px] font-medium tracking-[0.1em] uppercase text-text-disabled hover:text-text-secondary transition-colors"
+            className="text-[11px] font-medium tracking-widest uppercase text-text-disabled hover:text-text-secondary transition-colors"
           >
             X
           </a>

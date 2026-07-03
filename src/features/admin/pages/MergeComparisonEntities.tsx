@@ -336,7 +336,7 @@ export default function MergeComparisonEntities() {
           value={edits[field] ?? ""}
           onChange={(e) => setEdits((prev) => ({ ...prev, [field]: e.target.value }))}
           placeholder="—"
-          className="w-full border-0 bg-transparent p-0 text-sm font-medium text-text-primary placeholder:text-text-secondary/30 focus:outline-none focus:ring-0"
+          className="w-full border-0 bg-transparent p-0 text-sm font-medium text-text-primary placeholder:text-text-secondary/30 focus:outline-hidden focus:ring-0"
         />
       </div>
     );
@@ -378,7 +378,7 @@ export default function MergeComparisonEntities() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr,80px,1fr] gap-8 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_80px_1fr] gap-8 items-start">
 
                 {/* TARGET COLUMN (KEEP) */}
                 <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>

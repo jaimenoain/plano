@@ -44,7 +44,7 @@ export function DiscoveryBuildingCard({
     <div
       className={cn(
         "relative shrink-0 overflow-hidden bg-surface-muted",
-        compact ? "w-14 h-14 rounded-md" : "w-32 aspect-[4/3]",
+        compact ? "w-14 h-14 rounded-md" : "w-32 aspect-4/3",
       )}
     >
       <img
@@ -150,7 +150,7 @@ export function DiscoveryBuildingCard({
               </Badge>
             )}
             {building.winner_award_name && (
-              <Badge variant="secondary" className="flex items-center gap-1 font-semibold text-[10px] uppercase tracking-wider px-2 py-0.5 h-auto bg-amber-500/10 text-amber-600 border-amber-500/20 border max-w-full truncate shadow-sm">
+              <Badge variant="secondary" className="flex items-center gap-1 font-semibold text-[10px] uppercase tracking-wider px-2 py-0.5 h-auto bg-amber-500/10 text-amber-600 border-amber-500/20 border max-w-full truncate shadow-xs">
                 <Medal className="h-3 w-3 shrink-0" />
                 {building.winner_award_name}
               </Badge>

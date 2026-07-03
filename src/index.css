@@ -1,6 +1,239 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@plugin 'tailwindcss-animate';
+
+@custom-variant dark (&:is(.dark *));
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+  @media (width >= --theme(--breakpoint-sm)) {
+    max-width: none;
+  }
+  @media (width >= 1400px) {
+    max-width: 1400px;
+  }
+}
+
+@theme {
+  --text-2xs: 0.625rem;
+  --text-2xs--line-height: 0.875rem;
+  --text-2xs-plus: 0.6875rem;
+  --text-2xs-plus--line-height: 0.875rem;
+  --text-5xl: 3rem;
+  --text-5xl--line-height: 3.25rem;
+  --text-6xl: 3.75rem;
+  --text-6xl--line-height: 4rem;
+  --text-7xl: 4.5rem;
+  --text-7xl--line-height: 4.75rem;
+
+  --spacing-collection-mosaic: 10.5rem;
+  --spacing-mosaic-gap: 1.5px;
+  --spacing-search-serp: 25rem;
+
+  --container-search-serp-alt: 12.5rem;
+
+  --aspect-card-hero: var(--card-image-ratio-hero);
+  --aspect-card-standard: var(--card-image-ratio-standard);
+  --aspect-card-compact: var(--card-image-ratio-compact);
+
+  --line-clamp-card-snippet: var(--card-text-clamp-snippet);
+  --line-clamp-card-body: var(--card-text-clamp-body);
+
+  --shadow-card-elevated: var(--card-elevation-elevated);
+
+  --font-sans: Inter, system-ui, sans-serif;
+  --font-mono: Space Mono, monospace;
+
+  --color-border: var(--border-default);
+  --color-input: var(--border-default);
+  --color-ring: var(--brand-primary);
+  --color-background: var(--surface-default);
+  --color-foreground: var(--text-primary);
+
+  --color-primary: var(--brand-primary);
+  --color-primary-foreground: var(--brand-primary-foreground);
+
+  --color-secondary: var(--surface-muted);
+  --color-secondary-foreground: var(--text-primary);
+
+  --color-destructive: var(--feedback-destructive);
+  --color-destructive-foreground: var(--feedback-destructive-foreground);
+
+  --color-muted: var(--surface-muted);
+  --color-muted-foreground: var(--text-secondary);
+
+  --color-accent: var(--brand-secondary);
+  --color-accent-foreground: var(--brand-secondary-foreground);
+
+  --color-popover: var(--surface-overlay);
+  --color-popover-foreground: var(--text-primary);
+
+  --color-card: var(--surface-card);
+  --color-card-foreground: var(--text-primary);
+
+  --color-sidebar: var(--surface-muted);
+  --color-sidebar-foreground: var(--text-primary);
+  --color-sidebar-primary: var(--brand-primary);
+  --color-sidebar-primary-foreground: var(--brand-primary-foreground);
+  --color-sidebar-accent: var(--brand-secondary);
+  --color-sidebar-accent-foreground: var(--brand-secondary-foreground);
+  --color-sidebar-border: var(--border-default);
+  --color-sidebar-ring: var(--brand-primary);
+
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-hover: var(--brand-primary-hover);
+  --color-brand-primary-foreground: var(--brand-primary-foreground);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-secondary-foreground: var(--brand-secondary-foreground);
+  --color-brand-accent: var(--brand-accent);
+  --color-brand-accent-hover: var(--brand-accent-hover);
+  --color-brand-accent-foreground: var(--brand-accent-foreground);
+  --color-surface-default: var(--surface-default);
+  --color-surface-card: var(--surface-card);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-inverse: var(--surface-inverse);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-border-hairline: var(--border-hairline);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-disabled: var(--text-disabled);
+  --color-text-inverse: var(--text-inverse);
+  --color-feedback-success: var(--feedback-success);
+  --color-feedback-warning: var(--feedback-warning);
+  --color-feedback-destructive: var(--feedback-destructive);
+  --color-feedback-destructive-foreground: var(
+    --feedback-destructive-foreground
+  );
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-ping-large-slow: ping-large-slow 3s cubic-bezier(0, 0, 0.2, 1)
+    infinite;
+  --animate-shake: shake 0.3s ease-in-out;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+  @keyframes ping-large-slow {
+    75%,
+    100% {
+      transform: scale(1.5);
+      opacity: 0;
+    }
+  }
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    25% {
+      transform: translateX(-4px);
+    }
+    75% {
+      transform: translateX(4px);
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility glass {
+  background: color-mix(in srgb, var(--surface-card) 70%, transparent);
+  border-color: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  @apply backdrop-blur-xl border-b;
+}
+
+@utility safe-area-pt {
+  padding-top: env(safe-area-inset-top);
+}
+
+@utility safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility hide-scrollbar {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@utility hairline {
+  border-bottom: 0.5px solid var(--border-default);
+}
+
+@utility overflow-x-scroll-touch {
+  /**
+   * Horizontal strip scrollers (mobile): momentum scrolling + hidden scrollbars.
+   * Use instead of `overflow-x-auto` + ad-hoc scrollbar hiding on touch-heavy rows.
+   */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/*
+ * Global rollout guardrail: push UI toward the new editorial geometry.
+ * Keeps avatar circles untouched while flattening legacy rounded rectangles/shadows.
+ * Plain CSS (not @utility) — these override Tailwind's own rounded and shadow
+ * utilities on descendants of .ds-rollout; !important keeps precedence.
+ */
+.ds-rollout
+  :is(
+    .rounded-sm,
+    .rounded-md,
+    .rounded-lg,
+    .rounded-xl,
+    .rounded-2xl,
+    .rounded-3xl
+  ) {
+  border-radius: 0 !important;
+}
+
+.ds-rollout :is(.shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl) {
+  box-shadow: none !important;
+}
 
 /* Plano Design System - Modern Minimalist High-Contrast Theme */
 
@@ -129,60 +362,6 @@
   ::-webkit-scrollbar-thumb {
     background: var(--border-strong);
     border-radius: var(--radius);
-  }
-}
-
-@layer utilities {
-  .glass {
-    background: color-mix(in srgb, var(--surface-card) 70%, transparent);
-    border-color: color-mix(in srgb, var(--text-primary) 10%, transparent);
-    @apply backdrop-blur-xl border-b;
-  }
-  
-  .safe-area-pt {
-    padding-top: env(safe-area-inset-top);
-  }
-  
-  .safe-area-pb {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-  .hide-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  .hairline {
-    border-bottom: 0.5px solid var(--border-default);
-  }
-
-  /**
-   * Horizontal strip scrollers (mobile): momentum scrolling + hidden scrollbars.
-   * Use instead of `overflow-x-auto` + ad-hoc scrollbar hiding on touch-heavy rows.
-   */
-  .overflow-x-scroll-touch {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .overflow-x-scroll-touch::-webkit-scrollbar {
-    display: none;
-  }
-
-  /*
-   * Global rollout guardrail: push UI toward the new editorial geometry.
-   * Keeps avatar circles untouched while flattening legacy rounded rectangles/shadows.
-   */
-  .ds-rollout :is(.rounded-sm, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl) {
-    border-radius: 0 !important;
-  }
-
-  .ds-rollout :is(.shadow-sm, .shadow-md, .shadow-lg, .shadow-xl, .shadow-2xl) {
-    box-shadow: none !important;
   }
 }
 

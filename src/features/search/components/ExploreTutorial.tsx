@@ -36,7 +36,7 @@ export function ExploreTutorial({
   return (
     <div
       className={cn(
-        "fixed left-0 right-0 z-[55] bg-black/95 backdrop-blur-sm animate-in fade-in duration-500",
+        "fixed left-0 right-0 z-55 bg-black/95 backdrop-blur-xs animate-in fade-in duration-500",
         belowAppTopChrome
           ? "bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:bottom-0 top-[calc(3.5rem+env(safe-area-inset-top,0px))] md:top-16"
           : "inset-0"

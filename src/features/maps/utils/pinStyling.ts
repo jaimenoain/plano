@@ -65,7 +65,7 @@ function getBasePinStyle(item: ClusterResponse, options?: PinOptions): PinStyle 
       shape,
       zIndex: 30,
       size: 24,
-      classes: 'border-white border-2 shadow-sm',
+      classes: 'border-white border-2 shadow-xs',
       backgroundColor,
       showDot: false,
       showContent: true,

@@ -285,7 +285,7 @@ updateLocation(lat, lng, selectedAddress, { city: null, country: null, countryCo
                 e.stopPropagation();
                 setIsSatellite(!isSatellite);
               }}
-              className="bg-surface-default/90 backdrop-blur border border-border-default hover:bg-surface-muted"
+              className="bg-surface-default/90 backdrop-blur-sm border border-border-default hover:bg-surface-muted"
             >
               <Layers className="h-4 w-4 mr-2" />
               {isSatellite ? "Map" : "Satellite"}

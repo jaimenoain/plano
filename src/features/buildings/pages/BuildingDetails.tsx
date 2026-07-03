@@ -122,8 +122,8 @@ const OVERVIEW_STREAM_CHUNK_SIZE = 8;
 
 function RelatedBuildingCard({ b }: { b: RelatedBuilding }) {
   return (
-    <Link to={b.buildingUrl} className="flex-shrink-0 w-40 sm:w-48 group">
-      <div className="aspect-[4/3] w-full overflow-hidden bg-surface-muted">
+    <Link to={b.buildingUrl} className="shrink-0 w-40 sm:w-48 group">
+      <div className="aspect-4/3 w-full overflow-hidden bg-surface-muted">
         {b.imageUrl ? (
           <img
             src={b.imageUrl}
@@ -168,7 +168,7 @@ function RelatedBuildingRow({
   return (
     <section className="mt-12 border-t border-border-default pt-10 min-w-0">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 min-w-0">
-        <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary min-w-0 flex-1 break-words">
+        <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary min-w-0 flex-1 wrap-break-word">
           {title}
         </h2>
         <Link
@@ -181,8 +181,8 @@ function RelatedBuildingRow({
       {isLoading ? (
         <div className="flex gap-4 overflow-x-scroll-touch pb-2">
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="flex-shrink-0 w-40 sm:w-48 space-y-2">
-              <Skeleton className="aspect-[4/3] w-full" />
+            <div key={i} className="shrink-0 w-40 sm:w-48 space-y-2">
+              <Skeleton className="aspect-4/3 w-full" />
               <Skeleton className="h-4 w-4/5" />
               <Skeleton className="h-3 w-2/3" />
             </div>
@@ -355,10 +355,10 @@ function BuildingMapTab({
         {/* Current building marker */}
         <Marker longitude={lng} latitude={lat} anchor="bottom" style={{ zIndex: 20 }}>
           <div className="flex flex-col items-center gap-0.5">
-            <div className="bg-text-primary text-surface-default text-[10px] font-medium px-2 py-0.5 whitespace-nowrap max-w-[140px] truncate shadow-sm">
+            <div className="bg-text-primary text-surface-default text-[10px] font-medium px-2 py-0.5 whitespace-nowrap max-w-[140px] truncate shadow-xs">
               {buildingName}
             </div>
-            <div className="w-3 h-3 bg-text-primary rotate-45 -mt-1 shadow-sm" />
+            <div className="w-3 h-3 bg-text-primary rotate-45 -mt-1 shadow-xs" />
           </div>
         </Marker>
 
@@ -425,12 +425,12 @@ function BuildingMapTab({
 
       {/* Nearby count badge */}
       {showNearby && nearbyError && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-surface-default border border-border-default shadow-sm px-3 py-1.5 text-xs text-feedback-destructive">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-surface-default border border-border-default shadow-xs px-3 py-1.5 text-xs text-feedback-destructive">
           Could not load nearby buildings
         </div>
       )}
       {showNearby && !nearbyError && nearbyBuildings.length === 0 && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-surface-default border border-border-default shadow-sm px-3 py-1.5 text-xs text-text-secondary">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-surface-default border border-border-default shadow-xs px-3 py-1.5 text-xs text-text-secondary">
           No other buildings found within 1 km
         </div>
       )}
@@ -474,8 +474,8 @@ function NotePhotoGrid({
             type="button"
             className={cn(
               "relative bg-surface-muted overflow-hidden group/img transition-all duration-300",
-              count === 1 ? "aspect-[16/10]" : "aspect-square",
-              isThreeAndFirst && "col-span-2 aspect-[21/9]",
+              count === 1 ? "aspect-16/10" : "aspect-square",
+              isThreeAndFirst && "col-span-2 aspect-21/9",
             )}
             onClick={(e) => {
               e.stopPropagation();
@@ -1320,7 +1320,7 @@ function BuildingInfoTab({
               }
               return (
                 <li key={link.link_id}>
-                  <div className="group flex items-center justify-between gap-4 rounded-none border border-border-default bg-surface-card px-4 py-4 shadow-sm transition-colors hover:border-border-strong lg:px-5">
+                  <div className="group flex items-center justify-between gap-4 rounded-none border border-border-default bg-surface-card px-4 py-4 shadow-xs transition-colors hover:border-border-strong lg:px-5">
                     <a
                       href={link.url}
                       target="_blank"
@@ -1694,11 +1694,11 @@ export default function BuildingDetails() {
         return (
           <div key={block.key} className="space-y-4 border-b border-border-default pb-10">
             <div
-              className="group relative aspect-[16/10] cursor-pointer overflow-hidden bg-surface-muted"
+              className="group relative aspect-16/10 cursor-pointer overflow-hidden bg-surface-muted"
               onClick={() => setSelectedImage(img)}
             >
               <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-300" />
               {isOfficial && (
                 <span className="absolute left-4 top-4 bg-text-primary px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-text-inverse rounded-none">
                   Official
@@ -1736,13 +1736,13 @@ export default function BuildingDetails() {
                   key={img.id}
                   className={cn(
                     "group relative cursor-pointer overflow-hidden bg-surface-muted",
-                    images.length === 3 && i === 0 ? "col-span-2 aspect-[2/1]" : "aspect-square",
+                    images.length === 3 && i === 0 ? "col-span-2 aspect-2/1" : "aspect-square",
                   )}
                   onClick={() => setSelectedImage(img)}
                 >
                   <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   {img.likes_count > 0 && (
-                    <span className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow">
+                    <span className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-sm">
                       <Heart className="h-2.5 w-2.5 fill-white" aria-hidden />
                       {img.likes_count}
                     </span>
@@ -1772,12 +1772,12 @@ export default function BuildingDetails() {
         return (
           <div key={block.key} className="space-y-4 border-b border-border-default pb-10">
             <div
-              className="group relative aspect-[4/3] cursor-pointer overflow-hidden bg-surface-muted"
+              className="group relative aspect-4/3 cursor-pointer overflow-hidden bg-surface-muted"
               onClick={() => setSelectedImage(img)}
             >
               <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
               {img.likes_count > 0 && (
-                <span className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[10px] font-bold text-white drop-shadow">
+                <span className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[10px] font-bold text-white drop-shadow-sm">
                   <Heart className="h-3 w-3 fill-white" aria-hidden />
                   {img.likes_count}
                 </span>
@@ -1806,12 +1806,12 @@ export default function BuildingDetails() {
             <div
               className={cn(
                 "relative cursor-pointer overflow-hidden bg-surface-muted",
-                isTall ? "aspect-[4/5]" : "aspect-[4/3]",
+                isTall ? "aspect-4/5" : "aspect-4/3",
               )}
               onClick={() => setSelectedImage(img)}
             >
               <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-300" />
               {img.likes_count > 0 && (
                 <span className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[10px] font-bold text-white">
                   <Heart className="h-3 w-3 fill-white" aria-hidden />
@@ -1888,7 +1888,7 @@ export default function BuildingDetails() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="min-h-screen bg-surface-default [&_button]:!rounded-none [&_input]:!rounded-none [&_textarea]:!rounded-none"
+        className="min-h-screen bg-surface-default [&_button]:rounded-none! [&_input]:rounded-none! [&_textarea]:rounded-none!"
       >
         {/* Hidden file input for attaching photos to the active note draft. */}
         <input
@@ -1916,7 +1916,7 @@ export default function BuildingDetails() {
             />
             {/* Bottom-weighted gradient for title legibility — strengthened mid-stop hides low-quality images */}
             <div
-              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20"
+              className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/90 via-black/50 to-black/20"
               aria-hidden
             />
             <div className="absolute inset-0 flex flex-col justify-end px-5 pb-9 pt-8 sm:px-10">
@@ -2090,7 +2090,7 @@ export default function BuildingDetails() {
         <div
           className={cn(
             "border-b border-border-default bg-surface-default transition-shadow duration-200",
-            isTabBarSticky && "sticky top-0 z-30 shadow-sm",
+            isTabBarSticky && "sticky top-0 z-30 shadow-xs",
           )}
         >
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -2315,7 +2315,7 @@ export default function BuildingDetails() {
                             {img.type === "video" ? (
                               <div className="aspect-video flex items-center justify-center bg-surface-muted">
                                 <div className="h-10 w-10 flex items-center justify-center rounded-none bg-black/50">
-                                  <div className="border-l-[14px] border-l-white border-y-8 border-y-transparent ml-1" />
+                                  <div className="border-l-14 border-l-white border-y-8 border-y-transparent ml-1" />
                                 </div>
                               </div>
                             ) : (
@@ -2326,7 +2326,7 @@ export default function BuildingDetails() {
                               />
                             )}
                             {img.likes_count > 0 && (
-                              <span className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow">
+                              <span className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-sm">
                                 <Heart className="h-2.5 w-2.5 fill-white" aria-hidden />
                                 {img.likes_count}
                               </span>
@@ -2434,7 +2434,7 @@ export default function BuildingDetails() {
               <div className="lg:sticky lg:top-14 space-y-5">
 
                 {/* Action card */}
-                <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-sm space-y-5">
+                <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-xs space-y-5">
 
                   {/* Status */}
                   <div className="space-y-2">
@@ -2653,7 +2653,7 @@ export default function BuildingDetails() {
                                       e.stopPropagation();
                                       void navigate(`/building/${building.id}/note/${post.id}/edit`);
                                     }}
-                                    className="flex-shrink-0 p-1.5 rounded-none hover:bg-surface-default transition-colors opacity-40 group-hover/note:opacity-100"
+                                    className="shrink-0 p-1.5 rounded-none hover:bg-surface-default transition-colors opacity-40 group-hover/note:opacity-100"
                                     title="Edit this note"
                                   >
                                     <Pencil className="h-3 w-3 text-text-primary" />
@@ -2781,7 +2781,7 @@ export default function BuildingDetails() {
                 </div>
 
                 {/* Map card */}
-                <div className="bg-surface-card border border-border-default rounded-none overflow-hidden shadow-sm">
+                <div className="bg-surface-card border border-border-default rounded-none overflow-hidden shadow-xs">
                   <div className="aspect-square relative">
                     {coordinates ? (
                       <div className={cn("h-full w-full transition-all duration-700", !isMapExpanded && "grayscale-[0.4] hover:grayscale-0")}>
@@ -2828,7 +2828,7 @@ export default function BuildingDetails() {
 
                 {/* Overview sidebar: credits preview */}
                 {activeTab === "overview" && buildingCredits.length > 0 && (
-                  <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-sm">
+                  <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-xs">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
                         Credits
@@ -2852,7 +2852,7 @@ export default function BuildingDetails() {
                 {activeTab === "credits" && (
                   <div
                     id="contributors"
-                    className="scroll-mt-24 rounded-none border border-border-default bg-surface-card p-5 shadow-sm"
+                    className="scroll-mt-24 rounded-none border border-border-default bg-surface-card p-5 shadow-xs"
                   >
                     <h4 className="mb-3 text-[10px] font-medium uppercase tracking-[0.22em] text-text-secondary">
                       Page contributors
@@ -2866,7 +2866,7 @@ export default function BuildingDetails() {
 
                 {/* Building info — hidden on info tab (shown in main content there) */}
                 {activeTab !== "info" && (
-                  <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-sm">
+                  <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-xs">
                     <BuildingInfoSection building={building} buildingCredits={buildingCredits} />
                   </div>
                 )}

@@ -27,7 +27,7 @@ interface FeedPhotoCarouselProps {
  * Full-bleed photo carousel for feed entries with multiple uploaded images.
  *
  * Design decisions (aligned with DESIGN_TOKENS.md):
- * - aspect-[4/5] — matches FeedHeroSingleImage so the card height is consistent
+ * - aspect-4/5 — matches FeedHeroSingleImage so the card height is consistent
  * - Counter uses tabular-nums for stable digit width
  * - Active dot extends to a white pill; inactive dots are semi-transparent white —
  *   both sit on photography so white is the only readable colour; no brand-primary
@@ -98,7 +98,7 @@ export function FeedPhotoCarousel({
       <div
         className={cn(
           "relative w-full bg-surface-muted",
-          className?.includes("h-full") ? "h-full" : "aspect-[4/5]",
+          className?.includes("h-full") ? "h-full" : "aspect-4/5",
         )}
       >
         <img

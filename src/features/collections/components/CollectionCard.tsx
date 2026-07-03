@@ -35,7 +35,7 @@ export function CollectionCard({ collection, username, className, isDragEnabled 
       {...attributes}
       {...listeners}
       className={cn(
-        "block flex-shrink-0 group select-none outline-none",
+        "block shrink-0 group select-none outline-hidden",
         variant === "profile" ? "w-full" : "w-[180px]",
         isDragEnabled ? "cursor-grab active:cursor-grabbing" : "cursor-pointer",
         className

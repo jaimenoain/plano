@@ -400,7 +400,7 @@ export default function EditNote() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Title (optional)"
-          className="w-full text-xl font-semibold bg-transparent border-0 outline-none placeholder:text-text-disabled text-text-primary py-2 mb-1"
+          className="w-full text-xl font-semibold bg-transparent border-0 outline-hidden placeholder:text-text-disabled text-text-primary py-2 mb-1"
         />
 
         {/* Body — borderless textarea */}
@@ -486,7 +486,7 @@ export default function EditNote() {
                       onChange={(e) => updateCaption(img.id, e.target.value)}
                       placeholder="Caption…"
                       disabled={saving}
-                      className="text-[11px] px-2 py-1.5 bg-transparent border-t border-border-default text-text-primary placeholder:text-text-disabled outline-none w-full focus:bg-surface-muted/40"
+                      className="text-[11px] px-2 py-1.5 bg-transparent border-t border-border-default text-text-primary placeholder:text-text-disabled outline-hidden w-full focus:bg-surface-muted/40"
                     />
                   </div>
                 ))}
@@ -520,7 +520,7 @@ export default function EditNote() {
                       key={link.id}
                       className="flex items-center gap-2.5 p-2.5 rounded-sm border border-border-default bg-surface-muted/40 group"
                     >
-                      <LinkIcon className="w-3.5 h-3.5 text-text-disabled flex-shrink-0" />
+                      <LinkIcon className="w-3.5 h-3.5 text-text-disabled shrink-0" />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate text-text-primary leading-tight">
                           {link.title || link.url}
@@ -532,7 +532,7 @@ export default function EditNote() {
                       <button
                         type="button"
                         onClick={() => removeLink(link.id)}
-                        className="text-text-disabled hover:text-feedback-destructive transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
+                        className="text-text-disabled hover:text-feedback-destructive transition-colors shrink-0 opacity-0 group-hover:opacity-100"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -549,7 +549,7 @@ export default function EditNote() {
                 onChange={(e) => setNewLinkUrl(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addLink(); } }}
                 placeholder="https://…"
-                className="flex-[2] h-8 text-sm"
+                className="flex-2 h-8 text-sm"
               />
               <Input
                 value={newLinkTitle}
@@ -563,7 +563,7 @@ export default function EditNote() {
                 variant="outline"
                 size="sm"
                 onClick={addLink}
-                className="h-8 px-3 flex-shrink-0"
+                className="h-8 px-3 shrink-0"
                 disabled={!newLinkUrl.trim() || saving}
               >
                 <Plus className="w-3.5 h-3.5" />

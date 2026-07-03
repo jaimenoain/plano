@@ -15,6 +15,11 @@ export default tseslint.config(
       "repomix-output.xml",
       ".react-router/types/**",
       "**/*.timestamp-*.mjs",
+      // Design-sync tooling inputs and generated bundle — not app code (typecheck
+      // already scopes to src/; keep eslint aligned so `eslint .` doesn't flag them).
+      ".design-sync/**",
+      ".ds-sync/**",
+      "ds-bundle/**",
     ],
   },
   {

@@ -102,8 +102,8 @@ function UserMenu() {
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex w-full items-center gap-3 px-8 py-3 text-sm text-white/60 hover:text-white transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30">
-              <Avatar className="h-7 w-7 flex-shrink-0 ring-1 ring-white/20">
+            <button className="flex w-full items-center gap-3 px-8 py-3 text-sm text-white/60 hover:text-white transition-colors duration-150 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-white/30">
+              <Avatar className="h-7 w-7 shrink-0 ring-1 ring-white/20">
                 <AvatarImage
                   src={profile?.avatar_url || ""}
                   alt={profile?.username || user?.email || ""}
@@ -209,7 +209,7 @@ function CloseButton() {
         "transition-[opacity,color] duration-150",
         // Mobile sheet: no hover affordance — keep visible. Desktop overlay: show only while hovering the menu (see `group` on sidebar shell in `sidebar.tsx`) or when this control is keyboard-focused.
         "opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100",
-        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
+        "focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-white/30",
       )}
       aria-label="Close menu"
     >
@@ -242,7 +242,7 @@ export function AppSidebar() {
       <SidebarHeader className="flex flex-row items-center justify-between px-8 py-6 border-b border-white/10">
         <Link
           to="/"
-          className="flex items-center focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30 rounded-sm"
+          className="flex items-center focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-white/30 rounded-sm"
         >
           <PlanoLogo className="text-[3em] leading-none text-white" />
         </Link>
@@ -252,7 +252,7 @@ export function AppSidebar() {
       {/* ── Nav ── */}
       <SidebarContent className="py-6">
         {/* Main navigation */}
-        <SidebarGroup className="!p-0">
+        <SidebarGroup className="p-0!">
           <SidebarGroupContent>
             <SidebarMenu className="gap-0">
               {sidebarNavItems.map((item) => (
@@ -269,7 +269,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         {showAccountExtras ? (
-          <SidebarGroup className="!p-0 mt-6 pt-6 border-t border-white/10">
+          <SidebarGroup className="p-0! mt-6 pt-6 border-t border-white/10">
             <p className="px-8 pb-2 text-[11px] font-medium uppercase tracking-[0.15em] text-white/40">
               Account
             </p>

@@ -68,7 +68,7 @@ function Landing() {
             <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-text-disabled">
               What we&apos;re building
             </p>
-            <h2 className="max-w-xl text-[clamp(1.875rem,4.2vw,3rem)] font-bold leading-[1.05] tracking-[-0.025em] text-text-primary">
+            <h2 className="max-w-xl text-[clamp(1.875rem,4.2vw,3rem)] font-bold leading-[1.05] tracking-tight text-text-primary">
               A permanent record of the built world.
             </h2>
           </div>

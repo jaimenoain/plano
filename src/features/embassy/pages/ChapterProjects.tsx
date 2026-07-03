@@ -778,7 +778,7 @@ export default function ChapterProjectsPage() {
                   <input
                     autoFocus
                     aria-label="Project title"
-                    className="w-full bg-transparent border-0 outline-none ring-0 text-xl font-bold leading-tight text-text-primary placeholder:text-text-secondary/60"
+                    className="w-full bg-transparent border-0 outline-hidden ring-0 text-xl font-bold leading-tight text-text-primary placeholder:text-text-secondary/60"
                     value={fieldDraft}
                     onChange={(e) => setFieldDraft(e.target.value)}
                     onBlur={() => {
@@ -811,7 +811,7 @@ export default function ChapterProjectsPage() {
                     autoFocus
                     aria-label="Project description"
                     rows={3}
-                    className="w-full bg-transparent border-0 outline-none ring-0 text-sm text-text-secondary leading-relaxed resize-none placeholder:text-text-secondary/50"
+                    className="w-full bg-transparent border-0 outline-hidden ring-0 text-sm text-text-secondary leading-relaxed resize-none placeholder:text-text-secondary/50"
                     placeholder="Add description…"
                     value={fieldDraft}
                     onChange={(e) => setFieldDraft(e.target.value)}
@@ -960,7 +960,7 @@ export default function ChapterProjectsPage() {
                     <input
                       autoFocus
                       aria-label="Task title"
-                      className="w-full bg-transparent border-0 outline-none ring-0 text-xl font-bold leading-tight text-text-primary placeholder:text-text-secondary/60"
+                      className="w-full bg-transparent border-0 outline-hidden ring-0 text-xl font-bold leading-tight text-text-primary placeholder:text-text-secondary/60"
                       value={taskFieldDraft}
                       onChange={(e) => setTaskFieldDraft(e.target.value)}
                       onBlur={() => {
@@ -991,7 +991,7 @@ export default function ChapterProjectsPage() {
                       autoFocus
                       aria-label="Task description"
                       rows={3}
-                      className="w-full bg-transparent border-0 outline-none ring-0 text-sm text-text-secondary leading-relaxed resize-none placeholder:text-text-secondary/50"
+                      className="w-full bg-transparent border-0 outline-hidden ring-0 text-sm text-text-secondary leading-relaxed resize-none placeholder:text-text-secondary/50"
                       placeholder="Add description…"
                       value={taskFieldDraft}
                       onChange={(e) => setTaskFieldDraft(e.target.value)}
@@ -1547,7 +1547,7 @@ function DrawerTaskRow({
   return (
     <div
       className={cn(
-        "flex items-start gap-3 p-3 rounded-lg border border-border-default bg-surface-card cursor-pointer hover:shadow-sm transition-all",
+        "flex items-start gap-3 p-3 rounded-lg border border-border-default bg-surface-card cursor-pointer hover:shadow-xs transition-all",
         task.status === "done" && "opacity-60",
       )}
       onClick={onOpen}

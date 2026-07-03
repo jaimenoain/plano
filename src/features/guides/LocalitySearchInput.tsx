@@ -139,7 +139,7 @@ export function LocalitySearchInput({
           }}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="w-full pl-9 pr-4 py-2.5 text-sm bg-surface-overlay border border-border-default rounded-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-border-strong transition-colors"
+          className="w-full pl-9 pr-4 py-2.5 text-sm bg-surface-overlay border border-border-default rounded-sm text-text-primary placeholder:text-text-tertiary focus:outline-hidden focus:border-border-strong transition-colors"
           autoComplete="off"
           spellCheck={false}
         />
