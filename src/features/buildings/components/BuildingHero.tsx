@@ -35,7 +35,7 @@ export function BuildingHero({ src, alt, className, children }: BuildingHeroProp
           loading="eager"
         />
         {/* Cinematic Overlay */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/65 via-transparent to-transparent" />
       </motion.div>
       
       <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6 lg:p-8">

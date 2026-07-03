@@ -488,7 +488,7 @@ export default function Explore() {
       {/* Immersive panel: viewport between fixed app nav (top) and tab bar (bottom, mobile). */}
       <div
         className={cn(
-          "fixed left-0 right-0 z-[5] flex min-h-0 flex-col overflow-hidden bg-surface-inverse text-white",
+          "fixed left-0 right-0 z-5 flex min-h-0 flex-col overflow-hidden bg-surface-inverse text-white",
           showTutorial === false
             ? "top-[env(safe-area-inset-top,0px)] bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:top-0 md:bottom-0"
             : "top-[calc(3.5rem+env(safe-area-inset-top,0px))] bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:top-16 md:bottom-0"

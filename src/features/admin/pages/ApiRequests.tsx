@@ -233,7 +233,7 @@ function ApiRequestDetailSheet({
                   Error
                 </p>
                 <div className="bg-feedback-destructive/5 border border-feedback-destructive/20 p-3">
-                  <p className="text-sm text-feedback-destructive font-mono break-words whitespace-pre-wrap">
+                  <p className="text-sm text-feedback-destructive font-mono wrap-break-word whitespace-pre-wrap">
                     {log.error_message}
                   </p>
                 </div>
@@ -250,7 +250,7 @@ function ApiRequestDetailSheet({
                   {success ? "Response metadata" : "Debug metadata"}
                 </p>
                 <div className="bg-surface-subtle border border-border-default p-3 overflow-auto max-h-[420px]">
-                  <pre className="text-xs text-text-primary font-mono whitespace-pre-wrap break-words leading-relaxed">
+                  <pre className="text-xs text-text-primary font-mono whitespace-pre-wrap wrap-break-word leading-relaxed">
                     {JSON.stringify(log.metadata, null, 2)}
                   </pre>
                 </div>

@@ -50,7 +50,7 @@ export function DraggableReviewCard({
       {...attributes}
       {...listeners}
       className={cn(
-        "relative outline-none",
+        "relative outline-hidden",
         isDragging ? "opacity-0" : (isDragEnabled ? "cursor-grab" : ""),
         className
       )}

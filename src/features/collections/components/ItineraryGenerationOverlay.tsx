@@ -25,9 +25,9 @@ export function ItineraryGenerationOverlay({ open }: { open: boolean }) {
   return (
     <Dialog open={open}>
       <DialogPortal>
-        <DialogOverlay className="z-[1200] bg-black/60 backdrop-blur-sm" />
+        <DialogOverlay className="z-1200 bg-black/60 backdrop-blur-xs" />
         <DialogContent
-          className="z-[1200] flex items-center justify-center w-full h-full max-w-none border-none bg-transparent shadow-none sm:max-w-none"
+          className="z-1200 flex items-center justify-center w-full h-full max-w-none border-none bg-transparent shadow-none sm:max-w-none"
           hideCloseButton
           // Prevent focusing trap issues if multiple dialogs are open, though Radix handles this usually.
           onOpenAutoFocus={(e) => e.preventDefault()}

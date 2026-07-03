@@ -48,7 +48,7 @@ function UpdateCard({ update }: { update: PlanoUpdate }) {
           <img
             src={update.heroImageUrl}
             alt={update.title}
-            className="w-full aspect-[16/7] object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            className="w-full aspect-16/7 object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           />
         </Link>
       )}

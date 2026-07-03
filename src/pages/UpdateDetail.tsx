@@ -69,7 +69,7 @@ export default function UpdateDetail() {
             <img
               src={update.heroImageUrl}
               alt={update.title}
-              className="w-full aspect-[16/7] object-cover rounded-lg"
+              className="w-full aspect-16/7 object-cover rounded-lg"
             />
           )}
 

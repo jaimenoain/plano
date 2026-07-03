@@ -68,7 +68,7 @@ export function CardBookmark({
       title={isSaved ? "Saved to your list" : "Save to your list"}
       className={cn(
         "ml-auto shrink-0 rounded-sm p-1 text-text-secondary transition-colors hover:text-text-primary",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1",
+        "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1",
         hoverClasses,
         isSaving && "pointer-events-none opacity-50",
         className,

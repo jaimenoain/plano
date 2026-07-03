@@ -277,7 +277,7 @@ function DiscoverySearchInputInner({
               (buildingsData.length > 0 || peopleData.length > 0 || companiesData.length > 0 || entitiesLoading))) && (
           <div
             // shadow-lg removed — border + background is sufficient
-            className="absolute top-[calc(100%+4px)] left-0 w-full z-50 border border-border-default bg-surface-overlay text-text-primary outline-none animate-in fade-in-0 zoom-in-95 max-h-[min(24rem,70vh)] overflow-y-auto"
+            className="absolute top-[calc(100%+4px)] left-0 w-full z-50 border border-border-default bg-surface-overlay text-text-primary outline-hidden animate-in fade-in-0 zoom-in-95 max-h-[min(24rem,70vh)] overflow-y-auto"
           >
             <CommandList>
               {status === "OK" && data.length > 0 ? (

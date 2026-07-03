@@ -96,7 +96,7 @@ export function PersonalRatingButton({
               type="button"
               disabled={isLoading}
               className={`
-                relative p-0.5 rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2
+                relative p-0.5 rounded-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2
                 ${isLoading ? 'opacity-50 cursor-wait' : 'cursor-pointer'}
               `}
               onMouseEnter={() => setHoverRating(star)}

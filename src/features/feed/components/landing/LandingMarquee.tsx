@@ -64,11 +64,11 @@ export const LandingMarquee = () => {
         ))}
       </div>
       <div
-        className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-surface-default to-transparent"
+        className="pointer-events-none absolute inset-y-0 left-0 w-20 bg-linear-to-r from-surface-default to-transparent"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-surface-default to-transparent"
+        className="pointer-events-none absolute inset-y-0 right-0 w-20 bg-linear-to-l from-surface-default to-transparent"
         aria-hidden
       />
     </section>

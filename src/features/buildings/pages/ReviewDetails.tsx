@@ -856,7 +856,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
               </div>
 
               {/* Comment Input */}
-              <div className="flex gap-3 items-start pt-4 border-t border-border-default/50 sticky bottom-0 bg-surface-default/95 backdrop-blur-sm p-4 -mx-4 md:static md:bg-transparent md:p-0">
+              <div className="flex gap-3 items-start pt-4 border-t border-border-default/50 sticky bottom-0 bg-surface-default/95 backdrop-blur-xs p-4 -mx-4 md:static md:bg-transparent md:p-0">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user?.user_metadata?.avatar_url || undefined} />
                   <AvatarFallback>{user?.email?.charAt(0)}</AvatarFallback>
@@ -886,7 +886,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
 
             <section className="border-t border-border-default pt-8">
               <div
-                className="group relative aspect-[4/3] cursor-pointer overflow-hidden rounded-none bg-surface-muted"
+                className="group relative aspect-4/3 cursor-pointer overflow-hidden rounded-none bg-surface-muted"
                 // Locality URL not available: review.building does not include locality_country_code/city_slug — requires review detail query to join localities table
                 onClick={() => navigate(getBuildingUrl(review.building_id))}
               >
@@ -901,7 +901,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                     <Building2 className="h-10 w-10 opacity-20" />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60" />
                 <div className="absolute bottom-3 left-3 right-3 text-white">
                   <h3 className="text-lg font-bold leading-tight">
                     {review.building.name}

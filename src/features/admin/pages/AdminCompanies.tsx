@@ -86,7 +86,7 @@ function CompanyMergeCard({
           </Badge>
           <Badge variant="outline">{CLAIM_LABELS[company.claimStatus]}</Badge>
         </div>
-        <CardTitle className="mt-2 break-words leading-tight">{company.name}</CardTitle>
+        <CardTitle className="mt-2 wrap-break-word leading-tight">{company.name}</CardTitle>
         <CardDescription className="font-mono text-xs">/{company.slug}</CardDescription>
       </CardHeader>
       <CardContent className="text-sm text-text-secondary">

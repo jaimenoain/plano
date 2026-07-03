@@ -51,7 +51,7 @@ function TopNavLink({
     >
       {label}
       {isActive && (
-        <span className="absolute -bottom-0.5 left-0 w-full h-[1px] bg-text-primary" />
+        <span className="absolute -bottom-0.5 left-0 w-full h-px bg-text-primary" />
       )}
     </Link>
   );
@@ -86,7 +86,7 @@ function UserMenuDropdown() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="rounded-full focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border-default"
+          className="rounded-full focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-border-default"
           aria-label="Account menu"
         >
           <Avatar className="h-8 w-8 ring-1 ring-border-default">
@@ -180,7 +180,7 @@ export function AppTopNav() {
       <div className="flex items-center gap-8 min-w-0">
         <Link
           to="/"
-          className="shrink-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border-default rounded-sm"
+          className="shrink-0 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-border-default rounded-sm"
           aria-label="Plano · Home"
         >
           <PlanoLogo className="text-base text-text-primary" />

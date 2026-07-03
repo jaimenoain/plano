@@ -84,7 +84,7 @@ export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerC
                     </Button>
                 </div>
             )}
-            <div className="flex flex-row min-h-[3.5rem]">
+            <div className="flex flex-row min-h-14">
                 {/* Drag Handle */}
                 {isDraggable && (
                     <div
@@ -105,7 +105,7 @@ export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerC
                     <div className="flex flex-col flex-1 min-w-0">
                         <div className="flex items-start gap-2 min-w-0">
                             {badgeIndex !== undefined && (
-                                <div className="flex items-center justify-center min-w-[1.25rem] h-5 rounded-sm bg-brand-primary text-[10px] font-bold text-brand-primary-foreground mt-0.5 px-1 shrink-0">
+                                <div className="flex items-center justify-center min-w-5 h-5 rounded-sm bg-brand-primary text-[10px] font-bold text-brand-primary-foreground mt-0.5 px-1 shrink-0">
                                     {badgeIndex}
                                 </div>
                             )}

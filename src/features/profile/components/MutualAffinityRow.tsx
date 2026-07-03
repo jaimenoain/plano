@@ -37,7 +37,7 @@ export function MutualAffinityRow({ users }: MutualAffinityRowProps) {
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className={cn(
-                                    "absolute -bottom-2 -right-1 flex items-center justify-center rounded-full text-[10px] font-bold h-6 w-8 border-2 border-surface-default shadow-sm",
+                                    "absolute -bottom-2 -right-1 flex items-center justify-center rounded-full text-[10px] font-bold h-6 w-8 border-2 border-surface-default shadow-xs",
                                     getScoreColor(user.combined_score)
                                 )}>
                                     {Math.round(user.combined_score * 100)}%

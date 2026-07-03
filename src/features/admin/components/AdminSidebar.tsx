@@ -28,7 +28,7 @@ function SidebarCollapseChevron() {
     <button
       onClick={toggleSidebar}
       aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
-      className="absolute right-0 top-[60px] z-20 flex h-5 w-5 translate-x-1/2 items-center justify-center rounded-full border border-border-default bg-surface-card shadow-sm transition-colors hover:bg-surface-muted"
+      className="absolute right-0 top-[60px] z-20 flex h-5 w-5 translate-x-1/2 items-center justify-center rounded-full border border-border-default bg-surface-card shadow-xs transition-colors hover:bg-surface-muted"
     >
       {open ? (
         <ChevronLeft className="size-3 text-text-secondary" />

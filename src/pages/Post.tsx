@@ -179,9 +179,9 @@ export default function Post() {
           <>
             <div className="flex gap-5 py-6 hairline">
               {paramImage ? (
-                <img src={paramImage} alt={mainTitle} className="w-32 h-auto aspect-[2/3] object-cover rounded-none shadow-none flex-shrink-0" loading="lazy" />
+                <img src={paramImage} alt={mainTitle} className="w-32 h-auto aspect-2/3 object-cover rounded-none shadow-none shrink-0" loading="lazy" />
               ) : (
-                <div className="w-32 h-auto aspect-[2/3] bg-surface-muted rounded-none flex-shrink-0" />
+                <div className="w-32 h-auto aspect-2/3 bg-surface-muted rounded-none shrink-0" />
               )}
               <div className="flex flex-col justify-center">
                 <h2 className="text-xl font-bold leading-tight">{mainTitle}</h2>

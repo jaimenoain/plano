@@ -295,7 +295,7 @@ export function FilterDrawer() {
         <Button
           variant="outline"
           size="icon"
-          className="h-9 w-9 relative bg-surface-card/90 backdrop-blur-sm border border-border-default rounded-sm shadow-md hover:bg-surface-muted"
+          className="h-9 w-9 relative bg-surface-card/90 backdrop-blur-xs border border-border-default rounded-sm shadow-md hover:bg-surface-muted"
           aria-label="Filters"
         >
           <ListFilter className="h-4 w-4" />

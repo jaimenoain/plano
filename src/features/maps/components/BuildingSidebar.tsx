@@ -296,7 +296,7 @@ export function BuildingSidebar({
         </TabsList>
 
         <ScrollArea className="min-h-0 flex-1 w-full">
-          <TabsContent value="buildings" className="m-0 mt-0 outline-none">
+          <TabsContent value="buildings" className="m-0 mt-0 outline-hidden">
             <div className="pt-2 pb-6">
 
           {/* ── Location suggestions ── */}
@@ -499,7 +499,7 @@ export function BuildingSidebar({
             </div>
           </TabsContent>
 
-          <TabsContent value="people" className="m-0 mt-0 outline-none">
+          <TabsContent value="people" className="m-0 mt-0 outline-hidden">
             <div className="pt-2 pb-6">
               {peopleCount === 0 ? (
                 <div className="px-4 py-12 text-center">
@@ -547,7 +547,7 @@ export function BuildingSidebar({
             </div>
           </TabsContent>
 
-          <TabsContent value="companies" className="m-0 mt-0 outline-none">
+          <TabsContent value="companies" className="m-0 mt-0 outline-hidden">
             <div className="pt-2 pb-6">
               {companiesCount === 0 ? (
                 <div className="px-4 py-12 text-center">

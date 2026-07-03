@@ -300,7 +300,7 @@ export default function UserPhotoGallery() {
              <p className="text-sm">No photos uploaded yet.</p>
            </div>
         ) : (
-          <div className="grid grid-cols-2 gap-[1.5px] bg-border-default md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-mosaic-gap bg-border-default md:grid-cols-3 lg:grid-cols-4">
             {photos.map((photo) => {
                const imageUrl = getBuildingImageUrl(photo.storage_path);
                // Locality URL not available: Photo.building does not include locality_country_code/city_slug or short_id — requires photo gallery query to join localities table
@@ -323,7 +323,7 @@ export default function UserPhotoGallery() {
                     {/* Like Button */}
                     <button
                       onClick={(e) => handleLike(e, photo.id)}
-                      className="absolute top-2 right-2 p-2 rounded-full bg-black/40 /* Photo overlay — bg-black/40 approved per COMPONENT_SPEC §8 backdrop convention */ hover:bg-black/60 transition-colors backdrop-blur-sm group/btn z-10 flex items-center gap-1.5"
+                      className="absolute top-2 right-2 p-2 rounded-full bg-black/40 /* Photo overlay — bg-black/40 approved per COMPONENT_SPEC §8 backdrop convention */ hover:bg-black/60 transition-colors backdrop-blur-xs group/btn z-10 flex items-center gap-1.5"
                     >
                       <Heart
                          className={cn(

@@ -91,7 +91,7 @@ export function UserPicker({ selectedIds, onSelect, onRemove, className, modal }
                             <AvatarImage src={u.avatar_url || undefined} />
                             <AvatarFallback className="text-xs">{u.username.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
-                        <span className="truncate max-w-[8rem]">{u.username}</span>
+                        <span className="truncate max-w-32">{u.username}</span>
                         <X
                             className="h-4 w-4 cursor-pointer hover:text-feedback-destructive transition-colors"
                             onClick={() => onRemove(u.id)}

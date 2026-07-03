@@ -61,7 +61,7 @@ export function BuildingLocationMap({
 
   const outerClass =
     isExpanded
-      ? "fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      ? "fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 animate-in fade-in duration-200"
       : `relative rounded-none overflow-hidden border border-white/10 ${className || ""}`;
 
   const innerClass =
@@ -144,13 +144,13 @@ export function BuildingLocationMap({
           </Marker>
         </Map>
 
-        <div className="absolute top-2 left-2 flex flex-col gap-2 z-[60]">
+        <div className="absolute top-2 left-2 flex flex-col gap-2 z-60">
             <button
               onClick={(e) => {
                   e.stopPropagation();
                   setIsSatellite(!isSatellite);
               }}
-              className="p-2 bg-surface-default/90 backdrop-blur rounded-none border shadow-sm hover:bg-surface-muted transition-colors flex items-center gap-2"
+              className="p-2 bg-surface-default/90 backdrop-blur-sm rounded-none border shadow-xs hover:bg-surface-muted transition-colors flex items-center gap-2"
               title={isSatellite ? "Show Map" : "Show Satellite"}
             >
               <Layers className="w-4 h-4" />
@@ -164,7 +164,7 @@ export function BuildingLocationMap({
                   e.stopPropagation();
                   onToggleExpand();
               }}
-              className="absolute top-2 right-2 p-2 bg-surface-default/90 backdrop-blur rounded-none border shadow-sm hover:bg-surface-muted transition-colors z-[60]"
+              className="absolute top-2 right-2 p-2 bg-surface-default/90 backdrop-blur-sm rounded-none border shadow-xs hover:bg-surface-muted transition-colors z-60"
               title={isExpanded ? "Collapse Map" : "Expand Map"}
           >
               {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}

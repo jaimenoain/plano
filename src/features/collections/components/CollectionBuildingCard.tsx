@@ -104,7 +104,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                     </Button>
                 </div>
             )}
-            <div className="flex flex-col min-h-[7rem]">
+            <div className="flex flex-col min-h-28">
                 {/* Drag Handle + Content */}
                 <div className="flex items-stretch">
                     {isDraggable && (
@@ -122,7 +122,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                         <div className="flex justify-between items-start gap-2 min-w-0">
                              <div className="flex items-start gap-2 min-w-0">
                                 {badgeIndex !== undefined && (
-                                    <div className="flex items-center justify-center min-w-[1.25rem] h-5 rounded-sm bg-brand-primary text-[10px] font-bold text-brand-primary-foreground mt-0.5 px-1">
+                                    <div className="flex items-center justify-center min-w-5 h-5 rounded-sm bg-brand-primary text-[10px] font-bold text-brand-primary-foreground mt-0.5 px-1">
                                         {badgeIndex}
                                     </div>
                                 )}
@@ -244,11 +244,11 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                             <img
                                 src={imageUrl}
                                 alt={item.building.name}
-                                className="w-full aspect-[4/3] object-cover"
+                                className="w-full aspect-4/3 object-cover"
                                 loading="lazy"
                             />
                         ) : (
-                            <div className="w-full aspect-[4/3] flex items-center justify-center text-text-secondary bg-surface-muted">
+                            <div className="w-full aspect-4/3 flex items-center justify-center text-text-secondary bg-surface-muted">
                                 <span className="text-xs">No Image</span>
                             </div>
                         )}

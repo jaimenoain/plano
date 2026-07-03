@@ -19,7 +19,7 @@ import { useBuildingStatusActions } from '../hooks/useBuildingStatusActions';
 
 /** Single surface for map hover card (MapLibre outer frame is reset in index.css) */
 const POPUP_PANEL =
-  'relative flex w-[200px] max-w-xs flex-col overflow-hidden rounded-sm border border-border-default bg-surface-card shadow-sm';
+  'relative flex w-[200px] max-w-xs flex-col overflow-hidden rounded-sm border border-border-default bg-surface-card shadow-xs';
 const SHEET_PANEL =
   'relative flex w-full flex-col overflow-hidden bg-surface-card';
 
@@ -215,7 +215,7 @@ export function BuildingPopupContent({
                 </div>
                 )}
                 <div className="absolute top-2 right-2 z-20">
-                     <span className="bg-brand-primary text-brand-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                     <span className="bg-brand-primary text-brand-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs">
                         SUGGESTED
                      </span>
                 </div>
@@ -280,7 +280,7 @@ export function BuildingPopupContent({
 
         {filters.photographyGaps && (
           <div className="absolute top-2 left-2 z-20">
-            <div className="bg-surface-card/90 backdrop-blur-sm border border-border-default px-2 py-1 rounded-full flex items-center gap-1.5">
+            <div className="bg-surface-card/90 backdrop-blur-xs border border-border-default px-2 py-1 rounded-full flex items-center gap-1.5">
               <Camera className="h-3 w-3 text-text-primary" />
               <span className="text-[10px] font-bold text-text-primary uppercase">
                 {cluster.photos_count ?? 0} {cluster.photos_count === 1 ? 'Photo' : 'Photos'}

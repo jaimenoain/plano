@@ -64,7 +64,7 @@ export const ArchitectStatement = ({
             {(showReadMore || isExpanded) && (
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="mt-2 text-xs uppercase tracking-wide text-text-secondary hover:text-text-primary font-medium hover:underline focus:outline-none"
+                className="mt-2 text-xs uppercase tracking-wide text-text-secondary hover:text-text-primary font-medium hover:underline focus:outline-hidden"
               >
                 {isExpanded ? "Read less" : "Read more"}
               </button>

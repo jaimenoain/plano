@@ -13,7 +13,7 @@ const baseRow: RawFeedRow = {
 };
 
 describe("mapRawFeedRow — discovery fields", () => {
-  it("round-trips connectors, connectors_count, ring and location_match", () => {
+  it("round-trips connectors, connectors_count, ring-3 and location_match", () => {
     const row: RawFeedRow = {
       ...baseRow,
       ring: 2,

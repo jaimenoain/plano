@@ -246,7 +246,7 @@ export default function UpdateForm() {
         <div className="space-y-2">
           <AdminFormLabel>Hero image</AdminFormLabel>
           {heroImageUrl ? (
-            <div className="relative w-full aspect-[16/7] rounded-md overflow-hidden border border-border-default">
+            <div className="relative w-full aspect-16/7 rounded-md overflow-hidden border border-border-default">
               <img src={heroImageUrl} alt="Hero preview" className="w-full h-full object-cover" />
               <Button
                 type="button"

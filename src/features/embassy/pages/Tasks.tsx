@@ -615,7 +615,7 @@ export default function TasksPage() {
                     <input
                       autoFocus
                       aria-label="Task title"
-                      className="w-full bg-transparent border-0 outline-none ring-0 text-xl font-bold leading-tight text-text-primary placeholder:text-text-secondary/60"
+                      className="w-full bg-transparent border-0 outline-hidden ring-0 text-xl font-bold leading-tight text-text-primary placeholder:text-text-secondary/60"
                       value={fieldDraft}
                       onChange={(e) => setFieldDraft(e.target.value)}
                       onBlur={() => {
@@ -647,7 +647,7 @@ export default function TasksPage() {
                       autoFocus
                       aria-label="Task description"
                       rows={3}
-                      className="w-full bg-transparent border-0 outline-none ring-0 text-sm text-text-secondary leading-relaxed resize-none placeholder:text-text-secondary/50"
+                      className="w-full bg-transparent border-0 outline-hidden ring-0 text-sm text-text-secondary leading-relaxed resize-none placeholder:text-text-secondary/50"
                       placeholder="Add description…"
                       value={fieldDraft}
                       onChange={(e) => setFieldDraft(e.target.value)}

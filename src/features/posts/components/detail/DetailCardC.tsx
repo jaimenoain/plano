@@ -72,10 +72,10 @@ export function DetailCardC({
           >
             {username}
           </Link>
-          <span className="shrink-0 font-sans text-2xs uppercase tracking-[0.1em] text-text-secondary">
+          <span className="shrink-0 font-sans text-2xs uppercase tracking-widest text-text-secondary">
             {verb}
           </span>
-          <span className="shrink-0 font-sans text-2xs uppercase tracking-[0.1em] text-text-secondary">
+          <span className="shrink-0 font-sans text-2xs uppercase tracking-widest text-text-secondary">
             {timestamp}
           </span>
         </div>

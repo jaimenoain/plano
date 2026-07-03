@@ -175,7 +175,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
            <div className="relative">
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
              <input
-               className="flex h-10 w-full rounded-md border border-border-default bg-surface-default px-3 py-2 pl-9 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+               className="flex h-10 w-full rounded-md border border-border-default bg-surface-default px-3 py-2 pl-9 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-secondary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                placeholder="Search for buildings..."
                value={query}
                onChange={(e) => {
@@ -200,12 +200,12 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
             </div>
 
             {selected.length > 0 && (
-                <div className="px-4 py-2 border-b bg-surface-default/50 backdrop-blur-sm z-10">
+                <div className="px-4 py-2 border-b bg-surface-default/50 backdrop-blur-xs z-10">
                     <div className="text-[10px] uppercase font-bold text-text-secondary mb-2 tracking-wider">Selected ({selected.length}/6)</div>
                     <div className="flex gap-2 overflow-x-scroll-touch pb-2 snap-x">
                         {selected.map(item => (
                             <div key={item.id} className="relative shrink-0 w-12 snap-start">
-                                <div className="aspect-[2/3] rounded-none overflow-hidden bg-surface-muted border shadow-sm">
+                                <div className="aspect-2/3 rounded-none overflow-hidden bg-surface-muted border shadow-xs">
                                     {item.image_url ? (
                                         <img src={item.image_url} className="w-full h-full object-cover" loading="lazy" />
                                     ) : (
@@ -214,7 +214,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
                                 </div>
                                 <button
                                   onClick={() => toggleSelection(item)}
-                                  className="absolute -top-1.5 -right-1.5 bg-feedback-destructive text-white rounded-full p-0.5 shadow-sm hover:scale-110 transition-transform"
+                                  className="absolute -top-1.5 -right-1.5 bg-feedback-destructive text-white rounded-full p-0.5 shadow-xs hover:scale-110 transition-transform"
                                 >
                                     <X className="h-3 w-3" />
                                 </button>
@@ -276,7 +276,7 @@ function ListItem({ item, selected, toggle }: { item: FavoriteItem, selected: Fa
               isSelected ? "bg-brand-primary/5 border-brand-primary/20" : isDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-surface-muted",
           )}
         >
-            <div className="h-12 w-8 shrink-0 bg-surface-muted rounded-none overflow-hidden shadow-sm">
+            <div className="h-12 w-8 shrink-0 bg-surface-muted rounded-none overflow-hidden shadow-xs">
                 {item.image_url && <img src={item.image_url} className="w-full h-full object-cover" loading="lazy" />}
             </div>
             <div className="flex-1 min-w-0">
