@@ -4,6 +4,9 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "react-router dev",
     "prepare": "git config core.hooksPath .githooks",
@@ -72,10 +75,10 @@
     "input-otp": "^1.4.2",
     "lucide-react": "^0.462.0",
     "maplibre-gl": "5.24.0",
-    "next-themes": "^0.3.0",
-    "react": "^18.3.1",
+    "next-themes": "^0.4.6",
+    "react": "^19.2.7",
     "react-day-picker": "^8.10.1",
-    "react-dom": "^18.3.1",
+    "react-dom": "^19.2.7",
     "react-error-boundary": "^6.1.0",
     "react-force-graph-2d": "^1.29.0",
     "react-hook-form": "^7.61.1",
@@ -91,7 +94,7 @@
     "tailwindcss-animate": "^1.0.7",
     "tslib": "^2.8.1",
     "tsx": "^4.22.4",
-    "vaul": "^0.9.9",
+    "vaul": "^1.1.2",
     "zod": "^3.24.1",
     "zustand": "^5.0.14"
   },
@@ -108,8 +111,8 @@
     "@types/google.maps": "^3.58.1",
     "@types/maplibre-gl": "^1.13.2",
     "@types/node": "^22.19.7",
-    "@types/react": "^18.3.23",
-    "@types/react-dom": "^18.3.7",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "@types/react-map-gl": "^6.1.7",
     "@vitest/coverage-v8": "^4.1.9",
     "autoprefixer": "^10.5.2",
