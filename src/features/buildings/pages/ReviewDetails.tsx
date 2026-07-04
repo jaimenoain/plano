@@ -25,7 +25,7 @@ import { reviewLoader } from "./ReviewDetails.loader";
 
 export { reviewLoader as loader };
 
-export const meta: MetaFunction<typeof reviewLoader> = ({ data }) => {
+export const meta: MetaFunction<typeof reviewLoader> = ({ loaderData: data }) => {
   if (!data) return [{ title: "Plano" }];
   const title = `${data.username} - ${data.buildingName}`;
   const { description, ogImage, canonical, contentLength, imageCount, createdAt, username } = data;

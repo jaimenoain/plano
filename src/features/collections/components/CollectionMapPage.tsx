@@ -7,7 +7,7 @@ import {
 
 export { collectionMapPageLoader as loader } from "./CollectionMapPage.loader";
 
-export const meta: MetaFunction<typeof collectionMapPageLoader> = ({ data }) => {
+export const meta: MetaFunction<typeof collectionMapPageLoader> = ({ loaderData: data }) => {
   if (!data) return [{ title: "Plano" }];
   const d = data as CollectionMapPageLoaderData;
   const tags = [

@@ -29,7 +29,7 @@ import { personDetailsLoader, type PersonDetailsLoaderData } from "./PersonDetai
 
 export { personDetailsLoader as loader } from "./PersonDetails.loader";
 
-export const meta: MetaFunction<typeof personDetailsLoader> = ({ data }) => {
+export const meta: MetaFunction<typeof personDetailsLoader> = ({ loaderData: data }) => {
   if (!data) return [{ title: "Plano" }];
   const d = data as PersonDetailsLoaderData;
   return [

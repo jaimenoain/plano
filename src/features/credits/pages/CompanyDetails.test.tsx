@@ -344,7 +344,7 @@ describe("CompanyDetails (QA 4.1 unclaimed)", () => {
 describe("CompanyDetails meta (QA 4.1)", () => {
   it("emits document title and Organization JSON-LD script descriptor", () => {
     mocks.loaderData = buildLoaderData();
-    const tags = meta({ data: mocks.loaderData } as Parameters<typeof meta>[0]["data"]);
+    const tags = meta({ loaderData: mocks.loaderData } as Parameters<typeof meta>[0]);
 
     const titleEntry = tags.find((t): t is { title: string } => typeof t === "object" && t !== null && "title" in t);
     expect(titleEntry?.title).toBe(

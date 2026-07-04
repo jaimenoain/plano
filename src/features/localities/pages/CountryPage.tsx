@@ -20,7 +20,7 @@ import type { DiscoveryBuilding } from "@/features/search/components/types";
 
 export { countryPageLoader as loader } from "./CountryPage.loader";
 
-export const meta: MetaFunction<typeof countryPageLoader> = ({ data }) => {
+export const meta: MetaFunction<typeof countryPageLoader> = ({ loaderData: data }) => {
   if (!data) return [{ title: "Plano" }];
   const d = data as CountryPageLoaderData;
   return [

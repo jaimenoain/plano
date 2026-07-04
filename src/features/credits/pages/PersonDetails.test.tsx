@@ -326,7 +326,7 @@ describe("PersonDetails (QA 3.2 claimed)", () => {
 describe("PersonDetails meta (QA 3.1)", () => {
   it("emits document title and JSON-LD script descriptor", () => {
     mocks.loaderData = buildLoaderData();
-    const tags = meta({ data: mocks.loaderData } as Parameters<typeof meta>[0]["data"]);
+    const tags = meta({ loaderData: mocks.loaderData } as Parameters<typeof meta>[0]);
 
     const titleEntry = tags.find((t): t is { title: string } => typeof t === "object" && t !== null && "title" in t);
     expect(titleEntry?.title).toBe("Jane Doe — buildings, projects and credits on Plano");

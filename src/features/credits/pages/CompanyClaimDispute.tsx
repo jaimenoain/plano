@@ -15,7 +15,7 @@ import {
 
 export { companyClaimDisputeLoader as loader } from "./CompanyClaimDispute.loader";
 
-export const meta: MetaFunction<typeof companyClaimDisputeLoader> = ({ data }) => {
+export const meta: MetaFunction<typeof companyClaimDisputeLoader> = ({ loaderData: data }) => {
   if (!data) return [{ title: "Plano" }];
   const d = data as CompanyClaimDisputeLoaderData;
   return [{ title: `Dispute claim · ${d.companyName} | Plano` }];

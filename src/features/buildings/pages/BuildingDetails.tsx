@@ -761,7 +761,7 @@ function buildingDetailDocumentTitle(
   return `${buildingDetailPageTitle(building)} | Plano`;
 }
 
-export const meta: MetaFunction<typeof buildingLoader> = ({ data }) => {
+export const meta: MetaFunction<typeof buildingLoader> = ({ loaderData: data }) => {
   if (!data || !data.building) return [{ title: "Plano" }];
   const { building: rawBuilding, heroImageUrl, buildingCredits = [], locality } = data;
   const building = rawBuilding as BuildingDetails;

@@ -17,7 +17,7 @@ export { architectureHubLoader as loader } from "./ArchitectureHub.loader";
 // Meta
 // ---------------------------------------------------------------------------
 
-export const meta: MetaFunction<typeof architectureHubLoader> = ({ data: d }) => {
+export const meta: MetaFunction<typeof architectureHubLoader> = ({ loaderData: d }) => {
   if (!d) return [{ title: "Architecture | Plano" }];
   const loaderData = d as ArchitectureHubLoaderData;
   return [
