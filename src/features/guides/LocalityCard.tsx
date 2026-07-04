@@ -28,7 +28,7 @@ export function LocalityCard({ locality, featured = false }: LocalityCardProps) 
           <div className="absolute inset-0 bg-surface-muted" />
         )}
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
         {/* Text */}
         <div className="absolute bottom-0 left-0 right-0 p-4">
           <p className="text-xl font-bold text-white leading-tight tracking-tight">

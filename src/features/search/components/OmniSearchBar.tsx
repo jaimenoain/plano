@@ -216,7 +216,7 @@ export function OmniSearchBar({
         </div>
 
         {showDropdown && (
-          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 rounded-sm border border-border-default bg-surface-overlay text-text-primary shadow-lg outline-none animate-in fade-in-0 zoom-in-95 max-h-[400px] overflow-y-auto">
+          <div className="absolute top-[calc(100%+4px)] left-0 w-full z-50 rounded-sm border border-border-default bg-surface-overlay text-text-primary shadow-lg outline-hidden animate-in fade-in-0 zoom-in-95 max-h-[400px] overflow-y-auto">
             <CommandList>
               {hasPlaces && (
                 <CommandGroup heading="Places">

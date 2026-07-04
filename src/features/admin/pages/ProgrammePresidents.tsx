@@ -633,7 +633,7 @@ export default function ProgrammePresidents() {
                           <td className="py-3 px-4 text-right font-semibold text-text-primary">{row.edits30d}</td>
                           <td className="py-3 px-4 text-right">
                             {row.openApplications > 0 ? (
-                              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 rounded-full bg-feedback-warning text-feedback-warning-foreground text-xs font-medium px-1.5">
+                              <span className="inline-flex items-center justify-center min-w-5 h-5 rounded-full bg-feedback-warning text-feedback-warning-foreground text-xs font-medium px-1.5">
                                 {row.openApplications}
                               </span>
                             ) : (

@@ -88,7 +88,7 @@ export function HydrateFallback() {
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i}>
-                <div className="aspect-[4/3] w-full animate-pulse rounded-none bg-surface-muted" />
+                <div className="aspect-4/3 w-full animate-pulse rounded-none bg-surface-muted" />
                 <div className="mt-3 h-4 w-3/4 animate-pulse rounded-sm bg-surface-muted" />
                 <div className="mt-1 h-3 w-1/2 animate-pulse rounded-sm bg-surface-muted" />
               </div>
@@ -148,11 +148,11 @@ function CountryCard({ country }: { country: CountryEntry }) {
         <img
           src={imageUrl}
           alt={`Architecture in ${countryName}`}
-          className="aspect-[4/3] w-full rounded-none object-cover transition-opacity duration-150 group-hover:opacity-90"
+          className="aspect-4/3 w-full rounded-none object-cover transition-opacity duration-150 group-hover:opacity-90"
           loading="lazy"
         />
       ) : (
-        <div className="flex aspect-[4/3] w-full items-center justify-center rounded-none bg-surface-muted">
+        <div className="flex aspect-4/3 w-full items-center justify-center rounded-none bg-surface-muted">
           <span className="text-2xs font-medium uppercase tracking-widest text-text-disabled">
             No image yet
           </span>

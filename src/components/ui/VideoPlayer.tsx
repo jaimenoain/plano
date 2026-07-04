@@ -119,7 +119,7 @@ export function VideoPlayer({
 
       {!isPlaying && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/20">
-          <div className="rounded-sm bg-black/60 p-3 backdrop-blur-sm">
+          <div className="rounded-sm bg-black/60 p-3 backdrop-blur-xs">
             <Play className="w-8 h-8 text-white fill-white" />
           </div>
         </div>
@@ -128,7 +128,7 @@ export function VideoPlayer({
       {/* Controls Bar */}
       <div
         className={cn(
-          "absolute bottom-0 left-0 right-0 flex items-center justify-between bg-black/60 p-2 backdrop-blur-sm transition-opacity duration-300",
+          "absolute bottom-0 left-0 right-0 flex items-center justify-between bg-black/60 p-2 backdrop-blur-xs transition-opacity duration-300",
           isControlsVisible || !isPlaying ? "opacity-100" : "opacity-0"
         )}
       >

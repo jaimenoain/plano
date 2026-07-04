@@ -64,7 +64,7 @@ export function FeedbackKanbanView({
   }
 
   return (
-    <div className="overflow-x-auto rounded-sm border border-border-default [scrollbar-width:thin]">
+    <div className="overflow-x-auto rounded-sm border border-border-default scrollbar-thin">
       <div className="sticky top-0 z-10 flex min-w-max border-b border-border-default bg-surface-card">
         {KANBAN_STATUSES.map(({ value, label }, i) => (
           <div
@@ -194,7 +194,7 @@ export function FeedbackKanbanView({
                       <button
                         type="button"
                         onClick={() => onSelectRow(row)}
-                        className="w-full rounded-sm border border-border-default bg-surface-card p-3 text-left transition-colors hover:border-border-strong hover:bg-surface-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary"
+                        className="w-full rounded-sm border border-border-default bg-surface-card p-3 text-left transition-colors hover:border-border-strong hover:bg-surface-muted/50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-primary"
                       >
                         <div className="mb-2 flex items-start justify-between gap-2">
                           <span

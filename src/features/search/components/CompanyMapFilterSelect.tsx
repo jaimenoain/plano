@@ -137,7 +137,7 @@ export function CompanyMapFilterSelect({
               onValueChange={setInputValue}
               onFocus={() => setOpen(true)}
               placeholder={selectedCompany ? "" : placeholder}
-              className="min-w-[8rem] flex-1 bg-transparent py-1 text-sm outline-none placeholder:text-text-secondary"
+              className="min-w-32 flex-1 bg-transparent py-1 text-sm outline-hidden placeholder:text-text-secondary"
             />
             {isLoading ? <Loader2 className="h-4 w-4 shrink-0 animate-spin text-text-disabled" /> : null}
           </div>

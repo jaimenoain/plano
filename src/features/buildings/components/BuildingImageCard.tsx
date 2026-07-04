@@ -102,7 +102,7 @@ setIsLiked(previousIsLiked);
 
       {isVideo && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-black/40 /* Photo overlay — bg-black/40 approved per COMPONENT_SPEC §8 backdrop convention */ rounded-sm p-2 backdrop-blur-sm">
+          <div className="bg-black/40 /* Photo overlay — bg-black/40 approved per COMPONENT_SPEC §8 backdrop convention */ rounded-sm p-2 backdrop-blur-xs">
             <Play className="w-5 h-5 text-text-inverse fill-text-inverse" />
           </div>
         </div>
@@ -110,14 +110,14 @@ setIsLiked(previousIsLiked);
 
       {image.is_generated && (
         <div className="absolute top-1.5 left-1.5 pointer-events-none">
-          <span className="bg-black/60 text-text-inverse text-[10px] font-bold px-1.5 py-0.5 rounded-sm backdrop-blur-sm border border-white/10 uppercase tracking-wider">
+          <span className="bg-black/60 text-text-inverse text-[10px] font-bold px-1.5 py-0.5 rounded-sm backdrop-blur-xs border border-white/10 uppercase tracking-wider">
             Render
           </span>
         </div>
       )}
 
       {!isVideo && (
-        <div className="absolute bottom-2 right-2 bg-surface-card/80 backdrop-blur-sm rounded-sm px-2 py-0.5 text-xs font-medium flex items-center gap-1">
+        <div className="absolute bottom-2 right-2 bg-surface-card/80 backdrop-blur-xs rounded-sm px-2 py-0.5 text-xs font-medium flex items-center gap-1">
           <Heart
             className={`w-3.5 h-3.5 ${isLiked ? "fill-feedback-destructive text-feedback-destructive" : "text-text-secondary"}`}
             onClick={handleLike}

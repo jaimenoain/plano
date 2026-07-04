@@ -6,12 +6,12 @@
  *
  * Desktop sidebar:
  *   shadow-lg removed — flat is the rule; borders carry hierarchy, not elevation.
- *   Sidebar search header: bg-surface-card/95 backdrop-blur removed — the sidebar
+ *   Sidebar search header: bg-surface-card/95 backdrop-blur-sm removed — the sidebar
  *   already has a solid bg-surface-card background so the blur served no purpose.
  *   Simple border-b border-border-default separator instead.
  *
  * Mobile floating search bar:
- *   shadow-md removed. bg-surface-card/95 border backdrop-blur retained —
+ *   shadow-md removed. bg-surface-card/95 border backdrop-blur-sm retained —
  *   the frosted glass reads as "floating over the map" without needing shadow depth.
  *
  * Mobile List/Map toggle button:
@@ -296,7 +296,7 @@ function SearchPageContent() {
         {isMobile && (
           <div className="fixed left-4 right-4 top-[calc(3.5rem+env(safe-area-inset-top,0px)+0.5rem)] z-40 md:hidden">
             {/* No shadow — frosted glass border is sufficient over the map */}
-            <div className="border border-border-default bg-surface-card/95 p-1 backdrop-blur supports-[backdrop-filter]:bg-surface-card/90 focus-within:border-brand-primary focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-0">
+            <div className="border border-border-default bg-surface-card/95 p-1 backdrop-blur-sm supports-backdrop-filter:bg-surface-card/90 focus-within:border-brand-primary focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-0">
               {mobileSearchBar}
             </div>
           </div>

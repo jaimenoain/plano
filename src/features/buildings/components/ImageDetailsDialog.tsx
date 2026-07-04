@@ -267,7 +267,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
         <DialogDescription className="sr-only">View full size image and comments</DialogDescription>
 
         {/* Close Button - absolute */}
-        <DialogClose className="absolute right-4 top-4 z-50 rounded-none bg-black/50 p-2 text-white hover:bg-black/70 focus:outline-none md:hidden">
+        <DialogClose className="absolute right-4 top-4 z-50 rounded-none bg-black/50 p-2 text-white hover:bg-black/70 focus:outline-hidden md:hidden">
           <X className="h-4 w-4" />
         </DialogClose>
 
@@ -304,7 +304,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
                     />
                     {isGenerated && (
                         <div className="absolute top-4 left-4 z-20 pointer-events-none">
-                            <span className="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded-none backdrop-blur-sm border border-white/10 uppercase tracking-wider">
+                            <span className="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded-none backdrop-blur-xs border border-white/10 uppercase tracking-wider">
                                 Render / CGI
                             </span>
                         </div>
@@ -315,7 +315,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
 
           {isGenerated && type === 'video' && (
              <div className="absolute top-4 left-4 z-20 pointer-events-none">
-                 <span className="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded-none backdrop-blur-sm border border-white/10 uppercase tracking-wider">
+                 <span className="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded-none backdrop-blur-xs border border-white/10 uppercase tracking-wider">
                      Render / CGI
                  </span>
              </div>
@@ -406,7 +406,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
                           {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                         </span>
                       </div>
-                      <p className="text-sm text-text-primary/90 break-words">{comment.content}</p>
+                      <p className="text-sm text-text-primary/90 wrap-break-word">{comment.content}</p>
                     </div>
                     {user && user.id === comment.user.id && (
                       <Button

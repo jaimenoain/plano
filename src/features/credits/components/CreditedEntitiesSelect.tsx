@@ -147,7 +147,7 @@ export function CreditedEntitiesSelect({
                 {row.name}
                 <button
                   type="button"
-                  className="ml-1 rounded-sm outline-none focus:ring-2 focus:ring-brand-primary focus:ring-offset-2"
+                  className="ml-1 rounded-sm outline-hidden focus:ring-2 focus:ring-brand-primary focus:ring-offset-2"
                   onClick={() => handleUnselect(row.id)}
                 >
                   <X className="h-3 w-3 text-text-secondary hover:text-text-primary" />
@@ -162,13 +162,13 @@ export function CreditedEntitiesSelect({
               onFocus={() => setOpen(true)}
               placeholder={placeholder}
               autoComplete="off"
-              className="ml-2 flex-1 bg-transparent outline-none placeholder:text-text-disabled min-w-[50px]"
+              className="ml-2 flex-1 bg-transparent outline-hidden placeholder:text-text-disabled min-w-[50px]"
             />
           </div>
         </div>
         <div className="relative mt-2">
           {open && (enabled || inputValue.length > 0) && (
-            <div className="absolute top-0 z-10 w-full rounded-sm border border-border-default bg-surface-overlay text-text-primary shadow-lg outline-none animate-in fade-in-0 zoom-in-95">
+            <div className="absolute top-0 z-10 w-full rounded-sm border border-border-default bg-surface-overlay text-text-primary shadow-lg outline-hidden animate-in fade-in-0 zoom-in-95">
               <CommandList>
                 {!enabled && q.length > 0 && q.length < 2 && (
                   <CommandItem disabled>Type at least 2 characters to search</CommandItem>

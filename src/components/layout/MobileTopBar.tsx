@@ -41,12 +41,12 @@ export function MobileTopBar() {
     <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-surface-default border-b border-border-default safe-area-pt">
       <div className="h-14 flex items-center justify-between px-1">
         {/* Left: Hamburger */}
-        <SidebarTrigger className="h-auto min-h-11 min-w-11 w-auto border-0 bg-transparent p-2 shadow-none hover:bg-transparent active:scale-100 [&_svg]:!size-6" />
+        <SidebarTrigger className="h-auto min-h-11 min-w-11 w-auto border-0 bg-transparent p-2 shadow-none hover:bg-transparent active:scale-100 [&_svg]:size-6!" />
 
         {/* Center: Logo (absolutely centred so left/right slots don't shift it) */}
         <Link
           to="/"
-          className="absolute left-1/2 -translate-x-1/2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border-default rounded-sm"
+          className="absolute left-1/2 -translate-x-1/2 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-border-default rounded-sm"
           aria-label="Plano · Home"
         >
           <PlanoLogo className="text-base text-text-primary" />

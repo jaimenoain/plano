@@ -211,7 +211,7 @@ export default function MergeEntities() {
         </Tabs>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr,80px,1fr] gap-4 items-center">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_80px_1fr] gap-4 items-center">
         {/* Master Selection */}
         <div className="space-y-6">
           <div className="flex items-center gap-3">
@@ -227,7 +227,7 @@ export default function MergeEntities() {
               placeholder={`Search ${activeType}s...`}
               value={masterSearch}
               onChange={e => setMasterSearch(e.target.value)}
-              className="pl-10 h-12 bg-surface-card border-2 focus:border-text-primary/50 transition-all shadow-sm"
+              className="pl-10 h-12 bg-surface-card border-2 focus:border-text-primary/50 transition-all shadow-xs"
             />
             {loadingMaster && (
               <div className="absolute right-3 top-3.5">
@@ -278,7 +278,7 @@ export default function MergeEntities() {
 
         {/* Connector */}
         <div className="flex flex-col items-center justify-center gap-4 py-8 lg:py-0">
-          <div className="w-px h-12 bg-gradient-to-b from-transparent via-border-default to-border-default hidden lg:block" />
+          <div className="w-px h-12 bg-linear-to-b from-transparent via-border-default to-border-default hidden lg:block" />
           <div className={`p-4 rounded-full border-2 transition-all duration-500 ${
             selectedMaster && selectedDup 
               ? "border-text-primary bg-text-primary text-surface-default ring-2 ring-text-primary scale-105"
@@ -286,7 +286,7 @@ export default function MergeEntities() {
           }`}>
             <ArrowRightLeft className={`w-6 h-6 ${selectedMaster && selectedDup ? "animate-pulse" : ""}`} />
           </div>
-          <div className="w-px h-12 bg-gradient-to-t from-transparent via-border-default to-border-default hidden lg:block" />
+          <div className="w-px h-12 bg-linear-to-t from-transparent via-border-default to-border-default hidden lg:block" />
         </div>
 
         {/* Duplicate Selection */}
@@ -304,7 +304,7 @@ export default function MergeEntities() {
               placeholder={`Search ${activeType}s...`}
               value={dupSearch}
               onChange={e => setDupSearch(e.target.value)}
-              className="pl-10 h-12 bg-surface-card border-2 focus:border-text-primary/50 transition-all shadow-sm"
+              className="pl-10 h-12 bg-surface-card border-2 focus:border-text-primary/50 transition-all shadow-xs"
             />
             {loadingDup && (
               <div className="absolute right-3 top-3.5">
@@ -441,7 +441,7 @@ export default function MergeEntities() {
               Query Parameters
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-[1fr,auto,auto] gap-6 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-6 items-end">
               {/* Similarity Threshold */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">

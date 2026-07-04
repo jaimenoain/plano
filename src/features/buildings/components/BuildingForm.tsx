@@ -607,7 +607,7 @@ toast.error("Failed to add attribute");
                 onChange={(e) => setYear(e.target.value)}
                 placeholder="e.g. 1973"
                 autoComplete="off"
-                className="max-w-[8rem]"
+                className="max-w-32"
               />
             </div>
             <div className="space-y-2">
@@ -635,7 +635,7 @@ toast.error("Failed to add attribute");
                 readOnly={!!(year_completed && !isNaN(parseInt(year_completed, 10)))}
                 placeholder="e.g. 20"
                 autoComplete="off"
-                className="max-w-[6rem]"
+                className="max-w-24"
               />
             </div>
           </div>

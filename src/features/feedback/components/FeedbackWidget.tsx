@@ -145,10 +145,10 @@ export function FeedbackWidget() {
 
       {/* Dialog */}
       {open && (
-        <div className="fixed inset-0 z-[1200] flex items-center justify-center sm:items-center items-end">
+        <div className="fixed inset-0 z-1200 flex items-center justify-center sm:items-center items-end">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/40 backdrop-blur-xs"
             onClick={closeDialog}
           />
 
@@ -206,7 +206,7 @@ export function FeedbackWidget() {
                       className={cn(
                         "flex items-center gap-2 rounded-xl border px-4 py-3 text-sm transition-all duration-200",
                         feedbackType === value
-                          ? "border-brand-primary bg-brand-primary/10 text-brand-primary font-semibold shadow-sm"
+                          ? "border-brand-primary bg-brand-primary/10 text-brand-primary font-semibold shadow-xs"
                           : "border-border-default bg-surface-default text-text-secondary hover:border-brand-primary/40 hover:bg-surface-muted"
                       )}
                     >
@@ -220,7 +220,7 @@ export function FeedbackWidget() {
                 <div className="space-y-2">
                   <textarea
                     rows={4}
-                    className="w-full resize-none rounded-xl border border-border-default bg-surface-default px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
+                    className="w-full resize-none rounded-xl border border-border-default bg-surface-default px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-hidden focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
                     placeholder="Tell us what's on your mind…"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}

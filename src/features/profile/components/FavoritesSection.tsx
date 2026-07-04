@@ -101,7 +101,7 @@ export function FavoritesSection({ favorites, isOwnProfile, onManage }: Favorite
           </div>
           <ScrollBar orientation="horizontal" className="invisible" />
         </ScrollArea>
-        <div className="absolute top-0 right-[-1rem] bottom-4 w-12 bg-gradient-to-l from-surface-default to-transparent pointer-events-none z-10" />
+        <div className="absolute top-0 -right-4 bottom-4 w-12 bg-linear-to-l from-surface-default to-transparent pointer-events-none z-10" />
       </div>
 
       <div className="hidden md:grid grid-cols-6 gap-4">

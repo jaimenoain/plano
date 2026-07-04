@@ -639,7 +639,7 @@ toast.error("Location search failed. Please click on the map to set the location
                             <div className="bg-foreground text-background text-xs px-2 py-1 rounded shadow-lg">
                                 {building.name} {status && `(${status})`}
                             </div>
-                            <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[4px] border-t-foreground"></div>
+                            <div className="w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-foreground"></div>
                         </div>
 
                         <div className={`w-6 h-6 rounded-full ${pinColor} border-2 border-white shadow-none flex items-center justify-center text-white text-[10px] font-bold`}>
@@ -651,12 +651,12 @@ toast.error("Location search failed. Please click on the map to set the location
               </MapGL>
 
               {/* Overlay Legend or Status */}
-              <div className="absolute top-4 left-4 bg-surface-default/95 backdrop-blur px-3 py-2 rounded-sm border border-border-default text-xs space-y-1">
+              <div className="absolute top-4 left-4 bg-surface-default/95 backdrop-blur-sm px-3 py-2 rounded-sm border border-border-default text-xs space-y-1">
                  <div className="flex items-center gap-2">
                      {locationPrecision === 'approximate' ? (
-                         <div className="w-3 h-3 rounded-full bg-text-primary border border-white shadow-sm" />
+                         <div className="w-3 h-3 rounded-full bg-text-primary border border-white shadow-xs" />
                      ) : (
-                         <MapPin className="h-3 w-3 text-white fill-text-primary drop-shadow-sm" strokeWidth={1.5} />
+                         <MapPin className="h-3 w-3 text-white fill-text-primary drop-shadow-xs" strokeWidth={1.5} />
                      )}
                      <span>Selected Location</span>
                  </div>
@@ -677,7 +677,7 @@ toast.error("Location search failed. Please click on the map to set the location
                   variant="secondary"
                   size="sm"
                   onClick={() => setIsSatellite(!isSatellite)}
-                  className="bg-surface-default/90 backdrop-blur border border-border-default hover:bg-surface-muted"
+                  className="bg-surface-default/90 backdrop-blur-sm border border-border-default hover:bg-surface-muted"
                 >
                   <Layers className="h-4 w-4 mr-2" />
                   {isSatellite ? "Map" : "Satellite"}

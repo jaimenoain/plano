@@ -42,7 +42,7 @@ export function CompanyCreditCard({ credit, className }: CompanyCreditCardProps)
     >
       <Link
         to={buildingUrl}
-        className="relative block aspect-[4/3] w-full shrink-0 overflow-hidden bg-surface-muted sm:w-32 md:w-40"
+        className="relative block aspect-4/3 w-full shrink-0 overflow-hidden bg-surface-muted sm:w-32 md:w-40"
       >
         {thumb ? (
           <img src={thumb} alt="" className="h-full w-full object-cover" loading="lazy" />

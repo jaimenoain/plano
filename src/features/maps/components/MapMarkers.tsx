@@ -166,7 +166,7 @@ export function MapMarkers({
                  ...pinStyle,
                  backgroundColor: color,
                  showContent: true,
-                 classes: `${pinStyle.classes} text-white font-bold text-sm shadow-sm`,
+                 classes: `${pinStyle.classes} text-white font-bold text-sm shadow-xs`,
                  zIndex: 100, // High priority but below hover
                  showDot: false // Hide dot if showing number
              };
@@ -333,7 +333,7 @@ export function MapMarkers({
             offset={20}
             closeButton={false}
             closeOnClick={false}
-            className="plano-map-popup z-[100]"
+            className="plano-map-popup z-100"
             maxWidth="300px"
           >
             <BuildingPopupContent

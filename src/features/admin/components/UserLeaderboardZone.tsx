@@ -45,7 +45,7 @@ export function UserLeaderboardZone({ data }: UserLeaderboardZoneProps) {
                             <AvatarImage src={user.avatar_url || undefined} alt={user.username || "User"} />
                             <AvatarFallback>{user.username?.slice(0, 2).toUpperCase() || "??"}</AvatarFallback>
                           </Avatar>
-                          <div className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-primary text-[10px] text-brand-primary-foreground font-bold shadow-sm ring-1 ring-surface-default">
+                          <div className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-primary text-[10px] text-brand-primary-foreground font-bold shadow-xs ring-1 ring-surface-default">
                             {index + 1}
                           </div>
                         </div>

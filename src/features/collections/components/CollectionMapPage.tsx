@@ -1164,7 +1164,7 @@ toast({
 
   return (
     <AppLayout title={collection.name} showBack isFullScreen>
-      <div className="relative flex h-[calc(100dvh_-_9rem_-_env(safe-area-inset-bottom))] min-h-0 flex-1 flex-col overflow-hidden lg:flex-row-reverse md:fixed md:inset-x-0 md:bottom-0 md:left-0 md:right-0 md:top-16 md:h-auto">
+      <div className="relative flex h-[calc(100dvh-9rem-env(safe-area-inset-bottom))] min-h-0 flex-1 flex-col overflow-hidden lg:flex-row-reverse md:fixed md:inset-x-0 md:bottom-0 md:left-0 md:right-0 md:top-16 md:h-auto">
         <div className="lg:hidden">
           <SearchModeToggle
             mode={viewMode}
@@ -1181,9 +1181,9 @@ toast({
         >
             <div className="border-b">
                 {coverMosaicUrls.length >= 4 && (
-                  <div className="grid grid-cols-4 gap-[1.5px] bg-border-default">
+                  <div className="grid grid-cols-4 gap-mosaic-gap bg-border-default">
                     {coverMosaicUrls.map((url, index) => (
-                      <div key={index} className="aspect-[4/5] overflow-hidden bg-surface-muted">
+                      <div key={index} className="aspect-4/5 overflow-hidden bg-surface-muted">
                         <img
                           src={getBuildingImageUrl(url) ?? url}
                           alt=""
@@ -1396,7 +1396,7 @@ toast({
                           type="button"
                           variant="secondary"
                           size="sm"
-                          className="w-full shadow-none border border-border-default bg-surface-card/95 backdrop-blur-sm"
+                          className="w-full shadow-none border border-border-default bg-surface-card/95 backdrop-blur-xs"
                           disabled={
                             visibleSavedCandidatesToAdd.length === 0 ||
                             !viewportBounds ||

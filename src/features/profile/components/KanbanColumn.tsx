@@ -46,7 +46,7 @@ export function KanbanColumn({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex-shrink-0 w-[280px] min-w-[280px] rounded-sm flex flex-col h-full overflow-hidden snap-center border transition-all duration-200",
+        "shrink-0 w-[280px] min-w-[280px] rounded-sm flex flex-col h-full overflow-hidden snap-center border transition-all duration-200",
         isOverContainer
           ? "bg-brand-secondary border-brand-primary shadow-none"
           : "bg-surface-muted border-border-default"

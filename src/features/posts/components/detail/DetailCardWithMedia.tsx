@@ -117,11 +117,11 @@ export function DetailCardWithMedia({
             {username}
           </Link>
           {isArchitectOfBuilding ? (
-            <span className="mt-1.5 block w-fit bg-text-primary px-2 py-0.5 font-sans text-2xs font-bold uppercase tracking-[0.1em] text-text-inverse">
+            <span className="mt-1.5 block w-fit bg-text-primary px-2 py-0.5 font-sans text-2xs font-bold uppercase tracking-widest text-text-inverse">
               Designed this
             </span>
           ) : isVerifiedArchitect ? (
-            <span className="mt-1.5 block w-fit border border-text-primary px-2 py-0.5 font-sans text-2xs font-bold uppercase tracking-[0.1em] text-text-primary">
+            <span className="mt-1.5 block w-fit border border-text-primary px-2 py-0.5 font-sans text-2xs font-bold uppercase tracking-widest text-text-primary">
               Architect
             </span>
           ) : null}

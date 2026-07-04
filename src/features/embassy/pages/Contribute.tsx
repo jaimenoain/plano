@@ -878,8 +878,8 @@ function ResearchReviewPanel({
           "p-5 transition-all border-2",
           item.accepted
             ? isConflict
-              ? "border-feedback-warning/50 bg-feedback-warning/[0.03]"
-              : "border-brand-primary/40 bg-brand-primary/[0.03]"
+              ? "border-feedback-warning/50 bg-feedback-warning/3"
+              : "border-brand-primary/40 bg-brand-primary/3"
             : "border-border-default opacity-60",
         )}
       >
@@ -1067,7 +1067,7 @@ function ResearchReviewPanel({
       )}
 
       {/* Sticky save / skip bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 bg-background/95 backdrop-blur border-t border-border-default px-4 py-4 flex items-center justify-between gap-4">
+      <div className="fixed bottom-0 left-0 right-0 z-10 bg-background/95 backdrop-blur-sm border-t border-border-default px-4 py-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           {onDismiss && (
             <Button
@@ -1623,7 +1623,7 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
             variant="ghost"
             size="sm"
             onClick={() => setView("map")}
-            className={cn("gap-2", view === "map" && "bg-surface-card shadow-sm")}
+            className={cn("gap-2", view === "map" && "bg-surface-card shadow-xs")}
           >
             <Map className="h-4 w-4" />
             Map
@@ -1632,7 +1632,7 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
             variant="ghost"
             size="sm"
             onClick={() => setView("list")}
-            className={cn("gap-2", view === "list" && "bg-surface-card shadow-sm")}
+            className={cn("gap-2", view === "list" && "bg-surface-card shadow-xs")}
           >
             <List className="h-4 w-4" />
             List
@@ -1870,7 +1870,7 @@ function FlagButton({
   const [open, setOpen] = useState(false);
 
   const triggerClass = overlay
-    ? "p-1.5 rounded-md bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+    ? "p-1.5 rounded-md bg-background/80 backdrop-blur-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10"
     : "opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10";
 
   return (
@@ -2193,7 +2193,7 @@ function PhotosModerationTab({
                 <button
                   type="button"
                   onClick={() => handleApprove([p.id])}
-                  className="p-1.5 rounded-md bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-feedback-success hover:bg-feedback-success/10 transition-colors"
+                  className="p-1.5 rounded-md bg-background/80 backdrop-blur-xs text-muted-foreground hover:text-feedback-success hover:bg-feedback-success/10 transition-colors"
                   aria-label="Approve photo"
                   title="Approve photo"
                 >
@@ -2201,7 +2201,7 @@ function PhotosModerationTab({
                 </button>
               </div>
               {/* Bottom info overlay */}
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 translate-y-0">
+              <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-3 translate-y-0">
                 <p className="text-xs font-semibold text-white truncate leading-tight">{p.building_name}</p>
                 {p.caption && (
                   <p className="text-[10px] text-white/70 truncate mt-0.5">{p.caption}</p>

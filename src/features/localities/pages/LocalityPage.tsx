@@ -809,7 +809,7 @@ function CollectionPreviewMosaic({
 
   if (!main) {
     return (
-      <div className="flex aspect-[4/3] w-full items-center justify-center bg-surface-muted text-[10px] uppercase tracking-widest text-text-disabled">
+      <div className="flex aspect-4/3 w-full items-center justify-center bg-surface-muted text-[10px] uppercase tracking-widest text-text-disabled">
         No images
       </div>
     );
@@ -820,15 +820,15 @@ function CollectionPreviewMosaic({
   return (
     <>
       {/* Mobile: single hero — avoids ~50px thumbnail strip beside a 2fr/1fr grid */}
-      <div className="aspect-[4/3] w-full overflow-hidden bg-surface-muted md:hidden">
+      <div className="aspect-4/3 w-full overflow-hidden bg-surface-muted md:hidden">
         <img src={mainSrc} alt={name} className="h-full w-full rounded-none object-cover" />
       </div>
 
-      <div className="hidden aspect-[4/3] w-full grid-cols-[2fr_1fr] gap-[1.5px] overflow-hidden bg-border-default md:grid">
+      <div className="hidden aspect-4/3 w-full grid-cols-[2fr_1fr] gap-mosaic-gap overflow-hidden bg-border-default md:grid">
         <div className="overflow-hidden bg-surface-muted">
           <img src={mainSrc} alt={name} className="h-full w-full rounded-none object-cover" />
         </div>
-        <div className="grid grid-rows-2 gap-[1.5px]">
+        <div className="grid grid-rows-2 gap-mosaic-gap">
           {second ? (
             <div className="overflow-hidden bg-surface-muted">
               <img
@@ -954,7 +954,7 @@ function LocalityTopBuildings({
 
       {/* Hero building — full-width feature card */}
       <Link to={heroUrl} className="group mb-3 block overflow-hidden border border-border-default">
-        <div className="relative aspect-[16/9] overflow-hidden bg-surface-muted">
+        <div className="relative aspect-video overflow-hidden bg-surface-muted">
           {hero.main_image_url ? (
             <>
               <img
@@ -962,7 +962,7 @@ function LocalityTopBuildings({
                 alt={hero.name}
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/10 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
                 {hero.year_completed ? (
                   <p className="mb-1 text-[10px] font-medium uppercase tracking-widest text-white/55">
@@ -1000,7 +1000,7 @@ function LocalityTopBuildings({
                 to={url}
                 className="group block overflow-hidden border border-border-default"
               >
-                <div className="relative aspect-[4/3] overflow-hidden bg-surface-muted">
+                <div className="relative aspect-4/3 overflow-hidden bg-surface-muted">
                   {b.main_image_url ? (
                     <>
                       <img
@@ -1008,7 +1008,7 @@ function LocalityTopBuildings({
                         alt={b.name}
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
+                      <div className="absolute inset-0 bg-linear-to-t from-black/65 to-transparent" />
                     </>
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-surface-muted">

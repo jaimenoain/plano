@@ -42,7 +42,7 @@ export function SiteFooter() {
           <div className="col-span-1 sm:col-span-2 md:col-span-1">
             <Link
               to="/"
-              className="inline-block mb-4 text-text-inverse hover:opacity-80 transition-opacity duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-text-inverse/40 rounded-sm"
+              className="inline-block mb-4 text-text-inverse hover:opacity-80 transition-opacity duration-150 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-text-inverse/40 rounded-sm"
               aria-label="Home"
             >
               <PlanoLogo className="text-xl text-text-inverse" />
@@ -66,7 +66,7 @@ export function SiteFooter() {
                   >
                     {label}
                     {tag && (
-                      <span className="text-[9px] font-medium tracking-[0.1em] uppercase text-text-inverse/20 border border-text-inverse/10 px-1.5 py-0.5 rounded-[2px]">
+                      <span className="text-[9px] font-medium tracking-widest uppercase text-text-inverse/20 border border-text-inverse/10 px-1.5 py-0.5 rounded-[2px]">
                         {tag}
                       </span>
                     )}
@@ -147,7 +147,7 @@ export function SiteFooter() {
               href="https://www.instagram.com/plano_map/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[11px] font-medium tracking-[0.1em] uppercase text-text-inverse/20 hover:text-text-inverse transition-colors duration-150"
+              className="text-[11px] font-medium tracking-widest uppercase text-text-inverse/20 hover:text-text-inverse transition-colors duration-150"
             >
               Instagram
             </a>
@@ -156,7 +156,7 @@ export function SiteFooter() {
               href="https://x.com/planoapp"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[11px] font-medium tracking-[0.1em] uppercase text-text-inverse/20 hover:text-text-inverse transition-colors duration-150"
+              className="text-[11px] font-medium tracking-widest uppercase text-text-inverse/20 hover:text-text-inverse transition-colors duration-150"
             >
               X
             </a>

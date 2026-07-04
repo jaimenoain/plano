@@ -61,7 +61,7 @@ export function UserRow({
         <button
           type="button"
           onClick={onHide}
-          className="-m-1 shrink-0 rounded-sm p-2 hover:bg-surface-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-border-strong text-text-secondary hover:text-text-primary"
+          className="-m-1 shrink-0 rounded-sm p-2 hover:bg-surface-muted transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-border-strong text-text-secondary hover:text-text-primary"
           title="Hide suggestion"
         >
           <X className="h-4 w-4" aria-hidden />
@@ -72,7 +72,7 @@ export function UserRow({
         <button
           type="button"
           onClick={onToggleCloseFriend}
-          className="p-1 hover:bg-surface-muted rounded-sm transition-colors focus:outline-none"
+          className="p-1 hover:bg-surface-muted rounded-sm transition-colors focus:outline-hidden"
           title={isCloseFriend ? "Remove from close friends" : "Add to close friends"}
         >
           <Star
@@ -110,7 +110,7 @@ export function UserRow({
         <span
           className={cn(
             "block font-medium text-sm text-text-primary leading-snug",
-            layout === "stacked" ? "break-words line-clamp-2" : "truncate",
+            layout === "stacked" ? "wrap-break-word line-clamp-2" : "truncate",
           )}
           title={displayName}
         >
@@ -136,7 +136,7 @@ export function UserRow({
               e.stopPropagation();
               onHide();
             }}
-            className="absolute right-2 top-2 rounded-sm p-1 text-text-disabled opacity-0 transition-opacity hover:bg-surface-muted group-hover:opacity-100 focus:outline-none focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-border-strong"
+            className="absolute right-2 top-2 rounded-sm p-1 text-text-disabled opacity-0 transition-opacity hover:bg-surface-muted group-hover:opacity-100 focus:outline-hidden focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-border-strong"
             title="Hide suggestion"
           >
             <X className="h-4 w-4" aria-hidden />

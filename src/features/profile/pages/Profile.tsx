@@ -949,7 +949,7 @@ export default function Profile() {
               </div>
 
               {/* Username — hero title */}
-              <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-text-primary leading-none break-words mb-5">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-text-primary leading-none wrap-break-word mb-5">
                 {profile?.username}
               </h1>
 
@@ -969,7 +969,7 @@ export default function Profile() {
                     onChange={e => setDraftBio(e.target.value)}
                     placeholder="Short bio..."
                     rows={3}
-                    className="w-full text-sm text-text-primary bg-transparent border border-border-default px-3 py-2 resize-none focus:outline-none focus:border-border-strong placeholder:text-text-disabled leading-relaxed"
+                    className="w-full text-sm text-text-primary bg-transparent border border-border-default px-3 py-2 resize-none focus:outline-hidden focus:border-border-strong placeholder:text-text-disabled leading-relaxed"
                   />
                   <Input
                     value={draftWebsite}
@@ -1137,7 +1137,7 @@ export default function Profile() {
                       type="single"
                       value={viewMode}
                       onValueChange={v => v && setViewMode(v as "grid" | "kanban" | "list")}
-                      className="[&_button]:max-md:min-h-11 [&_button]:max-md:min-w-11"
+                      className="max-md:[&_button]:min-h-11 max-md:[&_button]:min-w-11"
                     >
                       <ToggleGroupItem value="grid" size="sm" aria-label="Grid"><LayoutGrid className="h-3.5 w-3.5" /></ToggleGroupItem>
                       <ToggleGroupItem value="kanban" size="sm" aria-label="Kanban"><Columns className="h-3.5 w-3.5" /></ToggleGroupItem>
@@ -1447,7 +1447,7 @@ function EditorialBuildingCard({ entry, showCommunityImages }: { entry: FeedRevi
   return (
     <Link to={url} className="group block" data-testid={`review-card-${entry.id}`}>
       {/* 3:4 portrait image, no rounding */}
-      <div className="aspect-[3/4] overflow-hidden bg-surface-muted mb-3">
+      <div className="aspect-3/4 overflow-hidden bg-surface-muted mb-3">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -1483,7 +1483,7 @@ function MasonryPhotoGrid({ photos }: { photos: UserPhoto[] }) {
         return (
           <div
             key={photo.id}
-            className={`relative overflow-hidden bg-surface-muted group cursor-pointer break-inside-avoid mb-px ${isFeatured ? "aspect-[3/4]" : "aspect-square"}`}
+            className={`relative overflow-hidden bg-surface-muted group cursor-pointer break-inside-avoid mb-px ${isFeatured ? "aspect-3/4" : "aspect-square"}`}
           >
             <img
               src={photo.url}

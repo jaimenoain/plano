@@ -632,11 +632,11 @@ export function DiscoveryCard({
 
       {/* ── Colour overlays (swipe feedback) ── */}
       <motion.div
-        className="absolute inset-0 bg-feedback-success z-[15] pointer-events-none"
+        className="absolute inset-0 bg-feedback-success z-15 pointer-events-none"
         style={{ opacity: likeOverlayOpacity }}
       />
       <motion.div
-        className="absolute inset-0 bg-feedback-destructive z-[15] pointer-events-none"
+        className="absolute inset-0 bg-feedback-destructive z-15 pointer-events-none"
         style={{ opacity: nopeOverlayOpacity }}
       />
 
@@ -715,7 +715,7 @@ export function DiscoveryCard({
       )}
 
       {/* ── Bottom gradient — tall and dark for large type ── */}
-      <div className="absolute bottom-0 left-0 right-0 h-3/4 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-20 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-3/4 bg-linear-to-t from-black/95 via-black/40 to-transparent z-20 pointer-events-none" />
 
       {/* ── Info overlay ── */}
       <div className="absolute bottom-0 left-0 right-0 px-5 pb-24 md:pb-8 z-30 text-white pointer-events-none">

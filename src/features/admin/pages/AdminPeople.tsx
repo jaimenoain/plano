@@ -83,7 +83,7 @@ function PersonMergeCard({
           </Badge>
           <Badge variant="outline">{CLAIM_LABELS[person.claimStatus]}</Badge>
         </div>
-        <CardTitle className="mt-2 break-words leading-tight">{person.name}</CardTitle>
+        <CardTitle className="mt-2 wrap-break-word leading-tight">{person.name}</CardTitle>
         <CardDescription className="font-mono text-xs">/{person.slug}</CardDescription>
       </CardHeader>
       <CardContent className="text-sm text-text-secondary">

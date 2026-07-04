@@ -226,7 +226,7 @@ function EditionsTab({ awardId }: { awardId: string }) {
               <Label className="text-xs">Year</Label>
               <Input placeholder="2024" value={newYear} onChange={(e) => setNewYear(e.target.value)} className="h-8" />
             </div>
-            <div className="flex-[2] space-y-1">
+            <div className="flex-2 space-y-1">
               <Label className="text-xs">Ceremony location (optional)</Label>
               <Input placeholder="London, UK" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} className="h-8" />
             </div>
@@ -452,7 +452,7 @@ function RecipientsTab({ awardId }: { awardId: string }) {
           id="edition-select"
           value={selectedEditionId}
           onChange={(e) => setSelectedEditionId(e.target.value)}
-          className="h-8 rounded-sm border border-border-default bg-surface-card px-2 text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-brand-primary"
+          className="h-8 rounded-sm border border-border-default bg-surface-card px-2 text-sm text-text-primary focus:outline-hidden focus:ring-1 focus:ring-brand-primary"
         >
           <option value="">Select an edition…</option>
           {editions.map((ed) => (

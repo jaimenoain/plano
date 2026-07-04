@@ -324,7 +324,7 @@ function CreditFlagTrigger({
             }
           }}
         >
-          <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto rounded-none [&_button]:!rounded-none">
+          <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto rounded-none [&_button]:rounded-none!">
             <SheetHeader>
               <SheetTitle>Report credit</SheetTitle>
               <SheetDescription>
@@ -353,7 +353,7 @@ function CreditFlagTrigger({
       }}
     >
       <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
-      <PopoverContent className="w-80 rounded-none [&_button]:!rounded-none" align="end" sideOffset={8}>
+      <PopoverContent className="w-80 rounded-none [&_button]:rounded-none!" align="end" sideOffset={8}>
         <p className="mb-4 text-sm text-text-secondary">Flag incorrect information. We review every report.</p>
         {fields}
         {actions}
@@ -402,8 +402,8 @@ function BuildingCreditRow({
       className={cn(
         "group",
         isSpotlight
-          ? "rounded-none border border-border-default bg-surface-card p-8 lg:p-10 shadow-sm"
-          : "rounded-none border border-border-default bg-surface-card p-4 shadow-sm",
+          ? "rounded-none border border-border-default bg-surface-card p-8 lg:p-10 shadow-xs"
+          : "rounded-none border border-border-default bg-surface-card p-4 shadow-xs",
         className,
       )}
     >
@@ -614,7 +614,7 @@ function BuildingCreditRow({
         <Sheet open={noteSheetOpen} onOpenChange={setNoteSheetOpen}>
           <SheetContent
             side="right"
-            className="flex w-full flex-col overflow-hidden rounded-none sm:max-w-lg sm:px-6 [&_button]:!rounded-none [&_textarea]:!rounded-none"
+            className="flex w-full flex-col overflow-hidden rounded-none sm:max-w-lg sm:px-6 [&_button]:rounded-none! [&_textarea]:rounded-none!"
           >
             {noteSheetOpen ? (
               <CreditNoteSheet
@@ -736,7 +736,7 @@ function CreditsEmptyState({
   return (
     <div className="flex flex-col items-center rounded-none border border-dashed border-border-strong bg-surface-muted/50 px-6 py-14 text-center lg:px-12 lg:py-20">
       <div
-        className="flex h-14 w-14 items-center justify-center rounded-none border border-border-default bg-surface-card shadow-sm"
+        className="flex h-14 w-14 items-center justify-center rounded-none border border-border-default bg-surface-card shadow-xs"
         aria-hidden
       >
         <Users className="h-7 w-7 text-text-secondary" />
@@ -958,7 +958,7 @@ export function BuildingCredits({
         <Sheet open={addOpen} onOpenChange={setAddOpen}>
           <SheetContent
             side="right"
-            className="flex w-full flex-col overflow-hidden rounded-none sm:max-w-lg sm:px-6 [&_button]:!rounded-none [&_input]:!rounded-none [&_textarea]:!rounded-none"
+            className="flex w-full flex-col overflow-hidden rounded-none sm:max-w-lg sm:px-6 [&_button]:rounded-none! [&_input]:rounded-none! [&_textarea]:rounded-none!"
           >
             {addOpen ? (
               <AddCreditForm

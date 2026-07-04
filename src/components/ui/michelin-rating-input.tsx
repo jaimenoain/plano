@@ -38,7 +38,7 @@ export function MichelinRatingInput({
             }}
             onMouseEnter={() => !disabled && setHovered(rating)}
             onMouseLeave={() => !disabled && setHovered(null)}
-            className="rounded-sm p-1 focus:outline-none transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
+            className="rounded-sm p-1 focus:outline-hidden transition-colors hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
           >
              <RatingCircle active={isActive} />
           </motion.button>

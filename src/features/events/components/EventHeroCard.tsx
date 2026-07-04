@@ -13,7 +13,7 @@ import {
 
 export function EventHeroCardSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn("aspect-[16/9] w-full animate-pulse bg-surface-muted md:aspect-[21/9]", className)} />
+    <div className={cn("aspect-video w-full animate-pulse bg-surface-muted md:aspect-21/9", className)} />
   );
 }
 
@@ -25,7 +25,7 @@ export function EventHeroCard({ event }: { event: EventCardDTO }) {
   return (
     <Link
       to={getEventUrl(event)}
-      className="group relative block aspect-[16/9] w-full overflow-hidden bg-surface-muted touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 md:aspect-[21/9]"
+      className="group relative block aspect-video w-full overflow-hidden bg-surface-muted touch-manipulation focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 md:aspect-21/9"
     >
       {showCover ? (
         <img
@@ -39,7 +39,7 @@ export function EventHeroCard({ event }: { event: EventCardDTO }) {
         <EventDateTile iso={event.startAt} />
       )}
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+      <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/20 to-transparent" />
 
       <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-5 text-text-inverse sm:p-8">
         <span className="text-2xs font-medium uppercase tracking-[0.2em] text-brand-accent">Featured</span>

@@ -220,7 +220,7 @@ export default function SupportPage() {
                   },
                 ].map(({ heading, body }) => (
                   <div key={heading}>
-                    <div className="w-6 h-[1px] bg-text-primary mb-6" />
+                    <div className="w-6 h-px bg-text-primary mb-6" />
                     <h3 className="text-sm font-semibold text-text-primary mb-3 tracking-normal">
                       {heading}
                     </h3>

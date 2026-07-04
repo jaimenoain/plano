@@ -158,10 +158,10 @@ function SavedPlacesStatusToggle({
       <ToggleGroupItem value="all" className="min-h-[44px] min-w-12 items-center justify-center px-2 md:min-h-9">
         All
       </ToggleGroupItem>
-      <ToggleGroupItem value="visited" className="min-h-[44px] min-w-[4.5rem] items-center justify-center px-2 md:min-h-9">
+      <ToggleGroupItem value="visited" className="min-h-[44px] min-w-18 items-center justify-center px-2 md:min-h-9">
         Visited
       </ToggleGroupItem>
-      <ToggleGroupItem value="pending" className="min-h-[44px] min-w-[5.5rem] items-center justify-center px-2 md:min-h-9">
+      <ToggleGroupItem value="pending" className="min-h-[44px] min-w-22 items-center justify-center px-2 md:min-h-9">
         Bucket list
       </ToggleGroupItem>
     </ToggleGroup>
@@ -853,10 +853,10 @@ toast.error("Failed to export data");
                             {formData.custom_categories && formData.custom_categories.length > 0 ? (
                                 <div className="space-y-2">
                                     {formData.custom_categories.map((cat) => (
-                                        <div key={cat.id} className="flex items-center justify-between bg-surface-card p-2 rounded-md shadow-sm border">
+                                        <div key={cat.id} className="flex items-center justify-between bg-surface-card p-2 rounded-md shadow-xs border">
                                             <div className="flex items-center gap-2">
                                                 <div
-                                                    className="w-4 h-4 rounded-full border shadow-sm"
+                                                    className="w-4 h-4 rounded-full border shadow-xs"
                                                     style={{ backgroundColor: cat.color }}
                                                 />
                                                 <span className="text-sm font-medium">{cat.label}</span>

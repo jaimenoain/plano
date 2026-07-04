@@ -33,7 +33,7 @@ export const LandingHero = () => {
 
         {/* Subheadline */}
         <motion.p
-          className="mb-12 max-w-[40rem] text-[clamp(0.9375rem,1.4vw,1.1875rem)] leading-[1.6] text-text-secondary"
+          className="mb-12 max-w-160 text-[clamp(0.9375rem,1.4vw,1.1875rem)] leading-[1.6] text-text-secondary"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}

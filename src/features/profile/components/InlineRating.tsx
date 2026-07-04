@@ -33,7 +33,7 @@ export function InlineRating({ rating, onRate, readOnly = false }: InlineRatingP
             onClick={(e) => { e.stopPropagation(); handleRate(star); }}
             onMouseEnter={() => !readOnly && setHoverRating(star)}
             className={cn(
-              "p-0.5 focus:outline-none transition-colors",
+              "p-0.5 focus:outline-hidden transition-colors",
               readOnly ? "cursor-default" : "cursor-pointer"
             )}
             whileTap={!readOnly ? { scale: 0.8 } : undefined}
