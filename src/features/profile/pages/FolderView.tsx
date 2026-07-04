@@ -12,7 +12,7 @@ import { folderLoader } from "./FolderView.loader";
 
 export { folderLoader as loader };
 
-export const meta: MetaFunction<typeof folderLoader> = ({ data }) => {
+export const meta: MetaFunction<typeof folderLoader> = ({ loaderData: data }) => {
   if (!data) return [{ title: "Plano" }];
   const { title, description, canonical, ogImage, isPublic } = data;
   const tags = [

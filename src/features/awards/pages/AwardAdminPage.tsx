@@ -76,7 +76,7 @@ import {
 
 export { awardAdminLoader as loader } from "./AwardAdminPage.loader";
 
-export const meta: MetaFunction<typeof awardAdminLoader> = ({ data }) => {
+export const meta: MetaFunction<typeof awardAdminLoader> = ({ loaderData: data }) => {
   if (!data) return [{ title: "Award Admin | Plano" }];
   return [{ title: `Manage ${(data as AwardAdminLoaderData).awardName} | Plano` }];
 };

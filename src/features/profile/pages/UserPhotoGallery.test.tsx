@@ -32,11 +32,17 @@ vi.mock('react-router', async (importOriginal) => {
   };
 });
 
+// Stable object reference — the component's effects depend on `currentUser`,
+// so returning a fresh object each render would retrigger them every render and
+// spin an infinite fetch loop (loading never settles). In the real app useAuth
+// returns a stable context value, so mirror that here.
+const mockAuthState = {
+  user: { id: 'user-123', email: 'test@example.com' },
+  loading: false,
+};
+
 vi.mock('@/features/auth/hooks/useAuth', () => ({
-  useAuth: () => ({
-    user: { id: 'user-123', email: 'test@example.com' },
-    loading: false,
-  }),
+  useAuth: () => mockAuthState,
 }));
 
 vi.mock('@/components/layout/AppLayout', () => ({

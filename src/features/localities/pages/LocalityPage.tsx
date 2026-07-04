@@ -38,7 +38,7 @@ import { localityPageLoader, type LocalityPageLoaderData } from "./LocalityPage.
 
 export { localityPageLoader as loader } from "./LocalityPage.loader";
 
-export const meta: MetaFunction<typeof localityPageLoader> = ({ data }) => {
+export const meta: MetaFunction<typeof localityPageLoader> = ({ loaderData: data }) => {
   if (!data) return [{ title: "Plano" }];
   const d = data as LocalityPageLoaderData;
   return [

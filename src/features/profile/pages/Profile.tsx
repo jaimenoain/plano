@@ -224,7 +224,7 @@ const variants = {
 const ITEMS_PER_PAGE = 15;
 
 // ─── Meta ─────────────────────────────────────────────────────────────────────
-export const meta: MetaFunction<typeof profileLoader> = ({ data, params }) => {
+export const meta: MetaFunction<typeof profileLoader> = ({ loaderData: data, params }) => {
   const usernameFromParams = params.username;
   if (!data || !data.profile) {
     const fallback = usernameFromParams ?? "Profile";

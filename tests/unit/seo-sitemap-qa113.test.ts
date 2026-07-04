@@ -105,7 +105,7 @@ describe("QA 11.3 — SEO / sitemap / meta (automated)", () => {
       structuredData: personLd,
     } as unknown as PersonDetailsLoaderData;
 
-    const pTags = personPageMeta({ data: personData } as Parameters<
+    const pTags = personPageMeta({ loaderData: personData } as Parameters<
       typeof personPageMeta
     >[0]);
     expect(
@@ -155,7 +155,7 @@ describe("QA 11.3 — SEO / sitemap / meta (automated)", () => {
       structuredData: companyLd,
     } as unknown as CompanyDetailsLoaderData;
 
-    const cTags = companyPageMeta({ data: companyData } as Parameters<
+    const cTags = companyPageMeta({ loaderData: companyData } as Parameters<
       typeof companyPageMeta
     >[0]);
     expect(

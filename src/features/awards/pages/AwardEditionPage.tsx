@@ -7,7 +7,7 @@ import { getEditionDisplayLabel, type AwardRecipientDTO } from "../types/awards"
 
 export { awardEditionLoader as loader } from "./AwardEditionPage.loader";
 
-export const meta: MetaFunction<typeof awardEditionLoader> = ({ data }) => {
+export const meta: MetaFunction<typeof awardEditionLoader> = ({ loaderData: data }) => {
   if (!data) return [{ title: "Plano" }];
   const d = data as AwardEditionLoaderData;
   return [

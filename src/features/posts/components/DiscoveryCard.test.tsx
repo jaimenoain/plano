@@ -14,7 +14,8 @@ vi.mock('@/features/buildings/hooks/useBuildingImages', () => ({
 }));
 
 vi.mock('@/hooks/useIntersectionObserver', () => ({
-  useIntersectionObserver: () => ({ isVisible: true, containerRef: { current: null } }),
+  // Real hook returns containerRef as a callback ref (a function), not a RefObject.
+  useIntersectionObserver: () => ({ isVisible: true, containerRef: vi.fn() }),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({

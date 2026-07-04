@@ -14,7 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export { awardLoader as loader } from "./AwardPage.loader";
 
-export const meta: MetaFunction<typeof awardLoader> = ({ data }) => {
+export const meta: MetaFunction<typeof awardLoader> = ({ loaderData: data }) => {
   if (!data) return [{ title: "Plano" }];
   const d = data as AwardLoaderData;
   return [

@@ -77,7 +77,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export { companyDetailsLoader as loader } from "./CompanyDetails.loader";
 
-export const meta: MetaFunction<typeof companyDetailsLoader> = ({ data }) => {
+export const meta: MetaFunction<typeof companyDetailsLoader> = ({ loaderData: data }) => {
   if (!data) return [{ title: "Plano" }];
   const d = data as CompanyDetailsLoaderData;
   return [
