@@ -15,6 +15,11 @@ export default tseslint.config(
       "repomix-output.xml",
       ".react-router/types/**",
       "**/*.timestamp-*.mjs",
+      // Design-sync tool I/O (cache, review output, generated config, vendored
+      // bundles) — not app source. .ds-sync/ and ds-bundle/ are also gitignored.
+      ".design-sync/**",
+      ".ds-sync/**",
+      "ds-bundle/**",
     ],
   },
   {
