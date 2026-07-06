@@ -149,7 +149,7 @@ type CreditRow = {
   updated_at: string;
   person: PersonEmbed;
   company: CompanyEmbed;
-  note: NoteEmbed;
+  note?: NoteEmbed;
 };
 
 type ModerationPersonEmbed = {

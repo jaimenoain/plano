@@ -44,11 +44,277 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_broadcast_reads: {
+        Row: {
+          broadcast_id: string
+          read_at: string
+          recipient_user_id: string
+        }
+        Insert: {
+          broadcast_id: string
+          read_at?: string
+          recipient_user_id: string
+        }
+        Update: {
+          broadcast_id?: string
+          read_at?: string
+          recipient_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_broadcast_reads_broadcast_id_fkey"
+            columns: ["broadcast_id"]
+            isOneToOne: false
+            referencedRelation: "admin_broadcasts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_broadcast_reads_recipient_user_id_fkey"
+            columns: ["recipient_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_broadcasts: {
+        Row: {
+          body: string
+          id: string
+          pinned: boolean
+          recipient_scope: string
+          scope_value: string | null
+          sent_at: string
+          sent_by: string
+          subject: string
+          type: string
+        }
+        Insert: {
+          body: string
+          id?: string
+          pinned?: boolean
+          recipient_scope: string
+          scope_value?: string | null
+          sent_at?: string
+          sent_by: string
+          subject: string
+          type: string
+        }
+        Update: {
+          body?: string
+          id?: string
+          pinned?: boolean
+          recipient_scope?: string
+          scope_value?: string | null
+          sent_at?: string
+          sent_by?: string
+          subject?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_broadcasts_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_flag_dismissals: {
+        Row: {
+          dismissed_at: string
+          dismissed_by: string
+          entity_id: string
+          flag_type: string
+          id: string
+          snooze_until: string | null
+        }
+        Insert: {
+          dismissed_at?: string
+          dismissed_by: string
+          entity_id: string
+          flag_type: string
+          id?: string
+          snooze_until?: string | null
+        }
+        Update: {
+          dismissed_at?: string
+          dismissed_by?: string
+          entity_id?: string
+          flag_type?: string
+          id?: string
+          snooze_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_flag_dismissals_dismissed_by_fkey"
+            columns: ["dismissed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      allowed_emails: {
+        Row: {
+          created_at: string | null
+          email: string
+          first_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          first_name?: string | null
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          first_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      ambassador_applications: {
+        Row: {
+          chapter_id: string | null
+          created_at: string
+          id: string
+          interests: string[] | null
+          locality_id: string | null
+          motivation_text: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_note: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          chapter_id?: string | null
+          created_at?: string
+          id?: string
+          interests?: string[] | null
+          locality_id?: string | null
+          motivation_text?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_note?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          chapter_id?: string | null
+          created_at?: string
+          id?: string
+          interests?: string[] | null
+          locality_id?: string | null
+          motivation_text?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_note?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ambassador_applications_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "ambassador_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ambassador_applications_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ambassador_applications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ambassador_applications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ambassador_building_research_queue: {
+        Row: {
+          building_id: string
+          building_name: string
+          chapter_id: string
+          current_values: Json
+          data_points: Json
+          id: string
+          researched_at: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          building_id: string
+          building_name: string
+          chapter_id: string
+          current_values?: Json
+          data_points?: Json
+          id?: string
+          researched_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          building_id?: string
+          building_name?: string
+          chapter_id?: string
+          current_values?: Json
+          data_points?: Json
+          id?: string
+          researched_at?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ambassador_building_research_queue_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ambassador_building_research_queue_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "ambassador_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ambassador_building_research_queue_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ambassador_chapters: {
         Row: {
           country_code: string
           created_at: string
           id: string
+          last_event_search_at: string | null
           locality_id: string | null
           max_ambassadors: number
           name: string
@@ -61,6 +327,7 @@ export type Database = {
           country_code: string
           created_at?: string
           id?: string
+          last_event_search_at?: string | null
           locality_id?: string | null
           max_ambassadors?: number
           name: string
@@ -73,6 +340,7 @@ export type Database = {
           country_code?: string
           created_at?: string
           id?: string
+          last_event_search_at?: string | null
           locality_id?: string | null
           max_ambassadors?: number
           name?: string
@@ -97,6 +365,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ambassador_goals: {
+        Row: {
+          created_at: string
+          current_value: number
+          due_date: string | null
+          id: string
+          metric: string
+          status: string
+          target_value: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_value?: number
+          due_date?: string | null
+          id?: string
+          metric: string
+          status?: string
+          target_value?: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_value?: number
+          due_date?: string | null
+          id?: string
+          metric?: string
+          status?: string
+          target_value?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       ambassador_memberships: {
         Row: {
@@ -172,88 +479,57 @@ export type Database = {
           {
             foreignKeyName: "ambassador_memberships_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
-      ambassador_applications: {
+      api_request_logs: {
         Row: {
-          chapter_id: string
+          cost_usd: number | null
           created_at: string
+          duration_ms: number
+          endpoint: string
+          error_message: string | null
           id: string
-          motivation_text: string
-          reviewed_at: string | null
-          reviewed_by: string | null
-          reviewer_note: string | null
-          status: string
-          user_id: string
+          input_tokens: number | null
+          metadata: Json | null
+          method: string
+          model: string | null
+          output_tokens: number | null
+          status_code: number
+          user_id: string | null
         }
         Insert: {
-          chapter_id: string
+          cost_usd?: number | null
           created_at?: string
+          duration_ms: number
+          endpoint: string
+          error_message?: string | null
           id?: string
-          motivation_text: string
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          reviewer_note?: string | null
-          status?: string
-          user_id: string
+          input_tokens?: number | null
+          metadata?: Json | null
+          method?: string
+          model?: string | null
+          output_tokens?: number | null
+          status_code: number
+          user_id?: string | null
         }
         Update: {
-          chapter_id?: string
+          cost_usd?: number | null
           created_at?: string
+          duration_ms?: number
+          endpoint?: string
+          error_message?: string | null
           id?: string
-          motivation_text?: string
-          reviewed_at?: string | null
-          reviewed_by?: string | null
-          reviewer_note?: string | null
-          status?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ambassador_applications_chapter_id_fkey"
-            columns: ["chapter_id"]
-            isOneToOne: false
-            referencedRelation: "ambassador_chapters"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ambassador_applications_reviewed_by_fkey"
-            columns: ["reviewed_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ambassador_applications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      allowed_emails: {
-        Row: {
-          created_at: string | null
-          email: string
-          first_name: string | null
-          id: string
-        }
-        Insert: {
-          created_at?: string | null
-          email: string
-          first_name?: string | null
-          id?: string
-        }
-        Update: {
-          created_at?: string | null
-          email?: string
-          first_name?: string | null
-          id?: string
+          input_tokens?: number | null
+          metadata?: Json | null
+          method?: string
+          model?: string | null
+          output_tokens?: number | null
+          status_code?: number
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -365,6 +641,530 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "attribute_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      award_admins: {
+        Row: {
+          award_id: string
+          created_at: string
+          id: string
+          invited_by: string | null
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          award_id: string
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          award_id?: string
+          created_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "award_admins_award_id_fkey"
+            columns: ["award_id"]
+            isOneToOne: false
+            referencedRelation: "awards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "award_admins_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "award_admins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      award_categories: {
+        Row: {
+          award_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          valid_from_edition_id: string | null
+          valid_to_edition_id: string | null
+        }
+        Insert: {
+          award_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          valid_from_edition_id?: string | null
+          valid_to_edition_id?: string | null
+        }
+        Update: {
+          award_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          valid_from_edition_id?: string | null
+          valid_to_edition_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "award_categories_award_id_fkey"
+            columns: ["award_id"]
+            isOneToOne: false
+            referencedRelation: "awards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "award_categories_valid_from_edition_id_fkey"
+            columns: ["valid_from_edition_id"]
+            isOneToOne: false
+            referencedRelation: "award_editions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "award_categories_valid_to_edition_id_fkey"
+            columns: ["valid_to_edition_id"]
+            isOneToOne: false
+            referencedRelation: "award_editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      award_claim_requests: {
+        Row: {
+          award_id: string
+          created_at: string
+          id: string
+          reason: string
+          requester_user_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_note: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          award_id: string
+          created_at?: string
+          id?: string
+          reason: string
+          requester_user_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          award_id?: string
+          created_at?: string
+          id?: string
+          reason?: string
+          requester_user_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_note?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "award_claim_requests_award_id_fkey"
+            columns: ["award_id"]
+            isOneToOne: false
+            referencedRelation: "awards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "award_claim_requests_requester_user_id_fkey"
+            columns: ["requester_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "award_claim_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      award_edition_events: {
+        Row: {
+          created_at: string
+          edition_id: string
+          event_date: string
+          event_type: Database["public"]["Enums"]["award_edition_event_type"]
+          id: string
+          location: string | null
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          edition_id: string
+          event_date: string
+          event_type: Database["public"]["Enums"]["award_edition_event_type"]
+          id?: string
+          location?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          edition_id?: string
+          event_date?: string
+          event_type?: Database["public"]["Enums"]["award_edition_event_type"]
+          id?: string
+          location?: string | null
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "award_edition_events_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "award_editions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      award_editions: {
+        Row: {
+          award_id: string
+          ceremony_location: string | null
+          created_at: string
+          edition_date: string | null
+          edition_label: string | null
+          edition_number: number | null
+          id: string
+          notes: string | null
+          slug: string | null
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          award_id: string
+          ceremony_location?: string | null
+          created_at?: string
+          edition_date?: string | null
+          edition_label?: string | null
+          edition_number?: number | null
+          id?: string
+          notes?: string | null
+          slug?: string | null
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          award_id?: string
+          ceremony_location?: string | null
+          created_at?: string
+          edition_date?: string | null
+          edition_label?: string | null
+          edition_number?: number | null
+          id?: string
+          notes?: string | null
+          slug?: string | null
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "award_editions_award_id_fkey"
+            columns: ["award_id"]
+            isOneToOne: false
+            referencedRelation: "awards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      award_recipient_suggestions: {
+        Row: {
+          award_id: string
+          category_id: string | null
+          created_at: string
+          edition_id: string | null
+          id: string
+          notes: string | null
+          outcome: string
+          recipient_building_id: string | null
+          recipient_company_id: string | null
+          recipient_person_id: string | null
+          recipient_type: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_note: string | null
+          source_url: string | null
+          status: string
+          submitted_by: string
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          award_id: string
+          category_id?: string | null
+          created_at?: string
+          edition_id?: string | null
+          id?: string
+          notes?: string | null
+          outcome: string
+          recipient_building_id?: string | null
+          recipient_company_id?: string | null
+          recipient_person_id?: string | null
+          recipient_type: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_note?: string | null
+          source_url?: string | null
+          status?: string
+          submitted_by: string
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          award_id?: string
+          category_id?: string | null
+          created_at?: string
+          edition_id?: string | null
+          id?: string
+          notes?: string | null
+          outcome?: string
+          recipient_building_id?: string | null
+          recipient_company_id?: string | null
+          recipient_person_id?: string | null
+          recipient_type?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_note?: string | null
+          source_url?: string | null
+          status?: string
+          submitted_by?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "award_recipient_suggestions_award_id_fkey"
+            columns: ["award_id"]
+            isOneToOne: false
+            referencedRelation: "awards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "award_recipient_suggestions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "award_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "award_recipient_suggestions_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "award_editions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "award_recipient_suggestions_recipient_building_id_fkey"
+            columns: ["recipient_building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "award_recipient_suggestions_recipient_company_id_fkey"
+            columns: ["recipient_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "award_recipient_suggestions_recipient_person_id_fkey"
+            columns: ["recipient_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "award_recipient_suggestions_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      award_recipients: {
+        Row: {
+          category_id: string
+          created_at: string
+          edition_id: string
+          id: string
+          notes: string | null
+          outcome: string
+          recipient_building_id: string | null
+          recipient_company_id: string | null
+          recipient_person_id: string | null
+          recipient_type: string
+          updated_at: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          edition_id: string
+          id?: string
+          notes?: string | null
+          outcome?: string
+          recipient_building_id?: string | null
+          recipient_company_id?: string | null
+          recipient_person_id?: string | null
+          recipient_type: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          edition_id?: string
+          id?: string
+          notes?: string | null
+          outcome?: string
+          recipient_building_id?: string | null
+          recipient_company_id?: string | null
+          recipient_person_id?: string | null
+          recipient_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "award_recipients_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "award_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "award_recipients_edition_id_fkey"
+            columns: ["edition_id"]
+            isOneToOne: false
+            referencedRelation: "award_editions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "award_recipients_recipient_building_id_fkey"
+            columns: ["recipient_building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "award_recipients_recipient_company_id_fkey"
+            columns: ["recipient_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "award_recipients_recipient_person_id_fkey"
+            columns: ["recipient_person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      awards: {
+        Row: {
+          awarding_body_company_id: string | null
+          awarding_body_name: string | null
+          awarding_body_type: string | null
+          claim_status: Database["public"]["Enums"]["person_claim_status"]
+          country: string | null
+          created_at: string
+          description: string | null
+          frequency: string
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          updated_at: string
+          website: string | null
+          wikidata_fetched_at: string | null
+          wikidata_qid: string | null
+          wikidata_sitelinks: number | null
+        }
+        Insert: {
+          awarding_body_company_id?: string | null
+          awarding_body_name?: string | null
+          awarding_body_type?: string | null
+          claim_status?: Database["public"]["Enums"]["person_claim_status"]
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          updated_at?: string
+          website?: string | null
+          wikidata_fetched_at?: string | null
+          wikidata_qid?: string | null
+          wikidata_sitelinks?: number | null
+        }
+        Update: {
+          awarding_body_company_id?: string | null
+          awarding_body_name?: string | null
+          awarding_body_type?: string | null
+          claim_status?: Database["public"]["Enums"]["person_claim_status"]
+          country?: string | null
+          created_at?: string
+          description?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          updated_at?: string
+          website?: string | null
+          wikidata_fetched_at?: string | null
+          wikidata_qid?: string | null
+          wikidata_sitelinks?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "awards_awarding_body_company_id_fkey"
+            columns: ["awarding_body_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -486,6 +1286,51 @@ export type Database = {
           },
         ]
       }
+      building_credit_notes: {
+        Row: {
+          content: string
+          created_at: string
+          credit_id: string
+          id: string
+          image_urls: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          credit_id: string
+          id?: string
+          image_urls?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          credit_id?: string
+          id?: string
+          image_urls?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_credit_notes_credit_id_fkey"
+            columns: ["credit_id"]
+            isOneToOne: true
+            referencedRelation: "building_credits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_credit_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       building_credits: {
         Row: {
           added_by_user_id: string | null
@@ -507,6 +1352,8 @@ export type Database = {
             | null
           id: string
           is_lead: boolean
+          moderated_at: string | null
+          moderated_by: string | null
           person_id: string | null
           project_url: string | null
           role: Database["public"]["Enums"]["credit_role_enum"]
@@ -536,6 +1383,8 @@ export type Database = {
             | null
           id?: string
           is_lead?: boolean
+          moderated_at?: string | null
+          moderated_by?: string | null
           person_id?: string | null
           project_url?: string | null
           role: Database["public"]["Enums"]["credit_role_enum"]
@@ -565,6 +1414,8 @@ export type Database = {
             | null
           id?: string
           is_lead?: boolean
+          moderated_at?: string | null
+          moderated_by?: string | null
           person_id?: string | null
           project_url?: string | null
           role?: Database["public"]["Enums"]["credit_role_enum"]
@@ -604,6 +1455,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "building_credits_moderated_by_fkey"
+            columns: ["moderated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "building_credits_person_id_fkey"
             columns: ["person_id"]
             isOneToOne: false
@@ -612,47 +1470,41 @@ export type Database = {
           },
         ]
       }
-      building_credit_notes: {
+      building_duplicate_dismissals: {
         Row: {
-          id: string
-          credit_id: string
-          user_id: string
-          content: string
-          image_urls: string[]
+          building_id_1: string
+          building_id_2: string
           created_at: string
-          updated_at: string
+          id: string
+          user_id: string
         }
         Insert: {
-          id?: string
-          credit_id: string
-          user_id: string
-          content: string
-          image_urls?: string[]
+          building_id_1: string
+          building_id_2: string
           created_at?: string
-          updated_at?: string
+          id?: string
+          user_id: string
         }
         Update: {
-          id?: string
-          credit_id?: string
-          user_id?: string
-          content?: string
-          image_urls?: string[]
+          building_id_1?: string
+          building_id_2?: string
           created_at?: string
-          updated_at?: string
+          id?: string
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "building_credit_notes_credit_id_fkey"
-            columns: ["credit_id"]
-            isOneToOne: true
-            referencedRelation: "building_credits"
+            foreignKeyName: "building_duplicate_dismissals_building_id_1_fkey"
+            columns: ["building_id_1"]
+            isOneToOne: false
+            referencedRelation: "buildings"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "building_credit_notes_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "building_duplicate_dismissals_building_id_2_fkey"
+            columns: ["building_id_2"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "buildings"
             referencedColumns: ["id"]
           },
         ]
@@ -689,54 +1541,70 @@ export type Database = {
       }
       building_posts: {
         Row: {
-          id: string
-          user_id: string
-          building_id: string
-          title: string | null
           body: string | null
-          tags: string[] | null
-          video_url: string | null
-          visibility: string
+          building_id: string
           created_at: string
+          id: string
+          moderated_at: string | null
+          moderated_by: string | null
+          tags: string[] | null
+          title: string | null
           updated_at: string
+          user_id: string
+          video_url: string | null
+          views_count: number
+          visibility: string
         }
         Insert: {
-          id?: string
-          user_id: string
-          building_id: string
-          title?: string | null
           body?: string | null
-          tags?: string[] | null
-          video_url?: string | null
-          visibility?: string
+          building_id: string
           created_at?: string
+          id?: string
+          moderated_at?: string | null
+          moderated_by?: string | null
+          tags?: string[] | null
+          title?: string | null
           updated_at?: string
+          user_id: string
+          video_url?: string | null
+          views_count?: number
+          visibility?: string
         }
         Update: {
-          id?: string
-          user_id?: string
-          building_id?: string
-          title?: string | null
           body?: string | null
-          tags?: string[] | null
-          video_url?: string | null
-          visibility?: string
+          building_id?: string
           created_at?: string
+          id?: string
+          moderated_at?: string | null
+          moderated_by?: string | null
+          tags?: string[] | null
+          title?: string | null
           updated_at?: string
+          user_id?: string
+          video_url?: string | null
+          views_count?: number
+          visibility?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "building_posts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "building_posts_building_id_fkey"
             columns: ["building_id"]
             isOneToOne: false
             referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_posts_moderated_by_fkey"
+            columns: ["moderated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "building_posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -810,8 +1678,11 @@ export type Database = {
           location: unknown
           location_precision: Database["public"]["Enums"]["location_precision"]
           merged_into_id: string | null
+          moderated_at: string | null
+          moderated_by: string | null
           name: string
           popularity_score: number
+          search_vector: unknown
           short_id: number
           size_category: string | null
           size_sqm: number | null
@@ -858,8 +1729,11 @@ export type Database = {
           location: unknown
           location_precision?: Database["public"]["Enums"]["location_precision"]
           merged_into_id?: string | null
+          moderated_at?: string | null
+          moderated_by?: string | null
           name: string
           popularity_score?: number
+          search_vector?: unknown
           short_id?: number
           size_category?: string | null
           size_sqm?: number | null
@@ -906,8 +1780,11 @@ export type Database = {
           location?: unknown
           location_precision?: Database["public"]["Enums"]["location_precision"]
           merged_into_id?: string | null
+          moderated_at?: string | null
+          moderated_by?: string | null
           name?: string
           popularity_score?: number
+          search_vector?: unknown
           short_id?: number
           size_category?: string | null
           size_sqm?: number | null
@@ -953,6 +1830,138 @@ export type Database = {
             columns: ["merged_into_id"]
             isOneToOne: false
             referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "buildings_moderated_by_fkey"
+            columns: ["moderated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chapter_projects: {
+        Row: {
+          chapter_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          chapter_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          chapter_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapter_projects_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "ambassador_chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chapter_tasks: {
+        Row: {
+          assigned_to: string | null
+          chapter_id: string
+          company_id: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          due_date: string | null
+          id: string
+          project_id: string | null
+          status: string
+          title: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          chapter_id: string
+          company_id?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          project_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          chapter_id?: string
+          company_id?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          project_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chapter_tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chapter_tasks_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "ambassador_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chapter_tasks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chapter_tasks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chapter_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "chapter_projects"
             referencedColumns: ["id"]
           },
         ]
@@ -1294,6 +2303,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          search_vector: unknown
           slug: string
           updated_at: string
           verified_domain: string | null
@@ -1309,6 +2319,7 @@ export type Database = {
           id: string
           logo_url?: string | null
           name: string
+          search_vector?: unknown
           slug: string
           updated_at?: string
           verified_domain?: string | null
@@ -1324,6 +2335,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          search_vector?: unknown
           slug?: string
           updated_at?: string
           verified_domain?: string | null
@@ -1698,6 +2710,149 @@ export type Database = {
         }
         Relationships: []
       }
+      embassy_event_discoveries: {
+        Row: {
+          address: string | null
+          chapter_id: string
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          duplicate_of_event_id: string | null
+          end_at: string | null
+          external_link: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          locality_id: string | null
+          published_event_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          snippet: string | null
+          source_url: string
+          start_at: string
+          status: string
+          title: string
+        }
+        Insert: {
+          address?: string | null
+          chapter_id: string
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          duplicate_of_event_id?: string | null
+          end_at?: string | null
+          external_link?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          locality_id?: string | null
+          published_event_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          snippet?: string | null
+          source_url: string
+          start_at: string
+          status?: string
+          title: string
+        }
+        Update: {
+          address?: string | null
+          chapter_id?: string
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          duplicate_of_event_id?: string | null
+          end_at?: string | null
+          external_link?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          locality_id?: string | null
+          published_event_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          snippet?: string | null
+          source_url?: string
+          start_at?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "embassy_event_discoveries_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "ambassador_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "embassy_event_discoveries_duplicate_of_event_id_fkey"
+            columns: ["duplicate_of_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "embassy_event_discoveries_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "embassy_event_discoveries_published_event_id_fkey"
+            columns: ["published_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "embassy_event_discoveries_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      embassy_event_search_runs: {
+        Row: {
+          chapter_id: string
+          completed_at: string | null
+          error: string | null
+          id: string
+          items_found: number | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          chapter_id: string
+          completed_at?: string | null
+          error?: string | null
+          id?: string
+          items_found?: number | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          chapter_id?: string
+          completed_at?: string | null
+          error?: string | null
+          id?: string
+          items_found?: number | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "embassy_event_search_runs_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "ambassador_chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_attendances: {
         Row: {
           created_at: string
@@ -1766,7 +2921,9 @@ export type Database = {
       events: {
         Row: {
           address: string | null
+          city_slug: string | null
           claim_status: Database["public"]["Enums"]["event_claim_status"]
+          country_code: string | null
           cover_image_url: string | null
           created_at: string
           description: string | null
@@ -1775,6 +2932,7 @@ export type Database = {
           id: string
           is_deleted: boolean
           is_self_hosted: boolean
+          locality_id: string | null
           location: unknown
           organiser_company_id: string | null
           organiser_person_id: string | null
@@ -1787,7 +2945,9 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          city_slug?: string | null
           claim_status?: Database["public"]["Enums"]["event_claim_status"]
+          country_code?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -1796,6 +2956,7 @@ export type Database = {
           id?: string
           is_deleted?: boolean
           is_self_hosted?: boolean
+          locality_id?: string | null
           location?: unknown
           organiser_company_id?: string | null
           organiser_person_id?: string | null
@@ -1808,7 +2969,9 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          city_slug?: string | null
           claim_status?: Database["public"]["Enums"]["event_claim_status"]
+          country_code?: string | null
           cover_image_url?: string | null
           created_at?: string
           description?: string | null
@@ -1817,6 +2980,7 @@ export type Database = {
           id?: string
           is_deleted?: boolean
           is_self_hosted?: boolean
+          locality_id?: string | null
           location?: unknown
           organiser_company_id?: string | null
           organiser_person_id?: string | null
@@ -1829,6 +2993,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "events_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "events_organiser_company_id_fkey"
             columns: ["organiser_company_id"]
             isOneToOne: false
@@ -1840,6 +3011,65 @@ export type Database = {
             columns: ["organiser_person_id"]
             isOneToOne: false
             referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback: {
+        Row: {
+          console_errors: Json
+          created_at: string
+          id: string
+          message: string
+          metadata: Json
+          needs_user_input: boolean
+          outcome_notes: string | null
+          page_url: string | null
+          screenshot_path: string | null
+          status: Database["public"]["Enums"]["feedback_status"]
+          status_changed_at: string | null
+          type: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          console_errors?: Json
+          created_at?: string
+          id?: string
+          message: string
+          metadata?: Json
+          needs_user_input?: boolean
+          outcome_notes?: string | null
+          page_url?: string | null
+          screenshot_path?: string | null
+          status?: Database["public"]["Enums"]["feedback_status"]
+          status_changed_at?: string | null
+          type: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          console_errors?: Json
+          created_at?: string
+          id?: string
+          message?: string
+          metadata?: Json
+          needs_user_input?: boolean
+          outcome_notes?: string | null
+          page_url?: string | null
+          screenshot_path?: string | null
+          status?: Database["public"]["Enums"]["feedback_status"]
+          status_changed_at?: string | null
+          type?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_user_id_profiles_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2125,29 +3355,35 @@ export type Database = {
           country_code: string
           created_at: string
           description: string | null
+          google_place_id: string | null
           hero_image_url: string | null
           id: string
           lat: number | null
           lng: number | null
           meta_description: string | null
           meta_title: string | null
+          region: string | null
+          region_slug: string | null
           slug: string
           updated_at: string
         }
         Insert: {
           buildings_count?: number
           city: string
-          city_slug?: string
+          city_slug: string
           country: string
           country_code: string
           created_at?: string
           description?: string | null
+          google_place_id?: string | null
           hero_image_url?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
           meta_description?: string | null
           meta_title?: string | null
+          region?: string | null
+          region_slug?: string | null
           slug: string
           updated_at?: string
         }
@@ -2159,12 +3395,15 @@ export type Database = {
           country_code?: string
           created_at?: string
           description?: string | null
+          google_place_id?: string | null
           hero_image_url?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
           meta_description?: string | null
           meta_title?: string | null
+          region?: string | null
+          region_slug?: string | null
           slug?: string
           updated_at?: string
         }
@@ -2190,6 +3429,39 @@ export type Database = {
           {
             foreignKeyName: "login_logs_user_id_fkey"
             columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      note_views: {
+        Row: {
+          created_at: string
+          note_id: string
+          viewer_id: string
+        }
+        Insert: {
+          created_at?: string
+          note_id: string
+          viewer_id: string
+        }
+        Update: {
+          created_at?: string
+          note_id?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_views_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "building_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "note_views_viewer_id_fkey"
+            columns: ["viewer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -2264,6 +3536,44 @@ export type Database = {
           },
         ]
       }
+      outreach_log: {
+        Row: {
+          ambassador_id: string
+          created_at: string
+          firm_id: string
+          id: string
+          notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ambassador_id: string
+          created_at?: string
+          firm_id: string
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ambassador_id?: string
+          created_at?: string
+          firm_id?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outreach_log_ambassador_id_fkey"
+            columns: ["ambassador_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       people: {
         Row: {
           avatar_url: string | null
@@ -2277,6 +3587,7 @@ export type Database = {
           location_note: string | null
           name: string
           nationality: string | null
+          search_vector: unknown
           slug: string
           updated_at: string
           website: string | null
@@ -2293,6 +3604,7 @@ export type Database = {
           location_note?: string | null
           name: string
           nationality?: string | null
+          search_vector?: unknown
           slug: string
           updated_at?: string
           website?: string | null
@@ -2309,6 +3621,7 @@ export type Database = {
           location_note?: string | null
           name?: string
           nationality?: string | null
+          search_vector?: unknown
           slug?: string
           updated_at?: string
           website?: string | null
@@ -2363,7 +3676,73 @@ export type Database = {
             foreignKeyName: "person_company_affiliations_person_id_fkey"
             columns: ["person_id"]
             isOneToOne: false
-            referencedRelation: "people"
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plano_updates: {
+        Row: {
+          author_id: string
+          body: string | null
+          country_code: string | null
+          created_at: string
+          excerpt: string | null
+          geo_scope: string
+          hero_image_url: string | null
+          id: string
+          locality_id: string | null
+          published_at: string | null
+          slug: string
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body?: string | null
+          country_code?: string | null
+          created_at?: string
+          excerpt?: string | null
+          geo_scope?: string
+          hero_image_url?: string | null
+          id?: string
+          locality_id?: string | null
+          published_at?: string | null
+          slug: string
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string | null
+          country_code?: string | null
+          created_at?: string
+          excerpt?: string | null
+          geo_scope?: string
+          hero_image_url?: string | null
+          id?: string
+          locality_id?: string | null
+          published_at?: string | null
+          slug?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plano_updates_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plano_updates_locality_id_fkey"
+            columns: ["locality_id"]
+            isOneToOne: false
+            referencedRelation: "localities"
             referencedColumns: ["id"]
           },
         ]
@@ -2428,6 +3807,78 @@ export type Database = {
           username?: string | null
           verified_architect_id?: string | null
           website?: string | null
+        }
+        Relationships: []
+      }
+      programme_campaign_chapters: {
+        Row: {
+          campaign_id: string
+          chapter_id: string
+        }
+        Insert: {
+          campaign_id: string
+          chapter_id: string
+        }
+        Update: {
+          campaign_id?: string
+          chapter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "programme_campaign_chapters_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "programme_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "programme_campaign_chapters_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "ambassador_chapters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      programme_campaigns: {
+        Row: {
+          chapter_scope: string
+          created_at: string
+          created_by: string
+          description: string | null
+          end_date: string
+          id: string
+          metric_type: string
+          start_date: string
+          target_value: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          chapter_scope?: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_date: string
+          id?: string
+          metric_type: string
+          start_date: string
+          target_value?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          chapter_scope?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          metric_type?: string
+          start_date?: string
+          target_value?: number
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2544,6 +3995,8 @@ export type Database = {
           is_generated: boolean | null
           is_official: boolean | null
           likes_count: number | null
+          moderated_at: string | null
+          moderated_by: string | null
           review_id: string
           storage_path: string
           user_id: string
@@ -2557,6 +4010,8 @@ export type Database = {
           is_generated?: boolean | null
           is_official?: boolean | null
           likes_count?: number | null
+          moderated_at?: string | null
+          moderated_by?: string | null
           review_id: string
           storage_path: string
           user_id: string
@@ -2570,12 +4025,21 @@ export type Database = {
           is_generated?: boolean | null
           is_official?: boolean | null
           likes_count?: number | null
+          moderated_at?: string | null
+          moderated_by?: string | null
           review_id?: string
           storage_path?: string
           user_id?: string
           width_px?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "review_images_moderated_by_fkey"
+            columns: ["moderated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "review_images_review_id_fkey"
             columns: ["review_id"]
@@ -2690,6 +4154,24 @@ export type Database = {
           proj4text?: string | null
           srid?: number
           srtext?: string | null
+        }
+        Relationships: []
+      }
+      staging_credits: {
+        Row: {
+          project_name: string | null
+          team_name: string | null
+          team_role: string | null
+        }
+        Insert: {
+          project_name?: string | null
+          team_name?: string | null
+          team_role?: string | null
+        }
+        Update: {
+          project_name?: string | null
+          team_name?: string | null
+          team_role?: string | null
         }
         Relationships: []
       }
@@ -2857,6 +4339,77 @@ export type Database = {
       }
     }
     Views: {
+      _ambassador_memberships_internal: {
+        Row: {
+          chapter_id: string | null
+          created_at: string | null
+          exco_responsibility: string | null
+          id: string | null
+          invited_by: string | null
+          joined_at: string | null
+          role: string | null
+          status: string | null
+          updated_at: string | null
+          updated_by: string | null
+          user_id: string | null
+        }
+        Insert: {
+          chapter_id?: string | null
+          created_at?: string | null
+          exco_responsibility?: string | null
+          id?: string | null
+          invited_by?: string | null
+          joined_at?: string | null
+          role?: string | null
+          status?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          chapter_id?: string | null
+          created_at?: string | null
+          exco_responsibility?: string | null
+          id?: string | null
+          invited_by?: string | null
+          joined_at?: string | null
+          role?: string | null
+          status?: string | null
+          updated_at?: string | null
+          updated_by?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ambassador_memberships_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "ambassador_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ambassador_memberships_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ambassador_memberships_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ambassador_memberships_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       geography_columns: {
         Row: {
           coord_dimension: number | null
@@ -2901,9 +4454,21 @@ export type Database = {
       }
     }
     Functions: {
-      complete_ambassador_onboarding: {
-        Args: { p_preferred_tools: string[] }
-        Returns: undefined
+      _ambassador_can_access_chapter: {
+        Args: { p_chapter_id: string }
+        Returns: boolean
+      }
+      _ambassador_profile_matches_chapter: {
+        Args: {
+          p_chapter: Database["public"]["Tables"]["ambassador_chapters"]["Row"]
+          p_country: string
+          p_location: string
+        }
+        Returns: boolean
+      }
+      _building_in_ambassador_chapter_scope: {
+        Args: { p_building_id: string; p_chapter_id: string }
+        Returns: boolean
       }
       _postgis_deprecate: {
         Args: { newname: string; oldname: string; version: string }
@@ -3036,9 +4601,57 @@ export type Database = {
         Args: { p_source_company_id: string; p_target_company_id: string }
         Returns: Json
       }
+      admin_merge_localities: {
+        Args: { p_source_locality_id: string; p_target_locality_id: string }
+        Returns: Json
+      }
       admin_merge_people: {
         Args: { p_source_person_id: string; p_target_person_id: string }
         Returns: Json
+      }
+      ambassador_apply_building_research: {
+        Args: { p_building_id: string; p_updates: Json }
+        Returns: undefined
+      }
+      ambassador_approve_building: {
+        Args: { p_building_id: string }
+        Returns: undefined
+      }
+      ambassador_approve_building_global: {
+        Args: { p_building_id: string }
+        Returns: undefined
+      }
+      ambassador_approve_credit: {
+        Args: { p_credit_id: string }
+        Returns: undefined
+      }
+      ambassador_approve_credit_global: {
+        Args: { p_credit_id: string }
+        Returns: undefined
+      }
+      ambassador_approve_photo: {
+        Args: { p_photo_id: string }
+        Returns: undefined
+      }
+      ambassador_approve_video: {
+        Args: { p_post_id: string }
+        Returns: undefined
+      }
+      ambassador_discard_event_discovery: {
+        Args: { p_discovery_id: string }
+        Returns: undefined
+      }
+      ambassador_dismiss_queued_research: {
+        Args: { p_queue_id: string }
+        Returns: undefined
+      }
+      ambassador_publish_event_discovery: {
+        Args: { p_discovery_id: string }
+        Returns: string
+      }
+      approve_award_suggestion: {
+        Args: { p_suggestion_id: string }
+        Returns: string
       }
       approve_company_steward_request: {
         Args: { p_token_hex: string }
@@ -3056,6 +4669,15 @@ export type Database = {
           p_target_id: string
         }
         Returns: undefined
+      }
+      building_matches_contact_filters: {
+        Args: {
+          p_building_id: string
+          p_contact_min_rating?: number
+          p_filter_contacts?: boolean
+          p_rated_by?: string[]
+        }
+        Returns: boolean
       }
       building_matches_credit_filters: {
         Args: { p_building_id: string; p_company_id: string; p_roles: string[] }
@@ -3095,14 +4717,29 @@ export type Database = {
       claim_event: {
         Args: {
           p_event_id: string
-          p_organiser_kind: string
           p_organiser_id?: string
+          p_organiser_kind: string
         }
         Returns: Json
       }
       claim_person: { Args: { p_person_id: string }; Returns: Json }
+      complete_ambassador_onboarding:
+        | { Args: { p_contributor_type: string }; Returns: undefined }
+        | { Args: { p_preferred_tools: string[] }; Returns: undefined }
       country_name_to_code: { Args: { p_country: string }; Returns: string }
       disablelongtransactions: { Args: never; Returns: string }
+      dismiss_building_duplicate_pair: {
+        Args: { p_id1: string; p_id2: string }
+        Returns: undefined
+      }
+      dismiss_intervention_flag: {
+        Args: {
+          p_entity_id: string
+          p_flag_type: string
+          p_snooze_days?: number
+        }
+        Returns: undefined
+      }
       dropgeometrycolumn:
         | {
             Args: {
@@ -3135,42 +4772,28 @@ export type Database = {
         | { Args: { table_name: string }; Returns: string }
       enablelongtransactions: { Args: never; Returns: string }
       equals: { Args: { geom1: unknown; geom2: unknown }; Returns: boolean }
-      find_nearby_buildings:
-        | {
-            Args: { lat: number; long: number; radius_meters?: number }
-            Returns: {
-              address: string
-              dist_meters: number
-              id: string
-              location_lat: number
-              location_lng: number
-              main_image_url: string
-              name: string
-              short_id: number
-              similarity_score: number
-              slug: string
-            }[]
-          }
-        | {
-            Args: {
-              lat: number
-              long: number
-              name_query?: string
-              radius_meters?: number
-            }
-            Returns: {
-              address: string
-              dist_meters: number
-              id: string
-              location_lat: number
-              location_lng: number
-              main_image_url: string
-              name: string
-              short_id: number
-              similarity_score: number
-              slug: string
-            }[]
-          }
+      find_nearby_buildings: {
+        Args: {
+          lat: number
+          long: number
+          name_query?: string
+          radius_meters?: number
+        }
+        Returns: {
+          address: string
+          dist_meters: number
+          id: string
+          location_approximate: boolean
+          location_lat: number
+          location_lng: number
+          main_image_url: string
+          name: string
+          short_id: number
+          similarity_score: number
+          slug: string
+          tier_rank_label: string
+        }[]
+      }
       fix_orphaned_user_buildings: { Args: never; Returns: undefined }
       flag_building_credit: {
         Args: {
@@ -3282,165 +4905,14 @@ export type Database = {
         Returns: boolean
       }
       geomfromewkt: { Args: { "": string }; Returns: unknown }
-      get_admin_content_stats: { Args: never; Returns: Json }
-      get_ambassador_badge_for_profile: {
-        Args: { p_user_id: string }
-        Returns: {
-          ambassador_role: string
-          chapter_name: string
-        }[]
-      }
-      get_ambassador_buildings_missing_metadata: {
-        Args: { p_chapter_id: string; p_limit?: number }
-        Returns: {
-          city: string | null
-          country: string | null
-          has_architect_credit: boolean
-          has_styles: boolean
-          id: string
-          name: string
-          popularity_score: number
-          short_id: number
-          slug: string
-          year_completed: number | null
-        }[]
-      }
-      get_ambassador_buildings_without_photos: {
-        Args: { p_chapter_id: string; p_limit?: number }
-        Returns: {
-          city: string | null
-          country: string | null
-          hero_image_url: string | null
-          id: string
-          name: string
-          popularity_score: number
-          short_id: number
-          slug: string
-        }[]
-      }
-      get_ambassador_my_audit_timeline: {
-        Args: { p_limit?: number }
-        Returns: {
-          building_id: string
-          building_name: string
-          building_short_id: number
-          building_slug: string
-          created_at: string | null
-          id: string
-          operation: string
-          table_name: string
-        }[]
-      }
-      get_ambassador_recent_buildings: {
-        Args: { p_chapter_id: string; p_limit?: number }
-        Returns: {
-          added_by_username: string | null
-          address: string | null
-          city: string | null
-          country: string | null
-          created_at: string | null
-          hero_image_url: string | null
-          id: string
-          lat: number | null
-          lng: number | null
-          n: string | null
-          name: string
-          short_id: number
-          slug: string
-        }[]
-      }
-      get_ambassador_unclaimed_firms: {
-        Args: { p_chapter_id: string; p_limit?: number }
-        Returns: {
-          building_count: number
-          claim_status: string
-          country: string | null
-          id: string
-          name: string
-          slug: string
-        }[]
-      }
-      get_chapter_ambassador_activity: {
-        Args: { p_chapter_id: string; p_days?: number }
-        Returns: {
-          avatar_url: string | null
-          edits_count: number
-          last_active_at: string | null
-          photos_added: number
-          role: string
-          user_id: string
-          username: string
-        }[]
-      }
-      get_chapter_members_with_contact: {
-        Args: { p_chapter_id: string }
-        Returns: {
-          avatar_url: string | null
-          email: string
-          exco_responsibility: string | null
-          joined_at: string
-          invited_by: string | null
-          membership_id: string
-          role: string
-          status: string
-          user_id: string
-          username: string
-        }[]
-      }
-      get_chapter_metrics: {
-        Args: { p_chapter_id: string; p_days?: number }
-        Returns: {
-          period_end: string
-          period_start: string
-          prev_period_end: string
-          prev_period_start: string
-          prev_total_building_visits: number
-          prev_total_edits: number
-          prev_total_photos_added: number
-          total_building_visits: number
-          total_edits: number
-          total_photos_added: number
-        }[]
-      }
-      president_invite_ambassador_member: {
-        Args: {
-          p_chapter_id: string
-          p_exco_responsibility?: string | null
-          p_role: string
-          p_user_id: string
-        }
-        Returns: string
-      }
-      president_update_chapter_membership: {
-        Args: {
-          p_exco_responsibility?: string | null
-          p_membership_id: string
-          p_role?: string | null
-          p_status?: string | null
-        }
-        Returns: undefined
-      }
-      get_national_chapter_overview: {
-        Args: { p_national_chapter_id: string }
-        Returns: {
-          chapter_id: string
-          chapter_name: string
-          edits_last_30d: number
-          last_activity_at: string | null
-          locality_id: string | null
-          member_count: number
-          photos_last_30d: number
-          president_name: string
-        }[]
-      }
       get_admin_ambassador_locality_coverage: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           buildings_count: number
-          chapter_id: string | null
+          chapter_id: string
           chapter_member_count: number
-          chapter_name: string | null
-          chapter_status: string | null
+          chapter_name: string
+          chapter_status: string
           city: string
           country: string
           country_code: string
@@ -3448,7 +4920,7 @@ export type Database = {
         }[]
       }
       get_admin_ambassador_program_stats: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           chapters_active: number
           chapters_forming: number
@@ -3458,15 +4930,225 @@ export type Database = {
           total_active_memberships: number
         }[]
       }
+      get_admin_broadcasts: {
+        Args: never
+        Returns: {
+          body: string
+          id: string
+          pinned: boolean
+          read_count: number
+          recipient_count: number
+          recipient_scope: string
+          scope_value: string
+          sent_at: string
+          sent_by_username: string
+          subject: string
+          type: string
+        }[]
+      }
+      get_admin_content_stats: { Args: never; Returns: Json }
       get_admin_dashboard_stats: { Args: never; Returns: Json }
       get_admin_leaderboards: { Args: never; Returns: Json }
       get_admin_notifications: { Args: never; Returns: Json }
       get_admin_pulse: { Args: never; Returns: Json }
       get_admin_retention: { Args: never; Returns: Json }
       get_admin_trends: { Args: never; Returns: Json }
+      get_ambassador_badge_for_profile: {
+        Args: { p_user_id: string }
+        Returns: {
+          ambassador_role: string
+          chapter_name: string
+        }[]
+      }
+      get_ambassador_broadcast_banners: {
+        Args: never
+        Returns: {
+          body: string
+          id: string
+          is_pinned: boolean
+          sent_at: string
+          subject: string
+          type: string
+        }[]
+      }
+      get_ambassador_buildings_missing_metadata: {
+        Args: { p_chapter_id: string; p_limit?: number }
+        Returns: {
+          city: string
+          country: string
+          has_architect_credit: boolean
+          has_styles: boolean
+          id: string
+          name: string
+          popularity_score: number
+          short_id: number
+          slug: string
+          year_completed: number
+        }[]
+      }
+      get_ambassador_buildings_without_photos: {
+        Args: { p_chapter_id: string; p_limit?: number }
+        Returns: {
+          city: string
+          country: string
+          hero_image_url: string
+          id: string
+          name: string
+          popularity_score: number
+          short_id: number
+          slug: string
+        }[]
+      }
+      get_ambassador_moderation_credits: {
+        Args: { p_chapter_id: string; p_limit?: number }
+        Returns: {
+          building_id: string
+          building_name: string
+          building_short_id: number
+          building_slug: string
+          created_at: string
+          entity_name: string
+          id: string
+          role: string
+        }[]
+      }
+      get_ambassador_moderation_photos: {
+        Args: { p_chapter_id: string; p_limit?: number }
+        Returns: {
+          building_id: string
+          building_name: string
+          building_short_id: number
+          building_slug: string
+          caption: string
+          created_at: string
+          id: string
+          storage_path: string
+        }[]
+      }
+      get_ambassador_moderation_videos: {
+        Args: { p_chapter_id: string; p_limit?: number }
+        Returns: {
+          body: string
+          building_id: string
+          building_name: string
+          building_short_id: number
+          building_slug: string
+          created_at: string
+          id: string
+          title: string
+          uploader_username: string
+          video_url: string
+        }[]
+      }
+      get_ambassador_my_audit_timeline: {
+        Args: { p_limit?: number }
+        Returns: {
+          building_id: string
+          building_name: string
+          building_short_id: number
+          building_slug: string
+          created_at: string
+          id: string
+          operation: string
+          table_name: string
+        }[]
+      }
+      get_ambassador_recent_buildings: {
+        Args: { p_chapter_id: string; p_limit?: number }
+        Returns: {
+          added_by_username: string
+          address: string
+          city: string
+          country: string
+          created_at: string
+          hero_image_url: string
+          id: string
+          lat: number
+          lng: number
+          moderated_at: string
+          moderated_by_username: string
+          n: string
+          name: string
+          short_id: number
+          slug: string
+        }[]
+      }
+      get_ambassador_research_queue: {
+        Args: { p_chapter_id: string; p_limit?: number }
+        Returns: {
+          building_id: string
+          building_name: string
+          current_values: Json
+          data_points: Json
+          id: string
+          researched_at: string
+          status: string
+        }[]
+      }
+      get_ambassador_research_queue_candidates: {
+        Args: { p_chapter_id: string; p_limit?: number }
+        Returns: {
+          address: string
+          city: string
+          context_count: number
+          country: string
+          current_access_cost: string
+          current_access_level: string
+          current_access_logistics: string
+          current_access_notes: string
+          current_alt_name: string
+          current_category_name: string
+          current_height_m: number
+          current_size_sqm: number
+          current_status: string
+          current_storeys: number
+          current_year_completed: number
+          id: string
+          materiality_count: number
+          name: string
+          popularity_score: number
+          style_count: number
+          typologies_count: number
+        }[]
+      }
+      get_ambassador_unclaimed_firms: {
+        Args: { p_chapter_id: string; p_limit?: number }
+        Returns: {
+          building_count: number
+          claim_status: string
+          country: string
+          id: string
+          name: string
+          slug: string
+        }[]
+      }
       get_architect_claim_status: {
         Args: { p_architect_id: string }
         Returns: Json
+      }
+      get_award_leaderboard: {
+        Args: { p_award_id?: string; p_limit?: number }
+        Returns: {
+          award_score: number
+          building_id: string
+          building_name: string
+          building_slug: string
+          city: string
+          country: string
+          finalist_count: number
+          hero_image_url: string
+          win_count: number
+        }[]
+      }
+      get_broadcast_read_status: {
+        Args: { p_broadcast_id: string }
+        Returns: {
+          chapter_id: string
+          chapter_name: string
+          president_user_id: string
+          president_username: string
+          read_at: string
+        }[]
       }
       get_building_leaderboards: { Args: never; Returns: Json }
       get_building_reviews: {
@@ -3495,6 +5177,12 @@ export type Database = {
           user_username: string
         }[]
       }
+      get_buildings_in_collections: {
+        Args: { p_collection_ids?: string[]; p_folder_ids?: string[] }
+        Returns: {
+          building_id: string
+        }[]
+      }
       get_buildings_list: {
         Args: {
           filter_criteria?: Json
@@ -3508,15 +5196,19 @@ export type Database = {
         Returns: {
           alt_name: string
           city: string
+          construction_status: string
           country: string
           credit_names: string[]
           id: string
           image_url: string
           lat: number
           lng: number
+          locality_city_slug: string
+          locality_country_code: string
           name: string
           popularity_score: number
           rating: number
+          short_id: number
           slug: string
           status: string
           tier_rank: string
@@ -3532,6 +5224,113 @@ export type Database = {
           lat: number
           lng: number
           name: string
+        }[]
+      }
+      get_buildings_with_awards: {
+        Args: {
+          p_award_id?: string
+          p_outcome?: string
+          p_year_from?: number
+          p_year_to?: number
+        }
+        Returns: {
+          building_id: string
+        }[]
+      }
+      get_chapter_ambassador_activity: {
+        Args: { p_chapter_id: string; p_days?: number }
+        Returns: {
+          avatar_url: string
+          edits_count: number
+          firms_claimed_count: number
+          last_active_at: string
+          moderation_count: number
+          outreach_count: number
+          photos_added: number
+          role: string
+          total_score: number
+          user_id: string
+          username: string
+          visits_count: number
+        }[]
+      }
+      get_chapter_members_with_contact: {
+        Args: { p_chapter_id: string }
+        Returns: {
+          avatar_url: string
+          email: string
+          exco_responsibility: string
+          invited_by: string
+          joined_at: string
+          membership_id: string
+          role: string
+          status: string
+          user_id: string
+          username: string
+        }[]
+      }
+      get_chapter_metrics: {
+        Args: { p_chapter_id: string; p_days?: number }
+        Returns: {
+          period_end: string
+          period_start: string
+          prev_period_end: string
+          prev_period_start: string
+          prev_total_building_visits: number
+          prev_total_edits: number
+          prev_total_photos_added: number
+          total_building_visits: number
+          total_edits: number
+          total_photos_added: number
+        }[]
+      }
+      get_chapter_performance_ranking: {
+        Args: { p_period_days?: number }
+        Returns: {
+          applications_approved: number
+          chapter_id: string
+          chapter_name: string
+          chapter_type: string
+          country_code: string
+          edits: number
+          last_activity_date: string
+          member_count: number
+          new_members: number
+          photos_added: number
+          score: number
+        }[]
+      }
+      get_chapter_tasks: {
+        Args: { p_chapter_id: string }
+        Returns: {
+          assigned_to: string
+          assignee_avatar_url: string
+          assignee_username: string
+          company_id: string
+          company_name: string
+          created_at: string
+          created_by: string
+          creator_username: string
+          description: string
+          due_date: string
+          id: string
+          project_id: string
+          project_title: string
+          status: string
+          title: string
+          updated_at: string
+          visibility: string
+        }[]
+      }
+      get_chapter_team: {
+        Args: { p_chapter_id: string }
+        Returns: {
+          avatar_url: string
+          exco_responsibility: string
+          joined_at: string
+          role: string
+          user_id: string
+          username: string
         }[]
       }
       get_collection_buildings: {
@@ -3552,76 +5351,70 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_collections_feed: {
+      get_community_feed_ranked: {
         Args: { p_limit: number; p_offset: number }
         Returns: {
-          building_count: number
-          description: string
+          building_data: Json
+          building_id: string
+          comments_count: number
+          connectors: Json
+          connectors_count: number
+          content: string
+          created_at: string
+          edited_at: string
+          freshness_hours: number
           id: string
-          name: string
-          owner: Json
-          owner_id: string
-          preview_buildings: Json
-          primary_tag: string
-          slug: string
-          updated_at: string
+          is_liked: boolean
+          is_suggested: boolean
+          likes_count: number
+          location_match: string
+          rating: number
+          review_images: Json
+          ring: number
+          score: number
+          status: string
+          suggestion_reason: string
+          tags: string[]
+          user_data: Json
+          user_id: string
+          views_count: number
         }[]
       }
-      get_discovery_feed:
-        | {
-            Args: {
-              p_city_filter?: string
-              p_limit: number
-              p_offset: number
-              p_user_id: string
-            }
-            Returns: {
-              address: string
-              city: string
-              country: string
-              id: string
-              main_image_url: string
-              name: string
-              save_count: number
-              slug: string
-              year_completed: number
-            }[]
-          }
-        | {
-            Args: {
-              p_architect_ids?: string[]
-              p_attribute_ids?: string[]
-              p_building_statuses?: string[]
-              p_category_id?: string
-              p_city_filter?: string
-              p_contact_user_ids?: string[]
-              p_country_code_filter?: string
-              p_country_filter?: string
-              p_credit_roles?: string[]
-              p_limit: number
-              p_locality_id?: string
-              p_max_lat?: number
-              p_max_lng?: number
-              p_min_lat?: number
-              p_min_lng?: number
-              p_offset: number
-              p_region_filter?: string
-              p_typology_ids?: string[]
-              p_user_id: string
-            }
-            Returns: {
-              address: string
-              city: string
-              country: string
-              id: string
-              main_image_url: string
-              name: string
-              save_count: number
-              short_id: number
-              slug: string
-              year_completed: number
-            }[]
-          }
+      get_discovery_feed: {
+        Args: {
+          p_architect_ids?: string[]
+          p_attribute_ids?: string[]
+          p_building_statuses?: string[]
+          p_category_id?: string
+          p_city_filter?: string
+          p_contact_user_ids?: string[]
+          p_country_code_filter?: string
+          p_country_filter?: string
+          p_credit_roles?: string[]
+          p_limit: number
+          p_locality_id?: string
+          p_max_lat?: number
+          p_max_lng?: number
+          p_min_lat?: number
+          p_min_lng?: number
+          p_offset: number
+          p_region_filter?: string
+          p_typology_ids?: string[]
+          p_user_id: string
+        }
+        Returns: {
+          address: string
+          city: string
+          country: string
+          id: string
+          main_image_url: string
+          name: string
+          save_count: number
+          short_id: number
+          slug: string
+          year_completed: number
+        }[]
+      }
       get_discovery_filters: { Args: never; Returns: Json }
       get_explorer_feed: {
         Args: { p_limit?: number; p_user_id: string }
@@ -3639,8 +5432,8 @@ export type Database = {
           trailer: string
         }[]
       }
-      get_feed: {
-        Args: { p_limit: number; p_offset: number }
+      get_feed_ranked: {
+        Args: { p_exclude_seen?: boolean; p_limit: number; p_offset: number }
         Returns: {
           building_data: Json
           building_id: string
@@ -3648,15 +5441,80 @@ export type Database = {
           content: string
           created_at: string
           edited_at: string
+          freshness_hours: number
           id: string
           is_liked: boolean
           likes_count: number
           rating: number
           review_images: Json
+          ring: string
+          score: number
           status: string
           tags: string[]
           user_data: Json
           user_id: string
+          views_count: number
+        }[]
+      }
+      get_global_moderation_buildings: {
+        Args: { p_exclude_chapter_id: string; p_limit?: number }
+        Returns: {
+          added_by_username: string
+          address: string
+          city: string
+          country: string
+          created_at: string
+          hero_image_url: string
+          id: string
+          lat: number
+          lng: number
+          moderated_at: string
+          moderated_by_username: string
+          n: string
+          name: string
+          short_id: number
+          slug: string
+        }[]
+      }
+      get_global_moderation_credits: {
+        Args: { p_exclude_chapter_id: string; p_limit?: number }
+        Returns: {
+          building_id: string
+          building_name: string
+          building_short_id: number
+          building_slug: string
+          created_at: string
+          entity_name: string
+          id: string
+          role: string
+        }[]
+      }
+      get_global_moderation_photos: {
+        Args: { p_exclude_chapter_id: string; p_limit?: number }
+        Returns: {
+          building_id: string
+          building_name: string
+          building_short_id: number
+          building_slug: string
+          caption: string
+          created_at: string
+          id: string
+          storage_path: string
+        }[]
+      }
+      get_global_moderation_videos: {
+        Args: { p_exclude_chapter_id: string; p_limit?: number }
+        Returns: {
+          body: string
+          building_id: string
+          building_name: string
+          building_short_id: number
+          building_slug: string
+          created_at: string
+          id: string
+          title: string
+          uploader_username: string
+          video_url: string
         }[]
       }
       get_group_film_stats:
@@ -3684,6 +5542,40 @@ export type Database = {
           username: string
         }[]
       }
+      get_locality_collections: {
+        Args: { p_limit?: number; p_locality_id: string }
+        Returns: {
+          building_count: number
+          id: string
+          name: string
+          owner_avatar_url: string
+          owner_username: string
+          preview_image_urls: string[]
+          slug: string
+        }[]
+      }
+      get_locality_top_contributors: {
+        Args: { p_limit?: number; p_locality_id: string }
+        Returns: {
+          avatar_url: string
+          buildings_logged: number
+          is_ambassador: boolean
+          photos_uploaded: number
+          reviews_written: number
+          user_id: string
+          username: string
+        }[]
+      }
+      get_locality_volunteer_team: {
+        Args: { p_locality_id: string }
+        Returns: {
+          avatar_url: string
+          exco_responsibility: string
+          role: string
+          user_id: string
+          username: string
+        }[]
+      }
       get_main_feed: {
         Args: {
           p_limit: number
@@ -3692,16 +5584,11 @@ export type Database = {
         }
         Returns: {
           building_id: string
-          content: string | null
           created_at: string
-          edited_at: string | null
           id: string
           rating: number | null
           status: string
-          tags: string[] | null
           user_id: string
-          video_url: string | null
-          visibility: string | null
           visited_at: string | null
         }[]
         SetofOptions: {
@@ -3734,6 +5621,7 @@ export type Database = {
               popularity_score: number
               slug: string
               tier_rank: string
+              winner_award_name: string
             }[]
           }
         | {
@@ -3779,6 +5667,35 @@ export type Database = {
           slug: string
           status: string
           tier_rank: string
+          winner_award_name: string
+        }[]
+      }
+      get_map_clusters_v3: {
+        Args: {
+          filter_criteria?: Json
+          max_lat: number
+          max_lng: number
+          min_lat: number
+          min_lng: number
+          zoom_level: number
+        }
+        Returns: {
+          city: string
+          construction_status: string
+          count: number
+          id: string
+          image_url: string
+          is_cluster: boolean
+          lat: number
+          lng: number
+          max_tier: number
+          name: string
+          photos_count: number
+          popularity_score: number
+          slug: string
+          status: string
+          tier_rank: string
+          winner_award_name: string
         }[]
       }
       get_map_pins:
@@ -3820,7 +5737,35 @@ export type Database = {
               status: string
             }[]
           }
+      get_my_ambassador_goals: {
+        Args: never
+        Returns: {
+          created_at: string
+          current_value: number
+          due_date: string
+          id: string
+          metric: string
+          status: string
+          target_value: number
+          title: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
       get_my_group_ids: { Args: never; Returns: string[] }
+      get_national_chapter_overview: {
+        Args: { p_national_chapter_id: string }
+        Returns: {
+          chapter_id: string
+          chapter_name: string
+          edits_last_30d: number
+          last_activity_at: string
+          locality_id: string
+          member_count: number
+          photos_last_30d: number
+          president_name: string
+        }[]
+      }
       get_people_you_may_know: {
         Args: { p_limit?: number }
         Returns: {
@@ -3832,12 +5777,42 @@ export type Database = {
           username: string
         }[]
       }
+      get_person_award_leaderboard: {
+        Args: { p_award_id?: string; p_limit?: number }
+        Returns: {
+          avatar_url: string
+          award_count: number
+          person_id: string
+          person_name: string
+          person_slug: string
+          win_count: number
+        }[]
+      }
+      get_photo_coverage_stats: {
+        Args: never
+        Returns: {
+          buildings_with_photos: number
+          buildings_without_photos: number
+          total_buildings: number
+          total_photos: number
+        }[]
+      }
       get_photo_heatmap_data: {
         Args: never
         Returns: {
           lat: number
           lng: number
           weight: number
+        }[]
+      }
+      get_potential_duplicate_buildings: {
+        Args: { p_chapter_id: string; p_limit?: number }
+        Returns: {
+          id1: string
+          id2: string
+          name1: string
+          name2: string
+          score: number
         }[]
       }
       get_potential_duplicates: {
@@ -3850,26 +5825,94 @@ export type Database = {
           score: number
         }[]
       }
-      get_suggested_posts: {
-        Args: { p_limit: number; p_offset: number }
+      get_president_directory: {
+        Args: never
         Returns: {
-          building_data: Json
-          building_id: string
-          comments_count: number
-          content: string
-          created_at: string
-          edited_at: string
-          id: string
-          is_liked: boolean
-          is_suggested: boolean
-          likes_count: number
-          rating: number
-          status: string
-          suggestion_reason: string
-          tags: string[]
-          user_data: Json
-          user_id: string
+          chapter_id: string
+          chapter_name: string
+          chapter_status: string
+          country_code: string
+          edits_30d: number
+          exco_members: Json
+          last_active_at: string
+          member_count: number
+          member_since: string
+          open_applications: number
+          president_avatar_url: string
+          president_user_id: string
+          president_username: string
         }[]
+      }
+      get_president_onboarding_list: {
+        Args: never
+        Returns: {
+          chapter_id: string
+          chapter_name: string
+          country_code: string
+          days_in_role: number
+          last_active_at: string
+          membership_id: string
+          president_avatar_url: string
+          president_user_id: string
+          president_username: string
+          steps_completed: number
+        }[]
+      }
+      get_president_onboarding_status: {
+        Args: { p_membership_id: string }
+        Returns: Json
+      }
+      get_programme_health_summary: { Args: never; Returns: Json }
+      get_programme_intervention_flags: {
+        Args: never
+        Returns: {
+          chapter_id: string
+          chapter_name: string
+          country_code: string
+          description: string
+          detected_at: string
+          flag_type: string
+          severity: string
+          suggested_action: string
+        }[]
+      }
+      get_top_photo_buildings: {
+        Args: { p_limit?: number }
+        Returns: {
+          city: string
+          country_code: string
+          id: string
+          lat: number
+          lng: number
+          name: string
+          photo_count: number
+          slug: string
+        }[]
+      }
+      get_user_ambassador_membership: {
+        Args: never
+        Returns: {
+          chapter_id: string
+          contributor_type: string | null
+          created_at: string
+          exco_responsibility: string | null
+          id: string
+          invited_by: string | null
+          joined_at: string
+          onboarded_at: string | null
+          preferred_tools: string[] | null
+          role: string
+          status: string
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ambassador_memberships"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       get_user_tags: {
         Args: { p_user_id: string }
@@ -3877,10 +5920,24 @@ export type Database = {
           tag: string
         }[]
       }
+      get_zero_photo_buildings: {
+        Args: { p_limit?: number }
+        Returns: {
+          city: string
+          country_code: string
+          id: string
+          lat: number
+          lng: number
+          name: string
+          slug: string
+        }[]
+      }
       gettransactionid: { Args: never; Returns: unknown }
+      has_embassy_portal_access: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
       is_ambassador: { Args: never; Returns: boolean }
-      has_embassy_portal_access: { Args: never; Returns: boolean }
+      is_chapter_leader: { Args: { p_chapter_id: string }; Returns: boolean }
+      is_chapter_president: { Args: { p_chapter_id: string }; Returns: boolean }
       is_collection_admin: {
         Args: { _collection_id: string }
         Returns: boolean
@@ -3896,6 +5953,14 @@ export type Database = {
         Args: { user_id_a: string; user_id_b: string }
         Returns: boolean
       }
+      is_national_president_of_local_chapter_parent: {
+        Args: { p_chapter_id: string }
+        Returns: boolean
+      }
+      is_user_verified_architect: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
       is_verified_architect_for_building: {
         Args: { building_uuid: string; user_uuid: string }
         Returns: boolean
@@ -3905,15 +5970,28 @@ export type Database = {
         Args: { b: Database["public"]["Tables"]["buildings"]["Row"] }
         Returns: string
       }
+      make_city_slug: { Args: { p_city: string }; Returns: string }
       make_locality_slug: {
         Args: { p_city: string; p_country_code: string }
         Returns: string
+      }
+      mark_broadcast_read: {
+        Args: { p_broadcast_id: string }
+        Returns: undefined
       }
       merge_buildings: {
         Args: { source_id: string; target_id: string }
         Returns: undefined
       }
       migrate_tags_to_collections: { Args: never; Returns: undefined }
+      plano_auth_is_award_admin: {
+        Args: { p_award_id: string }
+        Returns: boolean
+      }
+      plano_auth_is_award_admin_for_recipient: {
+        Args: { p_edition_id: string }
+        Returns: boolean
+      }
       plano_auth_is_company_steward: {
         Args: { p_company_id: string }
         Returns: boolean
@@ -3958,6 +6036,24 @@ export type Database = {
       }
       postgis_version: { Args: never; Returns: string }
       postgis_wagyu_version: { Args: never; Returns: string }
+      president_invite_ambassador_member: {
+        Args: {
+          p_chapter_id: string
+          p_exco_responsibility?: string
+          p_role: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      president_update_chapter_membership: {
+        Args: {
+          p_exco_responsibility?: string
+          p_membership_id: string
+          p_role: string
+          p_status?: string
+        }
+        Returns: undefined
+      }
       redeem_company_claim_token: {
         Args: { p_token_hex: string }
         Returns: Json
@@ -3970,24 +6066,46 @@ export type Database = {
         Args: { p_token_hex: string }
         Returns: Json
       }
+      refresh_locality_hero_images: { Args: never; Returns: undefined }
       reject_company_steward_request_by_id: {
         Args: { p_request_id: string }
         Returns: Json
       }
-      resolve_locality_for_explore: {
-        Args: { p_city: string; p_country_code: string }
-        Returns: string | null
-      }
-      review_ambassador_application: {
-        Args: {
-          p_application_id: string
-          p_approve: boolean
-          p_reviewer_note?: string | null
-          p_chapter_id?: string | null
-        }
+      reopen_feedback: {
+        Args: { p_id: string; p_reason: string }
         Returns: undefined
       }
+      resolve_locality_for_explore: {
+        Args: { p_city: string; p_country_code: string }
+        Returns: string
+      }
       revert_building_change: { Args: { log_id: string }; Returns: undefined }
+      review_ambassador_application:
+        | {
+            Args: {
+              p_application_id: string
+              p_approve: boolean
+              p_reviewer_note?: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_application_id: string
+              p_approve: boolean
+              p_chapter_id?: string
+              p_reviewer_note?: string
+            }
+            Returns: undefined
+          }
+      review_award_claim_request: {
+        Args: {
+          p_approve: boolean
+          p_request_id: string
+          p_reviewer_note?: string
+        }
+        Returns: Json
+      }
       search_buildings:
         | {
             Args: {
@@ -4047,6 +6165,47 @@ export type Database = {
               year_completed: number
             }[]
           }
+      search_buildings_v2: {
+        Args: {
+          p_filters?: Json
+          p_limit?: number
+          p_offset?: number
+          p_query: string
+        }
+        Returns: {
+          alt_name: string
+          city: string
+          construction_status: string
+          country: string
+          credit_names: string[]
+          hero_image_url: string
+          id: string
+          lat: number
+          lng: number
+          locality_city_slug: string
+          locality_country_code: string
+          name: string
+          popularity_score: number
+          rank_score: number
+          short_id: number
+          slug: string
+          tier_rank: string
+          year_completed: number
+        }[]
+      }
+      search_companies_v2: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          claim_status: string
+          country: string
+          credit_count: number
+          id: string
+          logo_url: string
+          name: string
+          rank_score: number
+          slug: string
+        }[]
+      }
       search_films_debug: {
         Args: {
           p_countries?: string[]
@@ -4077,18 +6236,33 @@ export type Database = {
           vote_count: number
         }[]
       }
+      search_people_v2: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          avatar_url: string
+          claim_status: string
+          credit_count: number
+          id: string
+          name: string
+          nationality: string
+          rank_score: number
+          slug: string
+        }[]
+      }
+      send_admin_broadcast: {
+        Args: {
+          p_body: string
+          p_recipient_scope: string
+          p_scope_value?: string
+          p_subject: string
+          p_type: string
+        }
+        Returns: string
+      }
       send_session_reminders: { Args: never; Returns: undefined }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       slugify_person_name: { Args: { raw: string }; Returns: string }
-      sync_ambassador_membership_after_profile_geography: {
-        Args: never
-        Returns: Json
-      }
-      submit_ambassador_application: {
-        Args: { p_chapter_id: string; p_motivation_text: string }
-        Returns: string
-      }
       st_3dclosestpoint: {
         Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
@@ -4670,7 +6844,38 @@ export type Database = {
         Args: { geom: unknown; move: number; wrap: number }
         Returns: unknown
       }
+      stamp_chapter_last_event_search_at: {
+        Args: { p_chapter_id: string }
+        Returns: undefined
+      }
+      submit_ambassador_application:
+        | {
+            Args: {
+              p_chapter_id?: string
+              p_interests?: string[]
+              p_locality_id?: string
+              p_motivation_text?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: { p_chapter_id: string; p_motivation_text: string }
+            Returns: string
+          }
+      submit_award_claim_request: {
+        Args: { p_award_id: string; p_reason: string }
+        Returns: Json
+      }
+      sync_ambassador_membership_after_profile_geography: {
+        Args: never
+        Returns: Json
+      }
+      toggle_broadcast_pin: {
+        Args: { p_broadcast_id: string; p_pinned: boolean }
+        Returns: undefined
+      }
       track_login: { Args: never; Returns: undefined }
+      track_note_views: { Args: { p_note_ids: string[] }; Returns: undefined }
       unaccent: { Args: { "": string }; Returns: string }
       unlockrows: { Args: { "": string }; Returns: number }
       update_building_community_preview: {
@@ -4695,6 +6900,14 @@ export type Database = {
       }
     }
     Enums: {
+      award_edition_event_type:
+        | "nominations_open"
+        | "nominations_close"
+        | "longlist_announcement"
+        | "shortlist_announcement"
+        | "winner_announcement"
+        | "ceremony"
+        | "other"
       building_access:
         | "Open Access"
         | "Admission Fee"
@@ -4762,6 +6975,14 @@ export type Database = {
       credit_tier_enum: "primary" | "contributor" | "ancillary"
       event_attendance_status: "interested" | "going"
       event_claim_status: "unclaimed" | "pending" | "claimed"
+      feedback_status:
+        | "open"
+        | "in_review"
+        | "testing"
+        | "resolved"
+        | "wont_fix"
+        | "duplicate"
+        | "backlog"
       location_precision: "exact" | "approximate"
       person_claim_status: "unclaimed" | "claimed" | "verified"
       poll_status:
@@ -4907,6 +7128,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      award_edition_event_type: [
+        "nominations_open",
+        "nominations_close",
+        "longlist_announcement",
+        "shortlist_announcement",
+        "winner_announcement",
+        "ceremony",
+        "other",
+      ],
       building_access: [
         "Open Access",
         "Admission Fee",
@@ -4980,6 +7210,15 @@ export const Constants = {
       credit_tier_enum: ["primary", "contributor", "ancillary"],
       event_attendance_status: ["interested", "going"],
       event_claim_status: ["unclaimed", "pending", "claimed"],
+      feedback_status: [
+        "open",
+        "in_review",
+        "testing",
+        "resolved",
+        "wont_fix",
+        "duplicate",
+        "backlog",
+      ],
       location_precision: ["exact", "approximate"],
       person_claim_status: ["unclaimed", "claimed", "verified"],
       poll_status: ["draft", "open", "closed", "archived", "live", "published"],
@@ -4987,3 +7226,4 @@ export const Constants = {
     },
   },
 } as const
+

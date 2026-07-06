@@ -101,22 +101,22 @@ export async function presidentInviteMember(args: {
     p_chapter_id: args.chapterId,
     p_user_id: args.userId,
     p_role: args.role,
-    p_exco_responsibility: args.excoResponsibility,
+    p_exco_responsibility: args.excoResponsibility ?? undefined,
   });
   if (error) throw error;
 }
 
 export async function presidentUpdateMembership(args: {
   membershipId: string;
-  role: string | null;
+  role: string;
   excoResponsibility: string | null;
   status: string | null;
 }): Promise<void> {
   const { error } = await supabase.rpc("president_update_chapter_membership", {
     p_membership_id: args.membershipId,
     p_role: args.role,
-    p_exco_responsibility: args.excoResponsibility,
-    p_status: args.status,
+    p_exco_responsibility: args.excoResponsibility ?? undefined,
+    p_status: args.status ?? undefined,
   });
   if (error) throw error;
 }
