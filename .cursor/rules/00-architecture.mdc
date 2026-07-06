@@ -1,24 +1,24 @@
 ---
-description: Core stack, SPA structure, and forbidden patterns. Always active.
+description: Core stack, SSR structure, and forbidden patterns. Always active.
 alwaysApply: true
 ---
 
 <!-- Companion rules: see also 06-agent-behaviour.mdc (alwaysApply — agent conduct,
-     challenge protocol, build verification, .ai-status.md discipline). All alwaysApply
+     challenge protocol, build verification, docs/AI_STATUS.md discipline). All alwaysApply
      files are loaded on every task. Combined token cost is intentional and reviewed. -->
 
 # Architecture Rules
 
 ## Stack (non-negotiable — no substitutions permitted)
 
-- **Build:** Vite (`vite build`, `vite` dev server)
-- **Framework:** React 18 SPA + TypeScript strict mode — client-side rendering only (`src/main.tsx` → `src/App.tsx`)
-- **Routing:** React Router v6 (`createBrowserRouter` in `src/App.tsx`)
+- **Build:** Vite 7 (`npm run build` → `react-router build` + post-build Vercel manifest cache patch)
+- **Framework:** React Router v7 **framework mode with SSR** + React 19 + TypeScript. Document shell in `src/root.tsx`; entries `src/entry.client.tsx` and `src/entry.server.tsx`. Deployed to Vercel via `@vercel/react-router`.
+- **Routing:** Declared in the `app/routes.ts` manifest (`route()` / `layout()` / `index()` helpers; re-exported by `src/routes.ts`). No `createBrowserRouter`, no file-convention routing.
 - **Backend/Auth/DB:** Supabase (Postgres/PostGIS + Auth + Storage + Edge Functions)
-- **Data access:** Supabase JS client in the browser (`src/integrations/supabase/client.ts`) — no Server Components, Server Actions, or app-owned HTTP API for core CRUD
-- **Styling:** Tailwind CSS + Shadcn/UI (Radix primitives) — no raw CSS, no arbitrary values
-- **Server state:** TanStack Query (`@tanstack/react-query`) for caching, fetching, and mutations
-- **Auth session in UI:** React Context (and Supabase auth listener) — not a global store for domain data
+- **Data access:** The Supabase **browser** client (`src/integrations/supabase/client.ts`) may only be imported inside `src/features/*/api/**` modules or `src/**/*.loader.ts` route loaders — components and hooks call typed functions there instead (enforced by ESLint `no-restricted-imports`). Server-side code (SSR loaders, resource routes) uses `createSupabaseServerClient` from `src/lib/supabase.server.ts`. App-owned HTTP endpoints exist as **resource routes** (`*.route.ts` files registered under `/api/*` in `app/routes.ts`) — see `02-api.mdc`.
+- **Styling:** Tailwind CSS **v4** + Shadcn/UI (Radix primitives in `src/components/ui/`) — no raw CSS, no arbitrary values. Tokens are defined in the CSS `@theme` block in `src/index.css` (there is no `tailwind.config.ts` in v4) and documented in `docs/DESIGN_TOKENS.md`.
+- **Server state:** TanStack Query v5 (`@tanstack/react-query`) for caching, fetching, and mutations
+- **Auth session in UI:** React Context (`AuthProvider` in `src/features/auth/hooks/useAuth.tsx`, hydrated from the SSR session) — not a global store for domain data
 - **Validation:** Zod — always, for form payloads and any structured input before writes
 - **Shared DB types:** `src/integrations/supabase/types.ts` (generated; never hand-edit — regenerate via `npm run gen-types` when schema changes)
 - **Docs file naming (minor convention):** root-level informational files in `docs/` (e.g. `ROADMAP.md`, `README.md`, `PRD.md`, `DATA_CONTRACT.md`, `DESIGN_TOKENS.md`, `AI_STATUS.md`) use ALL CAPS. Preserve their exact casing when referencing, linking, or creating these files — do not rewrite as `Roadmap.md` or `readme.md`.
@@ -27,12 +27,13 @@ alwaysApply: true
 
 - **No mock data, no dummy auth states.** Every feature connects to real Supabase from day one.
 - **No raw CSS.** No `style={{}}` props for values expressible as Tailwind utilities. No arbitrary `p-[14px]` values.
-- **No raw Tailwind palette colors** (e.g. `bg-blue-500`). Use only design token aliases from `tailwind.config.ts` (e.g. `bg-brand-primary`). Token values are defined in `docs/DESIGN_TOKENS.md` — if a token is not present there, flag it rather than guessing.
+- **No raw Tailwind palette colors** (e.g. `bg-blue-500`). Use only design token aliases (e.g. `bg-brand-primary`). Token values are defined in the `@theme` block of `src/index.css` and documented in `docs/DESIGN_TOKENS.md` — if a token is not present there, flag it rather than guessing.
 - **No global state for domain data.** Zustand/Redux/Context are strictly reserved for ephemeral UI preferences (theme, sidebar open) and auth/session wiring. Server state lives in TanStack Query.
 - **No installing npm packages** without explicit user permission. Use only what is in `package.json`.
 - **No `console.log`** in production code.
 - **No direct schema changes** via Supabase Dashboard or `supabase db push`. All schema changes are migration files only.
-- **No `getSession()`** anywhere. Always `getUser()`. See `04-auth.mdc`.
+- **No `getSession()`** for authorization decisions. Always `getUser()`. See `04-auth.mdc`.
+- **No new ESLint warnings.** The CI warning ratchet (`scripts/check-eslint-ratchet.mjs`) fails any PR where a warning bucket grows. Fix boundary-import and exhaustive-deps warnings in the code you touch.
 
 ## State Management Rules
 
@@ -48,18 +49,18 @@ Choose query options intentionally; there is no framework-level HTTP cache.
 |---|---|---|
 | Longer `staleTime` | Reference or rarely changing data (lookups, static-ish config) | `staleTime` in ms; optional `gcTime` for retention after unmount |
 | Moderate `staleTime` | Lists and detail views that can be slightly stale | Balance freshness vs. network churn |
-| `staleTime: 0` | User-specific, permission-sensitive, or data that must reflect the latest write immediately after navigation | Treat as “always stale” — refetch on mount/focus as configured |
+| `staleTime: 0` | User-specific, permission-sensitive, or data that must reflect the latest write immediately after navigation | Treat as "always stale" — refetch on mount/focus as configured |
 | `queryClient.invalidateQueries()` | After a successful mutation | Invalidate the smallest relevant key set — never rely on stale UI after writes |
-| `realtime: supabase-channel` | Live push via Supabase Realtime | **Subscribe in `useEffect`; unsubscribe on unmount.** Does not go through TanStack Query’s cache unless you explicitly sync into the cache. See `03-frontend.mdc`. |
+| `realtime: supabase-channel` | Live push via Supabase Realtime | **Subscribe in `useEffect`; unsubscribe on unmount.** Does not go through TanStack Query's cache unless you explicitly sync into the cache. See `03-frontend.mdc`. |
 
-User-specific queries MUST use query keys that include the authenticated user (or equivalent scope) so cached data is never shown to the wrong session. After logout, clear or reset queries as needed so no prior user’s data remains in memory.
+User-specific queries MUST use query keys that include the authenticated user (or equivalent scope) so cached data is never shown to the wrong session. After logout, clear or reset queries as needed so no prior user's data remains in memory.
 
 ## Memory Persistence
 
-`.ai-status.md` in the repo root is the single source of truth across sessions. After every task:
+`docs/AI_STATUS.md` is the single source of truth across sessions. After every task:
 
 1. Update `CURRENT_ARCHITECTURE_SNAPSHOT` with what was built.
 2. Log any bugs or loose ends in `KNOWN_ISSUES`.
 3. Never fix an unrelated bug mid-task — log it, finish the task.
 
-Read `.ai-status.md` at the start of every new session before doing anything else.
+Read `docs/AI_STATUS.md` at the start of every new session before doing anything else.

@@ -93,7 +93,7 @@ For any table with a `tenant_id` column, the RLS policy predicate MUST include t
 
 1. **`docs/DATA_CONTRACT.md` → RLS Architecture Notes** — this section declares the project-wide tenancy model (single-membership or multi-membership) and is the fastest way to confirm.
 2. **Existing migration files** in `supabase/migrations/` — inspect the tenant-related tables and existing policy predicates.
-3. **`packages/supabase/src/database.types.ts`** — check for a `tenant_memberships` junction table, which indicates multi-membership.
+3. **`src/integrations/supabase/types.ts`** — check for a `tenant_memberships` junction table, which indicates multi-membership.
 
 If the model is not clear from any of these sources, stop and ask — do not assume.
 
@@ -156,7 +156,7 @@ SELECT * FROM <table> WHERE <owner_column> = '<real-user-uuid>';
 -- Expected: 0 rows returned (NOT an error — silent denial is correct behaviour)
 ```
 
-A passing `turbo run build` does **NOT** verify RLS. These two tests are the only build-time check that catches silent permission denials for authenticated users.
+A passing `npm run build` does **NOT** verify RLS. These two tests are the only build-time check that catches silent permission denials for authenticated users.
 
 ## Schema Derivation — Source of Truth Hierarchy
 
@@ -165,7 +165,7 @@ When building a new table or modifying an existing one, consult these sources in
 1. **`docs/DATA_CONTRACT.md` → Domain Entity Inventory** — entity names, relationships, tenancy ownership, state machines, and key business constraints. This tells you *what* entities exist and how they relate. It does NOT contain column definitions, field types, or SQL.
 2. **`docs/PRD.md`** — the business rules, validation logic, and display requirements for this feature. Derive column names and types from the PRD's description of what the feature needs to store and display.
 3. **Existing migrations** in `supabase/migrations/` — match naming conventions, column patterns, and enum styles already established in the project.
-4. **`packages/supabase/src/database.types.ts`** — the auto-generated types from the live schema. This is the authoritative TypeScript representation and always wins over any other document.
+4. **`src/integrations/supabase/types.ts`** — the auto-generated types from the live schema. This is the authoritative TypeScript representation and always wins over any other document.
 
 Do NOT look in `docs/DATA_CONTRACT.md` for column names, field types, SQL definitions, or RLS policy predicates — these are not defined there. The contract provides entity structure and business constraints; the migration you write is where schema details are created.
 
@@ -174,7 +174,7 @@ Do NOT look in `docs/DATA_CONTRACT.md` for column names, field types, SQL defini
 Database entities represent raw storage. DTOs represent the exact view model the frontend consumes. They are never the same object.
 
 When constructing a DTO, derive the field list from:
-- **`packages/supabase/src/database.types.ts`** — the generated types define what columns exist and their TypeScript types.
+- **`src/integrations/supabase/types.ts`** — the generated types define what columns exist and their TypeScript types.
 - **`docs/PRD.md`** — the display rules and user-facing field names determine which fields to expose, which to strip, and which to compute or rename.
 
 ```typescript
@@ -197,14 +197,9 @@ interface UserDTO {
 
 ## Type Regeneration
 
-After any migration is applied, regenerate types. Prefer the Supabase MCP `generate_typescript_types` tool and write its output to the generated types file. The CLI is the fallback when MCP is unavailable:
+After any migration is applied, regenerate types with `npm run gen-types` (it writes `src/integrations/supabase/types.ts` atomically) and **commit the regenerated file in the same PR as the migration**. The Supabase MCP `generate_typescript_types` tool is an acceptable alternative when the CLI is unavailable — write its output to the same file.
 
-```bash
-npx supabase gen types typescript --project-id YOUR_PROJECT_ID \
-  > packages/supabase/src/database.types.ts
-```
-
-`packages/supabase/src/database.types.ts` is the authoritative TypeScript representation of the schema. It is auto-generated and never hand-edited. If any other document conflicts with the generated types, the generated types win — flag the discrepancy in `.ai-status.md` for resolution in Task X.99.
+`src/integrations/supabase/types.ts` is the authoritative TypeScript representation of the schema. It is auto-generated and never hand-edited. If any other document conflicts with the generated types, the generated types win — flag the discrepancy in `docs/AI_STATUS.md` for resolution in Task X.99. CI runs an advisory check (`scripts/check-types-staleness.mjs`) that warns when a PR touches migrations without regenerating types.
 
 ## Static Route Collision Guard
 

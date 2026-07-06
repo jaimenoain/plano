@@ -32,9 +32,9 @@ If any step reveals a problem, surface it explicitly before touching the codebas
 Before implementing any component, server action, migration, or utility:
 
 1. **Search the codebase first.** A component, hook, action, or helper that already exists must not be recreated — wire against it.
-2. **Check `packages/supabase/src/database.types.ts`** before defining any TypeScript interface that represents a DB entity. Use the generated type; do not hand-write a parallel definition.
+2. **Check `src/integrations/supabase/types.ts`** before defining any TypeScript interface that represents a DB entity. Use the generated type; do not hand-write a parallel definition.
 3. **Check `docs/DATA_CONTRACT.md`** before defining any DTO or API route. If the shape is already defined, use it exactly — do not invent variations.
-4. **Check `docs/DESIGN_TOKENS.md` and `tailwind.config.ts`** before using any color, spacing, or typography value. If the token doesn't exist, flag it rather than guessing.
+4. **Check `docs/DESIGN_TOKENS.md` and the `@theme` block in `src/index.css`** before using any color, spacing, or typography value. If the token doesn't exist, flag it rather than guessing.
 
 **The search protocol:**
 - Search by function name, type name, and concept (e.g. "tenant", "permission", "format currency").
@@ -143,9 +143,9 @@ If you discover a bug or logical gap while implementing a task that is **not** r
 
 Before marking any task complete or asking the user to test:
 
-1. Run `turbo run build` (or `npm run build` if outside monorepo context).
-2. Run `turbo run typecheck`.
-3. Run `turbo run lint`.
+1. Run `npm run build`.
+2. Run `npm run typecheck`.
+3. Run `npm run lint`.
 4. Fix all failures. Do not surface results to the user until all checks pass.
 5. Never ask the user to run build commands. This is your responsibility.
 
@@ -155,7 +155,7 @@ Before marking any task complete or asking the user to test:
 
 The contract (`docs/DATA_CONTRACT.md`), the migrations
 (`supabase/migrations/`), the generated types
-(`packages/supabase/src/database.types.ts`), and user instructions
+(`src/integrations/supabase/types.ts`), and user instructions
 each represent the system from a different angle. They drift. When
 they disagree, follow this hierarchy — do not silently pick one and
 proceed.
@@ -325,7 +325,7 @@ the contract creates silent drift.
 For every field the task's UI or server action will read, write, or
 display, confirm one of:
 
-- The field exists in `packages/supabase/src/database.types.ts` (the
+- The field exists in `src/integrations/supabase/types.ts` (the
   live schema), OR
 - The field will be added by this task's migration, and the
   migration's scope statement names the column.
@@ -353,7 +353,7 @@ Surface it and resolve before writing the action.
 
 For every entity in scope, compare the contract entry in
 `docs/DATA_CONTRACT.md`, the generated types in
-`packages/supabase/src/database.types.ts`, and any relevant entry in
+`src/integrations/supabase/types.ts`, and any relevant entry in
 `SCHEMA_DRIFT_LOG` (in `docs/AI_STATUS.md`). Flag any disagreement:
 
 - Contract describes a column the types lack (drift toward contract;
@@ -492,21 +492,20 @@ If you find yourself reaching for `sed`, `awk`, `for`, `while`, `xargs`, or a `g
 
 The shell forms below produce permission prompts that no reasonable allowlist entry can cover. Each has a clean equivalent — prefer the clean form so the project allowlist actually applies.
 
-**Do not append exit-code echoes.** `cmd 2>&1; echo "EXIT: $?"` and `cmd; echo "EXIT_CODE=$?"` are unnecessary — the Bash tool result already includes the exit code. Appending them turns a clean `npx next lint` into a multi-segment command that no allowlist pattern matches, forcing a prompt.
+**Do not append exit-code echoes.** `cmd 2>&1; echo "EXIT: $?"` and `cmd; echo "EXIT_CODE=$?"` are unnecessary — the Bash tool result already includes the exit code. Appending them turns a clean `npx eslint .` into a multi-segment command that no allowlist pattern matches, forcing a prompt.
 
-- Yes: `npx next lint --max-warnings=0`
-- No: `npx next lint 2>&1; echo "EXIT: $?"`
+- Yes: `npx eslint . --max-warnings=0`
+- No: `npx eslint . 2>&1; echo "EXIT: $?"`
 
 **Do not use absolute paths into `node_modules/.bin/`.** Run binaries via `npx <tool>` so the command starts with `npx`, which the allowlist can target. Absolute paths embed the project directory and can never be allowlisted generically.
 
-- Yes: `npx tsc --noEmit -p apps/web/tsconfig.typecheck.json`
-- No: `/Users/.../ceeq/node_modules/.bin/tsc --noEmit -p /Users/.../ceeq/apps/web/tsconfig.typecheck.json`
+- Yes: `npx tsc --noEmit -p tsconfig.app.json`
+- No: `/Users/.../plano/node_modules/.bin/tsc --noEmit -p /Users/.../plano/tsconfig.app.json`
 
-**Do not `cd <subdir> && <cmd>` to scope a workspace task.** Use the workspace-aware form — `npx --workspace apps/web <cmd>` or `npx turbo run <task> --filter=@my-app/web` — which starts with `npx` and can be allowlisted as a single prefix. A `cd && ...` chain starts with `cd`, which the allowlist cannot meaningfully target.
+**Do not `cd <subdir> && <cmd>`.** This is a single-package repo — every npm script runs from the repo root. A `cd && ...` chain starts with `cd`, which the allowlist cannot meaningfully target.
 
-- Yes: `npx turbo run lint --filter=@my-app/web`
-- Yes: `npx --workspace apps/web next lint`
-- No: `cd apps/web && npx next lint`
+- Yes: `npm run lint`
+- No: `cd src && npx eslint .`
 
 **Do not use `git -C <absolute-path>` when the Bash tool is already in the project's working directory.** Plain `git log`, `git diff`, `git show`, `git status`, and `git branch` are auto-allowed; the `-C <path>` prefix prevents the auto-allow from triggering and forces a prompt. Only use `-C` when you genuinely need to operate on a different repo than the cwd.
 
@@ -524,19 +523,19 @@ If you genuinely need a side-effecting per-file action, make it a separate, expl
 **Do not use interpreter `-c` / `-e` for one-off parsing or inspection.** `python3 -c`, `node -e`, `ruby -e`, `perl -e`, `php -r`, and `lua -e` are arbitrary code execution — they cannot be safely allowlisted and they prompt every time. For the cases that drive these:
 
 - Reading a file or a known field of a JSON/YAML file: use the `Read` tool, then inspect the content in the conversation.
-- Querying a JSON file from the shell: use `jq` (auto-allowed). Example: `jq '.scripts' apps/web/package.json` instead of `python3 -c "import json; ..."`.
+- Querying a JSON file from the shell: use `jq` (auto-allowed). Example: `jq '.scripts' package.json` instead of `python3 -c "import json; ..."`.
 - Querying YAML: use `yq` if available, otherwise read the file and parse it conversationally.
 - Tabular text processing: `awk` and `sort -u` cover most needs and are auto-allowed.
 
 **Do not write and execute shell scripts to `/tmp` (or any throwaway path).** `cat > /tmp/x.sh <<'EOF' ... EOF && bash /tmp/x.sh` is arbitrary code execution via heredoc, and the script content is not visible in any allowlist pattern. If a multi-step operation genuinely needs to be a script, put it under `scripts/` in the repo so it gets reviewed in a commit. For one-off operations, run the steps as discrete Bash tool calls instead.
 
-**Do not curl Supabase REST/RPC endpoints with the service role key.** Sourcing `.env.local` and attaching `$SUPABASE_SERVICE_ROLE_KEY` to a `curl` against `$NEXT_PUBLIC_SUPABASE_URL/rest/v1/...` is precisely the "bypass RLS / use service role keys" pattern §3 requires you to challenge. The legitimate alternatives:
+**Do not curl Supabase REST/RPC endpoints with the service role key.** Sourcing `.env.local` and attaching `$SUPABASE_SERVICE_ROLE_KEY` to a `curl` against `$VITE_SUPABASE_URL/rest/v1/...` is precisely the "bypass RLS / use service role keys" pattern §3 requires you to challenge. The legitimate alternatives:
 
 - To verify a SQL function or schema object exists: query `pg_proc` / `information_schema` with the Supabase MCP `execute_sql` tool (or `list_tables` / `list_migrations`) — no service-role key in your shell, no Dashboard round-trip.
 - To exercise an RPC end-to-end: write an integration test against the **local** Supabase instance with the **anon** key, not prod env vars.
 - If the user explicitly asks for a one-off service-role probe, follow the ask protocol in §3 — name the user-visible risk in plain English, propose the safer alternative as the default, get a yes/no, then run the single call (not a generated allowlist pattern).
 
-**Do not shell out to `mkdir` to prepare a directory for a new file.** The `Write` tool creates any missing parent directories automatically when it writes the first file. Calling `mkdir` separately is redundant, and `mkdir -p` against paths containing shell-glob metacharacters — including escaped Next.js route group (`\(app\)`) and dynamic segment (`\[tenant\]`) syntax — trips the harness's "no globs in write operations" guard, which cannot be allowlisted. Just use `Write` with the final file path.
+**Do not shell out to `mkdir` to prepare a directory for a new file.** The `Write` tool creates any missing parent directories automatically when it writes the first file. Calling `mkdir` separately is redundant, and `mkdir -p` against paths containing shell-glob metacharacters — parentheses, brackets, `$` — trips the harness's "no globs in write operations" guard, which cannot be allowlisted. Just use `Write` with the final file path.
 
 **Do not use `xargs ... sh -c '...'`, `xargs ... bash -c '...'`, or any `sh -c` / `bash -c` invocation.** These are arbitrary code execution via a quoted script body and can never be allowlisted. To inspect a small set of files matched by a pattern:
 
@@ -547,10 +546,10 @@ For content searches, use `rg <pattern> <path>` directly — it walks files itse
 
 **Prefer `rg` over `grep -r` for code searches.** `rg` (ripgrep) is auto-allowed, faster, respects `.gitignore` automatically (so no `node_modules` exclusion needed), and supports type filters (`-t ts -t tsx`) without `--include` flag soup. Critically: do not mix `find` syntax into `grep` — `grep -r ... ! -path "*/node_modules/*"` is not a valid composition (the `!` is `find`'s negation, not `grep`'s), it breaks the read-only-grep validator, and it forces a prompt for a command that wouldn't even work as written. The clean form:
 
-- Yes: `rg "pinned" -t ts -t tsx apps/web`
-- No: `grep -r "pinned" apps/web --include="*.ts" --include="*.tsx" ! -path "*/node_modules/*"`
+- Yes: `rg "pinned" -t ts -t tsx src`
+- No: `grep -r "pinned" src --include="*.ts" --include="*.tsx" ! -path "*/node_modules/*"`
 
-**Do not shell-escape Next.js route syntax (`\(app\)`, `\[tenant\]`) into bash arguments.** Paths containing route groups or dynamic segments should be passed to the Read/Write/Glob/Grep tools directly, with the literal `(app)` and `[tenant]` characters. If a shell command genuinely needs such a path, single-quote it: `'apps/web/app/(app)/[tenant]/page.tsx'`. The backslash-escaped form makes the harness treat the path as a glob pattern in write operations and refuses to allowlist it.
+**Do not backslash-escape paths containing parentheses or brackets (`\(...\)`, `\[...\]`) into bash arguments.** Such paths should be passed to the Read/Write/Glob/Grep tools directly, with the literal `(` and `[` characters. If a shell command genuinely needs such a path, single-quote it. The backslash-escaped form makes the harness treat the path as a glob pattern in write operations and refuses to allowlist it.
 
 **Use `WebFetch` for documentation and web URLs, not `curl`.** A `curl` to a docs URL prompts every time because `curl` is not auto-allowable (it can POST, follow redirects to mutating endpoints, or exfiltrate data). `WebFetch` is the designed tool — it handles fetch + content extraction in one step, has its own permission model, and lets you grep the returned content in-context.
 
@@ -559,5 +558,5 @@ For content searches, use `rg <pattern> <path>` directly — it walks files itse
 
 **Do not slice long `git diff` output with `| sed -n 'N,Mp'`.** The pipe-to-sed shape is brittle to allowlist (the matcher's greedy wildcards struggle with multi-segment commands) and prompts every time. For long diffs, redirect once and use the `Read` tool's native offset/limit instead — the Read tool exists precisely for paged reading.
 
-- Yes: `git diff apps/web/lib/actions/apollo.ts > /tmp/apollo.diff`, then `Read(path="/tmp/apollo.diff", offset=300, limit=300)`.
-- No: `git diff apps/web/lib/actions/apollo.ts | sed -n '300,600p'`
+- Yes: `git diff src/features/maps/api/mapsApi.ts > /tmp/maps.diff`, then `Read(path="/tmp/maps.diff", offset=300, limit=300)`.
+- No: `git diff src/features/maps/api/mapsApi.ts | sed -n '300,600p'`

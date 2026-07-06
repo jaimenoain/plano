@@ -10,7 +10,7 @@ alwaysApply: true
 Every feature task from Phase 2 onwards is a **Vertical Slice** — a single, cohesive implementation that delivers complete, end-to-end business value touching all layers:
 
 ```
-Database (schema + RLS) → Backend (server actions / API) → Frontend (UI + state)
+Database (schema + RLS) → Backend (feature api/ modules, loaders, resource routes) → Frontend (UI + state)
 ```
 
 Building "the DB layer" as one task and "the UI" as a separate disconnected task is **FORBIDDEN**. The only exception is Phase 1 (Walking Skeleton), which is structural setup only.
@@ -26,7 +26,7 @@ A Vertical Slice that is too thick will fail. If a single feature requires any o
 ### Correct Thin Slice split pattern
 
 ```
-Slice 1 — The Core:     Schema + basic server action + minimal UI (prove data saves)
+Slice 1 — The Core:     Schema + basic api/ write path + minimal UI (prove data saves)
 Slice 2 — The Polish:   Advanced UI + 3rd-party integration + edge case states
 ```
 
@@ -37,21 +37,22 @@ Do NOT split into "DB task" + "UI task" — that is horizontal slicing and is fo
 Every phase MUST contain these tasks in this order:
 
 ### Task X.0 — Tech Debt & Stability Check
-Before building anything new, review `.ai-status.md` (`KNOWN_ISSUES`) and the current codebase. Resolve any critical blocking issues. Log non-blocking issues without fixing them.
+Before building anything new, review `docs/AI_STATUS.md` (`KNOWN_ISSUES`) and the current codebase. Resolve any critical blocking issues. Log non-blocking issues without fixing them.
 
 ### [MANUAL TASK — SECRETS] — if the phase involves new 3rd-party integrations
 Provide step-by-step instructions for configuring secrets. Reference the Vercel Dashboard for env vars, Supabase Dashboard for Vault entries. Consolidate ALL secrets for the phase into a single manual block placed before any Cursor tasks.
 
 **Secrets placement decision:**
-- Consumed by Next.js / Vercel → Vercel Environment Variables
+- Consumed by the React Router app (loaders, resource routes) on Vercel → Vercel Environment Variables
 - Consumed by Supabase Edge Functions or pg functions → Supabase Vault (+ Vercel)
-- Never in `.ai-status.md`, never in chat, never committed to the repo
+- Never in `docs/AI_STATUS.md`, never in chat, never committed to the repo
 
 ### Task X.97 — Autonomous Build & Integrity Check
 Before handing off to the user, Cursor MUST autonomously run:
-- `turbo run build`
-- `turbo run typecheck`
-- `turbo run lint`
+- `npm run build`
+- `npm run typecheck`
+- `npm run lint`
+- `npm test`
 
 Fix all failures before proceeding. Never ask the user to run these commands.
 
@@ -64,7 +65,7 @@ Cursor performs a full documentation sync before closing the phase:
 
 1. **PRD & Data Contract:** Compare the actual implementation against `docs/PRD.md` and `docs/DATA_CONTRACT.md`. Catch anything not already synced during individual task Active Memory Updates. If the implementation diverged from either spec (e.g. different folder structure, renamed field, added column), update the spec to reflect reality — not the reverse.
 
-2. **Design Tokens:** Compare `tailwind.config.ts` against `docs/DESIGN_TOKENS.md`. If any token value was added, changed, or removed during the phase, update `docs/DESIGN_TOKENS.md` to match. The config file is the implementation truth; the markdown is the documentation. They must be identical at phase close.
+2. **Design Tokens:** Compare the `@theme` block in `src/index.css` against `docs/DESIGN_TOKENS.md`. If any token value was added, changed, or removed during the phase, update `docs/DESIGN_TOKENS.md` to match. The CSS is the implementation truth; the markdown is the documentation. They must be identical at phase close.
 
 3. **Roadmap phase summary:** Append a `## Phase X Summary` block to `docs/Roadmap.md` immediately after the last task of this phase. The block MUST include:
    - Actual completion date
@@ -72,7 +73,7 @@ Cursor performs a full documentation sync before closing the phase:
    - Any spec documents that were updated during the phase (list filename and nature of change)
    - If nothing was descoped and no specs were updated: write "No deviations. All tasks delivered as planned."
 
-4. **`.ai-status.md`:** Mark the phase as complete. Update `CURRENT_ARCHITECTURE_SNAPSHOT` to reflect the full post-phase state.
+4. **`docs/AI_STATUS.md`:** Mark the phase as complete. Update `CURRENT_ARCHITECTURE_SNAPSHOT` to reflect the full post-phase state.
 
 ## Per-Task Requirements
 
@@ -85,7 +86,7 @@ The agent writes a timestamped SQL file to `supabase/migrations/`. Lists all tab
 Explicitly list all RLS access patterns. Apply the full RLS checklist from `01-database.mdc`. Default Deny. Predicate Distinction. Sub-select auth form. Tenant isolation check for all tenant-scoped tables.
 
 **Backend/Logic Layer:**
-Specific Server Actions or API routes required. All validated with Zod. All returning typed result objects.
+Specific feature api/ functions, loaders, resource routes, or Edge Functions required (see `02-api.mdc`). All validated with Zod. All returning typed result objects.
 
 **Frontend/UI Layer:**
 Read and apply the design system before building any UI. The task description provides the goal and scope boundaries — the design system files provide the implementation detail:
@@ -97,7 +98,7 @@ Read and apply the design system before building any UI. The task description pr
 
 **Active Memory Update:**
 Every task MUST end with an instruction to:
-1. Update `.ai-status.md` with what was built and any discovered issues.
+1. Update `docs/AI_STATUS.md` with what was built and any discovered issues.
 2. **Sync `docs/DATA_CONTRACT.md` immediately** if the implementation introduced any of the following that are not already reflected in the contract:
    - A new table or column
    - A renamed or retyped field
