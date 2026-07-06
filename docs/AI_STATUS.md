@@ -1,5 +1,7 @@
 # AI Status
 
+> This file is the cross-session status ledger (known issues, schema drift, completed work). Structural facts about the stack live in `AGENTS.md` — read that first.
+
 ## Current Phase
 **Remaining surfaces refinement — complete** (2026-05-24). All phases P0–P10 delivered per [REMAINING_SURFACES_ROADMAP.md](REMAINING_SURFACES_ROADMAP.md). Predecessor **design refinement** is **complete** (R0–R9). Programme platform remains shipped.
 
@@ -10,8 +12,8 @@
 - **Design refinement (R0–R9, complete 2026-05-24):** Editorial spine (landing, feed, building detail); discovery/search/geography; profile/settings/connect; events/awards/collections; auth + token flows (`TokenFlowLayout`); embassy workspace (`embassy-ui`); admin console (`admin-ui`). Shared patterns: uppercase `tracking-[0.15em]` section labels, `text-3xl` page heads, hairline tabs, semantic feedback tokens (no raw amber/gray palette in features). Audit evidence in `DESIGN_SYSTEM_PAGE_AUDITS.md`. Automated verification in `ROADMAP.md` (typecheck/lint/build green; vitest 47 pre-existing failures documented below).
 - **Global ambassador roles (2026-05-21)**: Two new `ambassador_memberships.role` values: `global_team` (≈ ExCo, manages project globally) and `global_leaders` (≈ President, manages global_team). Migration `20271142000000_add_global_ambassador_roles.sql` extends role CHECK constraint, recreates `is_chapter_leader()` and `is_chapter_president()` to include new roles, recreates `get_chapter_team()` with updated sort order. All `isLeader`/`isPresident` frontend predicates updated. Team page shows new role groups; admin chapter detail role selects include new options. **Needs apply** in Supabase SQL Editor.
 - **Embassy Events review (Slices 0–3, complete)**: tables `embassy_event_discoveries` (review queue) and `embassy_event_search_runs` (audit log), plus column `ambassador_chapters.last_event_search_at`. Route `POST /api/embassy/event-search` runs serper.dev → Claude → dedup → bulk insert pipeline gated by a 4-day staleness check. `EmbassyLayout.tsx` fires a fire-and-forget trigger on every `/embassy/*` visit. RPCs `ambassador_publish_event_discovery` and `ambassador_discard_event_discovery` (SECURITY DEFINER) allow ambassadors to publish discoveries to `events` or discard them. Events tool card on `/embassy/contribute` with inline edit Sheet, Publish/Discard actions, duplicate-detection amber banner, and last-searched pill. Migrations `20271140000000` (applied), `20271141000000` (needs apply), and `20271148000000` (needs apply — RLS fix). Requires `SERPER_API_KEY` in env. After migrations are applied, run `npm run gen-types` to update `src/integrations/supabase/types.ts`.
-- Monorepo: React 18 SPA (Vite) + Supabase backend
-- Routing: React Router v6 with `createBrowserRouter`
+- Single-app repo: React Router v7 SSR (Vite 7) + React 19 + Supabase backend
+- Routing: React Router v7 framework mode — manifest in `app/routes.ts`
 - State: TanStack Query for server state
 - Auth guard: AdminGuard checks `profile.role IN ('admin','app_admin')`
 - **Programme platform** shipped (Phase 7):

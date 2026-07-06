@@ -1,24 +1,102 @@
 ---
-description: API routes, Server Actions, DTOs, and runtime declarations. Auto-attached for any API route or server action file.
-globs: ["**/app/api/**", "**/actions/**", "**/actions.ts", "**/route.ts"]
+description: Resource routes, loaders/actions, Supabase Edge Functions, and DTOs. Auto-attached for any route, loader, or Edge Function file.
+globs: ["**/*.route.ts", "**/*.loader.ts", "**/routes.ts", "supabase/functions/**"]
 alwaysApply: false
 ---
 
-# API & Server Action Rules
+# API & Server Boundary Rules
 
-## Runtime Declaration (required on every route)
+This app has exactly three kinds of server-side boundary. There are **no Next.js API routes, no Server Actions, no `'use server'`, no `revalidatePath()`, no runtime declarations** — any of those in generated code is a blocking error.
+
+| Boundary | Where | Use for |
+|---|---|---|
+| **Resource route** (`*.route.ts`) | `src/api/` or `src/features/<domain>/api/`, registered under `/api/*` in `app/routes.ts` | App-owned HTTP endpoints (JSON in/out): webhooks, pipelines, rate-limited writes |
+| **Route loader/action** (`*.loader.ts` or exported from a route module) | Next to the page it feeds, wired in `app/routes.ts` | SSR page data and form submissions |
+| **Supabase Edge Function** | `supabase/functions/<name>/` | Logic triggered by DB events/webhooks, or needing Supabase internals (`pg_net`, `pg_cron`), or storage upload/delete flows |
+
+Everything else (client-side reads/writes) goes through TanStack Query calling typed functions in the feature's `api/` module — see `00-architecture.mdc` and `03-frontend.mdc`.
+
+## Pattern 1 — Resource Route
+
+Real example: `src/features/feedback/api/feedback.route.ts` (crib from it). The mandatory skeleton:
 
 ```typescript
-// Every API route and Server Action file must declare runtime at the top.
-export const runtime = 'nodejs'; // Default. Required for any Supabase/DB access.
-export const runtime = 'edge';   // Only when: zero DB I/O, benefits from edge distribution.
+import { type ActionFunctionArgs } from "react-router";
+import { z } from "zod";
+import { createSupabaseServerClient } from "~/lib/supabase.server";
+
+const inputSchema = z.object({
+  message: z.string().min(10).max(2000),
+});
+
+export async function action({ request }: ActionFunctionArgs) {
+  if (request.method !== "POST") {
+    return Response.json({ error: "Method not allowed" }, { status: 405 });
+  }
+
+  // 1. Auth FIRST — headers must be threaded so refreshed cookies reach the response
+  const headers = new Headers();
+  const supabase = createSupabaseServerClient(request, headers);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401, headers });
+  }
+
+  // 2. Parse + validate BEFORE any business logic
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "Invalid JSON" }, { status: 400, headers });
+  }
+  const parsed = inputSchema.safeParse(body);
+  if (!parsed.success) {
+    return Response.json({ error: parsed.error.flatten() }, { status: 400, headers });
+  }
+
+  // 3. Business logic — identity always from `user.id`, never from the payload
+  // ...
+
+  return Response.json({ ok: true }, { status: 201, headers });
+}
 ```
 
-A route with database access declared as `edge` is a **blocking error**. Prisma TCP and Supabase direct connections are incompatible with the Edge Runtime.
+Rules:
+- Register the route in `app/routes.ts` (e.g. `route("api/feedback", "features/feedback/api/feedback.route.ts")`). An unregistered `*.route.ts` file does nothing.
+- Guard the HTTP method explicitly (405 otherwise).
+- GET-only endpoints export `loader` instead of `action` (see `src/api/version.route.ts`).
+- Pass the `headers` object to every `Response.json()` so Supabase cookie refreshes propagate.
+- Anonymous public endpoints (no auth) are the exception and must carry a comment explaining why.
+- Service-role clients (`SUPABASE_SERVICE_ROLE_KEY`) are permitted ONLY inside resource routes / Edge Functions for narrowly-scoped operations (e.g. storage writes to a bucket the user can't touch), never to bypass RLS for ordinary reads/writes.
 
-## Supabase Edge Function Flag
+## Pattern 2 — Route Loader / Action (SSR page data)
 
-If a use case requires server-side logic triggered by a database event, or requires Supabase internals (`pg_net`, `pg_cron`, DB webhooks), it MUST be a Supabase Edge Function, not a Vercel API route. Flag these in the contract:
+```typescript
+import type { LoaderFunctionArgs } from "react-router";
+import { createSupabaseServerClient } from "~/lib/supabase.server";
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const headers = new Headers();
+  const supabase = createSupabaseServerClient(request, headers);
+  const { data: { user } } = await supabase.auth.getUser();
+  // Fetch what the page needs; return data (+ headers when cookies changed)
+  return Response.json({ /* ... */ }, { headers });
+}
+```
+
+- Loaders that need the session for hydration use `getSessionForClientHydration()` from `src/lib/supabase.server.ts` — the only sanctioned `getSession()` call in the codebase lives inside that helper.
+- On the client, TanStack Query remains the cache for anything interactive; loaders provide first-paint data, not a second state system.
+
+## Pattern 3 — Supabase Edge Function
+
+For logic triggered by DB events/webhooks or requiring Supabase internals. Follows the **Manual Gatekeeper** pattern (canonical description in `AGENTS.md`):
+
+1. Handle `OPTIONS` immediately (200 + CORS headers).
+2. Initialize the Supabase client from the request's `Authorization` header.
+3. **MANDATORY:** `await supabase.auth.getUser()` — 401 immediately on failure.
+4. `verify_jwt = false` in `config.toml` is allowed ONLY because step 3 replaces it.
+
+Flag Edge Function needs explicitly in the task contract:
 
 ```typescript
 // runtime: supabase-edge-function
@@ -27,64 +105,39 @@ If a use case requires server-side logic triggered by a database event, or requi
 
 ## Zod Validation (mandatory on all write operations)
 
-Every `POST`, `PUT`, and `PATCH` request body MUST be validated with Zod before any business logic runs.
+Every request body that leads to a write MUST be validated with Zod before any business logic runs.
+
+**Cross-field conditional validation MUST use `.superRefine()`** on the parent object. Field-level `.refine()` cannot access sibling values and is FORBIDDEN for cross-field rules.
 
 ```typescript
-import { z } from 'zod';
-
-const CreateProjectSchema = z.object({
-  name: z.string().min(2).max(100),
-  slug: z.string().regex(/^[a-z0-9-]+$/),
-  tierLevel: z.enum(['free', 'pro', 'enterprise']),
-});
-
-// Cross-field validation uses .superRefine() — not .refine()
-const CloseOpportunitySchema = z.object({
-  stage: z.enum(['open', 'closed_won', 'closed_lost']),
+const CloseSchema = z.object({
+  stage: z.enum(["open", "closed_won", "closed_lost"]),
   closeReason: z.string().optional(),
 }).superRefine((data, ctx) => {
-  if (data.stage === 'closed_won' && !data.closeReason) {
+  if (data.stage === "closed_won" && !data.closeReason) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'closeReason is required when stage is closed_won',
-      path: ['closeReason'],
+      message: "closeReason is required when stage is closed_won",
+      path: ["closeReason"],
     });
   }
 });
 ```
 
-**Cross-field conditional validation MUST use `.superRefine()`** on the parent object. Field-level `.refine()` cannot access sibling values and is FORBIDDEN for cross-field rules.
-
-## Unauthenticated Guard (mandatory in every Server Action)
-
-Every Server Action MUST call `getUser()` and handle the null case with a typed return — never throw. Throwing an unhandled error from a Server Action surfaces a raw error boundary to the user; the typed result contract must be maintained across all code paths.
-
-```typescript
-const { data: { user } } = await supabase.auth.getUser();
-if (!user) return { success: false, error: 'Unauthenticated' };
-```
-
-This guard MUST appear before any database operation or business logic. There is no circumstance in which a Server Action proceeds without a verified user.
-
 ## Never Trust Client-Supplied Identity
 
-A Server Action MUST NEVER use a user ID, tenant ID, or any identity value sourced from the client payload to identify the acting user. Always derive identity server-side from `getUser()`.
+No server boundary may use a user ID, chapter ID, or any identity value sourced from the client payload to identify the **acting** user. Always derive identity server-side from `getUser()`.
 
 ```typescript
 // ❌ FORBIDDEN — trusts a value the client can forge
-export async function updateProfile(payload: { userId: string; name: string }) {
-  await supabase.from('profiles').update({ name: payload.name }).eq('id', payload.userId);
-}
+const { userId } = parsed.data;
+await supabase.from("profiles").update({ name }).eq("id", userId);
 
-// ✅ REQUIRED — identity derived from the verified session
-export async function updateProfile(payload: { name: string }) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: 'Unauthenticated' };
-  await supabase.from('profiles').update({ name: payload.name }).eq('id', user.id);
-}
+// ✅ REQUIRED — identity from the verified session
+await supabase.from("profiles").update({ name }).eq("id", user.id);
 ```
 
-This applies equally to `tenant_id`, `org_id`, and any other scoping identity. If the operation requires a tenant context, read it from the verified user's domain record — never from the request body.
+This applies equally to role checks and chapter/tenant scoping: read them from the verified user's domain records (or let RLS enforce them) — never from the request body.
 
 ## DTO Rules
 
@@ -92,62 +145,20 @@ Database entities represent raw storage. DTOs represent the exact view model the
 
 **Deriving DTO fields — source of truth hierarchy:**
 
-1. **`packages/supabase/src/database.types.ts`** — the auto-generated types define which columns exist and their TypeScript types. This is always authoritative for what the database contains.
-2. **`docs/PRD.md`** — the display rules and user-facing field names determine which fields to expose, which to strip, and which to compute or rename for the frontend.
+1. **`src/integrations/supabase/types.ts`** — the auto-generated types define which columns exist and their TypeScript types. Authoritative for what the database contains (note the staleness caveat in `AGENTS.md`).
+2. **`docs/PRD.md`** — display rules and user-facing field names determine which fields to expose, strip, compute, or rename.
 3. **`docs/DATA_CONTRACT.md` → Domain Entity Inventory** — entity relationships and business constraints inform join logic and computed fields. This does NOT contain field lists or type definitions.
 
 **DTO construction rules:**
-- Strip all sensitive fields before returning: `password_hash`, `stripe_customer_id`, `internal_notes`, service-role tokens.
-- Flatten nested DB objects where it simplifies the frontend (e.g. combine `first_name` + `last_name` → `fullName`).
+- Strip all sensitive fields before returning: password hashes, internal notes, service-role tokens, moderation metadata not meant for the reporter.
+- Flatten nested DB objects where it simplifies the frontend.
 - All DTO field names use `camelCase`.
 - Add inline mapping comments for any computed or renamed field.
 - Do NOT invent fields that have no basis in the generated types or the PRD. If you need a field that doesn't exist in the schema, the migration must add it first.
 
 ## Environment Variables
 
-Any env var consumed by an API route MUST be declared in Vercel Dashboard → Project Settings → Environment Variables. The Environment Variable Registry in `docs/DATA_CONTRACT.md` is the authoritative checklist — never access `process.env` for a variable not listed there.
-
-## Server Action Mutation Protocol
-
-Every Server Action that writes data MUST:
-
-1. Validate the input payload with Zod before any DB operation.
-2. Call `getUser()` and return `{ success: false, error: 'Unauthenticated' }` if the user is null — never trust client-supplied user IDs.
-3. Derive all identity values (user ID, tenant ID) from the verified session — never from the request payload.
-4. Use `(SELECT auth.uid())` in RLS predicates to identify the requesting user at the database level.
-5. Call `revalidatePath(path)` or `revalidateTag(tag)` after a successful write to invalidate the affected Vercel cache. The path must match the actual route consuming this data, as declared in the **API Route Registry** section of `docs/DATA_CONTRACT.md`.
-6. Return a typed result object (`{ success: true, data }` or `{ success: false, error: string }`) — never throw raw errors to the client.
-
-```typescript
-'use server';
-
-export async function updateProfile(payload: unknown) {
-  const validated = UpdateProfileSchema.safeParse(payload);
-  if (!validated.success) {
-    return { success: false, error: validated.error.flatten() };
-  }
-
-  const supabase = createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: 'Unauthenticated' };
-
-  // user.id comes from the verified session — never from payload
-  const { error } = await supabase
-    .from('profiles')
-    .update({ name: validated.data.name })
-    .eq('id', user.id);
-
-  if (error) return { success: false, error: error.message };
-
-  revalidatePath('/settings/profile'); // matches the API Route Registry in DATA_CONTRACT.md
-  return { success: true };
-}
-```
-
-## Secrets Placement
-
-| Secret type | Where it lives |
-|---|---|
-| Consumed by Next.js Server Actions / API Routes | Vercel Environment Variables |
-| Consumed by Supabase Edge Functions or pg functions | Supabase Vault + Vercel |
-| Never in `.ai-status.md`, never in chat, never committed | All secrets |
+- Client-visible vars are `VITE_`-prefixed and inlined at build time (`import.meta.env.VITE_*`).
+- Server-only secrets (e.g. `SUPABASE_SERVICE_ROLE_KEY`, webhook URLs, third-party API keys) are read via `process.env` inside server code only, and MUST be configured in Vercel → Project Settings → Environment Variables.
+- Secrets consumed by Supabase Edge Functions or pg functions live in Supabase Vault (+ Vercel if also needed there).
+- Never commit secrets; never write them to `docs/AI_STATUS.md` or chat.

@@ -40,7 +40,7 @@ There are two categories of Tailwind utility, and the rules for each are differe
 
 ## Tailwind & Design Token Rules
 
-All **visual** values come from `tailwind.config.ts` design tokens. The canonical token definitions are in `docs/DESIGN_TOKENS.md` — this is the authoritative reference for all color aliases, typography scale, spacing scale, border radius scale, and shadow values. The following are **hard rules**:
+All **visual** values come from design tokens (defined in the `@theme` block of `src/index.css`). The canonical token definitions are in `docs/DESIGN_TOKENS.md` — this is the authoritative reference for all color aliases, typography scale, spacing scale, border radius scale, and shadow values. The following are **hard rules**:
 
 | Constraint | Rule |
 |---|---|
@@ -53,7 +53,7 @@ All **visual** values come from `tailwind.config.ts` design tokens. The canonica
 | Typography application | Follow the matrix in `docs/DESIGN_TOKENS.md` §9 — the size/weight/letter-spacing combination is specified per UI context (page title, card title, label, badge, etc.) |
 | Component token assembly | Follow `docs/COMPONENT_SPEC.md` — token combinations for named component types are pre-specified and must not be derived independently |
 
-If a required **visual** token (colour, spacing value, radius, shadow, or typography step) is not present in `docs/DESIGN_TOKENS.md` or `tailwind.config.ts`, flag it as a design gap — do not guess or invent a value. This rule does not apply to structural utilities — you never need permission to use `flex`, `grid`, `items-center`, `max-w-lg`, or any other layout class.
+If a required **visual** token (colour, spacing value, radius, shadow, or typography step) is not present in `docs/DESIGN_TOKENS.md` or the `@theme` block of `src/index.css`, flag it as a design gap — do not guess or invent a value. This rule does not apply to structural utilities — you never need permission to use `flex`, `grid`, `items-center`, `max-w-lg`, or any other layout class.
 
 Use only Shadcn/UI components. "Artisanal" custom components that duplicate existing Shadcn primitives are forbidden.
 
@@ -121,21 +121,24 @@ useEffect(() => {
 ## Component File Structure
 
 ```
+app/routes.ts             # Route manifest (route()/layout()/index() — re-exported by src/routes.ts)
 src/
-  App.tsx                 # Router definition (createBrowserRouter)
-  main.tsx                # Entry — providers (QueryClient, auth, theme)
-  pages/                  # Route-level screens (or feature routes)
+  root.tsx                # SSR document shell — providers (QueryClient, auth, theme)
+  entry.client.tsx        # Browser hydration entry
+  entry.server.tsx        # SSR render entry
+  features/<domain>/      # Feature slices: {api, components, hooks, pages, types}
   components/
     ui/                   # Shadcn/UI primitives (auto-generated — do not edit)
     layout/               # Shared shells
-    [FeatureName]/        # Shared feature components
-  features/               # Optional feature modules (components, hooks, stores)
   hooks/                  # Shared hooks
+  lib/ · utils/           # Shared utilities (incl. supabase.server.ts)
 ```
 
-## SPA rendering model
+New feature code goes in its `src/features/<domain>/` slice. Cross-feature imports go through the feature barrel or its public `api/` — never deep into another feature's internals (ESLint-enforced).
 
-The app is a **client-rendered** Vite SPA. There are no React Server Components. Use standard React hooks (`useState`, `useEffect`, etc.), TanStack Query, and React Router as needed. Heavy work belongs in hooks, lazy-loaded routes (`React.lazy`), or small pure utilities — not in fictional “server-only” modules inside this repo.
+## Rendering model
+
+The app is **server-side rendered** by React Router v7 (framework mode), then hydrates in the browser. There are no React Server Components — every component is a regular React component that also runs on the server during SSR, so it must not touch `window`/`document` outside `useEffect`. First-paint data can come from route loaders; interactive data lives in TanStack Query. Heavy work belongs in hooks, lazy-loaded routes (`React.lazy`), or small pure utilities.
 
 ## Visual Consistency Checklist (for every UI task)
 
@@ -144,7 +147,7 @@ Before marking any frontend task complete, verify every generated component sati
 - [ ] Border radius uses only token scale values from `docs/DESIGN_TOKENS.md`
 - [ ] All spacing uses token scale (no arbitrary values)
 - [ ] All typography uses token scale
-- [ ] All colors reference `tailwind.config.ts` token aliases
+- [ ] All colors reference design-token aliases (defined in the `@theme` block of `src/index.css`)
 - [ ] Every interactive element implements `hover:`, `focus-visible:`, `disabled:` variants
 - [ ] No `style={{}}` props for Tailwind-expressible values
 - [ ] All dynamic values trace to named DTO fields (no hardcoded display data)

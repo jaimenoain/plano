@@ -1,17 +1,75 @@
-# Agent Instructions (Plano)
+# Agent Instructions (Plano) — Single Source of Truth
+
+This file is the canonical agent contract for this repo. `CLAUDE.md` and `GEMINI.md` are thin pointers to it. Detailed domain rules live in `.cursor/rules/` (indexed below). Cross-session status lives in `docs/AI_STATUS.md`.
 
 ## Project Context
-This is an architecture and mapping application ("Plano").
-* **Domain**: Buildings, Architects, Maps, and Urban Planning.
-* **Entities**: We deal with `Buildings` (not Movies), `Architects` (not Directors), and `Collections`.
 
-**DETECT & RESPECT:**
-Before generating any code or plans, you must SCAN the existing file structure to determine the established tech stack.
-1. **Read Configuration:** Check `package.json`, `pyproject.toml`, `go.mod`, or similar logic files to identify dependencies.
-2. **Match Versioning:** Use the exact package manager (e.g., `pnpm`, `yarn`, `pip`, `poetry`) and language versions defined in these files.
-3. **Mimic Patterns:** adopting the code style, folder structure, and naming conventions of existing files.
+Plano is an architecture and mapping application ("The world's architecture, cataloged").
+- **Domain**: Buildings, Architects, Maps, Collections, and Urban Planning.
+- **Entities**: `Buildings` (not Movies), `Architects` (not Directors), `Collections`. The repo pivoted from a prior product — some legacy DB tables remain; never build against them.
 
-**DO NOT** assume generic defaults. **DO NOT** create new configuration files (like `requirements.txt` or `.babelrc`) if a different standard (like `pyproject.toml` or `vite.config.ts`) already exists.
+## The Real Stack (verified 2026-07-06 — trust this over any older doc)
+
+Single-app repo. **NOT a monorepo** — there is no Turborepo, no pnpm workspaces, no `apps/` or `packages/` directories, no Next.js, no React Native.
+
+- **Framework**: React Router v7 **framework mode with SSR** on Vite 7, React 19, TypeScript.
+- **Deploy**: Vercel via `@vercel/react-router`.
+- **Backend**: Supabase — Postgres + PostGIS, Auth, Storage, Edge Functions (`supabase/functions/`).
+- **Server state**: TanStack Query v5. **UI state**: URL search params first.
+- **Styling**: Tailwind CSS v4 (tokens defined in CSS `@theme` in `src/index.css`; documented in `docs/DESIGN_TOKENS.md`) + shadcn/Radix primitives in `src/components/ui/`.
+- **Validation**: Zod at every boundary.
+
+### Layout map
+
+```
+app/routes.ts                        Route manifest (~122 entries; re-exported by src/routes.ts)
+src/root.tsx                         SSR document shell
+src/entry.client.tsx / entry.server.tsx
+src/api/*.route.ts                   App-owned resource routes (e.g. /api/version)
+src/features/<domain>/               26 feature slices: {api,components,hooks,pages,types}
+src/features/<domain>/api/*.route.ts Feature-owned resource routes (e.g. /api/feedback)
+src/components/ui/                   Shared shadcn/Radix primitives
+src/lib/supabase.server.ts           Server-side Supabase client (SSR, loaders, resource routes)
+src/integrations/supabase/client.ts  Browser Supabase client
+src/integrations/supabase/types.ts   Generated DB types — NEVER hand-edit; `npm run gen-types`
+supabase/migrations/                 Timestamped SQL migrations
+supabase/functions/                  Edge Functions
+docs/                                Specs: PRD.md, DATA_CONTRACT.md, DESIGN_TOKENS.md, AI_STATUS.md
+```
+
+### Commands
+
+`npm run dev` · `build` · `typecheck` · `typecheck:strict` · `test` · `test:coverage` · `lint` · `lint:fix` · `gen-types`
+
+There is no `turbo`, no workspace filtering. Run everything from the repo root.
+
+## Session Start — Do This First
+
+1. Read `docs/AI_STATUS.md` — check `KNOWN_ISSUES` and `SCHEMA_DRIFT_LOG` before touching code.
+2. Read `.cursor/rules/06-agent-behaviour.mdc` — conduct, pre-flight checks, challenge protocol. Always active.
+3. Read `.cursor/rules/00-architecture.mdc` — stack, forbidden patterns, state, caching. Always active.
+4. Read `.cursor/rules/05-vertical-slice.mdc` — task sequencing and slice limits. Always active.
+
+Then load the domain rule file for the work at hand:
+
+| Task type | Rule file |
+|---|---|
+| Schema, RLS, migrations | `.cursor/rules/01-database.mdc` |
+| Resource routes, loaders/actions, Edge Functions, DTOs | `.cursor/rules/02-api.mdc` |
+| React components, UI, styling | `.cursor/rules/03-frontend.mdc` |
+| Auth, guards, Supabase clients | `.cursor/rules/04-auth.mdc` |
+
+## Hard Rules (summary — full detail in the rule files)
+
+- **No `getSession()`** for authorization decisions. Always `getUser()`. (The one sanctioned exception lives in `src/lib/supabase.server.ts` for hydration token copying.)
+- **No mock data or boolean auth flags.** Every feature connects to real Supabase.
+- **No raw Tailwind palette colors** (`bg-blue-500`). Design token aliases only (`docs/DESIGN_TOKENS.md`).
+- **No global state for domain data.** TanStack Query for server state; URL params for UI state.
+- **No direct schema changes** via the Supabase Dashboard. Migrations only — write the timestamped file, apply it yourself via the Supabase MCP `apply_migration` tool, then run `npm run gen-types` and commit the regenerated types **in the same PR**.
+- **No npm installs** without explicit user permission.
+- **Feature `api/` modules own all Supabase queries.** Components and hooks never import `@/integrations/supabase/client` directly (ESLint `no-restricted-imports` enforces this; the CI warning ratchet fails any PR that adds a new violation).
+- **Server-side identity only.** Every loader/action/resource route/Edge Function that writes data derives the user from `getUser()` — never from the request payload.
+- **Warning ratchet**: if your change introduces a new ESLint warning (boundary imports, exhaustive-deps), fix it before handoff — CI fails when any warning bucket grows (`node scripts/check-eslint-ratchet.mjs`).
 
 ## Supabase Edge Functions & Security
 
@@ -28,3 +86,12 @@ Due to CORS preflight limitations in browsers, we **cannot** use Supabase's auto
 
 ### Code Style
 * When generating SQL or TypeScript for buildings, ensure geolocation handling (PostGIS) is accurate.
+
+## Source-of-Truth Hierarchy
+
+1. `src/integrations/supabase/types.ts` — what the schema *is* right now. **Caveat:** currently stale for ~20 recent tables/RPCs (see `SCHEMA_DRIFT_LOG` in `docs/AI_STATUS.md`); when types and live schema disagree, verify against the live DB via Supabase MCP before coding.
+2. `docs/DATA_CONTRACT.md` — what the schema *should be* (intent, business rules, DTOs).
+3. `docs/PRD.md` — what the product should *do*.
+4. The migration being written — what the schema *will become* in this task.
+
+When sources disagree, follow this order and log drift in `docs/AI_STATUS.md`.

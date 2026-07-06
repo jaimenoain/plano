@@ -1,140 +1,64 @@
 ---
-description: Supabase auth session handling, middleware rules, and multi-tenant boundary enforcement. Auto-attached for auth, middleware, and supabase client files.
-globs: ["**/middleware.ts", "**/lib/supabase/**", "**/auth/**", "**/lib/auth/**"]
+description: Supabase auth session handling, guard patterns, and client-type rules. Auto-attached for auth, supabase client, and guard files.
+globs: ["**/auth/**", "**/lib/supabase*", "**/integrations/supabase/**", "**/*Guard*"]
 alwaysApply: false
 ---
 
 # Auth Rules
 
-## The getUser() Mandate (absolute — no exceptions)
+## The getUser() Mandate (absolute — one sanctioned exception)
 
-`getSession()` is **FORBIDDEN** everywhere in this codebase.
+`getSession()` is **FORBIDDEN** for any authorization decision, anywhere in this codebase.
 
 | Context | Required call | Forbidden call |
 |---|---|---|
-| Middleware | `supabase.auth.getUser()` | `supabase.auth.getSession()` |
-| Server Components | `supabase.auth.getUser()` | `supabase.auth.getSession()` |
-| Server Actions | `supabase.auth.getUser()` | `supabase.auth.getSession()` |
+| Route loaders / actions | `supabase.auth.getUser()` | `supabase.auth.getSession()` |
+| Resource routes (`*.route.ts`) | `supabase.auth.getUser()` | `supabase.auth.getSession()` |
+| Supabase Edge Functions | `supabase.auth.getUser()` | `supabase.auth.getSession()` |
 
-**Why:** `getSession()` reads from the potentially stale cookie without triggering a server-side token refresh. This produces sessions that appear valid on the client but are rejected by the server. `getUser()` always validates against the Supabase Auth server.
+**Why:** `getSession()` reads from the potentially stale cookie without validating against the Supabase Auth server. This produces sessions that appear valid on the client but are rejected by the server. `getUser()` always validates.
+
+**The one sanctioned exception:** `getSessionForClientHydration()` in `src/lib/supabase.server.ts` calls `getUser()` first to validate, then copies raw tokens from `getSession()` for SSR hydration. That helper is the only place `getSession()` may appear. Never add another.
 
 ## Client Type Rules
 
-| Context | Client to use | Import |
+| Context | Client | Source |
 |---|---|---|
-| Server Components / Actions / Middleware | `createServerClient` | `@supabase/ssr` |
-| Client Components | `createBrowserClient` | `@supabase/ssr` |
+| Server code (loaders, actions, resource routes) | `createSupabaseServerClient(request, headers)` | `src/lib/supabase.server.ts` (wraps `@supabase/ssr` `createServerClient` with cookie plumbing) |
+| Browser code (feature `api/` modules, loaders) | `supabase` singleton | `src/integrations/supabase/client.ts` |
+| Edge Functions | Client built from the request's `Authorization` header | per-function (see Manual Gatekeeper in `AGENTS.md`) |
 
-Importing or instantiating `createServerClient` inside a Client Component is **FORBIDDEN**. The server client requires cookie access that does not exist in the browser.
+- Importing `src/lib/supabase.server.ts` into client-side code is **FORBIDDEN** — it requires request/response cookie access that does not exist in the browser.
+- The browser client may only be imported inside `src/features/*/api/**` or `src/**/*.loader.ts` (ESLint-enforced; see `00-architecture.mdc`).
+- When you build a server client, thread the `headers` object into every `Response` you return, so refreshed session cookies reach the browser.
 
-## Middleware Requirements
+## The Real Guard Pattern (what actually exists — extend this, don't invent middleware)
 
-`middleware.ts` MUST:
+There is **no `middleware.ts`** in React Router v7 and none should be created. Protection is layered:
 
-1. Call `supabase.auth.getUser()` on every request to refresh the session cookie.
-2. Protect all `(app)/` routes — redirect unauthenticated users to `/login`.
-3. Route authenticated users away from `/login` and `/signup` to their post-login landing route.
-4. Use the user-type route prefix map from `docs/DATA_CONTRACT.md` to determine the correct post-login destination (e.g. `operator` → `/dashboard`, `investor` → `/portfolio`).
+1. **Session context:** `AuthProvider` (`src/features/auth/hooks/useAuth.tsx`) receives `initialSession` from SSR hydration, subscribes to `supabase.auth.onAuthStateChange`, and exposes `user`, `session`, `loading` plus `signUp/signIn/signOut/resetPassword/updatePassword`. Consume it via the `useAuth()` hook — never create a parallel auth context.
+2. **Route-level guards (UX only):** guard components redirect unauthenticated users. The canonical example is `AdminGuard` (`src/features/admin/components/AdminGuard.tsx`): waits for `authLoading`/`profileLoading`, redirects to `/auth` when signed out, checks `profile.role === "admin" || profile.role === "app_admin"`, redirects failures to `/admin/unauthorized`, and renders `null` until verified. Admin routes are wrapped via `AdminLayoutWithGuard`. New protected areas follow this composition pattern (a guard component wrapping a layout, wired in `app/routes.ts`).
+3. **Real security is server-side:** RLS policies, `SECURITY DEFINER` RPC checks, and trigger-based protection against role escalation on `profiles`. A frontend guard is never the security boundary — see the SECURITY NOTE comment in `AdminGuard.tsx` and the rules in `01-database.mdc`.
 
-## Auth Exclusion Zone
-
-The following files are owned exclusively by the auth system. Never create, stub, or partially scaffold them as placeholders:
-
-**Files:**
-- `middleware.ts`
-- `lib/supabase/server.ts`
-- `lib/supabase/browser.ts`
-- `lib/supabase/admin.ts`
-- `lib/auth/` (entire directory)
-- `lib/onboarding/` (entire directory)
-- `tenant-system.config.ts`
-- `types/supabase.ts` (do not create; extend only if it already exists and contains non-auth types)
-
-**Routes:**
-- `/onboarding` (any variant)
-- `/settings/members`
-- `/auth/callback`
-
-If a navigation item must link to one of these routes, include the link string — but do NOT create the destination page.
-
-## Domain Provisioning (critical for multi-tenant apps)
-
-Supabase Auth (`auth.users`) and application domain tables are separate. When a new user signs up and confirms their email, Supabase creates a record in `auth.users` but nothing automatically populates the domain tables that RLS policies depend on. Without provisioning, every RLS-protected query silently fails for new users.
-
-### Preferred: Provision in the `/auth/callback` Route Handler
-
-The `/auth/callback` server route handler is the canonical provisioning location for projects that own this route. It fires exactly once per confirmed sign-up, executes in a server context with no race conditions, and requires no client-side coordination.
-
-When building the auth callback handler, include provisioning logic directly after the session exchange:
-
-```typescript
-// app/auth/callback/route.ts
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const code = searchParams.get('code');
-
-  if (code) {
-    const supabase = createServerClient(/* ... */);
-    await supabase.auth.exchangeCodeForSession(code);
-
-    // Provision domain tables immediately after session is established
-    await provisionUser(supabase); // see provisioning requirements below
-  }
-
-  return NextResponse.redirect(/* post-login route */);
-}
-```
-
-Note: `/auth/callback` is in the Auth Exclusion Zone — do not scaffold it during the walking skeleton phase. The auth build queue owns this file.
-
-### Fallback: AuthProvider (when callback route is not available)
-
-If the project cannot provision in the callback route (e.g. magic link flows where the callback is handled by Supabase), use an AuthProvider wrapping the `(app)/` layout as a fallback trigger.
-
-```typescript
-const provisioned = useRef(false);
-
-useEffect(() => {
-  if (session && !provisioned.current) {
-    provisioned.current = true;
-    const controller = new AbortController();
-    fetch('/api/provision-user', { method: 'POST', signal: controller.signal })
-      .catch(() => {}); // silent — never block auth flow
-    return () => controller.abort();
-  }
-}, [session]);
-```
-
-<!-- Scope note: provisioned.current resets to false on every component unmount, meaning
-     the provisioning call can fire again if the AuthProvider remounts (e.g. during certain
-     navigation patterns). This is acceptable — and safe — because the provisioning route
-     is strictly idempotent (see requirements below): repeated calls check for row existence
-     before inserting and never create duplicates. The ref's purpose is to prevent race
-     conditions and double-fires within a single mount cycle, not to guarantee exactly-once
-     delivery across the session lifetime. The idempotency guarantee on the server is the
-     real safety net. -->
-
-### Provisioning Requirements (apply to both approaches)
-
-The provisioning logic MUST:
-
-1. Use the **service-role** Supabase client (not anon) to write domain data, bypassing RLS for provisioning writes only.
-2. Read `docs/DATA_CONTRACT.md` to identify every table that needs a row on first user creation — at minimum `public.users`, plus any singleton records or tenant-scoped seed rows defined in the contract.
-3. Check for row existence before inserting. Never overwrite existing rows.
-4. Apply the first-user role elevation pattern defined in `DATA_CONTRACT.md` (e.g. first user becomes `admin`), if specified.
-5. Be **strictly idempotent** — calling it multiple times must never create duplicates or throw errors.
-6. **Never hardcode table names, role values, or record shapes** — read all of these from `DATA_CONTRACT.md`.
+Auth-related routes (registered in `app/routes.ts`): `/auth` and `/login` → `features/auth/pages/Auth.tsx`, `/update-password`, `/onboarding`, `/admin/unauthorized`.
 
 ## Auth Flow Requirements
 
 | Flow | Behaviour |
 |---|---|
-| Sign Up | Create user in Supabase Auth → redirect to `/confirm-email` (never to dashboard) |
-| `/confirm-email` | Static holding page only — no data fetching, no logic |
-| Log In | Authenticate → redirect to user-type post-login route from DATA_CONTRACT.md |
-| Log Out | Destroy session → redirect to `/` (marketing layout) |
-| Forgot Password | Trigger Supabase password reset email |
-| Layout switching | Driven by real session state — never a boolean flag |
+| Sign Up | `supabase.auth.signUp` with `emailRedirectTo` validated by `isValidRedirect` (`src/lib/security.ts`); username + optional `invited_by` in user metadata |
+| Log In | `signInWithPassword` → session propagates via `onAuthStateChange` |
+| Log Out | `supabase.auth.signOut()` → listener clears user/session state |
+| Forgot Password | `resetPassword` → email link to `/update-password` |
+| Layout switching | Driven by real session state from `useAuth()` — never a boolean flag |
+
+Redirect URLs passed to Supabase auth calls MUST be validated with `isValidRedirect` to prevent open-redirect vulnerabilities.
+
+## Role Semantics
+
+- Roles live on `profiles.role`. Admin surfaces require `admin` or `app_admin`.
+- Role escalation is blocked at the DB level by a trigger on `profiles` — never write code that updates `profiles.role` from the client.
+- Ambassador/chapter permissions come from `ambassador_memberships.role` and are enforced by RLS + SECURITY DEFINER RPCs, not by frontend checks.
 
 ## Supabase SMTP (Resend)
 
@@ -147,16 +71,4 @@ Auth emails (confirm signup, magic link, password reset) are sent via Resend usi
 | Username | `resend` |
 | Password | Resend API key (Supabase UI only — never committed) |
 
-Email templates in Supabase → Authentication → Email Templates must use the project's Vercel domain for redirect URLs.
-
-## Multi-Tenant Role Semantics
-
-When `DATA_CONTRACT.md` defines more than one user type with different access patterns, the auth system MUST document for each:
-
-- Role name(s) belonging to this user type
-- Primary protected route prefix (e.g. `/dashboard`, `/portfolio`)
-- Post-login landing route
-- Data entities this user type cannot access at all (not just filtered — fully invisible)
-- UI surfaces or API routes exclusive to this user type
-
-This information drives middleware route protection and the provisioning role assignment.
+Email templates in Supabase → Authentication → Email Templates must use the production domain for redirect URLs.
