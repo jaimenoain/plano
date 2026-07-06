@@ -52,8 +52,7 @@ export async function fetchChapterAmbassadorActivity(
   chapterId: string,
   days: number,
 ): Promise<ChapterAmbassadorActivityRow[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_chapter_ambassador_activity", {
+  const { data, error } = await supabase.rpc("get_chapter_ambassador_activity", {
     p_chapter_id: chapterId,
     p_days: days,
   });
@@ -83,8 +82,7 @@ export interface ChapterTeamMember {
 export async function fetchChapterTeam(
   chapterId: string,
 ): Promise<ChapterTeamMember[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_chapter_team", {
+  const { data, error } = await supabase.rpc("get_chapter_team", {
     p_chapter_id: chapterId,
   });
   if (error) throw error;

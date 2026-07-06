@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -279,8 +280,7 @@ export default function TasksPage() {
   const { data: membership } = useQuery({
     queryKey: ["ambassador-membership-tasks", user?.id],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("ambassador_memberships")
         .select("chapter_id, role")
         .eq("user_id", user!.id)
@@ -298,9 +298,8 @@ export default function TasksPage() {
   const { data: tasks = [], isLoading, error } = useQuery({
     queryKey: ["chapter-tasks", chapterId],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any).rpc("get_chapter_tasks", {
-        p_chapter_id: chapterId,
+      const { data, error } = await supabase.rpc("get_chapter_tasks", {
+        p_chapter_id: chapterId!,
       });
       if (error) throw error;
       return (data ?? []) as ChapterTask[];
@@ -313,9 +312,8 @@ export default function TasksPage() {
   const { data: teamMembers = [] } = useQuery({
     queryKey: ["chapter-team-tasks", chapterId],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any).rpc("get_chapter_team", {
-        p_chapter_id: chapterId,
+      const { data, error } = await supabase.rpc("get_chapter_team", {
+        p_chapter_id: chapterId!,
       });
       if (error) return [] as TeamMember[];
       return (data ?? []) as TeamMember[];
@@ -328,11 +326,10 @@ export default function TasksPage() {
   const { data: projects = [] } = useQuery({
     queryKey: ["chapter-projects-tasks", chapterId],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("chapter_projects")
         .select("id, title, status")
-        .eq("chapter_id", chapterId)
+        .eq("chapter_id", chapterId!)
         .in("status", ["active", "completed"])
         .order("created_at", { ascending: false });
       return (data ?? []) as Project[];
@@ -346,8 +343,7 @@ export default function TasksPage() {
     queryKey: ["company-search-tasks", form.company_query],
     queryFn: async () => {
       if (!form.company_query || form.company_query.length < 2) return [] as CompanyOption[];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("companies")
         .select("id, name")
         .ilike("name", `%${form.company_query}%`)
@@ -364,8 +360,7 @@ export default function TasksPage() {
     queryKey: ["company-search-inline", inlineCompanyQuery],
     queryFn: async () => {
       if (inlineCompanyQuery.length < 2) return [] as CompanyOption[];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("companies")
         .select("id, name")
         .ilike("name", `%${inlineCompanyQuery}%`)
@@ -382,8 +377,7 @@ export default function TasksPage() {
   // Create-only mutation for the New Task dialog
   const saveMutation = useMutation({
     mutationFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from("chapter_tasks").insert({
+      const { error } = await supabase.from("chapter_tasks").insert({
         title: form.title.trim(),
         description: form.description.trim() || null,
         due_date: form.due_date || null,
@@ -410,9 +404,8 @@ export default function TasksPage() {
     mutationFn: async ({ id, patch }: { id: string; patch: Partial<ChapterTask> }) => {
       const dbPatch = Object.fromEntries(
         Object.entries(patch).filter(([k]) => DB_FIELDS.has(k))
-      );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      ) as TablesUpdate<"chapter_tasks">;
+      const { error } = await supabase
         .from("chapter_tasks")
         .update({ ...dbPatch, updated_at: new Date().toISOString() })
         .eq("id", id);
@@ -429,8 +422,7 @@ export default function TasksPage() {
 
   const statusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: TaskStatus }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("chapter_tasks")
         .update({ status, updated_at: new Date().toISOString() })
         .eq("id", id);
@@ -447,8 +439,7 @@ export default function TasksPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from("chapter_tasks").delete().eq("id", id);
+      const { error } = await supabase.from("chapter_tasks").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

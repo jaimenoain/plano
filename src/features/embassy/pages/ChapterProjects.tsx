@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -147,8 +148,7 @@ function dueDateClass(due: string | null): string {
 async function fetchCampaignProgress(campaign: Campaign, chapterId: string): Promise<number> {
   const { start_date, end_date, metric_type } = campaign;
   const endTs = end_date + "T23:59:59Z";
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabase as any;
+  const db = supabase;
 
   if (metric_type === "photos") {
     const { data: memberIds } = await db
@@ -241,8 +241,7 @@ export default function ChapterProjectsPage() {
   const { data: membership } = useQuery({
     queryKey: ["ambassador-membership-projects", user?.id],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("ambassador_memberships")
         .select("chapter_id, role")
         .eq("user_id", user!.id)
@@ -260,12 +259,11 @@ export default function ChapterProjectsPage() {
   const { data: projects, isLoading, error } = useQuery({
     queryKey: ["chapter-projects", chapterId],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const db = supabase as any;
+      const db = supabase;
       const { data, error } = await db
         .from("chapter_projects")
         .select("*")
-        .eq("chapter_id", chapterId)
+        .eq("chapter_id", chapterId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       const rows = data as Project[];
@@ -294,8 +292,7 @@ export default function ChapterProjectsPage() {
   const { data: campaigns = [] } = useQuery({
     queryKey: ["programme-campaigns-portal", chapterId],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("programme_campaigns")
         .select("*")
         .order("start_date", { ascending: false });
@@ -320,9 +317,8 @@ export default function ChapterProjectsPage() {
   const { data: tasks = [] } = useQuery({
     queryKey: ["chapter-tasks-projects", chapterId],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any).rpc("get_chapter_tasks", {
-        p_chapter_id: chapterId,
+      const { data, error } = await supabase.rpc("get_chapter_tasks", {
+        p_chapter_id: chapterId!,
       });
       if (error) throw error;
       return (data ?? []) as ChapterTask[];
@@ -335,9 +331,8 @@ export default function ChapterProjectsPage() {
   const { data: teamMembers = [] } = useQuery({
     queryKey: ["chapter-team-projects", chapterId],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any).rpc("get_chapter_team", {
-        p_chapter_id: chapterId,
+      const { data } = await supabase.rpc("get_chapter_team", {
+        p_chapter_id: chapterId!,
       });
       return (data ?? []) as TeamMember[];
     },
@@ -350,8 +345,7 @@ export default function ChapterProjectsPage() {
     queryKey: ["company-search-projects-inline", inlineCompanyQuery],
     queryFn: async () => {
       if (inlineCompanyQuery.length < 2) return [] as { id: string; name: string }[];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from("companies")
         .select("id, name")
         .ilike("name", `%${inlineCompanyQuery}%`)
@@ -367,8 +361,7 @@ export default function ChapterProjectsPage() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const db = supabase as any;
+      const db = supabase;
       if (editingProject) {
         const { error } = await db
           .from("chapter_projects")
@@ -401,8 +394,7 @@ export default function ChapterProjectsPage() {
 
   const submitIdeaMutation = useMutation({
     mutationFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const db = supabase as any;
+      const db = supabase;
       const { error } = await db
         .from("chapter_projects")
         .insert({
@@ -450,8 +442,7 @@ export default function ChapterProjectsPage() {
 
   const publishMutation = useMutation({
     mutationFn: async (id: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("chapter_projects")
         .update({ status: "active", updated_at: new Date().toISOString() })
         .eq("id", id);
@@ -468,8 +459,7 @@ export default function ChapterProjectsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from("chapter_projects").delete().eq("id", id);
+      const { error } = await supabase.from("chapter_projects").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -482,8 +472,7 @@ export default function ChapterProjectsPage() {
 
   const createTaskMutation = useMutation({
     mutationFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from("chapter_tasks").insert({
+      const { error } = await supabase.from("chapter_tasks").insert({
         chapter_id: chapterId!,
         title: taskForm.title.trim(),
         description: taskForm.description.trim() || null,
@@ -508,8 +497,7 @@ export default function ChapterProjectsPage() {
 
   const taskStatusMutation = useMutation({
     mutationFn: async ({ id, newStatus }: { id: string; newStatus: TaskStatus }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("chapter_tasks")
         .update({ status: newStatus, updated_at: new Date().toISOString() })
         .eq("id", id);
@@ -528,9 +516,8 @@ export default function ChapterProjectsPage() {
     mutationFn: async ({ id, patch }: { id: string; patch: Partial<ChapterTask> }) => {
       const dbPatch = Object.fromEntries(
         Object.entries(patch).filter(([k]) => DB_TASK_FIELDS.has(k))
-      );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      ) as TablesUpdate<"chapter_tasks">;
+      const { error } = await supabase
         .from("chapter_tasks")
         .update({ ...dbPatch, updated_at: new Date().toISOString() })
         .eq("id", id);
@@ -554,8 +541,7 @@ export default function ChapterProjectsPage() {
       id: string;
       patch: Partial<Pick<Project, "title" | "description" | "status">>;
     }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("chapter_projects")
         .update({ ...patch, updated_at: new Date().toISOString() })
         .eq("id", id);
@@ -1282,8 +1268,7 @@ export default function ChapterProjectsPage() {
                       onClick={async () => {
                         if (!confirm("Delete this task?")) return;
                         setSelectedTask(null);
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        const { error } = await (supabase as any).from("chapter_tasks").delete().eq("id", task.id);
+                        const { error } = await supabase.from("chapter_tasks").delete().eq("id", task.id);
                         if (error) {
                           toast.error("Failed to delete task.");
                         } else {

@@ -269,8 +269,7 @@ async function fetchApiLogs(
   endpointFilter: string,
   statusFilter: string,
 ): Promise<ApiRequestLog[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabase as any)
+  let query = supabase
     .from("api_request_logs")
     .select(
       "id, created_at, endpoint, method, status_code, duration_ms, user_id, model, input_tokens, output_tokens, cost_usd, error_message, metadata",

@@ -137,9 +137,7 @@ export async function fetchFollowingFeedPage(
   limit: number,
   offset: number,
 ): Promise<FeedReview[]> {
-  // get_feed_ranked is not always present in generated types; cast loosely.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_feed_ranked", {
+  const { data, error } = await supabase.rpc("get_feed_ranked", {
     p_limit: limit,
     p_offset: offset,
     p_exclude_seen: true,
@@ -153,11 +151,10 @@ export async function fetchCommunityFeedPage(
   limit: number,
   offset: number,
 ): Promise<FeedReview[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc(
-    "get_community_feed_ranked",
-    { p_limit: limit, p_offset: offset },
-  );
+  const { data, error } = await supabase.rpc("get_community_feed_ranked", {
+    p_limit: limit,
+    p_offset: offset,
+  });
   if (error) throw error;
   return mapRows(data);
 }

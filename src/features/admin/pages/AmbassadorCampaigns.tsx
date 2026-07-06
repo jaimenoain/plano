@@ -94,8 +94,7 @@ function campaignStatus(c: Campaign): "upcoming" | "active" | "ended" {
 
 async function fetchProgress(campaign: Campaign): Promise<number> {
   const { start_date, end_date, metric_type } = campaign;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabase as any;
+  const db = supabase;
 
   if (metric_type === "photos") {
     const { count, error } = await db
@@ -144,8 +143,7 @@ export default function AmbassadorCampaigns() {
   const { data: draftIdeas = [], isLoading: ideasLoading, isError: ideasError } = useQuery({
     queryKey: ["admin-draft-ideas"],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const db = supabase as any;
+      const db = supabase;
 
       // 1. Fetch all draft rows. No FK-hint joins — chapter_projects.created_by
       //    references auth.users(id), not profiles(id), so `profiles!created_by`
@@ -196,8 +194,7 @@ export default function AmbassadorCampaigns() {
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ["programme-campaigns"],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("programme_campaigns")
         .select("*")
         .order("start_date", { ascending: false });
@@ -220,8 +217,7 @@ export default function AmbassadorCampaigns() {
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).from("programme_campaigns").insert({
+      const { error } = await supabase.from("programme_campaigns").insert({
         title: form.title,
         description: form.description || null,
         start_date: form.start_date,

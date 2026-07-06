@@ -1,8 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { PlanoUpdate, CreateUpdatePayload, UpdateUpdatePayload } from "../types";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const db = supabase as any;
+const db = supabase;
 
 function rowToUpdate(row: Record<string, unknown>): PlanoUpdate {
   return {

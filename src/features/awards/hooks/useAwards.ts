@@ -157,14 +157,12 @@ export function useAwardLeaderboard(awardId?: string, limit = 50) {
   return useQuery({
     queryKey: [...awardKeys.all, "leaderboard", awardId, limit],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any).rpc("get_award_leaderboard", {
-        p_award_id: awardId || null,
+      const { data, error } = await supabase.rpc("get_award_leaderboard", {
+        p_award_id: awardId || undefined,
         p_limit: limit,
       });
       if (error) throw error;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return data as unknown as any[];
+      return data ?? [];
     },
     staleTime: STALE_TIME,
   });
@@ -362,13 +360,12 @@ export function usePersonAwardLeaderboard(awardId?: string, limit = 50) {
   return useQuery({
     queryKey: [...awardKeys.all, "person-leaderboard", awardId, limit],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any).rpc("get_person_award_leaderboard", {
-        p_award_id: awardId || null,
+      const { data, error } = await supabase.rpc("get_person_award_leaderboard", {
+        p_award_id: awardId || undefined,
         p_limit: limit,
       });
       if (error) throw error;
-      return data as Array<{
+      return (data ?? []) as Array<{
         person_id: string;
         person_name: string;
         person_slug: string;
