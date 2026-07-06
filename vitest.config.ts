@@ -30,14 +30,22 @@ export default defineConfig({
     },
     coverage: {
       provider: "v8",
-      // text-summary prints to the CI log; html + lcov are uploaded as an artifact.
-      reporter: ["text", "text-summary", "html", "lcov"],
+      // text-summary prints to the CI log; html + lcov are uploaded as an artifact;
+      // json-summary feeds any future automated coverage ratchet.
+      reporter: ["text", "text-summary", "html", "lcov", "json-summary"],
       reportsDirectory: "./coverage",
       // Measure only the app source. Supabase edge functions (api/, app/,
       // supabase/functions/) run on Deno and aren't exercised by these tests.
       include: ["src/**"],
-      // No thresholds yet — reporting only. Enable a `thresholds` block once the
-      // suite is fully green so coverage can't silently erode.
+      // Ratchet floor: ~1pt below the suite as measured 2026-07-06 (statements
+      // 22.27, branches 18.9, functions 18.55, lines 23.49). Raise after any PR
+      // that meaningfully adds tests; never lower without a documented reason.
+      thresholds: {
+        statements: 21,
+        branches: 17,
+        functions: 17,
+        lines: 22,
+      },
       exclude: [
         "**/*.config.{js,ts,mjs,cjs}",
         "**/*.d.ts",
