@@ -32,6 +32,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
 import { EntityType } from "../types/merge";
@@ -108,11 +109,10 @@ export default function MergeComparisonEntities() {
             else if (entityType === "company") table = "companies";
             else if (entityType === "locality") table = "localities";
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { data, error } = await (supabase as any)
-                .from(table)
+            const { data, error } = await supabase
+                .from(table as "buildings" | "people" | "companies" | "localities")
                 .select("*")
-                .in("id", [targetPointer, sourcePointer]);
+                .in("id", [targetPointer, sourcePointer] as string[]);
 
             if (error) throw error;
             if (!data || data.length < 2) {
@@ -153,14 +153,12 @@ export default function MergeComparisonEntities() {
               const col = entityType === "person" ? "person_id" : "company_id";
               const { count: credits } = await supabase.from("building_credits").select("*", { count: "exact", head: true }).eq(col, sourcePointer);
               stats.credits = credits || 0;
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const { count: awards } = await (supabase as any).from("award_recipients").select("*", { count: "exact", head: true }).eq(`recipient_${entityType}_id`, sourcePointer);
+              const { count: awards } = await supabase.from("award_recipients").select("*", { count: "exact", head: true }).eq(`recipient_${entityType}_id`, sourcePointer);
               stats.awards = awards || 0;
             } else if (entityType === "locality") {
               const { count: buildings } = await supabase.from("buildings").select("*", { count: "exact", head: true }).eq("locality_id", sourcePointer);
               stats.buildings = buildings || 0;
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const { count: events } = await (supabase as any).from("events").select("*", { count: "exact", head: true }).eq("locality_id", sourcePointer);
+              const { count: events } = await supabase.from("events").select("*", { count: "exact", head: true }).eq("locality_id", sourcePointer);
               stats.events = events || 0;
             }
 
@@ -233,8 +231,10 @@ export default function MergeComparisonEntities() {
             }
 
             if (table) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const { error: updateError } = await (supabase as any).from(table).update(updatePayload).eq("id", targetPointer);
+              const { error: updateError } = await supabase
+                .from(table as "buildings")
+                .update(updatePayload as TablesUpdate<"buildings">)
+                .eq("id", targetPointer);
               if (updateError) throw updateError;
             }
 
@@ -256,14 +256,17 @@ export default function MergeComparisonEntities() {
               params = { [sourceKey]: sourcePointer, [targetKey]: targetPointer };
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { data, error } = await (supabase as any).rpc(rpcName, params);
+            const { data, error } = await supabase.rpc(
+              rpcName as "merge_buildings" | "admin_merge_people" | "admin_merge_companies" | "admin_merge_localities",
+              params,
+            );
 
             if (error) throw error;
-            
+
             // Handle JSONB return from admin_merge_* functions
-            if (data && typeof data === 'object' && data.ok === false) {
-              throw new Error(data.error || "Merge failed");
+            const result = data as { ok?: boolean; error?: string } | null | undefined;
+            if (result && typeof result === 'object' && result.ok === false) {
+              throw new Error(result.error || "Merge failed");
             }
 
             toast.success("Merge completed successfully");

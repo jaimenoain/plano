@@ -11,10 +11,7 @@ import type {
   AwardEditionEventType,
 } from "@/features/awards/types/awards";
 
-// The awards tables are not yet in the generated Supabase types (migration pending).
-// Use an untyped alias until `npm run gen-types` is re-run after migration.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const db = supabase as any;
+const db = supabase;
 
 // ── Row → DTO mappers ────────────────────────────────────────
 
@@ -502,7 +499,7 @@ export async function searchBuildings(query: string): Promise<{ id: string; name
     .limit(15);
 
   if (error) throw new Error(`Search failed: ${error.message}`);
-  return data ?? [];
+  return (data ?? []) as { id: string; name: string; slug: string; city: string | null }[];
 }
 
 export async function searchPeople(query: string): Promise<{ id: string; name: string; slug: string }[]> {
@@ -809,10 +806,11 @@ export async function submitAwardClaimRequest(
     p_reason:   reason,
   });
   if (error) return { ok: false, error: error.message };
+  const result = data as { ok: boolean; error?: string; request_id?: string };
   return {
-    ok:        data.ok,
-    error:     data.error,
-    requestId: data.request_id,
+    ok:        result.ok,
+    error:     result.error,
+    requestId: result.request_id,
   };
 }
 
@@ -841,10 +839,11 @@ export async function reviewAwardClaimRequest(
   const { data, error } = await db.rpc("review_award_claim_request", {
     p_request_id:    requestId,
     p_approve:       approve,
-    p_reviewer_note: reviewerNote ?? null,
+    p_reviewer_note: reviewerNote,
   });
   if (error) throw new Error(`Failed to review claim request: ${error.message}`);
-  if (data && !data.ok) throw new Error(data.error ?? "Review failed");
+  const result = data as { ok?: boolean; error?: string } | null;
+  if (result && !result.ok) throw new Error(result.error ?? "Review failed");
 }
 
 // ── Edition Events ────────────────────────────────────────────

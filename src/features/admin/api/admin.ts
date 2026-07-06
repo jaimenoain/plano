@@ -139,8 +139,7 @@ export async function fetchAdminDashboardStats(): Promise<DashboardStats> {
 }
 
 export async function fetchPhotoCoverageStats(): Promise<PhotoCoverageStats> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_photo_coverage_stats");
+  const { data, error } = await supabase.rpc("get_photo_coverage_stats");
   if (error || !data?.[0]) {
     return { total_photos: 0, buildings_with_photos: 0, buildings_without_photos: 0, total_buildings: 0 };
   }
@@ -148,15 +147,13 @@ export async function fetchPhotoCoverageStats(): Promise<PhotoCoverageStats> {
 }
 
 export async function fetchTopPhotoBuildings(limit = 50): Promise<TopPhotoBuilding[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_top_photo_buildings", { p_limit: limit });
+  const { data, error } = await supabase.rpc("get_top_photo_buildings", { p_limit: limit });
   if (error) return [];
   return (data as unknown as TopPhotoBuilding[]) || [];
 }
 
 export async function fetchZeroPhotoBuildings(limit = 500): Promise<ZeroPhotoBuilding[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_zero_photo_buildings", { p_limit: limit });
+  const { data, error } = await supabase.rpc("get_zero_photo_buildings", { p_limit: limit });
   if (error) return [];
   return (data as unknown as ZeroPhotoBuilding[]) || [];
 }

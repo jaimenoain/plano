@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import {
   STATUS_LABELS,
   TYPE_LABELS,
@@ -42,8 +43,7 @@ export async function loadFeedbackForAdmin(): Promise<{
   rows: FeedbackRow[];
   error: string | null;
 }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("feedback")
     .select(FEEDBACK_SELECT)
     .order("created_at", { ascending: false })
@@ -57,8 +57,7 @@ export async function loadFeedbackForTeam(userId: string): Promise<{
   rows: FeedbackRow[];
   error: string | null;
 }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("feedback")
     .select(FEEDBACK_SELECT)
     .eq("user_id", userId)
@@ -145,8 +144,7 @@ export async function updateFeedback(
   let feedbackType: FeedbackRow["type"] = "other";
 
   if (shouldNotify) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await (supabase as any)
+    const { data } = await supabase
       .from("feedback")
       .select("user_id, message, type")
       .eq("id", id)
@@ -158,13 +156,12 @@ export async function updateFeedback(
     }
   }
 
-  const update: Record<string, unknown> = { ...patch };
+  const update: TablesUpdate<"feedback"> = { ...patch };
   if (patch.status !== undefined) {
     update.status_changed_at = new Date().toISOString();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from("feedback")
     .update(update)
     .eq("id", id);
@@ -189,8 +186,7 @@ export async function reopenFeedback(
   id: string,
   reason: string,
 ): Promise<{ error: string | null }> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).rpc("reopen_feedback", {
+  const { error } = await supabase.rpc("reopen_feedback", {
     p_id: id,
     p_reason: reason.trim(),
   });

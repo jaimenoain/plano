@@ -52,8 +52,7 @@ export async function fetchChapterAmbassadorActivity(
   chapterId: string,
   days: number,
 ): Promise<ChapterAmbassadorActivityRow[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_chapter_ambassador_activity", {
+  const { data, error } = await supabase.rpc("get_chapter_ambassador_activity", {
     p_chapter_id: chapterId,
     p_days: days,
   });
@@ -83,8 +82,7 @@ export interface ChapterTeamMember {
 export async function fetchChapterTeam(
   chapterId: string,
 ): Promise<ChapterTeamMember[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_chapter_team", {
+  const { data, error } = await supabase.rpc("get_chapter_team", {
     p_chapter_id: chapterId,
   });
   if (error) throw error;
@@ -101,22 +99,22 @@ export async function presidentInviteMember(args: {
     p_chapter_id: args.chapterId,
     p_user_id: args.userId,
     p_role: args.role,
-    p_exco_responsibility: args.excoResponsibility,
+    p_exco_responsibility: args.excoResponsibility ?? undefined,
   });
   if (error) throw error;
 }
 
 export async function presidentUpdateMembership(args: {
   membershipId: string;
-  role: string | null;
+  role: string;
   excoResponsibility: string | null;
   status: string | null;
 }): Promise<void> {
   const { error } = await supabase.rpc("president_update_chapter_membership", {
     p_membership_id: args.membershipId,
     p_role: args.role,
-    p_exco_responsibility: args.excoResponsibility,
-    p_status: args.status,
+    p_exco_responsibility: args.excoResponsibility ?? undefined,
+    p_status: args.status ?? undefined,
   });
   if (error) throw error;
 }

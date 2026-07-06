@@ -28,7 +28,7 @@ export type AmbassadorRecentBuilding =
 export type AmbassadorAuditRow =
   Database["public"]["Functions"]["get_ambassador_my_audit_timeline"]["Returns"][number];
 
-// Research queue — manual type because generated types predate this table.
+// Research queue — manual type that narrows the generated RPC row (Json data_points, plain-string status).
 export type BuildingResearchQueueItem = {
   id: string;
   building_id: string;
@@ -81,38 +81,32 @@ export async function fetchAmbassadorRecentBuildings(
     p_limit: EMBASSY_TASK_FEED_LIMIT,
   });
   if (error) throw error;
-  // Cast required: generated types predate the moderated_at / moderated_by_username columns
-  // added by migration 20271110000000. Remove cast after next gen-types run.
-  return (data ?? []) as unknown as AmbassadorRecentBuilding[];
+  return data ?? [];
 }
 
 export async function approveBuilding(buildingId: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).rpc("ambassador_approve_building", {
+  const { error } = await supabase.rpc("ambassador_approve_building", {
     p_building_id: buildingId,
   });
   if (error) throw error;
 }
 
 export async function approvePhoto(photoId: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).rpc("ambassador_approve_photo", {
+  const { error } = await supabase.rpc("ambassador_approve_photo", {
     p_photo_id: photoId,
   });
   if (error) throw error;
 }
 
 export async function approveCredit(creditId: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).rpc("ambassador_approve_credit", {
+  const { error } = await supabase.rpc("ambassador_approve_credit", {
     p_credit_id: creditId,
   });
   if (error) throw error;
 }
 
 export async function approveVideo(postId: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).rpc("ambassador_approve_video", {
+  const { error } = await supabase.rpc("ambassador_approve_video", {
     p_post_id: postId,
   });
   if (error) throw error;
@@ -162,8 +156,7 @@ export type ModerationCreditItem = {
 };
 
 export async function fetchModerationPhotos(chapterId: string): Promise<ModerationPhotoItem[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_ambassador_moderation_photos", {
+  const { data, error } = await supabase.rpc("get_ambassador_moderation_photos", {
     p_chapter_id: chapterId,
     p_limit: EMBASSY_PHOTO_MODERATION_LIMIT,
   });
@@ -172,8 +165,7 @@ export async function fetchModerationPhotos(chapterId: string): Promise<Moderati
 }
 
 export async function fetchModerationVideos(chapterId: string): Promise<ModerationVideoItem[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_ambassador_moderation_videos", {
+  const { data, error } = await supabase.rpc("get_ambassador_moderation_videos", {
     p_chapter_id: chapterId,
     p_limit: EMBASSY_TASK_FEED_LIMIT,
   });
@@ -206,8 +198,7 @@ export type EventDiscovery = {
 };
 
 export async function fetchPendingEventDiscoveries(chapterId: string): Promise<EventDiscovery[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
+  const { data, error } = await supabase
     .from("embassy_event_discoveries")
     .select("*")
     .eq("chapter_id", chapterId)
@@ -215,8 +206,7 @@ export async function fetchPendingEventDiscoveries(chapterId: string): Promise<E
     .order("start_at", { ascending: true });
   if (error) throw error;
   const rows: EventDiscovery[] = (data ?? []).map(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (r: any): EventDiscovery => ({
+    (r): EventDiscovery => ({
       id: r.id,
       chapter_id: r.chapter_id,
       locality_id: r.locality_id,
@@ -231,7 +221,7 @@ export async function fetchPendingEventDiscoveries(chapterId: string): Promise<E
       cover_image_url: r.cover_image_url,
       source_url: r.source_url,
       snippet: r.snippet,
-      status: r.status,
+      status: r.status as EventDiscovery["status"],
       duplicate_of_event_id: r.duplicate_of_event_id ?? null,
       duplicate_of_title: null,
       duplicate_of_start_at: null,
@@ -242,17 +232,14 @@ export async function fetchPendingEventDiscoveries(chapterId: string): Promise<E
   // Batch-fetch duplicate event titles (FK-agnostic — same pattern as AmbassadorCampaigns)
   const dupIds = [...new Set(rows.map((r) => r.duplicate_of_event_id).filter(Boolean))] as string[];
   if (dupIds.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: evts } = await (supabase as any)
+    const { data: evts } = await supabase
       .from("events")
       .select("id, title, start_at")
       .in("id", dupIds);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const evtMap = new Map((evts ?? []).map((e: any) => [e.id, e]));
+    const evtMap = new Map((evts ?? []).map((e) => [e.id, e] as const));
     for (const row of rows) {
       if (row.duplicate_of_event_id) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const evt = evtMap.get(row.duplicate_of_event_id) as any;
+        const evt = evtMap.get(row.duplicate_of_event_id);
         if (evt) {
           row.duplicate_of_title = evt.title;
           row.duplicate_of_start_at = evt.start_at;
@@ -265,8 +252,7 @@ export async function fetchPendingEventDiscoveries(chapterId: string): Promise<E
 }
 
 export async function publishEventDiscovery(discoveryId: string): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("ambassador_publish_event_discovery", {
+  const { data, error } = await supabase.rpc("ambassador_publish_event_discovery", {
     p_discovery_id: discoveryId,
   });
   if (error) throw error;
@@ -274,8 +260,7 @@ export async function publishEventDiscovery(discoveryId: string): Promise<string
 }
 
 export async function discardEventDiscovery(discoveryId: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).rpc("ambassador_discard_event_discovery", {
+  const { error } = await supabase.rpc("ambassador_discard_event_discovery", {
     p_discovery_id: discoveryId,
   });
   if (error) throw error;
@@ -295,8 +280,7 @@ export async function updateEventDiscovery(
   discoveryId: string,
   patch: EventDiscoveryPatch,
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any)
+  const { error } = await supabase
     .from("embassy_event_discoveries")
     .update(patch)
     .eq("id", discoveryId);
@@ -308,27 +292,26 @@ export async function updateEventDiscovery(
 export async function fetchBuildingResearchQueue(
   chapterId: string,
 ): Promise<BuildingResearchQueueItem[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_ambassador_research_queue", {
+  const { data, error } = await supabase.rpc("get_ambassador_research_queue", {
     p_chapter_id: chapterId,
     p_limit: 10,
   });
   if (error) throw error;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((row: any): BuildingResearchQueueItem => ({
+  return (data ?? []).map((row): BuildingResearchQueueItem => ({
     id: row.id,
     building_id: row.building_id,
     building_name: row.building_name,
-    data_points: Array.isArray(row.data_points) ? row.data_points : [],
+    data_points: Array.isArray(row.data_points)
+      ? (row.data_points as BuildingResearchQueueItem["data_points"])
+      : [],
     current_values: (row.current_values ?? {}) as Record<string, unknown>,
-    status: row.status,
+    status: row.status as BuildingResearchQueueItem["status"],
     researched_at: row.researched_at,
   }));
 }
 
 export async function dismissResearchQueueItem(queueId: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).rpc("ambassador_dismiss_queued_research", {
+  const { error } = await supabase.rpc("ambassador_dismiss_queued_research", {
     p_queue_id: queueId,
   });
   if (error) throw error;
@@ -339,8 +322,7 @@ export async function dismissResearchQueueItem(queueId: string): Promise<void> {
 export async function fetchGlobalModerationPhotos(
   excludeChapterId: string,
 ): Promise<ModerationPhotoItem[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_global_moderation_photos", {
+  const { data, error } = await supabase.rpc("get_global_moderation_photos", {
     p_exclude_chapter_id: excludeChapterId,
     p_limit: EMBASSY_PHOTO_MODERATION_LIMIT,
   });
@@ -351,8 +333,7 @@ export async function fetchGlobalModerationPhotos(
 export async function fetchGlobalModerationVideos(
   excludeChapterId: string,
 ): Promise<ModerationVideoItem[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_global_moderation_videos", {
+  const { data, error } = await supabase.rpc("get_global_moderation_videos", {
     p_exclude_chapter_id: excludeChapterId,
     p_limit: EMBASSY_TASK_FEED_LIMIT,
   });
@@ -363,8 +344,7 @@ export async function fetchGlobalModerationVideos(
 export async function fetchGlobalModerationCredits(
   excludeChapterId: string,
 ): Promise<ModerationCreditItem[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_global_moderation_credits", {
+  const { data, error } = await supabase.rpc("get_global_moderation_credits", {
     p_exclude_chapter_id: excludeChapterId,
     p_limit: EMBASSY_TASK_FEED_LIMIT,
   });
@@ -375,40 +355,35 @@ export async function fetchGlobalModerationCredits(
 export async function fetchGlobalModerationBuildings(
   excludeChapterId: string,
 ): Promise<AmbassadorRecentBuilding[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_global_moderation_buildings", {
+  const { data, error } = await supabase.rpc("get_global_moderation_buildings", {
     p_exclude_chapter_id: excludeChapterId,
     p_limit: EMBASSY_TASK_FEED_LIMIT,
   });
   if (error) throw error;
-  return (data ?? []) as unknown as AmbassadorRecentBuilding[];
+  return data ?? [];
 }
 
 export async function approveBuildingGlobal(buildingId: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).rpc("ambassador_approve_building_global", {
+  const { error } = await supabase.rpc("ambassador_approve_building_global", {
     p_building_id: buildingId,
   });
   if (error) throw error;
 }
 
 export async function approveCreditGlobal(creditId: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).rpc("ambassador_approve_credit_global", {
+  const { error } = await supabase.rpc("ambassador_approve_credit_global", {
     p_credit_id: creditId,
   });
   if (error) throw error;
 }
 
 export async function fetchModerationCredits(chapterId: string): Promise<ModerationCreditItem[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_ambassador_moderation_credits", {
+  const { data, error } = await supabase.rpc("get_ambassador_moderation_credits", {
     p_chapter_id: chapterId,
     p_limit: EMBASSY_CREDITS_MODERATION_LIMIT,
   });
   if (error) throw error;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []).map((row: any) => ({
+  return (data ?? []).map((row) => ({
     id: row.id,
     created_at: row.created_at,
     role: row.role,

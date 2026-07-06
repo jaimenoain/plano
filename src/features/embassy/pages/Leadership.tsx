@@ -280,7 +280,6 @@ export default function LeadershipPage() {
       const { error } = await supabase.rpc("review_ambassador_application", {
         p_application_id: app.id,
         p_approve: true,
-        p_reviewer_note: null,
       });
       if (error) throw error;
       toast.success("Application approved");
@@ -310,7 +309,7 @@ export default function LeadershipPage() {
       const { error } = await supabase.rpc("review_ambassador_application", {
         p_application_id: rejectTarget.id,
         p_approve: false,
-        p_reviewer_note: rejectNote.trim() || null,
+        p_reviewer_note: rejectNote.trim() || undefined,
       });
       if (error) throw error;
       toast.success("Application rejected");

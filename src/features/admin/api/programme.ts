@@ -95,8 +95,7 @@ function parseExcoMembers(raw: unknown): ExcoMember[] {
 }
 
 export async function fetchPresidentDirectory(): Promise<PresidentDirectoryRow[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_president_directory");
+  const { data, error } = await supabase.rpc("get_president_directory");
   if (error) throw new Error(error.message);
   if (!Array.isArray(data)) return [];
   return (data as Record<string, unknown>[]).map((r) => ({
@@ -117,8 +116,7 @@ export async function fetchPresidentDirectory(): Promise<PresidentDirectoryRow[]
 }
 
 export async function fetchInterventionFlags(): Promise<InterventionFlag[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_programme_intervention_flags");
+  const { data, error } = await supabase.rpc("get_programme_intervention_flags");
   if (error) throw new Error(error.message);
   if (!Array.isArray(data)) return [];
   return (data as Record<string, unknown>[]).map((r) => ({
@@ -138,11 +136,10 @@ export async function dismissInterventionFlag(
   entityId: string,
   snoozeDays?: number,
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).rpc("dismiss_intervention_flag", {
+  const { error } = await supabase.rpc("dismiss_intervention_flag", {
     p_flag_type:   flagType,
     p_entity_id:   entityId,
-    p_snooze_days: snoozeDays ?? null,
+    p_snooze_days: snoozeDays,
   });
   if (error) throw new Error(error.message);
 }
@@ -150,8 +147,7 @@ export async function dismissInterventionFlag(
 // ─── Broadcasts ───────────────────────────────────────────────────────────────
 
 export async function fetchBroadcasts(): Promise<AdminBroadcast[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_admin_broadcasts");
+  const { data, error } = await supabase.rpc("get_admin_broadcasts");
   if (error) throw new Error(error.message);
   if (!Array.isArray(data)) return [];
   return (data as Record<string, unknown>[]).map((r) => ({
@@ -176,21 +172,19 @@ export async function sendBroadcast(params: {
   recipientScope: RecipientScope;
   scopeValue?: string | null;
 }): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("send_admin_broadcast", {
+  const { data, error } = await supabase.rpc("send_admin_broadcast", {
     p_subject:          params.subject,
     p_body:             params.body,
     p_type:             params.type,
     p_recipient_scope:  params.recipientScope,
-    p_scope_value:      params.scopeValue ?? null,
+    p_scope_value:      params.scopeValue ?? undefined,
   });
   if (error) throw new Error(error.message);
   return String(data);
 }
 
 export async function toggleBroadcastPin(broadcastId: string, pinned: boolean): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).rpc("toggle_broadcast_pin", {
+  const { error } = await supabase.rpc("toggle_broadcast_pin", {
     p_broadcast_id: broadcastId,
     p_pinned:       pinned,
   });
@@ -198,8 +192,7 @@ export async function toggleBroadcastPin(broadcastId: string, pinned: boolean): 
 }
 
 export async function fetchBroadcastReadStatus(broadcastId: string): Promise<BroadcastReadStatus[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_broadcast_read_status", {
+  const { data, error } = await supabase.rpc("get_broadcast_read_status", {
     p_broadcast_id: broadcastId,
   });
   if (error) throw new Error(error.message);
@@ -214,8 +207,7 @@ export async function fetchBroadcastReadStatus(broadcastId: string): Promise<Bro
 }
 
 export async function fetchBroadcastBanners(): Promise<BroadcastBanner[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_ambassador_broadcast_banners");
+  const { data, error } = await supabase.rpc("get_ambassador_broadcast_banners");
   if (error) return [];
   if (!Array.isArray(data)) return [];
   return (data as Record<string, unknown>[]).map((r) => ({
@@ -229,17 +221,15 @@ export async function fetchBroadcastBanners(): Promise<BroadcastBanner[]> {
 }
 
 export async function markBroadcastRead(broadcastId: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).rpc("mark_broadcast_read", {
+  const { error } = await supabase.rpc("mark_broadcast_read", {
     p_broadcast_id: broadcastId,
   });
   if (error) throw new Error(error.message);
 }
 
 export async function fetchChapterPerformanceRanking(periodDays: number | null): Promise<ChapterRankingRow[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_chapter_performance_ranking", {
-    p_period_days: periodDays,
+  const { data, error } = await supabase.rpc("get_chapter_performance_ranking", {
+    p_period_days: periodDays ?? undefined,
   });
   if (error) throw new Error(error.message);
   if (!Array.isArray(data)) return [];
@@ -259,8 +249,7 @@ export async function fetchChapterPerformanceRanking(periodDays: number | null):
 }
 
 export async function fetchPresidentOnboardingStatus(membershipId: string): Promise<PresidentOnboardingStatus | null> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_president_onboarding_status", {
+  const { data, error } = await supabase.rpc("get_president_onboarding_status", {
     p_membership_id: membershipId,
   });
   if (error) throw new Error(error.message);
@@ -278,8 +267,7 @@ export async function fetchPresidentOnboardingStatus(membershipId: string): Prom
 }
 
 export async function fetchPresidentOnboardingList(): Promise<PresidentOnboardingListRow[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_president_onboarding_list");
+  const { data, error } = await supabase.rpc("get_president_onboarding_list");
   if (error) throw new Error(error.message);
   if (!Array.isArray(data)) return [];
   return (data as Record<string, unknown>[]).map((r) => ({
@@ -297,8 +285,7 @@ export async function fetchPresidentOnboardingList(): Promise<PresidentOnboardin
 }
 
 export async function fetchProgrammeHealthSummary(): Promise<ProgrammeHealthSummary> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any).rpc("get_programme_health_summary");
+  const { data, error } = await supabase.rpc("get_programme_health_summary");
   if (error) throw new Error(error.message);
   const d = data as Record<string, unknown>;
   return {

@@ -107,7 +107,7 @@ function buildSubmitter(userId: string, profiles: Map<string, ProfileStub>): Eve
 }
 
 function buildOrganiser(
-  row: EventRow,
+  row: EventCardListRow,
   profiles: Map<string, ProfileStub>,
   people: Map<string, PersonStub>,
   companies: Map<string, CompanyStub>,
@@ -184,7 +184,7 @@ function mapBuildings(rows: EventBuildingJoinRow[] | null | undefined): EventBui
 }
 
 function rowToEventDTO(
-  row: EventRow,
+  row: EventCardListRow,
   profiles: Map<string, ProfileStub>,
   people: Map<string, PersonStub>,
   companies: Map<string, CompanyStub>,
@@ -231,8 +231,32 @@ function toCard(dto: EventDTO): EventCardDTO {
 export const EVENT_CARD_LIST_COLUMNS =
   "id, title, description, slug, start_at, end_at, address, location, external_link, cover_image_url, is_self_hosted, claim_status, submitted_by_user_id, organiser_user_id, organiser_person_id, organiser_company_id, is_deleted, created_at, updated_at";
 
+/** The subset of `events` columns selected by EVENT_CARD_LIST_COLUMNS. */
+type EventCardListRow = Pick<
+  EventRow,
+  | "id"
+  | "title"
+  | "description"
+  | "slug"
+  | "start_at"
+  | "end_at"
+  | "address"
+  | "location"
+  | "external_link"
+  | "cover_image_url"
+  | "is_self_hosted"
+  | "claim_status"
+  | "submitted_by_user_id"
+  | "organiser_user_id"
+  | "organiser_person_id"
+  | "organiser_company_id"
+  | "is_deleted"
+  | "created_at"
+  | "updated_at"
+>;
+
 /** Hydrates raw `events` rows into card DTOs (no building joins). */
-export async function hydrateEventRowsToCards(list: EventRow[]): Promise<EventCardDTO[]> {
+export async function hydrateEventRowsToCards(list: EventCardListRow[]): Promise<EventCardDTO[]> {
   if (list.length === 0) return [];
 
   const profileIds: string[] = [];

@@ -127,8 +127,7 @@ export default function MyGoalsPage() {
   const { data: goals, isLoading: loadingGoals } = useQuery({
     queryKey: ["ambassador-goals", user?.id],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any).rpc("get_my_ambassador_goals");
+      const { data, error } = await supabase.rpc("get_my_ambassador_goals");
       if (error) throw error;
       return (data ?? []) as Goal[];
     },
@@ -140,9 +139,8 @@ export default function MyGoalsPage() {
   const { data: allTasks = [], isLoading: loadingTasks } = useQuery({
     queryKey: ["chapter-tasks", chapterId],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any).rpc("get_chapter_tasks", {
-        p_chapter_id: chapterId,
+      const { data, error } = await supabase.rpc("get_chapter_tasks", {
+        p_chapter_id: chapterId!,
       });
       if (error) throw error;
       return (data ?? []) as ChapterTask[];
@@ -163,8 +161,7 @@ export default function MyGoalsPage() {
 
   const createGoalMutation = useMutation({
     mutationFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("ambassador_goals")
         .insert({
           user_id: user!.id,

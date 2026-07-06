@@ -98,8 +98,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   // ── 1. Check current pending count ─────────────────────────────────────────
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: queueRows, error: queueCountError } = await (supabase as any).rpc(
+  const { data: queueRows, error: queueCountError } = await supabase.rpc(
     "get_ambassador_research_queue",
     { p_chapter_id: chapter_id, p_limit: TARGET_QUEUE_SIZE },
   );
@@ -123,8 +122,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const needed = TARGET_QUEUE_SIZE - currentPendingCount;
 
   // ── 2. Get candidate buildings ──────────────────────────────────────────────
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: candidates, error: candidatesError } = await (supabase as any).rpc(
+  const { data: candidates, error: candidatesError } = await supabase.rpc(
     "get_ambassador_research_queue_candidates",
     { p_chapter_id: chapter_id, p_limit: needed },
   );

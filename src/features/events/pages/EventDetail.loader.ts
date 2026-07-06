@@ -25,8 +25,7 @@ export async function eventDetailLoader({ request, params }: LoaderFunctionArgs)
   const city = params.city as string | undefined;
 
   // Fetch minimal event data for locality consistency check.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: row } = await (supabase as any)
+  const { data: row } = await supabase
     .from("events")
     .select("slug, country_code, city_slug, is_deleted")
     .eq("slug", slug)

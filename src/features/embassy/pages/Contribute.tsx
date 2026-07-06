@@ -78,7 +78,7 @@ interface OutreachLogRow {
   notes: string | null;
   created_at: string;
   updated_at: string;
-  profiles: { username: string; avatar_url: string | null } | null;
+  profiles: { username: string | null; avatar_url: string | null } | null;
 }
 
 type ToolType = "research" | "photography" | "outreach" | "curation" | "community" | "events" | null;
@@ -536,18 +536,16 @@ type PotentialDuplicate = {
 };
 
 async function fetchPotentialDuplicateBuildings(chapterId: string): Promise<PotentialDuplicate[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await supabase.rpc("get_potential_duplicate_buildings" as any, {
+  const { data, error } = await supabase.rpc("get_potential_duplicate_buildings", {
     p_chapter_id: chapterId,
     p_limit: 20,
   });
   if (error) throw error;
-  return (data as PotentialDuplicate[]) ?? [];
+  return data ?? [];
 }
 
 async function dismissDuplicatePair(id1: string, id2: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await supabase.rpc("dismiss_building_duplicate_pair" as any, {
+  const { error } = await supabase.rpc("dismiss_building_duplicate_pair", {
     p_id1: id1,
     p_id2: id2,
   });
@@ -1127,11 +1125,10 @@ function ArchitectOutreachTool({ chapterId, onBack }: { chapterId: string; onBac
   const { data: myLogs } = useQuery({
     queryKey: ["embassy-outreach-logs", user?.id],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("outreach_log")
         .select("firm_id, status, created_at")
-        .eq("ambassador_id", user?.id)
+        .eq("ambassador_id", user!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as { firm_id: string; status: string; created_at: string }[];
@@ -1296,8 +1293,7 @@ function FirmOutreachDrawer({
     queryFn: async () => {
       // Fetch logs without a profiles join so this works regardless of whether the
       // outreach_log.ambassador_id FK points to auth.users or public.profiles.
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: logData, error: logsErr } = await (supabase as any)
+      const { data: logData, error: logsErr } = await supabase
         .from("outreach_log")
         .select("*")
         .eq("firm_id", firm!.id)
@@ -1308,12 +1304,11 @@ function FirmOutreachDrawer({
 
       // Batch-fetch profiles for every unique ambassador in the result.
       const ambassadorIds = [...new Set(rows.map((r) => r.ambassador_id))];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: profileData } = await (supabase as any)
+      const { data: profileData } = await supabase
         .from("profiles")
         .select("id, username, avatar_url")
         .in("id", ambassadorIds);
-      const profileMap: Record<string, { username: string; avatar_url: string | null }> = {};
+      const profileMap: Record<string, { username: string | null; avatar_url: string | null }> = {};
       for (const p of profileData ?? []) {
         profileMap[p.id] = { username: p.username, avatar_url: p.avatar_url };
       }
@@ -1328,10 +1323,9 @@ function FirmOutreachDrawer({
 
   const logMutation = useMutation({
     mutationFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("outreach_log")
-        .insert({ firm_id: firm!.id, ambassador_id: userId, status, notes: notes || null });
+        .insert({ firm_id: firm!.id, ambassador_id: userId!, status, notes: notes || null });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -2584,8 +2578,7 @@ function EventsTool({
   const { data: chapter } = useQuery({
     queryKey: ["ambassador-chapter-meta", chapterId],
     queryFn: async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("ambassador_chapters")
         .select("last_event_search_at, locality_id")
         .eq("id", chapterId)
