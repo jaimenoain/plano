@@ -89,7 +89,7 @@ Due to CORS preflight limitations in browsers, we **cannot** use Supabase's auto
 
 ## Source-of-Truth Hierarchy
 
-1. `src/integrations/supabase/types.ts` — what the schema *is* right now. **Caveat:** currently stale for ~20 recent tables/RPCs (see `SCHEMA_DRIFT_LOG` in `docs/AI_STATUS.md`); when types and live schema disagree, verify against the live DB via Supabase MCP before coding.
+1. `src/integrations/supabase/types.ts` — what the schema *is* right now (regenerated from the live schema 2026-07-06, PR #1501). If types and live schema ever disagree, verify against the live DB via Supabase MCP before coding and log drift in `docs/AI_STATUS.md`.
 2. `docs/DATA_CONTRACT.md` — what the schema *should be* (intent, business rules, DTOs).
 3. `docs/PRD.md` — what the product should *do*.
 4. The migration being written — what the schema *will become* in this task.
