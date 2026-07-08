@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 /**
- * gen-types staleness reminder (Phase 1, Theme C) — zero-dependency, ADVISORY.
+ * gen-types staleness check — zero-dependency, BLOCKING.
  *
  * If a PR adds/changes files under supabase/migrations/ but leaves
  * src/integrations/supabase/types.ts untouched, the generated types are probably now stale: a
- * schema migration should be accompanied by a `npm run gen-types` regen committed in the same PR
+ * schema migration must be accompanied by a `npm run gen-types` regen committed in the same PR
  * (see docs/migrations.md).
  *
- * This NEVER contacts Supabase (no token needed) and is wired into CI with `continue-on-error:
- * true`, so it only ever prints a reminder — it does not gate the build. It exits non-zero when it
- * detects the stale condition so the CI step renders a visible (non-failing) signal.
+ * This NEVER contacts Supabase (no token needed). It exits non-zero on the stale condition and
+ * gates the build via the "Types staleness" CI job. Requires a full-depth checkout on PRs so the
+ * origin/$GITHUB_BASE_REF diff works.
  *
  * Usage: `node scripts/check-types-staleness.mjs`
  */
@@ -55,11 +55,11 @@ function main() {
   const typesChanged = files.includes(TYPES_PATH);
 
   if (migrationChanged && !typesChanged) {
-    console.warn(
-      "⚠ This change touches supabase/migrations/ but does not update " +
+    console.error(
+      "✗ Types staleness: this change touches supabase/migrations/ but does not update " +
         `${TYPES_PATH}.\n` +
-        "  If the migration changed the public schema, run `npm run gen-types` locally and commit\n" +
-        "  the regenerated types in this PR. See docs/migrations.md. (advisory — not blocking)"
+        "  Run `npm run gen-types` locally and commit the regenerated types in this PR.\n" +
+        "  See docs/migrations.md. Resolve the item; do not weaken or skip this check."
     );
     process.exit(1);
   }
