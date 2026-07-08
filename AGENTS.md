@@ -34,7 +34,7 @@ src/integrations/supabase/client.ts  Browser Supabase client
 src/integrations/supabase/types.ts   Generated DB types — NEVER hand-edit; `npm run gen-types`
 supabase/migrations/                 Timestamped SQL migrations
 supabase/functions/                  Edge Functions
-docs/                                Specs: PRD.md, DATA_CONTRACT.md, DESIGN_TOKENS.md, AI_STATUS.md
+docs/                                Specs: PRD.md, DATA_CONTRACT.md, DESIGN_TOKENS.md, AI_STATUS.md, RUNBOOK.md, decisions/
 ```
 
 ### Commands
@@ -70,6 +70,16 @@ Then load the domain rule file for the work at hand:
 - **Feature `api/` modules own all Supabase queries.** Components and hooks never import `@/integrations/supabase/client` directly (ESLint `no-restricted-imports` enforces this; the CI warning ratchet fails any PR that adds a new violation).
 - **Server-side identity only.** Every loader/action/resource route/Edge Function that writes data derives the user from `getUser()` — never from the request payload.
 - **Warning ratchet**: if your change introduces a new ESLint warning (boundary imports, exhaustive-deps), fix it before handoff — CI fails when any warning bucket grows (`node scripts/check-eslint-ratchet.mjs`).
+- **Boring technology.** Prefer the most mainstream library and the most conventional layout for this stack. Introducing a new dependency or a novel pattern requires a 5–10-line ADR in `docs/decisions/` naming the mainstream option rejected and why (on top of the existing rule that npm installs need explicit user permission).
+- **Baselines only shrink.** Never modify a `*-baseline.json` file except to lower it. If a ratchet fails, the fix is the code, never the baseline.
+
+## Definition of Done (every change, no exceptions)
+
+1. `npm run check` passes locally before any commit — lint, typecheck, unit tests, migration check, and all four debt ratchets (it mirrors the blocking CI checks; `npm run build` completes the set).
+2. New user-facing behavior ships **with its test in the same PR**. A critical-path feature gets a Playwright spec in `tests/e2e/`; logic gets Vitest unit tests. "Test later" is not permitted.
+3. Any change to schema, API shape, env vars, commands, or architecture updates the corresponding doc **in the same PR**: regenerated `types.ts` + `docs/DATA_CONTRACT.md` for schema, `.env.example` for env vars, `docs/ARCHITECTURE.md` for structure, `docs/RUNBOOK.md` for commands/setup.
+4. Debt baselines never go up; the fix is the code, never the baseline.
+5. Work lands via small PRs — one concern per PR, reviewable in under ~15 minutes. Direct pushes to `main` are blocked by branch protection.
 
 ## Supabase Edge Functions & Security
 

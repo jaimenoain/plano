@@ -1,0 +1,14 @@
+#!/bin/sh
+# Plano pre-push hook.
+# Wired via the `prepare` npm script: `git config core.hooksPath .githooks`.
+# Runs the fast local quality gates (lint, typecheck, unit tests) so a broken
+# push fails here in ~a minute instead of minutes later in CI. The full CI
+# mirror is `npm run check`. Bypass in an emergency with `git push --no-verify`.
+
+echo "• pre-push: lint + typecheck + unit tests (bypass with --no-verify)"
+
+npm run lint || { echo "✖ pre-push blocked: lint failed."; exit 1; }
+npm run typecheck || { echo "✖ pre-push blocked: typecheck failed."; exit 1; }
+npm run test || { echo "✖ pre-push blocked: unit tests failed."; exit 1; }
+
+exit 0
