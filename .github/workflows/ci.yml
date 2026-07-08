@@ -148,6 +148,9 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: RLS coverage (static migration parse — promote once trusted)
+        continue-on-error: true
+        run: node scripts/check-rls-coverage.mjs
       - name: Strict typecheck (goal state — informational)
         continue-on-error: true
         run: npm run typecheck:strict
