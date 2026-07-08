@@ -10,7 +10,7 @@ Prerequisites: Node 22 (`.nvmrc` is authoritative — run `nvm use`), npm.
 nvm use                       # Node 22.22.0
 npm ci                        # install exact locked dependencies
 cp .env.example .env.local    # then fill in the values (see comments in the file)
-npm run dev                   # http://localhost:5173
+npm run dev                   # http://localhost:8080 (port pinned in vite.config.ts)
 ```
 
 Unit tests need **no** environment setup — the Supabase client is mocked, so this works immediately after `npm ci`:
@@ -39,7 +39,8 @@ This is a **single-app React Router v7 project in framework mode with SSR**. It 
 * **Row Level Security (RLS)** on effectively every table
 
 ### Testing
-* **Unit / component:** Vitest + Testing Library (`npm run test`). Co-located `*.test.ts(x)` under `src/` plus `tests/unit/`. Coverage floor enforced in CI.
+* **Unit / component:** Vitest + Testing Library (`npm run test`). Co-located `*.test.ts(x)` under `src/` plus `tests/unit/`. Coverage floor enforced in CI. Needs no env setup — Supabase is mocked.
+* **End-to-end:** Playwright (`npx playwright test`), specs in `tests/e2e/`. Drives a real browser through login, search, building pages, and saving, against the hosted Supabase using the QA test accounts from `.env.local`.
 
 ### Deployment
 * **Vercel** via `@vercel/react-router` (see [`vercel.json`](vercel.json) and [`docs/LAUNCH_HOSTING.md`](docs/LAUNCH_HOSTING.md)).
