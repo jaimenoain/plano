@@ -34,3 +34,4 @@ build/
 # Design-sync local scratch output
 .ds-sync/
 ds-bundle/
+playwright-report/
