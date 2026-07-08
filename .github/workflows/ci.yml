@@ -107,8 +107,8 @@ jobs:
       # add a new fingerprint to the ignore file.
       - run: /tmp/gitleaks dir . --no-banner --redact --exit-code 1
 
-  advisory:
-    name: Advisory (non-blocking)
+  types-staleness:
+    name: Types staleness
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
@@ -119,11 +119,20 @@ jobs:
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version-file: .nvmrc
+      # Fails when a PR touches supabase/migrations/ without regenerating
+      # src/integrations/supabase/types.ts. Run `npm run gen-types`; never skip.
+      - run: node scripts/check-types-staleness.mjs
+
+  advisory:
+    name: Advisory (non-blocking)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - name: Generated-types staleness (migrations touched without gen-types?)
-        continue-on-error: true
-        run: node scripts/check-types-staleness.mjs
       - name: File-size budgets
         continue-on-error: true
         run: node scripts/check-file-sizes.mjs
