@@ -16,6 +16,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "check": "npm run lint && npm run typecheck && npm run test && node scripts/check-migrations.mjs && node scripts/check-eslint-ratchet.mjs && node scripts/check-as-any-ratchet.mjs && node scripts/check-file-sizes.mjs && node scripts/check-strict-allowlist.mjs",
     "gen-types": "sh -c 'TMP=$(mktemp) && npx supabase gen types typescript --project-id lnqxtomyucnnrgeapnzt --schema public > \"$TMP\" && mv \"$TMP\" src/integrations/supabase/types.ts'",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

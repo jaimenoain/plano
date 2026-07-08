@@ -10,3 +10,14 @@ The most violation-prone rules (full detail in AGENTS.md):
 - **No mock data.** Every feature connects to real Supabase.
 - **No raw Tailwind palette colors.** Design token aliases only (`docs/DESIGN_TOKENS.md`).
 - **Migrations only** for schema changes — apply via Supabase MCP `apply_migration`, then `npm run gen-types` in the same PR.
+
+Definition of Done (full text in AGENTS.md): `npm run check` green before commit · tests ship with the behavior in the same PR · affected docs updated in the same PR · baselines never go up · small single-concern PRs, never direct pushes to `main`.
+
+Pointer map:
+
+- [`AGENTS.md`](AGENTS.md) — the rules; read first.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — how the system fits together.
+- [`docs/RUNBOOK.md`](docs/RUNBOOK.md) — clone → run → test → deploy, and what to do when things break.
+- [`docs/DATA_CONTRACT.md`](docs/DATA_CONTRACT.md) — what the schema/DTOs should be.
+- [`docs/decisions/`](docs/decisions/) — why things are the way they are (ADRs; write one for any structural/dependency/data-model choice).
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — how changes land (PRs, required checks, ratchets).
