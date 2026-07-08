@@ -22,7 +22,7 @@ Use these exact credentials. Do not generate random emails.
     {
       "role": "Standard User",
       "email": "tester@cineforum.eu",
-      "password": "CnjFsiVD2YgX9iBuZrfj",
+      "password": "<in .env.local — never commit credentials>",
       "description": "User with standard access, member of default groups."
     }
   ]
