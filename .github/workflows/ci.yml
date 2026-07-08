@@ -91,6 +91,21 @@ jobs:
       # Fix the new warning; never raise the baseline to get green.
       - run: node scripts/check-eslint-ratchet.mjs
 
+  debt-ratchet:
+    name: Debt ratchet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version-file: .nvmrc
+      # Both fail only when debt GROWS past its frozen baseline. Fix the code;
+      # never raise a baseline to get green.
+      - name: as-any / ts-ignore ratchet
+        run: node scripts/check-as-any-ratchet.mjs
+      - name: File-size ratchet
+        run: node scripts/check-file-sizes.mjs
+
   secret-scan:
     name: Secret scan
     runs-on: ubuntu-latest
@@ -133,9 +148,6 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - name: File-size budgets
-        continue-on-error: true
-        run: node scripts/check-file-sizes.mjs
       - name: Strict typecheck (goal state — informational)
         continue-on-error: true
         run: npm run typecheck:strict

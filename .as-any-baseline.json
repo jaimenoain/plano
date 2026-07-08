@@ -1,0 +1,31 @@
+{
+  "comment": "Per-file ceiling for `as any` + `@ts-ignore` occurrences. CI fails if any file EXCEEDS its count (files absent here allow 0). Only lower numbers via --update after a cleanup; never raise one to make CI pass.",
+  "files": {
+    "src/features/admin/api/events-discover.route.ts": 1,
+    "src/features/admin/pages/MergeComparisonEntities.tsx": 1,
+    "src/features/admin/pages/MergeEntities.tsx": 1,
+    "src/features/awards/api/awards.ts": 3,
+    "src/features/buildings/api/buildingsApi.ts": 1,
+    "src/features/buildings/pages/BuildingDetails.gallery.test.tsx": 1,
+    "src/features/buildings/pages/BuildingDetails.hover.test.tsx": 1,
+    "src/features/buildings/pages/BuildingDetails.loader.ts": 2,
+    "src/features/buildings/pages/BuildingDetails.test.tsx": 2,
+    "src/features/buildings/pages/BuildingDetails.tsx": 1,
+    "src/features/buildings/pages/ReviewDetails.test.tsx": 1,
+    "src/features/credits/api/credits.ts": 3,
+    "src/features/embassy/api/building-research.route.ts": 1,
+    "src/features/itinerary/stores/useItineraryStore.test.ts": 4,
+    "src/features/localities/api/localitiesApi.ts": 3,
+    "src/features/maps/components/BuildingLocationMap.test.tsx": 1,
+    "src/features/maps/components/BuildingPopupContent_Rating.test.tsx": 1,
+    "src/features/maps/components/BuildingSidebar_sorting.test.tsx": 2,
+    "src/features/maps/components/BuildingSidebar.test.tsx": 4,
+    "src/features/maps/hooks/useMapData.test.tsx": 1,
+    "src/features/posts/components/DiscoveryCard.test.tsx": 1,
+    "src/features/search/components/DiscoveryBuildingCard.overflow.test.tsx": 1,
+    "src/features/search/hooks/useBuildingSearch.test.tsx": 8,
+    "src/hooks/useTaxonomy.test.tsx": 2,
+    "src/utils/map.test.ts": 4,
+    "src/utils/supabaseFallback.ts": 1
+  }
+}
