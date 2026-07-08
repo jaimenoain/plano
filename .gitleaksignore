@@ -1,0 +1,15 @@
+# Frozen baseline for the Secret scan CI job (scripts run `gitleaks dir .`).
+# These are pre-existing findings, reviewed 2026-07-08:
+#  - .design-sync/.cache/review/*.json — false positives: hex cache keys, not secrets.
+#  - repomix-*.xml — generated repo snapshots that embedded the old archived
+#    test-user password (redacted at its source in docs/archive/TEST_USERS.md;
+#    the snapshots will drop it on next regeneration; the account password
+#    should be treated as burned and rotated).
+# Rule: NEVER add new fingerprints to silence a finding — remove the secret
+# from the file and rotate it. Entries here may only be deleted.
+.design-sync/.cache/review/Carousel.json:generic-api-key:3
+.design-sync/.cache/review/ChartContainer.json:generic-api-key:3
+.design-sync/.cache/review/Drawer.json:generic-api-key:2
+repomix-output.xml:generic-api-key:840
+migrations-repomix.xml:generic-api-key:2005
+repomix-code.xml:generic-api-key:839
