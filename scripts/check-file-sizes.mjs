@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 /**
- * File-size advisory (Phase 1, Theme F) — zero-dependency, NON-BLOCKING.
+ * File-size ratchet — zero-dependency, BLOCKING.
  *
- * Prints a sorted table of source files over a soft LOC budget, as a decomposition signal for
- * reviewers. It ALWAYS exits 0 — it never fails CI. The budgets are intentionally generous; the
- * point is to flag the handful of god-files, not to nag about every large module.
+ * Source files have LOC budgets (generous on purpose — the point is stopping god-files, not
+ * nagging). Files already over budget are grandfathered in `.file-size-baseline.json` at their
+ * frozen size and may only shrink. CI fails when:
+ *
+ *   - a file NOT in the baseline exceeds its budget (new god-file), or
+ *   - a baselined file GROWS past its frozen size (existing god-file getting worse).
  *
  * Budgets (by path role):
  *   pages       ≤ 800   (src/**\/pages/** or *.page.tsx)
@@ -12,15 +15,21 @@
  *   components  ≤ 400   (everything else under src/**\/components/**)
  *   other .ts(x) ≤ 400  (fallback)
  *
- * Usage: `node scripts/check-file-sizes.mjs`
+ * `--update` rewrites the baseline from the current run. It exists to LOWER numbers after a
+ * decomposition (a baselined file back under budget drops out entirely). Raising a number to
+ * make CI pass defeats the mechanism — never do it without an explicit human decision recorded
+ * in the PR description.
+ *
+ * Usage: `node scripts/check-file-sizes.mjs [--update]`
  */
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const srcDir = join(repoRoot, "src");
+const baselinePath = join(repoRoot, ".file-size-baseline.json");
 
 // Generated or vendored files we never want to flag.
 const EXCLUDE_RE = [
@@ -51,46 +60,109 @@ function budgetFor(relPath) {
   return { role: "other", limit: 400 };
 }
 
-function main() {
-  let files;
-  try {
-    files = walk(srcDir);
-  } catch (err) {
-    console.warn(`⚠ file-size check skipped: ${err.message}`);
-    return; // non-blocking
-  }
-
+function collectOverBudget() {
   const over = [];
-  for (const full of files) {
+  for (const full of walk(srcDir)) {
     const relPath = relative(repoRoot, full);
     if (EXCLUDE_RE.some((re) => re.test(relPath))) continue;
     try {
       if (!statSync(full).isFile()) continue;
       const loc = readFileSync(full, "utf8").split("\n").length;
       const { role, limit } = budgetFor(relPath);
-      if (loc > limit) over.push({ relPath, loc, role, limit, overBy: loc - limit });
+      if (loc > limit) over.push({ relPath, loc, role, limit });
     } catch {
       // ignore unreadable file
     }
   }
+  return over;
+}
 
-  if (over.length === 0) {
-    console.log("✓ No source files over their soft size budget.");
+const sortedObject = (entries) =>
+  Object.fromEntries([...entries].sort(([a], [b]) => a.localeCompare(b)));
+
+function writeBaseline(over) {
+  writeFileSync(
+    baselinePath,
+    JSON.stringify(
+      {
+        comment:
+          "Grandfathered over-budget files, frozen at their current LOC. CI fails if a " +
+          "listed file GROWS or an unlisted file exceeds its budget (pages 800, " +
+          "components 400, hooks 300, other 400). Only lower numbers via --update after " +
+          "a decomposition; never raise one to make CI pass.",
+        files: sortedObject(over.map((o) => [o.relPath, o.loc])),
+      },
+      null,
+      2
+    ) + "\n"
+  );
+}
+
+function main() {
+  const update = process.argv.includes("--update");
+  const over = collectOverBudget();
+
+  if (update) {
+    writeBaseline(over);
+    console.log(`✓ Baseline written to ${baselinePath} (${over.length} grandfathered files).`);
     return;
   }
 
-  over.sort((a, b) => b.overBy - a.overBy);
-  console.log(`\nℹ ${over.length} file(s) over their soft size budget (advisory — not blocking):\n`);
-  console.log("  over | loc  | budget | role       | file");
-  console.log("  -----+------+--------+------------+----------------------------------------");
-  for (const o of over) {
-    const over = String(o.overBy).padStart(4);
-    const loc = String(o.loc).padStart(4);
-    const limit = String(o.limit).padStart(6);
-    const role = o.role.padEnd(10);
-    console.log(`  ${over} | ${loc} | ${limit} | ${role} | ${o.relPath}`);
+  let baseline;
+  try {
+    baseline = JSON.parse(readFileSync(baselinePath, "utf8")).files ?? {};
+  } catch (err) {
+    console.error(
+      `✖ Could not read baseline at ${baselinePath}: ${err.message}\n` +
+        `  Seed it with: node scripts/check-file-sizes.mjs --update`
+    );
+    process.exit(1);
   }
-  console.log("\n  Soft budgets: pages ≤ 800, components ≤ 400, hooks ≤ 300. Consider decomposition.");
+
+  const regressions = [];
+  const improvements = [];
+  for (const o of over) {
+    const frozen = baseline[o.relPath];
+    if (frozen === undefined) {
+      regressions.push({ ...o, kind: "new", allowed: o.limit });
+    } else if (o.loc > frozen) {
+      regressions.push({ ...o, kind: "grew", allowed: frozen });
+    } else if (o.loc < frozen) {
+      improvements.push({ ...o, allowed: frozen });
+    }
+  }
+  // Baselined files now back under budget (or deleted) — baseline can shrink.
+  const currentOver = new Set(over.map((o) => o.relPath));
+  for (const relPath of Object.keys(baseline)) {
+    if (!currentOver.has(relPath)) improvements.push({ relPath, loc: null, allowed: baseline[relPath] });
+  }
+
+  if (improvements.length > 0) {
+    console.log("↓ Files below their frozen size — lock the improvement in with `--update`:");
+    for (const { relPath, loc, allowed } of improvements) {
+      console.log(`  - ${relPath}: ${loc ?? "under budget/removed"} (baseline ${allowed})`);
+    }
+  }
+
+  if (regressions.length > 0) {
+    console.error("\n✖ File-size ratchet failed:\n");
+    for (const { relPath, loc, role, limit, kind, allowed } of regressions) {
+      const reason =
+        kind === "new"
+          ? `new over-budget file (${role} budget ${limit})`
+          : `grandfathered file grew (frozen at ${allowed})`;
+      console.error(`  ${String(loc).padStart(5)} loc  ${relPath} — ${reason}`);
+    }
+    console.error(
+      "\nExtract components/hooks/api modules until the file is back at or under the line.\n" +
+        "Resolve the item; do not edit the baseline."
+    );
+    process.exit(1);
+  }
+
+  console.log(
+    `✓ File-size ratchet passed (${over.length} grandfathered files, none grew; budgets: pages 800, components 400, hooks 300, other 400).`
+  );
 }
 
 main();
