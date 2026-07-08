@@ -151,6 +151,11 @@ jobs:
       - name: RLS coverage (static migration parse — promote once trusted)
         continue-on-error: true
         run: node scripts/check-rls-coverage.mjs
+      # Fails only on high/critical advisories in production deps. Known-moderate
+      # as of 2026-07-08: ajv ReDoS via @vercel/react-router, no fix upstream.
+      - name: Dependency audit (high severity, prod deps)
+        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high
       - name: Strict typecheck (goal state — informational)
         continue-on-error: true
         run: npm run typecheck:strict
