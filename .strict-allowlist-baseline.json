@@ -1,0 +1,4 @@
+{
+  "comment": "Minimum number of files in tsconfig.strict.json include. The strict allowlist only grows; run --update after adding files. Never lower this to make CI pass.",
+  "minIncludeCount": 7
+}

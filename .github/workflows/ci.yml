@@ -105,6 +105,8 @@ jobs:
         run: node scripts/check-as-any-ratchet.mjs
       - name: File-size ratchet
         run: node scripts/check-file-sizes.mjs
+      - name: Strict-allowlist ratchet
+        run: node scripts/check-strict-allowlist.mjs
 
   secret-scan:
     name: Secret scan
