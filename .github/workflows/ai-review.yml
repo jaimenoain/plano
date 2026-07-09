@@ -52,4 +52,12 @@ jobs:
             Post specific findings as inline comments on the exact lines. Then post one
             summary comment ending with a verdict line: "Verdict: LGTM" or
             "Verdict: needs attention — <one line why>". Be concise; skip style nitpicks.
-          claude_args: '--allowed-tools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"'
+          # Pin the model explicitly: without it the CLI resolved to an opus
+          # 1M-context variant this API key can't use, so the first API call
+          # errored and the run ended in ~2s having posted nothing.
+          claude_args: |
+            --model claude-sonnet-5
+            --allowed-tools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
+          # Surface Claude's output in the run log; without this an execution
+          # error is invisible and continue-on-error makes the job look green.
+          show_full_output: true

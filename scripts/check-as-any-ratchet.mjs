@@ -30,7 +30,6 @@ const SCAN_DIRS = ["src", "app"];
 // Generated or vendored files we never want to ratchet.
 const EXCLUDE_RE = [
   /^src\/integrations\/supabase\/types\.ts$/,
-  /^src\/integrations\/supabase\/plano-tables\.types\.ts$/,
 ];
 const PATTERNS = [/\bas any\b/g, /@ts-ignore/g];
 

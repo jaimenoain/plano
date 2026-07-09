@@ -124,7 +124,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^17.7.0",
-    "happy-dom": "^15.11.7",
+    "happy-dom": "^20.10.6",
     "jsdom": "^28.1.0",
     "postcss": "^8.5.16",
     "tailwindcss": "^4.3.2",

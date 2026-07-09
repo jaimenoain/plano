@@ -36,7 +36,6 @@ const EXCLUDE_RE = [
   /\.test\.[tj]sx?$/,
   /\.spec\.[tj]sx?$/,
   /\/integrations\/supabase\/types\.ts$/,
-  /\/integrations\/supabase\/plano-tables\.types\.ts$/,
   /\/components\/ui\//,
 ];
 

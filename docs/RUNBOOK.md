@@ -7,6 +7,7 @@ The from-zero guide for a developer (or agent) seeing this repo for the first ti
 - **Node 22** — `.nvmrc` (22.22.0) is authoritative; `nvm use` picks it up. CI pins from the same file.
 - **npm** (ships with Node). No pnpm/yarn/turbo here.
 - Optional: [GitHub CLI](https://cli.github.com/) (`gh`) for PRs, [nvm](https://github.com/nvm-sh/nvm) for Node versions.
+- Only for schema work: the [Supabase CLI](https://supabase.com/docs/guides/cli) (`brew install supabase/tap/supabase` or `npx supabase`) — `npm run gen-types` shells out to it and it must be authenticated (`supabase login`) with access to the hosted project. You'll also need the repo owner to invite you to the Supabase project before you can read API keys or run `gen-types`. Day-to-day feature work needs none of this.
 
 ## Setup
 

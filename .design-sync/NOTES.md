@@ -4,12 +4,25 @@ Repo-specific gotchas and decisions for syncing `src/components/ui/` (shadcn/ui)
 
 ## ▶ STATUS FOR THE NEXT RUN (read this first)
 
-The full sync is **already built, authored, verified, and committed** — only the **upload** is left (it was blocked by missing Claude Design auth in a headless session). When re-run from an authorized interactive terminal:
+The full sync is **built, authored, verified, and committed**; the v4 rebuild is done. Only the **upload** may remain if a prior run hit missing Claude Design auth (`/design-login`). When re-run from an authorized interactive terminal:
 
-- `config.json` is complete but has **no `projectId`** → still a **first-time upload**: create a NEW Claude Design project and push into it.
-- **Do NOT re-author or re-grade.** All 50 `previews/*.tsx` and all 50 `.cache/review/*.grade.json` are committed; `package-capture` carries every grade forward (sources unchanged). Just: re-stage scripts (`cp -r`) + `npm i` in `.ds-sync/`, run `cfg.buildCmd`, run the driver (`resync.mjs`, no `--remote`), confirm `ok:true`/`bad:0`, then create project + upload.
+- `config.json` may still have **no `projectId`** → then it's a **first-time upload**: create a NEW Claude Design project and push into it. Once uploaded, `projectId` is recorded and future runs are re-syncs.
+- **Do NOT re-author or re-grade.** All 50 `previews/*.tsx` and all 50 `.cache/review/*.grade.json` are committed; grades key on the authored previews (unchanged), so `package-capture` carries every grade forward even though component `.tsx` classNames changed under v4. Just: re-stage scripts (`cp -r`) + `npm i` in `.ds-sync/` (**including `@tailwindcss/cli@4`, see below**), run `cfg.buildCmd`, run the driver, confirm `ok:true`/`bad:0`, then create project + upload.
 - Last local driver verdict: `ok:true`, 50/50 render clean, 0 floor cards, `upload.any:true`, `deletePaths:[]`.
-- ⚠️ A concurrent **Tailwind v4 migration** exists on branch `chore/tailwind-v4`. This sync targets **Tailwind v3.4** (`tailwind.ds.config.ts` + v3 CLI). If v4 lands on main, `cfg.buildCmd` and the DS Tailwind config must be reworked for v4 before re-syncing.
+
+### ⚠️ Tailwind v4 migration — LANDED (2026-07-03, commit 39dcf043)
+
+The v4 migration is now on main. The old v3 approach (`tailwind.ds.config.ts` JS config + repo's `node_modules/.bin/tailwindcss` v3 CLI) is **dead** — the repo no longer ships a standalone tailwind CLI (only `@tailwindcss/postcss`), and there is no `tailwind.config.ts`. Handled as follows:
+
+- **`cfg.buildCmd` reworked for v4**: `.ds-sync/node_modules/.bin/tailwindcss -i .design-sync/ds-entry.v4.css -o .design-sync/ds-styles.css --minify`.
+- **`.design-sync/ds-entry.v4.css`** (committed) is the new build entry: `@import "../src/index.css"` (the app's CSS-first config with `@theme` tokens), `@source "../.design-sync/previews"`, and a big `@source inline(...)` that re-creates the old safelist — forcing the full `{bg,text,border,ring,…}-{token}` palette (+ hover/focus/active/disabled) into the compiled CSS so Claude Design can use the whole palette. **If tokens are added/renamed in `src/index.css` `@theme`, mirror them in that inline list.** `tailwind.ds.config.ts` is retained only as dead reference — v4 ignores it.
+- **The v4 standalone CLI is NOT a repo dep.** It's installed into the isolated staging dir: `cd .ds-sync && npm i @tailwindcss/cli@4`. On a fresh clone, install it alongside esbuild/ts-morph. Version must be ≥ the repo's `tailwindcss` (currently 4.3.2).
+- **Design tokens & fonts survived the migration unchanged** — same names (`--brand-primary` #171717, `--surface-card`, `--text-primary` …, `--brand-accent` #beff00), Inter + Space Mono. So conventions.md is still accurate; only build tooling changed.
+- Compiled CSS is now **~513 KB** (was ~258 KB under v3) — v4 emits the full theme as custom properties + preflight. Not a defect.
+
+### ⚠️ The driver does NOT run `cfg.buildCmd`
+
+`resync.mjs` chains build→diff→validate→capture but does **not** invoke `cfg.buildCmd` — despite older notes implying "automatic prerequisite". **You must run `cfg.buildCmd` manually before the driver** (regenerate `.design-sync/ds-styles.css`), or the build copies a stale `ds-styles.css` and components render against outdated CSS (silently — the render check still passes because most classes overlap). Symptom of the miss: `_ds_bundle.css` stays at the old byte size. Always: `run buildCmd → run driver`.
 
 ## Setup / architecture
 
@@ -20,9 +33,9 @@ The full sync is **already built, authored, verified, and committed** — only t
 
 ## CSS / tokens — IMPORTANT (re-sync must regenerate)
 
-- shadcn styles entirely via Tailwind utility classes → we need a **compiled** stylesheet, not the raw `@tailwind` `src/index.css`.
-- `cfg.buildCmd` compiles it: `node_modules/.bin/tailwindcss -i src/index.css -o .design-sync/ds-styles.css --config tailwind.config.ts --minify`. Run this BEFORE the converter each sync (`cfg.cssEntry` points at the output). The file is gitignored (derived).
-- The repo's `dist/assets/*.css` is STALE (Mar 2026, references old "Space Grotesk"); never use it. Current tokens: sans=Inter, mono=Space Mono (tailwind.config.ts fontFamily).
+- shadcn styles entirely via Tailwind utility classes → we need a **compiled** stylesheet, not the raw `@import "tailwindcss"` `src/index.css`.
+- **v4 build** (see the Tailwind v4 section above): `cfg.buildCmd` compiles it via the v4 CLI + `.design-sync/ds-entry.v4.css`. Run this BEFORE the driver each sync (`cfg.cssEntry` points at the output `.design-sync/ds-styles.css`). The output is gitignored (derived).
+- The repo's `dist/assets/*.css` is STALE; never use it. Current tokens are defined CSS-first in `src/index.css` `@theme`: sans=Inter, mono=Space Mono.
 
 ## Fonts (self-hosted)
 
