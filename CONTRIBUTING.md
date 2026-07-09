@@ -17,8 +17,9 @@ All work goes through pull requests against `main`. Direct pushes are blocked by
 - **Secret scan** — gitleaks over the working tree
 - **Types staleness** — a migration in the PR requires regenerated `types.ts` in the same PR
 - **Debt ratchet** — `as any`/`@ts-ignore` count, file-size budgets, strict-TS allowlist (`scripts/check-*-ratchet.mjs`, `check-file-sizes.mjs`, `check-strict-allowlist.mjs`)
+- **RLS coverage** — `node scripts/check-rls-coverage.mjs`; every public table created in migrations must enable row-level security (promoted from advisory 2026-07-09)
 
-Advisory (non-blocking, promoted once stable): Playwright E2E, RLS coverage, dependency audit, strict typecheck, and an AI review that posts inline comments. Human PR reviews are deliberately not required (solo-maintainer repo).
+Advisory (non-blocking, promoted once stable): Playwright E2E, dependency audit, strict typecheck, and an AI review that posts inline comments. Human PR reviews are deliberately not required (solo-maintainer repo).
 
 Every PR must also meet the **Definition of Done** in [`AGENTS.md`](AGENTS.md) — tests and doc updates ship in the same PR as the change.
 
