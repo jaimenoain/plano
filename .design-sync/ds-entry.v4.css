@@ -1,0 +1,19 @@
+/* Design-sync Tailwind v4 entry (replaces the retired v3 tailwind.ds.config.ts).
+ *
+ * Imports the app's real CSS-first config (src/index.css: @import "tailwindcss",
+ * @theme tokens, @utility + @layer base). v4 auto-scans src/** from index.css's
+ * location, so every class used by src/components/ui/* is emitted. We add the
+ * authored previews as an extra source, and force the FULL token-utility
+ * vocabulary via @source inline(...) — designs built in Claude Design must be
+ * able to use the whole palette, not just the classes the app happens to use.
+ *
+ * Build:  .ds-sync/node_modules/.bin/tailwindcss \
+ *           -i .design-sync/ds-entry.v4.css -o .design-sync/ds-styles.css --minify
+ * If a token is added/renamed in src/index.css @theme, mirror it in the inline
+ * list below.
+ */
+@import "../src/index.css";
+
+@source "../.design-sync/previews";
+
+@source inline("{hover:,focus:,active:,disabled:,}{bg,text,border,ring,fill,stroke,from,to,via}-{brand-primary,brand-primary-hover,brand-primary-foreground,brand-secondary,brand-secondary-foreground,brand-accent,brand-accent-hover,brand-accent-foreground,surface-default,surface-card,surface-overlay,surface-muted,surface-inverse,border-default,border-strong,border-hairline,text-primary,text-secondary,text-disabled,text-inverse,feedback-success,feedback-warning,feedback-destructive,feedback-destructive-foreground,primary,primary-foreground,secondary,secondary-foreground,card,card-foreground,popover,popover-foreground,muted,muted-foreground,accent,accent-foreground,destructive,destructive-foreground,background,foreground,border,input,ring}");

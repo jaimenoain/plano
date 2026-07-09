@@ -907,10 +907,13 @@ function SizeReferencePopover() {
 function BuildingInfoSection({
   building,
   buildingCredits,
+  canEdit,
 }: {
   building: BuildingDetails;
   buildingCredits: import("@/features/credits/types").BuildingCreditWithEntities[];
+  canEdit: boolean;
 }) {
+  const navigate = useNavigate();
   const primaryCredits = visiblePrimaryCredits(buildingCredits);
 
   const rows = useMemo(() => {
@@ -1001,13 +1004,17 @@ function BuildingInfoSection({
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
           Building Info
         </h3>
-        <button
-          className="opacity-0 group-hover/info:opacity-100 transition-opacity inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary"
-          onClick={() => {/* TODO: open edit modal */}}
-        >
-          <Pencil className="h-3 w-3" />
-          Edit
-        </button>
+        {canEdit && (
+          <button
+            className="opacity-0 group-hover/info:opacity-100 transition-opacity inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary"
+            onClick={() =>
+              navigate(getBuildingUrl(building.id, building.slug, building.short_id) + "/edit")
+            }
+          >
+            <Pencil className="h-3 w-3" />
+            Edit
+          </button>
+        )}
       </div>
       <dl className="mt-3 divide-y divide-border-default">
         {rows.map(({ key, label, value }) => (
@@ -1449,7 +1456,7 @@ export default function BuildingDetails() {
     coordinates,
     accessSynthesis: _accessSynthesis,
     accessBadgeVariant: _accessBadgeVariant,
-    canEditOfficialData: _canEditOfficialData,
+    canEditOfficialData,
     isCreditsAdmin,
     handleStatusChange,
     handleRate,
@@ -2867,7 +2874,11 @@ export default function BuildingDetails() {
                 {/* Building info — hidden on info tab (shown in main content there) */}
                 {activeTab !== "info" && (
                   <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-xs">
-                    <BuildingInfoSection building={building} buildingCredits={buildingCredits} />
+                    <BuildingInfoSection
+                      building={building}
+                      buildingCredits={buildingCredits}
+                      canEdit={canEditOfficialData}
+                    />
                   </div>
                 )}
 

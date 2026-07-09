@@ -5,7 +5,7 @@
   "srcDir": "src/components/ui",
   "tsconfig": "tsconfig.json",
   "cssEntry": ".design-sync/ds-styles.css",
-  "buildCmd": "node_modules/.bin/tailwindcss -i src/index.css -o .design-sync/ds-styles.css --config .design-sync/tailwind.ds.config.ts --minify",
+  "buildCmd": ".ds-sync/node_modules/.bin/tailwindcss -i .design-sync/ds-entry.v4.css -o .design-sync/ds-styles.css --minify",
   "readmeHeader": ".design-sync/conventions.md",
   "guidelinesGlob": ["design-system/README.md"],
   "docsDir": ".design-sync/docs",
