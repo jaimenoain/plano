@@ -11,7 +11,7 @@
     "src/features/buildings/components/BuildingForm.tsx": 943,
     "src/features/buildings/components/ImageDetailsDialog.tsx": 447,
     "src/features/buildings/hooks/useBuildingInteractions.ts": 1381,
-    "src/features/buildings/pages/BuildingDetails.tsx": 2948,
+    "src/features/buildings/pages/BuildingDetails.tsx": 2906,
     "src/features/buildings/pages/ReviewDetails.tsx": 1101,
     "src/features/buildings/utils/structuredData.ts": 455,
     "src/features/collections/components/AddBuildingsToCollectionDialog.tsx": 765,
