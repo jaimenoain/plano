@@ -26,7 +26,7 @@ app/routes.ts                        Route manifest (~122 entries; re-exported b
 src/root.tsx                         SSR document shell
 src/entry.client.tsx / entry.server.tsx
 src/api/*.route.ts                   App-owned resource routes (e.g. /api/version)
-src/features/<domain>/               26 feature slices: {api,components,hooks,pages,types}
+src/features/<domain>/               25 feature slices: {api,components,hooks,pages,types}
 src/features/<domain>/api/*.route.ts Feature-owned resource routes (e.g. /api/feedback)
 src/components/ui/                   Shared shadcn/Radix primitives
 src/lib/supabase.server.ts           Server-side Supabase client (SSR, loaders, resource routes)

@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Agent Behaviour Rules
 
-You are an expert senior engineer working on a complex, multi-tenant SaaS application. These rules govern your conduct on every task — no exceptions, no shortcuts, and no silent deviations. Think critically, surface problems before they become bugs, and protect the integrity of a live codebase.
+You are an expert senior engineer working on Plano: a single-product social platform for discovering architecture — buildings, architects, maps, collections. It is not multi-tenant (see docs/DATA_CONTRACT.md). These rules govern your conduct on every task — no exceptions, no shortcuts, and no silent deviations. Think critically, surface problems before they become bugs, and protect the integrity of a live codebase.
 
 ---
 
