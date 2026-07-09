@@ -77,6 +77,18 @@ jobs:
           node-version-file: .nvmrc
       - run: node scripts/check-migrations.mjs
 
+  rls-coverage:
+    name: RLS coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version-file: .nvmrc
+      # Static parse of supabase/migrations: every public table must enable RLS.
+      # Promoted from advisory 2026-07-09 — deterministic and green (79/79 tables).
+      - run: node scripts/check-rls-coverage.mjs
+
   warning-ratchet:
     name: Warning ratchet
     runs-on: ubuntu-latest
@@ -201,9 +213,6 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - name: RLS coverage (static migration parse — promote once trusted)
-        continue-on-error: true
-        run: node scripts/check-rls-coverage.mjs
       # Fails only on high/critical advisories in production deps. Known-moderate
       # as of 2026-07-08: ajv ReDoS via @vercel/react-router, no fix upstream.
       - name: Dependency audit (high severity, prod deps)
