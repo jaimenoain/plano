@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Plano Web — Discovery & Entities" subtitle="Explore · Architect profile · Events · Sign in" viewport="1400x3000" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Discovery & Entities</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  html,body,#root{margin:0;padding:0;background:var(--surface-default);min-height:100vh}
+  *{box-sizing:border-box}
+  button{font-family:inherit}
+  a{color:inherit;text-decoration:none}
+  img{display:block;max-width:100%}
+  input,textarea,select{font-family:inherit}
+
+  /* ---- Kit chrome ---- */
+  .chrome-tabs{position:sticky;top:0;z-index:60;background:rgba(250,250,250,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-default)}
+  .chrome-inner{max-width:1360px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 32px}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap}
+  .tab{font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;padding:8px 14px;background:none;border:0;color:var(--text-secondary);cursor:pointer;border-radius:2px}
+  .tab:hover{color:var(--text-primary)}
+  .tab.active{background:#171717;color:#fff}
+  .chrome-right{display:flex;gap:10px;align-items:center}
+  .avatar{width:28px;height:28px;border-radius:9999px;background:#262626;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .bell{position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--text-primary);cursor:pointer;border-radius:2px}
+  .bell:hover{background:var(--surface-muted)}
+  .bell .dot{position:absolute;top:7px;right:8px;width:7px;height:7px;border-radius:9999px;background:var(--brand-accent);border:1.5px solid var(--surface-default)}
+
+  /* ---- Buttons ---- */
+  .btn{height:44px;padding:0 18px;border-radius:2px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center;gap:8px;line-height:1;transition:background 150ms,color 150ms;width:100%}
+  .btn-primary{background:#BEFF00;color:#171717}
+  .btn-primary:hover{background:#9ACC00}
+  .btn-outline{background:#fff;color:#171717;border-color:var(--border-strong)}
+  .btn-outline:hover{background:var(--surface-muted)}
+  .btn-dark{background:#171717;color:#fff}
+  .btn-dark:hover{background:#000}
+
+  /* Editorial CTA */
+  .cta{font-size:12px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:inherit;background:none;border:0;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:6px;transition:color 150ms}
+  .cta:hover{color:var(--text-secondary)}
+  .cta .ar{transition:transform 150ms}
+  .cta:hover .ar{transform:translateX(3px);color:#BEFF00}
+
+  /* Rating dots */
+  .rdots{display:inline-flex;gap:4px;vertical-align:middle;align-items:center}
+  .rdot{width:11px;height:11px;border-radius:9999px;background:#171717;display:inline-block}
+  .rdot.sm{width:8px;height:8px}
+  .rdot.inv{background:#fff}
+
+  .eyebrow{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .screen{max-width:1360px;margin:0 auto}
+
+  /* Photo placeholders — on-brand hatch + mono caption (awaiting art) */
+  .ph{position:relative;background-color:var(--surface-muted);background-image:repeating-linear-gradient(135deg,transparent 0 11px,rgba(0,0,0,.035) 11px 12px);display:flex;align-items:flex-end;overflow:hidden}
+  .ph::after{content:attr(data-label);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-disabled);padding:12px 14px;line-height:1.3}
+  .ph-dark{background-color:#0e0e0e;background-image:repeating-linear-gradient(135deg,transparent 0 13px,rgba(255,255,255,.028) 13px 14px)}
+  .ph-dark::after{color:rgba(255,255,255,.32)}
+
+  /* ============ EXPLORE — immersive dark discovery ============ */
+  .exp-stage{background:#000;min-height:calc(100vh - 61px);display:flex;justify-content:center;padding:0}
+  .exp-rail{position:relative;width:100%;max-width:520px;border-left:1px solid rgba(255,255,255,.06);border-right:1px solid rgba(255,255,255,.06);overflow:hidden}
+  /* location pill */
+  .exp-loc{position:absolute;top:20px;left:0;right:0;display:flex;justify-content:center;z-index:20;pointer-events:none}
+  .exp-pill{pointer-events:auto;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 16px;font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.72);background:rgba(0,0,0,.5);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15)}
+  .exp-pill .cnt{display:inline-flex;align-items:center;justify-content:center;height:16px;min-width:16px;padding:0 4px;border-radius:9999px;background:rgba(255,255,255,.2);font-size:10px;font-weight:600}
+  /* progress dots */
+  .exp-prog{position:absolute;top:50%;right:16px;transform:translateY(-50%);display:flex;flex-direction:column;gap:7px;z-index:20}
+  .exp-prog i{width:4px;height:4px;border-radius:9999px;background:rgba(255,255,255,.28);display:block}
+  .exp-prog i.on{background:#fff;height:18px}
+
+  .exp-card{position:relative;height:calc(100vh - 61px);width:100%}
+  .exp-photo{position:absolute;inset:0;background-size:cover;background-position:center}
+  .exp-scrim{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.86) 0%,rgba(0,0,0,.35) 42%,rgba(0,0,0,0) 66%)}
+  .exp-scrim-top{position:absolute;top:0;left:0;right:0;height:180px;background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent)}
+  .exp-meta{position:absolute;left:0;right:0;bottom:0;padding:0 28px 40px;color:#fff;z-index:10}
+  .exp-eyebrow{font-size:10px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.7);display:flex;align-items:center;gap:8px}
+  .exp-eyebrow .dotm{width:5px;height:5px;border-radius:9999px;background:rgba(255,255,255,.9);display:inline-block}
+  .exp-name{font-size:52px;font-weight:700;letter-spacing:-.03em;line-height:.94;margin:14px 0 0;text-wrap:balance;color:#fff}
+  .exp-sub{font-size:15px;color:rgba(255,255,255,.72);margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .exp-sub .mid{opacity:.5}
+  .exp-coord{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.04em;color:rgba(255,255,255,.5);margin-top:16px}
+  .exp-rate{display:flex;align-items:center;gap:10px;margin-top:22px}
+  .exp-rate .lab{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+  /* swipe affordances */
+  .exp-actions{display:flex;align-items:center;gap:28px;margin-top:30px;padding-top:22px;border-top:1px solid rgba(255,255,255,.14)}
+  .exp-act{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.72);background:none;border:0;cursor:pointer;transition:color 150ms}
+  .exp-act:hover{color:#fff}
+  .exp-act svg{width:16px;height:16px}
+  .exp-act:hover .ar{color:#BEFF00}
+  .exp-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.3);z-index:10}
+  /* peek of next card */
+  .exp-peek{height:8px;background:linear-gradient(to bottom,rgba(255,255,255,.05),transparent)}
+
+  /* ============ ARCHITECT / PERSON PROFILE ============ */
+  .doc{max-width:896px;margin:0 auto;padding:36px 32px 96px}
+  .backrow{margin-bottom:36px}
+  .p-head{border-bottom:1px solid var(--border-default);padding-bottom:44px;display:flex;flex-direction:row-reverse;gap:48px;align-items:flex-start}
+  .p-avatar{width:160px;height:160px;flex-shrink:0;border:1px solid var(--border-default);background-size:cover;background-position:center;filter:grayscale(1) contrast(1.02)}
+  .p-headmain{flex:1;min-width:0}
+  .p-namerow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .p-name{font-size:60px;font-weight:700;letter-spacing:-.04em;line-height:.92;margin:0;color:var(--text-primary)}
+  .p-badge{color:var(--text-primary);display:inline-flex}
+  .p-metarow{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:20px;font-size:14px;color:var(--text-secondary)}
+  .p-metarow .mono{font-family:'Space Mono',monospace;font-size:12px}
+  .p-web{margin-top:20px}
+  .p-bio{margin-top:24px;font-size:18px;line-height:1.7;color:var(--text-secondary);max-width:60ch}
+  .p-stats{display:flex;gap:0;margin-top:32px;border-top:1px solid var(--border-default)}
+  .p-stat{padding:20px 32px 0 0;margin-right:32px;border-right:1px solid var(--border-default)}
+  .p-stat:last-child{border-right:0}
+  .p-stat .v{font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1}
+  .p-stat .l{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);margin-top:8px}
+
+  .credits-sec{margin-top:56px}
+  .credits-h{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:4px;display:flex;justify-content:space-between;align-items:baseline}
+  .credits-h .n{font-family:'Space Mono',monospace;font-size:11px;color:var(--text-disabled)}
+  .credit{display:grid;grid-template-columns:120px 1fr auto;gap:24px;align-items:center;padding:22px 0;border-bottom:1px solid var(--border-default);cursor:pointer}
+  .credit:hover .c-name{color:var(--text-secondary)}
+  .credit:hover .c-thumb{filter:grayscale(0)}
+  .c-thumb{width:120px;height:84px;background-size:cover;background-position:center;flex-shrink:0;filter:grayscale(1);transition:filter 200ms}
+  .c-body{min-width:0}
+  .c-role{font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
+  .c-name{font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1.05;margin:6px 0 0;color:var(--text-primary);transition:color 150ms}
+  .c-loc{font-size:13px;color:var(--text-secondary);margin-top:6px}
+  .c-right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+  .c-year{font-family:'Space Mono',monospace;font-size:12px;color:var(--text-secondary)}
+
+  /* ============ EVENTS ============ */
+  .ev-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;border-bottom:1px solid var(--border-default);padding-bottom:32px;margin-bottom:44px}
+  .ev-title{font-size:44px;font-weight:700;letter-spacing:-.03em;line-height:1;margin:10px 0 0}
+  /* featured hero */
+  .ev-hero{display:grid;grid-template-columns:1.35fr 1fr;gap:0;border:1px solid var(--border-default);margin-bottom:64px;background:#fff}
+  .ev-hero-img{aspect-ratio:4/3;background-size:cover;background-position:center}
+  .ev-hero-body{padding:44px 40px;display:flex;flex-direction:column;justify-content:space-between}
+  .ev-hero-type{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .ev-hero-name{font-size:38px;font-weight:700;letter-spacing:-.03em;line-height:1.02;margin:20px 0 0}
+  .ev-datebar{display:flex;align-items:center;gap:20px;margin-top:26px}
+  .ev-datecard{border:1px solid var(--border-default);width:64px;flex-shrink:0;text-align:center}
+  .ev-datecard .m{font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:#171717;padding:5px 0}
+  .ev-datecard .d{font-size:26px;font-weight:700;letter-spacing:-.02em;padding:8px 0 10px}
+  .ev-when{font-size:14px;color:var(--text-secondary);line-height:1.5}
+  .ev-when .place{color:var(--text-primary);font-weight:500}
+  .ev-hero-foot{margin-top:32px;display:flex;align-items:center;justify-content:space-between}
+
+  .ev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px 24px}
+  .ev-card{cursor:pointer}
+  .ev-card-img{aspect-ratio:4/3;background-size:cover;background-position:center}
+  .ev-card-type{font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary);margin-top:16px;display:flex;align-items:center;gap:8px}
+  .ev-card-name{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:8px 0 0;color:var(--text-primary)}
+  .ev-card:hover .ev-card-name{color:var(--text-secondary)}
+  .ev-card-meta{font-size:13px;color:var(--text-secondary);margin-top:10px;display:flex;flex-direction:column;gap:3px}
+  .ev-card-meta .mono{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.03em}
+
+  /* ============ SIGN IN ============ */
+  .auth-shell{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 61px)}
+  .auth-left{background:#000;color:#fff;padding:56px 56px 48px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+  .auth-left-photo{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.24;filter:grayscale(1)}
+  .auth-left-inner{position:relative;z-index:2;display:flex;flex-direction:column;justify-content:space-between;height:100%}
+  .auth-tagline{font-size:52px;font-weight:700;letter-spacing:-.035em;line-height:.98;max-width:12ch;margin:0;color:#fff}
+  .auth-sub{font-size:15px;color:rgba(255,255,255,.6);margin-top:22px;max-width:34ch;line-height:1.5}
+  .auth-foot{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.4);display:flex;gap:20px}
+  .auth-right{background:#fff;display:flex;align-items:center;justify-content:center;padding:56px 40px}
+  .auth-form{width:100%;max-width:360px}
+  .auth-eyebrow{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .auth-h{font-size:32px;font-weight:700;letter-spacing:-.03em;line-height:1;margin:12px 0 0}
+  .auth-p{font-size:14px;color:var(--text-secondary);margin-top:12px;line-height:1.5}
+  .field{margin-top:22px}
+  .field label{font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary);display:block;margin-bottom:8px}
+  .field input{width:100%;height:44px;border:1px solid var(--border-strong);background:#fff;border-radius:2px;padding:0 14px;font-size:15px;color:var(--text-primary);outline:none;transition:border 150ms,box-shadow 150ms}
+  .field input::placeholder{color:var(--text-disabled)}
+  .field input:focus{border-color:#171717}
+  .field .lrow{display:flex;justify-content:space-between;align-items:baseline}
+  .field .forgot{font-size:11px;color:var(--text-secondary);letter-spacing:.02em;text-transform:none;font-weight:400}
+  .auth-submit{margin-top:28px}
+  .divider{display:flex;align-items:center;gap:14px;margin:26px 0;color:var(--text-disabled);font-size:10px;letter-spacing:.15em;text-transform:uppercase}
+  .divider::before,.divider::after{content:"";height:1px;background:var(--border-default);flex:1}
+  .auth-note{font-size:13px;color:var(--text-secondary);text-align:center;margin-top:26px}
+  .auth-note a{color:var(--text-primary);font-weight:500}
+  .auth-legal{font-size:11px;color:var(--text-disabled);text-align:center;margin-top:32px;line-height:1.6}
+  .auth-legal a{color:var(--text-secondary);text-decoration:underline;text-underline-offset:2px}
+
+  @media (max-width:900px){
+    .auth-shell,.ev-hero{grid-template-columns:1fr}
+    .ev-grid{grid-template-columns:1fr 1fr}
+    .p-head{flex-direction:column}
+    .p-name{font-size:44px}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+
+// ─── Plano logo ───
+const PlanoLogo = ({style}) => (
+  <svg viewBox="0 0 338 74" style={style} aria-label="Plano">
+    <g fill="currentColor">
+      <path d="M 0 73.731 L 0 0.977 L 28.369 0.977 Q 36.67 0.977 42.48 4.127 Q 48.291 7.276 51.343 12.818 Q 54.395 18.36 54.395 25.538 Q 54.395 32.765 51.294 38.258 Q 48.193 43.751 42.31 46.852 Q 36.426 49.952 28.027 49.952 L 14.893 49.952 L 14.893 73.731 L 0 73.731 Z"/>
+      <path d="M 111.084 73.731 L 64.795 73.731 L 64.795 0.977 L 79.688 0.977 L 79.688 61.378 L 111.084 61.378 L 111.084 73.731 Z"/>
+      <path d="M 117.139 73.731 L 141.992 0.977 L 161.523 0.977 L 187.012 73.731 L 170.459 73.731 L 164.845 56.837 L 132.666 56.837 L 138.994 56.837 L 133.594 73.731"/>
+      <path d="M 195.996 73.731 L 195.996 0.977 L 212.598 0.977 L 235.596 37.794 Q 244.727 55.372 246.582 60.45 L 245.068 60.45 Q 243.799 38.819 243.799 35.89 L 243.799 0.977 L 259.033 0.977 L 259.033 73.731 L 242.383 73.731 L 221.484 40.333 Q 211.035 20.948 208.105 14.991 L 210.01 14.991 Q 211.23 37.794 211.23 40.284 L 211.23 73.731 Z"/>
+      <path d="M 304.15 74.708 Q 294.531 74.708 286.841 70.313 Q 279.15 65.919 274.683 57.569 Q 270.215 49.22 270.215 37.403 Q 270.215 25.538 274.683 17.164 Q 279.15 8.79 286.841 4.395 Q 294.531 0.001 304.15 0.001 Q 313.818 0.001 321.484 4.395 Q 329.15 8.79 333.618 17.164 Q 338.086 25.538 338.086 37.403 Q 338.086 49.22 333.618 57.569 Q 329.15 65.919 321.484 70.313 Q 313.818 74.708 304.15 74.708 Z"/>
+    </g>
+  </svg>
+);
+
+const Rating = ({n, inv}) => {
+  if (!n || n < 1) return null;
+  return (
+    <span className="rdots" aria-label={`${n} points`}>
+      {Array.from({length: n}).map((_,i) => <i key={i} className={`rdot${inv?' inv':''}`}/>)}
+    </span>
+  );
+};
+
+// verified badge (Lucide BadgeCheck)
+const BadgeCheck = ({size=32}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/>
+    <path d="m9 12 2 2 4-4"/>
+  </svg>
+);
+const Ext = () => (<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>);
+const Pin = () => (<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>);
+const Bell = () => (<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.41 5.956-2.738 7.326Z"/></svg>);
+const Bookmark = () => (<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>);
+const XIcon = () => (<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>);
+const Google = () => (<svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1Z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z"/><path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84Z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.3 9.14 5.38 12 5.38Z"/></svg>);
+
+// Architecture photography — Unsplash
+const IMG = {
+  therme:"https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=1400&q=80",
+  ronchamp:"https://images.unsplash.com/photo-1494145904049-0dca59b4bbad?w=1400&q=80",
+  unite:"https://images.unsplash.com/photo-1459767129954-1b1c1f9b9ace?w=1400&q=80",
+  corb:"https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=1400&q=80",
+  villa:"https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1400&q=80",
+  chapel:"https://images.unsplash.com/photo-1524230572899-a752b3835840?w=1400&q=80",
+  firminy:"https://images.unsplash.com/photo-1494145904049-0dca59b4bbad?w=1400&q=80",
+  barbican:"https://images.unsplash.com/photo-1460574283810-2aab119d8511?w=1400&q=80",
+  salk:"https://images.unsplash.com/photo-1497604401993-f2e922e5cb0a?w=1400&q=80",
+  expo:"https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=1400&q=80",
+  talk:"https://images.unsplash.com/photo-1531058020387-3be344556be6?w=1400&q=80",
+  tour:"https://images.unsplash.com/photo-1493397212122-2b85dda8106b?w=1400&q=80",
+  portrait:"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&q=80",
+  night:"https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1400&q=80",
+};
+
+// ─── Chrome ───
+const Chrome = ({view, setView}) => {
+  const tabs=[["explore","Explore"],["architect","Architect"],["events","Events"],["signin","Sign in"]];
+  return (
+    <nav className="chrome-tabs">
+      <div className="chrome-inner">
+        <div style={{display:"flex",alignItems:"center",gap:32}}>
+          <PlanoLogo style={{height:22}}/>
+          <div className="tabs">
+            {tabs.map(([k,l])=>(
+              <button key={k} className={`tab ${view===k?'active':''}`} onClick={()=>setView(k)}>{l}</button>
+            ))}
+          </div>
+        </div>
+        <div className="chrome-right">
+          <div className="bell"><Bell/><span className="dot"/></div>
+          <div className="avatar">JN</div>
+        </div>
+      </div>
+    </nav>
+  );
+};
+
+// ═══════════════ EXPLORE ═══════════════
+const Explore = () => (
+  <div className="exp-stage">
+    <div className="exp-rail">
+      <div className="exp-loc">
+        <div className="exp-pill">
+          <Pin/>
+          <span>London</span>
+          <span className="cnt">2</span>
+          <span style={{display:"inline-flex",opacity:.7}}><XIcon/></span>
+        </div>
+      </div>
+      <div className="exp-prog">
+        <i className="on"/><i/><i/><i/><i/>
+      </div>
+
+      <div className="exp-card">
+        <div className="exp-photo ph-dark" style={{backgroundImage:`url(${IMG.barbican})`}}/>
+        <div className="exp-scrim-top"/>
+        <div className="exp-scrim"/>
+        <div className="exp-meta">
+          <div className="exp-eyebrow"><span className="dotm"/>Nearby you · Brutalist</div>
+          <h2 className="exp-name">Barbican Estate</h2>
+          <div className="exp-sub">
+            <span>Chamberlin, Powell &amp; Bon</span>
+            <span className="mid">·</span>
+            <span>London, UK</span>
+          </div>
+          <div className="exp-coord">51.5203° N, 0.0937° W · Completed 1976</div>
+          <div className="exp-rate">
+            <span className="lab">Rated</span>
+            <Rating n={3} inv/>
+            <span className="lab" style={{marginLeft:2}}>Masterpiece</span>
+          </div>
+          <div className="exp-actions">
+            <button className="exp-act save">
+              <Bookmark/><span>Save to list</span><span className="ar">→</span>
+            </button>
+            <button className="exp-act">
+              <XIcon/><span>Skip</span>
+            </button>
+            <div style={{flex:1}}/>
+            <button className="exp-act"><span>Open</span><span className="ar">→</span></button>
+          </div>
+        </div>
+      </div>
+      <div className="exp-peek"/>
+      <div className="exp-hint">Swipe up for next</div>
+    </div>
+  </div>
+);
+
+// ═══════════════ ARCHITECT / PERSON ═══════════════
+const CREDITS_PRIMARY = [
+  {img:IMG.villa, role:"Architect", name:"Villa Savoye", loc:"Poissy, France", year:"1931", rating:3},
+  {img:IMG.unite, role:"Architect", name:"Unité d'Habitation", loc:"Marseille, France", year:"1952", rating:3},
+  {img:IMG.chapel, role:"Architect", name:"Notre-Dame du Haut", loc:"Ronchamp, France", year:"1955", rating:3},
+  {img:IMG.firminy, role:"Architect", name:"Saint-Pierre", loc:"Firminy, France", year:"2006", rating:2},
+];
+const CREDITS_CONTRIB = [
+  {img:IMG.salk, role:"Master plan · consultant", name:"Chandigarh Capitol Complex", loc:"Chandigarh, India", year:"1953", rating:2},
+];
+
+const Credit = ({c}) => (
+  <div className="credit">
+    <div className="c-thumb ph" data-label={c.name}/>
+    <div className="c-body">
+      <div className="c-role">{c.role}</div>
+      <div className="c-name">{c.name}</div>
+      <div className="c-loc">{c.loc}</div>
+    </div>
+    <div className="c-right">
+      <Rating n={c.rating}/>
+      <span className="c-year">{c.year}</span>
+    </div>
+  </div>
+);
+
+const Architect = () => (
+  <div className="screen">
+    <div className="doc">
+      <div className="backrow"><button className="cta">← All architects</button></div>
+
+      <header className="p-head">
+        <div className="p-avatar ph" data-label="Portrait"/>
+        <div className="p-headmain">
+          <div className="p-namerow">
+            <h1 className="p-name">Le Corbusier</h1>
+            <span className="p-badge" title="Identity verified by Plano"><BadgeCheck size={34}/></span>
+          </div>
+          <div className="p-metarow">
+            <span>Swiss–French</span>
+            <span className="mono">1887–1965</span>
+            <span>Born La Chaux-de-Fonds</span>
+          </div>
+          <div className="p-web"><a className="cta" href="#" onClick={e=>e.preventDefault()}>Website <Ext/></a></div>
+          <p className="p-bio">
+            Pioneer of modern architecture and a founder of the International Style. His Five Points
+            reframed the house as a machine for living — pilotis, free plan, free façade, ribbon
+            windows, roof garden — and reshaped a century of cities.
+          </p>
+          <div className="p-stats">
+            <div className="p-stat"><div className="v">17</div><div className="l">Buildings</div></div>
+            <div className="p-stat"><div className="v">11</div><div className="l">UNESCO sites</div></div>
+            <div className="p-stat"><div className="v">2.4k</div><div className="l">Visits logged</div></div>
+          </div>
+        </div>
+      </header>
+
+      <section className="credits-sec">
+        <div className="credits-h"><span>Primary credits</span><span className="n">04</span></div>
+        {CREDITS_PRIMARY.map((c,i)=><Credit key={i} c={c}/>)}
+      </section>
+
+      <section className="credits-sec">
+        <div className="credits-h"><span>Contributor credits</span><span className="n">01</span></div>
+        {CREDITS_CONTRIB.map((c,i)=><Credit key={i} c={c}/>)}
+      </section>
+    </div>
+  </div>
+);
+
+// ═══════════════ EVENTS ═══════════════
+const EVENTS = [
+  {img:IMG.expo, type:"Exhibition", name:"Concrete Utopia: Brutalism Reconsidered", city:"London · Barbican", date:"14 Jul – 28 Sep", mono:"MoMA touring"},
+  {img:IMG.tour, type:"Guided tour", name:"Hampstead Modernism Walk", city:"London, UK", date:"Sat 19 Jul · 10:00", mono:"90 min · £18"},
+  {img:IMG.talk, type:"Lecture", name:"In conversation: Kazuyo Sejima", city:"Online", date:"Thu 24 Jul · 18:30", mono:"Free · RSVP"},
+  {img:IMG.salk, type:"Open house", name:"Salk Institute Open Day", city:"La Jolla, USA", date:"Sun 3 Aug · 09:00", mono:"Members only"},
+  {img:IMG.night, type:"Festival", name:"Open House Chicago", city:"Chicago, USA", date:"18 – 19 Oct", mono:"170 sites"},
+  {img:IMG.therme, type:"Guided tour", name:"Therme Vals Architecture Weekend", city:"Vals, Switzerland", date:"6 – 7 Sep", mono:"12 places"},
+];
+
+const Events = () => (
+  <div className="screen">
+    <div style={{maxWidth:1120,margin:"0 auto",padding:"40px 32px 96px"}}>
+      <header className="ev-head">
+        <div>
+          <div className="eyebrow">Community calendar</div>
+          <h1 className="ev-title">Upcoming events</h1>
+        </div>
+        <button className="cta">Share an event <span className="ar">→</span></button>
+      </header>
+
+      {/* Featured hero */}
+      <article className="ev-hero">
+        <div className="ev-hero-img ph" data-label="Barbican Art Gallery"/>
+        <div className="ev-hero-body">
+          <div>
+            <div className="ev-hero-type">Featured · Exhibition</div>
+            <h2 className="ev-hero-name">Concrete Utopia: Brutalism Reconsidered</h2>
+            <div className="ev-datebar">
+              <div className="ev-datecard"><div className="m">Jul</div><div className="d">14</div></div>
+              <div className="ev-when">
+                <div>14 July – 28 September 2026</div>
+                <div className="place">Barbican Art Gallery, London</div>
+              </div>
+            </div>
+          </div>
+          <div className="ev-hero-foot">
+            <span className="eyebrow" style={{fontFamily:"'Space Mono',monospace",letterSpacing:".03em"}}>MoMA touring show</span>
+            <button className="cta">Details <span className="ar">→</span></button>
+          </div>
+        </div>
+      </article>
+
+      {/* Grid */}
+      <div className="ev-grid">
+        {EVENTS.slice(1).map((e,i)=>(
+          <article key={i} className="ev-card">
+            <div className="ev-card-img ph" data-label={e.city}/>
+            <div className="ev-card-type"><span>{e.type}</span></div>
+            <h3 className="ev-card-name">{e.name}</h3>
+            <div className="ev-card-meta">
+              <span className="mono">{e.date}</span>
+              <span>{e.city} · {e.mono}</span>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+// ═══════════════ SIGN IN ═══════════════
+const SignIn = () => (
+  <div className="auth-shell">
+    <div className="auth-left">
+      <div className="auth-left-photo ph-dark" style={{backgroundImage:`url(${IMG.unite})`}}/>
+      <div className="auth-left-inner">
+        <PlanoLogo style={{height:24,color:"#fff"}}/>
+        <div>
+          <h1 className="auth-tagline">The world's architecture, cataloged.</h1>
+          <p className="auth-sub">Track visits, rate buildings, and follow the people who shape the built world.</p>
+        </div>
+        <div className="auth-foot">
+          <span>Est. 2024</span>
+          <span>·</span>
+          <span>41,208 buildings</span>
+        </div>
+      </div>
+    </div>
+    <div className="auth-right">
+      <form className="auth-form" onSubmit={e=>e.preventDefault()}>
+        <div className="auth-eyebrow">Welcome back</div>
+        <h2 className="auth-h">Sign in to Plano</h2>
+        <p className="auth-p">Pick up your journey — your lists, visits and follows.</p>
+
+        <div className="field">
+          <label>Email</label>
+          <input type="email" placeholder="you@studio.com"/>
+        </div>
+        <div className="field">
+          <div className="lrow">
+            <label>Password</label>
+            <a href="#" className="forgot" onClick={e=>e.preventDefault()}>Forgot?</a>
+          </div>
+          <input type="password" placeholder="••••••••••"/>
+        </div>
+
+        <div className="auth-submit"><button className="btn btn-primary">Continue →</button></div>
+
+        <div className="divider">or</div>
+        <button type="button" className="btn btn-outline"><Google/> Continue with Google</button>
+
+        <p className="auth-note">New to Plano? <a href="#" onClick={e=>e.preventDefault()}>Create an account</a></p>
+        <p className="auth-legal">By continuing you agree to our <a href="#" onClick={e=>e.preventDefault()}>Terms</a> and <a href="#" onClick={e=>e.preventDefault()}>Privacy Policy</a>.</p>
+      </form>
+    </div>
+  </div>
+);
+
+// ─── App ───
+const App = () => {
+  const [view, setView] = useState("explore");
+  return (
+    <div data-screen-label={`Plano · ${view}`}>
+      <Chrome view={view} setView={setView}/>
+      {view==="explore" && <Explore/>}
+      {view==="architect" && <Architect/>}
+      {view==="events" && <Events/>}
+      {view==="signin" && <SignIn/>}
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

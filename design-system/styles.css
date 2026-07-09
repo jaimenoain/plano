@@ -1,0 +1,6 @@
+/* ============================================================
+   Plano Design System — global stylesheet entrypoint.
+   Link THIS file (styles.css) and you get the whole system in one import.
+   ============================================================ */
+
+@import "./colors_and_type.css";

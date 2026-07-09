@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Spacing" name="Radius & Shadow" subtitle="Sharp edges · minimal shadows" viewport="900x260" -->
+<html lang="en"><head><meta charset="UTF-8"><title>Radius & Shadow</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;background:var(--surface-default);font-family:var(--font-sans)}
+  .wrap{padding:24px;display:grid;grid-template-columns:1fr 1fr;gap:32px}
+  .eyebrow{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);font-weight:500;margin-bottom:14px}
+  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .tile{background:#FFF;border:1px solid var(--border-default);aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:10px;color:var(--text-secondary)}
+  .stile{background:#FFF;padding:18px;font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);display:flex;align-items:center;justify-content:center}
+</style></head>
+<body><div class="wrap">
+<div>
+  <div class="eyebrow">Radius — sharp by default</div>
+  <div class="row">
+    <div class="tile" style="border-radius:0">0</div>
+    <div class="tile" style="border-radius:2px">2 · sm</div>
+    <div class="tile" style="border-radius:6px">6 · lg</div>
+    <div class="tile" style="border-radius:9999px;aspect-ratio:1/1">full</div>
+  </div>
+</div>
+<div>
+  <div class="eyebrow">Shadow — borders do the work</div>
+  <div class="row">
+    <div class="stile" style="box-shadow:none;border:1px solid var(--border-default)">none</div>
+    <div class="stile" style="box-shadow:0 1px 2px 0 rgb(0 0 0 / 0.04)">sm</div>
+    <div class="stile" style="box-shadow:0 2px 8px 0 rgb(0 0 0 / 0.06)">md</div>
+    <div class="stile" style="box-shadow:0 8px 24px 0 rgb(0 0 0 / 0.10)">lg</div>
+  </div>
+</div>
+</div></body></html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Building detail" subtitle="Hero · facts · body · reviews · related" viewport="1400x3200" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Building detail</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  /* ---- Building detail (screen-specific) ---- */
+  .bldg-hero-wrap{position:relative}
+  .bldg-hero-img{aspect-ratio:21/9;background:var(--surface-muted) center/cover;width:100%}
+  .bldg-hero-tag{position:absolute;left:24px;top:24px;background:rgba(255,255,255,.92);padding:7px 10px;font-size:10px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#171717}
+  .bldg-hero-inner{max-width:1100px;margin:0 auto;padding:48px 32px 0}
+  .bldg-meta-row{display:flex;justify-content:space-between;align-items:flex-end;margin-top:40px;gap:32px;flex-wrap:wrap}
+  .bldg-titles{flex:1;min-width:320px}
+  .bldg-name{font-size:clamp(48px,7vw,92px);font-weight:700;letter-spacing:-0.035em;line-height:.95;margin:8px 0 0}
+  .bldg-arch{margin-top:18px;font-size:18px;color:var(--text-secondary)}
+  .bldg-arch a{border-bottom:1px solid var(--border-default);padding-bottom:2px;color:var(--text-primary)}
+  .bldg-actions{display:flex;gap:12px;align-items:center}
+
+  .bldg-facts{margin-top:56px;border-top:1px solid var(--border-default);border-bottom:1px solid var(--border-default);display:grid;grid-template-columns:repeat(6,1fr);gap:0}
+  .fact{padding:20px 20px 20px 0;border-right:1px solid var(--border-default)}
+  .fact:last-child{border-right:0}
+  .fact-l{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);font-weight:500}
+  .fact-v{font-size:15px;color:var(--text-primary);margin-top:8px;font-weight:500;line-height:1.35}
+  .fact-v.mono{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.02em;font-weight:400}
+
+  .bldg-body{margin-top:64px;display:grid;grid-template-columns:220px 1fr;gap:64px}
+  .bldg-body-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);font-weight:500}
+  .bldg-body-text{font-size:18px;line-height:1.75;color:var(--text-primary);max-width:60ch}
+  .bldg-body-text p{margin:0 0 1.2em}
+
+  /* Editorial stream feature image — slotted between sections */
+  .feature-img{margin-top:80px}
+  .feature-img-frame{aspect-ratio:16/9;background:var(--surface-muted) center/cover;width:100%}
+  .feature-credit{margin-top:12px;display:flex;justify-content:space-between;align-items:baseline;font-size:11px;color:var(--text-secondary)}
+  .feature-credit-by{font-size:13px;color:var(--text-primary)}
+
+  /* Review list */
+  .reviews{margin-top:96px}
+  .review-head{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:18px;border-bottom:1px solid var(--border-default)}
+  .review-head h2{font-size:28px;font-weight:600;letter-spacing:-0.02em;margin:0}
+  .review{padding:40px 0;border-bottom:1px solid var(--border-default);display:grid;grid-template-columns:240px 1fr;gap:56px}
+  .review-who{display:flex;gap:14px;align-items:flex-start}
+  .avatar-lg{width:44px;height:44px;border:1px solid var(--border-default);background:var(--surface-muted);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--text-secondary);flex-shrink:0}
+  .review-name{font-size:17px;font-weight:600;letter-spacing:-0.01em;color:var(--text-primary)}
+  .review-when{font-size:11px;color:var(--text-secondary);margin-top:4px;letter-spacing:.08em;text-transform:uppercase;font-weight:500}
+  .review-rating{margin-top:8px}
+  .review-body{font-size:17px;line-height:1.75;color:var(--text-primary)}
+  .review-body .verified{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);margin-left:8px;vertical-align:middle}
+  .review-body .verified::before{content:"";width:6px;height:6px;background:#171717;display:inline-block}
+
+  /* Related */
+  .related{margin-top:96px}
+  .related-head{margin-bottom:28px}
+  .related-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  .rc{cursor:pointer}
+  .rc-img{aspect-ratio:4/3;background:var(--surface-muted) center/cover}
+  .rc-eyebrow{margin-top:14px}
+  .rc-name{font-size:22px;font-weight:700;letter-spacing:-0.02em;margin:6px 0 4px;line-height:1.1}
+  .rc-meta{font-size:12px;color:var(--text-secondary)}
+
+  @media (max-width: 900px){
+    .bldg-facts{grid-template-columns:repeat(3,1fr)}
+    .bldg-body,.review{grid-template-columns:1fr;gap:24px}
+    .related-grid{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { AppTopNav, SiteFooter } = window.PlanoDesignSystem_e8d587;
+
+const Building = () => (
+  <div className="bldg-hero">
+    <div className="bldg-hero-wrap">
+      <div className="bldg-hero-img" style={{backgroundImage:`url(${IMG.villa})`}}/>
+      <span className="bldg-hero-tag">Official · Fondation Le Corbusier</span>
+    </div>
+    <div className="bldg-hero-inner">
+      <div className="bldg-meta-row">
+        <div className="bldg-titles">
+          <div className="eyebrow">BUILDING</div>
+          <h1 className="bldg-name">Villa Savoye</h1>
+          <div className="bldg-arch">By <a>Le Corbusier</a> & <a>Pierre Jeanneret</a>, completed 1931.</div>
+        </div>
+        <div className="bldg-actions">
+          <button className="btn btn-outline">Save</button>
+          <button className="btn btn-primary">Log visit</button>
+        </div>
+      </div>
+
+      <div className="bldg-facts">
+        <div className="fact"><div className="fact-l">Location</div><div className="fact-v">Poissy, FR</div></div>
+        <div className="fact"><div className="fact-l">Coordinates</div><div className="fact-v mono">48.9244° N<br/>02.0280° E</div></div>
+        <div className="fact"><div className="fact-l">Typology</div><div className="fact-v">Private residence</div></div>
+        <div className="fact"><div className="fact-l">Style</div><div className="fact-v">International</div></div>
+        <div className="fact"><div className="fact-l">Status</div><div className="fact-v">Museum · Open</div></div>
+        <div className="fact"><div className="fact-l">Plano Rank</div><div className="fact-v">Top 1%</div></div>
+      </div>
+
+      <div className="bldg-body">
+        <div>
+          <div className="bldg-body-label">ABOUT</div>
+          <div style={{marginTop:18,fontSize:13,color:"var(--text-secondary)",lineHeight:1.8}}>
+            UNESCO-listed since 2016. A manifesto for the <em style={{fontStyle:"italic",color:"var(--text-primary)"}}>Five Points</em> of modern architecture: pilotis, flat roof terrace, open plan, horizontal windows, free facade.
+          </div>
+        </div>
+        <div className="bldg-body-text">
+          <p>Villa Savoye is arguably the most complete and resolved statement of Le Corbusier's early thesis. Commissioned by Pierre and Eugénie Savoye as a weekend retreat outside Paris, the house elevates domestic life on slender concrete pilotis, releases the ground for cars to circulate beneath, and delivers the family to a ribbon-windowed <em>piano nobile</em> that opens — via ramp — to a rooftop solarium.</p>
+          <p>It is a house that argues. Every element declares its structural logic: the columns are not decorated, the walls are not load-bearing, the roof is not pitched. What began as an experiment became a template.</p>
+        </div>
+      </div>
+
+      {/* Editorial stream — featured community image */}
+      <section className="feature-img">
+        <div className="feature-img-frame" style={{backgroundImage:`url(${IMG.salk})`}}/>
+        <div className="feature-credit">
+          <span className="feature-credit-by">Ground floor, morning light. — <strong style={{fontWeight:600}}>Claire Bergström</strong></span>
+          <span>♥ 84</span>
+        </div>
+      </section>
+
+      <section className="reviews">
+        <div className="review-head">
+          <h2>Reviews · 142</h2>
+          <div className="eyebrow">FOLLOWING 3 · ALL 142</div>
+        </div>
+
+        <div className="review">
+          <div className="review-who">
+            <div className="avatar-lg">EO</div>
+            <div>
+              <div className="review-name">Eleanor Okafor</div>
+              <div className="review-when">Visited · Jun 2024</div>
+              <div className="review-rating"><Rating n={3}/></div>
+            </div>
+          </div>
+          <div className="review-body">
+            Walking the ramp from ground to roof garden is an argument about how a house becomes a promenade. Every threshold is resolved; nothing is wasted. A masterpiece in the old sense of the word — a demonstration piece by a master at the height of his powers.
+          </div>
+        </div>
+
+        <div className="review">
+          <div className="review-who">
+            <div className="avatar-lg" style={{background:"#404040",color:"#fff"}}>MR</div>
+            <div>
+              <div className="review-name">Marco Rizzi <span className="verified">Verified architect</span></div>
+              <div className="review-when">Visited · Apr 2024</div>
+              <div className="review-rating"><Rating n={2}/></div>
+            </div>
+          </div>
+          <div className="review-body">
+            Essential, yes — every architect should make the pilgrimage at least once. But the house has become a monument to itself, and the tourist flow changes how you experience the space. Go early, go mid-week.
+          </div>
+        </div>
+
+        <div className="review" style={{borderBottom:0}}>
+          <div className="review-who">
+            <div className="avatar-lg" style={{background:"#737373",color:"#fff"}}>CB</div>
+            <div>
+              <div className="review-name">Claire Bergström</div>
+              <div className="review-when">Visited · Sep 2023</div>
+              <div className="review-rating"><Rating n={3}/></div>
+            </div>
+          </div>
+          <div className="review-body">
+            The bathroom chaise is still my favourite piece of residential architecture ever built. Everything about it — the scale, the tile, the light — feels like it was placed there specifically for me, ninety years before I arrived.
+          </div>
+        </div>
+
+        <div style={{marginTop:24,display:"flex",justifyContent:"center"}}>
+          <button className="cta">Show all 142 reviews <span className="ar">→</span></button>
+        </div>
+      </section>
+
+      <section className="related">
+        <div className="related-head">
+          <div className="eyebrow">MORE FROM LE CORBUSIER</div>
+        </div>
+        <div className="related-grid">
+          {[
+            {img:IMG.unite, t:"Unité d'Habitation", s:"Marseille · 1952"},
+            {img:IMG.kimbell, t:"Chapelle Ronchamp", s:"Ronchamp · 1955"},
+            {img:IMG.sagrada, t:"Couvent Sainte-Marie", s:"Éveux · 1960"},
+          ].map((c,i) => (
+            <div key={i} className="rc">
+              <div className="rc-img" style={{backgroundImage:`url(${c.img})`}}/>
+              <div className="rc-eyebrow eyebrow">BUILDING</div>
+              <div className="rc-name">{c.t}</div>
+              <div className="rc-meta">{c.s}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  </div>
+);
+
+function App(){
+  return (
+    <div data-screen-label="Building detail">
+      <AppTopNav activePath="/buildings" userInitial="J"/>
+      <Building/>
+      <SiteFooter/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

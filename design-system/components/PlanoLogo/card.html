@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Chrome" name="Plano wordmark" subtitle="PlanoLogo — currentColor, never lime" viewport="720x360" -->
+<html lang="en"><head><meta charset="UTF-8"><title>PlanoLogo</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>
+  html,body{margin:0;padding:0;background:var(--surface-default);font-family:var(--font-sans);color:var(--text-primary)}
+  .wrap{padding:40px;display:flex;flex-direction:column;gap:28px}
+  .eyebrow{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);font-weight:500;margin-bottom:16px}
+  .row{display:flex;align-items:baseline;gap:40px;flex-wrap:wrap}
+  .invert{background:#000;color:#fff;padding:28px 40px;display:flex;align-items:center;gap:40px}
+</style></head>
+<body><div class="wrap">
+  <div>
+    <div class="eyebrow">Scale — inherits size &amp; colour from context</div>
+    <div class="row" id="scales"></div>
+  </div>
+  <div>
+    <div class="eyebrow">On the inverted surface</div>
+    <div class="invert" id="invert"></div>
+  </div>
+</div>
+<script>
+  const { PlanoLogo } = window.PlanoDesignSystem_e8d587;
+  const h = React.createElement;
+  ReactDOM.createRoot(document.getElementById('scales')).render(
+    h(React.Fragment, null,
+      h(PlanoLogo, { size: 20 }),
+      h(PlanoLogo, { size: 32 }),
+      h(PlanoLogo, { size: 56 }),
+    )
+  );
+  ReactDOM.createRoot(document.getElementById('invert')).render(
+    h(React.Fragment, null,
+      h(PlanoLogo, { size: 24 }),
+      h(PlanoLogo, { size: 40 }),
+    )
+  );
+</script>
+</body></html>

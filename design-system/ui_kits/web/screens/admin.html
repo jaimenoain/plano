@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Admin" subtitle="Moderation console — review queue, bulk actions, table" viewport="1400x1600" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Admin</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  /* ---- Admin console (screen-specific) ---- */
+  .admin-shell{display:grid;grid-template-columns:236px 1fr;min-height:calc(100vh - 64px)}
+  .admin-nav{border-right:1px solid var(--border-default);background:var(--surface-card);padding:28px 16px}
+  .admin-nav-group{margin-bottom:28px}
+  .admin-nav-h{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-disabled);padding:0 12px;margin-bottom:8px}
+  .admin-nav-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;font-size:14px;color:var(--text-secondary);border-radius:2px;cursor:pointer}
+  .admin-nav-item:hover{background:var(--surface-muted);color:var(--text-primary)}
+  .admin-nav-item.active{background:#171717;color:#fff}
+  .admin-nav-item .count{font-family:'Space Mono',monospace;font-size:11px;opacity:.8}
+  .admin-nav-item.active .count{color:#BEFF00}
+
+  .admin-main{padding:36px 40px 80px;max-width:1120px}
+  .admin-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:8px}
+  .admin-title{font-size:34px;font-weight:700;letter-spacing:-0.03em;margin:6px 0 0;line-height:1}
+  .admin-sub{font-size:14px;color:var(--text-secondary);margin-top:10px}
+
+  .filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:28px 0 18px;padding-bottom:18px;border-bottom:1px solid var(--border-default)}
+  .search-inline{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid var(--border-default);background:#fff;border-radius:2px;min-width:260px;color:var(--text-disabled)}
+  .search-inline input{border:0;outline:0;background:none;font-size:14px;color:var(--text-primary);width:100%}
+  .spacer{flex:1}
+
+  table.tbl{width:100%;border-collapse:collapse;font-size:14px}
+  .tbl thead th{text-align:left;font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-disabled);padding:0 16px 12px;border-bottom:1px solid var(--border-default);white-space:nowrap}
+  .tbl tbody td{padding:16px;border-bottom:1px solid var(--border-default);vertical-align:middle;color:var(--text-primary)}
+  .tbl tbody tr:hover{background:var(--surface-muted)}
+  .tbl .col-check{width:20px;padding-right:0}
+  .cbx{width:16px;height:16px;border:1px solid var(--border-strong);border-radius:2px;background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#fff}
+  .cbx.on{background:#171717;border-color:#171717}
+  .cell-entity{display:flex;align-items:center;gap:12px}
+  .thumb{width:40px;height:40px;background:var(--surface-muted);flex-shrink:0;background-size:cover;background-position:center}
+  .cell-entity .n{font-size:14px;font-weight:600;letter-spacing:-.01em;color:var(--text-primary)}
+  .cell-entity .s{font-size:12px;color:var(--text-secondary);margin-top:2px}
+  .muted{color:var(--text-secondary)}
+  .mono-sm{font-family:'Space Mono',monospace;font-size:12px;color:var(--text-secondary)}
+  .row-actions{display:flex;gap:4px;justify-content:flex-end}
+  .ibtn{width:30px;height:30px;border:0;background:none;border-radius:2px;color:var(--text-secondary);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+  .ibtn:hover{background:#fff;color:var(--text-primary);box-shadow:inset 0 0 0 1px var(--border-default)}
+
+  .pager{display:flex;justify-content:space-between;align-items:center;margin-top:22px;font-size:13px;color:var(--text-secondary)}
+  .pager-btns{display:flex;gap:6px}
+
+  .bulkbar{display:flex;align-items:center;gap:16px;background:#171717;color:#fff;padding:12px 18px;border-radius:2px;margin-bottom:16px}
+  .bulkbar .lbl{font-size:13px;font-weight:500}
+  .bulkbar .cta{color:#fff}
+  .bulkbar .cta:hover{color:rgba(255,255,255,.6)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+const { AppTopNav } = window.PlanoDesignSystem_e8d587;
+
+const NAV = {
+  Moderation:[["Review queue",42,true],["Flagged images",8],["Reports",3]],
+  Catalogue:[["Buildings",null],["Architects",null],["Collections",null]],
+  People:[["Users",null],["Verifications",5],["Ambassadors",null]],
+};
+const MOD_ROWS = [
+  {img:IMG.barbican, n:"Barbican Centre", s:"London · added by e.okafor", by:"Eleanor Okafor", when:"2h ago", rating:2, status:["warn","Needs review"]},
+  {img:IMG.therme, n:"Therme Vals", s:"Vals, CH · added by j.noain", by:"Jaime Noain", when:"5h ago", rating:0, status:["idle","Draft"]},
+  {img:IMG.salk, n:"Salk Institute", s:"La Jolla · edit to facts", by:"Claire Bergström", when:"1d ago", rating:3, status:["ok","Approved"]},
+  {img:IMG.kimbell, n:"Kimbell Art Museum", s:"Fort Worth · new photos ×6", by:"Marco Rizzi", when:"1d ago", rating:2, status:["warn","Needs review"]},
+  {img:IMG.sydney, n:"Sydney Opera House", s:"duplicate flagged", by:"System", when:"2d ago", rating:0, status:["bad","Duplicate"]},
+  {img:IMG.unite, n:"Unité d'Habitation", s:"Marseille · architect merge", by:"Eleanor Okafor", when:"3d ago", rating:3, status:["ok","Approved"]},
+];
+const Admin = () => {
+  const [active, setActive] = useState("Review queue");
+  const [sel, setSel] = useState([0,3]);
+  const [filter, setFilter] = useState("needs");
+  const toggle = (i)=> setSel(s => s.includes(i) ? s.filter(x=>x!==i) : [...s,i]);
+  const allOn = sel.length === MOD_ROWS.length;
+  return (
+    <div className="admin-shell">
+      <aside className="admin-nav">
+        {Object.entries(NAV).map(([grp, items])=>(
+          <div className="admin-nav-group" key={grp}>
+            <div className="admin-nav-h">{grp}</div>
+            {items.map(([label,count])=>(
+              <div key={label} className={`admin-nav-item ${active===label?'active':''}`} onClick={()=>setActive(label)}>
+                <span>{label}</span>
+                {count!=null && <span className="count">{count}</span>}
+              </div>
+            ))}
+          </div>
+        ))}
+      </aside>
+      <main className="admin-main">
+        <div className="admin-head">
+          <div>
+            <div className="eyebrow">ADMIN · MODERATION</div>
+            <h1 className="admin-title">Review queue</h1>
+            <div className="admin-sub">42 submissions awaiting a decision · newest first</div>
+          </div>
+          <button className="btn btn-primary">Approve selected</button>
+        </div>
+
+        <div className="filter-bar">
+          <div className="search-inline"><Icon name="search" size={16}/><input placeholder="Search submissions"/></div>
+          <button className={`chip ${filter==='needs'?'on':''}`} onClick={()=>setFilter("needs")}>Needs review</button>
+          <button className={`chip ${filter==='drafts'?'on':''}`} onClick={()=>setFilter("drafts")}>Drafts</button>
+          <button className={`chip ${filter==='dupes'?'on':''}`} onClick={()=>setFilter("dupes")}>Duplicates</button>
+          <div className="spacer"/>
+          <button className="chip"><Icon name="filter" size={14}/> All cities <Icon name="chevdown" size={14}/></button>
+        </div>
+
+        {sel.length>0 && (
+          <div className="bulkbar">
+            <span className="lbl">{sel.length} selected</span>
+            <button className="cta">Approve <span className="ar">→</span></button>
+            <button className="cta">Merge <span className="ar">→</span></button>
+            <button className="cta">Reject <span className="ar">→</span></button>
+            <div style={{flex:1}}/>
+            <button className="cta" onClick={()=>setSel([])}>Clear</button>
+          </div>
+        )}
+
+        <table className="tbl">
+          <thead>
+            <tr>
+              <th className="col-check">
+                <span className={`cbx ${allOn?'on':''}`} onClick={()=>setSel(allOn?[]:MOD_ROWS.map((_,i)=>i))}>{allOn && <Icon name="check" size={12}/>}</span>
+              </th>
+              <th>Submission</th>
+              <th>Rating</th>
+              <th>Contributor</th>
+              <th>Status</th>
+              <th>Submitted</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {MOD_ROWS.map((r,i)=>(
+              <tr key={i}>
+                <td className="col-check">
+                  <span className={`cbx ${sel.includes(i)?'on':''}`} onClick={()=>toggle(i)}>{sel.includes(i) && <Icon name="check" size={12}/>}</span>
+                </td>
+                <td>
+                  <div className="cell-entity">
+                    <div className="thumb" style={{backgroundImage:`url(${r.img})`}}/>
+                    <div><div className="n">{r.n}</div><div className="s">{r.s}</div></div>
+                  </div>
+                </td>
+                <td>{r.rating>0 ? <Rating n={r.rating} size="sm"/> : <span className="muted">—</span>}</td>
+                <td className="muted">{r.by}</td>
+                <td><span className="status"><span className={`sdot ${r.status[0]}`}/>{r.status[1]}</span></td>
+                <td className="mono-sm">{r.when}</td>
+                <td>
+                  <div className="row-actions">
+                    <button className="ibtn" title="Edit"><Icon name="edit" size={16}/></button>
+                    <button className="ibtn" title="Open"><Icon name="external" size={16}/></button>
+                    <button className="ibtn" title="Reject"><Icon name="trash" size={16}/></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="pager">
+          <span>Showing 1–6 of 42</span>
+          <div className="pager-btns">
+            <button className="btn btn-outline btn-sm" disabled>Previous</button>
+            <button className="btn btn-outline btn-sm">Next</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+function App(){
+  return (
+    <div data-screen-label="Admin">
+      <AppTopNav activePath="/admin" userInitial="J"/>
+      <Admin/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

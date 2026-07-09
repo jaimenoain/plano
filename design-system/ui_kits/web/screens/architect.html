@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Architect profile" subtitle="Verified person page — bio, stats, credits" viewport="1400x2600" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Architect profile</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  /* Rating dots */
+  .rdots{display:inline-flex;gap:4px;vertical-align:middle;align-items:center}
+  .rdot{width:11px;height:11px;border-radius:9999px;background:#171717;display:inline-block}
+  .rdot.sm{width:8px;height:8px}
+  .screen{max-width:1360px;margin:0 auto}
+
+  /* Photo placeholders — on-brand hatch + mono caption (awaiting art) */
+  .ph{position:relative;background-color:var(--surface-muted);background-image:repeating-linear-gradient(135deg,transparent 0 11px,rgba(0,0,0,.035) 11px 12px);display:flex;align-items:flex-end;overflow:hidden}
+  .ph::after{content:attr(data-label);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-disabled);padding:12px 14px;line-height:1.3}
+
+  /* ============ ARCHITECT / PERSON PROFILE ============ */
+  .doc{max-width:896px;margin:0 auto;padding:36px 32px 96px}
+  .backrow{margin-bottom:36px}
+  .p-head{border-bottom:1px solid var(--border-default);padding-bottom:44px;display:flex;flex-direction:row-reverse;gap:48px;align-items:flex-start}
+  .p-avatar{width:160px;height:160px;flex-shrink:0;border:1px solid var(--border-default);background-size:cover;background-position:center;filter:grayscale(1) contrast(1.02)}
+  .p-headmain{flex:1;min-width:0}
+  .p-namerow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .p-name{font-size:60px;font-weight:700;letter-spacing:-.04em;line-height:.92;margin:0;color:var(--text-primary)}
+  .p-badge{color:var(--text-primary);display:inline-flex}
+  .p-metarow{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:20px;font-size:14px;color:var(--text-secondary)}
+  .p-metarow .mono{font-family:'Space Mono',monospace;font-size:12px}
+  .p-web{margin-top:20px}
+  .p-bio{margin-top:24px;font-size:18px;line-height:1.7;color:var(--text-secondary);max-width:60ch}
+  .p-stats{display:flex;gap:0;margin-top:32px;border-top:1px solid var(--border-default)}
+  .p-stat{padding:20px 32px 0 0;margin-right:32px;border-right:1px solid var(--border-default)}
+  .p-stat:last-child{border-right:0}
+  .p-stat .v{font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1}
+  .p-stat .l{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);margin-top:8px}
+
+  .credits-sec{margin-top:56px}
+  .credits-h{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:4px;display:flex;justify-content:space-between;align-items:baseline}
+  .credits-h .n{font-family:'Space Mono',monospace;font-size:11px;color:var(--text-disabled)}
+  .credit{display:grid;grid-template-columns:120px 1fr auto;gap:24px;align-items:center;padding:22px 0;border-bottom:1px solid var(--border-default);cursor:pointer}
+  .credit:hover .c-name{color:var(--text-secondary)}
+  .credit:hover .c-thumb{filter:grayscale(0)}
+  .c-thumb{width:120px;height:84px;background-size:cover;background-position:center;flex-shrink:0;filter:grayscale(1);transition:filter 200ms}
+  .c-body{min-width:0}
+  .c-role{font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
+  .c-name{font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1.05;margin:6px 0 0;color:var(--text-primary);transition:color 150ms}
+  .c-loc{font-size:13px;color:var(--text-secondary);margin-top:6px}
+  .c-right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+  .c-year{font-family:'Space Mono',monospace;font-size:12px;color:var(--text-secondary)}
+
+  @media (max-width:900px){
+    .p-head{flex-direction:column}
+    .p-name{font-size:44px}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { AppTopNav, SiteFooter } = window.PlanoDesignSystem_e8d587;
+
+const Rating = ({n}) => {
+  if (!n || n < 1) return null;
+  return <span className="rdots">{Array.from({length:n}).map((_,i)=><i key={i} className="rdot"/>)}</span>;
+};
+const BadgeCheck = ({size=32}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/>
+    <path d="m9 12 2 2 4-4"/>
+  </svg>
+);
+const Ext = () => (<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>);
+
+const IMG = {
+  villa:"https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1400&q=80",
+  unite:"https://images.unsplash.com/photo-1459767129954-1b1c1f9b9ace?w=1400&q=80",
+  chapel:"https://images.unsplash.com/photo-1524230572899-a752b3835840?w=1400&q=80",
+  firminy:"https://images.unsplash.com/photo-1494145904049-0dca59b4bbad?w=1400&q=80",
+  salk:"https://images.unsplash.com/photo-1497604401993-f2e922e5cb0a?w=1400&q=80",
+};
+
+const CREDITS_PRIMARY = [
+  {img:IMG.villa, role:"Architect", name:"Villa Savoye", loc:"Poissy, France", year:"1931", rating:3},
+  {img:IMG.unite, role:"Architect", name:"Unité d'Habitation", loc:"Marseille, France", year:"1952", rating:3},
+  {img:IMG.chapel, role:"Architect", name:"Notre-Dame du Haut", loc:"Ronchamp, France", year:"1955", rating:3},
+  {img:IMG.firminy, role:"Architect", name:"Saint-Pierre", loc:"Firminy, France", year:"2006", rating:2},
+];
+const CREDITS_CONTRIB = [
+  {img:IMG.salk, role:"Master plan · consultant", name:"Chandigarh Capitol Complex", loc:"Chandigarh, India", year:"1953", rating:2},
+];
+
+const Credit = ({c}) => (
+  <div className="credit">
+    <div className="c-thumb ph" data-label={c.name}/>
+    <div className="c-body">
+      <div className="c-role">{c.role}</div>
+      <div className="c-name">{c.name}</div>
+      <div className="c-loc">{c.loc}</div>
+    </div>
+    <div className="c-right">
+      <Rating n={c.rating}/>
+      <span className="c-year">{c.year}</span>
+    </div>
+  </div>
+);
+
+const Architect = () => (
+  <div className="screen">
+    <div className="doc">
+      <div className="backrow"><button className="cta">← All architects</button></div>
+
+      <header className="p-head">
+        <div className="p-avatar ph" data-label="Portrait"/>
+        <div className="p-headmain">
+          <div className="p-namerow">
+            <h1 className="p-name">Le Corbusier</h1>
+            <span className="p-badge" title="Identity verified by Plano"><BadgeCheck size={34}/></span>
+          </div>
+          <div className="p-metarow">
+            <span>Swiss–French</span>
+            <span className="mono">1887–1965</span>
+            <span>Born La Chaux-de-Fonds</span>
+          </div>
+          <div className="p-web"><a className="cta" href="#" onClick={e=>e.preventDefault()}>Website <Ext/></a></div>
+          <p className="p-bio">
+            Pioneer of modern architecture and a founder of the International Style. His Five Points
+            reframed the house as a machine for living — pilotis, free plan, free façade, ribbon
+            windows, roof garden — and reshaped a century of cities.
+          </p>
+          <div className="p-stats">
+            <div className="p-stat"><div className="v">17</div><div className="l">Buildings</div></div>
+            <div className="p-stat"><div className="v">11</div><div className="l">UNESCO sites</div></div>
+            <div className="p-stat"><div className="v">2.4k</div><div className="l">Visits logged</div></div>
+          </div>
+        </div>
+      </header>
+
+      <section className="credits-sec">
+        <div className="credits-h"><span>Primary credits</span><span className="n">04</span></div>
+        {CREDITS_PRIMARY.map((c,i)=><Credit key={i} c={c}/>)}
+      </section>
+
+      <section className="credits-sec">
+        <div className="credits-h"><span>Contributor credits</span><span className="n">01</span></div>
+        {CREDITS_CONTRIB.map((c,i)=><Credit key={i} c={c}/>)}
+      </section>
+    </div>
+  </div>
+);
+
+function App(){
+  return (
+    <div data-screen-label="Architect profile">
+      <AppTopNav activePath="/architects" userInitial="J"/>
+      <Architect/>
+      <SiteFooter/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

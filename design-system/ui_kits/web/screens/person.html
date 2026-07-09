@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Person credits" subtitle="Editable architect page — verified, bio, tiered credits" viewport="1400x2000" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Person credits</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  .doc{max-width:896px;margin:0 auto;padding:0 32px}
+  .sec-label{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .role-badge{font-size:11px;font-weight:500;padding:3px 9px;border:1px solid var(--border-default);border-radius:2px;color:var(--text-primary)}
+  .cta-quiet{color:var(--text-secondary)}
+  .cta-quiet:hover{color:var(--text-primary)}
+
+  /* ============ CREDITS (person / company) ============ */
+  .cr-head{border-bottom:1px solid var(--border-default);padding-bottom:40px}
+  .cr-head-in{display:flex;flex-direction:row-reverse;align-items:flex-start;gap:48px}
+  .cr-name{font-size:clamp(40px,6vw,64px);font-weight:700;letter-spacing:-.04em;line-height:.95;margin:0;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .cr-verify{color:var(--text-primary);flex-shrink:0}
+  .cr-meta{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:14px;color:var(--text-secondary);margin-top:18px}
+  .cr-bio{max-width:640px;font-size:16px;line-height:1.7;color:var(--text-secondary);margin-top:18px}
+  .cr-portrait{width:160px;height:160px;background-size:cover;background-position:center;filter:grayscale(1);border:1px solid var(--border-default);flex-shrink:0}
+  .cr-portrait.round{border-radius:9999px}
+  .cr-tier-h{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);margin:48px 0 6px}
+  .credit{display:flex;gap:24px;padding:26px 0;border-bottom:1px solid var(--border-default)}
+  .credit:last-child{border-bottom:0}
+  .credit .ph{width:168px;aspect-ratio:4/3;background-size:cover;background-position:center;filter:grayscale(1);flex-shrink:0;cursor:pointer;transition:filter 200ms}
+  .credit:hover .ph{filter:grayscale(0)}
+  .credit-name{font-size:19px;font-weight:600;letter-spacing:-.01em}
+  .credit-loc{font-size:14px;color:var(--text-secondary);margin-top:3px}
+  .credit-tags{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:12px}
+  .credit-firm{font-size:13px;color:var(--text-secondary)}
+  .credit-note{font-size:14px;line-height:1.6;color:var(--text-secondary);margin-top:12px;max-width:60ch}
+
+  @media (max-width:760px){ .cr-head-in{flex-direction:column} .credit{flex-direction:column} .credit .ph{width:100%} }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { AppTopNav, SiteFooter } = window.PlanoDesignSystem_e8d587;
+
+Object.assign(PLANO_ICONS, {
+  pencil:'<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>',
+});
+
+const IMG = {
+  barbican:"https://images.unsplash.com/photo-1470723710355-95304d8aece4?w=900&q=80",
+  concrete:"https://images.unsplash.com/photo-1511818966892-d7d671e672a2?w=900&q=80",
+  tower:"https://images.unsplash.com/photo-1486718448742-163732cd1544?w=900&q=80",
+  p6:"https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&q=80",
+};
+
+const PRIMARY_CREDITS = [
+  {name:"Barbican Estate",loc:"London, United Kingdom · Completed 1976",role:"Lead architect",firm:"Chamberlin, Powell & Bon",img:IMG.barbican,note:"Masterplan, towers, and the elevated pedestrian network across the 40-acre estate."},
+  {name:"National Theatre",loc:"London, United Kingdom · Completed 1976",role:"Design architect",firm:"Denys Lasdun & Partners",img:IMG.concrete},
+];
+const CONTRIB_CREDITS = [
+  {name:"Trellick Tower",loc:"London, United Kingdom · Completed 1972",role:"Consulting architect",firm:null,img:IMG.tower},
+];
+
+const Credit = ({c}) => (
+  <article className="credit">
+    <div className="ph" style={{backgroundImage:`url(${c.img})`}}/>
+    <div style={{minWidth:0,flex:1}}>
+      <div className="credit-name">{c.name}</div>
+      <div className="credit-loc">{c.loc}</div>
+      <div className="credit-tags">
+        <span className="role-badge">{c.role}</span>
+        {c.firm && <span className="credit-firm">{c.firm}</span>}
+      </div>
+      {c.note && <p className="credit-note">{c.note}</p>}
+    </div>
+  </article>
+);
+
+const Person = () => (
+  <div className="doc" style={{paddingTop:44,paddingBottom:96}}>
+    <button className="cta cta-quiet" style={{marginBottom:32}}>← Back</button>
+    <header className="cr-head">
+      <div className="cr-head-in">
+        <div className="cr-portrait round" style={{backgroundImage:`url(${IMG.p6})`}}/>
+        <div style={{minWidth:0,flex:1}}>
+          <div style={{display:"flex",justifyContent:"space-between",gap:16,alignItems:"flex-start"}}>
+            <h1 className="cr-name">Peter Chamberlin <span className="cr-verify"><BadgeCheck size={30}/></span></h1>
+            <button className="btn btn-outline btn-sm" style={{flexShrink:0}}><Icon name="pencil" size={14}/> Edit</button>
+          </div>
+          <div className="cr-meta"><span>British</span><span>1919–1978</span><span>London, United Kingdom</span></div>
+          <button className="cta" style={{marginTop:16}}>Website <span className="ar" style={{transform:"none"}}><Icon name="external" size={12}/></span></button>
+          <p className="cr-bio">Co-founder of Chamberlin, Powell &amp; Bon. Best known for the Barbican Estate and the Golden Lane Estate — dense, humane concrete cities-within-the-city that defined postwar London.</p>
+        </div>
+      </div>
+    </header>
+
+    <div style={{marginTop:36}}>
+      <div className="sec-label">Credits</div>
+      <div className="cr-tier-h">Primary credits</div>
+      <div>{PRIMARY_CREDITS.map((c,i)=><Credit key={i} c={c}/>)}</div>
+      <div className="cr-tier-h">Contributor credits</div>
+      <div>{CONTRIB_CREDITS.map((c,i)=><Credit key={i} c={c}/>)}</div>
+    </div>
+  </div>
+);
+
+function App(){
+  return (
+    <div data-screen-label="Person credits">
+      <AppTopNav activePath="/architects" userInitial="J"/>
+      <Person/>
+      <SiteFooter/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

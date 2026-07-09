@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="States" subtitle="Empty · loading skeleton · error (404)" viewport="1400x1100" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — States</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  /* ---- States (screen-specific) ---- */
+  .states-wrap{max-width:1100px;margin:0 auto;padding:48px 32px 120px;display:flex;flex-direction:column;gap:24px}
+  .states-row{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .panel{border:1px solid var(--border-default);background:var(--surface-card);border-radius:2px;overflow:hidden}
+  .panel-h{padding:14px 20px;border-bottom:1px solid var(--border-default);font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-disabled)}
+  .panel-body{padding:56px 40px;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .empty-mark{width:56px;height:56px;border:1.5px solid var(--border-strong);border-radius:9999px;display:flex;align-items:center;justify-content:center;color:var(--text-disabled);margin-bottom:22px}
+  .empty-t{font-size:22px;font-weight:600;letter-spacing:-.02em}
+  .empty-p{font-size:14px;color:var(--text-secondary);margin-top:10px;max-width:38ch;line-height:1.6}
+  .empty-cta{margin-top:24px}
+  .err-code{font-family:'Space Mono',monospace;font-size:13px;letter-spacing:.1em;color:var(--text-disabled)}
+  .err-t{font-size:clamp(44px,7vw,84px);font-weight:700;letter-spacing:-.04em;line-height:.9;margin:14px 0 0}
+
+  /* skeleton */
+  .sk-body{padding:28px 32px}
+  .sk{background:linear-gradient(90deg,#f0f0f0 25%,#e6e6e6 37%,#f0f0f0 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite;border-radius:2px}
+  @keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+  .sk-item{display:grid;grid-template-columns:120px 1fr;gap:20px;padding:20px 0;border-bottom:1px solid var(--border-default)}
+  .sk-item:last-child{border-bottom:0}
+
+  @media (max-width:1024px){ .states-row{grid-template-columns:1fr} }
+  @media (prefers-reduced-motion: reduce){ .sk{animation:none} }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { AppTopNav } = window.PlanoDesignSystem_e8d587;
+
+const States = () => (
+  <div className="states-wrap">
+    <div className="states-row">
+      <div className="panel">
+        <div className="panel-h">Empty state — collection</div>
+        <div className="panel-body">
+          <div className="empty-mark"><Icon name="plus" size={24}/></div>
+          <div className="empty-t">No buildings yet</div>
+          <div className="empty-p">Start logging the architecture you visit. Your history becomes a private atlas of what you've seen.</div>
+          <div className="empty-cta"><button className="btn btn-primary">Log your first visit</button></div>
+        </div>
+      </div>
+      <div className="panel">
+        <div className="panel-h">Empty state — search</div>
+        <div className="panel-body">
+          <div className="empty-mark"><Icon name="search" size={22}/></div>
+          <div className="empty-t">Nothing matches "kahn brutalism"</div>
+          <div className="empty-p">Try a broader term, or search by architect, city, or typology instead.</div>
+          <div className="empty-cta"><button className="cta">Clear filters <span className="ar">→</span></button></div>
+        </div>
+      </div>
+    </div>
+
+    <div className="states-row">
+      <div className="panel">
+        <div className="panel-h">Loading — feed skeleton</div>
+        <div className="sk-body">
+          {[0,1,2].map(i=>(
+            <div key={i} className="sk-item">
+              <div className="sk" style={{width:120,height:90}}/>
+              <div style={{display:"flex",flexDirection:"column",gap:10,paddingTop:4}}>
+                <div className="sk" style={{width:"38%",height:11}}/>
+                <div className="sk" style={{width:"72%",height:26}}/>
+                <div className="sk" style={{width:"50%",height:12}}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="panel">
+        <div className="panel-h">Error — 404</div>
+        <div className="panel-body">
+          <div className="err-code">ERROR · 404</div>
+          <div className="err-t">Not built.</div>
+          <div className="empty-p" style={{marginTop:18}}>This page isn't in the catalogue — the link may be broken, or the building was merged into another entry.</div>
+          <div className="empty-cta" style={{display:"flex",gap:10}}>
+            <button className="btn btn-outline"><Icon name="arrowleft" size={16}/> Go back</button>
+            <button className="btn btn-primary">Open the feed</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+function App(){
+  return (
+    <div data-screen-label="States">
+      <AppTopNav activePath="/" userInitial="J"/>
+      <States/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

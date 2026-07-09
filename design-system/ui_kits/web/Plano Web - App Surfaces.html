@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Plano Web — App Surfaces" subtitle="Admin · Search + map · Add building · Profile · States" viewport="1400x3000" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — App Surfaces</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  html,body,#root{margin:0;padding:0;background:var(--surface-default);min-height:100vh}
+  *{box-sizing:border-box}
+  button{font-family:inherit}
+  a{color:inherit;text-decoration:none}
+  img{display:block;max-width:100%}
+  input,textarea,select{font-family:inherit}
+
+  /* ---- Kit chrome ---- */
+  .chrome-tabs{position:sticky;top:0;z-index:60;background:rgba(250,250,250,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-default)}
+  .chrome-inner{max-width:1360px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 32px}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap}
+  .tab{font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;padding:8px 14px;background:none;border:0;color:var(--text-secondary);cursor:pointer;border-radius:2px}
+  .tab:hover{color:var(--text-primary)}
+  .tab.active{background:#171717;color:#fff}
+  .chrome-right{display:flex;gap:10px;align-items:center}
+  .avatar{width:28px;height:28px;border-radius:9999px;background:#262626;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .bell{position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--text-primary);cursor:pointer;border-radius:2px}
+  .bell:hover{background:var(--surface-muted)}
+  .bell .dot{position:absolute;top:7px;right:8px;width:7px;height:7px;border-radius:9999px;background:var(--brand-accent);border:1.5px solid var(--surface-default)}
+
+  /* ---- Buttons ---- */
+  .btn{height:40px;padding:0 16px;border-radius:2px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid transparent;display:inline-flex;align-items:center;gap:8px;line-height:1;transition:background 150ms,color 150ms}
+  .btn-primary{background:#BEFF00;color:#171717}
+  .btn-primary:hover{background:#9ACC00}
+  .btn-outline{background:#fff;color:#171717;border-color:var(--border-default)}
+  .btn-outline:hover{background:var(--surface-muted)}
+  .btn-ghost{background:transparent;color:#171717}
+  .btn-ghost:hover{background:var(--surface-muted)}
+  .btn-dark{background:#171717;color:#fff}
+  .btn-dark:hover{background:#000}
+  .btn-danger{background:#fff;color:var(--feedback-destructive);border-color:var(--border-default)}
+  .btn-danger:hover{background:var(--feedback-destructive);color:#fff;border-color:var(--feedback-destructive)}
+  .btn-sm{height:32px;padding:0 12px;font-size:13px}
+  .btn:disabled{opacity:.5;pointer-events:none}
+
+  /* Editorial CTA */
+  .cta{font-size:12px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:inherit;background:none;border:0;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:6px;transition:color 150ms}
+  .cta:hover{color:var(--text-secondary)}
+  .cta .ar{transition:transform 150ms}
+  .cta:hover .ar{transform:translateX(3px);color:#BEFF00}
+
+  /* Rating dots */
+  .rdots{display:inline-flex;gap:4px;vertical-align:middle;align-items:center}
+  .rdot{width:11px;height:11px;border-radius:9999px;background:#171717;display:inline-block}
+  .rdot.sm{width:8px;height:8px}
+
+  /* Status dots */
+  .sdot{width:9px;height:9px;border-radius:9999px;display:inline-block;flex-shrink:0}
+  .sdot.ok{background:var(--feedback-success)}
+  .sdot.warn{background:var(--feedback-warning)}
+  .sdot.bad{background:var(--feedback-destructive)}
+  .sdot.idle{background:var(--text-disabled)}
+  .status{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--text-primary)}
+
+  .eyebrow{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+
+  /* ============ ADMIN CONSOLE ============ */
+  .admin-shell{display:grid;grid-template-columns:236px 1fr;min-height:calc(100vh - 61px)}
+  .admin-nav{border-right:1px solid var(--border-default);background:var(--surface-card);padding:28px 16px}
+  .admin-nav-group{margin-bottom:28px}
+  .admin-nav-h{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-disabled);padding:0 12px;margin-bottom:8px}
+  .admin-nav-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;font-size:14px;color:var(--text-secondary);border-radius:2px;cursor:pointer}
+  .admin-nav-item:hover{background:var(--surface-muted);color:var(--text-primary)}
+  .admin-nav-item.active{background:#171717;color:#fff}
+  .admin-nav-item .count{font-family:'Space Mono',monospace;font-size:11px;opacity:.8}
+  .admin-nav-item.active .count{color:#BEFF00}
+
+  .admin-main{padding:36px 40px 80px;max-width:1120px}
+  .admin-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:8px}
+  .admin-title{font-size:34px;font-weight:700;letter-spacing:-0.03em;margin:6px 0 0;line-height:1}
+  .admin-sub{font-size:14px;color:var(--text-secondary);margin-top:10px}
+
+  .filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:28px 0 18px;padding-bottom:18px;border-bottom:1px solid var(--border-default)}
+  .search-inline{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid var(--border-default);background:#fff;border-radius:2px;min-width:260px;color:var(--text-disabled)}
+  .search-inline input{border:0;outline:0;background:none;font-size:14px;color:var(--text-primary);width:100%}
+  .chip{height:34px;padding:0 12px;border:1px solid var(--border-default);background:#fff;border-radius:2px;font-size:13px;color:var(--text-secondary);cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+  .chip:hover{border-color:var(--border-strong);color:var(--text-primary)}
+  .chip.on{background:#171717;color:#fff;border-color:#171717}
+  .spacer{flex:1}
+
+  table.tbl{width:100%;border-collapse:collapse;font-size:14px}
+  .tbl thead th{text-align:left;font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-disabled);padding:0 16px 12px;border-bottom:1px solid var(--border-default);white-space:nowrap}
+  .tbl tbody td{padding:16px;border-bottom:1px solid var(--border-default);vertical-align:middle;color:var(--text-primary)}
+  .tbl tbody tr:hover{background:var(--surface-muted)}
+  .tbl .col-check{width:20px;padding-right:0}
+  .cbx{width:16px;height:16px;border:1px solid var(--border-strong);border-radius:2px;background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#fff}
+  .cbx.on{background:#171717;border-color:#171717}
+  .cell-entity{display:flex;align-items:center;gap:12px}
+  .thumb{width:40px;height:40px;background:var(--surface-muted);flex-shrink:0;background-size:cover;background-position:center}
+  .cell-entity .n{font-size:14px;font-weight:600;letter-spacing:-.01em;color:var(--text-primary)}
+  .cell-entity .s{font-size:12px;color:var(--text-secondary);margin-top:2px}
+  .muted{color:var(--text-secondary)}
+  .mono-sm{font-family:'Space Mono',monospace;font-size:12px;color:var(--text-secondary)}
+  .row-actions{display:flex;gap:4px;justify-content:flex-end}
+  .ibtn{width:30px;height:30px;border:0;background:none;border-radius:2px;color:var(--text-secondary);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+  .ibtn:hover{background:#fff;color:var(--text-primary);box-shadow:inset 0 0 0 1px var(--border-default)}
+
+  .pager{display:flex;justify-content:space-between;align-items:center;margin-top:22px;font-size:13px;color:var(--text-secondary)}
+  .pager-btns{display:flex;gap:6px}
+
+  .bulkbar{display:flex;align-items:center;gap:16px;background:#171717;color:#fff;padding:12px 18px;border-radius:2px;margin-bottom:16px}
+  .bulkbar .lbl{font-size:13px;font-weight:500}
+  .bulkbar .cta{color:#fff}
+  .bulkbar .cta:hover{color:rgba(255,255,255,.6)}
+
+  /* ============ SEARCH + MAP ============ */
+  .serp-shell{display:grid;grid-template-columns:var(--search-serp) 1fr;height:calc(100vh - 61px)}
+  .serp-col{border-right:1px solid var(--border-default);background:var(--surface-card);display:flex;flex-direction:column;overflow:hidden}
+  .serp-search{padding:20px 24px 16px;border-bottom:1px solid var(--border-default)}
+  .serp-input{display:flex;align-items:center;gap:10px;height:44px;padding:0 14px;border:1px solid var(--border-strong);border-radius:2px;color:var(--text-secondary)}
+  .serp-input input{border:0;outline:0;background:none;font-size:15px;color:var(--text-primary);width:100%}
+  .serp-filters{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+  .serp-count{padding:14px 24px;font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary);border-bottom:1px solid var(--border-default)}
+  .serp-list{overflow-y:auto;flex:1}
+  .serp-item{display:grid;grid-template-columns:88px 1fr;gap:16px;padding:18px 24px;border-bottom:1px solid var(--border-default);cursor:pointer}
+  .serp-item:hover{background:var(--surface-muted)}
+  .serp-item.active{background:var(--surface-muted);box-shadow:inset 3px 0 0 #171717}
+  .serp-thumb{width:88px;height:66px;background:var(--surface-muted);background-size:cover;background-position:center}
+  .serp-eyebrow{font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
+  .serp-name{font-size:19px;font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:5px 0 4px}
+  .serp-meta{font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+  .map-col{position:relative;background:#EDEDED;overflow:hidden}
+  .map-canvas{position:absolute;inset:0;background:
+    linear-gradient(rgba(0,0,0,0.05) 1px,transparent 1px) 0 0/48px 48px,
+    linear-gradient(90deg,rgba(0,0,0,0.05) 1px,transparent 1px) 0 0/48px 48px,
+    #E8E8E6}
+  .map-road{position:absolute;background:#fff}
+  .pin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;color:#171717;display:flex;flex-direction:column;align-items:center}
+  .pin .dot{width:14px;height:14px;border-radius:9999px;background:#171717;border:2.5px solid #fff;box-shadow:var(--shadow-md)}
+  .pin.active .dot{width:20px;height:20px;background:#171717}
+  .pin.active .plabel{display:block}
+  .plabel{display:none;margin-top:6px;background:#171717;color:#fff;font-size:11px;font-weight:600;letter-spacing:-.01em;padding:4px 8px;border-radius:2px;white-space:nowrap}
+  .map-ctrls{position:absolute;top:16px;right:16px;display:flex;flex-direction:column;background:#fff;border:1px solid var(--border-default);border-radius:2px;overflow:hidden}
+  .map-ctrls button{width:38px;height:38px;border:0;background:#fff;font-size:18px;color:var(--text-primary);cursor:pointer;border-bottom:1px solid var(--border-default)}
+  .map-ctrls button:last-child{border-bottom:0}
+  .map-ctrls button:hover{background:var(--surface-muted)}
+  .map-cap{position:absolute;left:16px;bottom:14px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-disabled);background:rgba(255,255,255,.8);padding:5px 8px}
+
+  /* ============ FORM ============ */
+  .form-wrap{max-width:760px;margin:0 auto;padding:48px 32px 140px}
+  .form-top .eyebrow{margin-bottom:14px}
+  .form-title{font-size:clamp(40px,6vw,64px);font-weight:700;letter-spacing:-0.035em;line-height:.95;margin:0}
+  .form-lead{font-size:17px;color:var(--text-secondary);margin-top:18px;max-width:52ch;line-height:1.55}
+  .form-section{margin-top:56px;border-top:1px solid var(--border-default);padding-top:32px;display:grid;grid-template-columns:200px 1fr;gap:48px}
+  .form-section-h{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .form-section-d{font-size:13px;color:var(--text-disabled);margin-top:10px;line-height:1.6}
+  .fields{display:flex;flex-direction:column;gap:22px}
+  .field{display:flex;flex-direction:column;gap:8px}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .label{font-size:13px;font-weight:500;color:var(--text-primary)}
+  .label .opt{color:var(--text-disabled);font-weight:400;margin-left:6px}
+  .hint{font-size:12px;color:var(--text-secondary)}
+  .input,.textarea,.select{border:1px solid var(--border-default);background:#fff;border-radius:2px;padding:11px 13px;font-size:15px;color:var(--text-primary);width:100%;transition:border-color 150ms,box-shadow 150ms}
+  .input:focus,.textarea:focus,.select:focus{outline:0;border-color:#171717}
+  .input::placeholder,.textarea::placeholder{color:var(--text-disabled)}
+  .textarea{min-height:120px;line-height:1.6;resize:vertical}
+  .select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23525252' stroke-width='1.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px}
+  .rate-pick{display:flex;gap:10px}
+  .rate-opt{flex:1;border:1px solid var(--border-default);background:#fff;border-radius:2px;padding:14px 12px;cursor:pointer;text-align:left;transition:border-color 150ms}
+  .rate-opt:hover{border-color:var(--border-strong)}
+  .rate-opt.on{border-color:#171717;box-shadow:inset 0 0 0 1px #171717}
+  .rate-opt .rn{font-size:14px;font-weight:600;margin-top:10px}
+  .rate-opt .rd{font-size:12px;color:var(--text-secondary);margin-top:2px}
+  .dropzone{border:1.5px dashed var(--border-strong);border-radius:2px;background:var(--surface-muted);padding:40px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;color:var(--text-secondary);cursor:pointer}
+  .dropzone:hover{border-color:#171717;color:var(--text-primary)}
+  .picker-map{height:220px;position:relative;border:1px solid var(--border-default);border-radius:2px;overflow:hidden}
+  .form-actions{position:sticky;bottom:0;background:rgba(250,250,250,.92);backdrop-filter:blur(8px);border-top:1px solid var(--border-default);margin:56px -32px 0;padding:18px 32px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+  .form-actions .l{font-size:13px;color:var(--text-secondary);display:flex;align-items:center;gap:8px}
+
+  /* ============ PROFILE ============ */
+  .prof{max-width:1100px;margin:0 auto;padding:56px 32px 120px}
+  .prof-head{display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap}
+  .prof-av{width:104px;height:104px;border-radius:9999px;background:#262626;color:#fff;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:600;flex-shrink:0}
+  .prof-id{flex:1;min-width:280px}
+  .prof-name{font-size:clamp(40px,6vw,68px);font-weight:700;letter-spacing:-.035em;line-height:.95;margin:0}
+  .prof-handle{font-family:'Space Mono',monospace;font-size:13px;color:var(--text-secondary);margin-top:12px}
+  .prof-bio{font-size:16px;line-height:1.6;color:var(--text-primary);margin-top:16px;max-width:56ch}
+  .prof-actions{display:flex;gap:10px;align-items:center}
+  .prof-stats{margin-top:48px;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border-default);border-top:1px solid var(--border-default);border-bottom:1px solid var(--border-default)}
+  .prof-stat{background:var(--surface-default);padding:24px 4px 22px}
+  .prof-stat .n{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1}
+  .prof-stat .l{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);margin-top:10px;font-weight:500}
+  .tabs2{display:flex;gap:28px;margin-top:52px;border-bottom:1px solid var(--border-default)}
+  .tab2{background:none;border:0;padding:0 0 16px;font-size:14px;font-weight:500;color:var(--text-secondary);cursor:pointer;position:relative}
+  .tab2:hover{color:var(--text-primary)}
+  .tab2.on{color:var(--text-primary)}
+  .tab2.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:#171717}
+  .tab2 .c{font-family:'Space Mono',monospace;font-size:11px;color:var(--text-disabled);margin-left:6px}
+  .grid-log{margin-top:40px;display:grid;grid-template-columns:repeat(3,1fr);gap:32px 24px}
+  .logcard{cursor:pointer}
+  .logcard-img{aspect-ratio:4/3;background:var(--surface-muted);background-size:cover;background-position:center;position:relative}
+  .logcard-tag{position:absolute;left:0;top:0;background:rgba(255,255,255,.92);padding:5px 8px;font-size:9px;font-weight:500;letter-spacing:.14em;text-transform:uppercase}
+  .logcard-name{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:12px 0 4px;line-height:1.1}
+  .logcard-meta{font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:8px}
+
+  /* ============ STATES ============ */
+  .states-wrap{max-width:1100px;margin:0 auto;padding:48px 32px 120px;display:flex;flex-direction:column;gap:24px}
+  .states-row{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  .panel{border:1px solid var(--border-default);background:var(--surface-card);border-radius:2px;overflow:hidden}
+  .panel-h{padding:14px 20px;border-bottom:1px solid var(--border-default);font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-disabled)}
+  .panel-body{padding:56px 40px;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .empty-mark{width:56px;height:56px;border:1.5px solid var(--border-strong);border-radius:9999px;display:flex;align-items:center;justify-content:center;color:var(--text-disabled);margin-bottom:22px}
+  .empty-t{font-size:22px;font-weight:600;letter-spacing:-.02em}
+  .empty-p{font-size:14px;color:var(--text-secondary);margin-top:10px;max-width:38ch;line-height:1.6}
+  .empty-cta{margin-top:24px}
+  .err-code{font-family:'Space Mono',monospace;font-size:13px;letter-spacing:.1em;color:var(--text-disabled)}
+  .err-t{font-size:clamp(44px,7vw,84px);font-weight:700;letter-spacing:-.04em;line-height:.9;margin:14px 0 0}
+
+  /* skeleton */
+  .sk-body{padding:28px 32px}
+  .sk{background:linear-gradient(90deg,#f0f0f0 25%,#e6e6e6 37%,#f0f0f0 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite;border-radius:2px}
+  @keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+  .sk-item{display:grid;grid-template-columns:120px 1fr;gap:20px;padding:20px 0;border-bottom:1px solid var(--border-default)}
+  .sk-item:last-child{border-bottom:0}
+
+  @media (max-width:1024px){
+    .form-section{grid-template-columns:1fr;gap:16px}
+    .states-row{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion: reduce){ .sk{animation:none} }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+// ─── Plano logo ───
+const PlanoLogo = ({style}) => (
+  <svg viewBox="0 0 338 74" style={style} aria-label="Plano">
+    <g fill="currentColor">
+      <path d="M 0 73.731 L 0 0.977 L 28.369 0.977 Q 36.67 0.977 42.48 4.127 Q 48.291 7.276 51.343 12.818 Q 54.395 18.36 54.395 25.538 Q 54.395 32.765 51.294 38.258 Q 48.193 43.751 42.31 46.852 Q 36.426 49.952 28.027 49.952 L 14.893 49.952 L 14.893 73.731 L 0 73.731 Z"/>
+      <path d="M 111.084 73.731 L 64.795 73.731 L 64.795 0.977 L 79.688 0.977 L 79.688 61.378 L 111.084 61.378 L 111.084 73.731 Z"/>
+      <path d="M 117.139 73.731 L 141.992 0.977 L 161.523 0.977 L 187.012 73.731 L 170.459 73.731 L 164.845 56.837 L 132.666 56.837 L 138.994 56.837 L 133.594 73.731"/>
+      <path d="M 195.996 73.731 L 195.996 0.977 L 212.598 0.977 L 235.596 37.794 Q 244.727 55.372 246.582 60.45 L 245.068 60.45 Q 243.799 38.819 243.799 35.89 L 243.799 0.977 L 259.033 0.977 L 259.033 73.731 L 242.383 73.731 L 221.484 40.333 Q 211.035 20.948 208.105 14.991 L 210.01 14.991 Q 211.23 37.794 211.23 40.284 L 211.23 73.731 Z"/>
+      <path d="M 304.15 74.708 Q 294.531 74.708 286.841 70.313 Q 279.15 65.919 274.683 57.569 Q 270.215 49.22 270.215 37.403 Q 270.215 25.538 274.683 17.164 Q 279.15 8.79 286.841 4.395 Q 294.531 0.001 304.15 0.001 Q 313.818 0.001 321.484 4.395 Q 329.15 8.79 333.618 17.164 Q 338.086 25.538 338.086 37.403 Q 338.086 49.22 333.618 57.569 Q 329.15 65.919 321.484 70.313 Q 313.818 74.708 304.15 74.708 Z"/>
+    </g>
+  </svg>
+);
+
+// ─── Lucide-style icons (1.5px stroke, currentColor) ───
+const P = {
+  search:["circle cx=11 cy=11 r=8","path d=m21 21-4.3-4.3"],
+  bell:["path d=M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9","path d=M10.3 21a1.94 1.94 0 0 0 3.4 0"],
+  filter:["polygon points=22,3 2,3 10,12.46 10,19 14,21 14,12.46"],
+  mappin:["path d=M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0","circle cx=12 cy=10 r=3"],
+  check:["polyline points=20,6 9,17 4,12"],
+  chevdown:["polyline points=6,9 12,15 18,9"],
+  x:["path d=M18 6 6 18","path d=m6 6 12 12"],
+  plus:["path d=M12 5v14","path d=M5 12h14"],
+  upload:["path d=M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4","polyline points=17,8 12,3 7,8","path d=M12 3v12"],
+  image:["rect width=18 height=18 x=3 y=3 rx=2","circle cx=9 cy=9 r=2","path d=m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"],
+  edit:["path d=M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7","path d=M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"],
+  trash:["path d=M3 6h18","path d=M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"],
+  external:["path d=M15 3h6v6","path d=M10 14 21 3","path d=M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"],
+  arrowleft:["path d=M19 12H5","path d=m12 19-7-7 7-7"],
+};
+const Icon = ({name, size=18, style}) => {
+  const parse = (s) => {
+    const [tag, ...attrs] = s.split(" ");
+    const props = {key: s};
+    attrs.join(" ").match(/[\w-]+=[^ ]+/g)?.forEach(a => {
+      const [k,v] = a.split("=");
+      props[k==="class"?"className":k] = v.replace(/,/g," ");
+    });
+    return React.createElement(tag, props);
+  };
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+      style={style}>
+      {P[name].map(parse)}
+    </svg>
+  );
+};
+
+const Rating = ({n, size}) => {
+  if (!n || n < 1) return null;
+  return (
+    <span className="rdots" aria-label={`${n} points`}>
+      {Array.from({length:n}).map((_,i)=><i key={i} className={`rdot ${size==='sm'?'sm':''}`}/>)}
+    </span>
+  );
+};
+
+const IMG = {
+  barbican:"https://images.unsplash.com/photo-1460574283810-2aab119d8511?w=1200&q=80",
+  villa:"https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=80",
+  unite:"https://images.unsplash.com/photo-1459767129954-1b1c1f9b9ace?w=1200&q=80",
+  salk:"https://images.unsplash.com/photo-1497604401993-f2e922e5cb0a?w=1200&q=80",
+  pompidou:"https://images.unsplash.com/photo-1574958269340-fa927503f3dd?w=1200&q=80",
+  therme:"https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=1200&q=80",
+  kimbell:"https://images.unsplash.com/photo-1524230572899-a752b3835840?w=1200&q=80",
+  teshima:"https://images.unsplash.com/photo-1493397212122-2b85dda8106b?w=1200&q=80",
+  sydney:"https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=1200&q=80",
+};
+
+// ─── Kit chrome ───
+const VIEWS = [["admin","Admin"],["search","Search + map"],["form","Add building"],["profile","Profile"],["states","States"]];
+const Chrome = ({view, setView}) => (
+  <nav className="chrome-tabs">
+    <div className="chrome-inner">
+      <div style={{display:"flex",alignItems:"center",gap:28}}>
+        <PlanoLogo style={{height:20,color:"#171717"}}/>
+        <div className="tabs">
+          {VIEWS.map(([k,label])=>(
+            <button key={k} className={`tab ${view===k?'active':''}`} onClick={()=>setView(k)}>{label}</button>
+          ))}
+        </div>
+      </div>
+      <div className="chrome-right">
+        <div className="bell"><Icon name="bell" size={19}/><span className="dot"/></div>
+        <div className="avatar">JN</div>
+      </div>
+    </div>
+  </nav>
+);
+
+// ═══════════════ ADMIN ═══════════════
+const NAV = {
+  Moderation:[["Review queue",42,true],["Flagged images",8],["Reports",3]],
+  Catalogue:[["Buildings",null],["Architects",null],["Collections",null]],
+  People:[["Users",null],["Verifications",5],["Ambassadors",null]],
+};
+const MOD_ROWS = [
+  {img:IMG.barbican, n:"Barbican Centre", s:"London · added by e.okafor", by:"Eleanor Okafor", when:"2h ago", rating:2, status:["warn","Needs review"]},
+  {img:IMG.therme, n:"Therme Vals", s:"Vals, CH · added by j.noain", by:"Jaime Noain", when:"5h ago", rating:0, status:["idle","Draft"]},
+  {img:IMG.salk, n:"Salk Institute", s:"La Jolla · edit to facts", by:"Claire Bergström", when:"1d ago", rating:3, status:["ok","Approved"]},
+  {img:IMG.kimbell, n:"Kimbell Art Museum", s:"Fort Worth · new photos ×6", by:"Marco Rizzi", when:"1d ago", rating:2, status:["warn","Needs review"]},
+  {img:IMG.sydney, n:"Sydney Opera House", s:"duplicate flagged", by:"System", when:"2d ago", rating:0, status:["bad","Duplicate"]},
+  {img:IMG.unite, n:"Unité d'Habitation", s:"Marseille · architect merge", by:"Eleanor Okafor", when:"3d ago", rating:3, status:["ok","Approved"]},
+];
+const Admin = () => {
+  const [active, setActive] = useState("Review queue");
+  const [sel, setSel] = useState([0,3]);
+  const [filter, setFilter] = useState("needs");
+  const toggle = (i)=> setSel(s => s.includes(i) ? s.filter(x=>x!==i) : [...s,i]);
+  const allOn = sel.length === MOD_ROWS.length;
+  return (
+    <div className="admin-shell">
+      <aside className="admin-nav">
+        {Object.entries(NAV).map(([grp, items])=>(
+          <div className="admin-nav-group" key={grp}>
+            <div className="admin-nav-h">{grp}</div>
+            {items.map(([label,count])=>(
+              <div key={label} className={`admin-nav-item ${active===label?'active':''}`} onClick={()=>setActive(label)}>
+                <span>{label}</span>
+                {count!=null && <span className="count">{count}</span>}
+              </div>
+            ))}
+          </div>
+        ))}
+      </aside>
+      <main className="admin-main">
+        <div className="admin-head">
+          <div>
+            <div className="eyebrow">ADMIN · MODERATION</div>
+            <h1 className="admin-title">Review queue</h1>
+            <div className="admin-sub">42 submissions awaiting a decision · newest first</div>
+          </div>
+          <button className="btn btn-primary">Approve selected</button>
+        </div>
+
+        <div className="filter-bar">
+          <div className="search-inline"><Icon name="search" size={16}/><input placeholder="Search submissions"/></div>
+          <button className={`chip ${filter==='needs'?'on':''}`} onClick={()=>setFilter("needs")}>Needs review</button>
+          <button className={`chip ${filter==='drafts'?'on':''}`} onClick={()=>setFilter("drafts")}>Drafts</button>
+          <button className={`chip ${filter==='dupes'?'on':''}`} onClick={()=>setFilter("dupes")}>Duplicates</button>
+          <div className="spacer"/>
+          <button className="chip"><Icon name="filter" size={14}/> All cities <Icon name="chevdown" size={14}/></button>
+        </div>
+
+        {sel.length>0 && (
+          <div className="bulkbar">
+            <span className="lbl">{sel.length} selected</span>
+            <button className="cta">Approve <span className="ar">→</span></button>
+            <button className="cta">Merge <span className="ar">→</span></button>
+            <button className="cta">Reject <span className="ar">→</span></button>
+            <div style={{flex:1}}/>
+            <button className="cta" onClick={()=>setSel([])}>Clear</button>
+          </div>
+        )}
+
+        <table className="tbl">
+          <thead>
+            <tr>
+              <th className="col-check">
+                <span className={`cbx ${allOn?'on':''}`} onClick={()=>setSel(allOn?[]:MOD_ROWS.map((_,i)=>i))}>{allOn && <Icon name="check" size={12}/>}</span>
+              </th>
+              <th>Submission</th>
+              <th>Rating</th>
+              <th>Contributor</th>
+              <th>Status</th>
+              <th>Submitted</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {MOD_ROWS.map((r,i)=>(
+              <tr key={i}>
+                <td className="col-check">
+                  <span className={`cbx ${sel.includes(i)?'on':''}`} onClick={()=>toggle(i)}>{sel.includes(i) && <Icon name="check" size={12}/>}</span>
+                </td>
+                <td>
+                  <div className="cell-entity">
+                    <div className="thumb" style={{backgroundImage:`url(${r.img})`}}/>
+                    <div><div className="n">{r.n}</div><div className="s">{r.s}</div></div>
+                  </div>
+                </td>
+                <td>{r.rating>0 ? <Rating n={r.rating} size="sm"/> : <span className="muted">—</span>}</td>
+                <td className="muted">{r.by}</td>
+                <td><span className="status"><span className={`sdot ${r.status[0]}`}/>{r.status[1]}</span></td>
+                <td className="mono-sm">{r.when}</td>
+                <td>
+                  <div className="row-actions">
+                    <button className="ibtn" title="Edit"><Icon name="edit" size={16}/></button>
+                    <button className="ibtn" title="Open"><Icon name="external" size={16}/></button>
+                    <button className="ibtn" title="Reject"><Icon name="trash" size={16}/></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="pager">
+          <span>Showing 1–6 of 42</span>
+          <div className="pager-btns">
+            <button className="btn btn-outline btn-sm" disabled>Previous</button>
+            <button className="btn btn-outline btn-sm">Next</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+// ═══════════════ SEARCH + MAP ═══════════════
+const SERP = [
+  {img:IMG.barbican, eyebrow:"LONDON · 1982", name:"Barbican Centre", arch:"Chamberlin, Powell & Bowon", rating:2, saves:"1.2k saves", x:38, y:44},
+  {img:IMG.salk, eyebrow:"LA JOLLA · 1965", name:"Salk Institute", arch:"Louis Kahn", rating:3, saves:"980 saves", x:64, y:30},
+  {img:IMG.therme, eyebrow:"VALS · 1996", name:"Therme Vals", arch:"Peter Zumthor", rating:3, saves:"760 saves", x:52, y:62},
+  {img:IMG.kimbell, eyebrow:"FORT WORTH · 1972", name:"Kimbell Art Museum", arch:"Louis Kahn", rating:2, saves:"540 saves", x:28, y:70},
+  {img:IMG.unite, eyebrow:"MARSEILLE · 1952", name:"Unité d'Habitation", arch:"Le Corbusier", rating:3, saves:"1.5k saves", x:74, y:56},
+];
+const Search = () => {
+  const [active, setActive] = useState(0);
+  return (
+    <div className="serp-shell">
+      <div className="serp-col">
+        <div className="serp-search">
+          <div className="serp-input"><Icon name="search" size={18}/><input defaultValue="Louis Kahn"/><Icon name="x" size={16} style={{cursor:"pointer"}}/></div>
+          <div className="serp-filters">
+            <button className="chip on">Buildings</button>
+            <button className="chip">Architects</button>
+            <button className="chip">Collections</button>
+            <button className="chip"><Icon name="filter" size={13}/> Filters</button>
+          </div>
+        </div>
+        <div className="serp-count">184 buildings · sorted by rank</div>
+        <div className="serp-list">
+          {SERP.map((r,i)=>(
+            <div key={i} className={`serp-item ${active===i?'active':''}`} onClick={()=>setActive(i)}>
+              <div className="serp-thumb" style={{backgroundImage:`url(${r.img})`}}/>
+              <div>
+                <div className="serp-eyebrow">{r.eyebrow}</div>
+                <div className="serp-name">{r.name}</div>
+                <div className="serp-meta">
+                  <span>{r.arch}</span>
+                  {r.rating>0 && <><span>·</span><Rating n={r.rating} size="sm"/></>}
+                </div>
+                <div className="serp-meta" style={{marginTop:6}}><span className="mono-sm">{r.saves}</span></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="map-col">
+        <div className="map-canvas">
+          <div className="map-road" style={{left:0,right:0,top:"46%",height:6,opacity:.9}}/>
+          <div className="map-road" style={{top:0,bottom:0,left:"40%",width:6,opacity:.9}}/>
+          <div className="map-road" style={{left:0,right:0,top:"72%",height:4,opacity:.7}}/>
+          <div className="map-road" style={{top:0,bottom:0,left:"68%",width:4,opacity:.7}}/>
+        </div>
+        {SERP.map((r,i)=>(
+          <div key={i} className={`pin ${active===i?'active':''}`} style={{left:`${r.x}%`,top:`${r.y}%`,zIndex:active===i?10:1}} onClick={()=>setActive(i)}>
+            <span className="dot"/>
+            <span className="plabel">{r.name}</span>
+          </div>
+        ))}
+        <div className="map-ctrls">
+          <button>+</button>
+          <button>−</button>
+        </div>
+        <div className="map-cap">MapLibre · monochrome tiles</div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════ ADD BUILDING FORM ═══════════════
+const RATINGS = [[1,"Impressive"],[2,"Essential"],[3,"Masterpiece"]];
+const Form = () => {
+  const [rating, setRating] = useState(2);
+  return (
+    <div className="form-wrap">
+      <div className="form-top">
+        <div className="eyebrow">CATALOGUE · NEW ENTRY</div>
+        <h1 className="form-title">Add a building</h1>
+        <p className="form-lead">Every entry is reviewed before it goes public. Give it a name, a location, and a first impression — the community fills in the rest.</p>
+      </div>
+
+      <div className="form-section">
+        <div>
+          <div className="form-section-h">Identity</div>
+          <div className="form-section-d">What it's called and who designed it.</div>
+        </div>
+        <div className="fields">
+          <div className="field">
+            <label className="label">Building name</label>
+            <input className="input" placeholder="e.g. Villa Savoye"/>
+          </div>
+          <div className="field-row">
+            <div className="field">
+              <label className="label">Architect</label>
+              <input className="input" placeholder="Search or add architect"/>
+            </div>
+            <div className="field">
+              <label className="label">Year completed <span className="opt">optional</span></label>
+              <input className="input" placeholder="1931"/>
+            </div>
+          </div>
+          <div className="field">
+            <label className="label">Typology</label>
+            <select className="select" defaultValue="">
+              <option value="" disabled>Select a typology</option>
+              <option>Private residence</option>
+              <option>Cultural / museum</option>
+              <option>Religious</option>
+              <option>Civic / government</option>
+              <option>Commercial</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="form-section">
+        <div>
+          <div className="form-section-h">Location</div>
+          <div className="form-section-d">Drop a pin — coordinates are captured automatically.</div>
+        </div>
+        <div className="fields">
+          <div className="field-row">
+            <div className="field">
+              <label className="label">City</label>
+              <input className="input" placeholder="Poissy"/>
+            </div>
+            <div className="field">
+              <label className="label">Country</label>
+              <input className="input" placeholder="France"/>
+            </div>
+          </div>
+          <div className="field">
+            <label className="label">Map location</label>
+            <div className="picker-map">
+              <div className="map-canvas">
+                <div className="map-road" style={{left:0,right:0,top:"52%",height:5,opacity:.9}}/>
+                <div className="map-road" style={{top:0,bottom:0,left:"46%",width:5,opacity:.9}}/>
+              </div>
+              <div className="pin active" style={{left:"46%",top:"52%"}}><span className="dot"/></div>
+              <div className="map-cap">48.9244° N · 02.0280° E</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="form-section">
+        <div>
+          <div className="form-section-h">Your visit</div>
+          <div className="form-section-d">Rate it and say why. Sentence case — write like a magazine, not a review site.</div>
+        </div>
+        <div className="fields">
+          <div className="field">
+            <label className="label">Rating</label>
+            <div className="rate-pick">
+              {RATINGS.map(([n,lbl])=>(
+                <button key={n} className={`rate-opt ${rating===n?'on':''}`} onClick={()=>setRating(n)}>
+                  <Rating n={n}/>
+                  <div className="rn">{lbl}</div>
+                  <div className="rd">{n} point{n>1?"s":""}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="field">
+            <label className="label">Review <span className="opt">optional</span></label>
+            <textarea className="textarea" placeholder="What did it feel like to stand inside it?"></textarea>
+            <span className="hint">Markdown supported. No emoji — let the writing carry it.</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="form-section">
+        <div>
+          <div className="form-section-h">Photography</div>
+          <div className="form-section-d">Raw, documentary, sharp-edged. Overcast is welcome.</div>
+        </div>
+        <div className="fields">
+          <div className="dropzone">
+            <Icon name="upload" size={26}/>
+            <div style={{fontSize:15,fontWeight:500,color:"var(--text-primary)"}}>Drop photos here, or browse</div>
+            <div className="hint">JPEG or PNG · up to 20MB each · first image becomes the hero</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="form-actions">
+        <div className="l"><span className="sdot idle"/> Draft saved · 2 min ago</div>
+        <div style={{display:"flex",gap:10}}>
+          <button className="btn btn-outline">Save draft</button>
+          <button className="btn btn-primary">Submit for review</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════ PROFILE ═══════════════
+const PROF_TABS = [["visited","Visited",128],["collections","Collections",9],["reviews","Reviews",64],["wants","Want to visit",41]];
+const LOGS = [
+  {img:IMG.barbican, tag:"VISITED", name:"Barbican Centre", city:"London", rating:2},
+  {img:IMG.salk, tag:"VISITED", name:"Salk Institute", city:"La Jolla", rating:3},
+  {img:IMG.therme, tag:"VISITED", name:"Therme Vals", city:"Vals", rating:3},
+  {img:IMG.kimbell, tag:"VISITED", name:"Kimbell Art Museum", city:"Fort Worth", rating:2},
+  {img:IMG.villa, tag:"VISITED", name:"Villa Savoye", city:"Poissy", rating:3},
+  {img:IMG.pompidou, tag:"VISITED", name:"Centre Pompidou", city:"Paris", rating:2},
+];
+const Profile = () => {
+  const [tab, setTab] = useState("visited");
+  return (
+    <div className="prof">
+      <div className="prof-head">
+        <div className="prof-av">EO</div>
+        <div className="prof-id">
+          <div className="eyebrow" style={{marginBottom:10}}>MEMBER · LONDON</div>
+          <h1 className="prof-name">Eleanor Okafor</h1>
+          <div className="prof-handle">@eokafor · joined 2024</div>
+          <p className="prof-bio">Architectural writer. Chasing concrete across Europe, one weekend at a time. Editor of <em style={{fontStyle:"italic"}}>Brutalist Gems of London</em>.</p>
+        </div>
+        <div className="prof-actions">
+          <button className="btn btn-outline">Message</button>
+          <button className="btn btn-primary">Follow</button>
+        </div>
+      </div>
+
+      <div className="prof-stats">
+        <div className="prof-stat"><div className="n">128</div><div className="l">Buildings</div></div>
+        <div className="prof-stat"><div className="n">9</div><div className="l">Collections</div></div>
+        <div className="prof-stat"><div className="n">1,240</div><div className="l">Followers</div></div>
+        <div className="prof-stat"><div className="n">318</div><div className="l">Following</div></div>
+      </div>
+
+      <div className="tabs2">
+        {PROF_TABS.map(([k,label,c])=>(
+          <button key={k} className={`tab2 ${tab===k?'on':''}`} onClick={()=>setTab(k)}>{label}<span className="c">{c}</span></button>
+        ))}
+      </div>
+
+      <div className="grid-log">
+        {LOGS.map((l,i)=>(
+          <div key={i} className="logcard">
+            <div className="logcard-img" style={{backgroundImage:`url(${l.img})`}}>
+              <span className="logcard-tag">{l.tag}</span>
+            </div>
+            <div className="logcard-name">{l.name}</div>
+            <div className="logcard-meta"><span>{l.city}</span><span>·</span><Rating n={l.rating} size="sm"/></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════ STATES ═══════════════
+const States = () => (
+  <div className="states-wrap">
+    <div className="states-row">
+      <div className="panel">
+        <div className="panel-h">Empty state — collection</div>
+        <div className="panel-body">
+          <div className="empty-mark"><Icon name="plus" size={24}/></div>
+          <div className="empty-t">No buildings yet</div>
+          <div className="empty-p">Start logging the architecture you visit. Your history becomes a private atlas of what you've seen.</div>
+          <div className="empty-cta"><button className="btn btn-primary">Log your first visit</button></div>
+        </div>
+      </div>
+      <div className="panel">
+        <div className="panel-h">Empty state — search</div>
+        <div className="panel-body">
+          <div className="empty-mark"><Icon name="search" size={22}/></div>
+          <div className="empty-t">Nothing matches "kahn brutalism"</div>
+          <div className="empty-p">Try a broader term, or search by architect, city, or typology instead.</div>
+          <div className="empty-cta"><button className="cta">Clear filters <span className="ar">→</span></button></div>
+        </div>
+      </div>
+    </div>
+
+    <div className="states-row">
+      <div className="panel">
+        <div className="panel-h">Loading — feed skeleton</div>
+        <div className="sk-body">
+          {[0,1,2].map(i=>(
+            <div key={i} className="sk-item">
+              <div className="sk" style={{width:120,height:90}}/>
+              <div style={{display:"flex",flexDirection:"column",gap:10,paddingTop:4}}>
+                <div className="sk" style={{width:"38%",height:11}}/>
+                <div className="sk" style={{width:"72%",height:26}}/>
+                <div className="sk" style={{width:"50%",height:12}}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="panel">
+        <div className="panel-h">Error — 404</div>
+        <div className="panel-body">
+          <div className="err-code">ERROR · 404</div>
+          <div className="err-t">Not built.</div>
+          <div className="empty-p" style={{marginTop:18}}>This page isn't in the catalogue — the link may be broken, or the building was merged into another entry.</div>
+          <div className="empty-cta" style={{display:"flex",gap:10}}>
+            <button className="btn btn-outline"><Icon name="arrowleft" size={16}/> Go back</button>
+            <button className="btn btn-primary">Open the feed</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// ─── App ───
+function App(){
+  const [view, setView] = useState(()=>localStorage.getItem("plano-surfaces-view") || "admin");
+  useEffect(()=>{ localStorage.setItem("plano-surfaces-view", view); }, [view]);
+  return (
+    <div data-screen-label={`Plano surfaces · ${view}`}>
+      <Chrome view={view} setView={setView}/>
+      {view==="admin" && <Admin/>}
+      {view==="search" && <Search/>}
+      {view==="form" && <Form/>}
+      {view==="profile" && <Profile/>}
+      {view==="states" && <States/>}
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

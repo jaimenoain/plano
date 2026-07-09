@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Plano Web UI Kit" subtitle="Landing · Feed · Building detail" viewport="1400x3200" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Web UI Kit</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  html,body,#root{margin:0;padding:0;background:var(--surface-default);min-height:100vh}
+  *{box-sizing:border-box}
+  button{font-family:inherit}
+  a{color:inherit;text-decoration:none}
+  img{display:block;max-width:100%}
+
+  /* ---- Chrome ---- */
+  .chrome-tabs{position:sticky;top:0;z-index:50;background:rgba(250,250,250,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-default)}
+  .chrome-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 32px}
+  .chrome-logo{height:22px;color:#171717}
+  .tabs{display:flex;gap:4px}
+  .tab{font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;padding:8px 14px;background:none;border:0;color:var(--text-secondary);cursor:pointer;border-radius:2px}
+  .tab:hover{color:var(--text-primary)}
+  .tab.active{background:#171717;color:#fff}
+  .chrome-right{display:flex;gap:10px;align-items:center}
+  .avatar{width:28px;height:28px;border-radius:9999px;background:#262626;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+
+  /* ---- Buttons ---- */
+  .btn{height:40px;padding:0 16px;border-radius:2px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid transparent;display:inline-flex;align-items:center;gap:8px;line-height:1;transition:background 150ms}
+  .btn-primary{background:#BEFF00;color:#171717}
+  .btn-primary:hover{background:#9ACC00}
+  .btn-outline{background:#fff;color:#171717;border-color:var(--border-default)}
+  .btn-outline:hover{background:var(--surface-muted)}
+  .btn-ghost{background:transparent;color:#171717}
+  .btn-ghost:hover{background:var(--surface-muted)}
+  .btn-inverse{background:#fff;color:#000}
+  .btn-sm{height:32px;padding:0 12px;font-size:13px}
+  .btn-lg{height:48px;padding:0 22px;font-size:15px}
+
+  /* Editorial CTA */
+  .cta{font-size:12px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:inherit;background:none;border:0;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:6px;transition:color 150ms}
+  .cta:hover{color:var(--text-secondary)}
+  .cta .ar{transition:transform 150ms}
+  .cta:hover .ar{transform:translateX(3px);color:#BEFF00}
+
+  /* ---- Rating dots (Michelin-style — render only earned dots, black) ---- */
+  .rdots{display:inline-flex;gap:4px;vertical-align:middle;align-items:center}
+  .rdot{width:12px;height:12px;border-radius:9999px;background:#171717;display:inline-block}
+  .rdot.sm{width:9px;height:9px}
+  .rdot.lg{width:16px;height:16px}
+
+  /* ---- Eyebrow ---- */
+  .eyebrow{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .eyebrow-strong{color:var(--text-primary);font-weight:600}
+
+  /* ---- Layout ---- */
+  .page{max-width:1100px;margin:0 auto;padding:48px 32px 120px}
+  .page-wide{max-width:1280px;margin:0 auto;padding:48px 32px 120px}
+
+  /* ---- Landing ---- */
+  .hero{padding:80px 32px 96px;max-width:1280px;margin:0 auto;position:relative}
+  .hero-eyebrow{display:flex;gap:10px;align-items:center;margin-bottom:32px}
+  .pill{font-size:10px;letter-spacing:.15em;text-transform:uppercase;font-weight:500;padding:6px 10px;border:1px solid var(--border-default);background:#fff}
+  .pill-brand{background:#BEFF00;color:#171717;border-color:#BEFF00}
+  .hero-title{font-size:clamp(48px, 8.5vw, 128px);font-weight:700;letter-spacing:-0.04em;line-height:.92;color:var(--text-primary);margin:0}
+  .hero-title em{font-style:italic;font-weight:700}
+  .hero-sub{margin-top:28px;font-size:20px;line-height:1.5;letter-spacing:normal;color:var(--text-secondary);max-width:560px}
+  .hero-ctas{margin-top:44px;display:flex;gap:12px;align-items:center}
+
+  .hero-meta{margin-top:80px;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border-default);border-top:1px solid var(--border-default);border-bottom:1px solid var(--border-default)}
+  .hero-stat{background:var(--surface-default);padding:28px 20px}
+  .stat-n{font-size:40px;font-weight:700;letter-spacing:-0.02em;line-height:1}
+  .stat-l{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);margin-top:10px;font-weight:500}
+
+  /* Feature grid */
+  .features{margin-top:96px;display:grid;grid-template-columns:repeat(3,1fr);gap:48px}
+  .feature-num{font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .feature-t{font-size:24px;font-weight:600;letter-spacing:-.02em;margin:12px 0 10px;line-height:1.25}
+  .feature-p{font-size:14px;line-height:1.65;color:var(--text-secondary)}
+
+  /* ---- Feed ---- */
+  .feed{max-width:720px;margin:0 auto;padding:56px 32px 120px;display:flex;flex-direction:column;gap:96px}
+  /* Eyebrow above title — short, text-only location or context. */
+  .feed-eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;color:var(--text-secondary);margin-bottom:10px}
+  .feed-headline{font-size:clamp(42px, 6vw, 64px);font-weight:700;letter-spacing:-0.03em;line-height:1;color:var(--text-primary);margin:0}
+  /* Meta line below title — who, action, rating, when. */
+  .feed-meta{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+  .feed-meta .who-avatar{width:20px;height:20px;border-radius:9999px;background:#262626;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:600}
+  .feed-meta .who-name{font-size:12px;font-weight:500;color:var(--text-primary)}
+  .feed-meta .action{font-size:12px;color:var(--text-secondary)}
+  .feed-meta .when{font-size:12px;color:var(--text-disabled)}
+  .feed-meta .sep{color:var(--text-disabled);font-size:11px}
+  .feed-body{margin-top:24px;font-size:16px;line-height:1.75;color:var(--text-primary);max-width:60ch}
+  .feed-img{margin-top:22px;aspect-ratio:16/9;background:var(--surface-muted) center/cover;border:0}
+  .feed-foot{margin-top:22px;padding-top:16px;border-top:1px solid var(--border-default);display:flex;justify-content:space-between;align-items:center}
+  .feed-foot-l{display:flex;gap:18px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);font-weight:500;align-items:center}
+  .feed-foot-r{display:flex;gap:18px}
+  .icon-btn{background:none;border:0;color:var(--text-secondary);cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:500}
+  .icon-btn:hover{color:var(--text-primary)}
+
+  /* Collection feed item — horizontal mosaic */
+  .mosaic{margin-top:22px;display:grid;grid-template-columns:repeat(4,1fr);gap:1.5px}
+  .mosaic-cell{aspect-ratio:1/1;background:var(--surface-muted) center/cover}
+
+  /* ---- Building Detail ---- */
+  .bldg-hero{position:relative}
+  .bldg-hero-wrap{position:relative}
+  .bldg-hero-img{aspect-ratio:21/9;background:var(--surface-muted) center/cover;width:100%}
+  .bldg-hero-tag{position:absolute;left:24px;top:24px;background:rgba(255,255,255,.92);padding:7px 10px;font-size:10px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#171717}
+  .bldg-hero-inner{max-width:1100px;margin:0 auto;padding:48px 32px 0}
+  .bldg-meta-row{display:flex;justify-content:space-between;align-items:flex-end;margin-top:40px;gap:32px;flex-wrap:wrap}
+  .bldg-titles{flex:1;min-width:320px}
+  .bldg-name{font-size:clamp(48px,7vw,92px);font-weight:700;letter-spacing:-0.035em;line-height:.95;margin:8px 0 0}
+  .bldg-arch{margin-top:18px;font-size:18px;color:var(--text-secondary)}
+  .bldg-arch a{border-bottom:1px solid var(--border-default);padding-bottom:2px;color:var(--text-primary)}
+  .bldg-actions{display:flex;gap:12px;align-items:center}
+
+  .bldg-facts{margin-top:56px;border-top:1px solid var(--border-default);border-bottom:1px solid var(--border-default);display:grid;grid-template-columns:repeat(6,1fr);gap:0}
+  .fact{padding:20px 20px 20px 0;border-right:1px solid var(--border-default)}
+  .fact:last-child{border-right:0}
+  .fact-l{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);font-weight:500}
+  .fact-v{font-size:15px;color:var(--text-primary);margin-top:8px;font-weight:500;line-height:1.35}
+  .fact-v.mono{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.02em;font-weight:400}
+
+  .bldg-body{margin-top:64px;display:grid;grid-template-columns:220px 1fr;gap:64px}
+  .bldg-body-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);font-weight:500}
+  .bldg-body-text{font-size:18px;line-height:1.75;color:var(--text-primary);max-width:60ch}
+  .bldg-body-text p{margin:0 0 1.2em}
+
+  /* Editorial stream feature image — slotted between sections */
+  .feature-img{margin-top:80px}
+  .feature-img-frame{aspect-ratio:16/9;background:var(--surface-muted) center/cover;width:100%}
+  .feature-credit{margin-top:12px;display:flex;justify-content:space-between;align-items:baseline;font-size:11px;color:var(--text-secondary)}
+  .feature-credit-by{font-size:13px;color:var(--text-primary)}
+
+  /* Review list */
+  .reviews{margin-top:96px}
+  .review-head{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:18px;border-bottom:1px solid var(--border-default)}
+  .review-head h2{font-size:28px;font-weight:600;letter-spacing:-0.02em;margin:0}
+  .review{padding:40px 0;border-bottom:1px solid var(--border-default);display:grid;grid-template-columns:240px 1fr;gap:56px}
+  .review-who{display:flex;gap:14px;align-items:flex-start}
+  .avatar-lg{width:44px;height:44px;border:1px solid var(--border-default);background:var(--surface-muted);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:var(--text-secondary);flex-shrink:0}
+  .review-name{font-size:17px;font-weight:600;letter-spacing:-0.01em;color:var(--text-primary)}
+  .review-when{font-size:11px;color:var(--text-secondary);margin-top:4px;letter-spacing:.08em;text-transform:uppercase;font-weight:500}
+  .review-rating{margin-top:8px}
+  .review-body{font-size:17px;line-height:1.75;color:var(--text-primary)}
+  .review-body .verified{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);margin-left:8px;vertical-align:middle}
+  .review-body .verified::before{content:"";width:6px;height:6px;background:#171717;display:inline-block}
+
+  /* Related */
+  .related{margin-top:96px}
+  .related-head{margin-bottom:28px}
+  .related-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+  .rc{cursor:pointer}
+  .rc-img{aspect-ratio:4/3;background:var(--surface-muted) center/cover}
+  .rc-eyebrow{margin-top:14px}
+  .rc-name{font-size:22px;font-weight:700;letter-spacing:-0.02em;margin:6px 0 4px;line-height:1.1}
+  .rc-meta{font-size:12px;color:var(--text-secondary)}
+
+  /* ---- Footer ---- */
+  footer.site{background:#000;color:#fff;margin-top:0;padding:80px 32px 40px}
+  .foot-inner{max-width:1280px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px}
+  .foot-lg{height:32px;color:#fff}
+  .foot-h{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:20px;font-weight:500}
+  .foot-links{display:flex;flex-direction:column;gap:10px;font-size:14px}
+  .foot-links a{color:#fff;opacity:.85}
+  .foot-links a:hover{opacity:1;color:#BEFF00}
+  .foot-bot{max-width:1280px;margin:64px auto 0;padding-top:28px;border-top:1px solid rgba(255,255,255,.1);display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.5);letter-spacing:.08em;text-transform:uppercase}
+
+  /* Responsive */
+  @media (max-width: 900px){
+    .features{grid-template-columns:1fr;gap:32px}
+    .hero-meta{grid-template-columns:repeat(2,1fr)}
+    .bldg-facts{grid-template-columns:repeat(3,1fr)}
+    .bldg-body,.review{grid-template-columns:1fr;gap:24px}
+    .related-grid{grid-template-columns:1fr 1fr}
+    .foot-inner{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+// ─── Plano logo ───
+const PlanoLogo = ({style}) => (
+  <svg viewBox="0 0 338 74" style={style} aria-label="Plano">
+    <g fill="currentColor">
+      <path d="M 0 73.731 L 0 0.977 L 28.369 0.977 Q 36.67 0.977 42.48 4.127 Q 48.291 7.276 51.343 12.818 Q 54.395 18.36 54.395 25.538 Q 54.395 32.765 51.294 38.258 Q 48.193 43.751 42.31 46.852 Q 36.426 49.952 28.027 49.952 L 14.893 49.952 L 14.893 73.731 L 0 73.731 Z"/>
+      <path d="M 111.084 73.731 L 64.795 73.731 L 64.795 0.977 L 79.688 0.977 L 79.688 61.378 L 111.084 61.378 L 111.084 73.731 Z"/>
+      <path d="M 117.139 73.731 L 141.992 0.977 L 161.523 0.977 L 187.012 73.731 L 170.459 73.731 L 164.845 56.837 L 132.666 56.837 L 138.994 56.837 L 133.594 73.731"/>
+      <path d="M 195.996 73.731 L 195.996 0.977 L 212.598 0.977 L 235.596 37.794 Q 244.727 55.372 246.582 60.45 L 245.068 60.45 Q 243.799 38.819 243.799 35.89 L 243.799 0.977 L 259.033 0.977 L 259.033 73.731 L 242.383 73.731 L 221.484 40.333 Q 211.035 20.948 208.105 14.991 L 210.01 14.991 Q 211.23 37.794 211.23 40.284 L 211.23 73.731 Z"/>
+      <path d="M 304.15 74.708 Q 294.531 74.708 286.841 70.313 Q 279.15 65.919 274.683 57.569 Q 270.215 49.22 270.215 37.403 Q 270.215 25.538 274.683 17.164 Q 279.15 8.79 286.841 4.395 Q 294.531 0.001 304.15 0.001 Q 313.818 0.001 321.484 4.395 Q 329.15 8.79 333.618 17.164 Q 338.086 25.538 338.086 37.403 Q 338.086 49.22 333.618 57.569 Q 329.15 65.919 321.484 70.313 Q 313.818 74.708 304.15 74.708 Z"/>
+    </g>
+  </svg>
+);
+
+const Rating = ({n, size="md"}) => {
+  if (!n || n < 1) return null;
+  return (
+    <span className="rdots" aria-label={`${n} points`}>
+      {Array.from({length: n}).map((_,i) => (
+        <i key={i} className={`rdot ${size==='sm'?'sm':size==='lg'?'lg':''}`}/>
+      ))}
+    </span>
+  );
+};
+
+// Sample imagery — architecture photography from Unsplash
+const IMG = {
+  barbican: "https://images.unsplash.com/photo-1460574283810-2aab119d8511?w=1600&q=80",
+  villa: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1600&q=80",
+  unite: "https://images.unsplash.com/photo-1459767129954-1b1c1f9b9ace?w=1600&q=80",
+  guggenheim: "https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=1600&q=80",
+  salk: "https://images.unsplash.com/photo-1497604401993-f2e922e5cb0a?w=1600&q=80",
+  pompidou: "https://images.unsplash.com/photo-1574958269340-fa927503f3dd?w=1600&q=80",
+  sagrada: "https://images.unsplash.com/photo-1494145904049-0dca59b4bbad?w=1600&q=80",
+  farnsworth: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1600&q=80",
+  therme: "https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=1600&q=80",
+  kimbell: "https://images.unsplash.com/photo-1524230572899-a752b3835840?w=1600&q=80",
+  sydney: "https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=1600&q=80",
+  teshima: "https://images.unsplash.com/photo-1493397212122-2b85dda8106b?w=1600&q=80",
+};
+
+// ─── Chrome ───
+const Chrome = ({view, setView}) => (
+  <nav className="chrome-tabs">
+    <div className="chrome-inner">
+      <div style={{display:"flex",alignItems:"center",gap:32}}>
+        <a onClick={()=>setView("landing")} style={{cursor:"pointer"}}>
+          <PlanoLogo style={{height:22}}/>
+        </a>
+        <div className="tabs">
+          <button className={`tab ${view==='landing'?'active':''}`} onClick={()=>setView("landing")}>Overview</button>
+          <button className={`tab ${view==='feed'?'active':''}`} onClick={()=>setView("feed")}>Feed</button>
+          <button className={`tab ${view==='building'?'active':''}`} onClick={()=>setView("building")}>Building</button>
+        </div>
+      </div>
+      <div className="chrome-right">
+        <button className="btn btn-ghost btn-sm">Search</button>
+        <button className="btn btn-outline btn-sm">Log a visit</button>
+        <div className="avatar">JN</div>
+      </div>
+    </div>
+  </nav>
+);
+
+// ─── Landing ───
+const Landing = ({setView}) => (
+  <>
+    <header className="hero">
+      <div className="hero-eyebrow">
+        <span className="pill pill-brand">BETA</span>
+        <span className="eyebrow">VOL 01 · EST 2025</span>
+      </div>
+      <h1 className="hero-title">The world's<br/><em>architecture</em>,<br/>cataloged.</h1>
+      <p className="hero-sub">Track visits, rate buildings with a three-point scale, and follow friends, critics, and architects. Plano is a private atlas of what you've seen — and a quiet feed of where to go next.</p>
+      <div className="hero-ctas">
+        <button className="btn btn-primary btn-lg" onClick={()=>setView("feed")}>Open the feed</button>
+        <button className="cta" onClick={()=>setView("building")}>See a building <span className="ar">→</span></button>
+      </div>
+    </header>
+
+    <div style={{maxWidth:1280,margin:"0 auto",padding:"0 32px"}}>
+      <div className="hero-meta">
+        <div className="hero-stat"><div className="stat-n">12,408</div><div className="stat-l">Buildings catalogued</div></div>
+        <div className="hero-stat"><div className="stat-n">184</div><div className="stat-l">Cities</div></div>
+        <div className="hero-stat"><div className="stat-n">6,220</div><div className="stat-l">Members</div></div>
+        <div className="hero-stat"><div className="stat-n">41</div><div className="stat-l">Architects verified</div></div>
+      </div>
+
+      <div className="features">
+        <div>
+          <div className="feature-num">01 / TRACK</div>
+          <h3 className="feature-t">Log the buildings you visit.</h3>
+          <p className="feature-p">Check in on-site, add a rating, keep the notes private or share them. Your history becomes a travel record.</p>
+        </div>
+        <div>
+          <div className="feature-num">02 / RATE</div>
+          <h3 className="feature-t">Impressive · Essential · Masterpiece.</h3>
+          <p className="feature-p">A three-point Michelin-style scale. No five-star inflation. No "meh." Only conviction.</p>
+        </div>
+        <div>
+          <div className="feature-num">03 / COLLECT</div>
+          <h3 className="feature-t">Curate itineraries. Follow critics.</h3>
+          <p className="feature-p">Build multi-day architectural walks. Save trips from people whose eye you trust. Export as a map, a PDF, or a shared guide.</p>
+        </div>
+      </div>
+
+      <div style={{marginTop:96, padding:"80px 0",borderTop:"1px solid var(--border-default)",borderBottom:"1px solid var(--border-default)"}}>
+        <div className="eyebrow" style={{marginBottom:28}}>FEATURED COLLECTION</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:64, alignItems:"end"}}>
+          <h2 style={{fontSize:"clamp(40px,5.5vw,72px)",fontWeight:700,letterSpacing:"-0.03em",lineHeight:1,margin:0}}>Brutalist Gems<br/>of London.</h2>
+          <div>
+            <p style={{fontSize:17,lineHeight:1.7,color:"var(--text-secondary)",margin:0}}>Curated by Eleanor Okafor · 12 buildings · A weekend walking tour of the city's most uncompromising concrete, from Trellick to the Barbican estate.</p>
+            <div style={{marginTop:24}}><button className="cta">Open collection <span className="ar">→</span></button></div>
+          </div>
+        </div>
+        <div style={{marginTop:40,display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:"1.5px",background:"var(--border-default)"}}>
+          {[IMG.barbican, IMG.unite, IMG.sagrada, IMG.salk].map((u,i) => (
+            <div key={i} style={{aspectRatio:"4/5", background:`#f5f5f5 url(${u}) center/cover`}}/>
+          ))}
+        </div>
+      </div>
+    </div>
+  </>
+);
+
+// ─── Feed ───
+// Flexible feed item. `place` sits above the title (short, text-only).
+// Meta line below title carries attribution. `body` is optional.
+const FeedItem = ({who, when, action, rating, place, title, body, img, likes, comments}) => (
+  <article>
+    {place && <div className="feed-eyebrow">{place}</div>}
+    <h2 className="feed-headline">{title}</h2>
+    <div className="feed-meta">
+      <span className="who-avatar">{who[0]}</span>
+      <span className="who-name">{who}</span>
+      <span className="sep">·</span>
+      <span className="action">{action}</span>
+      {rating > 0 && <><span className="sep">·</span><Rating n={rating} size="sm"/></>}
+      <span className="sep">·</span>
+      <span className="when">{when}</span>
+    </div>
+    {img && <div className="feed-img" style={{backgroundImage:`url(${img})`}}/>}
+    {body && <p className="feed-body">{body}</p>}
+    <div className="feed-foot">
+      <div className="feed-foot-l">
+        <span>{likes} LIKES</span>
+        <span>{comments} COMMENTS</span>
+      </div>
+      <div className="feed-foot-r">
+        <button className="icon-btn">Save →</button>
+        <button className="icon-btn">Review →</button>
+      </div>
+    </div>
+  </article>
+);
+
+const Feed = () => (
+  <>
+    <div style={{maxWidth:720,margin:"0 auto",padding:"48px 32px 16px"}}>
+      <div className="eyebrow" style={{marginBottom:10}}>YOUR FEED · TODAY</div>
+      <h1 style={{fontSize:40,fontWeight:600,letterSpacing:"-0.025em",margin:0}}>Wednesday, October 23</h1>
+    </div>
+    <div className="feed">
+      <FeedItem
+        who="Eleanor Okafor" when="2 days ago" action="Visited"
+        rating={2}
+        place="London · 1982"
+        title="Barbican Centre"
+        img={IMG.barbican}
+        body="A cathedral of concrete. The lakeside conservatory at sunset turns the whole estate into a single, improbably serene garden — a Brutalist manifesto that somehow feels like a refuge. Came for the raw architecture; stayed four hours."
+        likes={42} comments={7}
+      />
+
+      {/* Collection item — mosaic treatment. No body — the photos are the argument. */}
+      <article>
+        <div className="feed-eyebrow">Venice & the Veneto</div>
+        <h2 className="feed-headline">A weekend with<br/>Carlo Scarpa.</h2>
+        <div className="feed-meta">
+          <span className="who-avatar" style={{background:"#404040"}}>M</span>
+          <span className="who-name">Marco Rizzi</span>
+          <span className="sep">·</span>
+          <span className="action">Published a collection · 12 buildings</span>
+          <span className="sep">·</span>
+          <span className="when">4 days ago</span>
+        </div>
+        <div className="mosaic">
+          {[IMG.kimbell, IMG.guggenheim, IMG.teshima, IMG.salk].map((u,i)=>(
+            <div key={i} className="mosaic-cell" style={{backgroundImage:`url(${u})`}}/>
+          ))}
+        </div>
+        <div className="feed-foot">
+          <div className="feed-foot-l"><span>28 LIKES</span><span>4 COMMENTS</span></div>
+          <div className="feed-foot-r">
+            <button className="icon-btn">Save →</button>
+            <button className="icon-btn">Open →</button>
+          </div>
+        </div>
+      </article>
+
+      {/* No body — the title and photo hold it alone. */}
+      <FeedItem
+        who="Claire Bergström" when="1 week ago" action="Rated"
+        rating={3}
+        place="La Jolla, CA · 1965"
+        title="Salk Institute"
+        img={IMG.salk}
+        body="The travertine plaza splits the Pacific in two. Photographs cannot prepare you for the silence at the centre — the building insists you stop talking. Went alone. Came back changed."
+        likes={117} comments={19}
+      />
+
+      {/* No body, no rating — a want-to-visit. */}
+      <FeedItem
+        who="Jaime Noain" when="2 weeks ago" action="Wants to visit"
+        rating={0}
+        place="Vals, Switzerland · 1996"
+        title="Therme Vals"
+        img={IMG.therme}
+        likes={8} comments={1}
+      />
+    </div>
+  </>
+);
+
+// ─── Building Detail ───
+const Building = () => (
+  <div className="bldg-hero">
+    <div className="bldg-hero-wrap">
+      <div className="bldg-hero-img" style={{backgroundImage:`url(${IMG.villa})`}}/>
+      <span className="bldg-hero-tag">Official · Fondation Le Corbusier</span>
+    </div>
+    <div className="bldg-hero-inner">
+      <div className="bldg-meta-row">
+        <div className="bldg-titles">
+          <div className="eyebrow">BUILDING</div>
+          <h1 className="bldg-name">Villa Savoye</h1>
+          <div className="bldg-arch">By <a>Le Corbusier</a> & <a>Pierre Jeanneret</a>, completed 1931.</div>
+        </div>
+        <div className="bldg-actions">
+          <button className="btn btn-outline">Save</button>
+          <button className="btn btn-primary">Log visit</button>
+        </div>
+      </div>
+
+      <div className="bldg-facts">
+        <div className="fact"><div className="fact-l">Location</div><div className="fact-v">Poissy, FR</div></div>
+        <div className="fact"><div className="fact-l">Coordinates</div><div className="fact-v mono">48.9244° N<br/>02.0280° E</div></div>
+        <div className="fact"><div className="fact-l">Typology</div><div className="fact-v">Private residence</div></div>
+        <div className="fact"><div className="fact-l">Style</div><div className="fact-v">International</div></div>
+        <div className="fact"><div className="fact-l">Status</div><div className="fact-v">Museum · Open</div></div>
+        <div className="fact"><div className="fact-l">Plano Rank</div><div className="fact-v">Top 1%</div></div>
+      </div>
+
+      <div className="bldg-body">
+        <div>
+          <div className="bldg-body-label">ABOUT</div>
+          <div style={{marginTop:18,fontSize:13,color:"var(--text-secondary)",lineHeight:1.8}}>
+            UNESCO-listed since 2016. A manifesto for the <em style={{fontStyle:"italic",color:"var(--text-primary)"}}>Five Points</em> of modern architecture: pilotis, flat roof terrace, open plan, horizontal windows, free facade.
+          </div>
+        </div>
+        <div className="bldg-body-text">
+          <p>Villa Savoye is arguably the most complete and resolved statement of Le Corbusier's early thesis. Commissioned by Pierre and Eugénie Savoye as a weekend retreat outside Paris, the house elevates domestic life on slender concrete pilotis, releases the ground for cars to circulate beneath, and delivers the family to a ribbon-windowed <em>piano nobile</em> that opens — via ramp — to a rooftop solarium.</p>
+          <p>It is a house that argues. Every element declares its structural logic: the columns are not decorated, the walls are not load-bearing, the roof is not pitched. What began as an experiment became a template.</p>
+        </div>
+      </div>
+
+      {/* Editorial stream — featured community image */}
+      <section className="feature-img">
+        <div className="feature-img-frame" style={{backgroundImage:`url(${IMG.salk})`}}/>
+        <div className="feature-credit">
+          <span className="feature-credit-by">Ground floor, morning light. — <strong style={{fontWeight:600}}>Claire Bergström</strong></span>
+          <span>♥ 84</span>
+        </div>
+      </section>
+
+      <section className="reviews">
+        <div className="review-head">
+          <h2>Reviews · 142</h2>
+          <div className="eyebrow">FOLLOWING 3 · ALL 142</div>
+        </div>
+
+        <div className="review">
+          <div className="review-who">
+            <div className="avatar-lg">EO</div>
+            <div>
+              <div className="review-name">Eleanor Okafor</div>
+              <div className="review-when">Visited · Jun 2024</div>
+              <div className="review-rating"><Rating n={3}/></div>
+            </div>
+          </div>
+          <div className="review-body">
+            Walking the ramp from ground to roof garden is an argument about how a house becomes a promenade. Every threshold is resolved; nothing is wasted. A masterpiece in the old sense of the word — a demonstration piece by a master at the height of his powers.
+          </div>
+        </div>
+
+        <div className="review">
+          <div className="review-who">
+            <div className="avatar-lg" style={{background:"#404040",color:"#fff"}}>MR</div>
+            <div>
+              <div className="review-name">Marco Rizzi <span className="verified">Verified architect</span></div>
+              <div className="review-when">Visited · Apr 2024</div>
+              <div className="review-rating"><Rating n={2}/></div>
+            </div>
+          </div>
+          <div className="review-body">
+            Essential, yes — every architect should make the pilgrimage at least once. But the house has become a monument to itself, and the tourist flow changes how you experience the space. Go early, go mid-week.
+          </div>
+        </div>
+
+        <div className="review" style={{borderBottom:0}}>
+          <div className="review-who">
+            <div className="avatar-lg" style={{background:"#737373",color:"#fff"}}>CB</div>
+            <div>
+              <div className="review-name">Claire Bergström</div>
+              <div className="review-when">Visited · Sep 2023</div>
+              <div className="review-rating"><Rating n={3}/></div>
+            </div>
+          </div>
+          <div className="review-body">
+            The bathroom chaise is still my favourite piece of residential architecture ever built. Everything about it — the scale, the tile, the light — feels like it was placed there specifically for me, ninety years before I arrived.
+          </div>
+        </div>
+
+        <div style={{marginTop:24,display:"flex",justifyContent:"center"}}>
+          <button className="cta">Show all 142 reviews <span className="ar">→</span></button>
+        </div>
+      </section>
+
+      <section className="related">
+        <div className="related-head">
+          <div className="eyebrow">MORE FROM LE CORBUSIER</div>
+        </div>
+        <div className="related-grid">
+          {[
+            {img:IMG.unite, t:"Unité d'Habitation", s:"Marseille · 1952"},
+            {img:IMG.kimbell, t:"Chapelle Ronchamp", s:"Ronchamp · 1955"},
+            {img:IMG.sagrada, t:"Couvent Sainte-Marie", s:"Éveux · 1960"},
+          ].map((c,i) => (
+            <div key={i} className="rc">
+              <div className="rc-img" style={{backgroundImage:`url(${c.img})`}}/>
+              <div className="rc-eyebrow eyebrow">BUILDING</div>
+              <div className="rc-name">{c.t}</div>
+              <div className="rc-meta">{c.s}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  </div>
+);
+
+// ─── Footer ───
+const Footer = () => (
+  <footer className="site">
+    <div className="foot-inner">
+      <div>
+        <PlanoLogo style={{height:32, marginBottom:24}}/>
+        <p style={{fontSize:14,lineHeight:1.65,color:"rgba(255,255,255,.7)",maxWidth:360,margin:0}}>The world's architecture, cataloged. A quiet place to track the buildings you've seen, rate them with conviction, and follow the people whose eye you trust.</p>
+      </div>
+      <div>
+        <div className="foot-h">PRODUCT</div>
+        <div className="foot-links"><a>Feed</a><a>Map</a><a>Collections</a><a>Architects</a></div>
+      </div>
+      <div>
+        <div className="foot-h">COMPANY</div>
+        <div className="foot-links"><a>About</a><a>Editorial</a><a>Press</a><a>Careers</a></div>
+      </div>
+      <div>
+        <div className="foot-h">LEGAL</div>
+        <div className="foot-links"><a>Terms</a><a>Privacy</a><a>Cookies</a><a>Contact</a></div>
+      </div>
+    </div>
+    <div className="foot-bot">
+      <span>© 2025 PLANO — ALL BUILDINGS BELONG TO SOMEONE</span>
+      <span>v01 · ESTABLISHED 2025</span>
+    </div>
+  </footer>
+);
+
+// ─── App ───
+function App(){
+  const [view, setView] = useState(() => localStorage.getItem("plano-view") || "landing");
+  useEffect(() => { localStorage.setItem("plano-view", view); }, [view]);
+
+  return (
+    <div data-screen-label={`Plano · ${view}`}>
+      <Chrome view={view} setView={setView}/>
+      {view === "landing" && <Landing setView={setView}/>}
+      {view === "feed" && <Feed/>}
+      {view === "building" && <Building/>}
+      <Footer/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

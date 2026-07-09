@@ -1,78 +1,92 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<title>Plano · Components · Distinctions</title>
-<link rel="stylesheet" href="../colors_and_type.css" />
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Michelin Rating" subtitle="Awards, not a score — 1–3 filled black dots, never empty" viewport="720x460" -->
+<html lang="en"><head><meta charset="UTF-8"><title>Rating</title>
+<link rel="stylesheet" href="../colors_and_type.css">
 <style>
-  html, body { margin: 0; padding: 0; background: #FAFAFA; }
-  .frame { padding: 20px 26px 24px;}
-  .head { display:flex; align-items:baseline; justify-content: space-between; margin-bottom: 18px;}
-  .meta-h { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-disabled); text-transform: uppercase;}
+  html,body{margin:0;padding:0;background:var(--surface-default);font-family:var(--font-sans)}
+  .wrap{padding:32px;display:flex;flex-direction:column;gap:32px}
+  .eyebrow{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-disabled);font-weight:500;margin-bottom:10px}
+  .row{display:flex;gap:36px;align-items:center;flex-wrap:wrap}
+  .tier{display:flex;align-items:center;gap:12px}
+  .dots{display:inline-flex;gap:5px}
+  .dot{width:16px;height:16px;border-radius:9999px;background:#171717;display:inline-block}
+  .dot.sm{width:10px;height:10px}
+  .dot.lg{width:20px;height:20px}
+  .label{font-size:14px;color:var(--text-primary);font-weight:500;letter-spacing:-0.005em}
+  .sub{font-size:11px;color:var(--text-secondary);letter-spacing:.08em;text-transform:uppercase;font-weight:500}
+  .note{font-size:12px;color:var(--text-secondary);line-height:1.6;max-width:52ch;border-top:1px solid var(--border-default);padding-top:16px;margin-top:4px}
+  .note strong{color:var(--text-primary);font-weight:600}
+  .ex{display:flex;gap:10px;align-items:center}
+  .ex .cap{font-size:12px;color:var(--text-secondary)}
+  /* input picker — discrete tiers */
+  .pick{display:inline-flex;gap:8px}
+  .opt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;width:100px;min-height:80px;padding:12px 8px;border:1px solid var(--border-default);border-radius:2px;background:var(--surface-card)}
+  .opt.on{border-color:var(--text-primary);background:var(--surface-muted)}
+  .opt .odots{display:flex;gap:4px;min-height:12px;align-items:center}
+  .opt .odots i{width:12px;height:12px;border-radius:9999px;background:#171717;display:block}
+  .opt .oname{font-size:12px;font-weight:500;color:var(--text-primary)}
+  .opt .odesc{font-size:10px;color:var(--text-secondary)}
+  .dont{display:inline-flex;align-items:center;gap:12px}
+  .dont .grp{display:inline-flex;gap:5px;align-items:center}
+  .dont .grp i{width:16px;height:16px;border-radius:9999px;background:#171717;display:block}
+  .dont .grp i.ring{background:none;border:1.5px solid rgba(163,163,163,.6)}
+  .dont .lab{font-size:11px;color:var(--feedback-destructive,#EF4444);font-weight:500}
+</style></head>
+<body><div class="wrap">
 
-  .grid { display:grid; grid-template-columns: repeat(4, 1fr); gap: 0;}
-  .tier { padding: 18px 18px 18px; border-right: 1px solid var(--border-default); display: flex; flex-direction: column; min-height: 200px;}
-  .tier:last-child { border-right: 0;}
-  .tier:first-child { padding-left: 0;}
-  .tier:last-child { padding-right: 0;}
-
-  .dots { display:flex; gap: 5px; height: 14px; margin-bottom: 16px; align-items: center;}
-  .dot  { width: 14px; height: 14px; border-radius: 50%; background: #171717;}
-  /* "Worth a visit" tier shows nothing — the empty space is the design. */
-  .tier.default .dots::before {
-    content: "—";
-    font-family: var(--font-mono);
-    font-size: 14px;
-    color: var(--text-disabled);
-    letter-spacing: 0.04em;
-  }
-
-  .tname { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); margin: 0 0 6px;}
-  .tdesc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0; flex: 1;}
-  .nums { font-family: var(--font-mono); font-size: 10px; color: var(--text-disabled); letter-spacing: 0.08em; text-transform: uppercase; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border-default);}
-
-  .note { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-default); font-size: 12px; color: var(--text-secondary); line-height: 1.5;}
-  .note b { color: var(--text-primary); font-weight: 600;}
-</style>
-</head>
-<body>
-<div class="frame">
-  <div class="head">
-    <span class="eyebrow">Distinctions · the three-dot ladder</span>
-    <span class="meta-h">awarded · not scored · empty is the default</span>
-  </div>
-  <div class="grid">
-
-    <div class="tier default">
-      <div class="dots"></div>
-      <h3 class="tname">Worth a visit</h3>
-      <p class="tdesc">The default for any building someone has logged. No distinction — just a record that you've been.</p>
-      <div class="nums">— · 1.18M logged</div>
-    </div>
-
-    <div class="tier">
-      <div class="dots"><span class="dot"></span></div>
-      <h3 class="tname">Impressive</h3>
-      <p class="tdesc">Worth visiting if you're in town. A solid example of its style and era.</p>
-      <div class="nums">● · 18,402 awarded</div>
-    </div>
-
-    <div class="tier">
-      <div class="dots"><span class="dot"></span><span class="dot"></span></div>
-      <h3 class="tname">Essential</h3>
-      <p class="tdesc">Worth a detour. A defining work — you'll remember the visit.</p>
-      <div class="nums">●● · 6,118 awarded</div>
-    </div>
-
-    <div class="tier">
-      <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-      <h3 class="tname">Masterpiece</h3>
-      <p class="tdesc">Worth a journey. One of the finest examples of the built world.</p>
-      <div class="nums">●●● · 412 awarded</div>
+  <div>
+    <div class="eyebrow">Award · Michelin system · 1 to 3 dots</div>
+    <div class="row">
+      <div class="tier">
+        <span class="dots"><i class="dot lg"></i></span>
+        <div>
+          <div class="label">Impressive</div>
+          <div class="sub" style="margin-top:2px">Worth a detour</div>
+        </div>
+      </div>
+      <div class="tier">
+        <span class="dots"><i class="dot lg"></i><i class="dot lg"></i></span>
+        <div>
+          <div class="label">Essential</div>
+          <div class="sub" style="margin-top:2px">Worth a journey</div>
+        </div>
+      </div>
+      <div class="tier">
+        <span class="dots"><i class="dot lg"></i><i class="dot lg"></i><i class="dot lg"></i></span>
+        <div>
+          <div class="label">Masterpiece</div>
+          <div class="sub" style="margin-top:2px">Once in a lifetime</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <p class="note"><b>Never render empty / outline dots.</b> They would imply a rating scale where the building is missing input. The dots are an award, like Michelin stars — the absence of dots is the normal state, not an incomplete one.</p>
-</div>
-</body>
-</html>
+  <div>
+    <div class="eyebrow">Inline — smaller scale, meta line</div>
+    <div class="row">
+      <span class="ex"><span class="dots"><i class="dot sm"></i><i class="dot sm"></i></span><span class="cap">Essential · rated by Eleanor</span></span>
+      <span class="ex"><span class="dots"><i class="dot sm"></i><i class="dot sm"></i><i class="dot sm"></i></span><span class="cap">Masterpiece · 12 reviews</span></span>
+    </div>
+  </div>
+
+  <div>
+    <div class="eyebrow">Input — discrete honour tiers · defaults to Standard</div>
+    <div class="pick">
+      <div class="opt"><span class="odots"></span><span class="oname">Interesting</span><span class="odesc">Worth a look</span></div>
+      <div class="opt on"><span class="odots"><i></i></span><span class="oname">Impressive</span><span class="odesc">Worth a detour</span></div>
+      <div class="opt"><span class="odots"><i></i><i></i></span><span class="oname">Essential</span><span class="odesc">Worth a journey</span></div>
+      <div class="opt"><span class="odots"><i></i><i></i><i></i></span><span class="oname">Masterpiece</span><span class="odesc">Once in a lifetime</span></div>
+    </div>
+  </div>
+
+  <div>
+    <div class="eyebrow">Never — fillable slots manufacture a bad score</div>
+    <div class="dont">
+      <span class="grp"><i></i><i class="ring"></i><i class="ring"></i></span>
+      <span class="lab">✗ One dot beside two empty rings reads as “1 out of 3”</span>
+    </div>
+  </div>
+
+  <p class="note"><strong>Dots are awards, not ratings.</strong> Most buildings will have none, and that's the default — a visited entry with no dots is perfectly complete. Dots are reserved for the rare few that earn one, two, or three. Never render empty placeholders: a 1-dot award is one dot, not one filled plus two hollow. The absence of dots carries meaning; filling them with outlines dilutes it.</p>
+
+</div></body></html>

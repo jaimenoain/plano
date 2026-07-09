@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Feed Card" subtitle="Location eyebrow above, meta attribution below" viewport="720x760" -->
+<html lang="en"><head><meta charset="UTF-8"><title>Feed Card</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;background:var(--surface-default);font-family:var(--font-sans);color:var(--text-primary)}
+  .wrap{padding:36px;max-width:680px;display:flex;flex-direction:column;gap:56px}
+
+  /* Eyebrow above title — short, text-only context (location · year) */
+  .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;color:var(--text-secondary);margin-bottom:10px}
+
+  .headline{font-size:44px;font-weight:700;letter-spacing:-0.03em;line-height:1.02;margin:0}
+
+  /* Meta below title — who, action, rating, when */
+  .meta{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+  .avatar{width:20px;height:20px;border-radius:9999px;background:#262626;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:600}
+  .who{font-size:12px;font-weight:500;color:var(--text-primary)}
+  .action{font-size:12px;color:var(--text-secondary)}
+  .when{font-size:12px;color:var(--text-disabled)}
+  .sep{color:var(--text-disabled);font-size:11px}
+  .dots{display:inline-flex;gap:4px;align-items:center}
+  .dot{width:9px;height:9px;border-radius:9999px;background:#171717}
+
+  .img{margin-top:22px;background:#D4D4D4 url('https://images.unsplash.com/photo-1519302959554-a75be0afc82a?w=1200&q=70') center/cover;aspect-ratio:16/9}
+  .body{margin-top:20px;font-size:15px;line-height:1.7;max-width:56ch}
+  .foot{margin-top:22px;padding-top:14px;border-top:1px solid var(--border-default);display:flex;justify-content:space-between;align-items:center;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);font-weight:500}
+  .foot .right{display:flex;gap:20px}
+
+  .variant-label{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-disabled);font-weight:500;margin-bottom:14px;border-bottom:1px solid var(--border-default);padding-bottom:8px}
+</style></head>
+<body><div class="wrap">
+
+  <!-- A: full — place above, meta below, body -->
+  <div>
+    <div class="variant-label">A — Full entry</div>
+    <div class="eyebrow">London · 1982</div>
+    <h2 class="headline">Barbican Centre</h2>
+    <div class="meta">
+      <span class="avatar">EO</span>
+      <span class="who">Eleanor Okafor</span>
+      <span class="sep">·</span>
+      <span class="action">Visited</span>
+      <span class="sep">·</span>
+      <span class="dots"><i class="dot"></i><i class="dot"></i></span>
+      <span class="sep">·</span>
+      <span class="when">2 days ago</span>
+    </div>
+    <div class="img"></div>
+    <p class="body">A cathedral of concrete. The lakeside conservatory at sunset turns the whole estate into a single, improbably serene garden — a Brutalist manifesto that somehow feels like a refuge.</p>
+    <div class="foot">
+      <span>42 Likes · 7 Comments</span>
+      <div class="right"><span>Save →</span><span>Review →</span></div>
+    </div>
+  </div>
+
+  <!-- B: no body — headline + image do the work -->
+  <div>
+    <div class="variant-label">B — No body · image carries</div>
+    <div class="eyebrow">Vals, Switzerland · 1996</div>
+    <h2 class="headline">Therme Vals</h2>
+    <div class="meta">
+      <span class="avatar" style="background:#525252">JN</span>
+      <span class="who">Jaime Noain</span>
+      <span class="sep">·</span>
+      <span class="action">Wants to visit</span>
+      <span class="sep">·</span>
+      <span class="when">2 weeks ago</span>
+    </div>
+    <div class="img" style="background-image:url('https://images.unsplash.com/photo-1505577058444-a3dab90d4253?w=1200&q=70')"></div>
+  </div>
+
+  <!-- C: no eyebrow — title is already the whole thing -->
+  <div>
+    <div class="variant-label">C — No eyebrow · when the title stands alone</div>
+    <h2 class="headline">A weekend with Carlo Scarpa.</h2>
+    <div class="meta">
+      <span class="avatar" style="background:#404040">M</span>
+      <span class="who">Marco Rizzi</span>
+      <span class="sep">·</span>
+      <span class="action">Published a collection · 12 buildings</span>
+      <span class="sep">·</span>
+      <span class="when">4 days ago</span>
+    </div>
+    <div class="img" style="background-image:url('https://images.unsplash.com/photo-1506854331823-503562d821a3?w=1200&q=70')"></div>
+    <p class="body">From the Brion tomb in the dawn fog to the Querini Stampalia stairs at closing time — every detail is an argument about how a building should meet the hand, the eye, and the ground.</p>
+  </div>
+
+</div></body></html>
