@@ -240,7 +240,7 @@ describe("CompanyDashboard (QA 9.2)", () => {
     renderDashboard();
 
     expect(await screen.findByRole("heading", { name: /^portfolio$/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Glass Tower" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Glass Tower" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Bridge Hall" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Sam Person" })).toHaveAttribute("href", "/person/sam-person");
     expect(screen.getByRole("button", { name: /add credit/i })).toBeInTheDocument();
@@ -374,7 +374,7 @@ describe("CompanyDashboard (QA 9.2)", () => {
     renderDashboard("/company-portfolio?company=alpha-ltd");
 
     expect(await screen.findByRole("combobox", { name: /select company/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Alpha Building" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Alpha Building" })).toBeInTheDocument();
 
     const companyCombo = screen.getByRole("combobox", { name: /select company/i });
     await user.click(companyCombo);
