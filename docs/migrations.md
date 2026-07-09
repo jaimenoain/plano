@@ -38,10 +38,14 @@ apply a migration that changes the public schema:
 npm run gen-types        # regenerates src/integrations/supabase/types.ts from the live DB
 ```
 
-Commit the regenerated file **in the same PR as the migration**. CI runs a non-blocking reminder
-(`scripts/check-types-staleness.mjs`) that flags a PR which changes `supabase/migrations/` without
-touching `types.ts`. (`gen-types` needs Supabase network access, so it is intentionally a local
-step, not a CI step.)
+`gen-types` shells out to the Supabase CLI — it must be installed (`brew install
+supabase/tap/supabase` or `npx supabase`) and authenticated (`supabase login`) with access to the
+hosted project; it is not an npm dependency.
+
+Commit the regenerated file **in the same PR as the migration**. CI enforces this with a
+**blocking** required check (`Types staleness`, `scripts/check-types-staleness.mjs`) that fails any
+PR changing `supabase/migrations/` without touching `types.ts`. (`gen-types` needs Supabase network
+access, so regeneration itself is intentionally a local step, not a CI step.)
 
 ## Growing the strict-TypeScript allowlist
 
