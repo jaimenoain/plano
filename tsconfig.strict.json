@@ -16,7 +16,10 @@
   "extends": "./tsconfig.app.json",
   "compilerOptions": {
     "strict": true,
-    "noImplicitAny": true
+    "noImplicitAny": true,
+    // Unlike the app program, this curated program does not pull in @types/node via imports,
+    // so src/config.ts's `process` fallback fails with TS2591 without it.
+    "types": ["node"]
   },
   "include": [
     "src/vite-env.d.ts",
