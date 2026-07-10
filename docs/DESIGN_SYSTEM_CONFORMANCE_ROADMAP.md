@@ -22,7 +22,7 @@ one surface at a time.
 | | PR | State |
 |---|---|---|
 | ✅ | Design-system foundation | **Merged** — [#1521](https://github.com/jaimenoain/plano/pull/1521) |
-| ✅ | 1 · Global chrome | **Open** — [#1522](https://github.com/jaimenoain/plano/pull/1522) |
+| ✅ | 1 · Global chrome | **Merged** — [#1522](https://github.com/jaimenoain/plano/pull/1522) |
 | ☐ | 2 · Feed | not started |
 | ☐ | 3 · Building detail | not started |
 | ☐ | 4 · Landing | not started |
@@ -94,17 +94,48 @@ update `docs/DESIGN_TOKENS.md` **in the same PR** — never defer the sync.
    4. *Cramped* (section gaps < 48px, feed gaps < 64px).
 5. **Reuse, don't fork.** Compose the utilities and `src/components/ui` primitives listed in §1.
 6. **Never introduce a raw value.** If a token is missing, propose adding it — don't hardcode.
-7. **Verify in the browser** (§4), then run the gate, then open the PR.
+7. **Verify in the browser** (§4), run the gate, open the PR, then **arm auto-merge** (§3.2).
+8. **Tick the row** in the §1 status table as part of that same PR.
 
-### Definition of Done (repo standard, `AGENTS.md`)
+### 3.1 Definition of Done (repo standard, `AGENTS.md`)
 
 - `npm run check` green **before commit** — lint, typecheck, vitest, migration check, and all four
   debt ratchets.
 - New user-facing behaviour ships **with its test in the same PR**.
 - Affected docs updated in the same PR (`docs/DESIGN_TOKENS.md`, the audit/inventory rows).
 - **Debt baselines only ever shrink.** If a ratchet fails, fix the code — never the baseline.
-- Small, single-concern PR. Direct pushes to `main` are blocked.
-- **Agent sessions cannot merge.** Push, open the PR, and hand off to the owner.
+- Small, single-concern PR. Direct pushes to `main` are blocked by branch protection.
+
+### 3.2 Landing the PR — auto-merge, not a hand-off
+
+`main` requires **9 status checks** (Lint, Typecheck, Test, Build, Migrations lint, Warning ratchet,
+Debt ratchet, Secret scan, Types staleness) and **zero approving reviews**, with
+*"require branches to be up to date"* enabled. Repo-level auto-merge is **on**.
+
+So a conformance PR merges itself the moment it is green. Immediately after opening it:
+
+```sh
+gh pr merge <number> --auto --merge
+```
+
+That arms auto-merge; GitHub lands the PR as soon as all 9 checks pass. **Do not merge by hand, and
+do not wait for a human.** If a check fails, auto-merge stays armed — push the fix and it lands.
+
+> Never reach for `--admin`, and never `git push --no-verify`. If a check is red, the code is wrong.
+
+**The staleness trap.** Because branches must be up to date, a PR opened while another is still in
+flight goes `BEHIND` the instant that other one merges. Auto-merge stays armed but blocks. GitHub
+does not update the branch for you. Refresh it with:
+
+```sh
+gh pr update-branch <number>          # equivalently: git merge origin/main && git push
+```
+
+Never `git reset --hard` or force-push to fix this — a plain merge of `origin/main` is what GitHub's
+own "Update branch" button does, and it rewrites no history.
+
+This is the single best reason to **work strictly one PR at a time**: branch off `main`, land it,
+then branch the next one off the new `main`.
 
 ---
 
@@ -144,6 +175,10 @@ Open the designed `screens/<screen>.html` the same way to compare side by side.
 - **File-size ratchet:** pages ≤ 800 lines, components ≤ 400, hooks ≤ 300, other ≤ 400. Oversized
   files are grandfathered but **must not grow** — extract sub-components. Watch
   `BuildingDetails.tsx` (**2905 lines**) and `Profile.tsx` (**1518 lines**).
+- The **pre-push hook** (`.githooks/pre-push`) re-runs lint + typecheck + unit tests. Under load —
+  a full `npm run check` plus a running dev server and headless browser — vitest can fail
+  spuriously there even though it passes on its own. Stop the preview server
+  (`preview_stop`) and push again. **Never** bypass it with `--no-verify`.
 
 ---
 
