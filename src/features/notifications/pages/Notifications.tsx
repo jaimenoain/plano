@@ -1,115 +1,19 @@
 /**
- * Notifications.tsx — Redesigned with A24 editorial aesthetic
+ * Notifications.tsx — the grouped activity feed (kit `notifications.html`).
  *
- * Visual changes (all data-fetching, click-handling, and mark-as-read logic unchanged):
- *
- * Heading:
- *   Responsive scale: text-3xl md:text-5xl font-bold tracking-tight leading-none
- *   Settings gear moved from Button wrapper to a bare icon button inline
- *   with the heading so the heading row doubles as the action row.
- *
- * Section labels ("New" / "Earlier"):
- *   text-xs font-semibold bg-surface-card/95 sticky → text-2xs font-medium
- *   tracking-[0.15em] uppercase text-text-secondary sticky bg-surface-default.
- *   Matches the section label pattern used across the rest of the app.
- *
- * Notification rows:
- *   bg-brand-secondary on unread removed — violates the monochromatic content
- *   surface rule in DESIGN_TOKENS. The neon dot is the sole unread signal.
- *   hover:bg-brand-secondary → hover:bg-surface-muted/50.
- *   Avatar: h-10 → h-9 w-9. Timestamp: text-xs → text-2xs text-text-disabled.
- *   Actor name: font-semibold → font-medium throughout getText().
- *
- * Icon badge colours:
- *   Reduced from per-type colour-coding (green/amber/neon/red) to two signals:
- *   Heart stays text-feedback-destructive (universal convention).
- *   ShieldCheck stays text-text-primary (significant system event).
- *   All other types → text-text-secondary, no fill. Contrast between
- *   notification types now comes from text content, not icon colour.
- *
- * Load more: Button variant="ghost" → bare text CTA "Load more →".
- * Loading: Loader2 h-8 w-8 → h-4 w-4 text-text-disabled.
+ * Owns data fetching, click routing and mark-as-read. Row presentation — badge icon, title,
+ * body copy and the lime unread square — lives in `components/NotificationRow.tsx`.
  */
-import { useEffect, useState, type KeyboardEvent } from "react";
-import { useNavigate, Link, type MetaFunction } from "react-router";
+import { useEffect, useState } from "react";
+import { useNavigate, type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Heart,
-  MessageCircle,
-  UserPlus,
-  Loader2,
-  Bell,
-  Sparkles,
-  Settings,
-  Users,
-  ShieldCheck,
-  Trophy,
-} from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { cn } from "@/lib/utils";
-import { NotificationSettingsDialog } from "@/features/notifications/components/NotificationSettingsDialog";
-
-interface Notification {
-  id: string;
-  created_at: string;
-  type:
-    | "follow"
-    | "like"
-    | "comment"
-    | "friend_joined"
-    | "suggest_follow"
-    | "recommendation"
-    | "visit_request"
-    | "architect_verification"
-    | "ambassador_application_received"
-    | "ambassador_application_approved"
-    | "ambassador_application_rejected"
-    | "ambassador_membership_review"
-    | "award_win"
-    | "feedback_status_updated"
-    | "feedback_notes_updated"
-    | "project_idea_submitted";
-  is_read: boolean;
-  actor_id: string;
-  recommendation_id?: string | null;
-  architect_id?: string | null;
-  actor: {
-    username: string | null;
-    avatar_url: string | null;
-  };
-  architect?: {
-    name: string | null;
-  };
-  resource?: {
-    id: string;
-    user_id: string;
-    user?: { username: string | null };
-    building?: { name: string };
-  };
-  metadata?: {
-    status?: string;
-    event_slug?: string;
-    event_title?: string;
-    application_id?: string;
-    chapter_id?: string;
-    chapter_name?: string;
-    reviewer_note?: string | null;
-    membership_id?: string;
-    member_username?: string;
-    feedback_id?: string;
-    message?: string;
-    idea_title?: string;
-  };
-  recommendation?: {
-    id?: string;
-    status?: string | null;
-    building?: { name: string | null } | null;
-  } | null;
-}
+import { Loader2, Bell, Settings } from "lucide-react";
+import { NotificationSettingsDialog } from "../components/NotificationSettingsDialog";
+import { NotificationRow } from "../components/NotificationRow";
+import type { Notification } from "../types";
 
 const NOTIFICATION_QUERY = `
   *,
@@ -271,330 +175,10 @@ export default function Notifications() {
     }
   };
 
-  const handleNotificationRowKeyDown = (
-    e: KeyboardEvent<HTMLDivElement>,
-    notification: Notification
-  ) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      handleNotificationClick(notification);
-    }
-  };
-
-  // ── Icon — two signal colours only (heart red, shield primary); all others secondary ──
-  const getIcon = (type: string) => {
-    switch (type) {
-      case "like":
-        // Heart red is a universal convention — keep
-        return <Heart className="h-3.5 w-3.5 text-feedback-destructive fill-feedback-destructive" />;
-      case "comment":
-        return <MessageCircle className="h-3.5 w-3.5 text-text-secondary" />;
-      case "follow":
-        return <UserPlus className="h-3.5 w-3.5 text-text-secondary" />;
-      case "friend_joined":
-        return <UserPlus className="h-3.5 w-3.5 text-text-secondary" />;
-      case "suggest_follow":
-        return <Sparkles className="h-3.5 w-3.5 text-text-secondary" />;
-      case "recommendation":
-        return <Sparkles className="h-3.5 w-3.5 text-text-secondary" />;
-      case "visit_request":
-        return <Users className="h-3.5 w-3.5 text-text-secondary" />;
-      case "architect_verification":
-        // System event of consequence — text-primary
-        return <ShieldCheck className="h-3.5 w-3.5 text-text-primary" />;
-      case "ambassador_application_received":
-        return <ShieldCheck className="h-3.5 w-3.5 text-text-primary" />;
-      case "ambassador_application_approved":
-      case "ambassador_application_rejected":
-        return <ShieldCheck className="h-3.5 w-3.5 text-text-secondary" />;
-      case "ambassador_membership_review":
-        return <ShieldCheck className="h-3.5 w-3.5 text-text-primary" />;
-      case "award_win":
-        return <Trophy className="h-3.5 w-3.5 text-amber-500" />;
-      case "feedback_status_updated":
-      case "feedback_notes_updated":
-        return <MessageCircle className="h-3.5 w-3.5 text-text-primary" />;
-      case "project_idea_submitted":
-        return <Sparkles className="h-3.5 w-3.5 text-text-primary" />;
-      default:
-        return <Bell className="h-3.5 w-3.5 text-text-disabled" />;
-    }
-  };
-
-  // ── Notification body text — font-medium for actor names (not semibold) ──
-  const getText = (n: Notification) => {
-    const actorName = n.actor?.username || "Someone";
-    const buildingName =
-      n.resource?.building?.name || n.recommendation?.building?.name;
-
-    switch (n.type) {
-      case "architect_verification": {
-        const architectName = n.architect?.name || "an architect";
-        const isApproved = n.metadata?.status === "approved";
-        return (
-          <span>
-            Your request to be verified as{" "}
-            <span className="font-medium">{architectName}</span> was{" "}
-            <span
-              className={
-                isApproved
-                  ? "text-feedback-success font-medium"
-                  : "text-feedback-destructive font-medium"
-              }
-            >
-              {isApproved ? "approved" : "declined"}
-            </span>
-          </span>
-        );
-      }
-      case "ambassador_application_received":
-        return (
-          <span>
-            <span className="font-medium">{actorName}</span> applied to join your ambassador chapter
-          </span>
-        );
-      case "ambassador_application_approved": {
-        const ch = n.metadata?.chapter_name?.trim();
-        return (
-          <span>
-            Your ambassador application was{" "}
-            <span className="text-feedback-success font-medium">approved</span>
-            {ch ? (
-              <>
-                {" "}
-                for <span className="font-medium">{ch}</span>
-              </>
-            ) : null}
-          </span>
-        );
-      }
-      case "ambassador_application_rejected": {
-        const note = n.metadata?.reviewer_note?.trim();
-        return (
-          <span>
-            Your ambassador application was{" "}
-            <span className="text-feedback-destructive font-medium">not approved</span>
-            {note ? (
-              <>
-                . Note: <span className="italic">{note}</span>
-              </>
-            ) : null}
-          </span>
-        );
-      }
-      case "ambassador_membership_review": {
-        const who = n.metadata?.member_username?.trim() || actorName;
-        const ch = n.metadata?.chapter_name?.trim();
-        return (
-          <span>
-            <span className="font-medium">{who}</span> updated their profile location
-            {ch ? (
-              <>
-                {" "}
-                and may no longer match <span className="font-medium">{ch}</span>
-              </>
-            ) : null}
-            . Please review their membership.
-          </span>
-        );
-      }
-      case "like":
-        return (
-          <span>
-            <span className="font-medium">{actorName}</span> liked your review
-            of <span className="italic">{buildingName || "a building"}</span>
-          </span>
-        );
-      case "comment":
-        return (
-          <span>
-            <span className="font-medium">{actorName}</span> commented on your
-            review of{" "}
-            <span className="italic">{buildingName || "a building"}</span>
-          </span>
-        );
-      case "follow":
-        return (
-          <span>
-            <span className="font-medium">{actorName}</span> started following
-            you
-          </span>
-        );
-      case "friend_joined":
-        return (
-          <span>
-            Your friend <span className="font-medium">{actorName}</span> just
-            joined Plano
-          </span>
-        );
-      case "suggest_follow":
-        return (
-          <span>
-            Welcome! Follow{" "}
-            <span className="font-medium">{actorName}</span>, who invited you to
-            join.
-          </span>
-        );
-      case "visit_request":
-        return (
-          <span>
-            <span className="font-medium">@{actorName}</span> wants to visit{" "}
-            <span className="italic">{buildingName || "a building"}</span> with
-            you
-          </span>
-        );
-      case "recommendation":
-        if (n.recommendation?.status === "visit_with") {
-          return (
-            <span>
-              <span className="font-medium">@{actorName}</span> wants to visit{" "}
-              <span className="italic">{buildingName || "a building"}</span>{" "}
-              with you
-            </span>
-          );
-        }
-        if (n.metadata?.event_slug) {
-          const title = n.metadata.event_title?.trim() || "an event";
-          return (
-            <span>
-              <span className="font-medium">@{actorName}</span> recommended{" "}
-              <Link
-                // TODO: enrich notification metadata with country_code + city_slug to emit locality-scoped URL
-                to={`/events/${n.metadata.event_slug}`}
-                onClick={(e) => e.stopPropagation()}
-                className="font-medium italic text-text-primary underline underline-offset-2 hover:opacity-80"
-              >
-                {title}
-              </Link>{" "}
-              to you
-            </span>
-          );
-        }
-        return (
-          <span>
-            <span className="font-medium">{actorName}</span> recommended{" "}
-            <span className="italic">{buildingName || "a building"}</span> for
-            you
-          </span>
-        );
-      case "award_win":
-        return (
-          <span>
-            Congratulations! Your building <span className="font-medium italic">{buildingName || "a building"}</span> won an award
-          </span>
-        );
-      case "feedback_status_updated":
-      case "feedback_notes_updated":
-        return (
-          <span>
-            {n.metadata?.message ??
-              "Your feedback was updated — open Feedback to see details."}
-          </span>
-        );
-      case "project_idea_submitted": {
-        const ideaTitle = n.metadata?.idea_title?.trim();
-        return (
-          <span>
-            <span className="font-medium">{actorName}</span> submitted a project idea
-            {ideaTitle ? (
-              <>: <span className="italic">{ideaTitle}</span></>
-            ) : null}
-          </span>
-        );
-      }
-      default:
-        return <span>New notification</span>;
-    }
-  };
-
-  // ── Notification title (bold label shown above body text) ──
-  const getTitle = (n: Notification): string => {
-    switch (n.type) {
-      case "architect_verification":
-        return n.metadata?.status === "approved"
-          ? "Architect Verification Approved"
-          : "Architect Verification Declined";
-      case "ambassador_application_received":
-        return "New Ambassador Application";
-      case "ambassador_application_approved":
-        return "Application Approved";
-      case "ambassador_application_rejected":
-        return "Application Declined";
-      case "ambassador_membership_review":
-        return "Membership Review";
-      case "like":
-        return "New Like";
-      case "comment":
-        return "New Comment";
-      case "follow":
-        return "New Follower";
-      case "friend_joined":
-        return "Friend Joined";
-      case "suggest_follow":
-        return "Suggested Follow";
-      case "visit_request":
-        return "Visit Request";
-      case "recommendation":
-        return "New Recommendation";
-      case "award_win":
-        return "Award";
-      case "feedback_status_updated":
-      case "feedback_notes_updated":
-        return "Feedback Update";
-      case "project_idea_submitted":
-        return "New Project Idea";
-      default:
-        return "Notification";
-    }
-  };
-
-  // ── Row renderer ──
   const renderNotificationList = (list: Notification[]) => (
     <>
       {list.map((n) => (
-        <div
-          key={n.id}
-          role="button"
-          tabIndex={0}
-          onClick={() => handleNotificationClick(n)}
-          onKeyDown={(e) => handleNotificationRowKeyDown(e, n)}
-          className={cn(
-            // Unread background removed — neon dot is the sole unread signal
-            "flex items-start gap-4 px-4 sm:px-6 py-4 border-b border-border-default last:border-0 cursor-pointer transition-colors hover:bg-surface-muted/40"
-          )}
-        >
-          {/* Avatar + icon badge */}
-          <div className="relative shrink-0 mt-0.5">
-            <Avatar className="h-9 w-9">
-              <AvatarImage src={n.actor?.avatar_url || undefined} />
-              <AvatarFallback className="text-xs">
-                {n.actor?.username?.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            {/* Badge — no white background box, just the icon */}
-            <div className="absolute -bottom-0.5 -right-0.5 bg-surface-default p-px">
-              {getIcon(n.type)}
-            </div>
-          </div>
-
-          {/* Text */}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-text-primary leading-snug">
-              {getTitle(n)}
-            </p>
-            <p className="text-sm text-text-secondary leading-snug line-clamp-2 mt-0.5">
-              {getText(n)}
-            </p>
-            <p className="text-2xs text-text-disabled mt-1.5 uppercase tracking-wide">
-              {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
-            </p>
-          </div>
-
-          {/* Unread dot — neon, the only brand accent on this surface */}
-          {!n.is_read && (
-            <div className="h-1.5 w-1.5 bg-brand-primary shrink-0 mt-2" />
-          )}
-        </div>
+        <NotificationRow key={n.id} notification={n} onSelect={handleNotificationClick} />
       ))}
     </>
   );
@@ -636,10 +220,8 @@ export default function Notifications() {
         <div className="max-w-4xl mx-auto pb-24">
 
           {/* ── Editorial heading ── */}
-          <div className="px-4 sm:px-6 lg:px-8 pt-10 pb-10 border-b border-border-default">
-            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-text-primary leading-none">
-              Notifications
-            </h1>
+          <div className="px-4 sm:px-6 lg:px-8 pt-11 pb-10 border-b border-border-default">
+            <h1 className="headline">Notifications</h1>
           </div>
 
           {notifications.length > 0 ? (
@@ -647,7 +229,7 @@ export default function Notifications() {
               {/* ── New ── */}
               {newNotifications.length > 0 && (
                 <div>
-                  <p className="px-4 sm:px-6 pt-8 pb-3 text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary sticky top-0 bg-surface-default z-10">
+                  <p className="eyebrow tracking-widest sticky top-0 z-10 bg-surface-default px-4 pb-3 pt-8 sm:px-6">
                     New
                   </p>
                   {renderNotificationList(newNotifications)}
@@ -657,12 +239,7 @@ export default function Notifications() {
               {/* ── Earlier ── */}
               {earlierNotifications.length > 0 && (
                 <div>
-                  <p
-                    className={cn(
-                      "px-4 sm:px-6 pb-3 text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary sticky top-0 bg-surface-default z-10",
-                      newNotifications.length > 0 ? "pt-8" : "pt-8"
-                    )}
-                  >
+                  <p className="eyebrow tracking-widest sticky top-0 z-10 bg-surface-default px-4 pb-3 pt-8 sm:px-6">
                     Earlier
                   </p>
                   {renderNotificationList(earlierNotifications)}
@@ -676,12 +253,10 @@ export default function Notifications() {
                     type="button"
                     onClick={handleLoadMore}
                     disabled={loadingMore}
-                    className="text-xs font-medium uppercase tracking-[0.15em] text-text-primary hover:opacity-60 transition-opacity disabled:opacity-30 flex items-center gap-2"
+                    className="cta-link disabled:opacity-30"
                   >
-                    {loadingMore && (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    )}
-                    Load more →
+                    {loadingMore && <Loader2 className="h-3 w-3 animate-spin" />}
+                    Load more
                   </button>
                 </div>
               )}

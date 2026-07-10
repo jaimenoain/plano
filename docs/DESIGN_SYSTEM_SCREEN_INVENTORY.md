@@ -62,8 +62,8 @@ Per-route polish after R0–R9 (programme [REMAINING_SURFACES_ROADMAP.md](REMAIN
 | Explore (`/explore`) | `src/features/explore/pages/Explore.tsx`, `src/features/posts/components/DiscoveryCard.tsx`, `DiscoveryAwardOverlay.tsx` | H |
 | Search (`/search`) | `src/features/search/SearchPage.tsx`, `src/features/maps/components/BuildingSidebar.tsx` (the SERP row — **not** `DiscoveryBuildingCard`, which is the modal picker) | XH |
 | Guides (`/guides`) | `src/features/guides/GuidesPage.tsx`, `LocalityCard.tsx`, `CollectionGuideCard.tsx` | M |
-| Connect (`/connect`) | `src/features/connect/pages/Connect.tsx` | M |
-| Notifications (`/notifications`) | `src/features/notifications/pages/Notifications.tsx` | M |
+| Connect (`/connect`) | `src/features/connect/pages/Connect.tsx`, `src/features/connect/components/{PeopleYouMayKnow,YourContacts,UserRow,MutualFacepile}.tsx` (`PeopleYouMayKnow` also renders `layout="stacked"` inside `FeedSidebar`) | M |
+| Notifications (`/notifications`) | `src/features/notifications/pages/Notifications.tsx` (data + routing), `src/features/notifications/components/NotificationRow.tsx` (row presentation, incl. the lime unread square) | M |
 | Post (`/post`) | `src/pages/Post.tsx` | H |
 | Profile (`/profile*`) | `src/features/profile/pages/Profile.tsx` | XH |
 | Profile photos | `src/features/profile/pages/UserPhotoGallery.tsx` | M |
@@ -71,7 +71,7 @@ Per-route polish after R0–R9 (programme [REMAINING_SURFACES_ROADMAP.md](REMAIN
 | Feedback history (`/feedback`) | `src/features/feedback/pages/FeedbackHistory.tsx` | M |
 | Buildings detail/edit/review | `src/features/buildings/pages/BuildingDetails.tsx`, `EditBuilding.tsx`, `EditNote.tsx`, `ReviewDetails.tsx` | XH |
 | Add building (`/add-building`) | `src/features/buildings/pages/AddBuilding.tsx` | H |
-| Events (list/detail/create/edit) | `src/features/events/pages/Events.tsx`, `EventDetail.tsx`, `SubmitEvent.tsx` | H |
+| Events (list/detail/create/edit) | `src/features/events/pages/Events.tsx`, `EventDetail.tsx`, `SubmitEvent.tsx`, `src/features/events/components/{EventHeroCard,EventGridCard}.tsx` (the listing cards; `EventDateCard` is exported from the latter) | H |
 | Awards (public + admin surface) | `src/features/awards/pages/AwardsIndex.tsx`, `AwardPage.tsx`, `AwardEditionPage.tsx`, `AwardAdminPage.tsx` | H |
 | Credits people/companies | `src/features/credits/pages/PersonDetails.tsx`, `CompanyDetails.tsx` | H |
 | Credits dashboards | `src/features/credits/pages/PersonDashboard.tsx`, `CompanyDashboard.tsx` | H |

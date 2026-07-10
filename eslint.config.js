@@ -151,11 +151,18 @@ export default tseslint.config(
     // src/features/buildings joined the list with the building-detail conformance PR.
     // src/features/localities and src/features/guides joined with the city+guides PR.
     // src/features/{search,explore,maps} joined with the map/explore/itinerary PR.
+    // src/features/{connect,notifications} joined with the events+connect+notifications PR.
     //
     // maps is the one directory covered as *.ts as well as *.tsx: every hex it ever held
     // lived in .ts (constants.ts, utils/pinStyling.ts), which is precisely how the lime
     // markers survived six conformance PRs. Its single sanctioned hex mirror,
     // constants/mapMarkerFills.ts, carries a documented file-level disable.
+    //
+    // src/features/events is deliberately NOT listed *yet*. Its listing surface is clean,
+    // but EventDetail.tsx paints its hero with `style={{ color: "#ffffff" }}` beside two
+    // raw `rgba(…)` inline styles; clearing only the literal this selector can see, while
+    // leaving its two siblings, would be gaming the guard. Add the directory once the
+    // detail surface is swept.
     //
     // src/features/collections is deliberately NOT listed: its custom-category colour
     // picker stores member-chosen hexes as data, not as design tokens.
@@ -168,6 +175,8 @@ export default tseslint.config(
       "src/features/guides/**/*.tsx",
       "src/features/search/**/*.tsx",
       "src/features/explore/**/*.tsx",
+      "src/features/connect/**/*.{ts,tsx}",
+      "src/features/notifications/**/*.{ts,tsx}",
       "src/features/maps/**/*.{ts,tsx}",
     ],
     ignores: ["**/*.test.ts", "**/*.test.tsx"],

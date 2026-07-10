@@ -32,9 +32,7 @@ export default function Connect() {
 
             {/* ── Editorial page heading ── */}
             <div className="pt-10 pb-10 border-b border-border-default">
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-text-primary leading-none">
-                Connect
-              </h1>
+              <h1 className="headline">Connect</h1>
             </div>
 
             {/* ── Suggestions ── */}

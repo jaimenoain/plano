@@ -28,8 +28,8 @@ one surface at a time.
 | ✅ | 4 · Landing | **Merged** — [#1527](https://github.com/jaimenoain/plano/pull/1527) |
 | ✅ | 5 · Profile + credits | **Merged** — [#1528](https://github.com/jaimenoain/plano/pull/1528) |
 | ✅ | 6 · City + guides | **Merged** — [#1529](https://github.com/jaimenoain/plano/pull/1529) |
-| ✅ | 7 · Map / explore / itinerary | Auto-merge armed |
-| ☐ | 8 · Events + connect + notifications | not started |
+| ✅ | 7 · Map / explore / itinerary | **Merged** — [#1530](https://github.com/jaimenoain/plano/pull/1530) |
+| ✅ | 8 · Events + connect + notifications | Auto-merge armed |
 | ☐ | 9 · Auth flows | not started |
 | ☐ | 10 · Settings + admin | not started |
 | ☐ | 11 · Compose + empty/loading/error states | not started |
@@ -484,12 +484,87 @@ Owner files verified present. Each row: branch → files → designed screen →
     budget. Both shrank or held; neither was extracted, since the colour block collapsed enough to
     absorb this PR's edits.
 
-### [ ] PR 8 · Events + connect + notifications
+### [x] PR 8 · Events + connect + notifications
 
 - **Branch:** `design/events-connect-notifications-conformance` · **Screens:** `events.html`,
   `connect.html`, `notifications.html`
-- **Files:** `src/features/events/pages/Events.tsx`, `src/features/connect/pages/Connect.tsx`,
-  `src/features/notifications/pages/Notifications.tsx`
+- **Files:** `src/features/events/pages/Events.tsx`,
+  `src/features/events/components/{EventHeroCard,EventGridCard,eventFormat}.tsx`,
+  `src/features/connect/pages/Connect.tsx`,
+  `src/features/connect/components/{UserRow,PeopleYouMayKnow,YourContacts}.tsx`,
+  `src/features/notifications/pages/Notifications.tsx` plus new
+  `src/features/notifications/components/NotificationRow.tsx` and `src/features/notifications/types.ts`.
+- **The black unread dot had a root cause, not a style.** `Notifications.tsx` painted its unread dot
+  `bg-brand-primary` and called it, in two comments, "the neon dot … the only brand accent on this
+  surface". It was written on 2026-04-07 (`4f26168f`), when `--brand-primary` *was* `#BEFF00`. Twenty
+  days later the brand redesign (`39692fdf`) flipped that token to near-black `#171717` and the dot
+  went dark in silence. **This is PR 7's lime-marker bug running backwards**: there a stale *mirror* of
+  a token stayed lime; here a live token *alias* changed underneath a name that no longer meant what it
+  said. The bell that points at these rows was swept by PR 1 and is correctly `bg-brand-accent`
+  (`AppTopNav.tsx:227`, `MobileTopBar.tsx:66`, `Header.tsx:128`); only the rows it points at were
+  missed. Kit: `.nt-unread{width:6px;height:6px;background:var(--brand-accent)}`, and §2 lists the
+  unread dot among the four sanctioned limes. Fixed, and pinned by a regression test.
+- **`/events` held the repo's last banned lime *and* its last banned weight.** `EventDateTile` painted
+  the weekday and month `text-brand-accent`, and `EventHeroCard`'s "Featured" eyebrow did the same —
+  decorative lime, a bug under §2. All four surviving feature-level `font-black` (weight **900**, which
+  the system bans outright; PR 7 removed the last one from `DiscoveryBuildingCard`) lived here.
+- **Delivered:** the featured event became the kit's `.ev-hero` — a **bordered two-column article**
+  (`1.35fr 1fr`, measured 633/469 at 1440, stacking below `md`), photo left, black-on-white body right.
+  Its full-bleed 21/9 photo, its `bg-linear-to-t from-black/75` **gradient** scrim (gradients are
+  banned) and its white-on-photo text are gone; `backgroundImage` now computes `none`, `box-shadow:
+  none`, `border-radius: 0px`, `border-width: 1px`. `EventDateTile` — a black tile with big lime
+  numerals, used as a photo *substitute* — was deleted; photo-less events now render
+  `.photo-placeholder` captioned with the event name, like every other surface, and the date survives
+  as the new **`EventDateCard`** (kit `.ev-datecard`: 64px, hairline, black month band over the day
+  numeral). Grid-card names went `text-base font-black` (16px/900) → `text-2xl font-bold tracking-tight`
+  (24px/700, kit 22px) — the single biggest hedged-type hit on the surface; the hero name
+  `text-2xl sm:text-4xl font-black` → `text-4xl font-bold`. The `formatEventChip` overlay chip left the
+  imagery and the date moved below it as `.meta-code`; `formatEventChip` and `organiserAvatarUrl` were
+  deleted with their last call sites. Three literal `→` glyphs across `/events` and `/notifications`
+  became `.cta-link`s, whose injected `::after` arrow is now the **only** lime on `/events`. All three
+  `h1`s (`Upcoming events`, `Connect`, `Notifications`) collapsed to `.headline` — one utility, one
+  treatment, measured 60px/lh 0.92 at 1440 and 40px at the mobile clamp floor. On `/connect`, both
+  `UserRow` hovers used `bg-brand-secondary`; that token used to be the lime wash `#F7FFE0` and the
+  redesign quietly redefined it to `#F5F5F5` — identical to `--surface-muted`, so the name had outlived
+  its meaning: swapped to `hover:bg-surface-muted`, matching the kit's `.ur:hover` and the notification
+  rows. `UserRow`'s two layouts disagreed on the name weight (`font-medium` vs `font-semibold`);
+  reconciled to the kit's 500. `YourContacts`' metric counts went 16px → `text-xl` (kit 20px/700).
+  `Notifications`' `award_win` Trophy dropped `text-amber-500` — the only raw palette colour in the
+  three features, and one the file's own header comment claimed did not exist — for
+  `text-text-secondary` (kit `#525252`). The page's 330-line row renderer, icon map and copy switches
+  moved to `NotificationRow.tsx` (707 → 291 lines), which is what made the dot testable at all: the page
+  mounts `useAuth` + Supabase, the row mounts nothing. Ten `tracking-[0.15em]` in the touched files
+  collapsed to `tracking-widest`; `text-[11px]` → `text-2xs-plus`; the no-op `pt-8 : pt-8` ternary went.
+- **Verified in the browser:** no `rgb(190, 255, 0)` at rest across every computed
+  `background/color/border/fill/stroke` **and** `::before`/`::after` on `/events` (340 elements) or
+  `/connect` (446); on `/notifications` (367) the **only** lime is the unread dot, which computes
+  `rgb(190, 255, 0)` at exactly `6px × 6px` with `border-radius: 0px`. `.cta-link:hover::after` still
+  resolves to `var(--brand-accent)`. Zero elements compute `font-weight: 900` on any of the three. The
+  hero measures `border-width: 1px` / `box-shadow: none` / `background-image: none`; all event imagery
+  `border-radius: 0px`; grid name 24px/700, hero name 36px/700. `.eyebrow` computes 1.5px tracking at
+  10px (= 0.15em). The row trophy computes `rgb(82, 82, 82)`, the heart `rgb(239, 68, 68)`. No
+  horizontal overflow at 375px on any of the three. The raw-hex guard now covers
+  `src/features/{connect,notifications}/**/*.{ts,tsx}`; the deep-feature baseline **ratcheted down**
+  (631 → 630).
+- **The featured hero and the unread dot do not render on live data.** No event in the database has a
+  cover image, and the QA account has no notifications, so both were driven with a temporary local stub
+  (reverted, and grep-verified gone) and are pinned by `EventHeroCard.test.tsx` /
+  `NotificationRow.test.tsx`. Three test files, 18 tests, are the first ever written for these features.
+- **Deferred / flagged, not done this PR:**
+  - The kit gives every event card a type eyebrow (`EXHIBITION` / `TOUR` / `TALK`). **There is no column
+    behind it** — `events` has no `event_type`, and inventing one would breach the no-mock-data rule.
+    The slot instead carries `organiserLine()` ("Community shared" / "Hosted by …"), which is real. A
+    genuine type label needs a migration plus a `SubmitEvent` field.
+  - `src/features/events/**` **cannot** join the raw-hex guard yet: `EventDetail.tsx:305` paints its
+    hero `style={{ color: "#ffffff" }}` beside two raw `rgba(…)` inline styles. The listing surface is
+    clean; clearing only the one literal the selector can see, while leaving its two siblings, would be
+    gaming the guard. It belongs to whichever PR sweeps the detail surface.
+  - `EventProfileCard.tsx` (rendered on `/profile`, not `/events`) still carries `font-black` and an
+    unlabelled `bg-surface-muted` empty box. It is PR 5's surface, not this one.
+  - Events keeps its `max-w-6xl` container (kit's inner column is 1120px). It is a discovery index, not
+    a `max-w-4xl` reading surface — the precedent PR 6 set for `/guides`.
+  - The events hero renders its name at 36px against the kit's 38px. `text-4xl` is the nearest
+    sanctioned step; `text-[38px]` would introduce a raw value.
 
 ### [ ] PR 9 · Auth flows
 
@@ -523,9 +598,9 @@ Measured on `main` after the foundation merged:
 
 | Debt | Count | How it dies |
 |---|---|---|
-| `tracking-[0.15em]` arbitrary values | **202** (234 before the landing PR, 233 before profile+credits, 207 before city+guides, 205 before map+explore) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
+| `tracking-[0.15em]` arbitrary values | **189** (234 before the landing PR, 233 before profile+credits, 207 before city+guides, 205 before map+explore, 202 before events+connect+notifications) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
 | Raw hex in `src/features` + `src/pages` | **21** across 11 files (31/12 before PR 7) | Replace with token aliases as you touch each surface. The lime map markers are **fixed** (PR 7). Two remaining `#BEFF00` strings are prose in comments, not literals. `src/features/maps/constants/mapMarkerFills.ts` is the one *sanctioned* hex mirror — MapLibre portals markers outside the CSS-variable cascade — and carries a documented `eslint-disable`. |
-| ESLint raw-hex guard coverage | `components/ui` + `components/layout` + `features/feed` + `features/buildings` + `features/localities` + `features/guides` + `features/search` + `features/explore` + `features/maps` (**`.ts` and `.tsx`**) | Once a feature directory is clean, widen the `files` glob in `eslint.config.js`. Guard `.ts` too where colour constants live — that is how the lime markers survived six PRs. `features/collections` is blocked: its category colour picker stores hexes as user data. |
+| ESLint raw-hex guard coverage | `components/ui` + `components/layout` + `features/feed` + `features/buildings` + `features/localities` + `features/guides` + `features/search` + `features/explore` + `features/connect` + `features/notifications` + `features/maps` (the last three **`.ts` and `.tsx`**) | Once a feature directory is clean, widen the `files` glob in `eslint.config.js`. Guard `.ts` too where colour constants live — that is how the lime markers survived six PRs. `features/collections` is blocked: its category colour picker stores hexes as user data. `features/events` is blocked on `EventDetail.tsx`'s `#ffffff` plus two raw `rgba()` inline styles — its *listing* surface is already clean. |
 
 Do **not** attempt a repo-wide sweep of these — it produces an unreviewable diff and will collide
 with every surface PR. Fold each into the PR that already owns the file.
