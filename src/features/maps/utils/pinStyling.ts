@@ -94,7 +94,7 @@ function getBasePinStyle(item: ClusterResponse, options?: PinOptions): PinStyle 
       zIndex = 20;
       backgroundColor = MAP_MARKER_FILL.white;
     } else {
-      classes += ' border-gray-600 border';
+      classes += ' border-border-strong border';
       zIndex = 10;
       backgroundColor = MAP_MARKER_FILL.surfaceMuted;
     }
@@ -192,7 +192,7 @@ function getBasePinStyle(item: ClusterResponse, options?: PinOptions): PinStyle 
         shape,
         zIndex: 20,
         size: 20,
-        classes: 'border-gray-600 border',
+        classes: 'border-border-strong border',
         backgroundColor: MAP_MARKER_FILL.white,
         showDot: false,
         showContent: true,
@@ -204,7 +204,7 @@ function getBasePinStyle(item: ClusterResponse, options?: PinOptions): PinStyle 
         shape,
         zIndex: 5,
         size: 20,
-        classes: 'border-gray-600 border',
+        classes: 'border-border-strong border',
         backgroundColor: MAP_MARKER_FILL.surfaceMuted80,
         showDot: false,
         showContent: true,

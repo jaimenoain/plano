@@ -387,8 +387,8 @@ export function BuildingPopupContent({
                                   h-8 w-8 rounded-full transition-all duration-200
                                   flex items-center justify-center border
                                   ${isFilled
-                                      ? "bg-black border-black"
-                                      : "bg-transparent border-gray-300 hover:border-gray-400"
+                                      ? "bg-text-primary border-text-primary"
+                                      : "bg-transparent border-border-default hover:border-border-strong"
                                   }
                               `}
                           >

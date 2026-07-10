@@ -162,7 +162,7 @@ export function MapMarkers({
         if (itinerarySequence !== undefined && itineraryDayIndex !== undefined) {
              // Kit `.pin .num`: black face, white 2px ring, white numeral. The day is
              // carried by the route's opacity, not the marker's hue. Rebuild `classes`
-             // rather than append — the tier's own `border-gray-600` would otherwise
+             // rather than append — the tier's own `border-border-strong` would otherwise
              // race `border-white` in the stylesheet, since Tailwind resolves conflicts
              // by rule order, not by class-attribute order. The construction treatment
              // is the one modifier worth carrying over.
