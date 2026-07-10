@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, type MetaFunction } from "react-router";
-import { X, Circle, Loader2, Pencil } from "lucide-react";
+import { X, Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { MichelinRatingInput } from "@/components/ui/michelin-rating-input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,7 +49,6 @@ export default function Post() {
 
   const [postType, setPostType] = useState<PostType>((typeParam === "bucket_list" || typeParam === "review") ? typeParam as PostType : "review");
   const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0); // Added for hover effect
   const [content, setContent] = useState("");
   const [visibility, setVisibility] = useState<Visibility>("public");
   const [showVisibilityMenu, setShowVisibilityMenu] = useState(false);
@@ -205,38 +205,17 @@ export default function Post() {
             </div>
 
             {postType === "review" && (
-              <div className="py-4 hairline">
-                <p className="text-sm text-text-secondary mb-3">Your Rating (Optional)</p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center gap-0.5 md:gap-1" onMouseLeave={() => setHoverRating(0)}>
-                    {Array.from({ length: 3 }).map((_, i) => {
-                      const starValue = i + 1;
-                      // Highlight stars if they are <= the selected rating OR <= the current hover index
-                      const isHighlighted = starValue <= (hoverRating || rating);
-                      
-                      return (
-                        <button 
-                          key={i} 
-                          onClick={() => setRating(starValue)}
-                          onMouseEnter={() => setHoverRating(starValue)}
-                          className="p-0.5"
-                        >
-                          <Circle className={cn(
-                            "h-6 w-6 md:h-7 md:w-7 transition-colors",
-                            isHighlighted
-                              ? "fill-text-primary text-text-primary"
-                              : "text-text-secondary/20"
-                          )} />
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {(hoverRating > 0 || rating > 0) && (
-                    <span className="text-4xl font-bold text-brand-primary ml-2">
-                      {hoverRating || rating}
-                    </span>
-                  )}
+              <div className="py-4 hairline space-y-3">
+                <div className="space-y-1">
+                  <p className="text-sm text-text-secondary">
+                    Award <span className="text-text-disabled">(optional)</span>
+                  </p>
+                  <p className="max-w-[56ch] text-xs leading-relaxed text-text-disabled">
+                    Dots are honours, not a score — like Michelin stars. Saving already earns a
+                    building its place; award dots mark the standouts.
+                  </p>
                 </div>
+                <MichelinRatingInput value={rating} onChange={setRating} />
               </div>
             )}
 

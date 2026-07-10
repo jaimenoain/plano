@@ -1,7 +1,6 @@
 import { StrictMode, useEffect, useState } from "react";
 import {
   Links,
-  Link,
   Meta,
   Outlet,
   Scripts,
@@ -24,6 +23,7 @@ import { CookieConsent } from "@/components/common/CookieConsent";
 import { PwaPrompt } from "@/components/pwa/PwaPrompt";
 import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
 import { RouteLoadingFallback } from "@/components/common/RouteLoadingFallback";
+import { NotFoundView } from "@/components/common/NotFoundView";
 import { AuthProvider, useAuth } from "@/features/auth/hooks/useAuth";
 import { useLoginTracker } from "@/features/auth/hooks/useLoginTracker";
 import { usePresenceTracker } from "@/features/auth/hooks/usePresenceTracker";
@@ -211,16 +211,8 @@ export function ErrorBoundary() {
 
   if (isRouteErrorResponse(error) && error.status === 404) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center bg-surface-default px-8 py-16 text-center">
-        <div className="flex flex-col items-center justify-center gap-4">
-          <h1 className="text-2xl font-semibold text-text-primary">Page not found</h1>
-          <p className="max-w-md text-sm text-text-secondary">
-            The page you are looking for does not exist.
-          </p>
-          <Button variant="outline" asChild>
-            <Link to="/">Go home</Link>
-          </Button>
-        </div>
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-surface-default px-8 py-16">
+        <NotFoundView />
       </div>
     );
   }

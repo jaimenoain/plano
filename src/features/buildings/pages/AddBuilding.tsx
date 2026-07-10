@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
 import { importLibrary } from "@googlemaps/js-api-loader";
 import { config } from "@/config";
-import { Loader2, MapPin, ArrowRight, Building2, Layers } from "lucide-react";
+import { Loader2, MapPin, Building2, Layers } from "lucide-react";
 import MapGL, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -482,7 +482,7 @@ toast.error("Location search failed. Please click on the map to set the location
                 {/* Location Matches */}
                 {duplicates.some(d => d.dist_meters <= 50 || d.location_precision === 'approximate') && (
                     <div className="space-y-2">
-                        <div className="text-2xs font-medium uppercase text-text-secondary tracking-[0.15em] flex items-center gap-2">
+                        <div className="text-2xs font-medium uppercase text-text-secondary tracking-widest flex items-center gap-2">
                            <MapPin className="h-3 w-3" /> Same location / vicinity
                         </div>
                         {duplicates.filter(d => d.dist_meters <= 50 || d.location_precision === 'approximate').map(building => (
@@ -521,7 +521,7 @@ toast.error("Location search failed. Please click on the map to set the location
                 {/* Name Matches */}
                 {duplicates.some(d => d.dist_meters > 50 && d.location_precision !== 'approximate') && (
                     <div className="space-y-2 pt-2">
-                        <div className="text-2xs font-medium uppercase text-text-secondary tracking-[0.15em]">
+                        <div className="text-2xs font-medium uppercase text-text-secondary tracking-widest">
                            Similar names (far away)
                         </div>
                          {duplicates.filter(d => d.dist_meters > 50 && d.location_precision !== 'approximate').map(building => (
@@ -699,7 +699,7 @@ toast.error("Location search failed. Please click on the map to set the location
             <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 my-2">
                 {duplicates.some(d => d.dist_meters <= 50 || d.location_precision === 'approximate') && (
                     <div className="space-y-2">
-                        <div className="text-2xs font-medium uppercase text-text-secondary tracking-[0.15em] flex items-center gap-2">
+                        <div className="text-2xs font-medium uppercase text-text-secondary tracking-widest flex items-center gap-2">
                             <MapPin className="h-3 w-3" /> Same location / vicinity
                         </div>
                         {duplicates.filter(d => d.dist_meters <= 50 || d.location_precision === 'approximate').map(building => (
@@ -736,7 +736,7 @@ toast.error("Location search failed. Please click on the map to set the location
 
                 {duplicates.some(d => d.dist_meters > 50 && d.location_precision !== 'approximate') && (
                     <div className="space-y-2 pt-2">
-                        <div className="text-2xs font-medium uppercase text-text-secondary tracking-[0.15em]">
+                        <div className="text-2xs font-medium uppercase text-text-secondary tracking-widest">
                             Similar names (far away)
                         </div>
                         {duplicates.filter(d => d.dist_meters > 50 && d.location_precision !== 'approximate').map(building => (
@@ -774,7 +774,7 @@ toast.error("Location search failed. Please click on the map to set the location
             </div>
             <DialogFooter className="sm:justify-start">
                 <Button variant="ghost" className="text-text-secondary text-xs" onClick={forceProceedToStep2}>
-                    No, I want to create a new entry <ArrowRight className="h-3 w-3 ml-1" />
+                    No, I want to create a new entry
                 </Button>
             </DialogFooter>
         </DialogContent>

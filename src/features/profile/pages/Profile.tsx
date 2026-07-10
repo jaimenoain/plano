@@ -10,7 +10,7 @@
  *  - Header: inline-editable firm name, bio, website link
  */
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useMemo, ReactNode, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   DndContext,
   MouseSensor,
@@ -35,8 +35,6 @@ import {
   type MetaFunction,
 } from "react-router";
 import {
-  Building2,
-  Bookmark,
   Loader2,
   Map as MapIcon,
   Search,
@@ -47,10 +45,10 @@ import {
   BadgeCheck,
   Shield,
   ExternalLink,
-  type LucideIcon,
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -1090,18 +1088,17 @@ export default function Profile() {
                     <div ref={containerRef} className="h-4 w-full" />
                   </>
                 ) : searchQuery ? (
-                  <EmptyState icon={Search} label="No results found" />
+                  <EmptyState eyebrow="No results found" />
                 ) : activeSection === "visited" ? (
-                  <EmptyState icon={Building2} label="No visited buildings yet" />
+                  <EmptyState eyebrow="No visited buildings yet" />
                 ) : (
                   <EmptyState
-                    icon={Bookmark}
-                    label="Bucket list is empty"
-                    description={isOwnProfile ? "Never forget a recommendation again. Add buildings here to build your personal queue." : undefined}
+                    eyebrow="Bucket list is empty"
+                    message={isOwnProfile ? "Never forget a recommendation again. Add buildings here to build your personal queue." : undefined}
                     action={isOwnProfile ? (
-                      <button type="button" onClick={() => navigate("/search")} className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity">
-                        Search buildings →
-                      </button>
+                      <Link to="/search" className="cta-link">
+                        Search buildings
+                      </Link>
                     ) : undefined}
                   />
                 )}
@@ -1148,7 +1145,7 @@ export default function Profile() {
                 ) : userPhotos.length > 0 ? (
                   <MasonryPhotoGrid photos={userPhotos} />
                 ) : (
-                  <EmptyState icon={Search} label="No photos yet" description={isOwnProfile ? "Photos you upload when reviewing buildings will appear here." : undefined} />
+                  <EmptyState eyebrow="No photos yet" message={isOwnProfile ? "Photos you upload when reviewing buildings will appear here." : undefined} />
                 )}
               </div>
             )}
@@ -1315,20 +1312,6 @@ function MasonryPhotoGrid({ photos }: { photos: UserPhoto[] }) {
           </div>
         );
       })}
-    </div>
-  );
-}
-
-// ─── Empty State ──────────────────────────────────────────────────────────────
-function EmptyState({ icon: Icon, label, description, action }: { icon: LucideIcon; label: string; description?: string; action?: ReactNode }) {
-  return (
-    <div className="flex flex-col items-center justify-center text-center py-20 px-8 gap-5">
-      <Icon className="h-7 w-7 text-text-disabled" strokeWidth={1.5} />
-      <div className="space-y-2">
-        <p className="text-base font-semibold text-text-primary tracking-tight">{label}</p>
-        {description && <p className="text-sm text-text-secondary max-w-xs leading-relaxed">{description}</p>}
-      </div>
-      {action && <div className="mt-1">{action}</div>}
     </div>
   );
 }

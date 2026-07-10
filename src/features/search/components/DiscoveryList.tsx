@@ -1,6 +1,7 @@
 import { Link } from "react-router";
-import { Building2, MapPinPlus } from "lucide-react";
+import { MapPinPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { DiscoveryBuilding } from "./types";
 import { DiscoveryBuildingCard } from "./DiscoveryBuildingCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -68,24 +69,21 @@ export function DiscoveryList({
     }
 
     return (
-      <div className="flex flex-col items-center justify-center py-12 px-4 text-center h-full min-h-[50vh]">
-        <div className="bg-surface-muted rounded-full p-4 mb-4">
-          <Building2 className="h-10 w-10 text-text-secondary" />
-        </div>
-        <h3 className="text-lg font-semibold">No buildings found here yet</h3>
-        <p className="text-text-secondary max-w-sm mt-1 mb-6">
-          Be the first to map this area.
-        </p>
-
-        {currentLocation && (
-          <Button asChild>
-            <Link to={`/add-building?lat=${currentLocation.lat}&lng=${currentLocation.lng}`}>
-              <MapPinPlus className="mr-2 h-4 w-4" />
-              Add Building Here
+      <EmptyState
+        className="h-full min-h-[50vh]"
+        eyebrow="No buildings found here yet"
+        message="Be the first to map this area."
+        action={
+          currentLocation && (
+            <Link
+              to={`/add-building?lat=${currentLocation.lat}&lng=${currentLocation.lng}`}
+              className="cta-link"
+            >
+              Add a building here
             </Link>
-          </Button>
-        )}
-      </div>
+          )
+        }
+      />
     );
   }
 
