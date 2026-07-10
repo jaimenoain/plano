@@ -86,7 +86,7 @@ function UserMenuDropdown() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="rounded-full focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-border-default"
+          className="rounded-full focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2"
           aria-label="Account menu"
         >
           <Avatar className="h-8 w-8 ring-1 ring-border-default">
@@ -175,12 +175,12 @@ export function AppTopNav() {
   const topNavItems = navItemsFor("top");
 
   return (
-    <header className="hidden md:flex fixed top-0 inset-x-0 z-50 h-16 items-center justify-between px-8 bg-[rgba(250,250,250,0.92)] backdrop-blur-md border-b border-border-default">
+    <header className="hidden md:flex fixed top-0 inset-x-0 z-50 h-16 items-center justify-between px-8 bg-surface-default/92 backdrop-blur-md border-b border-border-default">
       {/* Left: Logo + nav */}
       <div className="flex items-center gap-8 min-w-0">
         <Link
           to="/"
-          className="shrink-0 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-border-default rounded-sm"
+          className="shrink-0 rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2"
           aria-label="Plano · Home"
         >
           <PlanoLogo className="text-base text-text-primary" />

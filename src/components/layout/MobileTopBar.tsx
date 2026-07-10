@@ -46,7 +46,7 @@ export function MobileTopBar() {
         {/* Center: Logo (absolutely centred so left/right slots don't shift it) */}
         <Link
           to="/"
-          className="absolute left-1/2 -translate-x-1/2 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-border-default rounded-sm"
+          className="absolute left-1/2 -translate-x-1/2 rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2"
           aria-label="Plano · Home"
         >
           <PlanoLogo className="text-base text-text-primary" />
