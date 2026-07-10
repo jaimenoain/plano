@@ -8,7 +8,7 @@ export function LandingNav() {
   const navigate = useNavigate();
 
   return (
-    <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-border-default bg-[rgba(250,250,250,0.95)] px-5 backdrop-blur-xs md:px-8">
+    <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-border-default bg-surface-default/92 px-5 backdrop-blur-md md:px-8">
       <Link
         to="/"
         aria-label="Plano · Home"
@@ -26,12 +26,8 @@ export function LandingNav() {
         >
           Sign in
         </Button>
-        <Button
-          type="button"
-          size="sm"
-          className="h-8 rounded-sm bg-brand-primary px-4 text-xs font-medium text-brand-primary-foreground hover:bg-brand-primary-hover"
-          onClick={openWaitlistDialog}
-        >
+        {/* Stays black: the hero owns this view's single lime button. */}
+        <Button type="button" size="sm" className="px-4 text-xs" onClick={openWaitlistDialog}>
           Join the waiting list
         </Button>
       </div>

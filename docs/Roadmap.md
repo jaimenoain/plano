@@ -24,8 +24,8 @@ one surface at a time.
 | ✅ | Design-system foundation | **Merged** — [#1521](https://github.com/jaimenoain/plano/pull/1521) |
 | ✅ | 1 · Global chrome | **Merged** — [#1522](https://github.com/jaimenoain/plano/pull/1522) |
 | ✅ | 2 · Feed | **Merged** — [#1524](https://github.com/jaimenoain/plano/pull/1524) |
-| ✅ | 3 · Building detail | Auto-merge armed — [#1526](https://github.com/jaimenoain/plano/pull/1526) |
-| ☐ | 4 · Landing | not started |
+| ✅ | 3 · Building detail | **Merged** — [#1526](https://github.com/jaimenoain/plano/pull/1526) |
+| ✅ | 4 · Landing | Auto-merge armed |
 | ☐ | 5 · Profile + credits | not started |
 | ☐ | 6 · City + guides | not started |
 | ☐ | 7 · Map / explore / itinerary | not started |
@@ -245,12 +245,41 @@ Owner files verified present. Each row: branch → files → designed screen →
     surfaces with no sidebar on content-detail pages. Only the max-width was narrowed; removing the
     sidebar is a larger structural rewrite left for a follow-up.
 
-### [ ] PR 4 · Landing
+### [x] PR 4 · Landing
 
 - **Branch:** `design/landing-conformance` · **Screen:** `screens/landing.html`
-- **Files:** `src/features/feed/components/landing/{LandingHero,LandingNav,LandingMarquee,LandingFeatureGrid,LandingFooter}.tsx`
-- **Known deltas:** giant `.display` hero (italicise exactly one word), **one** lime CTA
-  (`<Button variant="accent">`) plus one `.cta-link`, ≥96px of air beneath, featured bands.
+- **Files:** `src/features/feed/pages/Index.tsx` (the `Landing()` composition),
+  `src/features/feed/components/landing/{LandingHero,LandingNav,LandingFeatureGrid}.tsx`, plus new
+  `LandingStatsBand.tsx`, `src/features/feed/api/landingStatsApi.ts`,
+  `src/features/feed/hooks/useLandingStats.ts`. `LandingMarquee.tsx` and `LandingFooter.tsx` deleted.
+- **Known deltas (as originally scoped):** giant `.display` hero (italicise exactly one word), **one**
+  lime CTA (`<Button variant="accent">`) plus one `.cta-link`, ≥96px of air beneath, featured bands.
+- **Delivered:** hero is now `.display` (measured **128px** / lh 0.92 / −5.76px tracking at 1440,
+  falling to the 56px clamp floor on mobile), hard-left rather than centred, headline copy aligned to
+  the page's own `<title>` — "The world's *architecture*, cataloged." — with `architecture` the one
+  italic word; the eyebrow became the single sanctioned `.accent-tag` lime pill; the CTA row is one
+  `<Button variant="accent">` (the page's only lime button — the hand-written `bg-brand-primary`
+  override is gone from both hero and nav) beside one `.cta-link` → `/search`, the map;
+  `LandingMarquee` (invented architect initials, meaningless base-36 codes, two **gradient** fade
+  masks) replaced by `LandingStatsBand`, a hairline 1px-gutter band of **live** Supabase counts;
+  `LandingFooter` deleted in favour of the app's black `SiteFooter` (`AppLayout` renders it once
+  `showFooter={false}` is dropped); `LandingNav`'s raw `rgba(250,250,250,0.95)` → `bg-surface-default/92
+  backdrop-blur-md`, matching `AppTopNav`; feature-grid `h3`s 20px → 24px, gap 40px → 48px, and its
+  raw inline `style={{ opacity }}` replaced with token utilities.
+- **The stats band takes no migration.** `buildings`, `localities`, `people`, `companies` and
+  `profiles` all grant anonymous `SELECT` (`USING (true)`), so five `head: true, count: "exact"`
+  queries run un-authenticated. Note `profiles.role` is nullable — a bare `.neq("role", "test_user")`
+  would drop every NULL row, so the filter is `.or("role.is.null,role.neq.test_user")`.
+- **Each cell carries a `minimum`.** A cell renders only once its count reaches it, so no hollow `0`
+  and no weak number can land on the page. Buildings/Cities/Architects sit at `1`; **Members is
+  gated at 1,000** — the live count is 15 pre-launch, and the cell will surface itself. Live values
+  at time of writing: 18,127 buildings · 6,292 cities · 16,448 architects & practices.
+- **Deferred / flagged, not done this PR:**
+  - The design's *Featured Collection* band (two-column headline + 4-up 4:5 image mosaic at 1.5px
+    hairline gutters). It needs a curated-collection query and real photography; inventing either
+    would breach the no-mock-data rule. Follow-up.
+  - The hero's framer-motion entrance renders the `<h1>` at `opacity: 0` until hydration, so the LCP
+    element is invisible if JS never runs. Pre-existing, not introduced here — worth its own fix.
 
 ### [ ] PR 5 · Profile + credits
 
@@ -322,7 +351,7 @@ Measured on `main` after the foundation merged:
 
 | Debt | Count | How it dies |
 |---|---|---|
-| `tracking-[0.15em]` arbitrary values | **233** (was 236) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
+| `tracking-[0.15em]` arbitrary values | **233** (measured on `main` before the landing PR: 234) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
 | Raw hex in `src/features` + `src/pages` | **31** across 12 files | Replace with token aliases as you touch each surface. Note `src/features/maps` holds 10 `#BEFF00` — lime map markers are a bug (PR 7). |
 | ESLint raw-hex guard coverage | `components/ui` + `components/layout` + `features/feed` + `features/buildings` | Once a feature directory is clean, widen the `files` glob in `eslint.config.js`. |
 
