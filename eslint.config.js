@@ -149,11 +149,14 @@ export default tseslint.config(
     // The remaining feature directories still carry raw hex values; burn those down
     // per-surface during the design conformance sweep, then widen `files` here.
     // src/features/buildings joined the list with the building-detail conformance PR.
+    // src/features/localities and src/features/guides joined with the city+guides PR.
     files: [
       "src/components/ui/**/*.tsx",
       "src/components/layout/**/*.tsx",
       "src/features/feed/**/*.tsx",
       "src/features/buildings/**/*.tsx",
+      "src/features/localities/**/*.tsx",
+      "src/features/guides/**/*.tsx",
     ],
     ignores: ["**/*.test.tsx"],
     rules: {

@@ -12,32 +12,25 @@ export function LocalityCard({ locality, featured = false }: LocalityCardProps) 
 
   if (featured) {
     return (
-      <Link
-        to={href}
-        className="group relative block overflow-hidden rounded-none bg-surface-muted border border-border-default hover:border-border-strong transition-colors duration-150"
-        style={{ aspectRatio: '4/3' }}
-      >
-        {locality.heroImageUrl ? (
-          <img
-            src={locality.heroImageUrl}
-            alt={locality.city}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-            loading="lazy"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-surface-muted" />
-        )}
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
-        {/* Text */}
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          <p className="text-xl font-bold text-white leading-tight tracking-tight">
-            {locality.city}
-          </p>
-          <p className="text-white/70 text-xs font-medium uppercase tracking-widest mt-0.5">
-            {locality.buildingsCount} buildings
-          </p>
+      <Link to={href} className="group block">
+        <div className="aspect-4/3 w-full overflow-hidden">
+          {locality.heroImageUrl ? (
+            <img
+              src={locality.heroImageUrl}
+              alt={locality.city}
+              className="h-full w-full object-cover grayscale transition duration-200 group-hover:grayscale-0"
+              loading="lazy"
+            />
+          ) : (
+            <div className="photo-placeholder size-full" data-label={locality.city} />
+          )}
         </div>
+        <p className="mt-3 text-xl font-bold leading-tight tracking-tight text-text-primary">
+          {locality.city}
+        </p>
+        <p className="mt-0.5 text-2xs font-medium uppercase tracking-widest text-text-secondary">
+          {locality.buildingsCount} buildings
+        </p>
       </Link>
     );
   }
@@ -50,7 +43,7 @@ export function LocalityCard({ locality, featured = false }: LocalityCardProps) 
       <span className="text-sm font-medium text-text-primary group-hover:underline underline-offset-2 transition-all">
         {locality.city}
       </span>
-      <span className="text-xs text-text-secondary tabular-nums">
+      <span className="meta-code tabular-nums text-text-disabled">
         {locality.buildingsCount}
       </span>
     </Link>

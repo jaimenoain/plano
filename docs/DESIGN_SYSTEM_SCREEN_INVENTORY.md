@@ -61,7 +61,7 @@ Per-route polish after R0–R9 (programme [REMAINING_SURFACES_ROADMAP.md](REMAIN
 | Feed + landing (`/`) | `src/features/feed/pages/Index.tsx`, `src/features/feed/components/landing/*` | XH |
 | Explore (`/explore`) | `src/features/explore/pages/Explore.tsx` | H |
 | Search (`/search`) | `src/features/search/SearchPage.tsx` | XH |
-| Guides (`/guides`) | `src/features/guides/GuidesPage.tsx` | M |
+| Guides (`/guides`) | `src/features/guides/GuidesPage.tsx`, `LocalityCard.tsx`, `CollectionGuideCard.tsx` | M |
 | Connect (`/connect`) | `src/features/connect/pages/Connect.tsx` | M |
 | Notifications (`/notifications`) | `src/features/notifications/pages/Notifications.tsx` | M |
 | Post (`/post`) | `src/pages/Post.tsx` | H |
@@ -76,7 +76,7 @@ Per-route polish after R0–R9 (programme [REMAINING_SURFACES_ROADMAP.md](REMAIN
 | Credits people/companies | `src/features/credits/pages/PersonDetails.tsx`, `CompanyDetails.tsx` | H |
 | Credits dashboards | `src/features/credits/pages/PersonDashboard.tsx`, `CompanyDashboard.tsx` | H |
 | Collections/folders | `src/features/collections/components/CollectionMapPage.tsx`, `src/features/profile/pages/FolderView.tsx` | H |
-| Geography pages (`/architecture*`, `/city/*`) | `src/pages/ArchitectureHub.tsx`, `src/features/localities/pages/CountryPage.tsx`, `LocalityPage.tsx` | H |
+| Geography pages (`/architecture*`, `/city/*`) | `src/pages/ArchitectureHub.tsx`, `src/features/localities/pages/CountryPage.tsx`, `LocalityPage.tsx` (a thin composition over `src/features/localities/components/*`) | H |
 | Ambassadors public pages | `src/features/ambassadors/pages/SupportPage.tsx`, `BecomeAmbassador.tsx`, `AmbassadorPortal.tsx` | M |
 | Superadmin playground | `src/features/superadmin/pages/CardPlayground.tsx` | M |
 

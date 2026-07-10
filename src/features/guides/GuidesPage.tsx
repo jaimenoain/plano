@@ -40,7 +40,7 @@ function CollectionSkeleton() {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+    <p className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
       {children}
     </p>
   );
@@ -112,7 +112,7 @@ export default function GuidesPage() {
         <section className="border-b border-border-default px-4 sm:px-8 py-16 sm:py-20">
           <div className="max-w-2xl">
             <SectionLabel>Guides</SectionLabel>
-            <h1 className="text-3xl sm:text-5xl font-bold text-text-primary mt-3 leading-tight tracking-tight">
+            <h1 className="headline mt-3">
               The world's architecture,<br />city by city.
             </h1>
             <p className="text-text-secondary text-sm mt-4">
@@ -125,7 +125,7 @@ export default function GuidesPage() {
         </section>
 
         {/* ── Zone 2: Browse by destination ────────────────────── */}
-        <section className="border-b border-border-default px-4 sm:px-8 py-12">
+        <section className="border-b border-border-default px-4 sm:px-8 py-14">
           <div className="flex items-center justify-between mb-6">
             <div>
               <SectionLabel>Browse by destination</SectionLabel>
@@ -184,11 +184,8 @@ export default function GuidesPage() {
           {/* Show more / country list footer */}
           <div className="flex items-center justify-between mt-4 pt-4 border-t border-border-default">
             {hasMore && (
-              <button
-                onClick={() => setShowAllLocalities(true)}
-                className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
-              >
-                Show all {continentLocalities.length} localities →
+              <button onClick={() => setShowAllLocalities(true)} className="cta-link">
+                Show all {continentLocalities.length} localities
               </button>
             )}
             {!hasMore && countries.length > 0 && (
@@ -204,17 +201,14 @@ export default function GuidesPage() {
                 ))}
               </div>
             )}
-            <Link
-              to="/architecture"
-              className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors ml-auto"
-            >
-              Full catalogue →
+            <Link to="/architecture" className="cta-link ml-auto">
+              Full catalogue
             </Link>
           </div>
         </section>
 
         {/* ── Zone 3: Popular collections ───────────────────────── */}
-        <section className="border-b border-border-default px-4 sm:px-8 py-12">
+        <section className="border-b border-border-default px-4 sm:px-8 py-14">
           <div className="flex items-center justify-between mb-8">
             <div>
               <SectionLabel>Curated by the community</SectionLabel>
@@ -222,11 +216,8 @@ export default function GuidesPage() {
                 Popular collections
               </h2>
             </div>
-            <Link
-              to="/explore"
-              className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors hidden sm:block"
-            >
-              Explore all →
+            <Link to="/explore" className="cta-link hidden sm:inline-flex">
+              Explore all
             </Link>
           </div>
 
@@ -243,24 +234,21 @@ export default function GuidesPage() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-text-secondary">
-              No public collections yet.{' '}
-              <Link to="/collections/new" className="underline">
-                Create the first one →
+            <div className="space-y-3">
+              <p className="text-sm text-text-secondary">No public collections yet.</p>
+              <Link to="/collections/new" className="cta-link">
+                Create the first one
               </Link>
-            </p>
+            </div>
           )}
 
-          <Link
-            to="/explore"
-            className="block text-center mt-8 text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors sm:hidden"
-          >
-            Explore all collections →
+          <Link to="/explore" className="cta-link mt-8 sm:hidden">
+            Explore all collections
           </Link>
         </section>
 
         {/* ── Zone 4: CTA strip ─────────────────────────────────── */}
-        <section className="px-4 sm:px-8 py-12">
+        <section className="px-4 sm:px-8 py-14">
           <div className="flex flex-col sm:flex-row sm:items-center gap-6">
             <div className="flex-1">
               <SectionLabel>Start exploring</SectionLabel>
@@ -272,17 +260,11 @@ export default function GuidesPage() {
               </p>
             </div>
             <div className="flex gap-6 shrink-0">
-              <Link
-                to="/collections/new"
-                className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-text-secondary"
-              >
-                New collection →
+              <Link to="/collections/new" className="cta-link">
+                New collection
               </Link>
-              <Link
-                to="/explore"
-                className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-              >
-                Explore map →
+              <Link to="/explore" className="cta-link">
+                Explore map
               </Link>
             </div>
           </div>
