@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Image as ImageIcon, Heart } from "lucide-react";
+import { Loader2, Heart } from "lucide-react";
 import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Select,
   SelectContent,
@@ -295,10 +296,11 @@ export default function UserPhotoGallery() {
         )}
 
         {photos.length === 0 ? (
-           <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 border border-dashed border-border-default px-6 py-16 text-center text-text-secondary">
-             <ImageIcon className="h-8 w-8 text-text-disabled" aria-hidden />
-             <p className="text-sm">No photos uploaded yet.</p>
-           </div>
+           <EmptyState
+             eyebrow="No photos yet"
+             message="Photos uploaded when reviewing buildings will appear here."
+             className="min-h-[40vh]"
+           />
         ) : (
           <div className="grid grid-cols-2 gap-mosaic-gap bg-border-default md:grid-cols-3 lg:grid-cols-4">
             {photos.map((photo) => {

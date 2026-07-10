@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { CollectionCard } from "@/features/collections/components/CollectionCard";
 import { ManageFoldersDialog } from "@/features/profile/components/ManageFoldersDialog";
 import { UserFolder } from "@/features/collections/types";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { folderLoader } from "./FolderView.loader";
 
@@ -189,16 +190,12 @@ setError("Failed to load folder");
   if (error || !folder) {
       return (
         <AppLayout title="Folder Not Found" showLogo={false} showBack>
-            <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
-                <div className="bg-surface-muted/50 p-6 rounded-full mb-6">
-                    <Folder className="h-10 w-10 text-text-secondary" />
-                </div>
-                <h2 className="text-2xl font-bold mb-2">Unavailable</h2>
-                <p className="text-text-secondary max-w-sm mx-auto mb-8">
-                    {error || "This folder does not exist or you don't have permission to view it."}
-                </p>
-                <Button onClick={handleBack}>Back to Profile</Button>
-            </div>
+            <EmptyState
+                eyebrow="Folder unavailable"
+                message={error || "This folder does not exist or you don't have permission to view it."}
+                action={<Button onClick={handleBack}>Back to profile</Button>}
+                className="min-h-[60vh]"
+            />
         </AppLayout>
       );
   }
@@ -251,20 +248,11 @@ setError("Failed to load folder");
                    ))}
                </div>
            ) : (
-               <div className="py-20 text-center border-2 border-dashed border-border-default/50 rounded-none bg-surface-muted/10">
-                   <div className="w-16 h-16 bg-surface-muted/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                       <Folder className="h-8 w-8 text-text-secondary/50" />
-                   </div>
-                   <h3 className="text-xl font-medium mb-2">Folder is empty</h3>
-                   <p className="text-text-secondary max-w-sm mx-auto mb-6">
-                       {isOwner ? "Add collections to this folder to organize your maps." : "This folder doesn't have any public collections yet."}
-                   </p>
-                   {isOwner && (
-                       <Button onClick={() => setShowManage(true)}>
-                           Organize Folder
-                       </Button>
-                   )}
-               </div>
+               <EmptyState
+                   eyebrow="Folder is empty"
+                   message={isOwner ? "Add collections to this folder to organize your maps." : "This folder doesn't have any public collections yet."}
+                   action={isOwner ? <Button onClick={() => setShowManage(true)}>Organize folder</Button> : undefined}
+               />
            )}
        </div>
 
