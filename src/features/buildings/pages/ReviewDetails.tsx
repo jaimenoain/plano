@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link, type MetaFunction } from "react-router";
-import { Loader2, Trash2, Heart, Circle, MessageCircle, Pencil, MapPin, Send, ExternalLink, Calendar, Building2 } from "lucide-react";
+import { Loader2, Trash2, Heart, Circle, MessageCircle, Pencil, MapPin, Send, ExternalLink, Calendar } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -580,7 +580,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
     return (
       <AppLayout>
         <div className="flex justify-center items-center h-[50vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-brand-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
         </div>
       </AppLayout>
     );
@@ -667,7 +667,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                 <div className="mt-6 space-y-4">
                   {/* Text Content */}
                   {review.content && (
-                    <div className="text-lg md:text-xl text-text-primary/90 leading-relaxed font-normal">
+                    <div className="max-w-[60ch] text-lg md:text-xl text-text-primary/90 leading-relaxed font-normal">
                       <p className="whitespace-pre-line">{review.content}</p>
                     </div>
                   )}
@@ -703,7 +703,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                   )}
 
                   {/* Interaction Bar */}
-                  <div className="flex items-center gap-4 pt-2 border-t border-border-default/50">
+                  <div className="flex items-center gap-4 pt-2 border-t border-border-default">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -812,7 +812,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                       </Avatar>
                     </Link>
                     <div className="flex-1 space-y-1">
-                      <div className="bg-surface-card/50 border border-border-default/50 rounded-lg p-3">
+                      <div className="bg-surface-card border border-border-default rounded-none p-3">
                         <div className="flex items-center justify-between mb-1">
                           <Link
                             to={`/profile/${comment.user_id}`}
@@ -856,7 +856,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
               </div>
 
               {/* Comment Input */}
-              <div className="flex gap-3 items-start pt-4 border-t border-border-default/50 sticky bottom-0 bg-surface-default/95 backdrop-blur-xs p-4 -mx-4 md:static md:bg-transparent md:p-0">
+              <div className="flex gap-3 items-start pt-4 border-t border-border-default sticky bottom-0 bg-surface-default/95 backdrop-blur-xs p-4 -mx-4 md:static md:bg-transparent md:p-0">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user?.user_metadata?.avatar_url || undefined} />
                   <AvatarFallback>{user?.email?.charAt(0)}</AvatarFallback>
@@ -897,9 +897,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-text-secondary bg-surface-muted/50">
-                    <Building2 className="h-10 w-10 opacity-20" />
-                  </div>
+                  <div className="photo-placeholder w-full h-full" data-label={review.building.name} aria-hidden />
                 )}
                 <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-60" />
                 <div className="absolute bottom-3 left-3 right-3 text-white">
@@ -956,7 +954,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                 <div className="flex flex-wrap gap-2">
                   {relatedReviews.map((r) => (
                     <Link key={r.id} to={`/profile/${r.user.username}`}>
-                      <Avatar className="h-8 w-8 ring-2 ring-surface-default hover:ring-brand-primary transition-all cursor-pointer">
+                      <Avatar className="h-8 w-8 ring-2 ring-surface-default hover:ring-text-primary transition-all cursor-pointer">
                         <AvatarImage src={r.user.avatar_url || undefined} />
                         <AvatarFallback>
                           {r.user.username?.charAt(0)}
@@ -986,7 +984,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                     return (
                       <div
                         key={link.id}
-                        className="flex items-center justify-between p-2 rounded-md bg-surface-card border border-border-default/50 hover:border-border-default transition-colors group"
+                        className="flex items-center justify-between p-2 rounded-none bg-surface-card border border-border-default hover:border-border-strong transition-colors group"
                       >
                         <a
                           href={link.url}
@@ -994,7 +992,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 min-w-0 flex-1"
                         >
-                          <div className="h-8 w-8 rounded bg-surface-muted/50 flex items-center justify-center shrink-0">
+                          <div className="h-8 w-8 rounded-none bg-surface-muted flex items-center justify-center shrink-0">
                             <ExternalLink className="h-4 w-4 text-text-secondary" />
                           </div>
                           <div className="min-w-0">
@@ -1040,7 +1038,7 @@ toast({ variant: "destructive", title: "Error", description: error instanceof Er
                     key={liker.user_id}
                     to={`/profile/${liker.user.username}`}
                     onClick={() => setShowLikesDialog(false)}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-muted transition-colors"
+                    className="flex items-center gap-3 p-2 rounded-none hover:bg-surface-muted transition-colors"
                   >
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={liker.user.avatar_url || undefined} />
