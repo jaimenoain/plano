@@ -45,7 +45,7 @@ export const meta: MetaFunction<typeof countryPageLoader> = ({ loaderData: data 
 export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading…">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
         <Skeleton className="mb-4 h-12 w-2/3 max-w-sm" />
         <Skeleton className="mb-8 h-6 w-40" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -220,7 +220,7 @@ export default function CountryPage() {
   return (
     <AppLayout showBack>
       <header className="border-b border-border-default pb-10">
-        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight text-text-primary md:text-5xl lg:text-6xl">
               {countryName}
@@ -240,7 +240,7 @@ export default function CountryPage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
         <section>
           <h2 className="mb-6 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
             Cities

@@ -72,7 +72,7 @@ function groupByTier(credits: PersonCreditWithBuilding[]) {
 export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading…">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
         <Skeleton className="mb-8 h-32 w-32 rounded-full" />
         <Skeleton className="mb-4 h-10 w-2/3 max-w-md" />
         <Skeleton className="mb-8 h-20 w-full" />
@@ -203,7 +203,7 @@ export default function PersonDetails() {
 
   return (
     <AppLayout showBack>
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
         {isOwner ? (
           <EditPersonForm
             open={editOpen}

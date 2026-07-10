@@ -137,7 +137,7 @@ function groupTierByRole(credits: CompanyCreditWithBuilding[]): Map<CreditRole, 
 export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading…">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
         <Skeleton className="mb-8 h-24 w-24 rounded-none" />
         <Skeleton className="mb-4 h-10 w-2/3 max-w-md" />
         <Skeleton className="mb-8 h-20 w-full" />
@@ -484,7 +484,7 @@ export default function CompanyDetails() {
 
   return (
     <AppLayout showBack>
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
         {user && company.claimStatus === "unclaimed" ? (
           <ClaimCompanyDialog
             companyId={company.id}
