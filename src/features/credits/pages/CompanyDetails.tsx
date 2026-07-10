@@ -572,36 +572,39 @@ export default function CompanyDetails() {
         <header className="border-b border-border-default pb-10">
           <div className="flex flex-col-reverse gap-8 sm:flex-row sm:items-start sm:gap-12 lg:gap-20">
             <div className="min-w-0 flex-1 space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="flex min-w-0 flex-wrap items-center gap-3">
-                  <h1 className="headline">{company.name}</h1>
-                  {company.claimStatus === "verified" ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex shrink-0 text-text-primary" tabIndex={0}>
-                          <BadgeCheck className="h-8 w-8 md:h-9 md:w-9" aria-label="Verified company on Plano" />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">Verified company on Plano</TooltipContent>
-                    </Tooltip>
+              <div className="space-y-2">
+                {(company.country || yearSpan) ? (
+                  <p className="font-mono text-2xs uppercase tracking-[0.14em] text-text-secondary">
+                    {[company.country, yearSpan].filter(Boolean).join(" · ")}
+                  </p>
+                ) : null}
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex min-w-0 flex-wrap items-center gap-3">
+                    <h1 className="headline">{company.name}</h1>
+                    {company.claimStatus === "verified" ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex shrink-0 text-text-primary" tabIndex={0}>
+                            <BadgeCheck className="h-8 w-8 md:h-9 md:w-9" aria-label="Verified company on Plano" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">Verified company on Plano</TooltipContent>
+                      </Tooltip>
+                    ) : null}
+                  </div>
+                  {isSteward ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 border-border-default"
+                      onClick={() => setEditOpen(true)}
+                    >
+                      <Pencil className="mr-2 h-4 w-4" aria-hidden />
+                      Edit
+                    </Button>
                   ) : null}
                 </div>
-                {isSteward ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0 border-border-default"
-                    onClick={() => setEditOpen(true)}
-                  >
-                    <Pencil className="mr-2 h-4 w-4" aria-hidden />
-                    Edit
-                  </Button>
-                ) : null}
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-text-secondary">
-                {company.country ? <span>{company.country}</span> : null}
-                {yearSpan ? <span>{yearSpan}</span> : null}
               </div>
               {company.website?.trim() ? (
                 <a

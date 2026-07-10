@@ -197,9 +197,8 @@ describe("PersonDetails (QA 3.1 unclaimed)", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "Jane Doe" })).toBeInTheDocument();
     expect(screen.getByText("Architect and educator.")).toBeInTheDocument();
-    expect(screen.getByText("British")).toBeInTheDocument();
-    expect(screen.getByText("1970–—")).toBeInTheDocument();
-    expect(screen.getByText("London")).toBeInTheDocument();
+    // Nationality · lifespan · place render as one mono eyebrow above the name.
+    expect(screen.getByText("British · 1970–— · London")).toBeInTheDocument();
 
     const website = screen.getByRole("link", { name: /website/i });
     expect(website).toHaveAttribute("href", "https://example.com");
