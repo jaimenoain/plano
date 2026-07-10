@@ -30,8 +30,8 @@ one surface at a time.
 | ✅ | 6 · City + guides | **Merged** — [#1529](https://github.com/jaimenoain/plano/pull/1529) |
 | ✅ | 7 · Map / explore / itinerary | **Merged** — [#1530](https://github.com/jaimenoain/plano/pull/1530) |
 | ✅ | 8 · Events + connect + notifications | **Merged** |
-| ✅ | 9 · Auth flows | Auto-merge armed |
-| ☐ | 10 · Settings + admin | not started |
+| ✅ | 9 · Auth flows | **Merged** — [#1532](https://github.com/jaimenoain/plano/pull/1532) |
+| ✅ | 10 · Settings + admin | **Auto-merge armed** |
 | ☐ | 11 · Compose + empty/loading/error states | not started |
 
 **What the merged foundation already gave you** (assume these exist — do not re-create them):
@@ -616,12 +616,60 @@ Owner files verified present. Each row: branch → files → designed screen →
   - Onboarding is a **single screen labelled "Step 1 of 3"**, not a wired 3-step wizard. The stepper is
     accurate to the current one-screen flow; steps 2–3 are a product decision, not a conformance edit.
 
-### [ ] PR 10 · Settings + admin
+### [x] PR 10 · Settings + admin
 
 - **Branch:** `design/settings-admin-conformance` · **Screens:** `settings.html`, `admin.html`
-- **Files:** `src/features/profile/pages/Settings.tsx`, `src/features/admin/**`
+- **Files:** `src/features/profile/pages/Settings.tsx`, `src/features/admin/components/admin-ui.tsx`,
+  `src/features/admin/pages/{MergeEntities,MergeComparisonEntities,Unauthorized,AwardForm,AwardDetail}.tsx`
 - **Note:** these are the **only** surfaces where a sidebar and boxed form cards are legitimate
   (admin card = 1px `border-default`, white fill, `radius-sm`, no shadow).
+- **Scope — a conformance sweep, not a rebuild.** Admin is 40 pages + 22 components, and its pixel
+  target `admin.html` is a rich moderation console (flat table, black bulk-action bar, mono meta, lime
+  active-row count) that has **no equivalent route** in the app (`Moderation.tsx` is a stripped table,
+  `Dashboard.tsx` is a tabbed metrics view). Per §6 ("do not attempt a repo-wide sweep — it produces
+  an unreviewable diff") and §3 ("small single-concern PR"), admin was swept at the **shared-primitive
+  level plus the §2 hard-rule violations**, not page-by-page.
+- **Delivered — Settings** (`Settings.tsx`, already flat/rule-separated/`max-w-2xl`, hex-clean): the
+  "Feedback history →" link became a `.cta-link` (drops the literal glyph; its `::after` supplies the
+  arrow + sanctioned lime hover), and all six `tracking-[0.15em]` collapsed to `tracking-widest`
+  (identical 0.15em; the kit's `.set-sec-h` is 0.15em, so the section-header treatment is preserved).
+  The section headers were **not** switched to `.eyebrow` — that utility is `letter-spacing: 0.08em`,
+  which would have *changed* the tracking and diverged from `settings.html`'s 0.15em; keeping the
+  hand-rolled classes at `tracking-widest` is the precedent-correct move (PRs 6–8).
+- **Delivered — Admin:** the shared `admin-ui.tsx` primitives (`AdminPageHeader`, `AdminSectionLabel`,
+  `AdminFormLabel`, `adminTableHeadClass`, `adminHairlineTabTriggerClass`) collapsed their five
+  `tracking-[0.15em]` to `tracking-widest` — one edit that cascades the fix across the ~37 pages that
+  import them. The repo's **last banned `font-black` (weight 900)** — 12 occurrences, all in the two
+  entity-merge tools — went to `font-bold` (`MergeEntities.tsx` ×5, `MergeComparisonEntities.tsx` ×7).
+  `Unauthorized.tsx`'s editorial "Return home →" link became a `.cta-link`; the two functional ghost
+  `<Button>`s carrying a typed arrow (`AwardForm` "Sync →", `AwardDetail` "View →") dropped the stray
+  glyph but stayed buttons (a `.cta-link` would break their onClick/loading/`asChild` semantics). No
+  stray lime existed on admin (only sanctioned focus rings).
+- **Deferred / flagged, not done this PR:**
+  - **The moderation-console rebuild (`admin.html`).** No matching route exists — it's a spec
+    reference like `states.html`. Rebuilding the flat table + black `.bulkbar` + mono meta + lime
+    active-row count is net-new feature work, not conformance.
+  - **The flat 236px editorial sidebar.** The app uses the shadcn `Sidebar` primitive (near-chrome);
+    swapping it for the kit's `border-right` rail is a structural rewrite.
+  - **The pervasive boxing on the entity-merge tools** (`border-2`, `rounded-md/full`, `shadow-lg/md`,
+    gradient dividers). These are heavily-styled operational tools where surgical card edits would be
+    arbitrary and inconsistent; a clean fix is either a dedicated restyle or **activating the dormant
+    `.ds-rollout` guardrail** (`src/index.css:396` — defined but applied *nowhere* in the app, so it
+    flattens nothing today). Turning it on app-wide is a foundation decision, not a surface PR.
+  - **Admin card radius.** The base `Card` primitive is deliberately `rounded-none` (sharp); the spec's
+    `radius-sm` (2px) was left alone rather than flip ~10 zone cards against the primitive's own default.
+  - **Raw-hex ESLint guard NOT widened** to `src/features/profile/**` or `src/features/admin/**`.
+    Admin carries legitimate chart/map hexes (`RetentionZone` Recharts fill, `ProgrammeHealth` chart
+    palette, `PhotoActivityZone` `#ffffff`, `ZeroPhotoBuildingsZone` `#EF4444`) that would each need a
+    documented file-level `eslint-disable` (chart.tsx precedent) before the dir is clean; `profile/`
+    has many unverified sibling files. Same "blocked, documented" posture as `events`/`collections`.
+  - **Oversized files** `AmbassadorChapterDetail.tsx` (1071) and `FeedbackBoard.tsx` (559) — not grown
+    here; extraction is out of scope.
+  - **`text-[Npx]` sizes** left as-is — §6 records the blanket no-raw-px rule as *not ported*
+    ("~590 such values and most are legitimate").
+  - **Settings h1** renders ~36px against the kit's `clamp(34–44px)`. `.headline` (40px floor)
+    overshoots the 44px cap and a raw `clamp()` is a banned value, so the nearest sanctioned step was
+    kept (same reasoning PR 6/8 recorded for the guides/events heroes).
 
 ### [ ] PR 11 · Compose + empty/loading/error states
 
@@ -641,7 +689,7 @@ Measured on `main` after the foundation merged:
 
 | Debt | Count | How it dies |
 |---|---|---|
-| `tracking-[0.15em]` arbitrary values | **189** (234 before the landing PR, 233 before profile+credits, 207 before city+guides, 205 before map+explore, 202 before events+connect+notifications) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
+| `tracking-[0.15em]` arbitrary values | **174** (234 before the landing PR, 233 before profile+credits, 207 before city+guides, 205 before map+explore, 202 before events+connect+notifications, 189 before settings+admin) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
 | Raw hex in `src/features` + `src/pages` | **21** across 11 files (31/12 before PR 7) | Replace with token aliases as you touch each surface. The lime map markers are **fixed** (PR 7). Two remaining `#BEFF00` strings are prose in comments, not literals. `src/features/maps/constants/mapMarkerFills.ts` is the one *sanctioned* hex mirror — MapLibre portals markers outside the CSS-variable cascade — and carries a documented `eslint-disable`. |
 | ESLint raw-hex guard coverage | `components/ui` + `components/layout` + `features/feed` + `features/buildings` + `features/localities` + `features/guides` + `features/search` + `features/explore` + `features/connect` + `features/notifications` + `features/maps` + `features/auth` (the last four **`.ts` and `.tsx`**) | Once a feature directory is clean, widen the `files` glob in `eslint.config.js`. Guard `.ts` too where colour constants live — that is how the lime markers survived six PRs. `features/collections` is blocked: its category colour picker stores hexes as user data. `features/events` is blocked on `EventDetail.tsx`'s `#ffffff` plus two raw `rgba()` inline styles — its *listing* surface is already clean. |
 

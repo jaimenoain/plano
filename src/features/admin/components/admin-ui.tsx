@@ -16,7 +16,7 @@ export function AdminPageHeader({
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="space-y-2">
-        <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">{eyebrow}</p>
+        <p className="text-2xs font-medium uppercase tracking-widest text-text-secondary">{eyebrow}</p>
         <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary">{title}</h1>
         {description ? (
           <p className="max-w-2xl text-sm text-text-secondary">{description}</p>
@@ -35,7 +35,7 @@ export function AdminSectionLabel({
   className?: string;
 }) {
   return (
-    <h2 className={cn("text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary", className)}>
+    <h2 className={cn("text-2xs font-medium uppercase tracking-widest text-text-secondary", className)}>
       {children}
     </h2>
   );
@@ -53,7 +53,7 @@ export function AdminFormLabel({
   return (
     <label
       htmlFor={htmlFor}
-      className={cn("text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary", className)}
+      className={cn("text-2xs font-medium uppercase tracking-widest text-text-secondary", className)}
     >
       {children}
     </label>
@@ -61,14 +61,14 @@ export function AdminFormLabel({
 }
 
 export const adminTableHeadClass =
-  "text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary font-normal";
+  "text-2xs font-medium uppercase tracking-widest text-text-secondary font-normal";
 
 /** Hairline tab strip — use on `TabsList` + `TabsTrigger` in admin operational pages. */
 export const adminHairlineTabsListClass =
   "h-auto rounded-none border-0 bg-transparent p-0";
 
 export const adminHairlineTabTriggerClass =
-  "rounded-none border-b-2 border-transparent px-4 pb-2 pt-0 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary data-[state=active]:border-text-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none";
+  "rounded-none border-b-2 border-transparent px-4 pb-2 pt-0 text-2xs font-medium uppercase tracking-widest text-text-secondary data-[state=active]:border-text-primary data-[state=active]:text-text-primary data-[state=active]:shadow-none";
 
 export function AdminEmptyState({
   title,

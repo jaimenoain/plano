@@ -174,7 +174,7 @@ export default function AwardDetail() {
                     <TableCell className="text-right">
                       <Button size="sm" variant="ghost" asChild>
                         <Link to={`/admin/awards/${awardId}/editions/${edition.id}`}>
-                          View →
+                          View
                         </Link>
                       </Button>
                     </TableCell>
