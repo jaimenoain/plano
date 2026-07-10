@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useAuth } from "../hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
+import { AuthEditorialPanel } from "../components/AuthEditorialPanel";
 import {
   resetPasswordSchema,
   signInSchema,
@@ -213,28 +214,29 @@ export default function Auth() {
 
   if (checkEmail) {
     return (
-      <div className="min-h-dvh w-full flex-1 bg-surface-default flex flex-col items-center justify-start md:justify-center overflow-y-auto safe-area-pt safe-area-pb px-4 py-4 md:py-8">
-        <div className="w-full max-w-sm flex flex-col items-center gap-4 md:gap-6">
-          <PlanoLogo className="text-2xl text-text-primary shrink-0" />
-          <div className="w-full bg-surface-card border border-border-default rounded-sm shadow-none p-6 md:p-8 flex flex-col gap-4 md:gap-6 text-center">
-            <div className="flex justify-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-sm border border-border-default bg-surface-muted">
-                <Mail className="h-7 w-7 text-text-secondary" aria-hidden />
-              </div>
+      <div className="grid min-h-dvh w-full flex-1 bg-surface-default min-[900px]:grid-cols-2">
+        <AuthEditorialPanel />
+        <div className="flex items-center justify-center overflow-y-auto safe-area-pt safe-area-pb px-6 py-10 md:px-10">
+          <div className="w-full max-w-[360px]">
+            <PlanoLogo className="mb-10 text-2xl text-text-primary min-[900px]:hidden" />
+
+            <div className="flex h-14 w-14 items-center justify-center rounded-sm border border-border-default bg-surface-muted">
+              <Mail className="h-7 w-7 text-text-secondary" aria-hidden />
             </div>
 
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-text-primary">
+            <p className="eyebrow mt-8">Check your inbox</p>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-text-primary">
               Check your email
             </h1>
 
-            <p className="text-text-secondary">
+            <p className="mt-3 text-text-secondary">
               We've sent a {isResetPassword ? "password reset" : "confirmation"} link to{" "}
               <span className="font-medium text-text-primary">{email}</span>. Please check your inbox to continue.
             </p>
 
             <Button
               variant="outline"
-              className="w-full h-11 min-h-11 font-medium rounded-sm"
+              className="mt-8 w-full h-11 min-h-11 font-medium rounded-sm"
               onClick={() => {
                 setCheckEmail(false);
                 setIsSignUp(false);
@@ -250,22 +252,30 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-dvh w-full flex-1 bg-surface-default flex flex-col items-center justify-start md:justify-center overflow-y-auto safe-area-pt safe-area-pb px-4 py-4 md:py-8">
-      <div className="w-full max-w-sm flex flex-col items-center gap-4 md:gap-6">
-        <PlanoLogo className="text-2xl text-text-primary shrink-0" />
+    <div className="grid min-h-dvh w-full flex-1 bg-surface-default min-[900px]:grid-cols-2">
+      <AuthEditorialPanel />
+      <div className="flex items-center justify-center overflow-y-auto safe-area-pt safe-area-pb px-6 py-10 md:px-10">
+        <div className="w-full max-w-[360px]">
+          <PlanoLogo className="mb-10 text-2xl text-text-primary min-[900px]:hidden" />
 
-        <div className="w-full bg-surface-card border border-border-default rounded-sm shadow-none p-6 md:p-8 flex flex-col gap-4 md:gap-6">
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-text-primary text-center">
+          <p className="eyebrow">
+            {isResetPassword
+              ? "Trouble signing in"
+              : isSignUp
+                ? "Get started"
+                : "Welcome back"}
+          </p>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight text-text-primary">
             {isResetPassword
               ? "Reset your password"
               : isSignUp
                 ? "Create your account"
-                : "Welcome back"}
+                : "Sign in to Plano"}
           </h1>
 
           {!isResetPassword && invitedBy && isSignUp && (
             inviterProfile ? (
-              <div className="flex flex-col items-center gap-4 mb-4 md:mb-8">
+              <div className="mt-8 flex flex-col items-center gap-4">
                 <div className="flex items-center justify-center pl-3">
                   {relatedProfiles.map((profile) => (
                     <Avatar key={profile.id} className="h-10 w-10 border-2 border-surface-default -ml-3 ring-2 ring-surface-default">
@@ -290,7 +300,7 @@ export default function Auth() {
                 </div>
               </div>
             ) : (
-              <div className="bg-brand-secondary/30 text-brand-primary px-4 py-3 rounded-sm text-sm flex items-center gap-2 border border-border-default">
+              <div className="mt-8 bg-brand-secondary/30 text-brand-primary px-4 py-3 rounded-sm text-sm flex items-center gap-2 border border-border-default">
                 <UserPlus className="h-4 w-4 shrink-0" />
                 <span>
                   <span className="font-semibold">{invitedBy}</span> invited you to join!
@@ -299,130 +309,130 @@ export default function Auth() {
             )
           )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm text-text-secondary">
-              Email
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-
-          {!isResetPassword && (
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm text-text-secondary">
-                Password
+              <Label htmlFor="email" className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
+                Email
               </Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-1 top-1/2 -translate-y-1/2 flex h-11 min-h-11 w-11 min-w-11 items-center justify-center rounded-sm text-text-secondary hover:text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
-          )}
 
-          {!isResetPassword && (
-            <div className="space-y-2">
-              {isSignUp ? (
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    id="terms"
-                    checked={termsAccepted}
-                    onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
-                    className="mt-0.5"
+            {!isResetPassword && (
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
+                  Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pr-12"
                   />
-                  <Label
-                    htmlFor="terms"
-                    className="text-sm font-normal text-text-secondary leading-snug cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    I accept the{" "}
-                    <Link
-                      to="/terms"
-                      className="font-medium text-text-primary underline-offset-2 hover:underline"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Terms and Conditions
-                    </Link>
-                  </Label>
-                </div>
-              ) : (
-                <div className="flex items-start">
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsResetPassword(true);
-                    }}
-                    className="text-sm text-text-secondary underline-offset-2 hover:text-text-primary hover:underline"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 flex h-11 min-h-11 w-11 min-w-11 items-center justify-center rounded-sm text-text-secondary hover:text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
-                    Forgot password?
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
 
-          <Button
-            type="submit"
-            className="w-full h-11 min-h-11 font-medium rounded-sm bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover active:scale-[0.98]"
-            variant="default"
-            disabled={loading}
-          >
-            {loading
-              ? "Loading..."
-              : isResetPassword
-                ? "Send Reset Link"
-                : isSignUp
-                  ? "Sign Up"
-                  : "Sign In"}
-          </Button>
-        </form>
+            {!isResetPassword && (
+              <div className="space-y-2">
+                {isSignUp ? (
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="terms"
+                      checked={termsAccepted}
+                      onCheckedChange={(checked) => setTermsAccepted(checked as boolean)}
+                      className="mt-0.5"
+                    />
+                    <Label
+                      htmlFor="terms"
+                      className="text-sm font-normal text-text-secondary leading-snug cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      I accept the{" "}
+                      <Link
+                        to="/terms"
+                        className="font-medium text-text-primary underline-offset-2 hover:underline"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Terms and Conditions
+                      </Link>
+                    </Label>
+                  </div>
+                ) : (
+                  <div className="flex items-start">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsResetPassword(true);
+                      }}
+                      className="text-sm text-text-secondary underline-offset-2 hover:text-text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
-        <p className="text-center text-sm text-text-secondary">
-          {isResetPassword ? (
-            <button
-              type="button"
-              onClick={() => {
-                setIsResetPassword(false);
-              }}
-              className="font-medium text-text-primary underline-offset-2 hover:underline"
+            <Button
+              type="submit"
+              className="w-full h-11 min-h-11 font-medium rounded-sm"
+              variant="accent"
+              disabled={loading}
             >
-              Back to Sign In
-            </button>
-          ) : (
-            <>
-              {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+              {loading
+                ? "Loading..."
+                : isResetPassword
+                  ? "Send Reset Link"
+                  : isSignUp
+                    ? "Sign Up"
+                    : "Sign In"}
+            </Button>
+          </form>
+
+          <p className="mt-6 text-sm text-text-secondary">
+            {isResetPassword ? (
               <button
                 type="button"
                 onClick={() => {
-                  setIsSignUp(!isSignUp);
+                  setIsResetPassword(false);
                 }}
                 className="font-medium text-text-primary underline-offset-2 hover:underline"
               >
-                {isSignUp ? "Sign In" : "Sign Up"}
+                Back to Sign In
               </button>
-            </>
-          )}
-        </p>
-      </div>
+            ) : (
+              <>
+                {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSignUp(!isSignUp);
+                  }}
+                  className="font-medium text-text-primary underline-offset-2 hover:underline"
+                >
+                  {isSignUp ? "Sign In" : "Sign Up"}
+                </button>
+              </>
+            )}
+          </p>
+        </div>
       </div>
     </div>
   );

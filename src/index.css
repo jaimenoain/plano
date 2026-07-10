@@ -343,6 +343,33 @@
     padding: 0.75rem 1rem;
   }
 
+  /* Dark photo placeholder — the inverse-surface sibling of .photo-placeholder,
+     for the black split panel on the auth screens. Same sharp edges + faint
+     diagonal hatch (white-tinted on black), monospace caption via data-label.
+     Bare (no data-label) it is simply the dark hatch background; layer content
+     on top with position/z-index. */
+  .photo-placeholder-dark {
+    position: relative;
+    background-color: var(--surface-inverse);
+    background-image: repeating-linear-gradient(
+      135deg,
+      transparent 0 13px,
+      rgba(255, 255, 255, 0.028) 13px 14px
+    );
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+  .photo-placeholder-dark::after {
+    content: attr(data-label);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+    padding: 0.75rem 1rem;
+  }
+
   /* Accent tag — the ONE sanctioned decorative lime: a small status pill
      (BETA / NEW / LIVE), at most one per view. Never a section accent, verified
      badge, or surface fill. */

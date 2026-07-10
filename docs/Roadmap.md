@@ -29,8 +29,8 @@ one surface at a time.
 | ✅ | 5 · Profile + credits | **Merged** — [#1528](https://github.com/jaimenoain/plano/pull/1528) |
 | ✅ | 6 · City + guides | **Merged** — [#1529](https://github.com/jaimenoain/plano/pull/1529) |
 | ✅ | 7 · Map / explore / itinerary | **Merged** — [#1530](https://github.com/jaimenoain/plano/pull/1530) |
-| ✅ | 8 · Events + connect + notifications | Auto-merge armed |
-| ☐ | 9 · Auth flows | not started |
+| ✅ | 8 · Events + connect + notifications | **Merged** |
+| ✅ | 9 · Auth flows | Auto-merge armed |
 | ☐ | 10 · Settings + admin | not started |
 | ☐ | 11 · Compose + empty/loading/error states | not started |
 
@@ -566,12 +566,55 @@ Owner files verified present. Each row: branch → files → designed screen →
   - The events hero renders its name at 36px against the kit's 38px. `text-4xl` is the nearest
     sanctioned step; `text-[38px]` would introduce a raw value.
 
-### [ ] PR 9 · Auth flows
+### [x] PR 9 · Auth flows
 
 - **Branch:** `design/auth-conformance` · **Screens:** `sign-in.html`, `onboarding.html`
-- **Files:** `src/features/auth/pages/Auth.tsx`, `src/features/auth/pages/Onboarding.tsx`
+- **Files:** `src/features/auth/pages/Auth.tsx`, `src/features/auth/pages/Onboarding.tsx`, plus new
+  `src/features/auth/components/{AuthEditorialPanel,OnboardingStepper}.tsx`, a new
+  `.photo-placeholder-dark` utility in `src/index.css`, and the raw-hex guard in `eslint.config.js`.
 - **Known deltas:** sign-in becomes a split screen (dark `.photo-placeholder` panel + form),
   collapsing to one column below 900px. Onboarding is a narrow, centred, stepped form.
+- **The auth routes are chromeless.** `/login`, `/auth` and `/onboarding` sit *outside* `MainLayout`
+  (`app/routes.ts:10-13`) — no top nav, no footer — so the split shell is the full `min-h-dvh`
+  viewport, not the kit's `calc(100vh - 64px)` below a nav.
+- **The dark panel is not a light-only violation.** The kit's `.auth-left` is a black `#000` panel,
+  and `LAYOUT-AND-CHROME.md` lists only three inverse-surface uses; but `docs/DESIGN_TOKENS.md:101`
+  already sanctions `surface-inverse` for **"dark panels"**, and PR 9's scope calls for it explicitly.
+  Built on the new `.photo-placeholder-dark` (the inverse-surface sibling of `.photo-placeholder`:
+  black + white-tinted diagonal hatch, mono caption via `data-label`).
+- **Delivered:** sign-in (`Auth.tsx`) rebuilt to `screens/sign-in.html` — a two-column
+  `min-[900px]:grid-cols-2` split, the black editorial panel extracted to `AuthEditorialPanel.tsx`
+  (white `PlanoLogo`, `.headline`-white tagline "The world's *architecture*, cataloged." with the one
+  italic word, a muted sub-line, and a white/40 `.eyebrow` caption), hidden below 900px so the form
+  stands alone. The right column dropped its boxed card to float the form at `max-w-[360px]`; the
+  hedged `text-2xl md:text-3xl lg:text-4xl` heading became a flat **`text-3xl font-bold tracking-tight`**
+  (kit 32px — the big type lives in the panel, not the form title) under a mode-aware `.eyebrow`
+  (WELCOME BACK / GET STARTED / TROUBLE SIGNING IN); field labels became uppercase tracked
+  (`text-2xs uppercase tracking-widest`); and the hand-rolled black submit button
+  (`bg-brand-primary … active:scale-[0.98]`) became **`Button variant="accent"`** — the sanctioned lime
+  primary-CTA fill, matching the kit's lime `btn-primary` and the landing precedent. The `checkEmail`
+  confirmation renders inside the same split so the panel persists. Onboarding (`Onboarding.tsx`) kept
+  its centred card but gained the kit's real 3-bar progress (`OnboardingStepper.tsx`, `.ob-steps`: bars
+  1..current inked `bg-text-primary`); its heading went `text-2xl md:text-3xl` → **`text-3xl font-bold
+  tracking-tight`**; its Save button → **`variant="accent"`** (lime); its `text-2xs … tracking-[0.15em]`
+  eyebrow collapsed to the shared `.eyebrow` class; the "Skip for now" `tracking-[0.15em]` →
+  `tracking-widest`; and both `text-[10px]` hints → `text-2xs`.
+- **Tests (first ever for these pages):** `OnboardingStepper.test.tsx` (4 tests — bar count, inked-up-to-
+  current, all-inked on the final step, accessible step position) and `AuthEditorialPanel.test.tsx`
+  (4 tests — logo, tagline/caption copy, the dark placeholder + mobile-hidden split, headline-white
+  tagline). Following the events-PR precedent, these cover the extracted presentational pieces, which
+  mount nothing, rather than the full pages (which mount `useAuth` + Supabase).
+- **The raw-hex guard now covers `src/features/auth/**/*.{ts,tsx}`** — the whole feature (pages *and*
+  hooks) is hex-clean, so it joins as `.ts` and `.tsx`, like maps/connect/notifications.
+- **Deferred / flagged, not done this PR:**
+  - The kit's sign-in shows a **"Continue with Google"** button + an "or" divider. The app has no OAuth
+    wiring; adding it would be net-new backend plus a mock control, so both were left out. Needs a real
+    social-auth integration first.
+  - The panel caption is a **static** editorial line (`Est. 2024 · Architecture, cataloged`), not the
+    kit's live "41,208 buildings" — inventing a count breaches the no-mock-data rule. A live count could
+    reuse `landingStatsApi`/`useLandingStats` in a follow-up.
+  - Onboarding is a **single screen labelled "Step 1 of 3"**, not a wired 3-step wizard. The stepper is
+    accurate to the current one-screen flow; steps 2–3 are a product decision, not a conformance edit.
 
 ### [ ] PR 10 · Settings + admin
 
@@ -600,7 +643,7 @@ Measured on `main` after the foundation merged:
 |---|---|---|
 | `tracking-[0.15em]` arbitrary values | **189** (234 before the landing PR, 233 before profile+credits, 207 before city+guides, 205 before map+explore, 202 before events+connect+notifications) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
 | Raw hex in `src/features` + `src/pages` | **21** across 11 files (31/12 before PR 7) | Replace with token aliases as you touch each surface. The lime map markers are **fixed** (PR 7). Two remaining `#BEFF00` strings are prose in comments, not literals. `src/features/maps/constants/mapMarkerFills.ts` is the one *sanctioned* hex mirror — MapLibre portals markers outside the CSS-variable cascade — and carries a documented `eslint-disable`. |
-| ESLint raw-hex guard coverage | `components/ui` + `components/layout` + `features/feed` + `features/buildings` + `features/localities` + `features/guides` + `features/search` + `features/explore` + `features/connect` + `features/notifications` + `features/maps` (the last three **`.ts` and `.tsx`**) | Once a feature directory is clean, widen the `files` glob in `eslint.config.js`. Guard `.ts` too where colour constants live — that is how the lime markers survived six PRs. `features/collections` is blocked: its category colour picker stores hexes as user data. `features/events` is blocked on `EventDetail.tsx`'s `#ffffff` plus two raw `rgba()` inline styles — its *listing* surface is already clean. |
+| ESLint raw-hex guard coverage | `components/ui` + `components/layout` + `features/feed` + `features/buildings` + `features/localities` + `features/guides` + `features/search` + `features/explore` + `features/connect` + `features/notifications` + `features/maps` + `features/auth` (the last four **`.ts` and `.tsx`**) | Once a feature directory is clean, widen the `files` glob in `eslint.config.js`. Guard `.ts` too where colour constants live — that is how the lime markers survived six PRs. `features/collections` is blocked: its category colour picker stores hexes as user data. `features/events` is blocked on `EventDetail.tsx`'s `#ffffff` plus two raw `rgba()` inline styles — its *listing* surface is already clean. |
 
 Do **not** attempt a repo-wide sweep of these — it produces an unreviewable diff and will collide
 with every surface PR. Fold each into the PR that already owns the file.

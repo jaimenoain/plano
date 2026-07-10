@@ -1,7 +1,7 @@
 {
   "comment": "ESLint warning ceiling per bucket (with per-file detail so regressions name the exact new files). CI fails if any bucket EXCEEDS its count. Only lower numbers via --update after a cleanup; never raise one to make CI pass.",
   "counts": {
-    "no-restricted-imports/deep-feature": 630,
+    "no-restricted-imports/deep-feature": 628,
     "no-restricted-imports/supabase-client": 133,
     "other": 5,
     "react-hooks/exhaustive-deps": 61
@@ -77,8 +77,6 @@
       "src/features/ambassadors/pages/AmbassadorPortal.tsx": 1,
       "src/features/ambassadors/pages/BecomeAmbassador.tsx": 3,
       "src/features/ambassadors/pages/SupportPage.tsx": 1,
-      "src/features/auth/pages/Auth.tsx": 1,
-      "src/features/auth/pages/Onboarding.tsx": 1,
       "src/features/auth/pages/UpdatePassword.tsx": 1,
       "src/features/awards/components/ClaimAwardDialog.tsx": 1,
       "src/features/awards/components/EditionEventsSection.tsx": 2,
