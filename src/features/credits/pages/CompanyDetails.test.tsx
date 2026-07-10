@@ -258,8 +258,8 @@ describe("CompanyDetails (QA 4.1 unclaimed)", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "StructCo GmbH" })).toBeInTheDocument();
     expect(screen.getByText("Structural engineering practice.")).toBeInTheDocument();
-    expect(screen.getByText("Germany")).toBeInTheDocument();
-    expect(screen.getByText("1990–—")).toBeInTheDocument();
+    // Country · year-span render as one mono eyebrow above the name.
+    expect(screen.getByText("Germany · 1990–—")).toBeInTheDocument();
 
     const website = screen.getByRole("link", { name: /website/i });
     expect(website).toHaveAttribute("href", "https://structco.example");

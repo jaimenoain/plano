@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import type { ReactNode } from "react";
+import { EntityHero } from "@/components/media/EntityHero";
 
 interface BuildingDetailHeroProps {
   /** Public URL of the building's hero photo, or `null` when none is set. */
@@ -7,41 +8,23 @@ interface BuildingDetailHeroProps {
   alt: string;
   /** Used as the `.photo-placeholder` caption when there is no photo. */
   buildingName: string;
+  /** Identity block (badges/title/meta) overlaid on the band's bottom gradient. */
+  overlay?: ReactNode;
 }
 
 /**
- * Full-bleed 16:9 hero band for the building detail page. Real photo when one
- * exists; otherwise the `.photo-placeholder` utility (never a blank/flat-grey
- * box). Title, badges and meta live in `BuildingHeader` now — this component
- * owns only the image/placeholder band.
- *
- * Named `BuildingDetailHero` (not `BuildingHero`) because `BuildingHero.tsx`
- * already exists in this directory and is actively used by
- * `src/features/localities/pages/LocalityPage.tsx` with a different prop
- * contract (`src`/`children`) — reusing that name/file would have broken it.
+ * Building-detail hero — the cropped full-colour band with the building identity
+ * overlaid. A thin wrapper over the shared {@link EntityHero} primitive
+ * (default ~58vh band height); kept as a named component so the building page
+ * call-site and its building-specific alt/placeholder contract stay stable.
  */
-export function BuildingDetailHero({ heroImageUrl, alt, buildingName }: BuildingDetailHeroProps) {
-  if (!heroImageUrl) {
-    return (
-      <div
-        className="photo-placeholder aspect-16/9 w-screen"
-        data-label={buildingName}
-        aria-hidden
-      />
-    );
-  }
-
+export function BuildingDetailHero({ heroImageUrl, alt, buildingName, overlay }: BuildingDetailHeroProps) {
   return (
-    <motion.img
-      key={heroImageUrl}
-      initial={{ opacity: 0, scale: 1.03 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.8 }}
-      src={heroImageUrl}
+    <EntityHero
+      heroImageUrl={heroImageUrl}
       alt={alt}
-      className="aspect-16/9 w-screen object-cover grayscale brightness-75 contrast-90"
-      fetchPriority="high"
-      loading="eager"
+      placeholderLabel={buildingName}
+      overlay={overlay}
     />
   );
 }

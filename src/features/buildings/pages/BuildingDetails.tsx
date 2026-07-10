@@ -82,7 +82,7 @@ import {
 import { ActivityStreamGroup } from "@/features/posts/components/ActivityStream";
 import { ClientOnly } from "@/components/common/ClientOnly";
 import { RelatedByArchitectSection, RelatedByCitySection } from "../components/RelatedBuildings";
-import { BuildingDetailHero } from "../components/BuildingDetailHero";
+import { BuildingHeroSection } from "../components/BuildingHeroSection";
 import { BuildingHeader } from "../components/BuildingHeader";
 import { BuildingMapTab } from "../components/BuildingMapTab";
 import { NotePhotoGrid } from "../components/NotePhotoGrid";
@@ -115,7 +115,7 @@ export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading..." showHeader shellProvidesTopInset>
       <Skeleton className="h-56 max-h-[50vh] sm:max-h-none sm:h-64 lg:h-80 w-full rounded-none" />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-8 space-y-8">
             <div className="space-y-3">
@@ -660,7 +660,7 @@ export default function BuildingDetails() {
               )}
             </div>
             {(preview || authorAttribution) && (
-              <div className="p-4 space-y-3">
+              <div className="pt-4 space-y-3">
                 {authorAttribution}
                 {preview && (
                   <Link to={`/review/${block.entryId}`} className="group/r block">
@@ -699,7 +699,7 @@ export default function BuildingDetails() {
               ))}
             </div>
             {(preview || authorAttribution) && (
-              <div className="p-4 space-y-3">
+              <div className="pt-4 space-y-3">
                 {authorAttribution}
                 {preview && (
                   <Link to={`/review/${block.entryId}`} className="group/r block">
@@ -731,7 +731,7 @@ export default function BuildingDetails() {
                 </span>
               )}
             </div>
-            <div className="p-4 space-y-3">
+            <div className="pt-4 space-y-3">
               {authorAttribution}
               {preview && (
                 <Link to={`/review/${block.entryId}`} className="group/r block">
@@ -767,7 +767,7 @@ export default function BuildingDetails() {
                 </span>
               )}
             </div>
-            {authorAttribution && <div className="p-4">{authorAttribution}</div>}
+            {authorAttribution && <div className="pt-4">{authorAttribution}</div>}
           </div>
         );
       }
@@ -848,18 +848,17 @@ export default function BuildingDetails() {
           onChange={handleImageSelect}
         />
 
-        {/* ── HERO — full-bleed 16:9 image or .photo-placeholder ── */}
-        <BuildingDetailHero
-          heroImageUrl={heroImageUrl}
-          alt={heroAlt}
-          buildingName={building.name}
-        />
-
-        {/* ── BUILDING HEADER — title, badges, meta, stats, actions ── */}
-        <BuildingHeader
+        {/* ── HERO — cropped colour band with identity overlaid ── */}
+        <BuildingHeroSection
           building={building}
           buildingCredits={buildingCredits}
           isStatusBuilding={isStatusBuilding}
+          heroImageUrl={heroImageUrl}
+          alt={heroAlt}
+        />
+
+        {/* ── STATS + ACTIONS BAR ── */}
+        <BuildingHeader
           visitorCount={visitorCount}
           totalRatingPoints={totalRatingPoints}
           buildingUrl={buildingUrl}
@@ -874,7 +873,7 @@ export default function BuildingDetails() {
             isTabBarSticky && "sticky top-0 z-30 shadow-xs",
           )}
         >
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center -mb-px overflow-x-scroll-touch">
                 {TABS.map((tab) => (
@@ -908,7 +907,7 @@ export default function BuildingDetails() {
 
         {/* ── TAB CONTENT ── */}
         <div className={cn(
-          activeTab === "map" ? "" : "max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16",
+          activeTab === "map" ? "" : "max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 py-16",
         )}>
           <div className={cn(
             activeTab !== "map" && "grid grid-cols-1 lg:grid-cols-12 gap-12",

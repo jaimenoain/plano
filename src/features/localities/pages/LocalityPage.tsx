@@ -53,7 +53,7 @@ export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading…">
       <Skeleton className="h-[clamp(260px,48vh,500px)] w-full" />
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
         <Skeleton className="mb-4 h-12 w-2/3 max-w-sm" />
         <Skeleton className="mb-8 h-6 w-40" />
         <div className="space-y-4">
@@ -182,7 +182,7 @@ export default function LocalityPage() {
         heroSourceBuilding={heroSourceBuilding}
       />
 
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 sm:px-6 lg:px-8">
 
         {/* ── Stats ── */}
         <div className="mt-8">

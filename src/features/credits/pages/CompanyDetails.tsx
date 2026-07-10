@@ -72,6 +72,7 @@ import {
 } from "@/features/credits/api/companies";
 import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
 import { companyDetailsLoader, type CompanyDetailsLoaderData } from "./CompanyDetails.loader";
+import { EntityMetaEyebrow } from "../components/EntityMetaEyebrow";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -137,7 +138,7 @@ function groupTierByRole(credits: CompanyCreditWithBuilding[]): Map<CreditRole, 
 export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading…">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
         <Skeleton className="mb-8 h-24 w-24 rounded-none" />
         <Skeleton className="mb-4 h-10 w-2/3 max-w-md" />
         <Skeleton className="mb-8 h-20 w-full" />
@@ -484,7 +485,7 @@ export default function CompanyDetails() {
 
   return (
     <AppLayout showBack>
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
         {user && company.claimStatus === "unclaimed" ? (
           <ClaimCompanyDialog
             companyId={company.id}
@@ -572,36 +573,35 @@ export default function CompanyDetails() {
         <header className="border-b border-border-default pb-10">
           <div className="flex flex-col-reverse gap-8 sm:flex-row sm:items-start sm:gap-12 lg:gap-20">
             <div className="min-w-0 flex-1 space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="flex min-w-0 flex-wrap items-center gap-3">
-                  <h1 className="headline">{company.name}</h1>
-                  {company.claimStatus === "verified" ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex shrink-0 text-text-primary" tabIndex={0}>
-                          <BadgeCheck className="h-8 w-8 md:h-9 md:w-9" aria-label="Verified company on Plano" />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">Verified company on Plano</TooltipContent>
-                    </Tooltip>
+              <div className="space-y-2">
+                <EntityMetaEyebrow items={[company.country, yearSpan]} />
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex min-w-0 flex-wrap items-center gap-3">
+                    <h1 className="headline">{company.name}</h1>
+                    {company.claimStatus === "verified" ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="inline-flex shrink-0 text-text-primary" tabIndex={0}>
+                            <BadgeCheck className="h-8 w-8 md:h-9 md:w-9" aria-label="Verified company on Plano" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">Verified company on Plano</TooltipContent>
+                      </Tooltip>
+                    ) : null}
+                  </div>
+                  {isSteward ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 border-border-default"
+                      onClick={() => setEditOpen(true)}
+                    >
+                      <Pencil className="mr-2 h-4 w-4" aria-hidden />
+                      Edit
+                    </Button>
                   ) : null}
                 </div>
-                {isSteward ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0 border-border-default"
-                    onClick={() => setEditOpen(true)}
-                  >
-                    <Pencil className="mr-2 h-4 w-4" aria-hidden />
-                    Edit
-                  </Button>
-                ) : null}
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-text-secondary">
-                {company.country ? <span>{company.country}</span> : null}
-                {yearSpan ? <span>{yearSpan}</span> : null}
               </div>
               {company.website?.trim() ? (
                 <a
