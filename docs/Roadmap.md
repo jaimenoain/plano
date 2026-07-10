@@ -24,7 +24,7 @@ one surface at a time.
 | ✅ | Design-system foundation | **Merged** — [#1521](https://github.com/jaimenoain/plano/pull/1521) |
 | ✅ | 1 · Global chrome | **Merged** — [#1522](https://github.com/jaimenoain/plano/pull/1522) |
 | ✅ | 2 · Feed | **Merged** — [#1524](https://github.com/jaimenoain/plano/pull/1524) |
-| ☐ | 3 · Building detail | not started |
+| ✅ | 3 · Building detail | Auto-merge armed — [#1526](https://github.com/jaimenoain/plano/pull/1526) |
 | ☐ | 4 · Landing | not started |
 | ☐ | 5 · Profile + credits | not started |
 | ☐ | 6 · City + guides | not started |
@@ -210,12 +210,15 @@ Owner files verified present. Each row: branch → files → designed screen →
   - `FeedPostByline` already renders earned-only dots correctly — migrate it to `RatingDots`.
 - **Cross-check:** `docs/FEED_REDESIGN_BRIEF.md`, `docs/FEED_REDESIGN_ROADMAP.md`.
 
-### [ ] PR 3 · Building detail
+### [x] PR 3 · Building detail
 
 - **Branch:** `design/building-detail-conformance` · **Screen:** `screens/building-detail.html`
-- **Files:** `src/features/buildings/pages/BuildingDetails.tsx` (**2905 lines — do not grow it**),
-  `src/features/buildings/components/PersonalRatingButton.tsx`
-- **Known deltas:**
+- **Files:** `src/features/buildings/pages/BuildingDetails.tsx` (was 2905 lines, now ~1700 after
+  extraction — do not grow it back), `src/features/buildings/components/PersonalRatingButton.tsx`,
+  plus new `BuildingHeader.tsx`, `BuildingDetailHero.tsx`, `RelatedBuildings.tsx`, `BuildingMapTab.tsx`,
+  `NotePhotoGrid.tsx`, `PendingPhotosQueue.tsx`, `BuildingInfoSection.tsx`, `BuildingInfoTab.tsx`,
+  `StreamAuthorAttribution.tsx`.
+- **Known deltas (as originally scoped):**
   - Full-bleed 16/9 hero (or `.photo-placeholder`), hard-left name + inline `RatingDots`.
   - Actions become editorial `.cta-link`s (`LOG VISIT →`, `SAVE →`, `REVIEW →`, `DIRECTIONS →`),
     not filled buttons.
@@ -224,6 +227,23 @@ Owner files verified present. Each row: branch → files → designed screen →
   - `PersonalRatingButton`'s **popover still renders three fill-left-to-right toggle slots with empty
     rings.** Replace with `MichelinRatingInput`. (Its trigger display was already fixed.)
   - Extract sub-components to respect the file-size ratchet.
+- **Delivered:** hero → `.photo-placeholder`/16:9 photo split into `BuildingDetailHero.tsx` (named
+  `Detail`-prefixed — `BuildingHero.tsx` already exists and is live on `LocalityPage.tsx` with a
+  different contract); title/badges/meta/stats/actions consolidated into one `BuildingHeader.tsx`
+  (`.headline`, `max-w-4xl`, no more hero/no-hero duplication); `PersonalRatingButton` now wraps
+  `MichelinRatingInput` in both `inline` and `popover` variants; Share/Add-credits/Directions are now
+  `.cta-link`s; reading column is `max-w-4xl` at the header/tab-bar/tab-content wrappers; ≥64px gaps
+  at the hero→header, header→tab-bar, tab-content-top and overview→related-buildings boundaries; both
+  `tracking-[0.15em]` occurrences in the page collapsed to `tracking-widest`; page split into 9
+  sub-components (file-size ratchet, mechanical in Phase A + the 2 new design components in Phase B).
+- **Deferred / flagged, not done this PR:**
+  - Inline `RatingDots` next to the header name — there is no per-building aggregate rating field
+    distinct from individual users' scores (`tier_rank` is a percentile popularity label, not a 1–3
+    score); left out rather than fake it. Needs a product decision + possibly a new column/RPC.
+  - The persistent right sidebar (Action card / Map card / Credits preview / Building Info) was not
+    removed, even though `DESIGN_TOKENS.md`/`CHECKLIST.md` call for single-column `max-w-4xl` reading
+    surfaces with no sidebar on content-detail pages. Only the max-width was narrowed; removing the
+    sidebar is a larger structural rewrite left for a follow-up.
 
 ### [ ] PR 4 · Landing
 
@@ -302,9 +322,9 @@ Measured on `main` after the foundation merged:
 
 | Debt | Count | How it dies |
 |---|---|---|
-| `tracking-[0.15em]` arbitrary values | **236** (was 240) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
+| `tracking-[0.15em]` arbitrary values | **233** (was 236) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
 | Raw hex in `src/features` + `src/pages` | **31** across 12 files | Replace with token aliases as you touch each surface. Note `src/features/maps` holds 10 `#BEFF00` — lime map markers are a bug (PR 7). |
-| ESLint raw-hex guard coverage | `components/ui` + `components/layout` + `features/feed` | Once a feature directory is clean, widen the `files` glob in `eslint.config.js`. |
+| ESLint raw-hex guard coverage | `components/ui` + `components/layout` + `features/feed` + `features/buildings` | Once a feature directory is clean, widen the `files` glob in `eslint.config.js`. |
 
 Do **not** attempt a repo-wide sweep of these — it produces an unreviewable diff and will collide
 with every surface PR. Fold each into the PR that already owns the file.
