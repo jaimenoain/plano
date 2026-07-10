@@ -4,6 +4,8 @@
 
 All work goes through pull requests against `main`. Direct pushes are blocked by branch protection (enforced for admins too).
 
+Arm auto-merge as soon as the PR is open (`gh pr merge <number> --auto --merge`) and let GitHub land it once the checks are green. The repo has **automatically delete head branches** enabled, so the remote branch is removed on merge — including merges that auto-merge performs. Nothing deletes your *local* branch: run `git fetch --prune` to drop the stale remote ref, then `git branch -d <branch>`.
+
 ## Branch protection (live configuration)
 
 `main` requires these status checks to pass before merge, and the branch must be up to date:
