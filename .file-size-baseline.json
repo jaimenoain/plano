@@ -33,7 +33,6 @@
     "src/features/embassy/pages/Tasks.tsx": 1192,
     "src/features/events/api/eventsApi.ts": 452,
     "src/features/itinerary/stores/useItineraryStore.ts": 345,
-    "src/features/localities/pages/LocalityPage.tsx": 1402,
     "src/features/maps/components/BuildingDrawerBody.tsx": 633,
     "src/features/maps/components/BuildingPopupContent.tsx": 426,
     "src/features/maps/components/BuildingSidebar.tsx": 598,

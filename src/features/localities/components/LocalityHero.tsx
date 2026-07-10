@@ -55,12 +55,10 @@ export function LocalityHero({
                 {region}
               </p>
             ) : null}
-            <h1 className="text-3xl font-bold leading-[1.05] tracking-tight text-text-inverse md:text-5xl lg:text-6xl">
-              {city}
-            </h1>
+            <h1 className="display text-text-inverse">{city}</h1>
           </div>
           {heroCreditUsername ? (
-            <div className="flex items-center justify-end gap-1.5 text-2xs text-text-inverse/70">
+            <div className="meta-code flex items-center justify-end gap-1.5 text-2xs text-text-inverse/70">
               <Camera className="h-3 w-3 shrink-0" aria-hidden />
               <span>
                 {heroSourceBuilding ? (
@@ -91,9 +89,7 @@ export function LocalityHero({
               {region}
             </p>
           ) : null}
-          <h1 className="text-3xl font-bold leading-[1.05] tracking-tight text-text-primary md:text-5xl lg:text-6xl">
-            {city}
-          </h1>
+          <h1 className="display text-text-primary">{city}</h1>
         </div>
       </div>
     </header>

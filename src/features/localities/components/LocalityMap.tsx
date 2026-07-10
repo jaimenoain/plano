@@ -198,7 +198,7 @@ export function LocalityMap({ localityId }: { localityId: string }) {
       </div>
 
       {hasActiveFilter ? (
-        <p className="mt-2 text-[10px] text-text-disabled">
+        <p className="mt-2 text-2xs text-text-disabled">
           Showing {filteredBuildings.length.toLocaleString()} of{" "}
           {mapBuildings.length.toLocaleString()} buildings
         </p>

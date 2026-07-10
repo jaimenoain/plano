@@ -30,11 +30,8 @@ export function LocalityEvents({
     <section className="mt-16 border-t border-border-default pt-12">
       <div className="mb-6 flex items-center justify-between gap-2">
         <SectionLabel>Events</SectionLabel>
-        <Link
-          to={`/events/${countryCode.toLowerCase()}/${citySlug}`}
-          className="text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
-        >
-          All events →
+        <Link to={`/events/${countryCode.toLowerCase()}/${citySlug}`} className="cta-link">
+          All events
         </Link>
       </div>
 

@@ -14,44 +14,42 @@ export function CollectionGuideCard({ collection }: CollectionGuideCardProps) {
       to={href}
       className="group block border-b border-border-default pb-6 last:border-0"
     >
-      {/* Mosaic preview */}
-      {collection.previewImages.length > 0 && (
-        <div
-          className="w-full mb-4 overflow-hidden rounded-none bg-surface-muted"
-          style={{ aspectRatio: '16/7' }}
-        >
-          {collection.previewImages.length === 1 ? (
-            <img
-              src={collection.previewImages[0]}
-              alt={collection.name}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-              loading="lazy"
-            />
-          ) : (
-            <div
-              className="w-full h-full grid gap-px"
-              style={{
-                gridTemplateColumns:
-                  collection.previewImages.length >= 3
-                    ? '2fr 1fr 1fr'
-                    : `repeat(${collection.previewImages.length}, 1fr)`,
-              }}
-            >
-              {collection.previewImages.slice(0, 3).map((url, i) => (
-                <img
-                  key={i}
-                  src={url}
-                  alt=""
-                  className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.015] ${
-                    i === 0 ? 'row-span-1' : ''
-                  }`}
-                  loading="lazy"
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {/* Mosaic preview — grayscale until hover, per screens/guides.html */}
+      <div
+        className="w-full mb-4 overflow-hidden rounded-none grayscale transition duration-200 group-hover:grayscale-0"
+        style={{ aspectRatio: '16/7' }}
+      >
+        {collection.previewImages.length === 0 ? (
+          <div className="photo-placeholder size-full" data-label={collection.name} />
+        ) : collection.previewImages.length === 1 ? (
+          <img
+            src={collection.previewImages[0]}
+            alt={collection.name}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div
+            className="w-full h-full grid gap-mosaic-gap bg-border-default"
+            style={{
+              gridTemplateColumns:
+                collection.previewImages.length >= 3
+                  ? '2fr 1fr 1fr'
+                  : `repeat(${collection.previewImages.length}, 1fr)`,
+            }}
+          >
+            {collection.previewImages.slice(0, 3).map((url, i) => (
+              <img
+                key={i}
+                src={url}
+                alt=""
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Metadata */}
       <div className="flex items-start justify-between gap-3">

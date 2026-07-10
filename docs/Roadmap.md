@@ -26,8 +26,8 @@ one surface at a time.
 | ✅ | 2 · Feed | **Merged** — [#1524](https://github.com/jaimenoain/plano/pull/1524) |
 | ✅ | 3 · Building detail | **Merged** — [#1526](https://github.com/jaimenoain/plano/pull/1526) |
 | ✅ | 4 · Landing | **Merged** — [#1527](https://github.com/jaimenoain/plano/pull/1527) |
-| ✅ | 5 · Profile + credits | Auto-merge armed |
-| ☐ | 6 · City + guides | not started |
+| ✅ | 5 · Profile + credits | **Merged** — [#1528](https://github.com/jaimenoain/plano/pull/1528) |
+| ✅ | 6 · City + guides | Auto-merge armed |
 | ☐ | 7 · Map / explore / itinerary | not started |
 | ☐ | 8 · Events + connect + notifications | not started |
 | ☐ | 9 · Auth flows | not started |
@@ -334,10 +334,53 @@ Owner files verified present. Each row: branch → files → designed screen →
   - `CompanyDetails.tsx` (846) was left over budget — this PR only shrank its markup, not its
     steward/claim/dispute logic.
 
-### [ ] PR 6 · City + guides
+### [x] PR 6 · City + guides
 
 - **Branch:** `design/city-guides-conformance` · **Screens:** `city.html`, `guides.html`
-- **Files:** `src/features/localities/pages/LocalityPage.tsx`, `src/features/guides/GuidesPage.tsx`
+- **Files:** `src/features/localities/pages/LocalityPage.tsx` (was 1401 lines, now 254 after
+  extraction — it has **left the file-size baseline**, do not grow it back), the eleven new
+  `src/features/localities/components/*.tsx`, `src/features/guides/GuidesPage.tsx`,
+  `src/features/guides/{LocalityCard,CollectionGuideCard}.tsx`
+- **Known deltas (as originally scoped):** none were pre-recorded; the sweep found four.
+  1. *Type hedged* — the city name was `text-3xl md:text-5xl lg:text-6xl` (30→60px) against the
+     kit's `clamp(56px, 8vw, 104px)`; the guides hero capped at 48px against the kit's 72px.
+  2. *Boxed where it should float* — `LocalityTopBuildings`' hero tile and its five secondary cards
+     each carried `border border-border-default`, as did the guides featured `LocalityCard`.
+  3. *No lime at all* — every `→` was typed into the label as a literal glyph, so the sanctioned
+     hover-arrow lime never appeared anywhere on either surface.
+  4. *Grey boxes* — photo-less slots rendered a flat `bg-surface-muted`, a centred `Building2` icon,
+     or the words "No images", never `.photo-placeholder`.
+- **Delivered:** the city name is now `.display` (measured **128px** / lh 0.92 / −5.76px tracking at
+  1440, falling to the 56px clamp floor on mobile) in both the photographic and typographic-fallback
+  variants; the photo credit became `.meta-code`; stat values settled at `text-4xl font-bold` (kit:
+  38px/700). `LocalityTopBuildings` is unboxed — the 16/9 hero keeps its scrim and overlaid name
+  (pushed to 30px), while the five secondary cards lost their borders **and** their gradient scrims:
+  the 4/3 image now carries the year and name *below* it in black type, per `.tb-card-yr` /
+  `.tb-card-name`. Nine hand-rolled arrow links across both surfaces became `.cta-link`, which
+  injects the `→` and its lime hover — that hover, plus the "Explore map" quick action's arrow
+  (`group-hover:text-brand-accent`, the kit's `.city-action.hl:hover .ar`), is the *only* lime on
+  either page. On guides, the hero became `.headline` (60px at 1440, 40px at the mobile floor); the
+  featured `LocalityCard` was unboxed with its name below a 4/3 image that is grayscale until hover
+  (`.city-card .ph`); the compact card's count became `.meta-code`; `CollectionGuideCard` gained the
+  same grayscale reveal and a `.photo-placeholder` for empty previews; zone padding went 48px → 56px.
+  Both `SectionLabel`s collapsed `tracking-[0.15em]` → `tracking-widest`, and the five `text-[10px]`
+  in touched city sections became `text-2xs`. The raw-hex ESLint guard now covers
+  `src/features/localities/**` and `src/features/guides/**` (both were already clean).
+- **Verified:** no `rgb(190, 255, 0)` anywhere at rest on `/architecture/fr/paris` or `/guides`;
+  `tracking-widest` computes to exactly 0.15em; all imagery `border-radius: 0px`; all 14 city card
+  links and the guides featured cards compute `border-width: 0px`; hero tile measures 16/9 and the
+  secondary cards 4/3; every `.cta-link` label is free of a literal `→` while its `::after` supplies
+  one; no horizontal overflow at 375px. Both baselines **ratcheted down** (LocalityPage.tsx left
+  `.file-size-baseline.json` entirely; deep-feature imports 634 → 633).
+- **Deferred / flagged, not done this PR:**
+  - The guides hero renders at 60px against the kit's 72px ceiling. `.headline` (40–60px) is the
+    nearest sanctioned utility — `.display` (up to 128px) would blow out the 640px inner column —
+    and hardcoding the kit's `clamp(44px, 7vw, 72px)` would introduce a raw value. Closing the gap
+    needs a new editorial type step, i.e. a foundation change, not a surface PR.
+  - Guides keeps its `max-w-[1440px]` container (the kit's `.doc-wide` is 1200px). It is a discovery
+    index, not a `max-w-4xl` reading surface, so the width was left alone.
+  - The continent tabs and map filter chips stay black-filled pills. Both kits draw them that way;
+    `PATTERNS.md`'s "quiet text tabs, not pills" governs the profile surface.
 
 ### [ ] PR 7 · Map / explore / itinerary
 
@@ -388,9 +431,9 @@ Measured on `main` after the foundation merged:
 
 | Debt | Count | How it dies |
 |---|---|---|
-| `tracking-[0.15em]` arbitrary values | **207** (234 before the landing PR, 233 before profile+credits) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
+| `tracking-[0.15em]` arbitrary values | **205** (234 before the landing PR, 233 before profile+credits, 207 before city+guides) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
 | Raw hex in `src/features` + `src/pages` | **31** across 12 files | Replace with token aliases as you touch each surface. Note `src/features/maps` holds 10 `#BEFF00` — lime map markers are a bug (PR 7). |
-| ESLint raw-hex guard coverage | `components/ui` + `components/layout` + `features/feed` + `features/buildings` | Once a feature directory is clean, widen the `files` glob in `eslint.config.js`. |
+| ESLint raw-hex guard coverage | `components/ui` + `components/layout` + `features/feed` + `features/buildings` + `features/localities` + `features/guides` | Once a feature directory is clean, widen the `files` glob in `eslint.config.js`. |
 
 Do **not** attempt a repo-wide sweep of these — it produces an unreviewable diff and will collide
 with every surface PR. Fold each into the PR that already owns the file.

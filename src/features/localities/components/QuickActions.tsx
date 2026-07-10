@@ -65,7 +65,14 @@ export function QuickActions({
               {label}
             </span>
           </span>
-          <span className="shrink-0 text-xs text-text-primary" aria-hidden>
+          {/* The arrow on the emphasised action is one of the four sanctioned lime uses. */}
+          <span
+            className={cn(
+              "shrink-0 text-xs text-text-primary transition-all group-hover:translate-x-[3px]",
+              emphasize && "group-hover:text-brand-accent",
+            )}
+            aria-hidden
+          >
             →
           </span>
         </Link>

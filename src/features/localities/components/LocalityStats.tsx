@@ -38,7 +38,7 @@ export function LocalityStats({ stats }: { stats: LocalityStatsData }) {
     <div className="grid grid-cols-2 gap-x-6 gap-y-8 border-b border-border-default py-10 sm:grid-cols-4 sm:gap-x-4">
       {items.map((item) => (
         <div key={item.label} className="flex min-w-0 flex-col gap-2">
-          <span className="font-display text-3xl font-semibold tabular-nums tracking-tight text-text-primary md:text-4xl">
+          <span className="font-display text-4xl font-bold tabular-nums tracking-tight text-text-primary">
             {item.value}
           </span>
           <span className="flex items-center gap-1.5 text-2xs font-medium uppercase tracking-widest text-text-secondary">

@@ -111,7 +111,7 @@ function ActivityItemRow({ item }: { item: ActivityItem }) {
       <Link to={`/profile/${item.username}`} className="shrink-0">
         <Avatar className="h-7 w-7 border border-border-default bg-surface-muted">
           <AvatarImage src={item.avatarUrl ?? undefined} alt="" />
-          <AvatarFallback className="text-[10px] font-medium text-text-secondary">
+          <AvatarFallback className="text-2xs font-medium text-text-secondary">
             {initials}
           </AvatarFallback>
         </Avatar>
@@ -126,7 +126,7 @@ function ActivityItemRow({ item }: { item: ActivityItem }) {
           </Link>{" "}
           {label}
         </p>
-        <p className="mt-0.5 text-[10px] text-text-disabled">
+        <p className="mt-0.5 text-2xs text-text-disabled">
           {timeAgo(item.createdAt)}
         </p>
       </div>
@@ -158,11 +158,8 @@ export function LocalityActivityStream({
     <section className="mt-16 border-t border-border-default pt-12">
       <div className="mb-6 flex items-center justify-between gap-2">
         <SectionLabel>Recent activity</SectionLabel>
-        <Link
-          to={`/explore?cc=${countryCode}&city=${citySlug}`}
-          className="text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
-        >
-          View all →
+        <Link to={`/explore?cc=${countryCode}&city=${citySlug}`} className="cta-link">
+          View all
         </Link>
       </div>
       <div>

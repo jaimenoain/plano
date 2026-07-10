@@ -26,11 +26,7 @@ function CollectionPreviewMosaic({
   const [main, second, third] = urls;
 
   if (!main) {
-    return (
-      <div className="flex aspect-4/3 w-full items-center justify-center bg-surface-muted text-[10px] uppercase tracking-widest text-text-disabled">
-        No images
-      </div>
-    );
+    return <div className="photo-placeholder aspect-4/3 w-full" data-label={name} />;
   }
 
   const mainSrc = getBuildingImageUrl(main) ?? "";
@@ -56,7 +52,7 @@ function CollectionPreviewMosaic({
               />
             </div>
           ) : (
-            <div className="bg-surface-muted" />
+            <div className="photo-placeholder" />
           )}
           {third ? (
             <div className="overflow-hidden bg-surface-muted">
@@ -67,7 +63,7 @@ function CollectionPreviewMosaic({
               />
             </div>
           ) : (
-            <div className="bg-surface-muted" />
+            <div className="photo-placeholder" />
           )}
         </div>
       </div>
@@ -86,11 +82,8 @@ export function LocalityCityGuides({
     <section className="mt-16 border-t border-border-default pt-12">
       <div className="mb-6 flex items-center justify-between gap-2">
         <SectionLabel>City guides</SectionLabel>
-        <Link
-          to={`/explore`}
-          className="text-[10px] font-medium uppercase tracking-widest text-text-disabled transition-colors hover:text-text-primary"
-        >
-          Browse collections →
+        <Link to={`/explore`} className="cta-link">
+          Browse collections
         </Link>
       </div>
 

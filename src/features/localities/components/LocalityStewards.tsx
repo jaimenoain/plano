@@ -53,7 +53,7 @@ function StewardCard({
       to={`/profile/${steward.username}`}
       className="group flex items-center gap-4 px-1 py-3.5 transition-colors hover:bg-surface-muted/50"
     >
-      <span className="w-7 shrink-0 text-[10px] font-medium tabular-nums text-text-disabled transition-colors group-hover:text-text-secondary">
+      <span className="w-7 shrink-0 text-2xs font-medium tabular-nums text-text-disabled transition-colors group-hover:text-text-secondary">
         {String(rank).padStart(2, "0")}
       </span>
       <Avatar className="h-10 w-10 shrink-0 border border-border-default bg-surface-muted">
@@ -110,7 +110,7 @@ export function LocalityStewards({ stewards }: { stewards: LocalitySteward[] }) 
     <section className="mt-16 border-t border-border-default pt-12">
       <div className="mb-2 flex items-baseline justify-between gap-2">
         <SectionLabel>Local experts &amp; stewards</SectionLabel>
-        <span className="text-[10px] tabular-nums text-text-disabled">
+        <span className="text-2xs tabular-nums text-text-disabled">
           {sorted.length}{" "}
           {sorted.length === 1 ? "contributor" : "contributors"}
         </span>
