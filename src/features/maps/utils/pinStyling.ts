@@ -52,12 +52,14 @@ function getBasePinStyle(item: ClusterResponse, options?: PinOptions): PinStyle 
   const shape: PinShape = item.location_approximate ? 'circle' : 'pin';
 
   if (options?.photographyGaps && !item.is_cluster) {
+    // The photography-gap overlay is a data-coverage heatmap, not a place marker —
+    // it is the one map layer that stays chromatic. Semantic feedback tokens only.
     const photoCount = item.photos_count ?? 0;
-    let backgroundColor = "#EF4444"; // Red (0 photos)
+    let backgroundColor: string = MAP_MARKER_FILL.feedbackDestructive; // 0 photos
     if (photoCount >= 3) {
-      backgroundColor = "#10B981"; // Green (3+ photos)
+      backgroundColor = MAP_MARKER_FILL.feedbackSuccess; // 3+ photos
     } else if (photoCount > 0) {
-      backgroundColor = "#F59E0B"; // Amber (1-2 photos)
+      backgroundColor = MAP_MARKER_FILL.feedbackWarning; // 1-2 photos
     }
 
     return {
@@ -82,10 +84,11 @@ function getBasePinStyle(item: ClusterResponse, options?: PinOptions): PinStyle 
 
     let backgroundColor: string;
     if (item.max_tier === 3) {
-      // Tier 3: Solid brand-secondary face (inline fill — reliable inside map canvas)
-      classes += ' border-brand-primary border-2';
+      // Tier 3: the most prominent cluster takes the solid black face, so its numeral
+      // and ring both invert to white (inline fill — reliable inside the map canvas).
+      classes = 'font-bold text-white border-white border-2';
       zIndex = 20;
-      backgroundColor = MAP_MARKER_FILL.brandSecondary;
+      backgroundColor = MAP_MARKER_FILL.brandPrimary;
     } else if (item.max_tier === 2) {
       classes += ' border-white border-2';
       zIndex = 20;
@@ -165,7 +168,9 @@ function getBasePinStyle(item: ClusterResponse, options?: PinOptions): PinStyle 
         shape,
         zIndex: 100,
         size: 30,
-        classes: 'border-text-primary border-2 text-brand-primary-foreground',
+        // Kit `.pin .dot`: black face, white ring. The ring must invert with the fill —
+        // `border-text-primary` on a black face is black-on-black.
+        classes: 'border-white border-2 text-brand-primary-foreground',
         backgroundColor: MAP_MARKER_FILL.brandPrimary,
         showDot: false,
         showContent: true,

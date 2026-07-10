@@ -70,17 +70,17 @@ describe('BuildingSidebar', () => {
       </MemoryRouter>
     );
 
-    // Check for rating dots
-    // The dots are divs with specific classes inside a container with aria-label
-    const ratingContainer = screen.getByLabelText('Rating: 3');
+    // The award is rendered by RatingDots: earned-only dots, named as distinctions.
+    // The old `aria-label="Rating: 3"` stated a score; the award model forbids that.
+    expect(screen.queryByLabelText('Rating: 3')).toBeNull();
+    const ratingContainer = screen.getByLabelText('3 distinctions');
     expect(ratingContainer).toBeDefined();
 
-    // Check the dots inside
-    const dots = ratingContainer.querySelectorAll('div');
+    const dots = ratingContainer.querySelectorAll('span[aria-hidden]');
     expect(dots.length).toBe(3);
 
-    // Monochrome SERP pins — text-primary squares (see BuildingSidebar doc block)
-    expect(dots[0].className).toContain('bg-text-primary');
+    // Monochrome — black dots, never lime, never a palette colour.
+    expect(dots[0].className).toContain('bg-brand-primary');
     expect(dots[0].className).not.toContain('bg-yellow-400');
   });
 

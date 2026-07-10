@@ -1,7 +1,7 @@
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { EyeOff, Circle, Medal } from "lucide-react";
+import { RatingDots } from "@/components/ui/rating-dots";
+import { EyeOff, Medal } from "lucide-react";
 import { Link } from "react-router";
 import { DiscoveryBuilding, ContactInteraction } from "./types";
 import { formatBuildingStatusForDisplay, isLostStatus } from "@/lib/buildingStatus";
@@ -43,8 +43,9 @@ export function DiscoveryBuildingCard({
   const ImageComponent = imageUrl && (
     <div
       className={cn(
+        // Imagery keeps radius-none at every size — the compact thumb was `rounded-md`.
         "relative shrink-0 overflow-hidden bg-surface-muted",
-        compact ? "w-14 h-14 rounded-md" : "w-32 aspect-4/3",
+        compact ? "w-14 h-14" : "w-32 aspect-4/3",
       )}
     >
       <img
@@ -58,8 +59,13 @@ export function DiscoveryBuildingCard({
 
   const actionPositionClass = imagePosition === 'left' ? 'bottom-2 right-2' : 'top-2 right-2';
 
+  // Kit `.serp-item`: an unboxed row separated by a single hairline, tinting on hover.
+  // No border box, no fill, no shadow — content rows float.
   const Content = (
-    <Card className="overflow-hidden shadow-none transition-shadow group relative min-w-0">
+    <div
+      data-testid="serp-row"
+      className="group relative min-w-0 overflow-hidden border-b border-border-default transition-colors hover:bg-surface-muted"
+    >
       {action && (
         <div
           className={cn("absolute z-10", actionPositionClass)}
@@ -82,12 +88,14 @@ export function DiscoveryBuildingCard({
           )}
         >
           <div className="flex flex-col">
+            {/* Kit `.serp-name` — 19px/700/−0.02em. `font-black` is weight 900; the
+                system permits Inter 400–700 only. */}
             <h3
               className={cn(
                 "line-clamp-2 group-hover:opacity-75 transition-opacity",
                 compact
                   ? "text-sm font-semibold leading-snug text-text-primary"
-                  : "font-black text-2xl leading-tight tracking-tight",
+                  : "text-xl font-bold leading-tight tracking-tight",
               )}
             >
               {building.name}
@@ -116,27 +124,16 @@ export function DiscoveryBuildingCard({
             {building.year_completed && (
               <>
                 <span> • </span>
-                <span>{building.year_completed}</span>
+                {/* Space Mono is reserved for tiny numeric meta — the year qualifies. */}
+                <span className="meta-code">{building.year_completed}</span>
               </>
             )}
           </div>
 
-          {/* Badges — status words removed; optional points-only chip when rated */}
-          <div className={cn("flex flex-wrap gap-2", compact ? "mt-1.5" : "mt-2")}>
-            {(userStatus === 'visited' || userStatus === 'pending') &&
-              userRating != null &&
-              userRating > 0 && (
-              <Badge
-                variant="secondary"
-                className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto bg-brand-primary/10 text-brand-primary hover:bg-brand-primary/20 border-brand-primary/20 border max-w-full truncate"
-                aria-label={`${userRating} ${userRating === 1 ? "point" : "points"}`}
-              >
-                <div className="flex gap-0.5">
-                  {Array.from({ length: userRating }).map((_, i) => (
-                    <Circle key={i} className="w-2 h-2 fill-current" aria-hidden />
-                  ))}
-                </div>
-              </Badge>
+          {/* Badges — status words removed. The award is earned-only dots, never a chip. */}
+          <div className={cn("flex flex-wrap items-center gap-2", compact ? "mt-1.5" : "mt-2")}>
+            {(userStatus === 'visited' || userStatus === 'pending') && (
+              <RatingDots rating={userRating} size="sm" />
             )}
             {(building.status === 'Unbuilt' || isLostStatus(building.status)) && (
               <Badge variant="outline" className="flex items-center gap-1 font-normal text-xs px-2 py-0.5 h-auto text-text-secondary border-text-secondary/30 max-w-full truncate">
@@ -150,7 +147,9 @@ export function DiscoveryBuildingCard({
               </Badge>
             )}
             {building.winner_award_name && (
-              <Badge variant="secondary" className="flex items-center gap-1 font-semibold text-[10px] uppercase tracking-wider px-2 py-0.5 h-auto bg-amber-500/10 text-amber-600 border-amber-500/20 border max-w-full truncate shadow-xs">
+              // Monochrome: `amber-500/600` were raw palette colours, and the system
+              // carries no chromatic accent for awards. Flat, hairline, no shadow.
+              <Badge variant="outline" className="flex items-center gap-1 font-medium text-2xs uppercase tracking-widest px-2 py-0.5 h-auto text-text-primary border-border-default max-w-full truncate">
                 <Medal className="h-3 w-3 shrink-0" />
                 {building.winner_award_name}
               </Badge>
@@ -187,7 +186,7 @@ export function DiscoveryBuildingCard({
 
         {imagePosition === 'right' && ImageComponent}
       </div>
-    </Card>
+    </div>
   );
 
   if (onClick) {

@@ -2,7 +2,8 @@ import { useMemo, useState, useEffect } from 'react';
 import type { GeoJSON } from 'geojson';
 import { Source, Layer, useMap } from 'react-map-gl/maplibre';
 import { useItineraryStore } from '@/features/itinerary/stores/useItineraryStore';
-import { DAY_COLORS } from '@/features/maps/constants';
+import { getDayRouteOpacity } from '../constants';
+import { MAP_MARKER_FILL } from '../constants/mapMarkerFills';
 
 export function ItineraryRoutes() {
   const days = useItineraryStore((state) => state.days);
@@ -38,7 +39,6 @@ export function ItineraryRoutes() {
     return days.map((day, index) => {
       if (!day.routeGeometry) return null;
 
-      const color = DAY_COLORS[index % DAY_COLORS.length];
       const isFallback = day.isFallback;
 
       return (
@@ -57,7 +57,8 @@ export function ItineraryRoutes() {
               'line-cap': 'round',
             }}
             paint={{
-              'line-color': color,
+              'line-color': MAP_MARKER_FILL.brandPrimary,
+              'line-opacity': getDayRouteOpacity(index),
               'line-width': 4,
               'line-dasharray': isFallback ? [2, 2] : undefined,
             }}

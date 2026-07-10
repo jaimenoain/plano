@@ -13,13 +13,18 @@ export interface MichelinRatingInputProps {
 /**
  * The four award tiers form an ascending ladder of merit — no rung reads as a
  * failure. Each choice shows only its own earned dots (0/1/2/3).
+ *
+ * Exported so every rating surface names the tiers identically. Anything that
+ * offers a 1–3 choice must label it, never number it.
  */
-const TIERS = [
+export const AWARD_TIERS = [
   { value: 0, label: "Interesting", hint: "Worth a look" },
   { value: 1, label: "Impressive", hint: "Worth a detour" },
   { value: 2, label: "Essential", hint: "Worth a journey" },
   { value: 3, label: "Masterpiece", hint: "Once in a lifetime" },
 ] as const;
+
+const TIERS = AWARD_TIERS;
 
 /**
  * Award rating input — a reward, not a scale (Michelin-style).

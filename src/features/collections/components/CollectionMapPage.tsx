@@ -33,6 +33,7 @@ export const meta: MetaFunction<typeof collectionMapPageLoader> = ({ loaderData:
   return tags;
 };
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { MAP_MARKER_FILL } from "@/features/maps";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -721,19 +722,16 @@ export default function CollectionMap() {
         let color: string | null = null;
         const interaction = userInteractionMap.get(item.building.id);
 
+        // Markers are monochrome. Categorisation is carried by a light-to-dark value
+        // ladder (black → white → muted), never by hue: gold/silver/bronze and
+        // green/orange both broke the design system's "markers are currentColor" rule.
         if (collection?.categorization_method === 'custom') {
-            if (item.custom_category_id) {
-            const category = collection.custom_categories?.find(c => c.id === item.custom_category_id);
-            if (category) {
-                color = category.color;
-            } else {
-                color = "#9CA3AF";
-            }
-            } else {
-            color = "#9CA3AF";
-            }
+            // A member-chosen category colour cannot survive a monochrome map, so every
+            // custom category now renders identically. The colour picker in
+            // CollectionSettingsDialog is consequently inert — see docs/Roadmap.md PR 7.
+            color = MAP_MARKER_FILL.brandPrimary;
         } else if (collection?.categorization_method === 'uniform') {
-            color = "#000000";
+            color = MAP_MARKER_FILL.brandPrimary;
         } else if (shouldFetchStats && statsData && memberIds) {
             const stat = statsMap.get(item.building.id);
             const targetUserIds = collection?.categorization_selected_members && collection.categorization_selected_members.length > 0
@@ -743,26 +741,19 @@ export default function CollectionMap() {
 
             if (collection.categorization_method === 'status') {
                 if (!stat || stat.visitedCount === 0) {
-                    color = "#9E9E9E"; // Not visited (Grey)
+                    color = MAP_MARKER_FILL.surfaceMuted80; // Not visited
+                } else if (stat.visitedCount >= targetCount && targetCount > 0) {
+                    color = MAP_MARKER_FILL.brandPrimary; // Visited by all
                 } else {
-                    if (stat.visitedCount >= targetCount && targetCount > 0) {
-                        color = "#4CAF50"; // Visited by All (Green)
-                    } else if (stat.visitedCount > 0) {
-                        color = "#FF9800"; // Visited by Some (Orange)
-                    }
+                    color = MAP_MARKER_FILL.white; // Visited by some
                 }
             } else if (collection.categorization_method === 'rating_member') {
                 if (!stat || !stat.hasSaved) {
-                    // No color (default) or grey?
-                    // If we want to highlight rated ones, unrated/unsaved can be default or grey.
-                    // Let's make them grey to indicate "no data/rating".
-                    color = "#9E9E9E";
-                } else {
-                    if (stat.maxRating === 3) color = "#FFD700"; // Gold
-                    else if (stat.maxRating === 2) color = "#C0C0C0"; // Silver
-                    else if (stat.maxRating === 1) color = "#CD7F32"; // Bronze
-                    else color = "#2196F3"; // Saved (Blue)
-                }
+                    color = MAP_MARKER_FILL.surfaceMuted80; // No rating on record
+                } else if (stat.maxRating === 3) color = MAP_MARKER_FILL.brandPrimary;
+                else if (stat.maxRating === 2) color = MAP_MARKER_FILL.white;
+                else if (stat.maxRating === 1) color = MAP_MARKER_FILL.surfaceMuted;
+                else color = MAP_MARKER_FILL.surfaceMuted80; // Saved, unrated
             }
         }
 
@@ -807,8 +798,8 @@ export default function CollectionMap() {
             address: marker.address,
             google_place_id: marker.google_place_id,
             website: marker.website,
-            // Use a default marker color if needed, or rely on icon in Map
-            color: "#6B7280",
+            // Standalone (non-building) markers sit at the quietest step of the ladder
+            color: MAP_MARKER_FILL.surfaceMuted80,
             main_image_url: photos[marker.id]?.url || null,
             image_attribution: photos[marker.id]?.attribution || null
         } as DiscoveryBuilding));
@@ -1175,7 +1166,7 @@ toast({
 
         {/* Sidebar List */}
         <div className={cn(
-          "w-full shrink-0 flex-col border-t border-border-default bg-surface-card lg:flex lg:h-full lg:w-80 lg:min-h-0 lg:border-l lg:border-t-0",
+          "w-full shrink-0 flex-col border-t border-border-default bg-surface-card lg:flex lg:h-full lg:w-collection-rail-narrow lg:min-h-0 lg:border-l lg:border-t-0 xl:w-collection-rail",
           viewMode === 'list' ? "order-2 flex h-full lg:order-2" : "hidden lg:flex lg:order-2",
         )}
         >
@@ -1196,7 +1187,7 @@ toast({
                 )}
                 <div className="flex items-center justify-between gap-4 p-4">
                 <div className="min-w-0 flex-1">
-                    <h1 className="font-bold text-xl truncate">{collection.name}</h1>
+                    <h1 className="truncate text-2xl font-bold leading-tight tracking-tight">{collection.name}</h1>
                     <div className="text-sm text-text-secondary mb-1">
                       By: <Link to={`/profile/${ownerProfile?.username}`} className="hover:underline text-text-primary">{ownerProfile?.username}</Link>
                     </div>
@@ -1587,7 +1578,7 @@ toast({
           if (!open) setBulkAddPreviewBuildings([]);
         }}
       >
-        <AlertDialogContent className="max-h-[min(90vh,36rem)] gap-0 overflow-hidden rounded-none p-0 shadow-xl sm:max-w-lg">
+        <AlertDialogContent className="max-h-[min(90vh,36rem)] gap-0 overflow-hidden rounded-none p-0 shadow-none sm:max-w-lg">
           <div className="border-b border-border-default px-6 pb-5 pt-6">
             <div className="flex gap-4">
               <div

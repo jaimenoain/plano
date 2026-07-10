@@ -209,6 +209,8 @@ Named layout tokens (exact measures, not constrained to the 4px grid):
 | `mosaic-gap` | `1.5px` | 1.5px | Gutter between mosaic cells (`gap-mosaic-gap`) |
 | `search-serp` | `25rem` | 400px | Search map results column width (`w-search-serp`, `ml-search-serp`, etc.) |
 | `search-serp-alt` (max-width) | `12.5rem` | 200px | Secondary building name line clamp in SERP list rows (`max-w-search-serp-alt`) |
+| `collection-rail` | `24.75rem` | 396px | Collection / itinerary map sidebar (`xl:w-collection-rail`) |
+| `collection-rail-narrow` | `22.5rem` | 360px | The same rail on narrower desktops (`lg:w-collection-rail-narrow`) |
 
 ---
 
@@ -560,6 +562,10 @@ context — never a raw palette value.**
 **`brand-primary`** (`#171717`) is the primary action colour — near-black. It is used for: primary button backgrounds everywhere (forms, modals, admin, CTA buttons in the top nav). It is the button colour. It is not the lime. `brand-primary-foreground` is `#FFFFFF` (white text on a black button).
 
 **`brand-accent`** (`#BEFF00`) is the lime accent — the one bright colour in the system. It is **rationed to four sanctioned UI uses**: (1) primary-CTA button fills (the Button `accent` variant), (2) focus rings (`focus-visible`, 2px + a 2px white offset), (3) the hover `→` arrow on editorial CTAs, and (4) one `.accent-tag` status pill per view. The `::selection` highlight and the bell unread dot are also lime. If `brand-accent` appears anywhere outside those uses it is an error — it must not appear as section accent bars, tab indicators, bookmark fills, verified-badge colours, icon or map-marker fills, the reward rating dots, or a decorative surface fill.
+
+**Map markers are monochrome, and the rule is enforced.** Marker faces are set through inline `backgroundColor` because MapLibre portals markers outside the cascade that resolves our CSS custom properties, so every marker colour is a literal. Those literals live in exactly one file — `src/features/maps/constants/mapMarkerFills.ts` — which mirrors the semantic tokens and carries a documented `eslint-disable`; the raw-hex guard covers the rest of `src/features/maps/**` as **`.ts` and `.tsx`**. Prominence is expressed by **fill value and size, never by hue**: a black face with a white ring is the top tier, a white face with a dark ring the next, muted below that. The lone exception is the photography-gap overlay, a data-coverage heatmap that keeps `--feedback-*` colours because it encodes a measurement rather than a place. (This file once held `brandPrimary: "#BEFF00"` — written when `--brand-primary` *was* lime, never updated when the brand flipped to black. Keep it in sync, or the next redesign rots it again.)
+
+**`RatingDots` accepts `tone="inverse"`** for white dots on a dark surface — the kit's `.rdot.inv`, used by the Explore card's black stage. The default tone is `brand-primary` black. Neither tone is ever lime: it has poor contrast on white and the dots are a reward, not an accent.
 
 **`brand-accent-foreground`** (`#171717`) is always used for text placed on `brand-accent` surfaces. The lime is a light colour — it requires dark foreground, not white.
 

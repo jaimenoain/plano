@@ -59,8 +59,8 @@ Per-route polish after R0–R9 (programme [REMAINING_SURFACES_ROADMAP.md](REMAIN
 | Route family | Primary files | Complexity |
 |---|---|---:|
 | Feed + landing (`/`) | `src/features/feed/pages/Index.tsx`, `src/features/feed/components/landing/*` | XH |
-| Explore (`/explore`) | `src/features/explore/pages/Explore.tsx` | H |
-| Search (`/search`) | `src/features/search/SearchPage.tsx` | XH |
+| Explore (`/explore`) | `src/features/explore/pages/Explore.tsx`, `src/features/posts/components/DiscoveryCard.tsx`, `DiscoveryAwardOverlay.tsx` | H |
+| Search (`/search`) | `src/features/search/SearchPage.tsx`, `src/features/maps/components/BuildingSidebar.tsx` (the SERP row — **not** `DiscoveryBuildingCard`, which is the modal picker) | XH |
 | Guides (`/guides`) | `src/features/guides/GuidesPage.tsx`, `LocalityCard.tsx`, `CollectionGuideCard.tsx` | M |
 | Connect (`/connect`) | `src/features/connect/pages/Connect.tsx` | M |
 | Notifications (`/notifications`) | `src/features/notifications/pages/Notifications.tsx` | M |
@@ -75,7 +75,7 @@ Per-route polish after R0–R9 (programme [REMAINING_SURFACES_ROADMAP.md](REMAIN
 | Awards (public + admin surface) | `src/features/awards/pages/AwardsIndex.tsx`, `AwardPage.tsx`, `AwardEditionPage.tsx`, `AwardAdminPage.tsx` | H |
 | Credits people/companies | `src/features/credits/pages/PersonDetails.tsx`, `CompanyDetails.tsx` | H |
 | Credits dashboards | `src/features/credits/pages/PersonDashboard.tsx`, `CompanyDashboard.tsx` | H |
-| Collections/folders | `src/features/collections/components/CollectionMapPage.tsx`, `src/features/profile/pages/FolderView.tsx` | H |
+| Collections/folders | `src/features/collections/components/CollectionMapPage.tsx`, `ItineraryList.tsx`, `CollectionBuildingCard.tsx`, `src/features/profile/pages/FolderView.tsx` | H |
 | Geography pages (`/architecture*`, `/city/*`) | `src/pages/ArchitectureHub.tsx`, `src/features/localities/pages/CountryPage.tsx`, `LocalityPage.tsx` (a thin composition over `src/features/localities/components/*`) | H |
 | Ambassadors public pages | `src/features/ambassadors/pages/SupportPage.tsx`, `BecomeAmbassador.tsx`, `AmbassadorPortal.tsx` | M |
 | Superadmin playground | `src/features/superadmin/pages/CardPlayground.tsx` | M |

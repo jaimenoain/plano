@@ -1,0 +1,7 @@
+/**
+ * Public surface of the maps feature.
+ *
+ * Other features import from here, never from `@/features/maps/<internal path>` —
+ * see the `no-restricted-imports` deep-feature rule in `eslint.config.js`.
+ */
+export { MAP_MARKER_FILL } from "./constants/mapMarkerFills";

@@ -4,7 +4,6 @@ import { ClusterResponse } from '../hooks/useMapData';
 import { BuildingPopupContent } from './BuildingPopupContent';
 import { getPinStyle } from '../utils/pinStyling';
 import { MapPin } from './MapPin';
-import { DAY_COLORS } from '@/features/maps/constants';
 import { MAP_MARKER_FILL } from '@/features/maps/constants/mapMarkerFills';
 import { getCollectionMarkerLucideIcon } from '@/features/collections/markerPlaceDisplay';
 import type { CollectionMarkerCategory } from '@/features/collections/types';
@@ -161,12 +160,19 @@ export function MapMarkers({
         const itineraryDayIndex = cluster.itinerary_day_index;
 
         if (itinerarySequence !== undefined && itineraryDayIndex !== undefined) {
-             const color = DAY_COLORS[itineraryDayIndex % DAY_COLORS.length];
+             // Kit `.pin .num`: black face, white 2px ring, white numeral. The day is
+             // carried by the route's opacity, not the marker's hue. Rebuild `classes`
+             // rather than append — the tier's own `border-gray-600` would otherwise
+             // race `border-white` in the stylesheet, since Tailwind resolves conflicts
+             // by rule order, not by class-attribute order. The construction treatment
+             // is the one modifier worth carrying over.
+             const constructionModifier =
+                 pinStyle.classes.match(/\b(?:opacity-50|border-dashed)\b/)?.[0] ?? '';
              pinStyle = {
                  ...pinStyle,
-                 backgroundColor: color,
+                 backgroundColor: MAP_MARKER_FILL.brandPrimary,
                  showContent: true,
-                 classes: `${pinStyle.classes} text-white font-bold text-sm shadow-xs`,
+                 classes: `border-white border-2 text-white font-bold text-sm shadow-xs ${constructionModifier}`.trim(),
                  zIndex: 100, // High priority but below hover
                  showDot: false // Hide dot if showing number
              };

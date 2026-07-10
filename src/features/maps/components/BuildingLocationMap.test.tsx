@@ -68,10 +68,10 @@ describe('BuildingLocationMap', () => {
   it('renders Tier S pin for rating 3', () => {
     render(<BuildingLocationMap {...defaultProps} rating={3} />);
 
-    // Expect failure until implementation
     const pin = screen.getByTestId('map-pin-container');
     expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
-    expect(pin.className).toContain('border-text-primary');
+    // Black face, white ring — the ring inverted when the fill stopped being lime.
+    expect(pin.className).toContain('border-white');
   });
 
   it('renders Tier A pin for rating 2', () => {

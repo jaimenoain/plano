@@ -71,17 +71,25 @@ describe('DiscoveryBuildingCard Overflow', () => {
     expect(card?.className).toContain('min-w-0');
   });
 
-  it('applies max-w-full and truncate to badges', () => {
+  it('renders the award as earned-only dots, not a points chip', () => {
     render(
       <BrowserRouter>
         <DiscoveryBuildingCard building={mockBuilding} />
       </BrowserRouter>
     );
 
-    // Status words removed from chip; mock has visited + 5pt rating — chip is aria-labelled only.
-    const pointsBadge = screen.getByLabelText('5 points');
-    expect(pointsBadge.className).toContain('max-w-full');
-    expect(pointsBadge.className).toContain('truncate');
+    // The chip that read "5 points" is gone: the award is a reward, not a scale.
+    // RatingDots clamps to the three earned tiers and never states a denominator.
+    expect(screen.queryByLabelText('5 points')).toBeNull();
+    expect(screen.getByLabelText('3 distinctions')).toBeDefined();
+  });
+
+  it('applies max-w-full and truncate to badges', () => {
+    render(
+      <BrowserRouter>
+        <DiscoveryBuildingCard building={mockBuilding} />
+      </BrowserRouter>
+    );
 
     // 'Lost' badge comes from building status
     const statusText = screen.getByText('Lost');

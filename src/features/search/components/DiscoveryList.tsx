@@ -39,10 +39,12 @@ export function DiscoveryList({
   const compact = variant === 'compact';
 
   if (isLoading) {
+    // Skeletons mirror the loaded row exactly: unboxed, hairline-separated. A boxed
+    // skeleton resolving into a floating row reads as a layout jump.
     return (
-      <div className={cn("space-y-4 p-4", compact && "space-y-2 p-2")}>
+      <div className={cn(compact && "p-1")}>
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="flex flex-row h-auto overflow-hidden rounded-none border border-border-default bg-surface-card text-text-primary shadow-none">
+          <div key={i} className="flex h-auto flex-row overflow-hidden border-b border-border-default text-text-primary">
             <Skeleton className={cn("shrink-0 rounded-none", compact ? "w-14 h-14" : "w-32 h-32")} />
             <div className={cn("flex-1 space-y-2", compact ? "p-2" : "p-4")}>
               <Skeleton className={cn(compact ? "h-4 w-3/4" : "h-5 w-3/4")} />
@@ -88,7 +90,9 @@ export function DiscoveryList({
   }
 
   return (
-    <div className={cn("space-y-4 p-4 pb-20 md:pb-4", compact && "space-y-2 p-2 pb-4", className)}>
+    // Rows sit flush so their hairlines form one continuous rule down the column —
+    // the kit separates results with a line, not with a gutter.
+    <div className={cn("pb-20 md:pb-4", compact && "p-1 pb-4", className)}>
       {buildings.map((building) => (
         <DiscoveryBuildingCard
           key={building.id}

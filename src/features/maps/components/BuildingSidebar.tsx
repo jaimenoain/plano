@@ -40,6 +40,7 @@ import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { useMapContext } from '../providers/MapContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { RatingDots } from '@/components/ui/rating-dots';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, MapPin, UserRound, Building2 } from 'lucide-react';
 import { Link } from 'react-router';
@@ -359,11 +360,9 @@ export function BuildingSidebar({
               <p className="text-sm text-text-disabled">
                 {findModeBuildings !== null ? "No buildings match this search" : "No buildings found in this area"}
               </p>
-              <Link
-                to="/add-building"
-                className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity"
-              >
-                Add building →
+              {/* `.cta-link` injects the arrow and its lime hover — never type a literal `→`. */}
+              <Link to="/add-building" className="cta-link">
+                Add building
               </Link>
             </div>
           ) : (
@@ -391,7 +390,7 @@ export function BuildingSidebar({
                   <Link
                     to={resolveBuildingUrl(building)}
                     key={building.id}
-                    className="group flex pl-4 pr-3 py-3 border-b border-border-default last:border-0 hover:bg-surface-muted/30 transition-colors"
+                    className="group flex pl-4 pr-3 py-3 border-b border-border-default last:border-0 hover:bg-surface-muted transition-colors"
                     onMouseEnter={() => setHighlightedId(building.id, { lat: building.lat, lng: building.lng })}
                     onMouseLeave={() => setHighlightedId(null)}
                     onClick={(e) => {
@@ -405,8 +404,10 @@ export function BuildingSidebar({
                   >
                     {/* Text content */}
                     <div className="flex-1 min-w-0 pr-3 flex flex-col justify-center min-h-[72px]">
+                      {/* Kit `.serp-name` — 19px/700/−0.02em. 14px/600 hedged the scale,
+                          the single commonest reason a Plano screen reads flat. */}
                       <h3
-                        className="line-clamp-2 text-sm font-semibold leading-tight text-text-primary group-hover:opacity-70 transition-opacity"
+                        className="line-clamp-2 text-lg font-bold leading-tight tracking-tight text-text-primary group-hover:opacity-70 transition-opacity"
                         title={building.name}
                       >
                         {building.name}
@@ -440,18 +441,13 @@ export function BuildingSidebar({
                             </span>
                           )}
                           {building.status && building.status !== 'none' && (
-                            <span className="text-2xs font-medium uppercase tracking-wide text-text-disabled capitalize">
+                            <span className="text-2xs font-medium uppercase tracking-widest text-text-disabled capitalize">
                               {building.status}
                             </span>
                           )}
-                          {building.rating > 0 && (
-                            <div className="flex gap-0.5" aria-label={`Rating: ${building.rating}`}>
-                              {Array.from({ length: building.rating }).map((_, i) => (
-                                // Monochromatic circles — rounded-full, no brand-primary
-                                <div key={i} className="h-1.5 w-1.5 rounded-full bg-text-primary" />
-                              ))}
-                            </div>
-                          )}
+                          {/* `aria-label="Rating: 2"` announced a score out of nothing.
+                              RatingDots names the earned distinctions instead. */}
+                          <RatingDots rating={building.rating} size="sm" />
                         </div>
                       )}
                     </div>
@@ -466,9 +462,8 @@ export function BuildingSidebar({
                           loading="lazy"
                         />
                       ) : (
-                        <div className="flex h-full items-center justify-center text-2xs text-text-disabled">
-                          No image
-                        </div>
+                        // Never a flat grey box — the system's hatched placeholder, labelled.
+                        <div className="photo-placeholder h-full w-full" data-label="No photo" />
                       )}
                     </div>
                   </Link>
