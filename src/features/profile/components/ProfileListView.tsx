@@ -107,7 +107,7 @@ export function ProfileListView({
                       </HoverCardContent>
                     </HoverCard>
                   ) : (
-                    <div className="w-8 h-8 rounded-md bg-surface-muted/50" />
+                    <div className="w-8 h-8 rounded-none bg-surface-muted/50" />
                   )}
                 </TableCell>
                 <TableCell className={cn("font-medium text-text-primary py-1", !isMobile && "truncate")}>

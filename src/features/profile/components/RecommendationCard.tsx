@@ -1,7 +1,8 @@
 import { Link } from "react-router";
-import { Circle, Bookmark, Trash2 } from "lucide-react";
+import { Bookmark, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { RatingDots } from "@/components/ui/rating-dots";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -60,48 +61,45 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
   const imageUrl = getBuildingImageUrl(building.main_image_url);
 
   return (
-    <div className="bg-surface-card border border-border-default rounded-none overflow-hidden flex flex-col h-full shadow-none animate-in fade-in zoom-in-95 duration-300">
-      <div className="relative aspect-4/3 group cursor-pointer overflow-hidden">
+    <div className="flex h-full flex-col animate-in fade-in duration-300">
+      <div className="group relative aspect-4/3 cursor-pointer overflow-hidden rounded-none bg-surface-muted">
         {/* Locality URL not available: Recommendation.building does not include locality_country_code/city_slug — requires recommendations query to join localities table */}
         <Link to={getBuildingUrl(building.id, building.slug, building.short_id)}>
             {imageUrl ? (
             <img
                 src={imageUrl}
                 alt={building.name}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                className="size-full object-cover transition-opacity duration-300 group-hover:opacity-85"
             />
             ) : (
-            <div className="w-full h-full bg-surface-muted flex items-center justify-center text-text-secondary p-4 text-center">
-                {building.name}
-            </div>
+            <div className="photo-placeholder size-full" data-label={building.name} />
             )}
         </Link>
       </div>
 
-      <div className="p-3 flex flex-col flex-1 gap-2">
+      <div className="flex flex-1 flex-col gap-2 pt-3">
         <div>
             {/* Locality URL not available: Recommendation.building does not include locality_country_code/city_slug — requires recommendations query to join localities table */}
-            <Link to={getBuildingUrl(building.id, building.slug, building.short_id)} className="hover:underline">
-                 <h3 className="font-semibold leading-tight line-clamp-1" title={building.name}>{building.name}</h3>
+            <Link to={getBuildingUrl(building.id, building.slug, building.short_id)} className="transition-opacity hover:opacity-60">
+                 <h3 className="text-xl font-bold leading-tight tracking-tight line-clamp-2" title={building.name}>{building.name}</h3>
             </Link>
-            <p className="text-xs text-text-secondary mt-0.5">
+            <p className="text-xs text-text-disabled mt-1">
               {year_completed ?? "—"} • {formatDistanceToNow(new Date(recommendation.created_at))} ago
             </p>
         </div>
 
-        {/* Recommender Info - More prominent in body */}
-        <div className="flex items-center gap-3 bg-surface-muted/30 p-2 rounded-sm my-1">
-             <Avatar className="h-8 w-8">
+        {/* Recommender — an avatar is the only round element here */}
+        <div className="flex items-center gap-2.5 py-1">
+             <Avatar className="h-6 w-6">
                 <AvatarImage src={recommender.avatar_url || undefined} />
-                <AvatarFallback className="text-xs">{recommender.username?.charAt(0)}</AvatarFallback>
+                <AvatarFallback className="text-2xs">{recommender.username?.charAt(0)}</AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
-                <span className="text-xs text-text-secondary leading-none">From</span>
-                <span className="font-semibold text-sm leading-tight">{recommender.username}</span>
-            </div>
+            <span className="text-xs text-text-secondary">
+              From <span className="font-medium text-text-primary">{recommender.username}</span>
+            </span>
         </div>
 
-        <div className="mt-auto grid grid-cols-3 gap-2">
+        <div className="mt-auto grid grid-cols-3 gap-2 pt-2">
           <TooltipProvider>
 
             <Tooltip>
@@ -118,11 +116,9 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
                   onClick={() => onRate(building)}
                 >
                   {interaction.rating ? (
-                    <span className="flex items-center gap-1 font-bold">
-                      <Circle className="h-3 w-3 fill-brand-primary text-brand-primary" /> {interaction.rating}
-                    </span>
+                    <RatingDots rating={interaction.rating} size="sm" />
                   ) : (
-                    <Circle className="h-4 w-4" />
+                    <span className="text-2xs font-medium uppercase tracking-widest">Rate</span>
                   )}
                 </Button>
               </TooltipTrigger>
@@ -161,7 +157,7 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
               <Tooltip>
                 <TooltipTrigger asChild>
                   <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-full rounded-md hover:bg-feedback-destructive/20 hover:text-feedback-destructive transition-colors">
+                    <Button variant="ghost" size="icon" className="h-8 w-full rounded-sm hover:bg-feedback-destructive/20 hover:text-feedback-destructive transition-colors">
                         <Trash2 className="h-4 w-4" />
                     </Button>
                   </AlertDialogTrigger>

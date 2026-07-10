@@ -1,9 +1,9 @@
 /**
- * Profile.tsx — Redesigned with A24 editorial aesthetic (v2)
+ * Profile.tsx — the member surface, conformed to design-system `screens/profile.html`.
  *
- * Key visual changes:
- *  - Avatar is a first-class portrait photo (3:4, right column, full-bleed)
- *  - Metrics ARE the tabs — no separate stats row + tab strip
+ * Composition:
+ *  - Round avatar + `.headline` name, then a hairline four-column stats band
+ *  - Quiet text tabs with mono counts beside the label — never pills
  *  - 'Visited' and 'Saved' replace the old 'log' + filter combo as first-class sections
  *  - Editorial building grid: no borders, no icons, bold name / faint meta
  *  - Photos: CSS masonry, featured items at positions 0, 7, 14…
@@ -35,7 +35,6 @@ import {
   type MetaFunction,
 } from "react-router";
 import {
-  LogOut,
   Building2,
   Bookmark,
   Loader2,
@@ -47,8 +46,6 @@ import {
   List,
   BadgeCheck,
   Shield,
-  Pencil,
-  Check,
   ExternalLink,
   type LucideIcon,
 } from "lucide-react";
@@ -81,12 +78,15 @@ import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { ProfileKanbanView } from "@/features/profile/components/ProfileKanbanView";
 import { handleDragEndLogic } from "@/utils/kanbanLogic";
 import { ProfileListView } from "@/features/profile/components/ProfileListView";
+import { ProfileHero } from "../components/ProfileHero";
+import { ProfileStatsBand } from "../components/ProfileStatsBand";
+import { ProfileTabs } from "../components/ProfileTabs";
+import { EditorialBuildingCard } from "../components/EditorialBuildingCard";
 import { profileLoader } from "./Profile.loader";
 import {
   profileStructuredData,
   SITE_URL,
 } from "@/features/buildings/utils/structuredData";
-import { getBuildingUrl } from "@/utils/url";
 import { cn } from "@/lib/utils";
 import {
   visibleCreditSummariesFromEmbed,
@@ -94,7 +94,6 @@ import {
 } from "@/features/credits/api/credits";
 import { getClaimedPersonSummaryForProfile } from "@/features/credits/api/people";
 import { profileHeaderUpdateSchema } from "@/lib/validations/profile";
-import { profileLogCardImageUrl } from "@/features/profile/utils/profileLogCardImageUrl";
 import { ProfileEventsSection } from "@/features/profile/components/ProfileEventsSection";
 
 export { profileLoader as loader } from "./Profile.loader";
@@ -113,14 +112,14 @@ export function HydrateFallback() {
   return (
     <AppLayout title="Profile" showLogo={false} showBack>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
-        <div className="flex gap-12 items-start">
+        <div className="flex gap-8 items-start">
+          <Skeleton className="size-20 sm:size-26 shrink-0 rounded-full" />
           <div className="flex-1 space-y-5">
             <Skeleton className="h-3.5 w-20" />
             <Skeleton className="h-14 w-2/3" />
             <Skeleton className="h-4 w-80" />
             <Skeleton className="h-3 w-32" />
           </div>
-          <Skeleton className="hidden sm:block w-44 h-56 shrink-0" />
         </div>
       </div>
     </AppLayout>
@@ -885,8 +884,6 @@ export default function Profile() {
     { key: "about", label: "About", count: null },
   ];
 
-  const hasAnyHeaderContent = profile?.firm || profile?.bio || profile?.website;
-
   // ─── Main render ─────────────────────────────────────────────────────────
   return (
     <>
@@ -894,210 +891,66 @@ export default function Profile() {
 
         {/* ══ PROFILE HERO ══════════════════════════════════════════════════ */}
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col-reverse sm:flex-row sm:items-start sm:gap-12 lg:gap-20 pt-10 pb-10 border-b border-border-default">
+          <ProfileHero
+            profile={profile}
+            isOwnProfile={isOwnProfile}
+            targetUserId={targetUserId}
+            isFollowing={isFollowing}
+            verifiedArchitectId={verifiedArchitectId}
+            ambassadorBadge={ambassadorBadge}
+            ambassadorProgramLabel={ambassadorProgramLabel}
+            isEditingHeader={isEditingHeader}
+            onStartEditing={() => {
+              setDraftFirm(profile?.firm || "");
+              setDraftBio(profile?.bio || "");
+              setDraftWebsite(profile?.website || "");
+              setIsEditingHeader(true);
+            }}
+            onCancelEditing={() => setIsEditingHeader(false)}
+            onSaveHeader={handleSaveHeader}
+            isSavingHeader={isSavingHeader}
+            draftFirm={draftFirm}
+            setDraftFirm={setDraftFirm}
+            draftBio={draftBio}
+            setDraftBio={setDraftBio}
+            draftWebsite={draftWebsite}
+            setDraftWebsite={setDraftWebsite}
+            onSignOut={handleSignOut}
+          />
 
-            {/* LEFT — text */}
-            <div className="flex-1 min-w-0 mt-6 sm:mt-0">
-
-              {/* Action bar */}
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-h-[20px]">
-                  {verifiedArchitectId && (
-                    <>
-                      <BadgeCheck className="w-3.5 h-3.5 text-text-primary shrink-0" />
-                      <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">Architect</span>
-                    </>
-                  )}
-                  {ambassadorBadge && (
-                    <>
-                      <Shield className="w-3.5 h-3.5 text-text-primary shrink-0" />
-                      <span className="text-2xs font-medium tracking-widest uppercase text-text-secondary">
-                        {ambassadorProgramLabel(ambassadorBadge.role)} · {ambassadorBadge.chapterName}
-                      </span>
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center gap-5">
-                  {isOwnProfile ? (
-                    isEditingHeader ? (
-                      <>
-                        <button type="button" onClick={() => setIsEditingHeader(false)} className="text-xs font-medium uppercase tracking-widest text-text-disabled hover:text-text-primary transition-colors">
-                          Cancel
-                        </button>
-                        <button type="button" onClick={handleSaveHeader} disabled={isSavingHeader} className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity disabled:opacity-40 flex items-center gap-1.5">
-                          {isSavingHeader ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                          Save
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button type="button" onClick={() => { setDraftFirm(profile?.firm || ""); setDraftBio(profile?.bio || ""); setDraftWebsite(profile?.website || ""); setIsEditingHeader(true); }} className="inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-0 md:min-w-0 md:p-0 text-text-disabled hover:text-text-primary active:text-text-primary transition-colors" aria-label="Edit profile">
-                          <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <Link to="/settings" className="text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors">
-                          Settings →
-                        </Link>
-                        <button type="button" onClick={handleSignOut} className="inline-flex items-center justify-center min-h-11 min-w-11 md:min-h-8 md:min-w-8 text-text-disabled hover:text-feedback-destructive active:text-feedback-destructive transition-colors" aria-label="Sign out">
-                          <LogOut className="w-3.5 h-3.5" />
-                        </button>
-                      </>
-                    )
-                  ) : (
-                    targetUserId && <FollowButton userId={targetUserId} initialIsFollowing={isFollowing} className="min-h-11 px-5 text-xs sm:h-7 sm:min-h-0 sm:px-4" />
-                  )}
-                </div>
-              </div>
-
-              {/* Username — hero title */}
-              <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-text-primary leading-none wrap-break-word mb-5">
-                {profile?.username}
-              </h1>
-
-              {/* Editable fields or display */}
-              {isEditingHeader ? (
-                <div className="space-y-2.5 max-w-sm mb-5">
-                  {verifiedArchitectId && (
-                    <Input
-                      value={draftFirm}
-                      onChange={e => setDraftFirm(e.target.value)}
-                      placeholder="Practice or firm name..."
-                      className="h-8 text-sm bg-transparent border-border-default"
-                    />
-                  )}
-                  <textarea
-                    value={draftBio}
-                    onChange={e => setDraftBio(e.target.value)}
-                    placeholder="Short bio..."
-                    rows={3}
-                    className="w-full text-sm text-text-primary bg-transparent border border-border-default px-3 py-2 resize-none focus:outline-hidden focus:border-border-strong placeholder:text-text-disabled leading-relaxed"
-                  />
-                  <Input
-                    value={draftWebsite}
-                    onChange={e => setDraftWebsite(e.target.value)}
-                    placeholder="Website or portfolio URL..."
-                    className="h-8 text-sm bg-transparent border-border-default"
-                  />
-                </div>
-              ) : (
-                <div className="space-y-2 mb-5">
-                  {profile?.firm && (
-                    <p className="text-sm font-medium text-text-secondary">{profile.firm}</p>
-                  )}
-                  {profile?.bio && (
-                    <p className="text-base text-text-secondary leading-relaxed max-w-lg">{profile.bio}</p>
-                  )}
-                  {profile?.website && (
-                    <a
-                      href={profile.website.startsWith("http") ? profile.website : `https://${profile.website}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-widest text-text-disabled hover:text-text-primary transition-colors"
-                    >
-                      {profile.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
-                      <ExternalLink className="w-3 h-3" />
-                    </a>
-                  )}
-                  {isOwnProfile && !hasAnyHeaderContent && (
-                    <button type="button" onClick={() => setIsEditingHeader(true)} className="text-xs font-medium uppercase tracking-widest text-text-disabled hover:text-text-primary transition-colors">
-                      + Add bio{verifiedArchitectId ? ", firm" : ""} & website
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Followers / following — secondary row */}
-              <div className="flex items-center gap-5">
-                <button onClick={() => openUserList("followers")} className="text-left hover:opacity-60 active:opacity-60 transition-opacity">
-                  <span className="text-2xl font-bold tabular-nums leading-none text-text-primary">{stats.followers}</span>
-                  <span className="text-2xs font-medium uppercase tracking-[0.15em] text-text-disabled ml-2">followers</span>
-                </button>
-                <button onClick={() => openUserList("following")} className="text-left hover:opacity-60 active:opacity-60 transition-opacity">
-                  <span className="text-2xl font-bold tabular-nums leading-none text-text-primary">{stats.following}</span>
-                  <span className="text-2xs font-medium uppercase tracking-[0.15em] text-text-disabled ml-2">following</span>
-                </button>
-              </div>
-            </div>
-
-            {/* RIGHT — portrait photo */}
-            <div className="shrink-0 self-start">
-              {profile?.avatar_url ? (
-                <div className="w-32 h-40 sm:w-44 sm:h-56 overflow-hidden bg-surface-muted">
-                  <img
-                    src={profile.avatar_url}
-                    alt={profile.username || ""}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="w-32 h-40 sm:w-44 sm:h-56 bg-surface-muted flex items-end p-3">
-                  <span className="text-3xl sm:text-5xl md:text-6xl font-bold text-border-strong leading-none select-none">
-                    {profile?.username?.[0]?.toUpperCase()}
-                  </span>
-                </div>
-              )}
-            </div>
-
-          </div>
+          <ProfileStatsBand
+            buildings={stats.reviews}
+            collections={stats.maps}
+            followers={stats.followers}
+            following={stats.following}
+            onOpenUserList={openUserList}
+          />
         </div>
 
         {isOwnProfile && claimedPersonForProfile ? (
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-            <div className="rounded-none border border-border-default bg-surface-muted px-4 py-4 sm:px-5">
-              <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary mb-2">
-                Professional profile
-              </p>
-              <Link
-                to={`/person/${claimedPersonForProfile.slug}`}
-                className="text-lg font-semibold tracking-tight text-text-primary hover:opacity-80 transition-opacity"
-              >
-                {claimedPersonForProfile.name}
-              </Link>
-              <p className="mt-1 text-sm text-text-secondary">
-                Credited on {claimedPersonForProfile.creditCount}{" "}
-                {claimedPersonForProfile.creditCount === 1 ? "building" : "buildings"}
-              </p>
-            </div>
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
+            <p className="eyebrow mb-2 tracking-widest">Professional profile</p>
+            <Link
+              to={`/person/${claimedPersonForProfile.slug}`}
+              className="text-lg font-semibold tracking-tight text-text-primary hover:opacity-80 transition-opacity"
+            >
+              {claimedPersonForProfile.name}
+            </Link>
+            <p className="mt-1 text-sm text-text-secondary">
+              Credited on {claimedPersonForProfile.creditCount}{" "}
+              {claimedPersonForProfile.creditCount === 1 ? "building" : "buildings"}
+            </p>
           </div>
         ) : null}
 
-        {/* ══ METRICS AS TABS ══════════════════════════════════════════════ */}
-        <div className="sticky top-0 z-20 bg-surface-default border-b border-border-default">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex -mb-px overflow-x-scroll-touch">
-              {tabs.map(tab => {
-                const isActive = activeSection === tab.key;
-                return (
-                  <button
-                    key={tab.key}
-                    onClick={() => handleSectionChange(tab.key)}
-                    className={`shrink-0 px-5 py-3 border-b-2 transition-colors text-left ${
-                      isActive ? "border-text-primary" : "border-transparent hover:border-border-default"
-                    }`}
-                  >
-                    {tab.count !== null ? (
-                      <>
-                        <div className={`text-base font-bold tracking-tight leading-none ${isActive ? "text-text-primary" : "text-text-disabled"}`}>
-                          {tab.count.toLocaleString()}
-                        </div>
-                        <div className={`text-2xs font-medium tracking-[0.15em] uppercase mt-0.5 ${isActive ? "text-text-secondary" : "text-text-disabled"}`}>
-                          {tab.label}
-                        </div>
-                      </>
-                    ) : (
-                      <div className={`text-xs font-medium tracking-[0.15em] uppercase leading-none py-1 ${isActive ? "text-text-primary" : "text-text-disabled"}`}>
-                        {tab.label}
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+        {/* ══ QUIET TEXT TABS ══════════════════════════════════════════════ */}
+        <div className="mt-16">
+          <ProfileTabs tabs={tabs} activeKey={activeSection} onChange={handleSectionChange} />
         </div>
 
         {/* ══ CONTENT BODY ═════════════════════════════════════════════════ */}
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="min-h-[60vh] py-10">
+          <div className="min-h-[60vh] pt-16 pb-10">
 
             {/* ── PORTFOLIO (claimed `people` row — link to full dashboard or public person page) ── */}
             {activeSection === "portfolio" && claimedPersonForProfile && (
@@ -1111,14 +964,14 @@ export default function Profile() {
                   {isOwnProfile ? (
                     <Link
                       to="/portfolio"
-                      className="inline-block text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
+                      className="inline-block text-xs font-medium uppercase tracking-widest text-text-primary transition-opacity hover:opacity-70"
                     >
                       Open portfolio dashboard →
                     </Link>
                   ) : (
                     <Link
                       to={`/person/${claimedPersonForProfile.slug}`}
-                      className="inline-block text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
+                      className="inline-block text-xs font-medium uppercase tracking-widest text-text-primary transition-opacity hover:opacity-70"
                     >
                       View public portfolio →
                     </Link>
@@ -1191,7 +1044,7 @@ export default function Profile() {
                         {viewMode === "grid" ? (
                           <motion.div key="grid" variants={variants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.15 }}>
                             {/* Editorial grid — no borders, no icons */}
-                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-10 pb-16">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-12 pb-16">
                               {filteredContent.map(item => (
                                 <EditorialBuildingCard key={item.id} entry={item} showCommunityImages={showCommunityImages} />
                               ))}
@@ -1432,44 +1285,6 @@ export default function Profile() {
 
       </AppLayout>
     </>
-  );
-}
-
-// ─── Editorial Building Card ──────────────────────────────────────────────────
-// No card chrome. 3:4 portrait image, bold name, faint meta below.
-function EditorialBuildingCard({ entry, showCommunityImages }: { entry: FeedReview; showCommunityImages: boolean }) {
-  const imageUrl = profileLogCardImageUrl(entry, showCommunityImages);
-  const topCredit = entry.building.creditedEntities?.[0];
-  const meta = [topCredit?.name, entry.building.year_completed].filter(Boolean).join(" · ");
-  // Locality URL not available: ReviewBuilding (FeedReview) does not include locality_country_code/city_slug — requires get_feed RPC to include locality fields in building_data
-  const url = getBuildingUrl(entry.building.id, entry.building.slug, entry.building.short_id);
-
-  return (
-    <Link to={url} className="group block" data-testid={`review-card-${entry.id}`}>
-      {/* 3:4 portrait image, no rounding */}
-      <div className="aspect-3/4 overflow-hidden bg-surface-muted mb-3">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={entry.building.name}
-            className="w-full h-full object-cover group-hover:opacity-85 [@media(hover:none)]:opacity-100 transition-opacity duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-end p-3">
-            <span className="text-text-disabled text-xs font-medium uppercase tracking-wide leading-tight line-clamp-3">
-              {entry.building.name}
-            </span>
-          </div>
-        )}
-      </div>
-      {/* Text — no icons, stark hierarchy */}
-      <p className="text-sm font-bold text-text-primary leading-snug line-clamp-2 group-hover:opacity-60 [@media(hover:none)]:opacity-100 transition-opacity">
-        {entry.building.name}
-      </p>
-      {meta && (
-        <p className="text-2xs text-text-disabled mt-0.5 truncate">{meta}</p>
-      )}
-    </Link>
   );
 }
 

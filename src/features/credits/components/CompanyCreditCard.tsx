@@ -42,21 +42,19 @@ export function CompanyCreditCard({ credit, className }: CompanyCreditCardProps)
     >
       <Link
         to={buildingUrl}
-        className="relative block aspect-4/3 w-full shrink-0 overflow-hidden bg-surface-muted sm:w-32 md:w-40"
+        className="relative block aspect-4/3 w-full shrink-0 overflow-hidden rounded-none bg-surface-muted sm:w-collection-mosaic"
       >
         {thumb ? (
           <img src={thumb} alt="" className="h-full w-full object-cover" loading="lazy" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs uppercase tracking-widest text-text-secondary">
-            No image
-          </div>
+          <div className="photo-placeholder h-full w-full" data-label={credit.building.name} />
         )}
       </Link>
       <div className="min-w-0 flex-1 space-y-2">
         <div>
           <Link
             to={buildingUrl}
-            className="text-lg font-semibold tracking-tight text-text-primary hover:underline md:text-xl"
+            className="text-lg font-semibold tracking-tight text-text-primary transition-opacity hover:opacity-60 md:text-xl"
           >
             {credit.building.name}
           </Link>
@@ -64,7 +62,7 @@ export function CompanyCreditCard({ credit, className }: CompanyCreditCardProps)
             <p className="mt-1 text-sm text-text-secondary">{locality}</p>
           ) : null}
           {credit.building.yearCompleted != null ? (
-            <p className="text-sm text-text-secondary">Completed {credit.building.yearCompleted}</p>
+            <p className="meta-code mt-1">Completed {credit.building.yearCompleted}</p>
           ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -77,10 +75,10 @@ export function CompanyCreditCard({ credit, className }: CompanyCreditCardProps)
               {credit.person.name}
             </Link>
           ) : null}
-          {yearPart ? <span className="text-sm text-text-secondary">{yearPart}</span> : null}
+          {yearPart ? <span className="meta-code">{yearPart}</span> : null}
         </div>
         {credit.contributionNotes?.trim() ? (
-          <p className="text-sm leading-relaxed text-text-secondary">{credit.contributionNotes.trim()}</p>
+          <p className="body-relaxed max-w-[60ch] text-sm">{credit.contributionNotes.trim()}</p>
         ) : null}
       </div>
     </article>

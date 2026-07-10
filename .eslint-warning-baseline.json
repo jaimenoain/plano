@@ -1,7 +1,7 @@
 {
   "comment": "ESLint warning ceiling per bucket (with per-file detail so regressions name the exact new files). CI fails if any bucket EXCEEDS its count. Only lower numbers via --update after a cleanup; never raise one to make CI pass.",
   "counts": {
-    "no-restricted-imports/deep-feature": 635,
+    "no-restricted-imports/deep-feature": 634,
     "no-restricted-imports/supabase-client": 133,
     "other": 5,
     "react-hooks/exhaustive-deps": 61
@@ -259,7 +259,7 @@
       "src/features/profile/hooks/useUserBuildingStatuses.ts": 1,
       "src/features/profile/hooks/useUserProfile.ts": 1,
       "src/features/profile/pages/FolderView.tsx": 4,
-      "src/features/profile/pages/Profile.tsx": 11,
+      "src/features/profile/pages/Profile.tsx": 10,
       "src/features/profile/pages/Settings.tsx": 6,
       "src/features/profile/pages/UserPhotoGallery.tsx": 1,
       "src/features/search/components/ArchitectSearchNudge.qa101.test.tsx": 1,

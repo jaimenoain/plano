@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { createElement } from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { ProfileListView } from './ProfileListView';
@@ -12,6 +13,16 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/components/ui/sidebar', () => ({
   useSidebar: mocks.useSidebar,
+}));
+
+// MichelinRatingInput and StatusBadge render motion.* elements; strip the animation props.
+vi.mock('framer-motion', () => ({
+  motion: new Proxy({} as Record<string, unknown>, {
+    get: (_target, tag: string) =>
+      ({ children, whileTap, whileHover, initial, animate, exit, transition, layout, ...props }: any) =>
+        createElement(tag, props, children),
+  }),
+  AnimatePresence: ({ children }: any) => <>{children}</>,
 }));
 
 const mockData: FeedReview[] = [
@@ -165,15 +176,32 @@ describe('ProfileListView', () => {
       </TooltipProvider>
     );
 
-    // InlineRating renders 3 buttons, each with a circle inside.
-    const starButtons = screen.getAllByRole('button').filter(button => button.querySelector('svg'));
+    // InlineRating shows the earned dots; the four-tier award input lives behind them.
+    fireEvent.click(screen.getByRole('button', { name: 'Set award rating' }));
 
-    // We expect 3 star buttons
-    expect(starButtons.length).toBeGreaterThanOrEqual(3);
+    const tiers = screen.getAllByRole('radio');
+    expect(tiers).toHaveLength(4);
 
-    // Click the 3rd star
-    fireEvent.click(starButtons[2]);
+    fireEvent.click(screen.getByRole('radio', { name: /masterpiece/i }));
 
     expect(onUpdate).toHaveBeenCalledWith('1', { rating: 3 });
+  });
+
+  it('renders read-only ratings as earned dots with no award input', () => {
+    mocks.useSidebar.mockReturnValue({ isMobile: false });
+    render(
+      <TooltipProvider>
+        <BrowserRouter>
+          <ProfileListView
+            data={mockData}
+            isOwnProfile={false}
+            onUpdate={vi.fn()}
+          />
+        </BrowserRouter>
+      </TooltipProvider>
+    );
+
+    expect(screen.getByRole('img', { name: '2 distinctions' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Set award rating' })).toBeNull();
   });
 });
