@@ -23,10 +23,9 @@ import { useCommunityFeed } from "@/features/feed/hooks/useCommunityFeed";
 import { Button } from "@/components/ui/button";
 
 import { LandingHero } from "../components/landing/LandingHero";
-import { LandingMarquee } from "../components/landing/LandingMarquee";
+import { LandingStatsBand } from "../components/landing/LandingStatsBand";
 import { LandingFeatureGrid } from "../components/landing/LandingFeatureGrid";
 import { LandingNav } from "../components/landing/LandingNav";
-import { LandingFooter } from "../components/landing/LandingFooter";
 import { FeedSidebar } from "../components/FeedSidebar";
 
 const INDEX_TITLE = "Plano — The world's architecture, cataloged.";
@@ -58,16 +57,14 @@ function Landing() {
   }, [setLandingHideTopChrome]);
 
   return (
-    <AppLayout showNav={false} showFooter={false}>
+    <AppLayout showNav={false}>
       <LandingNav />
       <main className="flex-1 w-full min-w-0 overflow-x-hidden">
         <LandingHero />
-        <LandingMarquee />
+        <LandingStatsBand />
         <section className="mx-auto max-w-[1080px] px-5 py-[120px] md:px-8">
           <div className="mb-20 space-y-3.5">
-            <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-text-disabled">
-              What we&apos;re building
-            </p>
+            <p className="eyebrow tracking-widest">What we&apos;re building</p>
             <h2 className="max-w-xl text-[clamp(1.875rem,4.2vw,3rem)] font-bold leading-[1.05] tracking-tight text-text-primary">
               A permanent record of the built world.
             </h2>
@@ -75,7 +72,6 @@ function Landing() {
           <LandingFeatureGrid />
         </section>
       </main>
-      <LandingFooter />
     </AppLayout>
   );
 }

@@ -58,7 +58,7 @@ Per-route polish after R0–R9 (programme [REMAINING_SURFACES_ROADMAP.md](REMAIN
 
 | Route family | Primary files | Complexity |
 |---|---|---:|
-| Feed + landing (`/`) | `src/features/feed/pages/Index.tsx` | XH |
+| Feed + landing (`/`) | `src/features/feed/pages/Index.tsx`, `src/features/feed/components/landing/*` | XH |
 | Explore (`/explore`) | `src/features/explore/pages/Explore.tsx` | H |
 | Search (`/search`) | `src/features/search/SearchPage.tsx` | XH |
 | Guides (`/guides`) | `src/features/guides/GuidesPage.tsx` | M |

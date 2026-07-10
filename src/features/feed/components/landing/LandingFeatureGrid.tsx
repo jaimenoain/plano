@@ -39,32 +39,34 @@ const features = [
   },
 ];
 
+/** Static classes so Tailwind's scanner sees them. */
+const ROW_FADE = ["opacity-100", "opacity-70", "opacity-40"];
+
 export const LandingFeatureGrid = () => {
   return (
-    <div className="grid grid-cols-1 gap-16 md:grid-cols-3 md:gap-10 lg:gap-10">
+    <div className="grid grid-cols-1 gap-16 md:grid-cols-3 md:gap-12">
       {features.map(({ tag, icon: Icon, title, description, items }) => (
         <div key={tag} className="space-y-8">
           {/* Header */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Icon className="h-3.5 w-3.5 text-text-disabled" strokeWidth={1.5} />
-              <p className="text-[11px] font-medium tracking-[0.18em] uppercase text-text-disabled">
+              <p className="text-[11px] font-medium tracking-widest uppercase text-text-disabled">
                 {tag}
               </p>
             </div>
-            <h3 className="text-xl font-bold tracking-tight text-text-primary leading-snug">
+            <h3 className="text-2xl font-bold tracking-tight text-text-primary leading-snug">
               {title}
             </h3>
             <p className="text-sm text-text-secondary leading-relaxed">{description}</p>
           </div>
 
-          {/* Example rows */}
+          {/* Example rows — each one recedes, so the eye starts at the top. */}
           <div className="space-y-0">
             {items.map(({ label, meta }, i) => (
               <div
                 key={label}
-                className="flex items-center justify-between border-b border-border-default py-3"
-                style={{ opacity: 1 - i * 0.28 }}
+                className={`flex items-center justify-between border-b border-border-default py-3 ${ROW_FADE[i] ?? "opacity-40"}`}
               >
                 <span className="text-sm font-medium text-text-primary">{label}</span>
                 <span className="text-xs text-text-disabled">{meta}</span>
