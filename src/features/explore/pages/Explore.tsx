@@ -625,23 +625,23 @@ export default function Explore() {
 
           {/* Error */}
           {status === "error" && (
-            <div className="h-full w-full flex flex-col items-center justify-center snap-center gap-4 px-8">
-              <p className="text-2xs font-medium uppercase tracking-widest text-white/20">
-                Error
-              </p>
-              <p className="text-base font-semibold text-white/60 text-center">
-                Failed to load feed
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                className="rounded-none border-white/20 bg-transparent text-white/80 hover:bg-white/10 hover:text-white"
-                onClick={() => void refetch()}
-                disabled={isFetching}
-              >
-                Try again
-              </Button>
-            </div>
+            <EmptyState
+              className="h-full w-full snap-center"
+              tone="inverse"
+              eyebrow="Error"
+              message="Failed to load feed."
+              action={
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="rounded-none border-white/20 bg-transparent text-white/80 hover:bg-white/10 hover:text-white"
+                  onClick={() => void refetch()}
+                  disabled={isFetching}
+                >
+                  Try again
+                </Button>
+              }
+            />
           )}
 
           {/* Empty */}
