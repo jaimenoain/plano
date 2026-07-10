@@ -29,6 +29,8 @@ import { useMapContext } from '../providers/MapContext';
 import { useMapData, ClusterResponse } from '../hooks/useMapData';
 import { MapMarkers } from './MapMarkers';
 import { BuildingDetailDrawer } from './BuildingDetailDrawer';
+import { MapChromeButton } from './MapChromeButton';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
 
@@ -407,36 +409,34 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
       <BuildingDetailDrawer cluster={selectedCluster} onClose={handleCloseDetail} />
 
       {showEmptyMessage && !isLoading && !isFetching && bounds && visibleClustersCount === 0 && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-surface-card/95 backdrop-blur-xs border border-border-default p-5 text-center max-w-xs animate-in fade-in zoom-in duration-300">
-          <p className="text-sm text-text-primary mb-3">
-            No buildings in this area
-          </p>
-          <button
-            type="button"
-            onClick={() => mapRef.current?.zoomOut()}
-            className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity"
-          >
-            Zoom out →
-          </button>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 max-w-xs bg-surface-card/95 backdrop-blur-xs border border-border-default animate-in fade-in zoom-in duration-300">
+          <EmptyState
+            className="px-6 py-8"
+            eyebrow="No buildings in this area"
+            action={
+              <button
+                type="button"
+                onClick={() => mapRef.current?.zoomOut()}
+                className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity"
+              >
+                Zoom out →
+              </button>
+            }
+          />
         </div>
       )}
 
       {/* ── Top-left: Satellite toggle & Gap Callout ── */}
       <div className="absolute top-2 left-2 flex flex-col gap-2 z-60">
-        <button
-          type="button"
+        <MapChromeButton
+          icon={<Layers className="w-4 h-4" strokeWidth={1.5} />}
+          label={isSatellite ? "Map" : "Satellite"}
+          title={isSatellite ? "Show Map" : "Show Satellite"}
           onClick={(e) => {
             e.stopPropagation();
             setIsSatellite(!isSatellite);
           }}
-          className="p-2 bg-surface-card/90 backdrop-blur-xs border border-border-default hover:bg-surface-muted transition-colors flex items-center gap-2"
-          title={isSatellite ? "Show Map" : "Show Satellite"}
-        >
-          <Layers className="w-4 h-4" strokeWidth={1.5} />
-          <span className="text-xs font-medium uppercase tracking-wide hidden sm:inline">
-            {isSatellite ? "Map" : "Satellite"}
-          </span>
-        </button>
+        />
 
         {topGapCluster && (
           <button
@@ -467,21 +467,21 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
       </div>
 
       {/* ── Top-right: Fullscreen toggle ── */}
-      <button
-        type="button"
+      <MapChromeButton
+        icon={
+          isExpanded ? (
+            <Minimize2 className="w-4 h-4" strokeWidth={1.5} />
+          ) : (
+            <Maximize2 className="w-4 h-4" strokeWidth={1.5} />
+          )
+        }
+        title={isExpanded ? "Collapse Map" : "Expand Map"}
         onClick={(e) => {
           e.stopPropagation();
           setIsExpanded(!isExpanded);
         }}
-        className="absolute top-2 right-2 p-2 bg-surface-card/90 backdrop-blur-xs border border-border-default hover:bg-surface-muted transition-colors z-60"
-        title={isExpanded ? "Collapse Map" : "Expand Map"}
-      >
-        {isExpanded ? (
-          <Minimize2 className="w-4 h-4" strokeWidth={1.5} />
-        ) : (
-          <Maximize2 className="w-4 h-4" strokeWidth={1.5} />
-        )}
-      </button>
+        className="absolute top-2 right-2 z-60"
+      />
     </div>
   );
 
