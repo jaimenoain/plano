@@ -86,7 +86,7 @@ describe('BuildingLocationMap', () => {
 
     const pin = screen.getByTestId('map-pin-container');
     expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.white);
-    expect(pin.className).toContain('border-gray-600');
+    expect(pin.className).toContain('border-border-strong');
   });
 
   it('renders Tier S pin for Top 1% (no user rating)', () => {

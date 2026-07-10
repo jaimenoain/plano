@@ -12,6 +12,7 @@ import { useStableMapUpdate } from '@/features/maps/hooks/useStableMapUpdate';
 import { MapErrorBoundary } from './MapErrorBoundary';
 import { MapMarkers } from './MapMarkers';
 import { ItineraryRoutes } from './ItineraryRoutes';
+import { MapChromeButton } from './MapChromeButton';
 import { DiscoveryBuilding } from '@/features/search/components/types';
 import { ClusterResponse } from '../hooks/useMapData';
 import { getBoundsFromBuildings, type Bounds } from '@/utils/map';
@@ -374,18 +375,15 @@ function CollectionMapGLContent({
 
         {/* Top Left: Satellite + optional collection actions (avoid bottom nav / mobile map-list toggle). */}
         <div className="absolute top-2 left-2 z-40 flex max-w-[min(100vw-5rem,20rem)] flex-col gap-2">
-          <button
-            type="button"
+          <MapChromeButton
+            icon={<Layers className="h-4 w-4 shrink-0" strokeWidth={1.5} />}
+            label={isSatellite ? "Map" : "Satellite"}
+            title={isSatellite ? "Show Map" : "Show Satellite"}
             onClick={(e) => {
                 e.stopPropagation();
                 setIsSatellite(!isSatellite);
             }}
-            className="flex items-center gap-2 rounded-sm border border-border-default bg-surface-card/90 p-2 shadow-md backdrop-blur-xs transition-colors hover:bg-surface-muted"
-            title={isSatellite ? "Show Map" : "Show Satellite"}
-          >
-            <Layers className="h-4 w-4 shrink-0" />
-            <span className="hidden text-xs font-medium sm:inline">{isSatellite ? "Map" : "Satellite"}</span>
-          </button>
+          />
           {bottomLeftOverlay ? (
             <div className="pointer-events-auto min-w-0" onClick={(e) => e.stopPropagation()}>
               {bottomLeftOverlay}
@@ -394,17 +392,12 @@ function CollectionMapGLContent({
         </div>
 
         {/* Top Right: Fullscreen Toggle */}
-        <button
-            type="button"
-            onClick={(e) => {
-                e.stopPropagation();
-                setIsExpanded(!isExpanded);
-            }}
-            className="absolute top-2 right-2 z-40 rounded-sm border border-border-default bg-surface-card/90 p-2 shadow-md backdrop-blur-xs transition-colors hover:bg-surface-muted"
+        <MapChromeButton
+            icon={isExpanded ? <Minimize2 className="h-4 w-4" strokeWidth={1.5} /> : <Maximize2 className="h-4 w-4" strokeWidth={1.5} />}
             title={isExpanded ? "Collapse Map" : "Expand Map"}
-        >
-            {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-        </button>
+            onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }}
+            className="absolute top-2 right-2 z-40"
+        />
     </div>
   );
 

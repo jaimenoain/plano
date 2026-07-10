@@ -41,6 +41,7 @@ import { useMapContext } from '../providers/MapContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RatingDots } from '@/components/ui/rating-dots';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, MapPin, UserRound, Building2 } from 'lucide-react';
 import { Link } from 'react-router';
@@ -311,13 +312,12 @@ export function BuildingSidebar({
                   key={suggestion.place_id}
                   type="button"
                   onClick={() => onLocationClick?.(suggestion.place_id)}
-                  className="w-full flex items-center gap-3 px-4 py-3 border-b border-border-default last:border-0 hover:bg-surface-muted/40 transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-4 py-3 border-b border-border-default hover:bg-surface-muted/40 transition-colors text-left"
                 >
                   <MapPin className="h-3.5 w-3.5 text-text-disabled shrink-0" strokeWidth={1.5} />
                   <p className="text-sm text-text-primary truncate flex-1">{suggestion.description}</p>
                 </button>
               ))}
-              <div className="h-px bg-border-default mx-4 my-2" />
             </div>
           ) : topLocation ? (
             <div>
@@ -332,7 +332,6 @@ export function BuildingSidebar({
                 <MapPin className="h-3.5 w-3.5 text-text-disabled shrink-0" strokeWidth={1.5} />
                 <p className="text-sm text-text-primary truncate flex-1">{topLocation.description}</p>
               </button>
-              <div className="h-px bg-border-default mx-4 my-2" />
             </div>
           ) : null}
 
@@ -356,15 +355,12 @@ export function BuildingSidebar({
               <p className="text-sm text-feedback-destructive">Failed to load buildings</p>
             </div>
           ) : buildings.length === 0 ? (
-            <div className="px-4 py-12 text-center space-y-3">
-              <p className="text-sm text-text-disabled">
-                {findModeBuildings !== null ? "No buildings match this search" : "No buildings found in this area"}
-              </p>
-              {/* `.cta-link` injects the arrow and its lime hover — never type a literal `→`. */}
-              <Link to="/add-building" className="cta-link">
-                Add building
-              </Link>
-            </div>
+            <EmptyState
+              className="py-12"
+              eyebrow={findModeBuildings !== null ? "No matches" : "Nothing here yet"}
+              message={findModeBuildings !== null ? "No buildings match this search." : "No buildings found in this area."}
+              action={<Link to="/add-building" className="cta-link">Add building</Link>}
+            />
           ) : (
             <>
               {buildings.map((building) => {
@@ -481,11 +477,9 @@ export function BuildingSidebar({
               {!hasNextPage && buildings.length > 0 && (
                 <div className="px-4 py-10 text-center space-y-3">
                   <p className="text-xs text-text-disabled">End of results</p>
-                  <Link
-                    to="/add-building"
-                    className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity"
-                  >
-                    Add a building →
+                  {/* `.cta-link` injects the arrow and its lime hover — never type a literal `→`. */}
+                  <Link to="/add-building" className="cta-link">
+                    Add a building
                   </Link>
                 </div>
               )}
@@ -497,11 +491,7 @@ export function BuildingSidebar({
           <TabsContent value="people" className="m-0 mt-0 outline-hidden">
             <div className="pt-2 pb-6">
               {peopleCount === 0 ? (
-                <div className="px-4 py-12 text-center">
-                  <p className="text-sm text-text-disabled">
-                    {isDiscovery ? "No architects credited in this area yet." : "No people match this search yet."}
-                  </p>
-                </div>
+                <EmptyState className="py-12" eyebrow="No people" message={isDiscovery ? "No architects credited in this area yet." : "No people match this search yet."} />
               ) : (
                 people.map((person) => {
                   const avatarSrc = getStorageAssetUrl(person.avatarUrl ?? null);
@@ -545,11 +535,7 @@ export function BuildingSidebar({
           <TabsContent value="companies" className="m-0 mt-0 outline-hidden">
             <div className="pt-2 pb-6">
               {companiesCount === 0 ? (
-                <div className="px-4 py-12 text-center">
-                  <p className="text-sm text-text-disabled">
-                    {isDiscovery ? "No companies credited in this area yet." : "No companies match this search yet."}
-                  </p>
-                </div>
+                <EmptyState className="py-12" eyebrow="No companies" message={isDiscovery ? "No companies credited in this area yet." : "No companies match this search yet."} />
               ) : (
                 companies.map((company) => {
                   const logoSrc = getStorageAssetUrl(company.logoUrl);

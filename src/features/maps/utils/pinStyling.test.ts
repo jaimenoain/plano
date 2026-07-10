@@ -63,7 +63,7 @@ describe('getPinStyle', () => {
       expect(style.tier).toBe('B');
       expect(style.size).toBe(20);
       expect(style.backgroundColor).toBe(MAP_MARKER_FILL.white);
-      expect(style.classes).toContain('border-gray-600');
+      expect(style.classes).toContain('border-border-strong');
     });
 
     it('returns Tier C (Ghost) for saved item (rating 0/null)', () => {
@@ -72,14 +72,14 @@ describe('getPinStyle', () => {
       let style = getPinStyle(savedItem);
       expect(style.tier).toBe('C');
       expect(style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
-      expect(style.classes).toContain('border-gray-600');
+      expect(style.classes).toContain('border-border-strong');
 
       // Case 2: Rating null, Status 'saved'
       const savedItemNull = createMockBuilding({ rating: null, status: 'saved' });
       style = getPinStyle(savedItemNull);
       expect(style.tier).toBe('C');
       expect(style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
-      expect(style.classes).toContain('border-gray-600');
+      expect(style.classes).toContain('border-border-strong');
     });
   });
 
@@ -193,7 +193,7 @@ describe('getPinStyle', () => {
       const style = getPinStyle(item);
       expect(style.tier).toBe('Cluster');
       expect(style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted);
-      expect(style.classes).toContain('border-gray-600');
+      expect(style.classes).toContain('border-border-strong');
       expect(style.classes).toContain('border');
       expect(style.classes).not.toContain('border-2');
     });

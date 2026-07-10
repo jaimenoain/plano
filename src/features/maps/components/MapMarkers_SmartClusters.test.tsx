@@ -64,11 +64,11 @@ describe('MapMarkers - Smart Clusters', () => {
     });
 
     it('does not let the tier ring race the white ring', () => {
-      // A Tier-C stop's own `border-gray-600` must not survive alongside `border-white`:
+      // A Tier-C stop's own `border-border-strong` must not survive alongside `border-white`:
       // Tailwind resolves that conflict by rule order, not class-attribute order.
       render(<MapMarkers clusters={[stop()]} setHighlightedId={setHighlightedId} highlightedId={null} />);
 
-      expect(screen.getByTestId('map-pin-container').className).not.toContain('border-gray-600');
+      expect(screen.getByTestId('map-pin-container').className).not.toContain('border-border-strong');
     });
 
     it('keeps the construction treatment on an itinerary stop', () => {
@@ -145,7 +145,7 @@ describe('MapMarkers - Smart Clusters', () => {
 
     const pin = screen.getByTestId('map-pin-container');
     expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted);
-    expect(pin.className).toContain('border-gray-600');
+    expect(pin.className).toContain('border-border-strong');
     // Check zIndex
     const marker = screen.getByTestId('marker-container');
     expect(marker.style.zIndex).toBe('10');
@@ -167,7 +167,7 @@ describe('MapMarkers - Smart Clusters', () => {
 
     const pin = screen.getByTestId('map-pin-container');
     expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted);
-    expect(pin.className).toContain('border-gray-600');
+    expect(pin.className).toContain('border-border-strong');
     // Check zIndex
     const marker = screen.getByTestId('marker-container');
     expect(marker.style.zIndex).toBe('10');

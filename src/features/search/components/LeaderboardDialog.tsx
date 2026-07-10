@@ -24,7 +24,7 @@ export function LeaderboardDialog({ open, onOpenChange }: LeaderboardDialogProps
       <DialogContent className="sm:max-w-md max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-amber-500" />
+            <Trophy className="h-5 w-5 text-text-primary" />
             Building Leaderboards
           </DialogTitle>
           <DialogDescription>
