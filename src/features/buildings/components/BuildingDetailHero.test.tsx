@@ -20,7 +20,8 @@ describe("BuildingDetailHero", () => {
     const img = screen.getByRole("img", { name: /villa savoye/i });
     expect(img).toBeTruthy();
     expect(img.getAttribute("src")).toBe("http://img/hero.jpg");
-    expect(img.className).toContain("aspect-16/9");
+    // Fills the cropped band (object-cover) rather than dictating a 16:9 aspect.
+    expect(img.className).toContain("object-cover");
   });
 
   it("renders the .photo-placeholder with the building name as data-label when there is no photo", () => {
@@ -38,6 +39,7 @@ describe("BuildingDetailHero", () => {
     const placeholder = container.querySelector(".photo-placeholder");
     expect(placeholder).toBeTruthy();
     expect(placeholder?.getAttribute("data-label")).toBe("Unbuilt Pavilion");
-    expect(placeholder?.className).toContain("aspect-16/9");
+    // Fills the cropped band rather than dictating a 16:9 aspect.
+    expect(placeholder?.className).toContain("h-full");
   });
 });
