@@ -661,7 +661,7 @@ export default function BuildingDetails() {
               )}
             </div>
             {(preview || authorAttribution) && (
-              <div className="p-4 space-y-3">
+              <div className="pt-4 space-y-3">
                 {authorAttribution}
                 {preview && (
                   <Link to={`/review/${block.entryId}`} className="group/r block">
@@ -700,7 +700,7 @@ export default function BuildingDetails() {
               ))}
             </div>
             {(preview || authorAttribution) && (
-              <div className="p-4 space-y-3">
+              <div className="pt-4 space-y-3">
                 {authorAttribution}
                 {preview && (
                   <Link to={`/review/${block.entryId}`} className="group/r block">
@@ -732,7 +732,7 @@ export default function BuildingDetails() {
                 </span>
               )}
             </div>
-            <div className="p-4 space-y-3">
+            <div className="pt-4 space-y-3">
               {authorAttribution}
               {preview && (
                 <Link to={`/review/${block.entryId}`} className="group/r block">
@@ -768,7 +768,7 @@ export default function BuildingDetails() {
                 </span>
               )}
             </div>
-            {authorAttribution && <div className="p-4">{authorAttribution}</div>}
+            {authorAttribution && <div className="pt-4">{authorAttribution}</div>}
           </div>
         );
       }

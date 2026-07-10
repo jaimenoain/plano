@@ -84,25 +84,23 @@ export function BuildingInfoTab({
     <div className="space-y-0 divide-y divide-border-default">
       <BuildingAwardsSection buildingId={building.id} buildingName={building.name} />
 
-      {/* Key stat grid */}
+      {/* Key facts — flush label/value list (aligns with the sections below) */}
       {keyStats.length > 0 && (
-        <div className={cn(
-          "grid gap-px bg-border-default border border-border-default mb-10",
-          keyStats.length === 1 ? "grid-cols-1" :
-          keyStats.length === 2 ? "grid-cols-2" :
-          "grid-cols-2 sm:grid-cols-3",
-        )}>
-          {keyStats.map(({ label, value }) => (
-            <div key={label} className="bg-surface-default p-6 sm:p-8">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-3">
-                {label}
-              </p>
-              <p className="font-display text-2xl sm:text-3xl font-bold text-text-primary leading-tight">
-                {value}
-              </p>
-            </div>
-          ))}
-        </div>
+        <section className="py-8">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-5">
+            Key facts
+          </p>
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-5">
+            {keyStats.map(({ label, value }) => (
+              <div key={label} className="min-w-0">
+                <dt className="text-[10px] font-medium uppercase tracking-wider text-text-secondary mb-1">
+                  {label}
+                </dt>
+                <dd className="text-base font-medium text-text-primary">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
       )}
 
       {/* Architect */}
