@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
+import { RatingDots } from "@/components/ui/rating-dots";
 import { getStorageAssetUrl } from "@/utils/image";
 
 export interface FeedPostBylineProps {
@@ -18,19 +19,6 @@ export interface FeedPostBylineProps {
   buildingId?: string | null;
   className?: string;
   onUsernameClick?: () => void;
-}
-
-function BylineRatingDots({ rating }: { rating: number }) {
-  return (
-    <span
-      className="inline-flex items-center gap-[3px] align-middle"
-      aria-label={`${rating} distinction${rating > 1 ? "s" : ""}`}
-    >
-      {Array.from({ length: rating }).map((_, i) => (
-        <span key={i} className="h-[7px] w-[7px] rounded-full bg-text-primary" />
-      ))}
-    </span>
-  );
 }
 
 function BylineAvatar({
@@ -129,7 +117,7 @@ export function FeedPostByline({
         >
           {authorLabel}
         </button>
-        {rating != null && rating > 0 ? <BylineRatingDots rating={rating} /> : null}
+        <RatingDots rating={rating} size="sm" />
         <span className="tracking-[0.06em] text-text-disabled">{timeAgo}</span>
       </div>
 
@@ -140,7 +128,7 @@ export function FeedPostByline({
           disabled={isSaving}
           aria-label={isSaved ? "Saved to your list" : "Save building to your list"}
           className={cn(
-            "inline-flex shrink-0 items-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors hover:text-text-primary",
+            "inline-flex shrink-0 items-center gap-1.5 text-[11px] font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary",
             isSaving && "pointer-events-none opacity-50",
           )}
         >

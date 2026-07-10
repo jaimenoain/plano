@@ -98,7 +98,7 @@ async function fetchRecentBuildings(): Promise<RecentBuilding[]> {
 
 function ModuleHeader({ title }: { title: string }) {
   return (
-    <h2 className="mb-3.5 text-[11px] font-medium uppercase tracking-[0.15em] text-text-disabled">
+    <h2 className="mb-3.5 text-[11px] font-medium uppercase tracking-widest text-text-disabled">
       {title}
     </h2>
   );
@@ -188,7 +188,7 @@ function RecentBuildingsModule() {
         <ul className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <li key={i} className="flex items-center gap-3 animate-pulse">
-              <div className="h-12 w-12 rounded bg-surface-muted shrink-0" />
+              <div className="h-12 w-12 rounded-none bg-surface-muted shrink-0" />
               <div className="flex-1 space-y-1.5">
                 <div className="h-3 w-2/3 rounded bg-surface-muted" />
                 <div className="h-2.5 w-1/3 rounded bg-surface-muted" />
@@ -221,7 +221,7 @@ function RecentBuildingsModule() {
                       className="h-12 w-12 shrink-0 rounded-none object-cover bg-surface-muted"
                     />
                   ) : (
-                    <div className="h-12 w-12 rounded bg-surface-muted shrink-0" />
+                    <div className="h-12 w-12 rounded-none bg-surface-muted shrink-0" />
                   )}
                   <div className="flex-1 min-w-0 leading-tight">
                     <div className="text-sm font-medium text-text-primary truncate">

@@ -84,7 +84,7 @@ export function EditorialFeedPost({
       data-testid={`editorial-feed-post-${entry.id}`}
       onClick={handleCardClick}
       className={cn(
-        "group/card relative w-full min-w-0 cursor-pointer border-b border-border-default py-[26px] pb-7 last:border-b-0",
+        "group/card relative w-full min-w-0 cursor-pointer",
         isArchitectOfBuilding && "border-l-2 border-l-text-primary pl-6",
       )}
     >
@@ -139,7 +139,7 @@ export function EditorialFeedPost({
       />
 
       <CardFooter
-        className="mt-6 pt-0"
+        className="mt-[22px] border-t border-border-default pt-4"
         showSave={false}
         likesCount={entry.likes_count}
         commentsCount={entry.comments_count}

@@ -24,7 +24,7 @@ export function FeedEditorialEyebrow({
   return (
     <p
       className={cn(
-        "mb-[14px] text-[11px] font-medium uppercase tracking-[0.15em] text-text-secondary",
+        "mb-[14px] text-[11px] font-medium uppercase tracking-widest text-text-secondary",
         className,
       )}
     >
