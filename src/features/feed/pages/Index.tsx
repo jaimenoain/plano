@@ -80,14 +80,14 @@ function Landing() {
   );
 }
 
+/** Feed items are unboxed — whitespace is the only separator. 64px, 96px from `md` up. */
+const FEED_RHYTHM = "flex flex-col gap-16 md:gap-24";
+
 function FeedSkeleton() {
   return (
-    <div>
+    <div className={FEED_RHYTHM}>
       {Array.from({ length: 3 }).map((_, i) => (
-        <div
-          key={i}
-          className="animate-pulse space-y-4 border-b border-border-default py-[26px] pb-7"
-        >
+        <div key={i} className="animate-pulse space-y-4">
           <div className="h-3 w-48 rounded-none bg-surface-muted" />
           <div className="h-14 w-4/5 max-w-lg rounded-none bg-surface-muted" />
           <div className="h-6 w-3/4 max-w-md rounded-none bg-surface-muted" />
@@ -129,7 +129,7 @@ function HomeFeedEntry({
 function SectionHeader({ index, title }: { index: string; title: string }) {
   return (
     <header className="mb-8 flex items-baseline justify-between border-b border-text-primary pb-2.5">
-      <h2 className="m-0 text-[11px] font-medium uppercase tracking-[0.15em] text-text-primary">
+      <h2 className="eyebrow m-0 text-text-primary">
         <span className="mr-2.5 font-mono text-text-disabled">{index}</span>
         {title}
       </h2>
@@ -172,19 +172,20 @@ function CompactActivityRun({
   const [expanded, setExpanded] = useState(false);
   const visible = expanded ? items : items.slice(0, COMPACT_RUN_VISIBLE);
   const hiddenCount = items.length - COMPACT_RUN_VISIBLE;
+  // A run of compact rows keeps its own tight rhythm, and counts as one item in FEED_RHYTHM.
   return (
-    <>
+    <div>
       {visible.map(renderItem)}
       {!expanded && hiddenCount > 0 && (
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="w-full border-t border-border-default py-4 text-left font-mono text-[10px] uppercase tracking-[0.08em] text-text-secondary transition-colors hover:text-text-primary"
+          className="w-full border-t border-border-default py-4 text-left font-mono text-[10px] uppercase tracking-wide text-text-secondary transition-colors hover:text-text-primary"
         >
           Show {hiddenCount} more
         </button>
       )}
-    </>
+    </div>
   );
 }
 
@@ -214,7 +215,7 @@ function FeedEntries({
       />
     );
   return (
-    <>
+    <div className={FEED_RHYTHM}>
       {blocks.map((block) =>
         block.kind === "compact-run" ? (
           <CompactActivityRun
@@ -226,7 +227,7 @@ function FeedEntries({
           renderItem(block.item)
         ),
       )}
-    </>
+    </div>
   );
 }
 
@@ -275,7 +276,8 @@ function Feed() {
   return (
     <AppLayout>
       <div className="mx-auto flex w-full max-w-[1080px] items-start gap-10 px-5 pb-24 pt-10 md:gap-14 md:px-8">
-        <main className="min-w-0 flex-1 border-r border-border-default pr-4 md:pr-14">
+        {/* The rule only divides feed from rail — below `md` the rail is gone, so it goes too. */}
+        <main className="min-w-0 flex-1 md:border-r md:border-border-default md:pr-14">
           {/* §01 — new, unseen updates from people you follow */}
           <SectionHeader index="§ 01" title="New from people you follow" />
           {following.isLoading ? (
@@ -338,7 +340,7 @@ function Feed() {
           )}
         </main>
 
-        <aside className="hidden w-[280px] shrink-0 md:block">
+        <aside className="hidden w-[320px] shrink-0 md:block">
           <div className="sticky top-[88px]">
             <FeedSidebar />
           </div>

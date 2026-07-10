@@ -23,7 +23,7 @@ one surface at a time.
 |---|---|---|
 | ✅ | Design-system foundation | **Merged** — [#1521](https://github.com/jaimenoain/plano/pull/1521) |
 | ✅ | 1 · Global chrome | **Merged** — [#1522](https://github.com/jaimenoain/plano/pull/1522) |
-| ☐ | 2 · Feed | not started |
+| ✅ | 2 · Feed | **Merged** — [#1524](https://github.com/jaimenoain/plano/pull/1524) |
 | ☐ | 3 · Building detail | not started |
 | ☐ | 4 · Landing | not started |
 | ☐ | 5 · Profile + credits | not started |
@@ -186,7 +186,7 @@ Open the designed `screens/<screen>.html` the same way to compare side by side.
 
 Owner files verified present. Each row: branch → files → designed screen → the deltas already known.
 
-### [ ] PR 2 · Feed — the signature surface
+### [x] PR 2 · Feed — the signature surface
 
 - **Branch:** `design/feed-conformance` · **Screen:** `screens/feed.html`
 - **Files:** `src/features/feed/pages/Index.tsx`, `src/features/feed/components/EditorialFeedPost.tsx`,
@@ -291,9 +291,9 @@ Measured on `main` after the foundation merged:
 
 | Debt | Count | How it dies |
 |---|---|---|
-| `tracking-[0.15em]` arbitrary values | **239** | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
-| Raw hex in `src/features` + `src/pages` | **31** across 12 files | Replace with token aliases as you touch each surface. |
-| ESLint raw-hex guard coverage | `components/ui` + `components/layout` only | Once a feature directory is clean, widen the `files` glob in `eslint.config.js`. |
+| `tracking-[0.15em]` arbitrary values | **236** (was 240) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
+| Raw hex in `src/features` + `src/pages` | **31** across 12 files | Replace with token aliases as you touch each surface. Note `src/features/maps` holds 10 `#BEFF00` — lime map markers are a bug (PR 7). |
+| ESLint raw-hex guard coverage | `components/ui` + `components/layout` + `features/feed` | Once a feature directory is clean, widen the `files` glob in `eslint.config.js`. |
 
 Do **not** attempt a repo-wide sweep of these — it produces an unreviewable diff and will collide
 with every surface PR. Fold each into the PR that already owns the file.
