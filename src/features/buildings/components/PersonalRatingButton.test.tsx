@@ -1,10 +1,11 @@
 
 // @vitest-environment happy-dom
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { PersonalRatingButton } from "./PersonalRatingButton";
 
-// Mock framer-motion to avoid animation issues in test environment
+// Mock framer-motion to avoid animation issues in test environment. Covers
+// MichelinRatingInput's internal motion.button usage too.
 vi.mock('framer-motion', () => ({
   motion: {
     button: ({ children, whileTap, whileHover, ...props }: any) => <button {...props}>{children}</button>,
@@ -18,9 +19,10 @@ describe("PersonalRatingButton", () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    cleanup();
   });
 
-  it("renders correctly with initial rating", () => {
+  it("renders the four MichelinRatingInput tiers, with the current rating checked", () => {
     render(
       <PersonalRatingButton
         buildingId="123"
@@ -30,12 +32,26 @@ describe("PersonalRatingButton", () => {
       />
     );
 
-    // Should show 3 buttons
-    const buttons = screen.getAllByRole("button");
-    expect(buttons).toHaveLength(3);
+    // Discrete four-tier radiogroup — a reward ladder, not three toggle slots.
+    const group = screen.getByRole("radiogroup", { name: /award rating/i });
+    const tiers = screen.getAllByRole("radio");
+    expect(tiers).toHaveLength(4);
+    expect(tiers.map((t) => t.textContent)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("Interesting"),
+        expect.stringContaining("Impressive"),
+        expect.stringContaining("Essential"),
+        expect.stringContaining("Masterpiece"),
+      ]),
+    );
+
+    // initialRating=2 -> "Essential" tier is the checked radio.
+    const essential = screen.getByRole("radio", { name: /essential/i });
+    expect(essential.getAttribute("aria-checked")).toBe("true");
+    expect(group).toContainElement(essential);
   });
 
-  it("calls onRate when clicked", () => {
+  it("calls onRate with the clicked tier's value", () => {
     render(
       <PersonalRatingButton
         buildingId="123"
@@ -45,10 +61,29 @@ describe("PersonalRatingButton", () => {
       />
     );
 
-    const buttons = screen.getAllByRole("button");
-    // Click the 3rd star
-    fireEvent.click(buttons[2]);
+    // Click "Essential" (tier value 2) by its accessible name, not a positional index.
+    fireEvent.click(screen.getByRole("radio", { name: /essential/i }));
 
-    expect(mockOnRate).toHaveBeenCalledWith("123", 3);
+    expect(mockOnRate).toHaveBeenCalledWith("123", 2);
+  });
+
+  it("popover variant: opens on trigger click and reports the selected tier", () => {
+    render(
+      <PersonalRatingButton
+        buildingId="123"
+        initialRating={null}
+        onRate={mockOnRate}
+        variant="popover"
+        label="Rate"
+      />
+    );
+
+    // No rating yet — trigger shows the plain label, not RatingDots.
+    const trigger = screen.getByRole("button", { name: "Rate" });
+    fireEvent.click(trigger);
+
+    fireEvent.click(screen.getByRole("radio", { name: /impressive/i }));
+
+    expect(mockOnRate).toHaveBeenCalledWith("123", 1);
   });
 });

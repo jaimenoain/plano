@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import BuildingDetails from './BuildingDetails';
-import { BrowserRouter, Routes, Route } from 'react-router';
+import { BrowserRouter } from 'react-router';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -88,8 +88,8 @@ vi.mock('@/utils/image', () => ({
 }));
 
 vi.mock('@/integrations/supabase/client', () => {
-    // Return a mocked user entry where rating is initially 0 (not rated) but status is visited
-    // so we can see the circles.
+    // Mocked user entry: visited, rating 0 ("Interesting" tier — the default,
+    // not a null/unrated state under the four-tier MichelinRatingInput model).
   const userBuildingEntry = {
       id: 'review-1',
       content: '',
@@ -155,7 +155,7 @@ vi.mock('@/features/buildings/components/BuildingImageCard', () => ({
   BuildingImageCard: () => <div />
 }));
 
-describe('BuildingDetails Rating Hover', () => {
+describe('BuildingDetails Rating', () => {
   const queryClient = new QueryClient({
       defaultOptions: {
           queries: {
@@ -190,8 +190,8 @@ describe('BuildingDetails Rating Hover', () => {
     cleanup();
   });
 
-  it('fills circles on hover', async () => {
-    const { container } = render(
+  it('rates the building via the sidebar MichelinRatingInput and saves it to Supabase', async () => {
+    render(
       <TooltipProvider>
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
@@ -208,47 +208,27 @@ describe('BuildingDetails Rating Hover', () => {
       expect(screen.getByRole("button", { name: /visited/i })).toBeTruthy();
     });
 
-    // The 3 rating circles are Lucide 'Circle' SVGs, now sized `h-7 w-7`
-    // (uniquely — the only h-7 w-7 svgs on the page). Each sits inside a
-    // `cursor-pointer` <button> that owns the onMouseEnter handler; the
-    // wrapping flex container owns onMouseLeave.
+    // The sidebar "My Rating" control is now a discrete four-tier radiogroup
+    // (PersonalRatingButton variant="inline" -> MichelinRatingInput) rather
+    // than the old hand-rolled hover-fill circle picker.
+    const group = screen.getByRole("radiogroup", { name: /award rating/i });
+    expect(group).toBeTruthy();
+
+    const impressive = screen.getByRole("radio", { name: /impressive/i });
+    fireEvent.click(impressive);
+
+    // Verify Supabase upsert call — mirrors the assertion pattern used in
+    // BuildingDetails.test.tsx's status-change test.
     await waitFor(() => {
-        const circles = container.querySelectorAll('svg.h-7.w-7');
-        expect(circles.length).toBe(3);
+        expect(mocks.upsert).toHaveBeenCalledWith(
+            expect.objectContaining({
+                user_id: 'user-123',
+                building_id: 'b1',
+                status: 'visited',
+                rating: 1,
+            }),
+            expect.anything(),
+        );
     });
-
-    const circles = container.querySelectorAll('svg.h-7.w-7');
-    const circle1 = circles[0];
-    const circle2 = circles[1];
-    const circle3 = circles[2];
-
-    // Initial state: 0 rating (from mock). All should be transparent fill.
-    expect(circle1.getAttribute('class')).toContain('fill-transparent');
-    expect(circle2.getAttribute('class')).toContain('fill-transparent');
-    expect(circle3.getAttribute('class')).toContain('fill-transparent');
-
-    // Hover over the 2nd circle's button (mouseenter does not bubble, so it
-    // must be dispatched on the element that carries the handler).
-    const button2 = circle2.closest('button')!;
-    fireEvent.mouseEnter(button2);
-
-    // Expect 1st and 2nd to be filled, 3rd to be transparent
-    // Wait for re-render
-    await waitFor(() => {
-        expect(circle1.getAttribute('class')).toContain('fill-text-primary');
-        expect(circle2.getAttribute('class')).toContain('fill-text-primary');
-        expect(circle3.getAttribute('class')).toContain('fill-transparent');
-    });
-
-    // Mouse leave is handled on the flex container that wraps the 3 buttons.
-    const ratingRow = button2.parentElement!;
-    fireEvent.mouseLeave(ratingRow);
-
-    // Should return to empty
-    await waitFor(() => {
-        expect(circle1.getAttribute('class')).toContain('fill-transparent');
-        expect(circle2.getAttribute('class')).toContain('fill-transparent');
-    });
-
   });
 });

@@ -4,7 +4,6 @@ import {
   useMemo,
   useCallback,
   useRef,
-  type ReactNode,
 } from "react";
 import {
   useParams,
@@ -20,13 +19,11 @@ import {
 import {
   Loader2, MapPin,
   Check, Bookmark, Image as ImageIcon,
-  Heart, ExternalLink, Circle, AlertTriangle,
-  EyeOff, Plus, X, Medal,
-  Pencil, BadgeCheck, ChevronDown, Share2, Navigation,
+  Heart, Circle, AlertTriangle,
+  EyeOff, Plus,
+  Pencil, ChevronDown,
 } from "lucide-react";
-import type { User } from "@supabase/supabase-js";
 import { motion, AnimatePresence } from "framer-motion";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
@@ -47,11 +44,6 @@ import {
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  formatSqm,
-  sizeCategoryLabel,
-  SizeReferencePopover,
-} from "../components/BuildingSizeReference";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { useQuery } from "@tanstack/react-query";
@@ -65,15 +57,13 @@ import {
   leadAttributionFromCredits,
   visiblePrimaryCredits,
 } from "@/features/credits/buildingCreditDisplay";
-import { getBuildingUrl, getLocalityUrl } from "@/utils/url";
+import { getBuildingUrl } from "@/utils/url";
 import { getBuildingImageUrl } from "@/utils/image";
 import { CollectionSelector } from "@/features/collections/components/CollectionSelector";
 import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
-import { PrimaryCreditsLinks } from "../components/PrimaryCreditsLinks";
 import { ArchitectStatement } from "../components/ArchitectStatement";
 import { BuildingCredits, BuildingCreditsPreview } from "../components/BuildingCredits";
 import { BuildingContributorsInline } from "../components/BuildingContributorsInline";
-import { BuildingAwardsSection } from "@/features/awards/components/BuildingAwardsSection";
 import { buildingLoader } from "./BuildingDetails.loader";
 import {
   buildingCanonicalUrl,
@@ -84,26 +74,23 @@ import {
 } from "@/features/buildings/utils/structuredData";
 import { formatBuildingStatusForDisplay, isLostStatus } from "@/lib/buildingStatus";
 import { cn } from "@/lib/utils";
-import { useBuildingInteractions, type TopLink } from "@/features/buildings/hooks/useBuildingInteractions";
+import { useBuildingInteractions } from "@/features/buildings/hooks/useBuildingInteractions";
 import {
   buildingEntryToFeedReview,
   type BuildingSummaryForFeed,
 } from "@/features/buildings/utils/buildingReviewFeedAdapter";
 import { ActivityStreamGroup } from "@/features/posts/components/ActivityStream";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ClientOnly } from "@/components/common/ClientOnly";
-import {
-  getRelatedBuildingsByPerson,
-  getRelatedBuildingsByCompany,
-  getBuildingsByCity,
-  type RelatedBuilding,
-} from "@/features/buildings/api/related";
-import { supabase } from "@/integrations/supabase/client";
-import MapGL, { Marker, NavigationControl, GeolocateControl } from "react-map-gl/maplibre";
-import maplibregl from "maplibre-gl";
-import { MapPin as MapPinMarker } from "@/features/maps/components/MapPin";
-import { getPinStyle } from "@/features/maps/utils/pinStyling";
-import type { ClusterResponse } from "@/features/maps/hooks/useMapData";
+import { RelatedByArchitectSection, RelatedByCitySection } from "../components/RelatedBuildings";
+import { BuildingDetailHero } from "../components/BuildingDetailHero";
+import { BuildingHeader } from "../components/BuildingHeader";
+import { BuildingMapTab } from "../components/BuildingMapTab";
+import { NotePhotoGrid } from "../components/NotePhotoGrid";
+import { PendingPhotosQueue } from "../components/PendingPhotosQueue";
+import { BuildingInfoSection } from "../components/BuildingInfoSection";
+import { BuildingInfoTab } from "../components/BuildingInfoTab";
+import { StreamAuthorAttribution } from "../components/StreamAuthorAttribution";
+import { PersonalRatingButton } from "../components/PersonalRatingButton";
 
 export { buildingLoader as loader } from "./BuildingDetails.loader";
 
@@ -122,401 +109,13 @@ const TABS: { id: TabId; label: string }[] = [
 /** Client-side chunks for overview editorial stream (infinite scroll). */
 const OVERVIEW_STREAM_CHUNK_SIZE = 8;
 
-// ─── Related buildings sub-components ────────────────────────────────────────
-
-function RelatedBuildingCard({ b }: { b: RelatedBuilding }) {
-  return (
-    <Link to={b.buildingUrl} className="shrink-0 w-40 sm:w-48 group">
-      <div className="aspect-4/3 w-full overflow-hidden bg-surface-muted">
-        {b.imageUrl ? (
-          <img
-            src={b.imageUrl}
-            alt={b.name}
-            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-[10px] uppercase tracking-widest text-text-secondary">
-            No image
-          </div>
-        )}
-      </div>
-      <div className="mt-2 space-y-0.5">
-        <p className="text-sm font-medium leading-snug text-text-primary line-clamp-2 group-hover:underline">
-          {b.name}
-        </p>
-        {(b.city || b.year_completed) ? (
-          <p className="text-xs text-text-secondary">
-            {[b.city, b.year_completed].filter(Boolean).join(" · ")}
-          </p>
-        ) : null}
-      </div>
-    </Link>
-  );
-}
-
-function RelatedBuildingRow({
-  title,
-  viewAllHref,
-  viewAllLabel,
-  buildings,
-  isLoading,
-}: {
-  title: string;
-  viewAllHref: string;
-  viewAllLabel: string;
-  buildings: RelatedBuilding[];
-  isLoading: boolean;
-}) {
-  if (!isLoading && buildings.length === 0) return null;
-
-  return (
-    <section className="mt-12 border-t border-border-default pt-10 min-w-0">
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 min-w-0">
-        <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary min-w-0 flex-1 wrap-break-word">
-          {title}
-        </h2>
-        <Link
-          to={viewAllHref}
-          className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary shrink-0 sm:text-right"
-        >
-          {viewAllLabel} →
-        </Link>
-      </div>
-      {isLoading ? (
-        <div className="flex gap-4 overflow-x-scroll-touch pb-2">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="shrink-0 w-40 sm:w-48 space-y-2">
-              <Skeleton className="aspect-4/3 w-full" />
-              <Skeleton className="h-4 w-4/5" />
-              <Skeleton className="h-3 w-2/3" />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="flex gap-4 overflow-x-scroll-touch pb-2">
-          {buildings.map((b) => (
-            <RelatedBuildingCard key={b.id} b={b} />
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function RelatedByArchitectSection({
-  building,
-  primaryCredit,
-}: {
-  building: BuildingDetails;
-  primaryCredit: import("@/features/credits/types").BuildingCreditWithEntities | null;
-}) {
-  const personId = primaryCredit?.personId ?? null;
-  const companyId = primaryCredit?.companyId ?? null;
-  const architectName = primaryCredit?.person?.name ?? primaryCredit?.company?.name ?? null;
-  const architectSlug = primaryCredit?.person?.slug ?? primaryCredit?.company?.slug ?? null;
-  const isPersonCredit = !!primaryCredit?.personId;
-
-  const { data: buildings = [], isLoading } = useQuery({
-    queryKey: ["buildings", "related", "architect", personId ?? companyId],
-    queryFn: () =>
-      personId
-        ? getRelatedBuildingsByPerson(personId, building.id)
-        : companyId
-          ? getRelatedBuildingsByCompany(companyId, building.id)
-          : Promise.resolve([]),
-    enabled: !!(personId || companyId),
-    staleTime: 120_000,
-  });
-
-  if (!architectName || !architectSlug) return null;
-
-  const viewAllHref = isPersonCredit
-    ? `/person/${architectSlug}`
-    : `/company/${architectSlug}`;
-
-  return (
-    <RelatedBuildingRow
-      title={`More by ${architectName}`}
-      viewAllHref={viewAllHref}
-      viewAllLabel="View all works"
-      buildings={buildings}
-      isLoading={isLoading}
-    />
-  );
-}
-
-function RelatedByCitySection({
-  building,
-  locality,
-}: {
-  building: BuildingDetails;
-  locality: { country_code: string; city_slug: string } | null;
-}) {
-  const city = building.city;
-
-  const { data: buildings = [], isLoading } = useQuery({
-    queryKey: ["buildings", "city", city],
-    queryFn: () => getBuildingsByCity(city!, building.id),
-    enabled: !!city,
-    staleTime: 120_000,
-  });
-
-  if (!city) return null;
-
-  const viewAllHref = locality
-    ? getLocalityUrl(locality.country_code, locality.city_slug)
-    : `/search?q=${encodeURIComponent(city)}`;
-
-  return (
-    <RelatedBuildingRow
-      title={`More architecture in ${city}`}
-      viewAllHref={viewAllHref}
-      viewAllLabel={`Explore ${city}`}
-      buildings={buildings}
-      isLoading={isLoading}
-    />
-  );
-}
-
-// ─── Map Tab ─────────────────────────────────────────────────────────────────
-
-interface NearbyBuilding {
-  id: string;
-  short_id: number;
-  slug: string | null;
-  name: string;
-  address: string | null;
-  location_lat: number;
-  location_lng: number;
-  dist_meters: number;
-  main_image_url: string | null;
-  tier_rank_label: string | null;
-  location_approximate: boolean;
-}
-
-const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
-const NEARBY_RADIUS_METERS = 1000;
-
-function BuildingMapTab({
-  lat,
-  lng,
-  buildingId,
-  buildingName,
-}: {
-  lat: number;
-  lng: number;
-  buildingId: string;
-  buildingName: string;
-}) {
-  const [isClient, setIsClient] = useState(false);
-  const [showNearby, setShowNearby] = useState(false);
-  const [nearbyBuildings, setNearbyBuildings] = useState<NearbyBuilding[]>([]);
-  const [isLoadingNearby, setIsLoadingNearby] = useState(false);
-  const [nearbyError, setNearbyError] = useState<string | null>(null);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-
-  useEffect(() => { setIsClient(true); }, []);
-
-  const handleShowNearby = useCallback(async () => {
-    if (showNearby) { setShowNearby(false); setNearbyError(null); return; }
-    setIsLoadingNearby(true);
-    setNearbyError(null);
-    try {
-      const { data, error } = await supabase.rpc("find_nearby_buildings", {
-        lat,
-        long: lng,
-        radius_meters: NEARBY_RADIUS_METERS,
-      });
-      if (error) {
-        setNearbyError(error.message);
-      } else if (data) {
-        setNearbyBuildings(
-          (data as unknown as NearbyBuilding[]).filter((b) => b.id !== buildingId),
-        );
-      }
-    } finally {
-      setIsLoadingNearby(false);
-      setShowNearby(true);
-    }
-  }, [lat, lng, buildingId, showNearby]);
-
-  if (!isClient) {
-    return <div className="h-[420px] md:h-[600px] bg-surface-muted" />;
-  }
-
-  return (
-    <div className="relative h-[420px] md:h-[600px] w-full">
-      <MapGL
-        initialViewState={{ longitude: lng, latitude: lat, zoom: 15 }}
-        mapLib={maplibregl}
-        style={{ width: "100%", height: "100%" }}
-        mapStyle={DEFAULT_MAP_STYLE}
-        attributionControl={false}
-      >
-        <NavigationControl position="bottom-right" />
-        <GeolocateControl position="bottom-right" trackUserLocation showUserLocation />
-
-        {/* Current building marker */}
-        <Marker longitude={lng} latitude={lat} anchor="bottom" style={{ zIndex: 20 }}>
-          <div className="flex flex-col items-center gap-0.5">
-            <div className="bg-text-primary text-surface-default text-[10px] font-medium px-2 py-0.5 whitespace-nowrap max-w-[140px] truncate shadow-xs">
-              {buildingName}
-            </div>
-            <div className="w-3 h-3 bg-text-primary rotate-45 -mt-1 shadow-xs" />
-          </div>
-        </Marker>
-
-        {/* Nearby building markers */}
-        {showNearby && nearbyBuildings
-          .filter(b => typeof b.location_lat === 'number' && typeof b.location_lng === 'number')
-          .map((b) => {
-            const pinData: ClusterResponse = {
-              id: b.id,
-              lat: b.location_lat,
-              lng: b.location_lng,
-              is_cluster: false,
-              count: 1,
-              rating: null,
-              status: null,
-              name: b.name,
-              slug: b.slug ?? undefined,
-              tier_rank_label: b.tier_rank_label,
-              location_approximate: b.location_approximate,
-            };
-            const pinStyle = getPinStyle(pinData);
-            const isHovered = hoveredId === b.id;
-            const MAP_MARKER_Z_MAX = 28;
-            const zIndex = isHovered ? 30 : Math.min(pinStyle.zIndex, MAP_MARKER_Z_MAX);
-            return (
-              <Marker
-                key={b.id}
-                longitude={b.location_lng}
-                latitude={b.location_lat}
-                anchor="center"
-                style={{ zIndex }}
-              >
-                <Link
-                  to={b.slug ? `/building/${b.short_id}/${b.slug}` : `/building/${b.id}`}
-                  onMouseEnter={() => setHoveredId(b.id)}
-                  onMouseLeave={() => setHoveredId(null)}
-                  aria-label={b.name}
-                >
-                  <MapPinMarker style={pinStyle} isHovered={isHovered} />
-                </Link>
-              </Marker>
-            );
-          })}
-      </MapGL>
-
-      {/* Show nearby buildings button */}
-      <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-50">
-        <button
-          type="button"
-          onClick={() => void handleShowNearby()}
-          disabled={isLoadingNearby}
-          className="flex items-center gap-2 bg-surface-default border border-border-default shadow-md px-4 py-2.5 text-xs font-medium uppercase tracking-widest text-text-primary hover:bg-surface-muted transition-colors disabled:opacity-60"
-        >
-          {isLoadingNearby ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <MapPin className="h-3.5 w-3.5" />
-          )}
-          {showNearby
-            ? `Hide nearby (${nearbyBuildings.length})`
-            : "Show nearby buildings"}
-        </button>
-      </div>
-
-      {/* Nearby count badge */}
-      {showNearby && nearbyError && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-surface-default border border-border-default shadow-xs px-3 py-1.5 text-xs text-feedback-destructive">
-          Could not load nearby buildings
-        </div>
-      )}
-      {showNearby && !nearbyError && nearbyBuildings.length === 0 && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-surface-default border border-border-default shadow-xs px-3 py-1.5 text-xs text-text-secondary">
-          No other buildings found within 1 km
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Note Photo Grid ──────────────────────────────────────────────────────────
-
-function NotePhotoGrid({
-  images,
-  totalCount,
-  onImageClick,
-}: {
-  images: { id: string; storage_path: string }[];
-  totalCount: number;
-  onImageClick: (img: { id: string; storage_path: string }) => void;
-}) {
-  const count = images.length;
-  const extraCount = totalCount - count;
-
-  if (count === 0) return null;
-
-  return (
-    <div
-      className={cn(
-        "grid gap-px overflow-hidden",
-        count === 1 ? "grid-cols-1" : "grid-cols-2",
-      )}
-    >
-      {images.map((img, i) => {
-        const url = getBuildingImageUrl(img.storage_path);
-        const isLast = i === count - 1 && extraCount > 0;
-
-        // Custom spans for 3 images: first one is wide
-        const isThreeAndFirst = count === 3 && i === 0;
-
-        return (
-          <button
-            key={img.id}
-            type="button"
-            className={cn(
-              "relative bg-surface-muted overflow-hidden group/img transition-all duration-300",
-              count === 1 ? "aspect-16/10" : "aspect-square",
-              isThreeAndFirst && "col-span-2 aspect-21/9",
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              onImageClick(img);
-            }}
-          >
-            {url && (
-              <img
-                src={url}
-                alt=""
-                className="w-full h-full object-cover transition-transform duration-500 group-hover/img:scale-105"
-                loading="lazy"
-              />
-            )}
-            {isLast ? (
-              <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center transition-colors group-hover/img:bg-black/30">
-                <span className="text-text-inverse text-xs font-bold tracking-wider">
-                  +{extraCount}
-                </span>
-              </div>
-            ) : (
-              <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/5 transition-colors" />
-            )}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 // ─── Building Details Component ──────────────────────────────────────────────
 
 export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading..." showHeader shellProvidesTopInset>
       <Skeleton className="h-56 max-h-[50vh] sm:max-h-none sm:h-64 lg:h-80 w-full rounded-none" />
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-8 space-y-8">
             <div className="space-y-3">
@@ -634,7 +233,7 @@ export interface BuildingDetails {
   hero_image_id: string | null;
 }
 
-interface FeedEntry {
+export interface FeedEntry {
   id: string;
   user_id: string;
   content: string | null;
@@ -664,19 +263,6 @@ interface DisplayImage {
   caption?: string | null;
 }
 
-function formatCatalogLabel(value: string | null | undefined): string | null {
-  const v = typeof value === "string" ? value.trim() : "";
-  if (!v) return null;
-  return v
-    .split("_")
-    .map((part) =>
-      part.length === 0
-        ? ""
-        : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase(),
-    )
-    .join(" ");
-}
-
 interface StreamBlock {
   key: string;
   entryId: string;
@@ -689,63 +275,6 @@ interface StreamBlock {
   topLikes: number;
   blockType: "featured" | "mosaic" | "image-review" | "image-only" | "text-only";
   score: number;
-}
-
-function StreamAuthorAttribution({
-  user,
-  rating,
-}: {
-  user: FeedEntry["user"];
-  rating: number | null;
-}) {
-  const name = user.username?.trim();
-  if (!name) return null;
-
-  return (
-    <div className="flex gap-3 items-start min-w-0">
-      <Avatar className="h-12 w-12 shrink-0 rounded-none border border-border-default bg-surface-muted">
-        <AvatarImage src={user.avatar_url || undefined} alt="" />
-        <AvatarFallback className="text-sm font-semibold text-text-secondary rounded-none">
-          {name.charAt(0).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
-      <div className="min-w-0 flex-1 pt-0.5">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-          <Link
-            to={`/profile/${name}`}
-            className="text-base md:text-lg font-semibold tracking-tight text-text-primary transition-colors hover:opacity-80"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {name}
-          </Link>
-          {user.is_architect_of_building ? (
-            <span
-              className="inline-block h-2 w-2 shrink-0 bg-text-primary"
-              aria-label="Architect of this building"
-            />
-          ) : null}
-          {user.is_verified_architect ? (
-            <BadgeCheck className="h-4 w-4 shrink-0 text-text-primary" aria-hidden />
-          ) : null}
-        </div>
-        {rating != null ? (
-          <div className="mt-1.5 flex gap-0.5" aria-label={`${rating} of 3 points`}>
-            {[1, 2, 3].map((i) => (
-              <Circle
-                key={i}
-                className={cn(
-                  "h-2.5 w-2.5",
-                  i <= rating
-                    ? "fill-text-primary text-text-primary"
-                    : "fill-transparent text-text-disabled",
-                )}
-              />
-            ))}
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
 }
 
 // ─── Meta ─────────────────────────────────────────────────────────────────────
@@ -800,536 +329,6 @@ export const meta: MetaFunction<typeof buildingLoader> = ({ loaderData: data }) 
   ];
 };
 
-// ─── Pending photos queue ─────────────────────────────────────────────────────
-
-interface PendingPhotoPreview {
-  id: string;
-  preview: string;
-}
-
-function PendingPhotosQueue({
-  pendingImages,
-  isSavingNote,
-  onRemove,
-  onSave,
-}: {
-  pendingImages: PendingPhotoPreview[];
-  isSavingNote: boolean;
-  onRemove: (id: string) => void;
-  onSave: () => void;
-}) {
-  if (pendingImages.length === 0) return null;
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {pendingImages.map((img) => (
-        <div key={img.id} className="relative h-16 w-16 shrink-0 bg-surface-muted">
-          <img src={img.preview} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
-          <button
-            type="button"
-            className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center bg-surface-overlay text-text-primary hover:bg-surface-muted"
-            onClick={() => onRemove(img.id)}
-            aria-label="Remove pending photo"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        disabled={isSavingNote}
-        className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-brand-primary disabled:opacity-50"
-        onClick={onSave}
-      >
-        {isSavingNote ? (
-          <Loader2 className="mr-1 inline h-3 w-3 animate-spin" aria-hidden />
-        ) : null}
-        Save photos →
-      </button>
-    </div>
-  );
-}
-
-// ─── Building info definition list ───────────────────────────────────────────
-
-function BuildingInfoSection({
-  building,
-  buildingCredits,
-  canEdit,
-}: {
-  building: BuildingDetails;
-  buildingCredits: import("@/features/credits/types").BuildingCreditWithEntities[];
-  canEdit: boolean;
-}) {
-  const navigate = useNavigate();
-  const primaryCredits = visiblePrimaryCredits(buildingCredits);
-
-  const rows = useMemo(() => {
-    const items: { label: string; value: ReactNode; key: string }[] = [];
-
-    if (primaryCredits.length > 0) {
-      items.push({
-        key: "architect",
-        label: "Architect",
-        value: (
-          <PrimaryCreditsLinks
-            credits={buildingCredits}
-            linkClassName="text-text-primary font-medium hover:underline underline-offset-2"
-          />
-        ),
-      });
-    }
-
-    if (building.year_completed) {
-      items.push({ key: "year", label: "Year", value: building.year_completed });
-    }
-
-    const locationParts = [building.address, building.city, building.country].filter(Boolean);
-    if (locationParts.length > 0) {
-      items.push({ key: "location", label: "Location", value: locationParts.join(", ") });
-    }
-
-    if (building.typology?.length) {
-      items.push({ key: "typology", label: "Typology", value: building.typology.join(", ") });
-    }
-
-    if (building.styles?.length) {
-      items.push({ key: "style", label: "Style", value: building.styles.map((s) => s.name).join(", ") });
-    }
-
-    if (building.materials?.length) {
-      items.push({ key: "materials", label: "Materials", value: building.materials.join(", ") });
-    }
-
-    if (building.category?.trim()) {
-      items.push({ key: "category", label: "Category", value: building.category });
-    }
-
-    if (building.size_category || building.size_sqm || building.storeys || building.height_m) {
-      const parts: string[] = [];
-      if (building.size_category) parts.push(sizeCategoryLabel(building.size_category));
-      if (building.size_sqm) parts.push(formatSqm(building.size_sqm));
-      if (building.storeys) parts.push(`${building.storeys} fl`);
-      if (building.height_m) parts.push(`${building.height_m} m`);
-      items.push({ key: "size", label: "Size", value: parts.join(" · ") });
-    }
-
-    if (building.context?.trim()) {
-      items.push({ key: "context", label: "Context", value: formatCatalogLabel(building.context) });
-    }
-
-    if (building.intervention?.trim()) {
-      items.push({ key: "intervention", label: "Intervention", value: formatCatalogLabel(building.intervention) });
-    }
-
-    if (building.access_level) {
-      const accessParts = [
-        formatCatalogLabel(building.access_level),
-        formatCatalogLabel(building.access_logistics),
-        formatCatalogLabel(building.access_cost),
-      ].filter(Boolean);
-      items.push({ key: "access", label: "Access", value: accessParts.join(" · ") });
-    }
-
-    if (building.access_notes?.trim()) {
-      items.push({ key: "access-notes", label: "Access Notes", value: building.access_notes });
-    }
-
-    const aliases = (building.aliases ?? []).filter((a): a is string => typeof a === "string" && a.trim().length > 0);
-    if (aliases.length > 0) {
-      items.push({ key: "aliases", label: "Also known as", value: aliases.join(", ") });
-    }
-
-    return items;
-  }, [building, buildingCredits, primaryCredits.length]);
-
-  if (rows.length === 0) return null;
-
-  return (
-    <section className="group/info">
-      <BuildingAwardsSection buildingId={building.id} buildingName={building.name} />
-      <div className="flex items-center gap-2">
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-          Building Info
-        </h3>
-        {canEdit && (
-          <button
-            className="opacity-0 group-hover/info:opacity-100 transition-opacity inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary"
-            onClick={() =>
-              navigate(getBuildingUrl(building.id, building.slug, building.short_id) + "/edit")
-            }
-          >
-            <Pencil className="h-3 w-3" />
-            Edit
-          </button>
-        )}
-      </div>
-      <dl className="mt-3 divide-y divide-border-default">
-        {rows.map(({ key, label, value }) => (
-          <div key={key} className="flex items-baseline gap-6 py-3">
-            <dt className="text-xs text-text-secondary shrink-0 w-24 md:w-28">{label}</dt>
-            <dd className="text-sm text-text-primary flex-1 min-w-0">{value}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
-  );
-}
-
-// ─── Info tab ────────────────────────────────────────────────────────────────
-
-function BuildingInfoTab({
-  building,
-  buildingCredits,
-  topLinks,
-  user,
-  showLinkEditor,
-  setShowLinkEditor,
-  newLinkUrl,
-  setNewLinkUrl,
-  newLinkTitle,
-  setNewLinkTitle,
-  handleAddLink,
-  handleLinkLike,
-  likedLinkIds,
-}: {
-  building: BuildingDetails;
-  buildingCredits: import("@/features/credits/types").BuildingCreditWithEntities[];
-  topLinks: TopLink[];
-  user: User | null;
-  showLinkEditor: boolean;
-  setShowLinkEditor: (v: boolean) => void;
-  newLinkUrl: string;
-  setNewLinkUrl: (v: string) => void;
-  newLinkTitle: string;
-  setNewLinkTitle: (v: string) => void;
-  handleAddLink: () => void;
-  handleLinkLike: (linkId: string) => Promise<void>;
-  likedLinkIds: Set<string>;
-}) {
-  const primaryCredits = visiblePrimaryCredits(buildingCredits);
-  const aliases = (building.aliases ?? []).filter((a): a is string => typeof a === "string" && a.trim().length > 0);
-
-  const keyStats: { label: string; value: ReactNode }[] = [];
-  if (building.year_completed) keyStats.push({ label: "Year", value: building.year_completed });
-  if (building.city || building.country)
-    keyStats.push({ label: "Location", value: [building.city, building.country].filter(Boolean).join(", ") });
-  if (building.typology?.length)
-    keyStats.push({ label: building.typology.length === 1 ? "Typology" : "Typologies", value: building.typology.join(", ") });
-
-  const classificationRows: { label: string; value: string }[] = [];
-  if (building.styles?.length)
-    classificationRows.push({ label: "Style", value: building.styles.map((s) => s.name).join(", ") });
-  if (building.category?.trim())
-    classificationRows.push({ label: "Category", value: building.category });
-  if (building.context?.trim())
-    classificationRows.push({ label: "Context", value: formatCatalogLabel(building.context) ?? building.context });
-  if (building.intervention?.trim())
-    classificationRows.push({ label: "Intervention", value: formatCatalogLabel(building.intervention) ?? building.intervention });
-
-  const accessParts = [
-    formatCatalogLabel(building.access_level),
-    formatCatalogLabel(building.access_logistics),
-    formatCatalogLabel(building.access_cost),
-  ].filter((v): v is string => Boolean(v));
-
-  const hasClassification = classificationRows.length > 0;
-  const hasMaterials = (building.materials?.length ?? 0) > 0;
-  const hasAccess = accessParts.length > 0 || building.access_notes?.trim();
-  const hasAliases = aliases.length > 0;
-  const hasAddress = building.address?.trim();
-  const hasSize = !!(building.size_category || building.size_sqm || building.storeys || building.height_m);
-
-  return (
-    <div className="space-y-0 divide-y divide-border-default">
-      <BuildingAwardsSection buildingId={building.id} buildingName={building.name} />
-
-      {/* Key stat grid */}
-      {keyStats.length > 0 && (
-        <div className={cn(
-          "grid gap-px bg-border-default border border-border-default mb-10",
-          keyStats.length === 1 ? "grid-cols-1" :
-          keyStats.length === 2 ? "grid-cols-2" :
-          "grid-cols-2 sm:grid-cols-3",
-        )}>
-          {keyStats.map(({ label, value }) => (
-            <div key={label} className="bg-surface-default p-6 sm:p-8">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-3">
-                {label}
-              </p>
-              <p className="font-display text-2xl sm:text-3xl font-bold text-text-primary leading-tight">
-                {value}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Architect */}
-      {primaryCredits.length > 0 && (
-        <section className="py-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-4">
-            {primaryCredits.length === 1 ? "Architect" : "Architects"}
-          </p>
-          <div className="font-display text-xl sm:text-2xl font-bold text-text-primary leading-snug">
-            <PrimaryCreditsLinks
-              credits={buildingCredits}
-              linkClassName="hover:underline underline-offset-4 decoration-1"
-            />
-          </div>
-        </section>
-      )}
-
-      {/* Address */}
-      {hasAddress && (
-        <section className="py-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-4">
-            Address
-          </p>
-          <p className="text-sm text-text-primary leading-relaxed">
-            {[building.address, building.city, building.country].filter(Boolean).join(", ")}
-          </p>
-        </section>
-      )}
-
-      {/* Classification */}
-      {hasClassification && (
-        <section className="py-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-5">
-            Classification
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-5">
-            {classificationRows.map(({ label, value }) => (
-              <div key={label}>
-                <p className="text-[10px] font-medium uppercase tracking-wider text-text-secondary mb-1">
-                  {label}
-                </p>
-                <p className="text-sm text-text-primary">{value}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Size */}
-      {hasSize && (
-        <section className="py-8">
-          <div className="flex items-center gap-2 mb-5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-              Size
-            </p>
-            <SizeReferencePopover />
-          </div>
-          <div className="flex flex-wrap gap-x-8 gap-y-4">
-            {building.size_category && (
-              <div>
-                <p className="text-[10px] font-medium uppercase tracking-wider text-text-secondary mb-1">Category</p>
-                <p className="text-sm text-text-primary">{sizeCategoryLabel(building.size_category)}</p>
-              </div>
-            )}
-            {building.size_sqm && (
-              <div>
-                <p className="text-[10px] font-medium uppercase tracking-wider text-text-secondary mb-1">Floor Area</p>
-                <p className="text-sm text-text-primary">{formatSqm(building.size_sqm)}</p>
-              </div>
-            )}
-            {building.storeys && (
-              <div>
-                <p className="text-[10px] font-medium uppercase tracking-wider text-text-secondary mb-1">Storeys</p>
-                <p className="text-sm text-text-primary">{building.storeys}</p>
-              </div>
-            )}
-            {building.height_m && (
-              <div>
-                <p className="text-[10px] font-medium uppercase tracking-wider text-text-secondary mb-1">Height</p>
-                <p className="text-sm text-text-primary">{building.height_m} m</p>
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Materials */}
-      {hasMaterials && (
-        <section className="py-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-5">
-            Materials
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {building.materials!.map((m) => (
-              <span
-                key={m}
-                className="px-3 py-1.5 bg-surface-muted border border-border-default text-xs text-text-primary font-medium"
-              >
-                {m}
-              </span>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Access */}
-      {hasAccess && (
-        <section className="py-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-5">
-            Access
-          </p>
-          {accessParts.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {accessParts.map((part) => (
-                <span
-                  key={part}
-                  className="px-3 py-1.5 bg-surface-muted border border-border-default text-xs text-text-primary font-medium"
-                >
-                  {part}
-                </span>
-              ))}
-            </div>
-          )}
-          {building.access_notes?.trim() && (
-            <p className="text-sm text-text-secondary leading-relaxed">
-              {building.access_notes}
-            </p>
-          )}
-        </section>
-      )}
-
-      {/* Aliases */}
-      {hasAliases && (
-        <section className="py-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-4">
-            Also Known As
-          </p>
-          <p className="text-sm text-text-secondary leading-relaxed">
-            {aliases.join(" · ")}
-          </p>
-        </section>
-      )}
-
-      {/* Links & resources */}
-      <section
-        className="py-12 border-t border-border-default"
-        aria-labelledby="building-resources-heading"
-      >
-        <header className="mb-8 space-y-2">
-          <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-text-secondary">
-            References
-          </p>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-2">
-              <h3
-                id="building-resources-heading"
-                className="font-display text-xl font-bold tracking-tight text-text-primary sm:text-2xl"
-              >
-                Links &amp; resources
-              </h3>
-              <p className="max-w-xl text-sm leading-relaxed text-text-secondary">
-                Articles, project pages, and references that help verify or explore this building.
-              </p>
-            </div>
-            {user ? (
-              <button
-                type="button"
-                onClick={() => setShowLinkEditor(!showLinkEditor)}
-                className="shrink-0 text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-              >
-                {showLinkEditor ? "Close" : "Add link →"}
-              </button>
-            ) : null}
-          </div>
-        </header>
-
-        {showLinkEditor && user && (
-          <div className="mb-8 flex flex-col gap-2 rounded-none border border-border-default bg-surface-muted p-4 sm:flex-row sm:items-center">
-            <Input
-              value={newLinkUrl}
-              onChange={(e) => setNewLinkUrl(e.target.value)}
-              placeholder="https://"
-              className="h-10 flex-1 border-border-default bg-surface-card text-sm"
-            />
-            <Input
-              value={newLinkTitle}
-              onChange={(e) => setNewLinkTitle(e.target.value)}
-              placeholder="Title (optional)"
-              className="h-10 flex-1 border-border-default bg-surface-card text-sm"
-            />
-            <Button
-              size="sm"
-              className="h-10 shrink-0 sm:px-6"
-              onClick={() => void handleAddLink()}
-              disabled={!newLinkUrl.trim()}
-            >
-              Add
-            </Button>
-          </div>
-        )}
-
-        {topLinks.length > 0 ? (
-          <ul className="space-y-3">
-            {topLinks.map((link) => {
-              let domain = "";
-              try {
-                domain = new URL(link.url).hostname;
-              } catch {
-                /* ignore */
-              }
-              return (
-                <li key={link.link_id}>
-                  <div className="group flex items-center justify-between gap-4 rounded-none border border-border-default bg-surface-card px-4 py-4 shadow-xs transition-colors hover:border-border-strong lg:px-5">
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="min-w-0 flex-1"
-                    >
-                      <div className="truncate text-sm font-semibold text-text-primary group-hover:underline underline-offset-4">
-                        {link.title || domain}
-                      </div>
-                      <div className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-text-secondary">
-                        {domain}
-                      </div>
-                    </a>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          void handleLinkLike(link.link_id);
-                        }}
-                        className={cn(
-                          "flex items-center gap-1 text-[10px] font-bold transition-colors",
-                          likedLinkIds.has(link.link_id)
-                            ? "text-text-primary"
-                            : "text-text-disabled hover:text-text-primary",
-                        )}
-                      >
-                        <Heart
-                          className={cn(
-                            "h-3 w-3",
-                            likedLinkIds.has(link.link_id) && "fill-current",
-                          )}
-                        />
-                        {link.like_count}
-                      </button>
-                      <ExternalLink className="h-3.5 w-3.5 text-text-disabled transition-colors group-hover:text-text-primary" />
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <div className="rounded-none border border-dashed border-border-strong bg-surface-muted/40 px-5 py-10 text-center">
-            <p className="text-sm text-text-secondary">
-              No external links yet—add articles, competition pages, or the architect&apos;s project URL.
-            </p>
-          </div>
-        )}
-      </section>
-
-    </div>
-  );
-}
-
 // ─── Page component ───────────────────────────────────────────────────────────
 
 export default function BuildingDetails() {
@@ -1366,8 +365,6 @@ export default function BuildingDetails() {
     loading,
     userStatus,
     myRating,
-    hoverRating,
-    setHoverRating,
     entries,
     displayImages,
     selectedImage,
@@ -1426,9 +423,6 @@ export default function BuildingDetails() {
     user,
     profile,
   });
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const buildingAny = building as any;
 
   // ── Tab state (URL-based) ─────────────────────────────────────────────────
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1854,189 +848,22 @@ export default function BuildingDetails() {
           onChange={handleImageSelect}
         />
 
-        {/* ── HERO — full-bleed only when a hero image exists (no empty band) ── */}
-        {heroImageUrl ? (
-          <div className="relative h-[clamp(360px,55vh,560px)] w-screen overflow-hidden bg-surface-muted">
-            <motion.img
-              key={heroImageUrl}
-              initial={{ opacity: 0, scale: 1.03 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8 }}
-              src={heroImageUrl}
-              alt={heroAlt}
-              className="absolute inset-0 h-full w-full object-cover grayscale brightness-75 contrast-90"
-              fetchPriority="high"
-              loading="eager"
-            />
-            {/* Bottom-weighted gradient for title legibility — strengthened mid-stop hides low-quality images */}
-            <div
-              className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/90 via-black/50 to-black/20"
-              aria-hidden
-            />
-            <div className="absolute inset-0 flex flex-col justify-end px-5 pb-9 pt-8 sm:px-10">
-              <div className="mx-auto w-full max-w-5xl space-y-3">
-                {(building.tier_rank || isStatusBuilding) && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    {building.tier_rank && (
-                      <span className="inline-block rounded-none bg-text-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-text-inverse">
-                        {building.tier_rank}
-                      </span>
-                    )}
-                    {isStatusBuilding && building.status && (
-                      <span className="inline-block rounded-none border border-white/30 bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white">
-                        {formatBuildingStatusForDisplay(building.status)}
-                      </span>
-                    )}
-                  </div>
-                )}
-                <h1 className="font-display text-[clamp(3rem,7vw,5.5rem)] font-bold leading-[0.98] tracking-[-0.038em] text-white">
-                  {building.name}.
-                </h1>
-                <p className="text-sm text-white/80">
-                  {primaryName ? (
-                    <span className="font-medium text-white">
-                      <PrimaryCreditsLinks
-                        credits={buildingCredits}
-                        linkClassName="text-white font-medium hover:underline underline-offset-2"
-                      />
-                    </span>
-                  ) : null}
-                  {(building.year_completed || buildingAny.century) && (
-                    <>
-                      {primaryName ? <span aria-hidden> · </span> : null}
-                      <span>
-                        {building.year_completed
-                          ? building.year_completed
-                          : `${buildingAny.century}th c.`}
-                      </span>
-                    </>
-                  )}
-                  {(building.city || building.country) && (
-                    <>
-                      <span aria-hidden> · </span>
-                      <span>
-                        {[building.city, building.country].filter(Boolean).join(", ")}
-                      </span>
-                    </>
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : null}
+        {/* ── HERO — full-bleed 16:9 image or .photo-placeholder ── */}
+        <BuildingDetailHero
+          heroImageUrl={heroImageUrl}
+          alt={heroAlt}
+          buildingName={building.name}
+        />
 
-        {/* ── BUILDING HEADER — title, metadata row, stats ── */}
-        <div className="border-b border-border-default">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
-
-              {/* Title & metadata */}
-              {!heroImageUrl ? (
-              <div className="lg:col-span-8 space-y-2">
-                {(building.tier_rank || isStatusBuilding) && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    {building.tier_rank && (
-                      <span className="inline-block px-2 py-0.5 bg-text-primary text-text-inverse text-[10px] font-bold uppercase tracking-[0.2em] rounded-none">
-                        {building.tier_rank}
-                      </span>
-                    )}
-                    {isStatusBuilding && building.status && (
-                      <span className="inline-block px-2 py-0.5 bg-feedback-destructive/10 text-feedback-destructive text-[10px] font-bold uppercase tracking-[0.2em] rounded-none border border-feedback-destructive/20">
-                        {formatBuildingStatusForDisplay(building.status)}
-                      </span>
-                    )}
-                    {buildingAny.winner_award_name && (
-                      <span className="inline-block px-2 py-0.5 border border-border-default text-[10px] font-bold uppercase tracking-[0.2em] rounded-none text-text-primary flex items-center gap-1">
-                        <Medal className="h-3 w-3" />
-                        Winner: {buildingAny.winner_award_name}
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-text-primary leading-[0.98]">
-                  {building.name}.
-                </h1>
-
-                {building.alt_name && (
-                  <p className="text-base text-text-secondary">{building.alt_name}</p>
-                )}
-
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-secondary pt-1">
-                  {primaryName && (
-                    <span className="flex items-center gap-1.5">
-                      <span className="text-text-disabled">by</span>
-                      <PrimaryCreditsLinks
-                        credits={buildingCredits}
-                        linkClassName="text-text-primary font-medium hover:underline underline-offset-2"
-                      />
-                    </span>
-                  )}
-                  {(building.year_completed || buildingAny.century) && (
-                    <>
-                      <span className="text-border-strong" aria-hidden>·</span>
-                      <span>
-                        {building.year_completed
-                          ? building.year_completed
-                          : `${buildingAny.century}th c.`}
-                      </span>
-                    </>
-                  )}
-                  {(building.city || building.country) && (
-                    <>
-                      <span className="text-border-strong" aria-hidden>·</span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3 text-text-disabled shrink-0" />
-                        {[building.city, building.country].filter(Boolean).join(", ")}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-              ) : (
-                <div className="lg:col-span-8 space-y-1">
-                  {building.alt_name && (
-                    <p className="text-base text-text-secondary">{building.alt_name}</p>
-                  )}
-                  {buildingAny.winner_award_name && (
-                    <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-text-primary">
-                      <Medal className="h-3 w-3" />
-                      Winner: {buildingAny.winner_award_name}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Stats & actions */}
-              <div className={cn("flex items-center gap-4 justify-start", heroImageUrl ? "lg:col-span-12 lg:justify-end" : "lg:col-span-4 lg:justify-end")}>
-                <div className="flex items-center gap-5 pr-5 border-r border-border-default">
-                  <div>
-                    <div className="text-xl font-bold font-display tabular-nums">{visitorCount}</div>
-                    <div className="text-[10px] uppercase tracking-widest text-text-secondary">Visits</div>
-                  </div>
-                  {totalRatingPoints !== null && totalRatingPoints > 0 && (
-                    <div>
-                      <div className="text-xl font-bold font-display tabular-nums">{totalRatingPoints}</div>
-                      <div className="text-[10px] uppercase tracking-widest text-text-secondary">Points</div>
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="h-9 gap-1.5">
-                    <Share2 className="h-3.5 w-3.5" /> Share
-                  </Button>
-                  <Button variant="outline" size="sm" className="h-9 gap-1.5" asChild>
-                    <Link to={`${buildingUrl}/edit`}>
-                      <Pencil className="h-3.5 w-3.5" /> Edit
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-
+        {/* ── BUILDING HEADER — title, badges, meta, stats, actions ── */}
+        <BuildingHeader
+          building={building}
+          buildingCredits={buildingCredits}
+          isStatusBuilding={isStatusBuilding}
+          visitorCount={visitorCount}
+          totalRatingPoints={totalRatingPoints}
+          buildingUrl={buildingUrl}
+        />
         {/* Sentinel — sticky tab bar triggers when this leaves viewport */}
         <div ref={sentinelRef} aria-hidden className="h-0" />
 
@@ -2047,7 +874,7 @@ export default function BuildingDetails() {
             isTabBarSticky && "sticky top-0 z-30 shadow-xs",
           )}
         >
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center -mb-px overflow-x-scroll-touch">
                 {TABS.map((tab) => (
@@ -2056,7 +883,7 @@ export default function BuildingDetails() {
                     type="button"
                     onClick={() => setTab(tab.id)}
                     className={cn(
-                      "px-5 py-3.5 text-[12px] font-medium uppercase tracking-[0.15em] border-b-2 shrink-0 transition-colors duration-150 whitespace-nowrap",
+                      "px-5 py-3.5 text-[12px] font-medium uppercase tracking-widest border-b-2 shrink-0 transition-colors duration-150 whitespace-nowrap",
                       activeTab === tab.id
                         ? "border-text-primary text-text-primary"
                         : "border-transparent text-text-secondary hover:text-text-primary",
@@ -2067,15 +894,13 @@ export default function BuildingDetails() {
                 ))}
               </div>
               {activeTab === "credits" && user && (
-                <Button
+                <button
                   type="button"
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0 text-xs uppercase tracking-widest"
+                  className="cta-link shrink-0"
                   onClick={() => setAddCreditOpen(true)}
                 >
-                  + Add credits
-                </Button>
+                  Add credits
+                </button>
               )}
             </div>
           </div>
@@ -2083,7 +908,7 @@ export default function BuildingDetails() {
 
         {/* ── TAB CONTENT ── */}
         <div className={cn(
-          activeTab === "map" ? "" : "max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10",
+          activeTab === "map" ? "" : "max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16",
         )}>
           <div className={cn(
             activeTab !== "map" && "grid grid-cols-1 lg:grid-cols-12 gap-12",
@@ -2141,7 +966,7 @@ export default function BuildingDetails() {
                         <span className="font-mono text-[11px] tracking-[0.06em] text-text-disabled">
                           § 01
                         </span>
-                        <span className="text-[11px] font-medium uppercase tracking-[0.15em] text-text-primary">
+                        <span className="text-[11px] font-medium uppercase tracking-widest text-text-primary">
                           Architect statement
                         </span>
                       </div>
@@ -2404,7 +1229,7 @@ export default function BuildingDetails() {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
-                            variant="outline"
+                            variant="accent"
                             className="w-full justify-between h-10 px-3 text-sm font-medium"
                           >
                             <div className="flex items-center gap-2">
@@ -2489,34 +1314,12 @@ export default function BuildingDetails() {
                         </span>
                       )}
                     </div>
-                    <div
-                      className="flex items-center justify-center gap-5 p-3 bg-surface-muted rounded-none"
-                      onMouseLeave={() => setHoverRating(null)}
-                    >
-                      {[1, 2, 3].map((i) => {
-                        const filled = hoverRating !== null ? i <= hoverRating : i <= myRating;
-                        return (
-                          <motion.button
-                            key={i}
-                            type="button"
-                            whileHover={{ scale: 1.2 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={() => void handleRate(building.id, i === myRating ? 0 : i)}
-                            onMouseEnter={() => setHoverRating(i)}
-                            className="cursor-pointer"
-                          >
-                            <Circle
-                              className={cn(
-                                "h-7 w-7 transition-all duration-200",
-                                filled
-                                  ? "fill-text-primary text-text-primary"
-                                  : "fill-transparent text-text-disabled opacity-50",
-                              )}
-                            />
-                          </motion.button>
-                        );
-                      })}
-                    </div>
+                    <PersonalRatingButton
+                      variant="inline"
+                      buildingId={building.id}
+                      initialRating={myRating}
+                      onRate={handleRate}
+                    />
                   </div>
 
                   {/* Secondary actions */}
@@ -2760,10 +1563,9 @@ export default function BuildingDetails() {
                         {[building.city, building.country].filter(Boolean).join(", ")}
                       </span>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-[10px] font-bold uppercase tracking-widest shrink-0"
+                    <button
+                      type="button"
+                      className="cta-link shrink-0"
                       onClick={() => {
                         if (building.location_precision === "approximate") {
                           setShowDirectionsAlert(true);
@@ -2775,8 +1577,8 @@ export default function BuildingDetails() {
                         }
                       }}
                     >
-                      Directions <Navigation className="h-3 w-3 ml-1" />
-                    </Button>
+                      Directions
+                    </button>
                   </div>
                 </div>
 

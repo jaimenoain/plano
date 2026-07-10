@@ -148,10 +148,12 @@ export default tseslint.config(
     // (min-h-[120px], w-[3.25rem]) as unrestricted and governs only *visual* tokens.
     // The remaining feature directories still carry raw hex values; burn those down
     // per-surface during the design conformance sweep, then widen `files` here.
+    // src/features/buildings joined the list with the building-detail conformance PR.
     files: [
       "src/components/ui/**/*.tsx",
       "src/components/layout/**/*.tsx",
       "src/features/feed/**/*.tsx",
+      "src/features/buildings/**/*.tsx",
     ],
     ignores: ["**/*.test.tsx"],
     rules: {
