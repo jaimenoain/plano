@@ -47,6 +47,11 @@
   --spacing-mosaic-gap: 1.5px;
   --spacing-search-serp: 25rem;
 
+  /* Collection / itinerary rail (screens/itinerary.html `.col-shell`): 396px, easing to
+     360px on narrower desktops. Distinct from the 400px search SERP column. */
+  --spacing-collection-rail: 24.75rem;
+  --spacing-collection-rail-narrow: 22.5rem;
+
   --container-search-serp-alt: 12.5rem;
 
   --aspect-card-hero: var(--card-image-ratio-hero);

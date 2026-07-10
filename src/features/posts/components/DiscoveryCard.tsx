@@ -13,17 +13,18 @@
  * Building info (bottom overlay):
  *   - Tiny uppercase meta line ABOVE the name: "CITY, COUNTRY · ARCHITECT"
  *     (A24's signature small-label-then-giant-title hierarchy)
- *   - Building name: text-4xl sm:text-5xl — film-poster scale
+ *   - Building name: `.headline` — film-poster scale, matching the kit's `.exp-name`
  *   - Save icon integrated into the name row (right side), no separate Button
  *
  * Swipe feedback stamps:
  *   - Rotated bookmark (save) on success-tinted disc + green wash; "HIDE" stamp for skip
  *
- * Rating overlay:
- *   - "Add points? (Optional)" header → tiny tracking-widest uppercase label
- *   - Button boxes → bare numbers at text-5xl, floating on the overlay
- *   - Selected state: text turns brand-primary (#BEFF00), subtle scale — no borders
- *   - "Next building" button → inline text CTA
+ * Award overlay:
+ *   - Tiny tracking-widest uppercase label
+ *   - Named award tiers (Impressive / Essential / Masterpiece), each with its own
+ *     earned dots, inverted to white for this black stage. Never the bare numerals.
+ *   - Selected state: full-opacity dots + subtle scale — no borders, no colour
+ *   - "Next building" → a `.cta-link`, whose injected arrow is the only lime here
  *
  * Pagination dots: kept, top-right corner instead of centered
  */
@@ -54,6 +55,7 @@ import {
 } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ContactFacepile } from "./ContactFacepile";
+import { DiscoveryAwardOverlay } from "./DiscoveryAwardOverlay";
 import {
   applyElasticPull,
   computeElasticLimit,
@@ -750,87 +752,25 @@ export function DiscoveryCard({
             }
             className="pointer-events-auto block cursor-pointer hover:opacity-80 active:opacity-80 transition-opacity"
           >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-none">
+            {/* Kit `.exp-name` — poster scale. `.headline` sets text-primary, so the
+                inverse colour is reapplied on top of it. */}
+            <h2 className="headline text-white">
               {building.name}
             </h2>
           </Link>
         </div>
       </div>
 
-      {/* ── Rating overlay — typographic, no button boxes ── */}
+      {/* ── Award overlay — named tiers, no numerals, no button boxes ── */}
       {showRating && (
-        <motion.div
-          data-explore-overlay="open"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.2 }}
-          className="absolute inset-0 z-50 flex flex-col items-center justify-end pb-20 sm:pb-24 bg-black/85"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Label */}
-          <p className="text-2xs font-medium tracking-[0.25em] uppercase text-white/60 mb-10">
-            Add points (optional)
-          </p>
-
-          {/* Rating options — pure type, no boxes */}
-          <div className="flex items-end gap-10 sm:gap-14">
-            {([null, 1, 2, 3] as const).map((val) => {
-              const isSelected = rating === val;
-              return (
-                <button
-                  key={val ?? "save"}
-                  onClick={(e) => handleRate(val, e)}
-                  className={`flex flex-col items-center gap-2 transition-all duration-200 ${
-                    isSelected ? "scale-110" : "hover:scale-105"
-                  }`}
-                >
-                  {/* Number / icon */}
-                  {val === null ? (
-                    <Bookmark
-                      className={`w-10 h-10 transition-colors ${
-                        isSelected ? "text-white" : "text-white/70"
-                      }`}
-                      strokeWidth={isSelected ? 2 : 1.5}
-                    />
-                  ) : (
-                    <span
-                      className={`text-3xl sm:text-5xl font-bold leading-none tabular-nums transition-colors ${
-                        isSelected ? "text-white" : "text-white/70"
-                      }`}
-                    >
-                      {val}
-                    </span>
-                  )}
-                  {/* Label — save option is icon-only; points stay typographic */}
-                  <span
-                    className={`text-2xs font-medium uppercase tracking-widest transition-colors ${
-                      val === null
-                        ? "sr-only"
-                        : isSelected
-                          ? "text-white"
-                          : "text-white/55"
-                    }`}
-                  >
-                    {val === null
-                      ? "Save without rating"
-                      : `${val} pt${val !== 1 ? "s" : ""}`}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Skip CTA */}
-          <button
-            className="mt-12 text-xs font-medium uppercase tracking-[0.15em] text-white/50 hover:text-white/80 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (onSwipeSave) onSwipeSave();
-            }}
-          >
-            Next building →
-          </button>
-        </motion.div>
+        <DiscoveryAwardOverlay
+          rating={rating}
+          onRate={handleRate}
+          onSkip={(e) => {
+            e.stopPropagation();
+            if (onSwipeSave) onSwipeSave();
+          }}
+        />
       )}
     </motion.div>
   );

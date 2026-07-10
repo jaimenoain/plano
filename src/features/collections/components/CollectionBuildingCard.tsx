@@ -158,9 +158,12 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                                     >
                                         <SelectTrigger className="h-auto p-0 border-none bg-transparent hover:bg-transparent shadow-none w-auto ring-0 focus:ring-0">
                                              <div className="flex items-center gap-2 px-1 py-0.5 rounded-sm hover:bg-surface-muted/50 transition-colors cursor-pointer">
+                                                 {/* Sidebar legend, not a map marker: this is the one
+                                                     surface where a member's chosen category colour is
+                                                     still shown. Uncategorised falls back to a token. */}
                                                  <div
                                                     className="w-3 h-3 rounded-full"
-                                                    style={{ backgroundColor: currentCategory?.color || "#9CA3AF" }}
+                                                    style={{ backgroundColor: currentCategory?.color || "var(--border-strong)" }}
                                                  />
                                                  <span className="truncate max-w-[120px] text-sm text-text-primary">
                                                     {currentCategory?.label || "Uncategorized"}

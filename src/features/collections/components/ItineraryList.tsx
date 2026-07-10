@@ -464,9 +464,9 @@ function ItineraryDayColumn({
 
     setIsEditDialogOpen(false);
   };
-
+  // Kit `.day`: hairline, radius-sm, white fill — boxed, but never tinted or soft-cornered.
   return (
-    <AccordionItem value={`day-${dayNumber}`} className="border-b-0 mb-4 bg-surface-muted/30 rounded-lg overflow-hidden border relative group">
+    <AccordionItem value={`day-${dayNumber}`} className="border-b-0 mb-4 bg-surface-card rounded-sm overflow-hidden border relative group">
         {canEdit && (
             <div className="absolute top-2 right-4 z-10">
                 <Button

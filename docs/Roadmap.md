@@ -27,8 +27,8 @@ one surface at a time.
 | ✅ | 3 · Building detail | **Merged** — [#1526](https://github.com/jaimenoain/plano/pull/1526) |
 | ✅ | 4 · Landing | **Merged** — [#1527](https://github.com/jaimenoain/plano/pull/1527) |
 | ✅ | 5 · Profile + credits | **Merged** — [#1528](https://github.com/jaimenoain/plano/pull/1528) |
-| ✅ | 6 · City + guides | Auto-merge armed |
-| ☐ | 7 · Map / explore / itinerary | not started |
+| ✅ | 6 · City + guides | **Merged** — [#1529](https://github.com/jaimenoain/plano/pull/1529) |
+| ✅ | 7 · Map / explore / itinerary | Auto-merge armed |
 | ☐ | 8 · Events + connect + notifications | not started |
 | ☐ | 9 · Auth flows | not started |
 | ☐ | 10 · Settings + admin | not started |
@@ -382,15 +382,107 @@ Owner files verified present. Each row: branch → files → designed screen →
   - The continent tabs and map filter chips stay black-filled pills. Both kits draw them that way;
     `PATTERNS.md`'s "quiet text tabs, not pills" governs the profile surface.
 
-### [ ] PR 7 · Map / explore / itinerary
+### [x] PR 7 · Map / explore / itinerary
 
 - **Branch:** `design/map-explore-conformance` · **Screens:** `search-map.html`, `explore.html`,
   `itinerary.html`
-- **Files:** `src/features/search/SearchPage.tsx`, `src/features/explore/pages/Explore.tsx`,
-  `src/features/collections/components/CollectionMapPage.tsx`
-- **Known deltas:** SERP column is 400px (`spacing-search-serp` token already exists); map markers
-  are `currentColor` and **never lime**; nav over the map may use the `glass` utility; Explore uses
-  the **inverse** `BottomNav` variant.
+- **Files:** `src/features/maps/components/BuildingSidebar.tsx` (**the real `/search` SERP row** — see
+  below), `src/features/search/components/{DiscoveryBuildingCard,DiscoveryList}.tsx`,
+  `src/features/posts/components/DiscoveryCard.tsx` (the Explore card, misfiled in `posts/`) plus new
+  `DiscoveryAwardOverlay.tsx`, `src/features/explore/pages/Explore.tsx`,
+  `src/features/collections/components/{CollectionMapPage,ItineraryList,CollectionBuildingCard}.tsx`,
+  `src/features/maps/{constants.ts,constants/mapMarkerFills.ts,utils/pinStyling.ts}` and
+  `components/{MapMarkers,ItineraryRoutes}.tsx`, plus new `src/features/maps/index.ts` (barrel),
+  `src/components/ui/rating-dots.tsx`, `src/components/ui/michelin-rating-input.tsx`.
+- **Trap for the next reader — `/search` does not render `DiscoveryBuildingCard`.** The name says
+  otherwise and `SearchPage.tsx` gives no hint, but `DiscoveryBuildingCard` + `DiscoveryList` render
+  **only** inside `AddBuildingsToCollectionDialog`, a modal picker. The SERP row you see at `/search`
+  is hand-rolled inside `BuildingSidebar.tsx`. Browser verification caught this after the "SERP" work
+  had already been done on the wrong component; both were fixed, but check what a route actually
+  mounts before styling it.
+- **Known deltas (as originally scoped):** SERP column is 400px (`spacing-search-serp` token already
+  exists); map markers are `currentColor` and **never lime**; nav over the map may use the `glass`
+  utility; Explore uses the **inverse** `BottomNav` variant.
+- **The lime markers had a root cause, not a style.** `constants/mapMarkerFills.ts` declared
+  `brandPrimary: "#BEFF00"` beneath a comment promising its values mirror `src/index.css`. When the
+  brand redesign flipped `--brand-primary` from lime to near-black `#171717`, this mirror was never
+  updated, and every Tier-S pin, Tier-3 cluster and itinerary marker went on painting itself lime —
+  under `text-white` / `text-brand-primary-foreground` labels, so it was a contrast failure too. The
+  fix is one character-for-character value; the key name was right all along. `DAY_COLORS` was
+  likewise eight *identical* lime strings, so the itinerary map had never actually distinguished its
+  days.
+- **Delivered:** `MAP_MARKER_FILL.brandPrimary` → `#171717`; `brandSecondary` (`#F7FFE0`, a lime wash
+  with no surviving token) deleted; the three photography-gap hexes folded in as `--feedback-*`
+  mirrors, so the file is now the *only* hex in `src/features/maps` and carries a documented
+  file-level `eslint-disable` (precedent: `chart.tsx`). Rings inverted with the fills — Tier S and
+  Tier-3 clusters are black faces with **white** 2px rings (`border-text-primary` on a black face was
+  black-on-black), matching the kit's `.pin .dot`. `DAY_COLORS` → `DAY_ROUTE_OPACITY` +
+  `getDayRouteOpacity()`: routes are one black ink separated by opacity (kit strokes Day 1 at 0.6,
+  Day 2 at 0.35), which *restores* a day distinction that never existed. Itinerary markers rebuild
+  their `classes` rather than append, because `border-gray-600` and `border-white` would otherwise
+  race in the stylesheet — Tailwind resolves that by rule order, not class order. The collection map
+  went monochrome (owner decision): status and rating ladders now read black → white → muted instead
+  of green/orange and gold/silver/bronze. On `/search`, the SERP row (`BuildingSidebar`) was already
+  unboxed, but its name hedged at **14px/600** against the kit's 19px/700 — the commonest cause of a
+  flat Plano screen — so it went to `text-lg font-bold tracking-tight`; its hand-rolled dot ladder,
+  whose `aria-label="Rating: 3"` announced a **score** to screen readers, became `RatingDots`
+  ("3 distinctions"); its flat grey "No image" box became a labelled `.photo-placeholder`; the typed
+  `Add building →` became a `.cta-link`; hover tint and eyebrow tracking aligned to the kit. The modal
+  picker row (`DiscoveryBuildingCard`) left its `<Card>` for an unboxed hairline row, lost the
+  `rounded-md` compact thumb, dropped `font-black` — **weight 900, which the system bans outright** —
+  to `text-xl font-bold`, swapped its `Circle` ladder for `RatingDots`, and traded an `amber-500/600`
+  award chip (raw palette) for a monochrome hairline badge; the year became `.meta-code`;
+  `DiscoveryList`'s boxed skeletons and its `space-y-4` gutter went, so rows sit flush and their
+  hairlines form one continuous rule. On
+  `/explore`, the award overlay's bare numerals `1 2 3` (and `1 pt` / `2 pts`) — the exact "X out of
+  3" reading the award model exists to avoid — became the named tiers **Impressive / Essential /
+  Masterpiece**, each with its own earned dots, extracted to `DiscoveryAwardOverlay.tsx`;
+  `RatingDots` gained `tone="inverse"` (the kit's `.rdot.inv`) for the black stage; `AWARD_TIERS` is
+  now exported from `MichelinRatingInput` so every surface names the tiers identically; the card name
+  became `.headline`; and "Next building →" became a `.cta-link`, whose injected arrow is the one
+  sanctioned lime on the surface. Four arbitrary tracking/size values in `Explore.tsx` collapsed to
+  `tracking-widest` / `text-2xs`. The itinerary rail took two new tokens
+  (`--spacing-collection-rail` 396px, `-narrow` 360px) against the kit's `.col-shell`; its `h1` went
+  20px → 24px; `shadow-xl` left the dialog; day cards went `rounded-lg bg-surface-muted/30` →
+  `rounded-sm bg-surface-card` (kit `.day` — boxed, but never tinted).
+- **Verified in the browser:** no `rgb(190, 255, 0)` at rest across every computed
+  `background/color/border/fill/stroke` **and** `::before`/`::after` on `/search` (877 elements),
+  `/explore` (689) and two collection maps; the only lime left on `/explore` is
+  `.cta-link:hover::after`. Tier-S pin faces compute `rgb(23, 23, 23)` with a white 2px ring (6 of 64
+  pins); SERP name computes 18px/700/−0.54px; SERP thumbs `border-radius: 0px`; the award renders as
+  "3 distinctions", and zero `aria-label^="Rating:"` nodes survive; the photo-less slot renders a
+  `.photo-placeholder` labelled "No photo"; the collection rail measures exactly 396px and its `h1`
+  24px/700; itinerary day cards compute `border-radius: 2px` on a white fill; `tracking-widest`
+  computes to 2.4px at 16px (= 0.15em); no horizontal overflow at 375px. The Explore award overlay
+  reads **SAVE · IMPRESSIVE · ESSENTIAL · MASTERPIECE** with white (`.rdot.inv`) dots and a
+  `.cta-link` whose `::after` supplies the `→`. Both baselines **ratcheted down**
+  (deep-feature imports 633 → 631; `CollectionMapPage.tsx` 1677 → 1668, `DiscoveryCard.tsx`
+  837 → 777, `BuildingSidebar.tsx` 598 → 593). The raw-hex guard now covers `src/features/{search,explore}/**/*.tsx` and
+  `src/features/maps/**/*.{ts,tsx}` — maps is the first directory guarded as `.ts` too, since every
+  hex it ever held lived in `.ts`, which is exactly how the lime survived six conformance PRs.
+- **Deferred / flagged, not done this PR:**
+  - **Custom collection categories now render identically on the map.** Members pick a colour per
+    category and monochrome markers cannot carry it, so `CollectionSettingsDialog`'s colour picker is
+    a control with no effect on the map (it still tints the sidebar legend in
+    `CollectionBuildingCard`). Settings is PR 10's surface, so the picker was left alone. Resolve it
+    by either re-encoding custom categories monochromatically — the kit numbers its itinerary pins,
+    `.pin .num` — or retiring the picker.
+  - `src/features/collections/**` therefore **cannot** join the raw-hex ESLint guard: that picker
+    stores member-chosen hexes as *data*, not as design tokens.
+  - The photography-gap overlay keeps its red/amber/green. It is a data-coverage heatmap, not a place
+    marker — the one map layer that stays chromatic. Its hexes are now `--feedback-*` mirrors.
+  - `glass` was **not** adopted on `/search`. The utility hardcodes `border-b`, which suits a top bar;
+    both candidates there are floating pills needing a full hairline, and `search-map.html` itself
+    renders its nav solid above the split rather than over the map. Forcing it would have been a
+    regression.
+  - `BottomNav` already ships the inverse (dark) treatment on `/explore`, keyed off
+    `location.pathname` rather than a `variant` prop. The appearance conforms; the API shape does not,
+    and that file is global chrome owned by PR 1.
+  - `pinStyling.ts` still carries `border-gray-600` (raw Tailwind palette, not hex, so the guard is
+    silent). Three marker tests assert that exact class; retiring it wants its own change.
+  - `CollectionMapPage.tsx` (1668) and `ItineraryList.tsx` (878) remain over the 400-line component
+    budget. Both shrank or held; neither was extracted, since the colour block collapsed enough to
+    absorb this PR's edits.
 
 ### [ ] PR 8 · Events + connect + notifications
 
@@ -431,9 +523,9 @@ Measured on `main` after the foundation merged:
 
 | Debt | Count | How it dies |
 |---|---|---|
-| `tracking-[0.15em]` arbitrary values | **205** (234 before the landing PR, 233 before profile+credits, 207 before city+guides) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
-| Raw hex in `src/features` + `src/pages` | **31** across 12 files | Replace with token aliases as you touch each surface. Note `src/features/maps` holds 10 `#BEFF00` — lime map markers are a bug (PR 7). |
-| ESLint raw-hex guard coverage | `components/ui` + `components/layout` + `features/feed` + `features/buildings` + `features/localities` + `features/guides` | Once a feature directory is clean, widen the `files` glob in `eslint.config.js`. |
+| `tracking-[0.15em]` arbitrary values | **202** (234 before the landing PR, 233 before profile+credits, 207 before city+guides, 205 before map+explore) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
+| Raw hex in `src/features` + `src/pages` | **21** across 11 files (31/12 before PR 7) | Replace with token aliases as you touch each surface. The lime map markers are **fixed** (PR 7). Two remaining `#BEFF00` strings are prose in comments, not literals. `src/features/maps/constants/mapMarkerFills.ts` is the one *sanctioned* hex mirror — MapLibre portals markers outside the CSS-variable cascade — and carries a documented `eslint-disable`. |
+| ESLint raw-hex guard coverage | `components/ui` + `components/layout` + `features/feed` + `features/buildings` + `features/localities` + `features/guides` + `features/search` + `features/explore` + `features/maps` (**`.ts` and `.tsx`**) | Once a feature directory is clean, widen the `files` glob in `eslint.config.js`. Guard `.ts` too where colour constants live — that is how the lime markers survived six PRs. `features/collections` is blocked: its category colour picker stores hexes as user data. |
 
 Do **not** attempt a repo-wide sweep of these — it produces an unreviewable diff and will collide
 with every surface PR. Fold each into the PR that already owns the file.

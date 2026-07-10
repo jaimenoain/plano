@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { DiscoveryCard } from './DiscoveryCard';
 import { BrowserRouter } from 'react-router';
 
@@ -56,6 +56,12 @@ vi.mock('framer-motion', async () => {
 
 
 describe('DiscoveryCard', () => {
+  // No global testing-library cleanup in this repo — renders would otherwise accumulate
+  // and `getByText` would find duplicates across tests.
+  afterEach(() => {
+    cleanup();
+  });
+
   const mockBuilding = {
     id: 'b1',
     name: 'Test Building',
@@ -77,5 +83,49 @@ describe('DiscoveryCard', () => {
     expect(
       screen.getByText((content) => content.includes('Test City') && content.includes('Test Designer')),
     ).toBeTruthy();
+  });
+
+  describe('award overlay', () => {
+    // ArrowRight is the keyboard equivalent of the save swipe; it opens the overlay.
+    const openOverlay = () => {
+      render(
+        <BrowserRouter>
+          <DiscoveryCard building={mockBuilding} />
+        </BrowserRouter>
+      );
+      fireEvent.keyDown(window, { key: 'ArrowRight' });
+    };
+
+    it('names the award tiers instead of numbering them', () => {
+      openOverlay();
+
+      expect(screen.getByText('Impressive')).toBeTruthy();
+      expect(screen.getByText('Essential')).toBeTruthy();
+      expect(screen.getByText('Masterpiece')).toBeTruthy();
+      expect(screen.getByText('Save')).toBeTruthy();
+    });
+
+    it('never renders a numeric score', () => {
+      openOverlay();
+
+      // The old overlay showed bare 1 / 2 / 3 with "1 pt" / "2 pts" / "3 pts" labels —
+      // exactly the "X out of 3" reading the award model exists to avoid.
+      for (const banned of ['1', '2', '3', '1 pt', '2 pts', '3 pts']) {
+        expect(screen.queryByText(banned)).toBeNull();
+      }
+      expect(screen.queryByText(/points/i)).toBeNull();
+    });
+
+    it('renders each tier with its own earned dots, inverted for the black stage', () => {
+      openOverlay();
+
+      expect(screen.getByLabelText('1 distinction')).toBeTruthy();
+      expect(screen.getByLabelText('2 distinctions')).toBeTruthy();
+      const masterpiece = screen.getByLabelText('3 distinctions');
+      expect(masterpiece).toBeTruthy();
+      // `.rdot.inv` — white dots, never lime, never black-on-black.
+      const dot = masterpiece.firstElementChild as HTMLElement;
+      expect(dot.className).toContain('bg-text-inverse');
+    });
   });
 });

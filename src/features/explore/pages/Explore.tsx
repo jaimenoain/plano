@@ -529,7 +529,7 @@ export default function Explore() {
                   {locationFilter.label || "World"}
                 </span>
                 {extraFilterCount > 0 && (
-                  <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-white/20 text-[10px] font-semibold tabular-nums">
+                  <span className="flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-white/20 text-2xs font-semibold tabular-nums">
                     {extraFilterCount}
                   </span>
                 )}
@@ -562,14 +562,14 @@ export default function Explore() {
                 className="flex h-full w-3/4 flex-col overflow-hidden border-l border-border-default bg-surface-default p-0 text-text-primary sm:w-search-serp sm:max-w-none"
               >
                 <SheetHeader className="border-b border-border-default px-4 pb-5 pt-6 text-left shrink-0 md:px-6">
-                  <SheetTitle className="text-xs font-medium tracking-[0.2em] uppercase text-text-secondary">
+                  <SheetTitle className="text-xs font-medium tracking-widest uppercase text-text-secondary">
                     Explore filters
                   </SheetTitle>
                 </SheetHeader>
                 <ScrollArea className="min-h-0 flex-1">
                   <div className="space-y-6 px-4 pb-8 pt-4 md:px-6">
                     <div className="space-y-3">
-                      <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+                      <p className="text-xs font-medium uppercase tracking-widest text-text-secondary">
                         Location
                       </p>
                       <DiscoverySearchInput
@@ -646,7 +646,7 @@ export default function Explore() {
           {/* Empty */}
           {status !== "pending" && status !== "error" && buildings.length === 0 && (
             <div className="h-full w-full flex flex-col items-center justify-center snap-center text-center px-8 gap-4">
-              <p className="text-2xs font-medium tracking-[0.2em] uppercase text-white/20 mb-1">
+              <p className="text-2xs font-medium tracking-widest uppercase text-white/20 mb-1">
                 {locationFilter.label || "No results"}
               </p>
               <p className="text-2xl font-bold tracking-tight text-white/60 leading-tight">

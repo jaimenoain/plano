@@ -17,14 +17,33 @@ const createMockBuilding = (overrides: Partial<ClusterResponse>): ClusterRespons
   ...overrides
 } as ClusterResponse);
 
+describe('MAP_MARKER_FILL', () => {
+  // Regression guard. `brandPrimary` used to hold #BEFF00: the constant was written when
+  // --brand-primary *was* lime, and it was never updated when the brand flipped to black.
+  // Markers are monochrome; lime is rationed to CTA fills, focus rings, the hover arrow
+  // and one .accent-tag. See docs/DESIGN_TOKENS.md.
+  it('never paints a marker face with brand-accent lime', () => {
+    const lime = ['#BEFF00', '#beff00'];
+    for (const [key, value] of Object.entries(MAP_MARKER_FILL)) {
+      expect(lime, `MAP_MARKER_FILL.${key} is lime`).not.toContain(value);
+    }
+  });
+
+  it('resolves brandPrimary to the near-black brand token, not lime', () => {
+    expect(MAP_MARKER_FILL.brandPrimary).toBe('#171717');
+  });
+});
+
 describe('getPinStyle', () => {
   describe('Suite 1: Library Logic (User Ratings)', () => {
-    it('returns Tier S (Lime) for rating 3', () => {
+    it('returns Tier S (solid black face, white ring) for rating 3', () => {
       const item = createMockBuilding({ rating: 3, status: 'visited' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('S');
       expect(style.size).toBe(30);
       expect(style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
+      // The ring inverts with the fill — a black ring on a black face is invisible.
+      expect(style.classes).toContain('border-white');
       expect(style.classes).toContain('text-brand-primary-foreground');
     });
 
@@ -65,7 +84,7 @@ describe('getPinStyle', () => {
   });
 
   describe('Suite 2: Discover Logic (Global Ranking)', () => {
-    it("returns Tier S (Lime) for 'Top 1%'", () => {
+    it("returns Tier S (solid black face) for 'Top 1%'", () => {
       const item = createMockBuilding({ tier_rank_label: 'Top 1%' });
       const style = getPinStyle(item);
       expect(style.tier).toBe('S');
@@ -150,12 +169,13 @@ describe('getPinStyle', () => {
   });
 
   describe('Suite 5: Cluster Logic', () => {
-    it('returns solid brand-secondary fill for Tier 3 clusters', () => {
+    it('returns a solid black fill with inverted numeral for Tier 3 clusters', () => {
       const item = createMockBuilding({ is_cluster: true, max_tier: 3, count: 10 });
       const style = getPinStyle(item);
       expect(style.tier).toBe('Cluster');
-      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.brandSecondary);
-      expect(style.classes).toContain('border-brand-primary');
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
+      expect(style.classes).toContain('text-white');
+      expect(style.classes).toContain('border-white');
       expect(style.classes).toContain('border-2');
     });
 

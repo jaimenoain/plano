@@ -91,6 +91,47 @@ describe('DiscoveryBuildingCard', () => {
     expect(flexRow).not.toBeNull();
   });
 
+  // Kit `.serp-item` — content rows float: hairline separator only, no box, no shadow,
+  // and imagery stays sharp. See design-system/.../CHECKLIST.md.
+  it('renders an unboxed row with a single hairline separator', () => {
+    render(
+      <BrowserRouter>
+        <DiscoveryBuildingCard building={mockBuilding} />
+      </BrowserRouter>
+    );
+
+    const row = screen.getByTestId('serp-row');
+    expect(row.className).toContain('border-b');
+    expect(row.className).not.toContain('shadow');
+    // `border-b` alone — never a full box or a card fill.
+    expect(row.className).not.toMatch(/\bborder\b(?!-)/);
+    expect(row.className).not.toContain('bg-surface-card');
+  });
+
+  it('sets the building name at weight 700, never the banned 800/900', () => {
+    render(
+      <BrowserRouter>
+        <DiscoveryBuildingCard building={mockBuilding} />
+      </BrowserRouter>
+    );
+
+    const name = screen.getByText('Test Building');
+    expect(name.className).toContain('font-bold');
+    expect(name.className).not.toContain('font-black');
+    expect(name.className).not.toContain('font-extrabold');
+  });
+
+  it('keeps the compact thumbnail sharp-edged', () => {
+    render(
+      <BrowserRouter>
+        <DiscoveryBuildingCard building={mockBuilding} variant="compact" />
+      </BrowserRouter>
+    );
+
+    const img = screen.getByRole('img', { name: 'Test Building, Test City' });
+    expect(img.parentElement?.className).not.toContain('rounded');
+  });
+
   it('renders alt_name when provided and different from name', () => {
     const buildingWithAltName = { ...mockBuilding, alt_name: 'Alternative Name' };
     render(
