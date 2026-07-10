@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Feed" subtitle="Editorial activity feed — visits, ratings, collections" viewport="1400x2800" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Feed</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  /* ---- Feed (screen-specific) ---- */
+  .feed{max-width:720px;margin:0 auto;padding:56px 32px 120px;display:flex;flex-direction:column;gap:96px}
+  /* Eyebrow above title — short, text-only location or context. */
+  .feed-eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;color:var(--text-secondary);margin-bottom:10px}
+  .feed-headline{font-size:clamp(42px, 6vw, 64px);font-weight:700;letter-spacing:-0.03em;line-height:1;color:var(--text-primary);margin:0}
+  /* Meta line below title — who, action, rating, when. */
+  .feed-meta{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+  .feed-meta .who-avatar{width:20px;height:20px;border-radius:9999px;background:#262626;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:600}
+  .feed-meta .who-name{font-size:12px;font-weight:500;color:var(--text-primary)}
+  .feed-meta .action{font-size:12px;color:var(--text-secondary)}
+  .feed-meta .when{font-size:12px;color:var(--text-disabled)}
+  .feed-meta .sep{color:var(--text-disabled);font-size:11px}
+  .feed-body{margin-top:24px;font-size:16px;line-height:1.75;color:var(--text-primary);max-width:60ch}
+  .feed-img{margin-top:22px;aspect-ratio:16/9;background:var(--surface-muted) center/cover;border:0}
+  .feed-foot{margin-top:22px;padding-top:16px;border-top:1px solid var(--border-default);display:flex;justify-content:space-between;align-items:center}
+  .feed-foot-l{display:flex;gap:18px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);font-weight:500;align-items:center}
+  .feed-foot-r{display:flex;gap:18px}
+  .icon-btn{background:none;border:0;color:var(--text-secondary);cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:500}
+  .icon-btn:hover{color:var(--text-primary)}
+
+  /* Collection feed item — horizontal mosaic */
+  .mosaic{margin-top:22px;display:grid;grid-template-columns:repeat(4,1fr);gap:1.5px}
+  .mosaic-cell{aspect-ratio:1/1;background:var(--surface-muted) center/cover}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { AppTopNav, SiteFooter } = window.PlanoDesignSystem_e8d587;
+
+// Flexible feed item. `place` sits above the title (short, text-only).
+// Meta line below title carries attribution. `body` is optional.
+const FeedItem = ({who, when, action, rating, place, title, body, img, likes, comments}) => (
+  <article>
+    {place && <div className="feed-eyebrow">{place}</div>}
+    <h2 className="feed-headline">{title}</h2>
+    <div className="feed-meta">
+      <span className="who-avatar">{who[0]}</span>
+      <span className="who-name">{who}</span>
+      <span className="sep">·</span>
+      <span className="action">{action}</span>
+      {rating > 0 && <><span className="sep">·</span><Rating n={rating} size="sm"/></>}
+      <span className="sep">·</span>
+      <span className="when">{when}</span>
+    </div>
+    {img && <div className="feed-img" style={{backgroundImage:`url(${img})`}}/>}
+    {body && <p className="feed-body">{body}</p>}
+    <div className="feed-foot">
+      <div className="feed-foot-l">
+        <span>{likes} LIKES</span>
+        <span>{comments} COMMENTS</span>
+      </div>
+      <div className="feed-foot-r">
+        <button className="icon-btn">Save →</button>
+        <button className="icon-btn">Review →</button>
+      </div>
+    </div>
+  </article>
+);
+
+const Feed = () => (
+  <>
+    <div style={{maxWidth:720,margin:"0 auto",padding:"48px 32px 16px"}}>
+      <div className="eyebrow" style={{marginBottom:10}}>YOUR FEED · TODAY</div>
+      <h1 style={{fontSize:40,fontWeight:600,letterSpacing:"-0.025em",margin:0}}>Wednesday, October 23</h1>
+    </div>
+    <div className="feed">
+      <FeedItem
+        who="Eleanor Okafor" when="2 days ago" action="Visited"
+        rating={2}
+        place="London · 1982"
+        title="Barbican Centre"
+        img={IMG.barbican}
+        body="A cathedral of concrete. The lakeside conservatory at sunset turns the whole estate into a single, improbably serene garden — a Brutalist manifesto that somehow feels like a refuge. Came for the raw architecture; stayed four hours."
+        likes={42} comments={7}
+      />
+
+      {/* Collection item — mosaic treatment. No body — the photos are the argument. */}
+      <article>
+        <div className="feed-eyebrow">Venice & the Veneto</div>
+        <h2 className="feed-headline">A weekend with<br/>Carlo Scarpa.</h2>
+        <div className="feed-meta">
+          <span className="who-avatar" style={{background:"#404040"}}>M</span>
+          <span className="who-name">Marco Rizzi</span>
+          <span className="sep">·</span>
+          <span className="action">Published a collection · 12 buildings</span>
+          <span className="sep">·</span>
+          <span className="when">4 days ago</span>
+        </div>
+        <div className="mosaic">
+          {[IMG.kimbell, IMG.guggenheim, IMG.teshima, IMG.salk].map((u,i)=>(
+            <div key={i} className="mosaic-cell" style={{backgroundImage:`url(${u})`}}/>
+          ))}
+        </div>
+        <div className="feed-foot">
+          <div className="feed-foot-l"><span>28 LIKES</span><span>4 COMMENTS</span></div>
+          <div className="feed-foot-r">
+            <button className="icon-btn">Save →</button>
+            <button className="icon-btn">Open →</button>
+          </div>
+        </div>
+      </article>
+
+      {/* No body — the title and photo hold it alone. */}
+      <FeedItem
+        who="Claire Bergström" when="1 week ago" action="Rated"
+        rating={3}
+        place="La Jolla, CA · 1965"
+        title="Salk Institute"
+        img={IMG.salk}
+        body="The travertine plaza splits the Pacific in two. Photographs cannot prepare you for the silence at the centre — the building insists you stop talking. Went alone. Came back changed."
+        likes={117} comments={19}
+      />
+
+      {/* No body, no rating — a want-to-visit. */}
+      <FeedItem
+        who="Jaime Noain" when="2 weeks ago" action="Wants to visit"
+        rating={0}
+        place="Vals, Switzerland · 1996"
+        title="Therme Vals"
+        img={IMG.therme}
+        likes={8} comments={1}
+      />
+    </div>
+  </>
+);
+
+function App(){
+  return (
+    <div data-screen-label="Feed">
+      <AppTopNav activePath="/feed" userInitial="J"/>
+      <Feed/>
+      <SiteFooter/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

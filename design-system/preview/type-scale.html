@@ -1,43 +1,24 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<title>Plano · Type · Scale</title>
-<link rel="stylesheet" href="../colors_and_type.css" />
+<!DOCTYPE html>
+<!-- @dsCard group="Type" name="Type Scale" subtitle="7xl → 2xs scale on Inter" viewport="720x440" -->
+<html lang="en"><head><meta charset="UTF-8"><title>Type Scale</title>
+<link rel="stylesheet" href="../colors_and_type.css">
 <style>
-  html, body { margin: 0; padding: 0; background: #FAFAFA; }
-  .card { padding: 22px 26px; }
-  .head { display:flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
-  .meta { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-disabled); text-transform: uppercase;}
-  table { width: 100%; border-collapse: collapse; }
-  td { padding: 8px 0; border-bottom: 1px solid var(--border-default); vertical-align: baseline; }
-  td.token { width: 18%; font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary); letter-spacing: 0.04em; padding-right: 16px;}
-  td.size  { width: 14%; font-family: var(--font-mono); font-size: 10px; color: var(--text-disabled); letter-spacing: 0.04em; text-align: right; padding-right: 22px;}
-  td.spec  { color: var(--text-primary); }
-  tr:last-child td { border-bottom: 0; }
-</style>
-</head>
-<body>
-<div class="card">
-  <div class="head">
-    <span class="eyebrow">Type scale · Inter</span>
-    <span class="meta">15 steps · 10 → 72</span>
-  </div>
-  <table>
-    <tr><td class="token">7xl</td><td class="size">72 / 76</td><td class="spec" style="font-size:42px; font-weight:700; letter-spacing:-0.035em; line-height:1;">Aa Plano</td></tr>
-    <tr><td class="token">6xl</td><td class="size">60 / 64</td><td class="spec" style="font-size:34px; font-weight:700; letter-spacing:-0.03em; line-height:1;">Editorial hero</td></tr>
-    <tr><td class="token">5xl</td><td class="size">48 / 52</td><td class="spec" style="font-size:28px; font-weight:700; letter-spacing:-0.025em; line-height:1.05;">Feed building name</td></tr>
-    <tr><td class="token">4xl</td><td class="size">40 / 48</td><td class="spec" style="font-size:24px; font-weight:700; letter-spacing:-0.02em;">Page heading</td></tr>
-    <tr><td class="token">3xl</td><td class="size">32 / 38</td><td class="spec" style="font-size:20px; font-weight:600; letter-spacing:-0.015em;">Section heading</td></tr>
-    <tr><td class="token">2xl</td><td class="size">24 / 32</td><td class="spec" style="font-size:18px; font-weight:600;">Sub-section</td></tr>
-    <tr><td class="token">xl</td><td class="size">20 / 28</td><td class="spec" style="font-size:16px; font-weight:600;">Card title · h3</td></tr>
-    <tr><td class="token">lg</td><td class="size">18 / 28</td><td class="spec" style="font-size:15px; font-weight:400;">Lead paragraph copy</td></tr>
-    <tr><td class="token">base</td><td class="size">16 / 24</td><td class="spec" style="font-size:14px; font-weight:400;">Body copy — the working size for everything that has to be read.</td></tr>
-    <tr><td class="token">sm</td><td class="size">14 / 20</td><td class="spec" style="font-size:13px; color:var(--text-secondary);">Supporting · table cells · form labels</td></tr>
-    <tr><td class="token">xs</td><td class="size">12 / 16</td><td class="spec" style="font-size:11px; color:var(--text-secondary);">Captions, timestamps, badge labels</td></tr>
-    <tr><td class="token">2xs-plus</td><td class="size">11 / 14</td><td class="spec" style="font-size:10px; font-weight:500; letter-spacing:0.15em; text-transform:uppercase; color:var(--text-primary);">Eyebrow · CTA · tab strip</td></tr>
-    <tr><td class="token">2xs</td><td class="size">10 / 14</td><td class="spec" style="font-size:9px; font-weight:500; letter-spacing:0.18em; text-transform:uppercase; color:var(--text-disabled);">Micro · divider · footer</td></tr>
-  </table>
-</div>
-</body>
-</html>
+  html,body{margin:0;padding:0;background:var(--surface-default);font-family:var(--font-sans)}
+  .wrap{padding:24px}
+  .row{display:grid;grid-template-columns:100px 1fr auto;align-items:baseline;gap:24px;padding:10px 0;border-bottom:1px solid var(--border-default)}
+  .token{font-family:var(--font-mono);font-size:10px;color:var(--text-secondary);letter-spacing:.05em}
+  .spec{font-family:var(--font-mono);font-size:10px;color:var(--text-disabled)}
+  .s{color:var(--text-primary)}
+</style></head>
+<body><div class="wrap">
+  <div class="row"><div class="token">7xl</div><div class="s" style="font-size:54px;font-weight:700;letter-spacing:-.035em;line-height:1">Aa</div><div class="spec">72 · bold</div></div>
+  <div class="row"><div class="token">6xl</div><div class="s" style="font-size:44px;font-weight:700;letter-spacing:-.03em;line-height:1">Aa</div><div class="spec">60 · bold</div></div>
+  <div class="row"><div class="token">4xl</div><div class="s" style="font-size:34px;font-weight:700;letter-spacing:-.025em">Aa</div><div class="spec">40 · bold</div></div>
+  <div class="row"><div class="token">3xl</div><div class="s" style="font-size:28px;font-weight:600;letter-spacing:-.02em">Aa</div><div class="spec">32 · semibold</div></div>
+  <div class="row"><div class="token">2xl</div><div class="s" style="font-size:22px;font-weight:600">Aa</div><div class="spec">24 · semibold</div></div>
+  <div class="row"><div class="token">xl</div><div class="s" style="font-size:18px;font-weight:600">Aa</div><div class="spec">20 · semibold</div></div>
+  <div class="row"><div class="token">base</div><div class="s" style="font-size:16px">Aa</div><div class="spec">16 · regular</div></div>
+  <div class="row"><div class="token">sm</div><div class="s" style="font-size:14px">Aa</div><div class="spec">14 · regular</div></div>
+  <div class="row"><div class="token">xs</div><div class="s" style="font-size:12px">Aa</div><div class="spec">12 · regular</div></div>
+  <div class="row"><div class="token">2xs</div><div class="s" style="font-size:10px;letter-spacing:.08em;text-transform:uppercase">Aa</div><div class="spec">10 · medium · caps</div></div>
+</div></body></html>

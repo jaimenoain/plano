@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Visit log" subtitle="Review detail — award, body, comments, building card" viewport="1400x2600" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Visit log</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  .doc{max-width:896px;margin:0 auto;padding:0 32px}
+  .sec-label{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .inp{width:100%;border:1px solid var(--border-strong);background:#fff;border-radius:2px;padding:12px 14px;font-size:15px;color:var(--text-primary);outline:none;transition:border 150ms;line-height:1.6;resize:none}
+  .inp:focus{border-color:#171717}
+  .inp::placeholder{color:var(--text-disabled)}
+  .role-badge{font-size:11px;font-weight:500;padding:3px 9px;border:1px solid var(--border-default);border-radius:2px;color:var(--text-primary)}
+
+  /* ============ VISIT LOG (review detail) ============ */
+  .rv-sec-h{border-bottom:1px solid var(--text-primary);padding-bottom:10px;margin-bottom:32px;font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-primary)}
+  .rv-sec-h .num{font-family:var(--font-mono);color:var(--text-disabled);margin-right:10px}
+  .rv-author{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+  .rv-id{display:flex;align-items:center;gap:12px}
+  .rv-av{width:44px;height:44px;border-radius:9999px;background-size:cover;background-position:center;filter:grayscale(1);border:1px solid var(--border-default);flex-shrink:0}
+  .rv-name{font-size:15px;font-weight:700;letter-spacing:-.01em}
+  .rv-badge{font-size:11px;font-weight:500;padding:2px 8px;border:1px solid var(--border-default);border-radius:2px;color:var(--text-secondary)}
+  .rv-time{font-size:12px;color:var(--text-secondary);margin-top:3px}
+  .rv-body{font-size:20px;line-height:1.6;color:var(--text-primary);letter-spacing:-.01em;margin:26px 0}
+  .rv-body p{margin:0 0 18px}
+  .rv-body p:last-child{margin-bottom:0}
+  .rv-photo{width:100%;aspect-ratio:3/2;background-size:cover;background-position:center;filter:grayscale(1);margin:0 0 24px}
+  .rv-bar{display:flex;align-items:center;gap:20px;padding:16px 0;border-top:1px solid var(--border-default);border-bottom:1px solid var(--border-default)}
+  .rv-actn{display:inline-flex;align-items:center;gap:7px;background:none;border:0;cursor:pointer;font-size:13px;color:var(--text-secondary);padding:0;transition:color 150ms}
+  .rv-actn:hover{color:var(--text-primary)}
+  .rv-actn.liked{color:var(--text-primary)}
+  .rv-likers{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary);margin-top:14px}
+  .rv-facepile{display:inline-flex}
+  .rv-facepile i{width:20px;height:20px;border-radius:9999px;background-size:cover;background-position:center;border:1.5px solid var(--surface-default);margin-left:-6px;filter:grayscale(1)}
+  .rv-facepile i:first-child{margin-left:0}
+  .cmt{display:flex;gap:12px;padding:16px 0}
+  .cmt-av{width:34px;height:34px;border-radius:9999px;background-size:cover;background-position:center;filter:grayscale(1);flex-shrink:0}
+  .cmt-name{font-size:13px;font-weight:600}
+  .cmt-when{font-size:11px;color:var(--text-disabled)}
+  .cmt-text{font-size:14px;color:var(--text-primary);line-height:1.5;margin-top:3px}
+  .cmt-like{font-size:11px;color:var(--text-secondary);background:none;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:0}
+  .cmt-like:hover{color:var(--text-primary)}
+  .cmt-compose{display:flex;gap:12px;align-items:flex-start;padding-top:18px}
+  .rv-bldg{display:block;position:relative;overflow:hidden}
+  .rv-bldg-img{width:100%;aspect-ratio:16/9;background-size:cover;background-position:center;filter:grayscale(1)}
+  .rv-bldg-cap{position:absolute;left:16px;bottom:14px;right:16px;color:#fff;font-size:20px;font-weight:700;letter-spacing:-.02em;text-shadow:0 1px 12px rgba(0,0,0,.4)}
+  .rv-meta{display:flex;align-items:flex-start;gap:9px;font-size:14px;color:var(--text-secondary);margin-top:12px}
+  .team-av{width:34px;height:34px;border-radius:9999px;background-size:cover;background-position:center;filter:grayscale(1);flex-shrink:0}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+const { AppTopNav, SiteFooter } = window.PlanoDesignSystem_e8d587;
+
+Object.assign(PLANO_ICONS, {
+  send:'<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>',
+});
+
+const IMG = {
+  barbican:"https://images.unsplash.com/photo-1470723710355-95304d8aece4?w=900&q=80",
+  me:"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80",
+  p1:"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80",
+  p2:"https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80",
+  p3:"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&q=80",
+  p4:"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80",
+  p5:"https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=200&q=80",
+  p6:"https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&q=80",
+  p7:"https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&q=80",
+};
+
+const COMMENTS = [
+  {av:IMG.p3,name:"concreteclara",when:"2 days ago",text:"The way the water gardens sit below the podium — most people miss it entirely. Glad you caught it.",likes:4},
+  {av:IMG.p6,name:"Studio Mono",when:"1 day ago",text:"Board-marked concrete done right. Try it again at dusk when the lights come up in the towers.",likes:1},
+];
+
+const Review = () => {
+  const [liked, setLiked] = useState(false);
+  const [likes, setLikes] = useState(23);
+  return (
+    <div className="doc" style={{paddingTop:44,paddingBottom:96}}>
+      <header className="rv-sec-h"><span className="num">§ 01</span>Visit log</header>
+
+      <article style={{borderBottom:"1px solid var(--border-default)",paddingBottom:32}}>
+        <div className="rv-author">
+          <div className="rv-id">
+            <div className="rv-av" style={{backgroundImage:`url(${IMG.me})`}}/>
+            <div>
+              <div style={{display:"flex",alignItems:"center",gap:9}}>
+                <span className="rv-name">jaimenoain</span>
+                <span className="rv-badge">Visited</span>
+              </div>
+              <div className="rv-time">3 days ago · Logged from London</div>
+            </div>
+          </div>
+          <Rating n={2} size="lg"/>
+        </div>
+
+        <div className="rv-body">
+          <p>A fortress of board-marked concrete that somehow feels generous. The elevated walkways reframe the city as a series of thresholds — you never quite arrive, you keep passing through.</p>
+          <p>The water gardens below the podium are the quiet masterstroke. Come at dusk, when the towers switch on and the whole estate reads as one continuous section.</p>
+        </div>
+
+        <div className="rv-photo" style={{backgroundImage:`url(${IMG.barbican})`}}/>
+
+        <div className="rv-bar">
+          <button className={`rv-actn ${liked?"liked":""}`} onClick={()=>{setLiked(!liked);setLikes(liked?likes-1:likes+1);}}>
+            {liked?<HeartFill size={16}/>:<Icon name="heart" size={16}/>} {likes}
+          </button>
+          <span className="rv-actn" style={{cursor:"default"}}><Icon name="message" size={16}/> {COMMENTS.length} comments</span>
+        </div>
+
+        <div className="rv-likers">
+          <span className="rv-facepile">
+            {[IMG.p2,IMG.p3,IMG.p6].map((u,i)=><i key={i} style={{backgroundImage:`url(${u})`}}/>)}
+          </span>
+          Liked by <b style={{color:"var(--text-primary)",fontWeight:500}}>marcusbuilt</b> and <b style={{color:"var(--text-primary)",fontWeight:500}}>{likes-1} others</b>
+        </div>
+      </article>
+
+      <section style={{padding:"28px 0",borderBottom:"1px solid var(--border-default)"}}>
+        <div className="sec-label" style={{marginBottom:6}}>Comments</div>
+        {COMMENTS.map((c,i)=>(
+          <div key={i} className="cmt">
+            <div className="cmt-av" style={{backgroundImage:`url(${c.av})`}}/>
+            <div style={{flex:1}}>
+              <div style={{display:"flex",alignItems:"center",gap:9}}>
+                <span className="cmt-name">{c.name}</span><span className="cmt-when">{c.when}</span>
+              </div>
+              <div className="cmt-text">{c.text}</div>
+              <button className="cmt-like"><Icon name="heart" size={12}/> {c.likes}</button>
+            </div>
+          </div>
+        ))}
+        <div className="cmt-compose">
+          <div className="cmt-av" style={{backgroundImage:`url(${IMG.me})`}}/>
+          <div style={{flex:1,display:"flex",gap:10,alignItems:"flex-start"}}>
+            <textarea className="inp" style={{minHeight:46,height:46}} placeholder="Write a comment…"/>
+            <button className="btn btn-dark" style={{width:46,padding:0,flexShrink:0,height:46}}><Icon name="send" size={16}/></button>
+          </div>
+        </div>
+      </section>
+
+      <section style={{paddingTop:36,borderBottom:"1px solid var(--border-default)",paddingBottom:36}}>
+        <a className="rv-bldg">
+          <div className="rv-bldg-img" style={{backgroundImage:`url(${IMG.barbican})`}}/>
+          <span className="rv-bldg-cap">Barbican Estate</span>
+        </a>
+        <div className="rv-meta"><Icon name="mappin" size={16} style={{marginTop:1}}/><span>Silk Street, London EC2Y 8DS, United Kingdom</span></div>
+        <div className="rv-meta"><Icon name="calendar" size={16}/><span>Completed 1976</span></div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:14}}>
+          {["Chamberlin, Powell & Bon","Brutalism","Listed Grade II"].map(t=>(
+            <span key={t} className="role-badge" style={{color:"var(--text-secondary)"}}>{t}</span>
+          ))}
+        </div>
+        <div style={{marginTop:22}}><button className="cta">View building details <span className="ar">→</span></button></div>
+      </section>
+
+      <section style={{paddingTop:28}}>
+        <div className="sec-label" style={{marginBottom:12}}>Also visited by</div>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          {[IMG.p1,IMG.p2,IMG.p3,IMG.p4,IMG.p5,IMG.p7].map((u,i)=>(
+            <div key={i} className="team-av" style={{backgroundImage:`url(${u})`,border:"1.5px solid var(--surface-default)"}}/>
+          ))}
+        </div>
+        <p style={{fontSize:12,color:"var(--text-secondary)",marginTop:12}}>+ 41 others from the community</p>
+      </section>
+    </div>
+  );
+};
+
+function App(){
+  return (
+    <div data-screen-label="Visit log">
+      <AppTopNav activePath="/feed" userInitial="J"/>
+      <Review/>
+      <SiteFooter/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

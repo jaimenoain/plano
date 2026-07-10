@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Explore" subtitle="Immersive dark building discovery — swipe to save/skip" viewport="1400x1400" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Explore</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  /* Rating dots (inverse variant for dark surface) */
+  .rdots{display:inline-flex;gap:4px;vertical-align:middle;align-items:center}
+  .rdot{width:11px;height:11px;border-radius:9999px;background:#171717;display:inline-block}
+  .rdot.sm{width:8px;height:8px}
+  .rdot.inv{background:#fff}
+
+  /* ============ EXPLORE — immersive dark discovery ============ */
+  .exp-stage{background:#000;min-height:calc(100vh - 64px);display:flex;justify-content:center;padding:0}
+  .exp-rail{position:relative;width:100%;max-width:520px;border-left:1px solid rgba(255,255,255,.06);border-right:1px solid rgba(255,255,255,.06);overflow:hidden}
+  .exp-loc{position:absolute;top:20px;left:0;right:0;display:flex;justify-content:center;z-index:20;pointer-events:none}
+  .exp-pill{pointer-events:auto;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 16px;font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.72);background:rgba(0,0,0,.5);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15)}
+  .exp-pill .cnt{display:inline-flex;align-items:center;justify-content:center;height:16px;min-width:16px;padding:0 4px;border-radius:9999px;background:rgba(255,255,255,.2);font-size:10px;font-weight:600}
+  .exp-prog{position:absolute;top:50%;right:16px;transform:translateY(-50%);display:flex;flex-direction:column;gap:7px;z-index:20}
+  .exp-prog i{width:4px;height:4px;border-radius:9999px;background:rgba(255,255,255,.28);display:block}
+  .exp-prog i.on{background:#fff;height:18px}
+
+  .exp-card{position:relative;height:calc(100vh - 64px);width:100%}
+  .exp-photo{position:absolute;inset:0;background-size:cover;background-position:center}
+  .exp-scrim{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.86) 0%,rgba(0,0,0,.35) 42%,rgba(0,0,0,0) 66%)}
+  .exp-scrim-top{position:absolute;top:0;left:0;right:0;height:180px;background:linear-gradient(to bottom,rgba(0,0,0,.55),transparent)}
+  .exp-meta{position:absolute;left:0;right:0;bottom:0;padding:0 28px 40px;color:#fff;z-index:10}
+  .exp-eyebrow{font-size:10px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.7);display:flex;align-items:center;gap:8px}
+  .exp-eyebrow .dotm{width:5px;height:5px;border-radius:9999px;background:rgba(255,255,255,.9);display:inline-block}
+  .exp-name{font-size:52px;font-weight:700;letter-spacing:-.03em;line-height:.94;margin:14px 0 0;text-wrap:balance;color:#fff}
+  .exp-sub{font-size:15px;color:rgba(255,255,255,.72);margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .exp-sub .mid{opacity:.5}
+  .exp-coord{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.04em;color:rgba(255,255,255,.5);margin-top:16px}
+  .exp-rate{display:flex;align-items:center;gap:10px;margin-top:22px}
+  .exp-rate .rdot{background:#fff}
+  .exp-rate .lab{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+  .exp-actions{display:flex;align-items:center;gap:28px;margin-top:30px;padding-top:22px;border-top:1px solid rgba(255,255,255,.14)}
+  .exp-act{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.72);background:none;border:0;cursor:pointer;transition:color 150ms}
+  .exp-act:hover{color:#fff}
+  .exp-act svg{width:16px;height:16px}
+  .exp-act .ar{transition:transform 150ms}
+  .exp-act:hover .ar{color:#BEFF00}
+  .exp-hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.3);z-index:10}
+  .exp-peek{height:8px;background:linear-gradient(to bottom,rgba(255,255,255,.05),transparent)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { AppTopNav } = window.PlanoDesignSystem_e8d587;
+
+const RatingInv = ({n}) => {
+  if (!n || n < 1) return null;
+  return <span className="rdots">{Array.from({length:n}).map((_,i)=><i key={i} className="rdot inv"/>)}</span>;
+};
+const Pin = () => (<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>);
+const Bookmark = () => (<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>);
+const XIcon = () => (<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>);
+
+const IMG = { barbican:"https://images.unsplash.com/photo-1460574283810-2aab119d8511?w=1400&q=80" };
+
+const Explore = () => (
+  <div className="exp-stage">
+    <div className="exp-rail">
+      <div className="exp-loc">
+        <div className="exp-pill">
+          <Pin/>
+          <span>London</span>
+          <span className="cnt">2</span>
+          <span style={{display:"inline-flex",opacity:.7}}><XIcon/></span>
+        </div>
+      </div>
+      <div className="exp-prog">
+        <i className="on"/><i/><i/><i/><i/>
+      </div>
+
+      <div className="exp-card">
+        <div className="exp-photo" style={{backgroundImage:`url(${IMG.barbican})`}}/>
+        <div className="exp-scrim-top"/>
+        <div className="exp-scrim"/>
+        <div className="exp-meta">
+          <div className="exp-eyebrow"><span className="dotm"/>Nearby you · Brutalist</div>
+          <h2 className="exp-name">Barbican Estate</h2>
+          <div className="exp-sub">
+            <span>Chamberlin, Powell &amp; Bon</span>
+            <span className="mid">·</span>
+            <span>London, UK</span>
+          </div>
+          <div className="exp-coord">51.5203° N, 0.0937° W · Completed 1976</div>
+          <div className="exp-rate">
+            <span className="lab">Rated</span>
+            <RatingInv n={3}/>
+            <span className="lab" style={{marginLeft:2}}>Masterpiece</span>
+          </div>
+          <div className="exp-actions">
+            <button className="exp-act save">
+              <Bookmark/><span>Save to list</span><span className="ar">→</span>
+            </button>
+            <button className="exp-act">
+              <XIcon/><span>Skip</span>
+            </button>
+            <div style={{flex:1}}/>
+            <button className="exp-act"><span>Open</span><span className="ar">→</span></button>
+          </div>
+        </div>
+      </div>
+      <div className="exp-peek"/>
+      <div className="exp-hint">Swipe up for next</div>
+    </div>
+  </div>
+);
+
+function App(){
+  return (
+    <div data-screen-label="Explore">
+      <AppTopNav activePath="/explore" userInitial="J"/>
+      <Explore/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

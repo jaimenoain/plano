@@ -1,24 +1,25 @@
 # Plano: Design Tokens
 
 > **Authoritative source for all visual design decisions.**
-> Token values are reflected in `tailwind.config.ts` at the repository root. Update this file when changing design decisions, then sync `tailwind.config.ts` to match.
+> Token values are implemented in the `@theme` block of `src/index.css` (Tailwind v4 — there is no `tailwind.config.ts`). Update this file when changing design decisions, then sync `src/index.css` to match.
 
 ## Design-System Source Alignment (mandatory)
 
-The `design-system/` folder is a required first-class input when defining or reviewing tokens and visual behavior.
+The `design-system/` folder is a required first-class input when defining or reviewing tokens and visual behavior. It holds the refreshed Plano design system imported from Claude Design (project `e8d58798`, namespace `PlanoDesignSystem_e8d587`).
 
 Use these files as mandatory references for every design update:
 
 - `design-system/colors_and_type.css` (token baseline)
-- `design-system/README.md` (brand and visual intent)
+- `design-system/README.md` (brand and visual intent — the narrative bible)
 - `design-system/preview/*` (foundational specimen references)
-- `design-system/ui_kits/website/*` (canonical landing/feed/detail visual examples)
+- `design-system/ui_kits/web/screens/*` (the 23 designed web screens — the pixel target per surface)
+- `design-system/claude-code-package-v2/design-system/*` (the layered implementation guide: `PATTERNS.md`, `COMPONENTS.md`, `LAYOUT-AND-CHROME.md`, `MIGRATION.md`, `TOKENS-AND-TAILWIND.md`, `CHECKLIST.md`, `SOURCE-OF-TRUTH.md`)
 
-Source-of-truth order for implementation changes:
+Source-of-truth order for **design decisions** (per `design-system/claude-code-package-v2/design-system/SOURCE-OF-TRUTH.md`): the design system wins, and the repo is brought into line.
 
-1. `tailwind.config.ts` + `src/index.css` (runtime implementation)
-2. `docs/DESIGN_TOKENS.md` (this document)
-3. `design-system/` references (visual and token reference package)
+1. The design-system package (design decision of record)
+2. `docs/DESIGN_TOKENS.md` (this document — reconciled to the package)
+3. `src/index.css` `@theme` (runtime — read for what a token currently resolves to)
 
 When any of these drift, update them in the same task. Do not defer sync.
 
@@ -34,11 +35,11 @@ When any of these drift, update them in the same task. Do not defer sync.
 
 **Corner geometry (product preference):** We **do not want rounded corners** on boxes, frames, and chrome that surround architecture — prefer **`rounded-none`** (straight right angles) on cards, panels, badges, maps, dialogs, and controls on **content detail surfaces** (the **building detail** page is the reference). Rounded rectangles read as generic consumer UI; right angles echo drafting, physical models, and print. **Intentional exceptions:** purely **circular glyphs** (e.g. Lucide `Circle` for ratings), **dot** markers at small sizes, and **avatar** crops — those are icons or identity discs, not rounded rectangle corners. Shared UI primitives (`Button`, `Input`, etc.) may still ship with `rounded-sm` until a surface overrides them; new work on editorial and detail pages should default to **`rounded-none`** unless an exception above applies.
 
-**Monochromatic content surfaces:** All content and feed pages are strictly monochromatic. Rating dots, active tab indicators, section accent bars, verified badges, icon fills, filter toggles, and interactive icon states all use `text-primary` (`#171717`). **`brand-primary` is near-black (`#171717`) — the primary action colour is black, not lime.** The lime (`#BEFF00`) lives in a separate `brand-accent` token and is reserved for: text selection highlight (`::selection`) and the notification dot on the bell icon. Focus rings and CTA arrows now use monochromatic signals. If `brand-accent` appears anywhere on a content or feed page outside those two contexts, it is an error.
+**Monochromatic content surfaces:** All content and feed pages are strictly monochromatic. Rating dots, active tab indicators, section accent bars, verified badges, icon fills, filter toggles, map markers, and interactive icon states all use `text-primary` (`#171717`). **`brand-primary` is near-black (`#171717`) — the neutral action colour and all text is black, not lime.** The lime (`#BEFF00`) lives in a separate `brand-accent` token and is **rationed to four sanctioned UI uses**: (1) primary-CTA button fills (the Button `accent` variant — lime fill, `#171717` text), (2) focus rings (`focus-visible`, 2px + a 2px white offset), (3) the hover `→` arrow on editorial CTAs, and (4) one `.accent-tag` status pill per view (BETA / NEW / LIVE). Two system touches are also lime: the `::selection` highlight and the bell unread dot. Everything else — section accents, surface fills, verified badges, icons, map markers, and the reward rating dots — stays monochrome. If `brand-accent` appears anywhere outside those uses, it is an error.
 
 **Single-column editorial layout:** Content detail pages (building detail, profile, architect profile) use a single-column `max-w-4xl` layout. No right sidebars on content pages. The sidebar pattern is restricted to admin and settings contexts.
 
-**CTA pattern:** In editorial contexts, calls to action are rendered as uppercase tracked text with a `→` arrow — never a filled button. Format: `text-xs font-medium uppercase tracking-widest` (operational shells may use `tracking-[0.15em]` for section labels — see `embassy-ui` / `admin-ui`). On hover, the label text dims to `text-secondary` and the `→` arrow remains `text-primary`. This applies to all in-page action links (review, save, follow, directions, etc.) outside of modal and form contexts.
+**CTA pattern:** In editorial contexts, calls to action are rendered as uppercase tracked text with a `→` arrow — never a filled button. Format: `text-xs font-medium uppercase tracking-widest` (operational shells may use `tracking-[0.15em]` for section labels — see `embassy-ui` / `admin-ui`). On hover, the label text dims to `text-secondary` and the `→` arrow nudges 3px right and colours lime (`brand-accent`). This is available as the `.cta-link` utility class (defined in `src/index.css`), which injects the arrow and its hover behaviour. It applies to all in-page action links (review, save, follow, directions, etc.) outside of modal and form contexts.
 
 **App shell:** The application uses a **horizontal sticky top navigation bar** (logo + nav links + search + primary CTA + bell + avatar), not a left sidebar. The body is a two-column grid: a fluid center feed column and a 320px sticky right rail.
 
@@ -88,7 +89,7 @@ These are the only colour tokens Cursor and components are permitted to use.
 | `brand-primary` | `palette-neutral-900` · `#171717` | **Primary actions — near-black button colour.** |
 | `brand-primary-hover` | `#000000` | Hover state for primary actions (pure black) |
 | `brand-primary-foreground` | `#FFFFFF` | Text/icons on brand-primary background (white on black) |
-| `brand-accent` | `palette-brand-500` · `#BEFF00` | The lime accent — used sparingly (text selection highlight, notification dot) |
+| `brand-accent` | `palette-brand-500` · `#BEFF00` | The lime accent — rationed to four uses: primary-CTA button fill, focus ring, hover `→` arrow, one `.accent-tag` pill (+ `::selection`, bell dot) |
 | `brand-accent-hover` | `palette-brand-600` · `#9ACC00` | Hover state for accent elements |
 | `brand-accent-foreground` | `palette-neutral-900` · `#171717` | Text/icons on brand-accent background (dark on lime) |
 | `brand-secondary` | `palette-neutral-100` · `#F5F5F5` | Secondary surfaces — muted tonal background |
@@ -264,7 +265,7 @@ Semantic tokens for the card system (`CardSpec` / `resolveCardSpec`). Values liv
 
 ## 7. Tailwind Config Block
 
-The `theme.extend` object that reflects these tokens in `tailwind.config.ts`.
+The `theme.extend` object that reflects these tokens (illustrative — the runtime implements them in the `@theme` block of `src/index.css`; there is no `tailwind.config.ts`).
 
 ```typescript
 theme: {
@@ -302,7 +303,7 @@ theme: {
       'brand-primary':              '#171717',  // Near-black — primary button background
       'brand-primary-hover':        '#000000',
       'brand-primary-foreground':   '#FFFFFF',  // White text on black button
-      'brand-accent':               '#BEFF00',  // Lime — text selection, notification dot
+      'brand-accent':               '#BEFF00',  // Lime — primary CTA, focus ring, hover → arrow, .accent-tag (+ ::selection, bell dot)
       'brand-accent-hover':         '#9ACC00',
       'brand-accent-foreground':    '#171717',
       'brand-secondary':            '#F5F5F5',
@@ -423,7 +424,7 @@ primitives with the project's tokens.
     --destructive-foreground: 0 0% 100%;          /* feedback-destructive-foreground #FFFFFF */
     --border:                 0 0% 90%;           /* border-default #E5E5E5 */
     --input:                  0 0% 90%;           /* border-default #E5E5E5 */
-    --ring:                   0 0% 9%;            /* brand-primary #171717 — focus ring (monochromatic) */
+    --ring:                   75 100% 50%;        /* brand-accent #BEFF00 — lime focus ring (focus-visible, 2px + 2px white offset) */
     --selection:              75 100% 50%;        /* brand-accent #BEFF00 — text selection */
     --radius:                 0.125rem;           /* radius-sm 2px — sharp default */
     --brand-accent:           75 100% 50%;        /* brand-accent #BEFF00 — lime, notification dot, CTA arrow */
@@ -515,7 +516,7 @@ convention.
 | Highlights sub-section label | `font-size-2xs` | `font-weight-medium` | `letter-spacing-wide` | `line-height-normal` | `text-disabled` |
 | Quote blockquote text | `font-size-sm` | `font-weight-medium` | `letter-spacing-normal` | `line-height-relaxed` | `text-secondary` |
 
-**Feed editorial typography notes:** The extreme scale contrast between the `feed-above` building metadata line (13px, gray) and the massive feed title (`clamp(48px, 6vw, 72px)`, bold, near-zero line-height) is the defining visual signature of the editorial feed. The contrast *is* the design — do not flatten it. Feed CTA links use uppercase tracked text (`letter-spacing-widest`) with a `→` arrow: on hover, the text dims to `text-secondary` and the arrow remains sharp black (`text-primary`). This preserves the strictly monochromatic editorial feel. Feed section dividers use `text-primary` (not secondary) for their labels, paired with a black `1px solid text-primary` bottom border — not the default gray hairline.
+**Feed editorial typography notes:** The extreme scale contrast between the `feed-above` building metadata line (13px, gray) and the massive feed title (`clamp(48px, 6vw, 72px)`, bold, near-zero line-height) is the defining visual signature of the editorial feed. The contrast *is* the design — do not flatten it. Feed CTA links use uppercase tracked text (`letter-spacing-widest`) with a `→` arrow: on hover, the text dims to `text-secondary` and the arrow nudges 3px right and turns lime (`brand-accent`) — the `.cta-link` utility. Feed section dividers use `text-primary` (not secondary) for their labels, paired with a black `1px solid text-primary` bottom border — not the default gray hairline.
 
 ---
 
@@ -558,7 +559,7 @@ context — never a raw palette value.**
 
 **`brand-primary`** (`#171717`) is the primary action colour — near-black. It is used for: primary button backgrounds everywhere (forms, modals, admin, CTA buttons in the top nav). It is the button colour. It is not the lime. `brand-primary-foreground` is `#FFFFFF` (white text on a black button).
 
-**`brand-accent`** (`#BEFF00`) is the lime accent — the one bright colour in the system. It appears in exactly two places: text selection highlight (`::selection`) and the notification dot on the bell icon. If `brand-accent` appears anywhere outside these two contexts it is an error. It must not appear as: button backgrounds, section accent bars, tab indicators, bookmark fills, verified badge colours, focus rings, CTA arrows, or any fill state on content or feed pages. Focus rings now use `brand-primary` (black).
+**`brand-accent`** (`#BEFF00`) is the lime accent — the one bright colour in the system. It is **rationed to four sanctioned UI uses**: (1) primary-CTA button fills (the Button `accent` variant), (2) focus rings (`focus-visible`, 2px + a 2px white offset), (3) the hover `→` arrow on editorial CTAs, and (4) one `.accent-tag` status pill per view. The `::selection` highlight and the bell unread dot are also lime. If `brand-accent` appears anywhere outside those uses it is an error — it must not appear as section accent bars, tab indicators, bookmark fills, verified-badge colours, icon or map-marker fills, the reward rating dots, or a decorative surface fill.
 
 **`brand-accent-foreground`** (`#171717`) is always used for text placed on `brand-accent` surfaces. The lime is a light colour — it requires dark foreground, not white.
 

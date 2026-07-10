@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Notifications" subtitle="Grouped activity — likes, comments, follows, awards" viewport="1400x2200" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Notifications</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  /* ---- Notifications (screen-specific) ---- */
+  .sec-label{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .doc{max-width:896px;margin:0 auto;padding:0 32px}
+  .page-h{padding:44px 0 40px;border-bottom:1px solid var(--border-default);display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+  .page-title{font-size:clamp(40px,6vw,60px);font-weight:700;letter-spacing:-.035em;line-height:.92;margin:0}
+  .star-btn{width:34px;height:34px;border-radius:2px;border:0;background:none;color:var(--text-secondary);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+  .star-btn:hover{background:var(--surface-muted);color:var(--text-primary)}
+
+  .nt-seclabel{position:sticky;top:0;background:var(--surface-default);z-index:5;padding:30px 0 12px;font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .nt-row{display:flex;align-items:flex-start;gap:16px;padding:16px 0;border-bottom:1px solid var(--border-default);cursor:pointer;transition:background 150ms}
+  .nt-row:hover{background:var(--surface-muted)}
+  .nt-av-wrap{position:relative;flex-shrink:0;margin-top:2px}
+  .nt-av{width:38px;height:38px;border-radius:9999px;background-size:cover;background-position:center;background-color:var(--surface-muted);filter:grayscale(1)}
+  .nt-badge{position:absolute;bottom:-3px;right:-3px;width:18px;height:18px;border-radius:9999px;background:var(--surface-default);display:flex;align-items:center;justify-content:center}
+  .nt-main{flex:1;min-width:0}
+  .nt-title{font-size:14px;font-weight:700;letter-spacing:-.01em;color:var(--text-primary)}
+  .nt-body{font-size:14px;color:var(--text-secondary);line-height:1.4;margin-top:2px}
+  .nt-body b{color:var(--text-primary);font-weight:500}
+  .nt-body i{font-style:italic}
+  .nt-time{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-disabled);margin-top:7px}
+  .nt-unread{width:6px;height:6px;background:var(--brand-accent);flex-shrink:0;margin-top:8px}
+  .nt-more{padding:30px 0;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { AppTopNav, SiteFooter } = window.PlanoDesignSystem_e8d587;
+
+// Screen-local icons not in the shared set
+Object.assign(PLANO_ICONS, {
+  heartfill:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" fill="currentColor" stroke="none"/>',
+  userplus:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/>',
+  sparkles:'<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>',
+  shield:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  trophy:'<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+});
+
+const IMG = {
+  p1:"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80",
+  p2:"https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80",
+  p3:"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&q=80",
+  p4:"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80",
+  p5:"https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=200&q=80",
+  p6:"https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&q=80",
+  p7:"https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&q=80",
+};
+
+const NT_ICON = {
+  like:{ic:"heartfill", color:"var(--feedback-destructive,#EF4444)"},
+  comment:{ic:"message", color:"var(--text-secondary)"},
+  follow:{ic:"userplus", color:"var(--text-secondary)"},
+  suggest:{ic:"sparkles", color:"var(--text-secondary)"},
+  verify:{ic:"shield", color:"var(--text-primary)"},
+  award:{ic:"trophy", color:"var(--text-secondary)"},
+};
+const NEW_NT = [
+  {av:IMG.p2, type:"like", title:"New like", time:"2 hours ago", read:false,
+   body:(<><b>marcusbuilt</b> liked your review of <i>Barbican Estate</i></>)},
+  {av:IMG.p3, type:"follow", title:"New follower", time:"5 hours ago", read:false,
+   body:(<><b>concreteclara</b> started following you</>)},
+  {av:IMG.p1, type:"comment", title:"New comment", time:"Yesterday", read:false,
+   body:(<><b>harriet.w</b> commented on your review of <i>National Theatre</i></>)},
+];
+const OLD_NT = [
+  {av:IMG.p6, type:"verify", title:"Architect verification approved", time:"2 days ago", read:true,
+   body:(<>Your request to be verified as <b>Peter Barber</b> was <b style={{color:"var(--feedback-success,#16A34A)"}}>approved</b></>)},
+  {av:IMG.p4, type:"suggest", title:"New recommendation", time:"3 days ago", read:true,
+   body:(<><b>j.okonkwo</b> recommended <i>Trellick Tower</i> for you</>)},
+  {av:IMG.p5, type:"award", title:"Award", time:"4 days ago", read:true,
+   body:(<>Congratulations! Your building <b><i>Isokon</i></b> won an award</>)},
+  {av:IMG.p7, type:"follow", title:"Friend joined", time:"1 week ago", read:true,
+   body:(<>Your friend <b>elena.k</b> just joined Plano</>)},
+];
+
+const NotifRow = ({n}) => {
+  const cfg = NT_ICON[n.type];
+  return (
+    <div className="nt-row">
+      <div className="nt-av-wrap">
+        <div className="nt-av" style={{backgroundImage:`url(${n.av})`}}/>
+        <div className="nt-badge" style={{color:cfg.color}}><Icon name={cfg.ic} size={13}/></div>
+      </div>
+      <div className="nt-main">
+        <div className="nt-title">{n.title}</div>
+        <div className="nt-body">{n.body}</div>
+        <div className="nt-time">{n.time}</div>
+      </div>
+      {!n.read && <div className="nt-unread"/>}
+    </div>
+  );
+};
+
+const Notifications = () => (
+  <div className="doc">
+    <div className="page-h">
+      <h1 className="page-title">Notifications</h1>
+      <button className="star-btn" title="Notification settings"><Icon name="settings" size={18}/></button>
+    </div>
+    <div className="nt-seclabel">New</div>
+    {NEW_NT.map((n,i)=><NotifRow key={i} n={n}/>)}
+    <div className="nt-seclabel">Earlier</div>
+    {OLD_NT.map((n,i)=><NotifRow key={i} n={n}/>)}
+    <div className="nt-more"><button className="cta">Load more <span className="ar">→</span></button></div>
+  </div>
+);
+
+function App(){
+  return (
+    <div data-screen-label="Notifications">
+      <AppTopNav activePath="/notifications" userInitial="J"/>
+      <Notifications/>
+      <SiteFooter/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

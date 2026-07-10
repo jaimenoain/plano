@@ -245,7 +245,7 @@ export default function Post() {
                 placeholder={postType === "review" ? "Write your thoughts..." : "Why do you want to visit this?"}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="min-h-[120px] resize-none rounded-sm border border-border-default bg-surface-muted/20 p-3 text-base focus-visible:ring-1 focus-visible:ring-brand-primary"
+                className="min-h-[120px] resize-none rounded-sm border border-border-default bg-surface-muted/20 p-3 text-base focus-visible:ring-1 focus-visible:ring-brand-accent"
               />
             </div>
 

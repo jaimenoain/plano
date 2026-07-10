@@ -452,7 +452,7 @@ function RecipientsTab({ awardId }: { awardId: string }) {
           id="edition-select"
           value={selectedEditionId}
           onChange={(e) => setSelectedEditionId(e.target.value)}
-          className="h-8 rounded-sm border border-border-default bg-surface-card px-2 text-sm text-text-primary focus:outline-hidden focus:ring-1 focus:ring-brand-primary"
+          className="h-8 rounded-sm border border-border-default bg-surface-card px-2 text-sm text-text-primary focus:outline-hidden focus:ring-1 focus:ring-brand-accent"
         >
           <option value="">Select an edition…</option>
           {editions.map((ed) => (

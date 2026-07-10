@@ -140,14 +140,14 @@ export function CreditedEntitiesSelect({
         className={cn("overflow-visible bg-transparent", className)}
         shouldFilter={false}
       >
-        <div className="group border border-border-default bg-surface-muted px-3 py-2 text-sm rounded-sm focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-2">
+        <div className="group border border-border-default bg-surface-muted px-3 py-2 text-sm rounded-sm focus-within:ring-2 focus-within:ring-brand-accent focus-within:ring-offset-2">
           <div className="flex flex-wrap gap-1">
             {selected.map((row) => (
               <Badge key={row.id} variant="secondary">
                 {row.name}
                 <button
                   type="button"
-                  className="ml-1 rounded-sm outline-hidden focus:ring-2 focus:ring-brand-primary focus:ring-offset-2"
+                  className="ml-1 rounded-sm outline-hidden focus:ring-2 focus:ring-brand-accent focus:ring-offset-2"
                   onClick={() => handleUnselect(row.id)}
                 >
                   <X className="h-3 w-3 text-text-secondary hover:text-text-primary" />

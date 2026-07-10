@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Search + map" subtitle="Split results list + monochrome MapLibre map with pins" viewport="1400x1000" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Search + map</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  /* ---- Search + map (screen-specific) ---- */
+  .mono-sm{font-family:'Space Mono',monospace;font-size:12px;color:var(--text-secondary)}
+  .serp-shell{display:grid;grid-template-columns:var(--search-serp) 1fr;height:calc(100vh - 64px)}
+  .serp-col{border-right:1px solid var(--border-default);background:var(--surface-card);display:flex;flex-direction:column;overflow:hidden}
+  .serp-search{padding:20px 24px 16px;border-bottom:1px solid var(--border-default)}
+  .serp-input{display:flex;align-items:center;gap:10px;height:44px;padding:0 14px;border:1px solid var(--border-strong);border-radius:2px;color:var(--text-secondary)}
+  .serp-input input{border:0;outline:0;background:none;font-size:15px;color:var(--text-primary);width:100%}
+  .serp-filters{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
+  .serp-count{padding:14px 24px;font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary);border-bottom:1px solid var(--border-default)}
+  .serp-list{overflow-y:auto;flex:1}
+  .serp-item{display:grid;grid-template-columns:88px 1fr;gap:16px;padding:18px 24px;border-bottom:1px solid var(--border-default);cursor:pointer}
+  .serp-item:hover{background:var(--surface-muted)}
+  .serp-item.active{background:var(--surface-muted);box-shadow:inset 3px 0 0 #171717}
+  .serp-thumb{width:88px;height:66px;background:var(--surface-muted);background-size:cover;background-position:center}
+  .serp-eyebrow{font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary)}
+  .serp-name{font-size:19px;font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:5px 0 4px}
+  .serp-meta{font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+  .map-col{position:relative;background:#EDEDED;overflow:hidden}
+  .map-canvas{position:absolute;inset:0;background:
+    linear-gradient(rgba(0,0,0,0.05) 1px,transparent 1px) 0 0/48px 48px,
+    linear-gradient(90deg,rgba(0,0,0,0.05) 1px,transparent 1px) 0 0/48px 48px,
+    #E8E8E6}
+  .map-road{position:absolute;background:#fff}
+  .pin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;color:#171717;display:flex;flex-direction:column;align-items:center}
+  .pin .dot{width:14px;height:14px;border-radius:9999px;background:#171717;border:2.5px solid #fff;box-shadow:var(--shadow-md)}
+  .pin.active .dot{width:20px;height:20px;background:#171717}
+  .pin.active .plabel{display:block}
+  .plabel{display:none;margin-top:6px;background:#171717;color:#fff;font-size:11px;font-weight:600;letter-spacing:-.01em;padding:4px 8px;border-radius:2px;white-space:nowrap}
+  .map-ctrls{position:absolute;top:16px;right:16px;display:flex;flex-direction:column;background:#fff;border:1px solid var(--border-default);border-radius:2px;overflow:hidden}
+  .map-ctrls button{width:38px;height:38px;border:0;background:#fff;font-size:18px;color:var(--text-primary);cursor:pointer;border-bottom:1px solid var(--border-default)}
+  .map-ctrls button:last-child{border-bottom:0}
+  .map-ctrls button:hover{background:var(--surface-muted)}
+  .map-cap{position:absolute;left:16px;bottom:14px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-disabled);background:rgba(255,255,255,.8);padding:5px 8px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+const { AppTopNav } = window.PlanoDesignSystem_e8d587;
+
+const SERP = [
+  {img:IMG.barbican, eyebrow:"LONDON · 1982", name:"Barbican Centre", arch:"Chamberlin, Powell & Bowon", rating:2, saves:"1.2k saves", x:38, y:44},
+  {img:IMG.salk, eyebrow:"LA JOLLA · 1965", name:"Salk Institute", arch:"Louis Kahn", rating:3, saves:"980 saves", x:64, y:30},
+  {img:IMG.therme, eyebrow:"VALS · 1996", name:"Therme Vals", arch:"Peter Zumthor", rating:3, saves:"760 saves", x:52, y:62},
+  {img:IMG.kimbell, eyebrow:"FORT WORTH · 1972", name:"Kimbell Art Museum", arch:"Louis Kahn", rating:2, saves:"540 saves", x:28, y:70},
+  {img:IMG.unite, eyebrow:"MARSEILLE · 1952", name:"Unité d'Habitation", arch:"Le Corbusier", rating:3, saves:"1.5k saves", x:74, y:56},
+];
+const Search = () => {
+  const [active, setActive] = useState(0);
+  return (
+    <div className="serp-shell">
+      <div className="serp-col">
+        <div className="serp-search">
+          <div className="serp-input"><Icon name="search" size={18}/><input defaultValue="Louis Kahn"/><Icon name="x" size={16} style={{cursor:"pointer"}}/></div>
+          <div className="serp-filters">
+            <button className="chip on">Buildings</button>
+            <button className="chip">Architects</button>
+            <button className="chip">Collections</button>
+            <button className="chip"><Icon name="filter" size={13}/> Filters</button>
+          </div>
+        </div>
+        <div className="serp-count">184 buildings · sorted by rank</div>
+        <div className="serp-list">
+          {SERP.map((r,i)=>(
+            <div key={i} className={`serp-item ${active===i?'active':''}`} onClick={()=>setActive(i)}>
+              <div className="serp-thumb" style={{backgroundImage:`url(${r.img})`}}/>
+              <div>
+                <div className="serp-eyebrow">{r.eyebrow}</div>
+                <div className="serp-name">{r.name}</div>
+                <div className="serp-meta">
+                  <span>{r.arch}</span>
+                  {r.rating>0 && <><span>·</span><Rating n={r.rating} size="sm"/></>}
+                </div>
+                <div className="serp-meta" style={{marginTop:6}}><span className="mono-sm">{r.saves}</span></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="map-col">
+        <div className="map-canvas">
+          <div className="map-road" style={{left:0,right:0,top:"46%",height:6,opacity:.9}}/>
+          <div className="map-road" style={{top:0,bottom:0,left:"40%",width:6,opacity:.9}}/>
+          <div className="map-road" style={{left:0,right:0,top:"72%",height:4,opacity:.7}}/>
+          <div className="map-road" style={{top:0,bottom:0,left:"68%",width:4,opacity:.7}}/>
+        </div>
+        {SERP.map((r,i)=>(
+          <div key={i} className={`pin ${active===i?'active':''}`} style={{left:`${r.x}%`,top:`${r.y}%`,zIndex:active===i?10:1}} onClick={()=>setActive(i)}>
+            <span className="dot"/>
+            <span className="plabel">{r.name}</span>
+          </div>
+        ))}
+        <div className="map-ctrls">
+          <button>+</button>
+          <button>−</button>
+        </div>
+        <div className="map-cap">MapLibre · monochrome tiles</div>
+      </div>
+    </div>
+  );
+};
+
+function App(){
+  return (
+    <div data-screen-label="Search + map">
+      <AppTopNav activePath="/search" userInitial="J"/>
+      <Search/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

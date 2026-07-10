@@ -1,69 +1,85 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<title>Plano · Components · Buttons</title>
-<link rel="stylesheet" href="../colors_and_type.css" />
+<!DOCTYPE html>
+<!-- @dsCard group="Components" name="Buttons" subtitle="Primary / outline / editorial CTA" viewport="720x280" -->
+<html lang="en"><head><meta charset="UTF-8"><title>Buttons</title>
+<link rel="stylesheet" href="../colors_and_type.css">
 <style>
-  html, body { margin: 0; padding: 0; background: #FAFAFA; }
-  .card { padding: 22px 26px; }
-  .head { display:flex; align-items:baseline; justify-content: space-between; margin-bottom: 16px; }
-  .meta { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-disabled); text-transform: uppercase;}
-  .grid { display: grid; grid-template-columns: 84px 1fr; gap: 14px 18px; align-items: center; }
-  .lbl { font-family: var(--font-mono); font-size: 10px; color: var(--text-disabled); letter-spacing: 0.06em; text-transform: uppercase; }
-  .row { display:flex; gap: 10px; align-items: center; flex-wrap: wrap;}
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 2px; font-family: var(--font-sans); font-size: 14px; font-weight: 500; line-height: 1; transition: background 120ms ease, color 120ms ease, border-color 120ms ease; cursor: pointer; border: 0;}
-  .btn-primary  { background: #171717; color: #FFFFFF;}
-  .btn-secondary { background: #F5F5F5; color: #171717; border: 1px solid #E5E5E5;}
-  .btn-outline   { background: #FFFFFF; color: #171717; border: 1px solid #E5E5E5;}
-  .btn-ghost     { background: transparent; color: #171717;}
-  .btn-destructive { background: #EF4444; color: #FFFFFF;}
-  .btn-sm { height: 32px; padding: 0 12px; font-size: 13px; }
-  .btn-lg { height: 48px; padding: 0 24px; font-size: 14px; }
-  .btn[data-state="hover"].btn-primary { background: #000000; }
-  .btn[data-state="hover"].btn-outline { background: #F5F5F5;}
-  .btn[data-state="hover"].btn-secondary { background: #EDEDED;}
-  .btn:focus-visible { outline: 2px solid #171717; outline-offset: 2px; }
-  .btn svg { width: 14px; height: 14px; stroke-width: 2; fill: none; stroke: currentColor; }
-  .cta { font-size: 12px; font-weight:500; letter-spacing: 0.15em; text-transform: uppercase; color: #171717; text-decoration: none; }
-</style>
-</head>
-<body>
-<div class="card">
-  <div class="head">
-    <span class="eyebrow">Buttons · variants &amp; states</span>
-    <span class="meta">height 40 · radius 2 · weight 500</span>
-  </div>
-  <div class="grid">
-    <span class="lbl">Default</span>
+  html,body{margin:0;padding:0;background:var(--surface-default);font-family:var(--font-sans);color:var(--text-primary)}
+  .wrap{padding:24px;display:flex;flex-direction:column;gap:24px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .eyebrow{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);font-weight:500;margin-bottom:10px}
+  .eyebrow em{font-style:normal;color:var(--text-primary)}
+
+  .btn{height:40px;padding:0 16px;border-radius:2px;font-size:14px;font-weight:500;font-family:inherit;cursor:pointer;border:1px solid transparent;display:inline-flex;align-items:center;gap:8px;line-height:1;transition:background 150ms}
+
+  /* Primary = black (monochrome default) */
+  .btn-primary{background:#171717;color:#fff}
+  .btn-primary:hover{background:#000}
+
+  /* Accent = lime (sparingly) */
+  .btn-accent{background:#BEFF00;color:#171717}
+  .btn-accent:hover{background:#9ACC00}
+
+  .btn-outline{background:#fff;color:#171717;border-color:var(--border-default)}
+  .btn-outline:hover{background:var(--surface-muted)}
+
+  .btn-ghost{background:transparent;color:#171717}
+  .btn-ghost:hover{background:var(--surface-muted)}
+
+  .btn-destructive{background:#fff;color:#EF4444;border-color:#EF4444}
+  .btn-destructive:hover{background:#EF4444;color:#fff}
+
+  .btn-sm{height:32px;padding:0 12px;font-size:13px}
+  .btn-lg{height:48px;padding:0 20px;font-size:15px}
+
+  .cta{font-size:12px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:#171717;background:none;border:0;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:6px;transition:color 150ms}
+  .cta:hover{color:var(--text-secondary)}
+
+  .disabled{opacity:.5;pointer-events:none}
+
+  .note{font-size:11px;color:var(--text-secondary);line-height:1.6;max-width:620px}
+  .note strong{color:var(--text-primary);font-weight:500}
+  .note code{background:var(--surface-muted);padding:1px 5px;font-size:10.5px;font-family:inherit}
+</style></head>
+<body><div class="wrap">
+
+  <div>
+    <div class="eyebrow"><em>Primary</em> — black fill, default</div>
     <div class="row">
-      <button class="btn btn-primary">Join the waiting list</button>
-      <button class="btn btn-secondary">Save to collection</button>
-      <button class="btn btn-outline">Log a visit</button>
+      <button class="btn btn-primary">Log visit</button>
+      <button class="btn btn-outline">Save to list</button>
       <button class="btn btn-ghost">Cancel</button>
       <button class="btn btn-destructive">Delete</button>
-    </div>
-    <span class="lbl">Hover</span>
-    <div class="row">
-      <button class="btn btn-primary" data-state="hover">Join the waiting list</button>
-      <button class="btn btn-secondary" data-state="hover">Save to collection</button>
-      <button class="btn btn-outline" data-state="hover">Log a visit</button>
-    </div>
-    <span class="lbl">Size</span>
-    <div class="row">
-      <button class="btn btn-primary btn-sm">Small · 32</button>
-      <button class="btn btn-primary">Default · 40</button>
-      <button class="btn btn-primary btn-lg">Large · 48</button>
-    </div>
-    <span class="lbl">With icon</span>
-    <div class="row">
-      <button class="btn btn-primary">
-        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-        Add building
-      </button>
-      <a href="#" class="cta">Read review&nbsp;→</a>
+      <button class="btn btn-primary disabled">Disabled</button>
     </div>
   </div>
-</div>
-</body>
-</html>
+
+  <div>
+    <div class="eyebrow"><em>Accent</em> — lime, use sparingly</div>
+    <div class="row">
+      <button class="btn btn-accent">Log visit</button>
+      <button class="btn btn-accent btn-sm">Follow</button>
+      <button class="btn btn-accent btn-lg">Open the feed</button>
+    </div>
+    <p class="note" style="margin-top:14px">
+      <strong>Reserve lime for moments that matter.</strong> Landing-page hero CTA, the single key action on an onboarding screen, a celebratory confirmation. At most one lime button per screen. On every other surface, use <code>btn-primary</code> (black) — the lime is most effective when it's rare.
+    </p>
+  </div>
+
+  <div>
+    <div class="eyebrow">Sizes — sm · default · lg</div>
+    <div class="row">
+      <button class="btn btn-primary btn-sm">Follow</button>
+      <button class="btn btn-primary">Follow</button>
+      <button class="btn btn-primary btn-lg">Follow</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="eyebrow">Editorial CTA — text + arrow, not a filled button</div>
+    <div class="row">
+      <button class="cta">Review this building →</button>
+      <button class="cta">Explore nearby →</button>
+    </div>
+  </div>
+
+</div></body></html>

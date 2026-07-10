@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Profile" subtitle="Member profile — stats, tabs, logged-building grid" viewport="1400x1800" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Profile</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  /* ---- Profile (screen-specific) ---- */
+  .prof{max-width:1100px;margin:0 auto;padding:56px 32px 120px}
+  .prof-head{display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap}
+  .prof-av{width:104px;height:104px;border-radius:9999px;background:#262626;color:#fff;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:600;flex-shrink:0}
+  .prof-id{flex:1;min-width:280px}
+  .prof-name{font-size:clamp(40px,6vw,68px);font-weight:700;letter-spacing:-.035em;line-height:.95;margin:0}
+  .prof-handle{font-family:'Space Mono',monospace;font-size:13px;color:var(--text-secondary);margin-top:12px}
+  .prof-bio{font-size:16px;line-height:1.6;color:var(--text-primary);margin-top:16px;max-width:56ch}
+  .prof-actions{display:flex;gap:10px;align-items:center}
+  .prof-stats{margin-top:48px;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border-default);border-top:1px solid var(--border-default);border-bottom:1px solid var(--border-default)}
+  .prof-stat{background:var(--surface-default);padding:24px 4px 22px}
+  .prof-stat .n{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1}
+  .prof-stat .l{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);margin-top:10px;font-weight:500}
+  .tabs2{display:flex;gap:28px;margin-top:52px;border-bottom:1px solid var(--border-default)}
+  .tab2{background:none;border:0;padding:0 0 16px;font-size:14px;font-weight:500;color:var(--text-secondary);cursor:pointer;position:relative}
+  .tab2:hover{color:var(--text-primary)}
+  .tab2.on{color:var(--text-primary)}
+  .tab2.on::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:#171717}
+  .tab2 .c{font-family:'Space Mono',monospace;font-size:11px;color:var(--text-disabled);margin-left:6px}
+  .grid-log{margin-top:40px;display:grid;grid-template-columns:repeat(3,1fr);gap:32px 24px}
+  .logcard{cursor:pointer}
+  .logcard-img{aspect-ratio:4/3;background:var(--surface-muted);background-size:cover;background-position:center;position:relative}
+  .logcard-tag{position:absolute;left:0;top:0;background:rgba(255,255,255,.92);padding:5px 8px;font-size:9px;font-weight:500;letter-spacing:.14em;text-transform:uppercase}
+  .logcard-name{font-size:20px;font-weight:700;letter-spacing:-.02em;margin:12px 0 4px;line-height:1.1}
+  .logcard-meta{font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:8px}
+
+  @media (max-width:900px){ .grid-log{grid-template-columns:1fr 1fr} }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+const { AppTopNav } = window.PlanoDesignSystem_e8d587;
+
+const PROF_TABS = [["visited","Visited",128],["collections","Collections",9],["reviews","Reviews",64],["wants","Want to visit",41]];
+const LOGS = [
+  {img:IMG.barbican, tag:"VISITED", name:"Barbican Centre", city:"London", rating:2},
+  {img:IMG.salk, tag:"VISITED", name:"Salk Institute", city:"La Jolla", rating:3},
+  {img:IMG.therme, tag:"VISITED", name:"Therme Vals", city:"Vals", rating:3},
+  {img:IMG.kimbell, tag:"VISITED", name:"Kimbell Art Museum", city:"Fort Worth", rating:2},
+  {img:IMG.villa, tag:"VISITED", name:"Villa Savoye", city:"Poissy", rating:3},
+  {img:IMG.pompidou, tag:"VISITED", name:"Centre Pompidou", city:"Paris", rating:2},
+];
+const Profile = () => {
+  const [tab, setTab] = useState("visited");
+  return (
+    <div className="prof">
+      <div className="prof-head">
+        <div className="prof-av">EO</div>
+        <div className="prof-id">
+          <div className="eyebrow" style={{marginBottom:10}}>MEMBER · LONDON</div>
+          <h1 className="prof-name">Eleanor Okafor</h1>
+          <div className="prof-handle">@eokafor · joined 2024</div>
+          <p className="prof-bio">Architectural writer. Chasing concrete across Europe, one weekend at a time. Editor of <em style={{fontStyle:"italic"}}>Brutalist Gems of London</em>.</p>
+        </div>
+        <div className="prof-actions">
+          <button className="btn btn-outline">Message</button>
+          <button className="btn btn-primary">Follow</button>
+        </div>
+      </div>
+
+      <div className="prof-stats">
+        <div className="prof-stat"><div className="n">128</div><div className="l">Buildings</div></div>
+        <div className="prof-stat"><div className="n">9</div><div className="l">Collections</div></div>
+        <div className="prof-stat"><div className="n">1,240</div><div className="l">Followers</div></div>
+        <div className="prof-stat"><div className="n">318</div><div className="l">Following</div></div>
+      </div>
+
+      <div className="tabs2">
+        {PROF_TABS.map(([k,label,c])=>(
+          <button key={k} className={`tab2 ${tab===k?'on':''}`} onClick={()=>setTab(k)}>{label}<span className="c">{c}</span></button>
+        ))}
+      </div>
+
+      <div className="grid-log">
+        {LOGS.map((l,i)=>(
+          <div key={i} className="logcard">
+            <div className="logcard-img" style={{backgroundImage:`url(${l.img})`}}>
+              <span className="logcard-tag">{l.tag}</span>
+            </div>
+            <div className="logcard-name">{l.name}</div>
+            <div className="logcard-meta"><span>{l.city}</span><span>·</span><Rating n={l.rating} size="sm"/></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+function App(){
+  return (
+    <div data-screen-label="Profile">
+      <AppTopNav activePath="/profile" userInitial="E"/>
+      <Profile/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

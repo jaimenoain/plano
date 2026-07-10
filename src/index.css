@@ -26,6 +26,22 @@
   --text-6xl--line-height: 4rem;
   --text-7xl: 4.5rem;
   --text-7xl--line-height: 4.75rem;
+  /* Poster-scale editorial display (design-system e8d58798). Tailwind v4 ships
+     8xl/9xl at these sizes with line-height 1; we keep them for direct use and
+     the `.display`/`.headline` utilities layer on the tight display line-height. */
+  --text-8xl: 6rem;
+  --text-8xl--line-height: 6rem;
+  --text-9xl: 8rem;
+  --text-9xl--line-height: 8rem;
+
+  /* Letter-spacing scale — implements docs/DESIGN_TOKENS.md §3, which was never wired up.
+     Tailwind's defaults (wide 0.025em, widest 0.1em) contradict the spec (0.08em / 0.15em),
+     which is why ~242 call sites hand-wrote `tracking-[0.15em]`. Defining these makes
+     `tracking-wide` / `tracking-widest` mean what the design system says they mean. */
+  --tracking-tighter: -0.045em;
+  --tracking-tight: -0.03em;
+  --tracking-wide: 0.08em;
+  --tracking-widest: 0.15em;
 
   --spacing-collection-mosaic: 10.5rem;
   --spacing-mosaic-gap: 1.5px;
@@ -210,6 +226,132 @@
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/* ============================================================
+   Plano editorial utility classes (design-system e8d58798).
+   Compose these on surfaces instead of re-deriving the recipe inline. Values
+   live here in the token/foundation layer; component code uses the class, never
+   raw hex/px. Ref: design-system/claude-code-package-v2/design-system/plano-tokens.css
+   ============================================================ */
+@layer components {
+  /* Editorial hero — the A24-scale poster headline (96–128px). Don't hedge. */
+  .display,
+  .hero {
+    font-family: var(--font-sans);
+    font-size: clamp(3.5rem, 11vw, 8rem);
+    font-weight: 700;
+    letter-spacing: -0.045em;
+    line-height: 0.92;
+    color: var(--text-primary);
+    text-wrap: balance;
+  }
+
+  /* Feed building-name — editorial display at scale (40–60px). */
+  .headline {
+    font-family: var(--font-sans);
+    font-size: clamp(2.5rem, 6vw, 3.75rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 0.92;
+    color: var(--text-primary);
+    text-wrap: balance;
+  }
+
+  /* Uppercase tracked label — the architectural eyebrow convention. */
+  .eyebrow,
+  .label-upper {
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  /* Relaxed editorial body copy. */
+  .body-relaxed {
+    line-height: 1.75;
+    color: var(--text-secondary);
+  }
+
+  /* Numeric-heavy meta — coordinates, date ranges, counters. Space Mono, small only. */
+  .meta-code {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+  }
+
+  /* Editorial CTA — uppercase tracked text + → arrow, never a filled button.
+     Hover: label dims to secondary; the → nudges 3px right and turns lime (one
+     of the four sanctioned lime uses). The arrow is injected, so markup is just
+     <a class="cta-link">Review this building</a>. */
+  .cta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5ch;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color 150ms ease;
+  }
+  .cta-link::after {
+    content: "→";
+    transition:
+      transform 150ms ease,
+      color 150ms ease;
+  }
+  .cta-link:hover {
+    color: var(--text-secondary);
+  }
+  .cta-link:hover::after {
+    transform: translateX(3px);
+    color: var(--brand-accent);
+  }
+
+  /* Photo placeholder — on-brand stand-in for real architecture photography.
+     Sharp edges, faint diagonal hatch, monospace caption via data-label:
+     <div class="photo-placeholder" data-label="Barbican Centre · 1982" /> */
+  .photo-placeholder {
+    position: relative;
+    background-color: var(--surface-muted);
+    background-image: repeating-linear-gradient(
+      135deg,
+      transparent 0 11px,
+      rgba(0, 0, 0, 0.035) 11px 12px
+    );
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+  .photo-placeholder::after {
+    content: attr(data-label);
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-disabled);
+    padding: 0.75rem 1rem;
+  }
+
+  /* Accent tag — the ONE sanctioned decorative lime: a small status pill
+     (BETA / NEW / LIVE), at most one per view. Never a section accent, verified
+     badge, or surface fill. */
+  .accent-tag {
+    display: inline-flex;
+    align-items: center;
+    background: var(--brand-accent);
+    color: var(--brand-accent-foreground);
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.5rem;
+    border-radius: 2px;
   }
 }
 

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Colors" name="Brand Colors" subtitle="Accent lime — reserved use" viewport="720x180" -->
+<html lang="en">
+<head><meta charset="UTF-8"><title>Primary Colors</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;background:var(--surface-default);font-family:var(--font-sans);color:var(--text-primary)}
+  .wrap{padding:24px}
+  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .swatch{display:flex;flex-direction:column}
+  .chip{height:72px;border:1px solid var(--border-default)}
+  .name{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-secondary);margin-top:8px;font-weight:500}
+  .hex{font-family:var(--font-mono);font-size:11px;color:var(--text-primary);margin-top:2px}
+  .note{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-secondary);margin-bottom:12px;font-weight:500}
+</style></head>
+<body><div class="wrap">
+<div class="note">Brand accent — reserved for primary buttons, focus rings, hover arrows</div>
+<div class="row">
+  <div class="swatch"><div class="chip" style="background:#BEFF00"></div><div class="name">brand-primary</div><div class="hex">#BEFF00</div></div>
+  <div class="swatch"><div class="chip" style="background:#9ACC00"></div><div class="name">brand-primary-hover</div><div class="hex">#9ACC00</div></div>
+  <div class="swatch"><div class="chip" style="background:#F7FFE0"></div><div class="name">brand-secondary</div><div class="hex">#F7FFE0</div></div>
+  <div class="swatch"><div class="chip" style="background:#4D6600"></div><div class="name">brand-secondary-fg</div><div class="hex">#4D6600</div></div>
+</div>
+</div></body></html>

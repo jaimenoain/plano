@@ -1,55 +1,84 @@
-<!doctype html>
+<!DOCTYPE html>
+<!-- @dsCard group="Colors" name="Feedback Colors" subtitle="Success / warning / destructive" viewport="720x140" -->
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<title>Plano · Color · Feedback</title>
-<link rel="stylesheet" href="../colors_and_type.css" />
+<meta charset="UTF-8">
+<title>Feedback Colors</title>
+<link rel="stylesheet" href="../colors_and_type.css">
 <style>
-  html, body { margin: 0; padding: 0; background: #FAFAFA; }
-  .card { padding: 22px 24px; }
-  .heading-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px; }
-  .meta { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-disabled); text-transform: uppercase;}
-  .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-  .tile { border: 1px solid var(--border-default); padding: 14px 14px 16px; background: #FFFFFF; }
-  .tile .hue { height: 28px; margin-bottom: 12px; }
-  .tile .name { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.02em; color: var(--text-primary); margin-bottom: 4px; }
-  .tile .hex  { font-family: var(--font-mono); font-size: 10px; color: var(--text-disabled); letter-spacing: 0.04em; margin-bottom: 10px;}
-  .tile .toast { display:flex; align-items:center; gap: 8px; padding: 6px 8px; font-size: 11px; }
-  .tile.success .toast { background: rgba(22,163,74,0.10); color: #16A34A; }
-  .tile.warning .toast { background: rgba(245,158,11,0.10); color: #B45309; }
-  .tile.destructive .toast { background: rgba(239,68,68,0.10); color: #EF4444; }
-  .tile .toast svg { width: 14px; height: 14px; stroke-width: 2; fill: none; stroke: currentColor; }
-  .note { margin-top: 14px; font-size: 11px; color: var(--text-secondary); line-height: 1.45; }
-  .note b { color: var(--text-primary); font-weight: 600; }
+  html,body{margin:0;padding:0;background:var(--surface-default);font-family:var(--font-sans);color:var(--text-primary)}
+  .wrap{padding:24px}
+  .note{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);font-weight:500;margin-bottom:14px}
+  .note em{font-style:normal;color:var(--text-primary)}
+
+  /* Three stacked rows, one per semantic */
+  .row{
+    display:grid;
+    grid-template-columns:14px 96px 1fr auto;
+    align-items:center;
+    gap:18px;
+    padding:16px 18px;
+    border-top:1px solid var(--border-default);
+  }
+  .row:last-child{border-bottom:1px solid var(--border-default)}
+
+  /* The only colour in the card — a 10px semantic dot */
+  .dot{
+    width:10px;height:10px;border-radius:9999px;
+    display:block;
+  }
+  .dot.success{background:#16A34A}
+  .dot.warning{background:#F59E0B}
+  .dot.destructive{background:#EF4444}
+
+  .label{
+    font-size:11px;letter-spacing:.15em;text-transform:uppercase;
+    color:var(--text-primary);font-weight:500;
+  }
+
+  .msg{font-size:14px;color:var(--text-primary);line-height:1.45}
+  .msg .secondary{color:var(--text-secondary)}
+
+  .hex{
+    font-family:var(--font-mono);font-size:11px;
+    color:var(--text-secondary);letter-spacing:.03em;
+  }
+
+  .foot{
+    margin-top:18px;font-size:11px;color:var(--text-secondary);
+    line-height:1.6;max-width:640px;
+  }
+  .foot code{font-family:var(--font-mono);background:var(--surface-muted);padding:1px 5px;font-size:10.5px}
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="heading-row">
-    <span class="eyebrow">Feedback · toasts, validation, alerts only</span>
-    <span class="meta">3 hues · never decorative</span>
+<div class="wrap">
+  <div class="note">Feedback — <em>dot-only</em>. Colour marks, never fills.</div>
+
+  <div class="row">
+    <span class="dot success" aria-hidden="true"></span>
+    <span class="label">Success</span>
+    <span class="msg">Visit logged. <span class="secondary">Added to your catalogue.</span></span>
+    <span class="hex">#16A34A</span>
   </div>
-  <div class="grid">
-    <div class="tile success">
-      <div class="hue" style="background:#16A34A"></div>
-      <div class="name">feedback-success</div>
-      <div class="hex">#16A34A · hue 142°</div>
-      <div class="toast"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Saved to collection</div>
-    </div>
-    <div class="tile warning">
-      <div class="hue" style="background:#F59E0B"></div>
-      <div class="name">feedback-warning</div>
-      <div class="hex">#F59E0B · hue 38°</div>
-      <div class="toast"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>Unverified credit</div>
-    </div>
-    <div class="tile destructive">
-      <div class="hue" style="background:#EF4444"></div>
-      <div class="name">feedback-destructive</div>
-      <div class="hex">#EF4444 · hue 0°</div>
-      <div class="toast"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6"/><path d="m9 9 6 6"/></svg>Failed to upload</div>
-    </div>
+
+  <div class="row">
+    <span class="dot warning" aria-hidden="true"></span>
+    <span class="label">Warning</span>
+    <span class="msg">Unsaved changes. <span class="secondary">Review before leaving.</span></span>
+    <span class="hex">#F59E0B</span>
   </div>
-  <p class="note"><b>Success is true green</b> (hue 142°) — intentionally far from the brand lime (hue 75°) so "success" and "brand" never collide.</p>
+
+  <div class="row">
+    <span class="dot destructive" aria-hidden="true"></span>
+    <span class="label">Destructive</span>
+    <span class="msg">Delete collection? <span class="secondary">This cannot be undone.</span></span>
+    <span class="hex">#EF4444</span>
+  </div>
+
+  <p class="foot">
+    Content surfaces stay monochromatic. Semantic colour appears only as a small <code>10px</code> dot beside the label — a mark, not a fill. Saturated fills (<code>bg-success</code>, <code>bg-destructive</code>) are reserved for modal confirmation actions and nothing else.
+  </p>
 </div>
 </body>
 </html>

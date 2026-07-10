@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Settings" subtitle="Account, profile & privacy preferences" viewport="1200x2400" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Settings</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  /* ---- Settings (screen-specific) ---- */
+  .doc-narrow{max-width:672px;margin:0 auto;padding:0 32px}
+  .set-back{margin:36px 0 26px;font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);background:none;border:0;cursor:pointer}
+  .set-back:hover{color:var(--text-primary)}
+  .set-h{font-size:clamp(34px,5vw,44px);font-weight:700;letter-spacing:-.03em;line-height:.95;margin:0}
+  .set-sub{font-size:14px;color:var(--text-secondary);margin-top:12px}
+  .set-fb{margin:36px 0;padding-bottom:36px;border-bottom:1px solid var(--border-default)}
+  .set-fb a{font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-primary)}
+  .set-avatar-block{display:flex;flex-direction:column;align-items:center;gap:16px;margin:8px 0 36px}
+  .set-avatar{width:96px;height:96px;border-radius:9999px;background-size:cover;background-position:center;background-color:var(--surface-muted);filter:grayscale(1);border:1px solid var(--border-default)}
+  .set-sec{padding:32px 0;border-top:1px solid var(--border-default)}
+  .set-sec:first-of-type{border-top:0;padding-top:0}
+  .set-sec-h{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:24px}
+  .field{margin-bottom:22px}
+  .field:last-child{margin-bottom:0}
+  .field label{font-size:13px;font-weight:500;color:var(--text-primary);display:block;margin-bottom:8px}
+  .field .hint{font-size:12px;color:var(--text-secondary);margin-top:8px}
+  .inp{width:100%;max-width:400px;height:44px;border:1px solid var(--border-strong);background:#fff;border-radius:2px;padding:0 14px;font-size:15px;color:var(--text-primary);outline:none;transition:border 150ms}
+  .inp:focus{border-color:#171717}
+  .inp.wide{max-width:100%}
+  .inp::placeholder{color:var(--text-disabled)}
+  textarea.inp{height:auto;min-height:104px;padding:12px 14px;resize:none;max-width:520px}
+  .inp-icon{position:relative;max-width:400px}
+  .inp-icon .ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-secondary);pointer-events:none}
+  .inp-icon .inp{padding-left:38px}
+  .set-manage-list{border-top:1px solid var(--border-default);border-bottom:1px solid var(--border-default)}
+  .set-manage{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 0;border-bottom:1px solid var(--border-default)}
+  .set-manage:last-child{border-bottom:0}
+  .set-manage h3{font-size:15px;font-weight:500;margin:0}
+  .set-manage p{font-size:13px;color:var(--text-secondary);margin:4px 0 0}
+  .set-actions{display:flex;justify-content:flex-end;padding:28px 0 0;border-top:1px solid var(--border-default);margin-top:8px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { AppTopNav } = window.PlanoDesignSystem_e8d587;
+
+Object.assign(PLANO_ICONS, {
+  pin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  mail:'<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+});
+
+const IMG = { me:"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80" };
+
+const Settings = () => (
+  <div className="doc-narrow">
+    <button className="set-back">← Back to profile</button>
+    <h1 className="set-h">Settings</h1>
+    <p className="set-sub">Account, profile, and privacy preferences.</p>
+
+    <div className="set-fb"><a href="#" onClick={e=>e.preventDefault()}>Feedback history →</a></div>
+
+    <div className="set-avatar-block">
+      <div className="set-avatar" style={{backgroundImage:`url(${IMG.me})`}}/>
+      <button className="btn btn-outline btn-sm"><Icon name="upload" size={15}/> Change photo</button>
+    </div>
+
+    <form onSubmit={e=>e.preventDefault()}>
+      <div className="set-sec">
+        <div className="set-sec-h">Public profile</div>
+        <div className="field">
+          <label>Username</label>
+          <input className="inp" defaultValue="jaimenoain"/>
+        </div>
+        <div className="field">
+          <label>Bio</label>
+          <textarea className="inp" defaultValue="Architect based in Madrid. Cataloguing concrete, one building at a time."/>
+        </div>
+        <div className="field">
+          <label>Where do you live?</label>
+          <div className="inp-icon"><span className="ic"><Icon name="pin" size={16}/></span><input className="inp" defaultValue="Madrid, Spain"/></div>
+          <p className="hint">This helps us personalize your experience.</p>
+        </div>
+      </div>
+
+      <div className="set-sec">
+        <div className="set-sec-h">Profile customization</div>
+        <div className="set-manage-list">
+          <div className="set-manage">
+            <div><h3>All-time favourites</h3><p>Select up to 6 buildings to showcase on your profile.</p></div>
+            <button type="button" className="btn btn-outline btn-sm">Manage</button>
+          </div>
+          <div className="set-manage">
+            <div><h3>Highlights</h3><p>Add favourite styles, people, and quotes.</p></div>
+            <button type="button" className="btn btn-outline btn-sm">Manage</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="set-sec">
+        <div className="set-sec-h">Account &amp; security</div>
+        <div className="field">
+          <label>Email address</label>
+          <div className="inp-icon"><span className="ic"><Icon name="mail" size={16}/></span><input className="inp" type="email" defaultValue="jaime@studio.com"/></div>
+          <p className="hint">Changing this will require verification on the new address.</p>
+        </div>
+        <div className="field">
+          <label>New password</label>
+          <input className="inp" type="password" placeholder="Leave blank to keep current password"/>
+        </div>
+      </div>
+
+      <div className="set-sec">
+        <div className="set-sec-h">Data &amp; privacy</div>
+        <div className="set-manage-list" style={{borderTop:"1px solid var(--border-default)"}}>
+          <div className="set-manage">
+            <div><h3>Download my data</h3><p>Export your ratings, reviews, and bucket list to a CSV file.</p></div>
+            <button type="button" className="btn btn-outline btn-sm"><Icon name="download" size={15}/> Export</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="set-actions"><button className="btn btn-primary">Save changes</button></div>
+    </form>
+    <div style={{height:80}}/>
+  </div>
+);
+
+function App(){
+  return (
+    <div data-screen-label="Settings">
+      <AppTopNav activePath="/settings" userInitial="J"/>
+      <Settings/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

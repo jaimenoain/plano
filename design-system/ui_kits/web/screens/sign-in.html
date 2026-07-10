@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Sign in" subtitle="Split auth — editorial panel + form" viewport="1400x1000" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Sign in</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  /* Dark photo placeholder */
+  .ph-dark{position:relative;background-color:#0e0e0e;background-image:repeating-linear-gradient(135deg,transparent 0 13px,rgba(255,255,255,.028) 13px 14px);background-size:cover;background-position:center;overflow:hidden}
+
+  /* ============ SIGN IN ============ */
+  .auth-shell{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 64px)}
+  .auth-left{background:#000;color:#fff;padding:56px 56px 48px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+  .auth-left-photo{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.24;filter:grayscale(1)}
+  .auth-left-inner{position:relative;z-index:2;display:flex;flex-direction:column;justify-content:space-between;height:100%}
+  .auth-tagline{font-size:52px;font-weight:700;letter-spacing:-.035em;line-height:.98;max-width:12ch;margin:0;color:#fff}
+  .auth-sub{font-size:15px;color:rgba(255,255,255,.6);margin-top:22px;max-width:34ch;line-height:1.5}
+  .auth-foot{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.4);display:flex;gap:20px}
+  .auth-right{background:#fff;display:flex;align-items:center;justify-content:center;padding:56px 40px}
+  .auth-form{width:100%;max-width:360px}
+  .auth-form .btn{width:100%}
+  .auth-eyebrow{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .auth-h{font-size:32px;font-weight:700;letter-spacing:-.03em;line-height:1;margin:12px 0 0}
+  .auth-p{font-size:14px;color:var(--text-secondary);margin-top:12px;line-height:1.5}
+  .field{margin-top:22px}
+  .field label{font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary);display:block;margin-bottom:8px}
+  .field input{width:100%;height:44px;border:1px solid var(--border-strong);background:#fff;border-radius:2px;padding:0 14px;font-size:15px;color:var(--text-primary);outline:none;transition:border 150ms,box-shadow 150ms}
+  .field input::placeholder{color:var(--text-disabled)}
+  .field input:focus{border-color:#171717}
+  .field .lrow{display:flex;justify-content:space-between;align-items:baseline}
+  .field .forgot{font-size:11px;color:var(--text-secondary);letter-spacing:.02em;text-transform:none;font-weight:400}
+  .auth-submit{margin-top:28px}
+  .divider{display:flex;align-items:center;gap:14px;margin:26px 0;color:var(--text-disabled);font-size:10px;letter-spacing:.15em;text-transform:uppercase}
+  .divider::before,.divider::after{content:"";height:1px;background:var(--border-default);flex:1}
+  .auth-note{font-size:13px;color:var(--text-secondary);text-align:center;margin-top:26px}
+  .auth-note a{color:var(--text-primary);font-weight:500}
+  .auth-legal{font-size:11px;color:var(--text-disabled);text-align:center;margin-top:32px;line-height:1.6}
+  .auth-legal a{color:var(--text-secondary);text-decoration:underline;text-underline-offset:2px}
+
+  @media (max-width:900px){ .auth-shell{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { AppTopNav, PlanoLogo } = window.PlanoDesignSystem_e8d587;
+
+const Google = () => (<svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1Z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z"/><path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84Z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.3 9.14 5.38 12 5.38Z"/></svg>);
+
+const IMG = { unite:"https://images.unsplash.com/photo-1459767129954-1b1c1f9b9ace?w=1400&q=80" };
+
+const SignIn = () => (
+  <div className="auth-shell">
+    <div className="auth-left">
+      <div className="auth-left-photo ph-dark" style={{backgroundImage:`url(${IMG.unite})`}}/>
+      <div className="auth-left-inner">
+        <PlanoLogo size={24} color="#fff"/>
+        <div>
+          <h1 className="auth-tagline">The world's architecture, cataloged.</h1>
+          <p className="auth-sub">Track visits, rate buildings, and follow the people who shape the built world.</p>
+        </div>
+        <div className="auth-foot">
+          <span>Est. 2024</span>
+          <span>·</span>
+          <span>41,208 buildings</span>
+        </div>
+      </div>
+    </div>
+    <div className="auth-right">
+      <form className="auth-form" onSubmit={e=>e.preventDefault()}>
+        <div className="auth-eyebrow">Welcome back</div>
+        <h2 className="auth-h">Sign in to Plano</h2>
+        <p className="auth-p">Pick up your journey — your lists, visits and follows.</p>
+
+        <div className="field">
+          <label>Email</label>
+          <input type="email" placeholder="you@studio.com"/>
+        </div>
+        <div className="field">
+          <div className="lrow">
+            <label>Password</label>
+            <a href="#" className="forgot" onClick={e=>e.preventDefault()}>Forgot?</a>
+          </div>
+          <input type="password" placeholder="••••••••••"/>
+        </div>
+
+        <div className="auth-submit"><button className="btn btn-primary">Continue →</button></div>
+
+        <div className="divider">or</div>
+        <button type="button" className="btn btn-outline"><Google/> Continue with Google</button>
+
+        <p className="auth-note">New to Plano? <a href="#" onClick={e=>e.preventDefault()}>Create an account</a></p>
+        <p className="auth-legal">By continuing you agree to our <a href="#" onClick={e=>e.preventDefault()}>Terms</a> and <a href="#" onClick={e=>e.preventDefault()}>Privacy Policy</a>.</p>
+      </form>
+    </div>
+  </div>
+);
+
+function App(){
+  return (
+    <div data-screen-label="Sign in">
+      <AppTopNav signedIn={false} activePath="/signin"/>
+      <SignIn/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

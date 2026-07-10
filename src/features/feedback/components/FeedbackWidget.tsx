@@ -220,7 +220,7 @@ export function FeedbackWidget() {
                 <div className="space-y-2">
                   <textarea
                     rows={4}
-                    className="w-full resize-none rounded-xl border border-border-default bg-surface-default px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-hidden focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
+                    className="w-full resize-none rounded-xl border border-border-default bg-surface-default px-4 py-3 text-sm text-text-primary placeholder:text-text-disabled focus:outline-hidden focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-primary transition-all"
                     placeholder="Tell us what's on your mind…"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}

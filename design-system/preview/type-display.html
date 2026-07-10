@@ -1,31 +1,34 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<title>Plano · Type · Display</title>
-<link rel="stylesheet" href="../colors_and_type.css" />
+<!DOCTYPE html>
+<!-- @dsCard group="Type" name="Display Type" subtitle="Editorial hero + feed headline" viewport="900x260" -->
+<html lang="en"><head><meta charset="UTF-8"><title>Display Type</title>
+<link rel="stylesheet" href="../colors_and_type.css">
 <style>
-  html, body { margin: 0; padding: 0; background: #FAFAFA; }
-  .card { padding: 26px 28px 30px; }
-  .head { display:flex; justify-content: space-between; align-items: baseline; margin-bottom: 22px; }
-  .meta { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-disabled); text-transform: uppercase;}
-  .specimen { font-size: clamp(48px, 7vw, 84px); font-weight: 700; letter-spacing: -0.038em; line-height: 0.92; color: var(--text-primary); margin: 0;}
-  .sub { display:flex; align-items:baseline; gap: 18px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--text-primary); }
-  .sub .e { font-size: 11px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-primary); }
-  .sub .m { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em; color: var(--text-disabled); }
-</style>
-</head>
-<body>
-<div class="card">
-  <div class="head">
-    <span class="eyebrow">Display · the editorial signature</span>
-    <span class="meta">Inter Bold · -0.035em · lh 0.95</span>
+  html,body{margin:0;padding:0;background:var(--surface-default);font-family:var(--font-sans)}
+  .wrap{padding:32px 28px}
+  .eyebrow{
+    font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+    color:var(--text-secondary);font-weight:500;
+    margin-bottom:18px;
+  }
+  .display{
+    font-size:76px;font-weight:700;letter-spacing:-0.035em;
+    line-height:.95;color:var(--text-primary);
+    margin:0;
+  }
+  .foot{
+    margin-top:24px;padding-top:14px;
+    border-top:1px solid var(--border-default);
+    display:flex;justify-content:space-between;align-items:baseline;gap:24px;
+    font-family:var(--font-mono);font-size:10px;
+    color:var(--text-disabled);letter-spacing:.04em;
+  }
+  .foot .left{color:var(--text-secondary)}
+</style></head>
+<body><div class="wrap">
+  <div class="eyebrow">Display headline · editorial hero</div>
+  <h1 class="display">The world's architecture, cataloged.</h1>
+  <div class="foot">
+    <span class="left">Inter · 76 · 700 · −0.035em · 0.95</span>
+    <span>fs-7xl</span>
   </div>
-  <h1 class="specimen">The world's<br/>architecture, catalogued.</h1>
-  <div class="sub">
-    <span class="e">§ 01 · Hero feed building name</span>
-    <span class="m">clamp(48,6vw,72) · weight 700 · tracking -0.035em</span>
-  </div>
-</div>
-</body>
-</html>
+</div></body></html>

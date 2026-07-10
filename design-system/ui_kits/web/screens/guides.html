@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Guides" subtitle="Discovery index — cities, localities, collections" viewport="1400x3200" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Guides</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  .doc-wide{max-width:1200px;margin:0 auto;padding:0 32px}
+  .sec-label{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .inp{width:100%;height:46px;border:1px solid var(--border-strong);background:#fff;border-radius:2px;padding:0 14px;font-size:15px;color:var(--text-primary);outline:none;transition:border 150ms}
+  .inp:focus{border-color:#171717}
+  .inp::placeholder{color:var(--text-disabled)}
+  .cta-quiet{color:var(--text-secondary)}
+  .cta-quiet:hover{color:var(--text-primary)}
+
+  /* ============ GUIDES ============ */
+  .g-sec{border-bottom:1px solid var(--border-default);padding:56px 0}
+  .g-hero-h{font-size:clamp(44px,7vw,72px);font-weight:700;letter-spacing:-.045em;line-height:.94;margin:14px 0 0}
+  .g-search{position:relative;max-width:440px;margin-top:32px}
+  .g-search .inp{padding-left:44px;height:52px}
+  .g-h2{font-size:26px;font-weight:600;letter-spacing:-.02em;margin:4px 0 0}
+  .cont-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:28px 0 32px}
+  .cont-tab{min-height:40px;padding:0 16px;border-radius:2px;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;background:none;border:1px solid var(--border-default);color:var(--text-secondary);transition:all 150ms}
+  .cont-tab:hover{border-color:var(--border-strong);color:var(--text-primary)}
+  .cont-tab.on{background:#171717;color:#fff;border-color:#171717}
+  .city-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .city-card{cursor:pointer}
+  .city-card .ph{width:100%;aspect-ratio:4/3;background-size:cover;background-position:center;filter:grayscale(1);transition:filter 200ms}
+  .city-card:hover .ph{filter:grayscale(0)}
+  .city-name{font-size:22px;font-weight:700;letter-spacing:-.02em;margin-top:12px}
+  .city-sub{font-size:13px;color:var(--text-secondary);margin-top:3px}
+  .loc-list{display:grid;grid-template-columns:1fr 1fr;column-gap:48px;border-top:1px solid var(--border-default);margin-top:32px}
+  .loc-row{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid var(--border-default);cursor:pointer}
+  .loc-row:hover .loc-city{color:var(--text-secondary)}
+  .loc-city{font-size:16px;font-weight:500;transition:color 150ms}
+  .loc-count{font-family:var(--font-mono);font-size:12px;color:var(--text-disabled)}
+  .col-grid{display:grid;grid-template-columns:repeat(3,1fr);column-gap:40px;row-gap:0}
+  .col-card{border-bottom:1px solid var(--border-default);padding:24px 0;cursor:pointer}
+  .col-card .ph{width:100%;aspect-ratio:16/7;background-size:cover;background-position:center;filter:grayscale(1);transition:filter 200ms}
+  .col-card:hover .ph{filter:grayscale(0)}
+  .col-name{font-size:17px;font-weight:600;letter-spacing:-.01em;margin-top:14px}
+  .col-sub{font-size:13px;color:var(--text-secondary);margin-top:4px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+const { AppTopNav, SiteFooter } = window.PlanoDesignSystem_e8d587;
+
+const IMG = {
+  brutal:"https://images.unsplash.com/photo-1517502884422-41eaead166d4?w=900&q=80",
+  tower:"https://images.unsplash.com/photo-1486718448742-163732cd1544?w=900&q=80",
+  villa:"https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=80",
+  museum:"https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=900&q=80",
+  chapel:"https://images.unsplash.com/photo-1464146072230-91cabc968266?w=900&q=80",
+  glass:"https://images.unsplash.com/photo-1449157291145-7efd050a4d0e?w=900&q=80",
+  london:"https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&q=80",
+  paris:"https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80",
+  berlin:"https://images.unsplash.com/photo-1560969184-10fe8719e047?w=800&q=80",
+};
+
+const CONTINENTS = ["Europe","Americas","Asia","Africa","Oceania"];
+const FEATURED = [
+  {name:"London",sub:"1,284 buildings · 92 collections",img:IMG.london},
+  {name:"Paris",sub:"968 buildings · 74 collections",img:IMG.paris},
+  {name:"Berlin",sub:"742 buildings · 61 collections",img:IMG.berlin},
+];
+const LOCALITIES = [
+  ["Barcelona",612],["Rotterdam",488],["Milan",421],["Copenhagen",397],
+  ["Vienna",356],["Porto",312],["Marseille",274],["Glasgow",241],
+];
+const COLLECTIONS = [
+  {name:"Brutalist gems of London",sub:"harriet.w · 12 buildings",img:IMG.brutal},
+  {name:"Le Corbusier, in sequence",sub:"marcusbuilt · 18 buildings",img:IMG.chapel},
+  {name:"Postwar concrete churches",sub:"concreteclara · 9 buildings",img:IMG.museum},
+  {name:"Glass houses, 1949–1971",sub:"j.okonkwo · 7 buildings",img:IMG.glass},
+  {name:"Rotterdam after the fire",sub:"Studio Mono · 15 buildings",img:IMG.tower},
+  {name:"Villas of the Riviera",sub:"elena.k · 11 buildings",img:IMG.villa},
+];
+
+const Guides = () => {
+  const [cont, setCont] = useState("Europe");
+  return (
+    <div className="doc-wide">
+      <section className="g-sec" style={{paddingTop:64}}>
+        <div style={{maxWidth:640}}>
+          <div className="sec-label">Guides</div>
+          <h1 className="g-hero-h">The world's architecture,<br/>city by city.</h1>
+          <p style={{fontSize:15,color:"var(--text-secondary)",marginTop:18}}>18,236 buildings across 6,619 localities, curated by the Plano community.</p>
+          <div className="g-search">
+            <span style={{position:"absolute",left:15,top:"50%",transform:"translateY(-50%)",color:"var(--text-secondary)"}}><Icon name="search" size={18}/></span>
+            <input className="inp" placeholder="Search a city or locality…"/>
+          </div>
+        </div>
+      </section>
+
+      <section className="g-sec">
+        <div className="sec-label">Browse by destination</div>
+        <h2 className="g-h2">Cities</h2>
+        <div className="cont-tabs">
+          {CONTINENTS.map(c=>(
+            <button key={c} className={`cont-tab ${cont===c?"on":""}`} onClick={()=>setCont(c)}>{c}</button>
+          ))}
+        </div>
+        <div className="city-grid">
+          {FEATURED.map(c=>(
+            <div key={c.name} className="city-card">
+              <div className="ph" style={{backgroundImage:`url(${c.img})`}}/>
+              <div className="city-name">{c.name}</div>
+              <div className="city-sub">{c.sub}</div>
+            </div>
+          ))}
+        </div>
+        <div className="loc-list">
+          {LOCALITIES.map(([city,n])=>(
+            <div key={city} className="loc-row">
+              <span className="loc-city">{city}</span>
+              <span className="loc-count">{n}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:20,paddingTop:20,borderTop:"1px solid var(--border-default)"}}>
+          <button className="cta cta-quiet">Show all 1,204 localities <span className="ar">→</span></button>
+          <button className="cta cta-quiet">Full catalogue <span className="ar">→</span></button>
+        </div>
+      </section>
+
+      <section className="g-sec">
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:28}}>
+          <div>
+            <div className="sec-label">Curated by the community</div>
+            <h2 className="g-h2">Popular collections</h2>
+          </div>
+          <button className="cta cta-quiet">Explore all <span className="ar">→</span></button>
+        </div>
+        <div className="col-grid">
+          {COLLECTIONS.map(c=>(
+            <div key={c.name} className="col-card">
+              <div className="ph" style={{backgroundImage:`url(${c.img})`}}/>
+              <div className="col-name">{c.name}</div>
+              <div className="col-sub">{c.sub}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section style={{padding:"56px 0"}}>
+        <div style={{display:"flex",alignItems:"center",gap:32,justifyContent:"space-between",flexWrap:"wrap"}}>
+          <div>
+            <div className="sec-label">Start exploring</div>
+            <h2 style={{fontSize:22,fontWeight:600,letterSpacing:"-.02em",margin:"6px 0 4px"}}>Create your own guide</h2>
+            <p style={{fontSize:14,color:"var(--text-secondary)",margin:0}}>Build a collection, generate an itinerary, and share it with the world.</p>
+          </div>
+          <div style={{display:"flex",gap:28,flexShrink:0}}>
+            <button className="cta">New collection <span className="ar">→</span></button>
+            <button className="cta cta-quiet">Explore map <span className="ar">→</span></button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+function App(){
+  return (
+    <div data-screen-label="Guides">
+      <AppTopNav activePath="/guides" userInitial="J"/>
+      <Guides/>
+      <SiteFooter/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

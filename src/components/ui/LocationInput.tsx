@@ -195,7 +195,7 @@ function PlacesAutocomplete({
             placeholder={placeholder}
             autoComplete="off" // FIXED: Disable browser autocomplete
             className={cn(
-              "flex h-10 w-full rounded-sm border border-border-default bg-surface-muted pl-9 pr-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-text-primary placeholder:text-text-disabled focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              "flex h-10 w-full rounded-sm border border-border-default bg-surface-muted pl-9 pr-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-text-primary placeholder:text-text-disabled focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             )}
           />
         </div>

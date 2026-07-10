@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Plano Web — Account & Social" subtitle="Notifications · Connect · Settings" viewport="1400x2600" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Account &amp; Social</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  html,body,#root{margin:0;padding:0;background:var(--surface-default);min-height:100vh}
+  *{box-sizing:border-box}
+  button{font-family:inherit}
+  a{color:inherit;text-decoration:none}
+  img{display:block;max-width:100%}
+  input,textarea,select{font-family:inherit}
+
+  /* ---- Kit chrome ---- */
+  .chrome-tabs{position:sticky;top:0;z-index:60;background:rgba(250,250,250,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-default)}
+  .chrome-inner{max-width:1360px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 32px}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap}
+  .tab{font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;padding:8px 14px;background:none;border:0;color:var(--text-secondary);cursor:pointer;border-radius:2px}
+  .tab:hover{color:var(--text-primary)}
+  .tab.active{background:#171717;color:#fff}
+  .chrome-right{display:flex;gap:10px;align-items:center}
+  .avatar{width:28px;height:28px;border-radius:9999px;background:#262626;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .bell{position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--text-primary);cursor:pointer;border-radius:2px}
+  .bell:hover{background:var(--surface-muted)}
+  .bell .dot{position:absolute;top:7px;right:8px;width:7px;height:7px;border-radius:9999px;background:var(--brand-accent);border:1.5px solid var(--surface-default)}
+
+  /* ---- Buttons ---- */
+  .btn{height:44px;padding:0 18px;border-radius:2px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center;gap:8px;line-height:1;transition:background 150ms,color 150ms}
+  .btn-primary{background:#BEFF00;color:#171717}
+  .btn-primary:hover{background:#9ACC00}
+  .btn-outline{background:#fff;color:#171717;border-color:var(--border-strong)}
+  .btn-outline:hover{background:var(--surface-muted)}
+  .btn-dark{background:#171717;color:#fff}
+  .btn-dark:hover{background:#000}
+  .btn-sm{height:34px;padding:0 14px;font-size:12px}
+
+  /* Editorial CTA */
+  .cta{font-size:12px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:inherit;background:none;border:0;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:6px;transition:color 150ms}
+  .cta:hover{color:var(--text-secondary)}
+  .cta .ar{transition:transform 150ms}
+  .cta:hover .ar{transform:translateX(3px);color:#BEFF00}
+
+  .eyebrow{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .sec-label{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+
+  /* ============ shared page shell ============ */
+  .doc{max-width:896px;margin:0 auto;padding:0 32px}
+  .doc-narrow{max-width:672px;margin:0 auto;padding:0 32px}
+  .page-h{padding:44px 0 40px;border-bottom:1px solid var(--border-default);display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+  .page-title{font-size:clamp(40px,6vw,60px);font-weight:700;letter-spacing:-.035em;line-height:.92;margin:0}
+
+  /* ============ NOTIFICATIONS ============ */
+  .nt-seclabel{position:sticky;top:61px;background:var(--surface-default);z-index:5;padding:30px 0 12px;font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .nt-row{display:flex;align-items:flex-start;gap:16px;padding:16px 0;border-bottom:1px solid var(--border-default);cursor:pointer;transition:background 150ms}
+  .nt-row:hover{background:var(--surface-muted)}
+  .nt-av-wrap{position:relative;flex-shrink:0;margin-top:2px}
+  .nt-av{width:38px;height:38px;border-radius:9999px;background-size:cover;background-position:center;background-color:var(--surface-muted);filter:grayscale(1)}
+  .nt-badge{position:absolute;bottom:-3px;right:-3px;width:18px;height:18px;border-radius:9999px;background:var(--surface-default);display:flex;align-items:center;justify-content:center}
+  .nt-main{flex:1;min-width:0}
+  .nt-title{font-size:14px;font-weight:700;letter-spacing:-.01em;color:var(--text-primary)}
+  .nt-body{font-size:14px;color:var(--text-secondary);line-height:1.4;margin-top:2px}
+  .nt-body b{color:var(--text-primary);font-weight:500}
+  .nt-body i{font-style:italic}
+  .nt-time{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-disabled);margin-top:7px}
+  .nt-unread{width:6px;height:6px;background:var(--brand-accent);flex-shrink:0;margin-top:8px}
+  .nt-more{padding:30px 0;}
+
+  /* ============ CONNECT / user rows ============ */
+  .cn-sec{padding:44px 0;border-bottom:1px solid var(--border-default)}
+  .cn-sec:last-child{border-bottom:0}
+  .ur{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid var(--border-default);cursor:pointer;transition:background 150ms}
+  .ur:last-child{border-bottom:0}
+  .ur:hover{background:var(--surface-muted)}
+  .ur-id{display:flex;align-items:center;gap:14px;min-width:0}
+  .ur-av{width:44px;height:44px;border-radius:9999px;background-size:cover;background-position:center;background-color:var(--surface-muted);filter:grayscale(1);flex-shrink:0;border:1px solid var(--border-default)}
+  .ur-name{font-size:14px;font-weight:500;color:var(--text-primary)}
+  .ur-mutual{font-size:12px;color:var(--text-secondary);margin-top:3px;display:flex;align-items:center;gap:8px}
+  .facepile{display:inline-flex}
+  .facepile i{width:18px;height:18px;border-radius:9999px;background-size:cover;background-position:center;border:1.5px solid var(--surface-default);margin-left:-6px;filter:grayscale(1)}
+  .facepile i:first-child{margin-left:0}
+  .ur-act{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .star-btn{width:34px;height:34px;border-radius:2px;border:0;background:none;color:var(--text-secondary);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+  .star-btn:hover{background:var(--surface-muted);color:var(--text-primary)}
+  .star-btn.on{color:var(--feedback-warning,#F59E0B)}
+
+  .metric-tabs{display:flex;border-bottom:1px solid var(--border-default);margin-top:22px}
+  .metric-tab{padding:14px 22px 12px;border:0;border-bottom:2px solid transparent;background:none;cursor:pointer;text-align:left;margin-bottom:-1px}
+  .metric-tab.on{border-bottom-color:#171717}
+  .metric-tab .v{font-size:20px;font-weight:700;letter-spacing:-.02em;line-height:1;color:var(--text-disabled)}
+  .metric-tab.on .v{color:var(--text-primary)}
+  .metric-tab .l{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-disabled);margin-top:6px}
+  .metric-tab.on .l{color:var(--text-secondary)}
+
+  /* ============ SETTINGS ============ */
+  .set-back{margin:36px 0 26px;font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);background:none;border:0;cursor:pointer}
+  .set-back:hover{color:var(--text-primary)}
+  .set-h{font-size:clamp(34px,5vw,44px);font-weight:700;letter-spacing:-.03em;line-height:.95;margin:0}
+  .set-sub{font-size:14px;color:var(--text-secondary);margin-top:12px}
+  .set-fb{margin:36px 0;padding-bottom:36px;border-bottom:1px solid var(--border-default)}
+  .set-fb a{font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-primary)}
+  .set-avatar-block{display:flex;flex-direction:column;align-items:center;gap:16px;margin:8px 0 36px}
+  .set-avatar{width:96px;height:96px;border-radius:9999px;background-size:cover;background-position:center;background-color:var(--surface-muted);filter:grayscale(1);border:1px solid var(--border-default)}
+  .set-sec{padding:32px 0;border-top:1px solid var(--border-default)}
+  .set-sec:first-of-type{border-top:0;padding-top:0}
+  .set-sec-h{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:24px}
+  .field{margin-bottom:22px}
+  .field:last-child{margin-bottom:0}
+  .field label{font-size:13px;font-weight:500;color:var(--text-primary);display:block;margin-bottom:8px}
+  .field .hint{font-size:12px;color:var(--text-secondary);margin-top:8px}
+  .inp{width:100%;max-width:400px;height:44px;border:1px solid var(--border-strong);background:#fff;border-radius:2px;padding:0 14px;font-size:15px;color:var(--text-primary);outline:none;transition:border 150ms}
+  .inp:focus{border-color:#171717}
+  .inp.wide{max-width:100%}
+  .inp::placeholder{color:var(--text-disabled)}
+  textarea.inp{height:auto;min-height:104px;padding:12px 14px;resize:none;max-width:520px}
+  .inp-icon{position:relative;max-width:400px}
+  .inp-icon .ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-secondary);pointer-events:none}
+  .inp-icon .inp{padding-left:38px}
+  .set-manage-list{border-top:1px solid var(--border-default);border-bottom:1px solid var(--border-default)}
+  .set-manage{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 0;border-bottom:1px solid var(--border-default)}
+  .set-manage:last-child{border-bottom:0}
+  .set-manage h3{font-size:15px;font-weight:500;margin:0}
+  .set-manage p{font-size:13px;color:var(--text-secondary);margin:4px 0 0}
+  .set-actions{display:flex;justify-content:flex-end;padding:28px 0 0;border-top:1px solid var(--border-default);margin-top:8px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+
+const PlanoLogo = ({style}) => (
+  <svg viewBox="0 0 338 74" style={style} aria-label="Plano">
+    <g fill="currentColor">
+      <path d="M 0 73.731 L 0 0.977 L 28.369 0.977 Q 36.67 0.977 42.48 4.127 Q 48.291 7.276 51.343 12.818 Q 54.395 18.36 54.395 25.538 Q 54.395 32.765 51.294 38.258 Q 48.193 43.751 42.31 46.852 Q 36.426 49.952 28.027 49.952 L 14.893 49.952 L 14.893 73.731 L 0 73.731 Z"/>
+      <path d="M 111.084 73.731 L 64.795 73.731 L 64.795 0.977 L 79.688 0.977 L 79.688 61.378 L 111.084 61.378 L 111.084 73.731 Z"/>
+      <path d="M 117.139 73.731 L 141.992 0.977 L 161.523 0.977 L 187.012 73.731 L 170.459 73.731 L 164.845 56.837 L 132.666 56.837 L 138.994 56.837 L 133.594 73.731"/>
+      <path d="M 195.996 73.731 L 195.996 0.977 L 212.598 0.977 L 235.596 37.794 Q 244.727 55.372 246.582 60.45 L 245.068 60.45 Q 243.799 38.819 243.799 35.89 L 243.799 0.977 L 259.033 0.977 L 259.033 73.731 L 242.383 73.731 L 221.484 40.333 Q 211.035 20.948 208.105 14.991 L 210.01 14.991 Q 211.23 37.794 211.23 40.284 L 211.23 73.731 Z"/>
+      <path d="M 304.15 74.708 Q 294.531 74.708 286.841 70.313 Q 279.15 65.919 274.683 57.569 Q 270.215 49.22 270.215 37.403 Q 270.215 25.538 274.683 17.164 Q 279.15 8.79 286.841 4.395 Q 294.531 0.001 304.15 0.001 Q 313.818 0.001 321.484 4.395 Q 329.15 8.79 333.618 17.164 Q 338.086 25.538 338.086 37.403 Q 338.086 49.22 333.618 57.569 Q 329.15 65.919 321.484 70.313 Q 313.818 74.708 304.15 74.708 Z"/>
+    </g>
+  </svg>
+);
+
+const P = {
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  settings:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  heart:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" fill="currentColor" stroke="none"/>',
+  message:'<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  userplus:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/>',
+  sparkles:'<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>',
+  shield:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+  trophy:'<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>',
+  star:'<path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.12 2.12 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.12 2.12 0 0 0 1.597-1.16z"/>',
+  mail:'<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+  arrowright:'<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  pin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+};
+const Icon = ({name, size=18, style}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={style}
+    dangerouslySetInnerHTML={{__html: P[name]}}/>
+);
+const StarFill = ({size=18}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" dangerouslySetInnerHTML={{__html:P.star}}/>
+);
+
+const IMG = {
+  p1:"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80",
+  p2:"https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80",
+  p3:"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&q=80",
+  p4:"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80",
+  p5:"https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=200&q=80",
+  p6:"https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&q=80",
+  p7:"https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&q=80",
+  p8:"https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=200&q=80",
+  me:"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80",
+};
+
+// ─── Chrome ───
+const VIEWS = [["notifications","Notifications"],["connect","Connect"],["settings","Settings"]];
+const Chrome = ({view, setView}) => (
+  <nav className="chrome-tabs">
+    <div className="chrome-inner">
+      <div style={{display:"flex",alignItems:"center",gap:32}}>
+        <PlanoLogo style={{height:20,color:"#171717"}}/>
+        <div className="tabs">
+          {VIEWS.map(([k,l])=>(
+            <button key={k} className={`tab ${view===k?'active':''}`} onClick={()=>setView(k)}>{l}</button>
+          ))}
+        </div>
+      </div>
+      <div className="chrome-right">
+        <div className="bell"><Icon name="bell" size={19}/><span className="dot"/></div>
+        <div className="avatar">JN</div>
+      </div>
+    </div>
+  </nav>
+);
+
+// ═══════════════ NOTIFICATIONS ═══════════════
+const NT_ICON = {
+  like:{ic:"heart", color:"var(--feedback-destructive,#EF4444)"},
+  comment:{ic:"message", color:"var(--text-secondary)"},
+  follow:{ic:"userplus", color:"var(--text-secondary)"},
+  suggest:{ic:"sparkles", color:"var(--text-secondary)"},
+  verify:{ic:"shield", color:"var(--text-primary)"},
+  award:{ic:"trophy", color:"var(--text-secondary)"},
+};
+const NEW_NT = [
+  {av:IMG.p2, type:"like", title:"New like", time:"2 hours ago", read:false,
+   body:(<><b>marcusbuilt</b> liked your review of <i>Barbican Estate</i></>)},
+  {av:IMG.p3, type:"follow", title:"New follower", time:"5 hours ago", read:false,
+   body:(<><b>concreteclara</b> started following you</>)},
+  {av:IMG.p1, type:"comment", title:"New comment", time:"Yesterday", read:false,
+   body:(<><b>harriet.w</b> commented on your review of <i>National Theatre</i></>)},
+];
+const OLD_NT = [
+  {av:IMG.p6, type:"verify", title:"Architect verification approved", time:"2 days ago", read:true,
+   body:(<>Your request to be verified as <b>Peter Barber</b> was <b style={{color:"var(--feedback-success,#16A34A)"}}>approved</b></>)},
+  {av:IMG.p4, type:"suggest", title:"New recommendation", time:"3 days ago", read:true,
+   body:(<><b>j.okonkwo</b> recommended <i>Trellick Tower</i> for you</>)},
+  {av:IMG.p5, type:"award", title:"Award", time:"4 days ago", read:true,
+   body:(<>Congratulations! Your building <b><i>Isokon</i></b> won an award</>)},
+  {av:IMG.p7, type:"follow", title:"Friend joined", time:"1 week ago", read:true,
+   body:(<>Your friend <b>elena.k</b> just joined Plano</>)},
+];
+
+const NotifRow = ({n}) => {
+  const cfg = NT_ICON[n.type];
+  return (
+    <div className="nt-row">
+      <div className="nt-av-wrap">
+        <div className="nt-av" style={{backgroundImage:`url(${n.av})`}}/>
+        <div className="nt-badge" style={{color:cfg.color}}><Icon name={cfg.ic} size={13}/></div>
+      </div>
+      <div className="nt-main">
+        <div className="nt-title">{n.title}</div>
+        <div className="nt-body">{n.body}</div>
+        <div className="nt-time">{n.time}</div>
+      </div>
+      {!n.read && <div className="nt-unread"/>}
+    </div>
+  );
+};
+
+const Notifications = () => (
+  <div className="doc">
+    <div className="page-h">
+      <h1 className="page-title">Notifications</h1>
+      <button className="star-btn" title="Notification settings"><Icon name="settings" size={18}/></button>
+    </div>
+    <div className="nt-seclabel">New</div>
+    {NEW_NT.map((n,i)=><NotifRow key={i} n={n}/>)}
+    <div className="nt-seclabel">Earlier</div>
+    {OLD_NT.map((n,i)=><NotifRow key={i} n={n}/>)}
+    <div className="nt-more"><button className="cta">Load more <span className="ar">→</span></button></div>
+  </div>
+);
+
+// ═══════════════ CONNECT ═══════════════
+const Facepile = ({imgs, label}) => (
+  <span className="ur-mutual">
+    <span className="facepile">{imgs.map((u,i)=><i key={i} style={{backgroundImage:`url(${u})`}}/>)}</span>
+    {label}
+  </span>
+);
+const FollowBtn = ({back}) => {
+  const [on, setOn] = useState(false);
+  return (
+    <button className={`btn btn-sm ${on?'btn-outline':'btn-dark'}`} style={{width:on?96:back?108:88}} onClick={(e)=>{e.stopPropagation();setOn(!on);}}>
+      {on?"Following":back?"Follow back":"Follow"}
+    </button>
+  );
+};
+const UserRow = ({u, follow, back, star}) => {
+  const [fav, setFav] = useState(u.close);
+  return (
+    <div className="ur">
+      <div className="ur-id">
+        <div className="ur-av" style={{backgroundImage:`url(${u.av})`}}/>
+        <div style={{minWidth:0}}>
+          <div className="ur-name">{u.name}</div>
+          {u.mutualImgs ? <Facepile imgs={u.mutualImgs} label={u.mutual}/> : (u.sub && <div className="ur-mutual">{u.sub}</div>)}
+        </div>
+      </div>
+      <div className="ur-act">
+        {star && (
+          <button className={`star-btn ${fav?'on':''}`} title="Close friend" onClick={(e)=>{e.stopPropagation();setFav(!fav);}}>
+            {fav ? <StarFill size={18}/> : <Icon name="star" size={18}/>}
+          </button>
+        )}
+        {follow && <FollowBtn back={back}/>}
+      </div>
+    </div>
+  );
+};
+
+const PYMK = [
+  {av:IMG.p5, name:"elena.k", mutual:"3 mutuals", mutualImgs:[IMG.p1,IMG.p2,IMG.p3]},
+  {av:IMG.p6, name:"Studio Mono", mutual:"Followed by harriet.w", mutualImgs:[IMG.p1]},
+  {av:IMG.p7, name:"brut.appreciation", mutual:"12 mutuals", mutualImgs:[IMG.p2,IMG.p3,IMG.p4]},
+  {av:IMG.p8, name:"dieter.rams.fan", sub:"New to Plano"},
+];
+const FOLLOWING = [
+  {av:IMG.p1, name:"harriet.w", sub:"London ambassador", close:true},
+  {av:IMG.p2, name:"marcusbuilt", sub:"142 buildings", close:true},
+  {av:IMG.p3, name:"concreteclara", sub:"71 buildings"},
+  {av:IMG.p4, name:"j.okonkwo", sub:"63 buildings"},
+  {av:IMG.p6, name:"Studio Mono", sub:"Architecture practice"},
+];
+const FOLLOWERS = [
+  {av:IMG.p5, name:"elena.k", sub:"28 buildings"},
+  {av:IMG.p7, name:"brut.appreciation", sub:"9 buildings"},
+  {av:IMG.p8, name:"dieter.rams.fan", sub:"New to Plano"},
+];
+
+const Connect = () => {
+  const [tab, setTab] = useState("following");
+  return (
+    <div className="doc">
+      <div className="page-h"><h1 className="page-title">Connect</h1></div>
+
+      <section className="cn-sec">
+        <div className="sec-label" style={{marginBottom:18}}>People you may know</div>
+        {PYMK.map((u,i)=><UserRow key={i} u={u} follow back={i===2}/>)}
+      </section>
+
+      <section className="cn-sec">
+        <div className="sec-label">Your contacts</div>
+        <div className="metric-tabs">
+          <button className={`metric-tab ${tab==='following'?'on':''}`} onClick={()=>setTab('following')}>
+            <div className="v">128</div><div className="l">Following</div>
+          </button>
+          <button className={`metric-tab ${tab==='followers'?'on':''}`} onClick={()=>setTab('followers')}>
+            <div className="v">1,204</div><div className="l">Followers</div>
+          </button>
+        </div>
+        <div style={{paddingTop:6}}>
+          {tab==='following'
+            ? FOLLOWING.map((u,i)=><UserRow key={i} u={u} star/>)
+            : FOLLOWERS.map((u,i)=><UserRow key={i} u={u} follow back/>)}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+// ═══════════════ SETTINGS ═══════════════
+const Settings = () => (
+  <div className="doc-narrow">
+    <button className="set-back">← Back to profile</button>
+    <h1 className="set-h">Settings</h1>
+    <p className="set-sub">Account, profile, and privacy preferences.</p>
+
+    <div className="set-fb"><a href="#" onClick={e=>e.preventDefault()}>Feedback history →</a></div>
+
+    <div className="set-avatar-block">
+      <div className="set-avatar" style={{backgroundImage:`url(${IMG.me})`}}/>
+      <button className="btn btn-outline btn-sm"><Icon name="upload" size={15}/> Change photo</button>
+    </div>
+
+    <form onSubmit={e=>e.preventDefault()}>
+      <div className="set-sec">
+        <div className="set-sec-h">Public profile</div>
+        <div className="field">
+          <label>Username</label>
+          <input className="inp" defaultValue="jaimenoain"/>
+        </div>
+        <div className="field">
+          <label>Bio</label>
+          <textarea className="inp" defaultValue="Architect based in Madrid. Cataloguing concrete, one building at a time."/>
+        </div>
+        <div className="field">
+          <label>Where do you live?</label>
+          <div className="inp-icon"><span className="ic"><Icon name="pin" size={16}/></span><input className="inp" defaultValue="Madrid, Spain"/></div>
+          <p className="hint">This helps us personalize your experience.</p>
+        </div>
+      </div>
+
+      <div className="set-sec">
+        <div className="set-sec-h">Profile customization</div>
+        <div className="set-manage-list">
+          <div className="set-manage">
+            <div><h3>All-time favourites</h3><p>Select up to 6 buildings to showcase on your profile.</p></div>
+            <button type="button" className="btn btn-outline btn-sm">Manage</button>
+          </div>
+          <div className="set-manage">
+            <div><h3>Highlights</h3><p>Add favourite styles, people, and quotes.</p></div>
+            <button type="button" className="btn btn-outline btn-sm">Manage</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="set-sec">
+        <div className="set-sec-h">Account &amp; security</div>
+        <div className="field">
+          <label>Email address</label>
+          <div className="inp-icon"><span className="ic"><Icon name="mail" size={16}/></span><input className="inp" type="email" defaultValue="jaime@studio.com"/></div>
+          <p className="hint">Changing this will require verification on the new address.</p>
+        </div>
+        <div className="field">
+          <label>New password</label>
+          <input className="inp" type="password" placeholder="Leave blank to keep current password"/>
+        </div>
+      </div>
+
+      <div className="set-sec">
+        <div className="set-sec-h">Data &amp; privacy</div>
+        <div className="set-manage-list" style={{borderTop:"1px solid var(--border-default)"}}>
+          <div className="set-manage">
+            <div><h3>Download my data</h3><p>Export your ratings, reviews, and bucket list to a CSV file.</p></div>
+            <button type="button" className="btn btn-outline btn-sm"><Icon name="download" size={15}/> Export</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="set-actions"><button className="btn btn-primary">Save changes</button></div>
+    </form>
+    <div style={{height:80}}/>
+  </div>
+);
+
+// ─── App ───
+const App = () => {
+  const [view, setView] = useState("notifications");
+  return (
+    <div data-screen-label={`Plano · ${view}`}>
+      <Chrome view={view} setView={setView}/>
+      {view==="notifications" && <Notifications/>}
+      {view==="connect" && <Connect/>}
+      {view==="settings" && <Settings/>}
+    </div>
+  );
+};
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

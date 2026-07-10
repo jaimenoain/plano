@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Plano Web — Itinerary & City" subtitle="Collection map + itinerary · City / locality page" viewport="1400x3200" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Itinerary &amp; City</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  html,body,#root{margin:0;padding:0;background:var(--surface-default);min-height:100vh}
+  *{box-sizing:border-box}
+  button{font-family:inherit}
+  a{color:inherit;text-decoration:none}
+  img{display:block;max-width:100%}
+  input,textarea,select{font-family:inherit}
+
+  /* ---- Kit chrome ---- */
+  .chrome-tabs{position:sticky;top:0;z-index:60;background:rgba(250,250,250,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-default)}
+  .chrome-inner{max-width:1360px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 32px}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap}
+  .tab{font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;padding:8px 14px;background:none;border:0;color:var(--text-secondary);cursor:pointer;border-radius:2px}
+  .tab:hover{color:var(--text-primary)}
+  .tab.active{background:#171717;color:#fff}
+  .chrome-right{display:flex;gap:10px;align-items:center}
+  .avatar{width:28px;height:28px;border-radius:9999px;background:#262626;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .bell{position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--text-primary);cursor:pointer;border-radius:2px}
+  .bell:hover{background:var(--surface-muted)}
+  .bell .dot{position:absolute;top:7px;right:8px;width:7px;height:7px;border-radius:9999px;background:var(--brand-accent);border:1.5px solid var(--surface-default)}
+
+  /* ---- Buttons ---- */
+  .btn{height:44px;padding:0 18px;border-radius:2px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center;gap:8px;line-height:1;transition:background 150ms,color 150ms}
+  .btn-primary{background:#BEFF00;color:#171717}
+  .btn-primary:hover{background:#9ACC00}
+  .btn-outline{background:#fff;color:#171717;border-color:var(--border-strong)}
+  .btn-outline:hover{background:var(--surface-muted)}
+  .btn-sm{height:36px;padding:0 14px;font-size:13px}
+  .icon-btn{width:36px;height:36px;border-radius:2px;border:1px solid var(--border-default);background:#fff;color:var(--text-secondary);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:all 150ms}
+  .icon-btn:hover{background:var(--surface-muted);color:var(--text-primary)}
+
+  /* Editorial CTA */
+  .cta{font-size:12px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:inherit;background:none;border:0;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:6px;transition:color 150ms}
+  .cta:hover{color:var(--text-secondary)}
+  .cta .ar{transition:transform 150ms}
+  .cta:hover .ar{transform:translateX(3px);color:#BEFF00}
+
+  /* Rating dots */
+  .rdots{display:inline-flex;gap:4px;vertical-align:middle;align-items:center}
+  .rdot{width:10px;height:10px;border-radius:9999px;background:#171717;display:inline-block}
+  .rdot.sm{width:8px;height:8px}
+
+  .eyebrow{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .screen{max-width:1360px;margin:0 auto}
+
+  /* Photo placeholder */
+  .ph{position:relative;background-color:var(--surface-muted);background-image:repeating-linear-gradient(135deg,transparent 0 11px,rgba(0,0,0,.035) 11px 12px);display:flex;align-items:flex-end;overflow:hidden;background-size:cover;background-position:center}
+
+  /* ============ MAP primitives ============ */
+  .map-col{position:relative;background:#EDEDED;overflow:hidden}
+  .map-canvas{position:absolute;inset:0;background:
+    linear-gradient(rgba(0,0,0,0.045) 1px,transparent 1px) 0 0/54px 54px,
+    linear-gradient(90deg,rgba(0,0,0,0.045) 1px,transparent 1px) 0 0/54px 54px,
+    #E9E9E7}
+  .map-road{position:absolute;background:#fff}
+  .map-route{position:absolute;inset:0;pointer-events:none;z-index:2}
+  .pin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;color:#171717;display:flex;flex-direction:column;align-items:center;z-index:3}
+  .pin .num{width:26px;height:26px;border-radius:9999px 9999px 9999px 2px;transform:rotate(45deg);background:#171717;border:2px solid #fff;box-shadow:var(--shadow-md);display:flex;align-items:center;justify-content:center}
+  .pin .num span{transform:rotate(-45deg);color:#fff;font-size:12px;font-weight:600}
+  .pin.active .num{background:#171717;width:32px;height:32px}
+  .pin.active .num span{font-size:14px}
+  .pin.active .plabel{display:block}
+  .plabel{display:none;margin-top:8px;background:#171717;color:#fff;font-size:11px;font-weight:600;letter-spacing:-.01em;padding:4px 8px;border-radius:2px;white-space:nowrap}
+  .map-ctrls{position:absolute;top:16px;right:16px;display:flex;flex-direction:column;background:#fff;border:1px solid var(--border-default);border-radius:2px;overflow:hidden;z-index:5}
+  .map-ctrls button{width:38px;height:38px;border:0;background:#fff;font-size:18px;color:var(--text-primary);cursor:pointer;border-bottom:1px solid var(--border-default)}
+  .map-ctrls button:last-child{border-bottom:0}
+  .map-ctrls button:hover{background:var(--surface-muted)}
+  .map-cap{position:absolute;left:16px;bottom:14px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-disabled);background:rgba(255,255,255,.82);padding:5px 8px;z-index:5}
+
+  /* ============ COLLECTION / ITINERARY ============ */
+  .col-shell{display:grid;grid-template-columns:1fr 396px;height:calc(100vh - 61px)}
+  .col-side{border-left:1px solid var(--border-default);background:var(--surface-card);display:flex;flex-direction:column;overflow:hidden}
+  .col-mosaic{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5px;background:var(--border-default);flex-shrink:0}
+  .col-mosaic .cell{aspect-ratio:4/5;background-size:cover;background-position:center;background-color:var(--surface-muted)}
+  .col-head{padding:20px 22px 18px;border-bottom:1px solid var(--border-default);flex-shrink:0}
+  .col-title{font-size:23px;font-weight:700;letter-spacing:-.02em;line-height:1.05;margin:8px 0 6px}
+  .col-by{font-size:13px;color:var(--text-secondary)}
+  .col-by b{color:var(--text-primary);font-weight:500}
+  .col-desc{font-size:13px;color:var(--text-secondary);line-height:1.55;margin-top:10px}
+  .col-actbar{display:flex;align-items:center;gap:8px;margin-top:16px}
+  .col-actbar .spacer{flex:1}
+  .seg-toggle{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--border-default);border-radius:2px;overflow:hidden;flex-shrink:0;margin:16px 22px 0}
+  .seg-toggle button{padding:9px 0;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;background:#fff;border:0;color:var(--text-secondary);cursor:pointer;transition:all 150ms}
+  .seg-toggle button:first-child{border-right:1px solid var(--border-default)}
+  .seg-toggle button.on{background:#171717;color:#fff}
+  .col-scroll{flex:1;overflow-y:auto;padding:18px 22px 40px}
+
+  /* Itinerary days + timeline */
+  .day{border:1px solid var(--border-default);border-radius:2px;margin-bottom:16px;overflow:hidden;background:#fff}
+  .day-h{padding:12px 15px;background:var(--surface-muted);border-bottom:1px solid var(--border-default);display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .day-h .t{font-size:14px;font-weight:600;letter-spacing:-.01em}
+  .day-h .m{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.04em;color:var(--text-secondary);white-space:nowrap}
+  .day-body{padding:14px 15px 6px}
+  .tl{position:relative}
+  .tl::before{content:"";position:absolute;left:12px;top:14px;bottom:20px;width:2px;background:var(--border-default);z-index:0}
+  .tl-stop{position:relative;padding:0 0 4px 40px;min-height:30px}
+  .tl-stop .num{position:absolute;left:0;top:0;width:26px;height:26px;border-radius:9999px;background:#171717;color:#fff;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;z-index:1}
+  .stop-card{display:flex;gap:12px}
+  .stop-thumb{width:54px;height:54px;flex-shrink:0;background-size:cover;background-position:center;background-color:var(--surface-muted)}
+  .stop-main{min-width:0;flex:1}
+  .stop-name{font-size:15px;font-weight:600;letter-spacing:-.01em;line-height:1.15;display:flex;align-items:center;gap:8px}
+  .stop-sub{font-size:12px;color:var(--text-secondary);margin-top:3px}
+  .stop-note{font-size:12.5px;color:var(--text-secondary);font-style:italic;line-height:1.5;margin:8px 0 0;padding-left:11px;border-left:2px solid var(--border-default)}
+  .tl-seg{position:relative;padding:8px 0 8px 40px}
+  .tl-seg .sico{position:absolute;left:2px;top:6px;width:22px;height:22px;border-radius:9999px;background:#fff;border:1px solid var(--border-default);display:flex;align-items:center;justify-content:center;color:var(--text-secondary);z-index:1}
+  .seg-txt{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--text-disabled);display:flex;align-items:center;gap:8px;height:22px}
+  .seg-txt .d{font-family:'Space Mono',monospace;letter-spacing:.02em}
+  .day-add{width:100%;padding:9px 0;border:1px dashed var(--border-strong);border-radius:2px;background:#fff;color:var(--text-secondary);font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;margin:2px 0 14px}
+  .day-add:hover{border-color:#171717;color:var(--text-primary)}
+
+  /* Map legend */
+  .map-legend{position:absolute;top:16px;left:16px;background:rgba(255,255,255,.94);border:1px solid var(--border-default);border-radius:2px;padding:12px 14px;z-index:5;min-width:172px}
+  .map-legend .h{font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:9px}
+  .map-legend .row{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text-primary);padding:3px 0}
+  .map-legend .row .mono{font-family:'Space Mono',monospace;font-size:11px;color:var(--text-secondary)}
+
+  /* ============ CITY / LOCALITY ============ */
+  .city{max-width:960px;margin:0 auto}
+  .city-hero{position:relative;height:clamp(340px,52vh,520px);overflow:hidden;background:#000}
+  .city-hero-img{position:absolute;inset:0;background-size:cover;background-position:center;filter:grayscale(.15) contrast(1.02)}
+  .city-hero-scrim{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.82) 0%,rgba(0,0,0,.2) 48%,rgba(0,0,0,.28) 100%)}
+  .city-hero-inner{position:absolute;left:0;right:0;bottom:0;max-width:960px;margin:0 auto;padding:0 32px 44px;width:100%}
+  .city-eyebrow{font-size:10px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.72)}
+  .city-region{font-size:11px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-top:10px}
+  .city-name{font-size:clamp(56px,8vw,104px);font-weight:700;letter-spacing:-.045em;line-height:.9;color:#fff;margin:12px 0 0}
+  .city-credit{position:absolute;right:32px;bottom:16px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.05em;color:rgba(255,255,255,.55);display:flex;align-items:center;gap:6px;z-index:2}
+
+  .city-body{padding:0 32px 120px}
+  .city-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;border-bottom:1px solid var(--border-default);padding:40px 0}
+  .city-stat .v{font-size:38px;font-weight:700;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+  .city-stat .l{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);margin-top:12px}
+
+  .city-actions{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--border-default)}
+  .city-action{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 24px;border-left:1px solid var(--border-default);cursor:pointer;transition:background 150ms}
+  .city-action:first-child{border-left:0}
+  .city-action:hover{background:var(--surface-muted)}
+  .city-action .l{display:flex;align-items:center;gap:11px;font-size:12px;font-weight:500;letter-spacing:.13em;text-transform:uppercase}
+  .city-action .ar{color:var(--text-primary);transition:transform 150ms}
+  .city-action:hover .ar{transform:translateX(3px)}
+  .city-action.hl:hover .ar{color:#BEFF00}
+
+  .city-sec{margin-top:56px;border-top:1px solid var(--border-default);padding-top:36px}
+  .city-sec:first-child{border-top:0}
+  .sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:22px}
+  .sec-label{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .sec-more{font-size:10px;font-weight:500;letter-spacing:.13em;text-transform:uppercase;color:var(--text-disabled)}
+  .sec-more:hover{color:var(--text-primary);cursor:pointer}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+  .chip{min-height:36px;padding:0 14px;display:inline-flex;align-items:center;border:1px solid var(--border-default);border-radius:2px;font-size:10px;font-weight:500;letter-spacing:.11em;text-transform:uppercase;color:var(--text-secondary);background:#fff;cursor:pointer;transition:all 150ms}
+  .chip:hover{border-color:#171717;color:var(--text-primary)}
+  .chip.on{background:#171717;border-color:#171717;color:#fff}
+  .chips-sep{width:1px;align-self:stretch;background:var(--border-default);margin:2px 4px}
+
+  .city-map{height:420px;position:relative;border:1px solid var(--border-default);overflow:hidden}
+
+  /* Top buildings */
+  .tb-hero{position:relative;display:block;border:1px solid var(--border-default);overflow:hidden;aspect-ratio:16/9;margin-bottom:12px;cursor:pointer}
+  .tb-hero-img{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform 500ms}
+  .tb-hero:hover .tb-hero-img{transform:scale(1.02)}
+  .tb-hero-scrim{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.72),rgba(0,0,0,.05) 55%,transparent)}
+  .tb-hero-meta{position:absolute;left:0;right:0;bottom:0;padding:24px}
+  .tb-hero-yr{font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:6px}
+  .tb-hero-name{font-size:28px;font-weight:700;letter-spacing:-.025em;line-height:1;color:#fff}
+  .tb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .tb-card{cursor:pointer}
+  .tb-card-img{aspect-ratio:4/3;background-size:cover;background-position:center;background-color:var(--surface-muted)}
+  .tb-card-yr{font-size:9px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-disabled);margin-top:10px}
+  .tb-card-name{font-size:15px;font-weight:600;letter-spacing:-.01em;line-height:1.15;margin-top:4px}
+  .tb-card:hover .tb-card-name{color:var(--text-secondary)}
+
+  /* Stewards */
+  .stw{border-top:1px solid var(--border-default);border-bottom:1px solid var(--border-default)}
+  .stw-row{display:flex;align-items:center;gap:16px;padding:14px 4px;border-bottom:1px solid var(--border-default);cursor:pointer;transition:background 150ms}
+  .stw-row:last-child{border-bottom:0}
+  .stw-row:hover{background:var(--surface-muted)}
+  .stw-rank{width:26px;font-family:'Space Mono',monospace;font-size:11px;color:var(--text-disabled);flex-shrink:0}
+  .stw-av{width:42px;height:42px;border-radius:9999px;border:1px solid var(--border-default);background-size:cover;background-position:center;filter:grayscale(1);flex-shrink:0}
+  .stw-main{flex:1;min-width:0}
+  .stw-name{font-size:14px;font-weight:500;display:flex;align-items:center;gap:9px}
+  .stw-badge{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:500;letter-spacing:.13em;text-transform:uppercase;color:var(--text-secondary)}
+  .stw-stats{font-size:11px;color:var(--text-secondary);margin-top:4px;display:flex;flex-wrap:wrap;gap:14px}
+  .stw-stats span{display:inline-flex;align-items:center;gap:5px;font-variant-numeric:tabular-nums}
+
+  /* City guides */
+  .cg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px 20px}
+  .cg-card{cursor:pointer}
+  .cg-mosaic{display:grid;grid-template-columns:2fr 1fr;gap:1.5px;background:var(--border-default);aspect-ratio:4/3}
+  .cg-mosaic .m2{display:grid;grid-template-rows:1fr 1fr;gap:1.5px}
+  .cg-mosaic i{display:block;background-size:cover;background-position:center;background-color:var(--surface-muted)}
+  .cg-name{font-size:14px;font-weight:600;letter-spacing:-.01em;line-height:1.2;margin-top:12px}
+  .cg-card:hover .cg-name{color:var(--text-secondary)}
+  .cg-meta{font-size:11px;color:var(--text-disabled);margin-top:5px}
+
+  /* Events */
+  .ev-row{display:flex;align-items:flex-start;gap:18px;padding:16px 0;border-bottom:1px solid var(--border-default);cursor:pointer}
+  .ev-row:first-child{border-top:1px solid var(--border-default)}
+  .ev-date{width:44px;text-align:center;flex-shrink:0}
+  .ev-date .mo{font-size:9px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--text-disabled)}
+  .ev-date .dy{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1;margin-top:3px}
+  .ev-main{flex:1;min-width:0}
+  .ev-name{font-size:15px;font-weight:500}
+  .ev-row:hover .ev-name{color:var(--text-secondary)}
+  .ev-meta{margin-top:7px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .ev-loc{font-size:11px;color:var(--text-disabled)}
+  .ev-tag{border:1px solid var(--border-default);padding:2px 7px;font-size:9px;font-weight:500;letter-spacing:.11em;text-transform:uppercase;color:var(--text-disabled)}
+
+  @media (max-width:1100px){
+    .col-shell{grid-template-columns:1fr 360px}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+
+const PlanoLogo = ({style}) => (
+  <svg viewBox="0 0 338 74" style={style} aria-label="Plano">
+    <g fill="currentColor">
+      <path d="M 0 73.731 L 0 0.977 L 28.369 0.977 Q 36.67 0.977 42.48 4.127 Q 48.291 7.276 51.343 12.818 Q 54.395 18.36 54.395 25.538 Q 54.395 32.765 51.294 38.258 Q 48.193 43.751 42.31 46.852 Q 36.426 49.952 28.027 49.952 L 14.893 49.952 L 14.893 73.731 L 0 73.731 Z"/>
+      <path d="M 111.084 73.731 L 64.795 73.731 L 64.795 0.977 L 79.688 0.977 L 79.688 61.378 L 111.084 61.378 L 111.084 73.731 Z"/>
+      <path d="M 117.139 73.731 L 141.992 0.977 L 161.523 0.977 L 187.012 73.731 L 170.459 73.731 L 164.845 56.837 L 132.666 56.837 L 138.994 56.837 L 133.594 73.731"/>
+      <path d="M 195.996 73.731 L 195.996 0.977 L 212.598 0.977 L 235.596 37.794 Q 244.727 55.372 246.582 60.45 L 245.068 60.45 Q 243.799 38.819 243.799 35.89 L 243.799 0.977 L 259.033 0.977 L 259.033 73.731 L 242.383 73.731 L 221.484 40.333 Q 211.035 20.948 208.105 14.991 L 210.01 14.991 Q 211.23 37.794 211.23 40.284 L 211.23 73.731 Z"/>
+      <path d="M 304.15 74.708 Q 294.531 74.708 286.841 70.313 Q 279.15 65.919 274.683 57.569 Q 270.215 49.22 270.215 37.403 Q 270.215 25.538 274.683 17.164 Q 279.15 8.79 286.841 4.395 Q 294.531 0.001 304.15 0.001 Q 313.818 0.001 321.484 4.395 Q 329.15 8.79 333.618 17.164 Q 338.086 25.538 338.086 37.403 Q 338.086 49.22 333.618 57.569 Q 329.15 65.919 321.484 70.313 Q 313.818 74.708 304.15 74.708 Z"/>
+    </g>
+  </svg>
+);
+
+// ─── Lucide-style icons (1.5px stroke, currentColor) ───
+const P = {
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  plus:'<path d="M12 5v14"/><path d="M5 12h14"/>',
+  settings:'<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>',
+  route:'<circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/>',
+  walk:'<path d="M13 4a1 1 0 1 0 2 0 1 1 0 1 0-2 0"/><path d="M7 21l3-6 1.5-1.5"/><path d="M6 12l3-2 2.5.8L14 14"/><path d="M14 21l-1.5-4 1-3"/>',
+  car:'<path d="M19 17h2l-1.5-5.5a2 2 0 0 0-1.9-1.5H7.4a2 2 0 0 0-1.9 1.5L4 17h2"/><circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/><path d="M6 17h11"/>',
+  bus:'<path d="M8 6v6"/><path d="M15 6v6"/><path d="M4 12h16"/><path d="M18 18h2a1 1 0 0 0 1-1v-5a8 8 0 0 0-16 0v5a1 1 0 0 0 1 1h2"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
+  mappin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  building:'<rect width="16" height="20" x="4" y="2" rx="1"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M16 10h.01"/><path d="M8 14h.01"/><path d="M16 14h.01"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  camera:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
+  book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  map:'<path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M9 4v13"/><path d="M15 7v13"/>',
+  star:'<path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.12 2.12 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.12 2.12 0 0 0 1.597-1.16z" fill="currentColor" stroke="none"/>',
+  cal:'<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  arrowright:'<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
+  external:'<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  lock:'<rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+};
+const Icon = ({name, size=18, style}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={style}
+    dangerouslySetInnerHTML={{__html: P[name]}}/>
+);
+
+const Rating = ({n, size}) => {
+  if (!n || n < 1) return null;
+  return (
+    <span className="rdots" aria-label={`${n} points`}>
+      {Array.from({length:n}).map((_,i)=><i key={i} className={`rdot ${size==='sm'?'sm':''}`}/>)}
+    </span>
+  );
+};
+const BadgeCheck = ({size=15}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/>
+    <path d="m9 12 2 2 4-4"/>
+  </svg>
+);
+
+// Architecture photography — Unsplash
+const IMG = {
+  barbican:"https://images.unsplash.com/photo-1460574283810-2aab119d8511?w=1000&q=80",
+  natl:"https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1000&q=80",
+  balfron:"https://images.unsplash.com/photo-1486718448742-163732cd1544?w=1000&q=80",
+  hayward:"https://images.unsplash.com/photo-1517263904808-5dc91e3e7044?w=1000&q=80",
+  trellick:"https://images.unsplash.com/photo-1493397212122-2b85dda8106b?w=1000&q=80",
+  economist:"https://images.unsplash.com/photo-1470004914212-05527e49370b?w=1000&q=80",
+  tate:"https://images.unsplash.com/photo-1533587851505-d119e13fa0d7?w=1000&q=80",
+  london:"https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=1600&q=80",
+  bridge:"https://images.unsplash.com/photo-1486299267070-83823f5448dd?w=1000&q=80",
+  gherkin:"https://images.unsplash.com/photo-1518998053901-5348d3961a04?w=1000&q=80",
+  stpauls:"https://images.unsplash.com/photo-1533929736458-ca588d08c8be?w=1000&q=80",
+  brut1:"https://images.unsplash.com/photo-1445991842772-097fea258e93?w=800&q=80",
+  brut2:"https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=800&q=80",
+  portrait1:"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80",
+  portrait2:"https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80",
+  portrait3:"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80",
+  portrait4:"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80",
+};
+
+// ─── Chrome ───
+const VIEWS = [["collection","Itinerary map"],["city","City page"]];
+const Chrome = ({view, setView}) => (
+  <nav className="chrome-tabs">
+    <div className="chrome-inner">
+      <div style={{display:"flex",alignItems:"center",gap:32}}>
+        <PlanoLogo style={{height:20,color:"#171717"}}/>
+        <div className="tabs">
+          {VIEWS.map(([k,l])=>(
+            <button key={k} className={`tab ${view===k?'active':''}`} onClick={()=>setView(k)}>{l}</button>
+          ))}
+        </div>
+      </div>
+      <div className="chrome-right">
+        <div className="bell"><Icon name="bell" size={19}/><span className="dot"/></div>
+        <div className="avatar">JN</div>
+      </div>
+    </div>
+  </nav>
+);
+
+// ═══════════════ COLLECTION / ITINERARY ═══════════════
+const STOPS = [
+  {n:1, img:IMG.barbican, name:"Barbican Estate", sub:"Chamberlin, Powell & Bon · 1976", rating:3, x:45, y:37,
+   note:"Start at Lakeside. The raised highwalk gives the best framing of Cromwell Tower before crowds arrive."},
+  {n:2, img:IMG.natl, name:"National Theatre", sub:"Denys Lasdun · 1976", rating:3, x:51, y:52,
+   note:"Cross the river via the Millennium Bridge — 12 min on foot along the South Bank."},
+  {n:3, img:IMG.hayward, name:"Hayward Gallery", sub:"GLC Architects · 1968", rating:2, x:56, y:59},
+];
+const STOPS2 = [
+  {n:4, img:IMG.trellick, name:"Trellick Tower", sub:"Ernő Goldfinger · 1972", rating:3, x:17, y:29,
+   note:"Grade II* listed. Exterior only — it's residential. The service tower reads best from Golborne Road."},
+  {n:5, img:IMG.balfron, name:"Balfron Tower", sub:"Ernő Goldfinger · 1967", rating:2, x:82, y:44},
+  {n:6, img:IMG.economist, name:"Economist Building", sub:"Alison & Peter Smithson · 1964", rating:2, x:54, y:50},
+];
+const ALL_STOPS = [...STOPS, ...STOPS2];
+
+const Segment = ({mode, time, dist}) => (
+  <div className="tl-seg">
+    <span className="sico"><Icon name={mode} size={13}/></span>
+    <div className="seg-txt"><span>{mode==='walk'?'Walk':mode==='car'?'Drive':'Transit'}</span><span className="d">{time} · {dist}</span></div>
+  </div>
+);
+
+const StopCard = ({s, active, onHover}) => (
+  <div className="tl-stop" onMouseEnter={()=>onHover(s.n)}>
+    <span className="num">{s.n}</span>
+    <div className="stop-card">
+      <div className="stop-thumb" style={{backgroundImage:`url(${s.img})`}}/>
+      <div className="stop-main">
+        <div className="stop-name">{s.name} <Rating n={s.rating} size="sm"/></div>
+        <div className="stop-sub">{s.sub}</div>
+        {s.note && <p className="stop-note">{s.note}</p>}
+      </div>
+    </div>
+  </div>
+);
+
+const Collection = () => {
+  const [tab, setTab] = useState("itinerary");
+  const [active, setActive] = useState(1);
+  const mosaic = [IMG.barbican, IMG.trellick, IMG.natl, IMG.economist];
+
+  return (
+    <div className="col-shell">
+      {/* Map */}
+      <div className="map-col">
+        <div className="map-canvas">
+          <div className="map-road" style={{left:0,right:0,top:"52%",height:7,opacity:.95}}/>
+          <div className="map-road" style={{top:0,bottom:0,left:"46%",width:7,opacity:.95}}/>
+          <div className="map-road" style={{left:0,right:0,top:"28%",height:4,opacity:.7}}/>
+          <div className="map-road" style={{top:0,bottom:0,left:"72%",width:4,opacity:.7}}/>
+          <div className="map-road" style={{left:"10%",right:"20%",top:"70%",height:14,opacity:.5,transform:"rotate(-4deg)",background:"#DDE6E8"}}/>
+        </div>
+        {/* dashed route — one polyline per day */}
+        <svg className="map-route" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <polyline points={STOPS.map(s=>`${s.x},${s.y}`).join(" ")}
+            fill="none" stroke="#171717" strokeWidth="0.45" strokeDasharray="1.4 1.4" strokeLinecap="round" strokeLinejoin="round" opacity="0.6"/>
+          <polyline points={STOPS2.map(s=>`${s.x},${s.y}`).join(" ")}
+            fill="none" stroke="#171717" strokeWidth="0.45" strokeDasharray="1.4 1.4" strokeLinecap="round" strokeLinejoin="round" opacity="0.35"/>
+        </svg>
+        {ALL_STOPS.map(s=>(
+          <div key={s.n} className={`pin ${active===s.n?'active':''}`} style={{left:`${s.x}%`,top:`${s.y}%`}} onClick={()=>setActive(s.n)}>
+            <span className="num"><span>{s.n}</span></span>
+            <span className="plabel">{s.name}</span>
+          </div>
+        ))}
+        <div className="map-legend">
+          <div className="h">2-day route</div>
+          <div className="row"><span>Buildings</span><span className="mono">6</span></div>
+          <div className="row"><span>Total distance</span><span className="mono">14.6 km</span></div>
+          <div className="row"><span>On foot</span><span className="mono">3h 05m</span></div>
+        </div>
+        <div className="map-ctrls"><button>+</button><button>−</button></div>
+        <div className="map-cap">MapLibre · 51.5074° N, 0.1278° W</div>
+      </div>
+
+      {/* Sidebar */}
+      <div className="col-side">
+        <div className="col-mosaic">
+          {mosaic.map((u,i)=><div key={i} className="cell" style={{backgroundImage:`url(${u})`}}/>)}
+        </div>
+        <div className="col-head">
+          <div className="eyebrow">Collection · 6 buildings</div>
+          <h1 className="col-title">Brutalist gems of London</h1>
+          <div className="col-by">By <b>jaimenoain</b> · 2-day itinerary</div>
+          <p className="col-desc">Concrete at its most uncompromising — a walking route through the estates, theatres and towers that made London the capital of Brutalism.</p>
+          <div className="col-actbar">
+            <button className="btn btn-primary btn-sm"><Icon name="route" size={15}/> Plan route</button>
+            <div className="spacer"/>
+            <button className="icon-btn" title="Add building"><Icon name="plus" size={17}/></button>
+            <button className="icon-btn" title="Settings"><Icon name="settings" size={16}/></button>
+          </div>
+        </div>
+
+        <div className="seg-toggle">
+          <button className={tab==='items'?'on':''} onClick={()=>setTab('items')}>All items</button>
+          <button className={tab==='itinerary'?'on':''} onClick={()=>setTab('itinerary')}>Itinerary</button>
+        </div>
+
+        <div className="col-scroll">
+          {tab==='itinerary' ? (
+            <>
+              <div className="day">
+                <div className="day-h"><span className="t">Day 1 · The City &amp; South Bank</span><span className="m">3 STOPS · 4.2 KM</span></div>
+                <div className="day-body">
+                  <div className="tl">
+                    <StopCard s={STOPS[0]} onHover={setActive}/>
+                    <Segment mode="walk" time="12 min" dist="0.9 km"/>
+                    <StopCard s={STOPS[1]} onHover={setActive}/>
+                    <Segment mode="walk" time="4 min" dist="0.3 km"/>
+                    <StopCard s={STOPS[2]} onHover={setActive}/>
+                  </div>
+                </div>
+              </div>
+
+              <div className="day">
+                <div className="day-h"><span className="t">Day 2 · West &amp; East ends</span><span className="m">3 STOPS · 10.4 KM</span></div>
+                <div className="day-body">
+                  <div className="tl">
+                    <StopCard s={STOPS2[0]} onHover={setActive}/>
+                    <Segment mode="bus" time="34 min" dist="7.1 km"/>
+                    <StopCard s={STOPS2[1]} onHover={setActive}/>
+                    <Segment mode="car" time="18 min" dist="3.3 km"/>
+                    <StopCard s={STOPS2[2]} onHover={setActive}/>
+                  </div>
+                </div>
+              </div>
+              <button className="day-add"><Icon name="plus" size={13}/> Add a day</button>
+            </>
+          ) : (
+            <div className="tl" style={{paddingLeft:0}}>
+              {ALL_STOPS.map(s=>(
+                <div key={s.n} className="stop-card" style={{padding:"14px 0",borderBottom:"1px solid var(--border-default)"}} onMouseEnter={()=>setActive(s.n)}>
+                  <div className="stop-thumb" style={{backgroundImage:`url(${s.img})`,width:64,height:64}}/>
+                  <div className="stop-main">
+                    <div className="stop-name">{s.name} <Rating n={s.rating} size="sm"/></div>
+                    <div className="stop-sub">{s.sub}</div>
+                    {s.note && <p className="stop-note">{s.note}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════ CITY / LOCALITY ═══════════════
+const STAT = [
+  {ic:"building", v:"1,284", l:"Buildings"},
+  {ic:"book", v:"46", l:"Collections"},
+  {ic:"users", v:"3,910", l:"Contributors"},
+  {ic:"camera", v:"12.6k", l:"Photos"},
+];
+const CITY_TOP = [
+  {img:IMG.gherkin, yr:"2003", name:"30 St Mary Axe"},
+  {img:IMG.tate, yr:"2000", name:"Tate Modern"},
+  {img:IMG.natl, yr:"1976", name:"National Theatre"},
+  {img:IMG.stpauls, yr:"1710", name:"St Paul's Cathedral"},
+  {img:IMG.bridge, yr:"1894", name:"Tower Bridge"},
+];
+const STEWARDS = [
+  {av:IMG.portrait1, name:"harriet.w", amb:true, title:"London ambassador", b:"214 buildings", p:"1.1k photos", r:"340 reviews"},
+  {av:IMG.portrait2, name:"marcusbuilt", b:"96 buildings", p:"420 photos", r:"88 reviews"},
+  {av:IMG.portrait3, name:"conceteclara", b:"71 buildings", p:"612 photos", r:"54 reviews"},
+  {av:IMG.portrait4, name:"j.okonkwo", b:"63 buildings", p:"180 photos", r:"71 reviews"},
+];
+const GUIDES = [
+  {main:IMG.barbican, a:IMG.trellick, b:IMG.natl, name:"Brutalist gems of London", meta:"6 buildings · jaimenoain"},
+  {main:IMG.stpauls, a:IMG.bridge, b:IMG.gherkin, name:"Wren's City churches", meta:"14 buildings · harriet.w"},
+  {main:IMG.tate, a:IMG.hayward, b:IMG.economist, name:"South Bank in a day", meta:"9 buildings · marcusbuilt"},
+];
+const CITY_EVENTS = [
+  {mo:"JUL", dy:"14", name:"Concrete Utopia: Brutalism Reconsidered", loc:"Barbican Art Gallery", tags:["Exhibition"]},
+  {mo:"JUL", dy:"19", name:"Hampstead modernism walk", loc:"Hampstead · 10:00", tags:["Tour","£18"]},
+  {mo:"OCT", dy:"18", name:"Open House London", loc:"Citywide", tags:["Festival","Free"]},
+];
+
+const CityMap = () => {
+  const pins = [[24,38],[40,30],[52,54],[66,42],[34,64],[72,66],[46,72],[60,24]];
+  return (
+    <div className="city-map">
+      <div className="map-canvas">
+        <div className="map-road" style={{left:0,right:0,top:"48%",height:7,opacity:.95}}/>
+        <div className="map-road" style={{top:0,bottom:0,left:"50%",width:7,opacity:.95}}/>
+        <div className="map-road" style={{left:0,right:0,top:"74%",height:4,opacity:.7}}/>
+        <div className="map-road" style={{top:0,bottom:0,left:"26%",width:4,opacity:.7}}/>
+        <div className="map-road" style={{left:"8%",right:"16%",top:"58%",height:16,opacity:.5,transform:"rotate(-3deg)",background:"#DDE6E8"}}/>
+      </div>
+      {pins.map(([x,y],i)=>(
+        <div key={i} className={`pin ${i===2?'active':''}`} style={{left:`${x}%`,top:`${y}%`}}>
+          <span className="num"><span></span></span>
+          {i===2 && <span className="plabel">Barbican Estate</span>}
+        </div>
+      ))}
+      <div className="map-ctrls"><button>+</button><button>−</button></div>
+      <div className="map-cap">1,284 buildings · monochrome tiles</div>
+    </div>
+  );
+};
+
+const City = () => {
+  const [style, setStyle] = useState("Brutalist");
+  const [access, setAccess] = useState(null);
+  const STYLES = ["Brutalist","Modernist","Art Deco","Gothic","High-Tech"];
+  const ACCESS = ["Public","Private"];
+  const STATUS = ["Existing","Lost"];
+
+  return (
+    <div>
+      <header className="city-hero">
+        <div className="city-hero-img" style={{backgroundImage:`url(${IMG.london})`}}/>
+        <div className="city-hero-scrim"/>
+        <div className="city-hero-inner">
+          <div className="city-eyebrow">United Kingdom</div>
+          <div className="city-region">England · Greater London</div>
+          <h1 className="city-name">London</h1>
+        </div>
+        <div className="city-credit"><Icon name="camera" size={12}/> Barbican Estate · foto: harriet.w</div>
+      </header>
+
+      <div className="city city-body">
+        <div className="city-stats">
+          {STAT.map((s,i)=>(
+            <div key={i} className="city-stat">
+              <div className="v">{s.v}</div>
+              <div className="l"><Icon name={s.ic} size={12}/> {s.l}</div>
+            </div>
+          ))}
+        </div>
+
+        <nav className="city-actions">
+          <div className="city-action hl">
+            <span className="l"><Icon name="map" size={16}/> Explore map</span>
+            <span className="ar"><Icon name="arrowright" size={15}/></span>
+          </div>
+          <div className="city-action">
+            <span className="l" style={{color:"var(--text-secondary)"}}><Icon name="book" size={16}/> Create itinerary</span>
+            <span className="ar"><Icon name="arrowright" size={15}/></span>
+          </div>
+          <div className="city-action">
+            <span className="l" style={{color:"var(--text-secondary)"}}><Icon name="plus" size={16}/> Add a building</span>
+            <span className="ar"><Icon name="arrowright" size={15}/></span>
+          </div>
+        </nav>
+
+        {/* Map + filters */}
+        <section className="city-sec">
+          <div className="sec-h"><span className="sec-label">Map</span><span className="sec-more" onClick={()=>{setStyle(null);setAccess(null);}}>Clear filters</span></div>
+          <div className="chips">
+            {STYLES.map(s=>(
+              <button key={s} className={`chip ${style===s?'on':''}`} onClick={()=>setStyle(style===s?null:s)}>{s}</button>
+            ))}
+            <span className="chips-sep"/>
+            {ACCESS.map(a=><button key={a} className={`chip ${access===a?'on':''}`} onClick={()=>setAccess(access===a?null:a)}>{a}</button>)}
+            {STATUS.map(a=><button key={a} className="chip">{a}</button>)}
+          </div>
+          <CityMap/>
+        </section>
+
+        {/* Top buildings */}
+        <section className="city-sec">
+          <div className="sec-h"><span className="sec-label">Top buildings</span><span className="sec-more">All 1,284 →</span></div>
+          <div className="tb-hero">
+            <div className="tb-hero-img" style={{backgroundImage:`url(${IMG.barbican})`}}/>
+            <div className="tb-hero-scrim"/>
+            <div className="tb-hero-meta">
+              <div className="tb-hero-yr">1976 · Chamberlin, Powell &amp; Bon</div>
+              <div className="tb-hero-name">Barbican Estate</div>
+            </div>
+          </div>
+          <div className="tb-grid">
+            {CITY_TOP.map((b,i)=>(
+              <div key={i} className="tb-card">
+                <div className="tb-card-img" style={{backgroundImage:`url(${b.img})`}}/>
+                <div className="tb-card-yr">{b.yr}</div>
+                <div className="tb-card-name">{b.name}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Stewards */}
+        <section className="city-sec">
+          <div className="sec-h"><span className="sec-label">Local experts &amp; stewards</span><span className="sec-more" style={{fontFamily:"'Space Mono',monospace"}}>3,910</span></div>
+          <div className="stw">
+            {STEWARDS.map((s,i)=>(
+              <div key={i} className="stw-row">
+                <div className="stw-rank">{String(i+1).padStart(2,"0")}</div>
+                <div className="stw-av" style={{backgroundImage:`url(${s.av})`}}/>
+                <div className="stw-main">
+                  <div className="stw-name">{s.name}{s.amb && <span className="stw-badge"><Icon name="star" size={11}/> {s.title}</span>}</div>
+                  <div className="stw-stats">
+                    <span><Icon name="building" size={12} style={{color:"var(--text-disabled)"}}/>{s.b}</span>
+                    <span><Icon name="camera" size={12} style={{color:"var(--text-disabled)"}}/>{s.p}</span>
+                    <span><Icon name="book" size={12} style={{color:"var(--text-disabled)"}}/>{s.r}</span>
+                  </div>
+                </div>
+                <span style={{color:"var(--text-disabled)"}}><Icon name="arrowright" size={15}/></span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* City guides */}
+        <section className="city-sec">
+          <div className="sec-h"><span className="sec-label">City guides</span><span className="sec-more">Browse collections →</span></div>
+          <div className="cg-grid">
+            {GUIDES.map((g,i)=>(
+              <div key={i} className="cg-card">
+                <div className="cg-mosaic">
+                  <i style={{backgroundImage:`url(${g.main})`}}/>
+                  <div className="m2"><i style={{backgroundImage:`url(${g.a})`}}/><i style={{backgroundImage:`url(${g.b})`}}/></div>
+                </div>
+                <div className="cg-name">{g.name}</div>
+                <div className="cg-meta">{g.meta}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Events */}
+        <section className="city-sec">
+          <div className="sec-h"><span className="sec-label">Events</span><span className="sec-more">All events →</span></div>
+          <div>
+            {CITY_EVENTS.map((e,i)=>(
+              <div key={i} className="ev-row">
+                <div className="ev-date"><div className="mo">{e.mo}</div><div className="dy">{e.dy}</div></div>
+                <div className="ev-main">
+                  <div className="ev-name">{e.name}</div>
+                  <div className="ev-meta">
+                    <span className="ev-loc">{e.loc}</span>
+                    {e.tags.map(t=><span key={t} className="ev-tag">{t}</span>)}
+                  </div>
+                </div>
+                <span style={{color:"var(--text-disabled)",marginTop:2}}><Icon name="cal" size={15}/></span>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+};
+
+// ─── App ───
+const App = () => {
+  const [view, setView] = useState("collection");
+  return (
+    <div data-screen-label={`Plano · ${view}`}>
+      <Chrome view={view} setView={setView}/>
+      {view==="collection" && <Collection/>}
+      {view==="city" && <City/>}
+    </div>
+  );
+};
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

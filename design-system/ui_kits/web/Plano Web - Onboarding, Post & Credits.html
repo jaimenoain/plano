@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Plano Web — Onboarding, Post & Credits" subtitle="Onboarding · Post · Visit log · Guides · Architect · Practice" viewport="1400x3200" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Onboarding, Post &amp; Credits</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../colors_and_type.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  html,body,#root{margin:0;padding:0;background:var(--surface-default);min-height:100vh}
+  *{box-sizing:border-box}
+  button{font-family:inherit}
+  a{color:inherit;text-decoration:none}
+  img{display:block;max-width:100%}
+  input,textarea,select{font-family:inherit}
+
+  /* ---- Kit chrome ---- */
+  .chrome-tabs{position:sticky;top:0;z-index:60;background:rgba(250,250,250,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-default)}
+  .chrome-inner{max-width:1360px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 32px}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap}
+  .tab{font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;padding:8px 14px;background:none;border:0;color:var(--text-secondary);cursor:pointer;border-radius:2px}
+  .tab:hover{color:var(--text-primary)}
+  .tab.active{background:#171717;color:#fff}
+  .chrome-right{display:flex;gap:10px;align-items:center}
+  .avatar{width:28px;height:28px;border-radius:9999px;background:#262626;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+  .bell{position:relative;width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--text-primary);cursor:pointer;border-radius:2px}
+  .bell:hover{background:var(--surface-muted)}
+  .bell .dot{position:absolute;top:7px;right:8px;width:7px;height:7px;border-radius:9999px;background:var(--brand-accent);border:1.5px solid var(--surface-default)}
+
+  /* ---- Buttons ---- */
+  .btn{height:44px;padding:0 18px;border-radius:2px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center;gap:8px;line-height:1;transition:background 150ms,color 150ms}
+  .btn-primary{background:#BEFF00;color:#171717}
+  .btn-primary:hover{background:#9ACC00}
+  .btn-outline{background:#fff;color:#171717;border-color:var(--border-strong)}
+  .btn-outline:hover{background:var(--surface-muted)}
+  .btn-dark{background:#171717;color:#fff}
+  .btn-dark:hover{background:#000}
+  .btn-block{width:100%}
+  .btn-sm{height:34px;padding:0 14px;font-size:12px}
+
+  /* Editorial CTA */
+  .cta{font-size:12px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:inherit;background:none;border:0;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:6px;transition:color 150ms}
+  .cta:hover{color:var(--text-secondary)}
+  .cta .ar{transition:transform 150ms}
+  .cta:hover .ar{transform:translateX(3px);color:#BEFF00}
+  .cta-quiet{color:var(--text-secondary)}
+  .cta-quiet:hover{color:var(--text-primary)}
+
+  .eyebrow{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .sec-label{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+
+  /* shells */
+  .doc{max-width:896px;margin:0 auto;padding:0 32px}
+  .doc-narrow{max-width:672px;margin:0 auto;padding:0 32px}
+  .doc-wide{max-width:1200px;margin:0 auto;padding:0 32px}
+
+  /* award dots — Michelin-style honours. Only ever render FILLED black dots.
+     An empty / outlined ring must never appear: one dot beside two empty rings
+     reads as "1 out of 3" (a bad score), the opposite of the intended honour. */
+  .dot{width:16px;height:16px;border-radius:9999px;flex-shrink:0}
+  .dot.on{background:var(--text-primary)}
+
+  /* award picker (Post input) — discrete honour tiers, never X-of-3 slots */
+  .award-pick{display:flex;gap:10px}
+  .award-opt{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:90px;padding:14px 8px;border:1px solid var(--border-default);border-radius:2px;background:var(--surface-card);cursor:pointer;transition:border-color 150ms,background 150ms}
+  .award-opt:hover{border-color:var(--border-strong)}
+  .award-opt.on{border-color:var(--text-primary);background:var(--surface-muted)}
+  .award-dots{display:flex;gap:5px;align-items:center;min-height:14px}
+  .award-name{font-size:12px;font-weight:500;color:var(--text-primary)}
+  .award-desc{font-size:11px;color:var(--text-secondary)}
+
+  /* inputs */
+  .inp{width:100%;height:46px;border:1px solid var(--border-strong);background:#fff;border-radius:2px;padding:0 14px;font-size:15px;color:var(--text-primary);outline:none;transition:border 150ms}
+  .inp:focus{border-color:#171717}
+  .inp::placeholder{color:var(--text-disabled)}
+  textarea.inp{height:auto;min-height:120px;padding:12px 14px;resize:none;line-height:1.6}
+  .inp-icon{position:relative}
+  .inp-icon .ic{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-secondary);pointer-events:none}
+  .inp-icon .inp{padding-left:40px}
+  .fld label{font-size:13px;font-weight:500;color:var(--text-primary);display:block;margin-bottom:8px}
+  .fld .hint{font-size:11px;color:var(--text-secondary);margin-top:7px}
+
+  /* ============ ONBOARDING ============ */
+  .ob-wrap{min-height:calc(100vh - 61px);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:56px 16px 80px}
+  .ob-card{width:100%;max-width:400px;background:var(--surface-card);border:1px solid var(--border-default);border-radius:2px;padding:32px}
+  .ob-steps{display:flex;align-items:center;gap:6px;justify-content:center;margin-bottom:24px}
+  .ob-step{height:3px;width:34px;border-radius:2px;background:var(--border-default)}
+  .ob-step.on{background:var(--text-primary)}
+  .ob-invite{display:flex;gap:12px;align-items:flex-start;text-align:left;border:1px solid var(--border-default);background:var(--surface-muted);border-radius:2px;padding:14px}
+  .ob-check{width:18px;height:18px;border-radius:2px;border:1.5px solid var(--text-primary);background:var(--text-primary);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}
+  .ob-avatar-drop{width:104px;height:104px;border-radius:9999px;background-size:cover;background-position:center;background-color:var(--surface-muted);filter:grayscale(1);border:1px solid var(--border-default);margin:0 auto}
+  .ob-upload{display:inline-flex;align-items:center;gap:8px;border:1.5px dashed var(--border-strong);border-radius:2px;padding:9px 16px;font-size:13px;color:var(--text-secondary);cursor:pointer;background:none;transition:border-color 150ms,color 150ms}
+  .ob-upload:hover{border-color:var(--text-primary);color:var(--text-primary)}
+
+  /* ============ POST COMPOSER ============ */
+  .pc-head{position:sticky;top:61px;z-index:20;background:rgba(250,250,250,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border-default)}
+  .pc-head-in{max-width:576px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:56px;padding:0 20px}
+  .pc-close{width:34px;height:34px;border:0;background:none;display:flex;align-items:center;justify-content:center;color:var(--text-primary);cursor:pointer;border-radius:2px;margin-left:-8px}
+  .pc-close:hover{background:var(--surface-muted)}
+  .pc-title{font-size:13px;font-weight:500;letter-spacing:.02em}
+  .pc-body{max-width:576px;margin:0 auto;padding:0 20px}
+  .hairline{border-bottom:1px solid var(--border-default)}
+  .seg{display:flex;gap:8px;padding:22px 0}
+  .seg button{flex:1;height:42px;border-radius:2px;border:1px solid var(--border-default);background:var(--surface-muted);color:var(--text-secondary);font-size:13px;font-weight:500;cursor:pointer;transition:all 150ms}
+  .seg button.on{background:#171717;color:#fff;border-color:#171717}
+  .chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 6px 0 12px;border:1px solid var(--border-default);border-radius:9999px;background:var(--surface-card);font-size:13px}
+  .chip .cx{width:22px;height:22px;border-radius:9999px;border:0;background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-secondary)}
+  .chip .cx:hover{background:var(--surface-muted);color:var(--text-primary)}
+  .chip-av{width:22px;height:22px;border-radius:9999px;background-size:cover;background-position:center;filter:grayscale(1)}
+  .vis-row{display:flex;align-items:center;gap:10px;padding:20px 0}
+  .vis-pick{position:relative}
+  .vis-menu{position:absolute;bottom:calc(100% + 8px);left:0;background:var(--surface-card);border:1px solid var(--border-default);border-radius:6px;box-shadow:0 8px 28px rgba(0,0,0,.12);overflow:hidden;min-width:180px;z-index:30}
+  .vis-menu button{display:block;width:100%;text-align:left;padding:11px 16px;font-size:13px;background:none;border:0;cursor:pointer;color:var(--text-primary)}
+  .vis-menu button:hover{background:var(--surface-muted)}
+  .vis-menu button.on{font-weight:700}
+
+  /* ============ VISIT LOG (review detail) ============ */
+  .rv-sec-h{border-bottom:1px solid var(--text-primary);padding-bottom:10px;margin-bottom:32px;font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-primary)}
+  .rv-sec-h .num{font-family:var(--font-mono);color:var(--text-disabled);margin-right:10px}
+  .rv-author{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+  .rv-id{display:flex;align-items:center;gap:12px}
+  .rv-av{width:44px;height:44px;border-radius:9999px;background-size:cover;background-position:center;filter:grayscale(1);border:1px solid var(--border-default);flex-shrink:0}
+  .rv-name{font-size:15px;font-weight:700;letter-spacing:-.01em}
+  .rv-badge{font-size:11px;font-weight:500;padding:2px 8px;border:1px solid var(--border-default);border-radius:2px;color:var(--text-secondary)}
+  .rv-time{font-size:12px;color:var(--text-secondary);margin-top:3px}
+  .rv-body{font-size:20px;line-height:1.6;color:var(--text-primary);letter-spacing:-.01em;margin:26px 0}
+  .rv-body p{margin:0 0 18px}
+  .rv-body p:last-child{margin-bottom:0}
+  .rv-bar{display:flex;align-items:center;gap:20px;padding:16px 0;border-top:1px solid var(--border-default);border-bottom:1px solid var(--border-default)}
+  .rv-actn{display:inline-flex;align-items:center;gap:7px;background:none;border:0;cursor:pointer;font-size:13px;color:var(--text-secondary);padding:0;transition:color 150ms}
+  .rv-actn:hover{color:var(--text-primary)}
+  .rv-actn.liked{color:var(--text-primary)}
+  .rv-likers{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary);margin-top:14px}
+  .rv-facepile{display:inline-flex}
+  .rv-facepile i{width:20px;height:20px;border-radius:9999px;background-size:cover;background-position:center;border:1.5px solid var(--surface-default);margin-left:-6px;filter:grayscale(1)}
+  .rv-facepile i:first-child{margin-left:0}
+  .cmt{display:flex;gap:12px;padding:16px 0}
+  .cmt-av{width:34px;height:34px;border-radius:9999px;background-size:cover;background-position:center;filter:grayscale(1);flex-shrink:0}
+  .cmt-name{font-size:13px;font-weight:600}
+  .cmt-when{font-size:11px;color:var(--text-disabled)}
+  .cmt-text{font-size:14px;color:var(--text-primary);line-height:1.5;margin-top:3px}
+  .cmt-like{font-size:11px;color:var(--text-secondary);background:none;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:0}
+  .cmt-like:hover{color:var(--text-primary)}
+  .cmt-compose{display:flex;gap:12px;align-items:flex-start;padding-top:18px}
+  .rv-bldg{display:block;position:relative;overflow:hidden}
+  .rv-bldg-cap{position:absolute;left:16px;bottom:14px;right:16px;color:#fff;font-size:20px;font-weight:700;letter-spacing:-.02em;text-shadow:0 1px 12px rgba(0,0,0,.4)}
+  .rv-meta{display:flex;align-items:flex-start;gap:9px;font-size:14px;color:var(--text-secondary);margin-top:12px}
+
+  /* ============ GUIDES ============ */
+  .g-sec{border-bottom:1px solid var(--border-default);padding:56px 0}
+  .g-hero-h{font-size:clamp(44px,7vw,72px);font-weight:700;letter-spacing:-.045em;line-height:.94;margin:14px 0 0}
+  .g-search{position:relative;max-width:440px;margin-top:32px}
+  .g-search .inp{padding-left:44px;height:52px}
+  .g-h2{font-size:26px;font-weight:600;letter-spacing:-.02em;margin:4px 0 0}
+  .cont-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:28px 0 32px}
+  .cont-tab{min-height:40px;padding:0 16px;border-radius:2px;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;background:none;border:1px solid var(--border-default);color:var(--text-secondary);transition:all 150ms}
+  .cont-tab:hover{border-color:var(--border-strong);color:var(--text-primary)}
+  .cont-tab.on{background:#171717;color:#fff;border-color:#171717}
+  .city-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .city-card{cursor:pointer}
+  .city-card .ph{width:100%;aspect-ratio:4/3;background-size:cover;background-position:center;filter:grayscale(1);transition:filter 200ms}
+  .city-card:hover .ph{filter:grayscale(0)}
+  .city-name{font-size:22px;font-weight:700;letter-spacing:-.02em;margin-top:12px}
+  .city-sub{font-size:13px;color:var(--text-secondary);margin-top:3px}
+  .loc-list{display:grid;grid-template-columns:1fr 1fr;column-gap:48px;border-top:1px solid var(--border-default);margin-top:32px}
+  .loc-row{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid var(--border-default);cursor:pointer}
+  .loc-row:hover .loc-city{color:var(--text-secondary)}
+  .loc-city{font-size:16px;font-weight:500;transition:color 150ms}
+  .loc-count{font-family:var(--font-mono);font-size:12px;color:var(--text-disabled)}
+  .col-grid{display:grid;grid-template-columns:repeat(3,1fr);column-gap:40px;row-gap:0}
+  .col-card{border-bottom:1px solid var(--border-default);padding:24px 0;cursor:pointer}
+  .col-card .ph{width:100%;aspect-ratio:16/7;background-size:cover;background-position:center;filter:grayscale(1);transition:filter 200ms}
+  .col-card:hover .ph{filter:grayscale(0)}
+  .col-name{font-size:17px;font-weight:600;letter-spacing:-.01em;margin-top:14px}
+  .col-sub{font-size:13px;color:var(--text-secondary);margin-top:4px}
+
+  /* ============ CREDITS (person / company) ============ */
+  .cr-head{border-bottom:1px solid var(--border-default);padding-bottom:40px}
+  .cr-head-in{display:flex;flex-direction:row-reverse;align-items:flex-start;gap:48px}
+  .cr-name{font-size:clamp(40px,6vw,64px);font-weight:700;letter-spacing:-.04em;line-height:.95;margin:0;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .cr-verify{color:var(--text-primary);flex-shrink:0}
+  .cr-meta{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:14px;color:var(--text-secondary);margin-top:18px}
+  .cr-bio{max-width:640px;font-size:16px;line-height:1.7;color:var(--text-secondary);margin-top:18px}
+  .cr-portrait{width:160px;height:160px;background-size:cover;background-position:center;filter:grayscale(1);border:1px solid var(--border-default);flex-shrink:0}
+  .cr-portrait.round{border-radius:9999px}
+  .cr-tier-h{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);margin:48px 0 6px}
+  .credit{display:flex;gap:24px;padding:26px 0;border-bottom:1px solid var(--border-default)}
+  .credit:last-child{border-bottom:0}
+  .credit .ph{width:168px;aspect-ratio:4/3;background-size:cover;background-position:center;filter:grayscale(1);flex-shrink:0;cursor:pointer;transition:filter 200ms}
+  .credit:hover .ph{filter:grayscale(0)}
+  .credit-name{font-size:19px;font-weight:600;letter-spacing:-.01em}
+  .credit-loc{font-size:14px;color:var(--text-secondary);margin-top:3px}
+  .credit-tags{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-top:12px}
+  .role-badge{font-size:11px;font-weight:500;padding:3px 9px;border:1px solid var(--border-default);border-radius:2px;color:var(--text-primary)}
+  .credit-firm{font-size:13px;color:var(--text-secondary)}
+  .credit-note{font-size:14px;line-height:1.6;color:var(--text-secondary);margin-top:12px;max-width:60ch}
+  .team-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border-default);cursor:pointer}
+  .team-row:last-child{border-bottom:0}
+  .team-av{width:40px;height:40px;border-radius:9999px;background-size:cover;background-position:center;filter:grayscale(1);flex-shrink:0}
+  .team-name{font-size:14px;font-weight:500}
+  .team-role{font-size:12px;color:var(--text-secondary);margin-top:2px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+
+const PlanoLogo = ({style}) => (
+  <svg viewBox="0 0 338 74" style={style} aria-label="Plano">
+    <g fill="currentColor">
+      <path d="M 0 73.731 L 0 0.977 L 28.369 0.977 Q 36.67 0.977 42.48 4.127 Q 48.291 7.276 51.343 12.818 Q 54.395 18.36 54.395 25.538 Q 54.395 32.765 51.294 38.258 Q 48.193 43.751 42.31 46.852 Q 36.426 49.952 28.027 49.952 L 14.893 49.952 L 14.893 73.731 L 0 73.731 Z"/>
+      <path d="M 111.084 73.731 L 64.795 73.731 L 64.795 0.977 L 79.688 0.977 L 79.688 61.378 L 111.084 61.378 L 111.084 73.731 Z"/>
+      <path d="M 117.139 73.731 L 141.992 0.977 L 161.523 0.977 L 187.012 73.731 L 170.459 73.731 L 164.845 56.837 L 132.666 56.837 L 138.994 56.837 L 133.594 73.731"/>
+      <path d="M 195.996 73.731 L 195.996 0.977 L 212.598 0.977 L 235.596 37.794 Q 244.727 55.372 246.582 60.45 L 245.068 60.45 Q 243.799 38.819 243.799 35.89 L 243.799 0.977 L 259.033 0.977 L 259.033 73.731 L 242.383 73.731 L 221.484 40.333 Q 211.035 20.948 208.105 14.991 L 210.01 14.991 Q 211.23 37.794 211.23 40.284 L 211.23 73.731 Z"/>
+      <path d="M 304.15 74.708 Q 294.531 74.708 286.841 70.313 Q 279.15 65.919 274.683 57.569 Q 270.215 49.22 270.215 37.403 Q 270.215 25.538 274.683 17.164 Q 279.15 8.79 286.841 4.395 Q 294.531 0.001 304.15 0.001 Q 313.818 0.001 321.484 4.395 Q 329.15 8.79 333.618 17.164 Q 338.086 25.538 338.086 37.403 Q 338.086 49.22 333.618 57.569 Q 329.15 65.919 321.484 70.313 Q 313.818 74.708 304.15 74.708 Z"/>
+    </g>
+  </svg>
+);
+
+const P = {
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  user:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>',
+  pin:'<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/>',
+  check:'<polyline points="20 6 9 17 4 12"/>',
+  x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  pencil:'<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/>',
+  chevron:'<path d="m6 9 6 6 6-6"/>',
+  heart:'<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>',
+  message:'<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+  send:'<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/><path d="m21.854 2.147-10.94 10.939"/>',
+  external:'<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+  calendar:'<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
+  building:'<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>',
+  search:'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  badge:'<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>',
+  briefcase:'<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+  users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  plus:'<path d="M5 12h14"/><path d="M12 5v14"/>',
+};
+const Icon = ({name, size=18, style}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={style}
+    dangerouslySetInnerHTML={{__html: P[name]}}/>
+);
+const HeartFill = ({size=16}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" dangerouslySetInnerHTML={{__html:P.heart}}/>
+);
+
+const Dots = ({n, size=16}) => (
+  <div style={{display:"flex",gap:5}}>
+    {Array.from({length:n}).map((_,i)=><span key={i} className="dot on" style={{width:size,height:size}}/>)}
+  </div>
+);
+
+const IMG = {
+  barbican:"https://images.unsplash.com/photo-1470723710355-95304d8aece4?w=900&q=80",
+  concrete:"https://images.unsplash.com/photo-1511818966892-d7d671e672a2?w=900&q=80",
+  brutal:"https://images.unsplash.com/photo-1517502884422-41eaead166d4?w=900&q=80",
+  tower:"https://images.unsplash.com/photo-1486718448742-163732cd1544?w=900&q=80",
+  villa:"https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=900&q=80",
+  museum:"https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=900&q=80",
+  chapel:"https://images.unsplash.com/photo-1464146072230-91cabc968266?w=900&q=80",
+  glass:"https://images.unsplash.com/photo-1449157291145-7efd050a4d0e?w=900&q=80",
+  london:"https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&q=80",
+  paris:"https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80",
+  berlin:"https://images.unsplash.com/photo-1560969184-10fe8719e047?w=800&q=80",
+  p1:"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80",
+  p2:"https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80",
+  p3:"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&q=80",
+  p4:"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80",
+  p5:"https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=200&q=80",
+  p6:"https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&q=80",
+  p7:"https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&q=80",
+  me:"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80",
+};
+
+// ─── Chrome ───
+const VIEWS = [
+  ["onboarding","Onboarding"],["post","Post"],["review","Visit log"],
+  ["guides","Guides"],["person","Architect"],["company","Practice"]
+];
+const Chrome = ({view, setView}) => (
+  <nav className="chrome-tabs">
+    <div className="chrome-inner">
+      <div style={{display:"flex",alignItems:"center",gap:32}}>
+        <PlanoLogo style={{height:20,color:"#171717"}}/>
+        <div className="tabs">
+          {VIEWS.map(([k,l])=>(
+            <button key={k} className={`tab ${view===k?'active':''}`} onClick={()=>setView(k)}>{l}</button>
+          ))}
+        </div>
+      </div>
+      <div className="chrome-right">
+        <div className="bell"><Icon name="bell" size={19}/><span className="dot"/></div>
+        <div className="avatar">JN</div>
+      </div>
+    </div>
+  </nav>
+);
+
+// ═══════════════ ONBOARDING ═══════════════
+const Onboarding = () => {
+  const [follow, setFollow] = useState(true);
+  return (
+    <div className="ob-wrap">
+      <PlanoLogo style={{height:22,color:"#171717",marginBottom:36}}/>
+      <div className="ob-card">
+        <div className="ob-steps">
+          <span className="ob-step on"/><span className="ob-step"/><span className="ob-step"/>
+        </div>
+        <div style={{textAlign:"center"}}>
+          <div className="eyebrow" style={{marginBottom:14}}>Step 1 of 3 · Profile</div>
+          <h1 style={{fontSize:32,fontWeight:700,letterSpacing:"-.03em",margin:0}}>Welcome.</h1>
+          <p style={{fontSize:15,color:"var(--text-secondary)",margin:"10px 0 0"}}>Let's set up your profile.</p>
+        </div>
+
+        <div className="ob-invite" style={{margin:"24px 0"}}>
+          <div className="rv-av" style={{width:38,height:38,backgroundImage:`url(${IMG.p1})`}}/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:"flex",alignItems:"center",gap:9}}>
+              <button className="ob-check" style={{background:follow?"var(--text-primary)":"none",color:follow?"#fff":"transparent"}} onClick={()=>setFollow(!follow)}>
+                {follow && <Icon name="check" size={13}/>}
+              </button>
+              <span style={{fontSize:14,fontWeight:500}}>Follow harriet.w</span>
+            </div>
+            <p style={{fontSize:12,color:"var(--text-secondary)",margin:"5px 0 0",paddingLeft:27}}>They invited you.</p>
+          </div>
+        </div>
+
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:14,margin:"8px 0 28px"}}>
+          <div className="ob-avatar-drop" style={{backgroundImage:`url(${IMG.me})`}}/>
+          <button className="ob-upload"><Icon name="upload" size={15}/> Change photo</button>
+        </div>
+
+        <div style={{textAlign:"left"}}>
+          <div className="fld" style={{marginBottom:20}}>
+            <label>Username</label>
+            <div className="inp-icon"><span className="ic"><Icon name="user" size={16}/></span>
+              <input className="inp" defaultValue="jaimenoain"/></div>
+            <p className="hint">This is how other architecture lovers will see you.</p>
+          </div>
+          <div className="fld">
+            <label>Where do you live?</label>
+            <div className="inp-icon"><span className="ic"><Icon name="pin" size={16}/></span>
+              <input className="inp" defaultValue="Madrid, Spain"/></div>
+            <p className="hint">Helps us show local architecture info.</p>
+          </div>
+        </div>
+
+        <div style={{display:"flex",flexDirection:"column",gap:12,marginTop:28}}>
+          <button className="btn btn-primary btn-block">Save and continue</button>
+          <button className="cta cta-quiet" style={{justifyContent:"center",padding:"6px 0"}}>Skip for now</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════ POST COMPOSER ═══════════════
+const REC = [{av:IMG.p2,name:"marcusbuilt"},{av:IMG.p3,name:"concreteclara"}];
+// Awards, not a rating. 0 (Interesting) is the default — saving a building already
+// means it earned a place; 1–3 dots are honours reserved for standouts.
+const AWARDS = [
+  {n:0, name:"Interesting", desc:"Worth a look"},
+  {n:1, name:"Impressive", desc:"Worth a detour"},
+  {n:2, name:"Essential", desc:"Worth a journey"},
+  {n:3, name:"Masterpiece", desc:"Once in a lifetime"},
+];
+const Post = () => {
+  const [type, setType] = useState("review");
+  const [rating, setRating] = useState(1);
+  const [vis, setVis] = useState("public");
+  const [menu, setMenu] = useState(false);
+  const [recs, setRecs] = useState(REC);
+  return (
+    <div style={{paddingBottom:80}}>
+      <div className="pc-head">
+        <div className="pc-head-in">
+          <button className="pc-close"><Icon name="x" size={20}/></button>
+          <span className="pc-title">{type==="review"?"Rate & review":"Add to bucket list"}</span>
+          <span style={{width:26}}/>
+        </div>
+      </div>
+      <div className="pc-body">
+        <div className="hairline" style={{display:"flex",gap:20,padding:"28px 0"}}>
+          <div className="photo-placeholder" style={{width:128,aspectRatio:"2/3",backgroundImage:`url(${IMG.barbican})`,backgroundSize:"cover",backgroundPosition:"center",filter:"grayscale(1)",flexShrink:0}}/>
+          <div style={{display:"flex",flexDirection:"column",justifyContent:"center"}}>
+            <h2 style={{fontSize:24,fontWeight:700,letterSpacing:"-.02em",lineHeight:1.05,margin:0}}>Barbican Estate</h2>
+            <p style={{fontSize:14,color:"var(--text-secondary)",margin:"6px 0 0"}}>Silk Street, London EC2</p>
+            <p style={{fontSize:13,color:"var(--text-secondary)",margin:"10px 0 0"}}>Chamberlin, Powell &amp; Bon</p>
+            <p style={{fontSize:13,color:"var(--text-secondary)",margin:"3px 0 0"}}>Completed 1976</p>
+          </div>
+        </div>
+
+        <div className="seg">
+          {[["review","Review"],["bucket_list","Bucket list"]].map(([k,l])=>(
+            <button key={k} className={type===k?"on":""} onClick={()=>setType(k)}>{l}</button>
+          ))}
+        </div>
+
+        {type==="review" && (
+          <div className="hairline" style={{padding:"22px 0"}}>
+            <p style={{fontSize:13,color:"var(--text-secondary)",margin:"0 0 4px"}}>Award <span style={{color:"var(--text-disabled)"}}>(optional)</span></p>
+            <p style={{fontSize:12,color:"var(--text-disabled)",margin:"0 0 16px",maxWidth:"56ch",lineHeight:1.5}}>Dots are honours, not a score — like Michelin stars. Saving a building already means it caught your eye; a single dot is reserved for standouts.</p>
+            <div className="award-pick">
+              {AWARDS.map(o=>(
+                <button key={o.n} className={`award-opt ${rating===o.n?"on":""}`} onClick={()=>setRating(o.n)}>
+                  <span className="award-dots">
+                    {Array.from({length:o.n}).map((_,i)=><span key={i} className="dot on" style={{width:14,height:14}}/>)}
+                  </span>
+                  <span className="award-name">{o.name}</span>
+                  <span className="award-desc">{o.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="hairline" style={{padding:"22px 0"}}>
+          <textarea className="inp" placeholder={type==="review"?"Write your thoughts…":"Why do you want to visit this?"} defaultValue={type==="review"?"A fortress of board-marked concrete that somehow feels generous. The elevated walkways reframe the city as a series of thresholds — you never quite arrive, you keep passing through.":""}/>
+        </div>
+
+        <div className="hairline" style={{padding:"22px 0"}}>
+          <p style={{fontSize:13,color:"var(--text-secondary)",margin:"0 0 14px"}}>{type==="review"?"Anyone in particular that shouldn't miss this?":"I'd like to visit this with…"}</p>
+          <div style={{display:"flex",flexWrap:"wrap",gap:10,alignItems:"center"}}>
+            {recs.map(r=>(
+              <span key={r.name} className="chip">
+                <span className="chip-av" style={{backgroundImage:`url(${r.av})`}}/>
+                {r.name}
+                <button className="cx" onClick={()=>setRecs(recs.filter(x=>x.name!==r.name))}><Icon name="x" size={13}/></button>
+              </span>
+            ))}
+            <button className="chip" style={{paddingRight:12,color:"var(--text-secondary)",cursor:"pointer"}}><Icon name="plus" size={14}/> Add</button>
+          </div>
+        </div>
+
+        <div className="vis-row">
+          <span style={{fontSize:12,color:"var(--text-secondary)"}}>Visibility: <span style={{color:"var(--text-primary)",fontWeight:500,textTransform:"capitalize"}}>{vis}</span></span>
+          <div className="vis-pick">
+            <button className="cx" style={{width:26,height:26,border:0,background:"none",cursor:"pointer",color:"var(--text-disabled)",display:"flex",alignItems:"center"}} onClick={()=>setMenu(!menu)}><Icon name="pencil" size={13}/></button>
+            {menu && (
+              <div className="vis-menu">
+                {["public","contacts","private"].map(v=>(
+                  <button key={v} className={vis===v?"on":""} onClick={()=>{setVis(v);setMenu(false);}} style={{textTransform:"capitalize"}}>{v}</button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:16,paddingTop:12}}>
+          <button className="btn btn-primary btn-block">Save</button>
+          <button className="cta cta-quiet" style={{fontSize:13,letterSpacing:0,textTransform:"none"}}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════ VISIT LOG ═══════════════
+const COMMENTS = [
+  {av:IMG.p3,name:"concreteclara",when:"2 days ago",text:"The way the water gardens sit below the podium — most people miss it entirely. Glad you caught it.",likes:4},
+  {av:IMG.p6,name:"Studio Mono",when:"1 day ago",text:"Board-marked concrete done right. Try it again at dusk when the lights come up in the towers.",likes:1},
+];
+const Review = () => {
+  const [liked, setLiked] = useState(false);
+  const [likes, setLikes] = useState(23);
+  return (
+    <div className="doc" style={{paddingTop:44,paddingBottom:96}}>
+      <header className="rv-sec-h"><span className="num">§ 01</span>Visit log</header>
+
+      <article style={{borderBottom:"1px solid var(--border-default)",paddingBottom:32}}>
+        <div className="rv-author">
+          <div className="rv-id">
+            <div className="rv-av" style={{backgroundImage:`url(${IMG.me})`}}/>
+            <div>
+              <div style={{display:"flex",alignItems:"center",gap:9}}>
+                <span className="rv-name">jaimenoain</span>
+                <span className="rv-badge">Visited</span>
+              </div>
+              <div className="rv-time">3 days ago · Logged from London</div>
+            </div>
+          </div>
+          <Dots n={2} size={16}/>
+        </div>
+
+        <div className="rv-body">
+          <p>A fortress of board-marked concrete that somehow feels generous. The elevated walkways reframe the city as a series of thresholds — you never quite arrive, you keep passing through.</p>
+          <p>The water gardens below the podium are the quiet masterstroke. Come at dusk, when the towers switch on and the whole estate reads as one continuous section.</p>
+        </div>
+
+        <div className="photo-placeholder" style={{width:"100%",aspectRatio:"3/2",backgroundImage:`url(${IMG.barbican})`,backgroundSize:"cover",backgroundPosition:"center",filter:"grayscale(1)",margin:"0 0 24px"}}/>
+
+        <div className="rv-bar">
+          <button className={`rv-actn ${liked?"liked":""}`} onClick={()=>{setLiked(!liked);setLikes(liked?likes-1:likes+1);}}>
+            {liked?<HeartFill size={16}/>:<Icon name="heart" size={16}/>} {likes}
+          </button>
+          <span className="rv-actn" style={{cursor:"default"}}><Icon name="message" size={16}/> {COMMENTS.length} comments</span>
+        </div>
+
+        <div className="rv-likers">
+          <span className="rv-facepile">
+            {[IMG.p2,IMG.p3,IMG.p6].map((u,i)=><i key={i} style={{backgroundImage:`url(${u})`}}/>)}
+          </span>
+          Liked by <b style={{color:"var(--text-primary)",fontWeight:500}}>marcusbuilt</b> and <b style={{color:"var(--text-primary)",fontWeight:500}}>{likes-1} others</b>
+        </div>
+      </article>
+
+      <section style={{padding:"28px 0",borderBottom:"1px solid var(--border-default)"}}>
+        <div className="sec-label" style={{marginBottom:6}}>Comments</div>
+        {COMMENTS.map((c,i)=>(
+          <div key={i} className="cmt">
+            <div className="cmt-av" style={{backgroundImage:`url(${c.av})`}}/>
+            <div style={{flex:1}}>
+              <div style={{display:"flex",alignItems:"center",gap:9}}>
+                <span className="cmt-name">{c.name}</span><span className="cmt-when">{c.when}</span>
+              </div>
+              <div className="cmt-text">{c.text}</div>
+              <button className="cmt-like"><Icon name="heart" size={12}/> {c.likes}</button>
+            </div>
+          </div>
+        ))}
+        <div className="cmt-compose">
+          <div className="cmt-av" style={{backgroundImage:`url(${IMG.me})`}}/>
+          <div style={{flex:1,display:"flex",gap:10,alignItems:"flex-start"}}>
+            <textarea className="inp" style={{minHeight:46,height:46,paddingTop:12}} placeholder="Write a comment…"/>
+            <button className="btn btn-dark" style={{width:46,padding:0,flexShrink:0}}><Icon name="send" size={16}/></button>
+          </div>
+        </div>
+      </section>
+
+      <section style={{paddingTop:36,borderBottom:"1px solid var(--border-default)",paddingBottom:36}}>
+        <a className="rv-bldg">
+          <div style={{width:"100%",aspectRatio:"16/9",backgroundImage:`url(${IMG.barbican})`,backgroundSize:"cover",backgroundPosition:"center",filter:"grayscale(1)"}}/>
+          <span className="rv-bldg-cap">Barbican Estate</span>
+        </a>
+        <div className="rv-meta"><Icon name="pin" size={16} style={{marginTop:1}}/><span>Silk Street, London EC2Y 8DS, United Kingdom</span></div>
+        <div className="rv-meta"><Icon name="calendar" size={16}/><span>Completed 1976</span></div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,marginTop:14}}>
+          {["Chamberlin, Powell & Bon","Brutalism","Listed Grade II"].map(t=>(
+            <span key={t} className="role-badge" style={{color:"var(--text-secondary)"}}>{t}</span>
+          ))}
+        </div>
+        <div style={{marginTop:22}}><button className="cta">View building details <span className="ar">→</span></button></div>
+      </section>
+
+      <section style={{paddingTop:28}}>
+        <div className="sec-label" style={{marginBottom:12}}>Also visited by</div>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          {[IMG.p1,IMG.p2,IMG.p3,IMG.p4,IMG.p5,IMG.p7].map((u,i)=>(
+            <div key={i} className="team-av" style={{width:34,height:34,backgroundImage:`url(${u})`,border:"1.5px solid var(--surface-default)"}}/>
+          ))}
+        </div>
+        <p style={{fontSize:12,color:"var(--text-secondary)",marginTop:12}}>+ 41 others from the community</p>
+      </section>
+    </div>
+  );
+};
+
+// ═══════════════ GUIDES ═══════════════
+const CONTINENTS = ["Europe","Americas","Asia","Africa","Oceania"];
+const FEATURED = [
+  {name:"London",sub:"1,284 buildings · 92 collections",img:IMG.london},
+  {name:"Paris",sub:"968 buildings · 74 collections",img:IMG.paris},
+  {name:"Berlin",sub:"742 buildings · 61 collections",img:IMG.berlin},
+];
+const LOCALITIES = [
+  ["Barcelona",612],["Rotterdam",488],["Milan",421],["Copenhagen",397],
+  ["Vienna",356],["Porto",312],["Marseille",274],["Glasgow",241],
+];
+const COLLECTIONS = [
+  {name:"Brutalist gems of London",sub:"harriet.w · 12 buildings",img:IMG.brutal},
+  {name:"Le Corbusier, in sequence",sub:"marcusbuilt · 18 buildings",img:IMG.chapel},
+  {name:"Postwar concrete churches",sub:"concreteclara · 9 buildings",img:IMG.museum},
+  {name:"Glass houses, 1949–1971",sub:"j.okonkwo · 7 buildings",img:IMG.glass},
+  {name:"Rotterdam after the fire",sub:"Studio Mono · 15 buildings",img:IMG.tower},
+  {name:"Villas of the Riviera",sub:"elena.k · 11 buildings",img:IMG.villa},
+];
+const Guides = () => {
+  const [cont, setCont] = useState("Europe");
+  return (
+    <div className="doc-wide">
+      <section className="g-sec" style={{paddingTop:64}}>
+        <div style={{maxWidth:640}}>
+          <div className="sec-label">Guides</div>
+          <h1 className="g-hero-h">The world's architecture,<br/>city by city.</h1>
+          <p style={{fontSize:15,color:"var(--text-secondary)",marginTop:18}}>18,236 buildings across 6,619 localities, curated by the Plano community.</p>
+          <div className="g-search">
+            <span style={{position:"absolute",left:15,top:"50%",transform:"translateY(-50%)",color:"var(--text-secondary)"}}><Icon name="search" size={18}/></span>
+            <input className="inp" placeholder="Search a city or locality…"/>
+          </div>
+        </div>
+      </section>
+
+      <section className="g-sec">
+        <div className="sec-label">Browse by destination</div>
+        <h2 className="g-h2">Cities</h2>
+        <div className="cont-tabs">
+          {CONTINENTS.map(c=>(
+            <button key={c} className={`cont-tab ${cont===c?"on":""}`} onClick={()=>setCont(c)}>{c}</button>
+          ))}
+        </div>
+        <div className="city-grid">
+          {FEATURED.map(c=>(
+            <div key={c.name} className="city-card">
+              <div className="ph" style={{backgroundImage:`url(${c.img})`}}/>
+              <div className="city-name">{c.name}</div>
+              <div className="city-sub">{c.sub}</div>
+            </div>
+          ))}
+        </div>
+        <div className="loc-list">
+          {LOCALITIES.map(([city,n])=>(
+            <div key={city} className="loc-row">
+              <span className="loc-city">{city}</span>
+              <span className="loc-count">{n}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:20,paddingTop:20,borderTop:"1px solid var(--border-default)"}}>
+          <button className="cta cta-quiet">Show all 1,204 localities <span className="ar">→</span></button>
+          <button className="cta cta-quiet">Full catalogue <span className="ar">→</span></button>
+        </div>
+      </section>
+
+      <section className="g-sec">
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:28}}>
+          <div>
+            <div className="sec-label">Curated by the community</div>
+            <h2 className="g-h2">Popular collections</h2>
+          </div>
+          <button className="cta cta-quiet">Explore all <span className="ar">→</span></button>
+        </div>
+        <div className="col-grid">
+          {COLLECTIONS.map(c=>(
+            <div key={c.name} className="col-card">
+              <div className="ph" style={{backgroundImage:`url(${c.img})`}}/>
+              <div className="col-name">{c.name}</div>
+              <div className="col-sub">{c.sub}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section style={{padding:"56px 0"}}>
+        <div style={{display:"flex",alignItems:"center",gap:32,justifyContent:"space-between",flexWrap:"wrap"}}>
+          <div>
+            <div className="sec-label">Start exploring</div>
+            <h2 style={{fontSize:22,fontWeight:600,letterSpacing:"-.02em",margin:"6px 0 4px"}}>Create your own guide</h2>
+            <p style={{fontSize:14,color:"var(--text-secondary)",margin:0}}>Build a collection, generate an itinerary, and share it with the world.</p>
+          </div>
+          <div style={{display:"flex",gap:28,flexShrink:0}}>
+            <button className="cta">New collection <span className="ar">→</span></button>
+            <button className="cta cta-quiet">Explore map <span className="ar">→</span></button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+// ═══════════════ ARCHITECT (person) ═══════════════
+const PRIMARY_CREDITS = [
+  {name:"Barbican Estate",loc:"London, United Kingdom · Completed 1976",role:"Lead architect",firm:"Chamberlin, Powell & Bon",img:IMG.barbican,note:"Masterplan, towers, and the elevated pedestrian network across the 40-acre estate."},
+  {name:"National Theatre",loc:"London, United Kingdom · Completed 1976",role:"Design architect",firm:"Denys Lasdun & Partners",img:IMG.concrete},
+];
+const CONTRIB_CREDITS = [
+  {name:"Trellick Tower",loc:"London, United Kingdom · Completed 1972",role:"Consulting architect",firm:null,img:IMG.tower},
+];
+const Credit = ({c}) => (
+  <article className="credit">
+    <div className="ph" style={{backgroundImage:`url(${c.img})`}}/>
+    <div style={{minWidth:0,flex:1}}>
+      <div className="credit-name">{c.name}</div>
+      <div className="credit-loc">{c.loc}</div>
+      <div className="credit-tags">
+        <span className="role-badge">{c.role}</span>
+        {c.firm && <span className="credit-firm">{c.firm}</span>}
+      </div>
+      {c.note && <p className="credit-note">{c.note}</p>}
+    </div>
+  </article>
+);
+const Person = () => (
+  <div className="doc" style={{paddingTop:44,paddingBottom:96}}>
+    <button className="cta cta-quiet" style={{marginBottom:32}}>← Back</button>
+    <header className="cr-head">
+      <div className="cr-head-in">
+        <div className="cr-portrait round" style={{backgroundImage:`url(${IMG.p6})`}}/>
+        <div style={{minWidth:0,flex:1}}>
+          <div style={{display:"flex",justifyContent:"space-between",gap:16,alignItems:"flex-start"}}>
+            <h1 className="cr-name">Peter Chamberlin <span className="cr-verify"><Icon name="badge" size={30}/></span></h1>
+            <button className="btn btn-outline btn-sm" style={{flexShrink:0}}><Icon name="pencil" size={14}/> Edit</button>
+          </div>
+          <div className="cr-meta"><span>British</span><span>1919–1978</span><span>London, United Kingdom</span></div>
+          <button className="cta" style={{marginTop:16}}>Website <span className="ar" style={{transform:"none"}}><Icon name="external" size={12}/></span></button>
+          <p className="cr-bio">Co-founder of Chamberlin, Powell &amp; Bon. Best known for the Barbican Estate and the Golden Lane Estate — dense, humane concrete cities-within-the-city that defined postwar London.</p>
+        </div>
+      </div>
+    </header>
+
+    <div style={{marginTop:36}}>
+      <div className="sec-label">Credits</div>
+      <div className="cr-tier-h">Primary credits</div>
+      <div>{PRIMARY_CREDITS.map((c,i)=><Credit key={i} c={c}/>)}</div>
+      <div className="cr-tier-h">Contributor credits</div>
+      <div>{CONTRIB_CREDITS.map((c,i)=><Credit key={i} c={c}/>)}</div>
+    </div>
+  </div>
+);
+
+// ═══════════════ PRACTICE (company) ═══════════════
+const FIRM_WORKS = [
+  {name:"Barbican Estate",loc:"London, United Kingdom · Completed 1976",role:"Architect of record",firm:null,img:IMG.barbican},
+  {name:"Golden Lane Estate",loc:"London, United Kingdom · Completed 1962",role:"Architect of record",firm:null,img:IMG.brutal},
+  {name:"University of Leeds Roger Stevens Building",loc:"Leeds, United Kingdom · Completed 1970",role:"Architect of record",firm:null,img:IMG.museum},
+];
+const FIRM_TEAM = [
+  {av:IMG.p6,name:"Peter Chamberlin",role:"Founding partner",verified:true},
+  {av:IMG.p1,name:"Geoffry Powell",role:"Founding partner"},
+  {av:IMG.p3,name:"Christoph Bon",role:"Founding partner"},
+];
+const Company = () => (
+  <div className="doc" style={{paddingTop:44,paddingBottom:96}}>
+    <button className="cta cta-quiet" style={{marginBottom:32}}>← Back</button>
+    <header className="cr-head">
+      <div className="cr-head-in">
+        <div className="cr-portrait" style={{backgroundImage:`url(${IMG.concrete})`}}/>
+        <div style={{minWidth:0,flex:1}}>
+          <div style={{display:"flex",justifyContent:"space-between",gap:16,alignItems:"flex-start"}}>
+            <h1 className="cr-name">Chamberlin, Powell &amp; Bon <span className="cr-verify"><Icon name="badge" size={30}/></span></h1>
+            <button className="btn btn-outline btn-sm" style={{flexShrink:0}}><Icon name="pencil" size={14}/> Edit</button>
+          </div>
+          <div className="cr-meta"><span>Architecture practice</span><span>Founded 1952</span><span>London, United Kingdom</span></div>
+          <button className="cta" style={{marginTop:16}}>Website <span className="ar" style={{transform:"none"}}><Icon name="external" size={12}/></span></button>
+          <p className="cr-bio">London practice founded by three RIBA-medal architects who won the Golden Lane competition in 1952. Their work fused CIAM-era planning with a tactile, board-marked concrete language that shaped a generation of British public housing.</p>
+        </div>
+      </div>
+    </header>
+
+    <div style={{marginTop:36}}>
+      <div className="sec-label" style={{marginBottom:6}}>People</div>
+      <div>
+        {FIRM_TEAM.map((t,i)=>(
+          <div key={i} className="team-row">
+            <div className="team-av" style={{backgroundImage:`url(${t.av})`}}/>
+            <div style={{flex:1}}>
+              <div style={{display:"flex",alignItems:"center",gap:7}}>
+                <span className="team-name">{t.name}</span>
+                {t.verified && <span style={{color:"var(--text-primary)",display:"flex"}}><Icon name="badge" size={14}/></span>}
+              </div>
+              <div className="team-role">{t.role}</div>
+            </div>
+            <span className="cta cta-quiet" style={{fontSize:11}}>View <span className="ar">→</span></span>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div style={{marginTop:24}}>
+      <div className="cr-tier-h" style={{marginTop:40}}>Works · 3 buildings</div>
+      <div>{FIRM_WORKS.map((c,i)=><Credit key={i} c={c}/>)}</div>
+    </div>
+  </div>
+);
+
+// ─── App ───
+const App = () => {
+  const [view, setView] = useState(() => localStorage.getItem("plano-obpc-view") || "onboarding");
+  React.useEffect(()=>{ localStorage.setItem("plano-obpc-view", view); }, [view]);
+  return (
+    <div data-screen-label={`Plano · ${view}`}>
+      <Chrome view={view} setView={setView}/>
+      {view==="onboarding" && <Onboarding/>}
+      {view==="post" && <Post/>}
+      {view==="review" && <Review/>}
+      {view==="guides" && <Guides/>}
+      {view==="person" && <Person/>}
+      {view==="company" && <Company/>}
+    </div>
+  );
+};
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

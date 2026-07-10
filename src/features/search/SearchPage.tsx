@@ -296,7 +296,7 @@ function SearchPageContent() {
         {isMobile && (
           <div className="fixed left-4 right-4 top-[calc(3.5rem+env(safe-area-inset-top,0px)+0.5rem)] z-40 md:hidden">
             {/* No shadow — frosted glass border is sufficient over the map */}
-            <div className="border border-border-default bg-surface-card/95 p-1 backdrop-blur-sm supports-backdrop-filter:bg-surface-card/90 focus-within:border-brand-primary focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-0">
+            <div className="border border-border-default bg-surface-card/95 p-1 backdrop-blur-sm supports-backdrop-filter:bg-surface-card/90 focus-within:border-brand-primary focus-within:ring-2 focus-within:ring-brand-accent focus-within:ring-offset-0">
               {mobileSearchBar}
             </div>
           </div>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Landing" subtitle="Marketing hero · stats · features · featured collection" viewport="1400x2600" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Landing</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  /* ---- Landing (screen-specific) ---- */
+  .hero{padding:80px 32px 96px;max-width:1280px;margin:0 auto;position:relative}
+  .hero-eyebrow{display:flex;gap:10px;align-items:center;margin-bottom:32px}
+  .hero-title{font-size:clamp(48px, 8.5vw, 128px);font-weight:700;letter-spacing:-0.04em;line-height:.92;color:var(--text-primary);margin:0}
+  .hero-title em{font-style:italic;font-weight:700}
+  .hero-sub{margin-top:28px;font-size:20px;line-height:1.5;letter-spacing:normal;color:var(--text-secondary);max-width:560px}
+  .hero-ctas{margin-top:44px;display:flex;gap:12px;align-items:center}
+
+  .hero-meta{margin-top:80px;display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border-default);border-top:1px solid var(--border-default);border-bottom:1px solid var(--border-default)}
+  .hero-stat{background:var(--surface-default);padding:28px 20px}
+  .stat-n{font-size:40px;font-weight:700;letter-spacing:-0.02em;line-height:1}
+  .stat-l{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);margin-top:10px;font-weight:500}
+
+  .features{margin-top:96px;display:grid;grid-template-columns:repeat(3,1fr);gap:48px}
+  .feature-num{font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .feature-t{font-size:24px;font-weight:600;letter-spacing:-.02em;margin:12px 0 10px;line-height:1.25}
+  .feature-p{font-size:14px;line-height:1.65;color:var(--text-secondary)}
+
+  @media (max-width: 900px){
+    .features{grid-template-columns:1fr;gap:32px}
+    .hero-meta{grid-template-columns:repeat(2,1fr)}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { AppTopNav, SiteFooter } = window.PlanoDesignSystem_e8d587;
+
+const Landing = () => (
+  <>
+    <header className="hero">
+      <div className="hero-eyebrow">
+        <span className="pill pill-brand">BETA</span>
+        <span className="eyebrow">VOL 01 · EST 2025</span>
+      </div>
+      <h1 className="hero-title">The world's<br/><em>architecture</em>,<br/>cataloged.</h1>
+      <p className="hero-sub">Track visits, rate buildings with a three-point scale, and follow friends, critics, and architects. Plano is a private atlas of what you've seen — and a quiet feed of where to go next.</p>
+      <div className="hero-ctas">
+        <a className="btn btn-primary btn-lg" href="feed.html">Open the feed</a>
+        <a className="cta" href="building-detail.html">See a building <span className="ar">→</span></a>
+      </div>
+    </header>
+
+    <div style={{maxWidth:1280,margin:"0 auto",padding:"0 32px"}}>
+      <div className="hero-meta">
+        <div className="hero-stat"><div className="stat-n">12,408</div><div className="stat-l">Buildings catalogued</div></div>
+        <div className="hero-stat"><div className="stat-n">184</div><div className="stat-l">Cities</div></div>
+        <div className="hero-stat"><div className="stat-n">6,220</div><div className="stat-l">Members</div></div>
+        <div className="hero-stat"><div className="stat-n">41</div><div className="stat-l">Architects verified</div></div>
+      </div>
+
+      <div className="features">
+        <div>
+          <div className="feature-num">01 / TRACK</div>
+          <h3 className="feature-t">Log the buildings you visit.</h3>
+          <p className="feature-p">Check in on-site, add a rating, keep the notes private or share them. Your history becomes a travel record.</p>
+        </div>
+        <div>
+          <div className="feature-num">02 / RATE</div>
+          <h3 className="feature-t">Impressive · Essential · Masterpiece.</h3>
+          <p className="feature-p">A three-point Michelin-style scale. No five-star inflation. No "meh." Only conviction.</p>
+        </div>
+        <div>
+          <div className="feature-num">03 / COLLECT</div>
+          <h3 className="feature-t">Curate itineraries. Follow critics.</h3>
+          <p className="feature-p">Build multi-day architectural walks. Save trips from people whose eye you trust. Export as a map, a PDF, or a shared guide.</p>
+        </div>
+      </div>
+
+      <div style={{marginTop:96, padding:"80px 0",borderTop:"1px solid var(--border-default)",borderBottom:"1px solid var(--border-default)"}}>
+        <div className="eyebrow" style={{marginBottom:28}}>FEATURED COLLECTION</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:64, alignItems:"end"}}>
+          <h2 style={{fontSize:"clamp(40px,5.5vw,72px)",fontWeight:700,letterSpacing:"-0.03em",lineHeight:1,margin:0}}>Brutalist Gems<br/>of London.</h2>
+          <div>
+            <p style={{fontSize:17,lineHeight:1.7,color:"var(--text-secondary)",margin:0}}>Curated by Eleanor Okafor · 12 buildings · A weekend walking tour of the city's most uncompromising concrete, from Trellick to the Barbican estate.</p>
+            <div style={{marginTop:24}}><a className="cta" href="itinerary-map.html">Open collection <span className="ar">→</span></a></div>
+          </div>
+        </div>
+        <div style={{marginTop:40,display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:"1.5px",background:"var(--border-default)"}}>
+          {[IMG.barbican, IMG.unite, IMG.sagrada, IMG.salk].map((u,i) => (
+            <div key={i} style={{aspectRatio:"4/5", background:`#f5f5f5 url(${u}) center/cover`}}/>
+          ))}
+        </div>
+      </div>
+    </div>
+  </>
+);
+
+function App(){
+  return (
+    <div data-screen-label="Landing">
+      <AppTopNav signedIn={false} activePath="/"/>
+      <Landing/>
+      <SiteFooter/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

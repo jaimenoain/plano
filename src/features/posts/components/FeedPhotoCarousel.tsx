@@ -132,7 +132,7 @@ export function FeedPhotoCarousel({
       <button
         type="button"
         onClick={handleLike}
-        className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/55 text-white px-2.5 py-1 rounded-sm text-xs font-medium transition-colors hover:bg-black/70 focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-1"
+        className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/55 text-white px-2.5 py-1 rounded-sm text-xs font-medium transition-colors hover:bg-black/70 focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-1"
         title={current.is_liked ? "Unlike photo" : "Like photo"}
       >
         <Heart

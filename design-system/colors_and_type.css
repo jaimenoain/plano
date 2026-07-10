@@ -1,32 +1,34 @@
 /* ============================================================
-   Plano Design System — Core foundations
-   Editorial, monochrome, photography-first.
-   The architecture is the colour; everything else gets out of the way.
+   Plano Design System — Colors & Typography
+   Editorial, monochrome, architectural. Sharp edges. One lime accent.
+   Reference: A24 Films + OMA/BIG/Zaha studio sites.
    ============================================================ */
 
-/* ---------- Fonts ----------------------------------------------------- */
-/* Inter — Google Fonts CDN substitute. The codebase prefers a self-hosted
-   variable file at /fonts/Inter-VariableFont_opsz_wght.ttf; we link from
-   Google Fonts here so the design system previews work standalone. */
-@import url("https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Space+Mono:wght@400;700&display=swap");
+/* Brand font — local variable Inter (opsz + wght). Space Mono stays from Google for now. */
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+
+@font-face {
+  font-family: 'Inter';
+  src: url('fonts/Inter-VariableFont_opsz_wght.ttf') format('truetype-variations'),
+       url('fonts/Inter-VariableFont_opsz_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
-  /* ---------- Raw palette (reference only — prefer semantic aliases) --- */
-
-  /* The lime — used in EXACTLY two places: ::selection + notification dot.
-     If you see it anywhere else on a content surface, it is a bug. */
+  /* ─── Raw palette (never use directly in components) ────────── */
   --palette-brand-50:  #F7FFE0;
   --palette-brand-100: #EEFFB8;
   --palette-brand-200: #DEFF82;
   --palette-brand-300: #CFFF4A;
   --palette-brand-400: #C5FF1E;
-  --palette-brand-500: #BEFF00;   /* the lime */
+  --palette-brand-500: #BEFF00;  /* The one colour */
   --palette-brand-600: #9ACC00;
   --palette-brand-700: #739900;
   --palette-brand-800: #4D6600;
   --palette-brand-900: #2B3A00;
 
-  /* Neutrals — the working palette of Plano. */
   --palette-neutral-50:  #FAFAFA;
   --palette-neutral-100: #F5F5F5;
   --palette-neutral-200: #E5E5E5;
@@ -39,268 +41,301 @@
   --palette-neutral-900: #171717;
   --palette-neutral-950: #0A0A0A;
 
-  /* Feedback */
   --palette-success-500:     #16A34A;
   --palette-warning-500:     #F59E0B;
   --palette-destructive-500: #EF4444;
 
-  /* ---------- Semantic aliases (use these in components) -------------- */
-  --brand-primary:              #171717;  /* near-black — the button colour */
+  /* ─── Semantic aliases (the only tokens components should use) ── */
+  /* Primary action = black (monochrome default). Accent = lime (sparingly). */
+  --brand-primary:              #171717;
   --brand-primary-hover:        #000000;
   --brand-primary-foreground:   #FFFFFF;
-  --brand-secondary:            #F5F5F5;
-  --brand-secondary-foreground: #171717;
   --brand-accent:               #BEFF00;
   --brand-accent-hover:         #9ACC00;
   --brand-accent-foreground:    #171717;
+  --brand-secondary:            #F5F5F5;
+  --brand-secondary-foreground: #171717;
 
   --surface-default: #FAFAFA;
   --surface-card:    #FFFFFF;
   --surface-overlay: #FFFFFF;
   --surface-muted:   #F5F5F5;
-  --surface-inverse: #000000;
+  --surface-inverse: #000000;  /* Pitch-black sidebar / footer / menus */
 
-  --border-default:  #E5E5E5;
-  --border-strong:   #A3A3A3;
-  --border-hairline: rgba(0, 0, 0, 0.08);
+  --border-default: #E5E5E5;
+  --border-strong:  #A3A3A3;
+  --border-hairline: rgba(0,0,0,0.08);
 
   --text-primary:   #171717;
   --text-secondary: #525252;
   --text-disabled:  #A3A3A3;
   --text-inverse:   #FFFFFF;
 
-  --feedback-success:              #16A34A;
-  --feedback-success-foreground:   #FFFFFF;
-  --feedback-warning:              #F59E0B;
-  --feedback-warning-foreground:   #171717;
-  --feedback-destructive:          #EF4444;
+  --feedback-success:                #16A34A;
+  --feedback-success-foreground:     #FFFFFF;
+  --feedback-warning:                #F59E0B;
+  --feedback-warning-foreground:     #171717;
+  --feedback-destructive:            #EF4444;
   --feedback-destructive-foreground: #FFFFFF;
 
-  /* ---------- Type families ------------------------------------------- */
-  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: "Space Mono", ui-monospace, "Menlo", monospace;
+  /* ─── Typography tokens ─────────────────────────────────────── */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
 
-  /* ---------- Type scale ---------------------------------------------- */
-  --font-size-2xs:      0.625rem;   /* 10  — micro labels */
-  --font-size-2xs-plus: 0.6875rem;  /* 11  — uppercase meta */
-  --font-size-xs:       0.75rem;    /* 12  — captions, timestamps */
-  --font-size-sm:       0.875rem;   /* 14  — table cells, secondary */
-  --font-size-base:     1rem;       /* 16  — body */
-  --font-size-lg:       1.125rem;   /* 18  — lead */
-  --font-size-xl:       1.25rem;    /* 20  — card title */
-  --font-size-2xl:      1.5rem;     /* 24  — section heading */
-  --font-size-3xl:      2rem;       /* 32  — page heading */
-  --font-size-4xl:      2.5rem;     /* 40  — page heading (spacious) */
-  --font-size-5xl:      3rem;       /* 48  — editorial feed building name */
-  --font-size-6xl:      3.75rem;    /* 60  — editorial hero */
-  --font-size-7xl:      4.5rem;     /* 72  — editorial maximum */
+  --fs-2xs:      0.625rem;   /* 10px — micro labels, eyebrows, uppercase meta */
+  --fs-xs:       0.75rem;    /* 12px — captions, badges */
+  --fs-sm:       0.875rem;   /* 14px — secondary text */
+  --fs-base:     1rem;       /* 16px — body */
+  --fs-lg:       1.125rem;   /* 18px — lead */
+  --fs-xl:       1.25rem;    /* 20px — card titles */
+  --fs-2xl:      1.5rem;     /* 24px — h3 */
+  --fs-3xl:      2rem;       /* 32px — h2 */
+  --fs-4xl:      2.5rem;     /* 40px — h1 */
+  --fs-5xl:      3rem;       /* 48px — feed name (floor) */
+  --fs-6xl:      3.75rem;    /* 60px — feed name (ceiling) */
+  --fs-7xl:      4.5rem;     /* 72px */
+  --fs-8xl:      6rem;       /* 96px — editorial display */
+  --fs-9xl:      8rem;       /* 128px — poster-scale hero. This is the move. Use it. */
 
-  --font-weight-normal:   400;
-  --font-weight-medium:   500;
-  --font-weight-semibold: 600;
-  --font-weight-bold:     700;
+  --fw-normal:   400;  /* @kind font */
+  --fw-medium:   500;  /* @kind font */
+  --fw-semibold: 600;  /* @kind font */
+  --fw-bold:     700;  /* @kind font */
 
-  --line-height-tight:   1.0;
-  --line-height-snug:    1.2;
-  --line-height-normal:  1.5;
-  --line-height-relaxed: 1.75;
+  --lh-tight:   1.0;   /* @kind font */
+  --lh-snug:    1.2;   /* @kind font */
+  --lh-normal:  1.5;   /* @kind font */
+  --lh-relaxed: 1.75;  /* @kind font */
+  --lh-display: 0.92;  /* @kind font */
 
-  --letter-spacing-tight:   -0.03em;
-  --letter-spacing-normal:  0em;
-  --letter-spacing-wide:    0.08em;
-  --letter-spacing-widest:  0.15em;
+  /* display/poster scale — letters almost touching */
+  --tracking-tighter: -0.045em;  /* @kind font */
+  --tracking-tight:  -0.03em;
+  --tracking-normal: 0em;
+  --tracking-wide:   0.08em;
+  --tracking-widest: 0.15em;
 
-  /* ---------- Spacing (4px base) -------------------------------------- */
-  --spacing-0:  0;
-  --spacing-1:  0.25rem;
-  --spacing-2:  0.5rem;
-  --spacing-3:  0.75rem;
-  --spacing-4:  1rem;
-  --spacing-5:  1.25rem;
-  --spacing-6:  1.5rem;
-  --spacing-8:  2rem;
-  --spacing-10: 2.5rem;
-  --spacing-12: 3rem;
-  --spacing-16: 4rem;
-  --spacing-20: 5rem;
-  --spacing-24: 6rem;
-  --spacing-32: 8rem;
+  /* ─── Spacing (4px base, spacious default) ──────────────────── */
+  --space-0:  0;
+  --space-1:  0.25rem;   /*  4px */
+  --space-2:  0.5rem;    /*  8px */
+  --space-3:  0.75rem;   /* 12px */
+  --space-4:  1rem;      /* 16px */
+  --space-5:  1.25rem;   /* 20px */
+  --space-6:  1.5rem;    /* 24px */
+  --space-8:  2rem;      /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+  --space-20: 5rem;      /* 80px */
+  --space-24: 6rem;      /* 96px */
+  --space-32: 8rem;      /* 128px */
 
-  /* ---------- Radius — sharp by default ------------------------------- */
-  --radius-none: 0px;     /* preferred on editorial + content-detail surfaces */
-  --radius-sm:   2px;     /* legacy primitive default (buttons, inputs, cards) */
+  /* ─── Radius — sharp by default ─────────────────────────────── */
+  --radius-none: 0px;
+  --radius-sm:   2px;    /* Default — cards, buttons, inputs */
   --radius-md:   4px;
-  --radius-lg:   6px;
-  --radius-xl:   8px;     /* use sparingly */
-  --radius-full: 9999px;  /* avatars and dot markers only */
+  --radius-lg:   6px;    /* Modals, sheets */
+  --radius-xl:   8px;    /* Rare — use sparingly */
+  --radius-full: 9999px; /* Avatars only */
 
-  /* ---------- Shadows — intentionally flat ---------------------------- */
+  /* ─── Shadows — deliberately minimal. Borders do the work. ──── */
+  --shadow-none: none;
   --shadow-sm:   0 1px 2px 0 rgb(0 0 0 / 0.04);
   --shadow-md:   0 2px 8px 0 rgb(0 0 0 / 0.06);
   --shadow-lg:   0 8px 24px 0 rgb(0 0 0 / 0.10);
-  --shadow-none: none;
 
-  /* ---------- Card tokens --------------------------------------------- */
-  --card-image-ratio-hero:     16 / 9;
-  --card-image-ratio-standard:  4 / 3;
-  --card-image-ratio-compact:   1 / 1;
+  /* ─── Card-system tokens ────────────────────────────────────── */
+  --card-image-ratio-hero: 16 / 9;       /* @kind other */
+  --card-image-ratio-standard: 4 / 3;    /* @kind other */
+  --card-image-ratio-compact: 1 / 1;     /* @kind other */
+
+  /* ─── Named layout tokens ───────────────────────────────────── */
+  --collection-mosaic: 10.5rem;   /* 168px */
+  --mosaic-gap: 1.5px;
+  --search-serp: 25rem;           /* 400px */
 }
 
 /* ============================================================
-   Element defaults — apply the type matrix from DESIGN_TOKENS §9
+   Semantic element styles — drop this into any doc and it looks Plano.
    ============================================================ */
 
-html, body {
-  font-family: var(--font-sans);
-  font-size: 16px;
-  line-height: var(--line-height-normal);
-  color: var(--text-primary);
+body {
   background: var(--surface-default);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: var(--lh-normal);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
 }
 
-/* Selection — the lime is allowed here. */
 ::selection {
   background: var(--brand-accent);
   color: var(--brand-accent-foreground);
 }
 
-/* ---------- Headings ---- */
-.h1, h1 {
-  font-size: var(--font-size-4xl);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: var(--letter-spacing-tight);
-  line-height: var(--line-height-snug);
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.h2, h2 {
-  font-size: var(--font-size-3xl);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--letter-spacing-tight);
-  line-height: var(--line-height-snug);
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.h3, h3 {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--letter-spacing-normal);
-  line-height: var(--line-height-snug);
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.h4, h4 {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-semibold);
-  line-height: var(--line-height-snug);
-  color: var(--text-primary);
-  margin: 0;
-}
-
-/* ---------- Editorial display ---- */
-/* The Plano signature: aggressive sans, near-zero leading, tight tracking. */
-.display-hero {
-  font-size: clamp(48px, 6vw, 72px);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: -0.035em;
-  line-height: 0.95;
+h1, .h1 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-4xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--lh-snug);
   color: var(--text-primary);
 }
 
-.display-compact {
-  font-size: clamp(36px, 4vw, 48px);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: -0.035em;
-  line-height: 1.0;
+/* Editorial hero — the A24-scale display headline.
+   Default scales toward poster size (128px). Don't hedge to medium —
+   the entire drama of this system is the jump from a 10px label to this. */
+.display, .hero {
+  font-family: var(--font-sans);
+  font-size: clamp(3.5rem, 11vw, var(--fs-9xl));
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-tighter);
+  line-height: var(--lh-display);
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+
+/* Feed building-name — editorial display at scale */
+.headline {
+  font-family: var(--font-sans);
+  font-size: clamp(var(--fs-4xl), 6vw, var(--fs-6xl));
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--lh-display);
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+
+h2, .h2 {
+  font-size: var(--fs-3xl);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--lh-snug);
   color: var(--text-primary);
 }
 
-.display-quote {
-  font-size: clamp(28px, 3vw, 40px);
-  font-weight: var(--font-weight-medium);
-  letter-spacing: -0.025em;
-  line-height: 1.15;
+h3, .h3 {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-normal);
+  line-height: var(--lh-snug);
   color: var(--text-primary);
 }
 
-/* ---------- Body & support ---- */
-.body, p {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-normal);
-  line-height: var(--line-height-normal);
+h4, .h4 {
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-snug);
+  color: var(--text-primary);
+}
+
+p, .body {
+  font-size: var(--fs-base);
+  line-height: var(--lh-normal);
   color: var(--text-primary);
 }
 
 .body-secondary {
-  font-size: var(--font-size-sm);
   color: var(--text-secondary);
-  line-height: var(--line-height-normal);
 }
 
-.lead {
-  font-size: var(--font-size-lg);
+.body-relaxed {
+  line-height: var(--lh-relaxed);
   color: var(--text-secondary);
-  line-height: var(--line-height-relaxed);
 }
 
-/* ---------- Editorial labels — the tracked-uppercase signature ---- */
-/* These run everywhere: section dividers, eyebrows, CTA links, tab strips.
-   The contrast between massive headlines and 11px tracked labels IS the design. */
-.eyebrow {
-  font-size: var(--font-size-2xs-plus);    /* 11px */
-  font-weight: var(--font-weight-medium);
-  letter-spacing: var(--letter-spacing-widest);
+small, .caption {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+}
+
+/* Uppercase tracked label — the architectural convention */
+.eyebrow, .label-upper {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
   color: var(--text-secondary);
 }
 
-.eyebrow-faint {
-  font-size: var(--font-size-2xs-plus);
-  font-weight: var(--font-weight-medium);
-  letter-spacing: var(--letter-spacing-widest);
-  text-transform: uppercase;
-  color: var(--text-disabled);
-}
-
+/* Editorial CTA — text + arrow, never a filled button */
 .cta-link {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-medium);
-  letter-spacing: var(--letter-spacing-widest);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5ch;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
   color: var(--text-primary);
   text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5em;
-  transition: color 120ms ease;
+  transition: color 150ms ease;
 }
 .cta-link:hover { color: var(--text-secondary); }
-.cta-link:hover .cta-arrow { color: var(--text-primary); }
-.cta-arrow {
-  font-size: 1em;
+
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
   color: var(--text-primary);
-  transition: transform 120ms ease;
 }
-.cta-link:hover .cta-arrow { transform: translateX(2px); }
 
-/* ---------- Monospace — building IDs, coordinates, meta codes ---- */
-.mono {
+/* Numeric-heavy meta — coordinates, date ranges, counters. Small size only. */
+.meta-code {
   font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  letter-spacing: 0.04em;
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tracking-wide);
   color: var(--text-secondary);
 }
 
-.building-id {
+/* Hairline — the primary separator, not shadows */
+.hairline {
+  border-bottom: 0.5px solid var(--border-default);
+}
+
+/* ─── Photo placeholder ──────────────────────────────────────────────
+   On-brand stand-in for real architecture photography. Sharp edges, a faint
+   neutral diagonal hatch, and a monospace caption naming what belongs here.
+   Use it everywhere a photo will eventually go — a photo-less surface should
+   look deliberate, never unfinished. Set the slot via data-label.
+   <div class="photo-placeholder" data-label="Barbican Centre · 1982"></div>   */
+.photo-placeholder {
+  position: relative;
+  background-color: var(--surface-muted);
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 11px,
+    rgba(0, 0, 0, 0.035) 11px 12px
+  );
+  border-radius: var(--radius-none);
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+.photo-placeholder::after {
+  content: attr(data-label);
   font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  letter-spacing: var(--letter-spacing-wide);
-  color: var(--text-secondary);
+  font-size: var(--fs-2xs);
+  letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
+  color: var(--text-disabled);
+  padding: var(--space-3) var(--space-4);
+}
+
+/* ─── Accent tag ─────────────────────────────────────────────────────
+   The ONE sanctioned decorative use of lime: a small status pill
+   (BETA / NEW / LIVE). Rationed — at most one per view. Never a section
+   accent, never a verified badge, never a surface fill. */
+.accent-tag {
+  display: inline-flex;
+  align-items: center;
+  background: var(--brand-accent);
+  color: var(--brand-accent-foreground);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
 }

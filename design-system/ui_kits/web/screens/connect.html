@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Connect" subtitle="People you may know · following / followers" viewport="1400x2000" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Connect</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  /* ---- Connect (screen-specific) ---- */
+  .sec-label{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .doc{max-width:896px;margin:0 auto;padding:0 32px}
+  .page-h{padding:44px 0 40px;border-bottom:1px solid var(--border-default);display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+  .page-title{font-size:clamp(40px,6vw,60px);font-weight:700;letter-spacing:-.035em;line-height:.92;margin:0}
+
+  .cn-sec{padding:44px 0;border-bottom:1px solid var(--border-default)}
+  .cn-sec:last-child{border-bottom:0}
+  .ur{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid var(--border-default);cursor:pointer;transition:background 150ms}
+  .ur:last-child{border-bottom:0}
+  .ur:hover{background:var(--surface-muted)}
+  .ur-id{display:flex;align-items:center;gap:14px;min-width:0}
+  .ur-av{width:44px;height:44px;border-radius:9999px;background-size:cover;background-position:center;background-color:var(--surface-muted);filter:grayscale(1);flex-shrink:0;border:1px solid var(--border-default)}
+  .ur-name{font-size:14px;font-weight:500;color:var(--text-primary)}
+  .ur-mutual{font-size:12px;color:var(--text-secondary);margin-top:3px;display:flex;align-items:center;gap:8px}
+  .facepile{display:inline-flex}
+  .facepile i{width:18px;height:18px;border-radius:9999px;background-size:cover;background-position:center;border:1.5px solid var(--surface-default);margin-left:-6px;filter:grayscale(1)}
+  .facepile i:first-child{margin-left:0}
+  .ur-act{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .star-btn{width:34px;height:34px;border-radius:2px;border:0;background:none;color:var(--text-secondary);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+  .star-btn:hover{background:var(--surface-muted);color:var(--text-primary)}
+  .star-btn.on{color:var(--feedback-warning,#F59E0B)}
+
+  .metric-tabs{display:flex;border-bottom:1px solid var(--border-default);margin-top:22px}
+  .metric-tab{padding:14px 22px 12px;border:0;border-bottom:2px solid transparent;background:none;cursor:pointer;text-align:left;margin-bottom:-1px}
+  .metric-tab.on{border-bottom-color:#171717}
+  .metric-tab .v{font-size:20px;font-weight:700;letter-spacing:-.02em;line-height:1;color:var(--text-disabled)}
+  .metric-tab.on .v{color:var(--text-primary)}
+  .metric-tab .l{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-disabled);margin-top:6px}
+  .metric-tab.on .l{color:var(--text-secondary)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+const { AppTopNav, SiteFooter } = window.PlanoDesignSystem_e8d587;
+
+const IMG = {
+  p1:"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&q=80",
+  p2:"https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&q=80",
+  p3:"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&q=80",
+  p4:"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&q=80",
+  p5:"https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=200&q=80",
+  p6:"https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200&q=80",
+  p7:"https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=200&q=80",
+  p8:"https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=200&q=80",
+};
+
+const Facepile = ({imgs, label}) => (
+  <span className="ur-mutual">
+    <span className="facepile">{imgs.map((u,i)=><i key={i} style={{backgroundImage:`url(${u})`}}/>)}</span>
+    {label}
+  </span>
+);
+const FollowBtn = ({back}) => {
+  const [on, setOn] = useState(false);
+  return (
+    <button className={`btn btn-sm ${on?'btn-outline':'btn-dark'}`} style={{width:on?96:back?108:88}} onClick={(e)=>{e.stopPropagation();setOn(!on);}}>
+      {on?"Following":back?"Follow back":"Follow"}
+    </button>
+  );
+};
+const UserRow = ({u, follow, back, star}) => {
+  const [fav, setFav] = useState(u.close);
+  return (
+    <div className="ur">
+      <div className="ur-id">
+        <div className="ur-av" style={{backgroundImage:`url(${u.av})`}}/>
+        <div style={{minWidth:0}}>
+          <div className="ur-name">{u.name}</div>
+          {u.mutualImgs ? <Facepile imgs={u.mutualImgs} label={u.mutual}/> : (u.sub && <div className="ur-mutual">{u.sub}</div>)}
+        </div>
+      </div>
+      <div className="ur-act">
+        {star && (
+          <button className={`star-btn ${fav?'on':''}`} title="Close friend" onClick={(e)=>{e.stopPropagation();setFav(!fav);}}>
+            {fav ? <StarFill size={18}/> : <Icon name="star" size={18}/>}
+          </button>
+        )}
+        {follow && <FollowBtn back={back}/>}
+      </div>
+    </div>
+  );
+};
+
+const PYMK = [
+  {av:IMG.p5, name:"elena.k", mutual:"3 mutuals", mutualImgs:[IMG.p1,IMG.p2,IMG.p3]},
+  {av:IMG.p6, name:"Studio Mono", mutual:"Followed by harriet.w", mutualImgs:[IMG.p1]},
+  {av:IMG.p7, name:"brut.appreciation", mutual:"12 mutuals", mutualImgs:[IMG.p2,IMG.p3,IMG.p4]},
+  {av:IMG.p8, name:"dieter.rams.fan", sub:"New to Plano"},
+];
+const FOLLOWING = [
+  {av:IMG.p1, name:"harriet.w", sub:"London ambassador", close:true},
+  {av:IMG.p2, name:"marcusbuilt", sub:"142 buildings", close:true},
+  {av:IMG.p3, name:"concreteclara", sub:"71 buildings"},
+  {av:IMG.p4, name:"j.okonkwo", sub:"63 buildings"},
+  {av:IMG.p6, name:"Studio Mono", sub:"Architecture practice"},
+];
+const FOLLOWERS = [
+  {av:IMG.p5, name:"elena.k", sub:"28 buildings"},
+  {av:IMG.p7, name:"brut.appreciation", sub:"9 buildings"},
+  {av:IMG.p8, name:"dieter.rams.fan", sub:"New to Plano"},
+];
+
+const Connect = () => {
+  const [tab, setTab] = useState("following");
+  return (
+    <div className="doc">
+      <div className="page-h"><h1 className="page-title">Connect</h1></div>
+
+      <section className="cn-sec">
+        <div className="sec-label" style={{marginBottom:18}}>People you may know</div>
+        {PYMK.map((u,i)=><UserRow key={i} u={u} follow back={i===2}/>)}
+      </section>
+
+      <section className="cn-sec">
+        <div className="sec-label">Your contacts</div>
+        <div className="metric-tabs">
+          <button className={`metric-tab ${tab==='following'?'on':''}`} onClick={()=>setTab('following')}>
+            <div className="v">128</div><div className="l">Following</div>
+          </button>
+          <button className={`metric-tab ${tab==='followers'?'on':''}`} onClick={()=>setTab('followers')}>
+            <div className="v">1,204</div><div className="l">Followers</div>
+          </button>
+        </div>
+        <div style={{paddingTop:6}}>
+          {tab==='following'
+            ? FOLLOWING.map((u,i)=><UserRow key={i} u={u} star/>)
+            : FOLLOWERS.map((u,i)=><UserRow key={i} u={u} follow back/>)}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+function App(){
+  return (
+    <div data-screen-label="Connect">
+      <AppTopNav activePath="/connect" userInitial="J"/>
+      <Connect/>
+      <SiteFooter/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

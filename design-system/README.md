@@ -1,316 +1,262 @@
 # Plano Design System
 
-> **Plano: The world's architecture, catalogued.**
-> A social platform for architecture enthusiasts to discover, document, and share notable buildings. Like Letterboxd, but for buildings.
+> **The world's architecture, cataloged.**
 
-The product is editorial-first, monochrome, and aggressively typographic — modelled on **A24 Films** and the websites of contemporary studios like **OMA, BIG, Zaha Hadid**. Architecture photography is the hero; everything else gets out of the way.
+Plano is a social platform for architecture enthusiasts — a "Letterboxd for buildings." Users log the buildings they visit, rate them on a 1–3 Michelin-style scale, write reviews with photos, follow friends and architects, curate collections into multi-day itineraries, and discover new architecture through an interactive global map.
 
----
-
-## Sources
-
-This design system is reverse-engineered from the production Plano codebase. The codebase is exceptionally well-documented — most decisions here cite `docs/DESIGN_TOKENS.md` and live components.
-
-- **GitHub:** [`jaimenoain/plano`](https://github.com/jaimenoain/plano) — explore the repo if you want pixel-level ground truth on a specific component. Particularly worth reading: `docs/DESIGN_TOKENS.md`, `docs/PRD.md`, `src/features/feed/components/landing/*`, `src/components/layout/AppTopNav.tsx`.
-- **Logo:** `uploads/PlanoLogo.tsx` — the wordmark `<svg>` from production.
-- **PWA icons:** `uploads/{favicon, apple-touch-icon, android-chrome-*}.png`.
-
-If you're building real Plano UI — extending the product itself, not designing in its style — go to the source. This system is a faithful summary, not a substitute.
-
----
+This design system captures the visual DNA of Plano: an **editorial, monochromatic, architectural** aesthetic modelled on **A24 Films** (a24films.com) and contemporary architecture studios (OMA, BIG, Zaha Hadid Architects). Aggressive sans-serif typography at extreme scale. Near-zero UI chrome. Generous whitespace as structure. Photography-first. One lime accent (`#BEFF00`) used with monastic restraint.
 
 ## Index
 
-| Path | What's in it |
+| File / folder | What's in it |
 |---|---|
-| `README.md` | This file — context, content fundamentals, visual foundations, iconography. |
-| `SKILL.md` | Cross-compatible Agent Skill manifest. |
-| `colors_and_type.css` | All design tokens as CSS vars + semantic element styles (`h1`, `.eyebrow`, `.cta-link`, `.display-hero`, etc). |
-| `assets/` | Logo SVGs, favicons, PWA icons. |
-| `preview/` | Design-system cards rendered for the review pane. |
-| `ui_kits/website/` | Faithful recreation of the Plano marketing site (landing) + editorial feed view. |
+| `README.md` | This file — context, content fundamentals, visual foundations, iconography |
+| `SKILL.md` | Agent-skill manifest for plugging this system into Claude Code |
+| `colors_and_type.css` | All CSS variables (raw palette + semantic aliases + type scale) and semantic element styles |
+| `assets/` | Logo (SVG), favicons, PWA icons |
+| `preview/` | Static HTML cards that populate the Design System tab |
+| `ui_kits/web/` | High-fidelity React recreation of the Plano web app (feed, building detail, landing, map) |
+
+## Source material
+
+The user provided the following — reader may or may not have access:
+
+- **Codebase:** `plano/` — a React 18 + Vite + React Router 7 SPA. TypeScript, Tailwind + shadcn/ui, Supabase backend, MapLibre GL JS for maps. Key directories: `plano/src/components/ui` (shadcn primitives), `plano/src/features/feed` (editorial feed), `plano/src/features/buildings` (building detail pages), `plano/src/components/layout` (AppSidebar, SiteFooter).
+- **Design tokens doc:** `plano/docs/DESIGN_TOKENS.md` — the authoritative token spec (539 lines; heavily referenced here).
+- **PRD:** `plano/docs/PRD.md` — full product requirements.
+- **Logo:** `uploads/svgviewer-output (1).svg` — the Plano wordmark (copied to `assets/plano-logo.svg`).
+- **GitHub repo:** `jaimenoain/plano` — same code as the local mount.
+- **Design reference:** [a24films.com](https://a24films.com) — aesthetic north star.
 
 ---
 
-## Brand essence
+## Content Fundamentals
 
-| | |
+Plano's voice is **confident, quiet, and editorial** — never salesy, never chirpy. The app feels like it was written by a thoughtful architecture magazine, not a consumer social app.
+
+### Tone
+
+- **Sentence case for everything except uppercase-tracked eyebrows and CTAs.** Titles are sentence case. Buttons are sentence case. Only the small all-caps tracked labels (`TRACK`, `COLLECT`, `EXPLORE NEARBY →`) use uppercase — that's a deliberate architectural convention, not shouting.
+- **Second person ("you"), but sparingly.** Copy frequently drops the pronoun entirely and lets the verb carry the action. "Track visits, rate buildings, and follow friends." — not "You can track visits..."
+- **Commands over promises.** "Log your journey." "Curate lists." "Follow architects." Imperative, direct, no hedging.
+- **British or American spelling — the codebase uses both.** `catalogue` and `cataloged` both appear (PRD + UI). No need to unify.
+- **No hype words.** Never "amazing," "incredible," "revolutionary," "delightful," "unleash." Trust the typography and photography to carry the drama.
+- **Em dashes and typographic detail.** Use real em dashes (—), proper apostrophes (the world's), and `·` middots for inline separators (`user · 12 buildings`).
+- **No emoji. Anywhere.** Not in copy, not in headings, not in empty states. Unicode is fine for typographic punctuation (— · →) but decorative emoji break the editorial register.
+
+### Tagline & product copy
+
+- Tagline: **"The world's architecture, cataloged."**
+- Sub: **"Track visits, rate buildings, and follow friends."**
+- Section headers in the editorial feed are tiny uppercase eyebrows (`FEATURED`, `NEARBY YOU`, `NEW IN LONDON`) that sit above massive bold building names.
+
+### The award dots — not a rating
+
+Plano does **not** rate buildings on a scale. Dots are **awards** — a badge of honour a user grants only to their personal best, exactly like Michelin stars. The default, and the state of the overwhelming majority of logged buildings, is **zero dots (Interesting)** — and even that bottom rung is a compliment, because saving a building already means it earned a place. Awarding a dot is a further distinction, never a low score.
+
+- **Interesting (0 dots)** — the default. Worth a look; saving it already says you cared.
+- **● Impressive (1 dot)** — worth a detour. A personal favourite.
+- **●● Essential (2 dots)** — worth a journey. Unmissable.
+- **●●● Masterpiece (3 dots)** — once in a lifetime. The very best.
+
+The tier names form an ascending ladder of merit adjectives — **Interesting → Impressive → Essential → Masterpiece** — so no rung reads as a failure. Because a dot is an honour, **empty or outlined "slots" are never shown — not in display and not in the input.** One filled dot must never sit beside two empty rings: that reads as "1 out of 3" (a bad score) when it is in fact high praise. Show only filled dots, or nothing at all.
+
+**Never** call this a "rating", show it "out of 3", display a large numeric score, or pad the row with empty / deactivated rings. Granting a 2nd or 3rd dot triggers the one playful toast: *"You just boosted this building's rank!"*
+
+### Example copy pairings
+
+| Eyebrow | Headline |
 |---|---|
-| **What it is** | The definitive, community-maintained database of the world's notable architecture, with social, mapping, and itinerary layers. |
-| **Tagline** | "The world's architecture, catalogued." |
-| **Positioning line** | "Like IMDb, but for buildings." (also: "Like Letterboxd, but for architecture.") |
-| **Personality** | Editorial · monographic · curatorial · cool · slick · contemporary · sharp. |
-| **Reference world** | A24 Films · OMA · BIG · Zaha Hadid Architects · architecture monographs and exhibition catalogues. |
-| **Audience** | Enthusiasts, students, practising architects, curators, social explorers. |
-| **What it is not** | Generic SaaS. Bluish-purple gradients. Rounded-corner consumer softness. Emoji. Serif. Retro. |
+| `VISITED` | Barbican Centre |
+| `WANTS TO VISIT` | Unité d'Habitation |
+| `COLLECTION · 12 BUILDINGS` | Brutalist Gems of London |
+| `TOP 1% · BUILT 1931` | Villa Savoye |
+| `ARCHITECT` | Le Corbusier |
 
 ---
 
-## CONTENT FUNDAMENTALS
+## Visual Foundations
 
-### Voice
-
-The voice is the voice of a quietly authoritative editorial publication. **Calm, precise, and architectural — never breathless, never marketing-y, never cute.** Plano speaks the way a serious magazine speaks about its subject: with respect for the work, an assumption that the reader cares, and zero fluff.
-
-### Tone register
-
-- **Declarative, not aspirational.** "The world's architecture, catalogued." — not "Imagine if every building…"
-- **Confident, not loud.** No exclamation marks (effectively never). No "AMAZING" or "incredible". Restraint is a brand signal.
-- **Specific, not generic.** "Brutalist Gems of London" beats "Cool buildings". Real buildings, real architects, real cities are always the example.
-- **Editorial pause.** Short sentences. Periods, not commas, do the heavy lifting. The cadence is closer to a museum wall label than a marketing page.
-
-### Casing
-
-| Context | Rule | Example |
-|---|---|---|
-| Headlines (display) | Sentence case. End with a full stop. | `The world's architecture, catalogued.` |
-| Section headings | Sentence case. | `What we're building` |
-| Eyebrow labels, badges, tab strips | UPPERCASE, tracked (`letter-spacing: 0.15em`). | `COMING SOON` · `DISCOVER` · `TOP 1%` |
-| CTA links (inline) | UPPERCASE, tracked, with `→`. | `READ REVIEW →` |
-| Button labels | Sentence case, normal tracking. | `Join the waiting list` · `Log a visit` |
-| Body copy | Sentence case. | `Track every building you've visited.` |
-| Architect / building names | Title Case as the world spells them. | `Le Corbusier` · `Unité d'Habitation` |
-
-**Pronouns:** *We* and *you*. Plano is the team, the reader is the user. Never "users" in copy — always "you" or, when in third person, a persona (`The Enthusiast`, `The Curator`).
-
-**Emoji:** **None.** Not in headlines, not in copy, not in empty states. The lime accent is the entire chromatic vocabulary; emoji would shatter the monochrome contract.
-
-**Spelling:** British English in editorial copy (`catalogued`, `colour`, `realised`) is acceptable and matches the codebase, but American English (`cataloged`) appears in the canonical tagline. Pick one per document and stay consistent.
-
-### Examples (lifted from production)
-
-> **Hero:**
-> COMING SOON
-> The world's architecture database.
-> *Like IMDb, but for buildings. We're cataloging every structure on earth — so the architects, engineers, and studios who make them possible finally get the credit they deserve.*
-
-> **Feature eyebrows:** `DISCOVER` · `CREDIT` · `TRACK`
-> **Feature titles:** `Every building, documented.` · `Architects get the credit they deserve.` · `Your architecture journey.`
-
-> **About page:**
-> "Architecture shapes every city, neighbourhood, and street we live in. Yet most of it goes unrecorded, undiscovered, and unappreciated outside a small professional circle. Plano changes that."
-
-> **Persona descriptions:**
-> *The Enthusiast — Travels to see notable buildings, keeps a personal log of visits, and rates what they see. Plano is Letterboxd for architecture.*
-
-> **CTAs:** `Join the waiting list` · `Log a visit` · `Read review →` · `Save to collection →`
-
-### Anti-examples (do not write)
-
-- ❌ "Get ready to discover amazing buildings!"
-- ❌ "Unlock the world's coolest architecture 🏛️"
-- ❌ "Join thousands of architecture lovers today!"
-- ❌ "Welcome to the future of building discovery."
-- ❌ Multi-clause hype paragraphs with em-dashes used as drama beats.
-
----
-
-## VISUAL FOUNDATIONS
-
-### The one rule
-
-**Let the architecture be the colour.** Every photograph of a building will be the most chromatic thing on screen. Everything that isn't a photograph is black, white, or grey. The single neon lime (`#BEFF00`) lives in exactly two contexts — text selection and the notification dot — and that's it.
+**One principle underlies everything:** let the architecture be the colour. Plano is a photography-first platform. Every building photo will be the most saturated thing on screen. The strictly grayscale chrome ensures photos sing. The single neon lime accent (`#BEFF00`) is the fluorescent tube in a concrete gallery — it marks where to look and what to press.
 
 ### Colour
 
-| Token | Hex | Where |
-|---|---|---|
-| `--brand-primary` | `#171717` | Primary buttons, primary text, active states, focus rings. The "brand colour" is near-black. |
-| `--brand-primary-hover` | `#000000` | Hover state on primary actions. |
-| `--brand-accent` | `#BEFF00` | Text selection (`::selection`) and notification dot on the bell. Nowhere else. |
-| `--surface-default` | `#FAFAFA` | The page. One application only — `<body>`. |
-| `--surface-card` | `#FFFFFF` | Cards, panels, modals, popovers in admin/settings contexts. |
-| `--surface-muted` | `#F5F5F5` | Sidebar background, input fills, code blocks, taxonomy chips, skeletons. |
-| `--surface-inverse` | `#000000` | Dark overlay panels, menus on photographs. |
-| `--border-default` | `#E5E5E5` | Every divider, every input outline. Borders replace shadows. |
-| `--border-strong` | `#A3A3A3` | Active/focused state on inputs. |
-| `--text-primary` | `#171717` | Body, headings, anything you have to read. |
-| `--text-secondary` | `#525252` | Metadata, timestamps, table column headers, persona bios. |
-| `--text-disabled` | `#A3A3A3` | Placeholders only — never use to "de-emphasise" content. |
-| `--feedback-success` | `#16A34A` | Toasts, validation. (Deliberately different hue from lime so "success" and "brand" never collide.) |
-| `--feedback-warning` | `#F59E0B` | Toasts, validation. |
-| `--feedback-destructive` | `#EF4444` | Destructive actions, error banners. |
+**Palette is strictly monochrome + one accent.**
 
-### Type
+- Neutrals: `#FAFAFA` page → `#FFFFFF` cards → `#F5F5F5` muted surfaces → `#E5E5E5` borders → `#171717` primary text → `#525252` secondary → `#A3A3A3` disabled.
+- Accent: `#BEFF00` (electric lime) — *rationed*. There are exactly four sanctioned uses: (1) primary-button fills, (2) focus rings, (3) the hover `→` arrow, and (4) a single small status pill (`BETA` / `NEW` / `LIVE` — the `.accent-tag` utility), at most one per view. **Never** as a section accent, a surface fill, a verified badge, or decorative colour beyond those four. Treat it like the fluorescent tube in a concrete gallery — one fixture, deliberately placed.
+- A pitch-black surface (`#000000`) exists for the global menu, mobile sidebar, and site footer — the only places that invert.
+- Feedback: true green `#16A34A` (success), amber `#F59E0B` (warning), red `#EF4444` (destructive). Success green is intentionally a different hue from the brand lime so "success" and "brand" never conflate. **Use these as 10px dots next to labels, not as surface fills** — see Feedback card. Saturated feedback fills are reserved for destructive-modal confirmation actions only.
 
-- **Sans:** **Inter** — variable, with optical sizing (`opsz 14..32`). Used for everything from 10px micro-labels to 72px editorial headlines. The neutrality of Inter is deliberate — it doesn't compete with photography.
-- **Mono:** **Space Mono** — for building IDs, coordinates, timestamps, footer eyebrows. The technical contrast to Inter that signals "this is data, not voice."
+Content pages (feed, building detail, profile) are **strictly monochromatic** — if the neon appears outside of a primary button, focus ring, hover arrow, or the one sanctioned status pill, it's a bug.
 
-> ⚠️ **Font availability note:** The codebase prefers self-hosted `Inter-VariableFont_opsz_wght.ttf`. We could not locate a font file in the provided assets, so `colors_and_type.css` pulls Inter and Space Mono from Google Fonts. **If you have the variable Inter file, drop it into `fonts/` and replace the `@import` line in `colors_and_type.css` with the `@font-face` block from `docs/DESIGN_TOKENS.md` §3.**
+### Typography
 
-#### Signature type moves
+- **Inter** for everything — body, headings, display. Loaded from Google Fonts with weights 400–700. At UI sizes it's a neutral grotesk; at editorial display sizes with tight tracking it performs like a poster typeface. **Never go heavier than 700 (bold)** — 800/900 breaks the elegant register.
+- **Space Mono** — use sparingly, and only at small sizes (11–13px) for content that is almost entirely numeric: coordinates (canonical), date ranges, counters. Avoid for letter-heavy labels or any display size — the letterforms are too expressive to sit comfortably alongside Inter at scale.
+- **Type as structure — and push it.** The contrast between a tiny uppercase tracked label (10px) and a massive bold headline *is* the design. The headline scale is the single biggest lever you have, and the most common failure is hedging to a safe medium size. Don't. Heroes scale toward **96–128px** (`--fs-8xl` / `--fs-9xl`, `.display`/`.hero`); feed building-names run **48–60px** (`.headline`). At those sizes tracking goes to `--tracking-tighter` (−0.045em) and line-height to `--lh-display` (0.92) so the letters sit tight, almost touching. The drama comes entirely from this size jump and from whitespace — not from stacking heavier weights (Inter stays 400–700).
+- Letter spacing: tight negative (`-0.03em`) on large display; wide (`0.08em` – `0.15em`) on uppercase labels. Body is flat.
+- No text shadow, no text gradient, no drop cap ornamentation.
 
-1. **Scale contrast as design.** The contrast between an 11px tracked uppercase eyebrow and a 60–72px tight-tracked headline *is the design*. Do not soften this gap.
-2. **Tight tracking on display sizes.** `letter-spacing: -0.03em` to `-0.035em` for anything ≥ 32px.
-3. **Near-zero leading on hero type.** `line-height: 0.95–1.0` on display headlines. Lines stack like printed type.
-4. **Widest tracking on labels.** `letter-spacing: 0.15em` (`--letter-spacing-widest`) for eyebrows, CTAs, tab strips, section dividers. This is what gives Plano its architectural-print feel.
-5. **The 10–11px label.** A surprising amount of structural copy lives at this size: section dividers, stat labels, footer chrome. Tracked, uppercase, dimmed to `text-disabled`.
+### Spacing & layout
 
-### Backgrounds
+- 4px base unit. Default generously — card padding 24–32px, section gaps 48–64px, page margins 32–48px.
+- Single-column `max-w-4xl` for all editorial surfaces (building detail, profile, architect profile). Sidebars are restricted to admin and settings.
+- The feed has **no card containers.** Content floats directly on the white canvas. Structure comes from typography scale and generous vertical spacing — not from boxes with borders.
+- Fixed layout tokens: `collection-mosaic` = 168px, `mosaic-gap` = 1.5px (hairline between mosaic cells), `search-serp` = 400px (map results column).
 
-- **One surface colour per page** — `#FAFAFA` is the canvas, and that's it. No gradients. No textures. No patterns. No illustrations.
-- **Photography full-bleed** in heroes — the building photo runs edge-to-edge. The only overlay permitted is a `bg-gradient-to-t from-black/60` cinematic gradient at the bottom for text legibility on hero images.
-- **Photography is presented raw** in the feed — sharp corners, no border, no shadow, no rounded crops. Like a magazine plate.
-- **Imagery colour vibe:** the architecture is what gives the page colour. Plano does not filter photos to be warm, cool, or B&W — they appear as uploaded. No grain, no vignettes, no Instagram filters.
+### Backgrounds, imagery, and grain
 
-### Animation
+- Backgrounds are flat colour — `#FAFAFA` primary, `#FFFFFF` cards, `#000000` inverted surfaces. **No gradients.** No textures. No noise.
+- Imagery is presented **raw** — sharp edges, no rounded corners on photographs, no drop shadows, no overlays. Like photographs mounted in a gallery.
+- **Photo-less surfaces must still look finished.** When real photography isn't available, use the `.photo-placeholder` utility — a faint neutral diagonal hatch on `--surface-muted` with a monospace caption (`data-label`) naming what belongs there. Sharp 0px corners, same aspect ratios as real imagery. A grey hatch with a label reads as *deliberate, awaiting art*; a blank box or a wall of text reads as *broken*. Never substitute a flat grey rectangle, a gradient, or invented vector art.
+- No hand-drawn illustrations. No stock vector art. Every visual element is either a photo, the wordmark, or a Lucide icon.
+- Photography direction tends cool and documentary — architectural photographers' work, often overcast or evenly lit. Black-and-white is welcome; warm-toned saturated lifestyle shots are not.
 
-Subtle. **Editorial fades**, not bouncy springs.
+### Borders, radii, shadows
 
-- **Hero entrance:** the building image scales from `1.05 → 1.0` over `1.2s` with the easing `[0.22, 1, 0.36, 1]` (Framer Motion's `"easeOutExpo"`-ish cubic). Headlines fade-and-rise (`opacity 0 → 1`, `y: 16 → 0`) over `~0.6s`, staggered by `~0.1s` per element.
-- **Marquee:** infinite horizontal scroll for the community avatars on the landing page. Constant velocity, no easing.
-- **Hover transitions:** `120–200ms ease` on colour. No transforms.
-- **Press:** primary buttons `active:scale-[0.98]`. No translate-y bounce.
-- **Page transitions:** none. SPA fades only.
+- Default radius: `2px` (`--radius-sm`) — almost flat, deliberately sharp. Modals get `6px`. Avatars are the only `9999px` element.
+- In the editorial feed, images and content blocks use `0px` radius. True sharp edges — like printed photographs in a magazine.
+- Borders carry the hierarchy: `#E5E5E5` default, `#A3A3A3` for active/focused state.
+- Shadows are flat and mostly absent. `shadow-md` (`0 2px 8px rgba(0,0,0,0.06)`) on cards when explicit lift is needed. `shadow-lg` on modals/popovers. Everything else uses borders alone.
+- **Never** use an inner shadow. Never use a colored glow.
 
-### Hover & press states
+### Buttons & interactive states
 
-| Element | Hover | Press |
-|---|---|---|
-| Primary button | `bg-brand-primary` → `bg-brand-primary-hover` (`#171717` → `#000000`). | `scale-[0.98]`. |
-| Secondary / outline button | Border darkens (`border-default` → `border-strong`); fill goes `surface-card` → `surface-muted`. | `scale-[0.98]`. |
-| Inline CTA link (`READ REVIEW →`) | Label dims to `text-secondary`; the `→` stays `text-primary`. (Reverses the visual emphasis — a deliberate editorial flourish.) | — |
-| Nav link (default → active) | `text-secondary` → `text-primary`. Active also adds a `1px` solid `bg-text-primary` bar pinned at `-bottom-0.5`. | — |
-| Input | Border `border-default` → `border-strong`; subtle `shadow-sm` lifts. Focus: `border-brand-primary` + `ring-2 ring-brand-primary`. | — |
-| Icon button | Foreground `text-secondary` → `text-primary`. No background fill. | — |
-| Image card | No hover effect on the image itself. Title underlines on hover when wrapped in a link. | — |
+- **Primary button:** lime fill, dark text, 2px radius, 500 weight, sentence case. `h-10 px-4`.
+- **Outline button:** white fill, grey border, same geometry.
+- **Editorial CTA:** uppercase tracked text + `→` arrow. No button container. Used for all in-page actions on content pages (review, save, follow, directions). Format: `text-xs font-medium uppercase tracking-widest`.
+- **Hover:** darken brand fills (`#BEFF00` → `#9ACC00`); opacity-nothing on text links — they simply move to `text-secondary`. Outline buttons fill with `surface-muted`.
+- **Pressed:** `active:scale-[0.98]` on Buttons. That's it — no colour flash.
+- **Focus ring:** 2px `#BEFF00` with 2px white offset. Visible only on keyboard focus (`focus-visible`).
+- **Disabled:** `opacity-50` + `pointer-events-none`. Labels use `text-disabled` (`#A3A3A3`).
 
-### Borders
+### Motion
 
-Borders are the primary hierarchy mechanism, **replacing** shadows in most contexts.
+- **Minimal.** Framer Motion is used but restrained.
+- Entry animations: fade + 12px y-translate, 600ms ease-out, optional 150ms stagger.
+- Hover transitions: 150ms colour change. No scale, no lift.
+- Rating input uses `whileTap: { scale: 0.9 }` — the only place things squish.
+- No bounces, no spring overshoots, no parallax, no scroll-driven effects.
 
-- **Default:** `1px solid #E5E5E5` (`border-default`). Every card, every input, every divider.
-- **Strong:** `1px solid #A3A3A3` (`border-strong`). Focused inputs, selected sidebar item, highlighted table row.
-- **Hairline:** `0.5px solid var(--border-default)`. Custom `.hairline` utility — used between dense rows in lists where a full 1px would feel heavy.
-- **Feed section dividers:** `1px solid var(--text-primary)` — black, not grey. Paired with the section label. This is rare and intentional; standard dividers stay grey.
+### Transparency, blur, glass
 
-### Shadows
-
-**Effectively unused** on content surfaces. The shadow tokens exist mostly for overlays.
-
-| Token | Value | Where |
-|---|---|---|
-| `--shadow-sm` | `0 1px 2px 0 rgb(0 0 0 / 0.04)` | Inputs on hover. |
-| `--shadow-md` | `0 2px 8px 0 rgb(0 0 0 / 0.06)` | Optional card lift — admin only. Prefer borders. |
-| `--shadow-lg` | `0 8px 24px 0 rgb(0 0 0 / 0.10)` | Modals, dropdowns, popovers. Always paired with `bg-black/50` backdrop. |
-
-**No inner shadows. No glow effects. No coloured shadows.**
-
-### Capsules vs. protection gradients
-
-- **Capsule pill backgrounds:** not used on photographs. If a label needs to sit on an image, it's set on a **black panel** (`bg-surface-inverse`) with white text — rarely.
-- **Protection gradients:** one place only — the cinematic `bg-gradient-to-t from-black/60 via-transparent to-transparent` at the bottom of full-bleed building hero images.
-
-### Transparency & blur
-
-- **App top nav:** `rgba(250,250,250,0.92)` + `backdrop-blur-md`. The nav fades through scrolling content. Bordered at the bottom with `border-default`.
-- **Landing nav:** `bg-surface-default/95` + `backdrop-blur-sm`. Slightly less glassy.
-- **Glass utility:** `.glass` — `background: color-mix(in srgb, var(--surface-card) 70%, transparent)` + `backdrop-blur-xl`. Used inside modals over photography.
-- **Modal backdrop:** `bg-black/50`, no blur. Modal panel is opaque `surface-overlay`.
-
-### Corner geometry
-
-This is one of the most important spatial decisions. **The default is `0px`. The exception is the legacy primitive ladder.**
-
-- **Editorial and content-detail surfaces (building, profile, architect, feed):** `--radius-none` (`0px`). Sharp. Cut, not moulded. Echoes drafting and physical models.
-- **Photography always:** `0px`. No exceptions. Square crops, sharp edges.
-- **Legacy shared primitives (`Button`, `Input`, `Badge`, `Card`):** `--radius-sm` (`2px`) — minimal softening for ergonomics. Many surfaces override this to `0px`.
-- **Circular only:** avatars (`--radius-full`) and small dot markers. These are *identity discs*, not rounded rectangles.
-- **Modals & popovers:** `--radius-lg` (`6px`) for legacy reasons; new modals on editorial surfaces should use `0px`.
+- Sparingly. A `glass` utility exists (`backdrop-blur-xl` + 70% white tint) for top navs over photography — but most surfaces are solid.
+- No frosted glass cards. No colored glass.
 
 ### Cards
 
-The card system is a paradox: **most "cards" in the feed aren't card containers at all**. They're typographic blocks separated by whitespace and a black border-bottom.
+Cards are **almost never boxed.**
 
-- **Feed item:** `border-b border-border-default py-8`. No `surface-card` background. No shadow. No rounding. Content floats directly on `surface-default`. The card has earned its space through type, not chrome.
-- **Admin / settings card:** `bg-surface-card border border-border-default` (no shadow). Rounded `radius-sm` (legacy). Optional `shadow-md` only if hierarchy demands.
-- **Image card (building thumbnail):** image with `aspect-card-standard` (4:3) or `aspect-card-hero` (16:9). No rounding. No frame. Title + meta sit *below*, never overlaid.
+- **Content/feed cards:** no border, no background, no shadow. Pure typography + imagery on the canvas. Image uses 0px radius. Metadata uses a 10px uppercase tracked eyebrow above a 48px bold (700) building name at `-0.03em` tracking.
+- **Admin / form cards:** 1px `border-default`, `surface-card` (white) fill, 2px radius, no shadow (shadow is optional and almost never used).
+- **Modals:** white fill, 6px radius, `shadow-lg`, black 50% backdrop.
 
-### Layout rules
+### Feed as a gallery
 
-- **App shell:** horizontal sticky top nav (logo + nav links + search + primary CTA + bell + avatar). **Not a left sidebar.** Height `64px`. Sticky `top-0`, `z-50`.
-- **Editorial body:** two-column grid — fluid centre feed column + `320px` sticky right rail. Max width `~960px`.
-- **Content detail pages:** single column, `max-w-4xl`. No right rail. Generous vertical rhythm.
-- **Section gaps:** `64–96px` between major page sections. Whitespace is editorial pause, not waste.
-- **Page padding:** `20px` mobile, `32px` desktop, on the inner container.
+The editorial feed is Plano's most distinctive surface. It deliberately does not look like a social media app. It looks like an architecture magazine:
 
-### Fixed elements
+1. A tiny uppercase eyebrow (10px, tracked, grey) says *what kind of thing this is* — `VISITED`, `WANTS TO VISIT`, `COLLECTION`.
+2. A large building name follows (48–60px, 700 bold, tight negative tracking).
+3. A subtitle with architect and city in secondary grey.
+4. Optional body copy at 16px/1.75 line-height, clamped to 3–4 lines with an uppercase `READ MORE →`.
+5. A hairline footer with likes/comments at the far left and a bookmark at the far right — no heavy iconography.
 
-- Top nav (sticky, `z-50`).
-- Right rail (sticky to viewport, only on desktop in editorial contexts).
-- Modal backdrop + dialog.
-- Mobile bottom nav (the codebase has a `BottomNav` component; the marketing site does not use it).
-- Cookie banner (when shown, fixed-bottom over the canvas).
+No containing box. No shadow. 64–96px vertical gap between items.
 
 ---
 
-## ICONOGRAPHY
+## Iconography
 
-### System
+Plano uses **[Lucide](https://lucide.dev)** (via `lucide-react`) for its entire icon set. This is the icon library that ships with shadcn/ui.
 
-**Lucide React** is the canonical icon library. The production codebase imports directly from `lucide-react` throughout — `<Bell />`, `<Search />`, `<MapPin />`, `<Building2 />`, `<Trophy />`, `<Gem />`, `<Sparkles />`, `<BadgeCheck />`, `<Briefcase />`, `<Landmark />`, `<Settings />`, `<LogOut />`, `<User />`, etc. No custom icon font, no SVG sprite sheet, no Material/Heroicons.
+- **Stroke-based, 1.5px stroke weight.** Monoline, open style — matches the editorial grotesk typography better than a filled icon set would.
+- Default size `16px` inline (`size-4`), `20–24px` for nav rails, `h-3.5 w-3.5` for inline meta (check marks, etc).
+- **Colour:** always inherits from text colour (`currentColor`). On content pages icons are `text-primary` or `text-secondary` — never lime. Lime appears only on the primary button, the focus ring, the hover `→` arrow, and the one `.accent-tag` status pill — never on icons, and never on rating dots.
+- **Never decorative.** If an icon sits next to text, it carries information (status, action, category). Lucide has ~1,400 icons — pick the one that's semantically exact.
 
-### Stroke & style
+Icons frequently used in Plano (by code frequency):
 
-- **Stroke-only.** No filled icons. Default stroke weight `2px` (Lucide default).
-- **Sizes:** `12px` (h-3 w-3, inline-with-text micro), `14px` (h-3.5 w-3.5, eyebrow icons), `16px` (h-4 w-4, default in buttons and nav), `20–24px` (hero/feature contexts).
-- **Colour:** inherits `currentColor` — typically `text-secondary` at rest, `text-primary` on hover or active state.
-- **Spacing from text:** `gap-2` (8px) in flex rows.
-
-### Identifying icons in use (from the codebase)
-
-| Use | Lucide name |
+| Icon | Usage |
 |---|---|
-| Bell / notification | `Bell` |
-| Search | `Search` |
-| Map pin / location | `MapPin` |
-| Building (generic) | `Building2` · `Landmark` |
-| User / avatar fallback | `User` |
-| Verified architect | `BadgeCheck` |
-| Top 1% / Top 5% / Top 10% | `Trophy` · `Gem` · `Sparkles` |
-| Settings | `Settings` |
-| Sign out | `LogOut` |
-| Portfolio | `Briefcase` |
-| Loading | `Loader2` (with `animate-spin`) |
+| `Activity` | Feed tab |
+| `Play` | Explore tab |
+| `BookOpen` | Guides tab |
+| `Search` | Search tab |
+| `Users` | Connect tab, facepiles |
+| `User` | Profile |
+| `Settings` | Settings page |
+| `Bell` | Notifications |
+| `Bookmark` / `BookmarkCheck` | Save-to-list action |
+| `MapPin` | Location, map markers |
+| `Building2` | Company / building meta |
+| `Briefcase` | Architect portfolio |
+| `CalendarDays` | Events |
+| `BadgeCheck` | Verified entity |
+| `Heart` | Like |
+| `MessageSquare` | Comments |
+| `Check` | Visited status |
+| `ChevronDown` / `→` (unicode) | Disclosure / CTA |
+| `X` | Close |
 
-### How to include Lucide
+### The award "dot"
 
-- **In React/JSX prototypes:** `<script type="module">import { Building2 } from "https://esm.sh/lucide-react@0.451.0"</script>` for quick prototyping; in production code use the npm package.
-- **In static HTML:** [Lucide static](https://unpkg.com/lucide-static@0.451.0/icons/) gives raw SVG by name. Or embed Lucide's web component via `<script src="https://unpkg.com/lucide@latest"></script>` then `<i data-lucide="bell"></i>` + `lucide.createIcons()`.
+Awards use a **filled circle** (not a star). Dots are **black** (`#171717`), never lime — lime has poor contrast on white — and never outlined. This differentiates Plano from 5-star consumer review apps. See the `Michelin Rating` card in `preview/` and `plano/src/components/ui/michelin-rating-input.tsx`.
 
-This design system's previews use the static SVG approach inlined for performance.
+- **Display** — render only the earned dots (1–3 filled black circles), tight together. Zero dots is complete and shows *nothing*: no placeholder, no ghost rings, no "0/3".
+- **Input** — present the four levels as discrete, labelled choices (**Interesting · Impressive · Essential · Masterpiece**), each rendered with *only* its own filled dots (0, 1, 2, or 3) and defaulting to Interesting. **Never** build the input as three toggleable slots that fill left-to-right — that manufactures the exact "X out of 3" reading the awards model exists to avoid. The canonical input lives in `ui_kits/web/Plano Web - Onboarding, Post & Credits.html` → **Post**.
 
-### Logos
+Dots are **a reward, not a scale.** If you are ever tempted to show an empty ring, don't — show fewer dots (or none) instead.
 
-- **Wordmark:** `assets/plano-logo.svg` / `assets/PlanoLogo.tsx`. The full "Plano" set in a custom geometric sans. Five glyphs, each drawn with quadratic curves — the `P`, `L`, `A`, `N`, `O` shapes carry the brand's architectural lockup. **The wordmark is monochrome `currentColor`.** Place it on light surfaces in `text-text-primary`; on dark surfaces invert with `text-text-inverse`.
-- **Symbol:** `assets/plano-symbol.svg`. Just the `P` glyph — used as the favicon, PWA icon, and small-format app mark. Renders white on a black square for the PWA. Inside the product the symbol is rarely used; the wordmark is preferred.
-- **Favicons & PWA icons:** `assets/{favicon-16, favicon-32, apple-touch-icon, android-chrome-192, android-chrome-512, favicon.ico}`. Black `P` on white, or white `P` on black square — both ship.
+### Logo
 
-### Emoji
+The Plano wordmark is a custom geometric letterform — see `assets/plano-logo.svg`. It's `currentColor` so it inherits from the text colour of its container (white on black in the sidebar, `text-primary` on the landing page). Never recolour it to the lime accent.
 
-**Never.** Not in copy, not in empty states, not in section labels. The monochrome contract forbids it. If a presence feels needed, use a Lucide stroke icon.
+### No emoji. No hand-drawn SVGs. No illustrated characters.
 
-### Unicode characters
-
-A handful are first-class brand glyphs:
-
-- `→` — the CTA arrow. Always paired with uppercase tracked text (`READ REVIEW →`).
-- `·` — the meta separator. `Le Corbusier · 1952 · Marseille`.
-- `§` — section prefix in feed dividers (e.g. `§ 01 · BUILDINGS`).
-- `↗` — external link indicator (used sparingly).
-- `—` — em dash for editorial pause. Use unstyled, surrounded by spaces in prose.
+Plano trusts photography and typography. Anything else is noise.
 
 ---
 
-## Designer reminders
+## UI Kits
 
-- One thousand no's for every yes. If a section feels empty, that's a composition problem to solve with type and whitespace, not by adding content.
-- The contrast between an 11px eyebrow and a 72px headline is the design. Don't compress it.
-- Photography is the colour. Don't add a second colour.
-- If you need a divider, it's `1px solid #E5E5E5`. Not a shadow. Not a gradient.
-- The lime only appears in two places. Two.
-- Rounded corners feel like a consumer app. Plano isn't one.
+- **`ui_kits/web/`** — the Plano web application: editorial feed, building detail page, landing page, map view. Built from the source code, not screenshots.
+
+(There is no separate mobile app — Plano is a PWA served from the same codebase, with `BottomNav` and `MobileTopBar` variants of the chrome.)
 
 ---
 
-*Last updated 2026 · derived from `jaimenoain/plano` `docs/DESIGN_TOKENS.md` and live source.*
+## Shared chrome components
+
+The global chrome is available as **importable React components** (compiled into `_ds_bundle.js`), so every Plano surface uses the same header, nav, and footer rather than re-implementing them. Each lives under `components/<Name>/` with a `.jsx`, a `.d.ts`, and a preview card, and shows in the **Chrome** group of the Design System tab.
+
+| Component | Recreates | Key props |
+|---|---|---|
+| `PlanoLogo` | The wordmark (`currentColor`) | `size`, `color` |
+| `AppTopNav` | Desktop sticky header | `signedIn`, `activePath`, `userInitial`, `avatarUrl`, `hasNotification` |
+| `MobileTopBar` | Mobile header (menu · logo · actions) | `signedIn`, `userInitial`, `avatarUrl`, `hasNotification` |
+| `BottomNav` | Mobile bottom tab bar | `activePath`, `variant` (`default` \| `inverse`) |
+| `SiteFooter` | Black four-column global footer | `year` |
+
+All are **presentational** (hook-free) — links are inert placeholders; wire routing in the consuming app. They read their colours and type from the design-system CSS, so link `styles.css` (or `colors_and_type.css`) alongside the bundle.
+
+**Consume them** — load the bundle, then read off the namespace:
+
+```html
+<link rel="stylesheet" href="styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="_ds_bundle.js"></script>
+<script>
+  const { AppTopNav } = window.PlanoDesignSystem_e8d587;
+  ReactDOM.createRoot(root).render(React.createElement(AppTopNav, { activePath: '/explore' }));
+</script>
+```
+
+In a `.dc.html` template, mount the same way with `<x-import component-from-global-scope="PlanoDesignSystem_e8d587.AppTopNav" hint-size="100%,64px"></x-import>` after loading the bundle in `<helmet>`.
+
+## Known gaps & caveats
+
+- **Fonts:** Inter and Space Mono are loaded from Google Fonts. No custom brand typefaces — Plano uses these two Google Fonts as-is. If you need offline typography assets, pull them from `https://fonts.googleapis.com/css2?family=Inter&family=Space+Mono`.
+- **No marketing illustrations:** the codebase has none. If you need decorative imagery for a new surface, use real architecture photography (licensed) rather than invented SVG art.
+- **No dark mode:** design is light-only. A pitch-black inverted surface exists for the menu/footer, but it's not a full dark theme.

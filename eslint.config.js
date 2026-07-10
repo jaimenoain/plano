@@ -136,4 +136,28 @@ export default tseslint.config(
       "react-refresh/only-export-components": "off",
     },
   },
+  {
+    // Token discipline (design-system e8d58798, see design-system/_adherence.oxlintrc.json).
+    // The shared design layer — shadcn primitives and the global chrome — must express
+    // colour through token aliases, never a raw hex. Error-level because both directories
+    // are clean today, so this only ever fires on a regression (no warning-ratchet impact).
+    //
+    // Deliberately NOT ported: the design system's blanket "no raw px" rule. It would
+    // contradict .cursor/rules/03-frontend.mdc, which treats *structural* utilities
+    // (min-h-[120px], w-[3.25rem]) as unrestricted and governs only *visual* tokens.
+    // Feature directories still carry ~32 raw hex values; burn those down per-surface
+    // during the design conformance sweep, then widen `files` here.
+    files: ["src/components/ui/**/*.tsx", "src/components/layout/**/*.tsx"],
+    ignores: ["**/*.test.tsx"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "Literal[value=/#[0-9a-fA-F]{3,8}/]",
+          message:
+            "Raw hex colour in the shared design layer. Use a design token alias (docs/DESIGN_TOKENS.md) — e.g. text-text-primary, bg-brand-accent, border-border-default.",
+        },
+      ],
+    },
+  },
 );

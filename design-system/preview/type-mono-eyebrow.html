@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<!-- @dsCard group="Type" name="Mono & Eyebrow" subtitle="Space Mono + uppercase tracked labels" viewport="720x240" -->
+<html lang="en"><head><meta charset="UTF-8"><title>Mono + Eyebrow</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  html,body{margin:0;padding:0;background:var(--surface-default);font-family:var(--font-sans)}
+  .wrap{padding:24px;display:grid;gap:22px}
+  .eyebrow{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);font-weight:500;margin-bottom:4px}
+  .label-upper{font-size:11px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-primary)}
+  .cta{font-size:12px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-primary);display:inline-flex;align-items:center;gap:6px}
+  .stack{display:grid;gap:2px}
+
+  /* Space Mono — small, numeric-heavy */
+  .mono-s{font-family:'Space Mono',monospace;font-size:12px;color:var(--text-primary);letter-spacing:.03em;line-height:1.55}
+
+  .row{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}
+  .cap{font-size:11px;color:var(--text-secondary)}
+
+  /* Don't-do examples */
+  .dont{display:grid;grid-template-columns:18px 1fr;gap:10px;align-items:baseline;padding:10px 12px;background:var(--surface-muted);border-left:2px solid var(--border-strong)}
+  .x{color:var(--text-secondary);font-size:13px;line-height:1.2;font-weight:400}
+  .dont-body{font-size:13px;color:var(--text-primary);line-height:1.5}
+  .dont-body .bad{font-family:'Space Mono',monospace;font-size:14px}
+  .dont-body em{color:var(--text-secondary);font-style:normal}
+
+  .note{font-size:11px;color:var(--text-secondary);line-height:1.6;max-width:620px}
+  .note strong{color:var(--text-primary);font-weight:500}
+</style></head>
+<body><div class="wrap">
+
+  <div class="stack">
+    <div class="eyebrow">Eyebrow label · 11 / medium / 0.15em</div>
+    <div class="label-upper">VISITED · 2 DAYS AGO</div>
+  </div>
+
+  <div class="stack">
+    <div class="eyebrow">Editorial CTA — text + arrow, never a filled button</div>
+    <div class="cta">REVIEW THIS BUILDING →</div>
+  </div>
+
+  <div class="stack">
+    <div class="eyebrow">Space Mono — use sparingly, small, numeric-heavy</div>
+    <div class="row">
+      <span class="mono-s">48.8584° N · 2.2945° E</span>
+      <span class="cap">coordinates · canonical use</span>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <span class="mono-s">1931 — 1998</span>
+      <span class="cap">date range · acceptable</span>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <span class="mono-s">01 / 12</span>
+      <span class="cap">counters · acceptable</span>
+    </div>
+  </div>
+
+  <div class="stack" style="gap:8px">
+    <div class="eyebrow">Don't</div>
+    <div class="dont">
+      <span class="x">×</span>
+      <div class="dont-body"><span class="bad">Brutalist gems of London</span> <em>— letter-heavy labels; use Inter</em></div>
+    </div>
+    <div class="dont">
+      <span class="x">×</span>
+      <div class="dont-body"><span class="bad" style="font-size:22px">48.8584° N</span> <em>— mono at display sizes clashes with Inter</em></div>
+    </div>
+  </div>
+
+  <p class="note">
+    <strong>Use Space Mono sparingly.</strong> It reads well only when the content is almost entirely numeric and sits at small sizes (11–13px). The letterforms are too expressive to sit alongside Inter at any larger scale or in label-like copy.
+  </p>
+
+</div></body></html>

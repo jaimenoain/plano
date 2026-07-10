@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<!-- @dsCard group="UI Kit — Web" name="Add building" subtitle="Multi-section catalogue submission form with award input" viewport="1400x2200" -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plano — Add building</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../../../colors_and_type.css">
+<link rel="stylesheet" href="../_shared/kit.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../../_ds_bundle.js"></script>
+<script type="text/babel" src="../_shared/kit-lib.jsx"></script>
+<style>
+  /* ---- Add building form (screen-specific) ---- */
+  .form-wrap{max-width:760px;margin:0 auto;padding:48px 32px 140px}
+  .form-top .eyebrow{margin-bottom:14px}
+  .form-title{font-size:clamp(40px,6vw,64px);font-weight:700;letter-spacing:-0.035em;line-height:.95;margin:0}
+  .form-lead{font-size:17px;color:var(--text-secondary);margin-top:18px;max-width:52ch;line-height:1.55}
+  .form-section{margin-top:56px;border-top:1px solid var(--border-default);padding-top:32px;display:grid;grid-template-columns:200px 1fr;gap:48px}
+  .form-section-h{font-size:10px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary)}
+  .form-section-d{font-size:13px;color:var(--text-disabled);margin-top:10px;line-height:1.6}
+  .fields{display:flex;flex-direction:column;gap:22px}
+  .field{display:flex;flex-direction:column;gap:8px}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .label{font-size:13px;font-weight:500;color:var(--text-primary)}
+  .label .opt{color:var(--text-disabled);font-weight:400;margin-left:6px}
+  .hint{font-size:12px;color:var(--text-secondary)}
+  .input,.textarea,.select{border:1px solid var(--border-default);background:#fff;border-radius:2px;padding:11px 13px;font-size:15px;color:var(--text-primary);width:100%;transition:border-color 150ms,box-shadow 150ms}
+  .input:focus,.textarea:focus,.select:focus{outline:0;border-color:#171717}
+  .input::placeholder,.textarea::placeholder{color:var(--text-disabled)}
+  .textarea{min-height:120px;line-height:1.6;resize:vertical}
+  .select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23525252' stroke-width='1.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px}
+  .rate-pick{display:flex;gap:10px}
+  .rate-opt{flex:1;border:1px solid var(--border-default);background:#fff;border-radius:2px;padding:14px 12px;cursor:pointer;text-align:left;transition:border-color 150ms}
+  .rate-opt:hover{border-color:var(--border-strong)}
+  .rate-opt.on{border-color:#171717;box-shadow:inset 0 0 0 1px #171717}
+  .rate-opt .rn{font-size:14px;font-weight:600;margin-top:10px}
+  .rate-opt .rd{font-size:12px;color:var(--text-secondary);margin-top:2px}
+  .dropzone{border:1.5px dashed var(--border-strong);border-radius:2px;background:var(--surface-muted);padding:40px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;color:var(--text-secondary);cursor:pointer}
+  .dropzone:hover{border-color:#171717;color:var(--text-primary)}
+  .picker-map{height:220px;position:relative;border:1px solid var(--border-default);border-radius:2px;overflow:hidden}
+  .map-canvas{position:absolute;inset:0;background:
+    linear-gradient(rgba(0,0,0,0.05) 1px,transparent 1px) 0 0/48px 48px,
+    linear-gradient(90deg,rgba(0,0,0,0.05) 1px,transparent 1px) 0 0/48px 48px,
+    #E8E8E6}
+  .map-road{position:absolute;background:#fff}
+  .pin{position:absolute;transform:translate(-50%,-100%);color:#171717;display:flex;flex-direction:column;align-items:center}
+  .pin .dot{width:14px;height:14px;border-radius:9999px;background:#171717;border:2.5px solid #fff;box-shadow:var(--shadow-md)}
+  .pin.active .dot{width:20px;height:20px}
+  .map-cap{position:absolute;left:16px;bottom:14px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-disabled);background:rgba(255,255,255,.8);padding:5px 8px}
+  .form-actions{position:sticky;bottom:0;background:rgba(250,250,250,.92);backdrop-filter:blur(8px);border-top:1px solid var(--border-default);margin:56px -32px 0;padding:18px 32px;display:flex;justify-content:space-between;align-items:center;gap:16px}
+  .form-actions .l{font-size:13px;color:var(--text-secondary);display:flex;align-items:center;gap:8px}
+
+  @media (max-width:1024px){ .form-section{grid-template-columns:1fr;gap:16px} }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState } = React;
+const { AppTopNav } = window.PlanoDesignSystem_e8d587;
+
+const RATINGS = [[1,"Impressive"],[2,"Essential"],[3,"Masterpiece"]];
+const Form = () => {
+  const [rating, setRating] = useState(2);
+  return (
+    <div className="form-wrap">
+      <div className="form-top">
+        <div className="eyebrow">CATALOGUE · NEW ENTRY</div>
+        <h1 className="form-title">Add a building</h1>
+        <p className="form-lead">Every entry is reviewed before it goes public. Give it a name, a location, and a first impression — the community fills in the rest.</p>
+      </div>
+
+      <div className="form-section">
+        <div>
+          <div className="form-section-h">Identity</div>
+          <div className="form-section-d">What it's called and who designed it.</div>
+        </div>
+        <div className="fields">
+          <div className="field">
+            <label className="label">Building name</label>
+            <input className="input" placeholder="e.g. Villa Savoye"/>
+          </div>
+          <div className="field-row">
+            <div className="field">
+              <label className="label">Architect</label>
+              <input className="input" placeholder="Search or add architect"/>
+            </div>
+            <div className="field">
+              <label className="label">Year completed <span className="opt">optional</span></label>
+              <input className="input" placeholder="1931"/>
+            </div>
+          </div>
+          <div className="field">
+            <label className="label">Typology</label>
+            <select className="select" defaultValue="">
+              <option value="" disabled>Select a typology</option>
+              <option>Private residence</option>
+              <option>Cultural / museum</option>
+              <option>Religious</option>
+              <option>Civic / government</option>
+              <option>Commercial</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="form-section">
+        <div>
+          <div className="form-section-h">Location</div>
+          <div className="form-section-d">Drop a pin — coordinates are captured automatically.</div>
+        </div>
+        <div className="fields">
+          <div className="field-row">
+            <div className="field">
+              <label className="label">City</label>
+              <input className="input" placeholder="Poissy"/>
+            </div>
+            <div className="field">
+              <label className="label">Country</label>
+              <input className="input" placeholder="France"/>
+            </div>
+          </div>
+          <div className="field">
+            <label className="label">Map location</label>
+            <div className="picker-map">
+              <div className="map-canvas">
+                <div className="map-road" style={{left:0,right:0,top:"52%",height:5,opacity:.9}}/>
+                <div className="map-road" style={{top:0,bottom:0,left:"46%",width:5,opacity:.9}}/>
+              </div>
+              <div className="pin active" style={{left:"46%",top:"52%"}}><span className="dot"/></div>
+              <div className="map-cap">48.9244° N · 02.0280° E</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="form-section">
+        <div>
+          <div className="form-section-h">Your visit</div>
+          <div className="form-section-d">Rate it and say why. Sentence case — write like a magazine, not a review site.</div>
+        </div>
+        <div className="fields">
+          <div className="field">
+            <label className="label">Rating</label>
+            <div className="rate-pick">
+              {RATINGS.map(([n,lbl])=>(
+                <button key={n} className={`rate-opt ${rating===n?'on':''}`} onClick={()=>setRating(n)}>
+                  <Rating n={n}/>
+                  <div className="rn">{lbl}</div>
+                  <div className="rd">{n} point{n>1?"s":""}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="field">
+            <label className="label">Review <span className="opt">optional</span></label>
+            <textarea className="textarea" placeholder="What did it feel like to stand inside it?"></textarea>
+            <span className="hint">Markdown supported. No emoji — let the writing carry it.</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="form-section">
+        <div>
+          <div className="form-section-h">Photography</div>
+          <div className="form-section-d">Raw, documentary, sharp-edged. Overcast is welcome.</div>
+        </div>
+        <div className="fields">
+          <div className="dropzone">
+            <Icon name="upload" size={26}/>
+            <div style={{fontSize:15,fontWeight:500,color:"var(--text-primary)"}}>Drop photos here, or browse</div>
+            <div className="hint">JPEG or PNG · up to 20MB each · first image becomes the hero</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="form-actions">
+        <div className="l"><span className="sdot idle"/> Draft saved · 2 min ago</div>
+        <div style={{display:"flex",gap:10}}>
+          <button className="btn btn-outline">Save draft</button>
+          <button className="btn btn-primary">Submit for review</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+function App(){
+  return (
+    <div data-screen-label="Add building">
+      <AppTopNav activePath="/add" userInitial="J"/>
+      <Form/>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
