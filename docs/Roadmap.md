@@ -110,7 +110,8 @@ update `docs/DESIGN_TOKENS.md` **in the same PR** — never defer the sync.
 
 `main` requires **9 status checks** (Lint, Typecheck, Test, Build, Migrations lint, Warning ratchet,
 Debt ratchet, Secret scan, Types staleness) and **zero approving reviews**, with
-*"require branches to be up to date"* enabled. Repo-level auto-merge is **on**.
+*"require branches to be up to date"* enabled. Repo-level auto-merge is **on**, and so is
+*"automatically delete head branches"*.
 
 So a conformance PR merges itself the moment it is green. Immediately after opening it:
 
@@ -118,8 +119,18 @@ So a conformance PR merges itself the moment it is green. Immediately after open
 gh pr merge <number> --auto --merge
 ```
 
-That arms auto-merge; GitHub lands the PR as soon as all 9 checks pass. **Do not merge by hand, and
-do not wait for a human.** If a check fails, auto-merge stays armed — push the fix and it lands.
+That arms auto-merge; GitHub lands the PR as soon as all 9 checks pass, then deletes the remote
+branch for you. **Do not merge by hand, and do not wait for a human.** If a check fails, auto-merge
+stays armed — push the fix and it lands.
+
+Do not pass `-d`/`--delete-branch` alongside `--auto`: `gh` only deletes the branch when it performs
+the merge itself, so with auto-merge armed the flag is silently ignored. Branch cleanup is the repo
+setting's job. Your local copy of the branch survives, so after the PR lands:
+
+```sh
+git checkout main && git pull && git fetch --prune   # drops the stale origin/<branch> ref
+git branch -d <branch>                               # delete the local copy
+```
 
 > Never reach for `--admin`, and never `git push --no-verify`. If a check is red, the code is wrong.
 
