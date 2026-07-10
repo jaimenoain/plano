@@ -24,7 +24,7 @@ one surface at a time.
 | ✅ | Design-system foundation | **Merged** — [#1521](https://github.com/jaimenoain/plano/pull/1521) |
 | ✅ | 1 · Global chrome | **Merged** — [#1522](https://github.com/jaimenoain/plano/pull/1522) |
 | ✅ | 2 · Feed | **Merged** — [#1524](https://github.com/jaimenoain/plano/pull/1524) |
-| ✅ | 3 · Building detail | Done — PR pending open/merge |
+| ✅ | 3 · Building detail | Auto-merge armed — [#1526](https://github.com/jaimenoain/plano/pull/1526) |
 | ☐ | 4 · Landing | not started |
 | ☐ | 5 · Profile + credits | not started |
 | ☐ | 6 · City + guides | not started |
