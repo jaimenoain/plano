@@ -295,7 +295,7 @@ export function FilterDrawer() {
         <Button
           variant="outline"
           size="icon"
-          className="h-9 w-9 relative bg-surface-card/90 backdrop-blur-xs border border-border-default rounded-sm shadow-md hover:bg-surface-muted"
+          className="h-9 w-9 relative bg-surface-card/90 backdrop-blur-xs border border-border-default rounded-none hover:bg-surface-muted"
           aria-label="Filters"
         >
           <ListFilter className="h-4 w-4" />
@@ -338,7 +338,7 @@ export function FilterDrawer() {
           {/* Mode-specific settings */}
           {effectiveMode === 'discover' && (
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider text-xs">
+              <h3 className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
                 Discovery Settings
               </h3>
 
@@ -374,7 +374,7 @@ export function FilterDrawer() {
 
           {effectiveMode === 'library' && (
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-text-secondary uppercase tracking-wider text-xs">
+              <h3 className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
                 {isContactMode ? 'Contact Filters' : 'Library Settings'}
               </h3>
 
