@@ -26,6 +26,7 @@ import { PersonAwardsSection } from "@/features/awards/components/PersonAwardsSe
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { personDetailsLoader, type PersonDetailsLoaderData } from "./PersonDetails.loader";
+import { EntityMetaEyebrow } from "../components/EntityMetaEyebrow";
 
 export { personDetailsLoader as loader } from "./PersonDetails.loader";
 
@@ -226,11 +227,7 @@ export default function PersonDetails() {
           <div className="flex flex-col-reverse gap-8 sm:flex-row sm:items-start sm:gap-12 lg:gap-20">
             <div className="min-w-0 flex-1 space-y-4">
               <div className="space-y-2">
-                {(person.nationality || lifeSpan || person.locationNote) ? (
-                  <p className="font-mono text-2xs uppercase tracking-[0.14em] text-text-secondary">
-                    {[person.nationality, lifeSpan, person.locationNote].filter(Boolean).join(" · ")}
-                  </p>
-                ) : null}
+                <EntityMetaEyebrow items={[person.nationality, lifeSpan, person.locationNote]} />
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="flex min-w-0 flex-wrap items-center gap-3">
                     <h1 className="headline">{person.name}</h1>

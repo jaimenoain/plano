@@ -72,6 +72,7 @@ import {
 } from "@/features/credits/api/companies";
 import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
 import { companyDetailsLoader, type CompanyDetailsLoaderData } from "./CompanyDetails.loader";
+import { EntityMetaEyebrow } from "../components/EntityMetaEyebrow";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -573,11 +574,7 @@ export default function CompanyDetails() {
           <div className="flex flex-col-reverse gap-8 sm:flex-row sm:items-start sm:gap-12 lg:gap-20">
             <div className="min-w-0 flex-1 space-y-4">
               <div className="space-y-2">
-                {(company.country || yearSpan) ? (
-                  <p className="font-mono text-2xs uppercase tracking-[0.14em] text-text-secondary">
-                    {[company.country, yearSpan].filter(Boolean).join(" · ")}
-                  </p>
-                ) : null}
+                <EntityMetaEyebrow items={[company.country, yearSpan]} />
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="flex min-w-0 flex-wrap items-center gap-3">
                     <h1 className="headline">{company.name}</h1>

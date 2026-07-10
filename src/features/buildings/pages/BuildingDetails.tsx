@@ -82,8 +82,7 @@ import {
 import { ActivityStreamGroup } from "@/features/posts/components/ActivityStream";
 import { ClientOnly } from "@/components/common/ClientOnly";
 import { RelatedByArchitectSection, RelatedByCitySection } from "../components/RelatedBuildings";
-import { BuildingDetailHero } from "../components/BuildingDetailHero";
-import { BuildingHeroIdentity } from "../components/BuildingHeroIdentity";
+import { BuildingHeroSection } from "../components/BuildingHeroSection";
 import { BuildingHeader } from "../components/BuildingHeader";
 import { BuildingMapTab } from "../components/BuildingMapTab";
 import { NotePhotoGrid } from "../components/NotePhotoGrid";
@@ -850,17 +849,12 @@ export default function BuildingDetails() {
         />
 
         {/* ── HERO — cropped colour band with identity overlaid ── */}
-        <BuildingDetailHero
+        <BuildingHeroSection
+          building={building}
+          buildingCredits={buildingCredits}
+          isStatusBuilding={isStatusBuilding}
           heroImageUrl={heroImageUrl}
           alt={heroAlt}
-          buildingName={building.name}
-          overlay={
-            <BuildingHeroIdentity
-              building={building}
-              buildingCredits={buildingCredits}
-              isStatusBuilding={isStatusBuilding}
-            />
-          }
         />
 
         {/* ── STATS + ACTIONS BAR ── */}
