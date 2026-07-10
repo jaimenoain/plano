@@ -25,8 +25,8 @@ one surface at a time.
 | ✅ | 1 · Global chrome | **Merged** — [#1522](https://github.com/jaimenoain/plano/pull/1522) |
 | ✅ | 2 · Feed | **Merged** — [#1524](https://github.com/jaimenoain/plano/pull/1524) |
 | ✅ | 3 · Building detail | **Merged** — [#1526](https://github.com/jaimenoain/plano/pull/1526) |
-| ✅ | 4 · Landing | Auto-merge armed |
-| ☐ | 5 · Profile + credits | not started |
+| ✅ | 4 · Landing | **Merged** — [#1527](https://github.com/jaimenoain/plano/pull/1527) |
+| ✅ | 5 · Profile + credits | Auto-merge armed |
 | ☐ | 6 · City + guides | not started |
 | ☐ | 7 · Map / explore / itinerary | not started |
 | ☐ | 8 · Events + connect + notifications | not started |
@@ -281,21 +281,58 @@ Owner files verified present. Each row: branch → files → designed screen →
   - The hero's framer-motion entrance renders the `<h1>` at `opacity: 0` until hydration, so the LCP
     element is invisible if JS never runs. Pre-existing, not introduced here — worth its own fix.
 
-### [ ] PR 5 · Profile + credits
+### [x] PR 5 · Profile + credits
 
 - **Branch:** `design/profile-credits-conformance` · **Screens:** `profile.html`, `architect.html`,
   `person.html`, `practice.html`
-- **Files:** `src/features/profile/pages/Profile.tsx` (**1518 lines**),
+- **Files:** `src/features/profile/pages/Profile.tsx` (was 1519 lines, now 1334 after extraction —
+  do not grow it back),
   `src/features/profile/components/{InlineRating,ProfileListView,RecommendationCard,KanbanColumn}.tsx`,
-  `src/features/credits/pages/{PersonDetails,CompanyDetails}.tsx`
-- **Known deltas:**
-  - `InlineRating`'s **interactive** path is still a three-slot toggle row with empty rings
+  plus new `ProfileHero.tsx`, `ProfileStatsBand.tsx`, `ProfileTabs.tsx`, `EditorialBuildingCard.tsx`;
+  `src/features/credits/pages/{PersonDetails,CompanyDetails}.tsx` and
+  `src/features/credits/components/{PersonCreditCard,CompanyCreditCard}.tsx`
+- **Known deltas (as originally scoped):**
+  - `InlineRating`'s **interactive** path was a three-slot toggle row with empty rings
     (`fill-transparent text-text-secondary/20`). Replace with `MichelinRatingInput`. Its read-only
     path already uses `RatingDots`.
-  - ⚠️ `src/features/profile/components/ProfileListView.test.tsx` asserts *"InlineRating renders 3
-    buttons, each with a circle inside"* — that test **must be updated** with the rework.
+  - ⚠️ `ProfileListView.test.tsx` asserted *"InlineRating renders 3 buttons, each with a circle
+    inside"* — that test **must be updated** with the rework.
   - Quiet text tabs, not pills. Avatar + `.meta-code` counts. Entries as feed items or a 168px
     mosaic (`spacing-collection-mosaic`, `mosaic-gap` 1.5px).
+- **Delivered:** `InlineRating`'s interactive path is now a `Popover` — trigger shows `RatingDots`
+  (or a quiet `RATE` eyebrow when unrated), content is `MichelinRatingInput`; the same shape
+  `PersonalRatingButton` took in PR 3, so no empty rings survive anywhere on these surfaces. The
+  clear-on-reclick gesture is gone: tier 0 *Interesting* is a real earned tier that renders as no
+  dots, so it reads identically to unrated. The two remaining hand-rolled `Circle` ladders —
+  `RecommendationCard`'s numeric `● 2` badge and `KanbanColumn`'s three-ring header — both became
+  `RatingDots`, and `KanbanColumn`'s ghost copy stopped saying *"Drag here to rate 2/3"* (it now
+  names the tier). Profile hero rebuilt to `screens/profile.html`: round **104px** avatar, `.headline`
+  name (measured 60px / lh 0.92 / −1.8px tracking at 1440, 40px at the mobile clamp floor), a new
+  hairline `ProfileStatsBand` (Buildings · Collections · Followers · Following, 1px gutters, 2 columns
+  below `sm` because four 0.15em labels do not fit across 375px), and `ProfileTabs` — quiet text tabs
+  with `.meta-code` counts beside the label, replacing the old *"metrics ARE the tabs"* number-stack.
+  `EditorialBuildingCard` moved to a 4:3 sharp image with a 20px name and inline `RatingDots`;
+  `RecommendationCard` unboxed (no border/fill, `.photo-placeholder` fallback). Credits pages: both
+  `h1`s → `.headline`, bios → `.body-relaxed max-w-[60ch]`, tier headers → `.eyebrow` + right-aligned
+  zero-padded `.meta-code` count over a hairline, credit thumbs → **168px** `w-collection-mosaic` with
+  `.photo-placeholder` fallbacks and mono years. **A person is drawn round, a practice square**
+  (`person.html` vs `practice.html`); the company stewards list, being people, went round too.
+  `text-secondary` (a missing `text-` prefix, so no colour at all) fixed at `CompanyDetails.tsx:212`;
+  all 25 `tracking-[0.15em]` occurrences in the touched files collapsed to `tracking-widest`.
+- **Verified:** no `rgb(190, 255, 0)` anywhere on `/profile/:username`, `/person/:slug` or
+  `/company/:slug`; entry-grid and credit-row imagery all `border-radius: 0px`; avatar `50%` on
+  profile, square on company; both file-size and warning baselines **ratcheted down** (Profile.tsx
+  1519 → 1334; deep-feature imports 635 → 634).
+- **Deferred / flagged, not done this PR:**
+  - `InlineRating`'s popover could not be driven in the preview browser: the list view sits inside an
+    `AnimatePresence mode="wait"` whose exit never settles while the tab reports
+    `visibilityState: hidden`, so the grid→list swap hangs. Its behaviour is covered by
+    `ProfileListView.test.tsx` instead; the same Radix-popover/`MichelinRatingInput` pair was driven
+    live on the building-detail page. Worth fixing the stall itself in PR 11 (states).
+  - `Profile.tsx` is still **1334 lines**, over the 800-line page budget. Four components came out;
+    the Photos/About/Collections sections and the drag-and-drop plumbing are the remaining bulk.
+  - `CompanyDetails.tsx` (846) was left over budget — this PR only shrank its markup, not its
+    steward/claim/dispute logic.
 
 ### [ ] PR 6 · City + guides
 
@@ -351,7 +388,7 @@ Measured on `main` after the foundation merged:
 
 | Debt | Count | How it dies |
 |---|---|---|
-| `tracking-[0.15em]` arbitrary values | **233** (measured on `main` before the landing PR: 234) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
+| `tracking-[0.15em]` arbitrary values | **207** (234 before the landing PR, 233 before profile+credits) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
 | Raw hex in `src/features` + `src/pages` | **31** across 12 files | Replace with token aliases as you touch each surface. Note `src/features/maps` holds 10 `#BEFF00` — lime map markers are a bug (PR 7). |
 | ESLint raw-hex guard coverage | `components/ui` + `components/layout` + `features/feed` + `features/buildings` | Once a feature directory is clean, widen the `files` glob in `eslint.config.js`. |
 

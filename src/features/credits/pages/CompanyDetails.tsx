@@ -138,7 +138,7 @@ export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading…">
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <Skeleton className="mb-8 h-24 w-24 rounded-sm" />
+        <Skeleton className="mb-8 h-24 w-24 rounded-none" />
         <Skeleton className="mb-4 h-10 w-2/3 max-w-md" />
         <Skeleton className="mb-8 h-20 w-full" />
         <Skeleton className="h-40 w-full" />
@@ -195,7 +195,7 @@ function AdministeredAwardsSection({ companyId }: { companyId: string }) {
   return (
     <section className="mt-12 border-t border-border-default pt-10">
       <div className="mb-6 flex items-center gap-3">
-        <h2 className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+        <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">
           Administered Awards
         </h2>
         <Trophy className="w-3.5 h-3.5 text-text-secondary" />
@@ -209,7 +209,7 @@ function AdministeredAwardsSection({ companyId }: { companyId: string }) {
             className="flex flex-col p-4 border border-border-default rounded-sm hover:bg-surface-muted transition-colors group"
           >
             <span className="text-sm font-bold transition-colors group-hover:text-text-secondary">{award.name}</span>
-            <span className="text-xs text-secondary mt-1">{award.editionCount} editions documented</span>
+            <span className="mt-1 text-xs text-text-secondary">{award.editionCount} editions documented</span>
           </Link>
         ))}
       </div>
@@ -247,9 +247,10 @@ function TierRoleSections({
 }) {
   if (credits.length === 0) return null;
   return (
-    <section className="mt-12 first:mt-0">
-      <h2 className="mb-6 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
-        {tierLabel(tier)} credits
+    <section className="mt-16 first:mt-0">
+      <h2 className="eyebrow mb-6 flex items-center justify-between border-b border-border-default pb-3 tracking-widest">
+        <span>{tierLabel(tier)} credits</span>
+        <span className="meta-code text-text-disabled">{String(credits.length).padStart(2, "0")}</span>
       </h2>
       <RoleGroupedCreditsList credits={credits} />
     </section>
@@ -573,9 +574,7 @@ export default function CompanyDetails() {
             <div className="min-w-0 flex-1 space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex min-w-0 flex-wrap items-center gap-3">
-                  <h1 className="text-3xl font-bold tracking-tight text-text-primary md:text-5xl lg:text-6xl">
-                    {company.name}
-                  </h1>
+                  <h1 className="headline">{company.name}</h1>
                   {company.claimStatus === "verified" ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -613,18 +612,19 @@ export default function CompanyDetails() {
                   }
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.15em] text-text-primary hover:underline"
+                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-widest text-text-primary hover:underline"
                 >
                   Website
                   <ExternalLink className="h-3 w-3" aria-hidden />
                 </a>
               ) : null}
               {company.bio?.trim() ? (
-                <p className="max-w-2xl text-base leading-relaxed text-text-secondary">{company.bio.trim()}</p>
+                <p className="body-relaxed max-w-[60ch] text-base">{company.bio.trim()}</p>
               ) : null}
             </div>
             {company.logoUrl ? (
               <div className="shrink-0 self-start">
+                {/* A practice is drawn square; a person is drawn round (see PersonDetails). */}
                 <Avatar className="h-32 w-32 shrink-0 rounded-none border border-border-default sm:h-40 sm:w-40">
                   <AvatarImage src={company.logoUrl} alt={`${company.name} logo`} />
                   <AvatarFallback className="rounded-none" />
@@ -635,7 +635,7 @@ export default function CompanyDetails() {
         </header>
 
         {showUnclaimedBanner ? (
-          <div className="mt-10 rounded-sm border border-border-default bg-surface-muted px-4 py-4 sm:px-5">
+          <div className="mt-10 rounded-none border border-border-default bg-surface-muted px-4 py-4 sm:px-5">
             <p className="mb-2 text-sm font-medium text-text-primary">This company hasn&apos;t been claimed yet</p>
             <p className="mb-3 text-sm text-text-secondary">
               If you represent this organization, verify a work email—we&apos;ll send a one-time link to finish
@@ -646,7 +646,7 @@ export default function CompanyDetails() {
                 type="button"
                 variant="default"
                 size="sm"
-                className="text-xs font-medium uppercase tracking-[0.15em]"
+                className="text-xs font-medium uppercase tracking-widest"
                 onClick={() => setClaimOpen(true)}
               >
                 Claim this company
@@ -654,7 +654,7 @@ export default function CompanyDetails() {
             ) : (
               <Link
                 to={`/auth?redirect=${encodeURIComponent(`/company/${slug}`)}`}
-                className="inline-flex text-xs font-medium uppercase tracking-[0.15em] text-text-primary hover:underline"
+                className="inline-flex text-xs font-medium uppercase tracking-widest text-text-primary hover:underline"
               >
                 Log in to claim →
               </Link>
@@ -670,7 +670,7 @@ export default function CompanyDetails() {
               stewards.
             </p>
             {pendingStewardRequestId ? (
-              <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+              <p className="text-xs font-medium uppercase tracking-widest text-text-secondary">
                 Request pending — owners have been notified by email.
               </p>
             ) : user ? (
@@ -678,7 +678,7 @@ export default function CompanyDetails() {
                 type="button"
                 variant="default"
                 size="sm"
-                className="text-xs font-medium uppercase tracking-[0.15em]"
+                className="text-xs font-medium uppercase tracking-widest"
                 onClick={() => setRequestAccessOpen(true)}
               >
                 Request access to manage this company
@@ -686,7 +686,7 @@ export default function CompanyDetails() {
             ) : (
               <Link
                 to={`/auth?redirect=${encodeURIComponent(`/company/${slug}`)}`}
-                className="inline-flex text-xs font-medium uppercase tracking-[0.15em] text-text-primary hover:underline"
+                className="inline-flex text-xs font-medium uppercase tracking-widest text-text-primary hover:underline"
               >
                 Log in to request access →
               </Link>
@@ -700,14 +700,14 @@ export default function CompanyDetails() {
                 {user ? (
                   <Link
                     to={`/company/${slug}/dispute`}
-                    className="inline-flex text-2xs font-medium uppercase tracking-[0.15em] text-text-primary hover:underline"
+                    className="inline-flex text-2xs font-medium uppercase tracking-widest text-text-primary hover:underline"
                   >
                     Dispute this claim
                   </Link>
                 ) : (
                   <Link
                     to={`/auth?redirect=${encodeURIComponent(`/company/${slug}/dispute`)}`}
-                    className="inline-flex text-2xs font-medium uppercase tracking-[0.15em] text-text-primary hover:underline"
+                    className="inline-flex text-2xs font-medium uppercase tracking-widest text-text-primary hover:underline"
                   >
                     Log in to dispute this claim →
                   </Link>
@@ -720,7 +720,7 @@ export default function CompanyDetails() {
         {isSteward && stewards.length > 0 ? (
           <section className="mt-12 border-b border-border-default pb-10" aria-label="Company stewards">
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">Stewards</h2>
+              <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">Stewards</h2>
               {isOwner ? (
                 <Button
                   type="button"
@@ -738,9 +738,9 @@ export default function CompanyDetails() {
               {stewards.map((s) => (
                 <li key={s.id} className="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-0">
                   <div className="flex min-w-0 items-center gap-3">
-                    <Avatar className="h-10 w-10 shrink-0 rounded-sm border border-border-default">
+                    <Avatar className="h-10 w-10 shrink-0 rounded-full border border-border-default">
                       {s.avatarUrl ? <AvatarImage src={s.avatarUrl} alt="" /> : null}
-                      <AvatarFallback className="rounded-sm text-xs font-medium text-text-primary">
+                      <AvatarFallback className="rounded-full text-xs font-medium text-text-primary">
                         {(s.username?.[0] ?? "?").toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -748,7 +748,7 @@ export default function CompanyDetails() {
                       <p className="truncate text-sm font-medium text-text-primary">
                         {s.username ? `@${s.username}` : "Plano member"}
                       </p>
-                      <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+                      <p className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
                         {stewardRoleLabel(s.role)}
                       </p>
                     </div>
@@ -776,10 +776,10 @@ export default function CompanyDetails() {
 
         <div className="mt-12">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <h2 className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">Credits</h2>
+            <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">Credits</h2>
             {roleOptions.length > 0 ? (
               <div className="flex flex-col gap-1 sm:items-end">
-                <span className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Role</span>
+                <span className="text-2xs font-medium uppercase tracking-widest text-text-secondary">Role</span>
                 <Select
                   value={roleFilter}
                   onValueChange={(v) => setRoleFilter(v as RoleFilter)}
@@ -817,7 +817,7 @@ export default function CompanyDetails() {
                       <Collapsible open={ancillaryOpen} onOpenChange={setAncillaryOpen}>
                         <CollapsibleTrigger
                           type="button"
-                          className="flex min-h-[44px] w-full items-center justify-between border-b border-border-default py-3 text-left text-xs font-medium uppercase tracking-[0.15em] text-text-secondary hover:text-text-primary"
+                          className="flex min-h-[44px] w-full items-center justify-between border-b border-border-default py-3 text-left text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary"
                         >
                           <span>Additional credits ({tierCredits.length})</span>
                           <ChevronDown

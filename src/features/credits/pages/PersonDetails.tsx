@@ -73,7 +73,7 @@ export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading…">
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <Skeleton className="mb-8 h-24 w-24 rounded-full" />
+        <Skeleton className="mb-8 h-32 w-32 rounded-full" />
         <Skeleton className="mb-4 h-10 w-2/3 max-w-md" />
         <Skeleton className="mb-8 h-20 w-full" />
         <Skeleton className="h-40 w-full" />
@@ -103,7 +103,7 @@ export function ErrorBoundary() {
           </p>
           <Link
             to="/explore"
-            className="text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
+            className="text-xs font-medium uppercase tracking-widest text-text-primary transition-opacity hover:opacity-70"
           >
             Browse buildings →
           </Link>
@@ -134,9 +134,10 @@ function CreditTierSection({
 }) {
   if (credits.length === 0) return null;
   return (
-    <section className="mt-12 first:mt-0">
-      <h2 className="mb-6 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
-        {tierLabel(tier)} credits
+    <section className="mt-16 first:mt-0">
+      <h2 className="eyebrow mb-6 flex items-center justify-between border-b border-border-default pb-3 tracking-widest">
+        <span>{tierLabel(tier)} credits</span>
+        <span className="meta-code text-text-disabled">{String(credits.length).padStart(2, "0")}</span>
       </h2>
       <div>
         {credits.map((c) => (
@@ -226,9 +227,7 @@ export default function PersonDetails() {
             <div className="min-w-0 flex-1 space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div className="flex min-w-0 flex-wrap items-center gap-3">
-                  <h1 className="text-3xl font-bold tracking-tight text-text-primary md:text-5xl lg:text-6xl">
-                    {person.name}
-                  </h1>
+                  <h1 className="headline">{person.name}</h1>
                   {person.claimStatus === "verified" ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -270,14 +269,15 @@ export default function PersonDetails() {
                 </a>
               ) : null}
               {person.bio?.trim() ? (
-                <p className="max-w-2xl text-base leading-relaxed text-text-secondary">{person.bio.trim()}</p>
+                <p className="body-relaxed max-w-[60ch] text-base">{person.bio.trim()}</p>
               ) : null}
             </div>
             {person.avatarUrl ? (
               <div className="shrink-0 self-start">
-                <Avatar className="h-32 w-32 shrink-0 rounded-none border border-border-default sm:h-40 sm:w-40">
+                {/* A person is drawn round; a practice is drawn square (see CompanyDetails). */}
+                <Avatar className="h-32 w-32 shrink-0 rounded-full border border-border-default sm:h-40 sm:w-40">
                   <AvatarImage src={person.avatarUrl} alt={person.name} />
-                  <AvatarFallback className="rounded-none" />
+                  <AvatarFallback className="rounded-full" />
                 </Avatar>
               </div>
             ) : null}
@@ -293,7 +293,7 @@ export default function PersonDetails() {
             {user ? (
               <button
                 type="button"
-                className="text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
+                className="text-xs font-medium uppercase tracking-widest text-text-primary transition-opacity hover:opacity-70"
                 onClick={() => setClaimOpen(true)}
               >
                 Claim this profile →
@@ -311,16 +311,18 @@ export default function PersonDetails() {
 
         <PersonAwardsSection personId={person.id} personName={person.name} />
 
-        <div className="mt-12">
-          <h2 className="mb-2 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">Credits</h2>
+        <div className="mt-16">
           {credits.length === 0 ? (
-            <p className="mt-4 text-sm text-text-secondary">No public credits on Plano yet.</p>
+            <>
+              <h2 className="eyebrow mb-2 tracking-widest">Credits</h2>
+              <p className="mt-4 text-sm text-text-secondary">No public credits on Plano yet.</p>
+            </>
           ) : (
             <>
               <CreditTierSection tier="primary" credits={primary} />
               <CreditTierSection tier="contributor" credits={contributor} />
               {ancillary.length > 0 ? (
-                <section className="mt-12">
+                <section className="mt-16">
                   <Collapsible open={ancillaryOpen} onOpenChange={setAncillaryOpen}>
                     <CollapsibleTrigger
                       type="button"

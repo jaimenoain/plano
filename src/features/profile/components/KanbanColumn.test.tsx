@@ -37,21 +37,28 @@ describe('KanbanColumn', () => {
     expect(icons[0]).toBeTruthy();
   });
 
-  it('renders dots for ratingValue 2', () => {
+  it('renders only the earned dots for ratingValue 2', () => {
     render(
       <DndContext>
-        <KanbanColumn id="col-3" title="2 Points" ratingValue={2} items={[]}>
+        <KanbanColumn id="col-3" title="Essential" ratingValue={2} items={[]}>
           <div />
         </KanbanColumn>
       </DndContext>
     );
-    // Check for aria-label which describes the points
-    const pointsContainer = screen.getByLabelText('2 points');
-    expect(pointsContainer).toBeTruthy();
+    // Awards are a reward, not a scale: two earned dots, no empty rings.
+    const dots = screen.getByRole('img', { name: '2 distinctions' });
+    expect(dots.childElementCount).toBe(2);
+  });
 
-    // We can also check if it contains 3 SVG elements (circles)
-    const circles = pointsContainer.querySelectorAll('svg');
-    expect(circles.length).toBe(3);
+  it('names the tier rather than an X-of-3 score in the empty-column hint', () => {
+    render(
+      <DndContext>
+        <KanbanColumn id="col-5" title="Masterpiece" ratingValue={3} items={[]}>
+          <div />
+        </KanbanColumn>
+      </DndContext>
+    );
+    expect(screen.getByText('Drag here to award Masterpiece')).toBeTruthy();
   });
 
   it('renders children correctly', () => {

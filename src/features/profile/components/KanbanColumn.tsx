@@ -1,8 +1,9 @@
 import React from "react";
 import { useDroppable, useDndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { Bookmark, Plus, Circle } from "lucide-react";
+import { Bookmark, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RatingDots } from "@/components/ui/rating-dots";
 
 interface KanbanColumnProps {
   id: string;
@@ -26,21 +27,11 @@ export function KanbanColumn({
   const { over } = useDndContext();
   const isOverContainer = isOver || (!!over && items.includes(over.id));
 
-  const getGhostLabel = () => {
-    switch(ratingValue) {
-        case 0:
-        case null:
-            return "Drag here to save for later";
-        case 1:
-            return "Drag here to rate 1/3";
-        case 2:
-            return "Drag here to rate 2/3";
-        case 3:
-            return "Drag here to rate 3/3";
-        default:
-            return "Drag items here";
-    }
-  };
+  // Awards are a reward, not a scale — name the tier, never "X of 3".
+  const getGhostLabel = () =>
+    ratingValue === 0 || ratingValue === null
+      ? "Drag here to save for later"
+      : `Drag here to award ${title}`;
 
   return (
     <div
@@ -66,22 +57,7 @@ export function KanbanColumn({
             </span>
           ) : (
             <span className="text-text-primary flex items-center justify-center h-6 px-1.5 rounded-sm bg-surface-muted">
-              <div
-                className="flex items-center gap-0.5"
-                aria-label={`${ratingValue} point${ratingValue > 1 ? "s" : ""}`}
-              >
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Circle
-                    key={i}
-                    className={cn(
-                      "w-3 h-3",
-                      i < (ratingValue ?? 0)
-                        ? "fill-brand-primary text-brand-primary"
-                        : "fill-transparent text-text-secondary/30",
-                    )}
-                  />
-                ))}
-              </div>
+              <RatingDots rating={ratingValue} size="sm" />
             </span>
           )}
           <span className="text-sm font-semibold">{title}</span>

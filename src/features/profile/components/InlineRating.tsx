@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { Circle } from "lucide-react";
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RatingDots } from "@/components/ui/rating-dots";
+import { MichelinRatingInput } from "@/components/ui/michelin-rating-input";
 
 interface InlineRatingProps {
   rating: number | null;
@@ -11,56 +10,48 @@ interface InlineRatingProps {
 }
 
 export function InlineRating({ rating, onRate, readOnly = false }: InlineRatingProps) {
-  const [hoverRating, setHoverRating] = useState<number | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   // Read-only display: show only earned dots (a reward, never empty rings).
   if (readOnly) {
     return <RatingDots rating={rating} size="md" />;
   }
 
-  const handleRate = (star: number) => {
-    if (readOnly) return;
-    if (rating === star) {
-      onRate(null);
-    } else {
-      onRate(star);
-    }
+  const hasRated = rating !== null && rating > 0;
+
+  // "Interesting" (tier 0) is a real earned tier that renders as no dots, so it doubles as
+  // the clear gesture the old three-slot picker offered on re-click.
+  const handleChange = (value: number) => {
+    onRate(value);
+    setIsOpen(false);
   };
 
   return (
-    <div className="flex items-center gap-0.5" onMouseLeave={() => setHoverRating(null)}>
-      {[1, 2, 3].map((star) => {
-        const isFilled = (hoverRating !== null ? star <= hoverRating : (rating || 0) >= star);
-
-        return (
-          <motion.button
-            key={star}
-            type="button"
-            onClick={(e) => { e.stopPropagation(); handleRate(star); }}
-            onMouseEnter={() => !readOnly && setHoverRating(star)}
-            className={cn(
-              "p-0.5 focus:outline-hidden transition-colors",
-              readOnly ? "cursor-default" : "cursor-pointer"
-            )}
-            whileTap={!readOnly ? { scale: 0.8 } : undefined}
-          >
-             <motion.div
-               initial={false}
-               animate={isFilled ? { scale: [1, 1.2, 1] } : { scale: 1 }}
-               transition={{ duration: 0.2 }}
-             >
-              <Circle
-                className={cn(
-                  "w-4 h-4 transition-colors",
-                  isFilled
-                    ? "fill-brand-primary text-brand-primary"
-                    : "fill-transparent text-text-secondary/20",
-                )}
-              />
-            </motion.div>
-          </motion.button>
-        );
-      })}
-    </div>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label="Set award rating"
+          onClick={(e) => e.stopPropagation()}
+          className="inline-flex h-6 items-center rounded-sm px-1 transition-colors hover:bg-surface-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent"
+        >
+          {hasRated ? (
+            <RatingDots rating={rating} size="md" />
+          ) : (
+            <span className="text-2xs font-medium uppercase tracking-widest text-text-disabled">
+              Rate
+            </span>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-auto p-3"
+        align="start"
+        sideOffset={5}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <MichelinRatingInput value={rating ?? 0} onChange={handleChange} />
+      </PopoverContent>
+    </Popover>
   );
 }
