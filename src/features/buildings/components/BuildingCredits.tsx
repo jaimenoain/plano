@@ -1,7 +1,7 @@
 import { useCallback, useReducer, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, ChevronDown, BadgeCheck, Flag, Users, User, Building2, NotebookPen, ImageIcon } from "lucide-react";
+import { ExternalLink, ChevronDown, BadgeCheck, Flag, User, Building2, NotebookPen, ImageIcon } from "lucide-react";
 import type { BuildingCreditWithEntities, CreditRole, CreditTier, FlagReason } from "@/features/credits/types";
 import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
 import { visiblePrimaryCredits } from "@/features/credits/buildingCreditDisplay";
@@ -12,6 +12,7 @@ import { markCreditFlaggedInSession, readSessionFlaggedCreditIds } from "@/featu
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -656,7 +657,6 @@ function TierRoleSections({
   if (credits.length === 0) return null;
   const byRole = groupTierByRole(credits);
   const tierTitle = `${tierHeadingLabel(tier)} credits`;
-  const isContributorPanel = tier === "contributor";
 
   const inner = (
     <>
@@ -696,14 +696,8 @@ function TierRoleSections({
   );
 
   return (
-    <section className="min-w-0 max-w-3xl" aria-label={tierTitle}>
-      {isContributorPanel ? (
-        <div className="rounded-none border border-border-default bg-surface-muted p-6 lg:p-8">
-          {inner}
-        </div>
-      ) : (
-        inner
-      )}
+    <section className="min-w-0" aria-label={tierTitle}>
+      {inner}
     </section>
   );
 }
@@ -733,44 +727,27 @@ function CreditsEmptyState({
   isAuthenticated: boolean;
   onAddClick: () => void;
 }) {
+  const name = buildingName?.trim();
   return (
-    <div className="flex flex-col items-center rounded-none border border-dashed border-border-strong bg-surface-muted/50 px-6 py-14 text-center lg:px-12 lg:py-20">
-      <div
-        className="flex h-14 w-14 items-center justify-center rounded-none border border-border-default bg-surface-card shadow-xs"
-        aria-hidden
-      >
-        <Users className="h-7 w-7 text-text-secondary" />
-      </div>
-      <h3 className="mt-6 font-display text-2xl font-bold tracking-tight text-text-primary">
-        No credits listed yet
-      </h3>
-      <p className="mt-3 max-w-md text-sm leading-relaxed text-text-secondary">
-        {buildingName?.trim() ? (
-          <>
-            Be the first to name the architects, engineers, and collaborators behind{" "}
-            <span className="font-medium text-text-primary">{buildingName.trim()}</span>.{" "}
-          </>
-        ) : (
-          <>Be the first to record who designed and built this project. </>
-        )}
-        Credits link professionals to their work—tag colleagues so they can discover and share this
-        building.
-      </p>
-      <div className="mt-8">
-        {isAuthenticated ? (
-          <Button type="button" variant="default" size="sm" className="h-10 px-6" onClick={onAddClick}>
+    <EmptyState
+      eyebrow="No credits listed yet"
+      message={
+        name
+          ? `Be the first to name the architects, engineers, and collaborators behind ${name}.`
+          : "Be the first to record who designed and built this project."
+      }
+      action={
+        isAuthenticated ? (
+          <Button type="button" size="sm" onClick={onAddClick}>
             Add a credit
           </Button>
         ) : (
-          <Link
-            to="/login"
-            className="text-xs font-medium uppercase tracking-widest text-text-primary transition-colors hover:text-text-secondary"
-          >
-            Sign in to add credits →
+          <Link to="/login" className="cta-link">
+            Sign in to add credits
           </Link>
-        )}
-      </div>
-    </div>
+        )
+      }
+    />
   );
 }
 
@@ -916,7 +893,7 @@ export function BuildingCredits({
             />
           </div>
           {ancillary.length > 0 ? (
-            <div className="mt-12 max-w-3xl">
+            <div className="mt-12">
               <Collapsible open={ancillaryOpen} onOpenChange={setAncillaryOpen}>
                 <CollapsibleTrigger
                   type="button"

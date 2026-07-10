@@ -152,11 +152,7 @@ function CountryCard({ country }: { country: CountryEntry }) {
           loading="lazy"
         />
       ) : (
-        <div className="flex aspect-4/3 w-full items-center justify-center rounded-none bg-surface-muted">
-          <span className="text-2xs font-medium uppercase tracking-widest text-text-disabled">
-            No image yet
-          </span>
-        </div>
+        <div className="photo-placeholder aspect-4/3 w-full" data-label={countryName} aria-hidden />
       )}
       <p className="mt-3 text-base font-semibold tracking-tight text-text-primary">
         {countryName}
@@ -203,35 +199,32 @@ export default function ArchitectureHub() {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 sm:px-6 lg:px-8">
 
         {/* ── Section 1: Hero ─────────────────────────────────────────── */}
         <section className="py-12 md:py-24">
-          <p className="mb-4 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+          <p className="eyebrow mb-4">
             Explore by location
           </p>
-          <h1 className="mb-6 text-3xl font-bold leading-tight tracking-tight text-text-primary md:text-6xl">
+          <h1 className="display mb-6">
             The World's Architecture
           </h1>
           <p className="mb-8 max-w-xl text-base font-normal leading-relaxed text-text-secondary">
             Thousands of buildings across {totalCountries} countries — catalogued,
             rated, and reviewed by architects and enthusiasts.
           </p>
-          <Link
-            to="/search"
-            className="text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-colors hover:text-text-secondary"
-          >
-            → Start exploring
+          <Link to="/search" className="cta-link">
+            Start exploring
           </Link>
         </section>
 
         {/* ── Section 2: Stats strip ──────────────────────────────────── */}
-        <dl className="grid grid-cols-3 gap-2 border-b border-t border-border-default py-10 sm:gap-4 md:gap-8">
+        <dl className="grid grid-cols-3 gap-2 border-b border-t border-border-default py-12 sm:gap-4 md:gap-8">
           <div className="min-w-0">
             <dd className="font-mono text-xl font-bold tracking-tight text-text-primary sm:text-3xl md:text-4xl">
               {totalBuildings.toLocaleString()}
             </dd>
-            <dt className="mt-1 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+            <dt className="eyebrow mt-1">
               Buildings
             </dt>
           </div>
@@ -239,7 +232,7 @@ export default function ArchitectureHub() {
             <dd className="font-mono text-xl font-bold tracking-tight text-text-primary sm:text-3xl md:text-4xl">
               {totalCountries}
             </dd>
-            <dt className="mt-1 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+            <dt className="eyebrow mt-1">
               Countries
             </dt>
           </div>
@@ -247,7 +240,7 @@ export default function ArchitectureHub() {
             <dd className="font-mono text-xl font-bold tracking-tight text-text-primary sm:text-3xl md:text-4xl">
               Community
             </dd>
-            <dt className="mt-1 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+            <dt className="eyebrow mt-1">
               Reviewed
             </dt>
           </div>
@@ -255,7 +248,7 @@ export default function ArchitectureHub() {
 
         {/* ── Section 3: Country grid ─────────────────────────────────── */}
         <section className="mt-16">
-          <p className="mb-6 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+          <p className="eyebrow mb-6">
             Browse by country
           </p>
           {countries.length > 0 ? (
@@ -271,19 +264,16 @@ export default function ArchitectureHub() {
 
         {/* ── Section 4: Featured cities ──────────────────────────────── */}
         {topCities.length > 0 && (
-          <>
-            <div className="mt-16 border-t border-border-default" />
-            <section className="mt-16 pb-24">
-              <p className="mb-8 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
-                Popular destinations
-              </p>
+          <section className="mt-16 border-t border-border-default pt-16 pb-24">
+            <p className="eyebrow mb-8">
+              Popular destinations
+            </p>
               <div className="grid grid-cols-2 gap-x-8 gap-y-6 md:grid-cols-3">
                 {topCities.map((city) => (
                   <CityItem key={`${city.countryCode}-${city.citySlug}`} city={city} />
                 ))}
               </div>
-            </section>
-          </>
+          </section>
         )}
 
         {topCities.length === 0 && <div className="h-24" />}

@@ -18,7 +18,7 @@ import {
 } from "react-router";
 import {
   Loader2, MapPin,
-  Check, Bookmark, Image as ImageIcon,
+  Check, Bookmark,
   Heart, Circle, AlertTriangle,
   EyeOff, Plus,
   Pencil, ChevronDown,
@@ -43,11 +43,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { useQuery } from "@tanstack/react-query";
-import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
 import { ImageDetailsDialog } from "../components/ImageDetailsDialog";
 import {
   buildingCreditsQueryKey,
@@ -85,6 +85,7 @@ import { RelatedByArchitectSection, RelatedByCitySection } from "../components/R
 import { BuildingHeroSection } from "../components/BuildingHeroSection";
 import { BuildingHeader } from "../components/BuildingHeader";
 import { BuildingMapTab } from "../components/BuildingMapTab";
+import { BuildingMediaTab } from "../components/BuildingMediaTab";
 import { NotePhotoGrid } from "../components/NotePhotoGrid";
 import { PendingPhotosQueue } from "../components/PendingPhotosQueue";
 import { BuildingInfoSection } from "../components/BuildingInfoSection";
@@ -371,6 +372,8 @@ export default function BuildingDetails() {
     setSelectedImage,
     likedImageIds,
     selectedIndex,
+    hasMoreCommunity,
+    loadMoreCommunity,
     topLinks,
     likedLinkIds,
     userLinks: _userLinks,
@@ -455,7 +458,6 @@ export default function BuildingDetails() {
   // ── Pure UI state ─────────────────────────────────────────────────────────
   const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [showDirectionsAlert, setShowDirectionsAlert] = useState(false);
-  const [mediaFilter, setMediaFilter] = useState<"all" | "photos" | "videos">("all");
 
   // Shared file input for attaching photos to the active note draft. Always
   // mounted so refs from the note editor and Media-tab shortcuts stay valid
@@ -485,17 +487,6 @@ export default function BuildingDetails() {
     () => new Map(displayImages.map((img) => [img.id, img])),
     [displayImages],
   );
-
-  const sortedDisplayImages = useMemo(
-    () => [...displayImages].sort((a, b) => b.likes_count - a.likes_count),
-    [displayImages],
-  );
-
-  const filteredMediaImages = useMemo(() => {
-    if (mediaFilter === "photos") return sortedDisplayImages.filter((img) => img.type !== "video");
-    if (mediaFilter === "videos") return sortedDisplayImages.filter((img) => img.type === "video");
-    return sortedDisplayImages;
-  }, [sortedDisplayImages, mediaFilter]);
 
   const buildingSummaryForFeed = useMemo((): BuildingSummaryForFeed | null => {
     if (!building) return null;
@@ -612,15 +603,26 @@ export default function BuildingDetails() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (!entries[0]?.isIntersecting) return;
-        setVisibleOverviewStreamCount((n) =>
-          n >= len ? n : Math.min(n + OVERVIEW_STREAM_CHUNK_SIZE, len),
-        );
+        // Reveal more of the loaded set; once exhausted, pull the next DB page.
+        if (visibleOverviewStreamCount < len) {
+          setVisibleOverviewStreamCount((n) =>
+            Math.min(n + OVERVIEW_STREAM_CHUNK_SIZE, len),
+          );
+        } else if (hasMoreCommunity) {
+          void loadMoreCommunity();
+        }
       },
       { root: null, rootMargin: "320px", threshold: 0 },
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [activeTab, streamBlocks.length, visibleOverviewStreamCount]);
+  }, [
+    activeTab,
+    streamBlocks.length,
+    visibleOverviewStreamCount,
+    hasMoreCommunity,
+    loadMoreCommunity,
+  ]);
 
   const visibleOverviewBlocks = useMemo(
     () => streamBlocks.slice(0, visibleOverviewStreamCount),
@@ -882,7 +884,7 @@ export default function BuildingDetails() {
                     type="button"
                     onClick={() => setTab(tab.id)}
                     className={cn(
-                      "px-5 py-3.5 text-[12px] font-medium uppercase tracking-widest border-b-2 shrink-0 transition-colors duration-150 whitespace-nowrap",
+                      "cursor-pointer px-5 py-3.5 text-[12px] font-medium uppercase tracking-widest border-b-2 shrink-0 transition-colors duration-150 whitespace-nowrap",
                       activeTab === tab.id
                         ? "border-text-primary text-text-primary"
                         : "border-transparent text-text-secondary hover:text-text-primary",
@@ -993,7 +995,8 @@ export default function BuildingDetails() {
                             {renderStreamBlock(block)}
                           </motion.div>
                         ))}
-                        {visibleOverviewStreamCount < streamBlocks.length ? (
+                        {visibleOverviewStreamCount < streamBlocks.length ||
+                        hasMoreCommunity ? (
                           <div
                             ref={overviewStreamSentinelRef}
                             className="h-8 w-full shrink-0"
@@ -1002,16 +1005,15 @@ export default function BuildingDetails() {
                         ) : null}
                       </>
                     ) : (
-                      <div className="flex flex-col items-center justify-center py-16 bg-surface-muted/30 rounded-none border border-dashed border-border-strong/30 text-center">
-                        <ImageIcon className="h-10 w-10 text-text-disabled opacity-25 mb-3" />
-                        <p className="text-sm font-medium text-text-primary mb-1">No photos yet</p>
-                        <p className="text-xs text-text-secondary max-w-xs mb-5">
-                          Be the first to share this building with the community.
-                        </p>
-                        <Button size="sm" variant="outline" onClick={startNoteWithPhotos}>
-                          Add Note
-                        </Button>
-                      </div>
+                      <EmptyState
+                        eyebrow="No photos yet"
+                        message="Be the first to share this building with the community."
+                        action={
+                          <Button size="sm" onClick={startNoteWithPhotos}>
+                            Add Note
+                          </Button>
+                        }
+                      />
                     )}
                   </section>
 
@@ -1027,147 +1029,43 @@ export default function BuildingDetails() {
 
               {/* ════ MEDIA TAB ════ */}
               {activeTab === "media" && (
-                <div className="space-y-6">
-                  {/* Header */}
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-display text-xl font-bold tracking-tight">Media</h3>
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        className="text-[10px] font-bold uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1.5"
-                        onClick={startNoteWithPhotos}
-                      >
-                        <Plus className="h-3 w-3" /> Upload
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setTab("overview");
-                          handleNewNote();
-                        }}
-                        className="text-[10px] font-bold uppercase tracking-widest bg-text-primary text-white px-3 py-1.5 rounded-none hover:opacity-80 transition-opacity"
-                      >
-                        Add Note
-                      </button>
+                <BuildingMediaTab
+                  images={displayImages}
+                  buildingId={building.id}
+                  onSelectImage={setSelectedImage}
+                  onUploadPhoto={startNoteWithPhotos}
+                  onWriteNote={() => {
+                    setTab("overview");
+                    handleNewNote();
+                  }}
+                  hasMore={hasMoreCommunity}
+                  onLoadMore={loadMoreCommunity}
+                >
+                  {/* Text-only reviews */}
+                  {streamBlocks.filter((b) => b.blockType === "text-only").length > 0 && (
+                    <div className="mt-8 space-y-4">
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-text-secondary pt-6 border-t border-border-default">
+                        Reviews
+                      </h4>
+                      {streamBlocks
+                        .filter((b) => b.blockType === "text-only")
+                        .map((block) => renderStreamBlock(block))}
                     </div>
-                  </div>
+                  )}
 
-                  {/* Filter strip */}
-                  <div className="flex gap-1 border-b border-border-default -mb-px">
-                    {(["all", "photos", "videos"] as const).map((f) => (
-                      <button
-                        key={f}
-                        type="button"
-                        onClick={() => setMediaFilter(f)}
-                        className={cn(
-                          "px-4 py-2.5 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors capitalize",
-                          mediaFilter === f
-                            ? "border-text-primary text-text-primary"
-                            : "border-transparent text-text-secondary hover:text-text-primary",
-                        )}
-                      >
-                        {f}
-                        {f === "all" && sortedDisplayImages.length > 0 && (
-                          <span className="ml-1.5 text-text-disabled font-normal normal-case tracking-normal">
-                            {sortedDisplayImages.length}
-                          </span>
-                        )}
-                        {f === "videos" && sortedDisplayImages.filter((i) => i.type === "video").length > 0 && (
-                          <span className="ml-1.5 text-text-disabled font-normal normal-case tracking-normal">
-                            {sortedDisplayImages.filter((i) => i.type === "video").length}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-
-                  <WidgetErrorBoundary>
-                    {filteredMediaImages.length > 0 ? (
-                      <div className="columns-2 gap-3">
-                        {filteredMediaImages.map((img) => (
-                          <div
-                            key={img.id}
-                            className="group relative mb-3 break-inside-avoid cursor-pointer overflow-hidden rounded-none bg-surface-muted"
-                            onClick={() => setSelectedImage(img)}
-                          >
-                            {img.type === "video" ? (
-                              <div className="aspect-video flex items-center justify-center bg-surface-muted">
-                                <div className="h-10 w-10 flex items-center justify-center rounded-none bg-black/50">
-                                  <div className="border-l-14 border-l-white border-y-8 border-y-transparent ml-1" />
-                                </div>
-                              </div>
-                            ) : (
-                              <img
-                                src={img.url}
-                                alt=""
-                                className="block w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                              />
-                            )}
-                            {img.likes_count > 0 && (
-                              <span className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-sm">
-                                <Heart className="h-2.5 w-2.5 fill-white" aria-hidden />
-                                {img.likes_count}
-                              </span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-24 bg-surface-muted/30 rounded-none border border-dashed border-border-strong/30 text-center">
-                        <ImageIcon className="h-12 w-12 text-text-disabled opacity-25 mb-4" />
-                        <h4 className="text-lg font-medium text-text-primary mb-2">
-                          {mediaFilter === "all" ? "No photos yet" : `No ${mediaFilter} yet`}
-                        </h4>
-                        <p className="text-sm text-text-secondary max-w-xs mb-6">
-                          Be the first to capture this building and share it with the community.
-                        </p>
-                        <div className="flex gap-3">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={startNoteWithPhotos}
-                          >
-                            Upload Photo
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              setTab("overview");
-                              handleNewNote();
-                            }}
-                          >
-                            Write Note
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Text-only reviews */}
-                    {streamBlocks.filter((b) => b.blockType === "text-only").length > 0 && (
-                      <div className="mt-8 space-y-4">
-                        <h4 className="text-xs font-bold uppercase tracking-widest text-text-secondary pt-6 border-t border-border-default">
-                          Reviews
-                        </h4>
-                        {streamBlocks
-                          .filter((b) => b.blockType === "text-only")
-                          .map((block) => renderStreamBlock(block))}
-                      </div>
-                    )}
-
-                    {activityOnlyFeedReviews.length > 0 && (
-                      <div className="mt-8 pt-6 border-t border-border-default">
-                        <h4 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-5">
-                          Recent Activity
-                        </h4>
-                        <ActivityStreamGroup
-                          entries={activityOnlyFeedReviews}
-                          hideGroupLabel
-                          squareAvatars
-                        />
-                      </div>
-                    )}
-                  </WidgetErrorBoundary>
-                </div>
+                  {activityOnlyFeedReviews.length > 0 && (
+                    <div className="mt-8 pt-6 border-t border-border-default">
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-5">
+                        Recent Activity
+                      </h4>
+                      <ActivityStreamGroup
+                        entries={activityOnlyFeedReviews}
+                        hideGroupLabel
+                        squareAvatars
+                      />
+                    </div>
+                  )}
+                </BuildingMediaTab>
               )}
 
               {/* ════ INFO TAB ════ */}

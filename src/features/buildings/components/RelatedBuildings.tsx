@@ -23,9 +23,7 @@ function RelatedBuildingCard({ b }: { b: RelatedBuilding }) {
             className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-[10px] uppercase tracking-widest text-text-secondary">
-            No image
-          </div>
+          <div className="photo-placeholder h-full w-full" data-label={b.name} aria-hidden />
         )}
       </div>
       <div className="mt-2 space-y-0.5">

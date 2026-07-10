@@ -17,13 +17,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { uploadFile } from "@/utils/upload";
 import { resizeImageWithDimensions } from "@/lib/image-compression";
-import { getBuildingImageUrl } from "@/utils/image";
 import { parseLocation } from "@/utils/location";
 import { synthesizeAccess } from "@/utils/accessSynthesis";
 import { visiblePrimaryCredits } from "@/features/credits/buildingCreditDisplay";
 import type { BuildingCreditWithEntities } from "@/features/credits/types";
 import type { BuildingDetails } from "@/features/buildings/pages/BuildingDetails";
 import type { User } from "@supabase/supabase-js";
+import {
+  COMMUNITY_PAGE_SIZE,
+  sortEntriesFollowedFirst,
+  type FeedEntry,
+  type RpcBuildingReviewRow,
+  type DisplayImage,
+} from "./buildingCommunityData";
+import { fetchCommunityPage, fetchLikedImageIds } from "../api/buildingReviews";
 
 /** Minimal profile shape the hook needs — avoids importing the full Profile type. */
 type ProfileForHook = { role?: string | null } | null | undefined;
@@ -39,56 +46,10 @@ export interface TopLink {
   user_avatar: string | null;
 }
 
-interface FeedEntry {
-  id: string;
-  user_id: string;
-  content: string | null;
-  rating: number | null;
-  status: "visited" | "pending";
-  tags: string[] | null;
-  created_at: string;
-  user: {
-    username: string | null;
-    avatar_url: string | null;
-    is_verified_architect?: boolean;
-    is_architect_of_building?: boolean;
-  };
-  images: { id: string; storage_path: string; created_at?: string }[];
-}
-
-interface RpcBuildingReviewRow {
-  id: string;
-  user_id: string;
-  created_at: string;
-  user_data: FeedEntry["user"] | null;
-  images?: Array<{
-    id: string;
-    storage_path: string;
-    likes_count?: number;
-    created_at?: string;
-    is_generated?: boolean;
-    is_official?: boolean;
-    caption?: string | null;
-  }>;
-  video_url?: string | null;
-  content?: string | null;
-  rating?: number | null;
-  status?: FeedEntry["status"];
-  tags?: string[] | null;
-}
-
-export interface DisplayImage {
-  id: string;
-  url: string;
-  poster?: string;
-  type?: "image" | "video";
-  likes_count: number;
-  created_at: string;
-  user: { username: string | null; avatar_url: string | null } | null;
-  is_generated?: boolean;
-  is_official?: boolean;
-  caption?: string | null;
-}
+// Community data types + transforms live in ./buildingCommunityData (keeps this
+// hook under its file-size cap). Re-exported (imported above) so existing
+// importers of the hook path keep working.
+export type { FeedEntry, RpcBuildingReviewRow, DisplayImage };
 
 // ─── Hook inputs ─────────────────────────────────────────────────────────────
 
@@ -131,6 +92,12 @@ export interface BuildingInteractions {
   setSelectedImage: (img: DisplayImage | null) => void;
   likedImageIds: Set<string>;
   selectedIndex: number;
+  /** True while more review pages remain to be fetched from get_building_reviews. */
+  hasMoreCommunity: boolean;
+  /** True while a "load more" page fetch is in flight. */
+  loadingMoreCommunity: boolean;
+  /** Fetch and append the next page of community reviews/images. */
+  loadMoreCommunity: () => Promise<void>;
 
   // Links
   topLinks: TopLink[];
@@ -265,6 +232,16 @@ export function useBuildingInteractions({
   const [displayImages, setDisplayImages] = useState<DisplayImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<DisplayImage | null>(null);
   const [likedImageIds, setLikedImageIds] = useState<Set<string>>(new Set());
+
+  // ── Community pagination (get_building_reviews LIMIT/OFFSET) ───────────────
+  /** Number of review rows already loaded for the current building. */
+  const communityOffsetRef = useRef(0);
+  /** Followed-user ids, cached so "load more" pages can re-sort consistently. */
+  const followedIdsRef = useRef<Set<string>>(new Set());
+  const [hasMoreCommunity, setHasMoreCommunity] = useState(false);
+  const [loadingMoreCommunity, setLoadingMoreCommunity] = useState(false);
+  /** Guards against overlapping "load more" fetches from the scroll observer. */
+  const loadingMoreCommunityRef = useRef(false);
 
   const selectedIndex = useMemo(() => {
     if (!selectedImage) return -1;
@@ -604,126 +581,32 @@ export function useBuildingInteractions({
               );
           }
 
-          const { data: entriesData, error: entriesError } = await supabase.rpc(
-            "get_building_reviews",
-            { p_building_id: resolvedBuildingId },
-          );
+          followedIdsRef.current = followedIds;
 
-          const communityImages: DisplayImage[] = [];
+          // First page only — further pages load on scroll via loadMoreCommunity.
+          const page = await fetchCommunityPage(resolvedBuildingId, 0);
 
-          if (!entriesError && entriesData) {
-            const rawEntries = entriesData as unknown as RpcBuildingReviewRow[];
-
-            rawEntries.forEach((entry) => {
-              // Video entries
-              if (entry.video_url) {
-                let posterUrl: string | undefined;
-                if (entry.images && entry.images.length > 0) {
-                  posterUrl =
-                    getBuildingImageUrl(entry.images[0].storage_path) ||
-                    undefined;
-                }
-                communityImages.push({
-                  id: `video-${entry.id}`,
-                  url: entry.video_url,
-                  poster: posterUrl,
-                  type: "video",
-                  likes_count: 0,
-                  created_at: entry.created_at,
-                  user: entry.user_data,
-                });
-              }
-              // Image entries
-              if (entry.images && entry.images.length > 0) {
-                entry.images.forEach((img) => {
-                  const publicUrl = getBuildingImageUrl(img.storage_path);
-                  if (publicUrl) {
-                    communityImages.push({
-                      id: img.id,
-                      url: publicUrl,
-                      type: "image",
-                      likes_count: img.likes_count || 0,
-                      created_at: img.created_at || entry.created_at,
-                      user: entry.user_data,
-                      is_generated: img.is_generated,
-                      is_official: img.is_official,
-                      caption: img.caption,
-                    });
-                  }
-                });
-              }
-            });
-
-            communityImages.sort((a, b) => {
-              if (b.likes_count !== a.likes_count)
-                return b.likes_count - a.likes_count;
-              return (
-                new Date(b.created_at).getTime() -
-                new Date(a.created_at).getTime()
-              );
-            });
-
-            const sanitizedEntries: FeedEntry[] = rawEntries.map((e) => ({
-              id: e.id,
-              user_id: e.user_id,
-              content: e.content ?? null,
-              rating: e.rating ?? null,
-              status: e.status ?? "visited",
-              tags: e.tags ?? null,
-              created_at: e.created_at,
-              user: {
-                username: e.user_data?.username ?? null,
-                avatar_url: e.user_data?.avatar_url ?? null,
-                is_verified_architect: e.user_data?.is_verified_architect,
-                is_architect_of_building:
-                  e.user_data?.is_architect_of_building,
-              },
-              images: (e.images || []).map((img) => ({
-                id: img.id,
-                storage_path: img.storage_path,
-                created_at: img.created_at,
-              })),
-            }));
-
-            sanitizedEntries.sort((a, b) => {
-              const aFollowed = followedIds.has(a.user_id);
-              const bFollowed = followedIds.has(b.user_id);
-              if (aFollowed && !bFollowed) return -1;
-              if (!aFollowed && bFollowed) return 1;
-              return (
-                new Date(b.created_at).getTime() -
-                new Date(a.created_at).getTime()
-              );
-            });
-
-            setEntries(sanitizedEntries);
+          if (!page) {
+            communityOffsetRef.current = 0;
+            setHasMoreCommunity(false);
+            setEntries([]);
+            setDisplayImages([]);
+            return;
           }
+
+          communityOffsetRef.current = page.rowCount;
+          setHasMoreCommunity(page.rowCount === COMMUNITY_PAGE_SIZE);
+          setEntries(sortEntriesFollowedFirst(page.entries, followedIds));
 
           // Resolve which images the current user has liked
-          if (userId && communityImages.length > 0) {
-            const imageIds = communityImages
+          if (userId) {
+            const imageIds = page.images
               .filter((img) => img.type === "image")
               .map((img) => img.id);
-            if (imageIds.length > 0) {
-              const { data: likesData } = await supabase
-                .from("image_likes")
-                .select("image_id")
-                .eq("user_id", userId)
-                .in("image_id", imageIds);
-              setLikedImageIds(
-                new Set<string>(
-                  (
-                    likesData as
-                      | { image_id: string }[]
-                      | null
-                      | undefined
-                  )?.map((l) => l.image_id) || [],
-                ),
-              );
-            }
+            setLikedImageIds(await fetchLikedImageIds(userId, imageIds));
           }
 
-          setDisplayImages(communityImages);
+          setDisplayImages(page.images);
         })(),
       );
 
@@ -743,6 +626,56 @@ export function useBuildingInteractions({
   useEffect(() => {
     void fetchUserSpecificData();
   }, [fetchUserSpecificData]);
+
+  /**
+   * Fetch the next page of community reviews/images and append them. Called by
+   * the page's overview + media scroll sentinels when the already-loaded set is
+   * exhausted. De-dupes by id so overlapping triggers can't double-insert.
+   */
+  const loadMoreCommunity = useCallback(async () => {
+    const b = buildingRef.current;
+    if (!b) return;
+    if (loadingMoreCommunityRef.current || !hasMoreCommunity) return;
+
+    loadingMoreCommunityRef.current = true;
+    setLoadingMoreCommunity(true);
+    try {
+      const offset = communityOffsetRef.current;
+      const page = await fetchCommunityPage(b.id, offset);
+
+      if (!page || page.rowCount === 0) {
+        setHasMoreCommunity(false);
+        return;
+      }
+
+      communityOffsetRef.current = offset + page.rowCount;
+      setHasMoreCommunity(page.rowCount === COMMUNITY_PAGE_SIZE);
+
+      setDisplayImages((prev) => {
+        const seen = new Set(prev.map((img) => img.id));
+        return [...prev, ...page.images.filter((img) => !seen.has(img.id))];
+      });
+      setEntries((prev) => {
+        const seen = new Set(prev.map((e) => e.id));
+        const merged = [...prev, ...page.entries.filter((e) => !seen.has(e.id))];
+        return sortEntriesFollowedFirst(merged, followedIdsRef.current);
+      });
+
+      // Resolve likes for the newly-loaded images and merge into the set.
+      if (userId) {
+        const newImageIds = page.images
+          .filter((img) => img.type === "image")
+          .map((img) => img.id);
+        const liked = await fetchLikedImageIds(userId, newImageIds);
+        if (liked.size > 0) {
+          setLikedImageIds((prev) => new Set<string>([...prev, ...liked]));
+        }
+      }
+    } finally {
+      loadingMoreCommunityRef.current = false;
+      setLoadingMoreCommunity(false);
+    }
+  }, [hasMoreCommunity, userId]);
 
   useEffect(() => {
     setNoteEditorOpen(false);
@@ -1321,6 +1254,9 @@ export function useBuildingInteractions({
     setSelectedImage,
     likedImageIds,
     selectedIndex,
+    hasMoreCommunity,
+    loadingMoreCommunity,
+    loadMoreCommunity,
     topLinks,
     likedLinkIds,
     linksLoading,
