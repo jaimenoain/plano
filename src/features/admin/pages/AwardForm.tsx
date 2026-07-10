@@ -213,7 +213,7 @@ export default function AwardForm() {
             {isEdit && wikidataQid && (
               <Button type="button" variant="ghost" size="sm" onClick={handleSyncWikidata} disabled={syncing}>
                 {syncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Sync →
+                Sync
               </Button>
             )}
           </div>

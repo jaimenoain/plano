@@ -437,7 +437,7 @@ toast({
         <button
           type="button"
           onClick={() => navigate("/profile")}
-          className="mb-8 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors hover:text-text-primary"
+          className="mb-8 text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
         >
           ← Back to profile
         </button>
@@ -450,11 +450,8 @@ toast({
         </p>
 
         <div className="mb-10 border-b border-border-default pb-10">
-          <Link
-            to="/feedback"
-            className="text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
-          >
-            Feedback history →
+          <Link to="/feedback" className="cta-link">
+            Feedback history
           </Link>
         </div>
 
@@ -490,7 +487,7 @@ toast({
         <form onSubmit={handleUpdateProfile} className="space-y-6">
           {/* Public Profile Section */}
           <div className="space-y-6">
-            <h2 className="mb-6 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Public profile</h2>
+            <h2 className="mb-6 text-2xs font-medium uppercase tracking-widest text-text-secondary">Public profile</h2>
             
             <div className="space-y-1.5">
               <Label htmlFor="username">Username</Label>
@@ -537,7 +534,7 @@ toast({
 
           {/* Profile Content Section */}
           <div className="space-y-6">
-            <h2 className="mb-6 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+            <h2 className="mb-6 text-2xs font-medium uppercase tracking-widest text-text-secondary">
               Profile customization
             </h2>
             <div className="space-y-0 divide-y divide-border-default border-y border-border-default">
@@ -562,7 +559,7 @@ toast({
             <>
               <div className="mt-12 border-t border-border-default pt-8" />
               <div className="space-y-4">
-                <h2 className="mb-6 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+                <h2 className="mb-6 text-2xs font-medium uppercase tracking-widest text-text-secondary">
                   App experience
                 </h2>
                 <div className="flex flex-wrap items-center justify-between gap-3 border-y border-border-default py-5">
@@ -584,7 +581,7 @@ toast({
 
           {/* Account Security Section */}
           <div className="space-y-4">
-            <h2 className="mb-6 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+            <h2 className="mb-6 text-2xs font-medium uppercase tracking-widest text-text-secondary">
               Account &amp; security
             </h2>
 
@@ -643,7 +640,7 @@ toast({
 
           {/* Data & Privacy Section */}
           <div className="space-y-4">
-            <h2 className="mb-6 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+            <h2 className="mb-6 text-2xs font-medium uppercase tracking-widest text-text-secondary">
               Data &amp; privacy
             </h2>
             <div className="flex flex-wrap items-center justify-between gap-3 border-y border-border-default py-5">

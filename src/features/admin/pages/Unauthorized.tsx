@@ -16,11 +16,8 @@ export default function Unauthorized() {
       <p className="max-w-md text-sm text-text-secondary">
         You do not have permission to access the admin console. If you believe this is an error, contact the system administrator.
       </p>
-      <Link
-        to="/"
-        className="text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
-      >
-        Return home →
+      <Link to="/" className="cta-link">
+        Return home
       </Link>
     </div>
   );

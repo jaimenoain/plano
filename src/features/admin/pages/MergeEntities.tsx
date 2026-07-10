@@ -405,7 +405,7 @@ export default function MergeEntities() {
       <div className="space-y-6 pt-12 border-t-2 border-border-default/50">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h3 className="text-2xl font-black flex items-center gap-3">
+            <h3 className="text-2xl font-bold flex items-center gap-3">
               <div className="w-9 h-9 rounded bg-text-primary/10 flex items-center justify-center border border-text-primary/20">
                 <Search className="w-4 h-4 text-text-primary" />
               </div>
@@ -436,7 +436,7 @@ export default function MergeEntities() {
         {/* Query Parameters */}
         <Card className="bg-surface-card border border-border-default rounded-md">
           <CardContent className="p-6">
-            <div className="flex items-center gap-2 mb-5 text-xs font-black text-text-secondary uppercase tracking-widest">
+            <div className="flex items-center gap-2 mb-5 text-xs font-bold text-text-secondary uppercase tracking-widest">
               <SlidersHorizontal className="w-3.5 h-3.5" />
               Query Parameters
             </div>
@@ -446,7 +446,7 @@ export default function MergeEntities() {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <label className="text-sm font-semibold text-text-primary">Similarity Threshold</label>
-                  <span className="text-sm font-black tabular-nums text-text-primary bg-text-primary/10 px-2.5 py-0.5 rounded-full border border-text-primary/20">
+                  <span className="text-sm font-bold tabular-nums text-text-primary bg-text-primary/10 px-2.5 py-0.5 rounded-full border border-text-primary/20">
                     {Math.round(threshold * 100)}%
                   </span>
                 </div>
@@ -582,8 +582,8 @@ export default function MergeEntities() {
                         </div>
 
                         <div className="flex flex-col items-center">
-                          <div className="text-[10px] font-black text-text-primary uppercase tracking-tighter mb-0.5">Similarity</div>
-                          <div className="px-3 py-1 bg-text-primary/10 text-text-primary rounded-full text-xs font-black border border-text-primary/20">
+                          <div className="text-[10px] font-bold text-text-primary uppercase tracking-tighter mb-0.5">Similarity</div>
+                          <div className="px-3 py-1 bg-text-primary/10 text-text-primary rounded-full text-xs font-bold border border-text-primary/20">
                             {Math.round(pair.score * 100)}%
                           </div>
                         </div>

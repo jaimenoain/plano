@@ -322,7 +322,7 @@ export default function MergeComparisonEntities() {
       <div className={`space-y-1 p-3 rounded border transition-colors ${
         isTarget ? "bg-surface-card border-feedback-success/20" : "bg-feedback-destructive/5 border-feedback-destructive/10"
       }`}>
-        <div className="text-[10px] text-text-secondary font-black uppercase tracking-widest opacity-60">{label}</div>
+        <div className="text-[10px] text-text-secondary font-bold uppercase tracking-widest opacity-60">{label}</div>
         <div className={`text-sm font-medium ${!isTarget ? "line-through opacity-40" : "text-text-primary"}`}>
           {value || <span className="opacity-30">—</span>}
         </div>
@@ -332,7 +332,7 @@ export default function MergeComparisonEntities() {
     // Editable field for the surviving (target) record. Bound to `edits[field]`.
     const renderEditableValue = (label: string, field: string, type: "text" | "number" = "text") => (
       <div className="space-y-1 p-3 rounded border bg-surface-card border-feedback-success/20 transition-colors focus-within:border-feedback-success/50">
-        <label htmlFor={`edit-${field}`} className="block text-[10px] text-text-secondary font-black uppercase tracking-widest opacity-60">{label}</label>
+        <label htmlFor={`edit-${field}`} className="block text-[10px] text-text-secondary font-bold uppercase tracking-widest opacity-60">{label}</label>
         <input
           id={`edit-${field}`}
           type={type}
@@ -370,12 +370,12 @@ export default function MergeComparisonEntities() {
 
                 <div className="hidden md:flex items-center gap-8 rounded-sm border border-border-default bg-surface-muted/50 px-6 py-3">
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Master</span>
+                    <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Master</span>
                     <span className="text-sm font-bold text-feedback-success truncate max-w-[150px]">{targetDisplayName}</span>
                   </div>
                   <ArrowLeftRight className="w-4 h-4 text-text-secondary opacity-30" />
                   <div className="flex flex-col text-right">
-                    <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Duplicate</span>
+                    <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Duplicate</span>
                     <span className="text-sm font-bold text-feedback-destructive truncate max-w-[150px]">{sourceEntity.name || sourceEntity.city}</span>
                   </div>
                 </div>
@@ -480,7 +480,7 @@ export default function MergeComparisonEntities() {
                           <ArrowLeftRight className="h-8 w-8 transition-transform group-hover:rotate-180 duration-500" />
                       </Button>
                     </motion.div>
-                    <div className="mt-4 text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] opacity-40">Swap Direction</div>
+                    <div className="mt-4 text-[10px] font-bold text-text-secondary uppercase tracking-[0.2em] opacity-40">Swap Direction</div>
                 </div>
 
                 {/* SOURCE COLUMN (REMOVE) */}
@@ -604,7 +604,7 @@ export default function MergeComparisonEntities() {
                                 
                                 {entityType === 'building' && reviewImages.length > 0 && (
                                   <div className="pt-6">
-                                    <h4 className="text-xs font-black text-text-secondary uppercase tracking-widest mb-3">Review Images to Move ({reviewImages.length})</h4>
+                                    <h4 className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-3">Review Images to Move ({reviewImages.length})</h4>
                                     <div className="flex flex-wrap gap-2">
                                       {reviewImages.slice(0, 8).map((img, i) => (
                                         <div key={i} className="w-12 h-12 rounded-lg bg-surface-muted overflow-hidden border border-border-default">
@@ -684,7 +684,7 @@ export default function MergeComparisonEntities() {
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
                                 </AlertDialog>
-                                <p className="text-[10px] text-text-secondary font-black uppercase tracking-[0.2em] opacity-40">System-level Operation</p>
+                                <p className="text-[10px] text-text-secondary font-bold uppercase tracking-[0.2em] opacity-40">System-level Operation</p>
                             </div>
                         </div>
                     </CardContent>
