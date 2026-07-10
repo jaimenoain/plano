@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Circle } from "lucide-react";
+import { RatingDots } from "@/components/ui/rating-dots";
 import { motion, AnimatePresence } from "framer-motion";
 
 export type BuildingStatus = 'pending' | 'visited' | 'ignored' | null;
@@ -96,7 +97,7 @@ export function PersonalRatingButton({
               type="button"
               disabled={isLoading}
               className={`
-                relative p-0.5 rounded-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2
+                relative p-0.5 rounded-sm focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2
                 ${isLoading ? 'opacity-50 cursor-wait' : 'cursor-pointer'}
               `}
               onMouseEnter={() => setHoverRating(star)}
@@ -155,16 +156,13 @@ export function PersonalRatingButton({
           className={`
             h-8 transition-all gap-1.5
             ${hasRated
-              ? "bg-brand-primary/10 hover:bg-brand-primary/20 text-[#595959] hover:text-[#595959] border-brand-primary/20 border"
+              ? "bg-brand-primary/10 hover:bg-brand-primary/20 text-text-primary hover:text-text-primary border-brand-primary/20 border"
               : "text-text-secondary hover:text-text-primary hover:bg-surface-muted"
             }
           `}
         >
           {hasRated ? (
-            <>
-              <Circle className="w-3.5 h-3.5 fill-[#595959]" />
-              <span className="font-bold">{initialRating}/3</span>
-            </>
+            <RatingDots rating={initialRating} size="sm" />
           ) : (
             <span className="text-xs">{label}</span>
           )}

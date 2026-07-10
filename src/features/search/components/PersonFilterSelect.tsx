@@ -120,7 +120,7 @@ export function PersonFilterSelect({
         <PopoverAnchor asChild>
           <div
             ref={containerRef}
-            className="group border border-border-default px-3 py-2 text-sm rounded-md focus-within:ring-2 focus-within:ring-brand-primary focus-within:ring-offset-2 bg-surface-default relative"
+            className="group border border-border-default px-3 py-2 text-sm rounded-md focus-within:ring-2 focus-within:ring-brand-accent focus-within:ring-offset-2 bg-surface-default relative"
           >
             <div className="flex flex-wrap gap-1">
               {selectedPeople.map((person) => (
@@ -129,7 +129,7 @@ export function PersonFilterSelect({
                   {person.name}
                   <button
                     type="button"
-                    className="ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-brand-primary focus:ring-offset-2"
+                    className="ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-brand-accent focus:ring-offset-2"
                     onClick={() => handleUnselect(person.id)}
                   >
                     <X className="h-3 w-3 text-text-secondary hover:text-text-primary" />

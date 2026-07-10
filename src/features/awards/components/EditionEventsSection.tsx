@@ -89,7 +89,7 @@ export function EditionEventsSection({ editionId }: Props) {
               <select
                 value={form.event_type}
                 onChange={(e) => setForm({ ...form, event_type: e.target.value as AwardEditionEventType })}
-                className="h-8 w-full rounded-sm border border-border-default bg-surface-card px-2 text-sm text-text-primary focus:outline-hidden focus:ring-1 focus:ring-brand-primary"
+                className="h-8 w-full rounded-sm border border-border-default bg-surface-card px-2 text-sm text-text-primary focus:outline-hidden focus:ring-1 focus:ring-brand-accent"
               >
                 {EVENT_TYPE_OPTIONS.map(([value, label]) => (
                   <option key={value} value={value}>{label}</option>

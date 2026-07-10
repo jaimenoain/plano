@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Circle } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { RatingDots } from "@/components/ui/rating-dots";
 
 interface InlineRatingProps {
   rating: number | null;
@@ -11,6 +12,11 @@ interface InlineRatingProps {
 
 export function InlineRating({ rating, onRate, readOnly = false }: InlineRatingProps) {
   const [hoverRating, setHoverRating] = useState<number | null>(null);
+
+  // Read-only display: show only earned dots (a reward, never empty rings).
+  if (readOnly) {
+    return <RatingDots rating={rating} size="md" />;
+  }
 
   const handleRate = (star: number) => {
     if (readOnly) return;

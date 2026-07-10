@@ -95,7 +95,7 @@ export function Header({
         <Input
           type="search"
           placeholder="Search map..."
-          className="pl-9 h-9 bg-surface-muted border-border-default focus-visible:ring-1 focus-visible:ring-brand-primary"
+          className="pl-9 h-9 bg-surface-muted border-border-default focus-visible:ring-1 focus-visible:ring-brand-accent"
         />
       </div>
     );

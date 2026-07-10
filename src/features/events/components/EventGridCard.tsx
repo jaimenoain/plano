@@ -51,7 +51,7 @@ export function EventGridCard({ event }: { event: EventCardDTO }) {
   return (
     <Link
       to={getEventUrl(event)}
-      className="group flex flex-col touch-manipulation transition-colors hover:bg-surface-muted/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
+      className="group flex flex-col touch-manipulation transition-colors hover:bg-surface-muted/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2"
     >
       <div className="relative aspect-4/3 w-full overflow-hidden bg-surface-muted">
         {showCover ? (

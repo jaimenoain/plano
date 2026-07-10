@@ -194,7 +194,7 @@ export function FeedbackKanbanView({
                       <button
                         type="button"
                         onClick={() => onSelectRow(row)}
-                        className="w-full rounded-sm border border-border-default bg-surface-card p-3 text-left transition-colors hover:border-border-strong hover:bg-surface-muted/50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-primary"
+                        className="w-full rounded-sm border border-border-default bg-surface-card p-3 text-left transition-colors hover:border-border-strong hover:bg-surface-muted/50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent"
                       >
                         <div className="mb-2 flex items-start justify-between gap-2">
                           <span

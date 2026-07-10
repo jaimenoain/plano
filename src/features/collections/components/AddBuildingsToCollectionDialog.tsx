@@ -157,7 +157,7 @@ function PlacesAutocompleteFields({
             autoComplete="off"
             className={cn(
               "flex h-10 w-full rounded-sm border-0 bg-brand-secondary pl-9 pr-3 py-2 text-sm shadow-none outline-hidden ring-0",
-              "placeholder:text-text-secondary focus-visible:ring-1 focus-visible:ring-brand-primary focus-visible:ring-offset-0",
+              "placeholder:text-text-secondary focus-visible:ring-1 focus-visible:ring-brand-accent focus-visible:ring-offset-0",
               "disabled:cursor-not-allowed disabled:opacity-50",
             )}
           />
@@ -653,7 +653,7 @@ toast.error("Failed to add building");
                     placeholder="Search by name, city, country, or address..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="border-0 bg-brand-secondary pl-9 shadow-none ring-0 focus-visible:border-0 focus-visible:ring-1 focus-visible:ring-brand-primary focus-visible:ring-offset-0"
+                    className="border-0 bg-brand-secondary pl-9 shadow-none ring-0 focus-visible:border-0 focus-visible:ring-1 focus-visible:ring-brand-accent focus-visible:ring-offset-0"
                   />
                 </div>
               </div>

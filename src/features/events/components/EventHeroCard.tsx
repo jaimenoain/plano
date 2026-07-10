@@ -25,7 +25,7 @@ export function EventHeroCard({ event }: { event: EventCardDTO }) {
   return (
     <Link
       to={getEventUrl(event)}
-      className="group relative block aspect-video w-full overflow-hidden bg-surface-muted touch-manipulation focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 md:aspect-21/9"
+      className="group relative block aspect-video w-full overflow-hidden bg-surface-muted touch-manipulation focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 md:aspect-21/9"
     >
       {showCover ? (
         <img
