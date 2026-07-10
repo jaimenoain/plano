@@ -31,8 +31,8 @@ one surface at a time.
 | ✅ | 7 · Map / explore / itinerary | **Merged** — [#1530](https://github.com/jaimenoain/plano/pull/1530) |
 | ✅ | 8 · Events + connect + notifications | **Merged** |
 | ✅ | 9 · Auth flows | **Merged** — [#1532](https://github.com/jaimenoain/plano/pull/1532) |
-| ✅ | 10 · Settings + admin | **Auto-merge armed** |
-| ☐ | 11 · Compose + empty/loading/error states | not started |
+| ✅ | 10 · Settings + admin | **Merged** — [#1533](https://github.com/jaimenoain/plano/pull/1533) |
+| ✅ | 11 · Compose + empty/loading/error states | **Auto-merge armed** |
 
 **What the merged foundation already gave you** (assume these exist — do not re-create them):
 
@@ -671,7 +671,7 @@ Owner files verified present. Each row: branch → files → designed screen →
     overshoots the 44px cap and a raw `clamp()` is a banned value, so the nearest sanctioned step was
     kept (same reasoning PR 6/8 recorded for the guides/events heroes).
 
-### [ ] PR 11 · Compose + empty/loading/error states
+### [x] PR 11 · Compose + empty/loading/error states
 
 - **Branch:** `design/compose-states-conformance` · **Screens:** `post.html`, `add-building.html`,
   `states.html`
@@ -680,6 +680,67 @@ Owner files verified present. Each row: branch → files → designed screen →
 - **Known deltas:** `post.html` is the canonical home of the four-tier rating input. `states.html` is
   a spec reference, not a route: empty states are a quiet uppercase eyebrow + one imperative
   sentence + one `.cta-link` — never a blank panel, never an illustration.
+- **The app had no shared empty-state primitive.** Every surface hand-rolled its own — the dominant
+  shape was `centered lucide icon + semibold title + secondary paragraph`, the *exact opposite* of
+  the recipe (which forbids icons, blank/dashed panels, and illustrations). Two near-duplicate local
+  `EmptyState` components existed (Profile, Notifications). The fix is a new canonical
+  `src/components/ui/empty-state.tsx` — a quiet `.eyebrow`, one sentence, one `.cta-link` (or one
+  primary button), an optional `.photo-placeholder` visual, and a `tone="inverse"` for dark surfaces
+  (the Explore stage). **No icon prop by design.**
+- **Delivered — Compose (`Post.tsx`):** the rating block was a 3× `Circle` toggle ladder with empty
+  outline rings (`text-text-secondary/20`) plus a `text-4xl` numeric readout — the precise "X out of
+  3" scale the awards model exists to avoid. Replaced with `MichelinRatingInput` (four labelled
+  tiers, earned dots only, `value=0` Interesting renders nothing); the `Circle` import, `hoverRating`
+  state and numeric readout are gone; the label became the kit's `Award (optional)` + the Michelin
+  explainer. The composer shell, hairline dividers and Save button already conformed.
+- **Delivered — Form (`AddBuilding.tsx`):** no rating input on this page (not added). The four
+  arbitrary `tracking-[0.15em]` eyebrow labels collapsed to `tracking-widest`; the duplicate-dialog
+  ghost `<Button>` dropped its decorative `ArrowRight` glyph (import removed) but stayed a button —
+  it carries onClick/loading semantics a `.cta-link` would break (PR 10 precedent).
+- **Delivered — Empty states:** the shared `EmptyState` replaced the icon/panel versions on the named
+  list/detail surfaces — Profile (its local `EmptyState` deleted, 4 call sites migrated; the
+  bucket-list action became a `.cta-link`), Notifications, `DiscoveryList`, `CollectionsGrid` (both
+  branches — the own-profile one was the `bg-surface-muted` framed **blank panel** the recipe
+  forbids; its redundant second "Organize folders" action dropped, since an empty profile has no
+  folders to organize), and Explore (`tone="inverse"` on the dark stage). Dead lucide imports
+  (`Bell`, `Building2`, `Layers`, `Map`, `Bookmark`, `LucideIcon`, `ReactNode`) removed with them.
+- **Delivered — 404 (`NotFound.tsx` + `root.tsx`):** the hand-drawn `ScopeReductionGraphic` SVG (a
+  direct "never an illustration" violation, with joke "value engineering" copy) is gone. A new shared
+  `src/components/common/NotFoundView.tsx` renders the `states.html` error composition — mono
+  `ERROR · 404`, a big `.display` "Not built." headline, one catalogue-voice sentence, and outline
+  "Go back" + lime "Open the feed". `root.tsx`'s separate thrown-404 branch ("Page not found") now
+  renders the *same* `NotFoundView`, so both 404 surfaces read identically; its stray `Link` import
+  was dropped. The two `tracking-[0.15em]` in the old page died with it.
+- **Tests (first for these pieces):** `empty-state.test.tsx` (4 — eyebrow via `.eyebrow`, no
+  icon/illustration/panel, a single `.cta-link` with its href, the `photoLabel` placeholder) and
+  `NotFoundView.test.tsx` (3 — the mono eyebrow + `.display` headline, the two actions, the old
+  illustration gone). `MichelinRatingInput` is already a tested primitive (live on building-detail
+  since PR 3), so `Post.tsx` — which mounts `useAuth` + Supabase — is covered through it, not as a
+  page test (the events/auth-PR precedent).
+- **Verified in the browser:** a bad URL renders the new 404 — `ERROR · 404`, the `.display`
+  "Not built." poster headline (lh 0.92), the catalogue sentence, outline "Go back" + lime accent
+  "Open the feed", **no `svg[viewBox="0 0 400 300"]`** illustration, `SiteFooter` intact, zero console
+  errors. `Post.tsx` and `michelin-rating-input.tsx` compile and load clean. Both file-size baselines
+  **ratcheted down** — `Profile.tsx` 1334 → 1317, `CollectionsGrid.tsx` left the grandfathered list
+  (now under the 400-line component budget). `npm run check` green (913 tests, all ratchets).
+- **Deferred / flagged, not done this PR:**
+  - **The `states.html` icon-mark composition.** The gallery draws each empty panel with a 56px
+    circled-icon mark + 22px title + button. That is spec-gallery chrome; `PATTERNS.md` and this PR's
+    delta prescribe the icon-less eyebrow+sentence+cta-link, which is what shipped. No icon marks.
+  - **The loading/skeleton surface was not unified.** 112 `Loader2` spinner files + ~20 hand-rolled
+    `animate-pulse` skeletons + an under-used `Skeleton` primitive remain inconsistent. `states.html`
+    only specs a feed skeleton; a single loading convention is its own effort, not this PR.
+  - **The generic crash error boundaries** (`AppErrorBoundary`, `RouteErrorBoundary`,
+    `WidgetErrorBoundary`, `MapErrorBoundary`) still use `AlertTriangle` + filled buttons. They are the
+    app's crash safety-net infra, not "empty/404 compositions across list/detail surfaces"; only the
+    thrown-**404** branch of `root.tsx` was brought into line.
+  - **`AdminEmptyState`** (dashed panel, ~20 admin sites) left alone — admin is a boxed-panel surface
+    (PR 10 territory), a separate call.
+  - **Events' empty state** already uses `.cta-link` (PR 8) but still leads with a `CalendarDays`
+    icon; left as-is to keep this diff focused on the icon-based/blank-panel offenders. A one-line
+    swap to the shared `EmptyState` would finish it.
+  - **The raw-hex ESLint guard was not widened** to `src/pages/**` — it holds files beyond the two
+    touched here that weren't audited for stray hex this PR.
 
 ---
 
@@ -689,7 +750,7 @@ Measured on `main` after the foundation merged:
 
 | Debt | Count | How it dies |
 |---|---|---|
-| `tracking-[0.15em]` arbitrary values | **174** (234 before the landing PR, 233 before profile+credits, 207 before city+guides, 205 before map+explore, 202 before events+connect+notifications, 189 before settings+admin) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
+| `tracking-[0.15em]` arbitrary values | **168** (234 before the landing PR, 233 before profile+credits, 207 before city+guides, 205 before map+explore, 202 before events+connect+notifications, 189 before settings+admin, 174 before compose+states) | Now redundant — `tracking-widest` *is* 0.15em. Collapse the ones in the files your PR already touches. |
 | Raw hex in `src/features` + `src/pages` | **21** across 11 files (31/12 before PR 7) | Replace with token aliases as you touch each surface. The lime map markers are **fixed** (PR 7). Two remaining `#BEFF00` strings are prose in comments, not literals. `src/features/maps/constants/mapMarkerFills.ts` is the one *sanctioned* hex mirror — MapLibre portals markers outside the CSS-variable cascade — and carries a documented `eslint-disable`. |
 | ESLint raw-hex guard coverage | `components/ui` + `components/layout` + `features/feed` + `features/buildings` + `features/localities` + `features/guides` + `features/search` + `features/explore` + `features/connect` + `features/notifications` + `features/maps` + `features/auth` (the last four **`.ts` and `.tsx`**) | Once a feature directory is clean, widen the `files` glob in `eslint.config.js`. Guard `.ts` too where colour constants live — that is how the lime markers survived six PRs. `features/collections` is blocked: its category colour picker stores hexes as user data. `features/events` is blocked on `EventDetail.tsx`'s `#ffffff` plus two raw `rgba()` inline styles — its *listing* surface is already clean. |
 

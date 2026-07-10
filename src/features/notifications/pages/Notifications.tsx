@@ -10,7 +10,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Bell, Settings } from "lucide-react";
+import { Loader2, Settings } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { NotificationSettingsDialog } from "../components/NotificationSettingsDialog";
 import { NotificationRow } from "../components/NotificationRow";
 import type { Notification } from "../types";
@@ -263,18 +264,10 @@ export default function Notifications() {
             </>
           ) : (
             // ── Empty state ──
-            <div className="flex flex-col items-center justify-center text-center py-24 px-8 gap-5">
-              <Bell className="h-7 w-7 text-text-disabled" strokeWidth={1.5} />
-              <div className="space-y-2">
-                <p className="text-base font-semibold text-text-primary tracking-tight">
-                  No notifications yet
-                </p>
-                <p className="text-sm text-text-secondary max-w-xs leading-relaxed">
-                  When people interact with you or your reviews, you'll see it
-                  here.
-                </p>
-              </div>
-            </div>
+            <EmptyState
+              eyebrow="No notifications yet"
+              message="When people interact with you or your reviews, you'll see it here."
+            />
           )}
         </div>
       </ScrollArea>

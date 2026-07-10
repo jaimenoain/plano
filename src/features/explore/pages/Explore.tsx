@@ -45,6 +45,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { DiscoverySearchInput } from "@/features/search/components/DiscoverySearchInput";
@@ -645,17 +646,12 @@ export default function Explore() {
 
           {/* Empty */}
           {status !== "pending" && status !== "error" && buildings.length === 0 && (
-            <div className="h-full w-full flex flex-col items-center justify-center snap-center text-center px-8 gap-4">
-              <p className="text-2xs font-medium tracking-widest uppercase text-white/20 mb-1">
-                {locationFilter.label || "No results"}
-              </p>
-              <p className="text-2xl font-bold tracking-tight text-white/60 leading-tight">
-                No buildings found
-              </p>
-              <p className="text-sm text-white/30 max-w-xs leading-relaxed">
-                Try widening your location filter or check back later.
-              </p>
-            </div>
+            <EmptyState
+              className="h-full w-full snap-center"
+              tone="inverse"
+              eyebrow={locationFilter.label || "No results"}
+              message="No buildings found here. Try widening your location filter, or check back later."
+            />
           )}
 
           {/* Cards — full-bleed on phones; a centered poster column on md+ so a

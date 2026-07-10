@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router";
-import { Folder, Layers, Map as MapIcon, Plus } from "lucide-react";
+import { Folder, Plus } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { supabase } from "@/integrations/supabase/client";
 import { UserFolder } from "@/features/collections/types";
 import { ManageFoldersDialog } from "@/features/profile/components/ManageFoldersDialog";
@@ -264,46 +265,26 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
 
   if (isEmpty && !isOwnProfile) {
     return (
-      <div className="flex flex-col items-center justify-center px-4 py-20 text-center">
-        <Layers className="mb-5 h-8 w-8 text-text-disabled" strokeWidth={1.25} />
-        <p className="text-base font-semibold tracking-tight text-text-primary">No public collections</p>
-        <p className="mt-2 max-w-sm text-sm leading-relaxed text-text-secondary">
-          This member hasn&apos;t shared any curated lists yet, or they&apos;re only visible to them.
-        </p>
-      </div>
+      <EmptyState
+        eyebrow="No public collections"
+        message="This member hasn't shared any curated lists yet, or they're only visible to them."
+      />
     );
   }
 
   if (isEmpty && isOwnProfile) {
     return (
-      <div className="space-y-8">
-        <ManageFoldersDialog open={showManageFolders} onOpenChange={setShowManageFolders} userId={userId} onUpdate={fetchData} />
-
-        <div className="border border-border-default bg-surface-muted px-4 py-12 text-center sm:px-10">
-          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center border border-border-default bg-surface-card">
-            <MapIcon className="h-7 w-7 text-text-secondary" strokeWidth={1.25} />
-          </div>
-          <p className="text-2xs font-medium uppercase tracking-widest text-text-secondary">Curated lists</p>
-          <h3 className="mt-2 text-xl font-semibold tracking-tight text-text-primary">Start a collection</h3>
-          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-text-secondary">
-            Save buildings into shareable maps, keep private lists for trips, and organize everything into folders when you&apos;re ready.
-          </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
-            {onCreate && (
-              <Button type="button" size="lg" className="min-w-[200px]" onClick={onCreate}>
-                New collection
-              </Button>
-            )}
-            <button
-              type="button"
-              className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
-              onClick={() => setShowManageFolders(true)}
-            >
-              Organize folders →
-            </button>
-          </div>
-        </div>
-      </div>
+      <EmptyState
+        eyebrow="Start a collection"
+        message="Save buildings into shareable maps, keep private lists for trips, and organize everything into folders when you're ready."
+        action={
+          onCreate && (
+            <Button type="button" size="lg" className="min-w-[200px]" onClick={onCreate}>
+              New collection
+            </Button>
+          )
+        }
+      />
     );
   }
 
