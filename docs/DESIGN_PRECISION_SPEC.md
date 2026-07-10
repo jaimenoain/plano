@@ -2,7 +2,7 @@
 
 **Status:** active. **Phase 1 (entity detail family) shipped** in PR #1535 (branch `design/building-detail-precision`).
 
-**Read order for a fresh conversation:** this file → [`AGENTS.md`](../AGENTS.md) → [`design-system/README.md`](../design-system/README.md) (brand rules) → [`docs/DESIGN_TOKENS.md`](DESIGN_TOKENS.md) → [`docs/DESIGN_SYSTEM_SCREEN_INVENTORY.md`](DESIGN_SYSTEM_SCREEN_INVENTORY.md) (route/file map). Then pick a phase below and run it end-to-end.
+**Read order for a fresh conversation:** this file → [`AGENTS.md`](../AGENTS.md) → [`design-system/README.md`](../design-system/README.md) (brand rules) → [`docs/DESIGN_TOKENS.md`](DESIGN_TOKENS.md) → [`docs/SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md) (**authoritative full catalogue** — ~90 route screens + ~30 modal/drawer surfaces + in-page view modes; the roadmap below covers all of it). Then pick a phase below and run it end-to-end.
 
 ---
 
@@ -71,20 +71,41 @@ Shared primitives from Phase 1 — **use these, don't reinvent**:
 
 ## 6. Phased roadmap
 
-Each phase is a coherent surface group runnable in one fresh conversation. Do them in order of impact, or pick per priority. Primary files come from `docs/DESIGN_SYSTEM_SCREEN_INVENTORY.md` — read the relevant rows before starting.
+Each phase is a coherent surface group runnable in one fresh conversation. Do them in impact order or pick per priority. Authoritative catalogue: **[`docs/SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md)** — read the relevant rows before starting. **The coverage matrix at the end maps every inventory section to a phase, so nothing is dropped.** Admin/superadmin (~45) is explicitly deferred.
 
-| Phase | Surface group | Key routes / files | Notes |
-|---|---|---|---|
-| **1 ✅** | **Entity detail family** | building, person, company, locality, country | Shipped (PR #1535): cropped colour EntityHero + overlay, 1120 shell, mono eyebrow, info-grid + review-alignment fixes. |
-| **1b** | Entity family finish | `PersonDetails`, `CompanyDetails` credit-row lists; building INFO/CREDITS/MEDIA tab bodies | The credit rows have large empty right-side space at 1120 — tighten. Audit each tab, not just OVERVIEW. |
-| **2** | **Feed + landing** (`/`) | `features/feed/pages/Index.tsx`, `features/feed/components/landing/*`, `features/posts/components/FeedCard{A,B,C}.tsx`, `ReviewCardFeed.tsx` | Highest-traffic (XH). Landing hero already strong; audit the logged-in feed cards + right sidebar (`FeedSidebar`, `PeopleYouMayKnow`). Note the shared feed cards render here AND were the near-miss for the building review bug. |
-| **3** | **Discovery** | Explore (`features/explore/pages/Explore.tsx`, `DiscoveryCard.tsx`), Search (`features/search/SearchPage.tsx`, `maps/components/BuildingSidebar.tsx` — the SERP row) | Map + card grids + the swipe intro. Greyscale map is on-brand; check card alignment + result rows + filters. |
-| **4** | **Profile & account** | Profile (`features/profile/pages/Profile.tsx`, XH), Settings, Profile photos, Itinerary/Visit-log | Profile is XH — stats band, tabs, grid/list toggles, the photo grid. Bring to the 1120 family measure if appropriate. |
-| **5** | **Social** | Connect (`features/connect/*`), Notifications (`NotificationRow.tsx` — the lime unread square), Post (`pages/Post.tsx`) | Rows/lists precision; the lime unread dot is one of only two legit lime uses. |
-| **6** | **Content surfaces** | Guides (`features/guides/*`), Events (`features/events/*`), Awards (`/award/:slug`), Updates (`pages/Updates.tsx`), City/Country list bodies | Poster heroes, card grids. Reuse EntityHero where a photo hero fits. |
-| **7** | **Auth & forms** | Login/Auth (`features/auth/pages/Auth.tsx`), Onboarding, Add-building (`/add-building`), claim/token flows | Form precision: label/field rhythm, split-screen auth, stepped onboarding. Forms are where alignment errors hide. |
-| **8** | **Mobile precision sweep** | All refined surfaces at 390px | Desktop-first fixes leave mobile gaps ("things touching"). Dedicated pass with `--viewport m` across Phases 1–7. Bottom nav, mobile top bar, sheets. |
-| **9** | Workspace surfaces (optional/lower) | Embassy (`features/embassy/*`), Admin (`features/admin/*`) | XH tool-heavy; historically lower design priority. |
+- **Phase 1 ✅ — Entity detail family** — building, person, company, locality, country. Shipped (#1535): cropped colour `EntityHero` + overlay, 1120 shell, mono eyebrow, info-grid + review-alignment fixes.
+- **Phase 1b — Entity family finish** — building detail's other tabs (INFO/CREDITS/MEDIA/MAP bodies, `RelatedByArchitect/City`), the person/company **credit-row lists** (large empty right-side space at 1120 — tighten), **Review detail** (`/review/:id`), **Architecture Hub** (`/architecture`, `pages/ArchitectureHub.tsx`).
+- **Phase 2 — Feed + landing** (`/`, `features/feed/pages/Index.tsx`) — ⚠️ **two screens in one route**: logged-out marketing landing (`LandingHero`/`LandingMarquee`/`LandingFeatureGrid`) and logged-in activity feed (`ReviewCardFeed`, `EditorialFeedPost`, `FeedActivitySummaryRow`, `FeedSidebar`). Landing hero already strong; focus the feed cards + right sidebar.
+- **Phase 3 — Discovery & the map system** — Explore (`features/explore/pages/Explore.tsx`), Search (`features/search/SearchPage.tsx`), **and the shared map components** (`src/features/maps/components/*`) reused by Search/Explore/Building/Locality/Collection-map — refine the one map system, everywhere benefits.
+- **Phase 4 — Profile, collections & settings** — Profile (`features/profile/pages/Profile.tsx`, XH) incl. all **in-page view modes** (grid/list/kanban/reviews/likes/photos), Photo gallery, **Folder view** (`/:username/folders/:slug`), **Collection map** (`/:username/map/:slug`), Settings.
+- **Phase 5 — Social & engagement** — Connect, Notifications (`NotificationRow` lime unread square — one of only two legit lime uses), Post, **Feedback history** (`/feedback`).
+- **Phase 6 — Content & informational** — Guides, Events (list + detail), Awards (index + page + edition + **owner-admin** `/award/:slug/admin`), Updates + Update detail, **Support**, About/Terms.
+- **Phase 7 — Forms, flows & dashboards** — Auth, Onboarding, Update password; form pairs (Add/Edit building, **Edit note**, Submit/Edit event, Award/Edition forms); token flows (remove-credit, verify-claim, approve-steward, accept-steward, company dispute); **Person/Company dashboards** (`/portfolio`, `/company-portfolio`, both H). Forms are where alignment errors hide.
+- **Phase 8 — Modals, drawers & overlays** (~30) — cross-cutting: refine each dialog/drawer as its parent phase touches it, **plus a dedicated consistency sweep** (inventory §3: claim/collection/folder/highlights dialogs, `FilterDrawer`, `BuildingDetailDrawer`, `PlanRouteDialog`, `ImageDetailsDialog`…). The Phase-1 overlay pattern (Dialog/Sheet/Drawer open-state) applies.
+- **Phase 9 — Global shells & chrome** — MainLayout, top nav / sidebar / bottom nav (`components/layout/navigation.ts` = single source), Header/MobileTopBar/SiteFooter, **404** (`NotFound`) + **500** (root `ErrorBoundary`). Frames every screen; broadly conformant already, so this is a precision + consistency pass (can also come *first* if shell drift is found).
+- **Phase 10 — Mobile precision sweep** — all refined surfaces at 390 (`--viewport m`); bottom nav, mobile top bar, sheets. Desktop-first fixes leave mobile gaps ("things touching").
+- **Phase 11 — Community** — Embassy 6-tab workspace (`/embassy/*`) + Ambassadors (Support done in P6; Become / Portal here).
+- **Deferred — Admin & superadmin (~45)** (`/admin/*`, `/superadmin/*`) — internal tooling; out of the near-term precision scope (inventory §5.5). Lightweight token/spacing pass only if prioritised.
+
+### Coverage matrix — every inventory section is placed
+
+| `SCREEN_INVENTORY.md` section | Phase(s) |
+|---|---|
+| §0 Global shells & chrome | **9** |
+| §1.1 Landing/Feed · Explore · Search · Guides · Architecture Hub | **2** · **3** · **3** · **6** · **1b** |
+| §1.2 Building detail · Add/Edit building · Edit note · Review detail | **1 ✅** · **7** · **7** · **1b** |
+| §1.3 Country · City/Locality (· redirect) | **1 ✅** |
+| §1.4 Events list · detail · submit/edit | **6** · **6** · **7** |
+| §1.5 Awards index · page · edition · owner-admin | **6** |
+| §1.6 Person · Company · dispute · Person/Company dashboards · accept-steward | **1 ✅** · **1 ✅** · **7** · **7** · **7** |
+| §1.7 Profile (+view modes) · Photos · Folder · Collection map · Settings | **4** |
+| §1.8 Support · Become/Portal ambassador · Embassy ×7 | **6** · **11** · **11** |
+| §1.9 Connect · Notifications · Feedback history · Post | **5** |
+| §1.10 Auth · Onboarding · Update password | **7** |
+| §1.11 About · Terms · Updates · Update detail | **6** |
+| §1.12 Token flows (remove-credit/verify-claim/approve-steward) · 404 · 500 | **7** · **9** · **9** |
+| §2 Admin & superadmin (~45) | **Deferred** |
+| §3 Modals/drawers (~30) + in-page view modes | **8** (+ within the owning phase) |
 
 ### Per-phase execution checklist (for a fresh conversation)
 1. Read this doc + the inventory rows for the phase + brand rules.
