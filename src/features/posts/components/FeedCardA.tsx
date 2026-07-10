@@ -181,7 +181,7 @@ export function FeedCardA({
                 ref={bodyRef}
                 className={cn(
                   "text-[17px] leading-[1.75] text-text-primary max-w-[62ch] font-sans",
-                  !essayExpanded && "line-clamp-3",
+                  !essayExpanded && "line-clamp-card-body",
                 )}
               >
                 {entry.content}
