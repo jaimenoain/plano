@@ -46,6 +46,10 @@ const ChartContainer = React.forwardRef<
         data-chart={chartId}
         ref={ref}
         className={cn(
+          // The '#ccc' / '#fff' below are Recharts' own hardcoded stroke values, matched by
+          // attribute selector precisely so we can override them with design tokens. They are
+          // not colours Plano applies, so the raw-hex guard does not apply here.
+          // eslint-disable-next-line no-restricted-syntax
           "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-text-secondary [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border-default/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border-default [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-hidden [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border-default [&_.recharts-radial-bar-background-sector]:fill-surface-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-surface-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border-default [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-sector]:outline-hidden [&_.recharts-surface]:outline-hidden",
           className,
         )}
