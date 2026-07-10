@@ -42,7 +42,7 @@ export function SiteFooter() {
           <div className="col-span-1 sm:col-span-2 md:col-span-1">
             <Link
               to="/"
-              className="inline-block mb-4 text-text-inverse hover:opacity-80 transition-opacity duration-150 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-text-inverse/40 rounded-sm"
+              className="inline-block mb-4 rounded-sm text-text-inverse hover:opacity-80 transition-opacity duration-150 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 focus-visible:ring-offset-brand-primary"
               aria-label="Home"
             >
               <PlanoLogo className="text-xl text-text-inverse" />

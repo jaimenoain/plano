@@ -27,7 +27,7 @@ export function TokenFlowMessage({ children, className }: { children: ReactNode;
 }
 
 const actionClass =
-  "inline-block text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70";
+  "inline-block text-xs font-medium uppercase tracking-widest text-text-primary transition-opacity hover:opacity-70";
 
 export function TokenFlowPrimaryLink({
   to,
@@ -65,7 +65,7 @@ export function TokenFlowSecondaryLink({
   children: ReactNode;
 }) {
   const secondaryClass =
-    "mt-4 inline-block text-xs font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors hover:text-text-primary";
+    "mt-4 inline-block text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary";
   if (href) {
     return (
       <a href={href} className={secondaryClass}>
