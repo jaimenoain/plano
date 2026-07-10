@@ -34,6 +34,15 @@
   --text-9xl: 8rem;
   --text-9xl--line-height: 8rem;
 
+  /* Letter-spacing scale — implements docs/DESIGN_TOKENS.md §3, which was never wired up.
+     Tailwind's defaults (wide 0.025em, widest 0.1em) contradict the spec (0.08em / 0.15em),
+     which is why ~242 call sites hand-wrote `tracking-[0.15em]`. Defining these makes
+     `tracking-wide` / `tracking-widest` mean what the design system says they mean. */
+  --tracking-tighter: -0.045em;
+  --tracking-tight: -0.03em;
+  --tracking-wide: 0.08em;
+  --tracking-widest: 0.15em;
+
   --spacing-collection-mosaic: 10.5rem;
   --spacing-mosaic-gap: 1.5px;
   --spacing-search-serp: 25rem;
