@@ -152,6 +152,8 @@ export default tseslint.config(
     // src/features/localities and src/features/guides joined with the city+guides PR.
     // src/features/{search,explore,maps} joined with the map/explore/itinerary PR.
     // src/features/{connect,notifications} joined with the events+connect+notifications PR.
+    // src/features/auth joined with the auth-flows PR (the whole feature is hex-clean,
+    // including its hooks, so it is covered as *.ts as well as *.tsx).
     //
     // maps is the one directory covered as *.ts as well as *.tsx: every hex it ever held
     // lived in .ts (constants.ts, utils/pinStyling.ts), which is precisely how the lime
@@ -178,6 +180,7 @@ export default tseslint.config(
       "src/features/connect/**/*.{ts,tsx}",
       "src/features/notifications/**/*.{ts,tsx}",
       "src/features/maps/**/*.{ts,tsx}",
+      "src/features/auth/**/*.{ts,tsx}",
     ],
     ignores: ["**/*.test.ts", "**/*.test.tsx"],
     rules: {

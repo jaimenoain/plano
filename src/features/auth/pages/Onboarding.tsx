@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, type MetaFunction } from "react-router";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useAuth } from "../hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LocationInput } from "@/components/ui/LocationInput";
 import { resizeImage } from "@/lib/image-compression";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
+import { OnboardingStepper } from "../components/OnboardingStepper";
 
 export const meta: MetaFunction = () => [
   { title: "Welcome to Plano" },
@@ -271,15 +272,15 @@ export default function Onboarding() {
     );
 
   return (
-    <div className="min-h-dvh bg-surface-default flex flex-col items-center justify-start md:justify-center overflow-y-auto safe-area-pt safe-area-pb px-4 py-4 md:py-8">
+    <div className="min-h-dvh w-full flex-1 bg-surface-default flex flex-col items-center justify-start md:justify-center overflow-y-auto safe-area-pt safe-area-pb px-4 py-4 md:py-8">
       <PlanoLogo className="text-2xl text-text-primary mb-4 md:mb-6 shrink-0" />
       <div className="w-full max-w-sm bg-surface-card border border-border-default rounded-sm shadow-none p-6 md:p-8 flex flex-col gap-4 md:gap-6 text-center">
-        <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
-          Step 1 of 3 · Profile
-        </p>
+        <OnboardingStepper total={3} current={1} />
+
+        <p className="eyebrow">Step 1 of 3 · Profile</p>
 
         <div className="space-y-2">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-text-primary">Welcome!</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-text-primary">Welcome.</h1>
           <p className="text-text-secondary">Let's set up your profile.</p>
         </div>
 
@@ -360,7 +361,7 @@ export default function Onboarding() {
                 placeholder="Choose a display name"
               />
             </div>
-            <p className="text-[10px] text-text-secondary">This is how other architecture lovers will see you.</p>
+            <p className="text-2xs text-text-secondary">This is how other architecture lovers will see you.</p>
           </div>
 
           {/* Location Field (Seamlessly sets Country) */}
@@ -374,18 +375,18 @@ export default function Onboarding() {
               }}
               placeholder="e.g. New York, USA"
             />
-            <p className="text-[10px] text-text-secondary">Helps us show local architecture info.</p>
+            <p className="text-2xs text-text-secondary">Helps us show local architecture info.</p>
           </div>
         </div>
 
         <div className="flex flex-col gap-3">
-          <Button onClick={handleSave} disabled={saving} className="w-full h-11 min-h-11 font-medium rounded-sm">
+          <Button onClick={handleSave} disabled={saving} variant="accent" className="w-full h-11 min-h-11 font-medium rounded-sm">
             {saving ? "Saving..." : "Save and Continue"}
           </Button>
           <button
             type="button"
             onClick={() => void handleSkip()}
-            className="min-h-11 w-full text-xs font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors hover:text-text-primary"
+            className="min-h-11 w-full text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
           >
             Skip for now
           </button>
