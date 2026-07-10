@@ -228,7 +228,7 @@ function RoleGroupedCreditsList({ credits }: { credits: CompanyCreditWithBuildin
           <h3 className="mb-4 text-sm font-medium text-text-primary">
             {formatCreditRoleLabel(role, null)}
           </h3>
-          <div>
+          <div className="grid grid-cols-1 gap-x-10 lg:grid-cols-2">
             {rows.map((c) => (
               <CompanyCreditCard key={c.id} credit={c} />
             ))}

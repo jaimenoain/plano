@@ -140,7 +140,7 @@ function CreditTierSection({
         <span>{tierLabel(tier)} credits</span>
         <span className="meta-code text-text-disabled">{String(credits.length).padStart(2, "0")}</span>
       </h2>
-      <div>
+      <div className="grid grid-cols-1 gap-x-10 lg:grid-cols-2">
         {credits.map((c) => (
           <PersonCreditCard key={c.id} credit={c} />
         ))}

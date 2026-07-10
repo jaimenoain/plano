@@ -36,7 +36,7 @@ export function CompanyCreditCard({ credit, className }: CompanyCreditCardProps)
   return (
     <article
       className={cn(
-        "flex flex-col gap-4 border-b border-border-default py-6 first:pt-0 last:border-b-0 sm:flex-row sm:gap-6",
+        "flex flex-col gap-4 border-b border-border-default py-6 sm:flex-row sm:gap-6",
         className
       )}
     >
