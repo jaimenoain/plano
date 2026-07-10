@@ -5152,7 +5152,12 @@ export type Database = {
       }
       get_building_leaderboards: { Args: never; Returns: Json }
       get_building_reviews: {
-        Args: { p_building_id: string }
+        Args: {
+          p_building_id: string
+          p_limit?: number
+          p_offset?: number
+          p_sort?: string
+        }
         Returns: {
           content: string
           created_at: string
@@ -7226,4 +7231,3 @@ export const Constants = {
     },
   },
 } as const
-

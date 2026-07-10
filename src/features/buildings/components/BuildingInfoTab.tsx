@@ -246,7 +246,7 @@ export function BuildingInfoTab({
 
       {/* Links & resources */}
       <section
-        className="py-12 border-t border-border-default"
+        className="py-8"
         aria-labelledby="building-resources-heading"
       >
         <header className="mb-8 space-y-2">
@@ -303,7 +303,7 @@ export function BuildingInfoTab({
         )}
 
         {topLinks.length > 0 ? (
-          <ul className="space-y-3">
+          <ul className="divide-y divide-border-default border-t border-border-default">
             {topLinks.map((link) => {
               let domain = "";
               try {
@@ -313,7 +313,7 @@ export function BuildingInfoTab({
               }
               return (
                 <li key={link.link_id}>
-                  <div className="group flex items-center justify-between gap-4 rounded-none border border-border-default bg-surface-card px-4 py-4 shadow-xs transition-colors hover:border-border-strong lg:px-5">
+                  <div className="group flex items-center justify-between gap-4 py-4">
                     <a
                       href={link.url}
                       target="_blank"
@@ -357,11 +357,9 @@ export function BuildingInfoTab({
             })}
           </ul>
         ) : (
-          <div className="rounded-none border border-dashed border-border-strong bg-surface-muted/40 px-5 py-10 text-center">
-            <p className="text-sm text-text-secondary">
-              No external links yet—add articles, competition pages, or the architect&apos;s project URL.
-            </p>
-          </div>
+          <p className="text-sm text-text-secondary">
+            No external links yet—add articles, competition pages, or the architect&apos;s project URL.
+          </p>
         )}
       </section>
 
