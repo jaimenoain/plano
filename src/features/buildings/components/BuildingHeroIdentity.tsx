@@ -1,4 +1,5 @@
 import { Medal } from "lucide-react";
+import { HeroIdentity } from "@/components/media/HeroIdentity";
 import { PrimaryCreditsLinks } from "./PrimaryCreditsLinks";
 import { visiblePrimaryCredits } from "../../credits/buildingCreditDisplay";
 import { formatBuildingStatusForDisplay } from "@/lib/buildingStatus";
@@ -32,7 +33,7 @@ export function BuildingHeroIdentity({
       : null;
 
   return (
-    <div className="space-y-3 text-text-inverse">
+    <HeroIdentity>
       {(building.tier_rank || isStatusBuilding || winnerAwardName) && (
         <div className="flex flex-wrap items-center gap-2">
           {building.tier_rank && (
@@ -75,6 +76,6 @@ export function BuildingHeroIdentity({
           />
         </div>
       )}
-    </div>
+    </HeroIdentity>
   );
 }
