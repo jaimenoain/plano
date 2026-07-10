@@ -110,7 +110,7 @@ export function EditorialFeedPost({
       {showPullQuote ? (
         <p
           className={cn(
-            "mb-[22px] max-w-[88%] text-[clamp(1.125rem,1.9vw,1.5rem)] font-medium leading-tight tracking-[-0.022em] text-text-secondary",
+            "mb-[22px] max-w-[34ch] text-[clamp(1.125rem,1.9vw,1.5rem)] font-medium leading-tight tracking-[-0.022em] text-text-secondary",
             contentWords > 40 && "line-clamp-4",
           )}
         >

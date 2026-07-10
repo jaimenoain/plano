@@ -182,7 +182,7 @@ function RecentBuildingsModule() {
   });
 
   return (
-    <section className="border-t border-border-default pt-5">
+    <section className="border-t border-border-default pt-9">
       <ModuleHeader title="Recently added" />
       {isLoading ? (
         <ul className="space-y-3">
@@ -253,7 +253,7 @@ function SidebarFooter() {
   ];
 
   return (
-    <section className="border-t border-border-default pt-5 pb-2">
+    <section className="border-t border-border-default pt-9 pb-2">
       <nav className="flex flex-wrap gap-x-3.5 gap-y-1.5 text-[11px] text-text-disabled">
         {links.map((link) => (
           <Link
