@@ -1,70 +1,81 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { EventCardDTO } from "@/features/events/types";
 import { getEventUrl } from "@/utils/url";
 import { cn } from "@/lib/utils";
-import { EventDateTile } from "@/features/events/components/EventGridCard";
-import {
-  formatEventListWhen,
-  organiserAvatarUrl,
-  organiserLine,
-} from "@/features/events/components/eventFormat";
+import { EventDateCard } from "@/features/events/components/EventGridCard";
+import { formatEventListWhen, organiserLine } from "@/features/events/components/eventFormat";
 
 export function EventHeroCardSkeleton({ className }: { className?: string }) {
   return (
-    <div className={cn("aspect-video w-full animate-pulse bg-surface-muted md:aspect-21/9", className)} />
+    <div className={cn("grid animate-pulse border border-border-default md:grid-cols-[1.35fr_1fr]", className)}>
+      <div className="aspect-4/3 w-full bg-surface-muted" />
+      <div className="flex flex-col justify-between gap-8 p-8 sm:p-10">
+        <div className="h-11 w-4/5 bg-surface-muted" />
+        <div className="h-16 w-1/2 bg-surface-muted" />
+      </div>
+    </div>
   );
 }
 
+/**
+ * Kit `.ev-hero` — the featured event as a bordered two-column article: photo left,
+ * black-on-white body right. Border only: no shadow, no radius, no scrim.
+ */
 export function EventHeroCard({ event }: { event: EventCardDTO }) {
   const [coverFailed, setCoverFailed] = useState(false);
   const showCover = Boolean(event.coverImageUrl?.trim()) && !coverFailed;
-  const avatarUrl = organiserAvatarUrl(event);
 
   return (
-    <Link
-      to={getEventUrl(event)}
-      className="group relative block aspect-video w-full overflow-hidden bg-surface-muted touch-manipulation focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 md:aspect-21/9"
-    >
-      {showCover ? (
-        <img
-          src={event.coverImageUrl!}
-          alt=""
-          loading="eager"
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={() => setCoverFailed(true)}
-        />
-      ) : (
-        <EventDateTile iso={event.startAt} />
-      )}
+    <article className="grid border border-border-default bg-surface-card md:grid-cols-[1.35fr_1fr]">
+      <div className="aspect-4/3 w-full overflow-hidden">
+        {showCover ? (
+          <img
+            src={event.coverImageUrl!}
+            alt=""
+            loading="eager"
+            className="h-full w-full object-cover"
+            onError={() => setCoverFailed(true)}
+          />
+        ) : (
+          <div className="photo-placeholder h-full w-full" data-label={event.title} />
+        )}
+      </div>
 
-      <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/20 to-transparent" />
+      <div className="flex flex-col justify-between p-8 sm:p-10">
+        <div>
+          <p className="eyebrow tracking-widest">Featured</p>
 
-      <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 p-5 text-text-inverse sm:p-8">
-        <span className="text-2xs font-medium uppercase tracking-[0.2em] text-brand-accent">Featured</span>
-        <h2 className="line-clamp-2 max-w-3xl text-2xl font-black leading-tight sm:text-4xl">
-          {event.title}
-        </h2>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-inverse/90">
-          <span>{formatEventListWhen(event.startAt)}</span>
-          {event.address ? (
-            <>
-              <span aria-hidden className="text-text-inverse/50">·</span>
-              <span className="truncate">{event.address}</span>
-            </>
-          ) : null}
+          <h2 className="mt-5 text-4xl font-bold leading-none tracking-tight text-text-primary">
+            <Link
+              to={getEventUrl(event)}
+              className="transition-colors hover:text-text-secondary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2"
+            >
+              {event.title}
+            </Link>
+          </h2>
+
+          <div className="mt-7 flex items-center gap-5">
+            <EventDateCard iso={event.startAt} />
+            <p className="text-sm leading-relaxed text-text-secondary">
+              {formatEventListWhen(event.startAt)}
+              {event.address ? (
+                <>
+                  <br />
+                  <span className="font-medium text-text-primary">{event.address}</span>
+                </>
+              ) : null}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-2 pt-1">
-          <Avatar className="h-6 w-6 border border-white/20">
-            {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
-            <AvatarFallback className="bg-surface-inverse text-2xs font-medium text-text-inverse">
-              {(event.organiser?.displayName ?? event.submittedBy.username ?? "?").charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <span className="truncate text-sm text-text-inverse/90">{organiserLine(event)}</span>
+
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+          <span className="meta-code uppercase">{organiserLine(event)}</span>
+          <Link to={getEventUrl(event)} className="cta-link">
+            Details
+          </Link>
         </div>
       </div>
-    </Link>
+    </article>
   );
 }

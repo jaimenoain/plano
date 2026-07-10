@@ -2,10 +2,10 @@
  * YourContacts.tsx — Redesigned with A24 editorial aesthetic
  *
  * Changes:
- *  - Section label: text-2xs uppercase tracking-[0.15em] (no Users icon)
+ *  - Section label: the `.eyebrow` utility at `tracking-widest` (no Users icon)
  *  - Shadcn <Tabs> replaced with a custom metric tab strip identical to the
  *    Profile.tsx pattern: large bold count above a tiny uppercase label,
- *    border-b-2 active indicator, no filled pill background
+ *    border-b-2 active indicator, no filled pill background (kit `.metric-tab`)
  *  - Switched from Tabs defaultValue to useState for active tab control
  *  - bg-surface-card border rounded-xl container removed from both tab panels —
  *    UserRows flow directly on the page surface with border-b dividers
@@ -153,9 +153,7 @@ export function YourContacts() {
   return (
     <div>
       {/* Section label */}
-      <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-6">
-        Your contacts
-      </p>
+      <p className="eyebrow tracking-widest mb-6">Your contacts</p>
 
       {/* ── Metric tab strip — same pattern as Profile.tsx ── */}
       <div className="flex border-b border-border-default mb-0">
@@ -173,14 +171,14 @@ export function YourContacts() {
               }`}
             >
               <div
-                className={`text-base font-bold tracking-tight leading-none ${
+                className={`text-xl font-bold tracking-tight leading-none ${
                   isActive ? "text-text-primary" : "text-text-disabled"
                 }`}
               >
                 {tab.count.toLocaleString()}
               </div>
               <div
-                className={`text-2xs font-medium tracking-[0.15em] uppercase mt-0.5 ${
+                className={`text-2xs font-medium tracking-widest uppercase mt-1.5 ${
                   isActive ? "text-text-secondary" : "text-text-disabled"
                 }`}
               >

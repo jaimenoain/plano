@@ -76,20 +76,13 @@ export default function Events() {
   return (
     <AppLayout title="Events" showBack={false}>
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-        <header className="mb-10 flex flex-col gap-4 border-b border-border-default pb-8 sm:flex-row sm:items-end sm:justify-between">
+        <header className="mb-11 flex flex-col gap-4 border-b border-border-default pb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="mb-2 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
-              Community calendar
-            </p>
-            <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary sm:text-4xl">
-              Upcoming events
-            </h1>
+            <p className="eyebrow tracking-widest">Community calendar</p>
+            <h1 className="headline mt-2.5">Upcoming events</h1>
           </div>
-          <Link
-            to="/events/new"
-            className="text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
-          >
-            Share an event →
+          <Link to="/events/new" className="cta-link">
+            Share an event
           </Link>
         </header>
 
@@ -100,9 +93,9 @@ export default function Events() {
         ) : null}
 
         {showInitialSkeleton ? (
-          <div className="space-y-10">
+          <div className="space-y-16">
             <EventHeroCardSkeleton />
-            <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
               <EventGridCardSkeleton />
               <EventGridCardSkeleton />
               <EventGridCardSkeleton />
@@ -112,18 +105,15 @@ export default function Events() {
           <div className="flex flex-col items-center justify-center border-y border-border-default px-4 py-16 text-center">
             <CalendarDays className="mb-4 h-10 w-10 text-text-disabled" aria-hidden />
             <p className="max-w-sm text-sm text-text-secondary">No upcoming events yet.</p>
-            <Link
-              to="/events/new"
-              className="mt-6 text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
-            >
-              Share the first event →
+            <Link to="/events/new" className="cta-link mt-6">
+              Share the first event
             </Link>
           </div>
         ) : (
-          <div className="space-y-10">
+          <div className="space-y-16">
             {featured ? <EventHeroCard event={featured} /> : null}
             {rest.length > 0 ? (
-              <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
                 {rest.map((ev) => (
                   <EventGridCard key={ev.id} event={ev} />
                 ))}
@@ -133,7 +123,7 @@ export default function Events() {
         )}
 
         {query.isFetchingNextPage ? (
-          <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-14 grid grid-cols-1 gap-x-6 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
             <EventGridCardSkeleton />
             <EventGridCardSkeleton />
             <EventGridCardSkeleton />

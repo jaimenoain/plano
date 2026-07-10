@@ -144,8 +144,8 @@ export function PeopleYouMayKnow({
     <p
       className={
         isStacked
-          ? "mb-3.5 text-[11px] font-medium uppercase tracking-[0.15em] text-text-disabled"
-          : "text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-4"
+          ? "mb-3.5 text-2xs-plus font-medium uppercase tracking-widest text-text-disabled"
+          : "eyebrow tracking-widest mb-4"
       }
     >
       {heading}

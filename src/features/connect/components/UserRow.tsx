@@ -126,7 +126,7 @@ export function UserRow({
   if (layout === "stacked") {
     return (
       <div
-        className="group relative flex flex-col gap-3 border-b border-border-default p-4 transition-colors hover:bg-brand-secondary cursor-pointer"
+        className="group relative flex flex-col gap-3 border-b border-border-default p-4 transition-colors hover:bg-surface-muted cursor-pointer"
         onClick={() => navigate(`/profile/${user.username?.toLowerCase() || user.id}`)}
       >
         {onHide && (
@@ -150,7 +150,7 @@ export function UserRow({
           </Avatar>
           <div className="min-w-0 flex-1 pr-5">
             <span
-              className="block text-sm font-semibold text-text-primary line-clamp-2"
+              className="block text-sm font-medium text-text-primary line-clamp-2"
               title={displayName}
             >
               {displayName}
@@ -175,7 +175,7 @@ export function UserRow({
 
   return (
     <div
-      className="flex min-w-0 items-center justify-between gap-3 p-4 border-b border-border-default hover:bg-brand-secondary transition-colors cursor-pointer relative group"
+      className="flex min-w-0 items-center justify-between gap-3 p-4 border-b border-border-default hover:bg-surface-muted transition-colors cursor-pointer relative group"
       onClick={() => navigate(`/profile/${user.username?.toLowerCase() || user.id}`)}
     >
       {identityBlock}

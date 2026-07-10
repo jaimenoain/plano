@@ -1,7 +1,7 @@
 {
   "comment": "ESLint warning ceiling per bucket (with per-file detail so regressions name the exact new files). CI fails if any bucket EXCEEDS its count. Only lower numbers via --update after a cleanup; never raise one to make CI pass.",
   "counts": {
-    "no-restricted-imports/deep-feature": 631,
+    "no-restricted-imports/deep-feature": 630,
     "no-restricted-imports/supabase-client": 133,
     "other": 5,
     "react-hooks/exhaustive-deps": 61
@@ -219,7 +219,7 @@
       "src/features/maps/hooks/useBuildingDrawerData.ts": 1,
       "src/features/maps/hooks/useBuildingStatusActions.ts": 2,
       "src/features/notifications/components/NotificationSettingsDialog.tsx": 1,
-      "src/features/notifications/pages/Notifications.tsx": 2,
+      "src/features/notifications/pages/Notifications.tsx": 1,
       "src/features/posts/components/ActivityStream.tsx": 1,
       "src/features/posts/components/card-parts/CardAuthor.tsx": 1,
       "src/features/posts/components/card-parts/CardImage.tsx": 2,
