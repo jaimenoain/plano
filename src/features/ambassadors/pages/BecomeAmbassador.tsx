@@ -265,7 +265,7 @@ export default function BecomeAmbassador() {
   return (
     <div className="w-full">
       <AppLayout title="Become an ambassador" showLogo={false}>
-        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+        <div className="w-full max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 pb-24">
           <header className="pt-16 pb-20 border-b border-border-default">
             <AmbassadorMarketingEyebrow>Ambassador programme</AmbassadorMarketingEyebrow>
             <h1 className="mt-8 text-4xl sm:text-6xl font-bold tracking-tight leading-tight text-text-primary">
@@ -292,9 +292,7 @@ export default function BecomeAmbassador() {
             <div className="space-y-10">
               {responsibilitySteps.map((step) => (
                 <div key={step.index} className="grid gap-4 sm:grid-cols-[3rem_1fr]">
-                  <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
-                    {step.index}
-                  </p>
+                  <AmbassadorMarketingEyebrow>{step.index}</AmbassadorMarketingEyebrow>
                   <div className="space-y-2">
                     <h3 className="text-lg font-bold tracking-tight text-text-primary">{step.heading}</h3>
                     <p className="text-sm leading-relaxed text-text-secondary">{step.body}</p>

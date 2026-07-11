@@ -110,7 +110,7 @@ export default function EmbassyLayout() {
         <div className="flex flex-col min-h-screen bg-surface-default">
           {/* Shared Navigation Tab Bar */}
           <header className="sticky top-0 z-40 w-full border-b border-border-default bg-surface-default/95 backdrop-blur-sm supports-backdrop-filter:bg-surface-default/70">
-            <div className="container flex h-14 items-center overflow-x-auto no-scrollbar">
+            <div className="mx-auto w-full max-w-[1120px] px-4 sm:px-6 lg:px-8 flex h-14 items-center overflow-x-auto no-scrollbar">
               <nav className="flex items-center space-x-6 text-sm font-medium">
                 {navItems.map((item) => {
                   const isActive = isEmbassyNavItemActive(item, location.pathname);
@@ -135,7 +135,7 @@ export default function EmbassyLayout() {
           </header>
 
           <main className="flex-1">
-            <div className="container py-6 sm:py-10 px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto w-full max-w-[1120px] py-6 sm:py-10 px-4 sm:px-6 lg:px-8">
               <Outlet />
             </div>
           </main>

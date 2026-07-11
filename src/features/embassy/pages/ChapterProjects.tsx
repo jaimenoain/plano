@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Plus, Pin, CheckCircle2, Archive, Loader2, Trash2,
+  Plus, CheckCircle2, Archive, Loader2, Trash2,
   Target, Lightbulb, CheckCheck, Inbox, Circle, Clock, CalendarDays,
   Users, Eye, EyeOff, Pencil, Zap, Building2,
 } from "lucide-react";
@@ -717,7 +717,6 @@ export default function ChapterProjectsPage() {
         <EmbassyErrorState message="Could not load projects. Check your database migrations or try again later." />
       ) : published.length === 0 ? (
         <EmbassyEmptyState
-          icon={<Pin className="h-10 w-10" />}
           title="No projects yet"
           description={
             isLeader
@@ -894,7 +893,7 @@ export default function ChapterProjectsPage() {
                 </div>
 
                 {projectTasks.length === 0 ? (
-                  <div className="py-12 text-center border border-dashed rounded-lg space-y-2">
+                  <div className="py-12 text-center border border-dashed rounded-sm space-y-2">
                     <Circle className="h-8 w-8 mx-auto text-text-secondary/40" />
                     <p className="text-sm text-text-secondary">No tasks yet — add the first one above.</p>
                   </div>
@@ -935,7 +934,7 @@ export default function ChapterProjectsPage() {
 
             const editableRowCls = (field: string) =>
               cn(
-                "flex items-start gap-3 rounded-md -mx-2 px-2 py-1 transition-colors",
+                "flex items-start gap-3 rounded-sm -mx-2 px-2 py-1 transition-colors",
                 canEdit && taskEditingField !== field && "cursor-pointer hover:bg-surface-muted/50",
               );
 
@@ -1161,7 +1160,7 @@ export default function ChapterProjectsPage() {
                           )}
                         </div>
                         {inlineCompanyQuery.length >= 2 && (
-                          <div className="border rounded-md divide-y max-h-36 overflow-y-auto">
+                          <div className="border rounded-sm divide-y max-h-36 overflow-y-auto">
                             {isInlineSearching ? (
                               <div className="p-2 text-xs text-text-secondary flex items-center gap-2">
                                 <Loader2 className="h-3 w-3 animate-spin" /> Searching…
@@ -1532,7 +1531,7 @@ function DrawerTaskRow({
   return (
     <div
       className={cn(
-        "flex items-start gap-3 p-3 rounded-lg border border-border-default bg-surface-card cursor-pointer hover:shadow-xs transition-all",
+        "flex items-start gap-3 p-3 rounded-sm border border-border-default bg-surface-card cursor-pointer hover:shadow-xs transition-all",
         task.status === "done" && "opacity-60",
       )}
       onClick={onOpen}

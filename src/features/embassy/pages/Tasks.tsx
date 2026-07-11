@@ -528,11 +528,10 @@ export default function TasksPage() {
         <EmbassyErrorState message="Failed to load tasks. Check your database migrations or try again." />
       ) : tasks.length === 0 ? (
         <EmbassyEmptyState
-          icon={<CheckCircle2 className="h-10 w-10" />}
           title="No tasks yet"
           description="Create a task and assign it to a team member to get started."
         >
-          <Button variant="outline" className="mt-2" onClick={openCreate}>
+          <Button variant="outline" onClick={openCreate}>
             Create the first task
           </Button>
         </EmbassyEmptyState>
@@ -593,7 +592,7 @@ export default function TasksPage() {
             // Shared class for editable rows
             const editableRowCls = (field: string) =>
               cn(
-                "flex items-start gap-3 rounded-md -mx-2 px-2 py-1 transition-colors",
+                "flex items-start gap-3 rounded-sm -mx-2 px-2 py-1 transition-colors",
                 canEdit && editingField !== field && "cursor-pointer hover:bg-surface-muted/50",
               );
 
@@ -873,7 +872,7 @@ export default function TasksPage() {
                           )}
                         </div>
                         {inlineCompanyQuery.length >= 2 && (
-                          <div className="border rounded-md divide-y max-h-36 overflow-y-auto">
+                          <div className="border rounded-sm divide-y max-h-36 overflow-y-auto">
                             {isInlineSearching ? (
                               <div className="p-2 text-xs text-text-secondary flex items-center gap-2">
                                 <Loader2 className="h-3 w-3 animate-spin" /> Searching…
@@ -1124,7 +1123,7 @@ export default function TasksPage() {
               <Label htmlFor="task-firm">Link to architecture firm (optional)</Label>
               {form.company_id ? (
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 px-3 py-2 border rounded-md text-sm flex items-center gap-2">
+                  <div className="flex-1 px-3 py-2 border rounded-sm text-sm flex items-center gap-2">
                     <Building2 className="h-3.5 w-3.5 text-text-secondary shrink-0" />
                     {form.company_name}
                   </div>
@@ -1145,7 +1144,7 @@ export default function TasksPage() {
                     onChange={(e) => patchForm({ company_query: e.target.value })}
                   />
                   {form.company_query.length >= 2 && (
-                    <div className="border rounded-md divide-y max-h-40 overflow-y-auto">
+                    <div className="border rounded-sm divide-y max-h-40 overflow-y-auto">
                       {isSearching ? (
                         <div className="p-2 text-xs text-text-secondary flex items-center gap-2">
                           <Loader2 className="h-3 w-3 animate-spin" /> Searching…

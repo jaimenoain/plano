@@ -6,7 +6,6 @@ import { fetchChapterTeam, type ChapterTeamMember } from "@/features/embassy/api
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   EmbassyEmptyState,
@@ -139,7 +138,6 @@ export default function TeamPage() {
         <EmbassyErrorState message="Failed to load team. Please try again." />
       ) : !members?.length ? (
         <EmbassyEmptyState
-          icon={<Users className="h-10 w-10" />}
           title="No team members yet"
           description="Your chapter hasn't set up its team yet."
         />
