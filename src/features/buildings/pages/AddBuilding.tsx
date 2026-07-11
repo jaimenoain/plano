@@ -482,7 +482,7 @@ toast.error("Location search failed. Please click on the map to set the location
                 {/* Location Matches */}
                 {duplicates.some(d => d.dist_meters <= 50 || d.location_precision === 'approximate') && (
                     <div className="space-y-2">
-                        <div className="text-2xs font-medium uppercase text-text-secondary tracking-widest flex items-center gap-2">
+                        <div className="eyebrow tracking-widest flex items-center gap-2">
                            <MapPin className="h-3 w-3" /> Same location / vicinity
                         </div>
                         {duplicates.filter(d => d.dist_meters <= 50 || d.location_precision === 'approximate').map(building => (
@@ -495,8 +495,8 @@ toast.error("Location search failed. Please click on the map to set the location
                                   // Locality URL not available: NearbyBuilding does not include locality_country_code/city_slug — requires duplicate-check RPC to join localities table
                                   onClick={() => navigate(getBuildingUrl(building.id))}
                                 >
-                                  <Avatar className="h-10 w-10 rounded-md">
-                                    <AvatarFallback className="rounded-md">
+                                  <Avatar className="h-10 w-10 rounded-none">
+                                    <AvatarFallback className="rounded-none">
                                       <Building2 className="h-5 w-5 text-text-secondary" />
                                     </AvatarFallback>
                                   </Avatar>
@@ -521,22 +521,22 @@ toast.error("Location search failed. Please click on the map to set the location
                 {/* Name Matches */}
                 {duplicates.some(d => d.dist_meters > 50 && d.location_precision !== 'approximate') && (
                     <div className="space-y-2 pt-2">
-                        <div className="text-2xs font-medium uppercase text-text-secondary tracking-widest">
+                        <div className="eyebrow tracking-widest">
                            Similar names (far away)
                         </div>
                          {duplicates.filter(d => d.dist_meters > 50 && d.location_precision !== 'approximate').map(building => (
                              <div
                                 key={building.id}
-                                className="flex flex-col gap-2 p-3 rounded-md border text-sm hover:bg-surface-muted/50 transition-colors"
+                                className="flex flex-col gap-2 p-3 rounded-sm border text-sm hover:bg-surface-muted/50 transition-colors"
                               >
                                 <div
                                   className="cursor-pointer flex gap-3"
                                   // Locality URL not available: NearbyBuilding does not include locality_country_code/city_slug — requires duplicate-check RPC to join localities table
                                   onClick={() => navigate(getBuildingUrl(building.id))}
                                 >
-                                  <Avatar className="h-10 w-10 rounded-md">
+                                  <Avatar className="h-10 w-10 rounded-none">
                                     <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
-                                    <AvatarFallback className="rounded-md">
+                                    <AvatarFallback className="rounded-none">
                                       <Building2 className="h-5 w-5 text-text-secondary" />
                                     </AvatarFallback>
                                   </Avatar>
@@ -636,7 +636,7 @@ toast.error("Location search failed. Please click on the map to set the location
                      <div className="group relative flex flex-col items-center">
                         {/* Tooltip */}
                         <div className="absolute bottom-full mb-2 hidden group-hover:flex flex-col items-center whitespace-nowrap">
-                            <div className="bg-foreground text-background text-xs px-2 py-1 rounded shadow-lg">
+                            <div className="bg-foreground text-background text-xs px-2 py-1 rounded-sm border border-border-default">
                                 {building.name} {status && `(${status})`}
                             </div>
                             <div className="w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-foreground"></div>
@@ -699,7 +699,7 @@ toast.error("Location search failed. Please click on the map to set the location
             <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 my-2">
                 {duplicates.some(d => d.dist_meters <= 50 || d.location_precision === 'approximate') && (
                     <div className="space-y-2">
-                        <div className="text-2xs font-medium uppercase text-text-secondary tracking-widest flex items-center gap-2">
+                        <div className="eyebrow tracking-widest flex items-center gap-2">
                             <MapPin className="h-3 w-3" /> Same location / vicinity
                         </div>
                         {duplicates.filter(d => d.dist_meters <= 50 || d.location_precision === 'approximate').map(building => (
@@ -712,8 +712,8 @@ toast.error("Location search failed. Please click on the map to set the location
                                     // Locality URL not available: NearbyBuilding does not include locality_country_code/city_slug — requires duplicate-check RPC to join localities table
                                     onClick={() => navigate(getBuildingUrl(building.id))}
                                 >
-                                    <Avatar className="h-10 w-10 rounded-md">
-                                        <AvatarFallback className="rounded-md">
+                                    <Avatar className="h-10 w-10 rounded-none">
+                                        <AvatarFallback className="rounded-none">
                                             <Building2 className="h-5 w-5 text-text-secondary" />
                                         </AvatarFallback>
                                     </Avatar>
@@ -736,22 +736,22 @@ toast.error("Location search failed. Please click on the map to set the location
 
                 {duplicates.some(d => d.dist_meters > 50 && d.location_precision !== 'approximate') && (
                     <div className="space-y-2 pt-2">
-                        <div className="text-2xs font-medium uppercase text-text-secondary tracking-widest">
+                        <div className="eyebrow tracking-widest">
                             Similar names (far away)
                         </div>
                         {duplicates.filter(d => d.dist_meters > 50 && d.location_precision !== 'approximate').map(building => (
                             <div
                                 key={building.id}
-                                className="flex flex-col gap-2 p-3 rounded-md border text-sm hover:bg-surface-muted/50 transition-colors"
+                                className="flex flex-col gap-2 p-3 rounded-sm border text-sm hover:bg-surface-muted/50 transition-colors"
                             >
                                 <div
                                     className="cursor-pointer flex gap-3"
                                     // Locality URL not available: NearbyBuilding does not include locality_country_code/city_slug — requires duplicate-check RPC to join localities table
                                     onClick={() => navigate(getBuildingUrl(building.id))}
                                 >
-                                    <Avatar className="h-10 w-10 rounded-md">
+                                    <Avatar className="h-10 w-10 rounded-none">
                                       <AvatarImage src={getBuildingImageUrl(building.main_image_url) || undefined} alt={building.name} className="object-cover" />
-                                        <AvatarFallback className="rounded-md">
+                                        <AvatarFallback className="rounded-none">
                                             <Building2 className="h-5 w-5 text-text-secondary" />
                                         </AvatarFallback>
                                     </Avatar>

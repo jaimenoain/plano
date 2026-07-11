@@ -338,7 +338,7 @@ toast.error("Unexpected error");
 
   return (
     <AppLayout title="Edit Building" showBack>
-      <div className="w-full min-w-0 max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+      <div className="w-full min-w-0 max-w-2xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
         <BuildingPageHeader
           title="Edit Building"
           description="Update location and catalogue details for this building."
@@ -361,7 +361,7 @@ toast.error("Unexpected error");
                 />
 
                 {duplicates.length > 0 && (
-                    <div className="rounded-lg border border-feedback-destructive/50 bg-feedback-destructive/10 p-4 text-feedback-destructive mt-4">
+                    <div className="rounded-sm border border-feedback-destructive/50 bg-feedback-destructive/10 p-4 text-feedback-destructive mt-4">
                         <div className="flex items-center gap-2 font-medium mb-1">
                             <AlertTriangle className="h-4 w-4" />
                             Potential Duplicates Found

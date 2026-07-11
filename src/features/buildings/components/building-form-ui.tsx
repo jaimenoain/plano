@@ -13,7 +13,7 @@ export function BuildingPageHeader({
 }) {
   return (
     <header className="space-y-2">
-      <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">{eyebrow}</p>
+      <p className="eyebrow tracking-widest">{eyebrow}</p>
       <h1 className="text-3xl font-bold tracking-tight leading-tight text-text-primary md:text-4xl">
         {title}
       </h1>
@@ -41,7 +41,7 @@ export function BuildingFormSection({
       )}
     >
       <div className="space-y-1">
-        <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">{title}</h2>
+        <h2 className="eyebrow tracking-widest">{title}</h2>
         {description ? <p className="text-sm text-text-secondary">{description}</p> : null}
       </div>
       {children}
@@ -61,7 +61,7 @@ export function BuildingFormLabel({
   return (
     <label
       htmlFor={htmlFor}
-      className={cn("text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary", className)}
+      className={cn("eyebrow tracking-widest", className)}
     >
       {children}
     </label>
@@ -82,7 +82,7 @@ export function BuildingFormPanel({
     <div className={cn("rounded-sm border border-border-default bg-surface-default", className)}>
       {title ? (
         <div className="border-b border-border-default px-4 py-3">
-          <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">{title}</p>
+          <p className="eyebrow tracking-widest">{title}</p>
         </div>
       ) : null}
       <div className="p-4">{children}</div>

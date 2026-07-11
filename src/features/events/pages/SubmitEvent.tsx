@@ -39,7 +39,7 @@ type SelectedBuilding = { id: string; name: string };
 function FormSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="space-y-4 border-t border-border-default pt-8 first:border-t-0 first:pt-0">
-      <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">{title}</h2>
+      <h2 className="eyebrow tracking-widest">{title}</h2>
       {children}
     </section>
   );
@@ -416,7 +416,7 @@ export default function SubmitEvent() {
     <AppLayout title={pageTitle} showBack>
       <div className="mx-auto max-w-2xl px-4 py-8">
         <header className="space-y-2">
-          <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+          <p className="eyebrow tracking-widest">
             {isEditMode ? "Edit event" : "New event"}
           </p>
           <h1 className="text-3xl font-bold tracking-tight text-text-primary">{pageTitle}</h1>
