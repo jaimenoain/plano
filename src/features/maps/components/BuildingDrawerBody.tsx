@@ -564,7 +564,7 @@ export function BuildingDrawerBody({ cluster, onClose, layout }: BuildingDrawerB
       </div>
 
       {/* ── 7. Sticky footer CTA ── */}
-      <div className="shrink-0 border-t border-border-default bg-surface-card p-3">
+      <div className="shrink-0 border-t border-border-default bg-surface-card p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         <Link
           to={fullUrl}
           onClick={onClose}
