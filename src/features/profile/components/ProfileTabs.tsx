@@ -19,7 +19,7 @@ interface ProfileTabsProps<K extends string> {
 export function ProfileTabs<K extends string>({ tabs, activeKey, onChange }: ProfileTabsProps<K>) {
   return (
     <div className="sticky top-0 z-20 border-b border-border-default bg-surface-default">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 sm:px-6 lg:px-8">
         <div className="flex gap-7 overflow-x-scroll-touch">
           {tabs.map((tab) => {
             const isActive = activeKey === tab.key;

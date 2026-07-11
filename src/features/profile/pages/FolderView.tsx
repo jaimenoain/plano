@@ -204,7 +204,7 @@ setError("Failed to load folder");
 
   return (
     <AppLayout title={folder.name} showLogo={false} showBack>
-       <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+       <div className="mx-auto max-w-[1120px] px-4 py-10 sm:px-6">
            <header className="mb-10 border-b border-border-default pb-8">
                <button
                  type="button"
@@ -215,7 +215,7 @@ setError("Failed to load folder");
                </button>
                <div className="flex items-start justify-between gap-4">
                    <div className="min-w-0">
-                       <p className="mb-2 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+                       <p className="eyebrow mb-2">
                          Collection folder
                        </p>
                        <h1 className="mb-2 flex items-center gap-3 text-3xl font-bold tracking-tight leading-none text-text-primary sm:text-4xl">

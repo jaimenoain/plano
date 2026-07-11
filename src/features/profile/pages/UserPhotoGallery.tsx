@@ -272,9 +272,9 @@ export default function UserPhotoGallery() {
 
   return (
     <AppLayout title={`${profileUsername}'s Photos`} showBack showLogo={false}>
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 py-10 sm:px-6 lg:px-8">
         <header className="mb-8 border-b border-border-default pb-6">
-          <p className="mb-2 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+          <p className="eyebrow mb-2">
             {profileUsername}
           </p>
           <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary md:text-4xl">

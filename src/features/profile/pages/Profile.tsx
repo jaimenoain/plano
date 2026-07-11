@@ -109,7 +109,7 @@ const PROFILE_PAGE_SELECT =
 export function HydrateFallback() {
   return (
     <AppLayout title="Profile" showLogo={false} showBack>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
+      <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
         <div className="flex gap-8 items-start">
           <Skeleton className="size-20 sm:size-26 shrink-0 rounded-full" />
           <div className="flex-1 space-y-5">
@@ -888,7 +888,7 @@ export default function Profile() {
       <AppLayout title={profile?.username || "Profile"} showLogo={false} showBack={!isOwnProfile} fullWidth>
 
         {/* ══ PROFILE HERO ══════════════════════════════════════════════════ */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8">
           <ProfileHero
             profile={profile}
             isOwnProfile={isOwnProfile}
@@ -926,7 +926,7 @@ export default function Profile() {
         </div>
 
         {isOwnProfile && claimedPersonForProfile ? (
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
+          <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 pt-12">
             <p className="eyebrow mb-2 tracking-widest">Professional profile</p>
             <Link
               to={`/person/${claimedPersonForProfile.slug}`}
@@ -947,7 +947,7 @@ export default function Profile() {
         </div>
 
         {/* ══ CONTENT BODY ═════════════════════════════════════════════════ */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="min-h-[60vh] pt-16 pb-10">
 
             {/* ── PORTFOLIO (claimed `people` row — link to full dashboard or public person page) ── */}
@@ -1198,20 +1198,6 @@ export default function Profile() {
                     </div>
                   </div>
                 )}
-
-                <div>
-                  <p className="text-2xs font-medium tracking-widest uppercase text-text-disabled mb-5">Connections</p>
-                  <div className="flex gap-12">
-                    <button onClick={() => openUserList("followers")} className="text-left hover:opacity-60 active:opacity-60 transition-opacity">
-                      <div className="text-3xl font-bold tracking-tight text-text-primary leading-none">{stats.followers}</div>
-                      <div className="text-2xs font-medium tracking-widest uppercase text-text-secondary mt-1.5">Followers</div>
-                    </button>
-                    <button onClick={() => openUserList("following")} className="text-left hover:opacity-60 active:opacity-60 transition-opacity">
-                      <div className="text-3xl font-bold tracking-tight text-text-primary leading-none">{stats.following}</div>
-                      <div className="text-2xs font-medium tracking-widest uppercase text-text-secondary mt-1.5">Following</div>
-                    </button>
-                  </div>
-                </div>
 
                 {squad.length > 0 && isOwnProfile && (
                   <div>
