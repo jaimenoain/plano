@@ -3,6 +3,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Trophy, MapPin, Calendar, ChevronRight } from "lucide-react";
 import { awardEditionLoader, type AwardEditionLoaderData } from "./AwardEditionPage.loader";
 import { AwardRecipientCard } from "../components/AwardRecipientCard";
+import { EmptyState } from "@/components/ui/empty-state";
 import { getEditionDisplayLabel, type AwardRecipientDTO } from "../types/awards";
 
 export { awardEditionLoader as loader } from "./AwardEditionPage.loader";
@@ -40,7 +41,7 @@ export default function AwardEditionPage() {
 
   return (
     <AppLayout showBack title={`${award.name} ${displayLabel}`} showHeader>
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
         <header className="mb-12">
           <nav className="flex items-center gap-1.5 text-2xs font-bold uppercase tracking-[0.15em] text-text-secondary mb-6">
             <Link to="/" className="hover:text-text-primary">Home</Link>
@@ -80,14 +81,15 @@ export default function AwardEditionPage() {
 
         <div className="space-y-16">
           {categories.length === 0 ? (
-            <div className="py-12 text-center border border-dashed border-border-default rounded-sm">
-              <p className="text-sm text-text-secondary">No recipients listed for this edition yet.</p>
-            </div>
+            <EmptyState
+              eyebrow="No recipients yet"
+              message="Recipients for this edition will appear here once they're recorded."
+            />
           ) : (
             categories.map((categoryName) => (
               <section key={categoryName}>
                 {categoryName !== 'Main Award' && (
-                  <h2 className="mb-6 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary border-b border-border-default pb-3">
+                  <h2 className="mb-6 eyebrow tracking-widest border-b border-border-default pb-3">
                     {categoryName}
                   </h2>
                 )}

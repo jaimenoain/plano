@@ -39,7 +39,7 @@ export function AwardRecipientCard({ recipient, className, showAwardName = false
 
     return (
       <div className="flex items-center gap-3 min-w-0">
-        <div className="relative shrink-0 w-12 h-12 rounded-sm overflow-hidden bg-surface-muted border border-border-default">
+        <div className="relative shrink-0 w-12 h-12 overflow-hidden bg-surface-muted border border-border-default">
           {imageUrl ? (
             <img src={imageUrl} alt={recipient.building.name} className="absolute inset-0 w-full h-full object-cover" />
           ) : (
@@ -112,7 +112,7 @@ export function AwardRecipientCard({ recipient, className, showAwardName = false
         {showAwardName && recipient.award && (
           <Link 
             to={`/award/${recipient.award.slug}`}
-            className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary hover:text-text-primary transition-colors mb-0.5"
+            className="eyebrow tracking-widest hover:text-text-primary transition-colors mb-0.5"
           >
             {recipient.award.name}
           </Link>

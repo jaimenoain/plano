@@ -54,8 +54,8 @@ export default function UpdateDetail() {
     : null;
 
   return (
-    <div className="min-h-screen bg-surface-default text-text-primary">
-      <div className="container mx-auto max-w-2xl px-4 py-12">
+    <div className="min-h-screen w-full bg-surface-default text-text-primary">
+      <div className="mx-auto max-w-2xl px-4 py-12">
         <Link
           to="/updates"
           className="mb-10 inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors hover:text-text-primary"
@@ -69,7 +69,7 @@ export default function UpdateDetail() {
             <img
               src={update.heroImageUrl}
               alt={update.title}
-              className="w-full aspect-16/7 object-cover rounded-lg"
+              className="w-full aspect-16/7 object-cover"
             />
           )}
 

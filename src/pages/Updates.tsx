@@ -4,6 +4,7 @@ import { SITE_URL } from "@/features/buildings/utils/structuredData";
 import { usePublishedUpdates } from "@/features/updates/hooks/useUpdates";
 import type { PlanoUpdate, GeoScope } from "@/features/updates/types";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const PAGE_TITLE = "Plano Updates";
 const PAGE_DESCRIPTION = "Product news, new cities, and community highlights from the Plano team.";
@@ -85,12 +86,10 @@ export default function Updates() {
   const { data: updates = [], isLoading } = usePublishedUpdates();
 
   return (
-    <div className="min-h-screen bg-surface-default text-text-primary">
-      <div className="container mx-auto py-16 px-4 max-w-3xl">
+    <div className="min-h-screen w-full bg-surface-default text-text-primary">
+      <div className="mx-auto py-16 px-4 max-w-[1120px]">
         <header className="mb-16 space-y-4">
-          <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
-            Updates
-          </p>
+          <p className="eyebrow tracking-widest">Updates</p>
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Plano Updates</h1>
           <p className="text-lg text-text-secondary leading-relaxed">
             Product news, new cities, and community highlights from the Plano team.
@@ -102,9 +101,10 @@ export default function Updates() {
             <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
           </div>
         ) : updates.length === 0 ? (
-          <p className="border border-dashed border-border-default py-16 text-center text-sm text-text-secondary">
-            No updates yet — check back soon.
-          </p>
+          <EmptyState
+            eyebrow="No updates yet"
+            message="Product news, new cities, and community highlights will appear here — check back soon."
+          />
         ) : (
           <div className="space-y-12">
             {updates.map((u) => (

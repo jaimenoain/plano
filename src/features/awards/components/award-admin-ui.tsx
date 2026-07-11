@@ -10,7 +10,7 @@ export function AwardAdminPageHeader({
   return (
     <div className="mb-8 flex items-start justify-between gap-4">
       <div className="space-y-2">
-        <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+        <p className="eyebrow tracking-widest">
           Award administration
         </p>
         <h1 className="text-3xl font-bold tracking-tight text-text-primary">{title}</h1>
@@ -21,7 +21,7 @@ export function AwardAdminPageHeader({
 }
 
 export const awardAdminTableHeadClass =
-  "text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary font-normal";
+  "eyebrow tracking-widest font-normal";
 
 export function outcomeBadgeClassName(outcome: string): string {
   const normalized = outcome.replace(/_/g, " ");

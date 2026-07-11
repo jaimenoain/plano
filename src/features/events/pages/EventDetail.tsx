@@ -158,7 +158,7 @@ function EventDetailSkeleton() {
     <AppLayout title="Event" showBack>
       <div className="w-full">
         <Skeleton className="h-[240px] w-full rounded-none md:h-[clamp(260px,48vh,500px)]" />
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1120px] px-4 sm:px-6 lg:px-8">
           <div className="space-y-4 py-8">
             <Skeleton className="h-3 w-20" />
             <Skeleton className="h-12 w-3/4 max-w-lg" />
@@ -228,8 +228,8 @@ export default function EventDetail() {
   if (query.isError || !query.data) {
     return (
       <AppLayout title="Event" showBack>
-        <div className="mx-auto max-w-4xl px-4 py-8">
-          <p className="text-sm text-destructive" role="alert">
+        <div className="mx-auto max-w-[1120px] px-4 py-8">
+          <p className="text-sm text-feedback-destructive" role="alert">
             {isEventsApiError(query.error) ? query.error.message : "This event could not be loaded."}
           </p>
         </div>
@@ -286,34 +286,21 @@ export default function EventDetail() {
             />
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(to top, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.30) 40%, rgba(0,0,0,0) 72%)",
-              }}
+              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent"
             />
             <div className="absolute inset-x-0 bottom-0">
-              <div className="mx-auto max-w-5xl px-4 pb-6 sm:px-6 md:pb-8 lg:px-8">
-                <span
-                  className="block text-2xs font-medium uppercase tracking-[0.15em]"
-                  style={{ color: "rgba(255,255,255,0.75)" }}
-                >
+              <div className="mx-auto max-w-[1120px] px-4 pb-6 sm:px-6 md:pb-8 lg:px-8">
+                <span className="block eyebrow tracking-widest text-text-inverse/75">
                   Event{event.address ? ` · ${event.address.split(",").pop()?.trim() ?? ""}` : ""}
                 </span>
-                <h1
-                  className="mt-2 text-3xl font-bold leading-tight tracking-tight md:text-5xl"
-                  style={{ color: "#ffffff" }}
-                >
+                <h1 className="mt-2 text-3xl font-bold leading-tight tracking-tight text-text-inverse md:text-5xl">
                   {event.title}
                 </h1>
-                <div
-                  className="mt-2 flex flex-wrap items-center gap-2 text-sm"
-                  style={{ color: "rgba(255,255,255,0.90)" }}
-                >
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-text-inverse/90">
                   <span>{formatEventWhenRange(event.startAt, event.endAt)}</span>
                   {event.address ? (
                     <>
-                      <span style={{ color: "rgba(255,255,255,0.55)" }}>·</span>
+                      <span className="text-text-inverse/55">·</span>
                       <span className="flex items-center gap-1">
                         <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
                         {event.address}
@@ -327,12 +314,12 @@ export default function EventDetail() {
         ) : null}
 
         <div className="px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-[1120px]">
 
             {/* ── IDENTITY (only when there is no cover to overlay onto) ── */}
             {!showCover ? (
               <div className="space-y-3 py-8">
-                <span className="block text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+                <span className="block eyebrow tracking-widest">
                   Event{event.address ? ` · ${event.address.split(",").pop()?.trim() ?? ""}` : ""}
                 </span>
                 <h1 className="text-3xl font-bold leading-tight tracking-tight text-text-primary md:text-5xl">
@@ -370,7 +357,7 @@ export default function EventDetail() {
 
               {/* ── SIDEBAR — action card (first on mobile, right column on desktop) ── */}
               <aside className="mt-6 lg:order-2 lg:mt-0 lg:self-start lg:sticky lg:top-24">
-                <div className="rounded-lg border border-border-default bg-surface-card p-5">
+                <div className="rounded-sm border border-border-default bg-surface-card p-5">
 
                   {/* When / Where */}
                   <div className="space-y-3 border-b border-border-default pb-4">
@@ -509,7 +496,7 @@ export default function EventDetail() {
                 {/* About */}
                 {description ? (
                   <section aria-label="About" className="border-b border-border-default py-8 lg:pt-0">
-                    <h2 className="mb-4 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+                    <h2 className="mb-4 eyebrow tracking-widest">
                       About
                     </h2>
                     <p className="whitespace-pre-wrap text-base leading-relaxed text-text-primary">
@@ -529,7 +516,7 @@ export default function EventDetail() {
 
                 {/* Organiser */}
                 <section aria-label="Organiser" className="border-b border-border-default py-8">
-                  <h2 className="mb-4 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+                  <h2 className="mb-4 eyebrow tracking-widest">
                     Organiser
                   </h2>
                   {showClaim ? (
@@ -600,7 +587,7 @@ export default function EventDetail() {
                           ) : null}
                         </div>
                         {event.isSelfHosted && event.claimStatus === "claimed" ? (
-                          <p className="mt-0.5 text-2xs font-medium uppercase tracking-[0.15em] text-text-disabled">
+                          <p className="mt-0.5 eyebrow tracking-widest text-text-disabled">
                             Host
                           </p>
                         ) : null}
@@ -636,7 +623,7 @@ export default function EventDetail() {
                 {/* Related buildings */}
                 {event.buildings.length > 0 ? (
                   <section aria-label="Related buildings" className="border-b border-border-default py-8">
-                    <h2 className="mb-4 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+                    <h2 className="mb-4 eyebrow tracking-widest">
                       Buildings
                     </h2>
                     <div className="flex gap-3 overflow-x-scroll-touch pb-1">
