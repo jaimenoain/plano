@@ -5,18 +5,89 @@ import { StreamAuthorAttribution } from "./StreamAuthorAttribution";
 import type { DisplayImage } from "../hooks/buildingCommunityData";
 import type { StreamBlock } from "../utils/streamBlocks";
 
+type StreamVariant = "overview" | "media";
+
+/** Editorial review body — mock `.review-body`: 17px/1.75, no quote marks. */
+function ReviewBody({ entryId, text }: { entryId: string; text: string }) {
+  return (
+    <Link to={`/review/${entryId}`} className="block">
+      <p className="text-[17px] leading-[1.75] text-text-primary transition-colors hover:text-text-secondary">
+        {text}
+      </p>
+    </Link>
+  );
+}
+
+/**
+ * Author column + body — mock `.review` row (240px who-column on md+).
+ */
+function ReviewRow({
+  attribution,
+  entryId,
+  text,
+}: {
+  attribution: React.ReactNode;
+  entryId: string;
+  text: string;
+}) {
+  return (
+    <div className="space-y-4 md:grid md:grid-cols-[240px_1fr] md:gap-14 md:space-y-0">
+      <div>{attribution}</div>
+      <ReviewBody entryId={entryId} text={text} />
+    </div>
+  );
+}
+
+/**
+ * Caption-credit line below an image — mock `.feature-credit`: caption and
+ * attribution on the left, likes count on the right. Replaces the old
+ * absolute ♥ overlays.
+ */
+function CaptionCreditLine({
+  caption,
+  likes,
+  children,
+}: {
+  caption?: string | null;
+  likes: number;
+  children?: React.ReactNode;
+}) {
+  if (!caption && !children && likes <= 0) return null;
+  return (
+    <div className="pt-3 space-y-3">
+      {caption && (
+        <p className="text-[13px] leading-snug text-text-primary">{caption}</p>
+      )}
+      {(children || likes > 0) && (
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">{children}</div>
+          {likes > 0 && (
+            <span className="flex shrink-0 items-center gap-1.5 pt-1 text-[11px] text-text-secondary">
+              <Heart className="h-3 w-3" aria-hidden />
+              {likes}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /**
  * Renders one block of the building editorial stream in its assigned layout
- * (featured / mosaic / image-review / image-only / text-only). Extracted from
- * the BuildingDetails page; used by the Overview tab and the Media tab's
- * text-review list.
+ * (featured / mosaic / image-review / image-only / text-only). The default
+ * `overview` variant is the editorial treatment (large type, caption-credit
+ * lines, author-column review rows); `media` keeps the compact quote list
+ * used under the Media tab's photo grid.
  */
 export function StreamBlockView({
   block,
   onSelectImage,
+  variant = "overview",
 }: {
   block: StreamBlock;
   onSelectImage: (img: DisplayImage) => void;
+  variant?: StreamVariant;
 }) {
   const { images, content, user, rating, isOfficial, topLikes, blockType } = block;
   const preview = content && content.length > 220 ? content.slice(0, 220) + "…" : content;
@@ -25,39 +96,42 @@ export function StreamBlockView({
       <StreamAuthorAttribution user={user} rating={rating} />
     ) : null;
 
+  if (variant === "media") {
+    if (!preview) return null;
+    return (
+      <div className="space-y-3 border-b border-border-default pb-10">
+        {authorAttribution}
+        <Link to={`/review/${block.entryId}`} className="group/r block">
+          <p className="text-sm leading-relaxed text-text-secondary italic group-hover/r:text-text-primary">
+            &ldquo;{preview}&rdquo;
+          </p>
+        </Link>
+      </div>
+    );
+  }
+
   if (blockType === "featured") {
     const img = images[0];
     if (!img) return null;
     return (
-      <div className="space-y-4 border-b border-border-default pb-10">
+      <div className="border-b border-border-default pb-10">
         <div
           className="group relative aspect-16/10 cursor-pointer overflow-hidden bg-surface-muted"
           onClick={() => onSelectImage(img)}
         >
           <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
-          <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-300" />
           {isOfficial && (
-            <span className="absolute left-4 top-4 bg-text-primary px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-text-inverse rounded-none">
+            <span className="absolute left-4 top-4 bg-surface-card/90 px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-text-primary rounded-none">
               Official
             </span>
           )}
-          {img.likes_count > 0 && (
-            <span className="absolute bottom-4 right-4 flex items-center gap-1.5 text-[11px] font-bold text-white drop-shadow-md">
-              <Heart className="h-3.5 w-3.5 fill-white text-white" aria-hidden />
-              {img.likes_count}
-            </span>
-          )}
         </div>
-        {(preview || authorAttribution) && (
-          <div className="pt-4 space-y-3">
-            {authorAttribution}
-            {preview && (
-              <Link to={`/review/${block.entryId}`} className="group/r block">
-                <p className="text-sm leading-relaxed text-text-secondary italic group-hover/r:text-text-primary">
-                  &ldquo;{preview}&rdquo;
-                </p>
-              </Link>
-            )}
+        <CaptionCreditLine caption={img.caption} likes={img.likes_count}>
+          {preview ? null : authorAttribution}
+        </CaptionCreditLine>
+        {preview && (
+          <div className="pt-6">
+            <ReviewRow attribution={authorAttribution} entryId={block.entryId} text={preview} />
           </div>
         )}
       </div>
@@ -66,8 +140,8 @@ export function StreamBlockView({
 
   if (blockType === "mosaic") {
     return (
-      <div className="space-y-4 border-b border-border-default pb-10">
-        <div className={cn("grid gap-px bg-border-default", images.length >= 4 ? "grid-cols-2" : "grid-cols-2")}>
+      <div className="border-b border-border-default pb-10">
+        <div className="grid grid-cols-2 gap-px bg-border-default">
           {images.slice(0, 4).map((img, i) => (
             <div
               key={img.id}
@@ -78,25 +152,15 @@ export function StreamBlockView({
               onClick={() => onSelectImage(img)}
             >
               <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              {img.likes_count > 0 && (
-                <span className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-sm">
-                  <Heart className="h-2.5 w-2.5 fill-white" aria-hidden />
-                  {img.likes_count}
-                </span>
-              )}
             </div>
           ))}
         </div>
-        {(preview || authorAttribution) && (
-          <div className="pt-4 space-y-3">
-            {authorAttribution}
-            {preview && (
-              <Link to={`/review/${block.entryId}`} className="group/r block">
-                <p className="text-sm leading-relaxed text-text-secondary italic group-hover/r:text-text-primary">
-                  &ldquo;{preview}&rdquo;
-                </p>
-              </Link>
-            )}
+        <CaptionCreditLine likes={topLikes}>
+          {preview ? null : authorAttribution}
+        </CaptionCreditLine>
+        {preview && (
+          <div className="pt-6">
+            <ReviewRow attribution={authorAttribution} entryId={block.entryId} text={preview} />
           </div>
         )}
       </div>
@@ -107,29 +171,19 @@ export function StreamBlockView({
     const img = images[0];
     if (!img) return null;
     return (
-      <div className="space-y-4 border-b border-border-default pb-10">
+      <div className="border-b border-border-default pb-10">
         <div
           className="group relative aspect-4/3 cursor-pointer overflow-hidden bg-surface-muted"
           onClick={() => onSelectImage(img)}
         >
           <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-          {img.likes_count > 0 && (
-            <span className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[10px] font-bold text-white drop-shadow-sm">
-              <Heart className="h-3 w-3 fill-white" aria-hidden />
-              {img.likes_count}
-            </span>
-          )}
         </div>
-        <div className="pt-4 space-y-3">
-          {authorAttribution}
-          {preview && (
-            <Link to={`/review/${block.entryId}`} className="group/r block">
-              <p className="text-sm leading-relaxed text-text-secondary italic group-hover/r:text-text-primary">
-                &ldquo;{preview}&rdquo;
-              </p>
-            </Link>
-          )}
-        </div>
+        <CaptionCreditLine caption={img.caption} likes={img.likes_count} />
+        {preview && (
+          <div className="pt-6">
+            <ReviewRow attribution={authorAttribution} entryId={block.entryId} text={preview} />
+          </div>
+        )}
       </div>
     );
   }
@@ -139,7 +193,7 @@ export function StreamBlockView({
     if (!img) return null;
     const isTall = topLikes >= 10;
     return (
-      <div className="group space-y-4 border-b border-border-default pb-10">
+      <div className="group border-b border-border-default pb-10">
         <div
           className={cn(
             "relative cursor-pointer overflow-hidden bg-surface-muted",
@@ -148,15 +202,10 @@ export function StreamBlockView({
           onClick={() => onSelectImage(img)}
         >
           <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
-          <div className="absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-300" />
-          {img.likes_count > 0 && (
-            <span className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[10px] font-bold text-white">
-              <Heart className="h-3 w-3 fill-white" aria-hidden />
-              {img.likes_count}
-            </span>
-          )}
         </div>
-        {authorAttribution && <div className="pt-4">{authorAttribution}</div>}
+        <CaptionCreditLine caption={img.caption} likes={img.likes_count}>
+          {authorAttribution}
+        </CaptionCreditLine>
       </div>
     );
   }
@@ -164,13 +213,8 @@ export function StreamBlockView({
   if (blockType === "text-only") {
     if (!preview) return null;
     return (
-      <div className="space-y-3 border-b border-border-default pb-10">
-        {authorAttribution}
-        <Link to={`/review/${block.entryId}`} className="group/r block">
-          <p className="text-sm leading-relaxed text-text-secondary italic group-hover/r:text-text-primary">
-            &ldquo;{preview}&rdquo;
-          </p>
-        </Link>
+      <div className="border-b border-border-default pb-10">
+        <ReviewRow attribution={authorAttribution} entryId={block.entryId} text={preview} />
       </div>
     );
   }

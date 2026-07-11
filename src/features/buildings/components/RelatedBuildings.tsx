@@ -14,28 +14,27 @@ import type { BuildingDetails } from "../pages/BuildingDetails";
 
 function RelatedBuildingCard({ b }: { b: RelatedBuilding }) {
   return (
-    <Link to={b.buildingUrl} className="shrink-0 w-40 sm:w-48 group">
+    <Link to={b.buildingUrl} className="group min-w-0">
       <div className="aspect-4/3 w-full overflow-hidden bg-surface-muted">
         {b.imageUrl ? (
           <img
             src={b.imageUrl}
             alt={b.name}
-            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
           <div className="photo-placeholder h-full w-full" data-label={b.name} aria-hidden />
         )}
       </div>
-      <div className="mt-2 space-y-0.5">
-        <p className="text-sm font-medium leading-snug text-text-primary line-clamp-2 group-hover:underline">
-          {b.name}
+      <div className="mt-3.5 eyebrow tracking-[0.15em]">Building</div>
+      <p className="mt-1.5 text-xl md:text-[22px] font-bold tracking-[-0.02em] leading-[1.1] text-text-primary line-clamp-2 group-hover:underline underline-offset-4">
+        {b.name}
+      </p>
+      {(b.city || b.year_completed) ? (
+        <p className="mt-1 text-xs text-text-secondary">
+          {[b.city, b.year_completed].filter(Boolean).join(" · ")}
         </p>
-        {(b.city || b.year_completed) ? (
-          <p className="text-xs text-text-secondary">
-            {[b.city, b.year_completed].filter(Boolean).join(" · ")}
-          </p>
-        ) : null}
-      </div>
+      ) : null}
     </Link>
   );
 }
@@ -57,30 +56,27 @@ function RelatedBuildingRow({
 
   return (
     <section className="mt-16 border-t border-border-default pt-10 min-w-0">
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 min-w-0">
-        <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary min-w-0 flex-1 wrap-break-word">
+      <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4 min-w-0">
+        <h2 className="eyebrow tracking-[0.15em] min-w-0 flex-1 wrap-break-word">
           {title}
         </h2>
-        <Link
-          to={viewAllHref}
-          className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary shrink-0 sm:text-right"
-        >
-          {viewAllLabel} →
+        <Link to={viewAllHref} className="cta-link shrink-0 sm:text-right">
+          {viewAllLabel}
         </Link>
       </div>
       {isLoading ? (
-        <div className="flex gap-4 overflow-x-scroll-touch pb-2">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="shrink-0 w-40 sm:w-48 space-y-2">
+        <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="space-y-2">
               <Skeleton className="aspect-4/3 w-full" />
-              <Skeleton className="h-4 w-4/5" />
+              <Skeleton className="h-5 w-4/5" />
               <Skeleton className="h-3 w-2/3" />
             </div>
           ))}
         </div>
       ) : (
-        <div className="flex gap-4 overflow-x-scroll-touch pb-2">
-          {buildings.map((b) => (
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3">
+          {buildings.slice(0, 6).map((b) => (
             <RelatedBuildingCard key={b.id} b={b} />
           ))}
         </div>

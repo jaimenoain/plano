@@ -37,8 +37,8 @@ export const ArchitectStatement = ({
 
   return (
     <div className={className || ""}>
-      {/* Editorial blockquote: neon left rule, no card box */}
-      <div className="border-l-2 border-text-primary pl-5 py-0.5">
+      {/* Editorial body copy in the label-column layout (mock .bldg-body-text) */}
+      <div>
         {isEditing ? (
           <Textarea
             value={statement}
@@ -50,7 +50,7 @@ export const ArchitectStatement = ({
           <div>
             <p
               ref={textRef}
-              className={`text-base leading-relaxed text-text-secondary whitespace-pre-wrap ${
+              className={`text-[17px] md:text-lg leading-[1.75] text-text-primary max-w-[60ch] whitespace-pre-wrap ${
                 !isExpanded ? "line-clamp-5" : ""
               }`}
             >

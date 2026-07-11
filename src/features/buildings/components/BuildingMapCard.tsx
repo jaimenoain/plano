@@ -31,7 +31,7 @@ export function BuildingMapCard({
   }, [isExpanded]);
 
   return (
-    <div className="bg-surface-card border border-border-default rounded-none overflow-hidden shadow-xs">
+    <div className="bg-surface-card border border-border-default rounded-none overflow-hidden">
       <div className="aspect-square relative">
         {coordinates ? (
           <div className={cn("h-full w-full transition-all duration-700", !isExpanded && "grayscale-[0.4] hover:grayscale-0")}>

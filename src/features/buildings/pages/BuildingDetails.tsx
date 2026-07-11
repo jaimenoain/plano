@@ -561,7 +561,7 @@ export default function BuildingDetails() {
                     type="button"
                     onClick={() => setTab(tab.id)}
                     className={cn(
-                      "cursor-pointer px-5 py-3.5 text-[12px] font-medium uppercase tracking-widest border-b-2 shrink-0 transition-colors duration-150 whitespace-nowrap",
+                      "cursor-pointer px-5 py-3.5 text-[11px] font-medium uppercase tracking-[0.15em] border-b-2 shrink-0 transition-colors duration-150 whitespace-nowrap",
                       activeTab === tab.id
                         ? "border-text-primary text-text-primary"
                         : "border-transparent text-text-secondary hover:text-text-primary",
@@ -647,24 +647,20 @@ export default function BuildingDetails() {
                   {/* Text-only reviews */}
                   {streamBlocks.filter((b) => b.blockType === "text-only").length > 0 && (
                     <div className="mt-8 space-y-4">
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-text-secondary pt-6 border-t border-border-default">
+                      <h4 className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary pt-6 border-t border-border-default">
                         Reviews
                       </h4>
                       {streamBlocks
                         .filter((b) => b.blockType === "text-only")
                         .map((block) => (
-                          <StreamBlockView
-                            key={block.key}
-                            block={block}
-                            onSelectImage={setSelectedImage}
-                          />
+                          <StreamBlockView key={block.key} block={block} variant="media" onSelectImage={setSelectedImage} />
                         ))}
                     </div>
                   )}
 
                   {activityOnlyFeedReviews.length > 0 && (
                     <div className="mt-8 pt-6 border-t border-border-default">
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-5">
+                      <h4 className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary mb-5">
                         Recent Activity
                       </h4>
                       <ActivityStreamGroup
@@ -758,17 +754,17 @@ export default function BuildingDetails() {
 
                 {/* Overview sidebar: credits preview */}
                 {activeTab === "overview" && buildingCredits.length > 0 && (
-                  <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-xs">
+                  <div className="bg-surface-card border border-border-default rounded-none p-5">
                     <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+                      <h4 className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary">
                         Credits
                       </h4>
                       <button
                         type="button"
                         onClick={() => setTab("credits")}
-                        className="text-[10px] font-bold uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
+                        className="cta-link text-[10px]"
                       >
-                        All →
+                        All
                       </button>
                     </div>
                     <BuildingCreditsPreview
@@ -782,9 +778,9 @@ export default function BuildingDetails() {
                 {activeTab === "credits" && (
                   <div
                     id="contributors"
-                    className="scroll-mt-24 rounded-none border border-border-default bg-surface-card p-5 shadow-xs"
+                    className="scroll-mt-24 rounded-none border border-border-default bg-surface-card p-5"
                   >
-                    <h4 className="mb-3 text-[10px] font-medium uppercase tracking-[0.22em] text-text-secondary">
+                    <h4 className="mb-3 text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary">
                       Page contributors
                     </h4>
                     <p className="mb-3 text-xs leading-relaxed text-text-secondary">
@@ -796,7 +792,7 @@ export default function BuildingDetails() {
 
                 {/* Building info — hidden on info tab (shown in main content there) */}
                 {activeTab !== "info" && (
-                  <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-xs">
+                  <div className="bg-surface-card border border-border-default rounded-none p-5">
                     <BuildingInfoSection
                       building={building}
                       buildingCredits={buildingCredits}

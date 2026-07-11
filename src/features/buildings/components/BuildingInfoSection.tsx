@@ -120,7 +120,7 @@ export function BuildingInfoSection({
     <section className="group/info">
       <BuildingAwardsSection buildingId={building.id} buildingName={building.name} />
       <div className="flex items-center gap-2">
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+        <h3 className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary">
           Building Info
         </h3>
         {canEdit && (
@@ -138,7 +138,7 @@ export function BuildingInfoSection({
       <dl className="mt-3 divide-y divide-border-default">
         {rows.map(({ key, label, value }) => (
           <div key={key} className="flex items-baseline gap-6 py-3">
-            <dt className="text-xs text-text-secondary shrink-0 w-24 md:w-28">{label}</dt>
+            <dt className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary shrink-0 w-24 md:w-28">{label}</dt>
             <dd className="text-sm text-text-primary flex-1 min-w-0">{value}</dd>
           </div>
         ))}
