@@ -13,18 +13,10 @@ import {
   isRouteErrorResponse,
   useRevalidator,
   useSearchParams,
-  useNavigate,
   type MetaFunction,
 } from "react-router";
-import {
-  Loader2, MapPin,
-  Check, Bookmark,
-  Heart, Circle, AlertTriangle,
-  EyeOff, Plus,
-  Pencil, ChevronDown,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Textarea } from "@/components/ui/textarea";
+import { Loader2, MapPin } from "lucide-react";
+import { motion } from "framer-motion";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,15 +27,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
@@ -53,15 +38,9 @@ import {
   buildingCreditsQueryKey,
   getBuildingCredits,
 } from "@/features/credits/api/credits";
-import {
-  leadAttributionFromCredits,
-  visiblePrimaryCredits,
-} from "@/features/credits/buildingCreditDisplay";
+import { visiblePrimaryCredits } from "@/features/credits/buildingCreditDisplay";
 import { getBuildingUrl } from "@/utils/url";
-import { getBuildingImageUrl } from "@/utils/image";
-import { CollectionSelector } from "@/features/collections/components/CollectionSelector";
 import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
-import { ArchitectStatement } from "../components/ArchitectStatement";
 import { BuildingCredits, BuildingCreditsPreview } from "../components/BuildingCredits";
 import { BuildingContributorsInline } from "../components/BuildingContributorsInline";
 import { buildingLoader } from "./BuildingDetails.loader";
@@ -72,7 +51,7 @@ import {
   buildingDescription,
   SITE_URL,
 } from "@/features/buildings/utils/structuredData";
-import { formatBuildingStatusForDisplay, isLostStatus } from "@/lib/buildingStatus";
+import { isLostStatus } from "@/lib/buildingStatus";
 import { cn } from "@/lib/utils";
 import { useBuildingInteractions } from "@/features/buildings/hooks/useBuildingInteractions";
 import {
@@ -80,18 +59,16 @@ import {
   type BuildingSummaryForFeed,
 } from "@/features/buildings/utils/buildingReviewFeedAdapter";
 import { ActivityStreamGroup } from "@/features/posts/components/ActivityStream";
-import { ClientOnly } from "@/components/common/ClientOnly";
-import { RelatedByArchitectSection, RelatedByCitySection } from "../components/RelatedBuildings";
 import { BuildingHeroSection } from "../components/BuildingHeroSection";
 import { BuildingHeader } from "../components/BuildingHeader";
 import { BuildingMapTab } from "../components/BuildingMapTab";
 import { BuildingMediaTab } from "../components/BuildingMediaTab";
-import { NotePhotoGrid } from "../components/NotePhotoGrid";
-import { PendingPhotosQueue } from "../components/PendingPhotosQueue";
 import { BuildingInfoSection } from "../components/BuildingInfoSection";
 import { BuildingInfoTab } from "../components/BuildingInfoTab";
-import { StreamAuthorAttribution } from "../components/StreamAuthorAttribution";
-import { PersonalRatingButton } from "../components/PersonalRatingButton";
+import { BuildingOverviewTab } from "../components/BuildingOverviewTab";
+import { BuildingActionCard } from "../components/BuildingActionCard";
+import { StreamBlockView } from "../components/BuildingStreamBlocks";
+import { buildStreamBlocks } from "../utils/streamBlocks";
 
 export { buildingLoader as loader } from "./BuildingDetails.loader";
 
@@ -106,9 +83,6 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "credits", label: "Credits" },
   { id: "map", label: "Map" },
 ];
-
-/** Client-side chunks for overview editorial stream (infinite scroll). */
-const OVERVIEW_STREAM_CHUNK_SIZE = 8;
 
 // ─── Building Details Component ──────────────────────────────────────────────
 
@@ -251,33 +225,6 @@ export interface FeedEntry {
   images: { id: string; storage_path: string; created_at?: string }[];
 }
 
-interface DisplayImage {
-  id: string;
-  url: string;
-  poster?: string;
-  type?: "image" | "video";
-  likes_count: number;
-  created_at: string;
-  user: { username: string | null; avatar_url: string | null } | null;
-  is_generated?: boolean;
-  is_official?: boolean;
-  caption?: string | null;
-}
-
-interface StreamBlock {
-  key: string;
-  entryId: string;
-  user: FeedEntry["user"];
-  content: string | null;
-  rating: number | null;
-  status: FeedEntry["status"];
-  images: DisplayImage[];
-  isOfficial: boolean;
-  topLikes: number;
-  blockType: "featured" | "mosaic" | "image-review" | "image-only" | "text-only";
-  score: number;
-}
-
 // ─── Meta ─────────────────────────────────────────────────────────────────────
 
 /** Header bar + `<title>` base: name with optional city when known. */
@@ -333,7 +280,6 @@ export const meta: MetaFunction<typeof buildingLoader> = ({ loaderData: data }) 
 // ─── Page component ───────────────────────────────────────────────────────────
 
 export default function BuildingDetails() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { profile } = useUserProfile();
   const {
@@ -510,287 +456,9 @@ export default function BuildingDetails() {
       );
   }, [entries, buildingSummaryForFeed, displayImageById, likedImageIds]);
 
-  const streamBlocks = useMemo((): StreamBlock[] => {
-    const entryImageIds = new Set(
-      entries.flatMap((e) => {
-        const ids = e.images.map((img) => img.id);
-        const videoKey = `video-${e.id}`;
-        if (displayImageById.get(videoKey)?.type === "video") ids.push(videoKey);
-        return ids;
-      }),
-    );
-
-    const entryBlocks = entries
-      .map((entry): StreamBlock | null => {
-        const images = entry.images
-          .map((img) => displayImageById.get(img.id))
-          .filter((img): img is DisplayImage => img != null);
-
-        const videoDisplay = displayImageById.get(`video-${entry.id}`);
-        const hasVideo = videoDisplay?.type === "video";
-        const isOfficial = images.some((img) => img.is_official);
-        const topLikes = images.reduce((max, img) => Math.max(max, img.likes_count), 0);
-        const hasContent = !!(entry.content?.trim());
-        const imageCount = images.length;
-
-        if (imageCount === 0 && !hasContent && !hasVideo) return null;
-
-        const architectBoost = entry.user?.is_architect_of_building ? 800 : 0;
-        const score =
-          architectBoost +
-          (isOfficial ? 1000 : 0) +
-          topLikes * 10 +
-          (hasContent ? 20 : 0) +
-          (imageCount > 1 ? 15 : 0) +
-          (hasVideo && imageCount === 0 ? 10 : 0);
-
-        let blockType: StreamBlock["blockType"];
-        if (isOfficial) blockType = "featured";
-        else if (imageCount >= 2) blockType = "mosaic";
-        else if ((imageCount === 1 || hasVideo) && hasContent) blockType = "image-review";
-        else if (imageCount === 1 || hasVideo) blockType = "image-only";
-        else blockType = "text-only";
-
-        return {
-          key: entry.id,
-          entryId: entry.id,
-          user: entry.user,
-          content: entry.content,
-          rating: entry.rating,
-          status: entry.status,
-          images,
-          isOfficial,
-          topLikes,
-          blockType,
-          score,
-        };
-      })
-      .filter((b): b is StreamBlock => b !== null);
-
-    const orphanBlocks: StreamBlock[] = displayImages
-      .filter((img) => !entryImageIds.has(img.id))
-      .map((img): StreamBlock => ({
-        key: `img-${img.id}`,
-        entryId: `img-${img.id}`,
-        user: img.user ?? { username: null, avatar_url: null },
-        content: null,
-        rating: null,
-        status: "visited" as const,
-        images: [img],
-        isOfficial: img.is_official ?? false,
-        topLikes: img.likes_count,
-        blockType: (img.is_official ?? false) ? "featured" : "image-only",
-        score: ((img.is_official ?? false) ? 1000 : 0) + img.likes_count * 10,
-      }));
-
-    return [...entryBlocks, ...orphanBlocks].sort((a, b) => b.score - a.score);
-  }, [entries, displayImages, displayImageById]);
-
-  const [visibleOverviewStreamCount, setVisibleOverviewStreamCount] = useState(
-    OVERVIEW_STREAM_CHUNK_SIZE,
-  );
-  const overviewStreamSentinelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setVisibleOverviewStreamCount(OVERVIEW_STREAM_CHUNK_SIZE);
-  }, [building?.id, entries.length, displayImages.length]);
-
-  useEffect(() => {
-    if (activeTab !== "overview") return;
-    const el = overviewStreamSentinelRef.current;
-    if (!el) return;
-    const len = streamBlocks.length;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries[0]?.isIntersecting) return;
-        // Reveal more of the loaded set; once exhausted, pull the next DB page.
-        if (visibleOverviewStreamCount < len) {
-          setVisibleOverviewStreamCount((n) =>
-            Math.min(n + OVERVIEW_STREAM_CHUNK_SIZE, len),
-          );
-        } else if (hasMoreCommunity) {
-          void loadMoreCommunity();
-        }
-      },
-      { root: null, rootMargin: "320px", threshold: 0 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [
-    activeTab,
-    streamBlocks.length,
-    visibleOverviewStreamCount,
-    hasMoreCommunity,
-    loadMoreCommunity,
-  ]);
-
-  const visibleOverviewBlocks = useMemo(
-    () => streamBlocks.slice(0, visibleOverviewStreamCount),
-    [streamBlocks, visibleOverviewStreamCount],
-  );
-
-  const renderStreamBlock = useCallback(
-    (block: StreamBlock) => {
-      const { images, content, user, rating, isOfficial, topLikes, blockType } = block;
-      const preview = content && content.length > 220 ? content.slice(0, 220) + "…" : content;
-      const authorAttribution =
-        user?.username?.trim() ? (
-          <StreamAuthorAttribution user={user} rating={rating} />
-        ) : null;
-
-      if (blockType === "featured") {
-        const img = images[0];
-        if (!img) return null;
-        return (
-          <div key={block.key} className="space-y-4 border-b border-border-default pb-10">
-            <div
-              className="group relative aspect-16/10 cursor-pointer overflow-hidden bg-surface-muted"
-              onClick={() => setSelectedImage(img)}
-            >
-              <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
-              <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-300" />
-              {isOfficial && (
-                <span className="absolute left-4 top-4 bg-text-primary px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-text-inverse rounded-none">
-                  Official
-                </span>
-              )}
-              {img.likes_count > 0 && (
-                <span className="absolute bottom-4 right-4 flex items-center gap-1.5 text-[11px] font-bold text-white drop-shadow-md">
-                  <Heart className="h-3.5 w-3.5 fill-white text-white" aria-hidden />
-                  {img.likes_count}
-                </span>
-              )}
-            </div>
-            {(preview || authorAttribution) && (
-              <div className="pt-4 space-y-3">
-                {authorAttribution}
-                {preview && (
-                  <Link to={`/review/${block.entryId}`} className="group/r block">
-                    <p className="text-sm leading-relaxed text-text-secondary italic group-hover/r:text-text-primary">
-                      &ldquo;{preview}&rdquo;
-                    </p>
-                  </Link>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      }
-
-      if (blockType === "mosaic") {
-        return (
-          <div key={block.key} className="space-y-4 border-b border-border-default pb-10">
-            <div className={cn("grid gap-px bg-border-default", images.length >= 4 ? "grid-cols-2" : "grid-cols-2")}>
-              {images.slice(0, 4).map((img, i) => (
-                <div
-                  key={img.id}
-                  className={cn(
-                    "group relative cursor-pointer overflow-hidden bg-surface-muted",
-                    images.length === 3 && i === 0 ? "col-span-2 aspect-2/1" : "aspect-square",
-                  )}
-                  onClick={() => setSelectedImage(img)}
-                >
-                  <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                  {img.likes_count > 0 && (
-                    <span className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-sm">
-                      <Heart className="h-2.5 w-2.5 fill-white" aria-hidden />
-                      {img.likes_count}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-            {(preview || authorAttribution) && (
-              <div className="pt-4 space-y-3">
-                {authorAttribution}
-                {preview && (
-                  <Link to={`/review/${block.entryId}`} className="group/r block">
-                    <p className="text-sm leading-relaxed text-text-secondary italic group-hover/r:text-text-primary">
-                      &ldquo;{preview}&rdquo;
-                    </p>
-                  </Link>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      }
-
-      if (blockType === "image-review") {
-        const img = images[0];
-        if (!img) return null;
-        return (
-          <div key={block.key} className="space-y-4 border-b border-border-default pb-10">
-            <div
-              className="group relative aspect-4/3 cursor-pointer overflow-hidden bg-surface-muted"
-              onClick={() => setSelectedImage(img)}
-            >
-              <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-              {img.likes_count > 0 && (
-                <span className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[10px] font-bold text-white drop-shadow-sm">
-                  <Heart className="h-3 w-3 fill-white" aria-hidden />
-                  {img.likes_count}
-                </span>
-              )}
-            </div>
-            <div className="pt-4 space-y-3">
-              {authorAttribution}
-              {preview && (
-                <Link to={`/review/${block.entryId}`} className="group/r block">
-                  <p className="text-sm leading-relaxed text-text-secondary italic group-hover/r:text-text-primary">
-                    &ldquo;{preview}&rdquo;
-                  </p>
-                </Link>
-              )}
-            </div>
-          </div>
-        );
-      }
-
-      if (blockType === "image-only") {
-        const img = images[0];
-        if (!img) return null;
-        const isTall = topLikes >= 10;
-        return (
-          <div key={block.key} className="group space-y-4 border-b border-border-default pb-10">
-            <div
-              className={cn(
-                "relative cursor-pointer overflow-hidden bg-surface-muted",
-                isTall ? "aspect-4/5" : "aspect-4/3",
-              )}
-              onClick={() => setSelectedImage(img)}
-            >
-              <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
-              <div className="absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-300" />
-              {img.likes_count > 0 && (
-                <span className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[10px] font-bold text-white">
-                  <Heart className="h-3 w-3 fill-white" aria-hidden />
-                  {img.likes_count}
-                </span>
-              )}
-            </div>
-            {authorAttribution && <div className="pt-4">{authorAttribution}</div>}
-          </div>
-        );
-      }
-
-      if (blockType === "text-only") {
-        if (!preview) return null;
-        return (
-          <div key={block.key} className="space-y-3 border-b border-border-default pb-10">
-            {authorAttribution}
-            <Link to={`/review/${block.entryId}`} className="group/r block">
-              <p className="text-sm leading-relaxed text-text-secondary italic group-hover/r:text-text-primary">
-                &ldquo;{preview}&rdquo;
-              </p>
-            </Link>
-          </div>
-        );
-      }
-
-      return null;
-    },
-    [setSelectedImage],
+  const streamBlocks = useMemo(
+    () => buildStreamBlocks(entries, displayImages, displayImageById),
+    [entries, displayImages, displayImageById],
   );
 
   // ── Loading guard ─────────────────────────────────────────────────────────
@@ -939,92 +607,18 @@ export default function BuildingDetails() {
 
               {/* ════ OVERVIEW TAB ════ */}
               {activeTab === "overview" && (
-                <div className="space-y-12">
-
-                  {/* Status alert */}
-                  {isStatusBuilding && (
-                    <div className="flex items-start gap-4 p-5 rounded-none bg-feedback-destructive/5 border border-feedback-destructive/20">
-                      <AlertTriangle className="h-5 w-5 text-feedback-destructive shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-bold text-feedback-destructive uppercase tracking-wider mb-1">
-                          {formatBuildingStatusForDisplay(building.status!)}
-                        </p>
-                        <p className="text-sm text-text-secondary">
-                          {isLostStatus(building.status)
-                            ? "This building no longer stands at this location."
-                            : building.status === "Unbuilt"
-                              ? "This project was never built and exists only in records."
-                              : "This building is currently under construction."}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Architect statement */}
-                  {building.architect_statement && (
-                    <section>
-                      <div className="mb-6 flex items-baseline gap-3 border-b border-text-primary pb-2">
-                        <span className="font-mono text-[11px] tracking-[0.06em] text-text-disabled">
-                          § 01
-                        </span>
-                        <span className="text-[11px] font-medium uppercase tracking-widest text-text-primary">
-                          Architect statement
-                        </span>
-                      </div>
-                      <ArchitectStatement
-                        statement={building.architect_statement}
-                        isEditing={false}
-                        onChange={() => {}}
-                        architectName={leadAttributionFromCredits(buildingCredits)}
-                      />
-                    </section>
-                  )}
-
-                  {/* Editorial stream — full list, infinite scroll (client-chunked) */}
-                  <section className="space-y-10">
-                    {streamBlocks.length > 0 ? (
-                      <>
-                        {visibleOverviewBlocks.map((block) => (
-                          <motion.div
-                            key={block.key}
-                            initial={{ opacity: 0, y: 16 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true, margin: "-40px" }}
-                            transition={{ duration: 0.4 }}
-                          >
-                            {renderStreamBlock(block)}
-                          </motion.div>
-                        ))}
-                        {visibleOverviewStreamCount < streamBlocks.length ||
-                        hasMoreCommunity ? (
-                          <div
-                            ref={overviewStreamSentinelRef}
-                            className="h-8 w-full shrink-0"
-                            aria-hidden
-                          />
-                        ) : null}
-                      </>
-                    ) : (
-                      <EmptyState
-                        eyebrow="No photos yet"
-                        message="Be the first to share this building with the community."
-                        action={
-                          <Button size="sm" onClick={startNoteWithPhotos}>
-                            Add Note
-                          </Button>
-                        }
-                      />
-                    )}
-                  </section>
-
-                  {/* Related buildings */}
-                  <ClientOnly>
-                    <RelatedByArchitectSection building={building} primaryCredit={primaryCredit} />
-                    {building.city && (
-                      <RelatedByCitySection building={building} locality={locality} />
-                    )}
-                  </ClientOnly>
-                </div>
+                <BuildingOverviewTab
+                  building={building}
+                  buildingCredits={buildingCredits}
+                  primaryCredit={primaryCredit}
+                  locality={locality}
+                  streamBlocks={streamBlocks}
+                  isStatusBuilding={isStatusBuilding}
+                  hasMoreCommunity={hasMoreCommunity}
+                  loadMoreCommunity={loadMoreCommunity}
+                  onSelectImage={setSelectedImage}
+                  onAddNote={startNoteWithPhotos}
+                />
               )}
 
               {/* ════ MEDIA TAB ════ */}
@@ -1049,7 +643,13 @@ export default function BuildingDetails() {
                       </h4>
                       {streamBlocks
                         .filter((b) => b.blockType === "text-only")
-                        .map((block) => renderStreamBlock(block))}
+                        .map((block) => (
+                          <StreamBlockView
+                            key={block.key}
+                            block={block}
+                            onSelectImage={setSelectedImage}
+                          />
+                        ))}
                     </div>
                   )}
 
@@ -1110,329 +710,33 @@ export default function BuildingDetails() {
               <div className="lg:sticky lg:top-14 space-y-5">
 
                 {/* Action card */}
-                <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-xs space-y-5">
-
-                  {/* Status */}
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-                      My Status
-                    </label>
-                    {userStatus === "ignored" ? (
-                      <div className="flex items-center gap-2 h-10 px-3 border border-border-default bg-surface-muted text-sm font-medium text-text-disabled">
-                        <EyeOff className="h-4 w-4 shrink-0" />
-                        <span>Hidden</span>
-                      </div>
-                    ) : (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="accent"
-                            className="w-full justify-between h-10 px-3 text-sm font-medium"
-                          >
-                            <div className="flex items-center gap-2">
-                              {userStatus === "visited" ? (
-                                <Check className="h-4 w-4 text-feedback-success" />
-                              ) : userStatus === "pending" ? (
-                                <Bookmark className="h-4 w-4 text-text-primary fill-current" />
-                              ) : (
-                                <Circle className="h-4 w-4 text-text-disabled" />
-                              )}
-                              {userStatus === "visited"
-                                ? "Visited"
-                                : userStatus === "pending"
-                                  ? "Saved"
-                                  : "Add to list"}
-                            </div>
-                            <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[220px] p-2 rounded-none">
-                          <DropdownMenuItem
-                            className="rounded-none py-2.5"
-                            onSelect={() => void handleStatusChange("visited")}
-                          >
-                            <Check className="mr-3 h-4 w-4 shrink-0" />
-                            <div>
-                              <p className="font-bold text-xs uppercase tracking-wider">Visited</p>
-                              <p className="text-[10px] text-text-secondary">I've seen this in person</p>
-                            </div>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="rounded-none py-2.5"
-                            onSelect={() => void handleStatusChange("pending")}
-                          >
-                            <Bookmark className="mr-3 h-4 w-4 shrink-0" />
-                            <div>
-                              <p className="font-bold text-xs uppercase tracking-wider">Wishlist</p>
-                              <p className="text-[10px] text-text-secondary">I want to visit this</p>
-                            </div>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="rounded-none py-2.5"
-                            onSelect={() => void handleStatusChange("ignored")}
-                          >
-                            <EyeOff className="mr-3 h-4 w-4 shrink-0" />
-                            <div>
-                              <p className="font-bold text-xs uppercase tracking-wider">Hide</p>
-                              <p className="text-[10px] text-text-secondary">Don&apos;t show in my feed</p>
-                            </div>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
-
-                  {userStatus === "ignored" ? (
-                    <div className="space-y-3">
-                      <p className="text-xs text-text-secondary leading-relaxed">
-                        This building is hidden. It won&apos;t appear on the map or be suggested to you.
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full h-9 text-[10px] font-bold uppercase tracking-wider"
-                        onClick={() => void handleStatusChange("ignored")}
-                      >
-                        Unhide
-                      </Button>
-                    </div>
-                  ) : (
-                  <>
-
-                  {/* Rating */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-                        My Rating
-                      </label>
-                      {myRating > 0 && (
-                        <span className="text-[10px] font-bold text-text-secondary">
-                          {myRating}/3
-                        </span>
-                      )}
-                    </div>
-                    <PersonalRatingButton
-                      variant="inline"
-                      buildingId={building.id}
-                      initialRating={myRating}
-                      onRate={handleRate}
-                    />
-                  </div>
-
-                  {/* Secondary actions */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={handleNewNote}
-                      className="h-9 text-[10px] font-bold uppercase tracking-wider bg-surface-muted hover:bg-border-default border-none"
-                    >
-                      <Plus className="h-3.5 w-3.5 mr-1.5" /> Note
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setShowCollections(!showCollections)}
-                      className="h-9 text-[10px] font-bold uppercase tracking-wider bg-surface-muted hover:bg-border-default border-none"
-                    >
-                      <Plus className="h-3.5 w-3.5 mr-1.5" /> Collection
-                    </Button>
-                  </div>
-
-                  {/* Existing notes list */}
-                  <AnimatePresence>
-                    {!noteEditorOpen && userPosts.length > 0 && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden pt-1"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-                            My Notes
-                          </span>
-                          {userPosts.length > 1 && (
-                            <span className="text-[10px] font-bold text-text-disabled bg-surface-muted px-1.5 py-0.5 rounded-full">
-                              {userPosts.length}
-                            </span>
-                          )}
-                        </div>
-                        <div className="space-y-3">
-                          {userPosts.map((post, idx) => {
-                            const preview = post.body?.trim()
-                              ? post.body.length > 100 ? post.body.slice(0, 100) + "…" : post.body
-                              : null;
-                            const dateStr = new Date(post.updated_at || post.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-                            const thumbs = post.images.slice(0, 4);
-
-                            const handleNoteImageClick = (img: typeof post.images[0]) => {
-                              const url = getBuildingImageUrl(img.storage_path);
-                              if (!url) return;
-
-                              setSelectedImage({
-                                id: img.id,
-                                url: url,
-                                type: "image",
-                                likes_count: 0,
-                                created_at: post.created_at,
-                                user: {
-                                  username: profile?.username || user?.email || "Me",
-                                  avatar_url: profile?.avatar_url || null,
-                                },
-                                caption: post.title || post.body || null,
-                              });
-                            };
-
-                            return (
-                              <div
-                                key={post.id}
-                                className="border border-border-default bg-surface-muted/30 group/note overflow-hidden transition-all duration-200 hover:border-border-strong hover:bg-surface-muted/50 cursor-pointer"
-                                onClick={() => void navigate(`/building/${building.id}/note/${post.id}/edit`)}
-                              >
-                                {/* Card header */}
-                                <div className="flex items-center justify-between px-3 py-2 border-b border-border-default bg-surface-muted/20">
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <span className="text-[10px] font-bold text-text-secondary tracking-tight uppercase">
-                                      {dateStr}
-                                    </span>
-                                    {userPosts.length > 1 && (
-                                      <span className="text-[9px] font-medium text-text-disabled bg-surface-default/50 px-1 border border-border-default/50">
-                                        {idx + 1}/{userPosts.length}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      void navigate(`/building/${building.id}/note/${post.id}/edit`);
-                                    }}
-                                    className="shrink-0 p-1.5 rounded-none hover:bg-surface-default transition-colors opacity-40 group-hover/note:opacity-100"
-                                    title="Edit this note"
-                                  >
-                                    <Pencil className="h-3 w-3 text-text-primary" />
-                                  </button>
-                                </div>
-
-                                {/* Dynamic Photo Grid */}
-                                <NotePhotoGrid
-                                  images={thumbs}
-                                  totalCount={post.images.length}
-                                  onImageClick={handleNoteImageClick}
-                                />
-
-                                {/* Body */}
-                                <div className="px-3.5 py-3">
-                                  {post.title?.trim() && (
-                                    <p className="text-xs font-bold text-text-primary leading-snug mb-1.5">{post.title}</p>
-                                  )}
-                                  {preview ? (
-                                    <p className="text-[11px] text-text-secondary leading-relaxed line-clamp-3">
-                                      {preview}
-                                    </p>
-                                  ) : (
-                                    !post.title?.trim() && (
-                                      <p className="text-[11px] text-text-disabled italic font-serif">Empty note</p>
-                                    )
-                                  )}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Note editor */}
-                  <AnimatePresence>
-                    {noteEditorOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden space-y-3 pt-4 border-t border-border-default"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-text-disabled">
-                            {activePostId ? "Editing note" : "New note"}
-                          </span>
-                          {userPosts.length > 0 && !activePostId && (
-                            <span className="text-[10px] text-text-disabled">
-                              {userPosts.length} existing note{userPosts.length !== 1 ? "s" : ""}
-                            </span>
-                          )}
-                        </div>
-                        <Textarea
-                          value={note}
-                          onChange={(e) => setNote(e.target.value)}
-                          placeholder="Add a note or review..."
-                          className="min-h-[100px] text-sm resize-none"
-                        />
-                        <PendingPhotosQueue
-                          pendingImages={pendingImages}
-                          isSavingNote={isSavingNote}
-                          onRemove={removePendingImage}
-                          onSave={() => void handleSaveNote()}
-                        />
-                        <div className="flex items-center justify-between gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={openNotePhotoPicker}
-                            disabled={isSavingNote}
-                            className="text-xs font-medium text-text-secondary hover:text-text-primary"
-                          >
-                            <Plus className="h-3.5 w-3.5 mr-1" />
-                            {pendingImages.length > 0 ? "Add more photos" : "Add photos"}
-                          </Button>
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                clearPendingImages();
-                                setNoteEditorOpen(false);
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => void handleSaveNote()}
-                              disabled={isSavingNote}
-                            >
-                              {isSavingNote && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
-                              Save
-                            </Button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* Collection selector */}
-                  <AnimatePresence>
-                    {showCollections && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden border-t border-border-default pt-4"
-                      >
-                        <CollectionSelector
-                          userId={user?.id ?? ""}
-                          selectedCollectionIds={selectedCollectionIds}
-                          onChange={setSelectedCollectionIds}
-                        />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  </>
-                  )}
-
-                </div>
+                <BuildingActionCard
+                  building={building}
+                  currentUser={user}
+                  profile={profile ?? null}
+                  userStatus={userStatus}
+                  onStatusChange={handleStatusChange}
+                  myRating={myRating}
+                  onRate={handleRate}
+                  onNewNote={handleNewNote}
+                  userPosts={userPosts}
+                  note={note}
+                  setNote={setNote}
+                  activePostId={activePostId}
+                  noteEditorOpen={noteEditorOpen}
+                  setNoteEditorOpen={setNoteEditorOpen}
+                  pendingImages={pendingImages}
+                  isSavingNote={isSavingNote}
+                  onRemovePendingImage={removePendingImage}
+                  onClearPendingImages={clearPendingImages}
+                  onSaveNote={handleSaveNote}
+                  onOpenNotePhotoPicker={openNotePhotoPicker}
+                  showCollections={showCollections}
+                  setShowCollections={setShowCollections}
+                  selectedCollectionIds={selectedCollectionIds}
+                  setSelectedCollectionIds={setSelectedCollectionIds}
+                  onSelectImage={setSelectedImage}
+                />
 
                 {/* Map card */}
                 <div className="bg-surface-card border border-border-default rounded-none overflow-hidden shadow-xs">
