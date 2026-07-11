@@ -42,7 +42,7 @@
     "src/features/posts/components/DiscoveryCard.tsx": 777,
     "src/features/posts/hooks/useDiscoveryFeed.ts": 301,
     "src/features/profile/components/ManageFoldersDialog.tsx": 521,
-    "src/features/profile/pages/Profile.tsx": 1317,
+    "src/features/profile/pages/Profile.tsx": 1273,
     "src/features/search/components/DiscoveryFiltersPanel.tsx": 623,
     "src/features/search/hooks/useBuildingSearch.ts": 1480,
     "src/features/search/SearchPage.tsx": 413,
