@@ -11,7 +11,6 @@ import {
   useRouteError,
   type LoaderFunctionArgs,
 } from "react-router";
-import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,6 +23,7 @@ import { PwaPrompt } from "@/components/pwa/PwaPrompt";
 import { AppErrorBoundary } from "@/components/common/AppErrorBoundary";
 import { RouteLoadingFallback } from "@/components/common/RouteLoadingFallback";
 import { NotFoundView } from "@/components/common/NotFoundView";
+import { ErrorView } from "@/components/common/ErrorView";
 import { AuthProvider, useAuth } from "@/features/auth/hooks/useAuth";
 import { useLoginTracker } from "@/features/auth/hooks/useLoginTracker";
 import { usePresenceTracker } from "@/features/auth/hooks/usePresenceTracker";
@@ -218,27 +218,26 @@ export function ErrorBoundary() {
   }
 
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center bg-surface-default px-8 py-16 text-center">
-      <div className="flex flex-col items-center justify-center gap-4">
-        <AlertTriangle className="h-12 w-12 text-feedback-destructive" />
-        <h1 className="text-2xl font-semibold text-text-primary">Something went wrong</h1>
-        <p className="max-w-md text-sm text-text-secondary">
-          An unexpected error occurred. Try refreshing the page.
-        </p>
-        <div className="flex gap-3">
+    <ErrorView
+      code="500"
+      headline="Something broke."
+      message="An unexpected error interrupted the page. A refresh usually clears it — the rest of the catalogue is still standing."
+      actions={
+        <>
           <Button variant="outline" onClick={() => window.location.reload()}>
             Refresh page
           </Button>
           <Button
             type="button"
+            variant="accent"
             onClick={() => revalidator.revalidate()}
             disabled={revalidator.state === "loading"}
           >
             Try again
           </Button>
-        </div>
-      </div>
-    </div>
+        </>
+      }
+    />
   );
 }
 

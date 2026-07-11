@@ -66,7 +66,7 @@ export function SiteFooter() {
                   >
                     {label}
                     {tag && (
-                      <span className="text-[9px] font-medium tracking-widest uppercase text-text-inverse/20 border border-text-inverse/10 px-1.5 py-0.5 rounded-[2px]">
+                      <span className="text-[9px] font-medium tracking-widest uppercase text-text-inverse/20 border border-text-inverse/10 px-1.5 py-0.5 rounded-sm">
                         {tag}
                       </span>
                     )}
