@@ -12,7 +12,7 @@ const BUILDINGS_SRC = join(process.cwd(), "src/features/buildings");
 const QA114_SOURCES = [
   "pages/BuildingDetails.tsx",
   "components/BuildingForm.tsx",
-  "components/BuildingHeader.tsx",
+  "components/BuildingMasthead.tsx",
   "components/BuildingAttributes.tsx",
 ] as const;
 

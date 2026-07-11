@@ -15,7 +15,7 @@ import {
   useSearchParams,
   type MetaFunction,
 } from "react-router";
-import { Loader2, MapPin } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
   AlertDialog,
@@ -40,8 +40,8 @@ import {
 } from "@/features/credits/api/credits";
 import { visiblePrimaryCredits } from "@/features/credits/buildingCreditDisplay";
 import { getBuildingUrl } from "@/utils/url";
-import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
 import { BuildingCredits, BuildingCreditsPreview } from "../components/BuildingCredits";
+import { BuildingMapCard } from "../components/BuildingMapCard";
 import { BuildingContributorsInline } from "../components/BuildingContributorsInline";
 import { buildingLoader } from "./BuildingDetails.loader";
 import {
@@ -60,7 +60,8 @@ import {
 } from "@/features/buildings/utils/buildingReviewFeedAdapter";
 import { ActivityStreamGroup } from "@/features/posts/components/ActivityStream";
 import { BuildingHeroSection } from "../components/BuildingHeroSection";
-import { BuildingHeader } from "../components/BuildingHeader";
+import { BuildingMasthead } from "../components/BuildingMasthead";
+import { BuildingFactsStrip } from "../components/BuildingFactsStrip";
 import { BuildingMapTab } from "../components/BuildingMapTab";
 import { BuildingMediaTab } from "../components/BuildingMediaTab";
 import { BuildingInfoSection } from "../components/BuildingInfoSection";
@@ -402,7 +403,6 @@ export default function BuildingDetails() {
 
 
   // ── Pure UI state ─────────────────────────────────────────────────────────
-  const [isMapExpanded, setIsMapExpanded] = useState(false);
   const [showDirectionsAlert, setShowDirectionsAlert] = useState(false);
 
   // Shared file input for attaching photos to the active note draft. Always
@@ -418,14 +418,6 @@ export default function BuildingDetails() {
     handleNewNote();
     notePhotoInputRef.current?.click();
   }, [setTab, handleNewNote]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isMapExpanded) setIsMapExpanded(false);
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isMapExpanded]);
 
   // ── Editorial stream ──────────────────────────────────────────────────────
 
@@ -493,6 +485,18 @@ export default function BuildingDetails() {
 
   const buildingUrl = getBuildingUrl(building.id, building.slug, building.short_id);
 
+  // Photographer credit chip for the hero band; hidden when the hero URL has
+  // no match in the community images (e.g. preview-fallback heroes).
+  const heroDisplayImage = heroImageUrl
+    ? displayImages.find((img) => img.url === heroImageUrl) ?? null
+    : null;
+  const heroCredit = heroDisplayImage
+    ? {
+        isOfficial: !!heroDisplayImage.is_official,
+        username: heroDisplayImage.user?.username ?? null,
+      }
+    : null;
+
   // ─── MAIN RENDER ─────────────────────────────────────────────────────────
 
   return (
@@ -518,23 +522,28 @@ export default function BuildingDetails() {
           onChange={handleImageSelect}
         />
 
-        {/* ── HERO — cropped colour band with identity overlaid ── */}
+        {/* ── PHOTO BAND — clean cropped photograph, credit chip only ── */}
         <BuildingHeroSection
+          heroImageUrl={heroImageUrl}
+          alt={heroAlt}
+          heroCredit={heroCredit}
+        />
+
+        {/* ── EDITORIAL MASTHEAD — identity + stats/actions below the photo ── */}
+        <BuildingMasthead
           building={building}
           buildingCredits={buildingCredits}
           isStatusBuilding={isStatusBuilding}
-          heroImageUrl={heroImageUrl}
-          alt={heroAlt}
-        />
-
-        {/* ── STATS + ACTIONS BAR ── */}
-        <BuildingHeader
           visitorCount={visitorCount}
           totalRatingPoints={totalRatingPoints}
           buildingUrl={buildingUrl}
         />
+
+        {/* ── FACTS STRIP — key facts, visible across all tabs ── */}
+        <BuildingFactsStrip building={building} coordinates={coordinates} />
+
         {/* Sentinel — sticky tab bar triggers when this leaves viewport */}
-        <div ref={sentinelRef} aria-hidden className="h-0" />
+        <div ref={sentinelRef} aria-hidden className="h-0 mt-10 md:mt-12" />
 
         {/* ── TAB BAR ── */}
         <div
@@ -739,49 +748,13 @@ export default function BuildingDetails() {
                 />
 
                 {/* Map card */}
-                <div className="bg-surface-card border border-border-default rounded-none overflow-hidden shadow-xs">
-                  <div className="aspect-square relative">
-                    {coordinates ? (
-                      <div className={cn("h-full w-full transition-all duration-700", !isMapExpanded && "grayscale-[0.4] hover:grayscale-0")}>
-                        <BuildingLocationMap
-                          lat={coordinates.lat}
-                          lng={coordinates.lng}
-                          isExpanded={isMapExpanded}
-                          onToggleExpand={() => setIsMapExpanded(!isMapExpanded)}
-                          className="h-full w-full"
-                        />
-                      </div>
-                    ) : (
-                      <div className="h-full w-full flex items-center justify-center bg-surface-muted">
-                        <MapPin className="h-6 w-6 text-text-disabled" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3.5 flex items-center justify-between border-t border-border-default">
-                    <div className="flex items-center gap-1.5 text-xs text-text-secondary min-w-0">
-                      <MapPin className="h-3 w-3 text-text-disabled shrink-0" />
-                      <span className="truncate">
-                        {[building.city, building.country].filter(Boolean).join(", ")}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      className="cta-link shrink-0"
-                      onClick={() => {
-                        if (building.location_precision === "approximate") {
-                          setShowDirectionsAlert(true);
-                        } else {
-                          window.open(
-                            `https://www.google.com/maps/dir/?api=1&destination=${coordinates?.lat},${coordinates?.lng}`,
-                            "_blank",
-                          );
-                        }
-                      }}
-                    >
-                      Directions
-                    </button>
-                  </div>
-                </div>
+                <BuildingMapCard
+                  coordinates={coordinates}
+                  city={building.city}
+                  country={building.country}
+                  isApproximate={building.location_precision === "approximate"}
+                  onDirectionsBlocked={() => setShowDirectionsAlert(true)}
+                />
 
                 {/* Overview sidebar: credits preview */}
                 {activeTab === "overview" && buildingCredits.length > 0 && (

@@ -36,3 +36,5 @@ build/
 ds-bundle/
 playwright-report/
 .audit/
+.audit-full/
+.audit-scroll/

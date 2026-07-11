@@ -264,6 +264,18 @@
     text-wrap: balance;
   }
 
+  /* Building-detail masthead title — sits BELOW the photo band, one step up
+     from .headline (48–92px, mock: building-detail.html .bldg-name). */
+  .headline-masthead {
+    font-family: var(--font-sans);
+    font-size: clamp(3rem, 7vw, 5.75rem);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 0.95;
+    color: var(--text-primary);
+    text-wrap: balance;
+  }
+
   /* Uppercase tracked label — the architectural eyebrow convention. */
   .eyebrow,
   .label-upper {
