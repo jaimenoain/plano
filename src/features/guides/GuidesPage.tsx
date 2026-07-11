@@ -12,6 +12,7 @@ import {
   type Continent,
 } from './continents';
 import { getCountryUrl } from '@/utils/url';
+import { EmptyState } from '@/components/ui/empty-state';
 
 // ─── Skeleton helpers ─────────────────────────────────────────────────────────
 
@@ -40,7 +41,7 @@ function CollectionSkeleton() {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
+    <p className="eyebrow tracking-widest">
       {children}
     </p>
   );
@@ -106,7 +107,7 @@ export default function GuidesPage() {
       />
 
       <AppLayout>
-      <div className="mx-auto min-h-screen w-full max-w-[1440px] bg-surface-default">
+      <div className="mx-auto min-h-screen w-full max-w-[1120px] bg-surface-default">
 
         {/* ── Zone 1: Hero ─────────────────────────────────────── */}
         <section className="border-b border-border-default px-4 sm:px-8 py-16 sm:py-20">
@@ -234,12 +235,15 @@ export default function GuidesPage() {
               ))}
             </div>
           ) : (
-            <div className="space-y-3">
-              <p className="text-sm text-text-secondary">No public collections yet.</p>
-              <Link to="/collections/new" className="cta-link">
-                Create the first one
-              </Link>
-            </div>
+            <EmptyState
+              eyebrow="No collections yet"
+              message="Community-curated collections will appear here."
+              action={
+                <Link to="/collections/new" className="cta-link">
+                  Create the first one
+                </Link>
+              }
+            />
           )}
 
           <Link to="/explore" className="cta-link mt-8 sm:hidden">

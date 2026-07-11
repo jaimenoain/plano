@@ -147,7 +147,7 @@ export function LocalitySearchInput({
 
       {open && suggestions.length > 0 && (
         <ul
-          className="absolute z-50 mt-1 w-full bg-surface-overlay border border-border-default rounded-sm shadow-lg overflow-hidden"
+          className="absolute z-50 mt-1 w-full bg-surface-overlay border border-border-default rounded-sm overflow-hidden"
           role="listbox"
         >
           {suggestions.map((s, i) => (

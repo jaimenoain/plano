@@ -28,7 +28,7 @@ export function LocalityCard({ locality, featured = false }: LocalityCardProps) 
         <p className="mt-3 text-xl font-bold leading-tight tracking-tight text-text-primary">
           {locality.city}
         </p>
-        <p className="mt-0.5 text-2xs font-medium uppercase tracking-widest text-text-secondary">
+        <p className="mt-0.5 eyebrow tracking-widest">
           {locality.buildingsCount} buildings
         </p>
       </Link>
