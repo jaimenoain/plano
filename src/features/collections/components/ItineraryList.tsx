@@ -491,7 +491,7 @@ function ItineraryDayColumn({
                     </div>
                 </div>
                 {transportMode === 'walking' && distance && distance > 15000 && (
-                    <div className="text-amber-600 text-xs flex items-center font-normal mt-1">
+                    <div className="text-feedback-warning text-xs flex items-center font-normal mt-1">
                         <AlertTriangle className="w-3 h-3 mr-1" />
                         Día muy intenso. Considera añadir un día extra o cambiar a coche.
                     </div>

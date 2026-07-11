@@ -117,7 +117,7 @@ export function FeedCardC({
       )}
 
       <CardFooter
-        className="mt-8"
+        className="pt-9"
         likesCount={entry.likes_count}
         commentsCount={entry.comments_count}
         isLiked={Boolean(entry.is_liked)}

@@ -455,7 +455,7 @@ toast({
           </Link>
         </div>
 
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-start mb-8">
             <Avatar className="h-24 w-24 mb-4">
               <AvatarImage src={avatarUrl || undefined} />
               <AvatarFallback className="text-2xl">
@@ -487,7 +487,7 @@ toast({
         <form onSubmit={handleUpdateProfile} className="space-y-6">
           {/* Public Profile Section */}
           <div className="space-y-6">
-            <h2 className="mb-6 text-2xs font-medium uppercase tracking-widest text-text-secondary">Public profile</h2>
+            <h2 className="eyebrow mb-6">Public profile</h2>
             
             <div className="space-y-1.5">
               <Label htmlFor="username">Username</Label>
@@ -534,7 +534,7 @@ toast({
 
           {/* Profile Content Section */}
           <div className="space-y-6">
-            <h2 className="mb-6 text-2xs font-medium uppercase tracking-widest text-text-secondary">
+            <h2 className="eyebrow mb-6">
               Profile customization
             </h2>
             <div className="space-y-0 divide-y divide-border-default border-y border-border-default">
@@ -543,14 +543,14 @@ toast({
                    <h3 className="font-medium text-text-primary">All-time favourites</h3>
                    <p className="text-sm text-text-secondary">Select up to 6 buildings to showcase on your profile.</p>
                 </div>
-                <Button type="button" variant="outline" className="shrink-0 rounded-sm" onClick={() => setShowManageFavorites(true)}>Manage</Button>
+                <Button type="button" variant="outline" className="shrink-0" onClick={() => setShowManageFavorites(true)}>Manage</Button>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-3 py-5">
                 <div className="min-w-0 flex-1">
                    <h3 className="font-medium text-text-primary">Highlights</h3>
                    <p className="text-sm text-text-secondary">Add favorite styles, people, and quotes.</p>
                 </div>
-                <Button type="button" variant="outline" className="shrink-0 rounded-sm" onClick={() => setShowManageHighlights(true)}>Manage</Button>
+                <Button type="button" variant="outline" className="shrink-0" onClick={() => setShowManageHighlights(true)}>Manage</Button>
               </div>
             </div>
           </div>
@@ -559,7 +559,7 @@ toast({
             <>
               <div className="mt-12 border-t border-border-default pt-8" />
               <div className="space-y-4">
-                <h2 className="mb-6 text-2xs font-medium uppercase tracking-widest text-text-secondary">
+                <h2 className="eyebrow mb-6">
                   App experience
                 </h2>
                 <div className="flex flex-wrap items-center justify-between gap-3 border-y border-border-default py-5">
@@ -569,7 +569,7 @@ toast({
                           Add Plano to your home screen for easier access.
                         </p>
                       </div>
-                      <Button type="button" variant="outline" className="shrink-0 rounded-sm" onClick={promptInstall}>
+                      <Button type="button" variant="outline" className="shrink-0" onClick={promptInstall}>
                         Install
                       </Button>
                 </div>
@@ -581,7 +581,7 @@ toast({
 
           {/* Account Security Section */}
           <div className="space-y-4">
-            <h2 className="mb-6 text-2xs font-medium uppercase tracking-widest text-text-secondary">
+            <h2 className="eyebrow mb-6">
               Account &amp; security
             </h2>
 
@@ -611,6 +611,7 @@ toast({
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Leave blank to keep current password"
+                className="max-w-sm"
               />
             </div>
 
@@ -640,7 +641,7 @@ toast({
 
           {/* Data & Privacy Section */}
           <div className="space-y-4">
-            <h2 className="mb-6 text-2xs font-medium uppercase tracking-widest text-text-secondary">
+            <h2 className="eyebrow mb-6">
               Data &amp; privacy
             </h2>
             <div className="flex flex-wrap items-center justify-between gap-3 border-y border-border-default py-5">
@@ -653,7 +654,7 @@ toast({
                 <Button
                   type="button"
                   variant="outline"
-                  className="shrink-0 rounded-sm"
+                  className="shrink-0"
                   onClick={handleExportData}
                   disabled={exporting}
                 >

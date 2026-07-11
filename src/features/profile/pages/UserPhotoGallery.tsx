@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Image as ImageIcon, Heart } from "lucide-react";
+import { Loader2, Heart } from "lucide-react";
 import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Select,
   SelectContent,
@@ -271,9 +272,9 @@ export default function UserPhotoGallery() {
 
   return (
     <AppLayout title={`${profileUsername}'s Photos`} showBack showLogo={false}>
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 py-10 sm:px-6 lg:px-8">
         <header className="mb-8 border-b border-border-default pb-6">
-          <p className="mb-2 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+          <p className="eyebrow mb-2">
             {profileUsername}
           </p>
           <h1 className="text-3xl font-bold tracking-tight leading-none text-text-primary md:text-4xl">
@@ -295,10 +296,11 @@ export default function UserPhotoGallery() {
         )}
 
         {photos.length === 0 ? (
-           <div className="flex flex-col items-center justify-center min-h-[40vh] gap-3 border border-dashed border-border-default px-6 py-16 text-center text-text-secondary">
-             <ImageIcon className="h-8 w-8 text-text-disabled" aria-hidden />
-             <p className="text-sm">No photos uploaded yet.</p>
-           </div>
+           <EmptyState
+             eyebrow="No photos yet"
+             message="Photos uploaded when reviewing buildings will appear here."
+             className="min-h-[40vh]"
+           />
         ) : (
           <div className="grid grid-cols-2 gap-mosaic-gap bg-border-default md:grid-cols-3 lg:grid-cols-4">
             {photos.map((photo) => {

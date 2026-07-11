@@ -178,7 +178,7 @@ export function FeedCardB({
                 ref={bodyRef}
                 className={cn(
                   "text-[17px] leading-[1.75] text-text-primary max-w-[62ch] font-sans",
-                  !essayExpanded && "line-clamp-4",
+                  !essayExpanded && "line-clamp-card-body",
                 )}
               >
                 {entry.content}
@@ -190,7 +190,7 @@ export function FeedCardB({
                     e.stopPropagation();
                     setEssayExpanded(true);
                   }}
-                  className="group/readmore mt-5 shrink-0 font-sans text-[11px] font-medium tracking-[0.18em] uppercase text-text-primary"
+                  className="group/readmore mt-5 shrink-0 font-sans text-[11px] font-medium tracking-[0.18em] uppercase text-text-primary transition-colors"
                 >
                   <span className="transition-colors group-hover/readmore:text-text-secondary">
                     Read the full review
