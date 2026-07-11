@@ -112,12 +112,12 @@ export function AwardFilterSelect({
           <div
             ref={containerRef}
             className={cn(
-              "flex min-h-9 flex-wrap items-center gap-1 rounded-md border border-border-default bg-surface-card px-2 py-1",
+              "flex min-h-9 flex-wrap items-center gap-1 rounded-sm border border-border-default bg-surface-card px-2 py-1",
             )}
           >
             {selectedAwardId ? (
               <span className="inline-flex items-center gap-1 rounded-sm bg-surface-muted px-2 py-0.5 text-xs text-text-primary">
-                <Trophy className="h-3 w-3 shrink-0 text-amber-500" aria-hidden />
+                <Trophy className="h-3 w-3 shrink-0 text-text-secondary" aria-hidden />
                 <span className="max-w-[200px] truncate">{selectedAwardName || "Award"}</span>
                 <button
                   type="button"
@@ -161,7 +161,7 @@ export function AwardFilterSelect({
                   onSelect={() => handleSelect(a)}
                   className="cursor-pointer"
                 >
-                  <Trophy className="mr-2 h-4 w-4 text-amber-500" />
+                  <Trophy className="mr-2 h-4 w-4 text-text-secondary" />
                   <div className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate text-sm">{a.name}</span>
                   </div>

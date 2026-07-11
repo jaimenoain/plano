@@ -7,6 +7,7 @@ import { awardLoader, type AwardLoaderData } from "./AwardPage.loader";
 import { AwardLeaderboardDialog } from "../components/AwardLeaderboardDialog";
 import { ClaimAwardDialog } from "../components/ClaimAwardDialog";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useMyAwardClaimRequest, useIsAwardAdmin, useUpcomingEventsByAward } from "@/features/awards/hooks/useAwards";
 import { getEditionDisplayLabel, editionEventTypeLabels } from "@/features/awards/types/awards";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,7 +63,7 @@ export default function AwardPage() {
 
   return (
     <AppLayout showBack title={award.name} showHeader>
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
         <header className="border-b border-border-default pb-10">
           <div className="flex flex-col gap-6">
             <div className="flex items-start justify-between gap-4">
@@ -181,7 +182,7 @@ export default function AwardPage() {
         {/* What's Next — only shown when there are upcoming events */}
         {upcomingEvents.length > 0 && (
           <section className="mt-10 border-b border-border-default pb-10">
-            <h2 className="mb-6 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+            <h2 className="mb-6 eyebrow tracking-widest">
               What's Next
             </h2>
             <div className="divide-y divide-border-default">
@@ -222,13 +223,13 @@ export default function AwardPage() {
         )}
 
         <section className="mt-12">
-          <h2 className="mb-8 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+          <h2 className="mb-8 eyebrow tracking-widest">
             Editions ({editions.length})
           </h2>
 
           <div className="space-y-1">
             {editions.length === 0 ? (
-              <p className="text-sm text-text-secondary italic">No editions listed yet.</p>
+              <EmptyState eyebrow="No editions yet" message="Editions of this award will appear here once they're added." />
             ) : (
               editions.map((edition) => (
                 <Link

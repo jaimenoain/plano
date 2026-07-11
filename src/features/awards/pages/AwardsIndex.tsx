@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/ui/empty-state";
 import { AwardRecipientCard } from "../components/AwardRecipientCard";
 import { AwardFilterSelect } from "../components/AwardFilterSelect";
 import {
@@ -154,7 +155,7 @@ function RecentTab() {
         <div className="space-y-0">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="flex items-center gap-4 py-3 border-b border-border-default">
-              <Skeleton className="h-12 w-12 rounded-md shrink-0" />
+              <Skeleton className="h-12 w-12 rounded-none shrink-0" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-2/3" />
                 <Skeleton className="h-3 w-1/3" />
@@ -164,18 +165,19 @@ function RecentTab() {
           ))}
         </div>
       ) : recipients.length === 0 ? (
-        <div className="py-16 text-center text-text-secondary text-sm">
-          No recipients match these filters.{" "}
-          <button
-            type="button"
-            className="underline underline-offset-2 hover:opacity-70"
-            onClick={() =>
-              setSearchParams({ tab: "recent" })
-            }
-          >
-            Clear filters
-          </button>
-        </div>
+        <EmptyState
+          eyebrow="No recipients"
+          message="No recipients match these filters."
+          action={
+            <button
+              type="button"
+              className="cta-link"
+              onClick={() => setSearchParams({ tab: "recent" })}
+            >
+              Clear filters
+            </button>
+          }
+        />
       ) : (
         <div>
           {recipients.map((r) => (
@@ -228,7 +230,7 @@ function LeaderboardTab() {
     <div className="space-y-10">
       {/* Award selector */}
       <div className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+        <p className="eyebrow tracking-widest">
           Filter by award
         </p>
         <AwardFilterSelect
@@ -240,7 +242,7 @@ function LeaderboardTab() {
 
       {/* Buildings */}
       <div className="space-y-3">
-        <h3 className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+        <h3 className="eyebrow tracking-widest">
           Buildings
         </h3>
         {buildingsLoading ? (
@@ -248,7 +250,7 @@ function LeaderboardTab() {
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex items-center gap-4">
                 <Skeleton className="w-7 h-5" />
-                <Skeleton className="w-9 h-9 rounded-md shrink-0" />
+                <Skeleton className="w-9 h-9 rounded-none shrink-0" />
                 <div className="flex-1 space-y-1.5">
                   <Skeleton className="h-4 w-1/2" />
                   <Skeleton className="h-3 w-1/3" />
@@ -273,7 +275,7 @@ function LeaderboardTab() {
                 >
                   {i + 1}
                 </span>
-                <div className="h-9 w-9 rounded-md overflow-hidden bg-surface-muted shrink-0 border border-border-default">
+                <div className="h-9 w-9 overflow-hidden bg-surface-muted shrink-0 border border-border-default">
                   {b.hero_image_url ? (
                     <img
                       src={getBuildingImageUrl(b.hero_image_url) ?? undefined}
@@ -319,7 +321,7 @@ function LeaderboardTab() {
 
       {/* People */}
       <div className="space-y-3">
-        <h3 className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+        <h3 className="eyebrow tracking-widest">
           People
         </h3>
         {peopleLoading ? (
@@ -420,7 +422,7 @@ function DirectoryTab() {
         <div className="space-y-2">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="flex items-center gap-4 py-3 border-b border-border-default">
-              <Skeleton className="h-8 w-8 rounded-md shrink-0" />
+              <Skeleton className="h-8 w-8 rounded-sm shrink-0" />
               <div className="flex-1 space-y-1.5">
                 <Skeleton className="h-4 w-1/2" />
                 <Skeleton className="h-3 w-1/3" />
@@ -429,9 +431,7 @@ function DirectoryTab() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <p className="py-12 text-center text-sm text-text-secondary">
-          No awards found.
-        </p>
+        <EmptyState eyebrow="No awards found" message="Try a different search term." />
       ) : (
         <div>
           {filtered.map((a) => {
@@ -444,7 +444,7 @@ function DirectoryTab() {
                 className="flex items-center gap-4 py-3 border-b border-border-default last:border-0 group hover:opacity-70 transition-opacity"
               >
                 {/* Initial tile */}
-                <div className="h-8 w-8 rounded-md bg-surface-muted border border-border-default shrink-0 flex items-center justify-center">
+                <div className="h-8 w-8 rounded-sm bg-surface-muted border border-border-default shrink-0 flex items-center justify-center">
                   <Trophy className="h-3.5 w-3.5 text-text-disabled" />
                 </div>
 
@@ -501,7 +501,7 @@ function RightRail({
             <p className="text-2xl font-bold text-text-primary">
               {stats.awardCount}
             </p>
-            <p className="text-2xs uppercase tracking-[0.15em] text-text-secondary mt-1">
+            <p className="eyebrow tracking-widest mt-1">
               Awards tracked
             </p>
           </div>
@@ -509,7 +509,7 @@ function RightRail({
             <p className="text-2xl font-bold text-text-primary">
               {stats.recipientCount.toLocaleString()}
             </p>
-            <p className="text-2xs uppercase tracking-[0.15em] text-text-secondary mt-1">
+            <p className="eyebrow tracking-widest mt-1">
               Recipients
             </p>
           </div>
@@ -520,7 +520,7 @@ function RightRail({
       {topBuildings.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+            <h3 className="eyebrow tracking-widest">
               Most awarded buildings
             </h3>
             <button
@@ -541,7 +541,7 @@ function RightRail({
                 <span className="text-xs font-bold text-text-disabled w-4 shrink-0">
                   {i + 1}
                 </span>
-                <div className="h-8 w-8 rounded-md overflow-hidden bg-surface-muted shrink-0 border border-border-default">
+                <div className="h-8 w-8 overflow-hidden bg-surface-muted shrink-0 border border-border-default">
                   {b.hero_image_url ? (
                     <img
                       src={getBuildingImageUrl(b.hero_image_url) ?? undefined}
@@ -567,7 +567,7 @@ function RightRail({
       {topPeople.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+            <h3 className="eyebrow tracking-widest">
               Most awarded people
             </h3>
             <button
@@ -607,7 +607,7 @@ function RightRail({
       {prestigiousAwards.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+            <h3 className="eyebrow tracking-widest">
               Prestigious awards
             </h3>
             <button
@@ -670,7 +670,7 @@ export default function AwardsIndex() {
 
   return (
     <AppLayout title="Awards" showLogo={false}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-24">
+      <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 py-10 pb-24">
         {/* ── Heading ── */}
         <div className="mb-8 border-b border-border-default pb-8">
           <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-text-primary leading-none">
