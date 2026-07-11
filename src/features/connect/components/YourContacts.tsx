@@ -11,13 +11,15 @@
  *    UserRows flow directly on the page surface with border-b dividers
  *  - ScrollArea retained for overflow but without a containing box
  *  - Loading: minimal spinner, no card layout
- *  - Empty states: minimal text, no centred card
+ *  - Empty states: the shared `EmptyState` primitive (eyebrow + sentence), no
+ *    centred card
  */
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { UserRow } from "./UserRow";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Loader2 } from "lucide-react";
 
 interface ContactUser {
@@ -209,11 +211,10 @@ export function YourContacts() {
               ))}
             </div>
           ) : (
-            <div className="py-16 text-center">
-              <p className="text-sm text-text-disabled">
-                You are not following anyone yet
-              </p>
-            </div>
+            <EmptyState
+              eyebrow="No one yet"
+              message="You are not following anyone yet."
+            />
           )}
         </ScrollArea>
       )}
@@ -237,9 +238,7 @@ export function YourContacts() {
               ))}
             </div>
           ) : (
-            <div className="py-16 text-center">
-              <p className="text-sm text-text-disabled">No followers yet</p>
-            </div>
+            <EmptyState eyebrow="No followers" message="No followers yet." />
           )}
         </ScrollArea>
       )}

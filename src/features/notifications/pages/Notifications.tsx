@@ -218,10 +218,10 @@ export default function Notifications() {
       />
 
       <ScrollArea className="h-full">
-        <div className="max-w-4xl mx-auto pb-24">
+        <div className="max-w-[1120px] mx-auto pb-24">
 
           {/* ── Editorial heading ── */}
-          <div className="px-4 sm:px-6 lg:px-8 pt-11 pb-10 border-b border-border-default">
+          <div className="px-4 sm:px-6 pt-11 pb-10 border-b border-border-default">
             <h1 className="headline">Notifications</h1>
           </div>
 

@@ -28,7 +28,7 @@ export default function Connect() {
     <div className="w-full">
       <AppLayout title="Connect" showLogo={false}>
         <div className="w-full pb-24">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8">
 
             {/* ── Editorial page heading ── */}
             <div className="pt-10 pb-10 border-b border-border-default">

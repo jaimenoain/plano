@@ -250,7 +250,7 @@ export default function Post() {
               </div>
 
               {showVisibilityMenu && (
-                <div className="absolute bottom-16 left-4 right-4 bg-surface-overlay border rounded-md shadow-xl z-50 overflow-hidden">
+                <div className="absolute bottom-16 left-4 right-4 bg-surface-overlay border border-border-default rounded-sm z-50 overflow-hidden">
                   {(["public", "contacts", "private"] as Visibility[]).map((v) => (
                     <button key={v} onClick={() => { setVisibility(v); setShowVisibilityMenu(false); }} className={cn("w-full px-4 py-3 text-left text-sm hover:bg-surface-muted", visibility === v ? "text-brand-primary font-bold" : "")}>
                       {v.charAt(0).toUpperCase() + v.slice(1)}
