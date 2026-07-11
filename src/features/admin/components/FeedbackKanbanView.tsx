@@ -3,6 +3,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   COLUMN_DOT,
   KANBAN_STATUSES,
@@ -57,9 +58,14 @@ export function FeedbackKanbanView({
 
   if (rows.length === 0) {
     return (
-      <div className="flex items-center justify-center rounded-sm border border-border-default py-16 text-text-secondary">
-        No feedback yet.
-      </div>
+      <EmptyState
+        eyebrow="No feedback yet"
+        message={
+          readOnly
+            ? "You haven't submitted any feedback."
+            : "No feedback has been submitted."
+        }
+      />
     );
   }
 
