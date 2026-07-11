@@ -107,7 +107,7 @@ function OnboardingCard({
           return (
             <div
               key={step.key}
-              className={`flex items-start gap-3 rounded-lg px-3 py-2.5 ${
+              className={`flex items-start gap-3 rounded-sm px-3 py-2.5 ${
                 done ? "opacity-50" : "bg-surface-default"
               }`}
             >
@@ -337,7 +337,7 @@ export default function LeadershipPage() {
           {visibleBanners.map((banner: BroadcastBanner) => (
             <div
               key={banner.id}
-              className={`flex items-start gap-3 rounded-lg border p-4 ${
+              className={`flex items-start gap-3 rounded-sm border p-4 ${
                 banner.isPinned
                   ? "bg-surface-muted border-border-default"
                   : "bg-feedback-warning/10 border-feedback-warning/30"

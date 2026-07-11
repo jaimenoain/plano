@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 export function AmbassadorMarketingEyebrow({ children }: { children: ReactNode }) {
   return (
-    <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">{children}</p>
+    <p className="eyebrow tracking-widest">{children}</p>
   );
 }
 
@@ -37,7 +37,7 @@ export function AmbassadorMarketingLabel({
   return (
     <label
       htmlFor={htmlFor}
-      className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary"
+      className="eyebrow tracking-widest"
     >
       {children}
     </label>

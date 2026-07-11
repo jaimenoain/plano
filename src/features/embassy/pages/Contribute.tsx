@@ -179,7 +179,7 @@ export default function ContributePage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Skeleton className="h-9 w-9 rounded-lg" />
+          <Skeleton className="h-9 w-9 rounded-sm" />
           <div className="space-y-2">
             <Skeleton className="h-6 w-48" />
             <Skeleton className="h-4 w-64" />
@@ -651,7 +651,7 @@ function DuplicateDetectionPanel({ chapterId }: { chapterId: string }) {
             exit={{ opacity: 0 }}
             className="flex flex-col items-center justify-center py-14 text-text-secondary space-y-3"
           >
-            <div className="w-14 h-14 rounded-md bg-surface-muted flex items-center justify-center opacity-40">
+            <div className="w-14 h-14 rounded-sm bg-surface-muted flex items-center justify-center opacity-40">
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <p className="font-medium opacity-50 text-sm">No potential duplicates found in your chapter.</p>
@@ -891,7 +891,7 @@ function ResearchReviewPanel({
               aria-label="Accept this data point"
               aria-pressed={item.accepted}
               className={cn(
-                "flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                "flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-medium transition-colors",
                 item.accepted
                   ? isConflict ? "bg-feedback-warning text-text-primary cursor-default" : "bg-text-primary text-surface-default cursor-default"
                   : "border border-border-default text-muted-foreground hover:border-border-strong hover:text-brand-primary",
@@ -907,7 +907,7 @@ function ResearchReviewPanel({
               aria-label="Reject this data point"
               aria-pressed={!item.accepted}
               className={cn(
-                "flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                "flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-medium transition-colors",
                 !item.accepted
                   ? "bg-destructive text-white cursor-default"
                   : "border border-border-default text-muted-foreground hover:border-destructive hover:text-destructive",
@@ -934,7 +934,7 @@ function ResearchReviewPanel({
 
               {/* Current value (shown only for conflict fields) */}
               {isConflict && item.currentDisplayValue && (
-                <div className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+                <div className="rounded-sm bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
                   <span className="font-medium">Current:</span> {item.currentDisplayValue}
                 </div>
               )}
@@ -967,7 +967,7 @@ function ResearchReviewPanel({
 
             {/* Right: source snippet + URL */}
             {(item.source_url || item.snippet) && (
-              <div className="md:w-72 shrink-0 rounded-md bg-muted/60 p-3 space-y-1.5 text-xs text-muted-foreground mt-3 md:mt-0 self-start">
+              <div className="md:w-72 shrink-0 rounded-sm bg-muted/60 p-3 space-y-1.5 text-xs text-muted-foreground mt-3 md:mt-0 self-start">
                 {item.snippet && (
                   <p className="italic leading-relaxed">&ldquo;{item.snippet}&rdquo;</p>
                 )}
@@ -1052,7 +1052,7 @@ function ResearchReviewPanel({
           </p>
           <div className="grid gap-2">
             {confirmedItems.map((item) => (
-              <div key={item.field} className="flex items-center gap-3 px-3 py-2 rounded-md bg-muted/40 text-sm">
+              <div key={item.field} className="flex items-center gap-3 px-3 py-2 rounded-sm bg-muted/40 text-sm">
                 <CheckCircle className="h-3.5 w-3.5 shrink-0 text-feedback-success" />
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground w-32 shrink-0">
                   {FIELD_LABELS[item.field] ?? item.field}
@@ -1409,7 +1409,7 @@ function FirmOutreachDrawer({
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Interaction History</p>
           {logsLoading ? (
             <div className="space-y-3">
-              {[0, 1].map(i => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
+              {[0, 1].map(i => <Skeleton key={i} className="h-16 w-full rounded-sm" />)}
             </div>
           ) : logsError ? (
             <div className="text-center py-8 space-y-3">
@@ -1433,7 +1433,7 @@ function FirmOutreachDrawer({
                   ? profile.username.slice(0, 2).toUpperCase()
                   : "?";
                 return (
-                  <div key={log.id} className="border rounded-lg p-3 space-y-1.5">
+                  <div key={log.id} className="border rounded-sm p-3 space-y-1.5">
                     <div className="flex items-center justify-between gap-2">
                       <Badge
                         variant="secondary"
@@ -1612,7 +1612,7 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
           </div>
         </div>
 
-        <div className="flex items-center bg-muted p-1 rounded-lg">
+        <div className="flex items-center bg-muted p-1 rounded-sm">
           <Button
             variant="ghost"
             size="sm"
@@ -1672,7 +1672,7 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
               <div className="flex items-center gap-2">
                 <div className={cn(
                   "w-2 h-2 rounded-full",
-                  f.value === 0 ? "bg-[#EF4444]" : f.value === 1 ? "bg-[#F59E0B]" : "bg-[#10B981]"
+                  f.value === 0 ? "bg-feedback-destructive" : f.value === 1 ? "bg-feedback-warning" : "bg-feedback-success"
                 )} />
                 {f.label}
               </div>
@@ -1682,7 +1682,7 @@ function PhotographyTool({ chapterId, onBack }: { chapterId: string; onBack: () 
       </div>
 
       {view === "map" ? (
-        <div className="flex-1 min-h-0 border rounded-2xl overflow-hidden shadow-inner bg-surface-muted relative">
+        <div className="flex-1 min-h-0 border rounded-sm overflow-hidden shadow-inner bg-surface-muted relative">
           <PlanoMap showGapCallout />
         </div>
       ) : (
@@ -1864,8 +1864,8 @@ function FlagButton({
   const [open, setOpen] = useState(false);
 
   const triggerClass = overlay
-    ? "p-1.5 rounded-md bg-background/80 backdrop-blur-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-    : "opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10";
+    ? "p-1.5 rounded-sm bg-background/80 backdrop-blur-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+    : "opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10";
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -1899,7 +1899,7 @@ function FlagButton({
                 setOpen(false);
                 onFlag(id, label, r.value);
               }}
-              className="w-full text-left text-sm px-2 py-1.5 rounded-md hover:bg-destructive/10 hover:text-destructive transition-colors"
+              className="w-full text-left text-sm px-2 py-1.5 rounded-sm hover:bg-destructive/10 hover:text-destructive transition-colors"
             >
               {r.label}
             </button>
@@ -2187,7 +2187,7 @@ function PhotosModerationTab({
                 <button
                   type="button"
                   onClick={() => handleApprove([p.id])}
-                  className="p-1.5 rounded-md bg-background/80 backdrop-blur-xs text-muted-foreground hover:text-feedback-success hover:bg-feedback-success/10 transition-colors"
+                  className="p-1.5 rounded-sm bg-background/80 backdrop-blur-xs text-muted-foreground hover:text-feedback-success hover:bg-feedback-success/10 transition-colors"
                   aria-label="Approve photo"
                   title="Approve photo"
                 >
@@ -2515,7 +2515,7 @@ function CreditsModerationTab({
 
 function GlobalModerationBanner({ onBack }: { onBack: () => void }) {
   return (
-    <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-muted/60 border border-border-default">
+    <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-sm bg-muted/60 border border-border-default">
       <p className="text-xs text-muted-foreground">
         Showing content from uncharted locations — places not yet covered by an active chapter.
       </p>
@@ -2902,7 +2902,7 @@ function EventsTool({
                 onChange={handleCoverFileChange}
               />
               {editDraft.cover_image_url && (
-                <div className="overflow-hidden rounded-md border border-border-default">
+                <div className="overflow-hidden rounded-none border border-border-default">
                   <img
                     src={editDraft.cover_image_url}
                     alt=""
@@ -2982,7 +2982,7 @@ function EventDiscoveryCard({
             <img
               src={d.cover_image_url}
               alt=""
-              className="w-16 h-16 rounded-lg object-cover shrink-0"
+              className="w-16 h-16 rounded-none object-cover shrink-0"
             />
           )}
           <div className="min-w-0 flex-1 space-y-2">
@@ -2993,7 +2993,7 @@ function EventDiscoveryCard({
             </div>
 
             {isDuplicate && d.duplicate_of_title && (
-              <div className="flex items-start gap-1.5 rounded-md bg-feedback-warning/10 border border-feedback-warning/30 px-3 py-2 text-xs text-feedback-warning">
+              <div className="flex items-start gap-1.5 rounded-sm bg-feedback-warning/10 border border-feedback-warning/30 px-3 py-2 text-xs text-feedback-warning">
                 <AlertCircle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                 <span>
                   Possible duplicate of{" "}

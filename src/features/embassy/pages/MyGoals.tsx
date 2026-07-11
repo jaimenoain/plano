@@ -15,12 +15,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Target, History, Plus, Loader2, ArrowUpRight, TrendingUp, Star, CheckSquare, Circle, Clock, CheckCircle2, CalendarDays, FolderOpen, Building2, Eye, EyeOff, Users } from "lucide-react";
+import { Target, History, Plus, Loader2, ArrowUpRight, TrendingUp, CheckSquare, Circle, Clock, CheckCircle2, CalendarDays, FolderOpen, Building2, Eye, EyeOff, Users } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow, isPast, isToday, parseISO } from "date-fns";
 import {
   EmbassyPageHeader,
+  EmbassyEmptyState,
   EMBASSY_SKELETON_ROUNDED,
 } from "@/features/embassy/components/embassy-ui";
 
@@ -222,7 +223,7 @@ export default function MyGoalsPage() {
           </div>
           {loadingTasks ? (
             <div className="space-y-2">
-              {[0, 1].map((i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
+              {[0, 1].map((i) => <Skeleton key={i} className="h-14 w-full rounded-sm" />)}
             </div>
           ) : (
             <div className="space-y-2">
@@ -254,16 +255,12 @@ export default function MyGoalsPage() {
               {[0, 1].map(i => <Skeleton key={i} className={cn("h-32 w-full", EMBASSY_SKELETON_ROUNDED)} />)}
             </div>
           ) : goals?.filter(g => g.status === 'active').length === 0 ? (
-            <Card className="p-8 text-center border-dashed border-2 flex flex-col items-center justify-center space-y-4">
-              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                <Star className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <div className="space-y-1">
-                <p className="font-medium">No active goals</p>
-                <p className="text-sm text-muted-foreground">Set a target to keep yourself motivated.</p>
-              </div>
+            <EmbassyEmptyState
+              title="No active goals"
+              description="Set a target to keep yourself motivated."
+            >
               <Button variant="outline" size="sm" onClick={() => setIsGoalOpen(true)}>Set your first goal</Button>
-            </Card>
+            </EmbassyEmptyState>
           ) : (
             <div className="grid gap-4">
               {goals?.filter(g => g.status === 'active').map((goal) => (
@@ -281,7 +278,7 @@ export default function MyGoalsPage() {
 
           {loadingTimeline ? (
             <div className="space-y-3">
-              {[0, 1, 2].map(i => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}
+              {[0, 1, 2].map(i => <Skeleton key={i} className="h-16 w-full rounded-sm" />)}
             </div>
           ) : timeline?.length === 0 ? (
             <p className="text-muted-foreground text-sm py-4">No recent activity logged.</p>
@@ -474,7 +471,7 @@ function OpenTaskRow({ task, onClick }: { task: ChapterTask; onClick: () => void
   const cfg = TASK_STATUS_CONFIG[task.status];
   return (
     <div
-      className="flex items-center gap-3 p-3 rounded-lg border border-border-default hover:bg-surface-muted/50 transition-colors cursor-pointer"
+      className="flex items-center gap-3 p-3 rounded-sm border border-border-default hover:bg-surface-muted/50 transition-colors cursor-pointer"
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -537,7 +534,7 @@ function GoalCard({ goal }: { goal: Goal }) {
 
 function ActivityRow({ item }: { item: AmbassadorAuditRow }) {
   return (
-    <div className="flex items-center gap-4 p-3 rounded-lg border hover:bg-surface-muted/50 transition-colors">
+    <div className="flex items-center gap-4 p-3 rounded-sm border hover:bg-surface-muted/50 transition-colors">
       <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
         <History className="h-4 w-4 text-muted-foreground" />
       </div>

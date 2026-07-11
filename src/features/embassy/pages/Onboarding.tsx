@@ -207,7 +207,7 @@ export default function OnboardingPage() {
                   >
                     <div
                       className={cn(
-                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors",
+                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-sm transition-colors",
                         selected
                           ? "bg-text-primary text-surface-default"
                           : "bg-surface-muted text-text-secondary"
