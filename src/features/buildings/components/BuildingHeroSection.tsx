@@ -8,17 +8,16 @@ export interface HeroCredit {
 interface BuildingHeroSectionProps {
   heroImageUrl: string | null;
   alt: string;
-  /** Photographer credit for the chip on the band; null hides the chip. */
+  /** Photographer credit for the caption under the band; null hides it. */
   heroCredit: HeroCredit | null;
 }
 
 /**
- * The building-detail photo band: a clean cropped photograph with a small
- * credit chip — no overlaid identity. The building name, architect and actions
- * live below in `BuildingMasthead`. When there is no photo the band renders
- * nothing at all and the masthead becomes the hero (an empty hatched band
- * would only push the title down for exactly the buildings with nothing to
- * show).
+ * The building-detail photo band — deliberately demoted. It sits *below* the
+ * masthead (the name leads the page now) and is contained to the content
+ * column with a firm height cap, so an un-curated UGC shot is a supporting
+ * image rather than a full-bleed hero. Credit is a quiet caption, not an
+ * overlaid pill. When there is no photo the band renders nothing at all.
  */
 export function BuildingHeroSection({
   heroImageUrl,
@@ -28,13 +27,13 @@ export function BuildingHeroSection({
   if (!heroImageUrl) return null;
 
   return (
-    <div className="relative w-full">
-      <div className="aspect-[16/9] sm:aspect-[21/9] max-h-[68vh] w-full overflow-hidden bg-surface-muted">
+    <figure className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mt-8 md:mt-10">
+      <div className="aspect-[4/3] sm:aspect-[16/9] max-h-[420px] w-full overflow-hidden bg-surface-muted">
         <motion.img
           key={heroImageUrl}
-          initial={{ opacity: 0, scale: 1.03 }}
+          initial={{ opacity: 0, scale: 1.02 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.7 }}
           src={heroImageUrl}
           alt={alt}
           className="h-full w-full object-cover"
@@ -43,11 +42,11 @@ export function BuildingHeroSection({
         />
       </div>
       {heroCredit && (
-        <span className="absolute left-4 top-4 sm:left-6 sm:top-6 bg-surface-card/90 px-2.5 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-text-primary">
+        <figcaption className="mt-2 text-right text-[11px] tracking-[0.05em] text-text-secondary">
           {heroCredit.isOfficial ? "Official" : "Photo"}
           {heroCredit.username ? ` · ${heroCredit.username}` : ""}
-        </span>
+        </figcaption>
       )}
-    </div>
+    </figure>
   );
 }
