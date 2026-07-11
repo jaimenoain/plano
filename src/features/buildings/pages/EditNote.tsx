@@ -389,7 +389,7 @@ export default function EditNote() {
         {/* Building context */}
         {buildingName && (
           <div className="mb-6">
-            <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Note for</p>
+            <p className="eyebrow tracking-widest">Note for</p>
             <h1 className="text-3xl font-bold tracking-tight text-text-primary mt-0.5">{buildingName}</h1>
           </div>
         )}
@@ -416,13 +416,13 @@ export default function EditNote() {
 
           {/* Tags */}
           <div className="space-y-2">
-            <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Tags</p>
+            <p className="eyebrow tracking-widest">Tags</p>
             <TagInput tags={tags} setTags={setTags} placeholder="Add tags and press Enter…" />
           </div>
 
           {/* Attachments */}
           <div className="space-y-2">
-            <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Attachments</p>
+            <p className="eyebrow tracking-widest">Attachments</p>
 
             <input
               ref={imageInputRef}
@@ -450,7 +450,7 @@ export default function EditNote() {
                 {images.map((img) => (
                   <div
                     key={img.id}
-                    className="relative group rounded-sm overflow-hidden border border-border-default bg-surface-muted flex flex-col"
+                    className="relative group rounded-none overflow-hidden border border-border-default bg-surface-muted flex flex-col"
                   >
                     {/* Thumbnail */}
                     <div className="relative aspect-square">
@@ -507,7 +507,7 @@ export default function EditNote() {
 
           {/* Links */}
           <div className="space-y-2">
-            <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Links</p>
+            <p className="eyebrow tracking-widest">Links</p>
 
             {/* Existing links */}
             {links.length > 0 && (

@@ -56,7 +56,7 @@ export default function CompanyClaimDispute() {
   return (
     <AppLayout showBack>
       <div className="mx-auto max-w-lg px-4 py-10 sm:px-6">
-        <p className="mb-2 text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+        <p className="mb-2 eyebrow tracking-widest">
           Company claim
         </p>
         <h1 className="mb-3 text-3xl font-bold tracking-tight leading-none text-text-primary">
@@ -75,7 +75,7 @@ export default function CompanyClaimDispute() {
             </p>
             <Link
               to={authRedirect}
-              className="inline-block text-xs font-medium uppercase tracking-[0.15em] text-text-primary transition-opacity hover:opacity-70"
+              className="inline-block text-xs font-medium uppercase tracking-widest text-text-primary transition-opacity hover:opacity-70"
             >
               Log in to continue →
             </Link>
@@ -85,7 +85,7 @@ export default function CompanyClaimDispute() {
             <div className="grid gap-2">
               <Label
                 htmlFor="dispute-reason"
-                className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary"
+                className="eyebrow tracking-widest"
               >
                 Reason (required)
               </Label>
@@ -103,7 +103,7 @@ export default function CompanyClaimDispute() {
             <div className="grid gap-2">
               <Label
                 htmlFor="dispute-evidence"
-                className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary"
+                className="eyebrow tracking-widest"
               >
                 Evidence URL (optional)
               </Label>
@@ -125,7 +125,7 @@ export default function CompanyClaimDispute() {
               </Button>
               <Link
                 to={`/company/${slug}`}
-                className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors hover:text-text-primary"
+                className="text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
               >
                 Cancel
               </Link>

@@ -21,6 +21,7 @@ import { GripVertical, Loader2, Pencil, Plus } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Dialog,
   DialogContent,
@@ -189,12 +190,10 @@ export function CompanyPortfolioManageSection({
           <Card className="overflow-hidden border border-border-default">
             <CardContent className="p-0">
               {items.length === 0 ? (
-                <div className="flex flex-col items-center px-6 py-14 text-center">
-                  <p className="text-sm font-medium text-text-primary">No credits yet</p>
-                  <p className="mt-2 max-w-md text-sm leading-relaxed text-text-secondary">
-                    Add a credit from the catalogue or list a new building, then attach your studio&apos;s role here.
-                  </p>
-                </div>
+                <EmptyState
+                  eyebrow="No credits yet"
+                  message="Add a credit from the catalogue or list a new building, then attach your studio's role here."
+                />
               ) : (
                 items.map((row) => (
                   <SortablePortfolioRow key={row.credit.id} id={row.credit.id} disabled={!reorderMode || reorderMut.isPending}>
