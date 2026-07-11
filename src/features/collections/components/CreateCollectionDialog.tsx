@@ -184,7 +184,7 @@ toast({ variant: "destructive", description: "Failed to create collection." });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-surface-overlay border border-border-default rounded-lg shadow-lg p-0">
+      <DialogContent className="sm:max-w-md bg-surface-overlay border border-border-default p-0">
         <DialogHeader className="p-6 border-b border-border-default">
           <DialogTitle>New Collection</DialogTitle>
           <DialogDescription>

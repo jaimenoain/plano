@@ -6,6 +6,7 @@ import { searchBuildingsRpc } from "@/utils/supabaseFallback";
 import { Loader2, Search, Circle, X, Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -175,7 +176,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
            <div className="relative">
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
              <input
-               className="flex h-10 w-full rounded-md border border-border-default bg-surface-default px-3 py-2 pl-9 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-secondary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+               className="flex h-10 w-full rounded-none border border-border-default bg-surface-default px-3 py-2 pl-9 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-secondary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                placeholder="Search for buildings..."
                value={query}
                onChange={(e) => {
@@ -201,11 +202,11 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
 
             {selected.length > 0 && (
                 <div className="px-4 py-2 border-b bg-surface-default/50 backdrop-blur-xs z-10">
-                    <div className="text-[10px] uppercase font-bold text-text-secondary mb-2 tracking-wider">Selected ({selected.length}/6)</div>
+                    <div className="eyebrow tracking-widest mb-2">Selected ({selected.length}/6)</div>
                     <div className="flex gap-2 overflow-x-scroll-touch pb-2 snap-x">
                         {selected.map(item => (
                             <div key={item.id} className="relative shrink-0 w-12 snap-start">
-                                <div className="aspect-2/3 rounded-none overflow-hidden bg-surface-muted border shadow-xs">
+                                <div className="aspect-2/3 rounded-none overflow-hidden bg-surface-muted border">
                                     {item.image_url ? (
                                         <img src={item.image_url} className="w-full h-full object-cover" loading="lazy" />
                                     ) : (
@@ -214,7 +215,7 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
                                 </div>
                                 <button
                                   onClick={() => toggleSelection(item)}
-                                  className="absolute -top-1.5 -right-1.5 bg-feedback-destructive text-white rounded-full p-0.5 shadow-xs hover:scale-110 transition-transform"
+                                  className="absolute -top-1.5 -right-1.5 bg-feedback-destructive text-text-inverse rounded-full p-0.5 hover:scale-110 transition-transform"
                                 >
                                     <X className="h-3 w-3" />
                                 </button>
@@ -231,11 +232,11 @@ export function ManageFavoritesDialog({ open, onOpenChange, favorites, onSave }:
                   ) : (
                       <TabsContent value="suggested" className="mt-0 space-y-1">
                           {suggestions.length === 0 && !loading && (
-                              <div className="text-center py-12 px-4 text-text-secondary text-sm">
-                                  <Circle className="h-8 w-8 mx-auto mb-3 text-text-secondary/30" />
-                                  <p>You haven't rated any buildings 10/10 yet.</p>
-                                  <Button variant="link" onClick={() => setActiveTab("search")}>Search instead</Button>
-                              </div>
+                              <EmptyState
+                                  eyebrow="No 10/10 buildings"
+                                  message="You haven't rated any buildings 10/10 yet."
+                                  action={<Button variant="link" onClick={() => setActiveTab("search")}>Search instead</Button>}
+                              />
                           )}
                           {suggestions.map(item => <ListItem key={item.id} item={item} selected={selected} toggle={toggleSelection} />)}
                       </TabsContent>
@@ -272,11 +273,11 @@ function ListItem({ item, selected, toggle }: { item: FavoriteItem, selected: Fa
         <div
           onClick={() => !isDisabled && toggle(item)}
           className={cn(
-              "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors border border-transparent",
+              "flex items-center gap-3 p-2 rounded-none cursor-pointer transition-colors border border-transparent",
               isSelected ? "bg-brand-primary/5 border-brand-primary/20" : isDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-surface-muted",
           )}
         >
-            <div className="h-12 w-8 shrink-0 bg-surface-muted rounded-none overflow-hidden shadow-xs">
+            <div className="h-12 w-8 shrink-0 bg-surface-muted rounded-none overflow-hidden">
                 {item.image_url && <img src={item.image_url} className="w-full h-full object-cover" loading="lazy" />}
             </div>
             <div className="flex-1 min-w-0">
@@ -286,7 +287,7 @@ function ListItem({ item, selected, toggle }: { item: FavoriteItem, selected: Fa
                 </div>
                 <div className="flex items-center gap-2 text-[10px] text-text-secondary mt-0.5">
                     {item.rating && (
-                        <span className="flex items-center text-[#595959] gap-0.5 font-medium">
+                        <span className="flex items-center text-text-secondary gap-0.5 font-medium">
                             <Circle className="h-2.5 w-2.5 fill-current" /> {item.rating}
                         </span>
                     )}

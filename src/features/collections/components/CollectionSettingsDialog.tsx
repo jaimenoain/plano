@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Trash2, Plus, X, MapPin, AlertTriangle, Download, Bookmark, LogOut, Sparkles, FolderPlus, Folder, Info } from "lucide-react";
+import { Loader2, Trash2, Plus, X, AlertTriangle, Download, Bookmark, LogOut, Sparkles, FolderPlus, Folder, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserSearch } from "@/features/profile/components/UserSearch";
@@ -528,7 +528,7 @@ toast.error("Failed to export data");
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-[500px] flex flex-col h-full bg-surface-overlay border-l border-border-default shadow-lg">
+      <SheetContent side="right" className="w-full sm:max-w-[500px] flex flex-col h-full bg-surface-overlay border-l border-border-default">
         <SheetHeader className="border-b border-border-default pb-4">
           <SheetTitle>Collection Settings</SheetTitle>
           <SheetDescription>Manage your collection preferences and collaborators.</SheetDescription>
@@ -583,7 +583,7 @@ toast.error("Failed to export data");
                 )}
                 {showSavedCandidates &&
                   (onSavedPlacesStatusFilterChange || onSavedPlacesDotFilterChange) && (
-                  <div className="rounded-md border border-border-default bg-surface-muted/40 p-3 space-y-4">
+                  <div className="rounded-none border border-border-default bg-surface-muted/40 p-3 space-y-4">
                     {onSavedPlacesStatusFilterChange && (
                       <div className="space-y-2">
                         <Label className="text-sm font-medium text-text-primary">Show by list</Label>
@@ -708,7 +708,7 @@ toast.error("Failed to export data");
             <Separator className="my-6" />
 
             {isOwner && (
-              <div className="border border-feedback-destructive/50 rounded-md p-4 bg-feedback-destructive/5 space-y-4">
+              <div className="border border-feedback-destructive/50 rounded-none p-4 bg-feedback-destructive/5 space-y-4">
                 <h3 className="text-feedback-destructive font-medium flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4" /> Danger Zone
                 </h3>
@@ -766,7 +766,7 @@ toast.error("Failed to export data");
                     </div>
                 </RadioGroup>
 
-                <div className="text-sm text-text-secondary bg-surface-muted/10 p-2 rounded-md border mt-2">
+                <div className="text-sm text-text-secondary bg-surface-muted/10 p-2 rounded-none border mt-2">
                     {METHOD_DESCRIPTIONS[formData.categorization_method]}
                 </div>
 
@@ -792,7 +792,7 @@ toast.error("Failed to export data");
                          </div>
 
                          {formData.categorization_selected_members !== null && (
-                             <ScrollArea className="h-[150px] border rounded-md p-2 bg-surface-muted/5">
+                             <ScrollArea className="h-[150px] border rounded-none p-2 bg-surface-muted/5">
                                  {contributors.length > 0 ? (
                                      <div className="space-y-2">
                                          {contributors.map(c => {
@@ -849,14 +849,14 @@ toast.error("Failed to export data");
                             </Button>
                         </div>
 
-                        <ScrollArea className="h-[200px] border rounded-md bg-surface-muted/10 p-2">
+                        <ScrollArea className="h-[200px] border rounded-none bg-surface-muted/10 p-2">
                             {formData.custom_categories && formData.custom_categories.length > 0 ? (
                                 <div className="space-y-2">
                                     {formData.custom_categories.map((cat) => (
-                                        <div key={cat.id} className="flex items-center justify-between bg-surface-card p-2 rounded-md shadow-xs border">
+                                        <div key={cat.id} className="flex items-center justify-between bg-surface-card p-2 rounded-none border">
                                             <div className="flex items-center gap-2">
                                                 <div
-                                                    className="w-4 h-4 rounded-full border shadow-xs"
+                                                    className="w-4 h-4 rounded-full border"
                                                     style={{ backgroundColor: cat.color }}
                                                 />
                                                 <span className="text-sm font-medium">{cat.label}</span>
@@ -868,9 +868,8 @@ toast.error("Failed to export data");
                                     ))}
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-text-secondary text-xs gap-2 opacity-50">
-                                    <MapPin className="h-6 w-6" />
-                                    <p>No custom categories yet</p>
+                                <div className="flex h-full items-center justify-center text-text-secondary text-xs opacity-50">
+                                    No custom categories yet
                                 </div>
                             )}
                         </ScrollArea>
@@ -898,11 +897,11 @@ toast.error("Failed to export data");
                         <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
                     </div>
                 ) : contributors.length === 0 ? (
-                    <div className="text-center py-8 text-text-secondary text-sm border rounded-md border-dashed">
+                    <p className="text-center py-8 text-text-secondary text-sm">
                         No collaborators yet.
-                    </div>
+                    </p>
                 ) : (
-                    <ScrollArea className="h-[200px] border rounded-md">
+                    <ScrollArea className="h-[200px] border rounded-none">
                         <div className="divide-y">
                             {contributors.map(contributor => {
                                 if (!contributor.user) return null;

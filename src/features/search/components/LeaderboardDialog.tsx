@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLeaderboard } from "../hooks/useLeaderboard";
 import { LeaderboardCard } from "./LeaderboardCard";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Trophy, TrendingUp, Loader2 } from "lucide-react";
 
 interface LeaderboardDialogProps {
@@ -52,9 +53,10 @@ export function LeaderboardDialog({ open, onOpenChange }: LeaderboardDialogProps
             <ScrollArea className="flex-1 -mx-2 px-2">
               <TabsContent value="most_visited" className="mt-0 space-y-1 pb-4">
                 {leaderboard?.most_visited?.length === 0 ? (
-                  <div className="text-center py-8 text-text-secondary">
-                    No stats available yet.
-                  </div>
+                  <EmptyState
+                    eyebrow="No stats yet"
+                    message="Visit stats will appear here as the community explores buildings."
+                  />
                 ) : (
                   leaderboard?.most_visited?.map((building, index) => (
                     <LeaderboardCard
@@ -69,9 +71,10 @@ export function LeaderboardDialog({ open, onOpenChange }: LeaderboardDialogProps
 
               <TabsContent value="top_rated" className="mt-0 space-y-1 pb-4">
                 {leaderboard?.top_rated?.length === 0 ? (
-                  <div className="text-center py-8 text-text-secondary">
-                    No rated buildings yet (min. 3 votes required).
-                  </div>
+                  <EmptyState
+                    eyebrow="No rated buildings"
+                    message="Buildings need at least three votes to appear here."
+                  />
                 ) : (
                   leaderboard?.top_rated?.map((building, index) => (
                     <LeaderboardCard

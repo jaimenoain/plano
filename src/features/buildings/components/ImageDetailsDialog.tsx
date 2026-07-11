@@ -260,7 +260,7 @@ toast({ variant: "destructive", title: "Failed to delete comment" });
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         hideCloseButton
-        className="max-w-5xl h-[95vh] md:h-[90vh] p-0 overflow-hidden flex flex-col md:flex-row gap-0 bg-surface-overlay border border-border-default rounded-none shadow-lg"
+        className="max-w-5xl h-[95vh] md:h-[90vh] p-0 overflow-hidden flex flex-col md:flex-row gap-0 bg-surface-overlay border border-border-default"
       >
         {/* Hidden titles for accessibility */}
         <DialogTitle className="sr-only">Image Details</DialogTitle>

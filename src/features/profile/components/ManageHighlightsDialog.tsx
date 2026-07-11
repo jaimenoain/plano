@@ -227,10 +227,10 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
 
                           {peopleHighlights.length > 0 && (
                               <div className="space-y-2">
-                                  <span className="text-xs text-text-secondary font-bold uppercase">Selected ({peopleHighlights.length}/5)</span>
+                                  <span className="eyebrow tracking-widest">Selected ({peopleHighlights.length}/5)</span>
                                   <div className="space-y-1">
                                       {peopleHighlights.map(p => (
-                                          <div key={p.id} className="flex items-center justify-between p-2 rounded-md bg-surface-muted/50">
+                                          <div key={p.id} className="flex items-center justify-between p-2 rounded-none bg-surface-muted/50">
                                               <div className="flex items-center gap-3">
                                                   <div className="h-10 w-10 rounded-none bg-surface-muted overflow-hidden">
                                                       {p.image_url && <img src={p.image_url} className="w-full h-full object-cover" alt={p.title} loading="lazy" />}
@@ -248,7 +248,7 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
 
                           {peopleResults.length > 0 && (
                                <div className="space-y-2 mt-4">
-                                  <span className="text-xs text-text-secondary font-bold uppercase">Results</span>
+                                  <span className="eyebrow tracking-widest">Results</span>
                                   <div className="space-y-1">
                                       {peopleResults.map(p => {
                                           const isSelected = !!peopleHighlights.find(sel => sel.id === p.id);
@@ -258,7 +258,7 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
                                                   onClick={() => !isSelected && togglePeopleHighlight(p)}
                                                   disabled={!isSelected && peopleHighlights.length >= 5}
                                                   className={cn(
-                                                      "flex items-center gap-3 p-2 rounded-md w-full text-left transition-colors",
+                                                      "flex items-center gap-3 p-2 rounded-none w-full text-left transition-colors",
                                                       isSelected ? "bg-brand-primary/10 opacity-50 cursor-default" : "hover:bg-surface-muted"
                                                   )}
                                               >
@@ -280,7 +280,7 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
                   {/* QUOTES TAB */}
                   {activeTab === "quotes" && (
                       <div className="space-y-6">
-                          <div className="space-y-3 p-4 bg-surface-muted/30 rounded-lg border border-border-default/50">
+                          <div className="space-y-3 p-4 bg-surface-muted/30 rounded-none border border-border-default/50">
                                <div className="space-y-1">
                                    <Label className="text-xs">Quote</Label>
                                    <Textarea
@@ -305,9 +305,9 @@ export function ManageHighlightsDialog({ open, onOpenChange, favorites, onSave }
 
                           {quotes.length > 0 && (
                               <div className="space-y-3">
-                                  <span className="text-xs text-text-secondary font-bold uppercase">Your Quotes ({quotes.length})</span>
+                                  <span className="eyebrow tracking-widest">Your Quotes ({quotes.length})</span>
                                   {quotes.map((q, _i) => (
-                                      <div key={q.id} className="relative group p-3 rounded-lg bg-surface-muted/20 border border-border-default/50">
+                                      <div key={q.id} className="relative group p-3 rounded-none bg-surface-muted/20 border border-border-default/50">
                                           <p className="text-sm italic pr-6">"{q.title}"</p>
                                           {q.quote_source && <p className="text-xs text-text-secondary mt-1">— {q.quote_source}</p>}
                                           <button

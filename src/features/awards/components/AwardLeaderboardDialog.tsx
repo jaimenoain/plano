@@ -9,6 +9,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Link } from "react-router";
 
 interface AwardLeaderboardDialogProps {
@@ -31,7 +32,7 @@ export function AwardLeaderboardDialog({
       <DialogContent className="max-w-2xl h-[80vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <Trophy className="h-6 w-6 text-amber-500" />
+            <Trophy className="h-6 w-6 text-text-secondary" />
             {awardName ? `${awardName} Leaderboard` : "Global Award Leaderboard"}
           </DialogTitle>
           <p className="text-sm text-text-secondary">
@@ -44,7 +45,7 @@ export function AwardLeaderboardDialog({
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-4 py-2">
-                  <Skeleton className="h-12 w-12 rounded-md shrink-0" />
+                  <Skeleton className="h-12 w-12 rounded-none shrink-0" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-3/4" />
                     <Skeleton className="h-3 w-1/2" />
@@ -52,9 +53,10 @@ export function AwardLeaderboardDialog({
                 </div>
               ))
             ) : buildings?.length === 0 ? (
-              <div className="text-center py-12 text-text-secondary">
-                No buildings found on this leaderboard yet.
-              </div>
+              <EmptyState
+                eyebrow="Empty leaderboard"
+                message="No buildings have been ranked on this leaderboard yet."
+              />
             ) : (
               buildings?.map((b, index) => (
                 <div
@@ -64,7 +66,7 @@ export function AwardLeaderboardDialog({
                   <div className="w-8 text-center font-bold text-text-secondary">
                     {index + 1}
                   </div>
-                  <div className="h-12 w-12 rounded-md overflow-hidden bg-surface-muted shrink-0 border border-border-default">
+                  <div className="h-12 w-12 rounded-none overflow-hidden bg-surface-muted shrink-0 border border-border-default">
                     {b.hero_image_url ? (
                       <img
                         src={b.hero_image_url}
