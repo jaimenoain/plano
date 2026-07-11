@@ -11,6 +11,7 @@ import {
 } from "@/features/credits/api/people";
 import type { PersonCreditWithBuilding, PersonPortfolioItem } from "@/features/credits/types";
 import { PersonCreditCard } from "@/features/credits/components/PersonCreditCard";
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
 import { toast } from "sonner";
 
@@ -59,7 +60,7 @@ function DashboardTierSection({
   if (sorted.length === 0) return null;
   return (
     <section className="mt-12 first:mt-0">
-      <h2 className="mb-6 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+      <h2 className="mb-6 text-xs font-medium uppercase tracking-widest text-text-secondary">
         {tierLabel(tier)} credits
       </h2>
       <div>
@@ -139,7 +140,7 @@ export default function PersonDashboard() {
   if (authLoading || claimedQuery.isLoading) {
     return (
       <AppLayout title="My portfolio" showBack>
-        <div className="mx-auto max-w-4xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1120px] space-y-8 px-4 py-8 sm:px-6 lg:px-8">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-4 w-96" />
           <div className="grid gap-4 md:grid-cols-3">
@@ -161,7 +162,7 @@ export default function PersonDashboard() {
 
   return (
     <AppLayout title="My portfolio" showBack>
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
         <header className="mb-8 space-y-2">
           <h1 className="text-3xl font-bold tracking-tight text-text-primary md:text-4xl">My portfolio</h1>
           <p className="text-sm text-text-secondary md:text-base">
@@ -187,19 +188,19 @@ export default function PersonDashboard() {
           <>
             <div className="grid grid-cols-1 gap-px border border-border-default bg-border-default sm:grid-cols-3">
               <div className="bg-surface-default px-5 py-6">
-                <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">
+                <p className="eyebrow tracking-widest">
                   Buildings credited
                 </p>
                 <p className="mt-2 text-2xl font-bold tabular-nums text-text-primary">{stats.buildingCount}</p>
                 <p className="mt-1 text-xs text-text-secondary">Distinct buildings in your portfolio</p>
               </div>
               <div className="bg-surface-default px-5 py-6">
-                <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Roles</p>
+                <p className="eyebrow tracking-widest">Roles</p>
                 <p className="mt-2 text-2xl font-bold tabular-nums text-text-primary">{stats.roleCount}</p>
                 <p className="mt-1 text-xs text-text-secondary">Distinct credit roles</p>
               </div>
               <div className="bg-surface-default px-5 py-6">
-                <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Year span</p>
+                <p className="eyebrow tracking-widest">Year span</p>
                 <p className="mt-2 text-2xl font-bold tabular-nums text-text-primary">
                   {stats.yearMin != null && stats.yearMax != null
                     ? stats.yearMin === stats.yearMax
@@ -212,7 +213,7 @@ export default function PersonDashboard() {
             </div>
 
             <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">Sort within each tier</h2>
+              <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">Sort within each tier</h2>
               <ToggleGroup
                 type="single"
                 value={sortMode}
@@ -236,7 +237,10 @@ export default function PersonDashboard() {
                 <DashboardTierSection tier="contributor" items={portfolio.contributor} sortMode={sortMode} />
                 <DashboardTierSection tier="ancillary" items={portfolio.ancillary} sortMode={sortMode} />
                 {allItems.length === 0 ? (
-                  <p className="mt-12 text-center text-sm text-text-secondary">No credits yet.</p>
+                  <EmptyState
+                    eyebrow="No credits yet"
+                    message="Buildings where you're credited will appear here once your work is catalogued."
+                  />
                 ) : null}
               </div>
             )}
