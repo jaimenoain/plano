@@ -71,8 +71,8 @@ export default function SupportPage() {
 
           {/* ── Hero ──────────────────────────────────────────────────────── */}
           <section className="border-b border-border-default">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20">
-              <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-8">
+            <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20">
+              <p className="eyebrow tracking-widest mb-8">
                 Ambassador programme
               </p>
               <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-tight text-text-primary">
@@ -103,14 +103,14 @@ export default function SupportPage() {
 
           {/* ── Stats bar ─────────────────────────────────────────────────── */}
           <section className="border-b border-border-default">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8">
               <div className="grid grid-cols-3 divide-x divide-border-default">
                 {values.map(({ stat, label }) => (
                   <div key={label} className="py-10 px-4 first:pl-0 last:pr-0">
                     <p className="text-4xl font-bold tracking-tight leading-tight text-text-primary">
                       {stat}
                     </p>
-                    <p className="mt-1 text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary">
+                    <p className="mt-1 eyebrow tracking-widest">
                       {label}
                     </p>
                   </div>
@@ -121,8 +121,8 @@ export default function SupportPage() {
 
           {/* ── What ambassadors do ───────────────────────────────────────── */}
           <section className="border-b border-border-default">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-              <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-2">
+            <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 py-20">
+              <p className="eyebrow tracking-widest mb-2">
                 The role
               </p>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight leading-snug text-text-primary mb-16">
@@ -132,7 +132,7 @@ export default function SupportPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-14">
                 {responsibilities.map(({ index, heading, body }) => (
                   <div key={index}>
-                    <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-disabled mb-4">
+                    <p className="eyebrow tracking-widest text-text-disabled mb-4">
                       {index}
                     </p>
                     <h3 className="text-xl font-semibold text-text-primary mb-3">
@@ -149,7 +149,7 @@ export default function SupportPage() {
 
           {/* ── Pull quote ────────────────────────────────────────────────── */}
           <section className="border-b border-border-default bg-surface-inverse">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 py-20">
               <p
                 className="text-3xl sm:text-4xl font-medium leading-snug text-text-inverse"
                 style={{ letterSpacing: "-0.025em" }}
@@ -157,7 +157,7 @@ export default function SupportPage() {
                 "Every building that exists in the world deserves to be documented.
                 Ambassadors are the reason that is possible."
               </p>
-              <p className="mt-8 text-2xs font-medium tracking-[0.15em] uppercase text-white/40">
+              <p className="mt-8 eyebrow tracking-widest text-text-inverse/40">
                 Plano team
               </p>
             </div>
@@ -165,8 +165,8 @@ export default function SupportPage() {
 
           {/* ── Chapter structure ─────────────────────────────────────────── */}
           <section className="border-b border-border-default">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-              <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-2">
+            <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 py-20">
+              <p className="eyebrow tracking-widest mb-2">
                 Structure
               </p>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight leading-snug text-text-primary mb-14">
@@ -194,8 +194,8 @@ export default function SupportPage() {
 
           {/* ── What you get ──────────────────────────────────────────────── */}
           <section className="border-b border-border-default">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-              <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-2">
+            <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 py-20">
+              <p className="eyebrow tracking-widest mb-2">
                 Benefits
               </p>
               <h2 className="text-3xl sm:text-4xl font-bold tracking-tight leading-snug text-text-primary mb-14">
@@ -235,8 +235,8 @@ export default function SupportPage() {
 
           {/* ── Apply CTA ─────────────────────────────────────────────────── */}
           <section>
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-              <p className="text-2xs font-medium tracking-[0.15em] uppercase text-text-secondary mb-6">
+            <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 py-24">
+              <p className="eyebrow tracking-widest mb-6">
                 Join the programme
               </p>
               <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight text-text-primary mb-10">

@@ -24,14 +24,12 @@ export const meta: MetaFunction = () => [
 
 export default function About() {
   return (
-    <div className="min-h-screen bg-surface-default text-text-primary">
+    <div className="min-h-screen w-full bg-surface-default text-text-primary">
       <ScrollRestoration />
-      <div className="container mx-auto py-16 px-4 max-w-3xl space-y-16">
+      <div className="mx-auto py-16 px-4 max-w-3xl space-y-16">
 
         <header className="space-y-4">
-          <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
-            About
-          </p>
+          <p className="eyebrow tracking-widest">About</p>
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
             The world's architecture, cataloged.
           </h1>
@@ -43,7 +41,7 @@ export default function About() {
         </header>
 
         <section className="space-y-4">
-          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">What we&apos;re building</h2>
+          <h2 className="eyebrow tracking-widest">What we&apos;re building</h2>
           <p className="text-text-secondary leading-relaxed">
             Architecture shapes every city, neighbourhood, and street we live in.
             Yet most of it goes unrecorded, undiscovered, and unappreciated outside
@@ -61,7 +59,7 @@ export default function About() {
         </section>
 
         <section className="space-y-6">
-          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Who Plano is for</h2>
+          <h2 className="eyebrow tracking-widest">Who Plano is for</h2>
           <div className="grid gap-6 sm:grid-cols-2">
             {[
               {
@@ -98,7 +96,7 @@ export default function About() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Core features</h2>
+          <h2 className="eyebrow tracking-widest">Core features</h2>
           <ul className="space-y-3 text-text-secondary">
             {[
               [
@@ -137,7 +135,7 @@ export default function About() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Get in touch</h2>
+          <h2 className="eyebrow tracking-widest">Get in touch</h2>
           <p className="text-text-secondary leading-relaxed">
             We're a small team with a large ambition. If you have questions,
             feedback, or just want to talk about architecture, reach us at{" "}

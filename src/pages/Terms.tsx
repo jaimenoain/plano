@@ -24,11 +24,11 @@ export const meta: MetaFunction = () => [
 
 export default function Terms() {
   return (
-    <div className="min-h-screen bg-surface-default text-text-primary">
+    <div className="min-h-screen w-full bg-surface-default text-text-primary">
       <ScrollRestoration />
-      <div className="container mx-auto max-w-2xl space-y-10 px-4 py-12">
+      <div className="mx-auto max-w-2xl space-y-10 px-4 py-12">
         <header className="space-y-4 border-b border-border-default pb-8">
-          <p className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">Legal</p>
+          <p className="eyebrow tracking-widest">Legal</p>
           <h1 className="text-3xl font-bold tracking-tight leading-none sm:text-4xl">
             Terms and Conditions for Plano
           </h1>
@@ -38,21 +38,21 @@ export default function Terms() {
         </header>
 
         <section className="space-y-4">
-          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">1. Introduction</h2>
+          <h2 className="eyebrow tracking-widest">1. Introduction</h2>
           <p>
             Welcome to Plano ("we," "our," or "us"). By accessing or using our website and social platform (the "Service"), you agree to be bound by these Terms and Conditions ("Terms"). If you disagree with any part of these terms, you may not access the Service.
           </p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">2. Description of Service</h2>
+          <h2 className="eyebrow tracking-widest">2. Description of Service</h2>
           <p>
             Plano is a social platform designed for architecture enthusiasts to track visits, rate buildings, organize trips, and interact with friends. The Service is provided "as-is" and may be updated or modified at any time.
           </p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">3. User Accounts</h2>
+          <h2 className="eyebrow tracking-widest">3. User Accounts</h2>
           <p>
             To access certain features of the Service, you must register for an account.
           </p>
@@ -73,7 +73,7 @@ export default function Terms() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">4. User Conduct</h2>
+          <h2 className="eyebrow tracking-widest">4. User Conduct</h2>
           <p>You agree not to use the Service to:</p>
           <ul className="list-disc pl-6 space-y-2">
             <li>
@@ -95,7 +95,7 @@ export default function Terms() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">5. User-Generated Content</h2>
+          <h2 className="eyebrow tracking-widest">5. User-Generated Content</h2>
           <ul className="list-disc pl-6 space-y-2">
             <li>
               <strong>Ownership:</strong> You retain ownership of the ratings, reviews, lists, and other content you post ("User Content").
@@ -110,49 +110,49 @@ export default function Terms() {
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">6. Third-Party Data</h2>
+          <h2 className="eyebrow tracking-widest">6. Third-Party Data</h2>
           <p>
             This product uses data from various sources. Building metadata, images, and other related information displayed on Plano are provided by OpenStreetMap, Google Places, and user contributions. We do not guarantee the accuracy or completeness of this data.
           </p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">7. Intellectual Property</h2>
+          <h2 className="eyebrow tracking-widest">7. Intellectual Property</h2>
           <p>
             The Service and its original content (excluding User Content and third-party data), features, and functionality are and will remain the exclusive property of Plano. Our trademarks and trade dress may not be used in connection with any product or service without the prior written consent of Plano.
           </p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">8. Termination</h2>
+          <h2 className="eyebrow tracking-widest">8. Termination</h2>
           <p>
             We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms. Upon termination, your right to use the Service will immediately cease.
           </p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">9. Limitation of Liability</h2>
+          <h2 className="eyebrow tracking-widest">9. Limitation of Liability</h2>
           <p>
             In no event shall Plano, its developments, or affiliates be liable for any indirect, incidental, special, consequential, or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Service.
           </p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">10. Privacy</h2>
+          <h2 className="eyebrow tracking-widest">10. Privacy</h2>
           <p>
             Your use of the Service is also governed by our Privacy Policy. By using the Service, you consent to the collection and use of information as detailed in our Privacy Policy, including the tracking of your building visits for the purpose of providing social features.
           </p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">11. Changes to Terms</h2>
+          <h2 className="eyebrow tracking-widest">11. Changes to Terms</h2>
           <p>
             We reserve the right, at our sole discretion, to modify or replace these Terms at any time. We will try to provide at least 30 days' notice prior to any new terms taking effect. By continuing to access or use our Service after those revisions become effective, you agree to be bound by the revised terms.
           </p>
         </section>
 
         <section className="space-y-4">
-          <h2 className="text-2xs font-medium uppercase tracking-[0.15em] text-text-secondary">12. Contact Us</h2>
+          <h2 className="eyebrow tracking-widest">12. Contact Us</h2>
           <p>
             If you have any questions about these Terms, please contact us at: <a href="mailto:support@plano.app" className="text-brand-primary hover:underline">support@plano.app</a>
           </p>
