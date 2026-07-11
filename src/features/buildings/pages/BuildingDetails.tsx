@@ -61,7 +61,6 @@ import {
 import { ActivityStreamGroup } from "@/features/posts/components/ActivityStream";
 import { BuildingHeroSection } from "../components/BuildingHeroSection";
 import { BuildingMasthead } from "../components/BuildingMasthead";
-import { BuildingFactsStrip } from "../components/BuildingFactsStrip";
 import { BuildingMapTab } from "../components/BuildingMapTab";
 import { BuildingMediaTab } from "../components/BuildingMediaTab";
 import { BuildingInfoSection } from "../components/BuildingInfoSection";
@@ -522,14 +521,7 @@ export default function BuildingDetails() {
           onChange={handleImageSelect}
         />
 
-        {/* ── PHOTO BAND — clean cropped photograph, credit chip only ── */}
-        <BuildingHeroSection
-          heroImageUrl={heroImageUrl}
-          alt={heroAlt}
-          heroCredit={heroCredit}
-        />
-
-        {/* ── EDITORIAL MASTHEAD — identity + stats/actions below the photo ── */}
+        {/* ── EDITORIAL MASTHEAD — identity leads; photo is demoted below ── */}
         <BuildingMasthead
           building={building}
           buildingCredits={buildingCredits}
@@ -539,8 +531,12 @@ export default function BuildingDetails() {
           buildingUrl={buildingUrl}
         />
 
-        {/* ── FACTS STRIP — key facts, visible across all tabs ── */}
-        <BuildingFactsStrip building={building} coordinates={coordinates} />
+        {/* ── PHOTO BAND — contained supporting image, quiet caption credit ── */}
+        <BuildingHeroSection
+          heroImageUrl={heroImageUrl}
+          alt={heroAlt}
+          heroCredit={heroCredit}
+        />
 
         {/* Sentinel — sticky tab bar triggers when this leaves viewport */}
         <div ref={sentinelRef} aria-hidden className="h-0 mt-10 md:mt-12" />

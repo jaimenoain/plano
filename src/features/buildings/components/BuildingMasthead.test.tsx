@@ -115,6 +115,12 @@ describe("BuildingMasthead", () => {
     expect(screen.getByText(/lost/i)).toBeTruthy();
   });
 
+  it("shows the location in the eyebrow (in place of a generic label)", () => {
+    renderMasthead(makeBuilding());
+    expect(screen.getByText("Poissy, France")).toBeTruthy();
+    expect(screen.queryByText("Building")).toBeNull();
+  });
+
   it("copies the URL to the clipboard when Web Share is unavailable", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "share", { value: undefined, configurable: true });
@@ -131,11 +137,12 @@ describe("BuildingMasthead", () => {
     );
   });
 
-  it("shows visit and point stats", () => {
-    renderMasthead(makeBuilding());
-    expect(screen.getByText("Visits")).toBeTruthy();
-    expect(screen.getByText("5")).toBeTruthy();
-    expect(screen.getByText("Points")).toBeTruthy();
-    expect(screen.getByText("15")).toBeTruthy();
+  it("folds visit and point counts into the meta line", () => {
+    const { container } = renderMasthead(makeBuilding());
+    const text = container.textContent ?? "";
+    expect(text).toContain("5");
+    expect(text).toContain("Visits");
+    expect(text).toContain("15");
+    expect(text).toContain("Points");
   });
 });
