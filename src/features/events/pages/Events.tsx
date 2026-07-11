@@ -1,8 +1,8 @@
 import { useEffect, useMemo } from "react";
 import { Link, type MetaFunction } from "react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { CalendarDays } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { EmptyState } from "@/components/ui/empty-state";
 import { EventGridCard, EventGridCardSkeleton } from "@/features/events/components/EventGridCard";
 import { EventHeroCard, EventHeroCardSkeleton } from "@/features/events/components/EventHeroCard";
 import { getUpcomingEvents, UPCOMING_EVENTS_PAGE_SIZE } from "@/features/events/api/eventsApi";
@@ -75,7 +75,7 @@ export default function Events() {
 
   return (
     <AppLayout title="Events" showBack={false}>
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-[1120px] px-4 py-10 sm:px-6">
         <header className="mb-11 flex flex-col gap-4 border-b border-border-default pb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="eyebrow tracking-widest">Community calendar</p>
@@ -102,13 +102,15 @@ export default function Events() {
             </div>
           </div>
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center border-y border-border-default px-4 py-16 text-center">
-            <CalendarDays className="mb-4 h-10 w-10 text-text-disabled" aria-hidden />
-            <p className="max-w-sm text-sm text-text-secondary">No upcoming events yet.</p>
-            <Link to="/events/new" className="cta-link mt-6">
-              Share the first event
-            </Link>
-          </div>
+          <EmptyState
+            eyebrow="No upcoming events"
+            message="Tours, exhibitions, lectures and open houses will appear here."
+            action={
+              <Link to="/events/new" className="cta-link">
+                Share the first event
+              </Link>
+            }
+          />
         ) : (
           <div className="space-y-16">
             {featured ? <EventHeroCard event={featured} /> : null}
