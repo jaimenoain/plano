@@ -100,11 +100,11 @@ export function BuildingMediaTab({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-xl font-bold tracking-tight">Media</h3>
+        <h3 className="text-2xl font-semibold tracking-[-0.02em] text-text-primary">Media</h3>
         <div className="flex items-center gap-3">
           <button
             type="button"
-            className="cursor-pointer flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+            className="cursor-pointer flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors hover:text-text-primary"
             onClick={onUploadPhoto}
           >
             <Plus className="h-3 w-3" /> Upload
@@ -112,7 +112,7 @@ export function BuildingMediaTab({
           <button
             type="button"
             onClick={onWriteNote}
-            className="cursor-pointer rounded-none bg-text-primary px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white transition-opacity hover:opacity-80"
+            className="cursor-pointer rounded-none bg-text-primary px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.15em] text-text-inverse transition-opacity hover:opacity-80"
           >
             Add Note
           </button>
@@ -129,7 +129,7 @@ export function BuildingMediaTab({
               type="button"
               onClick={() => setMediaFilter(f)}
               className={cn(
-                "cursor-pointer border-b-2 px-4 py-2.5 text-xs font-bold uppercase capitalize tracking-widest transition-colors",
+                "cursor-pointer border-b-2 px-4 py-2.5 text-[11px] font-medium uppercase capitalize tracking-[0.15em] transition-colors",
                 mediaFilter === f
                   ? "border-text-primary text-text-primary"
                   : "border-transparent text-text-secondary hover:text-text-primary",

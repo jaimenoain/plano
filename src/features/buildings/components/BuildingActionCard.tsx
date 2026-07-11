@@ -87,11 +87,11 @@ export function BuildingActionCard({
   onSelectImage,
 }: BuildingActionCardProps) {
   return (
-    <div className="bg-surface-card border border-border-default rounded-none p-5 shadow-xs space-y-5">
+    <div className="bg-surface-card border border-border-default rounded-none p-5 space-y-5">
 
       {/* Status */}
       <div className="space-y-2">
-        <label className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+        <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary">
           My Status
         </label>
         {userStatus === "ignored" ? (
@@ -179,7 +179,7 @@ export function BuildingActionCard({
       {/* Rating */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+          <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary">
             My Rating
           </label>
           {myRating > 0 && (
@@ -226,7 +226,7 @@ export function BuildingActionCard({
             className="overflow-hidden pt-1"
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+              <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary">
                 My Notes
               </span>
               {userPosts.length > 1 && (

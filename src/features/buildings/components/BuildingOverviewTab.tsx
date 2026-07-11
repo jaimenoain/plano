@@ -81,7 +81,7 @@ export function BuildingOverviewTab({
 
       {/* Status alert */}
       {isStatusBuilding && (
-        <div className="flex items-start gap-4 p-5 rounded-none bg-feedback-destructive/5 border border-feedback-destructive/20">
+        <div className="flex items-start gap-4 py-5 px-5 rounded-none bg-feedback-destructive/5 border-y border-feedback-destructive/20">
           <AlertTriangle className="h-5 w-5 text-feedback-destructive shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-bold text-feedback-destructive uppercase tracking-wider mb-1">
@@ -98,16 +98,11 @@ export function BuildingOverviewTab({
         </div>
       )}
 
-      {/* Architect statement */}
+      {/* Architect statement — editorial label-column layout (mock .bldg-body) */}
       {building.architect_statement && (
-        <section>
-          <div className="mb-6 flex items-baseline gap-3 border-b border-text-primary pb-2">
-            <span className="font-mono text-[11px] tracking-[0.06em] text-text-disabled">
-              § 01
-            </span>
-            <span className="text-[11px] font-medium uppercase tracking-widest text-text-primary">
-              Architect statement
-            </span>
+        <section className="md:grid md:grid-cols-[220px_1fr] md:gap-16">
+          <div className="mb-4 text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary md:mb-0 md:pt-1.5">
+            Statement
           </div>
           <ArchitectStatement
             statement={building.architect_statement}
@@ -120,6 +115,16 @@ export function BuildingOverviewTab({
 
       {/* Editorial stream — full list, infinite scroll (client-chunked) */}
       <section className="space-y-10">
+        {streamBlocks.length > 0 && (
+          <div className="flex items-baseline justify-between border-b border-border-default pb-4">
+            <h2 className="text-2xl md:text-[28px] font-semibold tracking-[-0.02em] text-text-primary">
+              Community
+            </h2>
+            <span className="eyebrow tracking-[0.15em]">
+              {streamBlocks.length} {streamBlocks.length === 1 ? "entry" : "entries"}
+            </span>
+          </div>
+        )}
         {streamBlocks.length > 0 ? (
           <>
             {visibleBlocks.map((block) => (

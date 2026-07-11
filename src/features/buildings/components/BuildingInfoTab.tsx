@@ -87,7 +87,7 @@ export function BuildingInfoTab({
       {/* Key facts — flush label/value list (aligns with the sections below) */}
       {keyStats.length > 0 && (
         <section className="py-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-5">
+          <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary mb-5">
             Key facts
           </p>
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-5">
@@ -106,10 +106,10 @@ export function BuildingInfoTab({
       {/* Architect */}
       {primaryCredits.length > 0 && (
         <section className="py-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-4">
+          <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary mb-4">
             {primaryCredits.length === 1 ? "Architect" : "Architects"}
           </p>
-          <div className="font-display text-xl sm:text-2xl font-bold text-text-primary leading-snug">
+          <div className="text-xl sm:text-2xl font-semibold tracking-[-0.02em] text-text-primary leading-snug">
             <PrimaryCreditsLinks
               credits={buildingCredits}
               linkClassName="hover:underline underline-offset-4 decoration-1"
@@ -121,7 +121,7 @@ export function BuildingInfoTab({
       {/* Address */}
       {hasAddress && (
         <section className="py-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-4">
+          <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary mb-4">
             Address
           </p>
           <p className="text-sm text-text-primary leading-relaxed">
@@ -133,7 +133,7 @@ export function BuildingInfoTab({
       {/* Classification */}
       {hasClassification && (
         <section className="py-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-5">
+          <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary mb-5">
             Classification
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-5">
@@ -153,7 +153,7 @@ export function BuildingInfoTab({
       {hasSize && (
         <section className="py-8">
           <div className="flex items-center gap-2 mb-5">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+            <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary">
               Size
             </p>
             <SizeReferencePopover />
@@ -190,7 +190,7 @@ export function BuildingInfoTab({
       {/* Materials */}
       {hasMaterials && (
         <section className="py-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-5">
+          <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary mb-5">
             Materials
           </p>
           <div className="flex flex-wrap gap-2">
@@ -209,7 +209,7 @@ export function BuildingInfoTab({
       {/* Access */}
       {hasAccess && (
         <section className="py-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-5">
+          <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary mb-5">
             Access
           </p>
           {accessParts.length > 0 && (
@@ -235,7 +235,7 @@ export function BuildingInfoTab({
       {/* Aliases */}
       {hasAliases && (
         <section className="py-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-4">
+          <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary mb-4">
             Also Known As
           </p>
           <p className="text-sm text-text-secondary leading-relaxed">
@@ -250,14 +250,14 @@ export function BuildingInfoTab({
         aria-labelledby="building-resources-heading"
       >
         <header className="mb-8 space-y-2">
-          <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-text-secondary">
+          <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary">
             References
           </p>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-2">
               <h3
                 id="building-resources-heading"
-                className="font-display text-xl font-bold tracking-tight text-text-primary sm:text-2xl"
+                className="text-xl font-semibold tracking-[-0.02em] text-text-primary sm:text-2xl"
               >
                 Links &amp; resources
               </h3>
