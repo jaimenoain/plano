@@ -152,7 +152,7 @@ export function ClaimEventDialog({
                       <span className="block truncate font-normal leading-snug text-text-primary">
                         {org.name}
                       </span>
-                      <span className="block text-2xs uppercase tracking-[0.15em] text-text-disabled">
+                      <span className="block eyebrow tracking-widest text-text-disabled">
                         {org.kind === "company" ? "Company" : "Person"}
                       </span>
                     </span>

@@ -229,7 +229,7 @@ toast({ variant: "destructive", description: "Failed to delete collection." });
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md bg-surface-overlay border border-border-default rounded-lg shadow-lg p-0">
+        <DialogContent className="sm:max-w-md bg-surface-overlay border border-border-default p-0">
           <DialogHeader className="p-6 border-b border-border-default">
             <DialogTitle>
               {view === "list" && "Manage Collections"}
@@ -259,7 +259,7 @@ toast({ variant: "destructive", description: "Failed to delete collection." });
                 <ScrollArea className="h-[40vh]">
                   <div className="space-y-2 p-1">
                     {collections.map(c => (
-                      <div key={c.id} className="flex items-center justify-between p-3 rounded-lg border bg-surface-card hover:bg-surface-muted/50 transition-colors group">
+                      <div key={c.id} className="flex items-center justify-between p-3 rounded-none border bg-surface-card hover:bg-surface-muted/50 transition-colors group">
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium truncate">{c.name}</h4>
                           <p className="text-xs text-text-secondary truncate">
@@ -323,7 +323,7 @@ toast({ variant: "destructive", description: "Failed to delete collection." });
                   ) : folders.length === 0 ? (
                     <p className="text-sm text-text-secondary py-2">No folders found.</p>
                   ) : (
-                    <ScrollArea className="h-[120px] rounded-md border p-2">
+                    <ScrollArea className="h-[120px] rounded-none border p-2">
                       <div className="space-y-2">
                         {folders.map(folder => (
                           <div key={folder.id} className="flex items-center space-x-3 p-1 rounded hover:bg-surface-muted/30">

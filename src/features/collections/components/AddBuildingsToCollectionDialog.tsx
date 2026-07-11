@@ -313,7 +313,7 @@ function OtherMarkersTabPanel({
                 </div>
               ) : markers.length > 0 ? (
                 <>
-                  <p className="mb-2 text-xs font-medium uppercase tracking-wider text-text-secondary">
+                  <p className="mb-2 eyebrow tracking-widest">
                     Places on this map
                   </p>
                   <ul className="space-y-0.5">
@@ -619,7 +619,7 @@ toast.error("Failed to add building");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl h-[80vh] flex flex-col gap-0 overflow-hidden border-0 bg-surface-overlay p-0 shadow-xl rounded-lg">
+      <DialogContent className="max-w-5xl h-[80vh] flex flex-col gap-0 overflow-hidden border-0 bg-surface-overlay p-0">
         <DialogHeader className="shrink-0 px-5 pb-2 pt-5">
           <DialogTitle>Add to Collection</DialogTitle>
         </DialogHeader>
@@ -707,7 +707,7 @@ toast.error("Failed to add building");
                         <Button
                           size="sm"
                           variant={isAdded ? "secondary" : "default"}
-                          className="h-8 w-8 p-0 shrink-0 shadow-xs"
+                          className="h-8 w-8 p-0 shrink-0"
                           disabled={isAdded || addMutation.isPending || hideMutation.isPending}
                           onClick={(e) => {
                             e.stopPropagation();

@@ -226,11 +226,11 @@ export function SuggestAwardDialog({ isOpen, onClose, initialRecipient }: Sugges
                 <Label>Recipient</Label>
                 <div className="p-4 rounded-sm border border-border-default bg-surface-muted">
                   <p className="text-sm font-bold">{initialRecipient?.name}</p>
-                  <p className="text-xs text-secondary uppercase tracking-widest mt-1">
+                  <p className="eyebrow tracking-widest mt-1">
                     {initialRecipient?.type}
                   </p>
                 </div>
-                <p className="text-xs text-secondary italic">
+                <p className="text-xs text-text-secondary italic">
                   Suggesting an award for this {initialRecipient?.type}.
                 </p>
               </div>

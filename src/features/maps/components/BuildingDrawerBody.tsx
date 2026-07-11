@@ -71,8 +71,7 @@ interface BuildingDrawerBodyProps {
   layout: 'panel' | 'sheet';
 }
 
-const SECTION_LABEL =
-  'text-2xs font-medium uppercase tracking-widest text-text-secondary';
+const SECTION_LABEL = 'eyebrow tracking-widest';
 
 export function BuildingDrawerBody({ cluster, onClose, layout }: BuildingDrawerBodyProps) {
   const buildingId = String(cluster.id);
@@ -282,7 +281,7 @@ export function BuildingDrawerBody({ cluster, onClose, layout }: BuildingDrawerB
           {(cluster.tier_rank_label || shouldFlagConstructionStatus(cluster.construction_status)) && (
             <div className="mb-2 flex flex-wrap items-center gap-2">
               {cluster.tier_rank_label && (
-                <span className="text-2xs font-medium uppercase tracking-widest text-text-disabled">
+                <span className="eyebrow tracking-widest text-text-disabled">
                   {cluster.tier_rank_label}
                 </span>
               )}

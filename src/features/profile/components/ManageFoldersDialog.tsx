@@ -376,7 +376,7 @@ toast({ variant: "destructive", description: "Failed to delete folder." });
                     {folders.map(f => (
                       <div
                         key={f.id}
-                        className="flex items-center justify-between p-3 rounded-lg border bg-surface-card hover:bg-surface-muted/50 transition-colors group cursor-pointer"
+                        className="flex items-center justify-between p-3 rounded-none border bg-surface-card hover:bg-surface-muted/50 transition-colors group cursor-pointer"
                         onClick={() => handleManageContents(f)}
                       >
                         <div className="flex-1 min-w-0">

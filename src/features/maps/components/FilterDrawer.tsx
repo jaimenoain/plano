@@ -338,7 +338,7 @@ export function FilterDrawer() {
           {/* Mode-specific settings */}
           {effectiveMode === 'discover' && (
             <div className="space-y-4">
-              <h3 className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
+              <h3 className="eyebrow tracking-widest">
                 Discovery Settings
               </h3>
 
@@ -374,7 +374,7 @@ export function FilterDrawer() {
 
           {effectiveMode === 'library' && (
             <div className="space-y-4">
-              <h3 className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
+              <h3 className="eyebrow tracking-widest">
                 {isContactMode ? 'Contact Filters' : 'Library Settings'}
               </h3>
 
