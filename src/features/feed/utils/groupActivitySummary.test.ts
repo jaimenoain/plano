@@ -3,6 +3,7 @@ import {
   collapseCompactRuns,
   groupHomeFeedEntries,
   promoteFirstMediaEntry,
+  spaceOutNoMediaLargeEntries,
 } from "@/features/feed/utils/groupActivitySummary";
 import type { FeedEventAttendance, FeedReview, ReviewBuilding } from "@/types/feed";
 
@@ -199,6 +200,54 @@ describe("promoteFirstMediaEntry", () => {
     const input = [visit({ id: "a" }), photo("p")];
     promoteFirstMediaEntry(input);
     expect(input.map((e) => e.id)).toEqual(["a", "p"]);
+  });
+});
+
+describe("spaceOutNoMediaLargeEntries", () => {
+  const photo = (id: string): FeedReview =>
+    visit({
+      id,
+      images: [{ id: `i-${id}`, url: `https://img/${id}.jpg`, likes_count: 0, is_liked: false }],
+    });
+  const text = (id: string): FeedReview => visit({ id, content: `Notes about ${id}` });
+
+  it("pulls a later media entry forward to break up two adjacent text-only entries", () => {
+    const out = spaceOutNoMediaLargeEntries([text("a"), text("b"), photo("p"), text("c")]);
+    expect(out.map((e) => e.id)).toEqual(["a", "p", "b", "c"]);
+  });
+
+  it("leaves the pair as-is when no later media entry is available", () => {
+    const input = [text("a"), text("b"), text("c")];
+    const out = spaceOutNoMediaLargeEntries(input);
+    expect(out.map((e) => e.id)).toEqual(["a", "b", "c"]);
+  });
+
+  it("does nothing when text-only entries aren't adjacent", () => {
+    const input = [text("a"), photo("p"), text("b")];
+    const out = spaceOutNoMediaLargeEntries(input);
+    expect(out.map((e) => e.id)).toEqual(["a", "p", "b"]);
+  });
+
+  it("does not treat an event-attendance row as large", () => {
+    const out = spaceOutNoMediaLargeEntries([
+      text("a"),
+      eventAttendance("e1"),
+      text("b"),
+      photo("p"),
+    ]);
+    // "a" and "b" are separated by the event row, so no swap needed — event rows are inert.
+    expect(out.map((e) => e.id)).toEqual(["a", "e1", "b", "p"]);
+  });
+
+  it("breaks up a longer run of consecutive text-only entries with a single donor", () => {
+    const out = spaceOutNoMediaLargeEntries([text("a"), text("b"), text("c"), photo("p")]);
+    expect(out.map((e) => e.id)).toEqual(["a", "p", "b", "c"]);
+  });
+
+  it("does not mutate the input array", () => {
+    const input = [text("a"), text("b"), photo("p")];
+    spaceOutNoMediaLargeEntries(input);
+    expect(input.map((e) => e.id)).toEqual(["a", "b", "p"]);
   });
 });
 

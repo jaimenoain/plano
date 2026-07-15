@@ -15,6 +15,7 @@ import {
   collapseCompactRuns,
   groupHomeFeedEntries,
   promoteFirstMediaEntry,
+  spaceOutNoMediaLargeEntries,
   type HomeFeedRenderItem,
 } from "@/features/feed/utils/groupActivitySummary";
 import type { FeedHomeEntry, FeedReview } from "@/types/feed";
@@ -231,20 +232,22 @@ function Feed() {
   const following = useHomeFeed();
   const community = useCommunityFeed();
 
-  // The page's first card should always lead with media. §01 is the top section, so
-  // float its first photo/video entry up; §02 keeps its rank order unless §01 has no
-  // visible entries, in which case §02 becomes the page's first card.
+  // The page's first card should always lead with media, and no two consecutive large
+  // (non-activity) cards should both be text-only. §01 is the top section, so float its
+  // first photo/video entry up; §02 keeps its rank order unless §01 has no visible
+  // entries, in which case §02 becomes the page's first card. Both sections then get a
+  // pass to break up any adjacent text-only large cards.
   const followingHasEntries =
     !following.isLoading && !following.isError && following.reviews.length > 0;
   const followingReviews = useMemo(
-    () => promoteFirstMediaEntry(following.reviews),
+    () => spaceOutNoMediaLargeEntries(promoteFirstMediaEntry(following.reviews)),
     [following.reviews],
   );
   const communityReviews = useMemo(
     () =>
-      followingHasEntries
-        ? community.reviews
-        : promoteFirstMediaEntry(community.reviews),
+      spaceOutNoMediaLargeEntries(
+        followingHasEntries ? community.reviews : promoteFirstMediaEntry(community.reviews),
+      ),
     [followingHasEntries, community.reviews],
   );
 
