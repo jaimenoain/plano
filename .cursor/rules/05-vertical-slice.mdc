@@ -15,26 +15,40 @@ Database (schema + RLS) → Backend (feature api/ modules, loaders, resource rou
 
 Building "the DB layer" as one task and "the UI" as a separate disconnected task is **FORBIDDEN**. The only exception is Phase 1 (Walking Skeleton), which is structural setup only.
 
-## The Thin Slice Complexity Limit
+## The Slice Sizing Limit
 
-A Vertical Slice that is too thick will fail. If a single feature requires any of the following, it MUST be split into sequential Thin Slices:
+Default: **keep the whole feature in one slice / one PR.** Bias toward fewer, larger PRs — the canonical rule and rationale live in **PR Sizing** in `AGENTS.md`. Full CRUD for one entity (with its search, sort, filter, empty state, validation), or a single integration plus the UI it powers, is ONE slice — never split it.
 
-1. **Data heavy:** More than 2 new DB tables or entities.
-2. **External integrations:** A complex 3rd-party API (Stripe, OpenAI, Resend).
-3. **Complex UI:** A multi-step flow (4+ steps) or multiple distinct, complex screens.
+Split a feature into sequential, **each-independently-shippable** slices ONLY if one of these clearly applies:
 
-### Correct Thin Slice split pattern
+1. **Data-heavy:** more than ~4 new DB tables/entities with independent business rules.
+2. **Multiple integrations:** two or more unrelated complex third-party APIs (Stripe, OpenAI, Resend, …) in the same feature.
+3. **Compound scope:** each half would be a right-sized, independently shippable feature on its own.
+4. **Feature fusion:** the task bundles two or more distinct spec features that don't share a screen, flow, or primary entity.
+
+If none clearly applies, do NOT split. When in doubt, keep it whole — fragmentation costs more than PR size.
+
+### Correct split pattern (only when a split is warranted)
+
+Each slice must ship real end-to-end value on its own — not a half-feature:
 
 ```
-Slice 1 — The Core:     Schema + basic api/ write path + minimal UI (prove data saves)
-Slice 2 — The Polish:   Advanced UI + 3rd-party integration + edge case states
+Slice 1:   A complete, usable sub-feature end-to-end (schema + api/ + UI + states)
+Slice 2:   A second complete sub-feature that builds on it and ships on its own
 ```
 
-Do NOT split into "DB task" + "UI task" — that is horizontal slicing and is forbidden.
+Do NOT split into "DB task" + "UI task" — that is horizontal slicing and is **forbidden**.
+
+## Granularity Self-Check
+
+Before executing a task, sanity-check its size against **PR Sizing** in `AGENTS.md`. Flag and propose a merge or split before proceeding when:
+
+- **Too small — merge into the adjacent task:** a migration with no backend or UI following it; adding a single field/button/column to an existing feature; a task whose whole scope is "create a file" or "update a config"; a task that only verifies what the adjacent task could verify itself; any goal stateable in under 10 words.
+- **Too large — split** only if a criterion in "The Slice Sizing Limit" above clearly applies. When in doubt, keep it whole.
 
 ## Mandatory Task Sequence per Phase
 
-Every phase MUST contain these tasks in this order:
+These are checklist steps folded into the feature's **single PR** — not separate PRs or separately reviewable tasks. Build, integrity check, and verification run as part of delivering the one feature (see **PR Sizing** in `AGENTS.md`), never as their own PR. Every phase runs them in this order:
 
 ### Task X.0 — Tech Debt & Stability Check
 Before building anything new, review `docs/AI_STATUS.md` (`KNOWN_ISSUES`) and the current codebase. Resolve any critical blocking issues. Log non-blocking issues without fixing them.

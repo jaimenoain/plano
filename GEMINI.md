@@ -11,7 +11,7 @@ The most violation-prone rules (full detail in AGENTS.md):
 - **No raw Tailwind palette colors.** Design token aliases only (`docs/DESIGN_TOKENS.md`).
 - **Migrations only** for schema changes — apply via Supabase MCP `apply_migration`, then `npm run gen-types` in the same PR.
 
-Definition of Done (full text in AGENTS.md): `npm run check` green before commit · tests ship with the behavior in the same PR · affected docs updated in the same PR · baselines never go up · small single-concern PRs, never direct pushes to `main`.
+Definition of Done (full text in AGENTS.md): `npm run check` green before commit · tests ship with the behavior in the same PR · affected docs updated in the same PR · baselines never go up · **one PR = one complete feature** (a full vertical slice — never a DB/API/UI split; see **PR Sizing** in AGENTS.md) · never direct pushes to `main`.
 
 Pointer map:
 
