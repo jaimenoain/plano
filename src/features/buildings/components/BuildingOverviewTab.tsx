@@ -77,14 +77,18 @@ export function BuildingOverviewTab({
   );
 
   return (
-    <div className="space-y-12">
+    // Editorial rhythm: generous, even spacing between movements (status → statement
+    // → community → related), a step up from the old flat 48px. `space-y` auto-zeroes
+    // the first movement; the Related sections carry their own border-t hairline as the
+    // final divider (mock building-detail.html: body → reviews → related).
+    <div className="space-y-16 md:space-y-20">
 
-      {/* Status alert */}
+      {/* Status alert — quiet editorial band; destructive tint carries the meaning */}
       {isStatusBuilding && (
-        <div className="flex items-start gap-4 py-5 px-5 rounded-none bg-feedback-destructive/5 border-y border-feedback-destructive/20">
-          <AlertTriangle className="h-5 w-5 text-feedback-destructive shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-bold text-feedback-destructive uppercase tracking-wider mb-1">
+        <div className="flex items-start gap-4 px-5 py-4 rounded-none bg-feedback-destructive/5 border-y border-feedback-destructive/20">
+          <AlertTriangle className="h-4 w-4 text-feedback-destructive shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-feedback-destructive">
               {formatBuildingStatusForDisplay(building.status!)}
             </p>
             <p className="text-sm text-text-secondary">
