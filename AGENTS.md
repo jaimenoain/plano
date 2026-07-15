@@ -75,7 +75,7 @@ Then load the domain rule file for the work at hand:
 
 ## Definition of Done (every change, no exceptions)
 
-1. `npm run check` passes locally before any commit — lint, typecheck, unit tests, migration check, and all four debt ratchets (it mirrors the blocking CI checks; `npm run build` completes the set).
+1. `npm run check` passes locally before any commit — lint, typecheck, unit tests, migration check, the four debt ratchets, and RLS coverage. It runs the blocking CI checks that work locally; `npm run build`, the gitleaks secret scan, and the CI-only Types-staleness check (it diffs the PR against its base) complete the set.
 2. New user-facing behavior ships **with its test in the same PR**. A critical-path feature gets a Playwright spec in `tests/e2e/`; logic gets Vitest unit tests. "Test later" is not permitted.
 3. Any change to schema, API shape, env vars, commands, or architecture updates the corresponding doc **in the same PR**: regenerated `types.ts` + `docs/DATA_CONTRACT.md` for schema, `.env.example` for env vars, `docs/ARCHITECTURE.md` for structure, `docs/RUNBOOK.md` for commands/setup.
 4. Debt baselines never go up; the fix is the code, never the baseline.

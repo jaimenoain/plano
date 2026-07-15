@@ -2,7 +2,7 @@
 
 **Product:** Plano — The world's architecture, cataloged.
 **Document type:** Data & API Contract
-**Last updated:** April 2026
+**Last updated:** April 2026 — this is the *intent* layer (what the schema should be). The authoritative record of what the schema **is** right now is the generated `src/integrations/supabase/types.ts` (regenerated from the live schema 2026-07-06); this date reflects when the intent/business rules were last revised, not the live schema.
 **Database:** Supabase (PostgreSQL 15 + PostGIS)
 **Related:** Opaque token and verification-link security patterns are summarized in **`docs/SECURITY.md`** (see §9b / §9e).
 

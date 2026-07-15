@@ -37,7 +37,7 @@ All apply to every phase:
 - **Services own all Supabase queries.** Components never call `supabase.from()` directly. Hooks call services or RPC wrappers.
 - **Per [CLAUDE.md](CLAUDE.md):** no `getSession()`, only `getUser()`. No mock data. No raw Tailwind palette colors — use design tokens from [docs/DESIGN_TOKENS.md](docs/DESIGN_TOKENS.md).
 - **Tests required.** Vitest unit tests for new logic; updated tests for changed logic. Each phase adds at least one test that would fail if the phase were reverted.
-- **Update [.ai-status.md](.ai-status.md) after each phase.** One entry per phase summarising what shipped and what's next.
+- **Update [docs/AI_STATUS.md](AI_STATUS.md) after each phase.** One entry per phase summarising what shipped and what's next.
 
 ---
 
@@ -97,7 +97,7 @@ A single PR titled `Phase 0: Feed foundations`. Touches a small number of files.
    - The ranker (Phase 1) consumes `hasSeen` for the `seen_penalty` signal.
    - **Acceptance:** existing view-tracking behaviour is unchanged; the hook is callable and has unit tests.
 
-5. **Document the rebuild in [.ai-status.md](.ai-status.md).**
+5. **Document the rebuild in [docs/AI_STATUS.md](AI_STATUS.md).**
    - New section: "Feed Rebuild — In Progress." Note Phase 0 complete, link to brief and roadmap.
 
 ### Out of scope for Phase 0

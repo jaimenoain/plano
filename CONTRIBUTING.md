@@ -31,7 +31,7 @@ Debt baselines (ESLint warnings, and any other `*-baseline.json`) may only shrin
 
 ## Local quality gates
 
-Run before committing — this mirrors the blocking CI checks (add `npm run build` for full parity):
+Run before committing — this runs the blocking CI checks that work locally. For full parity also run `npm run build`; the gitleaks secret scan and the Types-staleness check are CI-only (the latter diffs the PR against its base):
 
 ```bash
 npm run check
