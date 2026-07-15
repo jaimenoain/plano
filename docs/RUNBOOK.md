@@ -49,10 +49,10 @@ E2E runs against the hosted (production) Supabase using the dedicated QA account
 ## Quality gates (before every commit)
 
 ```bash
-npm run check   # lint + typecheck + unit tests + migration check + all four debt ratchets
+npm run check   # lint + typecheck + unit tests + migration check + four debt ratchets + RLS coverage
 ```
 
-This mirrors the blocking CI checks; `npm run build` (the exact command CI and Vercel run) completes the set. A pre-push git hook runs lint + typecheck + unit tests automatically; a pre-commit hook checks migrations when you stage files under `supabase/migrations/`.
+This runs the blocking CI checks that can run locally. Three are not in it by design: `npm run build` (the exact command CI and Vercel run), the gitleaks **secret scan**, and **Types staleness** — the last diffs the PR against `origin/$GITHUB_BASE_REF`, so it only has meaning in CI, not on a local branch. Run `npm run build` before handoff to complete the set. A pre-push git hook runs lint + typecheck + unit tests automatically; a pre-commit hook checks migrations when you stage files under `supabase/migrations/`.
 
 If a **ratchet** fails (ESLint warnings, `as any`, file size, strict-TS allowlist): fix the code; never edit the `*-baseline.json`. The failure output names exactly what regressed. Rationale: [ADR 0003](decisions/0003-ratchets-over-big-bang.md).
 

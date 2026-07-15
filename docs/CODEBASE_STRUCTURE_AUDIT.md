@@ -173,7 +173,7 @@ very high leverage.)*
 | Sev | Finding | Evidence |
 |---|---|---|
 | 🔴 | `coverage/` committed — 16 MB, 477 files | A full HTML coverage report is tracked; it is stale (it even contains `src/App.tsx.html` from the pre-SSR layout). |
-| 🟠 | AI-context / working dumps committed | `repomix-code.xml` + `repomix-output.xml` (~1 MB each), `migrations-repomix.xml` (2.8 MB), `search-backend-extract.txt` (304 KB), `cards-context.txt` (56 KB), `.ai-status.md` (212 KB), `mobile_feed_layout.png`. |
+| 🟠 | AI-context / working dumps committed | `repomix-code.xml` + `repomix-output.xml` (~1 MB each), `migrations-repomix.xml` (2.8 MB), `search-backend-extract.txt` (304 KB), `cards-context.txt` (56 KB), `mobile_feed_layout.png`. (The stale root `.ai-status.md` dump was removed 2026-07-15 — canonical status lives in `docs/AI_STATUS.md`.) |
 | 🟠 | Dual lockfiles, no declared package manager | `bun.lockb` **and** `package-lock.json` both tracked; no `packageManager` field; CI uses `npm ci`. Divergence-prone. |
 | 🟠 | `tsconfig*.tsbuildinfo` tracked despite being in `.gitignore` | `.gitignore` has `*.tsbuildinfo`, but the files were committed before the pattern was added and never `git rm --cached`-ed. |
 | 🟡 | `design-system/` committed — 392 KB, 478 files | Preview HTML, JSX mockups, duplicate icons; reads like a separate project (`SKILL.md`). |
