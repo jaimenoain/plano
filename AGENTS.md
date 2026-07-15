@@ -75,11 +75,37 @@ Then load the domain rule file for the work at hand:
 
 ## Definition of Done (every change, no exceptions)
 
-1. `npm run check` passes locally before any commit — lint, typecheck, unit tests, migration check, and all four debt ratchets (it mirrors the blocking CI checks; `npm run build` completes the set).
+1. `npm run check` passes locally before any commit — lint, typecheck, unit tests, migration check, the four debt ratchets, and RLS coverage. It runs the blocking CI checks that work locally; `npm run build`, the gitleaks secret scan, and the CI-only Types-staleness check (it diffs the PR against its base) complete the set.
 2. New user-facing behavior ships **with its test in the same PR**. A critical-path feature gets a Playwright spec in `tests/e2e/`; logic gets Vitest unit tests. "Test later" is not permitted.
 3. Any change to schema, API shape, env vars, commands, or architecture updates the corresponding doc **in the same PR**: regenerated `types.ts` + `docs/DATA_CONTRACT.md` for schema, `.env.example` for env vars, `docs/ARCHITECTURE.md` for structure, `docs/RUNBOOK.md` for commands/setup.
 4. Debt baselines never go up; the fix is the code, never the baseline.
-5. Work lands via small PRs — one concern per PR, reviewable in under ~15 minutes. Direct pushes to `main` are blocked by branch protection. Arm auto-merge (`gh pr merge <number> --auto --merge`); GitHub merges once green and deletes the head branch automatically. Prune your local copy afterwards (`git fetch --prune && git branch -d <branch>`).
+5. Work lands via complete PRs — **one PR = one complete, independently shippable feature** (a vertical slice touching every layer it needs: schema/DB → backend/API → frontend/UI). Ship the whole feature in one PR however many commits or files it takes; never split it into separate DB / API / UI PRs. See **[PR Sizing](#pr-sizing--one-pr--one-full-feature)** below for what counts as one PR and the only reasons to split. Direct pushes to `main` are blocked by branch protection. Auto-merge is armed automatically for every ready PR (`.github/workflows/automerge.yml`); human review is not required. GitHub merges once the required checks are green and deletes the head branch automatically. Prune your local copy afterwards (`git fetch --prune && git branch -d <branch>`). See [ADR 0005](docs/decisions/0005-auto-merge-on-green.md).
+
+## PR Sizing — one PR = one full feature
+
+**One PR = one complete, independently shippable feature: a vertical slice that touches every layer it needs (schema/DB → backend/API → frontend/UI) and delivers end-to-end value on its own.** It stays whole however many commits or files it takes. **Bias toward fewer, larger PRs** — every PR carries a fixed cost (a CI run, a human trigger, a review pass), and this owner is non-technical and won't do detailed per-PR review, so extra checkpoints add cost without value. A fragmented plan is the expensive failure, not a large PR.
+
+**FORBIDDEN — horizontal slicing.** A "DB layer" PR, then a separate "API" PR, then a separate "UI" PR for the same feature. These are meaningless apart and none ships alone. They are one PR.
+
+**Counts as ONE PR — do not split:**
+- Full CRUD for one entity — including its search, sort, filter, empty state, and validation.
+- A single third-party integration (Stripe, OpenAI, Resend, …) plus the UI it powers.
+- A feature and the small capabilities that share its screen or flow.
+- Two small entities that share one screen or one flow.
+
+**Split into sequential, each-independently-shippable slices ONLY if one clearly applies** (else keep it whole — when in doubt, keep it whole):
+1. **Data-heavy:** more than ~4 new tables/entities with independent business rules.
+2. **Multiple integrations:** two or more unrelated complex third-party APIs in the same feature.
+3. **Compound scope:** each half would be a right-sized, independently shippable feature on its own.
+4. **Feature fusion:** the task bundles two or more distinct spec features that don't share a screen, flow, or primary entity.
+
+**Too-small smells — merge into the adjacent task:** a migration with no backend or UI following it; adding a single field/button/column to an existing feature; a task whose whole scope is "create a file" or "update a config"; a task that only verifies what the adjacent task could verify itself; any task whose goal fits in under 10 words.
+
+**Roadmap sizing anchor:** one task ≈ one feature section of the spec/PRD; a full single-product roadmap lands at roughly **15–30 coding tasks**. Well under that → features were fused; well over → tasks are just steps of one feature and must be merged.
+
+**Meta work is sized differently.** Any change with no user-facing feature — docs, agent/process rules, CI/tooling, ADRs, pure refactors, design-precision passes — ignores the vertical-slice mandate and the 15–30 band. Size it by the **largest coherent, reviewable chunk**: a coupled, single-concern change is ONE PR however many steps it lists. Split meta work only for genuine independent deployability/reversibility (you'd bisect or revert one part alone) or genuine parallel execution.
+
+**The test to apply every time:** if the parts are incoherent apart (each meaningless without the others) and none deploys on its own → ONE concern → ONE PR. Reserve extra PRs only for parts that genuinely stand alone.
 
 ## Supabase Edge Functions & Security
 

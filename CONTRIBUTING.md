@@ -4,7 +4,7 @@
 
 All work goes through pull requests against `main`. Direct pushes are blocked by branch protection (enforced for admins too).
 
-Arm auto-merge as soon as the PR is open (`gh pr merge <number> --auto --merge`) and let GitHub land it once the checks are green. The repo has **automatically delete head branches** enabled, so the remote branch is removed on merge — including merges that auto-merge performs. Nothing deletes your *local* branch: run `git fetch --prune` to drop the stale remote ref, then `git branch -d <branch>`.
+Auto-merge is armed automatically for every ready (non-draft) PR by [`.github/workflows/automerge.yml`](.github/workflows/automerge.yml) — you don't need to run `gh pr merge` yourself (though `gh pr merge <number> --auto --squash` is a harmless manual fallback). GitHub lands the PR once the required checks are green. The repo has **automatically delete head branches** enabled, so the remote branch is removed on merge — including merges that auto-merge performs. Nothing deletes your *local* branch: run `git fetch --prune` to drop the stale remote ref, then `git branch -d <branch>`.
 
 ## Branch protection (live configuration)
 
@@ -21,7 +21,7 @@ Arm auto-merge as soon as the PR is open (`gh pr merge <number> --auto --merge`)
 - **Debt ratchet** — `as any`/`@ts-ignore` count, file-size budgets, strict-TS allowlist (`scripts/check-*-ratchet.mjs`, `check-file-sizes.mjs`, `check-strict-allowlist.mjs`)
 - **RLS coverage** — `node scripts/check-rls-coverage.mjs`; every public table created in migrations must enable row-level security (promoted from advisory 2026-07-09)
 
-Advisory (non-blocking, promoted once stable): Playwright E2E, dependency audit, strict typecheck, and an AI review that posts inline comments. Human PR reviews are deliberately not required (solo-maintainer repo).
+Advisory (non-blocking, promoted once stable): Playwright E2E, dependency audit, strict typecheck, and an AI review that posts inline comments. Human PR reviews are **not required** — merges to `main` are gated solely on the required checks above, and PRs auto-merge once green. See [ADR 0005](docs/decisions/0005-auto-merge-on-green.md) for the rationale.
 
 Every PR must also meet the **Definition of Done** in [`AGENTS.md`](AGENTS.md) — tests and doc updates ship in the same PR as the change.
 
@@ -31,7 +31,7 @@ Debt baselines (ESLint warnings, and any other `*-baseline.json`) may only shrin
 
 ## Local quality gates
 
-Run before committing — this mirrors the blocking CI checks (add `npm run build` for full parity):
+Run before committing — this runs the blocking CI checks that work locally. For full parity also run `npm run build`; the gitleaks secret scan and the Types-staleness check are CI-only (the latter diffs the PR against its base):
 
 ```bash
 npm run check

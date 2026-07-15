@@ -37,7 +37,7 @@ All apply to every phase:
 - **Services own all Supabase queries.** Components never call `supabase.from()` directly. Hooks call services or RPC wrappers.
 - **Per [CLAUDE.md](CLAUDE.md):** no `getSession()`, only `getUser()`. No mock data. No raw Tailwind palette colors — use design tokens from [docs/DESIGN_TOKENS.md](docs/DESIGN_TOKENS.md).
 - **Tests required.** Vitest unit tests for new logic; updated tests for changed logic. Each phase adds at least one test that would fail if the phase were reverted.
-- **Update [.ai-status.md](.ai-status.md) after each phase.** One entry per phase summarising what shipped and what's next.
+- **Update [docs/AI_STATUS.md](AI_STATUS.md) after each phase.** One entry per phase summarising what shipped and what's next.
 
 ---
 
@@ -46,7 +46,7 @@ All apply to every phase:
 These apply to every phase. Re-read before starting each one.
 
 1. **Each phase ships independently and leaves the app working.** Never end a phase with a broken state. If a phase needs to be split mid-flight, split it — but ship working code at every commit.
-2. **Bias toward smaller PRs.** A phase may produce multiple PRs. One coherent change per PR.
+2. **One PR = one complete feature (a full vertical slice).** Bias toward fewer, larger PRs — ship a feature end-to-end in one PR (schema → api → UI), never split across a DB PR, an API PR, and a UI PR. See **PR Sizing** in `AGENTS.md`. A phase may still produce more than one PR when it genuinely contains more than one independently shippable feature.
 3. **Preserve user-visible behaviour unless the phase explicitly changes it.** Don't sweep unrelated UI fixes into a feed PR. Note them for later.
 4. **Every card has an attribution line.** From Phase 1 onward, no card lands in the feed without a one-line "why am I seeing this." This is the non-negotiable explainability constraint of the rebuild.
 5. **The ranker is rule-based and inspectable.** No ML, no embeddings, no learned weights in any phase of this roadmap. Tuning is by hand. If the agent is tempted to add learned ranking, escalate to the human first.
@@ -97,7 +97,7 @@ A single PR titled `Phase 0: Feed foundations`. Touches a small number of files.
    - The ranker (Phase 1) consumes `hasSeen` for the `seen_penalty` signal.
    - **Acceptance:** existing view-tracking behaviour is unchanged; the hook is callable and has unit tests.
 
-5. **Document the rebuild in [.ai-status.md](.ai-status.md).**
+5. **Document the rebuild in [docs/AI_STATUS.md](AI_STATUS.md).**
    - New section: "Feed Rebuild — In Progress." Note Phase 0 complete, link to brief and roadmap.
 
 ### Out of scope for Phase 0

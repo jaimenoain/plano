@@ -1,6 +1,6 @@
 # Design System Page Audits
 
-Per-page audit log for the design refinement programme ([ROADMAP.md](ROADMAP.md), R0–R9) and the successor **remaining surfaces** programme ([REMAINING_SURFACES_ROADMAP.md](REMAINING_SURFACES_ROADMAP.md), P0–P10). Each entry records intent, deltas, and rationale. Written by the agent during refinement phases; no human sign-off required.
+Per-page audit log for the design refinement programme ([Roadmap.md](Roadmap.md), R0–R9) and the successor **remaining surfaces** programme ([REMAINING_SURFACES_ROADMAP.md](REMAINING_SURFACES_ROADMAP.md), P0–P10). Each entry records intent, deltas, and rationale. Written by the agent during refinement phases; no human sign-off required.
 
 ## Agent workflow (kit comparison)
 
@@ -32,7 +32,7 @@ When refining a page with a website kit reference:
 | Page | Intent | Kit | Before | After | States | Phase | Phase P* | Refinement |
 |---|---|---|---|---|---|---|---|---|
 | Inventory | Execution baseline | N/A | Routes missing from tracker | Verified routes in `app/routes.ts`; added missing admin/token routes | — | 0 | — | refined |
-| ROADMAP + trackers | Measurable refinement programme | N/A | Rollout “complete” conflated with visual polish | `docs/ROADMAP.md` canonical; inventory Rollout + Refinement columns; this audit template | — | R0 | — | refined |
+| ROADMAP + trackers | Measurable refinement programme | N/A | Rollout “complete” conflated with visual polish | `docs/Roadmap.md` canonical; inventory Rollout + Refinement columns; this audit template | — | R0 | — | refined |
 | Remaining surfaces setup | Gap checklist + inventory linkage | N/A | 50 routes unnamed in audits | `REMAINING_SURFACES_ROADMAP.md` gap table; inventory **Remaining surfaces** column; audit **Phase P*** column | — | P0 | P0 | refined |
 
 ---
@@ -256,4 +256,4 @@ When refining a page with a website kit reference:
 
 ## Phases 2–7 (rollout) and R1–R8 (refinement)
 
-Audits for remaining route families are recorded as each phase batch completes. See completion tracker in [DESIGN_SYSTEM_SCREEN_INVENTORY.md](DESIGN_SYSTEM_SCREEN_INVENTORY.md) and phase checklist in [ROADMAP.md](ROADMAP.md).
+Audits for remaining route families are recorded as each phase batch completes. See completion tracker in [DESIGN_SYSTEM_SCREEN_INVENTORY.md](DESIGN_SYSTEM_SCREEN_INVENTORY.md) and phase checklist in [Roadmap.md](Roadmap.md).

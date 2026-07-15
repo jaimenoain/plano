@@ -2,7 +2,7 @@
 
 This inventory is the execution baseline for the design-system rollout across the web app.
 
-**Refinement programme:** Family-level polish (R0–R9) is **complete** — see [ROADMAP.md](ROADMAP.md). **Remaining surfaces** (P0–P10) is **complete** (2026-05-24) — all 50 gap routes audited; see [REMAINING_SURFACES_ROADMAP.md](REMAINING_SURFACES_ROADMAP.md) summary.
+**Refinement programme:** Family-level polish (R0–R9) is **complete** — see [Roadmap.md](Roadmap.md). **Remaining surfaces** (P0–P10) is **complete** (2026-05-24) — all 50 gap routes audited; see [REMAINING_SURFACES_ROADMAP.md](REMAINING_SURFACES_ROADMAP.md) summary.
 
 ## Complexity legend
 
@@ -123,7 +123,7 @@ Per-route polish after R0–R9 (programme [REMAINING_SURFACES_ROADMAP.md](REMAIN
 | Admin console | complete |
 | QA + hardening | complete |
 
-**Refinement** (layout + typography + kit fidelity — see [ROADMAP.md](ROADMAP.md)):
+**Refinement** (layout + typography + kit fidelity — see [Roadmap.md](Roadmap.md)):
 
 | Family | Refinement |
 |---|---|
