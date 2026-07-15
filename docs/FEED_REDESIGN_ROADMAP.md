@@ -46,7 +46,7 @@ All apply to every phase:
 These apply to every phase. Re-read before starting each one.
 
 1. **Each phase ships independently and leaves the app working.** Never end a phase with a broken state. If a phase needs to be split mid-flight, split it — but ship working code at every commit.
-2. **Bias toward smaller PRs.** A phase may produce multiple PRs. One coherent change per PR.
+2. **One PR = one complete feature (a full vertical slice).** Bias toward fewer, larger PRs — ship a feature end-to-end in one PR (schema → api → UI), never split across a DB PR, an API PR, and a UI PR. See **PR Sizing** in `AGENTS.md`. A phase may still produce more than one PR when it genuinely contains more than one independently shippable feature.
 3. **Preserve user-visible behaviour unless the phase explicitly changes it.** Don't sweep unrelated UI fixes into a feed PR. Note them for later.
 4. **Every card has an attribution line.** From Phase 1 onward, no card lands in the feed without a one-line "why am I seeing this." This is the non-negotiable explainability constraint of the rebuild.
 5. **The ranker is rule-based and inspectable.** No ML, no embeddings, no learned weights in any phase of this roadmap. Tuning is by hand. If the agent is tempted to add learned ranking, escalate to the human first.

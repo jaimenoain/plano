@@ -41,7 +41,7 @@ Editorial/monochrome has a **tiny error budget**: no shadows or rounded corners 
   - **as-any ratchet** + **strict-allowlist ratchet**: don't add `as any`/`@ts-ignore`; don't drop strict-mode files.
 - **Guard tests** (`tests/unit/deprecated-artifacts-*.test.ts`): e.g. **no `/architect/` path literals in `src/`** (redirects only) — watch JSDoc comments with slashes like `name/architect/place`.
 - Design tokens only (`docs/DESIGN_TOKENS.md`); reuse `src/components/ui` primitives; no `getSession()`, no mock data.
-- Small single-concern PRs; branch off `main`; `gh pr create` following `.github/PULL_REQUEST_TEMPLATE.md`.
+- One PR per coherent surface group. A design-precision pass is **meta work** — size it by the largest reviewable chunk (per **PR Sizing** in `AGENTS.md`), not the feature 15–30 band; commit per screen *within* that one PR. Branch off `main`; `gh pr create` following `.github/PULL_REQUEST_TEMPLATE.md`.
 
 Run locally before pushing: `npm run typecheck && node scripts/check-file-sizes.mjs && node scripts/check-eslint-ratchet.mjs && npx vitest run <touched dirs>`.
 
