@@ -1,0 +1,24 @@
+# Dependabot configuration
+#
+# Routine (scheduled) dependency version bumps are intentionally DISABLED.
+# `open-pull-requests-limit: 0` is GitHub's documented switch for turning off
+# version-update PRs while leaving security updates unaffected:
+# https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#open-pull-requests-limit
+#
+# We keep dependencies current deliberately, not via automated bump PRs. This
+# file is a committed guardrail: it keeps routine bumps off even if Dependabot
+# version updates are later enabled in repo settings. To re-enable bumps for an
+# ecosystem, remove its `open-pull-requests-limit: 0` line.
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 0
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 0
