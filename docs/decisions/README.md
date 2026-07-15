@@ -10,3 +10,4 @@ Format: context → decision → consequences. Keep them under a page.
 | [0002](0002-migration-collision-baseline.md) | Grandfather migration filename collisions; never rename applied migrations |
 | [0003](0003-ratchets-over-big-bang.md) | Debt ratchets over big-bang cleanups; baselines only shrink |
 | [0004](0004-e2e-against-production-with-qa-accounts.md) | E2E tests run against production Supabase with dedicated QA accounts |
+| [0005](0005-auto-merge-on-green.md) | Auto-merge on green; human review not required, arming automated |

@@ -79,7 +79,7 @@ Then load the domain rule file for the work at hand:
 2. New user-facing behavior ships **with its test in the same PR**. A critical-path feature gets a Playwright spec in `tests/e2e/`; logic gets Vitest unit tests. "Test later" is not permitted.
 3. Any change to schema, API shape, env vars, commands, or architecture updates the corresponding doc **in the same PR**: regenerated `types.ts` + `docs/DATA_CONTRACT.md` for schema, `.env.example` for env vars, `docs/ARCHITECTURE.md` for structure, `docs/RUNBOOK.md` for commands/setup.
 4. Debt baselines never go up; the fix is the code, never the baseline.
-5. Work lands via small PRs — one concern per PR, reviewable in under ~15 minutes. Direct pushes to `main` are blocked by branch protection. Arm auto-merge (`gh pr merge <number> --auto --merge`); GitHub merges once green and deletes the head branch automatically. Prune your local copy afterwards (`git fetch --prune && git branch -d <branch>`).
+5. Work lands via small PRs — one concern per PR, reviewable in under ~15 minutes. Direct pushes to `main` are blocked by branch protection. Auto-merge is armed automatically for every ready PR (`.github/workflows/automerge.yml`); human review is not required. GitHub merges once the required checks are green and deletes the head branch automatically. Prune your local copy afterwards (`git fetch --prune && git branch -d <branch>`). See [ADR 0005](docs/decisions/0005-auto-merge-on-green.md).
 
 ## Supabase Edge Functions & Security
 

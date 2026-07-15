@@ -1,0 +1,31 @@
+name: Auto-merge
+
+# Arms GitHub-native auto-merge on every ready (non-draft) PR, so a mergeable PR
+# never lingers waiting for a manual `gh pr merge --auto`. GitHub still holds the
+# merge until every required status check is green and the branch is up to date;
+# the head branch is deleted on merge (repo setting). Human review is not required
+# (see docs/decisions/0005-auto-merge-on-green.md).
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+
+# Least privilege: only what `gh pr merge --auto` needs.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  arm-auto-merge:
+    name: Arm auto-merge
+    runs-on: ubuntu-latest
+    # Draft PRs are excluded; `ready_for_review` re-fires this when a draft opens up.
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Enable auto-merge (squash)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        # Idempotent: a no-op if auto-merge is already armed or the PR is already
+        # merged/closed. Never fails the PR — arming is best-effort convenience.
+        run: gh pr merge --auto --squash "$PR_URL" || true
