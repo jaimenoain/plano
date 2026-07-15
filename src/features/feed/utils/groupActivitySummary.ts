@@ -50,6 +50,38 @@ function isLightActivity(entry: FeedHomeEntry): entry is FeedReview {
   return !isEventAttendanceEntry(entry) && resolveCardType(entry) === "activity";
 }
 
+/** A "large" entry renders as the full-width editorial post (card type A/B/C), not a compact row. */
+function isLargeEntry(entry: FeedHomeEntry): entry is FeedReview {
+  return !isEventAttendanceEntry(entry) && resolveCardType(entry) !== "activity";
+}
+
+function isLargeNoMedia(entry: FeedHomeEntry): boolean {
+  return isLargeEntry(entry) && !hasReviewMedia(entry);
+}
+
+function isLargeWithMedia(entry: FeedHomeEntry): boolean {
+  return isLargeEntry(entry) && hasReviewMedia(entry);
+}
+
+/**
+ * Returns a copy of `entries` with no two consecutive "large" (non-activity) entries both
+ * lacking media. Whenever a text-only entry would land directly after another text-only
+ * entry, the nearest later media-bearing large entry is pulled forward to sit between them.
+ * If no later media entry is available, the pair is left as-is. Preserves the relative order
+ * of everything else; event-attendance rows are never treated as large.
+ */
+export function spaceOutNoMediaLargeEntries<T extends FeedHomeEntry>(entries: T[]): T[] {
+  const next = entries.slice();
+  for (let i = 1; i < next.length; i++) {
+    if (!isLargeNoMedia(next[i]) || !isLargeNoMedia(next[i - 1])) continue;
+    const donorIdx = next.findIndex((e, j) => j > i && isLargeWithMedia(e));
+    if (donorIdx === -1) continue; // no later media entry to pull forward
+    const [media] = next.splice(donorIdx, 1);
+    next.splice(i, 0, media);
+  }
+  return next;
+}
+
 /**
  * Whether two consecutive light visits belong in the same summary: same author, same
  * status (so the verb is consistent), and the same calendar day.
