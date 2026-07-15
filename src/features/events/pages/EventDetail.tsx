@@ -296,11 +296,11 @@ export default function EventDetail() {
                 <h1 className="mt-2 text-3xl font-bold leading-tight tracking-tight text-text-inverse md:text-5xl">
                   {event.title}
                 </h1>
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-text-inverse/90">
+                <div className="mt-2 flex flex-col gap-1 text-sm text-text-inverse/90 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
                   <span>{formatEventWhenRange(event.startAt, event.endAt)}</span>
                   {event.address ? (
                     <>
-                      <span className="text-text-inverse/55">·</span>
+                      <span className="hidden text-text-inverse/55 sm:inline">·</span>
                       <span className="flex items-center gap-1">
                         <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
                         {event.address}
@@ -325,11 +325,11 @@ export default function EventDetail() {
                 <h1 className="text-3xl font-bold leading-tight tracking-tight text-text-primary md:text-5xl">
                   {event.title}
                 </h1>
-                <div className="flex flex-wrap items-center gap-2 text-sm text-text-secondary">
+                <div className="flex flex-col gap-1 text-sm text-text-secondary sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
                   <span>{formatEventWhenRange(event.startAt, event.endAt)}</span>
                   {event.address ? (
                     <>
-                      <span className="text-text-disabled">·</span>
+                      <span className="hidden text-text-disabled sm:inline">·</span>
                       <span className="flex items-center gap-1">
                         <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
                         {event.address}
