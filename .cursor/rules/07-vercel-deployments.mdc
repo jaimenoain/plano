@@ -1,0 +1,136 @@
+---
+description: Vercel deployment failures, FUNCTION_INVOCATION_FAILED, ERR_MODULE_NOT_FOUND, react-router, vercel build output, and serverless function bundle tracing. Load when debugging production deploys or serverless runtime errors.
+alwaysApply: false
+---
+
+# Vercel Deployment & Runtime Rules
+
+This rule applies when a **Vercel build succeeds** but **production returns 500** (`FUNCTION_INVOCATION_FAILED`, `ERR_MODULE_NOT_FOUND`, or similar at **function invocation**). It does **not** replace `turbo run build` / local CI in `06-agent-behaviour.mdc` §7 — those verify app code; this rule verifies **what Vercel ships into the serverless function**.
+
+Full checklist and React Router copy-script pattern: `docs/playbooks/vercel-runtime-module-not-found.md`.
+
+---
+
+## 1. Mandatory first step — read the function bundle
+
+Before editing `vite.config.*`, `next.config.*`, `vercel.json`, `installCommand`, or `ssr.noExternal`:
+
+1. `cd` to the Vercel **root directory** (monorepo subfolder if the app is not repo root).
+2. Run a production trace build:
+
+```bash
+rm -rf .vercel/output
+npx vercel build --prod --yes
+```
+
+3. Inspect the traced function (path varies by framework; React Router / Remix often `index.func`):
+
+```bash
+FUNC=$(ls -d .vercel/output/functions/*.func 2>/dev/null | head -1)
+jq '.handler, (.filePathMap | keys | map(select(test("<package-from-error-message>"))))' \
+  "$FUNC/.vc-config.json"
+```
+
+Replace `<package-from-error-message>` with the package segment from the runtime log (e.g. `react-router`).
+
+**Interpretation:**
+
+| Observation | Meaning | Wrong fix |
+|---|---|---|
+| Missing `.mjs` (or path from error) **not** in `filePathMap` | **nft** (node-file-trace) omitted it from the bundle | `installCommand` reinstall, cache-bust `npm ci` |
+| File **is** in `filePathMap` but still missing at runtime | Path / root-directory / handler mismatch | Blind `ssr.noExternal` |
+| Build OK locally (CLI ≥54) but fails on GitHub-integrated build | Server-side builder / nft regression | Only editing app bundler config |
+
+The auto-generated wrapper (e.g. React Router’s `server-index.mjs`) is **not** in the repo. Patching only the app SSR bundle does not change what that wrapper imports.
+
+---
+
+## 2. Forbidden triage (do not do these first)
+
+Until §1 is complete:
+
+- Do **not** add or change `ssr.noExternal` / `serverExternalPackages` as the sole fix for a missing `node_modules/...` path at runtime.
+- Do **not** add `installCommand` guards to reinstall a package that `npm ci` already installs (build logs show a complete install).
+- Do **not** ship multiple production deploys based only on symptom matching without reading `.vc-config.json` `filePathMap`.
+
+Log findings in `docs/AI_STATUS.md` under `KNOWN_ISSUES` when the incident is in this template repo; for other products, log in that project’s status/runbook.
+
+---
+
+## 3. Platform regression fingerprint
+
+Treat as **Vercel-side builder / nft change** when **all** are true:
+
+- Same commit (or CSS-only change) deployed fine before, then fails without meaningful app changes.
+- Runtime error references a path under `node_modules/<pkg>/dist/.../*.mjs` that exists on the build machine after `npm ci`.
+- Redeploy of a previously-good commit also fails.
+
+**Immediate restore (production down):**
+
+```bash
+npx vercel build --prod --yes
+npx vercel deploy --prebuilt --prod --yes
+```
+
+Uses local CLI trace output and skips the broken server-side build. Confirm project link (`app/.vercel/project.json` or repo root) points at the correct Vercel project.
+
+**Cache:** If logs show “Restored build cache from previous deployment” and failures persist, redeploy **without cache** (`vercel --force` or Dashboard).
+
+**Dashboard:** Framework Preset must match the real framework (§4). Wrong preset does not replace a bundle fix but avoids the wrong builder path.
+
+---
+
+## 4. Framework & project settings
+
+On every new Vercel project or when onboarding a non–Next.js app:
+
+| Actual stack | Framework Preset (Vercel Dashboard) | Notes |
+|---|---|---|
+| Next.js App Router (this template) | **Next.js** | Default for `apps/web` |
+| React Router 7+ | **React Router** | Not **Vite** — generic vite preset routes through `@vercel/remix-builder` with weaker defaults |
+| Remix | **Remix** | Same builder family as RR7 |
+
+Set **Root Directory** to the app subfolder (e.g. `app/`) when the deployable app is not the repo root — makes function paths and debugging clearer.
+
+---
+
+## 5. React Router 7+ on Vercel (conditional)
+
+Apply **only** when the project uses `react-router build` and Vercel emits `build/server/.../server-index.mjs` with `import * as RR from 'react-router'`.
+
+### Why app bundler config is insufficient
+
+- `ssr.noExternal: ["react-router", "react-router-dom"]` inlines RR into the app SSR `index.js` only.
+- Vercel’s generated `server-index.mjs` still does a **bare** `import 'react-router'`.
+- nft (older CLI / server builder) may trace `exports` `default` → `.js` while Node 24 ESM resolves `module-sync` → `.mjs` — bundle lacks the file Node loads.
+
+### Durable fix (commit in the React Router app repo)
+
+1. Post-build script copies `node_modules/react-router/` beside each server bundle (see playbook for full script).
+2. Chain in `package.json`: `"build": "react-router build && node ./scripts/copy-react-router-into-server-build.mjs"`.
+3. Revert `installCommand` workarounds to plain `npm ci`.
+
+Verify:
+
+```bash
+npm run build
+ls build/server/*/node_modules/react-router/dist/development/index.mjs
+```
+
+After `npx vercel build --prod --yes`, confirm the copied path appears in `filePathMap` (playbook § verify).
+
+Keep the copy step even after fixing Framework Preset — preset alone does not guarantee nft includes `.mjs`.
+
+---
+
+## 6. Next.js apps in this template
+
+This monorepo’s web app is **Next.js on Vercel**, not React Router. The exact `react-router` nft bug does not apply to the default stack.
+
+For Next.js `ERR_MODULE_NOT_FOUND` at runtime, still run §1 against `.vercel/output/functions/**/*.func/.vc-config.json` before changing `next.config` or `experimental.serverComponentsExternalPackages`.
+
+---
+
+## 7. Escalation to Vercel support
+
+When filing with Vercel, include: failing deployment ID, last known-good deployment ID, output of §1 `jq` on both local and (if obtainable) failing build, and Framework Preset + Root Directory settings.

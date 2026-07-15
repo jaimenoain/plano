@@ -1,0 +1,93 @@
+# Sweep merged branches — deletes the head branch of any merged PR whose branch
+# still exists, on a schedule (plus on-demand).
+#
+# Why a scheduled sweep and not a `pull_request: closed` trigger (the previous
+# delete-merged-branch.yml): this repo auto-merges via GitHub's native
+# auto-merge, enabled by the Auto-merge workflow using GITHUB_TOKEN (ADR-0020).
+# GitHub deliberately does NOT start a new workflow run from events triggered by
+# GITHUB_TOKEN — so the merge/close event of a bot-performed auto-merge never
+# fires a `pull_request`-triggered cleanup (the old workflow logged zero runs),
+# and the repo's "auto-delete head branches on merge" setting likewise skips
+# app/bot merges. Every auto-merged PR therefore left its head branch behind.
+#
+# A schedule is triggered by time, not by the token, so it runs regardless of who
+# (or what) performed the merge. `workflow_dispatch` allows an immediate manual
+# sweep. Trade-off: cleanup is periodic, not instantaneous — a merged branch
+# lingers at most one cron interval (up to a day). Nothing is blocked by that
+# lag: a lingering merged branch is cosmetic, and agents never reuse one (§16).
+#
+# Safety: only deletes refs of MERGED, same-repo PRs; never the default branch,
+# never a fork branch, never a ref still used by an open PR. A failed delete is
+# tolerated (already gone / race) so the job never fails on a no-op. To pause,
+# delete this file.
+name: Sweep merged branches
+
+on:
+  schedule:
+    # Daily, off-peak (was */15 — ADR-0025): on a private repo every run bills
+    # a 1-minute minimum, so 96 idle runs/day ≈ 2,880 min/month — alone
+    # exceeding the 2,000-min Actions free tier — for purely cosmetic cleanup.
+    # Need a branch gone now? Run the workflow manually (workflow_dispatch).
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+# One sweep at a time; let a running sweep finish rather than cancelling it.
+concurrency:
+  group: sweep-merged-branches
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Delete head branches of merged PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          owner="${REPO%%/*}"
+          default_branch="$(gh api "repos/$REPO" --jq '.default_branch')"
+
+          # Refs still in use by an open PR — never delete these.
+          mapfile -t open_heads < <(
+            gh pr list --repo "$REPO" --state open --limit 200 \
+              --json headRefName --jq '.[].headRefName'
+          )
+
+          # Head refs of merged, same-repo PRs (fork PRs excluded).
+          mapfile -t merged_heads < <(
+            gh pr list --repo "$REPO" --state merged --limit 100 \
+              --json headRefName,headRepositoryOwner \
+              --jq ".[] | select(.headRepositoryOwner.login == \"$owner\") | .headRefName" \
+              | sort -u
+          )
+
+          deleted=0
+          for ref in "${merged_heads[@]:-}"; do
+            [ -z "$ref" ] && continue
+            [ "$ref" = "$default_branch" ] && continue
+
+            # Skip if an open PR still uses this ref as its head.
+            in_use=
+            for oh in "${open_heads[@]:-}"; do
+              [ "$oh" = "$ref" ] && in_use=1 && break
+            done
+            [ -n "$in_use" ] && continue
+
+            # Only act if the branch still exists.
+            if gh api "repos/$REPO/git/refs/heads/$ref" >/dev/null 2>&1; then
+              echo "Deleting merged branch: $ref"
+              if gh api -X DELETE "repos/$REPO/git/refs/heads/$ref"; then
+                deleted=$((deleted + 1))
+              else
+                echo "  (could not delete $ref — leaving it)"
+              fi
+            fi
+          done
+
+          echo "Sweep complete — deleted $deleted branch(es)."
