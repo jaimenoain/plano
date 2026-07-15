@@ -12,7 +12,6 @@
     "maxFileSize": 500000
   },
   "include": [
-    ".ai-status.md",
     "apps/**/*.ts",
     "apps/**/*.tsx",
     "packages/**/*.ts",

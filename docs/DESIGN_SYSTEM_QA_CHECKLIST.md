@@ -1,6 +1,6 @@
 # Design System QA Checklist
 
-Use this checklist for design-system work. During the **refinement programme** ([ROADMAP.md](ROADMAP.md)), agents complete **§1–§7 only** at programme end (see ROADMAP “Automated verification”); **§8 Sign-Off is not required** (no human gate).
+Use this checklist for design-system work. During the **refinement programme** ([Roadmap.md](Roadmap.md)), agents complete **§1–§7 only** at programme end (see ROADMAP “Automated verification”); **§8 Sign-Off is not required** (no human gate).
 
 ## 1) Token Compliance
 
