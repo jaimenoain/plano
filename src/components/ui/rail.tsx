@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 /**
- * Shared chrome for the feed sidebar rail.
+ * Shared chrome for sidebar rails (feed, building detail).
  *
- * Every module below the passport is a `RailModule`: a hairline `border-t`
- * section on the rail's 36px rhythm. List modules share one row grammar —
- * a 13px semibold title, an 11px secondary meta line, and a Space Mono
- * figure in the margin — exported here as class constants.
+ * Every module below the rail's lead block is a `RailModule`: a hairline
+ * `border-t` section on the rail's 36px rhythm. List modules share one row
+ * grammar — a 13px semibold title, an 11px secondary meta line, and a
+ * Space Mono figure in the margin — exported here as class constants.
  */
 
 export const RAIL_ROW = "flex items-baseline gap-3 py-2.5";
@@ -17,23 +18,45 @@ export const RAIL_ROW_FIGURE =
   "shrink-0 font-mono text-[11px] tracking-[0.04em] text-text-disabled";
 export const RAIL_LIST_ITEM = "border-b border-border-default last:border-b-0";
 
-export function RailModule({ children }: { children: ReactNode }) {
+export function RailModule({
+  children,
+  id,
+  className,
+}: {
+  children: ReactNode;
+  id?: string;
+  className?: string;
+}) {
   return (
-    <section className="border-t border-border-default pt-9">{children}</section>
+    <section
+      id={id}
+      className={cn("border-t border-border-default pt-9", className)}
+    >
+      {children}
+    </section>
   );
 }
 
-export function RailHeader({ label, meta }: { label: string; meta?: string }) {
+export function RailHeader({
+  label,
+  meta,
+}: {
+  label: string;
+  meta?: ReactNode;
+}) {
   return (
     <div className="mb-3.5 flex items-baseline justify-between gap-3">
       <h2 className="text-[11px] font-medium uppercase tracking-widest text-text-disabled">
         {label}
       </h2>
-      {meta && (
-        <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.08em] text-text-disabled">
-          {meta}
-        </span>
-      )}
+      {meta != null &&
+        (typeof meta === "string" ? (
+          <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.08em] text-text-disabled">
+            {meta}
+          </span>
+        ) : (
+          meta
+        ))}
     </div>
   );
 }

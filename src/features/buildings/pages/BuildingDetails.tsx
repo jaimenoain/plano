@@ -40,9 +40,12 @@ import {
 } from "@/features/credits/api/credits";
 import { visiblePrimaryCredits } from "@/features/credits/buildingCreditDisplay";
 import { getBuildingUrl } from "@/utils/url";
-import { BuildingCredits, BuildingCreditsPreview } from "../components/BuildingCredits";
+import { BuildingCredits } from "../components/BuildingCredits";
 import { BuildingMapCard } from "../components/BuildingMapCard";
-import { BuildingContributorsInline } from "../components/BuildingContributorsInline";
+import {
+  ContributorsRailModule,
+  CreditsRailModule,
+} from "../components/BuildingRailSections";
 import { buildingLoader } from "./BuildingDetails.loader";
 import {
   buildingCanonicalUrl,
@@ -104,8 +107,12 @@ export function HydrateFallback() {
             </div>
           </div>
           <div className="lg:col-span-4 space-y-6">
-            <Skeleton className="h-64 w-full rounded-none" />
-            <Skeleton className="h-48 w-full rounded-none" />
+            <Skeleton className="h-10 w-full rounded-none" />
+            <Skeleton className="aspect-square w-full rounded-none" />
+            <div className="space-y-3">
+              <Skeleton className="h-3 w-2/3 rounded-none" />
+              <Skeleton className="h-3 w-1/2 rounded-none" />
+            </div>
           </div>
         </div>
       </div>
@@ -706,9 +713,9 @@ export default function BuildingDetails() {
 
             {/* ── SIDEBAR — Right Column ── */}
             {activeTab !== "map" && <div className="lg:col-span-4">
-              <div className="lg:sticky lg:top-14 space-y-5">
+              <div className="lg:sticky lg:top-14">
 
-                {/* Action card */}
+                {/* Personal module */}
                 <BuildingActionCard
                   building={building}
                   currentUser={user}
@@ -737,7 +744,7 @@ export default function BuildingDetails() {
                   onSelectImage={setSelectedImage}
                 />
 
-                {/* Map card */}
+                {/* Location module */}
                 <BuildingMapCard
                   coordinates={coordinates}
                   city={building.city}
@@ -746,53 +753,27 @@ export default function BuildingDetails() {
                   onDirectionsBlocked={() => setShowDirectionsAlert(true)}
                 />
 
-                {/* Overview sidebar: credits preview */}
+                {/* Overview rail: credits preview */}
                 {activeTab === "overview" && buildingCredits.length > 0 && (
-                  <div className="bg-surface-card border border-border-default rounded-none p-5">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary">
-                        Credits
-                      </h4>
-                      <button
-                        type="button"
-                        onClick={() => setTab("credits")}
-                        className="cta-link text-[10px]"
-                      >
-                        All
-                      </button>
-                    </div>
-                    <BuildingCreditsPreview
-                      credits={buildingCredits}
-                      isAuthenticated={Boolean(user)}
-                    />
-                  </div>
+                  <CreditsRailModule
+                    credits={buildingCredits}
+                    isAuthenticated={Boolean(user)}
+                    onShowAll={() => setTab("credits")}
+                  />
                 )}
 
-                {/* Credits tab sidebar: contributors */}
+                {/* Credits tab rail: contributors */}
                 {activeTab === "credits" && (
-                  <div
-                    id="contributors"
-                    className="scroll-mt-24 rounded-none border border-border-default bg-surface-card p-5"
-                  >
-                    <h4 className="mb-3 text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary">
-                      Page contributors
-                    </h4>
-                    <p className="mb-3 text-xs leading-relaxed text-text-secondary">
-                      People who added photos, credits, or edits to this listing.
-                    </p>
-                    <BuildingContributorsInline buildingId={building.id} />
-                  </div>
+                  <ContributorsRailModule buildingId={building.id} />
                 )}
 
                 {/* Building info — hidden on info tab (shown in main content there) */}
                 {activeTab !== "info" && (
-                  <div className="bg-surface-card border border-border-default rounded-none p-5">
-                    <BuildingInfoSection
-                      building={building}
-                      buildingCredits={buildingCredits}
-                      canEdit={canEditOfficialData}
-                    />
-                  </div>
+                  <BuildingInfoSection
+                    building={building}
+                    buildingCredits={buildingCredits}
+                    canEdit={canEditOfficialData}
+                  />
                 )}
 
               </div>

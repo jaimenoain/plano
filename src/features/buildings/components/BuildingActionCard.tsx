@@ -87,11 +87,11 @@ export function BuildingActionCard({
   onSelectImage,
 }: BuildingActionCardProps) {
   return (
-    <div className="bg-surface-card border border-border-default rounded-none p-5 space-y-5">
+    <section className="space-y-5 pb-1 border-t border-border-default pt-9 lg:border-t-0 lg:pt-0">
 
       {/* Status */}
       <div className="space-y-2">
-        <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary">
+        <label className="text-[11px] font-medium uppercase tracking-widest text-text-disabled">
           My Status
         </label>
         {userStatus === "ignored" ? (
@@ -179,11 +179,11 @@ export function BuildingActionCard({
       {/* Rating */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary">
+          <label className="text-[11px] font-medium uppercase tracking-widest text-text-disabled">
             My Rating
           </label>
           {myRating > 0 && (
-            <span className="text-[10px] font-bold text-text-secondary">
+            <span className="font-mono text-[10px] tracking-[0.08em] text-text-disabled">
               {myRating}/3
             </span>
           )}
@@ -202,7 +202,7 @@ export function BuildingActionCard({
           variant="secondary"
           size="sm"
           onClick={onNewNote}
-          className="h-9 text-[10px] font-bold uppercase tracking-wider bg-surface-muted hover:bg-border-default border-none"
+          className="h-9 text-[10px] font-bold uppercase tracking-wider border border-border-default bg-transparent hover:bg-surface-muted"
         >
           <Plus className="h-3.5 w-3.5 mr-1.5" /> Note
         </Button>
@@ -210,7 +210,7 @@ export function BuildingActionCard({
           variant="secondary"
           size="sm"
           onClick={() => setShowCollections(!showCollections)}
-          className="h-9 text-[10px] font-bold uppercase tracking-wider bg-surface-muted hover:bg-border-default border-none"
+          className="h-9 text-[10px] font-bold uppercase tracking-wider border border-border-default bg-transparent hover:bg-surface-muted"
         >
           <Plus className="h-3.5 w-3.5 mr-1.5" /> Collection
         </Button>
@@ -226,7 +226,7 @@ export function BuildingActionCard({
             className="overflow-hidden pt-1"
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary">
+              <span className="text-[11px] font-medium uppercase tracking-widest text-text-disabled">
                 My Notes
               </span>
               {userPosts.length > 1 && (
@@ -336,6 +336,6 @@ export function BuildingActionCard({
       </>
       )}
 
-    </div>
+    </section>
   );
 }

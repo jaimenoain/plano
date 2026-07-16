@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getBuildingImageUrl } from "@/utils/image";
 import { EmptyState } from "@/components/ui/empty-state";
 import { fetchBucketList } from "../../api/railApi";
-import { RailHeader, RailModule, RailSkeletonRows } from "./RailModule";
+import { RailHeader, RailModule, RailSkeletonRows } from "@/components/ui/rail";
 
 /**
  * "Your bucket list" — the member's next buildings to visit: the three most
