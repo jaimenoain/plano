@@ -1,9 +1,9 @@
 import { useCallback, useReducer, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, ChevronDown, BadgeCheck, Flag, User, Building2, NotebookPen, ImageIcon } from "lucide-react";
+import { ExternalLink, ChevronDown, BadgeCheck, Flag, NotebookPen, ImageIcon } from "lucide-react";
 import type { BuildingCreditWithEntities, CreditRole, CreditTier, FlagReason } from "@/features/credits/types";
-import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
+import { creditRoleGroup, formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
 import { visiblePrimaryCredits } from "@/features/credits/buildingCreditDisplay";
 import { AddCreditForm } from "@/features/credits/components/AddCreditForm";
 import { CreditNoteSheet } from "@/features/credits/components/CreditNoteSheet";
@@ -58,10 +58,10 @@ function tierHeadingLabel(tier: CreditTier): string {
   return "Additional";
 }
 
-function tierShortDescription(tier: CreditTier): string {
-  if (tier === "primary") return "Lead design team and core architecture credits.";
-  if (tier === "contributor") return "Engineering, interiors, landscape, and specialist consultants.";
-  return "Further collaborators and supporting roles.";
+function tierEyebrowLabel(tier: CreditTier): string {
+  if (tier === "primary") return "Primary";
+  if (tier === "contributor") return "Contributors";
+  return "Additional";
 }
 
 function groupByTier(credits: BuildingCreditWithEntities[]) {
@@ -84,21 +84,27 @@ function sortRowsInRole(rows: BuildingCreditWithEntities[]): BuildingCreditWithE
   });
 }
 
-function groupTierByRole(credits: BuildingCreditWithEntities[]): Map<string, BuildingCreditWithEntities[]> {
-  const map = new Map<string, BuildingCreditWithEntities[]>();
+interface RoleGroup {
+  key: string;
+  label: string;
+  rows: BuildingCreditWithEntities[];
+}
+
+/**
+ * Group a tier's credits by resolved role so each role heads exactly one ledger group.
+ * Custom wordings that match a standard role merge into it (see `creditRoleGroup`).
+ */
+function groupTierByRoleLabel(credits: BuildingCreditWithEntities[]): RoleGroup[] {
+  const map = new Map<string, RoleGroup>();
   for (const c of credits) {
-    const label = formatCreditRoleLabel(c.role, c.roleCustom);
-    const list = map.get(label) ?? [];
-    list.push(c);
-    map.set(label, list);
+    const { key, label } = creditRoleGroup(c.role, c.roleCustom);
+    const group = map.get(key) ?? { key, label, rows: [] };
+    group.rows.push(c);
+    map.set(key, group);
   }
-  const labels = [...map.keys()].sort((a, b) => a.localeCompare(b));
-  const ordered = new Map<string, BuildingCreditWithEntities[]>();
-  for (const label of labels) {
-    const items = map.get(label);
-    if (items) ordered.set(label, sortRowsInRole(items));
-  }
-  return ordered;
+  return [...map.values()]
+    .map((g) => ({ ...g, rows: sortRowsInRole(g.rows) }))
+    .sort((a, b) => a.label.localeCompare(b.label));
 }
 
 function yearRangeText(credit: BuildingCreditWithEntities): string | null {
@@ -363,28 +369,23 @@ function CreditFlagTrigger({
   );
 }
 
-function BuildingCreditRow({
+function CreditLedgerEntry({
   credit,
-  className,
   buildingId,
   buildingName,
   sessionFlaggedIds,
   onFlagSessionMarked,
   currentUserId,
-  variant = "default",
 }: {
   credit: BuildingCreditWithEntities;
-  className?: string;
   buildingId: string;
   buildingName?: string | null;
   sessionFlaggedIds: Set<string>;
   onFlagSessionMarked: (creditId: string) => void;
   currentUserId?: string | null;
-  variant?: "default" | "spotlight";
 }) {
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
   const years = yearRangeText(credit);
-  const roleLabel = formatCreditRoleLabel(credit.role, credit.roleCustom);
   const project = credit.projectUrl?.trim() ?? "";
   const showFlag =
     credit.status !== "flagged" &&
@@ -394,132 +395,42 @@ function BuildingCreditRow({
   // Show note CTA when the signed-in user submitted this credit.
   const isOwner = Boolean(currentUserId && credit.addedByUserId === currentUserId);
 
-  const avatarSrc = creditAvatarSrc(credit);
-  const initials = creditInitials(credit);
-  const isSpotlight = variant === "spotlight";
-
   return (
-    <div
-      className={cn(
-        "group",
-        isSpotlight
-          ? "rounded-none border border-border-default bg-surface-card p-8 lg:p-10 shadow-xs"
-          : "rounded-none border border-border-default bg-surface-card p-4 shadow-xs",
-        className,
-      )}
-    >
-      <div
-        className={cn(
-          "flex gap-3",
-          isSpotlight && "flex-col items-center text-center sm:flex-row sm:items-start sm:text-left gap-6",
-        )}
-      >
-        <Avatar
-          className={cn(
-            "shrink-0 rounded-none ring-1 ring-border-tertiary",
-            isSpotlight ? "mt-0 h-20 w-20 ring-2 ring-border-default" : "mt-0.5 h-9 w-9",
-          )}
-        >
-          <AvatarImage src={avatarSrc} alt={initials} />
-          <AvatarFallback className="rounded-none bg-surface-subtle">
-            {credit.company && !credit.person ? (
-              <Building2
-                className={cn("text-text-disabled", isSpotlight ? "h-8 w-8" : "h-4 w-4")}
-                strokeWidth={1.5}
-                aria-hidden
-              />
-            ) : (
-              <User
-                className={cn("text-text-disabled", isSpotlight ? "h-8 w-8" : "h-4 w-4")}
-                strokeWidth={1.5}
-                aria-hidden
-              />
-            )}
-          </AvatarFallback>
-        </Avatar>
-        <div className="min-w-0 flex-1 w-full">
-          <div
-            className={cn(
-              "flex flex-wrap items-start justify-between gap-2",
-              isSpotlight && "sm:flex-nowrap",
-            )}
-          >
-            <div className="min-w-0 flex-1 space-y-1.5">
-              {isSpotlight ? (
-                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-secondary w-full sm:text-left">
-                  {roleLabel}
-                </p>
-              ) : null}
-              <div
-                className={cn(
-                  "flex flex-wrap items-center gap-x-2 gap-y-0.5",
-                  isSpotlight && "justify-center sm:justify-start",
-                )}
-              >
-                <EntityLinks
-                  credit={credit}
-                  linkClassName={
-                    isSpotlight ? "text-xl font-semibold tracking-tight sm:text-2xl" : undefined
-                  }
-                />
-                {credit.isLead ? (
-                  <span className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
-                    Lead
-                  </span>
-                ) : null}
-                {credit.status === "verified" ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex shrink-0" tabIndex={0}>
-                        <BadgeCheck
-                          className={cn(
-                            "text-text-primary",
-                            isSpotlight ? "h-5 w-5" : "h-4 w-4",
-                          )}
-                          aria-label="Verified credit"
-                        />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Verified credit</TooltipContent>
-                  </Tooltip>
-                ) : null}
-                {credit.status === "flagged" ? (
-                  <span className="text-2xs font-medium uppercase tracking-widest text-destructive">
-                    Flagged
-                  </span>
-                ) : null}
-              </div>
-              {!isSpotlight ? (
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                  <span className="text-xs text-text-secondary">{roleLabel}</span>
-                  {years ? (
-                    <>
-                      <span className="text-text-disabled">·</span>
-                      <span className="text-xs text-text-secondary">{years}</span>
-                    </>
-                  ) : null}
-                </div>
-              ) : years ? (
-                <p className="text-sm text-text-secondary tabular-nums">{years}</p>
-              ) : null}
-              {credit.contributionNotes?.trim() ? (
-                <p
-                  className={cn(
-                    "leading-relaxed text-text-secondary",
-                    isSpotlight ? "text-base max-w-xl mx-auto sm:mx-0" : "text-sm",
-                  )}
-                >
-                  {credit.contributionNotes.trim()}
-                </p>
-              ) : null}
-            </div>
-            <div
-              className={cn(
-                "flex shrink-0 items-center gap-0.5",
-                isSpotlight && "justify-center sm:justify-end w-full sm:w-auto pt-2 sm:pt-0",
-              )}
-            >
-              {project ? (
+    <div className="group">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+          <EntityLinks credit={credit} linkClassName="text-[15px]" />
+          {credit.isLead ? (
+            <span className="text-2xs font-medium uppercase tracking-widest text-text-secondary">
+              Lead
+            </span>
+          ) : null}
+          {credit.status === "verified" ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex shrink-0 self-center" tabIndex={0}>
+                  <BadgeCheck className="h-4 w-4 text-text-primary" aria-label="Verified credit" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Verified credit</TooltipContent>
+            </Tooltip>
+          ) : null}
+          {credit.status === "flagged" ? (
+            <span className="text-2xs font-medium uppercase tracking-widest text-destructive">
+              Flagged
+            </span>
+          ) : null}
+          {years ? (
+            <>
+              <span className="text-text-disabled" aria-hidden>
+                ·
+              </span>
+              <span className="text-sm tabular-nums text-text-secondary">{years}</span>
+            </>
+          ) : null}
+        </div>
+        <div className="-mt-1 flex shrink-0 items-center gap-0.5">
+          {project ? (
                 <a
                   href={projectHref(project)}
                   target="_blank"
@@ -549,18 +460,24 @@ function BuildingCreditRow({
                   </TooltipContent>
                 </Tooltip>
               ) : null}
-              <CreditFlagTrigger
-                creditId={credit.id}
-                buildingId={buildingId}
-                show={showFlag}
-                onReported={() => onFlagSessionMarked(credit.id)}
-              />
-            </div>
-          </div>
+          <CreditFlagTrigger
+            creditId={credit.id}
+            buildingId={buildingId}
+            show={showFlag}
+            onReported={() => onFlagSessionMarked(credit.id)}
+          />
+        </div>
+      </div>
 
-          {/* Inline note display */}
-          {credit.note ? (
-            <div className="mt-4 space-y-3 rounded-none border-l-2 border-border-default pl-4">
+      {credit.contributionNotes?.trim() ? (
+        <p className="mt-1 text-sm leading-relaxed text-text-secondary">
+          {credit.contributionNotes.trim()}
+        </p>
+      ) : null}
+
+      {/* Inline note display */}
+      {credit.note ? (
+        <div className="mt-3 space-y-3 rounded-none border-l-2 border-border-default pl-4">
               <div>
                 <p className="text-[10px] font-medium uppercase tracking-[0.18em] text-text-disabled">
                   {isOwner ? "Your note" : "Note from the team"}
@@ -585,30 +502,28 @@ function BuildingCreditRow({
                   </span>
                 </div>
               ) : null}
-              {isOwner && !credit.note ? null : isOwner ? (
-                <button
-                  type="button"
-                  onClick={() => setNoteSheetOpen(true)}
-                  className="text-xs text-text-disabled underline-offset-2 hover:text-text-secondary hover:underline"
-                >
-                  Edit note
-                </button>
-              ) : null}
-            </div>
-          ) : isOwner ? (
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={() => setNoteSheetOpen(true)}
-                className="flex items-center gap-1.5 text-xs font-medium text-text-disabled underline-offset-2 hover:text-text-secondary hover:underline"
-              >
-                <NotebookPen className="h-3.5 w-3.5" aria-hidden />
-                Add a note about your work
-              </button>
-            </div>
+          {isOwner ? (
+            <button
+              type="button"
+              onClick={() => setNoteSheetOpen(true)}
+              className="text-xs text-text-disabled underline-offset-2 hover:text-text-secondary hover:underline"
+            >
+              Edit note
+            </button>
           ) : null}
         </div>
-      </div>
+      ) : isOwner ? (
+        <div className="mt-2">
+          <button
+            type="button"
+            onClick={() => setNoteSheetOpen(true)}
+            className="flex items-center gap-1.5 text-xs font-medium text-text-disabled underline-offset-2 hover:text-text-secondary hover:underline"
+          >
+            <NotebookPen className="h-3.5 w-3.5" aria-hidden />
+            Add a note about your work
+          </button>
+        </div>
+      ) : null}
 
       {/* Note edit sheet */}
       {isOwner ? (
@@ -635,7 +550,7 @@ function BuildingCreditRow({
   );
 }
 
-function TierRoleSections({
+function TierLedger({
   tier,
   credits,
   buildingId,
@@ -643,7 +558,7 @@ function TierRoleSections({
   sessionFlaggedIds,
   onFlagSessionMarked,
   currentUserId,
-  showTierHeading = true,
+  showTierEyebrow = true,
 }: {
   tier: CreditTier;
   credits: BuildingCreditWithEntities[];
@@ -652,33 +567,31 @@ function TierRoleSections({
   sessionFlaggedIds: Set<string>;
   onFlagSessionMarked: (creditId: string) => void;
   currentUserId?: string | null;
-  showTierHeading?: boolean;
+  showTierEyebrow?: boolean;
 }) {
   if (credits.length === 0) return null;
-  const byRole = groupTierByRole(credits);
+  const groups = groupTierByRoleLabel(credits);
   const tierTitle = `${tierHeadingLabel(tier)} credits`;
 
-  const inner = (
-    <>
-      {showTierHeading ? (
-        <header className="mb-6 space-y-2 lg:mb-8">
-          <h3 className="text-[10px] font-medium uppercase tracking-[0.22em] text-text-secondary">
-            {tierTitle}
-          </h3>
-          <p className="max-w-xl text-sm leading-relaxed text-text-secondary">
-            {tierShortDescription(tier)}
-          </p>
-        </header>
+  return (
+    <section className="min-w-0" aria-label={tierTitle}>
+      {showTierEyebrow ? (
+        <h3 className="mb-3 text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary">
+          {tierEyebrowLabel(tier)}
+        </h3>
       ) : null}
-      <div className="space-y-8">
-        {[...byRole.entries()].map(([label, rows]) => (
-          <div key={label}>
-            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-primary">
+      <dl className="divide-y divide-border-default">
+        {groups.map(({ key, label, rows }) => (
+          <div
+            key={key}
+            className="grid grid-cols-[110px_1fr] items-baseline gap-4 py-3.5 sm:grid-cols-[140px_1fr] sm:gap-6"
+          >
+            <dt className="text-[11px] font-medium uppercase tracking-widest text-text-disabled">
               {label}
-            </h4>
-            <div className="space-y-3">
+            </dt>
+            <dd className="min-w-0 space-y-3">
               {rows.map((c) => (
-                <BuildingCreditRow
+                <CreditLedgerEntry
                   key={c.id}
                   credit={c}
                   buildingId={buildingId}
@@ -688,16 +601,10 @@ function TierRoleSections({
                   currentUserId={currentUserId}
                 />
               ))}
-            </div>
+            </dd>
           </div>
         ))}
-      </div>
-    </>
-  );
-
-  return (
-    <section className="min-w-0" aria-label={tierTitle}>
-      {inner}
+      </dl>
     </section>
   );
 }
@@ -738,9 +645,9 @@ function CreditsEmptyState({
       }
       action={
         isAuthenticated ? (
-          <Button type="button" size="sm" onClick={onAddClick}>
+          <button type="button" className="cta-link" onClick={onAddClick}>
             Add a credit
-          </Button>
+          </button>
         ) : (
           <Link to="/login" className="cta-link">
             Sign in to add credits
@@ -772,23 +679,15 @@ export function BuildingCredits({
   const { primary, contributor, ancillary } = groupByTier(visibleCredits);
   const { sessionIds, markAndBump } = useSessionFlaggedCreditBump();
 
-  const spotlightCredit =
-    visibleCredits.length === 1 && visibleCredits[0].creditTier !== "ancillary"
-      ? visibleCredits[0]
-      : null;
+  // Tier eyebrows only earn their place when the list actually spans tiers.
+  const multiTier = [primary, contributor, ancillary].filter((t) => t.length > 0).length > 1;
 
   const addCreditFooter =
     isAuthenticated && visibleCredits.length > 0 ? (
-      <div className="mt-10 flex flex-wrap items-center gap-4 border-t border-border-default pt-8 lg:mt-12 lg:pt-10">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="uppercase tracking-widest"
-          onClick={() => setAddOpen(true)}
-        >
+      <div className="mt-10 border-t border-border-default pt-8 lg:mt-12 lg:pt-10">
+        <button type="button" className="cta-link" onClick={() => setAddOpen(true)}>
           Add a credit
-        </Button>
+        </button>
       </div>
     ) : null;
 
@@ -798,20 +697,18 @@ export function BuildingCredits({
       className="scroll-mt-24"
       aria-labelledby="building-credits-heading"
     >
-      <header className="mb-10 lg:mb-14">
-        <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-text-secondary">
-          Project team
-        </p>
+      <header className="mb-8 flex items-baseline justify-between gap-6 border-b border-border-default pb-4">
         <h2
           id="building-credits-heading"
-          className="mt-2 font-display text-3xl font-bold tracking-tight text-text-primary sm:text-4xl"
+          className="text-2xl font-semibold tracking-[-0.02em] text-text-primary md:text-[28px]"
         >
           Credits
         </h2>
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-text-secondary">
-          Everyone who shaped this building—designers, engineers, makers, and advisors. Add names so
-          collaborators get credit and can share this page with their networks.
-        </p>
+        {visibleCredits.length > 0 ? (
+          <span className="eyebrow tracking-[0.15em]">
+            {visibleCredits.length} {visibleCredits.length === 1 ? "credit" : "credits"}
+          </span>
+        ) : null}
       </header>
 
       {visibleCredits.length === 0 ? (
@@ -820,60 +717,10 @@ export function BuildingCredits({
           isAuthenticated={isAuthenticated}
           onAddClick={() => setAddOpen(true)}
         />
-      ) : spotlightCredit ? (
-        <>
-          <section aria-label={`${tierHeadingLabel(spotlightCredit.creditTier)} credits`}>
-            <BuildingCreditRow
-              credit={spotlightCredit}
-              buildingId={buildingId}
-              buildingName={buildingName}
-              sessionFlaggedIds={sessionIds}
-              onFlagSessionMarked={markAndBump}
-              currentUserId={currentUserId}
-              variant="spotlight"
-            />
-          </section>
-          {ancillary.length > 0 ? (
-            <div className="mt-10 lg:mt-12">
-              <Collapsible open={ancillaryOpen} onOpenChange={setAncillaryOpen}>
-                <CollapsibleTrigger
-                  type="button"
-                  className="flex w-full items-center justify-between rounded-none border border-border-default bg-surface-muted px-4 py-4 text-left transition-colors hover:bg-surface-muted/80 lg:px-5"
-                >
-                  <span className="text-xs font-semibold uppercase tracking-widest text-text-primary">
-                    More credits ({ancillary.length})
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      "h-4 w-4 shrink-0 transition-transform text-text-secondary",
-                      ancillaryOpen && "rotate-180",
-                    )}
-                    aria-hidden
-                  />
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="pt-6">
-                    <TierRoleSections
-                      tier="ancillary"
-                      credits={ancillary}
-                      buildingId={buildingId}
-                      buildingName={buildingName}
-                      sessionFlaggedIds={sessionIds}
-                      onFlagSessionMarked={markAndBump}
-                      currentUserId={currentUserId}
-                      showTierHeading={false}
-                    />
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            </div>
-          ) : null}
-          {addCreditFooter}
-        </>
       ) : (
         <>
           <div className="space-y-12 lg:space-y-16">
-            <TierRoleSections
+            <TierLedger
               tier="primary"
               credits={primary}
               buildingId={buildingId}
@@ -881,8 +728,9 @@ export function BuildingCredits({
               sessionFlaggedIds={sessionIds}
               onFlagSessionMarked={markAndBump}
               currentUserId={currentUserId}
+              showTierEyebrow={multiTier}
             />
-            <TierRoleSections
+            <TierLedger
               tier="contributor"
               credits={contributor}
               buildingId={buildingId}
@@ -890,16 +738,17 @@ export function BuildingCredits({
               sessionFlaggedIds={sessionIds}
               onFlagSessionMarked={markAndBump}
               currentUserId={currentUserId}
+              showTierEyebrow={multiTier}
             />
           </div>
           {ancillary.length > 0 ? (
-            <div className="mt-12">
+            <div className={cn((primary.length > 0 || contributor.length > 0) && "mt-12")}>
               <Collapsible open={ancillaryOpen} onOpenChange={setAncillaryOpen}>
                 <CollapsibleTrigger
                   type="button"
-                  className="flex w-full items-center justify-between rounded-none border border-border-default bg-surface-muted px-4 py-4 text-left transition-colors hover:bg-surface-muted/80 lg:px-5"
+                  className="group flex w-full items-center justify-between border-t border-border-default py-4 text-left"
                 >
-                  <span className="text-xs font-semibold uppercase tracking-widest text-text-primary">
+                  <span className="text-[11px] font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors group-hover:text-text-primary">
                     More credits ({ancillary.length})
                   </span>
                   <ChevronDown
@@ -911,8 +760,8 @@ export function BuildingCredits({
                   />
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <div className="pt-8">
-                    <TierRoleSections
+                  <div className="pt-2">
+                    <TierLedger
                       tier="ancillary"
                       credits={ancillary}
                       buildingId={buildingId}
@@ -920,7 +769,7 @@ export function BuildingCredits({
                       sessionFlaggedIds={sessionIds}
                       onFlagSessionMarked={markAndBump}
                       currentUserId={currentUserId}
-                      showTierHeading={false}
+                      showTierEyebrow={false}
                     />
                   </div>
                 </CollapsibleContent>

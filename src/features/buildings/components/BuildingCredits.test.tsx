@@ -116,6 +116,86 @@ describe("BuildingCredits", () => {
     expect(leadIdx).toBeLessThan(followIdx);
   });
 
+  it("renders each role label exactly once, as the ledger group heading", () => {
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({
+        id: "r1",
+        role: "design_architecture",
+        person: { id: "p1", name: "First Architect", slug: "fa" },
+      }),
+      baseCredit({
+        id: "r2",
+        role: "design_architecture",
+        person: { id: "p2", name: "Second Architect", slug: "sa" },
+      }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    expect(screen.getAllByText("Design Architecture")).toHaveLength(1);
+    expect(screen.getByRole("link", { name: "First Architect" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Second Architect" })).toBeInTheDocument();
+  });
+
+  it("merges a custom role wording into the matching standard role group", () => {
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({
+        id: "std",
+        role: "structural_engineering",
+        creditTier: "contributor",
+        company: { id: "c1", name: "Laing O'Rourke", slug: "laing" },
+      }),
+      baseCredit({
+        id: "alias",
+        role: "other",
+        roleCustom: "Structural Engineer",
+        creditTier: "contributor",
+        company: { id: "c2", name: "Waterman Group", slug: "waterman" },
+      }),
+      baseCredit({
+        id: "case",
+        role: "other",
+        roleCustom: "structural engineering",
+        creditTier: "contributor",
+        company: { id: "c3", name: "Arup", slug: "arup" },
+      }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    // Alias ("Structural Engineer") and case-variant custom both merge into the enum group.
+    expect(screen.getAllByText("Structural Engineering")).toHaveLength(1);
+    expect(screen.queryByText("Structural Engineer")).toBeNull();
+    expect(screen.getByRole("link", { name: "Laing O'Rourke" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Waterman Group" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Arup" })).toBeInTheDocument();
+  });
+
+  it("keeps unmatched custom roles as their own group, shown as typed", () => {
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({
+        id: "cl",
+        role: "other",
+        roleCustom: "Client",
+        creditTier: "contributor",
+        company: { id: "c1", name: "South Central Management", slug: "scm" },
+      }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    expect(screen.getByText("Client")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "South Central Management" })).toBeInTheDocument();
+  });
+
+  it("renders a single credit in the ledger with its role label and name", () => {
+    const credits: BuildingCreditWithEntities[] = [
+      baseCredit({
+        id: "solo",
+        role: "design_architecture",
+        person: { id: "p1", name: "Solo Architect", slug: "solo" },
+      }),
+    ];
+    wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
+    const region = screen.getByRole("region", { name: /primary credits/i });
+    expect(within(region).getByText("Design Architecture")).toBeInTheDocument();
+    expect(within(region).getByRole("link", { name: "Solo Architect" })).toBeInTheDocument();
+  });
+
   it("shows verified badge only for verified credits", () => {
     const credits: BuildingCreditWithEntities[] = [
       baseCredit({
