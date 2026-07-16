@@ -41,11 +41,14 @@ interface PeopleYouMayKnowProps {
   layout?: "default" | "stacked";
   /** Section heading text. */
   heading?: string;
+  /** Maximum suggestions to render. Defaults to 4 (the /connect page count). */
+  limit?: number;
 }
 
 export function PeopleYouMayKnow({
   layout = "default",
   heading = "People you may know",
+  limit = 4,
 }: PeopleYouMayKnowProps) {
   const { user } = useAuth();
   const [suggestions, setSuggestions] = useState<SuggestionUser[]>([]);
@@ -80,7 +83,7 @@ export function PeopleYouMayKnow({
         });
         const candidates = ((rpcRows as unknown as SuggestionUser[]) ?? [])
           .filter((p) => !followingIds.has(p.id) && !hiddenIds.has(p.id))
-          .slice(0, 4);
+          .slice(0, limit);
 
         if (candidates.length > 0 && realFollowingIds.length > 0) {
           const candidateIds = candidates.map((u) => u.id);
@@ -115,7 +118,7 @@ export function PeopleYouMayKnow({
       }
     };
     fetchSuggestions();
-  }, [user]);
+  }, [user, limit]);
 
   const handleHide = async (suggestedId: string) => {
     if (!user) return;
@@ -159,7 +162,7 @@ export function PeopleYouMayKnow({
         <div className="space-y-4">
           <div className="h-2.5 w-32 bg-surface-muted animate-pulse" />
           <div>
-            {[1, 2, 3, 4].map((i) => (
+            {Array.from({ length: limit }, (_, i) => i).map((i) => (
               <div
                 key={i}
                 className="flex flex-col gap-3 p-4 border-b border-border-default last:border-0"

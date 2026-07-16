@@ -229,6 +229,7 @@ function FeedEntries({
 }
 
 function Feed() {
+  const { user } = useAuth();
   const following = useHomeFeed();
   const community = useCommunityFeed();
 
@@ -341,7 +342,7 @@ function Feed() {
 
         <aside className="hidden w-[320px] shrink-0 md:block">
           <div className="sticky top-[88px]">
-            <FeedSidebar />
+            <FeedSidebar userId={user?.id} />
           </div>
         </aside>
       </div>

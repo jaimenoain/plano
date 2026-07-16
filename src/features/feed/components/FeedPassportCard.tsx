@@ -62,10 +62,10 @@ export function FeedPassportCard() {
           .publicUrl
     : undefined;
 
-  const items: Array<{ label: string; value: number }> = [
-    { label: "Visited", value: stats?.visited ?? 0 },
-    { label: "Saved", value: stats?.saved ?? 0 },
-    { label: "Followers", value: stats?.followers ?? 0 },
+  const items: Array<{ label: string; value: number; to: string }> = [
+    { label: "Visited", value: stats?.visited ?? 0, to: "/profile?section=visited" },
+    { label: "Saved", value: stats?.saved ?? 0, to: "/profile?section=saved" },
+    { label: "Followers", value: stats?.followers ?? 0, to: "/profile" },
   ];
 
   return (
@@ -87,18 +87,18 @@ export function FeedPassportCard() {
         </div>
       </Link>
 
-      <dl className="mt-4 grid grid-cols-3 border-t border-border-default pt-4 text-center">
+      <div className="mt-4 grid grid-cols-3 border-t border-border-default pt-4">
         {items.map((item) => (
-          <div key={item.label}>
-            <dt className="text-lg font-semibold tabular-nums leading-none text-text-primary">
+          <Link key={item.label} to={item.to} className="group/stat block">
+            <div className="text-2xl font-semibold tabular-nums leading-none tracking-[-0.025em] text-text-primary">
               {item.value}
-            </dt>
-            <dd className="mt-1 text-[10px] uppercase tracking-[0.12em] text-text-disabled">
+            </div>
+            <div className="mt-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-text-disabled transition-colors group-hover/stat:text-text-secondary">
               {item.label}
-            </dd>
-          </div>
+            </div>
+          </Link>
         ))}
-      </dl>
+      </div>
     </section>
   );
 }
