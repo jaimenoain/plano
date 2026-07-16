@@ -1,27 +1,25 @@
 name: AI review
 
-# Advisory reviewer: posts inline comments + a verdict on every PR. Never blocks
-# merge (not in the required checks). Runs once when the PR opens (or leaves
-# draft) to keep API cost at one review per PR; push more commits and want a
-# fresh pass? Re-request by commenting "@claude review the latest changes".
+# On-demand reviewer ONLY: comment "@claude <request>" on a PR to get a review
+# of the current state. Never blocks merge (not in the required checks). The
+# scheduled review of everything that lands on main lives in nightly.yml —
+# per-PR automatic reviews were removed to cut Anthropic API cost
+# (docs/decisions/0006-nightly-heavy-tier.md).
 on:
-  pull_request:
-    types: [opened, ready_for_review]
   issue_comment:
     types: [created]
 
 concurrency:
-  group: ai-review-${{ github.event.pull_request.number || github.event.issue.number }}
+  group: ai-review-${{ github.event.issue.number }}
   cancel-in-progress: false
 
 jobs:
   review:
     name: Claude review
-    # Run on non-draft PRs, or on PR comments that mention @claude.
+    # Run only on PR comments that mention @claude.
     if: >
-      (github.event_name == 'pull_request' && github.event.pull_request.draft == false) ||
-      (github.event_name == 'issue_comment' && github.event.issue.pull_request &&
-       contains(github.event.comment.body, '@claude'))
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@claude')
     runs-on: ubuntu-latest
     permissions:
       contents: read
