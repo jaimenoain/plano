@@ -347,8 +347,6 @@ export default function BuildingDetails() {
     totalRatingPoints,
     visitorCount,
     coordinates,
-    accessSynthesis: _accessSynthesis,
-    accessBadgeVariant: _accessBadgeVariant,
     canEditOfficialData,
     isCreditsAdmin,
     handleStatusChange,
