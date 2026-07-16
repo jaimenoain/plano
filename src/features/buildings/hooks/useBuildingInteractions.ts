@@ -18,7 +18,6 @@ import { useToast } from "@/hooks/use-toast";
 import { uploadFile } from "@/utils/upload";
 import { resizeImageWithDimensions } from "@/lib/image-compression";
 import { parseLocation } from "@/utils/location";
-import { synthesizeAccess } from "@/utils/accessSynthesis";
 import { visiblePrimaryCredits } from "@/features/credits/buildingCreditDisplay";
 import type { BuildingCreditWithEntities } from "@/features/credits/types";
 import type { BuildingDetails } from "@/features/buildings/pages/BuildingDetails";
@@ -156,9 +155,6 @@ export interface BuildingInteractions {
   totalRatingPoints: number | null;
   visitorCount: number;
   coordinates: { lat: number; lng: number } | null;
-  googleSearchUrl: string;
-  accessSynthesis: ReturnType<typeof synthesizeAccess> | null;
-  accessBadgeVariant: () => "default" | "success" | "warning" | "brand";
   /** True when the current user may edit official building data. */
   canEditOfficialData: boolean;
   /** True when the current user has admin/app_admin role. */
@@ -213,6 +209,13 @@ export function useBuildingInteractions({
   const [heroImageUrl, setHeroImageUrl] = useState<string | null>(
     initialHeroImageUrl,
   );
+  // Client-side navigation between two building pages reuses this component
+  // instance (only the :id param changes), so the useState initializer above
+  // only runs for the FIRST building visited — without this re-sync the hero
+  // band keeps showing the previous building's photo until a full reload.
+  useEffect(() => {
+    setHeroImageUrl(initialHeroImageUrl);
+  }, [initialHeroImageUrl]);
 
   // ── Core loading ─────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
@@ -324,54 +327,6 @@ export function useBuildingInteractions({
     () => parseLocation(building?.location),
     [building],
   );
-
-  const accessSynthesis = useMemo(() => {
-    if (
-      !building ||
-      (!building.access_level &&
-        !building.access_logistics &&
-        !building.access_cost)
-    )
-      return null;
-    return synthesizeAccess(
-      building.access_level || null,
-      building.access_logistics || null,
-      building.access_cost || null,
-    );
-  }, [building]);
-
-  const accessBadgeVariant = useCallback(
-    (): "default" | "success" | "warning" | "brand" => {
-      const level = building?.access_level;
-      if (level === "public") return "success";
-      if (level === "commercial") return "brand";
-      if (level === "private" || level === "restricted") return "warning";
-      if (accessSynthesis?.variant === "warning") return "warning";
-      if (accessSynthesis?.variant === "outline") return "brand";
-      return "default";
-    },
-    [building, accessSynthesis],
-  );
-
-  const googleSearchUrl = useMemo(() => {
-    if (!building) return "";
-    const creditPart = visiblePrimaryCredits(buildingCredits)
-      .map((c) => {
-        const p = c.person?.name;
-        const co = c.company?.name;
-        if (p && co) return `${p} ${co}`;
-        return p ?? co ?? "";
-      })
-      .filter(Boolean)
-      .join(" ");
-    const query = [building.name, building.city, creditPart]
-      .filter(Boolean)
-      .join(" ");
-    const params = new URLSearchParams();
-    params.set("q", query);
-    params.set("udm", "2");
-    return `https://www.google.com/search?${params.toString()}`;
-  }, [building, buildingCredits]);
 
   // ── Data fetching ────────────────────────────────────────────────────────
 
@@ -1291,9 +1246,6 @@ export function useBuildingInteractions({
     totalRatingPoints,
     visitorCount,
     coordinates,
-    googleSearchUrl,
-    accessSynthesis,
-    accessBadgeVariant,
     canEditOfficialData,
     isCreditsAdmin,
     handleStatusChange,

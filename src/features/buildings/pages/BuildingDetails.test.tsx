@@ -258,6 +258,43 @@ describe('BuildingDetails Interaction', () => {
     });
   });
 
+  it('re-syncs the hero image when client-side navigating to another building', async () => {
+    // Same component instance, loader data swapped — mirrors React Router
+    // reusing the route component when only the :id param changes.
+    mocks.loaderData.heroImageUrl = 'http://img/building-a-hero.jpg';
+
+    const tree = () => (
+      <TooltipProvider>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <SidebarProvider>
+              <BuildingDetails />
+            </SidebarProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </TooltipProvider>
+    );
+    const view = render(tree());
+
+    await waitFor(() => {
+      expect(document.querySelector('img[src="http://img/building-a-hero.jpg"]')).toBeTruthy();
+    }, { timeout: 3000 });
+
+    mocks.loaderData.building = {
+      ...(mocks.loaderData.building as Record<string, unknown>),
+      id: 'b2',
+      name: 'Second Building',
+      slug: 'second-building',
+    };
+    mocks.loaderData.heroImageUrl = 'http://img/building-b-hero.jpg';
+    view.rerender(tree());
+
+    await waitFor(() => {
+      expect(document.querySelector('img[src="http://img/building-b-hero.jpg"]')).toBeTruthy();
+      expect(document.querySelector('img[src="http://img/building-a-hero.jpg"]')).toBeFalsy();
+    }, { timeout: 3000 });
+  });
+
   it('renders lost to time message and Navigate to Site button when status is lost', async () => {
     const lostBuilding = {
         id: 'b1',
