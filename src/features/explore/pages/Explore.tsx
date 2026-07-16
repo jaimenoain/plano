@@ -654,15 +654,14 @@ export default function Explore() {
             />
           )}
 
-          {/* Cards — full-bleed on phones; a centered poster column on md+ so a
-              mouse/keyboard swipe stays in a comfortable, discoverable band. */}
+          {/* Cards — full-bleed, cinematic, at every breakpoint. */}
           {buildings.map((building) => (
             <div
               key={building.id}
-              className="h-full w-full snap-start snap-always flex justify-center"
+              className="h-full w-full snap-start snap-always"
               style={{ contain: "layout paint" }}
             >
-              <div className="relative h-full w-full md:max-w-md md:border-x md:border-white/5">
+              <div className="relative h-full w-full">
                 <DiscoveryCard
                   building={building}
                   onSwipeSave={() => handleSwipeSave(building.id)}
