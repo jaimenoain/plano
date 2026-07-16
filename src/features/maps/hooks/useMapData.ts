@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { resolveConstructionStatuses } from '@/lib/buildingStatus';
 import { Bounds } from '@/utils/map';
 import { MapFilters, MapMode } from '@/types/plano-map';
+import { getGlobalTierRank, getPersonalTierRank } from '../utils/pinStyling';
 
 export interface ClusterResponse {
   id: string | number;
@@ -77,30 +78,14 @@ interface MapClusterRpcRow {
 
 type MapClusterRpcItem = MapClusterRpcRow & Record<string, unknown>;
 
-function calculateTierRank(item: MapClusterRpcRow): number {
-  // Determine context: Library (User Rating/Status) vs Discover (Global Rank)
-  const userRating = item.rating ?? 0;
-  const status = item.status;
-  // Check if item is in library (rated > 0, or explicitly saved/visited)
-  const isLibraryItem = userRating > 0 || status === 'visited' || status === 'saved' || status === 'pending';
-
-  if (isLibraryItem) {
-    // My Library — Michelin dots: 3 / 2 / 1 / Rest (aligned with getPinStyle tiers)
-    if (userRating >= 3) return 3;
-    if (userRating === 2) return 2;
-    if (userRating === 1) return 1;
-    // Rating 0 or saved/visited without numeric rating
-    return 1;
+function calculateTierRank(item: MapClusterRpcRow, mode: MapMode): number {
+  // Mode selects the code (aligned with getPinStyle): library → the user's own
+  // points; discover → global percentile bands. Numeric rank 1–5 for
+  // downstream aggregation; pins style from the label / rating directly.
+  if (mode === 'library') {
+    return getPersonalTierRank(item.rating, item.status);
   }
-
-  // Discover — percentile bands (numeric rank for downstream aggregation; pins use labels in getPinStyle)
-  const label = item.tier_rank;
-
-  if (label === 'Top 1%') return 3;
-  if (label === 'Top 5%') return 2;
-  if (label === 'Top 20%' || label === 'Top 10%') return 1;
-
-  return 1;
+  return getGlobalTierRank(typeof item.tier_rank === 'string' ? item.tier_rank : null);
 }
 
 export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapDataProps) {
@@ -268,7 +253,7 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
 
       // Transform data to inject numeric tier_rank and preserve label
       const transformedData = visibleData.map((item) => {
-        const rank = calculateTierRank(item);
+        const rank = calculateTierRank(item, mode);
 
         return {
           ...item,

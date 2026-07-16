@@ -1,20 +1,4 @@
-/**
- * PlanoMap.tsx — Refined with A24 editorial aesthetic
- *
- * All map state, bounds tracking, geolocation, and data-fetching logic unchanged.
- * Three visual changes only:
- *
- * Map control buttons (satellite + fullscreen):
- *   shadow-md removed — frosted glass + border is sufficient over the map tile.
- *   Satellite label: uppercase tracking-wide added for editorial micro-label treatment.
- *
- * Empty state overlay ("No buildings in this location"):
- *   shadow-lg removed.
- *   "Zoom out to see more" CTA: text-brand-primary hover:underline font-semibold →
- *   text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60
- *   transition-opacity. Editorial text CTA, consistent with the rest of the app.
- *   Label text: "No buildings in this location" → "No buildings in this area".
- */
+/** The /search map surface: server-clustered pins (useMapData), find-mode results, detail drawer. */
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { createPortal } from "react-dom";
 import Map, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef } from 'react-map-gl/maplibre';
@@ -27,6 +11,7 @@ import { useMapClusterViewport } from '@/features/maps/hooks/useMapClusterViewpo
 import { MapErrorBoundary } from './MapErrorBoundary';
 import { useMapContext } from '../providers/MapContext';
 import { useMapData, ClusterResponse } from '../hooks/useMapData';
+import { getGlobalTierRank } from '../utils/pinStyling';
 import { MapMarkers } from './MapMarkers';
 import { BuildingDetailDrawer } from './BuildingDetailDrawer';
 import { MapChromeButton } from './MapChromeButton';
@@ -250,7 +235,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
           slug: b.slug,
           image_url: b.hero_image_url ?? undefined,
           tier_rank_label: b.tier_rank,
-          tier_rank: 1,
+          tier_rank: getGlobalTierRank(b.tier_rank),
         }))
     : browseClusters;
   const isLoading = findModeBuildings ? false : browseLoading;

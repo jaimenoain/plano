@@ -102,7 +102,8 @@ export function LocalityMap({ localityId }: { localityId: string }) {
       let tier_rank: string;
       if (idx < Math.max(1, Math.ceil(total * 0.01))) tier_rank = 'Top 1%';
       else if (idx < Math.max(2, Math.ceil(total * 0.05))) tier_rank = 'Top 5%';
-      else if (idx < Math.ceil(total * 0.20)) tier_rank = 'Top 20%';
+      else if (idx < Math.ceil(total * 0.1)) tier_rank = 'Top 10%';
+      else if (idx < Math.ceil(total * 0.2)) tier_rank = 'Top 20%';
       else tier_rank = 'Standard';
       return { ...b, tier_rank } as unknown as DiscoveryBuilding;
     });

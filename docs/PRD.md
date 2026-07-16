@@ -407,7 +407,7 @@ Switching modes shall reset status and hide filters to sensible defaults for the
 The map shall fetch data via the `get_map_clusters_v2` RPC, which returns either cluster points (aggregated by geographic proximity) or individual building points depending on the viewport bounds and zoom level.
 
 **FR-8.3.2 Cluster Display**
-Cluster markers shall display the count of buildings they contain. Their size and colour shall reflect the highest-tier building within the cluster (`max_tier`).
+Cluster markers shall display the count of buildings they contain. Their size shall reflect the count; their face shall mirror the 5-rank pin ladder via `max_tier` (numeric 1–5): a cluster wears a rank's face if and only if it contains at least one building of that rank, computed with the same code (personal or global) as the individual pins for the active mode.
 
 **FR-8.3.3 Cluster Expansion**
 Clicking a cluster marker shall zoom the map to that cluster's expansion zoom level, revealing the individual buildings or sub-clusters within.
@@ -417,10 +417,10 @@ Clicking a cluster marker shall zoom the map to that cluster's expansion zoom le
 #### Requirements
 
 **FR-8.4.1 Tier-Based Styling**
-Building pins shall be visually differentiated by tier rank with distinct colours and sizes for Top 1% through Standard.
+Building pins shall follow a monochrome 5-rank ladder (rank 5 → 1): 30px black face with white ring · 26px white with black ring · 22px white with strong border · 18px muted · 14px translucent muted. Prominence is carried by fill value and size, never hue; markers never use `brand-accent`. The active map mode selects the data source: in discover mode the ranks map to the global percentile bands Top 1% / 5% / 10% / 20% / Rest, and buildings in the user's library additionally show a subtle centre "saved" dot (white on the rank-5 black face, black otherwise).
 
 **FR-8.4.2 Library Mode Styling**
-In library mode, pin colour shall reflect the user's personal rating of the building instead of global tier.
+In library (personal) mode, the same 5-rank ladder is driven entirely by the user's own relationship: 3 pts / 2 pts / 1 pt / saved-or-visited-unrated / unsaved. Rated pins additionally show their award as 1–3 tiny dots inside the pin (white on the rank-5 black face, black otherwise), matching the Michelin-dot language used across the app. Global percentile is ignored in this mode.
 
 **FR-8.4.3 Approximate Location**
 Buildings with `location_precision = approximate` shall use a circle shape instead of a standard pin to communicate uncertainty.

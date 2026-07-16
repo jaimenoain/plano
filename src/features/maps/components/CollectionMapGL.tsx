@@ -15,6 +15,7 @@ import { ItineraryRoutes } from './ItineraryRoutes';
 import { MapChromeButton } from './MapChromeButton';
 import { DiscoveryBuilding } from '@/features/search/components/types';
 import { ClusterResponse } from '../hooks/useMapData';
+import { getGlobalTierRank } from '../utils/pinStyling';
 import { getBoundsFromBuildings, type Bounds } from '@/utils/map';
 import { useItineraryStore } from '@/features/itinerary/stores/useItineraryStore';
 import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
@@ -202,7 +203,7 @@ function CollectionMapGLContent({
   }, [hasFittedBounds, isMapLoaded, onViewportBoundsChange, reportViewportBounds]);
 
   // Build supercluster index whenever buildings or itinerary assignments change.
-  // Each point stores a numeric tier_rank (1–3) so clusters can surface the
+  // Each point stores a numeric tier_rank (1–5) so clusters can surface the
   // highest-ranked building they contain via the reduce aggregation (max_tier).
   const superclusterIndex = useMemo(() => {
     const sc = new Supercluster({
@@ -219,10 +220,7 @@ function CollectionMapGLContent({
       .map(b => {
         const itineraryInfo = itineraryMap.get(b.id);
         const tierLabel = typeof b.tier_rank === 'string' ? b.tier_rank : null;
-        let tierRank = 1;
-        if (tierLabel === 'Top 1%') tierRank = 3;
-        else if (tierLabel === 'Top 5%') tierRank = 2;
-        else if (tierLabel === 'Top 20%' || tierLabel === 'Top 10%') tierRank = 1;
+        const tierRank = getGlobalTierRank(tierLabel);
 
         return {
           type: 'Feature' as const,

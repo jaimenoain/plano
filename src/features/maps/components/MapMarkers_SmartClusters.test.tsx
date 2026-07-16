@@ -26,12 +26,21 @@ vi.mock('./BuildingPopupContent', () => ({
   BuildingPopupContent: () => <div>Popup Content</div>,
 }));
 
+// Controllable MapContext — lets tests flip the map mode (library ⇄ discover)
+const { mockCtx } = vi.hoisted(() => ({
+  mockCtx: { current: null as unknown },
+}));
+vi.mock('../providers/MapContext', () => ({
+  useOptionalMapContext: () => mockCtx.current,
+}));
+
 describe('MapMarkers - Smart Clusters', () => {
   const setHighlightedId = vi.fn();
 
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
+    mockCtx.current = null;
   });
 
   const baseCluster: ClusterResponse = {
@@ -64,11 +73,11 @@ describe('MapMarkers - Smart Clusters', () => {
     });
 
     it('does not let the tier ring race the white ring', () => {
-      // A Tier-C stop's own `border-border-strong` must not survive alongside `border-white`:
+      // A quiet stop's own `border-border-default` must not survive alongside `border-white`:
       // Tailwind resolves that conflict by rule order, not class-attribute order.
       render(<MapMarkers clusters={[stop()]} setHighlightedId={setHighlightedId} highlightedId={null} />);
 
-      expect(screen.getByTestId('map-pin-container').className).not.toContain('border-border-strong');
+      expect(screen.getByTestId('map-pin-container').className).not.toContain('border-border-default');
     });
 
     it('keeps the construction treatment on an itinerary stop', () => {
@@ -82,17 +91,26 @@ describe('MapMarkers - Smart Clusters', () => {
 
       expect(screen.getByTestId('map-pin-container').className).toContain('opacity-50');
     });
+
+    it('suppresses the saved mark under the sequence numeral', () => {
+      render(
+        <MapMarkers
+          clusters={[stop({ status: 'saved' })]}
+          setHighlightedId={setHighlightedId}
+          highlightedId={null}
+        />
+      );
+
+      expect(screen.queryByTestId('map-pin-saved-mark')).toBeNull();
+    });
   });
 
-  it('renders Tier 3 (solid black, inverted numeral) cluster correctly', () => {
-    const tier3Cluster: ClusterResponse = {
-      ...baseCluster,
-      max_tier: 3,
-    };
-
+  // Clusters mirror the 5-rank pin ladder via max_tier: a cluster wears a
+  // rank's face iff it contains at least one building of that rank.
+  it('renders a rank-5 cluster (solid black, inverted numeral)', () => {
     render(
       <MapMarkers
-        clusters={[tier3Cluster]}
+        clusters={[{ ...baseCluster, max_tier: 5 }]}
         setHighlightedId={setHighlightedId}
         highlightedId={null}
       />
@@ -102,20 +120,13 @@ describe('MapMarkers - Smart Clusters', () => {
     expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
     expect(pin.className).toContain('border-white');
     expect(pin.className).toContain('text-white');
-    // Check zIndex
-    const marker = screen.getByTestId('marker-container');
-    expect(marker.style.zIndex).toBe('20');
+    expect(screen.getByTestId('marker-container').style.zIndex).toBe('36');
   });
 
-  it('renders Tier 2 (White) cluster correctly', () => {
-    const tier2Cluster: ClusterResponse = {
-      ...baseCluster,
-      max_tier: 2,
-    };
-
+  it('renders a rank-4 cluster (white face, black ring)', () => {
     render(
       <MapMarkers
-        clusters={[tier2Cluster]}
+        clusters={[{ ...baseCluster, max_tier: 4 }]}
         setHighlightedId={setHighlightedId}
         highlightedId={null}
       />
@@ -123,21 +134,29 @@ describe('MapMarkers - Smart Clusters', () => {
 
     const pin = screen.getByTestId('map-pin-container');
     expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.white);
-    expect(pin.className).toContain('border-white');
-    // Check zIndex
-    const marker = screen.getByTestId('marker-container');
-    expect(marker.style.zIndex).toBe('20');
+    expect(pin.className).toContain('border-text-primary');
+    expect(screen.getByTestId('marker-container').style.zIndex).toBe('32');
   });
 
-  it('renders Tier 1 (Standard) cluster correctly', () => {
-    const tier1Cluster: ClusterResponse = {
-      ...baseCluster,
-      max_tier: 1,
-    };
-
+  it('renders a rank-3 cluster (white face, strong border)', () => {
     render(
       <MapMarkers
-        clusters={[tier1Cluster]}
+        clusters={[{ ...baseCluster, max_tier: 3 }]}
+        setHighlightedId={setHighlightedId}
+        highlightedId={null}
+      />
+    );
+
+    const pin = screen.getByTestId('map-pin-container');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.white);
+    expect(pin.className).toContain('border-border-strong');
+    expect(screen.getByTestId('marker-container').style.zIndex).toBe('28');
+  });
+
+  it('renders a rank-2 cluster (muted face)', () => {
+    render(
+      <MapMarkers
+        clusters={[{ ...baseCluster, max_tier: 2 }]}
         setHighlightedId={setHighlightedId}
         highlightedId={null}
       />
@@ -146,30 +165,91 @@ describe('MapMarkers - Smart Clusters', () => {
     const pin = screen.getByTestId('map-pin-container');
     expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted);
     expect(pin.className).toContain('border-border-strong');
-    // Check zIndex
-    const marker = screen.getByTestId('marker-container');
-    expect(marker.style.zIndex).toBe('10');
+    expect(screen.getByTestId('marker-container').style.zIndex).toBe('20');
   });
 
-  it('defaults to Tier 1 style if max_tier is undefined', () => {
-    const defaultCluster: ClusterResponse = {
-      ...baseCluster,
-      max_tier: undefined,
-    };
-
+  it('renders a rank-1 cluster (quietest face)', () => {
     render(
       <MapMarkers
-        clusters={[defaultCluster]}
+        clusters={[{ ...baseCluster, max_tier: 1 }]}
         setHighlightedId={setHighlightedId}
         highlightedId={null}
       />
     );
 
     const pin = screen.getByTestId('map-pin-container');
-    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted);
-    expect(pin.className).toContain('border-border-strong');
-    // Check zIndex
-    const marker = screen.getByTestId('marker-container');
-    expect(marker.style.zIndex).toBe('10');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
+    expect(pin.className).toContain('border-border-default');
+    expect(screen.getByTestId('marker-container').style.zIndex).toBe('10');
+  });
+
+  it('defaults to the rank-1 style if max_tier is undefined', () => {
+    render(
+      <MapMarkers
+        clusters={[{ ...baseCluster, max_tier: undefined }]}
+        setHighlightedId={setHighlightedId}
+        highlightedId={null}
+      />
+    );
+
+    const pin = screen.getByTestId('map-pin-container');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
+    expect(pin.className).toContain('border-border-default');
+    expect(screen.getByTestId('marker-container').style.zIndex).toBe('10');
+  });
+
+  describe('mode-scoped pin codes', () => {
+    const building = (overrides: Partial<ClusterResponse>): ClusterResponse => ({
+      ...baseCluster,
+      is_cluster: false,
+      count: 1,
+      ...overrides,
+    } as ClusterResponse);
+
+    it('library mode: a 3-pt building renders the rank-5 face with 3 dots', () => {
+      mockCtx.current = { state: { mode: 'library', filters: {} } };
+      render(
+        <MapMarkers
+          clusters={[building({ rating: 3, status: 'visited' })]}
+          setHighlightedId={setHighlightedId}
+          highlightedId={null}
+        />
+      );
+
+      const pin = screen.getByTestId('map-pin-container');
+      expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
+      expect(screen.getByTestId('map-pin-dots').children).toHaveLength(3);
+    });
+
+    it('library mode: an unsaved Top 1% building renders the quietest rank-1 face', () => {
+      mockCtx.current = { state: { mode: 'library', filters: {} } };
+      render(
+        <MapMarkers
+          clusters={[building({ tier_rank_label: 'Top 1%', rating: 0, status: 'none' })]}
+          setHighlightedId={setHighlightedId}
+          highlightedId={null}
+        />
+      );
+
+      const pin = screen.getByTestId('map-pin-container');
+      expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
+      expect(screen.queryByTestId('map-pin-dots')).toBeNull();
+    });
+
+    it('discover mode: a saved building keeps its global rank and gains the saved mark', () => {
+      mockCtx.current = { state: { mode: 'discover', filters: {} } };
+      render(
+        <MapMarkers
+          clusters={[building({ tier_rank_label: 'Top 1%', rating: 1, status: 'visited' })]}
+          setHighlightedId={setHighlightedId}
+          highlightedId={null}
+        />
+      );
+
+      const pin = screen.getByTestId('map-pin-container');
+      expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
+      expect(screen.getByTestId('map-pin-saved-mark')).toBeTruthy();
+      expect(screen.queryByTestId('map-pin-dots')).toBeNull();
+    });
   });
 });

@@ -115,8 +115,8 @@ export function BuildingMapTab({
             };
             const pinStyle = getPinStyle(pinData);
             const isHovered = hoveredId === b.id;
-            const MAP_MARKER_Z_MAX = 28;
-            const zIndex = isHovered ? 30 : Math.min(pinStyle.zIndex, MAP_MARKER_Z_MAX);
+            const MAP_MARKER_Z_MAX = 36;
+            const zIndex = isHovered ? 37 : Math.min(pinStyle.zIndex, MAP_MARKER_Z_MAX);
             return (
               <Marker
                 key={b.id}

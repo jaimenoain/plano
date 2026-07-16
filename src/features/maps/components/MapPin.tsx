@@ -1,6 +1,5 @@
 import React from 'react';
 import { PinStyle } from '../utils/pinStyling';
-import { MAP_MARKER_FILL } from '../constants/mapMarkerFills';
 
 interface MapPinProps {
   style: PinStyle;
@@ -41,15 +40,6 @@ export const MapPin: React.FC<MapPinProps> = ({ style, children, isHovered }) =>
       style={containerStyle}
       data-testid="map-pin-container"
     >
-      {/* Pulse Effect (Tier S) — inline fill so it paints inside MapLibre marker portal */}
-      {style.tier === 'S' && (
-        <div
-          className="absolute inset-0 -z-10 animate-ping-large-slow rounded-full opacity-30"
-          style={{ backgroundColor: MAP_MARKER_FILL.brandPrimary }}
-          data-testid="map-pin-pulse"
-        />
-      )}
-
       {/* Inner Content Wrapper */}
       {/* Counter-rotate if it's a pin shape so content stays upright */}
       <div
@@ -58,14 +48,29 @@ export const MapPin: React.FC<MapPinProps> = ({ style, children, isHovered }) =>
           ${isPinShape ? '-rotate-45' : ''}
         `}
       >
-        {/* Dot Decoration (Tier A) */}
-        {style.showDot && (
+        {/* Personal code: the user's award dots (1–3), the same visual language
+            as RatingDots — inline fill so it paints inside the MapLibre portal. */}
+        {style.dots > 0 ? (
           <div
-            className="absolute h-2 w-2 rounded-full"
-            style={{ backgroundColor: MAP_MARKER_FILL.brandPrimary }}
-            data-testid="map-pin-dot"
+            className="absolute flex items-center justify-center gap-[2px]"
+            data-testid="map-pin-dots"
+          >
+            {Array.from({ length: style.dots }).map((_, i) => (
+              <div
+                key={i}
+                className="h-[3px] w-[3px] rounded-full"
+                style={{ backgroundColor: style.innerMarkColor }}
+              />
+            ))}
+          </div>
+        ) : style.savedMark ? (
+          /* Global code: subtle centre dot = "in your library" */
+          <div
+            className="absolute h-1.5 w-1.5 rounded-full"
+            style={{ backgroundColor: style.innerMarkColor }}
+            data-testid="map-pin-saved-mark"
           />
-        )}
+        ) : null}
 
         {/* Content */}
         <div className="z-10 relative">

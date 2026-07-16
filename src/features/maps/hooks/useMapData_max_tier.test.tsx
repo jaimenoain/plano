@@ -38,12 +38,28 @@ describe('useMapData (max_tier)', () => {
     // Mock RPC response with max_tier
     const mockClusters = [
       {
+        id: 'cluster-5',
+        lat: 5,
+        lng: 5,
+        is_cluster: true,
+        count: 8,
+        max_tier: 5, // Top rank (contains a Top 1% / 3-pt building)
+      },
+      {
+        id: 'cluster-4',
+        lat: 8,
+        lng: 8,
+        is_cluster: true,
+        count: 6,
+        max_tier: 4,
+      },
+      {
         id: 'cluster-1',
         lat: 10,
         lng: 10,
         is_cluster: true,
         count: 5,
-        max_tier: 3, // High tier
+        max_tier: 3,
       },
       {
         id: 'cluster-2',
@@ -51,7 +67,7 @@ describe('useMapData (max_tier)', () => {
         lng: 20,
         is_cluster: true,
         count: 3,
-        max_tier: 2, // Medium tier
+        max_tier: 2,
       },
       {
         id: 'cluster-3',
@@ -59,7 +75,7 @@ describe('useMapData (max_tier)', () => {
         lng: 30,
         is_cluster: true,
         count: 2,
-        max_tier: 1, // Standard tier
+        max_tier: 1, // Rest
       },
     ];
 
@@ -76,9 +92,11 @@ describe('useMapData (max_tier)', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     const clusters = result.current.clusters;
-    expect(clusters).toHaveLength(3);
+    expect(clusters).toHaveLength(5);
 
-    // Verify max_tier is preserved
+    // Verify max_tier is preserved across the full 1–5 ladder
+    expect(clusters?.find(c => c.id === 'cluster-5')?.max_tier).toBe(5);
+    expect(clusters?.find(c => c.id === 'cluster-4')?.max_tier).toBe(4);
     expect(clusters?.find(c => c.id === 'cluster-1')?.max_tier).toBe(3);
     expect(clusters?.find(c => c.id === 'cluster-2')?.max_tier).toBe(2);
     expect(clusters?.find(c => c.id === 'cluster-3')?.max_tier).toBe(1);

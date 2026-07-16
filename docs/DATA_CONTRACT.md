@@ -3929,7 +3929,7 @@ interface MapClusterDTO {
   longitude: number;
   count: number;                        // Buildings in cluster
   expansionZoom: number;                // Zoom level to expand
-  maxTier: string | null;               // Highest tier in cluster
+  maxTier: number | null;               // Highest pin-ladder rank in cluster (1–5), mode-scoped
 }
 
 interface MapPinDTO {
@@ -3964,7 +3964,7 @@ Example payload (MapClusterDTO):
   "longitude": -0.1278,
   "count": 23,
   "expansionZoom": 14,
-  "maxTier": "Top 1%"
+  "maxTier": 5
 }
 */
 
