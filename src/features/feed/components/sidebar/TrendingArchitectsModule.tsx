@@ -11,7 +11,7 @@ import {
   RailHeader,
   RailModule,
   RailSkeletonRows,
-} from "./RailModule";
+} from "@/components/ui/rail";
 
 /**
  * "Most credited" — the architects behind the buildings the community has

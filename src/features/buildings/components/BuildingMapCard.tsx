@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RailHeader, RailModule } from "@/components/ui/rail";
 import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
 
 interface BuildingMapCardProps {
@@ -12,7 +13,14 @@ interface BuildingMapCardProps {
   onDirectionsBlocked: () => void;
 }
 
-/** Sidebar map card: square inline map with place line + Directions action. */
+/** Formats coordinates as the rail's mono meta line, e.g. `51.51 N · 0.08 W`. */
+function formatCoordinates({ lat, lng }: { lat: number; lng: number }) {
+  const latLine = `${Math.abs(lat).toFixed(2)} ${lat >= 0 ? "N" : "S"}`;
+  const lngLine = `${Math.abs(lng).toFixed(2)} ${lng >= 0 ? "E" : "W"}`;
+  return `${latLine} · ${lngLine}`;
+}
+
+/** Location rail module: square inline map with place line + Directions action. */
 export function BuildingMapCard({
   coordinates,
   city,
@@ -31,7 +39,11 @@ export function BuildingMapCard({
   }, [isExpanded]);
 
   return (
-    <div className="bg-surface-card border border-border-default rounded-none overflow-hidden">
+    <RailModule>
+      <RailHeader
+        label="Location"
+        meta={coordinates ? formatCoordinates(coordinates) : undefined}
+      />
       <div className="aspect-square relative">
         {coordinates ? (
           <div className={cn("h-full w-full transition-all duration-700", !isExpanded && "grayscale-[0.4] hover:grayscale-0")}>
@@ -49,8 +61,8 @@ export function BuildingMapCard({
           </div>
         )}
       </div>
-      <div className="p-3.5 flex items-center justify-between border-t border-border-default">
-        <div className="flex items-center gap-1.5 text-xs text-text-secondary min-w-0">
+      <div className="mt-3.5 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 text-[11px] text-text-secondary min-w-0">
           <MapPin className="h-3 w-3 text-text-disabled shrink-0" />
           <span className="truncate">
             {[city, country].filter(Boolean).join(", ")}
@@ -73,6 +85,6 @@ export function BuildingMapCard({
           Directions
         </button>
       </div>
-    </div>
+    </RailModule>
   );
 }

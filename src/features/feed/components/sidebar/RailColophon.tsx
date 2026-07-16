@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 
 import { fetchCensus } from "../../api/railApi";
-import { RailModule } from "./RailModule";
+import { RailModule } from "@/components/ui/rail";
 
 const LINKS: Array<{ to: string; label: string }> = [
   { to: "/about", label: "About" },

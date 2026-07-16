@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getBuildingImageUrl } from "@/utils/image";
 import { fetchSpotlightPool } from "../../api/railApi";
 import { dateKey, pickBuildingOfTheDay } from "../../utils/buildingOfTheDay";
-import { RailHeader, RailModule } from "./RailModule";
+import { RailHeader, RailModule } from "@/components/ui/rail";
 
 /**
  * "Today" — the rail's one large photograph. A daily edition drawn from the
