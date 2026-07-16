@@ -131,7 +131,22 @@ export default function Explore() {
   ]);
 
   const [isFilterVisible, setIsFilterVisible] = useState(true);
+  /**
+   * The filter pill is an invitation shown on the first building only. Once the
+   * user swipes onward without engaging it, it stays hidden for the rest of the
+   * session — unless a filter is actually applied, which must remain visible so
+   * it can be changed or cleared.
+   */
+  const [filterDismissed, setFilterDismissed] = useState(false);
   const [isLocationSheetOpen, setIsLocationSheetOpen] = useState(false);
+
+  const hasActiveFilters =
+    Boolean(locationFilter.label) || extraFilterCount > 0;
+
+  /** Swiping past the first building without an active filter retires the pill. */
+  const dismissFilterOnSwipe = useCallback(() => {
+    if (!hasActiveFilters) setFilterDismissed(true);
+  }, [hasActiveFilters]);
   const [searchValue, setSearchValue] = useState("");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -251,6 +266,9 @@ export default function Explore() {
       const el = scrollContainerRef.current;
       if (!el) return;
       const top = el.scrollTop;
+      // Scrolling past the first building counts as swiping onward — the pill
+      // invitation is over unless a filter is already applied.
+      if (top >= FILTER_BAR_HIDE_ABOVE_PX) dismissFilterOnSwipe();
       setIsFilterVisible((prev) => {
         if (top <= FILTER_BAR_SHOW_BELOW_PX) return true;
         if (top >= FILTER_BAR_HIDE_ABOVE_PX) return false;
@@ -397,6 +415,9 @@ export default function Explore() {
 
   const handleSwipeSave = async (buildingId: string) => {
     if (!user) return;
+    // A completed swipe on the first card never crosses the scroll threshold
+    // (the next card replaces it at the same offset), so retire the pill here too.
+    dismissFilterOnSwipe();
     // Optimistically hide the card so the swipe feels instant; roll back below if the
     // write fails so we never claim success for a building that wasn't actually saved.
     setHiddenBuildingIds((prev) => {
@@ -434,6 +455,9 @@ export default function Explore() {
 
   const handleSwipeHide = async (buildingId: string) => {
     if (!user) return;
+    // Same as handleSwipeSave: a swipe on the first card doesn't scroll, so the
+    // scroll-threshold dismissal never fires for it.
+    dismissFilterOnSwipe();
     // Optimistically hide the card so the swipe feels instant; roll back below if the
     // write fails so a building that wasn't actually hidden isn't lost from the feed.
     setHiddenBuildingIds((prev) => {
@@ -500,12 +524,18 @@ export default function Explore() {
           <div
             className={cn(
               "absolute top-4 left-0 right-0 z-50 flex justify-center transition-all duration-300 pointer-events-none",
-              isFilterVisible
+              isFilterVisible && !filterDismissed
                 ? "opacity-100 translate-y-0"
                 : "opacity-0 -translate-y-10"
             )}
           >
-          <div className="pointer-events-auto">
+          <div
+            className={cn(
+              isFilterVisible && !filterDismissed
+                ? "pointer-events-auto"
+                : "pointer-events-none"
+            )}
+          >
             <Sheet open={isLocationSheetOpen} onOpenChange={setIsLocationSheetOpen}>
               <button
                 type="button"
