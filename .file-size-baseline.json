@@ -39,7 +39,7 @@
     "src/features/maps/components/FilterDrawer.tsx": 482,
     "src/features/maps/components/PlanoMap.tsx": 498,
     "src/features/maps/hooks/useURLMapState.ts": 357,
-    "src/features/posts/components/DiscoveryCard.tsx": 777,
+    "src/features/posts/components/DiscoveryCard.tsx": 765,
     "src/features/posts/hooks/useDiscoveryFeed.ts": 301,
     "src/features/profile/components/ManageFoldersDialog.tsx": 521,
     "src/features/profile/pages/Profile.tsx": 1273,
