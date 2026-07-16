@@ -152,56 +152,9 @@ jobs:
       # src/integrations/supabase/types.ts. Run `npm run gen-types`; never skip.
       - run: node scripts/check-types-staleness.mjs
 
-  e2e:
-    name: E2E (advisory)
-    runs-on: ubuntu-latest
-    env:
-      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-      VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
-      ACTIVE_USER_EMAIL: ${{ secrets.ACTIVE_USER_EMAIL }}
-      ACTIVE_USER_PASSWORD: ${{ secrets.ACTIVE_USER_PASSWORD }}
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - name: Check E2E secrets are configured
-        id: gate
-        run: |
-          if [ -z "$VITE_SUPABASE_URL" ]; then
-            echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::E2E skipped — E2E secrets not configured in repo settings (see tests/e2e/README note in CI PR)."
-          else
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          fi
-      - if: steps.gate.outputs.run == 'true'
-        run: npm ci
-      - name: Cache Playwright browsers
-        if: steps.gate.outputs.run == 'true'
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-      - if: steps.gate.outputs.run == 'true'
-        run: npx playwright install --with-deps chromium
-      # Advisory until stable for 2+ weeks, then drop continue-on-error and add
-      # to the required checks. Runs against production with QA test accounts.
-      - name: Run E2E suite
-        if: steps.gate.outputs.run == 'true'
-        continue-on-error: true
-        run: npx playwright test
-      - name: Upload E2E report
-        if: ${{ !cancelled() && steps.gate.outputs.run == 'true' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: playwright-report
-          path: |
-            playwright-report/
-            test-results/
-          retention-days: 14
-          if-no-files-found: ignore
+  # The Playwright E2E suite (formerly the `e2e` job here, advisory) now runs
+  # in the nightly heavy tier: .github/workflows/nightly.yml
+  # (docs/decisions/0006-nightly-heavy-tier.md).
 
   advisory:
     name: Advisory (non-blocking)
