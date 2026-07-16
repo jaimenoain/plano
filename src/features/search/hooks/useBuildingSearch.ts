@@ -16,8 +16,10 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getBuildingImageUrl } from "@/utils/image";
 import { parseLocation } from "@/utils/location";
 import { filterLocalBuildings } from "../utils/searchFilters";
+import { buildRatedByParam } from "../utils/ratedByParam";
 import { UserSearchResult } from "./useUserSearch";
 import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
+import { useUserProfile } from "@/features/profile";
 import { Bounds } from "@/utils/map";
 import { CREDIT_ROLES } from "@/features/credits/api/credits";
 import type { CreditRole } from "@/features/credits/types";
@@ -436,6 +438,10 @@ async function fetchBuildingIdsMatchingCreditFilters(
 
 export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: { searchTriggerVersion?: number, bounds?: Bounds | null, zoom?: number } = {}) {
   const { user } = useAuth();
+  // Canonical username lives in `profiles` — the JWT user_metadata copy goes
+  // stale on rename, which made the rated_by self-entry match nobody.
+  const { profile, loading: profileLoading } = useUserProfile();
+  const profileUsername = profile?.username ?? null;
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const debouncedQuery = useDebounce(searchQuery, 300);
@@ -600,13 +606,12 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   // Sync resolved profiles to state
   useEffect(() => {
     if (ratedByProfiles && ratedByProfiles.length > 0) {
-      const currentUsername = (user?.user_metadata as { username?: string } | undefined)?.username;
-      const otherContacts = ratedByProfiles.filter(p => p.username !== currentUsername);
+      const otherContacts = ratedByProfiles.filter(p => p.username !== profileUsername);
       setSelectedContacts(otherContacts);
     } else if (!ratedByParam) {
       setSelectedContacts([]);
     }
-  }, [ratedByProfiles, user, ratedByParam]);
+  }, [ratedByProfiles, profileUsername, ratedByParam]);
 
   // Hydrate object lists from raw IDs in URL on mount
   useEffect(() => {
@@ -844,29 +849,24 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
       if (selectedCenturies.length > 0) params.set("centuries", selectedCenturies.join(","));
       else params.delete("centuries");
 
-      // Construct rated_by param
-      const ratedByUsers = new Set<string>();
-      const authUsername = (user?.user_metadata as { username?: string } | undefined)?.username;
-      if ((statusFilters.length > 0 || personalMinRating > 0) && authUsername) {
-        ratedByUsers.add(authUsername);
-      }
-      selectedContacts.forEach(c => {
-        if (c.username) ratedByUsers.add(c.username);
+      const ratedByValue = buildRatedByParam({
+        profileUsername,
+        profileLoading,
+        includeSelf: statusFilters.length > 0 || personalMinRating > 0,
+        contactUsernames: selectedContacts.map((c) => c.username).filter((u): u is string => !!u),
+        isLoadingRatedBy,
+        existingParam: ratedByParam,
       });
-
-      if (ratedByUsers.size > 0) {
-        params.set("rated_by", Array.from(ratedByUsers).join(","));
-      } else if (isLoadingRatedBy && ratedByParam) {
-        params.set("rated_by", ratedByParam);
-      } else {
-        params.delete("rated_by");
-      }
+      if (ratedByValue) params.set("rated_by", ratedByValue);
+      else params.delete("rated_by");
 
       return params;
     }, { replace: true });
   }, [
     isLoadingRatedBy,
     ratedByParam,
+    profileUsername,
+    profileLoading,
     userLocation,
     viewMode,
     mode,
