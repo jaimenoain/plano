@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatCoordinates } from "@/utils/location";
 import { RailHeader, RailModule } from "@/components/ui/rail";
 import { BuildingLocationMap } from "@/features/maps/components/BuildingLocationMap";
 
@@ -11,13 +12,6 @@ interface BuildingMapCardProps {
   /** Approximate locations confirm before opening external directions. */
   isApproximate: boolean;
   onDirectionsBlocked: () => void;
-}
-
-/** Formats coordinates as the rail's mono meta line, e.g. `51.51 N · 0.08 W`. */
-function formatCoordinates({ lat, lng }: { lat: number; lng: number }) {
-  const latLine = `${Math.abs(lat).toFixed(2)} ${lat >= 0 ? "N" : "S"}`;
-  const lngLine = `${Math.abs(lng).toFixed(2)} ${lng >= 0 ? "E" : "W"}`;
-  return `${latLine} · ${lngLine}`;
 }
 
 /** Location rail module: square inline map with place line + Directions action. */

@@ -3,6 +3,13 @@ export interface Coordinates {
   lng: number;
 }
 
+/** Formats coordinates as a mono meta line, e.g. `51.51 N · 0.08 W`. */
+export function formatCoordinates({ lat, lng }: Coordinates): string {
+  const latLine = `${Math.abs(lat).toFixed(2)} ${lat >= 0 ? "N" : "S"}`;
+  const lngLine = `${Math.abs(lng).toFixed(2)} ${lng >= 0 ? "E" : "W"}`;
+  return `${latLine} · ${lngLine}`;
+}
+
 export function parseLocation(location: unknown): Coordinates | null {
   if (!location) return null;
 
