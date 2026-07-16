@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Heart, Plus } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useSearchParams } from "react-router";
+import { GalleryVertical, LayoutDashboard, LayoutGrid, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { WidgetErrorBoundary } from "@/components/common/WidgetErrorBoundary";
+import { MediaGalleryItem, type MediaGalleryVariant } from "./MediaGalleryItem";
 import type { DisplayImage } from "../hooks/useBuildingInteractions";
 
 /** Client-side chunks for the media grid (infinite scroll). */
@@ -11,6 +14,21 @@ const MEDIA_CHUNK_SIZE = 12;
 
 const MEDIA_FILTERS = ["all", "photos", "videos"] as const;
 type MediaFilter = (typeof MEDIA_FILTERS)[number];
+
+type MediaView = MediaGalleryVariant;
+
+/** Per-view gallery container: how the shared item set is laid out. */
+const VIEW_CONTAINER_CLASS: Record<MediaView, string> = {
+  masonry: "columns-2 gap-3 lg:columns-3",
+  feed: "mx-auto max-w-2xl space-y-8",
+  grid: "grid grid-cols-3 gap-mosaic-gap bg-border-default md:grid-cols-4",
+};
+
+const VIEW_OPTIONS: { id: MediaView; label: string; Icon: typeof LayoutGrid }[] = [
+  { id: "masonry", label: "Masonry view", Icon: LayoutDashboard },
+  { id: "feed", label: "Feed view", Icon: GalleryVertical },
+  { id: "grid", label: "Grid view", Icon: LayoutGrid },
+];
 
 interface BuildingMediaTabProps {
   /** All display images for the building (sorted/filtered internally). */
@@ -31,10 +49,11 @@ interface BuildingMediaTabProps {
 }
 
 /**
- * The Media tab body: filterable masonry gallery with chunked infinite-scroll
- * reveal (so hundreds of `<img>` never mount at once), lazy-loaded images, and
- * an editorial empty state. Extracted from `BuildingDetails.tsx` to keep the
- * page under its file-size cap.
+ * The Media tab body: filterable gallery with three switchable layouts
+ * (masonry / single-column feed / square grid, persisted as `?view=`),
+ * chunked infinite-scroll reveal (so hundreds of `<img>` never mount at
+ * once), lazy-loaded images, and an editorial empty state. Extracted from
+ * `BuildingDetails.tsx` to keep the page under its file-size cap.
  */
 export function BuildingMediaTab({
   images,
@@ -49,6 +68,26 @@ export function BuildingMediaTab({
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [visibleCount, setVisibleCount] = useState(MEDIA_CHUNK_SIZE);
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // View toggle lives in the URL (03-frontend.mdc URL-first state); the
+  // masonry default is omitted, and unknown values fall back to it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawView = searchParams.get("view");
+  const view: MediaView = rawView === "feed" || rawView === "grid" ? rawView : "masonry";
+  const setView = useCallback(
+    (v: MediaView) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (v === "masonry") next.delete("view");
+          else next.set("view", v);
+          return next;
+        },
+        { replace: true, preventScrollReset: true },
+      );
+    },
+    [setSearchParams],
+  );
 
   const sortedImages = useMemo(
     () => [...images].sort((a, b) => b.likes_count - a.likes_count),
@@ -119,78 +158,54 @@ export function BuildingMediaTab({
         </div>
       </div>
 
-      {/* Filter strip */}
-      <div className="-mb-px flex gap-1 border-b border-border-default">
-        {MEDIA_FILTERS.map((f) => {
-          const count = f === "all" ? sortedImages.length : f === "videos" ? videoCount : 0;
-          return (
-            <button
-              key={f}
-              type="button"
-              onClick={() => setMediaFilter(f)}
-              className={cn(
-                "cursor-pointer border-b-2 px-4 py-2.5 text-[11px] font-medium uppercase capitalize tracking-[0.15em] transition-colors",
-                mediaFilter === f
-                  ? "border-text-primary text-text-primary"
-                  : "border-transparent text-text-secondary hover:text-text-primary",
-              )}
-            >
-              {f}
-              {count > 0 && (
-                <span className="ml-1.5 font-normal normal-case tracking-normal text-text-disabled">
-                  {count}
-                </span>
-              )}
-            </button>
-          );
-        })}
+      {/* Filter strip + view switcher */}
+      <div className="flex items-end justify-between border-b border-border-default">
+        <div className="-mb-px flex gap-1">
+          {MEDIA_FILTERS.map((f) => {
+            const count = f === "all" ? sortedImages.length : f === "videos" ? videoCount : 0;
+            return (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setMediaFilter(f)}
+                className={cn(
+                  "cursor-pointer border-b-2 px-4 py-2.5 text-[11px] font-medium uppercase capitalize tracking-[0.15em] transition-colors",
+                  mediaFilter === f
+                    ? "border-text-primary text-text-primary"
+                    : "border-transparent text-text-secondary hover:text-text-primary",
+                )}
+              >
+                {f}
+                {count > 0 && (
+                  <span className="ml-1.5 font-normal normal-case tracking-normal text-text-disabled">
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <ToggleGroup
+          type="single"
+          value={view}
+          onValueChange={(v) => v && setView(v as MediaView)}
+          className="pb-1.5"
+          aria-label="Gallery layout"
+        >
+          {VIEW_OPTIONS.map(({ id, label, Icon }) => (
+            <ToggleGroupItem key={id} value={id} aria-label={label} className="h-8 w-8 p-0">
+              <Icon className="h-3.5 w-3.5" />
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
       </div>
 
       <WidgetErrorBoundary>
         {filteredImages.length > 0 ? (
           <>
-            <div className="columns-2 gap-3 lg:columns-3">
+            <div className={VIEW_CONTAINER_CLASS[view]} data-testid={`media-view-${view}`}>
               {visibleImages.map((img) => (
-                <div
-                  key={img.id}
-                  className="group relative mb-3 cursor-pointer overflow-hidden rounded-none break-inside-avoid bg-surface-muted"
-                  onClick={() => onSelectImage(img)}
-                >
-                  {img.type === "video" ? (
-                    <div className="relative aspect-video">
-                      {img.poster ? (
-                        <img
-                          src={img.poster}
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                          className="absolute inset-0 h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="photo-placeholder absolute inset-0" data-label="Video" aria-hidden />
-                      )}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="flex h-10 w-10 items-center justify-center bg-black/60">
-                          <span className="ml-1 border-y-8 border-l-14 border-y-transparent border-l-white" />
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <img
-                      src={img.url}
-                      alt=""
-                      loading="lazy"
-                      decoding="async"
-                      className="block w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  )}
-                  {img.likes_count > 0 && (
-                    <span className="absolute bottom-2 right-2 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-sm">
-                      <Heart className="h-2.5 w-2.5 fill-white" aria-hidden />
-                      {img.likes_count}
-                    </span>
-                  )}
-                </div>
+                <MediaGalleryItem key={img.id} image={img} variant={view} onSelect={onSelectImage} />
               ))}
             </div>
             {(visibleCount < filteredImages.length || hasMore) && (
