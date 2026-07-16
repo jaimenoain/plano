@@ -12,13 +12,15 @@ describe('MapPin Component', () => {
   });
 
   const defaultStyle: PinStyle = {
-    tier: 'C',
+    rank: 1,
     shape: 'circle',
     zIndex: 5,
     size: 20,
     classes: 'border-white/50 border',
     backgroundColor: MAP_MARKER_FILL.surfaceMuted80,
-    showDot: false,
+    dots: 0,
+    savedMark: false,
+    innerMarkColor: MAP_MARKER_FILL.brandPrimary,
     showContent: true,
   };
 
@@ -56,25 +58,52 @@ describe('MapPin Component', () => {
     expect(pin.className).toContain('z-50');
   });
 
-  it('renders pulse for Tier S', () => {
-    const sTierStyle: PinStyle = { ...defaultStyle, tier: 'S' };
-    render(<MapPin style={sTierStyle} isHovered={false} />);
-    const pulse = screen.getByTestId('map-pin-pulse');
-    expect(pulse).toBeTruthy();
-    expect(pulse.className).toContain('animate-ping-large-slow');
+  it('never renders the retired rank-5 pulse (static top tier)', () => {
+    const topStyle: PinStyle = {
+      ...defaultStyle,
+      rank: 5,
+      backgroundColor: MAP_MARKER_FILL.brandPrimary,
+    };
+    render(<MapPin style={topStyle} isHovered={false} />);
+    expect(screen.queryByTestId('map-pin-pulse')).toBeNull();
   });
 
-  it('renders dot for Tier A (showDot=true)', () => {
-    const aTierStyle: PinStyle = { ...defaultStyle, tier: 'A', showDot: true };
-    render(<MapPin style={aTierStyle} isHovered={false} />);
-    const dot = screen.getByTestId('map-pin-dot');
-    expect(dot).toBeTruthy();
+  it('renders the personal award dots with the inner mark colour', () => {
+    const ratedStyle: PinStyle = {
+      ...defaultStyle,
+      rank: 5,
+      dots: 3,
+      innerMarkColor: MAP_MARKER_FILL.white,
+    };
+    render(<MapPin style={ratedStyle} isHovered={false} />);
+    const dots = screen.getByTestId('map-pin-dots');
+    expect(dots.children).toHaveLength(3);
+    expect((dots.children[0] as HTMLElement).style.backgroundColor).toBe(
+      MAP_MARKER_FILL.white
+    );
   });
 
-  it('does not render dot if showDot=false', () => {
-    const noDotStyle: PinStyle = { ...defaultStyle, showDot: false };
-    render(<MapPin style={noDotStyle} isHovered={false} />);
-    const dot = screen.queryByTestId('map-pin-dot');
-    expect(dot).toBeNull();
+  it('renders 1 dot for a 1-pt pin', () => {
+    render(<MapPin style={{ ...defaultStyle, rank: 3, dots: 1 }} isHovered={false} />);
+    expect(screen.getByTestId('map-pin-dots').children).toHaveLength(1);
+  });
+
+  it('renders the saved mark when set', () => {
+    render(<MapPin style={{ ...defaultStyle, savedMark: true }} isHovered={false} />);
+    expect(screen.getByTestId('map-pin-saved-mark')).toBeTruthy();
+  });
+
+  it('lets dots win over the saved mark (never both)', () => {
+    render(
+      <MapPin style={{ ...defaultStyle, dots: 2, savedMark: true }} isHovered={false} />
+    );
+    expect(screen.getByTestId('map-pin-dots')).toBeTruthy();
+    expect(screen.queryByTestId('map-pin-saved-mark')).toBeNull();
+  });
+
+  it('renders neither dots nor mark by default', () => {
+    render(<MapPin style={defaultStyle} isHovered={false} />);
+    expect(screen.queryByTestId('map-pin-dots')).toBeNull();
+    expect(screen.queryByTestId('map-pin-saved-mark')).toBeNull();
   });
 });

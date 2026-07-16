@@ -65,8 +65,11 @@ describe('BuildingLocationMap', () => {
     locationPrecision: 'exact' as const,
   };
 
-  it('renders Tier S pin for rating 3', () => {
-    render(<BuildingLocationMap {...defaultProps} rating={3} />);
+  // The mini-map has no MapProvider, so it renders the global code: the pin
+  // wears the building's percentile band; the user's own relationship shows as
+  // the saved mark, never as a different rank.
+  it("renders the rank-5 face (black, white ring) for 'Top 1%'", () => {
+    render(<BuildingLocationMap {...defaultProps} rating={0} tierRank="Top 1%" />);
 
     const pin = screen.getByTestId('map-pin-container');
     expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
@@ -74,33 +77,41 @@ describe('BuildingLocationMap', () => {
     expect(pin.className).toContain('border-white');
   });
 
-  it('renders Tier A pin for rating 2', () => {
-    render(<BuildingLocationMap {...defaultProps} rating={2} />);
+  it("renders the rank-4 face (white, black ring) for 'Top 5%'", () => {
+    render(<BuildingLocationMap {...defaultProps} tierRank="Top 5%" />);
 
     const pin = screen.getByTestId('map-pin-container');
     expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.white);
+    expect(pin.className).toContain('border-text-primary');
   });
 
-  it('renders Tier B pin for rating 1', () => {
-    render(<BuildingLocationMap {...defaultProps} rating={1} />);
+  it("renders the rank-3 face (white, strong border) for 'Top 10%'", () => {
+    render(<BuildingLocationMap {...defaultProps} tierRank="Top 10%" />);
 
     const pin = screen.getByTestId('map-pin-container');
     expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.white);
     expect(pin.className).toContain('border-border-strong');
   });
 
-  it('renders Tier S pin for Top 1% (no user rating)', () => {
-    render(<BuildingLocationMap {...defaultProps} rating={0} tierRank="Top 1%" />);
-
-    const pin = screen.getByTestId('map-pin-container');
-    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
-  });
-
-  it('renders Tier C pin for Standard rank (no user rating)', () => {
+  it('renders the quietest rank-1 face for Standard rank', () => {
     render(<BuildingLocationMap {...defaultProps} rating={0} tierRank="Standard" />);
 
     const pin = screen.getByTestId('map-pin-container');
     expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
+  });
+
+  it('shows the saved mark for a rated building without changing its global rank', () => {
+    render(<BuildingLocationMap {...defaultProps} rating={3} tierRank="Standard" />);
+
+    const pin = screen.getByTestId('map-pin-container');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
+    expect(screen.getByTestId('map-pin-saved-mark')).toBeTruthy();
+  });
+
+  it("shows the saved mark for a 'pending' (wishlisted) building", () => {
+    render(<BuildingLocationMap {...defaultProps} status="pending" tierRank="Top 5%" />);
+
+    expect(screen.getByTestId('map-pin-saved-mark')).toBeTruthy();
   });
 
   it('uses bottom anchor for exact location (pin shape)', () => {

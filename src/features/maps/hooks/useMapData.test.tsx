@@ -147,6 +147,53 @@ describe('useMapData', () => {
     );
   });
 
+  it('injects mode-aware numeric tier_rank (1–5) and preserves the label', async () => {
+    const rows = [
+      { id: 'a', lat: 1, lng: 1, is_cluster: false, count: 1, tier_rank: 'Top 1%', rating: 0, status: 'none' },
+      { id: 'b', lat: 2, lng: 2, is_cluster: false, count: 1, tier_rank: 'Top 10%', rating: 0, status: 'none' },
+      { id: 'c', lat: 3, lng: 3, is_cluster: false, count: 1, tier_rank: 'Top 25%', rating: 0, status: 'none' },
+      { id: 'd', lat: 4, lng: 4, is_cluster: false, count: 1, tier_rank: 'Standard', rating: 3, status: 'visited' },
+    ];
+    rpcMock.mockResolvedValue({ data: rows, error: null });
+
+    const bounds = { north: 10, south: 0, east: 10, west: 0 };
+    const { result } = renderHook(
+      () => useMapData({ bounds, zoom: 10, filters: {}, mode: 'discover' }),
+      { wrapper: createWrapper() },
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const byId = (id: string) => result.current.clusters?.find((c) => c.id === id);
+    expect(byId('a')?.tier_rank).toBe(5);
+    expect(byId('b')?.tier_rank).toBe(3);
+    // Retired 'Top 25%' band tolerated as the Top 20% rank
+    expect(byId('c')?.tier_rank).toBe(2);
+    // Discover mode ignores the personal rating
+    expect(byId('d')?.tier_rank).toBe(1);
+    expect(byId('a')?.tier_rank_label).toBe('Top 1%');
+  });
+
+  it('ranks by the personal code in library mode', async () => {
+    const rows = [
+      { id: 'a', lat: 1, lng: 1, is_cluster: false, count: 1, tier_rank: 'Standard', rating: 3, status: 'visited' },
+      { id: 'b', lat: 2, lng: 2, is_cluster: false, count: 1, tier_rank: 'Standard', rating: 0, status: 'saved' },
+      { id: 'c', lat: 3, lng: 3, is_cluster: false, count: 1, tier_rank: 'Top 1%', rating: 0, status: 'none' },
+    ];
+    rpcMock.mockResolvedValue({ data: rows, error: null });
+
+    const bounds = { north: 10, south: 0, east: 10, west: 0 };
+    const { result } = renderHook(
+      () => useMapData({ bounds, zoom: 10, filters: {}, mode: 'library' }),
+      { wrapper: createWrapper() },
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const byId = (id: string) => result.current.clusters?.find((c) => c.id === id);
+    expect(byId('a')?.tier_rank).toBe(5); // 3 pts
+    expect(byId('b')?.tier_rank).toBe(2); // saved, unrated
+    expect(byId('c')?.tier_rank).toBe(1); // unsaved — global rank ignored
+  });
+
   it('should omit credit_company_id and credit_roles when no credit filters are set', async () => {
     const bounds = { north: 10, south: 0, east: 10, west: 0 };
     const zoom = 10;

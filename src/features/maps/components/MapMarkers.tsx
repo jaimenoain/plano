@@ -51,6 +51,10 @@ export function MapMarkers({
   const { current: map } = useMap();
   const mapCtx = useOptionalMapContext();
   const photographyGaps = mapCtx?.state.filters.photographyGaps ?? false;
+  // Mode selects the pin code (library → personal points, discover → global
+  // percentiles). Surfaces without a MapProvider (collections, localities,
+  // building maps) have no mode and read as discover/global.
+  const mode = mapCtx?.state.mode ?? 'discover';
   const isMobile = useIsMobile();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -153,7 +157,7 @@ export function MapMarkers({
         const isCluster = cluster.is_cluster;
         const buildingUrl = !isCluster ? getBuildingUrl(String(cluster.id), cluster.slug) : '#';
 
-        let pinStyle = getPinStyle(cluster, { photographyGaps });
+        let pinStyle = getPinStyle(cluster, { photographyGaps, mode });
 
         // Itinerary overrides
         const itinerarySequence = cluster.itinerary_sequence;
@@ -174,7 +178,8 @@ export function MapMarkers({
                  showContent: true,
                  classes: `border-white border-2 text-white font-bold text-sm shadow-xs ${constructionModifier}`.trim(),
                  zIndex: 100, // High priority but below hover
-                 showDot: false // Hide dot if showing number
+                 dots: 0, // The sequence numeral replaces any rating/saved mark
+                 savedMark: false
              };
         }
 
@@ -215,10 +220,9 @@ export function MapMarkers({
                       <span>{itinerarySequence}</span>
                   ) : (
                       pinStyle.showContent && (
-                        /* Keep existing Rating or fallback dot logic here if needed,
-                            or leave empty if the Pin Style handles the visuals (e.g. dots)
-                        */
-                        // If it's a candidate, show accent dot inside
+                        /* Rating dots / saved marks are rendered by MapPin from
+                           the PinStyle itself; the children slot only carries
+                           the candidate dot. */
                         cluster.is_candidate ? (
                             <div
                               className="h-2 w-2 shrink-0 rounded-full"
@@ -310,7 +314,7 @@ export function MapMarkers({
           </Marker>
         );
       }),
-    [displayClusters, map, handleMouseEnter, handleMouseLeave, highlightedId, hoveredClusterId, selectedId, onSelectBuilding, isMobile, photographyGaps]
+    [displayClusters, map, handleMouseEnter, handleMouseLeave, highlightedId, hoveredClusterId, selectedId, onSelectBuilding, isMobile, photographyGaps, mode]
   );
 
   return (

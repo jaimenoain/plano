@@ -135,8 +135,6 @@
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
-  --animate-ping-large-slow: ping-large-slow 3s cubic-bezier(0, 0, 0.2, 1)
-    infinite;
   --animate-shake: shake 0.3s ease-in-out;
 
   @keyframes accordion-down {
@@ -153,13 +151,6 @@
     }
     to {
       height: 0;
-    }
-  }
-  @keyframes ping-large-slow {
-    75%,
-    100% {
-      transform: scale(1.5);
-      opacity: 0;
     }
   }
   @keyframes shake {

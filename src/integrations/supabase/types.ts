@@ -5697,6 +5697,7 @@ export type Database = {
           name: string
           photos_count: number
           popularity_score: number
+          rating: number
           slug: string
           status: string
           tier_rank: string
