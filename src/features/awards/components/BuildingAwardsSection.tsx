@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { useAwardsByBuilding } from "../hooks/useAwards";
 import { AwardRecipientCard } from "./AwardRecipientCard";
 import { SuggestAwardButton } from "./SuggestAwardButton";
@@ -6,9 +7,19 @@ import { SuggestAwardButton } from "./SuggestAwardButton";
 interface BuildingAwardsSectionProps {
   buildingId: string;
   buildingName: string;
+  /**
+   * `"rail"` (default) keeps the compact micro-label head used inside the
+   * right-rail info module. `"feature"` renders the main-column section-head
+   * grammar (28px semibold + count eyebrow + hairline rule) for the Info tab.
+   */
+  variant?: "rail" | "feature";
 }
 
-export function BuildingAwardsSection({ buildingId, buildingName }: BuildingAwardsSectionProps) {
+export function BuildingAwardsSection({
+  buildingId,
+  buildingName,
+  variant = "rail",
+}: BuildingAwardsSectionProps) {
   const { data: awards = [], isLoading } = useAwardsByBuilding(buildingId);
   const [showAll, setShowAll] = useState(false);
 
@@ -19,19 +30,30 @@ export function BuildingAwardsSection({ buildingId, buildingName }: BuildingAwar
   const hasMore = awards.length > 5;
 
   return (
-    <section className="py-8">
-      <div className="mb-6 flex items-center gap-3">
-        <h2 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-          Awards
-        </h2>
-      </div>
+    <section className={cn(variant === "rail" && "py-8")}>
+      {variant === "feature" ? (
+        <div className="mb-8 flex items-baseline justify-between border-b border-border-default pb-4">
+          <h2 className="text-2xl font-semibold tracking-[-0.02em] text-text-primary md:text-[28px]">
+            Awards
+          </h2>
+          <span className="eyebrow tracking-[0.15em]">
+            {awards.length} {awards.length === 1 ? "award" : "awards"}
+          </span>
+        </div>
+      ) : (
+        <div className="mb-6 flex items-center gap-3">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+            Awards
+          </h2>
+        </div>
+      )}
 
       <div className="divide-y divide-border-default">
         {displayedAwards.map((award) => (
-          <AwardRecipientCard 
-            key={award.id} 
-            recipient={award} 
-            showAwardName 
+          <AwardRecipientCard
+            key={award.id}
+            recipient={award}
+            showAwardName
           />
         ))}
       </div>
@@ -47,10 +69,10 @@ export function BuildingAwardsSection({ buildingId, buildingName }: BuildingAwar
       )}
 
       <div className="mt-8">
-        <SuggestAwardButton 
-          recipientType="building" 
-          recipientId={buildingId} 
-          recipientName={buildingName} 
+        <SuggestAwardButton
+          recipientType="building"
+          recipientId={buildingId}
+          recipientName={buildingName}
         />
       </div>
     </section>

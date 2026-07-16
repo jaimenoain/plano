@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseLocation } from "./location";
+import { formatCoordinates, parseLocation } from "./location";
 
 // Characterization tests: lock in the CURRENT behavior of parseLocation,
 // which accepts GeoJSON objects, WKT strings, and PostGIS WKB hex strings.
@@ -87,5 +87,19 @@ describe("parseLocation", () => {
       expect(result!.lng).toBeCloseTo(-0.1278, 10);
       expect(result!.lat).toBeCloseTo(51.5074, 10);
     });
+  });
+});
+
+describe("formatCoordinates", () => {
+  it("formats north-east coordinates", () => {
+    expect(formatCoordinates({ lat: 48.9244, lng: 2.028 })).toBe("48.92 N · 2.03 E");
+  });
+
+  it("formats south-west coordinates with absolute figures", () => {
+    expect(formatCoordinates({ lat: -33.8568, lng: -70.6483 })).toBe("33.86 S · 70.65 W");
+  });
+
+  it("treats the equator and prime meridian as N/E", () => {
+    expect(formatCoordinates({ lat: 0, lng: 0 })).toBe("0.00 N · 0.00 E");
   });
 });

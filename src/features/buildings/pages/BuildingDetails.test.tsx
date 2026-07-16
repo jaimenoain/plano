@@ -84,6 +84,7 @@ vi.mock('@/utils/supabaseFallback');
 
 vi.mock('@/utils/location', () => ({
   parseLocation: () => ({ lat: 0, lng: 0 }),
+  formatCoordinates: () => '0.00 N · 0.00 E',
 }));
 
 vi.mock('@/utils/image', () => ({
