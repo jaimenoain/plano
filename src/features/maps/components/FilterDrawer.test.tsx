@@ -15,14 +15,14 @@ import { FilterDrawer } from './FilterDrawer';
 import * as MapContext from '../providers/MapContext';
 import * as Taxonomy from '@/hooks/useTaxonomy';
 import { useUserSearch } from '@/features/search/hooks/useUserSearch';
-import * as BuildingSearch from '@/features/search/hooks/useBuildingSearch';
+import * as BuildingSearch from '@/features/search/context/BuildingSearchContext';
 
 vi.mock('@/features/auth/hooks/useAuth', () => ({
   useAuth: vi.fn(() => ({ user: null })),
 }));
 
-vi.mock('@/features/search/hooks/useBuildingSearch', () => ({
-  useBuildingSearch: vi.fn(),
+vi.mock('@/features/search/context/BuildingSearchContext', () => ({
+  useBuildingSearchContext: vi.fn(),
 }));
 
 // Mock dependencies
@@ -128,7 +128,7 @@ describe('FilterDrawer', () => {
     selectedCreditRoles: [],
     setSelectedCreditRoles: vi.fn(),
     mode: 'discover',
-    setMode: vi.fn(),
+    switchMode: vi.fn(),
     globalMinRating: 0,
     setGlobalMinRating: vi.fn(),
     hideHidden: true,
@@ -170,7 +170,7 @@ describe('FilterDrawer', () => {
     (Taxonomy.useTaxonomy as Mock).mockReturnValue(defaultTaxonomy);
     (useUserSearch as Mock).mockReturnValue({ users: [], isLoading: false });
 
-    (BuildingSearch.useBuildingSearch as Mock).mockReturnValue(defaultBuildingSearch);
+    (BuildingSearch.useBuildingSearchContext as Mock).mockReturnValue(defaultBuildingSearch);
   });
 
   afterEach(() => {
@@ -190,7 +190,7 @@ describe('FilterDrawer', () => {
   it('hides "Curators & Friends" section in Library mode', () => {
     (MapContext.useMapContext as Mock).mockReturnValue(defaultMapContext);
 
-    (BuildingSearch.useBuildingSearch as Mock).mockReturnValue({
+    (BuildingSearch.useBuildingSearchContext as Mock).mockReturnValue({
       ...defaultBuildingSearch,
       mode: 'library',
     });

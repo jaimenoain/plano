@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
   Bell,
+  Bookmark,
   Briefcase,
   Building2,
   Landmark,
@@ -105,6 +106,12 @@ function UserMenuDropdown() {
           <Link to={ownProfilePath} className="flex items-center gap-2 cursor-pointer">
             <UserIcon className="h-4 w-4" />
             Profile
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/search?mode=library" className="flex items-center gap-2 cursor-pointer">
+            <Bookmark className="h-4 w-4" />
+            My Library
           </Link>
         </DropdownMenuItem>
         {isAmbassador ? (

@@ -35,6 +35,8 @@ import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext
 import { PlanoMap } from "@/features/maps/components/PlanoMap";
 import { BuildingSidebar, type SearchResultTab } from "@/features/maps/components/BuildingSidebar";
 import { MapControls } from "@/features/maps/components/MapControls";
+import { BuildingSearchProvider } from "./context/BuildingSearchContext";
+import { MapModeToggle } from "./components/MapModeToggle";
 import { DiscoverySearchInput, Suggestion } from "@/features/search/components/DiscoverySearchInput";
 import { useGlobalEntitySearch } from "@/features/search/hooks/useGlobalEntitySearch";
 import { useUnifiedSearch } from "@/features/search/hooks/useUnifiedSearch";
@@ -274,6 +276,7 @@ function SearchPageContent() {
             {/* No shadow — frosted glass border is sufficient over the map */}
             <div className="border border-border-default bg-surface-card/95 p-1 backdrop-blur-sm supports-backdrop-filter:bg-surface-card/90 focus-within:border-brand-primary">
               {mobileSearchBar}
+              <MapModeToggle name="map-mode-mobile" className="mt-1" />
             </div>
           </div>
         )}
@@ -297,10 +300,15 @@ function SearchPageContent() {
               placeholder="Search buildings, people, companies..."
               className="flex-1"
             />
-            {/* Desktop only — the sidebar is merely CSS-hidden on mobile, and a
-                second mounted FilterDrawer/useBuildingSearch clobbers the URL
-                filter params with its stale state (see SearchPage.test.tsx). */}
+            {/* Desktop only — the sidebar is merely CSS-hidden on mobile; the
+                shared BuildingSearchProvider means duplicate mounts no longer
+                clobber the URL, but there is no reason to mount two drawers. */}
             {!isMobile && <MapControls />}
+          </div>
+
+          {/* Discover / My Library — page-level destination switch, always visible */}
+          <div className="border-b border-border-default p-4">
+            <MapModeToggle name="map-mode-desktop" />
           </div>
 
           <div className="relative min-h-0 flex-1 overflow-hidden">
@@ -378,7 +386,9 @@ function SearchPageContent() {
 export default function SearchPage() {
   return (
     <MapProvider>
-      <SearchPageContent />
+      <BuildingSearchProvider>
+        <SearchPageContent />
+      </BuildingSearchProvider>
     </MapProvider>
   );
 }

@@ -15,6 +15,61 @@ vi.mock('@/features/profile/hooks/useUserBuildingStatuses', () => ({
 }));
 
 import { filterBuildingIds } from './useBuildingSearch';
+import { parseModeParams } from '../utils/searchUrlParams';
+
+describe('parseModeParams', () => {
+  const paramsFrom = (search: string) => {
+    const sp = new URLSearchParams(search);
+    return (key: string) => sp.get(key);
+  };
+
+  it('a bare mode=library link implies the full personal-status baseline', () => {
+    const result = parseModeParams(paramsFrom('mode=library'));
+
+    expect(result.mode).toBe('library');
+    expect(result.statusFilters).toEqual(['visited', 'saved', 'pending']);
+    expect(result.hideVisited).toBe(false);
+    expect(result.hideSaved).toBe(false);
+  });
+
+  it('a bare mode=discover link implies hiding saved and visited', () => {
+    const result = parseModeParams(paramsFrom('mode=discover'));
+
+    expect(result.mode).toBe('discover');
+    expect(result.statusFilters).toEqual([]);
+    expect(result.hideVisited).toBe(true);
+    expect(result.hideSaved).toBe(true);
+  });
+
+  it('explicit params win over mode-implied defaults', () => {
+    const result = parseModeParams(
+      paramsFrom('mode=library&status=visited&hideVisited=false'),
+    );
+
+    expect(result.statusFilters).toEqual(['visited']);
+    expect(result.hideVisited).toBe(false);
+
+    const discover = parseModeParams(paramsFrom('mode=discover&hideSaved=false'));
+    expect(discover.hideSaved).toBe(false);
+    expect(discover.hideVisited).toBe(true);
+  });
+
+  it('no mode param keeps the legacy neutral defaults', () => {
+    const result = parseModeParams(paramsFrom(''));
+
+    expect(result.mode).toBeNull();
+    expect(result.statusFilters).toEqual([]);
+    expect(result.hideVisited).toBe(false);
+    expect(result.hideSaved).toBe(false);
+  });
+
+  it('ignores unknown mode values', () => {
+    const result = parseModeParams(paramsFrom('mode=bogus'));
+
+    expect(result.mode).toBeNull();
+    expect(result.statusFilters).toEqual([]);
+  });
+});
 
 describe('filterBuildingIds', () => {
   const user = { id: 'me' };

@@ -1026,7 +1026,7 @@ export default function Profile() {
                     <button
                       type="button"
                       className="h-11 shrink-0 px-3 border border-border-default text-text-disabled hover:text-text-primary hover:border-border-strong transition-colors inline-flex items-center justify-center sm:h-7 sm:px-2.5"
-                      onClick={() => navigate(activeSection === "saved" ? `/search?rated_by=${profile?.username || ""}&open_filters=true&mode=library&status=visited%2Csaved%2Cpending` : `/search?rated_by=${profile?.username || ""}&open_filters=true`)}
+                      onClick={() => navigate(isOwnProfile ? `/search?mode=library` : `/search?rated_by=${profile?.username || ""}`)}
                       title="View on map"
                     >
                       <MapIcon className="h-3.5 w-3.5" />

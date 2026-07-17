@@ -13,8 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { DiscoveryFiltersPanel } from '@/features/search/components/DiscoveryFiltersPanel';
 import { SegmentedControl } from '@/components/ui/segmented-control';
-import { useBuildingSearch } from '@/features/search/hooks/useBuildingSearch';
-import { MapMode } from '@/types/plano-map';
+import { useBuildingSearchContext } from '@/features/search/context/BuildingSearchContext';
 import { QualityRatingFilter } from './filters/QualityRatingFilter';
 import { FolderAndCollectionMultiSelect } from './filters/FolderAndCollectionMultiSelect';
 import { useTaxonomy } from '@/hooks/useTaxonomy';
@@ -86,30 +85,14 @@ export function FilterDrawer() {
     selectedCenturies,
     setSelectedCenturies,
     mode,
-    setMode,
-  } = useBuildingSearch();
+    switchMode,
+  } = useBuildingSearchContext();
 
   const {
     materialityAttributes,
     contextAttributes,
     styleAttributes,
   } = useTaxonomy();
-
-  const handleModeChange = (newMode: string) => {
-    const typedMode = newMode as MapMode;
-
-    if (typedMode === 'discover') {
-      setMode(typedMode);
-      setStatusFilters([]);
-      setHideSaved(true);
-      setHideVisited(true);
-    } else if (typedMode === 'library') {
-      setMode(typedMode);
-      setStatusFilters(['visited', 'saved', 'pending']);
-      setHideSaved(false);
-      setHideVisited(false);
-    }
-  };
 
   const handlePeopleFilterChange = (people: { id: string; name: string }[]) => {
     setSelectedPeople(people);
@@ -212,7 +195,10 @@ export function FilterDrawer() {
     setMinStoreys(null);
     setMaxStoreys(null);
     setSelectedCenturies([]);
-    setMode(null);
+    // Clearing filters must not eject the user from the map they chose —
+    // restore the current mode's baseline instead (React batches these, so
+    // switchMode's companion-filter writes win over the resets above).
+    if (mode) switchMode(mode);
   };
 
   const currentMinRating = currentGlobalMinRating;
@@ -244,7 +230,7 @@ export function FilterDrawer() {
     if (minStoreys !== null || maxStoreys !== null) count++;
     if (selectedCenturies.length > 0) count++;
 
-    if (mode === 'discover') {
+    if ((mode ?? 'discover') === 'discover') {
       if (currentMinRating > 0) count++;
       if (hideSaved) count++;
     } else if (mode === 'library') {
@@ -287,7 +273,9 @@ export function FilterDrawer() {
   };
 
   const isContactMode = currentContacts.length > 0;
-  const effectiveMode = isContactMode ? 'library' : mode;
+  // The page behaves as Discover until a mode is chosen, so the drawer shows
+  // Discover's settings for mode null — matching the page-level MapModeToggle.
+  const effectiveMode = isContactMode ? 'library' : (mode ?? 'discover');
 
   return (
     <Sheet>
@@ -321,21 +309,8 @@ export function FilterDrawer() {
           )}
         </SheetHeader>
         <div className="grid gap-6 py-6">
-          {/* View Mode */}
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium leading-none">View Mode</h3>
-            <SegmentedControl
-              options={[
-                { label: 'Discover', value: 'discover' },
-                { label: 'My Library', value: 'library' },
-              ]}
-              value={mode}
-              onValueChange={handleModeChange}
-              className="w-full"
-            />
-          </div>
-
-          {/* Mode-specific settings */}
+          {/* Mode-specific settings — the Discover / My Library switch itself
+              lives on the page (MapModeToggle), not in the drawer */}
           {effectiveMode === 'discover' && (
             <div className="space-y-4">
               <h3 className="eyebrow tracking-widest">

@@ -17,11 +17,21 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { parseLocation } from "@/utils/location";
 import { filterLocalBuildings } from "../utils/searchFilters";
 import { buildRatedByParam } from "../utils/ratedByParam";
+import {
+  getArrayParam,
+  getNumArrayParam,
+  getBoolParam,
+  getNumParam,
+  getIdListParam,
+  parseModeParams,
+  parseCreditRolesParam,
+  getCreditCompanyParam,
+} from "../utils/searchUrlParams";
+import { getDistanceFromLatLonInM, isValidCoordinate } from "../utils/geo";
 import { UserSearchResult } from "./useUserSearch";
 import { useUserBuildingStatuses } from "@/features/profile/hooks/useUserBuildingStatuses";
 import { useUserProfile } from "@/features/profile";
 import { Bounds } from "@/utils/map";
-import { CREDIT_ROLES } from "@/features/credits/api/credits";
 import type { CreditRole } from "@/features/credits/types";
 import type { MapMode } from "@/types/plano-map";
 import {
@@ -84,37 +94,7 @@ interface HydratedBuildingFromIdsRow {
 }
 
 // Constants
-const EARTH_RADIUS_METERS = 6371000; // Earth's radius in meters
-const VALID_LOCATION_THRESHOLD = 0.0001; // Threshold for filtering invalid (0,0) coordinates
 const QUERY_LIMIT = 100000; // Large limit to bypass default 1000 row limit
-
-// Helper to calculate Haversine distance in meters
-function getDistanceFromLatLonInM(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const dLat = deg2rad(lat2 - lat1);
-  const dLon = deg2rad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = EARTH_RADIUS_METERS * c;
-  return d;
-}
-
-function deg2rad(deg: number): number {
-  return deg * (Math.PI / 180);
-}
-
-// Validate if coordinates are valid and not at (0,0)
-function isValidCoordinate(lat: number, lng: number): boolean {
-  return (
-    lat >= -90 && 
-    lat <= 90 && 
-    lng >= -180 && 
-    lng <= 180 &&
-    !(Math.abs(lat) < VALID_LOCATION_THRESHOLD && Math.abs(lng) < VALID_LOCATION_THRESHOLD)
-  );
-}
 
 // Helper function to map visitors to interactions
 function mapVisitorsToInteractions(visitors: ContactRater[]): ContactInteraction[] {
@@ -363,38 +343,6 @@ async function enrichBuildings(
   return enrichedBuildings;
 }
 
-// URL Param Parsers
-const getArrayParam = (param: string | null): string[] => param ? param.split(",") : [];
-
-const getNumArrayParam = (param: string | null): number[] =>
-  param
-    ? param
-        .split(",")
-        .map((s) => parseInt(s, 10))
-        .filter((n) => Number.isInteger(n) && (n >= 1 || n === 0))
-    : [];
-const getBoolParam = (param: string | null, defaultVal: boolean): boolean => 
-  param !== null ? param === "true" : defaultVal;
-const getNumParam = (param: string | null, defaultVal: number): number => 
-  param ? parseInt(param, 10) : defaultVal;
-const getIdListParam = (param: string | null): { id: string; name: string }[] =>
-  param ? param.split(",").map(id => ({ id, name: id })) : []; // Name to be hydrated later
-
-const CREDIT_ROLE_SET = new Set<string>(CREDIT_ROLES);
-
-function parseCreditRolesParam(param: string | null): CreditRole[] {
-  if (!param) return [];
-  return param
-    .split(",")
-    .map((s) => s.trim())
-    .filter((x): x is CreditRole => CREDIT_ROLE_SET.has(x));
-}
-
-function getCreditCompanyParam(param: string | null): { id: string; name: string } | null {
-  if (!param || param.length < 32) return null;
-  return { id: param.trim(), name: param.trim() };
-}
-
 async function fetchBuildingIdsMatchingCreditFilters(
   companyId: string | null,
   roles: readonly CreditRole[]
@@ -447,10 +395,14 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   const debouncedQuery = useDebounce(searchQuery, 300);
   const debouncedBounds = useDebounce(bounds, 300);
 
+  // `mode` is a first-class destination: a bare `/search?mode=library` link
+  // must show the library on its own (see parseModeParams).
+  const modeImplied = parseModeParams((key) => searchParams.get(key));
+
   // New Filters State
-  const [statusFilters, setStatusFilters] = useState<string[]>(getArrayParam(searchParams.get("status")));
-  const [hideVisited, setHideVisited] = useState(getBoolParam(searchParams.get("hideVisited"), false));
-  const [hideSaved, setHideSaved] = useState(getBoolParam(searchParams.get("hideSaved"), false));
+  const [statusFilters, setStatusFilters] = useState<string[]>(modeImplied.statusFilters);
+  const [hideVisited, setHideVisited] = useState(modeImplied.hideVisited);
+  const [hideSaved, setHideSaved] = useState(modeImplied.hideSaved);
   const [hideHidden, setHideHidden] = useState(getBoolParam(searchParams.get("hideHidden"), true));
   const [hideWithoutImages, setHideWithoutImages] = useState(getBoolParam(searchParams.get("hideWithoutImages"), false));
 
@@ -473,10 +425,34 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     getIdListParam(searchParams.get("folders"))
   );
   const [viewMode, setViewMode] = useState<'list' | 'map'>((searchParams.get("view") as 'list' | 'map') || 'map');
-  const [mode, setMode] = useState<MapMode>(() => {
-    const m = searchParams.get("mode");
-    return m === 'discover' || m === 'library' ? m : null;
-  });
+  const [mode, setMode] = useState<MapMode>(modeImplied.mode);
+
+  // Switch mode together with its companion filters — the mode is only
+  // meaningful with them (library = your pins via status filters; discover
+  // hides what you already saved). Single entry point for the page-level
+  // toggle and for Clear-all restoring the current mode's baseline.
+  const switchMode = useCallback((newMode: Exclude<MapMode, null>) => {
+    setMode(newMode);
+    if (newMode === 'discover') {
+      setStatusFilters([]);
+      setHideSaved(true);
+      setHideVisited(true);
+    } else {
+      setStatusFilters(['visited', 'saved', 'pending']);
+      setHideSaved(false);
+      setHideVisited(false);
+    }
+  }, []);
+
+  // Adopt mode deep-links that arrive while already mounted (e.g. the nav
+  // menu's "My Library" link clicked from within /search). The URL writer
+  // below re-serializes the companion filters on the state change.
+  const urlModeParam = searchParams.get("mode");
+  useEffect(() => {
+    const m = urlModeParam === 'discover' || urlModeParam === 'library' ? urlModeParam : null;
+    if (m && m !== mode) switchMode(m);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- react only to URL changes; `mode` here would refire on internal toggles
+  }, [urlModeParam]);
 
   // New Filters
   const [selectedCategory, setSelectedCategory] = useState<string | null>(searchParams.get("category") || null);
@@ -1462,6 +1438,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
     setViewMode,
     mode,
     setMode,
+    switchMode,
     userLocation,
     updateLocation,
     requestLocation,
