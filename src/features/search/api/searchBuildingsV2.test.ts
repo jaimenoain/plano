@@ -63,6 +63,28 @@ describe("searchBuildingsV2", () => {
     expect(results[0].credit_names).toContain("Renzo Piano");
   });
 
+  it("passes through coordinate-less hits untouched (null lat/lng)", async () => {
+    // The migration drops the `location IS NOT NULL` gate so a name search can
+    // return a building with no coordinates; lat/lng come back NULL. The client
+    // contract must carry them through unchanged (no pin, still listed).
+    const NO_COORDS_HIT = {
+      ...SHARD_HIT,
+      id: "farnsworth",
+      name: "Farnsworth House",
+      slug: "farnsworth-house",
+      lat: null,
+      lng: null,
+    };
+    mockRpc.mockResolvedValue({ data: [NO_COORDS_HIT], error: null });
+
+    const results = await searchBuildingsV2("farnsworth house");
+
+    expect(results).toHaveLength(1);
+    expect(results[0].name).toBe("Farnsworth House");
+    expect(results[0].lat).toBeNull();
+    expect(results[0].lng).toBeNull();
+  });
+
   it("returns empty array when rpc returns null data", async () => {
     mockRpc.mockResolvedValue({ data: null, error: null });
     const results = await searchBuildingsV2("nothing");

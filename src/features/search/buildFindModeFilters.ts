@@ -19,10 +19,12 @@ export function buildFindModeFilters(filters: MapFilters): SearchBuildingsV2Filt
   if (filters.category) f.category_id = filters.category;
   if (filters.typologies?.length) f.typology_ids = filters.typologies;
   if (filters.attributes?.length) f.attribute_ids = filters.attributes;
-  // Construction status: mirror the Browse surfaces exactly (explicit picks →
-  // inclusion; Show-lost / default → exclusion) so the Building-status filter
-  // behaves identically in Find mode.
-  const construction = resolveConstructionStatuses(filters);
+  // Construction status: explicit picks → inclusion; Show-lost → its exclusion.
+  // But Find mode is an authoritative name/text search, so the *default* case
+  // ships NO exclusion — a building the user names surfaces regardless of status
+  // (its Lost/Unbuilt chip keeps that visible). Browse surfaces still default to
+  // hiding non-standing buildings.
+  const construction = resolveConstructionStatuses(filters, { authoritativeText: true });
   if (construction.construction_statuses) f.construction_statuses = construction.construction_statuses;
   if (construction.exclude_construction_statuses) f.exclude_construction_statuses = construction.exclude_construction_statuses;
   if (filters.sizeCategories?.length) f.size_categories = filters.sizeCategories;
