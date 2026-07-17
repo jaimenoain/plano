@@ -52,6 +52,7 @@ import { SmartFilterSuggestions } from '@/features/search/components/SmartFilter
 import type { CompanySummary, PersonSummary } from '@/features/credits/types';
 import type { BuildingSearchHit } from '@/features/search/api/searchBuildingsV2';
 import type { ClusterResponse } from '../hooks/useMapData';
+import { useInfiniteScrollSentinel } from '../hooks/useInfiniteScrollSentinel';
 import { getBoundsFromBuildings } from '@/utils/map';
 import { cn } from '@/lib/utils';
 import { resolveBuildingUrl } from '@/utils/url';
@@ -133,7 +134,6 @@ export function BuildingSidebar({
     state: { bounds, filters },
     methods: { setHighlightedId, selectBuilding, fitMapBounds },
   } = useMapContext();
-  const observerTarget = useRef<HTMLDivElement>(null);
   const lastZoomedQuery = useRef<string | null>(null);
   // Controlled when the parent supplies resultTab + onResultTabChange (so the
   // tab survives the mobile List↔Map remount and stays in sync across the two
@@ -224,21 +224,15 @@ export function BuildingSidebar({
   const isLoading = findModeBuildings ? false : browseLoading;
   const isFetching = findModeBuildings ? false : browseFetching;
 
-  // Infinite scroll observer (Browse mode only)
-  useEffect(() => {
-    if (findModeBuildings) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage();
-        }
-      },
-      { threshold: 0.1 }
-    );
-    const currentTarget = observerTarget.current;
-    if (currentTarget) observer.observe(currentTarget);
-    return () => { if (currentTarget) observer.unobserve(currentTarget); };
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage, findModeBuildings]);
+  // Browse-mode infinite scroll (enabled once page 1 has rows so the sentinel is mounted).
+  const { targetRef: observerTarget, rootRef: scrollViewportRef } = useInfiniteScrollSentinel({
+    enabled: !findModeBuildings && (data?.pages?.[0]?.length ?? 0) > 0,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetching,
+    fetchNextPage,
+    pageCount: data?.pages.length,
+  });
 
   // Auto-zoom on Browse-mode query (Find mode handles its own fit via SearchPage)
   useEffect(() => {
@@ -284,7 +278,13 @@ export function BuildingSidebar({
         locality_city_slug: h.locality_city_slug,
       }));
     }
-    const allBuildings = data?.pages.flat() || [];
+    // Dedupe by id across pages — OFFSET pagination over a non-unique sort can
+    // repeat a building at a page boundary, colliding on the React `key`. (The
+    // SQL id tiebreaker stops rows being skipped; this is the safety net.)
+    const seen = new Set<string>();
+    const allBuildings = (data?.pages.flat() || []).filter((b) =>
+      seen.has(b.id) ? false : (seen.add(b.id), true)
+    );
     return [...allBuildings].sort((a, b) => {
       const isHiddenA = a.status === 'ignored';
       const isHiddenB = b.status === 'ignored';
@@ -321,7 +321,7 @@ export function BuildingSidebar({
           </TabsTrigger>
         </TabsList>
 
-        <ScrollArea className="min-h-0 flex-1 w-full">
+        <ScrollArea viewportRef={scrollViewportRef} className="min-h-0 flex-1 w-full">
           <TabsContent value="buildings" className="m-0 mt-0 outline-hidden">
             <div className="pt-2 pb-6">
 

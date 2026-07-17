@@ -47,6 +47,20 @@ Commit the regenerated file **in the same PR as the migration**. CI enforces thi
 PR changing `supabase/migrations/` without touching `types.ts`. (`gen-types` needs Supabase network
 access, so regeneration itself is intentionally a local step, not a CI step.)
 
+**Types-neutral migrations.** Some migrations genuinely change no types — a `create or replace
+function` that only edits a function *body* (an `ORDER BY` tweak, a reworded `RAISE`) with no change
+to its signature/return, or a pure data backfill. `gen-types` is then a no-op and there is nothing
+to commit. Declare such a migration with a marker line so the staleness check passes without a
+`types.ts` diff:
+
+```sql
+-- types-neutral: ORDER BY only; function signature/RETURNS unchanged, so gen-types is a no-op.
+```
+
+This is not a blanket skip: every changed migration must **either** update `types.ts` **or** carry
+its own marker, so a real schema change with a forgotten regen still fails. The marker (and its
+reason) live in the migration, keeping the exemption auditable in the PR diff.
+
 ## Growing the strict-TypeScript allowlist
 
 The app still typechecks in lenient mode. `tsconfig.strict.json` typechecks a curated allowlist of
