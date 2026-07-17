@@ -11,6 +11,8 @@
 -- Fix: append `b.id` as a unique final tiebreaker so the total order is stable
 -- across pages. ORDER BY change only — signature and RETURNS TABLE are
 -- unchanged, so CREATE OR REPLACE (no DROP, no gen-types) is sufficient.
+--
+-- types-neutral: ORDER BY only; get_buildings_list signature/RETURNS TABLE unchanged, so gen-types is a no-op.
 
 CREATE OR REPLACE FUNCTION public.get_buildings_list(
   min_lat double precision,
