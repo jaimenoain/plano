@@ -65,6 +65,33 @@ describe('buildingStatus', () => {
         resolveConstructionStatuses({ constructionStatuses: ['Lost'], showLost: true }),
       ).toEqual({ construction_statuses: ['Lost'] });
     });
+
+    // authoritativeText = Find mode: an explicit typed name/text query is
+    // authoritative, so the DEFAULT case drops the exclusion entirely (a named
+    // building surfaces regardless of status). Explicit picks and Show-lost
+    // still narrow results exactly as in Browse.
+    describe('authoritativeText (Find mode)', () => {
+      it('drops the default exclusion — no construction-status constraint', () => {
+        expect(resolveConstructionStatuses({}, { authoritativeText: true })).toEqual({});
+      });
+
+      it('still applies explicit picks', () => {
+        expect(
+          resolveConstructionStatuses(
+            { constructionStatuses: ['Lost'] },
+            { authoritativeText: true },
+          ),
+        ).toEqual({ construction_statuses: ['Lost'] });
+      });
+
+      it('still applies the Show-lost exclusion', () => {
+        expect(
+          resolveConstructionStatuses({ showLost: true }, { authoritativeText: true }),
+        ).toEqual({
+          exclude_construction_statuses: [...SHOW_LOST_EXCLUDED_CONSTRUCTION_STATUSES],
+        });
+      });
+    });
   });
 
   // getConstructionTreatment / shouldFlagConstructionStatus drive the pin

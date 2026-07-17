@@ -107,15 +107,24 @@ export interface ConstructionStatusFilter {
  *   still hiding Under Construction / Unbuilt.
  * - default → exclusion list hiding non-standing + not-yet-built buildings,
  *   so legacy rows with `status IS NULL` stay visible.
+ *
+ * `authoritativeText` flips the default case to *no* exclusion. Find mode (an
+ * explicit typed name/text query) is authoritative: a building the user names
+ * must surface regardless of construction status. Its Lost/Unbuilt chip keeps
+ * the status visible. Explicit picks and Show-lost still narrow Find results.
  */
 export function resolveConstructionStatuses(
   filters: Pick<MapFilters, 'constructionStatuses' | 'showLost'>,
+  opts?: { authoritativeText?: boolean },
 ): ConstructionStatusFilter {
   if (filters.constructionStatuses && filters.constructionStatuses.length > 0) {
     return { construction_statuses: filters.constructionStatuses };
   }
   if (filters.showLost) {
     return { exclude_construction_statuses: [...SHOW_LOST_EXCLUDED_CONSTRUCTION_STATUSES] };
+  }
+  if (opts?.authoritativeText) {
+    return {};
   }
   return { exclude_construction_statuses: [...DEFAULT_EXCLUDED_CONSTRUCTION_STATUSES] };
 }
