@@ -44,14 +44,26 @@ function canUseNewAutocomplete(): boolean {
 // subsequent requests go directly to the legacy AutocompleteService.
 let newApiConfirmed = true;
 
+/** Soft bias for autocomplete — nudges results toward a point, never restricts. */
+export type LocationBias = { lat: number; lng: number; radiusMeters?: number };
+
 async function fetchSuggestionsNew(
   input: string,
   types: string[] | undefined,
+  locationBias: LocationBias | undefined,
 ): Promise<PlaceAutocompletePrediction[]> {
   const includedPrimaryTypes = legacyTypesToIncludedPrimary(types);
   const request: google.maps.places.AutocompleteRequest = {
     input,
     ...(includedPrimaryTypes?.length ? { includedPrimaryTypes } : {}),
+    ...(locationBias
+      ? {
+          locationBias: {
+            center: { lat: locationBias.lat, lng: locationBias.lng },
+            radius: locationBias.radiusMeters ?? 50000,
+          },
+        }
+      : {}),
   };
   const { suggestions: raw } =
     await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
@@ -101,11 +113,12 @@ async function fetchSuggestions(
   input: string,
   types: string[] | undefined,
   legacyFallback: boolean,
+  locationBias: LocationBias | undefined,
 ): Promise<PlaceAutocompletePrediction[]> {
   if (legacyFallback) {
     if (newApiConfirmed && canUseNewAutocomplete()) {
       try {
-        const result = await fetchSuggestionsNew(input, types);
+        const result = await fetchSuggestionsNew(input, types, locationBias);
         return result;
       } catch {
         // New API unavailable (e.g. 403 — "Places API (New)" not enabled on this key).
@@ -119,7 +132,7 @@ async function fetchSuggestions(
   if (!canUseNewAutocomplete()) {
     throw new Error("NEW_PLACES_AUTOCOMPLETE_UNAVAILABLE");
   }
-  return fetchSuggestionsNew(input, types);
+  return fetchSuggestionsNew(input, types, locationBias);
 }
 
 export function useAutocompleteSuggestions(options: {
@@ -132,6 +145,12 @@ export function useAutocompleteSuggestions(options: {
    * is used (Places API New). When true (default), falls back to legacy AutocompleteService after failures.
    */
   legacyAutocompleteFallback?: boolean;
+  /**
+   * Optional soft bias toward a map location (e.g. the current viewport centre),
+   * so generic queries resolve to the right area. Only applied on the new Places
+   * API path; never restricts results.
+   */
+  locationBias?: LocationBias;
 }) {
   const {
     types,
@@ -139,9 +158,12 @@ export function useAutocompleteSuggestions(options: {
     initOnMount = true,
     defaultValue = "",
     legacyAutocompleteFallback = true,
+    locationBias,
   } = options;
   const legacyFallbackRef = useRef(legacyAutocompleteFallback);
   legacyFallbackRef.current = legacyAutocompleteFallback;
+  const locationBiasRef = useRef(locationBias);
+  locationBiasRef.current = locationBias;
   const [ready, setReady] = useState(false);
   const [value, setValueState] = useState(defaultValue);
   const [suggestions, setSuggestions] = useState<{
@@ -199,7 +221,12 @@ export function useAutocompleteSuggestions(options: {
       setSuggestions((s) => ({ ...s, loading: true }));
 
       try {
-        const data = await fetchSuggestions(input, typesRef.current, allowLegacy);
+        const data = await fetchSuggestions(
+          input,
+          typesRef.current,
+          allowLegacy,
+          locationBiasRef.current,
+        );
         if (seq !== requestSeqRef.current) return;
         setSuggestions({
           loading: false,

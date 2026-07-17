@@ -37,6 +37,7 @@ import {
 import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { extractLocationDetails } from "@/lib/location-utils";
+import { useAutocompleteSuggestions } from "@/hooks/useAutocompleteSuggestions";
 
 const DEFAULT_MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
@@ -67,10 +68,7 @@ export default function AddBuilding() {
   const [extractedLocation, setExtractedLocation] = useState<{ city: string | null; country: string | null; countryCode: string | null }>({ city: null, country: null, countryCode: null });
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [isSatellite, setIsSatellite] = useState(true);
-  // When set, LocationInput seeds this text, runs the Places search, and opens
-  // the suggestions dropdown — how the building name locates the building.
-  const [pendingLocateQuery, setPendingLocateQuery] = useState<string | null>(null);
-  // Guards against re-firing the name-driven search for a name we already located.
+  // Guards against re-running the name-driven lookup for a name we already searched.
   const lastAutoSearchedName = useRef<string | null>(null);
 
   const { user } = useAuth();
@@ -144,6 +142,17 @@ return new Map();
     latitude: 51.5074,
     longitude: -0.1278,
     zoom: 12
+  });
+
+  // Background "did you mean?" lookup driven by the building name. It NEVER fills
+  // the location field — matches are surfaced as a dismissible suggestion list, so
+  // a name that Google can't resolve (obscure, foreign-language, not a POI) simply
+  // shows nothing instead of hindering the address search. Biased to the current
+  // map view so generic names ("City Hall") resolve to the right area.
+  const nameLocator = useAutocompleteSuggestions({
+    debounce: 350,
+    initOnMount: true,
+    locationBias: { lat: viewState.latitude, lng: viewState.longitude },
   });
 
   // Handle URL parameters for initial location
@@ -350,8 +359,9 @@ toast.error("Location search failed. Please click on the map to set the location
     }
   };
 
-  // Carry the building name into the location search and auto-run it, so a named
-  // landmark (e.g. "The Shard") locates itself. The user still picks the match.
+  // Quietly look the building name up in Places so a named landmark ("The Shard")
+  // can be located. Runs in the background — it never fills the location field, so
+  // a name Google can't resolve costs the user nothing.
   const maybeLocateFromName = (): void => {
     const query = nameInput.trim();
     if (
@@ -363,8 +373,21 @@ toast.error("Location search failed. Please click on the map to set the location
       return;
     }
     lastAutoSearchedName.current = query;
-    setPendingLocateQuery(query);
+    nameLocator.setValue(query, true);
   };
+
+  // User tapped one of the name-derived suggestions → resolve it to a pin.
+  const handleNameSuggestionPick = (description: string, placeName?: string): void => {
+    nameLocator.clearSuggestions();
+    void handleLocationSelected(description, "", placeName);
+  };
+
+  // Show the name suggestions only while the location is still unset — once a pin
+  // exists or the user is searching an address, they're irrelevant.
+  const nameSuggestions =
+    !markerPosition && !selectedAddress && nameLocator.suggestions.status === "OK"
+      ? nameLocator.suggestions.data.slice(0, 3)
+      : [];
 
   const proceedToStep2 = (): void => {
     if (!markerPosition) return;
@@ -449,12 +472,43 @@ toast.error("Location search failed. Please click on the map to set the location
                   placeholder="Search by name or address..."
                   searchTypes={[]}
                   className="w-full"
-                  autoSearchQuery={pendingLocateQuery}
-                  onAutoSearchConsumed={() => setPendingLocateQuery(null)}
                 />
                 <p className="text-xs text-text-secondary">
                   Search or click on the map to set location.
                 </p>
+
+                {/* Non-destructive "did you mean?" matches derived from the name.
+                    Never fills the field; absent when the name has no match. */}
+                {nameSuggestions.length > 0 && (
+                  <div className="overflow-hidden rounded-sm border border-border-default bg-surface-muted">
+                    <p className="eyebrow tracking-widest px-3 pb-1.5 pt-2.5 text-text-secondary">
+                      Matches for “{nameInput.trim()}”
+                    </p>
+                    <ul>
+                      {nameSuggestions.map((s) => (
+                        <li key={s.place_id}>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleNameSuggestionPick(s.description, s.structured_formatting?.main_text)
+                            }
+                            className="flex w-full items-start gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-surface-default"
+                          >
+                            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-text-secondary" />
+                            <span className="min-w-0">
+                              <span className="block truncate font-medium text-text-primary">
+                                {s.structured_formatting?.main_text ?? s.description}
+                              </span>
+                              <span className="block truncate text-xs text-text-secondary">
+                                {s.description}
+                              </span>
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-start space-x-2">
