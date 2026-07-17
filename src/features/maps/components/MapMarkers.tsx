@@ -15,6 +15,14 @@ import { cn } from '@/lib/utils';
 
 import { useOptionalMapContext } from '../providers/MapContext';
 
+/**
+ * The React key for a cluster/marker. Derived solely from `id` (+ `count` for
+ * clusters, so a cell that gains/loses a member remounts cleanly). Shared by the
+ * dedupe pass and the render so the two can never drift apart.
+ */
+const markerKey = (c: ClusterResponse): string =>
+  c.is_cluster ? `cluster-${c.id}-${c.count}` : `marker-${c.id}`;
+
 interface MapMarkersProps {
   clusters: ClusterResponse[];
   highlightedId?: string | null;
@@ -120,6 +128,24 @@ export function MapMarkers({
       return clusters;
   }, [clusters, activeCluster]);
 
+  // Guard React's key invariant at the render boundary. Every marker key comes
+  // from `markerKey(cluster)`; if two entries ever collide — a server-clustering
+  // regression, a fan-out introduced by a future filter join, or the
+  // retained-cluster append above racing a refetch — React throws "two children
+  // with the same key" and silently drops one marker. Dropping the later
+  // duplicate keeps the map correct regardless of the source.
+  const dedupedClusters = useMemo(() => {
+    const seen = new Set<string>();
+    const out: ClusterResponse[] = [];
+    for (const c of displayClusters) {
+      const key = markerKey(c);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(c);
+    }
+    return out.length === displayClusters.length ? displayClusters : out;
+  }, [displayClusters]);
+
   // When the highlight comes from a SERP row whose building has no individual
   // pin (it's grouped into a cluster at this zoom), emphasise the containing
   // cluster instead. Resolve it by nearest screen-pixel distance to the point,
@@ -148,11 +174,9 @@ export function MapMarkers({
 
   const markers = useMemo(
     () =>
-      displayClusters.map((cluster) => {
-        // Determine the unique key for the marker
-        const key = cluster.is_cluster
-          ? `cluster-${cluster.id}-${cluster.count}`
-          : `marker-${cluster.id}`;
+      dedupedClusters.map((cluster) => {
+        // Determine the unique key for the marker (deduped upstream).
+        const key = markerKey(cluster);
 
         const isCluster = cluster.is_cluster;
         const buildingUrl = !isCluster ? getBuildingUrl(String(cluster.id), cluster.slug) : '#';
@@ -314,7 +338,7 @@ export function MapMarkers({
           </Marker>
         );
       }),
-    [displayClusters, map, handleMouseEnter, handleMouseLeave, highlightedId, hoveredClusterId, selectedId, onSelectBuilding, isMobile, photographyGaps, mode]
+    [dedupedClusters, map, handleMouseEnter, handleMouseLeave, highlightedId, hoveredClusterId, selectedId, onSelectBuilding, isMobile, photographyGaps, mode]
   );
 
   return (
