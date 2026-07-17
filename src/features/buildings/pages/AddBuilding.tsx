@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { LocationInput } from "@/components/ui/LocationInput";
 import {
@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
 import { importLibrary } from "@googlemaps/js-api-loader";
 import { config } from "@/config";
-import { Loader2, MapPin, Building2, Layers } from "lucide-react";
+import { Loader2, MapPin, Layers, CheckCircle2, Search } from "lucide-react";
 import MapGL, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -27,11 +27,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
-import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
+import {
+  NearbyBuildingsList,
+  type NearbyBuilding,
+} from "../components/NearbyBuildingsList";
 import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { extractLocationDetails } from "@/lib/location-utils";
@@ -47,19 +49,6 @@ const STOP_WORDS = [
   'library', 'hospital', 'terminal', 'airport', 'mall', 'market', 'store',
   'shop', 'block', 'street', 'avenue', 'road'
 ];
-
-interface NearbyBuilding {
-  id: string;
-  name: string;
-  address: string | null;
-  location_lat: number;
-  location_lng: number;
-  dist_meters: number;
-  similarity_score?: number;
-  location_precision?: 'exact' | 'approximate';
-
-  main_image_url?: string | null;
-}
 
 export const meta: MetaFunction = () => [
   { title: "Add Building | Plano" },
@@ -78,6 +67,11 @@ export default function AddBuilding() {
   const [extractedLocation, setExtractedLocation] = useState<{ city: string | null; country: string | null; countryCode: string | null }>({ city: null, country: null, countryCode: null });
   const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
   const [isSatellite, setIsSatellite] = useState(true);
+  // When set, LocationInput seeds this text, runs the Places search, and opens
+  // the suggestions dropdown — how the building name locates the building.
+  const [pendingLocateQuery, setPendingLocateQuery] = useState<string | null>(null);
+  // Guards against re-firing the name-driven search for a name we already located.
+  const lastAutoSearchedName = useRef<string | null>(null);
 
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -356,6 +350,22 @@ toast.error("Location search failed. Please click on the map to set the location
     }
   };
 
+  // Carry the building name into the location search and auto-run it, so a named
+  // landmark (e.g. "The Shard") locates itself. The user still picks the match.
+  const maybeLocateFromName = (): void => {
+    const query = nameInput.trim();
+    if (
+      query.length < 3 ||
+      markerPosition ||
+      selectedAddress ||
+      lastAutoSearchedName.current === query
+    ) {
+      return;
+    }
+    lastAutoSearchedName.current = query;
+    setPendingLocateQuery(query);
+  };
+
   const proceedToStep2 = (): void => {
     if (!markerPosition) return;
 
@@ -417,8 +427,18 @@ toast.error("Location search failed. Please click on the map to set the location
                   placeholder="e.g. The Shard"
                   value={nameInput}
                   onChange={(e) => setNameInput(e.target.value)}
+                  onBlur={maybeLocateFromName}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      maybeLocateFromName();
+                    }
+                  }}
                   autoComplete="off"
                 />
+                <p className="text-xs text-text-secondary">
+                  We&apos;ll use this to help find the building on the map.
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -426,9 +446,11 @@ toast.error("Location search failed. Please click on the map to set the location
                 <LocationInput
                   value={selectedAddress ?? ""}
                   onLocationSelected={handleLocationSelected}
-                  placeholder="Search for address..."
+                  placeholder="Search by name or address..."
                   searchTypes={[]}
                   className="w-full"
+                  autoSearchQuery={pendingLocateQuery}
+                  onAutoSearchConsumed={() => setPendingLocateQuery(null)}
                 />
                 <p className="text-xs text-text-secondary">
                   Search or click on the map to set location.
@@ -454,9 +476,53 @@ toast.error("Location search failed. Please click on the map to set the location
                 </div>
               </div>
 
+              {/* Location status — always states whether the requirement is met */}
+              <div
+                id="location-requirement"
+                className={`flex items-start gap-2 rounded-sm border p-3 text-sm ${
+                  markerPosition
+                    ? "border-feedback-success/40 bg-feedback-success/10"
+                    : "border-border-default bg-surface-muted"
+                }`}
+              >
+                {markerPosition ? (
+                  <>
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-feedback-success" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-text-primary">
+                        {locationPrecision === "approximate" ? "Approximate location set" : "Location set"}
+                      </p>
+                      <p className="truncate text-xs text-text-secondary">
+                        {selectedAddress || "Custom map pin"}
+                      </p>
+                      <p className="mt-0.5 text-xs text-text-disabled">
+                        {markerPosition.lat.toFixed(5)}, {markerPosition.lng.toFixed(5)}
+                        {checkingDuplicates && (
+                          <span className="ml-2 inline-flex items-center gap-1 text-text-secondary">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Checking nearby…
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Search className="mt-0.5 h-4 w-4 shrink-0 text-text-secondary" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-text-primary">Location not set</p>
+                      <p className="text-xs text-text-secondary">
+                        Search above or tap anywhere on the map to drop a pin.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+
               <Button
                 onClick={proceedToStep2}
                 disabled={!markerPosition || checkingDuplicates}
+                aria-describedby="location-requirement"
                 className="w-full"
               >
                 {checkingDuplicates ? (
@@ -478,84 +544,10 @@ toast.error("Location search failed. Please click on the map to set the location
                 We found similar buildings in the database.
               </p>
               <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-
-                {/* Location Matches */}
-                {duplicates.some(d => d.dist_meters <= 50 || d.location_precision === 'approximate') && (
-                    <div className="space-y-2">
-                        <div className="eyebrow tracking-widest flex items-center gap-2">
-                           <MapPin className="h-3 w-3" /> Same location / vicinity
-                        </div>
-                        {duplicates.filter(d => d.dist_meters <= 50 || d.location_precision === 'approximate').map(building => (
-                             <div
-                                key={building.id}
-                                className="flex flex-col gap-2 p-3 rounded-sm border border-feedback-warning/40 bg-feedback-warning/10 text-sm hover:bg-feedback-warning/15 transition-colors"
-                              >
-                                <div
-                                  className="cursor-pointer flex gap-3"
-                                  // Locality URL not available: NearbyBuilding does not include locality_country_code/city_slug — requires duplicate-check RPC to join localities table
-                                  onClick={() => navigate(getBuildingUrl(building.id))}
-                                >
-                                  <Avatar className="h-10 w-10 rounded-none">
-                                    <AvatarFallback className="rounded-none">
-                                      <Building2 className="h-5 w-5 text-text-secondary" />
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium flex justify-between items-start">
-                                      <span className="truncate pr-1">{building.name}</span>
-                                      <span className="text-xs text-feedback-warning font-medium whitespace-nowrap">
-                                        {building.dist_meters.toFixed(0)}m
-                                      </span>
-                                    </div>
-                                    {building.address && (
-                                      <p className="text-xs text-text-secondary line-clamp-2">{building.address}</p>
-                                    )}
-                                  </div>
-                                </div>
-
-                              </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Name Matches */}
-                {duplicates.some(d => d.dist_meters > 50 && d.location_precision !== 'approximate') && (
-                    <div className="space-y-2 pt-2">
-                        <div className="eyebrow tracking-widest">
-                           Similar names (far away)
-                        </div>
-                         {duplicates.filter(d => d.dist_meters > 50 && d.location_precision !== 'approximate').map(building => (
-                             <div
-                                key={building.id}
-                                className="flex flex-col gap-2 p-3 rounded-sm border text-sm hover:bg-surface-muted/50 transition-colors"
-                              >
-                                <div
-                                  className="cursor-pointer flex gap-3"
-                                  // Locality URL not available: NearbyBuilding does not include locality_country_code/city_slug — requires duplicate-check RPC to join localities table
-                                  onClick={() => navigate(getBuildingUrl(building.id))}
-                                >
-                                  <Avatar className="h-10 w-10 rounded-none">
-                                    <AvatarImage src={building.main_image_url || undefined} alt={building.name} className="object-cover" />
-                                    <AvatarFallback className="rounded-none">
-                                      <Building2 className="h-5 w-5 text-text-secondary" />
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium flex justify-between items-start">
-                                      <span className="truncate pr-1">{building.name}</span>
-                                      <span className="text-xs text-text-secondary whitespace-nowrap">
-                                        {(building.dist_meters / 1000).toFixed(1)}km
-                                      </span>
-                                    </div>
-                                    {building.address && (
-                                      <p className="text-xs text-text-secondary line-clamp-2">{building.address}</p>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                        ))}
-                    </div>
-                )}
+                <NearbyBuildingsList
+                  duplicates={duplicates}
+                  onSelect={(id) => navigate(getBuildingUrl(id))}
+                />
               </div>
             </BuildingFormPanel>
           )}
@@ -672,6 +664,16 @@ toast.error("Location search failed. Please click on the map to set the location
                  )}
               </div>
 
+              {/* Empty-state hint: makes the second unblock path (tap the map) obvious */}
+              {!markerPosition && (
+                <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-4">
+                  <div className="flex items-center gap-2 rounded-sm border border-border-default bg-surface-default/95 px-4 py-2.5 text-sm text-text-primary shadow-lg backdrop-blur-sm">
+                    <MapPin className="h-4 w-4 text-text-secondary" strokeWidth={1.5} />
+                    Tap anywhere to drop a pin
+                  </div>
+                </div>
+              )}
+
               <div className="absolute bottom-4 left-4 z-10">
                 <Button
                   variant="secondary"
@@ -697,80 +699,10 @@ toast.error("Location search failed. Please click on the map to set the location
                 </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 my-2">
-                {duplicates.some(d => d.dist_meters <= 50 || d.location_precision === 'approximate') && (
-                    <div className="space-y-2">
-                        <div className="eyebrow tracking-widest flex items-center gap-2">
-                            <MapPin className="h-3 w-3" /> Same location / vicinity
-                        </div>
-                        {duplicates.filter(d => d.dist_meters <= 50 || d.location_precision === 'approximate').map(building => (
-                            <div
-                                key={building.id}
-                                className="flex flex-col gap-2 p-3 rounded-sm border border-feedback-warning/40 bg-feedback-warning/10 text-sm hover:bg-feedback-warning/15 transition-colors"
-                            >
-                                <div
-                                    className="cursor-pointer flex gap-3"
-                                    // Locality URL not available: NearbyBuilding does not include locality_country_code/city_slug — requires duplicate-check RPC to join localities table
-                                    onClick={() => navigate(getBuildingUrl(building.id))}
-                                >
-                                    <Avatar className="h-10 w-10 rounded-none">
-                                        <AvatarFallback className="rounded-none">
-                                            <Building2 className="h-5 w-5 text-text-secondary" />
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="font-medium flex justify-between items-start">
-                                            <span className="truncate pr-1">{building.name}</span>
-                                            <span className="text-xs text-feedback-warning font-medium whitespace-nowrap">
-                                                {building.dist_meters.toFixed(0)}m
-                                            </span>
-                                        </div>
-                                        {building.address && (
-                                            <p className="text-xs text-text-secondary line-clamp-1 truncate">{building.address}</p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {duplicates.some(d => d.dist_meters > 50 && d.location_precision !== 'approximate') && (
-                    <div className="space-y-2 pt-2">
-                        <div className="eyebrow tracking-widest">
-                            Similar names (far away)
-                        </div>
-                        {duplicates.filter(d => d.dist_meters > 50 && d.location_precision !== 'approximate').map(building => (
-                            <div
-                                key={building.id}
-                                className="flex flex-col gap-2 p-3 rounded-sm border text-sm hover:bg-surface-muted/50 transition-colors"
-                            >
-                                <div
-                                    className="cursor-pointer flex gap-3"
-                                    // Locality URL not available: NearbyBuilding does not include locality_country_code/city_slug — requires duplicate-check RPC to join localities table
-                                    onClick={() => navigate(getBuildingUrl(building.id))}
-                                >
-                                    <Avatar className="h-10 w-10 rounded-none">
-                                      <AvatarImage src={getBuildingImageUrl(building.main_image_url) || undefined} alt={building.name} className="object-cover" />
-                                        <AvatarFallback className="rounded-none">
-                                            <Building2 className="h-5 w-5 text-text-secondary" />
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="font-medium flex justify-between items-start">
-                                            <span className="truncate pr-1">{building.name}</span>
-                                            <span className="text-xs text-text-secondary whitespace-nowrap">
-                                                {(building.dist_meters / 1000).toFixed(1)}km
-                                            </span>
-                                        </div>
-                                        {building.address && (
-                                            <p className="text-xs text-text-secondary line-clamp-1 truncate">{building.address}</p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                <NearbyBuildingsList
+                  duplicates={duplicates}
+                  onSelect={(id) => navigate(getBuildingUrl(id))}
+                />
             </div>
             <DialogFooter className="sm:justify-start">
                 <Button variant="ghost" className="text-text-secondary text-xs" onClick={forceProceedToStep2}>
