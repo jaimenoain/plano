@@ -25,6 +25,15 @@ interface LocationInputProps {
   placeholder?: string;
   searchTypes?: string[];
   id?: string;
+  /**
+   * When set to a non-empty string, the input programmatically seeds its query
+   * with this text, runs the autocomplete search, and opens the suggestions
+   * dropdown — e.g. to locate a building from its name. Fire
+   * {@link LocationInputProps.onAutoSearchConsumed} to clear the trigger.
+   */
+  autoSearchQuery?: string | null;
+  /** Called once an `autoSearchQuery` has been applied, so the caller can reset it. */
+  onAutoSearchConsumed?: () => void;
 }
 
 export function LocationInput({
@@ -34,6 +43,8 @@ export function LocationInput({
   placeholder = "Search for a city...",
   searchTypes = ["(cities)"],
   id,
+  autoSearchQuery,
+  onAutoSearchConsumed,
 }: LocationInputProps) {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -94,6 +105,8 @@ setHasError(true);
           placeholder={placeholder}
           searchTypes={searchTypes}
           id={id}
+          autoSearchQuery={autoSearchQuery}
+          onAutoSearchConsumed={onAutoSearchConsumed}
         />
       ) : (
         <Button variant="outline" disabled className="w-full justify-start">
@@ -111,6 +124,8 @@ interface PlacesAutocompleteProps {
   placeholder: string;
   searchTypes: string[];
   id?: string;
+  autoSearchQuery?: string | null;
+  onAutoSearchConsumed?: () => void;
 }
 
 function PlacesAutocomplete({
@@ -119,6 +134,8 @@ function PlacesAutocomplete({
   placeholder,
   searchTypes,
   id,
+  autoSearchQuery,
+  onAutoSearchConsumed,
 }: PlacesAutocompleteProps) {
   const {
     ready,
@@ -135,13 +152,29 @@ function PlacesAutocomplete({
 
   const [open, setOpen] = useState(false);
   const commandRef = useRef<HTMLDivElement>(null);
+  // Remembers a value we seeded programmatically so the defaultValue sync effect
+  // below doesn't immediately reset it back to the (still-stale) parent value.
+  const seededQueryRef = useRef<string | null>(null);
 
   // Sync internal value with external defaultValue updates
   useEffect(() => {
     if (defaultValue !== undefined && defaultValue !== value) {
+        // Preserve a freshly-seeded programmatic search until the user acts on it.
+        if (seededQueryRef.current !== null && value === seededQueryRef.current) return;
         setValue(defaultValue, false);
     }
   }, [defaultValue, setValue, value]);
+
+  // Programmatic search: seed the query, run the fetch, and open the dropdown
+  // when the caller requests it (e.g. locate a building from its name).
+  useEffect(() => {
+    const query = autoSearchQuery?.trim();
+    if (!ready || !query) return;
+    seededQueryRef.current = query;
+    setValue(query, true);
+    setOpen(true);
+    onAutoSearchConsumed?.();
+  }, [autoSearchQuery, ready, setValue, onAutoSearchConsumed]);
 
   // Handle click outside to close suggestions
   useEffect(() => {
@@ -155,6 +188,7 @@ function PlacesAutocomplete({
   }, []);
 
   const handleSelect = async (address: string, placeName?: string) => {
+    seededQueryRef.current = null;
     setValue(address, false);
     clearSuggestions();
     setOpen(false);
@@ -185,6 +219,7 @@ function PlacesAutocomplete({
             id={id}
             value={value}
             onValueChange={(val) => {
+              seededQueryRef.current = null;
               setValue(val);
               // FIXED: Update parent immediately so typing is saved even if no suggestion is clicked
               onLocationSelected(val, "");
