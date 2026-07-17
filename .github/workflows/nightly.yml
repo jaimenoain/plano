@@ -1,0 +1,261 @@
+# Nightly heavy tier (docs/decisions/0006-nightly-heavy-tier.md): the thorough
+# checks that used to run on every PR — the Playwright E2E suite (ci.yml `e2e`)
+# and the AI review (advisory.yml `claude-review` + ai-review.yml on
+# pull_request) — run once per night, and only if main actually moved since the
+# last successful nightly. PRs keep the fast blocking gates (ci.yml); on-demand
+# AI review stays available via "@claude" comments (ai-review.yml).
+#
+# Shape: guard → { e2e, review } → alert.
+# - guard skips the whole tier when main is unchanged, so idle nights are free.
+# - alert is mandatory: PRs auto-merge unattended (ADR 0005) and nobody reads
+#   GitHub notifications, so a red nightly opens/updates a `nightly-failure`
+#   issue instead of failing silently.
+#
+# Known trade-offs:
+# - GitHub auto-disables this cron after ~60 days of repo inactivity; any
+#   commit or manual dispatch revives it.
+# - The guard queries runs by WORKFLOW FILE NAME — renaming nightly.yml resets
+#   the "last success" baseline (one redundant full run; harmless).
+# - A failed nightly does not advance the baseline, so the guard re-runs every
+#   night until main is fixed forward.
+name: Nightly
+
+on:
+  schedule:
+    - cron: '29 3 * * *' # staggered per repo; odd minute dodges cron congestion
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Run even if main has no new commits since the last successful nightly'
+        type: boolean
+        default: true
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  # Skip the heavy tier when main hasn't moved. On `schedule`, github.sha IS
+  # main's tip at trigger time, so no checkout is needed — one API call
+  # compares it to the head_sha of this workflow's last successful main run.
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+      # Last verified sha — the AI review diffs from here.
+      base: ${{ steps.decide.outputs.base }}
+    steps:
+      - name: New commits since last successful nightly?
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Dispatch bypasses the guard by default (that's what dispatch is
+          # for); `-f force=false` exercises the skip path on demand.
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && inputs.force }}
+        run: |
+          set -euo pipefail
+          last="$(gh api "repos/${{ github.repository }}/actions/workflows/nightly.yml/runs?status=success&branch=main&per_page=1" \
+                    --jq '.workflow_runs[0].head_sha // empty')"
+          echo "base=$last" >> "$GITHUB_OUTPUT"
+          if [ "$FORCE" = "true" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "forced via workflow_dispatch"
+          elif [ -z "$last" ] || [ "$last" != "${{ github.sha }}" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "first-ever nightly, or main moved since ${last:-'(never)'}"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "main unchanged since $last — skipping the heavy tier"
+          fi
+
+  # The Playwright suite — steps identical to the `e2e` job that lived in
+  # ci.yml, minus `continue-on-error` on the test run: here a red suite must
+  # fail the job so the alert below fires (with continue-on-error a failed run
+  # concludes "success" and blinds the guard baseline AND the alert). Runs
+  # against production with QA test accounts (ADR 0004); skips cleanly when the
+  # E2E secrets are not configured.
+  e2e:
+    name: E2E
+    needs: guard
+    if: needs.guard.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
+      ACTIVE_USER_EMAIL: ${{ secrets.ACTIVE_USER_EMAIL }}
+      ACTIVE_USER_PASSWORD: ${{ secrets.ACTIVE_USER_PASSWORD }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Check E2E secrets are configured
+        id: gate
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::E2E skipped — E2E secrets not configured in repo settings (see tests/e2e/README note in CI PR)."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.gate.outputs.run == 'true'
+        run: npm ci
+      - name: Cache Playwright browsers
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - if: steps.gate.outputs.run == 'true'
+        run: npx playwright install --with-deps chromium
+      - name: Run E2E suite
+        if: steps.gate.outputs.run == 'true'
+        run: npx playwright test
+      - name: Upload E2E report
+        if: ${{ !cancelled() && steps.gate.outputs.run == 'true' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  # AI review of everything that landed on main since the last verified sha.
+  # Replaces the two per-PR reviews (advisory.yml `claude-review`, ai-review.yml
+  # on pull_request) — one Sonnet pass per day instead of two reviews per PR.
+  # A schedule run has NO pull-request context, so the action runs in plain
+  # agent mode: the diff range comes from the prompt and findings go to a
+  # labeled issue — and only when there ARE findings. Active as soon as the
+  # ANTHROPIC_API_KEY repository secret exists; until then every step skips
+  # cleanly and the job stays green.
+  review:
+    needs: guard
+    if: needs.guard.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
+      # claude-code-action@v1 exchanges an OIDC token for its GitHub token;
+      # without this the job fails at startup ("Could not fetch an OIDC token").
+      id-token: write
+    env:
+      # secrets.* is not allowed in step `if:` expressions; mirror presence here
+      HAS_ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+      # Runners do not export GITHUB_TOKEN to processes — the agent's
+      # `gh issue` calls need it explicitly.
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        if: env.HAS_ANTHROPIC_KEY == 'true'
+        with:
+          fetch-depth: 0
+      - name: Resolve review base
+        id: base
+        if: env.HAS_ANTHROPIC_KEY == 'true'
+        env:
+          GUARD_BASE: ${{ needs.guard.outputs.base }}
+        run: |
+          set -euo pipefail
+          base="$GUARD_BASE"
+          # First nightly ever, or baseline no longer reachable (force-push):
+          # fall back to main as of 24h ago; repo younger than that → root.
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            base="$(git rev-list -1 --before='24 hours ago' HEAD || true)"
+            [ -z "$base" ] && base="$(git rev-list --max-parents=0 HEAD | tail -1)"
+          fi
+          echo "sha=$base" >> "$GITHUB_OUTPUT"
+      - name: Ensure the ai-review label exists
+        if: env.HAS_ANTHROPIC_KEY == 'true'
+        run: |
+          gh label create ai-review --repo "$GITHUB_REPOSITORY" \
+            --color 1D76DB --description "Findings from the nightly AI review" --force
+      - uses: anthropics/claude-code-action@ba0aafd4308cbba7165f9f2cdb0cfbed5a3c99ce # v1
+        if: env.HAS_ANTHROPIC_KEY == 'true'
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ github.token }}
+          prompt: |
+            Nightly review of everything merged to main since the last verified
+            commit. There is NO pull request context.
+
+            BASE: ${{ steps.base.outputs.sha }}
+            HEAD: ${{ github.sha }}
+
+            1. Run `git diff ${{ steps.base.outputs.sha }}..HEAD` and `git log
+               --oneline ${{ steps.base.outputs.sha }}..HEAD` to see what
+               changed. If the diff is empty, stop — do nothing, post nothing.
+            2. Review the diff as a senior engineer who knows this repo's
+               rules. Read AGENTS.md first — it is the canonical contract.
+               Check the changes against it, especially:
+               - getUser() (never getSession()) for any authorization decision
+               - no mock data; features connect to real Supabase
+               - design token aliases only, no raw Tailwind palette colors
+               - Supabase queries only inside feature api/ modules
+               - migrations accompanied by regenerated types in the same PR
+               - no baseline file raised, no continue-on-error added to a
+                 blocking CI job
+               Also look for plain correctness bugs, security issues, and
+               SSR-unsafe code (window/document at module scope). Use Read/Grep
+               on the checked-out repo to confirm suspicions against
+               surrounding code before reporting. Skip style nitpicks.
+            3. ONLY if you find real problems: run `gh issue list --state open
+               --label ai-review` first — if an open ai-review issue exists,
+               comment on it instead of creating a new one; otherwise create
+               ONE issue with `gh issue create --label ai-review` titled
+               "AI nightly review: <short summary>". For each finding give the
+               file path, what looks wrong, severity, confidence, and the
+               commit that introduced it. Findings are flags to investigate,
+               not confirmed facts.
+
+            If nothing is wrong, exit without posting anything.
+          # Pin the model explicitly: without it the CLI resolved to an opus
+          # 1M-context variant this API key can't use (see ai-review.yml).
+          claude_args: |
+            --model claude-sonnet-5
+            --max-turns 25
+            --allowedTools "Bash(git diff:*),Bash(git log:*),Bash(gh issue list:*),Bash(gh issue create:*),Bash(gh issue comment:*),Read,Grep,Glob"
+          # Surface Claude's output in the run log; without this an execution
+          # error is invisible.
+          show_full_output: true
+
+  # Nobody watches scheduled runs: a red nightly MUST become an issue that the
+  # next session finds. Skipped upstream jobs (guard said "unchanged") do NOT
+  # trip `failure()`, so idle nights stay silent.
+  alert:
+    needs: [guard, e2e, review]
+    if: failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open (or comment on) the nightly-failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          gh label create nightly-failure --repo "$GITHUB_REPOSITORY" \
+            --color B60205 --description "Nightly heavy tier failed on main" --force
+          BODY="The **Nightly** workflow failed on \`main\` at \`${GITHUB_SHA}\`.
+
+          Run: $RUN_URL
+
+          PRs auto-merge unattended (ADR 0005) — this issue is the only signal. Fix main forward before starting new work. Close only after a subsequent green Nightly run on main."
+          EXISTING=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --label nightly-failure --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --repo "$GITHUB_REPOSITORY" --body "$BODY"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" \
+              --title "🔴 Nightly failed on main" --body "$BODY" --label nightly-failure
+          fi
