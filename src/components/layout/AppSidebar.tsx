@@ -15,6 +15,7 @@ import {
   Settings,
   LogOut,
   Bell,
+  Bookmark,
   X,
   Briefcase,
   Building2,
@@ -141,6 +142,15 @@ function UserMenu() {
               <Link to={ownProfilePath} className="flex items-center gap-2 cursor-pointer text-white/80 hover:text-white focus:text-white focus:bg-white/10">
                 <UserIcon className="h-4 w-4" />
                 Profile
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link
+                to="/search?mode=library"
+                className="flex items-center gap-2 cursor-pointer text-white/80 hover:text-white focus:text-white focus:bg-white/10"
+              >
+                <Bookmark className="h-4 w-4" />
+                My Library
               </Link>
             </DropdownMenuItem>
             {isAmbassador ? (

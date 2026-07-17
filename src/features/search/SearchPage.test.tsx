@@ -25,6 +25,16 @@ vi.mock("@/features/maps/components/MapControls", () => ({
   MapControls: () => <div data-testid="map-controls" />,
 }));
 
+vi.mock("@/features/search/context/BuildingSearchContext", () => ({
+  BuildingSearchProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock("@/features/search/components/MapModeToggle", () => ({
+  MapModeToggle: ({ name }: { name: string }) => (
+    <div data-testid="map-mode-toggle" data-name={name} />
+  ),
+}));
+
 vi.mock("@/features/maps/providers/MapContext", () => ({
   MapProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useMapContext: () => ({
@@ -98,5 +108,27 @@ describe("SearchPage — single FilterDrawer owner", () => {
     render(<SearchPage />);
 
     expect(screen.getAllByTestId("map-controls")).toHaveLength(1);
+  });
+
+  it("renders the Discover / My Library toggle in the desktop sidebar", () => {
+    (useIsMobile as Mock).mockReturnValue(false);
+
+    render(<SearchPage />);
+
+    const toggles = screen.getAllByTestId("map-mode-toggle");
+    expect(toggles).toHaveLength(1);
+    expect(toggles[0].getAttribute("data-name")).toBe("map-mode-desktop");
+  });
+
+  it("renders the mobile toggle in the floating bar (desktop copy stays CSS-hidden but shares state via the provider)", () => {
+    (useIsMobile as Mock).mockReturnValue(true);
+
+    render(<SearchPage />);
+
+    const names = screen
+      .getAllByTestId("map-mode-toggle")
+      .map((el) => el.getAttribute("data-name"));
+    expect(names).toContain("map-mode-mobile");
+    expect(names).toContain("map-mode-desktop");
   });
 });
