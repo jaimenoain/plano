@@ -22,10 +22,6 @@
  * Mobile list overlay:
  *   bg-surface-card → bg-surface-default — the list slides in as a page,
  *   not as a card. Matches the page background colour.
- *
- * Map loading placeholder:
- *   h-8 w-8 text-text-secondary → h-4 w-4 text-text-disabled — subtle,
- *   consistent with loading states across the rest of the app.
  */
 import { useState, useEffect, useRef, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -321,7 +317,10 @@ function SearchPageContent() {
               placeholder="Search buildings, people, companies..."
               className="flex-1"
             />
-            <MapControls />
+            {/* Desktop only — the sidebar is merely CSS-hidden on mobile, and a
+                second mounted FilterDrawer/useBuildingSearch clobbers the URL
+                filter params with its stale state (see SearchPage.test.tsx). */}
+            {!isMobile && <MapControls />}
           </div>
 
           <div className="relative min-h-0 flex-1 overflow-hidden">
