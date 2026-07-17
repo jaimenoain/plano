@@ -1,16 +1,15 @@
 # Advisory checks — these run and report but NEVER block a merge.
 # Promotion policy (docs/decisions/0001-repo-guardrails.md): once a job has
 # been green for 2+ weeks, consider moving it into ci.yml as blocking.
+#
+# The per-PR AI review that used to live here (claude-review) was removed in
+# favour of the nightly scheduled review (.github/workflows/nightly.yml) —
+# see docs/decisions/0006-nightly-heavy-tier.md. On-demand reviews are still
+# available by commenting "@claude ..." on a PR (ai-review.yml).
 name: Advisory
 
 on:
-  # ready_for_review is added so the paid AI review (claude-review job below)
-  # fires the moment a draft PR is marked ready — the default trigger set
-  # (opened/synchronize/reopened) does NOT include it. The job itself is gated
-  # on draft == false, so reviews of work-in-progress drafts are skipped.
-  # To restore the old behaviour, delete the `types:` line.
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
 
 concurrency:
   group: advisory-${{ github.workflow }}-${{ github.ref }}
@@ -22,6 +21,9 @@ jobs:
   # removed with apps/mobile (ADR-0005). It is deliberately not duplicated here.
 
   # Flags newly-introduced vulnerable or malicious dependencies on the PR diff.
+  # Requires the Dependency graph (Settings → Advanced Security) — enabled for
+  # this repo on 2026-07-16; if the job ever reports "Dependency review is not
+  # supported on this repository", that setting was switched off again.
   # Works out of the box on PUBLIC repos. On a PRIVATE repo the action requires
   # GitHub Advanced Security and hard-errors ("Dependency review is not supported
   # on this repository"), so it is skipped there — a job that can never pass is
@@ -36,39 +38,3 @@ jobs:
       - uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
-
-  # AI code review on every PR (Claude). Active as soon as the repository
-  # secret ANTHROPIC_API_KEY exists (GitHub → Settings → Secrets and variables
-  # → Actions); until then every step skips cleanly and the job stays green.
-  # Model pinned to Haiku (cheapest tier) and turns capped to keep per-review
-  # cost to cents — decision recorded in docs/decisions/0003-ai-pr-review.md.
-  claude-review:
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    # Cost gate: skip the paid AI review on DRAFT PRs. Drafts are
-    # work-in-progress and push often; reviewing every push burns Anthropic
-    # tokens for little value. Review resumes automatically the moment the PR
-    # is marked "Ready for review" (see the ready_for_review trigger above).
-    # To review drafts too, delete this `if:` line.
-    if: ${{ github.event.pull_request.draft == false }}
-    permissions:
-      contents: read
-      pull-requests: write
-      issues: read
-    env:
-      # secrets.* is not allowed in step `if:` expressions; mirror presence here
-      HAS_ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
-    steps:
-      - uses: actions/checkout@v4
-        if: env.HAS_ANTHROPIC_KEY == 'true'
-        with:
-          fetch-depth: 0
-      - uses: anthropics/claude-code-action@v1
-        if: env.HAS_ANTHROPIC_KEY == 'true'
-        with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          use_sticky_comment: true
-          prompt: 'Review this PR for bugs, security issues, and violations of the rules in .cursor/rules/. Post inline comments and an overall verdict. Report every issue you find, including ones you are uncertain about, with a confidence level and severity for each.'
-          claude_args: |
-            --model claude-haiku-4-5
-            --max-turns 25

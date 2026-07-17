@@ -53,7 +53,7 @@ Tailwind CSS v4 with design tokens defined in CSS `@theme` in `src/index.css`, d
 
 ## Quality gates
 
-Blocking on every PR (branch protection, admins included): Lint, Typecheck, Test + coverage floor, Build, Migrations lint, ESLint-warning ratchet, Secret scan, Types staleness, RLS coverage, and the Debt ratchet (`as any` count, file-size budgets, strict-TS allowlist). Advisory (visible, non-blocking): Playwright E2E, dependency audit, strict typecheck. Debt baselines only shrink — see [decision 0003](decisions/0003-ratchets-over-big-bang.md). Local mirror: `npm run check`; the full Definition of Done lives in [`AGENTS.md`](../AGENTS.md).
+Blocking on every PR (branch protection, admins included): Lint, Typecheck, Test + coverage floor, Build, Migrations lint, ESLint-warning ratchet, Secret scan, Types staleness, RLS coverage, and the Debt ratchet (`as any` count, file-size budgets, strict-TS allowlist). Advisory (visible, non-blocking): dependency audit, strict typecheck. The Playwright E2E suite and the AI review run nightly against `main`, not per PR (see [decision 0006](decisions/0006-nightly-heavy-tier.md)). Debt baselines only shrink — see [decision 0003](decisions/0003-ratchets-over-big-bang.md). Local mirror: `npm run check`; the full Definition of Done lives in [`AGENTS.md`](../AGENTS.md).
 
 ### TypeScript strictness
 

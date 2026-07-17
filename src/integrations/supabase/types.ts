@@ -4728,6 +4728,42 @@ export type Database = {
         | { Args: { p_preferred_tools: string[] }; Returns: undefined }
       country_name_to_code: { Args: { p_country: string }; Returns: string }
       disablelongtransactions: { Args: never; Returns: string }
+      discover_companies: {
+        Args: {
+          max_lat: number
+          max_lng: number
+          min_lat: number
+          min_lng: number
+          p_limit?: number
+        }
+        Returns: {
+          claim_status: string
+          country: string
+          credit_count: number
+          id: string
+          logo_url: string
+          name: string
+          slug: string
+        }[]
+      }
+      discover_people: {
+        Args: {
+          max_lat: number
+          max_lng: number
+          min_lat: number
+          min_lng: number
+          p_limit?: number
+        }
+        Returns: {
+          avatar_url: string
+          claim_status: string
+          credit_count: number
+          id: string
+          name: string
+          nationality: string
+          slug: string
+        }[]
+      }
       dismiss_building_duplicate_pair: {
         Args: { p_id1: string; p_id2: string }
         Returns: undefined

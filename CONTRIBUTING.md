@@ -21,7 +21,7 @@ Auto-merge is armed automatically for every ready (non-draft) PR by [`.github/wo
 - **Debt ratchet** — `as any`/`@ts-ignore` count, file-size budgets, strict-TS allowlist (`scripts/check-*-ratchet.mjs`, `check-file-sizes.mjs`, `check-strict-allowlist.mjs`)
 - **RLS coverage** — `node scripts/check-rls-coverage.mjs`; every public table created in migrations must enable row-level security (promoted from advisory 2026-07-09)
 
-Advisory (non-blocking, promoted once stable): Playwright E2E, dependency audit, strict typecheck, and an AI review that posts inline comments. Human PR reviews are **not required** — merges to `main` are gated solely on the required checks above, and PRs auto-merge once green. See [ADR 0005](docs/decisions/0005-auto-merge-on-green.md) for the rationale.
+Advisory (non-blocking, promoted once stable): dependency audit, dependency review, strict typecheck. The Playwright E2E suite and the AI review run nightly against `main` instead of per PR ([ADR 0006](docs/decisions/0006-nightly-heavy-tier.md)); comment `@claude <request>` on a PR for an on-demand review. Human PR reviews are **not required** — merges to `main` are gated solely on the required checks above, and PRs auto-merge once green. See [ADR 0005](docs/decisions/0005-auto-merge-on-green.md) for the rationale.
 
 Every PR must also meet the **Definition of Done** in [`AGENTS.md`](AGENTS.md) — tests and doc updates ship in the same PR as the change.
 
