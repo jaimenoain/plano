@@ -1,7 +1,6 @@
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { getDistanceFromLatLonInM } from "@/utils/map";
 import type { TablesUpdate } from "@/integrations/supabase/types";
 import type {
   BuildingCreditWithEntities,
@@ -428,97 +427,51 @@ export async function searchPeople(query: string): Promise<PersonSummary[]> {
 }
 
 /**
- * Discovery browse — returns people relevant to the given map bounds (or globally),
- * sorted by credit count descending. Used when there is no active search query.
+ * Discovery browse — returns people credited on buildings within the given map
+ * bounds, ranked by number of credited buildings in that viewport. Used when
+ * there is no active search query. Backed by the discover_people RPC (a single
+ * bbox-join aggregate); returns `[]` when there are no bounds yet.
  */
 export async function discoverPeople(
   bounds?: { south: number; north: number; west: number; east: number } | null,
   limit = 30
 ): Promise<PersonSummary[]> {
-  let personIds: string[] | null = null;
+  if (!bounds) return [];
 
-  if (bounds) {
-    const centerLat = (bounds.north + bounds.south) / 2;
-    const centerLng = (bounds.west + bounds.east) / 2;
-    const radiusMeters = getDistanceFromLatLonInM(
-      centerLat,
-      centerLng,
-      bounds.north,
-      bounds.east,
-    );
+  // Cast through unknown: discover_people not yet in generated types (matches
+  // the search_people_v2 wrapper convention).
+  const supabaseAny = supabase as unknown as { rpc: (name: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }> };
+  const { data, error } = await supabaseAny.rpc("discover_people", {
+    min_lat: bounds.south,
+    max_lat: bounds.north,
+    min_lng: bounds.west,
+    max_lng: bounds.east,
+    p_limit: limit,
+  });
 
-    const { data: buildingRows, error: bErr } = await supabase.rpc(
-      "find_nearby_buildings",
-      { lat: centerLat, long: centerLng, radius_meters: radiusMeters },
-    );
-
-    if (bErr) throw bErr;
-    if (!buildingRows?.length) return [];
-
-    const buildingIds = (buildingRows as Array<{ id: string }>)
-      .slice(0, 300)
-      .map((r) => r.id);
-    const { data: creditRows, error: cErr } = await supabase
-      .from("building_credits")
-      .select("person_id")
-      .in("building_id", buildingIds)
-      .not("person_id", "is", null);
-
-    if (cErr) throw cErr;
-    personIds = [...new Set((creditRows || []).map((r) => r.person_id as string))];
-    if (personIds.length === 0) return [];
-  }
-
-  let baseQuery = supabase
-    .from("people")
-    .select("id, name, slug, claim_status, nationality, avatar_url");
-
-  if (personIds !== null) {
-    baseQuery = baseQuery.in("id", personIds);
-  }
-
-  const { data: peopleRows, error: pErr } = await baseQuery.limit(limit * 3);
-  if (pErr) throw pErr;
-  if (!peopleRows?.length) return [];
-
-  const ids = (peopleRows as Array<{ id: string }>).map((r) => r.id);
-
-  // Fetch all credit counts in a single query and tally client-side
-  const { data: countRows, error: cntErr } = await supabase
-    .from("building_credits")
-    .select("person_id")
-    .in("person_id", ids)
-    .not("person_id", "is", null);
-
-  if (cntErr) throw cntErr;
-
-  const countById = new Map<string, number>();
-  for (const row of countRows || []) {
-    const pid = row.person_id as string;
-    countById.set(pid, (countById.get(pid) ?? 0) + 1);
-  }
-
-  return (peopleRows as Array<{
+  if (error) throw error;
+  const rows = data as Array<{
     id: string;
     name: string;
     slug: string;
     claim_status: PersonSummary["claimStatus"];
     nationality: string | null;
     avatar_url: string | null;
-  }>)
-    .map((r) => ({
-      id: r.id,
-      name: r.name,
-      slug: r.slug,
-      claimStatus: r.claim_status,
-      nationality: r.nationality,
-      avatarUrl: r.avatar_url,
-      creditCount: countById.get(r.id) ?? 0,
-      associatedCompanies: [],
-      knownBuilding: null,
-    }))
-    .sort((a, b) => (b.creditCount ?? 0) - (a.creditCount ?? 0))
-    .slice(0, limit);
+    credit_count: number;
+  }> | null;
+  if (!rows?.length) return [];
+
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    slug: r.slug,
+    claimStatus: r.claim_status,
+    nationality: r.nationality,
+    avatarUrl: r.avatar_url,
+    creditCount: Number(r.credit_count),
+    associatedCompanies: [],
+    knownBuilding: null,
+  }));
 }
 
 /**
