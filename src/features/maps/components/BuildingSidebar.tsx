@@ -42,6 +42,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RatingDots } from '@/components/ui/rating-dots';
 import { EmptyState } from '@/components/ui/empty-state';
+import { EntityResultsList } from './EntityResultsList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, MapPin, UserRound, Building2 } from 'lucide-react';
 import { Link } from 'react-router';
@@ -81,7 +82,7 @@ interface Building {
   locality_city_slug?: string | null;
 }
 
-type SearchResultTab = 'buildings' | 'people' | 'companies';
+export type SearchResultTab = 'buildings' | 'people' | 'companies';
 
 interface BuildingSidebarProps {
   topLocation?: { description: string; place_id: string } | null;
@@ -90,6 +91,15 @@ interface BuildingSidebarProps {
   people?: PersonSummary[];
   companies?: CompanySummary[];
   isDiscovery?: boolean;
+  /** People tab loading/error — drives the spinner + error branch (parity with the Buildings tab). */
+  peopleLoading?: boolean;
+  peopleError?: boolean;
+  /** Companies tab loading/error — drives the spinner + error branch. */
+  companiesLoading?: boolean;
+  companiesError?: boolean;
+  /** Controlled tab selection. When both are provided the parent owns the state; otherwise falls back to internal state. */
+  resultTab?: SearchResultTab;
+  onResultTabChange?: (tab: SearchResultTab) => void;
   /** When set, bypasses the internal get_buildings_list query and renders these Find-mode results instead. */
   findModeBuildings?: BuildingSearchHit[] | null;
   /** Phase 4 — when in Find mode, this is the active query used to compute smart filter chips. */
@@ -108,6 +118,12 @@ export function BuildingSidebar({
   people = [],
   companies = [],
   isDiscovery = false,
+  peopleLoading = false,
+  peopleError = false,
+  companiesLoading = false,
+  companiesError = false,
+  resultTab: resultTabProp,
+  onResultTabChange,
   findModeBuildings = null,
   findModeQuery,
   onSmartFilterApplied,
@@ -119,7 +135,15 @@ export function BuildingSidebar({
   } = useMapContext();
   const observerTarget = useRef<HTMLDivElement>(null);
   const lastZoomedQuery = useRef<string | null>(null);
-  const [resultTab, setResultTab] = useState<SearchResultTab>('buildings');
+  // Controlled when the parent supplies resultTab + onResultTabChange (so the
+  // tab survives the mobile List↔Map remount and stays in sync across the two
+  // mounted sidebars); otherwise falls back to internal state.
+  const [resultTabInternal, setResultTabInternal] = useState<SearchResultTab>('buildings');
+  const resultTab = resultTabProp ?? resultTabInternal;
+  const setResultTab = (tab: SearchResultTab) => {
+    if (onResultTabChange) onResultTabChange(tab);
+    else setResultTabInternal(tab);
+  };
 
   // Browse mode: get_buildings_list (infinite, viewport-constrained).
   // Disabled when findModeBuildings are provided — Find mode bypasses this query.
@@ -490,86 +514,43 @@ export function BuildingSidebar({
 
           <TabsContent value="people" className="m-0 mt-0 outline-hidden">
             <div className="pt-2 pb-6">
-              {peopleCount === 0 ? (
-                <EmptyState className="py-12" eyebrow="No people" message={isDiscovery ? "No architects credited in this area yet." : "No people match this search yet."} />
-              ) : (
-                people.map((person) => {
-                  const avatarSrc = getStorageAssetUrl(person.avatarUrl ?? null);
-                  const meta = [
+              <EntityResultsList
+                loading={peopleLoading}
+                error={peopleError}
+                errorLabel="Failed to load people"
+                fallbackIcon={UserRound}
+                empty={<EmptyState className="py-12" eyebrow="No people" message={isDiscovery ? "No architects credited in this area yet." : "No people match this search yet."} />}
+                rows={people.map((person) => ({
+                  id: person.id,
+                  name: person.name,
+                  href: `/person/${person.slug}`,
+                  imageUrl: getStorageAssetUrl(person.avatarUrl ?? null),
+                  meta: [
                     person.nationality?.trim() || null,
                     person.creditCount != null ? `${person.creditCount} credits` : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' · ');
-                  return (
-                    <Link
-                      to={`/person/${person.slug}`}
-                      key={person.id}
-                      className="group flex items-center gap-3 px-4 py-3 border-b border-border-default last:border-0 hover:bg-surface-muted/40 transition-colors"
-                    >
-                      {avatarSrc ? (
-                        <img
-                          src={avatarSrc}
-                          alt=""
-                          className="h-10 w-10 shrink-0 rounded-none object-cover border border-border-default"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <UserRound className="h-4 w-4 text-text-disabled shrink-0" strokeWidth={1.5} />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium leading-tight text-text-primary group-hover:opacity-70 transition-opacity truncate">
-                          {person.name}
-                        </p>
-                        {meta ? (
-                          <p className="text-xs text-text-disabled mt-0.5 truncate">{meta}</p>
-                        ) : null}
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
+                  ].filter(Boolean).join(' · '),
+                }))}
+              />
             </div>
           </TabsContent>
 
           <TabsContent value="companies" className="m-0 mt-0 outline-hidden">
             <div className="pt-2 pb-6">
-              {companiesCount === 0 ? (
-                <EmptyState className="py-12" eyebrow="No companies" message={isDiscovery ? "No companies credited in this area yet." : "No companies match this search yet."} />
-              ) : (
-                companies.map((company) => {
-                  const logoSrc = getStorageAssetUrl(company.logoUrl);
-                  const meta = [company.country?.trim() || null, `${company.creditCount} credits`]
-                    .filter(Boolean)
-                    .join(' · ');
-                  return (
-                    <Link
-                      to={`/company/${company.slug}`}
-                      key={company.id}
-                      className="group flex items-center gap-3 px-4 py-3 border-b border-border-default last:border-0 hover:bg-surface-muted/40 transition-colors"
-                    >
-                      {logoSrc ? (
-                        <img
-                          src={logoSrc}
-                          alt=""
-                          className="h-10 w-10 shrink-0 rounded-none object-cover border border-border-default"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <Building2 className="h-4 w-4 text-text-disabled shrink-0" strokeWidth={1.5} />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium leading-tight text-text-primary group-hover:opacity-70 transition-opacity truncate">
-                          {company.name}
-                        </p>
-                        {meta ? (
-                          <p className="text-xs text-text-disabled mt-0.5 truncate">{meta}</p>
-                        ) : null}
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
+              <EntityResultsList
+                loading={companiesLoading}
+                error={companiesError}
+                errorLabel="Failed to load companies"
+                fallbackIcon={Building2}
+                empty={<EmptyState className="py-12" eyebrow="No companies" message={isDiscovery ? "No companies credited in this area yet." : "No companies match this search yet."} />}
+                rows={companies.map((company) => ({
+                  id: company.id,
+                  name: company.name,
+                  href: `/company/${company.slug}`,
+                  imageUrl: getStorageAssetUrl(company.logoUrl),
+                  meta: [company.country?.trim() || null, `${company.creditCount} credits`]
+                    .filter(Boolean).join(' · '),
+                }))}
+              />
             </div>
           </TabsContent>
         </ScrollArea>

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useDebounce } from "@/hooks/useDebounce";
 import { searchPeople, discoverPeople } from "@/features/credits/api/people";
 import { searchCompanies, discoverCompanies } from "@/features/credits/api/companies";
@@ -42,16 +42,34 @@ export function useGlobalEntitySearch({
   const peopleDiscoverQuery = useQuery({
     queryKey: ["discover-people", bounds],
     queryFn: () => discoverPeople(bounds),
-    enabled: runDiscover,
+    enabled: runDiscover && !!bounds,
+    placeholderData: keepPreviousData,
     staleTime: 60_000,
   });
 
   const companiesDiscoverQuery = useQuery({
     queryKey: ["discover-companies", bounds],
     queryFn: () => discoverCompanies(bounds),
-    enabled: runDiscover,
+    enabled: runDiscover && !!bounds,
+    placeholderData: keepPreviousData,
     staleTime: 60_000,
   });
+
+  // In discover mode, a disabled query (no bounds yet) reports isLoading===false,
+  // which would flash the EmptyState before the map reports its viewport. Treat
+  // "waiting for bounds" as loading so the tabs show a spinner instead.
+  const peopleLoading = hasQuery
+    ? peopleSearchQuery.isLoading
+    : !bounds || peopleDiscoverQuery.isLoading;
+  const companiesLoading = hasQuery
+    ? companiesSearchQuery.isLoading
+    : !bounds || companiesDiscoverQuery.isLoading;
+  const peopleError = hasQuery
+    ? peopleSearchQuery.isError
+    : peopleDiscoverQuery.isError;
+  const companiesError = hasQuery
+    ? companiesSearchQuery.isError
+    : companiesDiscoverQuery.isError;
 
   return {
     people: hasQuery
@@ -60,9 +78,11 @@ export function useGlobalEntitySearch({
     companies: hasQuery
       ? (companiesSearchQuery.data ?? [])
       : (companiesDiscoverQuery.data ?? []),
-    isLoading: hasQuery
-      ? peopleSearchQuery.isLoading || companiesSearchQuery.isLoading
-      : peopleDiscoverQuery.isLoading || companiesDiscoverQuery.isLoading,
+    peopleLoading,
+    companiesLoading,
+    peopleError,
+    companiesError,
+    isLoading: peopleLoading || companiesLoading,
     isDiscovery: runDiscover,
   };
 }

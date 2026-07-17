@@ -34,12 +34,10 @@ import { ClientOnly } from "@/components/common/ClientOnly";
 import { getGeocode, getLatLng } from "@/lib/googleMapsGeocoding";
 import { Bounds, getBoundsFromBuildings } from "@/utils/map";
 import { useNavigate } from "react-router";
-import type { SearchBuildingsV2Filters } from "@/features/search/api/searchBuildingsV2";
-
-import { resolveConstructionStatuses } from "@/lib/buildingStatus";
+import { buildFindModeFilters } from "./buildFindModeFilters";
 import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext";
 import { PlanoMap } from "@/features/maps/components/PlanoMap";
-import { BuildingSidebar } from "@/features/maps/components/BuildingSidebar";
+import { BuildingSidebar, type SearchResultTab } from "@/features/maps/components/BuildingSidebar";
 import { MapControls } from "@/features/maps/components/MapControls";
 import { DiscoverySearchInput, Suggestion } from "@/features/search/components/DiscoverySearchInput";
 import { useGlobalEntitySearch } from "@/features/search/hooks/useGlobalEntitySearch";
@@ -101,44 +99,9 @@ function SearchPageContent() {
   // Find mode: query >= 2 chars after debounce
   const isFindMode = debouncedSearchValue.trim().length >= 2;
 
-  // Map MapFilters → SearchBuildingsV2Filters so Find-mode RPCs respect the
-  // same global filters (credits, taxonomy, size, awards, access) as Browse mode.
-  const findModeFilters = useMemo((): SearchBuildingsV2Filters | undefined => {
-    const f: SearchBuildingsV2Filters = {};
-    if (filters.creditCompany?.id) f.credit_company_id = filters.creditCompany.id;
-    if (filters.creditRoles?.length) f.credit_roles = filters.creditRoles;
-    if (filters.category) f.category_id = filters.category;
-    if (filters.typologies?.length) f.typology_ids = filters.typologies;
-    if (filters.attributes?.length) f.attribute_ids = filters.attributes;
-    // Construction status: mirror the Browse surfaces exactly (explicit picks →
-    // inclusion; Show-lost / default → exclusion) so the Building-status filter
-    // behaves identically in Find mode.
-    const construction = resolveConstructionStatuses(filters);
-    if (construction.construction_statuses) f.construction_statuses = construction.construction_statuses;
-    if (construction.exclude_construction_statuses) f.exclude_construction_statuses = construction.exclude_construction_statuses;
-    if (filters.sizeCategories?.length) f.size_categories = filters.sizeCategories;
-    if (filters.minSizeSqm) f.min_size_sqm = filters.minSizeSqm;
-    if (filters.maxSizeSqm) f.max_size_sqm = filters.maxSizeSqm;
-    if (filters.minStoreys) f.min_storeys = filters.minStoreys;
-    if (filters.maxStoreys) f.max_storeys = filters.maxStoreys;
-    if (filters.awardId) f.award_id = filters.awardId;
-    if (filters.awardOutcome) f.award_outcome = filters.awardOutcome;
-    if (filters.awardYearFrom) f.award_year_from = filters.awardYearFrom;
-    if (filters.awardYearTo) f.award_year_to = filters.awardYearTo;
-    if (filters.accessLevels?.length) f.access_levels = filters.accessLevels;
-    if (filters.accessLogistics?.length) f.access_logistics = filters.accessLogistics;
-    if (filters.accessCosts?.length) f.access_costs = filters.accessCosts;
-    if (filters.centuries?.length) f.centuries = filters.centuries;
-    // Library filters — Folders/Collections and Curators & friends — so Find mode
-    // narrows to the same set as Browse.
-    if (filters.collections?.length) f.collections = filters.collections.map((c) => c.id);
-    if (filters.folderIds?.length) f.folders = filters.folderIds;
-    const ratedBy = filters.contacts?.map((c) => c.name) ?? filters.ratedBy;
-    if (ratedBy?.length) f.rated_by = ratedBy;
-    if (filters.filterContacts) f.filter_contacts = true;
-    if (filters.contactMinRating) f.contact_min_rating = filters.contactMinRating;
-    return Object.keys(f).length > 0 ? f : undefined;
-  }, [filters]);
+  // Map MapFilters → SearchBuildingsV2Filters so Find-mode RPCs respect the same
+  // global filters (credits, taxonomy, size, awards, access) as Browse mode.
+  const findModeFilters = useMemo(() => buildFindModeFilters(filters), [filters]);
 
   // Find mode — three parallel RPCs, no bbox.
   // Pass the RAW input value: useUnifiedSearch debounces `query` internally
@@ -158,10 +121,27 @@ function SearchPageContent() {
     enabled: !isFindMode,
   });
 
-  // Derived people/companies for BuildingSidebar
-  const people = isFindMode ? findResults.people : browseEntities.people;
-  const companies = isFindMode ? findResults.companies : browseEntities.companies;
-  const isDiscovery = !isFindMode;
+  // Selected SERP tab — owned here (single owner) so it survives the mobile
+  // List↔Map remount and stays in sync across both sidebar instances. Kept out
+  // of the URL to avoid the dual-mount clobber (PR #1574).
+  const [resultTab, setResultTab] = useState<SearchResultTab>("buildings");
+
+  // Entity-tab props shared by both sidebar instances. Per-tab loading/error is
+  // threaded so the People/Companies tabs show a spinner / error instead of a
+  // permanent "nothing here" state.
+  const sidebarEntityProps = {
+    people: isFindMode ? findResults.people : browseEntities.people,
+    companies: isFindMode ? findResults.companies : browseEntities.companies,
+    isDiscovery: !isFindMode,
+    peopleLoading: isFindMode ? findResults.isLoading : browseEntities.peopleLoading,
+    companiesLoading: isFindMode ? findResults.isLoading : browseEntities.companiesLoading,
+    peopleError: isFindMode ? findResults.error != null : browseEntities.peopleError,
+    companiesError: isFindMode ? findResults.error != null : browseEntities.companiesError,
+    resultTab,
+    onResultTabChange: setResultTab,
+    findModeBuildings: isFindMode ? findResults.buildings : null,
+    findModeQuery: isFindMode ? debouncedSearchValue : undefined,
+  };
 
   // Push find-mode building results into MapContext so PlanoMap uses them as pins
   const lastFitQuery = useRef<string | null>(null);
@@ -328,11 +308,7 @@ function SearchPageContent() {
             <BuildingSidebar
               suggestions={suggestions}
               onLocationClick={handleLocationResultClick}
-              people={people}
-              companies={companies}
-              isDiscovery={isDiscovery}
-              findModeBuildings={isFindMode ? findResults.buildings : null}
-              findModeQuery={isFindMode ? debouncedSearchValue : undefined}
+              {...sidebarEntityProps}
               onSmartFilterApplied={() => setSearchValue("")}
             />
           </div>
@@ -387,11 +363,7 @@ function SearchPageContent() {
               <BuildingSidebar
                 suggestions={suggestions}
                 onLocationClick={handleLocationResultClick}
-                people={people}
-                companies={companies}
-                isDiscovery={isDiscovery}
-                findModeBuildings={isFindMode ? findResults.buildings : null}
-                findModeQuery={isFindMode ? debouncedSearchValue : undefined}
+                {...sidebarEntityProps}
                 onSmartFilterApplied={() => setSearchValue("")}
                 className="pb-24"
               />

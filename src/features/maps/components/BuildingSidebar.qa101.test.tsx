@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BuildingSidebar } from "./BuildingSidebar";
 import { MemoryRouter } from "react-router";
@@ -44,6 +44,8 @@ function mockEmptyBuildings() {
     fetchNextPage: vi.fn(),
   });
 }
+
+afterEach(() => cleanup());
 
 describe("BuildingSidebar (QA 10.1 — global entity tabs)", () => {
   it("People tab lists name, credit count, and nationality (or avatar affordance)", async () => {
@@ -107,5 +109,65 @@ describe("BuildingSidebar (QA 10.1 — global entity tabs)", () => {
     });
     expect(screen.getByText(/GB/)).toBeInTheDocument();
     expect(screen.getByText(/42 credits/)).toBeInTheDocument();
+  });
+
+  it("People tab shows a spinner while loading instead of the empty state", async () => {
+    mockMapContext();
+    mockEmptyBuildings();
+
+    const { container } = render(
+      <MemoryRouter>
+        <BuildingSidebar people={[]} companies={[]} peopleLoading resultTab="people" onResultTabChange={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(container.querySelector(".animate-spin")).toBeInTheDocument();
+    expect(screen.queryByText(/No architects credited in this area yet/i)).not.toBeInTheDocument();
+  });
+
+  it("People tab shows an error message when loading fails", async () => {
+    mockMapContext();
+    mockEmptyBuildings();
+
+    render(
+      <MemoryRouter>
+        <BuildingSidebar people={[]} companies={[]} peopleError resultTab="people" onResultTabChange={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText(/Failed to load people/i)).toBeInTheDocument();
+    expect(screen.queryByText(/No architects credited in this area yet/i)).not.toBeInTheDocument();
+  });
+
+  it("Companies tab shows an error message when loading fails", async () => {
+    mockMapContext();
+    mockEmptyBuildings();
+
+    render(
+      <MemoryRouter>
+        <BuildingSidebar people={[]} companies={[]} companiesError resultTab="companies" onResultTabChange={vi.fn()} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText(/Failed to load companies/i)).toBeInTheDocument();
+  });
+
+  it("is controlled by resultTab / onResultTabChange when both are provided", async () => {
+    mockMapContext();
+    mockEmptyBuildings();
+
+    const onResultTabChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <BuildingSidebar people={[]} companies={[]} resultTab="people" onResultTabChange={onResultTabChange} />
+      </MemoryRouter>,
+    );
+
+    // People tab is active from the prop, without any click.
+    expect(screen.getByRole("tab", { name: /people/i })).toHaveAttribute("aria-selected", "true");
+
+    await user.click(screen.getByRole("tab", { name: /companies/i }));
+    expect(onResultTabChange).toHaveBeenCalledWith("companies");
   });
 });
