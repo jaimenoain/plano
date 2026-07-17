@@ -78,8 +78,10 @@ export function PeopleYouMayKnow({
           (hiddenData as SuggestedHideRow[] | null)?.map((h) => h.suggested_user_id) || []
         );
 
+        // Over-fetch so post-filtering (already-followed / hidden) still leaves
+        // roughly `limit` candidates to show.
         const { data: rpcRows } = await supabase.rpc("get_people_you_may_know", {
-          p_limit: 5,
+          p_limit: Math.max(5, limit + 4),
         });
         const candidates = ((rpcRows as unknown as SuggestionUser[]) ?? [])
           .filter((p) => !followingIds.has(p.id) && !hiddenIds.has(p.id))
