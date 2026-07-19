@@ -38,3 +38,6 @@ playwright-report/
 .audit/
 .audit-full/
 .audit-scroll/
+
+# Agent worktrees — parallel-session checkouts (06-agent-behaviour.mdc §14, ADR-0007)
+.claude/worktrees/
