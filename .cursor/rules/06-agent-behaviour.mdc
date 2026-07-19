@@ -560,3 +560,17 @@ For content searches, use `rg <pattern> <path>` directly — it walks files itse
 
 - Yes: `git diff src/features/maps/api/mapsApi.ts > /tmp/maps.diff`, then `Read(path="/tmp/maps.diff", offset=300, limit=300)`.
 - No: `git diff src/features/maps/api/mapsApi.ts | sed -n '300,600p'`
+
+---
+
+## 14. Parallel Work & Git Worktrees
+
+One task, one fresh branch, one PR — and when tasks run in parallel, they never share a checkout: every simultaneous task beyond the first works in a git worktree. Lifecycle (fleet policy: ADR-0007, template ADR-0035):
+
+1. **Worktrees live inside the repo, never beside it.** Standard location: `.claude/worktrees/<slug>` (gitignored). Never create sibling folders in the owner's projects directory (`<repo>-wt-*`, `<repo>.wt`, ad-hoc clones): they clutter a folder the owner actually looks at, escape every cleanup sweep, and rot.
+
+2. **Cut from a just-fetched base.** `git fetch origin` immediately before `git worktree add .claude/worktrees/<slug> -b <type>/<slug> origin/main`. A worktree cut from a stale ref is where "mystery" merge conflicts and silently stalled merges begin.
+
+3. **Check for overlap before cutting.** `gh pr list --state open` — if an open PR touches the same files, continue inside that work's own branch/worktree or sequence behind it; never stack a parallel PR that will conflict with one already in flight.
+
+4. **A worktree dies with its PR.** The moment the PR merges: `git worktree remove <path>`, then delete its local branch. At session start, run `git worktree prune` and remove any worktree whose branch has fully landed and whose tree is clean; leave dirty ones alone and flag them. A machine-level janitor (a scheduled task on the owner's machine running `worktree-janitor.sh`) backstops this sweep daily, but the session that opened a worktree owns its cleanup.
