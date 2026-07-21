@@ -427,21 +427,16 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: {
   const [viewMode, setViewMode] = useState<'list' | 'map'>((searchParams.get("view") as 'list' | 'map') || 'map');
   const [mode, setMode] = useState<MapMode>(modeImplied.mode);
 
-  // Switch mode together with its companion filters — the mode is only
-  // meaningful with them (library = your pins via status filters; discover
-  // hides what you already saved). Single entry point for the page-level
-  // toggle and for Clear-all restoring the current mode's baseline.
-  const switchMode = useCallback((newMode: Exclude<MapMode, null>) => {
+  // Switch mode with its companion filters — the mode is only meaningful with
+  // them (library = your pins via status filters; discover hides what you saved;
+  // All / null = the whole world, saved/visited included). Single entry point
+  // for the page toggle and for Clear-all restoring the current mode's baseline.
+  const switchMode = useCallback((newMode: MapMode) => {
     setMode(newMode);
-    if (newMode === 'discover') {
-      setStatusFilters([]);
-      setHideSaved(true);
-      setHideVisited(true);
-    } else {
-      setStatusFilters(['visited', 'saved', 'pending']);
-      setHideSaved(false);
-      setHideVisited(false);
-    }
+    const isDiscover = newMode === 'discover';
+    setStatusFilters(newMode === 'library' ? ['visited', 'saved', 'pending'] : []);
+    setHideSaved(isDiscover);
+    setHideVisited(isDiscover);
   }, []);
 
   // Adopt mode deep-links that arrive while already mounted (e.g. the nav

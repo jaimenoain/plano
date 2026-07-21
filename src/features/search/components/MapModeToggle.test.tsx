@@ -32,12 +32,22 @@ describe('MapModeToggle', () => {
     cleanup();
   });
 
-  it('shows Discover as active when no mode is chosen yet', () => {
+  it('shows All as active when no mode is chosen yet', () => {
     render(<MapModeToggle name="test" />);
 
     // SegmentedControl marks the active option with the primary text class.
-    const discover = screen.getByText('Discover');
-    expect(discover.className).toContain('text-text-primary');
+    const all = screen.getByText('All');
+    expect(all.className).toContain('text-text-primary');
+  });
+
+  it('returns to All (null) when the All segment is clicked', () => {
+    (useBuildingSearchContext as Mock).mockReturnValue({ mode: 'discover', switchMode });
+
+    render(<MapModeToggle name="test" />);
+
+    fireEvent.click(screen.getByText('All'));
+
+    expect(switchMode).toHaveBeenCalledWith(null);
   });
 
   it('switches to My Library for a signed-in user', () => {

@@ -261,7 +261,7 @@ function SearchPageContent() {
         placeholder="Search..."
         className="flex-1"
       />
-      <MapControls />
+      <MapControls compact />
     </div>
   );
 
@@ -288,26 +288,28 @@ function SearchPageContent() {
         */}
         <div className="absolute bottom-0 left-0 top-0 z-20 hidden w-search-serp min-h-0 flex-col border-r border-border-default bg-surface-card transition-all duration-300 md:flex">
 
-          {/* Sidebar search header — solid background, no backdrop blur needed */}
-          <div className="p-4 border-b border-border-default flex items-center gap-2">
-            <DiscoverySearchInput
-              value={searchValue}
-              onSearchChange={handleSearchChange}
-              onLocationSelect={handleLocationSelect}
-              onSuggestionsChange={setSuggestions}
-              disableDropdown={true}
-              showMixedEntitySuggestions={false}
-              placeholder="Search buildings, people, companies..."
-              className="flex-1"
-            />
-            {/* Desktop only — the sidebar is merely CSS-hidden on mobile; the
-                shared BuildingSearchProvider means duplicate mounts no longer
-                clobber the URL, but there is no reason to mount two drawers. */}
-            {!isMobile && <MapControls />}
-          </div>
+          {/* Sidebar search header — search + filters and the All / Discover /
+              My Library switch form one grouped block so the destination
+              toggle reads as part of the query controls, not a detached band. */}
+          <div className="p-4 border-b border-border-default space-y-3">
+            <div className="flex items-center gap-2">
+              <DiscoverySearchInput
+                value={searchValue}
+                onSearchChange={handleSearchChange}
+                onLocationSelect={handleLocationSelect}
+                onSuggestionsChange={setSuggestions}
+                disableDropdown={true}
+                showMixedEntitySuggestions={false}
+                placeholder="Search buildings, people, companies..."
+                className="flex-1"
+              />
+              {/* Desktop only — the sidebar is merely CSS-hidden on mobile; the
+                  shared BuildingSearchProvider means duplicate mounts no longer
+                  clobber the URL, but there is no reason to mount two drawers. */}
+              {!isMobile && <MapControls />}
+            </div>
 
-          {/* Discover / My Library — page-level destination switch, always visible */}
-          <div className="border-b border-border-default p-4">
+            {/* All / Discover / My Library — page-level destination switch */}
             <MapModeToggle name="map-mode-desktop" />
           </div>
 
