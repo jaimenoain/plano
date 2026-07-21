@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { FilterTrigger } from './FilterTrigger';
 import {
   Sheet,
   SheetContent,
@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/accordion';
 import type { UserSearchResult } from '@/features/search/hooks/useUserSearch';
 
-export function FilterDrawer() {
+export function FilterDrawer({ compact = false }: { compact?: boolean }) {
   const {
     statusFilters: currentStatus,
     setStatusFilters,
@@ -280,19 +280,7 @@ export function FilterDrawer() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-9 w-9 relative bg-surface-card/90 backdrop-blur-xs border border-border-default rounded-none hover:bg-surface-muted"
-          aria-label="Filters"
-        >
-          <ListFilter className="h-4 w-4" />
-          {activeFilterCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-brand-primary text-[8px] text-brand-primary-foreground">
-              {activeFilterCount}
-            </span>
-          )}
-        </Button>
+        <FilterTrigger compact={compact} count={activeFilterCount} />
       </SheetTrigger>
       <SheetContent side="right" className="w-[min(340px,calc(100vw-2rem))] sm:w-[380px] overflow-y-auto">
         <SheetHeader className="flex flex-row items-center justify-between space-y-0">
