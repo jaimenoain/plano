@@ -25,6 +25,7 @@ import {
   Trash2,
   Trophy,
   UserCircle,
+  UserPlus,
   Users,
   UsersRound,
   type LucideIcon,
@@ -67,6 +68,7 @@ export const communityItems: AdminNavItem[] = [
   { title: "Ambassador Coverage", url: "/admin/ambassadors/coverage", icon: Globe2 },
   { title: "Campaigns", url: "/admin/ambassadors/campaigns", icon: Target },
   { title: "Feedback", url: "/admin/feedback", icon: MessageSquare },
+  { title: "Waiting List", url: "/admin/waitlist", icon: UserPlus },
 ];
 
 export const awardsItems: AdminNavItem[] = [

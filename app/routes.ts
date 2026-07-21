@@ -79,6 +79,7 @@ export default [
     route("/admin/system", "pages/AdminSystemPlaceholder.tsx"),
     route("/admin/api-requests", "features/admin/pages/ApiRequests.tsx"),
     route("/admin/feedback", "features/admin/pages/Feedback.tsx"),
+    route("/admin/waitlist", "features/admin/pages/Waitlist.tsx"),
     route("/admin/events", "features/admin/pages/AdminEvents.tsx"),
     route("/admin/programme", "features/admin/pages/ProgrammeRedirect.tsx"),
     route("/admin/programme/health", "features/admin/pages/ProgrammeHealth.tsx"),
