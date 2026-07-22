@@ -95,7 +95,7 @@ Protects against losing *work* (stalled or mis-merged PRs). Both are quick setti
 
 ## Phase 4 — Hand-over quality (principles 10, 11)
 
-- [ ] **4.1 — Charter ↔ ADR reconciliation.** Update the charter's "In practice" pointers to
+- [x] **4.1 — Charter ↔ ADR reconciliation.** Update the charter's "In practice" pointers to
   plano's real ADR numbers (or add a crosswalk table), resolving all 17 dangling ADR citations
   and the §15 Product Change Protocol reference. Confirm `docs/decisions/README.md` is complete.
 - [ ] **4.2 — ADR backfill.** Record existing-but-undocumented mechanisms as ADRs: the

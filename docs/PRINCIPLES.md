@@ -9,7 +9,7 @@ change to the system can be tested against them.
 _how to act on a task_, and CI enforces what can be enforced. A proposed
 change that serves no principle — or fights one — needs the owner's explicit
 sign-off, surfaced as a business decision. Changing a principle itself
-requires an ADR that supersedes [ADR-0036](decisions/0036-principles-charter.md).
+requires an ADR that supersedes [ADR-0008](decisions/0008-adopt-principles-charter.md).
 
 ---
 
@@ -22,7 +22,8 @@ Questions to the owner are business questions, in plain English, answerable
 in five seconds with a yes or no.
 
 _In practice:_ `.cursor/rules/06-agent-behaviour.mdc` §3 (make the call,
-ask only when it matters), ADR-0014 (agent-first manual tasks).
+ask only when it matters) plus the user-level operating instructions — encoded
+behaviourally, no plano ADR.
 
 ## 2. Owner time is the project's scarcest input
 
@@ -33,7 +34,9 @@ Every UAT request arrives with an evidence pack — the link to click, what to
 expect, screenshots — so the sitting takes minutes and tests the business
 claim, nothing else.
 
-_In practice:_ ADR-0015 (automation-first UAT), ADR-0019 (risk-based UAT).
+_In practice:_ the automation-first, risk-based UAT convention in
+`docs/project_start/04-writing-the-roadmap.md` — followed but not yet recorded as a
+plano ADR (backfill is roadmap task 4.2).
 
 ## 3. Permission is business consent, not technical consent
 
@@ -56,8 +59,8 @@ change is a _deployment_ decision (staged deploys, one-sentence promotion,
 agent-drafted release notes), never a git decision. Drift is a function of
 branch lifetime, so branch lifetime is kept near zero.
 
-_In practice:_ `.cursor/rules/06-agent-behaviour.mdc` §16, ADR-0017/0018
-(clean-branch loop), ADR-0020/0028 (auto-merge on green), ADR-0035
+_In practice:_ `AGENTS.md` §5 (ephemeral single-concern PRs, no human merge step),
+ADR-0005 + ADR-0011 (auto-merge on green, fail-closed preflight), ADR-0007
 (worktrees only for parallel sessions, dying with their PR).
 
 ## 5. Gates are boring; judgment is advisory
@@ -69,8 +72,8 @@ full e2e, subjective quality) runs on the nightly tier and files issues
 instead of blocking merges. A red gate is never cleared by weakening the
 gate.
 
-_In practice:_ ADR-0001 (guardrails policy), ADR-0021 (no strict status
-checks), ADR-0031 (nightly heavy tier).
+_In practice:_ the guardrails posture across ADR-0003/0006/0010/0013 (no single
+plano ADR), ADR-0010 (no strict status checks), ADR-0006 (nightly heavy tier).
 
 ## 6. Frugal by default
 
@@ -79,8 +82,8 @@ earned yet. The PR tier runs only cheap static checks; everything heavy runs
 nightly and skips itself when `main` has not moved; scheduled jobs run daily,
 not per-event.
 
-_In practice:_ ADR-0025 (CI cost posture), ADR-0031/0033 (nightly heavy
-tier, static-only PR tier).
+_In practice:_ ADR-0006 (nightly heavy tier that self-skips when `main` has not
+moved, and the static-only PR tier) — plano folds the CI-cost posture into ADR-0006.
 
 ## 7. Data is sacred; code is expendable
 
@@ -90,13 +93,16 @@ is preceded by an automatic restore point; point-in-time recovery is
 verified during project setup; destructive migrations are rehearsed against
 a local copy before touching production.
 
+_In practice:_ ADR-0012 (data-safety rails — scheduled encrypted backups plus a
+pre-destructive-migration restore point on the free tier).
+
 ## 8. The system watches production, not just the pipeline
 
 The owner must never be the person who discovers the live site is broken —
 customers reporting to the CEO is the most expensive error channel there is.
 Runtime errors and uptime feed the same find-and-fix loop as CI failures.
 
-_In practice:_ ADR-0008 (production error tracking) plus the scheduled
+_In practice:_ ADR-0014 (production error tracking) plus the scheduled
 self-repair loop (principle 9).
 
 ## 9. The system repairs and maintains itself on a clock
@@ -106,9 +112,9 @@ workflows, drifted repo settings: all of these are found and fixed by
 scheduled runs, not by waiting for a human to start a session. Unattended
 rot is a defect of the system, never of the owner.
 
-_In practice:_ the nightly tier's failure issues (ADR-0031), the session
-pipeline health check (`06-agent-behaviour.mdc` §0), the branch sweep
-(ADR-0020/0025).
+_In practice:_ the nightly tier's failure issues (ADR-0006), the session
+pipeline-health check (`06-agent-behaviour.mdc` §0, recorded as ADR-0013), the
+branch sweep (ADR-0005 plus the daily `sweep-merged-branches` workflow).
 
 ## 10. The repo is the only memory
 
@@ -117,8 +123,9 @@ project state that lives only in a conversation is already lost. Everything
 a future agent session — or a future human developer — needs is in the
 repository: PRD, data contract, ADRs, status file, roadmaps.
 
-_In practice:_ `docs/AI_STATUS.md` discipline (§9), ADR discipline (§14),
-the Product Change Protocol (§15).
+_In practice:_ `docs/AI_STATUS.md` discipline (`06-agent-behaviour.mdc` §9), ADR
+discipline (`AGENTS.md` "Boring technology" plus `docs/decisions/`), the Product
+Change Protocol (`docs/AGENT_GUIDE.md`).
 
 ## 11. Built to be handed over
 
@@ -128,5 +135,41 @@ every structural choice. The success test: a professional developer taking
 over the codebase should be productive quickly — and should not want to
 rebuild it.
 
-_In practice:_ the boring-technology rule (§14), the debt ratchet and
-coverage floor (ADR-0001/0006), the dead-code gate (ADR-0007).
+_In practice:_ the boring-technology rule (`AGENTS.md` "Boring technology"), the
+debt ratchet (ADR-0003; a coverage-floor ratchet is not yet built — roadmap task
+4.3), the dead-code gate (not yet built — roadmap task 4.3).
+
+---
+
+## Template → plano ADR crosswalk
+
+This charter was ported from the owner's `jaimenoain/template` repo, so its original
+_In practice:_ lines cited the **template's** ADR numbers. Plano keeps its own independent
+0001–0014 sequence (ADRs are never renumbered once accepted — ADR-0002). The prose above has
+been rewritten to plano's real pointers; this table records the lineage and is the canonical
+map for anyone comparing plano against the template. "Rules only" means the mechanism lives in
+`.cursor/rules/` / `AGENTS.md` rather than an ADR; "roadmap 4.x" means the plano ADR is a
+planned backfill.
+
+| Template ADR (as cited) | Subject | Plano resolution |
+|---|---|---|
+| ADR-0036 | principles charter | **ADR-0008** (adopt-principles-charter) |
+| ADR-0014 | agent-first manual tasks | rules only (`06-agent-behaviour.mdc` §3 + user-level ops) |
+| ADR-0015 | automation-first UAT | convention in `project_start/04-writing-the-roadmap.md`; ADR backfill = roadmap 4.2 |
+| ADR-0019 | risk-based UAT | as above — roadmap 4.2 |
+| ADR-0017 / 0018 | clean-branch loop | **ADR-0005** (auto-merge) + **ADR-0007** (worktree lifecycle) |
+| ADR-0020 / 0028 | auto-merge on green | **ADR-0005** + **ADR-0011** (fail-closed preflight) |
+| ADR-0035 | worktrees for parallel sessions | **ADR-0007** |
+| ADR-0001 | guardrails policy | posture across **ADR-0003 / 0006 / 0010 / 0013** (no single plano ADR) |
+| ADR-0021 | no strict status checks | **ADR-0010** |
+| ADR-0025 | CI cost posture | folded into **ADR-0006** |
+| ADR-0031 | nightly heavy tier / failure issues | **ADR-0006** |
+| ADR-0033 | static-only PR tier | folded into **ADR-0006** |
+| ADR-0008 | production error tracking | **ADR-0014** |
+| ADR-0006 | coverage-floor ratchet | not yet built — roadmap 4.3 |
+| ADR-0007 | dead-code gate | not yet built — roadmap 4.3 |
+
+Prose section pointers were template-numbered too and are corrected above: the
+boring-technology rule and ADR discipline live in `AGENTS.md` ("Boring technology") and
+`docs/decisions/`, and the Product Change Protocol lives in `docs/AGENT_GUIDE.md` — not in
+`06-agent-behaviour.mdc` §14/§15/§16 (that rules file ends at §14, worktrees).
