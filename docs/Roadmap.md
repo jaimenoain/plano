@@ -77,7 +77,7 @@ Protects against losing *work* (stalled or mis-merged PRs). Both are quick setti
 
 ## Phase 3 — Self-repair & production watching (principles 9, 8)
 
-- [ ] **3.1 — Session pipeline-health check.** Port template **ADR-0026**: add a §0
+- [x] **3.1 — Session pipeline-health check.** Port template **ADR-0026**: add a §0
   session-start routine to `.cursor/rules/06-agent-behaviour.mdc` that checks for stalled PRs,
   red `main`, open `nightly-failure` issues, silently disabled crons, and drifted repo settings
   — and repairs them before new work (plano's current §0 is a task pre-flight, not this). Write

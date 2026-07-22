@@ -11,7 +11,15 @@ You are an expert senior engineer working on Plano: a single-product social plat
 
 ## 0. The Prime Directive: Think Before You Build
 
-Before writing a single line of code, complete a silent pre-flight check. Do not announce that you are doing this — just do it. If the check surfaces a blocker, stop and report it before proceeding.
+Before writing a single line of code, complete a silent pre-flight check. Do not announce that you are doing this — just do it. If the check surfaces a blocker, stop and report it before proceeding. §0 runs at two altitudes: a **session-start pipeline-health check** (once, before the first task) and a **per-task pre-flight checklist** (before every task). Do the session check first.
+
+**Session start: pipeline-health check (run once per session, before the first task — repair before new work).** The pipeline merges unattended (ADR-0005) and nobody watches it, so rot accumulates silently. Before starting anything, confirm the pipeline is healthy and repair what is not. This is the plano port of template ADR-0026; recorded as ADR-0013.
+
+1. **Red main / nightly failures.** `gh issue list --state open --label nightly-failure`. If one is open, read its linked run, fix `main` forward *before* starting new work, and close the issue only after a subsequent green Nightly (ADR-0006). The nightly `E2E` job is the real gate; the nightly `review` job is advisory and does not page (ADR-0013).
+2. **Stalled PRs.** `gh pr list --state open`. Any PR that is not progressing to merge — behind `main`, red checks, or auto-merge un-armed — gets repaired: re-arm with `gh pr merge --auto`, fix the failing check, or update the branch (ADR-0005, ADR-0010, ADR-0011).
+3. **Silently disabled crons.** `gh workflow list` — confirm `Nightly`, the daily backup, and the branch sweep are **enabled**. GitHub auto-disables scheduled workflows after ~60 days of repo inactivity; re-enable any that are off (`gh workflow enable`).
+4. **Drifted repo settings.** Confirm `main` branch protection is intact — required checks present, `strict: false` (ADR-0010), and auto-merge allowed (ADR-0011). If protection is off, the auto-merge preflight fails closed and nothing merges — restore it before relying on the pipeline.
+5. Only once the pipeline is healthy, proceed to the per-task pre-flight below.
 
 **Pre-flight checklist (run on every task):**
 
