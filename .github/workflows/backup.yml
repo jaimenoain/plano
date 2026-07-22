@@ -81,17 +81,42 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
 
-      - name: Dump roles, schema, and data (Supabase CLI)
+      - name: Verify connection target (prints no secrets)
+        if: steps.gate.outputs.run == 'true'
+        # Parses SUPABASE_DB_URL and echoes only user/host/port/db — never the
+        # password — so a misconfigured secret fails here in seconds with a clear
+        # message instead of deep inside an opaque `supabase db dump` container error.
+        run: |
+          node -e '
+            let u;
+            try { u = new URL(process.env.SUPABASE_DB_URL || ""); }
+            catch { console.log("::error::SUPABASE_DB_URL is not a valid URL — check for unencoded special characters in the password (reset the DB password for a clean one)."); process.exit(1); }
+            console.log(`Connecting as user="${u.username}" host="${u.hostname}" port="${u.port || "5432"}" db="${u.pathname.slice(1)}"`);
+            if (/pooler\.supabase\.com$/.test(u.hostname) && !u.username.includes(".")) {
+              console.log(`::error::The Session pooler requires the username "postgres.<project-ref>" (e.g. postgres.lnqxtomyucnnrgeapnzt), but SUPABASE_DB_URL uses just "${u.username}". Copy the Session pooler URI from Supabase and update the secret.`);
+              process.exit(1);
+            }
+          '
+
+      - name: Dump schema and data, roles best-effort (Supabase CLI)
         if: steps.gate.outputs.run == 'true'
         run: |
           set -euo pipefail
           mkdir -p backup
-          # Supabase's own CLI handles the free-tier realities raw pg_dump does
-          # not: PostGIS / spatial_ref_sys and the supabase_admin-owned auth &
-          # storage schemas. Three files restore cleanly in order.
-          npx --yes supabase db dump --db-url "$SUPABASE_DB_URL" --role-only -f backup/roles.sql
+          # Supabase's own CLI handles the free-tier realities raw pg_dump does not:
+          # PostGIS / spatial_ref_sys and the supabase_admin-owned auth & storage
+          # schemas. Schema + data are the restorable core and go through the pooler.
           npx --yes supabase db dump --db-url "$SUPABASE_DB_URL" -f backup/schema.sql
           npx --yes supabase db dump --db-url "$SUPABASE_DB_URL" --use-copy --data-only -f backup/data.sql
+          # Roles/globals need pg_dumpall + superuser and are frequently not permitted
+          # through the pooler on a hosted project; Supabase recreates its managed roles
+          # on restore. Best-effort so a roles-only failure can't sink the whole backup.
+          if npx --yes supabase db dump --db-url "$SUPABASE_DB_URL" --role-only -f backup/roles.sql; then
+            echo "roles captured."
+          else
+            echo "::warning::Role dump not permitted (pg_dumpall through the pooler) — backing up schema + data only."
+            printf -- '-- roles not captured: pg_dumpall is not permitted through the Supabase pooler; managed roles are recreated by Supabase on restore.\n' > backup/roles.sql
+          fi
 
       - name: Bundle and encrypt
         if: steps.gate.outputs.run == 'true'
