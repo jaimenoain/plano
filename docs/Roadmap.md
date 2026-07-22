@@ -98,9 +98,12 @@ Protects against losing *work* (stalled or mis-merged PRs). Both are quick setti
 - [x] **4.1 — Charter ↔ ADR reconciliation.** Update the charter's "In practice" pointers to
   plano's real ADR numbers (or add a crosswalk table), resolving all 17 dangling ADR citations
   and the §15 Product Change Protocol reference. Confirm `docs/decisions/README.md` is complete.
-- [ ] **4.2 — ADR backfill.** Record existing-but-undocumented mechanisms as ADRs: the
+- [x] **4.2 — ADR backfill.** Record existing-but-undocumented mechanisms as ADRs: the
   data-layer import boundary, the raw-hex / design-token guard, the gitleaks secret scan, the
-  types-staleness gate, and the risk-based-UAT convention (principle 2).
+  types-staleness gate, and the risk-based-UAT convention (principle 2). **→ Done 2026-07-23:
+  ADR-0015 (import boundary), 0016 (design-token guard), 0017 (gitleaks scan), 0018
+  (types-staleness gate), 0019 (risk-based UAT); README index + PRINCIPLES.md crosswalk
+  reconciled to the new numbers.**
 - [ ] **4.3 — (Optional) additional hand-over gates.** Port, if wanted: a dead-code gate (knip,
   template ADR-0007), a contract-drift check (template ADR-0012), and a coverage-floor ratchet
   (template ADR-0006). Nice-to-haves — plano is already well-ratcheted; drop any that aren't
