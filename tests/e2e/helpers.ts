@@ -61,11 +61,14 @@ export async function openFirstSearchResult(page: Page, query: string): Promise<
     .getAttribute("href");
   if (!href) throw new Error("drawer has no 'Open full profile' href");
   // /building/:id server-redirects to the canonical
-  // /architecture/:country/:city/:id/:slug. A default goto (waitUntil "load")
-  // rejects with net::ERR_ABORTED when that redirect supersedes the in-flight
-  // navigation, so resolve on "commit" and confirm the final URL + paint below.
-  await page.goto(href, { waitUntil: "commit" });
-  await page.waitForURL(/\/(building|architecture)\//);
+  // /architecture/:country/:city/:id/:slug. That redirect aborts the in-flight
+  // document navigation, so page.goto rejects with net::ERR_ABORTED before it
+  // can commit — a benign race: the redirect itself proceeds. Swallow only that
+  // error and confirm the resulting canonical URL + paint below.
+  await page.goto(href, { waitUntil: "commit" }).catch((err) => {
+    if (!/ERR_ABORTED/.test(String(err))) throw err;
+  });
+  await page.waitForURL(/\/(building|architecture)\//, { timeout: 30_000 });
   await page.waitForLoadState("domcontentloaded");
   return name;
 }
