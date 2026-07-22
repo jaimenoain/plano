@@ -37,6 +37,10 @@ export async function login(page: Page, email: string, password: string) {
 export async function openFirstSearchResult(page: Page, query: string): Promise<string> {
   await page.goto("/search");
   const input = page.getByPlaceholder("Search buildings, people, companies...");
+  // /search is map-heavy and slow to become interactive against production;
+  // wait for the input explicitly so a slow first paint fails clearly here
+  // rather than as an opaque fill() timeout.
+  await expect(input).toBeVisible({ timeout: 30_000 });
   await input.fill(query);
   await input.press("Enter");
 
@@ -56,8 +60,12 @@ export async function openFirstSearchResult(page: Page, query: string): Promise<
     .getByRole("link", { name: "Open full profile" })
     .getAttribute("href");
   if (!href) throw new Error("drawer has no 'Open full profile' href");
-  await page.goto(href);
-  // /building/:id redirects to the canonical /architecture/:country/:city/:id/:slug.
+  // /building/:id server-redirects to the canonical
+  // /architecture/:country/:city/:id/:slug. A default goto (waitUntil "load")
+  // rejects with net::ERR_ABORTED when that redirect supersedes the in-flight
+  // navigation, so resolve on "commit" and confirm the final URL + paint below.
+  await page.goto(href, { waitUntil: "commit" });
   await page.waitForURL(/\/(building|architecture)\//);
+  await page.waitForLoadState("domcontentloaded");
   return name;
 }
