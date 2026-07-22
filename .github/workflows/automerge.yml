@@ -2,9 +2,13 @@ name: Auto-merge
 
 # Arms GitHub-native auto-merge on every ready (non-draft) PR, so a mergeable PR
 # never lingers waiting for a manual `gh pr merge --auto`. GitHub still holds the
-# merge until every required status check is green and the branch is up to date;
-# the head branch is deleted on merge (repo setting). Human review is not required
+# merge until every required status check is green; the head branch is deleted on
+# merge (repo setting). Human review is not required
 # (see docs/decisions/0005-auto-merge-on-green.md).
+#
+# Fail-closed: a preflight refuses to arm unless `main` is actually protected, so a
+# dropped or misconfigured protection surfaces as a failed job instead of silently
+# arming auto-merge onto an ungated main (see docs/decisions/0011-fail-closed-automerge-preflight.md).
 
 on:
   pull_request:
@@ -22,10 +26,25 @@ jobs:
     # Draft PRs are excluded; `ready_for_review` re-fires this when a draft opens up.
     if: github.event.pull_request.draft == false
     steps:
+      - name: Require main to be protected (fail closed)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Refuse to arm auto-merge unless main's branch protection is actually on.
+        # If protection is ever dropped, the required checks no longer gate the merge —
+        # fail loudly here rather than silently arm onto an unprotected main (template ADR-0028).
+        run: |
+          protected=$(gh api "repos/${{ github.repository }}/branches/main" --jq '.protected')
+          if [ "$protected" != "true" ]; then
+            echo "::error::main branch protection is OFF — refusing to arm auto-merge."
+            exit 1
+          fi
+          echo "main is protected; proceeding to arm auto-merge."
+
       - name: Enable auto-merge (squash)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
         # Idempotent: a no-op if auto-merge is already armed or the PR is already
-        # merged/closed. Never fails the PR — arming is best-effort convenience.
+        # merged/closed. The fail-closed gate is the preflight above; this keeps `|| true`
+        # only so a benign already-armed/closed no-op doesn't fail the job.
         run: gh pr merge --auto --squash "$PR_URL" || true
