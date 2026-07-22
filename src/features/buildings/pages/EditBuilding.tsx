@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
+import { NavigationBlocker } from "@/components/common/NavigationBlocker";
 import {
   BuildingFormSection,
   BuildingPageHeader,
@@ -40,6 +41,19 @@ interface NearbyBuilding {
   dist_meters: number;
 }
 
+/** Stable signature of the location fields for dirty detection. */
+function serializeLocation(loc: LocationData): string {
+  return JSON.stringify({
+    lat: loc.lat,
+    lng: loc.lng,
+    address: loc.address,
+    city: loc.city,
+    country: loc.country,
+    countryCode: loc.countryCode,
+    precision: loc.precision,
+  });
+}
+
 export const meta: MetaFunction = () => [
   { title: "Edit Building | Plano" },
   { name: "robots", content: "noindex, nofollow" },
@@ -59,6 +73,15 @@ export default function EditBuilding() {
   const [buildingSlug, setBuildingSlug] = useState<string | null>(null);
   const [buildingShortId, setBuildingShortId] = useState<number | null>(null);
   const [primaryDesignCreditRowIds, setPrimaryDesignCreditRowIds] = useState<string[]>([]);
+  const [formDirty, setFormDirty] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
+  const locationSnapshotRef = useRef<string | null>(null);
+
+  const locationDirty =
+    !!locationData &&
+    locationSnapshotRef.current !== null &&
+    serializeLocation(locationData) !== locationSnapshotRef.current;
+  const isDirty = !justSaved && (formDirty || locationDirty);
 
   useEffect(() => {
     if (authLoading) return;
@@ -82,6 +105,9 @@ export default function EditBuilding() {
       setBuildingShortId(null);
       setPrimaryDesignCreditRowIds([]);
       setDuplicates([]);
+      setFormDirty(false);
+      setJustSaved(false);
+      locationSnapshotRef.current = null;
 
       let query = supabase.from('buildings').select('*');
 
@@ -195,7 +221,7 @@ export default function EditBuilding() {
       const precision: LocationData["precision"] =
         precRaw === "approximate" || precRaw === "exact" ? precRaw : "exact";
 
-      setLocationData({
+      const loadedLocation: LocationData = {
           lat,
           lng,
           address: data.address || "",
@@ -203,7 +229,9 @@ export default function EditBuilding() {
           country: data.country,
           countryCode: data.country_code,
           precision,
-      });
+      };
+      locationSnapshotRef.current = serializeLocation(loadedLocation);
+      setLocationData(loadedLocation);
 
     } catch (_error) {
 toast.error("Error loading building");
@@ -246,6 +274,21 @@ toast.error("Error loading building");
     const timer = setTimeout(checkDuplicates, 800);
     return () => clearTimeout(timer);
   }, [locationData?.lat, locationData?.lng, buildingId]);
+
+  // After a successful save, redirect once dirty state has cleared so NavigationBlocker allows it.
+  useEffect(() => {
+    if (justSaved && buildingId) {
+      navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
+    }
+  }, [justSaved, buildingId, buildingSlug, buildingShortId, navigate]);
+
+  const handleCancel = (): void => {
+    if (buildingId) {
+      navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
+    } else {
+      navigate(-1);
+    }
+  };
 
   const handleSubmit = async (formData: BuildingFormData): Promise<void> => {
     if (!locationData || !buildingId) return undefined;
@@ -314,8 +357,9 @@ toast.error("Failed to update building");
           }
 
       toast.success("Building updated successfully");
-      // Locality URL not available: buildingSlug/buildingShortId state does not include locality_country_code/city_slug — requires initial building fetch to also load locality fields
-      navigate(getBuildingUrl(buildingId, buildingSlug, buildingShortId));
+      // Clear dirty state so NavigationBlocker doesn't intercept the post-save redirect;
+      // the navigation itself happens in the justSaved effect below.
+      setJustSaved(true);
 
     } catch (_error) {
 toast.error("Unexpected error");
@@ -338,6 +382,7 @@ toast.error("Unexpected error");
 
   return (
     <AppLayout title="Edit Building" showBack>
+      <NavigationBlocker isDirty={isDirty} />
       <div className="w-full min-w-0 max-w-2xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
         <BuildingPageHeader
           title="Edit Building"
@@ -375,7 +420,7 @@ toast.error("Unexpected error");
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            className="h-7 text-xs border-feedback-destructive/50 text-feedback-destructive hover:bg-feedback-destructive hover:text-white"
+                                            className="h-7 text-xs border-feedback-destructive/50 text-feedback-destructive hover:bg-feedback-destructive hover:text-surface-default"
                                             onClick={() => navigate(`/admin/merge/building/${buildingId}/${d.id}`)}
                                             type="button"
                                         >
@@ -390,17 +435,17 @@ toast.error("Unexpected error");
                 )}
         </BuildingFormSection>
 
-        <BuildingFormSection title="Building details">
-            <BuildingForm
-              initialValues={initialValues}
-              onSubmit={handleSubmit}
-              isSubmitting={isSubmitting}
-              submitLabel="Update Building"
-              mode="edit"
-              buildingId={buildingId ?? undefined}
-              shortId={buildingShortId}
-            />
-        </BuildingFormSection>
+        <BuildingForm
+          initialValues={initialValues}
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+          submitLabel="Update Building"
+          mode="edit"
+          buildingId={buildingId ?? undefined}
+          shortId={buildingShortId}
+          onCancel={handleCancel}
+          onDirtyChange={setFormDirty}
+        />
       </div>
     </AppLayout>
   );

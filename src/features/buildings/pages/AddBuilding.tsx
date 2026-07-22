@@ -14,9 +14,10 @@ import { Loader2, MapPin, Layers, CheckCircle2, Search } from "lucide-react";
 import MapGL, { Marker, NavigationControl, MapMouseEvent } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useNavigate, useSearchParams, type MetaFunction } from "react-router";
+import { useLocation, useNavigate, useSearchParams, type MetaFunction } from "react-router";
 import { toast } from "sonner";
 import { AddBuildingDetails } from "../components/AddBuildingDetails";
+import { AddBuildingAuthGate, AddBuildingAuthLoading } from "../components/AddBuildingAuthGate";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -71,8 +72,9 @@ export default function AddBuilding() {
   // Guards against re-running the name-driven lookup for a name we already searched.
   const lastAutoSearchedName = useRef<string | null>(null);
 
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const [mapsLoaded, setMapsLoaded] = useState(false);
   const [isMapClient, setIsMapClient] = useState(false);
@@ -416,6 +418,15 @@ toast.error("Location search failed. Please click on the map to set the location
         setShowDuplicateDialog(false);
     }
   };
+
+  if (authLoading) {
+    return <AddBuildingAuthLoading />;
+  }
+
+  if (!user) {
+    const redirectTarget = encodeURIComponent(`${location.pathname}${location.search}`);
+    return <AddBuildingAuthGate redirectTarget={redirectTarget} />;
+  }
 
   if (step === 2 && finalLocationData) {
     return (

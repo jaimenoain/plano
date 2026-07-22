@@ -28,42 +28,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TagInput } from "@/components/ui/tag-input";
 import { Textarea } from "@/components/ui/textarea";
 
-const SIZE_CATEGORY_OPTIONS = [
-  { label: "XS", value: "xs" },
-  { label: "S",  value: "s" },
-  { label: "M",  value: "m" },
-  { label: "L",  value: "l" },
-  { label: "XL", value: "xl" },
-  { label: "XXL", value: "xxl" },
-];
-
-const SIZE_REFERENCE_ROWS = [
-  { label: "XS",  gfa: "< 50 m²" },
-  { label: "S",   gfa: "50 – 500 m²" },
-  { label: "M",   gfa: "500 – 2,000 m²" },
-  { label: "L",   gfa: "2,000 – 10,000 m²" },
-  { label: "XL",  gfa: "10,000 – 50,000 m²" },
-  { label: "XXL", gfa: "50,000+ m²" },
-];
-
-const STATUS_OPTIONS = ['Built', 'Under Construction', 'Unbuilt', 'Lost', 'Temporary'];
-const ACCESS_LEVEL_OPTIONS = [
-  { label: 'Public', value: 'public' },
-  { label: 'Private', value: 'private' },
-  { label: 'Restricted', value: 'restricted' },
-  { label: 'Commercial', value: 'commercial' }
-];
-const ACCESS_LOGISTICS_OPTIONS = [
-  { label: 'Walk-in', value: 'walk-in' },
-  { label: 'Booking Required', value: 'booking_required' },
-  { label: 'Tour Only', value: 'tour_only' },
-  { label: 'Exterior Only', value: 'exterior_only' }
-];
-const ACCESS_COST_OPTIONS = [
-  { label: 'Free', value: 'free' },
-  { label: 'Paid', value: 'paid' },
-  { label: 'Customers Only', value: 'customers_only' }
-];
+import {
+  SIZE_CATEGORY_OPTIONS,
+  SIZE_REFERENCE_ROWS,
+  STATUS_OPTIONS,
+  ACCESS_LEVEL_OPTIONS,
+  ACCESS_LOGISTICS_OPTIONS,
+  ACCESS_COST_OPTIONS,
+} from "./buildingFormOptions";
 
 export interface BuildingFormData {
   name: string;
@@ -98,12 +70,17 @@ interface BuildingFormProps {
   mode?: 'create' | 'edit';
   buildingId?: string;
   shortId?: number | null;
+  /** When provided, renders a Cancel button in the action bar. */
+  onCancel?: () => void;
+  /** Emits whether the form fields differ from their initial values. */
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { ArchitectStatement } from "./ArchitectStatement";
+import { useBuildingFormDirty } from "./useBuildingFormDirty";
 
-export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode = 'create', buildingId, shortId }: BuildingFormProps) {
+export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode = 'create', buildingId, shortId, onCancel, onDirtyChange }: BuildingFormProps) {
   const { honeypotProps, isBot } = useHoneypot();
   const { profile } = useUserProfile();
 
@@ -177,6 +154,17 @@ return true; // Fallback to true on error to avoid blocking UX unnecessarily
   );
   const [showAliases, setShowAliases] = useState(
     mode === 'create' ? true : (!!initialValues.alt_name || (initialValues.aliases?.length ?? 0) > 0)
+  );
+
+  const isDirty = useBuildingFormDirty(
+    initialValues,
+    {
+      name, alt_name, aliases, year_completed, century_manual, status,
+      access_level, access_logistics, access_cost, access_notes, architect_statement,
+      size_category, size_sqm, height_m, storeys, designCreditEntities,
+      functional_category_id, functional_typology_ids, selected_attribute_ids,
+    },
+    onDirtyChange,
   );
 
   const { data: categories, isLoading: isLoadingCategories } = useQuery({
@@ -381,7 +369,6 @@ toast.error("Failed to add attribute");
   };
 
   return (
-    <div className="max-w-2xl mx-auto w-full">
     <form onSubmit={handleSubmit} className="space-y-2">
       <BuildingFormSection title="Basics">
         <div className="space-y-2">
@@ -924,8 +911,20 @@ toast.error("Failed to add attribute");
 
       <input {...honeypotProps} />
 
-      <div className="flex items-center justify-end gap-3 pt-6 border-t border-border-default mt-6">
-        <Button type="submit" variant="default" disabled={isSubmitting}>
+      <div className="sticky bottom-0 z-10 -mx-4 mt-6 flex items-center justify-end gap-3 border-t border-border-default bg-surface-default/95 px-4 py-3 backdrop-blur-xs">
+        {mode === 'edit' && !isDirty && (
+          <span className="mr-auto text-xs text-text-secondary">No changes to save</span>
+        )}
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+            Cancel
+          </Button>
+        )}
+        <Button
+          type="submit"
+          variant="default"
+          disabled={isSubmitting || (mode === 'edit' && !isDirty)}
+        >
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin text-text-secondary" />
@@ -937,6 +936,5 @@ toast.error("Failed to add attribute");
         </Button>
       </div>
     </form>
-    </div>
   );
 }

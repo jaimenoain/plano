@@ -38,8 +38,9 @@ export default function Auth() {
   const [searchParams] = useSearchParams();
   const invitedBy = searchParams.get("invited_by");
   const postAuthRedirect = safeInternalRedirect(searchParams.get("redirect"));
-  
-  const [isSignUp, setIsSignUp] = useState(!!invitedBy);
+  const startInSignUp = searchParams.get("signup") === "1";
+
+  const [isSignUp, setIsSignUp] = useState(!!invitedBy || startInSignUp);
   const [isResetPassword, setIsResetPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
