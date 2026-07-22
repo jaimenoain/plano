@@ -22,9 +22,9 @@ E.g. `0001-initial-build.md`, `0002-billing-and-invoicing.md`.
 
 ## Index
 
-| #   | Roadmap                                          | Completed |
-| --- | ------------------------------------------------ | --------- |
-| —   | (none yet — the first close-out adds a row here) | —         |
+| #   | Roadmap                                                          | Completed  |
+| --- | ---------------------------------------------------------------- | ---------- |
+| [0001](0001-design-precision-programme.md) | Design Precision Programme — pixel-precision pass across all surfaces | 2026-07-22 |
 
 ## The reset scaffold
 
