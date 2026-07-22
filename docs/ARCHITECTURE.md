@@ -51,6 +51,13 @@ Browser ── SSR HTML + hydrated React app (Vercel)
 
 Tailwind CSS v4 with design tokens defined in CSS `@theme` in `src/index.css`, documented in [`DESIGN_TOKENS.md`](DESIGN_TOKENS.md). Raw palette classes (`bg-blue-500`) are forbidden; token aliases only. Shared primitives are shadcn/Radix in `src/components/ui/`.
 
+## Error tracking
+
+- Production runtime errors go to **Sentry** (`@sentry/react`) — see [decision 0014](decisions/0014-production-error-tracking.md).
+- Wiring: `initSentry()` in [`src/lib/sentry.ts`](../src/lib/sentry.ts) is called from `src/entry.client.tsx`; `setSentryUser()` runs in `src/root.tsx`; the route error boundaries (`AppErrorBoundary`, `WidgetErrorBoundary`, `MapErrorBoundary`) report through `captureErrorBoundaryException()`.
+- Gated on the **`VITE_SENTRY_DSN`** build-time env var (a Vercel Production variable). With no DSN — dev, preview, or a misconfigured deploy — `initSentry` is a **no-op**, so nothing is emitted.
+- Frugal by design: **errors only** (`tracesSampleRate` and both replay rates are `0` — no tracing, no session replay). `beforeSend` scrubs `token`/`access_token` params from breadcrumb URLs. **Client-side only** today; SSR (loader/action) capture is a deliberate future option.
+
 ## Quality gates
 
 Blocking on every PR (branch protection, admins included): Lint, Typecheck, Test + coverage floor, Build, Migrations lint, ESLint-warning ratchet, Secret scan, Types staleness, RLS coverage, and the Debt ratchet (`as any` count, file-size budgets, strict-TS allowlist). Advisory (visible, non-blocking): dependency audit, strict typecheck. The Playwright E2E suite and the AI review run nightly against `main`, not per PR (see [decision 0006](decisions/0006-nightly-heavy-tier.md)). Debt baselines only shrink — see [decision 0003](decisions/0003-ratchets-over-big-bang.md). Local mirror: `npm run check`; the full Definition of Done lives in [`AGENTS.md`](../AGENTS.md).

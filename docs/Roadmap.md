@@ -36,9 +36,11 @@ so.
   unrecoverable. Decide: **upgrade Supabase to a paid tier** (turns on daily backups + PITR),
   **or** tell the agent to set up **scripted daily backups** instead. **→ Owner chose scripted
   daily backups (2026-07-22); implemented in task 2.1.**
-- [ ] **0.2 — Sentry project + DSN (unblocks 3.2).** Create a Sentry project and hand the agent
+- [x] **0.2 — Sentry project + DSN (unblocks 3.2).** Create a Sentry project and hand the agent
   the DSN to set as `VITE_SENTRY_DSN` in Vercel, so live errors are actually captured. (Or say
-  "set up Sentry" and the agent walks you through the one signup step.)
+  "set up Sentry" and the agent walks you through the one signup step.) **→ Done 2026-07-22:
+  owner created the Sentry project + set `VITE_SENTRY_DSN` in Vercel Production; verified live (a
+  test exception reached the project's ingest endpoint).**
 - [ ] **0.3 — Anthropic credits.** Top up when convenient — the nightly AI-review job fails
   until then. No other action needed.
 
@@ -84,7 +86,7 @@ Protects against losing *work* (stalled or mis-merged PRs). Both are quick setti
   the plano ADR. Also diagnose the open nightly `E2E` failure (issue #1572) and make the
   `review` job treat Anthropic credit-exhaustion as a skip, not a hard failure, so benign
   causes stop paging.
-- [ ] **3.2 — Production error-tracking ADR + docs.** Gated on **0.2**. Port template
+- [x] **3.2 — Production error-tracking ADR + docs.** Gated on **0.2**. Port template
   **ADR-0008** shape: document Sentry (already wired client-side) in
   [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) and [`docs/RUNBOOK.md`](RUNBOOK.md), write the plano
   ADR, and confirm the prod DSN is live. Server-side (SSR) capture optional.

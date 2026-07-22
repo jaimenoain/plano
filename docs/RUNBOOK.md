@@ -93,6 +93,15 @@ Delete the local dump once the migration is confirmed good — it contains custo
 
 > The *automated* restore point (a hook that dumps on every destructive change) and verified PITR are deferred: **adopt the template's pattern once it lands** (it assumes a paid Supabase tier). On the free tier the scripted dump above is what ships. Upgrading Supabase to a paid tier + PITR supersedes rail 1.
 
+## Observability — production errors
+
+Runtime errors real users hit go to **Sentry** (`@sentry/react`; [ADR 0014](decisions/0014-production-error-tracking.md)). Where to look and how it's gated:
+
+- **See errors:** the Sentry project dashboard (issues are grouped by exception). Errors carry the authenticated user id (via `setSentryUser`) but no other PII.
+- **The one thing that turns it on:** the **`VITE_SENTRY_DSN`** environment variable in Vercel (Production scope). It is baked in at build time, so **setting or changing it needs a redeploy** to take effect. With no DSN, `initSentry()` ([`src/lib/sentry.ts`](../src/lib/sentry.ts)) is a no-op — dev and preview never emit, and a deploy missing the var silently captures nothing.
+- **Verify it's live:** load production, trigger a client error (e.g. in the console: `setTimeout(() => { throw new Error("sentry-test") }, 0)`), and confirm a request to `…ingest.…sentry.io/api/<project>/envelope/` fires (DevTools Network) and the event appears in Sentry.
+- **Scope:** client-side only, **errors only** — no performance tracing or session replay (all sample rates `0`, by design). SSR-side capture is not wired.
+
 ## When things break
 
 | Symptom | Do this |
@@ -103,4 +112,5 @@ Delete the local dump once the migration is confirmed good — it contains custo
 | E2E fails with `ACTIVE_USER_EMAIL / ACTIVE_USER_PASSWORD not set` | Add the QA credentials to `.env.local` |
 | Users see old JS chunks / weird hydration errors right after a deploy | The `__manifest` CDN-cache guard should prevent this (`scripts/patch-vercel-manifest-cache.js`, runs in `npm run build`) — if it recurs, check that the postbuild patch still ran in the Vercel build log |
 | App boots but every query fails | `.env.local` Supabase values missing/wrong — compare against `.env.example` |
+| Need to see a production runtime error | Check Sentry (see [Observability](#observability--production-errors)); if nothing is captured, confirm `VITE_SENTRY_DSN` is set in Vercel Production and the app was redeployed after it was set |
 | Something in the code contradicts the docs | Don't silently pick one: check `docs/AI_STATUS.md` (known issues, drift log) and log the drift there per `AGENTS.md` |

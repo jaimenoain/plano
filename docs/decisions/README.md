@@ -19,3 +19,4 @@ Format: context → decision → consequences. Keep them under a page.
 | [0011](0011-fail-closed-automerge-preflight.md) | Auto-merge preflight fails closed: refuse to arm when main is unprotected |
 | [0012](0012-data-safety-rails.md) | Data-safety rails on the free tier: scheduled encrypted backups + pre-destructive-migration restore point |
 | [0013](0013-session-pipeline-health-check.md) | Session-start pipeline-health check; the nightly AI review does not page |
+| [0014](0014-production-error-tracking.md) | Production error tracking via Sentry (client-side, errors-only) |
