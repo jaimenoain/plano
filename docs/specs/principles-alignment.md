@@ -2,9 +2,11 @@
 
 **Companion to:** [`docs/PRINCIPLES.md`](../PRINCIPLES.md) (the charter) and
 [ADR-0008](../decisions/0008-adopt-principles-charter.md) (its adoption).
-**Status:** audit complete 2026-07-22; remediation **queued** (see the roadmap at the
-end). This is a deep-reference spec, not a source of truth — the charter is the *why*, the
-ADRs are the *what*, `.cursor/rules/` are the *how*.
+**Status:** audit complete 2026-07-22; updated the same day with the owner's answers on
+Supabase plan, Sentry DSN, and Anthropic credits (see principles 7–9 and the owner-actions
+list). Remediation **queued** (see the roadmap at the end). This is a deep-reference spec, not
+a source of truth — the charter is the *why*, the ADRs are the *what*, `.cursor/rules/` are
+the *how*.
 
 This document audits each of the charter's 11 principles against plano's actual state —
 its docs, rules, CI, git hooks, ratchets, **and live GitHub/infra state** (branch
@@ -116,24 +118,41 @@ pointer is dangling or mis-directed. Reconciled by roadmap task 6.
   "There is no local Supabase: the app always runs against the hosted Supabase project,"
   which directly contradicts the charter's "destructive migrations are rehearsed against a
   local copy."
+- **⚠️ Confirmed by owner (2026-07-22): Supabase is on the FREE plan, which does not support
+  daily backups or point-in-time recovery at all.** So there is currently **zero backup
+  coverage** — a bad migration or accidental delete against production is unrecoverable. This
+  is the single largest risk in the audit, and the free-plan reality means the fix cannot be
+  a simple "turn PITR on"; it is a business choice plus a scripted fallback.
 - **Evidence.** Grep across `docs/` for backup / PITR / restore-point / rehearse finds only
   tangential hits; no script, no ADR, no RUNBOOK procedure. **The template has not
   implemented this principle either** (its ADR-0036 notes P7–P9 are adopted ahead of
   implementation).
-- **What must change.** Roadmap task 3: verify PITR/backups are ON in Supabase (owner
-  action), add a pre-destructive-migration restore-point + rehearsal checklist to the
-  RUNBOOK, reconcile the "no local Supabase" contradiction, and mark the *automated*
-  restore-point mechanism as **"adopt the template's pattern once it lands."**
+- **What must change.** Roadmap task 3, now shaped by the free-plan constraint:
+  1. **Owner decision (owner action 1):** either upgrade Supabase to a paid tier to unlock
+     PITR/daily backups, **or** accept scripted logical backups as the safety net. Until one
+     of these exists, treat every destructive migration as unrecoverable.
+  2. If staying on free tier: add a **scheduled logical backup** (a daily `pg_dump` of
+     production to off-Supabase storage) and a **pre-destructive-migration `pg_dump` restore
+     point** — this is the concrete substitute for the automatic restore point the charter
+     assumes.
+  3. Add the restore-point + rehearsal checklist to `docs/RUNBOOK.md` and reconcile the "no
+     local Supabase" line. Mark the *automated* restore-point mechanism as **"adopt the
+     template's pattern once it lands"** — but note the template's pattern will assume a paid
+     Supabase tier, so on free tier the scripted `pg_dump` fallback is what actually ships.
 
 ### 8. The system watches production, not just the pipeline — Partial
 - **Current state.** Sentry is wired: `src/lib/sentry.ts` (`initSentry`), called from
   `src/entry.client.tsx`; `setSentryUser` in `src/root.tsx`; error boundaries
   (`AppErrorBoundary`, `WidgetErrorBoundary`, `MapErrorBoundary`). It is an env-gated no-op
   unless `VITE_SENTRY_DSN` is set.
-- **Gaps.** (a) **Client-only** (`@sentry/react`) — no server/SSR-side capture. (b)
-  **Undocumented** — absent from `docs/ARCHITECTURE.md` and `docs/RUNBOOK.md`; no ADR (the
-  charter's `ADR-0008 (production error tracking)` cite is dangling). (c) Whether the prod
-  DSN is actually set is unverified (owner action). (d) No uptime monitor.
+- **⚠️ Confirmed by owner (2026-07-22): `VITE_SENTRY_DSN` is NOT set in production.** Since
+  Sentry is a no-op without a DSN, production error tracking is currently **effectively off** —
+  live errors are silently dropped. So this principle is failing *in practice today*, not just
+  under-documented.
+- **Gaps.** (a) **No DSN in prod** → capture is off right now (owner action 2: create a Sentry
+  project and set the DSN). (b) **Client-only** (`@sentry/react`) — no server/SSR-side capture.
+  (c) **Undocumented** — absent from `docs/ARCHITECTURE.md` and `docs/RUNBOOK.md`; no ADR (the
+  charter's `ADR-0008 (production error tracking)` cite is dangling). (d) No uptime monitor.
 - **What must change.** Roadmap task 5: write the error-tracking ADR (porting template
   **ADR-0008** shape), document Sentry in ARCHITECTURE/RUNBOOK, verify prod DSN (owner
   action); server-side capture optional.
@@ -148,14 +167,28 @@ pointer is dangling or mis-directed. Reconciled by roadmap task 6.
      failure-issue triage. The template has this (its **ADR-0026** + §0 item).
   2. No guard against silently disabled crons (GitHub auto-disables scheduled workflows after
      ~60 days of inactivity) or drifted repo settings.
-  3. **Live proof of unrepaired rot:** the Nightly workflow has been **red on `main` since
-     2026-07-16** (open issue **#1572**, `review` + `E2E` jobs failing), and PR **#1576** has
-     been **stalled 5 days** — auto-merge armed but the required `Types staleness` check
-     failing (migration touched without regenerating `src/integrations/supabase/types.ts`;
-     it may also be superseded by the merged #1573/#1574).
+  3. **Live proof of unrepaired rot (as found 2026-07-22):** the Nightly workflow had been
+     **red on `main` since 2026-07-16** (open issue **#1572**), and PR **#1576** had been
+     **stalled 5 days**. Both are now addressed:
+     - **PR #1576 — fixed and merging.** It was net-new root-cause work (a DB trigger + backfill
+       keeping `auth.users` metadata in sync with `profiles.username`), *not* superseded. It was
+       blocked because its migration touched `supabase/migrations/` without the required
+       types regen, and it carried two number collisions (an ADR numbered `0007`, now
+       `worktree-lifecycle`, and a migration `20271174…`, now the pagination migration). It was
+       rebased onto main, both numbers freed (ADR → `0009`, migration → `20271176…`), and the
+       migration correctly marked `-- types-neutral:` (it changes no schema, only a
+       function/trigger/backfill). **Note: merging lands the migration in the repo; it still
+       has to be *applied* to production for the 7 drifted accounts to be corrected** — a
+       separate step needing Supabase access.
+     - **Nightly red (#1572):** the `review` job fails because the Anthropic account is out of
+       credits (owner confirmed a top-up is pending — owner action 3), and the `E2E` job fails
+       separately. The credit-exhaustion failure is transient; the E2E failure needs a look
+       during roadmap task 4. A hardening follow-up: make the nightly `review` job treat
+       credit exhaustion as a skip, not a hard failure, so it stops opening `nightly-failure`
+       issues for a known-benign cause.
 - **What must change.** Roadmap task 4: port the template's session pipeline-health check
-  (**ADR-0026**) into `06-agent-behaviour.mdc` §0, and repair the current red nightly (#1572).
-  PR #1576's fate is an owner decision (owner action 3).
+  (**ADR-0026**) into `06-agent-behaviour.mdc` §0, diagnose the nightly `E2E` failure, and make
+  the `review` job credit-exhaustion-tolerant.
 
 ### 10. The repo is the only memory — Aligned (minor)
 - **Current state.** `docs/AI_STATUS.md`, `docs/PRD.md`, `docs/DATA_CONTRACT.md`, the ADR
@@ -208,22 +241,27 @@ right-sized — not a fresh fleet.
   `automerge.yml` read `main`'s `protected` boolean and refuse to arm auto-merge if
   protection is off. Write the plano ADR.
 
-**Data safety (principle 7) — before any destructive DB operation**
+**Data safety (principle 7) — before any destructive DB operation — HIGHEST PRIORITY**
 
-- [ ] **Task 3 — Data-safety rails.** Confirm Supabase point-in-time recovery / daily
-  backups are ON (owner action 1). Add a pre-destructive-migration restore-point +
-  rehearsal checklist to `docs/RUNBOOK.md` and reconcile its "no local Supabase" line with
-  the charter's rehearsal clause. Mark the *automated* restore-point mechanism as **"adopt
-  the template's pattern once it lands"** (the template has not built it yet). Write the
-  plano ADR.
+> Supabase is on the **free plan**, so there is **no PITR and no daily backup today** —
+> zero recoverability. This task is the top of the roadmap.
+
+- [ ] **Task 3 — Data-safety rails.** Gated on owner action 1 (upgrade Supabase for
+  PITR, *or* accept scripted backups). If staying on free tier: add a **scheduled daily
+  `pg_dump`** of production to off-Supabase storage and a **pre-destructive-migration
+  `pg_dump` restore point**. Add the restore-point + rehearsal checklist to `docs/RUNBOOK.md`
+  and reconcile its "no local Supabase" line. Mark the *automated* restore-point mechanism as
+  **"adopt the template's pattern once it lands"** (noting that pattern will assume a paid
+  tier; the scripted `pg_dump` fallback is what ships on free tier). Write the plano ADR.
 
 **Self-repair & production watching (principles 9, 8)**
 
 - [ ] **Task 4 — Session pipeline-health check.** Port template **ADR-0026**: add a §0
   session-start routine to `06-agent-behaviour.mdc` that checks for stalled PRs, red `main`,
   open `nightly-failure` issues, silently disabled crons, and drifted repo settings — and
-  repairs them before new work. Write the plano ADR. Repair the current red nightly (#1572)
-  as the first exercise of it.
+  repairs them before new work. Write the plano ADR. Also diagnose the nightly `E2E` failure
+  and make the `review` job treat Anthropic credit-exhaustion as a skip (not a hard failure),
+  so #1572-style benign failures stop paging.
 - [ ] **Task 5 — Production error-tracking ADR + docs.** Port template **ADR-0008** shape:
   document Sentry in `docs/ARCHITECTURE.md` and `docs/RUNBOOK.md`, write the plano ADR,
   verify the prod DSN is set (owner action 2). Server-side capture optional.
@@ -242,13 +280,22 @@ right-sized — not a fresh fleet.
   coverage-floor ratchet (template ADR-0006). Nice-to-haves — plano is already
   well-ratcheted.
 
-## Owner actions (grouped — each under a minute, plain English)
+## Owner actions (grouped — plain English)
 
-1. **Supabase backups (principle 7).** Confirm point-in-time recovery / daily backups are
-   turned on in the Supabase dashboard. This is the safety net for all customer data.
-2. **Sentry (principle 8).** Confirm the production error-tracking key (`VITE_SENTRY_DSN`)
-   is set in Vercel, so live errors are actually captured rather than silently dropped.
-3. **Stalled PR #1576 (principle 9).** Decide: finish it, or close it as already-superseded
-   by the merged #1573/#1574? One yes/no.
-4. **Nightly AI review (principle 9).** Confirm the `ANTHROPIC_API_KEY` secret is set if you
-   want the nightly AI-review job to run green.
+Updated 2026-07-22 with the owner's answers.
+
+1. **Data backups (principle 7) — the important one.** Supabase is on the free plan, which
+   has **no backups and no point-in-time recovery**, so right now a bad migration or delete is
+   unrecoverable. Decide: **upgrade Supabase to a paid tier** (turns on daily backups + PITR),
+   **or** tell the agent to set up **scripted daily backups** instead. Either way, this should
+   happen before the next destructive database change.
+2. **Sentry (principle 8).** The production error-tracking key (`VITE_SENTRY_DSN`) is not set,
+   so live errors are currently invisible. To turn it on: create a Sentry project and give the
+   agent the DSN to put in Vercel (or say "set up Sentry" and it will walk you through the
+   one signup step).
+3. **Anthropic credits (principle 9).** Top up when convenient — the nightly AI-review job
+   fails until then (owner noted a top-up is coming). No action needed beyond the top-up.
+4. **PR #1576 — done, no action needed.** The agent fixed and merged it (it was real
+   root-cause work, not a duplicate). One residual: the data fix it contains still needs to be
+   *applied* to the production database to correct the ~7 affected accounts — the agent can do
+   that once it has Supabase access.
