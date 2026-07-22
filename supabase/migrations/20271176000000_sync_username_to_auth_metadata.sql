@@ -1,3 +1,4 @@
+-- types-neutral: adds a function + trigger + one-time data backfill only; no table, column, or return-type change, so src/integrations/supabase/types.ts is unaffected.
 -- Keep auth.users.raw_user_meta_data.username in sync with the canonical
 -- public.profiles.username, and backfill the drift that has already accumulated.
 --
@@ -14,7 +15,7 @@
 --
 -- PR #1573 fixed the READ path (the client now sources `profiles.username` via
 -- useUserProfile). This migration removes the drift AT THE SOURCE so no other
--- JWT-only consumer can go stale again. See docs/decisions/0007-username-canonical-in-profiles.md.
+-- JWT-only consumer can go stale again. See docs/decisions/0009-username-canonical-in-profiles.md.
 --
 -- Design: profiles.username is the single source of truth; auth metadata is a
 -- best-effort mirror. A trigger keeps the mirror current on every write path at

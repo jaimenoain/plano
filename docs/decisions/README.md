@@ -14,3 +14,4 @@ Format: context → decision → consequences. Keep them under a page.
 | [0006](0006-nightly-heavy-tier.md) | Nightly heavy tier: one scheduled AI review + E2E, off the PR path |
 | [0007](0007-worktree-lifecycle.md) | Worktree lifecycle: in-repo, fresh-based, dies with its PR |
 | [0008](0008-adopt-principles-charter.md) | Adopt the operating-principles charter above ADRs and rules |
+| [0009](0009-username-canonical-in-profiles.md) | `profiles.username` is canonical; auth metadata is a synced mirror |

@@ -1,4 +1,4 @@
-# 0007 — `profiles.username` is canonical; auth metadata is a synced mirror
+# 0009 — `profiles.username` is canonical; auth metadata is a synced mirror
 
 **Status:** accepted (2026-07-17)
 
@@ -39,7 +39,7 @@ Two independent guarantees ("belt and suspenders"):
    write paths at once — Settings, Onboarding, admin anonymize, and any future
    one — instead of patching each client call site (which is exactly how the
    drift accumulated). A one-time backfill in the same migration
-   (`20271174000000`) corrects the existing drift.
+   (`20271176000000`) corrects the existing drift.
 
 2. **Suspenders — reads prefer profiles.** Application code reads the username
    from `profiles` (via `useUserProfile`), never from the JWT. As of this work
