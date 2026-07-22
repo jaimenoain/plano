@@ -23,10 +23,10 @@ export function useTopGuideLocalities(limit = 4) {
   });
 }
 
-export function usePopularCollections() {
+export function usePopularCollections(limit = 12) {
   return useQuery({
-    queryKey: guidesKeys.collections(),
-    queryFn: () => getPopularCollections(12),
+    queryKey: [...guidesKeys.collections(), limit],
+    queryFn: () => getPopularCollections(limit),
     staleTime: 1000 * 60 * 5,
   });
 }
