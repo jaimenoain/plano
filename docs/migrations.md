@@ -5,6 +5,12 @@ This doc covers the day-to-day workflows the Phase 1 guardrails (from
 you — there is a single production Supabase project and no staging copy, so **applying migrations
 stays a manual, deliberate step.**
 
+> **Destructive migration?** Before applying anything that drops/renames a column or table,
+> deletes rows, or rewrites data, take a restore point and rehearse it locally first — the
+> checklist is in [Data safety](RUNBOOK.md#data-safety--backups--restore) (`node
+> scripts/backup-restore-point.mjs`). On the free tier this is the only rollback you get
+> ([ADR 0012](decisions/0012-data-safety-rails.md)).
+
 ## Writing a migration
 
 - Name it `YYYYMMDDHHmmss_short_description.sql` using a **unique 14-digit UTC timestamp**.

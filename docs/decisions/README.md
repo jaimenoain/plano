@@ -17,3 +17,4 @@ Format: context → decision → consequences. Keep them under a page.
 | [0009](0009-username-canonical-in-profiles.md) | `profiles.username` is canonical; auth metadata is a synced mirror |
 | [0010](0010-drop-strict-status-checks.md) | Drop strict status checks; a branch need not be up-to-date to merge |
 | [0011](0011-fail-closed-automerge-preflight.md) | Auto-merge preflight fails closed: refuse to arm when main is unprotected |
+| [0012](0012-data-safety-rails.md) | Data-safety rails on the free tier: scheduled encrypted backups + pre-destructive-migration restore point |

@@ -41,3 +41,6 @@ playwright-report/
 
 # Agent worktrees — parallel-session checkouts (06-agent-behaviour.mdc §14, ADR-0007)
 .claude/worktrees/
+
+# Local database restore points (scripts/backup-restore-point.mjs) — never commit customer data
+backups/

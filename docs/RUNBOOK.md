@@ -28,7 +28,7 @@ Then fill `.env.local` — every variable is documented inline in [`.env.example
 
 Everything else in `.env.example` is optional or server-side (see its comments). `.env`/`.env.local` are gitignored — never commit real values.
 
-There is **no local Supabase**: the app always runs against the hosted Supabase project. Unit tests mock Supabase entirely, so they work with no env setup at all.
+There is **no local Supabase for feature work**: the app always runs against the hosted Supabase project, and unit tests mock Supabase entirely, so they work with no env setup at all. The one exception is **rehearsing a destructive migration** — there you *do* restore a dump into a throwaway local Postgres and run the migration against it first (see [Data safety](#data-safety--backups--restore) below). That reconciles the charter's rehearsal clause ([PRINCIPLES.md §7](PRINCIPLES.md)) with "no local Supabase": no local Supabase *stack*, but a local restore-from-dump when — and only when — a migration is destructive.
 
 ## Run
 
@@ -62,7 +62,36 @@ If a **ratchet** fails (ESLint warnings, `as any`, file size, strict-TS allowlis
 2. Open a PR; the 10 required checks must pass (see [`CONTRIBUTING.md`](../CONTRIBUTING.md)). Want an AI review? Comment `@claude <request>` on the PR; a scheduled review of everything on `main` also runs nightly ([ADR 0006](decisions/0006-nightly-heavy-tier.md)).
 3. Merge → **Vercel deploys `main` automatically** (`@vercel/react-router`; config in [`vercel.json`](../vercel.json), details in [`LAUNCH_HOSTING.md`](LAUNCH_HOSTING.md)).
 
-Schema changes never go through the Supabase dashboard: write a timestamped migration in `supabase/migrations/`, apply it via the Supabase MCP `apply_migration`, run `npm run gen-types`, and commit both in the same PR — full workflow in [`migrations.md`](migrations.md).
+Schema changes never go through the Supabase dashboard: write a timestamped migration in `supabase/migrations/`, apply it via the Supabase MCP `apply_migration`, run `npm run gen-types`, and commit both in the same PR — full workflow in [`migrations.md`](migrations.md). **If the migration is destructive or irreversible** (drops/renames a column or table, deletes rows, rewrites data), take a restore point first — see [Data safety](#data-safety--backups--restore).
+
+## Data safety — backups & restore
+
+Supabase is on the **free plan**, which has no automated backups and no point-in-time recovery, so recoverability is scripted, not a plan feature ([ADR 0012](decisions/0012-data-safety-rails.md), realizing [PRINCIPLES.md §7](PRINCIPLES.md)). Two rails:
+
+**1. Daily backup (automatic).** [`.github/workflows/backup.yml`](../.github/workflows/backup.yml) dumps production (roles + schema + data, via the Supabase CLI so PostGIS and the `supabase_admin`-owned `auth`/`storage` schemas come through), encrypts it (AES-256), and uploads it as a 90-day GitHub artifact — off Supabase. It stays green but does nothing until two repo secrets exist:
+
+| Secret | Where it comes from |
+|---|---|
+| `SUPABASE_DB_URL` | Supabase → Project Settings → Database → Connection string → **Session pooler** URI (IPv4; runners can't use the direct IPv6 endpoint), password filled in |
+| `BACKUP_ENCRYPTION_PASSPHRASE` | A strong passphrase you generate. **Also store it in a password manager** — without it the backups can't be decrypted |
+
+Trigger a manual run to verify: **Actions → Backup → Run workflow**. To restore, download the artifact, decrypt (`gpg -d db-backup-*.tar.gz.gpg > b.tar.gz`), unpack, and replay in order: `cat roles.sql schema.sql data.sql | psql "$SUPABASE_DB_URL"`.
+
+**2. Pre-destructive-migration restore point + rehearsal (manual).** Before applying a destructive migration, take a point-in-time restore point and rehearse the change locally:
+
+```bash
+export SUPABASE_DB_URL='postgresql://...'   # same Session-pooler string as the secret
+node scripts/backup-restore-point.mjs       # writes backups/restore-point-<UTC>.tar.gz (gitignored)
+```
+
+Then, before touching production:
+1. **Rehearse** — restore the dump into a throwaway local Postgres (`createdb rehearsal && cat backups/restore-point-*/{roles,schema,data}.sql | psql rehearsal`), apply the new migration there, and confirm it behaves. This is the charter's "rehearsed against a local copy" step.
+2. **Apply** to production via the Supabase MCP `apply_migration` as usual.
+3. **Roll back** only if production is damaged: replay the restore point over production (`cat backups/restore-point-*/{roles,schema,data}.sql | psql "$SUPABASE_DB_URL"`).
+
+Delete the local dump once the migration is confirmed good — it contains customer data.
+
+> The *automated* restore point (a hook that dumps on every destructive change) and verified PITR are deferred: **adopt the template's pattern once it lands** (it assumes a paid Supabase tier). On the free tier the scripted dump above is what ships. Upgrading Supabase to a paid tier + PITR supersedes rail 1.
 
 ## When things break
 

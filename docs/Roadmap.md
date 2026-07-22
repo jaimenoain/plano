@@ -31,10 +31,11 @@ These are the only steps that need the owner; each takes under a minute. The age
 them because they require accounts, money, or secret values. Later tasks that depend on one say
 so.
 
-- [ ] **0.1 — Data backups decision (unblocks 2.1).** Supabase is on the **free plan**, which
+- [x] **0.1 — Data backups decision (unblocks 2.1).** Supabase is on the **free plan**, which
   has **no backups and no point-in-time recovery** — today a bad migration or delete is
   unrecoverable. Decide: **upgrade Supabase to a paid tier** (turns on daily backups + PITR),
-  **or** tell the agent to set up **scripted daily backups** instead.
+  **or** tell the agent to set up **scripted daily backups** instead. **→ Owner chose scripted
+  daily backups (2026-07-22); implemented in task 2.1.**
 - [ ] **0.2 — Sentry project + DSN (unblocks 3.2).** Create a Sentry project and hand the agent
   the DSN to set as `VITE_SENTRY_DSN` in Vercel, so live errors are actually captured. (Or say
   "set up Sentry" and the agent walks you through the one signup step.)
@@ -63,7 +64,7 @@ Protects against losing *work* (stalled or mis-merged PRs). Both are quick setti
 > recoverability. Phase 1's tasks are 5-minute settings changes; do them, then treat this as
 > the next thing that happens — before any further destructive database change.
 
-- [ ] **2.1 — Data-safety rails.** Gated on **0.1**. If upgrading Supabase: verify PITR/daily
+- [x] **2.1 — Data-safety rails.** Gated on **0.1**. If upgrading Supabase: verify PITR/daily
   backups are on and document it. If staying on free tier: add a **scheduled daily `pg_dump`**
   of production to off-Supabase storage and a **pre-destructive-migration `pg_dump` restore
   point**. Either way, add the restore-point + rehearsal checklist to

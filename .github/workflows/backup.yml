@@ -1,0 +1,150 @@
+# Scheduled logical backup of the production database
+# (docs/decisions/0012-data-safety-rails.md).
+#
+# Supabase is on the free plan — no automated backups and no point-in-time
+# recovery (PRINCIPLES.md §7). This workflow is the scripted fallback: once a
+# day it takes a logical dump of production (roles + schema + data) with the
+# Supabase CLI, encrypts it, and uploads it as an artifact stored OFF Supabase
+# (in GitHub). On a paid tier this is superseded by PITR + the template's
+# automated restore-point pattern "once it lands" (see the ADR).
+#
+# Shape: dump → alert.
+# - dump skips cleanly (stays green) until the two backup secrets exist, so the
+#   daily cron does not page before the owner has configured it.
+# - alert is mandatory: nobody watches scheduled runs, so a failed backup
+#   opens/updates a `backup-failure` issue instead of failing silently.
+#
+# Required repository secrets (both must be set for the backup to run):
+# - SUPABASE_DB_URL: the production connection string. Use the Supabase
+#   dashboard → Project Settings → Database → Connection string → "Session
+#   pooler" URI (IPv4, which GitHub runners need), with the DB password filled in.
+# - BACKUP_ENCRYPTION_PASSPHRASE: a strong passphrase used to symmetrically
+#   encrypt each dump (AES-256). The dumps contain all customer data, so they
+#   are never stored in the clear. Keep a copy of this passphrase in a password
+#   manager — without it the backups cannot be restored.
+#
+# Known trade-offs:
+# - GitHub auto-disables this cron after ~60 days of repo inactivity; any commit
+#   or manual dispatch revives it.
+# - A logical daily dump means the recovery point is up to 24h old; the
+#   pre-destructive-migration restore point (scripts/backup-restore-point.mjs)
+#   covers the moment right before a risky migration.
+name: Backup
+
+on:
+  schedule:
+    - cron: '41 2 * * *' # daily; staggered odd minute dodges cron congestion
+  workflow_dispatch:
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      # secrets.* is not allowed in step `if:` expressions; mirror presence here.
+      HAS_DB_URL: ${{ secrets.SUPABASE_DB_URL != '' }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+    steps:
+      - name: Check backup secrets are configured
+        id: gate
+        run: |
+          set -euo pipefail
+          if [ "$HAS_DB_URL" != "true" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Backup skipped — SUPABASE_DB_URL secret not configured in repo settings (see docs/decisions/0012-data-safety-rails.md)."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Refuse to dump without an encryption passphrase
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          set -euo pipefail
+          if [ -z "${BACKUP_ENCRYPTION_PASSPHRASE:-}" ]; then
+            echo "::error::SUPABASE_DB_URL is set but BACKUP_ENCRYPTION_PASSPHRASE is missing — refusing to produce an unencrypted dump of customer data."
+            exit 1
+          fi
+
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        if: steps.gate.outputs.run == 'true'
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        if: steps.gate.outputs.run == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Dump roles, schema, and data (Supabase CLI)
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p backup
+          # Supabase's own CLI handles the free-tier realities raw pg_dump does
+          # not: PostGIS / spatial_ref_sys and the supabase_admin-owned auth &
+          # storage schemas. Three files restore cleanly in order.
+          npx --yes supabase db dump --db-url "$SUPABASE_DB_URL" --role-only -f backup/roles.sql
+          npx --yes supabase db dump --db-url "$SUPABASE_DB_URL" -f backup/schema.sql
+          npx --yes supabase db dump --db-url "$SUPABASE_DB_URL" --use-copy --data-only -f backup/data.sql
+
+      - name: Bundle and encrypt
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          set -euo pipefail
+          stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+          echo "STAMP=$stamp" >> "$GITHUB_ENV"
+          tar -czf "backup-${stamp}.tar.gz" -C backup roles.sql schema.sql data.sql
+          # Symmetric AES-256; loopback pinentry so gpg reads the passphrase from stdin in CI.
+          gpg --batch --yes --pinentry-mode loopback \
+            --passphrase "$BACKUP_ENCRYPTION_PASSPHRASE" \
+            --symmetric --cipher-algo AES256 \
+            -o "backup-${stamp}.tar.gz.gpg" "backup-${stamp}.tar.gz"
+          # Never let the plaintext dump leave this step.
+          rm -f "backup-${stamp}.tar.gz" backup/roles.sql backup/schema.sql backup/data.sql
+
+      - name: Upload encrypted backup artifact
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: db-backup-${{ env.STAMP }}
+          path: backup-${{ env.STAMP }}.tar.gz.gpg
+          retention-days: 90 # GitHub's maximum
+          if-no-files-found: error
+
+  # Nobody watches scheduled runs: a failed backup MUST become an issue the next
+  # session finds. A clean skip (secrets absent) does not trip failure().
+  alert:
+    needs: [dump]
+    if: failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open (or comment on) the backup-failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          gh label create backup-failure --repo "$GITHUB_REPOSITORY" \
+            --color B60205 --description "Scheduled production backup failed" --force
+          BODY="The **Backup** workflow failed to dump production.
+
+          Run: $RUN_URL
+
+          The daily backup is the only safety net on the free tier (ADR 0012). Fix it before any destructive database change. Close only after a subsequent green Backup run."
+          EXISTING=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --label backup-failure --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --repo "$GITHUB_REPOSITORY" --body "$BODY"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" \
+              --title "🔴 Production backup failed" --body "$BODY" --label backup-failure
+          fi
