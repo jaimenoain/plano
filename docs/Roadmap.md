@@ -47,7 +47,7 @@ so.
 
 Protects against losing *work* (stalled or mis-merged PRs). Both are quick settings/CI changes.
 
-- [ ] **1.1 — Drop strict status checks.** Port template **ADR-0021**: set `strict: false` on
+- [x] **1.1 — Drop strict status checks.** Port template **ADR-0021**: set `strict: false` on
   `main`'s required-checks protection so auto-merge never stalls on a stale or stacked branch
   (this session hit that stall repeatedly). Write the plano ADR. **Verify:** a PR that is behind
   `main` still auto-merges without a manual branch update.

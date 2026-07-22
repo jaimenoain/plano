@@ -15,3 +15,4 @@ Format: context → decision → consequences. Keep them under a page.
 | [0007](0007-worktree-lifecycle.md) | Worktree lifecycle: in-repo, fresh-based, dies with its PR |
 | [0008](0008-adopt-principles-charter.md) | Adopt the operating-principles charter above ADRs and rules |
 | [0009](0009-username-canonical-in-profiles.md) | `profiles.username` is canonical; auth metadata is a synced mirror |
+| [0010](0010-drop-strict-status-checks.md) | Drop strict status checks; a branch need not be up-to-date to merge |
