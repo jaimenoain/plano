@@ -8,7 +8,7 @@
     "src/features/awards/hooks/useAwards.ts": 515,
     "src/features/awards/pages/AwardAdminPage.tsx": 854,
     "src/features/buildings/components/BuildingCredits.tsx": 945,
-    "src/features/buildings/components/BuildingForm.tsx": 943,
+    "src/features/buildings/components/BuildingForm.tsx": 941,
     "src/features/buildings/components/ImageDetailsDialog.tsx": 447,
     "src/features/buildings/hooks/useBuildingInteractions.ts": 1269,
     "src/features/buildings/pages/BuildingDetails.tsx": 853,

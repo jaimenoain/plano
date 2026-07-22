@@ -189,6 +189,7 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
         isSubmitting={isSubmitting}
         submitLabel="Save Building"
         mode="create"
+        onCancel={onBack}
       />
     </div>
   );
