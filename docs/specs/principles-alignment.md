@@ -4,9 +4,9 @@
 [ADR-0008](../decisions/0008-adopt-principles-charter.md) (its adoption).
 **Status:** audit complete 2026-07-22; updated the same day with the owner's answers on
 Supabase plan, Sentry DSN, and Anthropic credits (see principles 7–9 and the owner-actions
-list). Remediation **queued** (see the roadmap at the end). This is a deep-reference spec, not
-a source of truth — the charter is the *why*, the ADRs are the *what*, `.cursor/rules/` are
-the *how*.
+list). Remediation roadmap is now **active** in [`docs/ROADMAP.md`](../Roadmap.md). This is a
+deep-reference spec, not a source of truth — the charter is the *why*, the ADRs are the *what*,
+`.cursor/rules/` are the *how*.
 
 This document audits each of the charter's 11 principles against plano's actual state —
 its docs, rules, CI, git hooks, ratchets, **and live GitHub/infra state** (branch
@@ -45,7 +45,7 @@ therefore "adopt the template's pattern once it lands," not an original design.
 0017–0021, 0025, 0028, 0031, 0033, 0035, 0036). None of these exist in plano, which has an
 independent 0001–0007 sequence on unrelated subjects. The charter's *prose* pointers
 (`.cursor/rules/06-agent-behaviour.mdc`, `docs/AI_STATUS.md`) resolve fine; every ADR
-pointer is dangling or mis-directed. Reconciled by roadmap task 6.
+pointer is dangling or mis-directed. Reconciled by roadmap task 4.1.
 
 ---
 
@@ -58,7 +58,7 @@ pointer is dangling or mis-directed. Reconciled by roadmap task 6.
   business calls.
 - **Evidence.** `06-agent-behaviour.mdc` §3 present; §13 (tool-call efficiency) present.
 - **What must change.** Nothing structural. The charter's `ADR-0014 (agent-first manual
-  tasks)` cite is dangling (task 6).
+  tasks)` cite is dangling (task 4.1).
 
 ### 2. Owner time is the project's scarcest input — Partial
 - **Current state.** The risk-based UAT model (per-phase `X.98` gate only when a later
@@ -68,7 +68,7 @@ pointer is dangling or mis-directed. Reconciled by roadmap task 6.
 - **Evidence.** `04-writing-the-roadmap.md` describes automation-first and risk-based UAT;
   no plano ADR records it. Charter cites template `ADR-0015`/`ADR-0019` — both dangling.
 - **What must change.** Low urgency: the convention is present and working. Formalizing it
-  as a plano ADR is folded into the ADR backfill (task 7); pointer fix in task 6.
+  as a plano ADR is folded into the ADR backfill (task 4.2); pointer fix in task 4.1.
 
 ### 3. Permission is business consent, not technical consent — Aligned
 - **Current state.** `06-agent-behaviour.mdc` §3 and §13 encode "never ask technical
@@ -91,7 +91,7 @@ pointer is dangling or mis-directed. Reconciled by roadmap task 6.
   2. `automerge.yml` arms auto-merge best-effort (`|| true`) with **no fail-closed check
      that `main` is actually protected** before arming — the template's preflight refuses
      if protection is off (template **ADR-0028**).
-- **What must change.** Roadmap tasks 1 (drop strict) and 2 (fail-closed preflight).
+- **What must change.** Roadmap tasks 1.1 (drop strict) and 1.2 (fail-closed preflight).
 
 ### 5. Gates are boring; judgment is advisory — Aligned (minor)
 - **Current state.** Required PR checks are fast, deterministic, mechanical (lint,
@@ -101,9 +101,9 @@ pointer is dangling or mis-directed. Reconciled by roadmap task 6.
   and on-demand `ai-review` never block.
 - **Minor gap.** `Build` is a required blocking check; the template moves build off the PR
   tier into nightly (template **ADR-0033**, static-only PR tier). Keeping build as a gate is
-  defensible; noted for consideration, not urgent. The `strict: true` posture (task 1) also
+  defensible; noted for consideration, not urgent. The `strict: true` posture (task 1.1) also
   touches this principle.
-- **What must change.** Optional (task 8 / consideration in task 1).
+- **What must change.** Optional (task 4.3 / consideration in task 1.1).
 
 ### 6. Frugal by default — Aligned
 - **Current state.** The nightly `guard` job self-skips the heavy tier when `main` hasn't
@@ -127,7 +127,7 @@ pointer is dangling or mis-directed. Reconciled by roadmap task 6.
   tangential hits; no script, no ADR, no RUNBOOK procedure. **The template has not
   implemented this principle either** (its ADR-0036 notes P7–P9 are adopted ahead of
   implementation).
-- **What must change.** Roadmap task 3, now shaped by the free-plan constraint:
+- **What must change.** Roadmap task 2.1, now shaped by the free-plan constraint:
   1. **Owner decision (owner action 1):** either upgrade Supabase to a paid tier to unlock
      PITR/daily backups, **or** accept scripted logical backups as the safety net. Until one
      of these exists, treat every destructive migration as unrecoverable.
@@ -153,7 +153,7 @@ pointer is dangling or mis-directed. Reconciled by roadmap task 6.
   project and set the DSN). (b) **Client-only** (`@sentry/react`) — no server/SSR-side capture.
   (c) **Undocumented** — absent from `docs/ARCHITECTURE.md` and `docs/RUNBOOK.md`; no ADR (the
   charter's `ADR-0008 (production error tracking)` cite is dangling). (d) No uptime monitor.
-- **What must change.** Roadmap task 5: write the error-tracking ADR (porting template
+- **What must change.** Roadmap task 3.2: write the error-tracking ADR (porting template
   **ADR-0008** shape), document Sentry in ARCHITECTURE/RUNBOOK, verify prod DSN (owner
   action); server-side capture optional.
 
@@ -183,10 +183,10 @@ pointer is dangling or mis-directed. Reconciled by roadmap task 6.
      - **Nightly red (#1572):** the `review` job fails because the Anthropic account is out of
        credits (owner confirmed a top-up is pending — owner action 3), and the `E2E` job fails
        separately. The credit-exhaustion failure is transient; the E2E failure needs a look
-       during roadmap task 4. A hardening follow-up: make the nightly `review` job treat
+       during roadmap task 3.1. A hardening follow-up: make the nightly `review` job treat
        credit exhaustion as a skip, not a hard failure, so it stops opening `nightly-failure`
        issues for a known-benign cause.
-- **What must change.** Roadmap task 4: port the template's session pipeline-health check
+- **What must change.** Roadmap task 3.1: port the template's session pipeline-health check
   (**ADR-0026**) into `06-agent-behaviour.mdc` §0, diagnose the nightly `E2E` failure, and make
   the `review` job credit-exhaustion-tolerant.
 
@@ -196,7 +196,7 @@ pointer is dangling or mis-directed. Reconciled by roadmap task 6.
 - **Minor gaps.** The charter cites a "Product Change Protocol (§15)" but
   `06-agent-behaviour.mdc` ends at §14; `docs/decisions/README.md` index was missing 0007
   (fixed in this PR); `docs/specs/` did not exist (bootstrapped by this file).
-- **What must change.** Pointer reconciliation (task 6); the §15 reference is folded into
+- **What must change.** Pointer reconciliation (task 4.1); the §15 reference is folded into
   that task.
 
 ### 11. Built to be handed over — Partial
@@ -208,77 +208,22 @@ pointer is dangling or mis-directed. Reconciled by roadmap task 6.
   coverage ratchet") but **not ratcheted** (template ADR-0006). (c) No contract-drift gate
   (template ADR-0012) though `DATA_CONTRACT.md` is large. (d) Several live mechanisms lack
   ADRs (data-layer import boundary, raw-hex/token guard, gitleaks scan, types-staleness).
-- **What must change.** Roadmap tasks 6 (pointers), 7 (ADR backfill), 8 (optional gates).
+- **What must change.** Roadmap tasks 4.1 (pointers), 4.2 (ADR backfill), 4.3 (optional gates).
 
 ---
 
-## Proposed roadmap (QUEUED)
+## Roadmap — now active in `docs/ROADMAP.md`
 
-> **Not active yet.** `docs/ROADMAP.md` (one file; `docs/Roadmap.md` is the same inode on
-> the case-insensitive macOS FS) currently holds the **Design Precision Programme**, whose
-> phases are all shipped but which has not been closed out and archived. Per the owner's
-> instruction this roadmap is **queued behind it**, not written into `docs/ROADMAP.md`.
->
-> **To activate:** first close out the Design Precision Programme per
-> [ADR-0016 convention](../roadmaps/README.md) (cap it with a Delivery Record, archive to
-> `docs/roadmaps/0001-<slug>.md`, reset `docs/ROADMAP.md` to the blank scaffold), then
-> generate this roadmap into the clean `docs/ROADMAP.md` following
-> `docs/project_start/04-writing-the-roadmap.md` in subsequent mode.
+**Promoted 2026-07-22** into [`docs/ROADMAP.md`](../Roadmap.md) — the repo's single
+active-roadmap slot — replacing the completed Design Precision Programme, now archived at
+[`docs/roadmaps/0001-design-precision-programme.md`](../roadmaps/0001-design-precision-programme.md).
 
-This is **meta work** (CI / settings / docs / ADRs), so **one concern = one PR** — no
-vertical slices. Tasks are ordered by risk of losing work or data: pipeline integrity
-first, then data safety, then self-repair, then hand-over quality. Each task **ports the
-template's proven mechanism** where one exists. Plano is an active project already carrying
-a nightly heavy tier and a full ratchet set, so this is reconciliation and gap-filling,
-right-sized — not a fresh fleet.
-
-**Pipeline integrity & branch protection (principles 4, 5)**
-
-- [ ] **Task 1 — Drop strict status checks.** Port template **ADR-0021**: set `strict:
-  false` on `main`'s required-checks protection so auto-merge never stalls on a stale or
-  stacked branch. Write the plano ADR. (Verify: a behind-`main` PR still auto-merges.)
-- [ ] **Task 2 — Fail-closed auto-merge preflight.** Port template **ADR-0028**: make
-  `automerge.yml` read `main`'s `protected` boolean and refuse to arm auto-merge if
-  protection is off. Write the plano ADR.
-
-**Data safety (principle 7) — before any destructive DB operation — HIGHEST PRIORITY**
-
-> Supabase is on the **free plan**, so there is **no PITR and no daily backup today** —
-> zero recoverability. This task is the top of the roadmap.
-
-- [ ] **Task 3 — Data-safety rails.** Gated on owner action 1 (upgrade Supabase for
-  PITR, *or* accept scripted backups). If staying on free tier: add a **scheduled daily
-  `pg_dump`** of production to off-Supabase storage and a **pre-destructive-migration
-  `pg_dump` restore point**. Add the restore-point + rehearsal checklist to `docs/RUNBOOK.md`
-  and reconcile its "no local Supabase" line. Mark the *automated* restore-point mechanism as
-  **"adopt the template's pattern once it lands"** (noting that pattern will assume a paid
-  tier; the scripted `pg_dump` fallback is what ships on free tier). Write the plano ADR.
-
-**Self-repair & production watching (principles 9, 8)**
-
-- [ ] **Task 4 — Session pipeline-health check.** Port template **ADR-0026**: add a §0
-  session-start routine to `06-agent-behaviour.mdc` that checks for stalled PRs, red `main`,
-  open `nightly-failure` issues, silently disabled crons, and drifted repo settings — and
-  repairs them before new work. Write the plano ADR. Also diagnose the nightly `E2E` failure
-  and make the `review` job treat Anthropic credit-exhaustion as a skip (not a hard failure),
-  so #1572-style benign failures stop paging.
-- [ ] **Task 5 — Production error-tracking ADR + docs.** Port template **ADR-0008** shape:
-  document Sentry in `docs/ARCHITECTURE.md` and `docs/RUNBOOK.md`, write the plano ADR,
-  verify the prod DSN is set (owner action 2). Server-side capture optional.
-
-**Hand-over quality (principles 10, 11)**
-
-- [ ] **Task 6 — Charter ↔ ADR reconciliation.** Update the charter's "In practice"
-  pointers to plano's real ADR numbers (or add a crosswalk table), resolving all 17 dangling
-  cites and the §15 Product Change Protocol reference. Confirm `docs/decisions/README.md` is
-  complete.
-- [ ] **Task 7 — ADR backfill.** Record existing-but-undocumented mechanisms as ADRs:
-  data-layer import boundary, raw-hex / design-token guard, gitleaks secret scan,
-  types-staleness gate, and the risk-based-UAT convention (principle 2).
-- [ ] **Task 8 — (Optional, lower priority) additional hand-over gates.** Port, if desired:
-  dead-code gate (knip, template ADR-0007), contract-drift check (template ADR-0012),
-  coverage-floor ratchet (template ADR-0006). Nice-to-haves — plano is already
-  well-ratcheted.
+`docs/ROADMAP.md` is the **authoritative task list**: Phase 0 (owner prerequisites) → Phase 1
+(merge-pipeline integrity) → Phase 2 (data safety) → Phase 3 (self-repair & production
+watching) → Phase 4 (hand-over quality), one concern = one PR, risk-ordered, each porting the
+template's proven mechanism. This spec is the companion audit — the "what must change" notes
+per principle above reference the roadmap's phase-task IDs (e.g. task 2.1, 3.1). The grouped
+owner actions below are Phase 0 of the roadmap, kept here with their business rationale.
 
 ## Owner actions (grouped — plain English)
 

@@ -1,122 +1,115 @@
-# Design Precision Programme — spec & phased roadmap
+# Roadmap — Principles alignment
 
-**Status:** active. **Phase 1 (entity detail family) shipped** in PR #1535 (branch `design/building-detail-precision`).
+**Status:** active (installed 2026-07-22, replacing the completed Design Precision Programme,
+now archived at [`docs/roadmaps/0001-design-precision-programme.md`](roadmaps/0001-design-precision-programme.md)).
+Generated in subsequent mode per [`docs/project_start/04-writing-the-roadmap.md`](project_start/04-writing-the-roadmap.md).
 
-**Read order for a fresh conversation:** this file → [`AGENTS.md`](../AGENTS.md) → [`design-system/README.md`](../design-system/README.md) (brand rules) → [`docs/DESIGN_TOKENS.md`](DESIGN_TOKENS.md) → [`docs/SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md) (**authoritative full catalogue** — ~90 route screens + ~30 modal/drawer surfaces + in-page view modes; the roadmap below covers all of it). Then pick a phase below and run it end-to-end.
+**Read order for a fresh conversation:** this file →
+[`docs/specs/principles-alignment.md`](specs/principles-alignment.md) (the audit + evidence
+behind every task) → [`docs/PRINCIPLES.md`](PRINCIPLES.md) (the charter) →
+[ADR-0008](decisions/0008-adopt-principles-charter.md) (adoption).
 
----
+## What this is
 
-## 1. Why this exists (the bar)
+Close the gaps found auditing plano against the charter. This is **meta work** (CI, repo
+settings, docs, ADRs), so the single sizing rule is **one concern = one PR — no vertical
+slices**. Tasks are ordered by risk of losing work or data: merge-pipeline integrity first,
+then data safety, then self-repair, then hand-over quality. Each task **ports the template's
+proven mechanism** where one exists (template ADRs cited); it does not invent a plano-specific
+design. Plano is an active project already running a nightly heavy tier and a full ratchet
+set, so this is reconciliation and gap-filling — right-sized, not a fresh fleet.
 
-PLANO is an editorial, photography-first, **monochrome** platform where **design precision *is* the product**. A prior programme (R0–R9 family polish, P0–P10 remaining surfaces — see `ROADMAP.md`/`REMAINING_SURFACES_ROADMAP.md`) made screens **conformant** (right tokens, right patterns). This programme goes one level deeper: **pixel precision** — the spacing, alignment, hero treatment, content width, and mobile behaviour that separate "uses the design system" from "slick."
-
-Editorial/monochrome has a **tiny error budget**: no shadows or rounded corners to hide a 4px mistake, so any misalignment or cramped spacing *screams*. That is exactly why generic SaaS design "just works" for Claude but this project doesn't — and why we refine **directly in code with live browser verification**, never via lossy design-tool round-trips.
-
-**Definition of "done" for a screen:** title/primary content visible on load (no scroll-to-see); one consistent content measure; aligned left edges across sections; no elements touching; deliberate whitespace; **verified at desktop 1440 AND mobile 390**; on-brand (full-colour photography, mono eyebrows, hairline borders, sharp corners, Inter + Space Mono).
-
----
-
-## 2. The method (the loop) — run this for every screen
-
-1. **Boot + log in.** `npm run dev` (port 8080). Then screenshot the target routes with the audit tool (it logs in as the ACTIVE test user and settles animations):
-   ```
-   node scripts/design-audit.mjs --routes /,/explore,/search
-   node scripts/design-audit.mjs --routes /profile --viewport m
-   ```
-   PNGs land in `.audit/` (gitignored). Read them.
-2. **Measure the flaws.** Don't eyeball only — measure. In a page.evaluate (or extend the script): title push-down vs viewport height, content-container width, element `left` offsets that should match, `document.documentElement.scrollWidth - clientWidth` (horizontal overflow). Numbers make the fix objective and the win provable.
-3. **Fix in code** using design tokens + existing primitives (§4). Never raw Tailwind palette (`bg-blue-500`), never new one-off values where a token/primitive exists.
-4. **Re-verify live** at desktop **and** mobile; iterate until the numbers and the screenshot are right.
-5. **Extract when a pattern repeats.** The moment two screens want the same thing, lift it into a shared primitive so precision is *inherited*, not re-derived. This is the actual cure for "going in circles."
-6. **Commit per screen/stage** on a feature branch; keep each commit small and verified.
+Only the coding agent flips `[ ]` → `[x]`, one task per PR through the normal auto-merge flow.
+When the last task is checked, run the close-out (archive this file to `docs/roadmaps/`, reset
+per [`docs/roadmaps/README.md`](roadmaps/README.md)).
 
 ---
 
-## 3. Guardrails / Definition of Done (CI will enforce these)
+## Phase 0 — Owner prerequisites (human-only)
 
-- `npm run typecheck` clean; **pre-push hook runs the full test suite** — it must pass (it will block the push otherwise).
-- **Ratchets (CI "Debt ratchet" + "Warning ratchet"):**
-  - **File-size ratchet** (`scripts/check-file-sizes.mjs`): grandfathered files (e.g. `BuildingDetails.tsx`, `CompanyDetails.tsx`) have **frozen line caps and may not grow**. If your change grows one, **extract a component** until it's back under — never edit the baseline. Budgets: pages 800, components 400, hooks 300.
-  - **Warning ratchet** (`scripts/check-eslint-ratchet.mjs`): don't add eslint warnings above baseline.
-  - **as-any ratchet** + **strict-allowlist ratchet**: don't add `as any`/`@ts-ignore`; don't drop strict-mode files.
-- **Guard tests** (`tests/unit/deprecated-artifacts-*.test.ts`): e.g. **no `/architect/` path literals in `src/`** (redirects only) — watch JSDoc comments with slashes like `name/architect/place`.
-- Design tokens only (`docs/DESIGN_TOKENS.md`); reuse `src/components/ui` primitives; no `getSession()`, no mock data.
-- One PR per coherent surface group. A design-precision pass is **meta work** — size it by the largest reviewable chunk (per **PR Sizing** in `AGENTS.md`), not the feature 15–30 band; commit per screen *within* that one PR. Branch off `main`; `gh pr create` following `.github/PULL_REQUEST_TEMPLATE.md`.
+These are the only steps that need the owner; each takes under a minute. The agent cannot do
+them because they require accounts, money, or secret values. Later tasks that depend on one say
+so.
 
-Run locally before pushing: `npm run typecheck && node scripts/check-file-sizes.mjs && node scripts/check-eslint-ratchet.mjs && npx vitest run <touched dirs>`.
-
----
-
-## 4. Infrastructure already built (reuse it)
-
-Shared primitives from Phase 1 — **use these, don't reinvent**:
-- `src/components/media/EntityHero.tsx` — cropped full-colour hero band (default ~58vh, capped below viewport), `w-full`, `.photo-placeholder` fallback, bottom gradient, `overlay` slot inside a `max-w-[1120px]` container. Props `{heroImageUrl, alt, placeholderLabel, overlay, heightClassName?}`.
-- `src/components/media/HeroIdentity.tsx` — layout-only overlay wrapper (`space-y-3 text-text-inverse`): badges → mono eyebrow → white headline → credits.
-- `src/features/credits/components/EntityMetaEyebrow.tsx` — mono uppercase-tracked meta eyebrow (`items` array, joined with ` · `). Used above person/company names.
-- `src/features/buildings/components/BuildingHeroSection.tsx`, `BuildingHeroIdentity.tsx`, `BuildingHeader.tsx` — building-specific composition of the above.
-- **Content measure:** the entity family standardised on **`max-w-[1120px]`** (was `max-w-4xl`/896). Match it when a page joins the family.
-- `scripts/design-audit.mjs` — the login + settle + screenshot tool (§2).
+- [ ] **0.1 — Data backups decision (unblocks 2.1).** Supabase is on the **free plan**, which
+  has **no backups and no point-in-time recovery** — today a bad migration or delete is
+  unrecoverable. Decide: **upgrade Supabase to a paid tier** (turns on daily backups + PITR),
+  **or** tell the agent to set up **scripted daily backups** instead.
+- [ ] **0.2 — Sentry project + DSN (unblocks 3.2).** Create a Sentry project and hand the agent
+  the DSN to set as `VITE_SENTRY_DSN` in Vercel, so live errors are actually captured. (Or say
+  "set up Sentry" and the agent walks you through the one signup step.)
+- [ ] **0.3 — Anthropic credits.** Top up when convenient — the nightly AI-review job fails
+  until then. No other action needed.
 
 ---
 
-## 5. Key gotchas (a fresh conversation WILL hit these)
+## Phase 1 — Merge-pipeline integrity (principles 4, 5)
 
-- **Animations hide content in headless capture.** The app gates content behind framer-motion entrance animations that only play when the tab is "visible" — a naive screenshot (or the built-in preview, `visibilityState:hidden`) shows blank/half-built screens. The audit script overrides `visibilityState`/`hidden` to force them to settle. **A "blank/terrible" screen is often this, not a design bug — always settle first.**
-- **Login:** test users live in `.env.local` (`ACTIVE_USER_EMAIL`/`_PASSWORD`, also `NEW_`/`INACTIVE_`). Login form selectors: `#email`, `#password`, `button[type=submit]` (see `tests/e2e/helpers.ts`). Never print the password.
-- **Dev DB has no individual-person entities** — `/person/:slug` 404s for famous architects locally; most credits resolve to companies. You can verify Company/Locality live but may have to assert Person from code parity (it shares Company's header/shell).
-- **Ports:** `npm run dev` → 8080 (vite config). `.claude/launch.json` uses 8085. Pass `--base http://localhost:<port>` to the audit script to match.
-- **`/architect/` and `/locality/` routes are redirects** — the real pages are `/person/:slug` (`PersonDetails`), `/company/:slug` (`CompanyDetails`), `/city/:citySlug` & `/architecture/:cc/:city` (`LocalityPage`).
+Protects against losing *work* (stalled or mis-merged PRs). Both are quick settings/CI changes.
 
----
-
-## 6. Phased roadmap
-
-Each phase is a coherent surface group runnable in one fresh conversation. Do them in impact order or pick per priority. Authoritative catalogue: **[`docs/SCREEN_INVENTORY.md`](SCREEN_INVENTORY.md)** — read the relevant rows before starting. **The coverage matrix at the end maps every inventory section to a phase, so nothing is dropped.** Admin/superadmin (~45) is explicitly deferred.
-
-- **[x] Phase 1 ✅ — Entity detail family** — building, person, company, locality, country. Shipped (#1535): cropped colour `EntityHero` + overlay, 1120 shell, mono eyebrow, info-grid + review-alignment fixes.
-- **[x] Phase 1b — Entity family finish** — building detail's other tabs (INFO/CREDITS/MEDIA/MAP bodies, `RelatedByArchitect/City`), the person/company **credit-row lists** (large empty right-side space at 1120 — tighten), **Review detail** (`/review/:id`), **Architecture Hub** (`/architecture`, `pages/ArchitectureHub.tsx`). Shipped: `BuildingMediaTab` extraction (responsive masonry, `.photo-placeholder`, `EmptyState`), unboxed credits/info + aligned edges, two-column credit grid, review detail normalised to the monochrome system, Architecture Hub `.display` hero at 1120. Community-reviews pagination landed alongside (RPC `get_building_reviews` LIMIT/OFFSET + migration).
-- **[x] Phase 2 — Feed + landing** (`/`, `features/feed/pages/Index.tsx`) — ⚠️ **two screens in one route**: logged-out marketing landing (`LandingHero`/`LandingStatsBand`/`LandingFeatureGrid`) and logged-in activity feed (`EditorialFeedPost`, `FeedActivitySummaryRow`, `FeedSidebar`). Landing left as-is (already strong). Shipped: `FeedSidebar` module rhythm normalised to a single 36px divider cadence (Recently-added + footer were `pt-5`, now `pt-9`); `EditorialFeedPost` pull-quote measure changed from the odd-one-out `max-w-[88%]` to a `ch`-based editorial measure (`max-w-[34ch]`). **Scope note:** `FeedCardA/B/C` never render on `/` (`HomeFeedEntry` routes non-activity/non-event entries to `EditorialFeedPost`), so their footer/`line-clamp` unification was deferred to Phase 3/4, which own the Explore/Profile surfaces where those cards appear.
-- **[x] Phase 3 — Discovery & the map system** — Explore (`features/explore/pages/Explore.tsx`), Search (`features/search/SearchPage.tsx`), **and the shared map components** (`src/features/maps/components/*`) reused by Search/Explore/Building/Locality/Collection-map. Surfaces were already conformant, so this was a precision + consistency pass. Shipped: extracted **`MapChromeButton`** — the satellite/fullscreen controls were hand-rolled three ways (shadow/radius/blur/surface/casing) across `PlanoMap`/`CollectionMapGL`/`BuildingLocationMap`; now one flat editorial shell, verified byte-identical across wrappers. Map raw-palette leaks tokenised (`border-gray-600`→`border-border-strong` in `pinStyling`, `bg-black`/`border-gray-*`→ tokens in `BuildingPopupContent` rating circles; tests updated). `PlanoMap` empty overlay + `BuildingSidebar`'s three empties + Explore's error state routed through the shared `EmptyState`. Search consistency: `BuildingSidebar` end-of-results CTA → `.cta-link` (no literal arrow), double location-suggestion divider removed; `FilterDrawer` trigger de-shadowed/sharpened + section-heading recipe normalised; mobile search-bar lime focus ring dropped. `LeaderboardDialog` `text-amber-500` → token. **Scope note:** FeedCardA/B/C footer/`line-clamp` unification was deferred to **Phase 4** (Profile) and **shipped there**. Drawer widths + `BuildingDrawerBody` action fills left as deliberate.
-- **[x] Phase 4 — Profile, collections & settings** — Profile (`features/profile/pages/Profile.tsx`, XH) incl. all **in-page view modes** (grid/list/kanban/photos/about), Photo gallery, **Folder view** (`/:username/folders/:slug`), **Collection map** (`/:username/map/:slug`), Settings. Precision + consistency pass. Shipped: **FeedCardA/B/C** footer/`line-clamp` unified (the Phase 2/3 deferral — footer all `pt-9`, body → `line-clamp-card-body` token, read-more `transition-colors` parity). Profile family aligned to the **`max-w-[1120px]`** measure (Profile ×4 wrappers + `ProfileTabs` + `UserPhotoGallery` were 1024, `FolderView` was 896); About tab's duplicated Followers/Following pair (already in `ProfileStatsBand`) removed. Hand-rolled empties in `UserPhotoGallery`/`FolderView` (dashed panel + icon-in-circle) + folder-unavailable routed through **`EmptyState`**; `ItineraryList` `text-amber-600` → `text-feedback-warning`. Settings: avatar block left-aligned (was the only centered element breaking the left edge), field widths unified, `rounded-sm` button one-offs dropped, section eyebrows → `.eyebrow`. Hand-rolled header eyebrows (`tracking-[0.15em]`/`tracking-widest`) unified on the `.eyebrow` utility. **Decomposition:** inline `MasonryPhotoGrid` extracted to its own component (+ COMPONENT_SPEC §8 scrim annotation); `Profile.tsx` 1317→1273, baseline lowered. **Scope notes:** Collection map (`CollectionMapPage`, at its size ceiling) was already token-clean — verify-only, no edits, and unverifiable on the dev DB (test user has 0 collections). `ItineraryList`'s hardcoded Spanish string ("Día muy intenso…") is a copy/i18n bug, flagged as a follow-up, not this design pass.
-- **[x] Phase 5 — Social & engagement** — Connect (`/connect`), Notifications (`/notifications`), Post (`/post`), **Feedback history** (`/feedback`). Precision + consistency pass; all four surfaces were already token-clean. Shipped: **content measure aligned to the `max-w-[1120px]` family** — Connect (was `max-w-4xl`/896), Notifications (was `max-w-4xl`/896), Feedback wrapper (was `max-w-2xl`/672). Notifications left-edge fix: the heading was `lg:px-8` while every row/group-eyebrow beneath capped at `sm:px-6`, so the `.headline` sat 8px past the list at `lg` — dropped `lg:px-8` so edges are flush. Hand-rolled empties routed through the shared **`EmptyState`**: Connect's two `YourContacts` text empties (following/followers) and the Feedback board's whole-board "No feedback yet" bordered box (`FeedbackKanbanView`, shared with admin — now a copy that reads readOnly vs team). Feedback header eyebrow's odd `tracking-[0.15em]` → the `.eyebrow` utility (`tracking-widest`, which this codebase defines as 0.15em — see `src/index.css` letter-spacing scale). Post: the visibility popover's `rounded-md shadow-xl` (one of only two `shadow-xl` uses in the entire feature/pages tree) flattened to `border border-border-default rounded-sm`, no shadow — the flat editorial system holds. **Scope notes:** the `eyebrow tracking-widest` combo was **kept** everywhere — it is the established family section-eyebrow convention (PersonDetails/CompanyDetails/Events/ProfileHero/ProfileStatsBand all use it), so stripping the tracking would have made these surfaces *inconsistent*, not more consistent. Post keeps its narrow `max-w-lg` compose measure (a focused single-column composer; form alignment is Phase 7's remit). `FeedbackDetailContent`'s `font-semibold uppercase tracking-wider` field labels left as-is (admin-shared, internally consistent). The lime unread marker (`NotificationRow`, `bg-brand-accent` `#BEFF00`) is intentional and untouched. **Follow-up flagged:** the Feedback `testing` status uses a raw-palette violet (`feedbackTypes.ts` `bg-violet-500/10 text-violet-800`, `COLUMN_DOT bg-violet-400`) — the semantic set (success/warning/destructive/brand-primary/muted) is fully assigned to the other 6 statuses and there is no `feedback-info`/blue token, so a clean fix needs a new semantic token (a design-system decision) and it's admin-shared; deferred rather than collapsed onto neutral.
-- **[x] Phase 6 — Content & informational** — Guides, Events (list + detail), Awards (index + page + edition + **owner-admin** `/award/:slug/admin`), Updates + Update detail, **Support**, About/Terms. Precision + consistency pass; all surfaces were token-clean but off-measure. Shipped: **content measure aligned to the `max-w-[1120px]` family** — Guides (was `max-w-[1440px]`), Events list (`max-w-6xl`), Event detail (unified four wrappers that were split `max-w-4xl`/`max-w-5xl`, which also killed the skeleton→loaded jump), Awards index (`max-w-7xl`, two-column + `w-72` rail still fits), Award page/edition/owner-admin (`max-w-4xl`), Updates (`max-w-3xl`), Support (7× `max-w-4xl`). **Bare public-page centering fix:** Updates/UpdateDetail/About/Terms don't use `AppLayout`; they sat in a shrink-to-content flex ancestor (`group/sidebar-wrapper`), so their `container mx-auto max-w-*` column left-aligned with an empty right half and `max-w-[1120px]` never engaged — dropped `container`, added `w-full` to the `min-h-screen` shell so the column centers (About/Terms kept their narrow prose measure, now centered). Hand-rolled empties routed through **`EmptyState`**: Updates (dashed box), Events list (icon+bordered box, `CalendarDays` import dropped), Guides (collections), Award edition (dashed panel), Awards index (directory "No awards found" + the filter empty with a `.cta-link` Clear-filters action), Award page ("No editions"). Event-detail hero overlay's inline raw hex/rgba (`#ffffff`, `rgba(255,255,255,…)`, black gradient) → inverse tokens (`text-text-inverse/NN`) + the sanctioned `bg-gradient-to-t from-black/80 via-black/25 to-transparent` scrim mirroring `EntityHero`; `text-destructive` → `text-feedback-destructive`. `AwardFilterSelect` `text-amber-500` Trophies → `text-text-secondary` (icons stay monochrome). Photographic thumbnails → `rounded-none` (AwardsIndex building tiles + `AwardRecipientCard`, UpdateDetail hero image); non-photo one-offs → `rounded-sm` (Award filter input, event sidebar card, Trophy tiles, skeletons). Hand-rolled `uppercase tracking-[0.15em]`/`tracking-widest` section eyebrows unified on **`.eyebrow tracking-widest`** (byte-identical output; the `.eyebrow` utility is 0.08em, the `tracking-widest` utility overrides to 0.15em) — via shared definitions where possible (`GuidesPage` `SectionLabel`, `award-admin-ui` header + `awardAdminTableHeadClass`) plus inline section labels; CTA-style links, breadcrumbs, badges, buttons and tabs left as-is. Guides `LocalitySearchInput` dropdown `shadow-lg` flattened to border-only. **Scope notes:** the AwardAdminPage "No pending suggestions" empty was **left as-is** — the file is grandfathered at its frozen line cap (854) with 1 line of slack, and routing it through `EmptyState` (import + prettier-wrapped message) would grow it past the cap without an offsetting extraction; deferred rather than bust the ratchet. Compact in-`<Table>`/under-subsection empties (AwardAdminPage table cells, AwardsIndex leaderboard "No data yet", `EditionEventsSection`) kept as inline placeholders — a `py-20` `EmptyState` would be oversized. Submit/edit-event + Award/Edition forms are Phase 7; the award/claim dialogs (amber Trophy, `rounded-md`) are Phase 8. **Follow-ups flagged:** `EditionEventsSection.tsx` `hover:text-feedback-error` vs `-destructive` elsewhere; `AwardsIndex` FrequencyBadge `tracking-wider` vs the widest scale.
-- **[x] Phase 7 — Forms, flows & dashboards** — Auth, Onboarding, Update password; form pairs (Add/Edit building, Edit note, Submit/Edit event, Award/Edition forms); token flows (remove-credit, verify-claim, approve-steward, accept-steward, company dispute); Person/Company dashboards (`/portfolio`, `/company-portfolio`). Precision + consistency pass; every surface was already token-clean (zero raw palette/hex; dashboard + token-flow photo thumbnails already `rounded-none`), so the deltas were measure, eyebrows, empties, and a few shadow/corner one-offs. Shipped: **Person/Company dashboards → the `max-w-[1120px]` family** (both were `max-w-4xl`/896; skeleton + loaded wrappers moved together to avoid a skeleton→loaded jump, mirroring Phase 6's Event detail — Profile joined 1120 in Phase 4). **EditBuilding measure drift fixed**: the outer wrapper was `max-w-4xl` while the embedded `BuildingForm` column is `max-w-2xl`, so the full-width location picker and the centred fields had mismatched widths/left edges — outer settled to `max-w-2xl` so picker + fields share one edge. **Eyebrows unified on `.eyebrow tracking-widest`**: the shared building-form kit `building-form-ui.tsx` (4×, flows to Add/Edit/BuildingForm) + inline sites in AddBuilding, EditNote, SubmitEvent, PersonDashboard, CompanyDashboard, CompanyClaimDispute; where a larger heading eyebrow was intended (`text-xs`) only the arbitrary `tracking-[0.15em]` → the `tracking-widest` utility (byte-identical, preserves the two-tier hierarchy the PersonDetails/CompanyDetails siblings keep). Hand-rolled empties → shared **`EmptyState`** (PersonDashboard "No credits yet"; CompanyPortfolioManageSection "No credits yet" — net −1 line, kept the frozen 734 cap). Sharpen: AddBuilding map hover-tooltip `shadow-lg` → border (the only shadow in the subset); EditBuilding `rounded-lg` destructive box → `rounded-sm`; photographic thumbnails → `rounded-none` (AddBuilding architect/company avatars, EditNote attachment cards); AddBuilding suggestion-row containers `rounded-md` → `rounded-sm`. **Scope notes:** Auth (`max-w-[360px]`), Onboarding/UpdatePassword (`max-w-sm`), the four token flows (`max-w-md` via `TokenFlowLayout`) and CompanyClaimDispute (`max-w-lg`) were **kept narrow** — deliberate focused single-column entry (Post's kept `max-w-lg` in Phase 5), verify-only. Admin Award/Edition forms (`AwardForm`/`EditionForm`) are named in the phase but live under the Deferred admin section; already on `AdminPageHeader` at admin-standard `max-w-2xl` — left as-is so they stay consistent with sibling admin pages. BuildingForm's Size-Reference **popover** heading (`text-xs font-bold`, overlay territory) left for Phase 8. Compact dashed upload/placeholder controls (Onboarding avatar, EditNote upload, BuildingForm size placeholder) are controls, not empty states — left. Dashboards verified from code parity (dev DB test user has no person/company claim, so `/portfolio` + `/company-portfolio` render null locally); add-building / events/new / edit-building verified live at 1440 + 390 (no overflow, aligned edges).
-- **[x] Phase 8 — Modals, drawers & overlays** (~30) — cross-cutting consistency sweep. **Root fix:** the shared overlay panel primitives shipped legacy soft corners (`dialog`/`alert-dialog` `rounded-lg`; `popover`/`dropdown-menu`/`select`/`context-menu`/`menubar`/`hover-card`/`command`/`tooltip` `rounded-sm`; `drawer` `rounded-t-sm`) that every modal in the app inherited — contradicting the `rounded-none`-for-dialogs mandate, with leaf dialogs already hand-patching around it. Normalised all of them to **`rounded-none`** in one place (keeping the sanctioned `shadow-lg` overlay elevation — tokens §6/§7), so ~78 dialogs/menus now inherit editorial square corners for free; the redundant per-dialog `rounded-lg`/`shadow-lg`/`shadow-xl` overrides (`CreateCollection`, `ManageCollection`, `AddBuildingsToCollection`, `CollectionSettings` sheet, `ImageDetails`) were dropped, and the `alert-dialog`/`sheet` title typography drift was aligned to `dialog` (`leading-none tracking-tight`). **Leaf sweep:** raw palette → tokens (`AwardLeaderboardDialog` `text-amber-500`→`text-text-secondary`; `ManageFavoritesDialog` `text-[#595959]`→`text-text-secondary`, `text-white`→`text-text-inverse`; `SuggestAwardDialog` `text-secondary`→`text-text-secondary`); `shadow-xs` one-offs removed (`ManageFavorites` ×3, `AddBuildings`, `CollectionSettings` ×2); inner `rounded-md/lg` rows/thumbnails/scrollareas → `rounded-none` (Manage Folders/Favorites/Highlights/Collection/CollectionSettings + `AwardLeaderboard` photo thumbnail & skeleton); hand-rolled eyebrows unified on **`.eyebrow tracking-widest`** (`ManageFavorites`, `ManageHighlights` ×3, `AddBuildings`, `SuggestAward`, `ClaimEvent`, `FilterDrawer` ×2, `BuildingDrawerBody` `SECTION_LABEL` const + inline). Empties → shared **`EmptyState`** where sizing allows (`AwardLeaderboardDialog`, search `LeaderboardDialog` ×2, `ManageFavorites` suggestions icon-empty). Verified live: `FilterDrawer` sheet + `WaitingListDialog` both render `border-radius:0` with shadow retained at 1280 **and** 390, zero horizontal overflow. **Scope notes:** `CollectionSettings`'s icon-column + dashed-box empties were stripped of the forbidden icon/dashed-panel to **compact inline placeholders** rather than `EmptyState` — a `py-20` `EmptyState` overflows their 200px scroll areas (Phase-6 "oversized" precedent) and the file is grandfathered over-cap; the freed `MapPin` import kept it net-negative. `ClaimAwardDialog`'s `text-xs` form Label already uses the `tracking-widest` utility (larger-eyebrow tier, Phase-7 precedent) — left. `ImageDetailsDialog` photo-overlay caption badges (white-on-black over imagery) + `BuildingDetailDrawer` "View full details" styled link kept intentional; `CollectionSettings` `#EEFF41` category-color **default** left as data (no guard flags it, not chrome); compact plain-text list empties (`AddToFolder`/`ManageFolders`/`CreateCollection`/`ImageDetails` comments) kept inline. Already-clean (verify-only): `AddBuilding`, `BlockUser`, `DisconnectLegacyClaim`, `PlanRoute`, `ClaimCompany`, `RequestStewardAccess`, `ClaimPerson`, `NotificationSettings`, `WaitingList`, `MapControls`. **Follow-ups flagged:** `tooltip.tsx` `bg-neutral-900` raw palette (pre-existing); decomposition of the over-cap dialogs (`CollectionSettings` 1002, `AddBuildings` 764, `BuildingDrawerBody` 632).
-- **[x] Phase 9 — Global shells & chrome** — MainLayout, top nav / sidebar / bottom nav (`components/layout/navigation.ts` = single source), Header/MobileTopBar/SiteFooter, **404** (`NotFound`) + **500** (root `ErrorBoundary`). Precision + consistency pass; the chrome was already conformant (all token-based, flat, sharp — no raw palette/hex, no stray shadows). **Root fix:** the **error family** read as two different products — the 404 (`NotFoundView`) follows the design-system error recipe (mono `ERROR · 404` eyebrow → `.display` headline → catalogue sentence → 2 actions, **no icon**), but the three error **boundaries** used a lucide `AlertTriangle` spot icon + generic `text-2xl/xl font-semibold` heading + no eyebrow, contradicting the states.html spec + `EmptyState`'s no-illustration rule. Extracted **`ErrorView`** (`components/common/ErrorView.tsx`) — the non-404 sibling of `NotFoundView`, same composition with a caller-owned `actions` slot + `heightClassName` so full-screen (`min-h-screen`) and inline (`h-[60vh]`) boundaries share it — and routed the root `ErrorBoundary` non-404 branch (`root.tsx`), `AppErrorBoundary`, and `RouteErrorBoundary` (currently unused but exported) through it, dropping the `AlertTriangle` import from each; 500 now reads "Something broke." in the catalogue voice. **Chrome nits:** `SiteFooter` country-tag badge `rounded-[2px]` → `rounded-sm` (only sharp-corner one-off in the shells); `Header` notification-badge ring `border-surface-card` → `border-surface-default`, matching the byte-identical badge in `AppTopNav`/`MobileTopBar` (Header sits on `bg-surface-default`). `NotFoundView` left untouched (canonical, test-covered 404). **Scope notes:** `AppSidebar`'s pervasive raw `white`/`white/xx` is the established inverse-surface convention (pitch-black offcanvas), the raw-hex guard doesn't flag `white`, and Phases 5/8 kept white-on-inverse — left. Eyebrow non-unification in `SiteFooter`/`AppSidebar`/`BottomNav` left: `.eyebrow` hard-codes `text-secondary` + `0.08em`, but these live on inverse surfaces at custom sizes/opacities, so applying it would *change* color/tracking (not byte-identical — the bar prior phases held). **Follow-ups flagged:** `Header` (`max-w-7xl`, contextual title bar shown via `AppLayout showHeader` on building-detail + award pages) is `fixed top-0 z-40` under the global `AppTopNav`/`MobileTopBar` — a pre-existing layout-architecture wrinkle (measure divergence + stacking), out of a token/spacing pass's remit; `RouteErrorBoundary` is exported but has no importers (dead until wired).
-- **[x] Phase 10 — Mobile precision sweep** — all refined surfaces re-audited at 390 (`--viewport m`); bottom nav, mobile top bar, sheets. Precision + consistency pass. **The page-level layout was already mobile-sound:** all ~31 refined routes logged **`h-overflow:0px`** at 390 (prior desktop-first work + the global `html`/`body` `overflow-x:hidden` guards held), and a full-page 390 pass over the densest surfaces (home feed, Profile, Building detail, Settings) showed no touching/overflow — so the audit-plan suspects (side-by-side `min-w-[200px]` action rows, un-broken `grid-cols-4`, the Explore CTA, the `SiteFooter` full-bleed) were **verify-only, none overflowed**. The real deltas were the mobile-only gaps the desktop pass can't surface. Shipped: **Bottom-sheet safe-area (the "sheets" focus)** — the vaul `Drawer` footer (`ui/drawer.tsx`), the Radix `Sheet` bottom variant (`ui/sheet.tsx`), and the shared `BuildingDrawerBody` sticky CTA had no iOS home-indicator clearance, so their footer CTAs sat under the home bar; added additive `pb-[calc(<base>+env(safe-area-inset-bottom))]` at the primitive level (the two `components/ui` overlay primitives are ratchet-exempt) so **every** bottom sheet/drawer inherits the clearance, degrading to base on non-inset devices (`env()`=0) — not screenshot-verifiable in headless (no safe-area insets), so verify-only + no-regression-at-env-0. **Cookie-consent ↔ bottom-nav collision** — the global `CookieConsent` sat at `bottom-0 z-50`, the same slot as the mobile `BottomNav`, which renders later in the DOM and painted over the banner's Accept/Decline, leaving the consent controls **untappable at 390**; raised the banner above the nav stacking level (`z-[60]`, below the map panel `z-70` / overlays `z-1100`) + added home-indicator clearance — pure layout/stacking fix, no change to consent copy/defaults/behaviour. **Event-detail meta separator orphan** — the ` · ` between datetime and location was a standalone flex child that wrapped to a lone bullet on its own line at 390; both meta variants (cover overlay + non-cover identity) now stack `flex-col gap-1` with the separator `hidden … sm:inline`, so mobile shows two clean lines and desktop keeps the inline ` · `. **Scope notes:** no migration; admin/superadmin + Embassy/ambassadors mobile stay in their deferred/Phase-11 scope. Verified live at 390 **and** 1440 (no desktop regression); typecheck + file-size + eslint ratchets green; 185 touched-dir tests pass.
-- **[x] Phase 11 — Community** — Embassy 6-tab workspace (`/embassy/*`) + Ambassadors (Support done in P6; Become / Portal here). Precision + consistency pass. **Root fixes at the shared primitives** (the four biggest Embassy pages — `Contribute.tsx` 3087, `ChapterProjects.tsx`, `Tasks.tsx`, `EmbassyLeadership.tsx` — are grandfathered at their frozen caps with ~1 line of slack, so leverage came from `embassy-ui.tsx` + line-neutral swaps): reshaped **`EmbassyEmptyState`** from a dashed-panel-with-icon (the exact pattern the canonical `EmptyState` forbids) to the no-icon/no-dashed recipe (eyebrow + sentence + action) — fixing the Team/Tasks/ChapterProjects empties in one place and dropping the now-dead `icon` prop at those call sites (freed `Users`/`Pin` imports); dropped the `AlertCircle` spot icon from `EmbassyErrorState` (Phase-9 no-illustration mandate); routed MyGoals' "No active goals" icon-in-circle Card through the reshaped primitive (freed `Star`). **Eyebrows unified on `.eyebrow tracking-widest`** (0.15em preserved, byte-identical) across `embassy-ui.tsx`'s three definitions (`EmbassyPageHeader`/`EmbassySectionLabel`/`embassyTableHeadClass`, propagating to every consumer) + the ambassador marketing kit (`ambassador-marketing-ui.tsx` eyebrow/label, inline step-index at `BecomeAmbassador`). **Content measure → the `max-w-[1120px]` family**: `BecomeAmbassador` (was `max-w-4xl`) and the whole Embassy workspace (`EmbassyLayout` tab bar + content column, were the sprawling `container` growing to 1536 at 2xl → now `mx-auto w-full max-w-[1120px]` with edges aligned). **Line-neutral swaps** across the frozen pages: raw hex traffic-light dots (`#EF4444`/`#F59E0B`/`#10B981`) → `bg-feedback-destructive/warning/success`; `rounded-2xl`/`rounded-lg`/`rounded-md` cards/panels/controls/skeletons → `rounded-sm`, photographic thumbnails (`object-cover` + wrapper) → `rounded-none`; legitimate `rounded-full` (status dots, avatars, pills) left. **Scope notes:** `AmbassadorPortal` is a redirect stub (→ `/embassy/contribute`) — verify-only. The `MyGoals` `ActivityRow` "icon-in-circle" the recon flagged is a **data row** with a leading icon chip, not an empty — left. **Verification:** `/become-ambassador` verified live at 1440 + 390 (eyebrows, 1120 measure, aligned edges, `h-overflow:0`); Embassy `/embassy/*` is gated on an **active `ambassador_memberships` row** the QA `ACTIVE_USER` lacks (redirects to `/become-ambassador`; `/embassy/goals` hit the transient loader ErrorBoundary — rendering the correct Phase-9 500 `ErrorView`), so Embassy content verified from **code parity** (shared-primitive + className-level, holds regardless of data). Typecheck + all three ratchets green; 913 unit tests pass. **Follow-ups flagged (own PRs — not this design pass):** `Contribute.tsx` deep token migration (~80 shadcn-default tokens `text-muted-foreground`/`bg-muted`, the local `ModerationEmptyState` + inline dashed boxes — needs decomposition, file frozen); the unreachable dead `pages/Embassy.tsx` (729 lines, not in `routes.ts`, imported nowhere); `text-white` in Contribute left as the inverse-surface convention (map overlays/image scrims).
-- **Deferred — Admin & superadmin (~45)** (`/admin/*`, `/superadmin/*`) — internal tooling; out of the near-term precision scope (inventory §5.5). Lightweight token/spacing pass only if prioritised.
-
-### Coverage matrix — every inventory section is placed
-
-| `SCREEN_INVENTORY.md` section | Phase(s) |
-|---|---|
-| §0 Global shells & chrome | **9** |
-| §1.1 Landing/Feed · Explore · Search · Guides · Architecture Hub | **2** · **3** · **3** · **6** · **1b** |
-| §1.2 Building detail · Add/Edit building · Edit note · Review detail | **1 ✅** · **7** · **7** · **1b** |
-| §1.3 Country · City/Locality (· redirect) | **1 ✅** |
-| §1.4 Events list · detail · submit/edit | **6** · **6** · **7** |
-| §1.5 Awards index · page · edition · owner-admin | **6** |
-| §1.6 Person · Company · dispute · Person/Company dashboards · accept-steward | **1 ✅** · **1 ✅** · **7** · **7** · **7** |
-| §1.7 Profile (+view modes) · Photos · Folder · Collection map · Settings | **4** |
-| §1.8 Support · Become/Portal ambassador · Embassy ×7 | **6** · **11** · **11** |
-| §1.9 Connect · Notifications · Feedback history · Post | **5** |
-| §1.10 Auth · Onboarding · Update password | **7** |
-| §1.11 About · Terms · Updates · Update detail | **6** |
-| §1.12 Token flows (remove-credit/verify-claim/approve-steward) · 404 · 500 | **7** · **9** · **9** |
-| §2 Admin & superadmin (~45) | **Deferred** |
-| §3 Modals/drawers (~30) + in-page view modes | **8** (+ within the owning phase) |
-
-### Per-phase execution checklist (for a fresh conversation)
-1. Read this doc + the inventory rows for the phase + brand rules.
-2. `npm run dev`; `node scripts/design-audit.mjs --routes <phase routes>` (desktop **and** `--viewport m`). Read every screenshot; settle animations (the tool does).
-3. List concrete precision issues **with measurements** (overflow, offsets, widths, hero height vs viewport). Confirm scope with the user if ambiguous.
-4. Fix in code (tokens + §4 primitives); re-verify live each change at both breakpoints. Extract a shared primitive the moment a pattern repeats.
-5. Gate: `typecheck` + ratchets + touched tests green; pre-push runs full suite.
-6. Commit per screen on a `design/<phase>` branch; `gh pr create` per the template; report the PR.
+- [ ] **1.1 — Drop strict status checks.** Port template **ADR-0021**: set `strict: false` on
+  `main`'s required-checks protection so auto-merge never stalls on a stale or stacked branch
+  (this session hit that stall repeatedly). Write the plano ADR. **Verify:** a PR that is behind
+  `main` still auto-merges without a manual branch update.
+- [ ] **1.2 — Fail-closed auto-merge preflight.** Port template **ADR-0028**: make
+  `automerge.yml` read `main`'s `protected` boolean and refuse to arm auto-merge if protection
+  is off (today it arms best-effort with `|| true`). Write the plano ADR.
 
 ---
 
-## 7. Provenance
+## Phase 2 — Data safety (principle 7)
 
-Phase 1 fixed, on a real production example (`/architecture/gb/london/13154/two-fifty-one`): B&W→colour hero; hero pushed the title 1005px→455px→now overlaid; content 896→1120; INFO spec grid de-crammed + aligned; review avatars de-drifted (17px→0). Then extracted `EntityHero`/`HeroIdentity`/`EntityMetaEyebrow` and rolled the pattern to locality/person/company/country. This doc captures that method so the rest of the app gets the same treatment, one phase at a time.
+> ⚠️ **Highest-severity gap in the audit.** With no backups on the free plan, there is zero
+> recoverability. Phase 1's tasks are 5-minute settings changes; do them, then treat this as
+> the next thing that happens — before any further destructive database change.
+
+- [ ] **2.1 — Data-safety rails.** Gated on **0.1**. If upgrading Supabase: verify PITR/daily
+  backups are on and document it. If staying on free tier: add a **scheduled daily `pg_dump`**
+  of production to off-Supabase storage and a **pre-destructive-migration `pg_dump` restore
+  point**. Either way, add the restore-point + rehearsal checklist to
+  [`docs/RUNBOOK.md`](RUNBOOK.md) and reconcile its "no local Supabase" line with the charter's
+  rehearsal clause. Mark the *automated* restore-point mechanism as **"adopt the template's
+  pattern once it lands"** (the template has not built it yet; note that pattern assumes a paid
+  tier, so on free tier the scripted `pg_dump` fallback is what ships). Write the plano ADR.
+
+---
+
+## Phase 3 — Self-repair & production watching (principles 9, 8)
+
+- [ ] **3.1 — Session pipeline-health check.** Port template **ADR-0026**: add a §0
+  session-start routine to `.cursor/rules/06-agent-behaviour.mdc` that checks for stalled PRs,
+  red `main`, open `nightly-failure` issues, silently disabled crons, and drifted repo settings
+  — and repairs them before new work (plano's current §0 is a task pre-flight, not this). Write
+  the plano ADR. Also diagnose the open nightly `E2E` failure (issue #1572) and make the
+  `review` job treat Anthropic credit-exhaustion as a skip, not a hard failure, so benign
+  causes stop paging.
+- [ ] **3.2 — Production error-tracking ADR + docs.** Gated on **0.2**. Port template
+  **ADR-0008** shape: document Sentry (already wired client-side) in
+  [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) and [`docs/RUNBOOK.md`](RUNBOOK.md), write the plano
+  ADR, and confirm the prod DSN is live. Server-side (SSR) capture optional.
+
+---
+
+## Phase 4 — Hand-over quality (principles 10, 11)
+
+- [ ] **4.1 — Charter ↔ ADR reconciliation.** Update the charter's "In practice" pointers to
+  plano's real ADR numbers (or add a crosswalk table), resolving all 17 dangling ADR citations
+  and the §15 Product Change Protocol reference. Confirm `docs/decisions/README.md` is complete.
+- [ ] **4.2 — ADR backfill.** Record existing-but-undocumented mechanisms as ADRs: the
+  data-layer import boundary, the raw-hex / design-token guard, the gitleaks secret scan, the
+  types-staleness gate, and the risk-based-UAT convention (principle 2).
+- [ ] **4.3 — (Optional) additional hand-over gates.** Port, if wanted: a dead-code gate (knip,
+  template ADR-0007), a contract-drift check (template ADR-0012), and a coverage-floor ratchet
+  (template ADR-0006). Nice-to-haves — plano is already well-ratcheted; drop any that aren't
+  worth the CI cost.
+
+---
+
+## Final UAT
+
+One sitting at the end of the roadmap. The agent provides the evidence; the owner confirms the
+business claims in minutes:
+
+- The pipeline still merges unattended (a test PR auto-merges while behind `main`).
+- A backup safety net exists (a restore point can be produced before a destructive migration).
+- Production errors show up somewhere the owner can see them (a test error reaches Sentry).
