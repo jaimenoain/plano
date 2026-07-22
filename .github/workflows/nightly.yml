@@ -180,9 +180,18 @@ jobs:
             --color 1D76DB --description "Findings from the nightly AI review" --force
       - uses: anthropics/claude-code-action@ba0aafd4308cbba7165f9f2cdb0cfbed5a3c99ce # v1
         if: env.HAS_ANTHROPIC_KEY == 'true'
+        # The nightly review is advisory judgment off the PR path (ADR-0006), so
+        # it must NEVER page: continue-on-error keeps a credit-exhausted or
+        # otherwise-errored run from failing the job and tripping `alert` with a
+        # `nightly-failure` issue for a benign cause (ADR-0013). show_full_output
+        # below keeps the real error visible in the run log. `allowed_bots: '*'`
+        # lets the scheduled github-actions trigger past the action's bot-actor
+        # gate — without it the scheduled review never runs at all.
+        continue-on-error: true
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ github.token }}
+          allowed_bots: '*'
           prompt: |
             Nightly review of everything merged to main since the last verified
             commit. There is NO pull request context.
