@@ -374,7 +374,7 @@ export function CollectionsGrid({ userId, username, isOwnProfile, onCreate, refr
       {isOwnProfile && onCreate && !isEmpty && (
         <p className="border-t border-border-default pt-8 text-center text-2xs text-text-disabled">
           Looking for the map editor?{" "}
-          <Link className="text-text-secondary underline-offset-4 hover:text-text-primary hover:underline" to="/collections/new">
+          <Link className="text-text-secondary underline-offset-4 hover:text-text-primary hover:underline" to="/collections">
             Create another list →
           </Link>
         </p>

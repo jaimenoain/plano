@@ -183,6 +183,7 @@ export default [
       "/accept-company-steward",
       "features/credits/pages/AcceptCompanySteward.tsx",
     ),
+    route("/collections", "features/collections/pages/CollectionsIndexPage.tsx"),
     route(
       "/:username/map/:slug",
       "features/collections/components/CollectionMapPage.tsx",

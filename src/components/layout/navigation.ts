@@ -3,6 +3,7 @@ import {
   BookOpen,
   CalendarDays,
   CheckSquare,
+  Folder,
   Landmark,
   LayoutDashboard,
   Play,
@@ -51,6 +52,13 @@ export const appNavItems: AppNavItem[] = [
     path: "/guides",
     icon: BookOpen,
     surfaces: ["top", "sidebar"],
+  },
+  {
+    label: "Collections",
+    path: "/collections",
+    icon: Folder,
+    surfaces: ["top", "sidebar"],
+    isActive: (pathname) => pathname === "/collections",
   },
   {
     label: "Search",

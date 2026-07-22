@@ -22,7 +22,7 @@ export function QuickActions({
       emphasize: true,
     },
     {
-      to: `/collections/new?locality=${citySlug}`,
+      to: `/collections`,
       icon: BookOpen,
       label: "Create itinerary",
       emphasize: false,

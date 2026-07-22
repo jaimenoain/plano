@@ -217,7 +217,7 @@ export default function GuidesPage() {
                 Popular collections
               </h2>
             </div>
-            <Link to="/explore" className="cta-link hidden sm:inline-flex">
+            <Link to="/collections" className="cta-link hidden sm:inline-flex">
               Explore all
             </Link>
           </div>
@@ -239,14 +239,14 @@ export default function GuidesPage() {
               eyebrow="No collections yet"
               message="Community-curated collections will appear here."
               action={
-                <Link to="/collections/new" className="cta-link">
+                <Link to="/collections" className="cta-link">
                   Create the first one
                 </Link>
               }
             />
           )}
 
-          <Link to="/explore" className="cta-link mt-8 sm:hidden">
+          <Link to="/collections" className="cta-link mt-8 sm:hidden">
             Explore all collections
           </Link>
         </section>
@@ -264,7 +264,7 @@ export default function GuidesPage() {
               </p>
             </div>
             <div className="flex gap-6 shrink-0">
-              <Link to="/collections/new" className="cta-link">
+              <Link to="/collections" className="cta-link">
                 New collection
               </Link>
               <Link to="/explore" className="cta-link">
