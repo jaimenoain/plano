@@ -12,3 +12,5 @@ Format: context → decision → consequences. Keep them under a page.
 | [0004](0004-e2e-against-production-with-qa-accounts.md) | E2E tests run against production Supabase with dedicated QA accounts |
 | [0005](0005-auto-merge-on-green.md) | Auto-merge on green; human review not required, arming automated |
 | [0006](0006-nightly-heavy-tier.md) | Nightly heavy tier: one scheduled AI review + E2E, off the PR path |
+| [0007](0007-worktree-lifecycle.md) | Worktree lifecycle: in-repo, fresh-based, dies with its PR |
+| [0008](0008-adopt-principles-charter.md) | Adopt the operating-principles charter above ADRs and rules |
