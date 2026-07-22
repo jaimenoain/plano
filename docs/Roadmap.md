@@ -51,7 +51,7 @@ Protects against losing *work* (stalled or mis-merged PRs). Both are quick setti
   `main`'s required-checks protection so auto-merge never stalls on a stale or stacked branch
   (this session hit that stall repeatedly). Write the plano ADR. **Verify:** a PR that is behind
   `main` still auto-merges without a manual branch update.
-- [ ] **1.2 — Fail-closed auto-merge preflight.** Port template **ADR-0028**: make
+- [x] **1.2 — Fail-closed auto-merge preflight.** Port template **ADR-0028**: make
   `automerge.yml` read `main`'s `protected` boolean and refuse to arm auto-merge if protection
   is off (today it arms best-effort with `|| true`). Write the plano ADR.
 
