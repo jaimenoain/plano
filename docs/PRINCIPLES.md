@@ -35,8 +35,8 @@ expect, screenshots — so the sitting takes minutes and tests the business
 claim, nothing else.
 
 _In practice:_ the automation-first, risk-based UAT convention in
-`docs/project_start/04-writing-the-roadmap.md` — followed but not yet recorded as a
-plano ADR (backfill is roadmap task 4.2).
+`docs/project_start/04-writing-the-roadmap.md`, recorded as
+[ADR-0019](decisions/0019-risk-based-uat.md).
 
 ## 3. Permission is business consent, not technical consent
 
@@ -145,7 +145,7 @@ debt ratchet (ADR-0003; a coverage-floor ratchet is not yet built — roadmap ta
 
 This charter was ported from the owner's `jaimenoain/template` repo, so its original
 _In practice:_ lines cited the **template's** ADR numbers. Plano keeps its own independent
-0001–0014 sequence (ADRs are never renumbered once accepted — ADR-0002). The prose above has
+0001–0019 sequence (ADRs are never renumbered once accepted — ADR-0002). The prose above has
 been rewritten to plano's real pointers; this table records the lineage and is the canonical
 map for anyone comparing plano against the template. "Rules only" means the mechanism lives in
 `.cursor/rules/` / `AGENTS.md` rather than an ADR; "roadmap 4.x" means the plano ADR is a
@@ -155,8 +155,8 @@ planned backfill.
 |---|---|---|
 | ADR-0036 | principles charter | **ADR-0008** (adopt-principles-charter) |
 | ADR-0014 | agent-first manual tasks | rules only (`06-agent-behaviour.mdc` §3 + user-level ops) |
-| ADR-0015 | automation-first UAT | convention in `project_start/04-writing-the-roadmap.md`; ADR backfill = roadmap 4.2 |
-| ADR-0019 | risk-based UAT | as above — roadmap 4.2 |
+| ADR-0015 | automation-first UAT | **ADR-0019** (risk-based-uat) |
+| ADR-0019 | risk-based UAT | **ADR-0019** (risk-based-uat) |
 | ADR-0017 / 0018 | clean-branch loop | **ADR-0005** (auto-merge) + **ADR-0007** (worktree lifecycle) |
 | ADR-0020 / 0028 | auto-merge on green | **ADR-0005** + **ADR-0011** (fail-closed preflight) |
 | ADR-0035 | worktrees for parallel sessions | **ADR-0007** |

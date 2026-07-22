@@ -20,3 +20,8 @@ Format: context → decision → consequences. Keep them under a page.
 | [0012](0012-data-safety-rails.md) | Data-safety rails on the free tier: scheduled encrypted backups + pre-destructive-migration restore point |
 | [0013](0013-session-pipeline-health-check.md) | Session-start pipeline-health check; the nightly AI review does not page |
 | [0014](0014-production-error-tracking.md) | Production error tracking via Sentry (client-side, errors-only) |
+| [0015](0015-data-layer-import-boundary.md) | Data-layer import boundary: no direct Supabase client / deep cross-feature imports (ESLint, warn + ratchet) |
+| [0016](0016-design-token-guard.md) | Raw-hex design-token guard: no hex literals in swept design surfaces (ESLint, error) |
+| [0017](0017-gitleaks-secret-scan.md) | Gitleaks secret scan on every PR; findings are rotated, never fingerprint-silenced |
+| [0018](0018-types-staleness-gate.md) | Types-staleness gate: a migration must regen `types.ts` or carry a `types-neutral` marker |
+| [0019](0019-risk-based-uat.md) | Risk-based, automation-first UAT: per-phase `X.98` gate only when depended on, plus one Final UAT |
