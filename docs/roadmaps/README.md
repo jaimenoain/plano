@@ -25,6 +25,7 @@ E.g. `0001-initial-build.md`, `0002-billing-and-invoicing.md`.
 | #   | Roadmap                                                          | Completed  |
 | --- | ---------------------------------------------------------------- | ---------- |
 | [0001](0001-design-precision-programme.md) | Design Precision Programme — pixel-precision pass across all surfaces | 2026-07-22 |
+| [0002](0002-principles-alignment.md) | Principles alignment — close charter gaps (merge integrity, data safety, self-repair, hand-over) | 2026-07-23 |
 
 ## The reset scaffold
 
