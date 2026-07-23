@@ -6,6 +6,7 @@ import {
   Briefcase,
   Building2,
   Landmark,
+  Layers,
   LogOut,
   Search,
   Settings,
@@ -112,6 +113,12 @@ function UserMenuDropdown() {
           <Link to="/search?mode=library" className="flex items-center gap-2 cursor-pointer">
             <Bookmark className="h-4 w-4" />
             My Library
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to={`${ownProfilePath}?section=collections`} className="flex items-center gap-2 cursor-pointer">
+            <Layers className="h-4 w-4" />
+            My collections
           </Link>
         </DropdownMenuItem>
         {isAmbassador ? (

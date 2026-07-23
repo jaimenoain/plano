@@ -21,6 +21,7 @@ import {
   Building2,
   ChevronDown,
   Landmark,
+  Layers,
   type LucideIcon,
 } from "lucide-react";
 import { useLocation, Link, useNavigate } from "react-router";
@@ -151,6 +152,15 @@ function UserMenu() {
               >
                 <Bookmark className="h-4 w-4" />
                 My Library
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link
+                to={`${ownProfilePath}?section=collections`}
+                className="flex items-center gap-2 cursor-pointer text-white/80 hover:text-white focus:text-white focus:bg-white/10"
+              >
+                <Layers className="h-4 w-4" />
+                My collections
               </Link>
             </DropdownMenuItem>
             {isAmbassador ? (
