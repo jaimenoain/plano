@@ -25,9 +25,16 @@ interface AddBuildingDetailsProps {
     precision?: 'exact' | 'approximate';
   };
   onBack: () => void;
+  /**
+   * When set (e.g. the create flow was launched from the "Add to Collection"
+   * modal), a successful save returns here instead of the new building's detail
+   * page, carrying params that reopen the modal with the new building added +
+   * selected. Should be a same-origin path, e.g. `/:username/map/:slug`.
+   */
+  returnTo?: string;
 }
 
-export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsProps) {
+export function AddBuildingDetails({ locationData, onBack, returnTo }: AddBuildingDetailsProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const navigate = useNavigate();
@@ -149,8 +156,14 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
     }
 
     toast.success("Building added successfully!");
-    // Locality URL not available: insert response does not include locality_country_code/city_slug — requires buildings INSERT to return locality join or a separate lookup
-    navigate(getBuildingUrl(insertedData.id, insertedData.slug, insertedData.short_id));
+    if (returnTo) {
+      // Launched from the "Add to Collection" modal: bounce back so the modal
+      // reopens, auto-adds this building to the collection, and selects it.
+      navigate(`${returnTo}?addBuildings=1&createdBuilding=${insertedData.id}`);
+    } else {
+      // Locality URL not available: insert response does not include locality_country_code/city_slug — requires buildings INSERT to return locality join or a separate lookup
+      navigate(getBuildingUrl(insertedData.id, insertedData.slug, insertedData.short_id));
+    }
     setIsSubmitting(false);
   };
 

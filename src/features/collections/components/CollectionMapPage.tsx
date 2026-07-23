@@ -232,6 +232,13 @@ interface SavedCandidateResponse {
   } | null;
 }
 
+/** Returns a copy of the search params with the given keys removed (for consume-once deep links). */
+function withoutSearchParams(prev: URLSearchParams, ...keys: string[]): URLSearchParams {
+  const next = new URLSearchParams(prev);
+  keys.forEach((key) => next.delete(key));
+  return next;
+}
+
 export default function CollectionMap() {
   const { username, slug } = useParams();
   const { user } = useAuth();
@@ -250,6 +257,7 @@ export default function CollectionMap() {
     useState<"map" | "general" | "markers" | "collaborators">("map");
   const [showAddBuildings, setShowAddBuildings] = useState(false);
   const [hasAddBuildingsOpened, setHasAddBuildingsOpened] = useState(false);
+  const [justCreatedBuildingId, setJustCreatedBuildingId] = useState<string | null>(null);
   const [showPlanRoute, setShowPlanRoute] = useState(false);
   const [hasPlanRouteOpened, setHasPlanRouteOpened] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
@@ -388,21 +396,23 @@ export default function CollectionMap() {
   // RLS bypass on collections, so they are treated as ordinary viewers here (no failing UI).
   const canEdit = isOwner || isEditorContributor;
 
-  // Deep link from a "collaboration request" notification: ?settings=collaborators opens
-  // the settings sheet on the Collaborators tab (owner/editor only). Consume the param once.
+  // Consume-once deep links (owner/editor only): ?settings=collaborators opens the settings sheet on
+  // the Collaborators tab; ?addBuildings=1&createdBuilding=<id> is the "Create new building" return
+  // trip — reopen the Add-to-Collection modal and hand it the new building (auto-add + select).
   useEffect(() => {
-    if (searchParams.get("settings") !== "collaborators") return;
     if (!canEdit) return;
-    setSettingsInitialTab("collaborators");
-    setShowSettings(true);
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        next.delete("settings");
-        return next;
-      },
-      { replace: true },
-    );
+    if (searchParams.get("settings") === "collaborators") {
+      setSettingsInitialTab("collaborators");
+      setShowSettings(true);
+      setSearchParams((prev) => withoutSearchParams(prev, "settings"), { replace: true });
+    }
+    if (searchParams.get("addBuildings") === "1") {
+      setJustCreatedBuildingId(searchParams.get("createdBuilding"));
+      setShowAddBuildings(true);
+      setSearchParams((prev) => withoutSearchParams(prev, "addBuildings", "createdBuilding"), {
+        replace: true,
+      });
+    }
   }, [searchParams, canEdit, setSearchParams]);
 
   // 3. Fetch Items and Markers
@@ -1489,6 +1499,8 @@ toast({
                       onCollectionDataChanged={() => {
                         void refetchItems();
                       }}
+                      returnTo={`/${username}/map/${slug}`}
+                      justCreatedBuildingId={justCreatedBuildingId}
                   />
               </Suspense>
             )}

@@ -428,7 +428,11 @@ toast.error("Location search failed. Please click on the map to set the location
       <AppLayout title="Add Building" showBack>
         <div className="min-h-screen bg-surface-default">
           <div className="max-w-2xl mx-auto px-4 py-8">
-            <AddBuildingDetails locationData={finalLocationData} onBack={() => setStep(1)} />
+            <AddBuildingDetails
+              locationData={finalLocationData}
+              onBack={() => setStep(1)}
+              returnTo={searchParams.get("returnTo") ?? undefined}
+            />
           </div>
         </div>
       </AppLayout>
