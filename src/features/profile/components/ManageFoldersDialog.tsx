@@ -342,7 +342,7 @@ toast({ variant: "destructive", description: "Failed to delete folder." });
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-h-[85vh] grid-rows-[auto_minmax(0,1fr)]">
           <DialogHeader>
             <DialogTitle>
               {view === "list" && "Manage Folders"}
@@ -359,7 +359,7 @@ toast({ variant: "destructive", description: "Failed to delete folder." });
           </DialogHeader>
 
           {view === "list" ? (
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4 min-h-0">
               <Button onClick={startCreate} className="w-full">
                 <Plus className="mr-2 h-4 w-4" /> Create New Folder
               </Button>
@@ -371,7 +371,7 @@ toast({ variant: "destructive", description: "Failed to delete folder." });
               ) : folders.length === 0 ? (
                 <p className="text-center py-8 text-text-secondary">No folders found.</p>
               ) : (
-                <ScrollArea className="h-[40vh] [&>[data-radix-scroll-area-viewport]>div]:block!">
+                <ScrollArea className="flex-1 min-h-0 [&>[data-radix-scroll-area-viewport]>div]:block!">
                   <div className="space-y-2 p-1">
                     {folders.map(f => (
                       <div
@@ -403,13 +403,13 @@ toast({ variant: "destructive", description: "Failed to delete folder." });
               )}
             </div>
           ) : view === "manage_items" ? (
-             <div className="space-y-4">
+             <div className="flex flex-col gap-4 min-h-0">
                  {itemsLoading ? (
                      <div className="flex justify-center py-12">
                          <Loader2 className="h-8 w-8 animate-spin text-text-secondary" />
                      </div>
                  ) : (
-                     <ScrollArea className="h-[50vh] pr-4 [&>[data-radix-scroll-area-viewport]>div]:block!">
+                     <ScrollArea className="flex-1 min-h-0 pr-4 [&>[data-radix-scroll-area-viewport]>div]:block!">
                          <div className="space-y-2">
                              {availableCollections.length === 0 ? (
                                  <p className="text-center text-text-secondary py-4">No collections found.</p>
@@ -450,7 +450,7 @@ toast({ variant: "destructive", description: "Failed to delete folder." });
                  </DialogFooter>
              </div>
           ) : (
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4 min-h-0">
               <div className="space-y-2">
                 <Label htmlFor="name">Name</Label>
                 <Input
