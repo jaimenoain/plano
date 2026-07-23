@@ -25,6 +25,18 @@ import {
   EMBASSY_SKELETON_ROUNDED,
 } from "@/features/embassy/components/embassy-ui";
 import { StartHereQueue } from "@/features/embassy/components/StartHereQueue";
+import { SuggestedGoalChips } from "../components/SuggestedGoalChips";
+import type { SuggestedGoalMetric } from "../api/suggestedGoals";
+
+type GoalMetric =
+  | "edits"
+  | "photos"
+  | "firms_claimed"
+  | "visits"
+  | "moderation"
+  | "outreach"
+  | "events"
+  | "research";
 
 type Goal = {
   id: string;
@@ -32,7 +44,7 @@ type Goal = {
   title: string;
   target_value: number;
   current_value: number;
-  metric: "edits" | "photos" | "firms_claimed" | "visits";
+  metric: GoalMetric;
   status: "active" | "achieved" | "abandoned";
   due_date: string | null;
   created_at: string;
@@ -97,7 +109,8 @@ export default function MyGoalsPage() {
   // Form state
   const [title, setTitle] = useState("");
   const [target, setTarget] = useState("10");
-  const [metric, setMetric] = useState<Goal["metric"]>("edits");
+  const [metric, setMetric] = useState<GoalMetric>("edits");
+  const [pendingChipMetric, setPendingChipMetric] = useState<SuggestedGoalMetric | null>(null);
 
   // Reuse the membership query already fired by EmbassyLayout (same queryKey).
   // When this component mounts the cache is already populated, so chapterId
@@ -162,14 +175,14 @@ export default function MyGoalsPage() {
   });
 
   const createGoalMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (input: { title: string; metric: GoalMetric; target: number }) => {
       const { error } = await supabase
         .from("ambassador_goals")
         .insert({
           user_id: user!.id,
-          title,
-          target_value: parseInt(target),
-          metric,
+          title: input.title,
+          target_value: input.target,
+          metric: input.metric,
           status: "active",
         });
       if (error) throw error;
@@ -181,7 +194,10 @@ export default function MyGoalsPage() {
       queryClient.invalidateQueries({ queryKey: ["ambassador-goals", user?.id] });
     },
     onError: () => {
-      toast.error("Failed to set goal. Check if the ambassador_goals table exists.");
+      toast.error("Couldn't set that goal — try again in a moment.");
+    },
+    onSettled: () => {
+      setPendingChipMetric(null);
     },
   });
 
@@ -189,6 +205,11 @@ export default function MyGoalsPage() {
     setTitle("");
     setTarget("10");
     setMetric("edits");
+  };
+
+  const handlePickSuggestedGoal = (suggestion: { metric: SuggestedGoalMetric; title: string; target: number }) => {
+    setPendingChipMetric(suggestion.metric);
+    createGoalMutation.mutate({ title: suggestion.title, metric: suggestion.metric, target: suggestion.target });
   };
 
   return (
@@ -255,6 +276,14 @@ export default function MyGoalsPage() {
             <Target className="h-5 w-5 text-text-secondary" aria-hidden />
             <h2 className="text-lg font-semibold tracking-tight text-text-primary">Active goals</h2>
           </div>
+
+          {chapterId && (
+            <SuggestedGoalChips
+              chapterId={chapterId}
+              pendingMetric={pendingChipMetric}
+              onPick={handlePickSuggestedGoal}
+            />
+          )}
 
           {loadingGoals ? (
             <div className="grid gap-4">
@@ -444,6 +473,10 @@ export default function MyGoalsPage() {
                     <SelectItem value="photos">Photos</SelectItem>
                     <SelectItem value="visits">Visits</SelectItem>
                     <SelectItem value="firms_claimed">Firm Claims</SelectItem>
+                    <SelectItem value="moderation">Moderation</SelectItem>
+                    <SelectItem value="outreach">Outreach</SelectItem>
+                    <SelectItem value="events">Events</SelectItem>
+                    <SelectItem value="research">Research</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -460,8 +493,8 @@ export default function MyGoalsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsGoalOpen(false)}>Cancel</Button>
-            <Button 
-              onClick={() => createGoalMutation.mutate()} 
+            <Button
+              onClick={() => createGoalMutation.mutate({ title, metric, target: parseInt(target) })}
               disabled={createGoalMutation.isPending || !title.trim()}
             >
               {createGoalMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Start Goal"}
@@ -506,11 +539,15 @@ function OpenTaskRow({ task, onClick }: { task: ChapterTask; onClick: () => void
 function GoalCard({ goal }: { goal: Goal }) {
   const progress = Math.min(100, (goal.current_value / goal.target_value) * 100);
   
-  const metricLabels = {
+  const metricLabels: Record<GoalMetric, string> = {
     edits: "edits",
     photos: "photos",
     firms_claimed: "firms claimed",
-    visits: "visits logged"
+    visits: "visits logged",
+    moderation: "items moderated",
+    outreach: "outreach contacts",
+    events: "events published",
+    research: "research items applied",
   };
 
   return (
