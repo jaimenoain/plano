@@ -83,7 +83,14 @@ export default function EmbassyLayout() {
       credentials: "include",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ action: "run", chapter_id: chapterId }),
-    }).catch(() => undefined);
+    })
+      .then((r) => {
+        // Opportunistic kick-off: never block the layout, but don't hide the
+        // failure either — the Events tool reads run status for the user-facing
+        // state; this warning is the operator breadcrumb.
+        if (!r.ok) console.warn(`[embassy] event-search kick-off failed (${r.status})`);
+      })
+      .catch(() => undefined);
   }, [membership, location.pathname]);
 
   // Fire-and-forget: fill the research queue up to 10 items per chapter per session.
@@ -99,7 +106,11 @@ export default function EmbassyLayout() {
       credentials: "include",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ action: "fill", chapter_id: chapterId }),
-    }).catch(() => undefined);
+    })
+      .then((r) => {
+        if (!r.ok) console.warn(`[embassy] research-queue kick-off failed (${r.status})`);
+      })
+      .catch(() => undefined);
   }, [membership, location.pathname]);
 
   const navItems = embassyNavItemsFor(isLeader);
