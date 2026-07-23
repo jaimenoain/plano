@@ -18,7 +18,10 @@ export interface Notification {
     | "award_win"
     | "feedback_status_updated"
     | "feedback_notes_updated"
-    | "project_idea_submitted";
+    | "project_idea_submitted"
+    | "collection_collab_requested"
+    | "collection_collab_accepted"
+    | "collection_collab_rejected";
   is_read: boolean;
   actor_id: string;
   recommendation_id?: string | null;
@@ -49,6 +52,11 @@ export interface Notification {
     feedback_id?: string;
     message?: string;
     idea_title?: string;
+    request_id?: string;
+    collection_id?: string;
+    collection_slug?: string;
+    collection_name?: string;
+    owner_username?: string;
   };
   recommendation?: {
     id?: string;

@@ -171,6 +171,19 @@ export default function Notifications() {
           ? String((notification.metadata as { feedback_id?: string }).feedback_id)
           : null;
       navigate(feedbackId ? `/feedback?open=${feedbackId}` : "/feedback");
+    } else if (
+      notification.type === "collection_collab_requested" ||
+      notification.type === "collection_collab_accepted" ||
+      notification.type === "collection_collab_rejected"
+    ) {
+      const ownerUsername = notification.metadata?.owner_username;
+      const slug = notification.metadata?.collection_slug;
+      if (ownerUsername && slug) {
+        // The owner receives the request → deep-link to the Collaborators tab so they can act.
+        const suffix =
+          notification.type === "collection_collab_requested" ? "?settings=collaborators" : "";
+        navigate(`/${ownerUsername}/map/${slug}${suffix}`);
+      }
     } else if (notification.resource?.id) {
       navigate(`/review/${notification.resource.id}`);
     }

@@ -1966,6 +1966,61 @@ export type Database = {
           },
         ]
       }
+      collection_collaboration_requests: {
+        Row: {
+          collection_id: string
+          created_at: string
+          id: string
+          message: string | null
+          requester_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          collection_id: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          requester_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          collection_id?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          requester_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_collaboration_requests_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_collaboration_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collection_collaboration_requests_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collection_contributors: {
         Row: {
           collection_id: string
@@ -6117,6 +6172,10 @@ export type Database = {
         Args: { p_id: string; p_reason: string }
         Returns: undefined
       }
+      request_collection_collaboration: {
+        Args: { p_collection_id: string; p_message?: string }
+        Returns: string
+      }
       resolve_locality_for_explore: {
         Args: { p_city: string; p_country_code: string }
         Returns: string
@@ -6147,6 +6206,10 @@ export type Database = {
           p_reviewer_note?: string
         }
         Returns: Json
+      }
+      review_collection_collaboration: {
+        Args: { p_approve: boolean; p_note?: string; p_request_id: string }
+        Returns: undefined
       }
       search_buildings:
         | {
