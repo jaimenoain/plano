@@ -62,7 +62,6 @@ export default function AddBuilding() {
   const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [locationPrecision, setLocationPrecision] = useState<'exact' | 'approximate'>('exact');
   const [potentialName, setPotentialName] = useState<string | undefined>(undefined);
-  const [nameInput, setNameInput] = useState<string>("");
   const [checkingDuplicates, setCheckingDuplicates] = useState(false);
   const [duplicates, setDuplicates] = useState<NearbyBuilding[]>([]);
   const [markerPosition, setMarkerPosition] = useState<{ lat: number; lng: number } | null>(null);
@@ -76,20 +75,16 @@ export default function AddBuilding() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
+  // Seed the name once from the URL (?name=) so the field stays freely
+  // editable afterward. A URL→state effect would re-inject the param whenever
+  // the field is cleared, trapping the user on the (often approximate) value.
+  const [nameInput, setNameInput] = useState<string>(() => searchParams.get("name") ?? "");
   const [mapsLoaded, setMapsLoaded] = useState(false);
   const [isMapClient, setIsMapClient] = useState(false);
 
   useEffect(() => {
     setIsMapClient(true);
   }, []);
-
-  // Handle name param for pre-filling
-  useEffect(() => {
-    const nameParam = searchParams.get("name");
-    if (nameParam && !nameInput) {
-      setNameInput(nameParam);
-    }
-  }, [searchParams, nameInput]);
 
   // Load Google Maps
   useEffect(() => {
