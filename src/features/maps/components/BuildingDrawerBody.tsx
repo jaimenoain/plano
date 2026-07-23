@@ -27,6 +27,7 @@ import {
   MessageSquare,
   MapPin,
   Loader2,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -61,22 +62,29 @@ import { getBuildingImageUrl } from '@/utils/image';
 import { getBuildingUrl } from '@/utils/url';
 import { useBuildingStatusActions } from '../hooks/useBuildingStatusActions';
 import { useBuildingDrawerData } from '../hooks/useBuildingDrawerData';
-import { useToast } from '@/hooks/use-toast';
-import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useBuildingDrawerNotesAndCollections } from '../hooks/useBuildingDrawerNotesAndCollections';
 
 interface BuildingDrawerBodyProps {
   cluster: ClusterResponse;
   onClose: () => void;
   layout: 'panel' | 'sheet';
+  /**
+   * Collection context only: remove this building from the current collection.
+   * When provided (owner/contributor), a dedicated destructive action renders.
+   * The caller owns the confirm dialog + refetch + closing the drawer.
+   */
+  onRemoveFromCollection?: (buildingId: string) => void;
 }
 
 const SECTION_LABEL = 'eyebrow tracking-widest';
 
-export function BuildingDrawerBody({ cluster, onClose, layout }: BuildingDrawerBodyProps) {
+export function BuildingDrawerBody({
+  cluster,
+  onClose,
+  layout,
+  onRemoveFromCollection,
+}: BuildingDrawerBodyProps) {
   const buildingId = String(cluster.id);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const {
     user,
@@ -133,87 +141,29 @@ export function BuildingDrawerBody({ cluster, onClose, layout }: BuildingDrawerB
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const hasStatus = isSaved || isVisited;
 
-  // ── Notes ──
+  // ── Notes & collections (state + Supabase mutations) ──
   const existingPost = data?.userPosts?.[0] ?? null;
-  const [noteOpen, setNoteOpen] = useState(false);
-  const [noteDraft, setNoteDraft] = useState('');
-  const [savingNote, setSavingNote] = useState(false);
-  useEffect(() => {
-    setNoteDraft(existingPost?.body ?? '');
-  }, [existingPost?.id]);
-
-  const openNoteEditor = () => {
-    setNoteDraft(existingPost?.body ?? '');
-    setNoteOpen(true);
-    setCollectionsOpen(false);
-  };
-
-  const saveNote = async () => {
-    if (!user) return;
-    setSavingNote(true);
-    const statusToUse = isVisited ? 'visited' : isSaved ? 'pending' : isIgnored ? 'ignored' : 'visited';
-    try {
-      await supabase.from('user_buildings').upsert(
-        { user_id: user.id, building_id: buildingId, status: statusToUse },
-        { onConflict: 'user_id, building_id' },
-      );
-      if (existingPost) {
-        const { error } = await supabase
-          .from('building_posts')
-          .update({ body: noteDraft, updated_at: new Date().toISOString() })
-          .eq('id', existingPost.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('building_posts')
-          .insert({ user_id: user.id, building_id: buildingId, body: noteDraft });
-        if (error) throw error;
-      }
-      toast({ title: 'Note saved' });
-      setNoteOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['building-drawer', buildingId] });
-      queryClient.invalidateQueries({ queryKey: ['user-building-statuses'] });
-    } catch {
-      toast({ variant: 'destructive', title: 'Failed to save note' });
-    } finally {
-      setSavingNote(false);
-    }
-  };
-
-  // ── Collections ──
-  const [collectionIds, setCollectionIds] = useState<string[]>([]);
-  const [collectionsOpen, setCollectionsOpen] = useState(false);
-  useEffect(() => {
-    if (data?.collectionIds) setCollectionIds(data.collectionIds);
-  }, [data?.collectionIds]);
-
-  const onCollectionsChange = async (newIds: string[]) => {
-    if (!user) return;
-    const prev = collectionIds;
-    const added = newIds.filter((id) => !prev.includes(id));
-    const removed = prev.filter((id) => !newIds.includes(id));
-    setCollectionIds(newIds); // optimistic
-    try {
-      if (added.length > 0) {
-        const { error } = await supabase
-          .from('collection_items')
-          .insert(added.map((cId) => ({ collection_id: cId, building_id: buildingId })));
-        if (error) throw error;
-      }
-      if (removed.length > 0) {
-        const { error } = await supabase
-          .from('collection_items')
-          .delete()
-          .in('collection_id', removed)
-          .eq('building_id', buildingId);
-        if (error) throw error;
-      }
-      queryClient.invalidateQueries({ queryKey: ['building-drawer', buildingId] });
-    } catch {
-      toast({ variant: 'destructive', title: 'Failed to update collection' });
-      setCollectionIds(prev); // revert
-    }
-  };
+  const {
+    noteOpen,
+    setNoteOpen,
+    noteDraft,
+    setNoteDraft,
+    savingNote,
+    openNoteEditor,
+    saveNote,
+    collectionIds,
+    collectionsOpen,
+    setCollectionsOpen,
+    onCollectionsChange,
+  } = useBuildingDrawerNotesAndCollections({
+    buildingId,
+    user,
+    isVisited,
+    isSaved,
+    isIgnored,
+    existingPost,
+    initialCollectionIds: data?.collectionIds,
+  });
 
   // ── Summary facts ──
   const facts = [
@@ -440,6 +390,22 @@ export function BuildingDrawerBody({ cluster, onClose, layout }: BuildingDrawerB
                     selectedCollectionIds={collectionIds}
                     onChange={onCollectionsChange}
                   />
+                </div>
+              )}
+
+              {/* Collection context — remove this building from the open collection.
+                  The caller owns the confirm dialog, refetch and closing the drawer. */}
+              {onRemoveFromCollection && (
+                <div className="mt-4 border-t border-border-default pt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 w-full justify-center gap-1.5 border-feedback-destructive/40 text-xs text-feedback-destructive hover:bg-feedback-destructive hover:text-feedback-destructive-foreground"
+                    onClick={() => onRemoveFromCollection(buildingId)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Remove from collection
+                  </Button>
                 </div>
               )}
             </>

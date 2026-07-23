@@ -5,3 +5,5 @@
  * see the `no-restricted-imports` deep-feature rule in `eslint.config.js`.
  */
 export { MAP_MARKER_FILL } from "./constants/mapMarkerFills";
+export { BuildingListRow } from "./components/BuildingListRow";
+export type { ClusterResponse } from "./hooks/useMapData";

@@ -40,13 +40,13 @@ import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { useMapContext } from '../providers/MapContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { RatingDots } from '@/components/ui/rating-dots';
 import { EmptyState } from '@/components/ui/empty-state';
 import { EntityResultsList } from './EntityResultsList';
+import { BuildingListRow } from './BuildingListRow';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, MapPin, UserRound, Building2 } from 'lucide-react';
 import { Link } from 'react-router';
-import { getBuildingImageUrl, getStorageAssetUrl } from '@/utils/image';
+import { getStorageAssetUrl } from '@/utils/image';
 import { Suggestion } from '@/features/search/components/DiscoverySearchInput';
 import { SmartFilterSuggestions } from '@/features/search/components/SmartFilterSuggestions';
 import type { CompanySummary, PersonSummary } from '@/features/credits/types';
@@ -56,11 +56,7 @@ import { useInfiniteScrollSentinel } from '../hooks/useInfiniteScrollSentinel';
 import { getBoundsFromBuildings } from '@/utils/map';
 import { cn } from '@/lib/utils';
 import { resolveBuildingUrl } from '@/utils/url';
-import {
-  resolveConstructionStatuses,
-  shouldFlagConstructionStatus,
-  formatBuildingStatusForDisplay,
-} from '@/lib/buildingStatus';
+import { resolveConstructionStatuses } from '@/lib/buildingStatus';
 
 interface Building {
   id: string;
@@ -388,7 +384,6 @@ export function BuildingSidebar({
           ) : (
             <>
               {buildings.map((building) => {
-                const imageUrl = getBuildingImageUrl(building.image_url);
                 // The drawer's data payload, derived from the SERP row. Mirrors
                 // the shape a map pin would supply so BuildingPopupContent (the
                 // shared card) renders identically from either entry point.
@@ -407,86 +402,21 @@ export function BuildingSidebar({
                   city: building.city ?? undefined,
                 };
                 return (
-                  <Link
-                    to={resolveBuildingUrl(building)}
+                  <BuildingListRow
                     key={building.id}
-                    className="group flex pl-4 pr-3 py-3 border-b border-border-default last:border-0 hover:bg-surface-muted transition-colors"
-                    onMouseEnter={() => setHighlightedId(building.id, { lat: building.lat, lng: building.lng })}
-                    onMouseLeave={() => setHighlightedId(null)}
-                    onClick={(e) => {
-                      // Plain click opens the detail drawer instead of navigating
-                      // to the full building page. Modified clicks (⌘/ctrl/shift/
-                      // alt) fall through so "open in new tab" still works.
-                      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-                      e.preventDefault();
-                      selectBuilding(cluster);
-                    }}
-                  >
-                    {/* Text content */}
-                    <div className="flex-1 min-w-0 pr-3 flex flex-col justify-center min-h-[72px]">
-                      {/* Kit `.serp-name` — 19px/700/−0.02em. 14px/600 hedged the scale,
-                          the single commonest reason a Plano screen reads flat. */}
-                      <h3
-                        className="line-clamp-2 text-lg font-bold leading-tight tracking-tight text-text-primary group-hover:opacity-70 transition-opacity"
-                        title={building.name}
-                      >
-                        {building.name}
-                      </h3>
-                      {building.alt_name && building.alt_name !== building.name && (
-                        <span className="max-w-search-serp-alt truncate text-xs italic text-text-secondary mt-0.5">
-                          {building.alt_name}
-                        </span>
-                      )}
-
-                      {/* Architect (credits) and locality (city only) */}
-                      <div className="mt-1 flex flex-col gap-0.5">
-                        {building.credit_names?.length > 0 && (
-                          <p className="text-xs text-text-secondary line-clamp-1">
-                            {building.credit_names.filter(Boolean).join(', ')}
-                          </p>
-                        )}
-                        {building.city ? (
-                          <p className="text-xs text-text-disabled line-clamp-1">{building.city}</p>
-                        ) : null}
-                      </div>
-
-                      {/* Construction status + library status + rating */}
-                      {(shouldFlagConstructionStatus(building.construction_status) ||
-                        (building.status && building.status !== 'none') ||
-                        building.rating > 0) && (
-                        <div className="mt-1.5 flex items-center gap-3">
-                          {shouldFlagConstructionStatus(building.construction_status) && (
-                            <span className="border border-border-default px-1.5 py-0.5 text-2xs font-medium uppercase tracking-wide text-text-secondary">
-                              {formatBuildingStatusForDisplay(building.construction_status!)}
-                            </span>
-                          )}
-                          {building.status && building.status !== 'none' && (
-                            <span className="text-2xs font-medium uppercase tracking-widest text-text-disabled capitalize">
-                              {building.status}
-                            </span>
-                          )}
-                          {/* `aria-label="Rating: 2"` announced a score out of nothing.
-                              RatingDots names the earned distinctions instead. */}
-                          <RatingDots rating={building.rating} size="sm" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Image — inset from column edge via row pr-3 */}
-                    <div className="relative w-24 shrink-0 bg-surface-muted overflow-hidden">
-                      {imageUrl ? (
-                        <img
-                          src={imageUrl}
-                          alt={building.name}
-                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
-                          loading="lazy"
-                        />
-                      ) : (
-                        // Never a flat grey box — the system's hatched placeholder, labelled.
-                        <div className="photo-placeholder h-full w-full" data-label="No photo" />
-                      )}
-                    </div>
-                  </Link>
+                    href={resolveBuildingUrl(building)}
+                    name={building.name}
+                    altName={building.alt_name}
+                    creditNames={building.credit_names}
+                    city={building.city}
+                    imageUrl={building.image_url}
+                    rating={building.rating}
+                    status={building.status}
+                    constructionStatus={building.construction_status}
+                    onSelect={() => selectBuilding(cluster)}
+                    onHoverEnter={() => setHighlightedId(building.id, { lat: building.lat, lng: building.lng })}
+                    onHoverLeave={() => setHighlightedId(null)}
+                  />
                 );
               })}
 
