@@ -239,16 +239,24 @@ function getBasePinStyle(item: ClusterResponse, options?: PinOptions): PinStyle 
 
   // Custom Category / Member Status colour override
   if (item.color) {
+    // The face arrives already resolved on the monochrome ladder (buildings via
+    // categorisation; standalone markers via the quiet muted step). Only the solid
+    // brand-primary face is dark enough for a white ring + white content; every
+    // lighter face needs a dark ring and dark content or it vanishes on the light
+    // (positron) basemap — the satellite toggle never changes marker styling.
+    const isDarkFace = item.color === MAP_MARKER_FILL.brandPrimary;
     return {
       rank: null,
       shape,
       zIndex: 20,
       size: 28,
-      classes: 'border-white border-2 text-black',
+      classes: isDarkFace
+        ? 'border-white border-2 text-white'
+        : 'border-text-primary border-2 text-brand-primary',
       backgroundColor: item.color,
       dots: 0,
       savedMark: false,
-      innerMarkColor: MAP_MARKER_FILL.brandPrimary,
+      innerMarkColor: isDarkFace ? MAP_MARKER_FILL.white : MAP_MARKER_FILL.brandPrimary,
       showContent: true,
     };
   }

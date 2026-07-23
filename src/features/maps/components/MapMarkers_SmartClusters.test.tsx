@@ -252,4 +252,34 @@ describe('MapMarkers - Smart Clusters', () => {
       expect(screen.queryByTestId('map-pin-dots')).toBeNull();
     });
   });
+
+  // Standalone custom "Other markers": near-white face on the quiet muted step.
+  // Regression guard — they were invisible on the light basemap because the ring
+  // and icon were both white on a near-white face.
+  describe('standalone custom markers', () => {
+    const marker = (overrides: Partial<ClusterResponse> = {}): ClusterResponse => ({
+      ...baseCluster,
+      is_cluster: false,
+      count: 1,
+      is_custom_marker: true,
+      marker_category: 'other',
+      color: MAP_MARKER_FILL.surfaceMuted80,
+      ...overrides,
+    } as ClusterResponse);
+
+    it('paints a near-white face with a dark ring and a dark icon (visible on the light basemap)', () => {
+      render(<MapMarkers clusters={[marker()]} setHighlightedId={setHighlightedId} highlightedId={null} />);
+
+      const pin = screen.getByTestId('map-pin-container');
+      expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
+      expect(pin.className).toContain('border-text-primary');
+      expect(pin.className).not.toContain('border-white');
+
+      // The category icon inherits the dark inner-mark colour via its wrapper span,
+      // never the old hard-coded white.
+      const icon = pin.querySelector('svg');
+      expect(icon).not.toBeNull();
+      expect((icon!.parentElement as HTMLElement).style.color).toBe(MAP_MARKER_FILL.brandPrimary);
+    });
+  });
 });

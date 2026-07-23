@@ -239,7 +239,9 @@ export function MapMarkers({
                   <span>{cluster.count}</span>
               ) : (
                   MarkerIcon ? (
-                     <MarkerIcon className="w-3.5 h-3.5 text-white" />
+                     <span style={{ color: pinStyle.innerMarkColor }}>
+                        <MarkerIcon className="w-3.5 h-3.5" />
+                     </span>
                   ) : itinerarySequence !== undefined ? (
                       <span>{itinerarySequence}</span>
                   ) : (
