@@ -174,9 +174,12 @@ export default function Notifications() {
     } else if (
       notification.type === "collection_collab_requested" ||
       notification.type === "collection_collab_accepted" ||
-      notification.type === "collection_collab_rejected"
+      notification.type === "collection_collab_rejected" ||
+      notification.type === "collection_collab_added"
     ) {
-      const ownerUsername = notification.metadata?.owner_username;
+      // For added/accepted/rejected the actor is the owner, so fall back to the actor's
+      // username when metadata.owner_username is absent (direct adds don't store it).
+      const ownerUsername = notification.metadata?.owner_username ?? notification.actor?.username;
       const slug = notification.metadata?.collection_slug;
       if (ownerUsername && slug) {
         // The owner receives the request → deep-link to the Collaborators tab so they can act.

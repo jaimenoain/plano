@@ -76,3 +76,23 @@ export async function reviewCollectionCollaboration(params: {
   });
   if (error) throw new Error(error.message);
 }
+
+/**
+ * Best-effort: email a user that they were added as a collaborator on a collection.
+ * The in-app notification and the contributor row are the source of truth; email is a
+ * bonus, so a failure here is logged and swallowed rather than surfaced to the owner.
+ * Invoked after either add path (direct add, or approving a request-to-collaborate).
+ */
+export async function notifyCollaboratorByEmail(
+  collectionId: string,
+  recipientId: string,
+): Promise<void> {
+  try {
+    const { error } = await supabase.functions.invoke("notify-collection-collaborator", {
+      body: { collectionId, recipientId },
+    });
+    if (error) console.warn("notify-collection-collaborator failed", error);
+  } catch (e) {
+    console.warn("notify-collection-collaborator threw", e);
+  }
+}

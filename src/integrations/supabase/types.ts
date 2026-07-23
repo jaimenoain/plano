@@ -3817,6 +3817,7 @@ export type Database = {
           notification_preferences: Json | null
           profile_sections: Json | null
           role: string | null
+          search_vector: unknown
           subscribed_platforms: string[] | null
           updated_at: string | null
           username: string | null
@@ -3837,6 +3838,7 @@ export type Database = {
           notification_preferences?: Json | null
           profile_sections?: Json | null
           role?: string | null
+          search_vector?: unknown
           subscribed_platforms?: string[] | null
           updated_at?: string | null
           username?: string | null
@@ -3857,6 +3859,7 @@ export type Database = {
           notification_preferences?: Json | null
           profile_sections?: Json | null
           role?: string | null
+          search_vector?: unknown
           subscribed_platforms?: string[] | null
           updated_at?: string | null
           username?: string | null
@@ -6354,6 +6357,16 @@ export type Database = {
           nationality: string
           rank_score: number
           slug: string
+        }[]
+      }
+      search_profiles: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          avatar_url: string
+          firm: string
+          id: string
+          rank_score: number
+          username: string
         }[]
       }
       send_admin_broadcast: {

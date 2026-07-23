@@ -75,4 +75,14 @@ describe("NotificationRow", () => {
     expect(screen.getByText("New Follower")).toBeInTheDocument();
     expect(screen.getByText(/started following you/)).toBeInTheDocument();
   });
+
+  it("renders the direct 'added as collaborator' notification with the collection name", () => {
+    renderRow({
+      type: "collection_collab_added",
+      metadata: { collection_name: "Brutalist London", collection_slug: "brutalist-london" },
+    });
+    expect(screen.getByText("Added as collaborator")).toBeInTheDocument();
+    expect(screen.getByText(/added you as an editor on/)).toBeInTheDocument();
+    expect(screen.getByText("Brutalist London")).toBeInTheDocument();
+  });
 });

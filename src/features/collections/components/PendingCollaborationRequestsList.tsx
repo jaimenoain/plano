@@ -34,9 +34,9 @@ export function PendingCollaborationRequestsList({
   );
   const reviewCollaboration = useReviewCollaboration(collectionId);
 
-  const handleReview = (requestId: string, approve: boolean) => {
+  const handleReview = (requestId: string, approve: boolean, recipientId?: string) => {
     reviewCollaboration.mutate(
-      { requestId, approve },
+      { requestId, approve, recipientId },
       {
         onSuccess: () => {
           void refetch();
@@ -73,7 +73,7 @@ export function PendingCollaborationRequestsList({
                 size="sm"
                 variant="outline"
                 disabled={reviewCollaboration.isPending}
-                onClick={() => handleReview(req.id, true)}
+                onClick={() => handleReview(req.id, true, req.requester?.id)}
               >
                 <Check className="h-4 w-4 sm:mr-1" />
                 <span className="hidden sm:inline">Accept</span>

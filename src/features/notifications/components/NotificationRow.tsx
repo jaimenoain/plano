@@ -55,6 +55,7 @@ export function notificationIcon(type: Notification["type"]): ReactNode {
       return <Users className="h-3.5 w-3.5 text-text-primary" />;
     case "collection_collab_accepted":
     case "collection_collab_rejected":
+    case "collection_collab_added":
       return <Users className="h-3.5 w-3.5 text-text-secondary" />;
     default:
       return <Bell className="h-3.5 w-3.5 text-text-disabled" />;
@@ -103,6 +104,8 @@ export function notificationTitle(n: Notification): string {
       return "Request Approved";
     case "collection_collab_rejected":
       return "Request Declined";
+    case "collection_collab_added":
+      return "Added as collaborator";
     default:
       return "Notification";
   }
@@ -290,7 +293,8 @@ export function notificationText(n: Notification): ReactNode {
         </span>
       );
     }
-    case "collection_collab_accepted": {
+    case "collection_collab_accepted":
+    case "collection_collab_added": {
       const name = n.metadata?.collection_name?.trim();
       return (
         <span>
