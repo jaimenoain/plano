@@ -16,26 +16,30 @@ productive session; Phase 3 the return loop; Phase 4 holds gated bigger bets.
 
 - [ ] **0.1 — Confirm `SERPER_API_KEY` is set in production env.** The Events tool's
   discovery pipeline 503s without it. Task 1.5 makes the failure visible either way.
+- [ ] **0.2 — Apply migration `20271182000000_embassy_flag_reports.sql` to prod.** Direct
+  DB writes were permission-blocked in the agent session that shipped 1.2. One-liner:
+  `eval "$(grep '^SUPABASE_DB_URL=' .env.local)" && psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20271182000000_embassy_flag_reports.sql`
+  (or authorize the agent to run it). Until applied, the flag button shows an error toast.
 
 ## Phase 1 — Restore trust (fix what's broken)
 
-- [ ] **1.1 — Onboarding ↔ Contribute tool-preference contract.** Rename saved key
-  `moderation` → `curation` (legacy values mapped on read), add Events as the 6th rankable
-  tool in `/embassy/welcome`, correct the Moderation tool description to match the shipped
-  tool, and verify Contribute honors the saved ordering. Unit test covers the legacy-key
-  mapping.
-- [ ] **1.2 — Real flagging.** The Moderation tool's Flag button writes a row to the
-  existing `reports` table in the shape `/admin/moderation` consumes (today **nothing**
-  writes to `reports`); success/error feedback replaces the fake toast.
-- [ ] **1.3 — Campaign outreach progress.** `fetchCampaignProgress` (ChapterProjects)
-  matches `outreach_log.ambassador_id` against **profile ids**, not membership ids —
-  progress bars stop being permanently 0. Regression test.
-- [ ] **1.4 — One front door + dead code removal.** Delete unrouted
-  `src/features/embassy/pages/Embassy.tsx` (729 lines); align the avatar-menu link with
-  the `/embassy` redirect target; drop the unreachable `embassy-index` route mapping.
-- [ ] **1.5 — Visible failure states for event discovery.** Missing `SERPER_API_KEY` /
-  search failures surface as a clear "search unavailable" state in the Events tool instead
-  of a silently-swallowed 503 and an empty list.
+- [x] **1.1 — Onboarding ↔ Contribute tool-preference contract.** Shipped 2026-07-23
+  (PR #1626): legacy `moderation` key mapped on read via shared `toolPreferences.ts`,
+  Events added as the 6th rankable tool, Moderation description corrected. Unit tests
+  cover the legacy-key mapping.
+- [x] **1.2 — Real flagging.** Shipped 2026-07-23 (PR #1627): flags insert typed pending
+  `reports` rows the `/admin/moderation` queue consumes; migration `20271182000000` drops
+  the mistaken `reported_id → profiles` FK and adds `content_type`.
+  **⚠️ Migration awaiting prod apply (owner action 0.2)** — flags error honestly until then.
+- [x] **1.3 — Campaign outreach progress.** Shipped 2026-07-23 (PR #1628): outreach
+  matched against member user ids; helper extracted to `api/campaignProgress.ts` with a
+  regression test.
+- [x] **1.4 — One front door + dead code removal.** Shipped 2026-07-23 (PR #1629): all
+  entries point at `/embassy`; dead `pages/Embassy.tsx` (729 lines) and the unreachable
+  `embassy-index` mapping deleted.
+- [x] **1.5 — Visible failure states for event discovery.** Shipped 2026-07-23 (PR #1630):
+  Events tool reads the latest `embassy_event_search_runs` row — clear switched-off /
+  failed / searching states, polling stops on failure, layout kick-offs log a warning.
 
 ## Phase 2 — Friction killers (the productive session)
 
