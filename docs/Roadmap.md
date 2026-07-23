@@ -12,14 +12,15 @@ tasks, completes the first in under 2 minutes, sees it counted, and has a reason
 tomorrow. Phase 1 removes every "the portal lied to me" moment; Phase 2 builds the
 productive session; Phase 3 the return loop; Phase 4 holds gated bigger bets.
 
-## [ ] Phase 0 — Owner prerequisites (human-only, non-blocking)
+## [X] Phase 0 — Owner prerequisites (human-only, non-blocking)
 
-- **0.1 — Confirm `SERPER_API_KEY` is set in production env.** The Events tool's
-  discovery pipeline 503s without it. Task 1.5 makes the failure visible either way.
-- **0.2 — Apply migration `20271182000000_embassy_flag_reports.sql` to prod.** Direct
-  DB writes were permission-blocked in the agent session that shipped 1.2. One-liner:
-  `eval "$(grep '^SUPABASE_DB_URL=' .env.local)" && psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/20271182000000_embassy_flag_reports.sql`
-  (or authorize the agent to run it). Until applied, the flag button shows an error toast.
+- **0.1 — Confirm `SERPER_API_KEY` is set in production env.** Confirmed by owner
+  2026-07-23. The Events tool's discovery pipeline 503s without it.
+- **0.2 — Apply migration `20271182000000_embassy_flag_reports.sql` to prod.** Applied
+  2026-07-23 (psql via `SUPABASE_DB_URL`, owner-authorized): `reports` now has
+  `content_type` and no longer carries the mistaken `reported_id → profiles` FK, so the
+  Moderation flag button writes real rows in prod. (ALTERs ran idempotently — the schema
+  was already in target state; the run settled and verified it.)
 
 ## [X] Phase 1 — Restore trust (fix what's broken)
 
@@ -30,7 +31,7 @@ productive session; Phase 3 the return loop; Phase 4 holds gated bigger bets.
 - **1.2 — Real flagging.** Shipped 2026-07-23 (PR #1627): flags insert typed pending
   `reports` rows the `/admin/moderation` queue consumes; migration `20271182000000` drops
   the mistaken `reported_id → profiles` FK and adds `content_type`.
-  **⚠️ Migration awaiting prod apply (owner action 0.2)** — flags error honestly until then.
+  Migration applied to prod 2026-07-23 (owner action 0.2 done) — flagging now works live.
 - **1.3 — Campaign outreach progress.** Shipped 2026-07-23 (PR #1628): outreach
   matched against member user ids; helper extracted to `api/campaignProgress.ts` with a
   regression test.
