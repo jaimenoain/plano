@@ -18,6 +18,10 @@
 -- ambassador/reporter themself. Existing per-type opt-out (profiles.notification_preferences,
 -- migration 20260311000000) applies automatically via the notifications table's own
 -- before-insert trigger — nothing new needed there.
+--
+-- types-neutral: notifications.type is a plain text column (CHECK constraint only,
+-- not an enum) and every function below is a body-only CREATE OR REPLACE with an
+-- unchanged signature/return type — gen-types is a no-op for this migration.
 
 -- ─── 1. Notification type check constraint ─────────────────────────────────────
 
