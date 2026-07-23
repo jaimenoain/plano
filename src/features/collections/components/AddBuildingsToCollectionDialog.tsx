@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,12 +13,11 @@ import {
   Search,
   X,
   MapPin,
-  PlusCircle,
   Trash2,
   type LucideIcon,
 } from "lucide-react";
-import { useNavigate } from "react-router";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { CreateNewBuildingButton } from "./CreateNewBuildingButton";
 import { primaryBuildingCreditsToSummaries } from "@/features/credits/api/credits";
 import { toast } from "sonner";
 import { getBuildingImageUrl } from "@/utils/image";
@@ -57,6 +56,10 @@ interface AddBuildingsToCollectionDialogProps {
   onOpenChange: (open: boolean) => void;
   /** Parent refetch for the combined `collection_items` + `collection_markers` query (map + list). */
   onCollectionDataChanged?: () => void;
+  /** Same-origin path (this collection's map page) the "Create new building" flow returns to, reopening this modal. */
+  returnTo?: string;
+  /** Building just created via "Create new building"; on mount the modal selects it and auto-adds it to the collection once. */
+  justCreatedBuildingId?: string | null;
 }
 
 function displayMarkerSecondaryLine(marker: CollectionMarker): string | null {
@@ -389,15 +392,17 @@ export function AddBuildingsToCollectionDialog({
   open,
   onOpenChange,
   onCollectionDataChanged,
+  returnTo,
+  justCreatedBuildingId,
 }: AddBuildingsToCollectionDialogProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  
+
   // State merged from both branches
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null);
+  // Seed selection from a just-created building (runs once, at the return-trip mount).
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(justCreatedBuildingId ?? null);
 
   const { data: buildings, isLoading } = useQuery({
     queryKey: ["add-buildings-dialog", user?.id, debouncedSearchQuery],
@@ -600,20 +605,23 @@ toast.error("Failed to add building");
     return buildings.find((b) => b.id === selectedBuildingId);
   }, [selectedBuildingId, buildings]);
 
+  // Auto-add a just-created building once per mount; skip if already present so
+  // it can't double-add. Needs only the id, not the list query.
+  const autoAddedRef = useRef(false);
+  useEffect(() => {
+    if (!justCreatedBuildingId || autoAddedRef.current) return;
+    if (existingBuildingIds.has(justCreatedBuildingId)) return;
+    autoAddedRef.current = true;
+    addMutation.mutate(justCreatedBuildingId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot on the id; addMutation is stable
+  }, [justCreatedBuildingId, existingBuildingIds]);
+
   const searchFooter = searchQuery ? (
     <div className="flex flex-col items-center justify-center pt-8 pb-2 gap-4 mt-2">
       <p className="text-center text-sm text-text-secondary">
         Not finding what you are looking for?
       </p>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => navigate(`/add-building?name=${encodeURIComponent(searchQuery)}`)}
-        className="gap-2"
-      >
-        <PlusCircle className="h-4 w-4" />
-        Create new building
-      </Button>
+      <CreateNewBuildingButton searchQuery={searchQuery} returnTo={returnTo} />
     </div>
   ) : null;
 
@@ -670,15 +678,7 @@ toast.error("Failed to add building");
                         {searchQuery ? "No buildings found matching your search." : "No saved buildings found."}
                       </p>
                       {searchQuery && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => navigate(`/add-building?name=${encodeURIComponent(searchQuery)}`)}
-                          className="gap-2"
-                        >
-                          <PlusCircle className="h-4 w-4" />
-                          Create new building
-                        </Button>
+                        <CreateNewBuildingButton searchQuery={searchQuery} returnTo={returnTo} />
                       )}
                     </div>
                   }
