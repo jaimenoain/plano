@@ -48,7 +48,7 @@ export default function Notifications() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth");
+      navigate("/login");
       return;
     }
     if (user) fetchNotifications();

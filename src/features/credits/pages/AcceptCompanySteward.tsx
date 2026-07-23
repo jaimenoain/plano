@@ -62,7 +62,7 @@ export default function AcceptCompanySteward() {
     };
   }, [authLoading, user, token, navigate]);
 
-  const loginHref = `/auth?redirect=${encodeURIComponent(`/accept-company-steward?token=${encodeURIComponent(token)}`)}`;
+  const loginHref = `/login?redirect=${encodeURIComponent(`/accept-company-steward?token=${encodeURIComponent(token)}`)}`;
 
   if (authLoading || (user && status !== "error" && token.length === 64)) {
     return (

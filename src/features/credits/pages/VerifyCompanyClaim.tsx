@@ -64,7 +64,7 @@ export default function VerifyCompanyClaim() {
               Use the same Plano account you used when you entered your work email on the company
               page.
             </TokenFlowMessage>
-            <TokenFlowPrimaryLink to={`/auth?redirect=${encodeURIComponent(d.returnPath)}`}>
+            <TokenFlowPrimaryLink to={`/login?redirect=${encodeURIComponent(d.returnPath)}`}>
               Log in →
             </TokenFlowPrimaryLink>
           </>

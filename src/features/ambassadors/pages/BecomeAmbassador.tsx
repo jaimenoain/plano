@@ -313,7 +313,7 @@ export default function BecomeAmbassador() {
                 cares about architecture where they live.
               </p>
               <Button asChild variant="outline" size="lg" className="rounded-sm tracking-[0.15em] uppercase text-xs font-medium px-10">
-                <Link to="/auth">Log in or register</Link>
+                <Link to="/login">Log in or register</Link>
               </Button>
             </AmbassadorMarketingSection>
           ) : loadingData ? (

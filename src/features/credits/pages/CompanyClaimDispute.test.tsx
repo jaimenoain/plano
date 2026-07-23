@@ -79,7 +79,7 @@ describe("CompanyClaimDispute (QA 7.4)", () => {
     renderPage();
     expect(screen.getByRole("link", { name: /Log in to continue/i })).toHaveAttribute(
       "href",
-      `/auth?redirect=${encodeURIComponent("/company/structco/dispute")}`,
+      `/login?redirect=${encodeURIComponent("/company/structco/dispute")}`,
     );
   });
 

@@ -653,7 +653,7 @@ export default function CompanyDetails() {
               </Button>
             ) : (
               <Link
-                to={`/auth?redirect=${encodeURIComponent(`/company/${slug}`)}`}
+                to={`/login?redirect=${encodeURIComponent(`/company/${slug}`)}`}
                 className="inline-flex text-xs font-medium uppercase tracking-widest text-text-primary hover:underline"
               >
                 Log in to claim →
@@ -685,7 +685,7 @@ export default function CompanyDetails() {
               </Button>
             ) : (
               <Link
-                to={`/auth?redirect=${encodeURIComponent(`/company/${slug}`)}`}
+                to={`/login?redirect=${encodeURIComponent(`/company/${slug}`)}`}
                 className="inline-flex text-xs font-medium uppercase tracking-widest text-text-primary hover:underline"
               >
                 Log in to request access →
@@ -706,7 +706,7 @@ export default function CompanyDetails() {
                   </Link>
                 ) : (
                   <Link
-                    to={`/auth?redirect=${encodeURIComponent(`/company/${slug}/dispute`)}`}
+                    to={`/login?redirect=${encodeURIComponent(`/company/${slug}/dispute`)}`}
                     className="inline-flex text-2xs font-medium uppercase tracking-widest text-text-primary hover:underline"
                   >
                     Log in to dispute this claim →

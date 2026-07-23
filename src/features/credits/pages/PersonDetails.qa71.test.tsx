@@ -207,7 +207,7 @@ describe("PersonDetails (QA 7.1 claim flow)", () => {
     mocks.user = null;
     renderPage();
     const login = screen.getByRole("link", { name: /Log in to claim/i });
-    expect(login).toHaveAttribute("href", "/auth?redirect=%2Fperson%2Fjane-doe");
+    expect(login).toHaveAttribute("href", "/login?redirect=%2Fperson%2Fjane-doe");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 

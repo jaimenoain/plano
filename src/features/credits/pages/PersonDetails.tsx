@@ -299,7 +299,7 @@ export default function PersonDetails() {
               </button>
             ) : (
               <Link
-                to={`/auth?redirect=${encodeURIComponent(`/person/${slug}`)}`}
+                to={`/login?redirect=${encodeURIComponent(`/person/${slug}`)}`}
                 className="inline-flex text-xs font-medium uppercase tracking-widest text-text-primary hover:underline"
               >
                 Log in to claim →

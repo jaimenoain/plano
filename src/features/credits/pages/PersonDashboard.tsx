@@ -124,7 +124,7 @@ export default function PersonDashboard() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      navigate("/auth");
+      navigate("/login");
       return;
     }
     if (claimedQuery.isError) {

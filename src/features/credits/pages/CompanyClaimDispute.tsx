@@ -30,7 +30,7 @@ export default function CompanyClaimDispute() {
   const [evidenceUrl, setEvidenceUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const authRedirect = `/auth?redirect=${encodeURIComponent(`/company/${slug}/dispute`)}`;
+  const authRedirect = `/login?redirect=${encodeURIComponent(`/company/${slug}/dispute`)}`;
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();

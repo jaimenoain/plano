@@ -23,7 +23,7 @@ export const AdminGuard = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (!authLoading && !session) {
-      navigate("/auth");
+      navigate("/login");
       return;
     }
 

@@ -18,7 +18,7 @@ export default function Connect() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth");
+      navigate("/login");
     }
   }, [user, authLoading, navigate]);
 

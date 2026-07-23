@@ -98,7 +98,7 @@ export default function Settings() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth");
+      navigate("/login");
     } else if (user && profile) {
       const emailVal = user.email || "";
       const usernameVal = profile.username || "";

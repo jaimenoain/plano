@@ -1094,7 +1094,7 @@ export default function CollectionMap() {
 
   const handleSaveAllBuildings = async () => {
     if (!user?.id) {
-        navigate("/auth");
+        navigate("/login");
         return;
     }
 

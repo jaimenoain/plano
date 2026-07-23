@@ -22,7 +22,7 @@ export function LandingNav() {
           variant="ghost"
           size="sm"
           className="text-sm font-medium"
-          onClick={() => navigate("/auth")}
+          onClick={() => navigate("/login")}
         >
           Sign in
         </Button>
