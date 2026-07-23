@@ -177,9 +177,9 @@ export function AddBuildingDetails({ locationData, onBack }: AddBuildingDetailsP
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <BuildingPageHeader
-          eyebrow="Step 2"
+          eyebrow="Step 2 — optional"
           title="Building details"
-          description={`Tell us more about ${locationData.name || locationData.address}.`}
+          description={`Add anything you know about ${locationData.name || locationData.address} — or just save. You can edit later.`}
         />
       </div>
 

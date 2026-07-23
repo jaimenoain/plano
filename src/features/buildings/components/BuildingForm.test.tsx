@@ -113,6 +113,40 @@ describe('BuildingForm', () => {
     expect(queryByRole('button', { name: /Add Aliases/i })).toBeNull();
   });
 
+  it('shows the optional-details banner and Skip for now in create mode', () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <BuildingForm
+          initialValues={initialValues}
+          onSubmit={async () => {}}
+          isSubmitting={false}
+          submitLabel="Save Building"
+          mode="create"
+        />
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByText(/Only a name is required/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Skip for now/i })).toBeTruthy();
+  });
+
+  it('does not show the optional-details banner or Skip for now in edit mode', () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <BuildingForm
+          initialValues={initialValues}
+          onSubmit={async () => {}}
+          isSubmitting={false}
+          submitLabel="Save"
+          mode="edit"
+        />
+      </QueryClientProvider>
+    );
+
+    expect(screen.queryByText(/Only a name is required/i)).toBeNull();
+    expect(screen.queryByRole('button', { name: /Skip for now/i })).toBeNull();
+  });
+
   describe('Access Notes Placeholder', () => {
     it('shows default placeholder when cost is free and logistics is walk-in', () => {
       render(
