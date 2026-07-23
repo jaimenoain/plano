@@ -42,7 +42,7 @@ productive session; Phase 3 the return loop; Phase 4 holds gated bigger bets.
   Events tool reads the latest `embassy_event_search_runs` row — clear switched-off /
   failed / searching states, polling stops on failure, layout kick-offs log a warning.
 
-## [ ] Phase 2 — Friction killers (the productive session)
+## [x] Phase 2 — Friction killers (the productive session)
 
 - **2.1 — "Start here" task queue.** Shipped 2026-07-23: the Dashboard (and, via the
   existing redirect, the `/embassy` landing) opens with up to 5 ready tasks — the top live
@@ -69,9 +69,17 @@ productive session; Phase 3 the return loop; Phase 4 holds gated bigger bets.
   their building/photo/video/credit via the Moderation tool's flag button. Migration
   `20271183000000_contribution_outcome_notifications.sql`. Closes the silent-moderation
   loop.
-- **2.4 — Suggested goals + broader metrics.** One-click suggested goal chips derived
-  from chapter backlog; goal metrics extended to moderation, outreach, events, and
-  research (borrow counting from the activity RPC).
+- **2.4 — Suggested goals + broader metrics.** Shipped 2026-07-23: one-click suggested
+  goal chips on `/embassy/goals` (new `SuggestedGoalChips` + `api/suggestedGoals.ts`,
+  pure `buildSuggestedGoals` unit-tested) derived from the same five backlog queues
+  `StartHereQueue` uses — clicking a chip creates the goal immediately, no dialog.
+  `ambassador_goals.metric` and `get_my_ambassador_goals()` extended with four new
+  counting branches: moderation and outreach mirror `get_chapter_ambassador_activity`'s
+  existing filters; events and research are new signals (`embassy_event_discoveries`
+  publish stamps and the `ai_research_apply` audit-log tag respectively — the activity
+  RPC doesn't count either today). Migration `20271184000000_embassy_goal_metrics_expansion.sql`.
+  Known pre-existing gap, not fixed here: video approvals aren't tagged as moderation
+  anywhere in the app, so they don't count toward a moderation goal either.
 
 ## [ ] Phase 3 — Personal progress & return loops
 
