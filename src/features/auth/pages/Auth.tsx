@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams, Link, type MetaFunction } from "react-router";
+import { useNavigate, useSearchParams, useLocation, Link, type MetaFunction } from "react-router";
 import { Eye, EyeOff, Mail, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,8 +24,13 @@ type Profile = {
   role?: string;
 };
 
-export const meta: MetaFunction = () => [
-  { title: "Sign In | Plano" },
+export const meta: MetaFunction = ({ location }) => [
+  {
+    title:
+      location.pathname === "/signup"
+        ? "Create your account | Plano"
+        : "Sign in | Plano",
+  },
   { name: "robots", content: "noindex, nofollow" },
 ];
 
@@ -35,12 +40,23 @@ function safeInternalRedirect(raw: string | null): string | null {
 }
 
 export default function Auth() {
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const invitedBy = searchParams.get("invited_by");
   const postAuthRedirect = safeInternalRedirect(searchParams.get("redirect"));
-  const startInSignUp = searchParams.get("signup") === "1";
 
-  const [isSignUp, setIsSignUp] = useState(!!invitedBy || startInSignUp);
+  // Mode is now driven by the URL: /signup vs /login. The `signup=1` query is kept
+  // as a legacy fallback for any cached /login?signup=1 links.
+  const isSignUp =
+    location.pathname === "/signup" || searchParams.get("signup") === "1";
+
+  // Query string carried across the login↔signup toggle. Rebuilt from searchParams
+  // (not location.search) so it encodes identically on server and client — and drops
+  // the legacy `signup` flag so the toggle can't get stuck on one mode.
+  const toggleParams = new URLSearchParams(searchParams);
+  toggleParams.delete("signup");
+  const toggleSearch = toggleParams.toString();
+
   const [isResetPassword, setIsResetPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -240,8 +256,8 @@ export default function Auth() {
               className="mt-8 w-full h-11 min-h-11 font-medium rounded-sm"
               onClick={() => {
                 setCheckEmail(false);
-                setIsSignUp(false);
                 setIsResetPassword(false);
+                navigate("/login");
               }}
             >
               Back to Sign In
@@ -421,15 +437,14 @@ export default function Auth() {
             ) : (
               <>
                 {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsSignUp(!isSignUp);
-                  }}
+                <Link
+                  to={`${isSignUp ? "/login" : "/signup"}${
+                    toggleSearch ? `?${toggleSearch}` : ""
+                  }`}
                   className="font-medium text-text-primary underline-offset-2 hover:underline"
                 >
                   {isSignUp ? "Sign In" : "Sign Up"}
-                </button>
+                </Link>
               </>
             )}
           </p>
