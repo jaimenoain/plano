@@ -34,6 +34,7 @@ import { AddToFolderDialog } from "@/features/profile/components/AddToFolderDial
 import { collectionSchema } from "@/lib/validations/collection";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PendingCollaborationRequestsList } from "./PendingCollaborationRequestsList";
+import { notifyCollaboratorByEmail } from "../api/collaboration";
 
 interface CollectionSettingsDialogProps {
   collection: Collection;
@@ -319,10 +320,27 @@ export function CollectionSettingsDialog({
       });
 
     if (error) {
-toast.error("Failed to add contributor");
+      toast.error("Failed to add contributor");
     } else {
       toast.success("Contributor added");
       fetchContributors();
+
+      // Notify the new collaborator: in-app row (owner → recipient; the
+      // before_insert_notifications trigger honours their preferences) plus a
+      // best-effort email. Neither should block the "Contributor added" success.
+      if (currentUserId) {
+        void supabase.from("notifications").insert({
+          user_id: userId,
+          actor_id: currentUserId,
+          type: "collection_collab_added",
+          metadata: {
+            collection_id: collection.id,
+            collection_slug: collection.slug,
+            collection_name: collection.name,
+          },
+        });
+      }
+      void notifyCollaboratorByEmail(collection.id, userId);
     }
   };
 

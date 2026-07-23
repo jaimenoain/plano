@@ -21,7 +21,8 @@ export interface Notification {
     | "project_idea_submitted"
     | "collection_collab_requested"
     | "collection_collab_accepted"
-    | "collection_collab_rejected";
+    | "collection_collab_rejected"
+    | "collection_collab_added";
   is_read: boolean;
   actor_id: string;
   recommendation_id?: string | null;

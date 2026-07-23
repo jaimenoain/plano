@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import {
   fetchMyCollaborationRequestStatus,
   fetchPendingCollaborationRequests,
+  notifyCollaboratorByEmail,
   requestCollectionCollaboration,
   reviewCollectionCollaboration,
   type CollaborationRequestStatus,
@@ -73,16 +74,23 @@ export function useReviewCollaboration(collectionId: string | undefined) {
       requestId: string;
       approve: boolean;
       note?: string;
+      /** Requester being approved — used to email them (the RPC handles the in-app row). */
+      recipientId?: string;
     }) => {
       await reviewCollectionCollaboration({ requestId, approve, note });
       return approve;
     },
-    onSuccess: (approved) => {
+    onSuccess: (approved, variables) => {
       toast.success(approved ? "Collaborator added." : "Request declined.");
       void queryClient.invalidateQueries({
         queryKey: ["collection_collab_request", "pending", collectionId],
       });
       void queryClient.invalidateQueries({ queryKey: ["collection_contributors", collectionId] });
+      // The approve branch of review_collection_collaboration already inserts the
+      // in-app notification; email is the only missing piece here (best-effort).
+      if (approved && collectionId && variables.recipientId) {
+        void notifyCollaboratorByEmail(collectionId, variables.recipientId);
+      }
     },
     onError: (error: Error) => {
       toast.error(friendlyReviewError(error.message));
