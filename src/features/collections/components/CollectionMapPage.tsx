@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, Suspense } from "react";
-import { useParams, useNavigate, Link, type MetaFunction } from "react-router";
+import { useParams, useNavigate, useSearchParams, Link, type MetaFunction } from "react-router";
 import {
   collectionMapPageLoader,
   type CollectionMapPageLoaderData,
@@ -42,7 +42,7 @@ import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings, isLngLatInBounds, type Bounds } from "@/utils/map";
 import { getBuildingImageUrl } from "@/utils/image";
 import { collectionStructuredData, SITE_URL } from "@/features/buildings/utils/structuredData";
-import { Loader2, Settings, Plus, ExternalLink, Star, ListFilter, MapPinPlus, Building2 } from "lucide-react";
+import { Loader2, ExternalLink, ListFilter, MapPinPlus, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -77,6 +77,7 @@ import { lazyWithRetry } from "@/utils/lazyWithRetry";
 import { useGooglePlacePhotos } from "@/hooks/useGooglePlacePhotos";
 import { primaryBuildingCreditsToSummaries } from "@/features/credits/api/credits";
 import { CollectionItemRow } from "./CollectionItemRow";
+import { CollectionAccessActions } from "./CollectionAccessActions";
 import { useCollectionMapSelection } from "../hooks/useCollectionMapSelection";
 
 const CollectionSettingsDialog = lazyWithRetry(() => import("@/features/collections/components/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
@@ -235,6 +236,7 @@ export default function CollectionMap() {
   const { username, slug } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -244,6 +246,8 @@ export default function CollectionMap() {
     useCollectionMapSelection();
   const [showSettings, setShowSettings] = useState(false);
   const [hasSettingsOpened, setHasSettingsOpened] = useState(false);
+  const [settingsInitialTab, setSettingsInitialTab] =
+    useState<"map" | "general" | "markers" | "collaborators">("map");
   const [showAddBuildings, setShowAddBuildings] = useState(false);
   const [hasAddBuildingsOpened, setHasAddBuildingsOpened] = useState(false);
   const [showPlanRoute, setShowPlanRoute] = useState(false);
@@ -360,40 +364,46 @@ export default function CollectionMap() {
     [user?.id, collection?.id],
   );
 
-  // Check if user is a contributor
-  const { data: isContributor } = useQuery({
-    queryKey: ["is_contributor", collection?.id, user?.id],
+  // The current user's contributor role on this collection (null if not a contributor).
+  // Only an "editor" contributor may write — this mirrors the RLS policies exactly, so
+  // the UI never offers edit controls the database will reject.
+  const { data: contributorRole } = useQuery({
+    queryKey: ["collection_contributor_role", collection?.id, user?.id],
     queryFn: async () => {
-      if (!collection?.id || !user?.id) return false;
-      const { count } = await supabase
+      if (!collection?.id || !user?.id) return null;
+      const { data } = await supabase
         .from("collection_contributors")
-        .select("*", { count: 'exact', head: true })
+        .select("role")
         .eq("collection_id", collection.id)
-        .eq("user_id", user.id);
-      return (count || 0) > 0;
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return data?.role ?? null;
     },
     enabled: !!collection?.id && !!user?.id
   });
 
-  // Fetch current user's profile to check for admin role
-  const { data: currentUserProfile } = useQuery({
-    queryKey: ["profile", "current", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id
-  });
-
-  const isAdmin = currentUserProfile?.role === "admin" || currentUserProfile?.role === "app_admin";
   const isOwner = user?.id === collection?.owner_id;
-  const canEdit = isOwner || !!isContributor || isAdmin;
+  const isEditorContributor = contributorRole === "editor";
+  // Write access = exactly what RLS permits: owner or editor contributor. Admins have no
+  // RLS bypass on collections, so they are treated as ordinary viewers here (no failing UI).
+  const canEdit = isOwner || isEditorContributor;
+
+  // Deep link from a "collaboration request" notification: ?settings=collaborators opens
+  // the settings sheet on the Collaborators tab (owner/editor only). Consume the param once.
+  useEffect(() => {
+    if (searchParams.get("settings") !== "collaborators") return;
+    if (!canEdit) return;
+    setSettingsInitialTab("collaborators");
+    setShowSettings(true);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("settings");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [searchParams, canEdit, setSearchParams]);
 
   // 3. Fetch Items and Markers
   const { data: collectionData, isLoading: loadingItems, refetch: refetchItems } = useQuery({
@@ -1206,37 +1216,16 @@ toast({
                         </Button>
                     )}
                 </div>
-                {canEdit && (
-                    <div className="flex items-center gap-2 shrink-0">
-                        <Button variant="ghost" size="icon" onClick={() => setShowAddBuildings(true)}>
-                            <Plus className="h-5 w-5 text-text-secondary" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
-                            <Settings className="h-5 w-5 text-text-secondary" />
-                        </Button>
-                    </div>
-                )}
-                {!canEdit && (
-                    <div className="flex items-center gap-2 shrink-0">
-                        {user && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleToggleFavorite}
-                            className="text-text-secondary hover:text-feedback-warning"
-                          >
-                            <Star
-                              className={cn(
-                                "h-5 w-5",
-                                isFavorite && "fill-feedback-warning text-feedback-warning",
-                              )}
-                            />
-                          </Button>
-                        )}
-                         <Button variant="ghost" size="icon" onClick={() => setShowSettings(true)}>
-                            <ListFilter className="h-5 w-5 text-text-secondary" />
-                        </Button>
-                    </div>
+                {collection && (
+                    <CollectionAccessActions
+                        canEdit={canEdit}
+                        isLoggedIn={!!user}
+                        collectionId={collection.id}
+                        isFavorite={!!isFavorite}
+                        onToggleFavorite={handleToggleFavorite}
+                        onAdd={() => setShowAddBuildings(true)}
+                        onOpenSettings={() => setShowSettings(true)}
+                    />
                 )}
                 </div>
             </div>
@@ -1475,6 +1464,7 @@ toast({
                 onSavedPlacesStatusFilterChange={handleSavedPlacesStatusFilterChange}
                 isOwner={isOwner}
                 canEdit={canEdit}
+                initialTab={settingsInitialTab}
                 currentUserId={user?.id}
                 onPlanRoute={() => setShowPlanRoute(true)}
                 onSaveAll={() => {

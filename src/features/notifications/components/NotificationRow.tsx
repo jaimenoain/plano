@@ -51,6 +51,11 @@ export function notificationIcon(type: Notification["type"]): ReactNode {
       return <MessageCircle className="h-3.5 w-3.5 text-text-primary" />;
     case "project_idea_submitted":
       return <Sparkles className="h-3.5 w-3.5 text-text-primary" />;
+    case "collection_collab_requested":
+      return <Users className="h-3.5 w-3.5 text-text-primary" />;
+    case "collection_collab_accepted":
+    case "collection_collab_rejected":
+      return <Users className="h-3.5 w-3.5 text-text-secondary" />;
     default:
       return <Bell className="h-3.5 w-3.5 text-text-disabled" />;
   }
@@ -92,6 +97,12 @@ export function notificationTitle(n: Notification): string {
       return "Feedback Update";
     case "project_idea_submitted":
       return "New Project Idea";
+    case "collection_collab_requested":
+      return "Collaboration Request";
+    case "collection_collab_accepted":
+      return "Request Approved";
+    case "collection_collab_rejected":
+      return "Request Declined";
     default:
       return "Notification";
   }
@@ -265,6 +276,40 @@ export function notificationText(n: Notification): ReactNode {
           {ideaTitle ? (
             <>
               : <span className="italic">{ideaTitle}</span>
+            </>
+          ) : null}
+        </span>
+      );
+    }
+    case "collection_collab_requested": {
+      const name = n.metadata?.collection_name?.trim();
+      return (
+        <span>
+          <span className="font-medium">{actorName}</span> wants to collaborate on{" "}
+          <span className="italic">{name || "your collection"}</span>
+        </span>
+      );
+    }
+    case "collection_collab_accepted": {
+      const name = n.metadata?.collection_name?.trim();
+      return (
+        <span>
+          <span className="font-medium">{actorName}</span> added you as an editor on{" "}
+          <span className="italic">{name || "a collection"}</span>
+        </span>
+      );
+    }
+    case "collection_collab_rejected": {
+      const name = n.metadata?.collection_name?.trim();
+      const note = n.metadata?.reviewer_note?.trim();
+      return (
+        <span>
+          Your request to collaborate on{" "}
+          <span className="italic">{name || "a collection"}</span> was{" "}
+          <span className="text-feedback-destructive font-medium">not approved</span>
+          {note ? (
+            <>
+              . Note: <span className="italic">{note}</span>
             </>
           ) : null}
         </span>

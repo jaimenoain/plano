@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collection, type SavedPlacesDotFilter, type SavedPlacesStatusFilter } from "@/features/collections/types";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { parseLocation } from "@/utils/location";
+import { buildCollectionCsvExport } from "../api/exportCollectionCsv";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,6 +33,7 @@ import {
 import { AddToFolderDialog } from "@/features/profile/components/AddToFolderDialog";
 import { collectionSchema } from "@/lib/validations/collection";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PendingCollaborationRequestsList } from "./PendingCollaborationRequestsList";
 
 interface CollectionSettingsDialogProps {
   collection: Collection;
@@ -47,6 +48,7 @@ interface CollectionSettingsDialogProps {
   onSavedPlacesStatusFilterChange?: (filter: SavedPlacesStatusFilter) => void;
   isOwner?: boolean;
   canEdit?: boolean;
+  initialTab?: "map" | "general" | "markers" | "collaborators";
   onSaveAll?: () => void;
   currentUserId?: string;
   onPlanRoute?: () => void;
@@ -66,27 +68,6 @@ type UserFolderLinkRow = {
   user_folders: { id: string; name: string } | { id: string; name: string }[] | null;
 };
 
-type ExportBuildingCreditRow = {
-  credit_tier: string | null;
-  status: string | null;
-  person: { name: string | null } | null;
-  company: { name: string | null } | null;
-};
-type ExportBuilding = {
-  name?: string | null;
-  address?: string | null;
-  city?: string | null;
-  country?: string | null;
-  year_completed?: number | null;
-  location?: unknown;
-  building_credits?: ExportBuildingCreditRow[] | null;
-} | null;
-
-type CollectionItemExportRow = {
-  note: string | null;
-  custom_category_id: string | null;
-  buildings: ExportBuilding | ExportBuilding[];
-};
 
 const METHOD_DESCRIPTIONS = {
   uniform: "All pins appear identical, regardless of status or rating.",
@@ -181,6 +162,7 @@ export function CollectionSettingsDialog({
   onSavedPlacesStatusFilterChange,
   isOwner = false,
   canEdit = true,
+  initialTab = "map",
   onSaveAll,
   currentUserId,
   onPlanRoute,
@@ -210,6 +192,12 @@ export function CollectionSettingsDialog({
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [contributors, setContributors] = useState<Contributor[]>([]);
   const [loadingContributors, setLoadingContributors] = useState(false);
+
+  // Non-editors only ever have the Map View tab, so clamp any deep-linked tab to "map".
+  const [activeTab, setActiveTab] = useState<string>(canEdit ? initialTab : "map");
+  useEffect(() => {
+    if (open) setActiveTab(canEdit ? initialTab : "map");
+  }, [open, initialTab, canEdit]);
   const [downloading, setDownloading] = useState(false);
   const [showAddToFolder, setShowAddToFolder] = useState(false);
 
@@ -428,99 +416,22 @@ toast.error("Failed to add contributor");
   const handleExportData = async () => {
     try {
       setDownloading(true);
-      const { data, error } = await supabase
-        .from('collection_items')
-        .select(`
-          note,
-          custom_category_id,
-          buildings (
-            name,
-            address,
-            city,
-            country,
-            year_completed,
-            location,
-            building_credits (
-              credit_tier,
-              status,
-              person:people (name),
-              company:companies (name)
-            )
-          )
-        `)
-        .eq('collection_id', collection.id);
-
-      if (error) throw error;
-
-      if (!data || data.length === 0) {
+      const result = await buildCollectionCsvExport(collection);
+      if (!result) {
         toast.info("No items to export");
         return;
       }
-
-      // Generate CSV
-      const headers = ['Name', 'Address', 'City', 'Country', 'Year', 'Latitude', 'Longitude', 'Credits', 'Note', 'Category'];
-      const exportRows = data as unknown as CollectionItemExportRow[];
-      const rows = exportRows.map((item) => {
-        const bRaw = item.buildings;
-        const building = Array.isArray(bRaw) ? bRaw[0] : bRaw;
-        const location = parseLocation(building?.location);
-
-        const credits =
-          building?.building_credits
-            ?.filter(
-              (c) =>
-                c.credit_tier === "primary" &&
-                (c.status === "active" || c.status === "verified"),
-            )
-            .map((c) => {
-              const pn = c.person?.name;
-              const cn = c.company?.name;
-              if (pn && cn) return `${pn} @ ${cn}`;
-              return pn || cn || "";
-            })
-            .filter(Boolean)
-            .join("; ") ?? "";
-
-        // Find category label if needed
-        const category = collection.custom_categories?.find(c => c.id === item.custom_category_id)?.label || '';
-
-        // Escape CSV fields
-        const escape = (val: unknown) => {
-          if (val === null || val === undefined) return '';
-          const str = String(val);
-          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-            return `"${str.replace(/"/g, '""')}"`;
-          }
-          return str;
-        };
-
-        return [
-          escape(building?.name),
-          escape(building?.address),
-          escape(building?.city),
-          escape(building?.country),
-          escape(building?.year_completed),
-          escape(location?.lat),
-          escape(location?.lng),
-          escape(credits),
-          escape(item.note),
-          escape(category)
-        ].join(',');
-      });
-
-      const csvContent = [headers.join(','), ...rows].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([result.csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `${collection.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}-export.csv`);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", result.filename);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-
       toast.success("Export successful");
     } catch (_error) {
-toast.error("Failed to export data");
+      toast.error("Failed to export data");
     } finally {
       setDownloading(false);
     }
@@ -530,11 +441,15 @@ toast.error("Failed to export data");
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-[500px] flex flex-col h-full bg-surface-overlay border-l border-border-default">
         <SheetHeader className="border-b border-border-default pb-4">
-          <SheetTitle>Collection Settings</SheetTitle>
-          <SheetDescription>Manage your collection preferences and collaborators.</SheetDescription>
+          <SheetTitle>{canEdit ? "Collection Settings" : "Display Options"}</SheetTitle>
+          <SheetDescription>
+            {canEdit
+              ? "Manage your collection preferences and collaborators."
+              : "Adjust how this collection is shown to you. Only the owner and collaborators can change its settings."}
+          </SheetDescription>
         </SheetHeader>
 
-        <Tabs defaultValue="map" className="w-full flex-1 flex flex-col min-h-0">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-1 flex flex-col min-h-0">
           <TabsList className={canEdit ? "grid w-full grid-cols-4" : "grid w-full grid-cols-1"}>
             <TabsTrigger value="map">Map View</TabsTrigger>
             {canEdit && <TabsTrigger value="general">General</TabsTrigger>}
@@ -880,6 +795,14 @@ toast.error("Failed to export data");
           </TabsContent>
 
           <TabsContent value="collaborators" className="space-y-4 py-4 overflow-y-auto flex-1">
+             {isOwner && (
+               <PendingCollaborationRequestsList
+                 collectionId={collection.id}
+                 enabled={!!isOwner && open}
+                 onAccepted={fetchContributors}
+               />
+             )}
+
              {isOwner && (
                <div className="space-y-2">
                   <Label>Add Collaborator</Label>
