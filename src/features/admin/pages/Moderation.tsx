@@ -24,13 +24,22 @@ interface Report {
   reported_id: string;
   reason: string;
   details: string | null;
+  content_type: string | null;
   status: string | null;
   created_at: string;
   reporter?: { username: string | null } | null;
 }
 
+// review/comment are legacy rows detected by probing; building/photo/video/credit
+// come from the embassy Moderation flag button, typed via reports.content_type.
+type ReportContentType = 'review' | 'comment' | 'building' | 'photo' | 'video' | 'credit' | 'unknown';
+
+// Only these types can be deleted from this queue; the rest are handled in
+// their own admin surfaces and can only be dismissed here.
+const DELETABLE_TYPES: ReportContentType[] = ['review', 'comment'];
+
 interface EnrichedReport extends Report {
-  contentType: 'review' | 'comment' | 'unknown';
+  contentType: ReportContentType;
   contentSnippet?: string;
 }
 
@@ -72,7 +81,28 @@ export default function Moderation() {
 
       // Enrich with content
       const enriched = await Promise.all((rawReports as ReportQueryRow[]).map(async (r) => {
-        // Try Review
+        // Typed content reports (embassy flag button): resolve by declared type.
+        if (r.content_type === 'building') {
+          const { data } = await supabase
+            .from('buildings')
+            .select('name')
+            .eq('id', r.reported_id)
+            .maybeSingle();
+          return {
+            ...r,
+            contentType: 'building' as const,
+            contentSnippet: data?.name ?? r.details ?? 'Content not found or deleted',
+          };
+        }
+        if (r.content_type === 'photo' || r.content_type === 'video' || r.content_type === 'credit') {
+          return {
+            ...r,
+            contentType: r.content_type as ReportContentType,
+            contentSnippet: r.details ?? undefined,
+          };
+        }
+
+        // Legacy rows (no content_type): probe review, then comment.
         const { data: review } = await supabase
             .from('building_posts')
             .select('body')
@@ -83,7 +113,6 @@ export default function Moderation() {
             return { ...r, contentType: 'review' as const, contentSnippet: review.body ?? undefined };
         }
 
-        // Try Comment
         const { data: comment } = await supabase
             .from('comments')
             .select('content')
@@ -138,6 +167,7 @@ toast.error("Failed to dismiss report");
 
   const handleDeleteContent = async (report: EnrichedReport) => {
     if (!currentAdminId) return;
+    if (!DELETABLE_TYPES.includes(report.contentType)) return;
     if (!window.confirm("Are you sure? This will delete the content permanently.")) return;
 
     try {
@@ -230,7 +260,7 @@ toast.error("Failed to delete content");
                                 <Button size="sm" variant="ghost" onClick={() => handleDismiss(report)}>
                                     <CheckCircle className="h-4 w-4 mr-1" /> Dismiss
                                 </Button>
-                                <Button size="sm" variant="destructive" onClick={() => handleDeleteContent(report)} disabled={report.contentType === 'unknown'}>
+                                <Button size="sm" variant="destructive" onClick={() => handleDeleteContent(report)} disabled={!DELETABLE_TYPES.includes(report.contentType)}>
                                     <Trash2 className="h-4 w-4 mr-1" /> Delete
                                 </Button>
                             </div>

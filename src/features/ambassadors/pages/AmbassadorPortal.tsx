@@ -8,9 +8,9 @@ export const meta: MetaFunction = () => [
   { name: "robots", content: "noindex, nofollow" },
 ];
 
-/** Canonical entry for ambassadors — redirects to Embassy Contribute. */
+/** Canonical entry for ambassadors — redirects to the Embassy front door. */
 export async function loader() {
-  return redirect("/embassy/contribute");
+  return redirect("/embassy");
 }
 
 /** Fallback if the loader does not run (e.g. client-only navigation edge cases). */

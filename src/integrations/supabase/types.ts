@@ -4014,6 +4014,7 @@ export type Database = {
       }
       reports: {
         Row: {
+          content_type: string | null
           created_at: string | null
           details: string | null
           id: string
@@ -4023,6 +4024,7 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          content_type?: string | null
           created_at?: string | null
           details?: string | null
           id?: string
@@ -4032,6 +4034,7 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          content_type?: string | null
           created_at?: string | null
           details?: string | null
           id?: string
@@ -4041,13 +4044,6 @@ export type Database = {
           status?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "reports_reported_id_fkey"
-            columns: ["reported_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "reports_reporter_id_fkey"
             columns: ["reporter_id"]

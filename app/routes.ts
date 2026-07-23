@@ -123,7 +123,7 @@ export default [
     route("/support", "features/ambassadors/pages/SupportPage.tsx"),
     route("/become-ambassador", "features/ambassadors/pages/BecomeAmbassador.tsx"),
     route("embassy", "features/embassy/components/EmbassyLayout.tsx", [
-      index("features/embassy/pages/Contribute.tsx", { id: "embassy-index" }),
+      // No index route: the layout loader redirects bare /embassy to /embassy/goals.
       route("contribute", "features/embassy/pages/Contribute.tsx", {
         id: "embassy-contribute",
       }),

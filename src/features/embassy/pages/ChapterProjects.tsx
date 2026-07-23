@@ -29,6 +29,7 @@ import {
   EMBASSY_SKELETON_ROUNDED,
 } from "@/features/embassy/components/embassy-ui";
 import { formatDistanceToNow, format, parseISO, isPast, isToday } from "date-fns";
+import { fetchCampaignProgress } from "../api/campaignProgress";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -143,62 +144,6 @@ function dueDateClass(due: string | null): string {
   if (isPast(d) && !isToday(d)) return "text-feedback-destructive";
   if (isToday(d)) return "text-feedback-warning";
   return "text-text-secondary";
-}
-
-async function fetchCampaignProgress(campaign: Campaign, chapterId: string): Promise<number> {
-  const { start_date, end_date, metric_type } = campaign;
-  const endTs = end_date + "T23:59:59Z";
-  const db = supabase;
-
-  if (metric_type === "photos") {
-    const { data: memberIds } = await db
-      .from("ambassador_memberships")
-      .select("user_id")
-      .eq("chapter_id", chapterId)
-      .eq("status", "active");
-    if (!memberIds?.length) return 0;
-    const ids = memberIds.map((m: { user_id: string }) => m.user_id);
-    const { count } = await db
-      .from("review_images")
-      .select("id", { count: "exact", head: true })
-      .in("user_id", ids)
-      .gte("created_at", start_date)
-      .lte("created_at", endTs);
-    return count ?? 0;
-  }
-
-  if (metric_type === "edits") {
-    const { data: memberIds } = await db
-      .from("ambassador_memberships")
-      .select("user_id")
-      .eq("chapter_id", chapterId)
-      .eq("status", "active");
-    if (!memberIds?.length) return 0;
-    const ids = memberIds.map((m: { user_id: string }) => m.user_id);
-    const { count } = await db
-      .from("building_audit_logs")
-      .select("id", { count: "exact", head: true })
-      .in("user_id", ids)
-      .gte("created_at", start_date)
-      .lte("created_at", endTs);
-    return count ?? 0;
-  }
-
-  // outreach
-  const { data: memberMemberships } = await db
-    .from("ambassador_memberships")
-    .select("id")
-    .eq("chapter_id", chapterId)
-    .eq("status", "active");
-  if (!memberMemberships?.length) return 0;
-  const membershipIds = memberMemberships.map((m: { id: string }) => m.id);
-  const { count } = await db
-    .from("outreach_log")
-    .select("id", { count: "exact", head: true })
-    .in("ambassador_id", membershipIds)
-    .gte("created_at", start_date)
-    .lte("created_at", endTs);
-  return count ?? 0;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

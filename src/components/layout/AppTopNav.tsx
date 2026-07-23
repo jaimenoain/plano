@@ -123,7 +123,7 @@ function UserMenuDropdown() {
         </DropdownMenuItem>
         {isAmbassador ? (
           <DropdownMenuItem asChild>
-            <Link to="/embassy/contribute" className="flex items-center gap-2 cursor-pointer">
+            <Link to="/embassy" className="flex items-center gap-2 cursor-pointer">
               <Landmark className="h-4 w-4" />
               Ambassador Portal
             </Link>
