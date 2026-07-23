@@ -85,4 +85,30 @@ describe("NotificationRow", () => {
     expect(screen.getByText(/added you as an editor on/)).toBeInTheDocument();
     expect(screen.getByText("Brutalist London")).toBeInTheDocument();
   });
+
+  it("renders a contribution_approved notification with the content type and building name", () => {
+    renderRow({
+      type: "contribution_approved",
+      metadata: { content_type: "photo", building_name: "Barbican Centre" },
+    });
+    expect(screen.getByText("Contribution Approved")).toBeInTheDocument();
+    expect(screen.getByText(/Your photo of/)).toBeInTheDocument();
+    expect(screen.getByText("Barbican Centre")).toBeInTheDocument();
+    expect(screen.getByText("approved")).toBeInTheDocument();
+  });
+
+  it("renders a contribution_flagged notification with the flag reason", () => {
+    renderRow({
+      type: "contribution_flagged",
+      metadata: {
+        content_type: "credit",
+        building_name: "Barbican Centre",
+        reason: "Incorrect role",
+      },
+    });
+    expect(screen.getByText("Flagged for Review")).toBeInTheDocument();
+    expect(screen.getByText(/Your credit for/)).toBeInTheDocument();
+    expect(screen.getByText(/flagged for review/)).toBeInTheDocument();
+    expect(screen.getByText("Incorrect role")).toBeInTheDocument();
+  });
 });

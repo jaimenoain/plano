@@ -61,9 +61,14 @@ productive session; Phase 3 the return loop; Phase 4 holds gated bigger bets.
   `PlanoMap`/`MapMarkers`/`BuildingPopupContent` (invisible outside gap mode). Pure
   `buildReviewImageRow` + `nextBuildingAfter` unit-tested. No migration (reuses existing
   tables/RPC). Item-level auto-select on the map is a follow-up.
-- **2.3 — Contribution outcome notifications.** New `contribution_approved` /
-  `contribution_flagged` notification types fired from ambassador moderation actions,
-  following the `notify-credit-outcome` pattern. Closes the silent-moderation loop.
+- **2.3 — Contribution outcome notifications.** Shipped 2026-07-23: new
+  `contribution_approved` / `contribution_flagged` notification types. All six
+  `ambassador_approve_*` RPCs (building/photo/video/credit, plus the two global variants)
+  now notify the original contributor right after stamping `moderated_at`; a new
+  `AFTER INSERT` trigger on `reports` notifies the contributor when an ambassador flags
+  their building/photo/video/credit via the Moderation tool's flag button. Migration
+  `20271183000000_contribution_outcome_notifications.sql`. Closes the silent-moderation
+  loop.
 - **2.4 — Suggested goals + broader metrics.** One-click suggested goal chips derived
   from chapter backlog; goal metrics extended to moderation, outreach, events, and
   research (borrow counting from the activity RPC).

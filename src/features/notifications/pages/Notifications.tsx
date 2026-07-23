@@ -187,6 +187,12 @@ export default function Notifications() {
           notification.type === "collection_collab_requested" ? "?settings=collaborators" : "";
         navigate(`/${ownerUsername}/map/${slug}${suffix}`);
       }
+    } else if (
+      notification.type === "contribution_approved" ||
+      notification.type === "contribution_flagged"
+    ) {
+      const buildingId = notification.metadata?.building_id;
+      if (buildingId) navigate(`/building/${buildingId}`);
     } else if (notification.resource?.id) {
       navigate(`/review/${notification.resource.id}`);
     }

@@ -22,7 +22,9 @@ export interface Notification {
     | "collection_collab_requested"
     | "collection_collab_accepted"
     | "collection_collab_rejected"
-    | "collection_collab_added";
+    | "collection_collab_added"
+    | "contribution_approved"
+    | "contribution_flagged";
   is_read: boolean;
   actor_id: string;
   recommendation_id?: string | null;
@@ -58,6 +60,12 @@ export interface Notification {
     collection_slug?: string;
     collection_name?: string;
     owner_username?: string;
+    content_type?: "building" | "photo" | "video" | "credit";
+    building_id?: string;
+    building_name?: string;
+    building_slug?: string;
+    building_short_id?: number;
+    reason?: string;
   };
   recommendation?: {
     id?: string;
