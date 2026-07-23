@@ -27,7 +27,7 @@ export function AddBuildingAuthGate({ redirectTarget }: { redirectTarget: string
           </p>
           <div className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row">
             <Button asChild variant="outline">
-              <Link to={`/login?redirect=${redirectTarget}&signup=1`}>Sign up</Link>
+              <Link to={`/signup?redirect=${redirectTarget}`}>Sign up</Link>
             </Button>
             <Button asChild variant="accent">
               <Link to={`/login?redirect=${redirectTarget}`}>Log in</Link>

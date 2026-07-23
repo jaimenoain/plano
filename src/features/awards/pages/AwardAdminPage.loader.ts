@@ -14,7 +14,7 @@ export async function awardAdminLoader({ params }: LoaderFunctionArgs): Promise<
 
   // Require authentication.
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw redirect(`/sign-in?redirect=/award/${slug}/admin`);
+  if (!user) throw redirect(`/login?redirect=/award/${slug}/admin`);
 
   // Load award.
   let award;
