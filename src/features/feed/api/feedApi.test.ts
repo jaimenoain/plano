@@ -62,3 +62,21 @@ describe("mapRawFeedRow — discovery fields", () => {
     expect(mapped.ring).toBeUndefined();
   });
 });
+
+describe("mapRawFeedRow — video_url", () => {
+  it("passes video_url through so a video-only post reads as media", () => {
+    const row: RawFeedRow = {
+      ...baseRow,
+      content: null,
+      video_url: "https://vid/post-1.mp4",
+    };
+
+    const mapped = mapRawFeedRow(row);
+
+    expect(mapped.video_url).toBe("https://vid/post-1.mp4");
+  });
+
+  it("defaults video_url to null when the RPC omits it", () => {
+    expect(mapRawFeedRow(baseRow).video_url).toBeNull();
+  });
+});
