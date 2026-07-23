@@ -9,6 +9,7 @@ export { PersonalRatingButton, type BuildingStatus } from './components/Personal
 export { PopularityBadge } from './components/PopularityBadge';
 export { ImageDetailsDialog } from './components/ImageDetailsDialog';
 export { BuildingImageCard } from './components/BuildingImageCard';
+export { PendingPhotosQueue } from './components/PendingPhotosQueue';
 
 // Hooks used by other features
 export { useBuildingImages } from './hooks/useBuildingImages';

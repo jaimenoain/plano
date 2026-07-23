@@ -44,6 +44,8 @@ interface MapMarkersProps {
   onSelectBuilding?: (cluster: ClusterResponse) => void;
   onRemoveFromCollection?: (id: string) => void;
   onAddCandidate?: (id: string) => void;
+  /** Embassy Photography: opens the in-place photo-upload sheet from a gap-pin popup. */
+  onAddPhoto?: (buildingId: string, name: string) => void;
 }
 
 export function MapMarkers({
@@ -54,7 +56,8 @@ export function MapMarkers({
   selectedId,
   onSelectBuilding,
   onRemoveFromCollection,
-  onAddCandidate
+  onAddCandidate,
+  onAddPhoto
 }: MapMarkersProps) {
   const { current: map } = useMap();
   const mapCtx = useOptionalMapContext();
@@ -357,6 +360,7 @@ export function MapMarkers({
                   cluster={activeCluster}
                   onRemoveFromCollection={onRemoveFromCollection}
                   onAddCandidate={onAddCandidate}
+                  onAddPhoto={onAddPhoto}
                   fullWidth
                 />
               </div>
@@ -378,6 +382,7 @@ export function MapMarkers({
               onMouseLeave={handleMouseLeave}
               onRemoveFromCollection={onRemoveFromCollection}
               onAddCandidate={onAddCandidate}
+              onAddPhoto={onAddPhoto}
             />
           </Popup>
         )

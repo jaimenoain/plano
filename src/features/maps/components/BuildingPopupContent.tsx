@@ -16,6 +16,7 @@ import { ClusterResponse } from '../hooks/useMapData';
 import { getBuildingImageUrl } from '@/utils/image';
 import { getBuildingUrl } from '@/utils/url';
 import { useBuildingStatusActions } from '../hooks/useBuildingStatusActions';
+import { PopupRatingBar } from './PopupRatingBar';
 
 /** Single surface for map hover card (MapLibre outer frame is reset in index.css) */
 const POPUP_PANEL =
@@ -29,6 +30,12 @@ interface BuildingPopupContentProps {
   onMouseLeave?: () => void;
   onRemoveFromCollection?: (id: string) => void;
   onAddCandidate?: (id: string) => void;
+  /**
+   * Embassy Photography: when provided AND the photography-gaps filter is
+   * active, the popup shows an "Add photo" action that opens the in-place
+   * upload sheet. Other map surfaces never pass this, so it never appears.
+   */
+  onAddPhoto?: (buildingId: string, name: string) => void;
   /** When true, renders full-width (for mobile bottom sheet). Strips fixed popup dimensions. */
   fullWidth?: boolean;
   /**
@@ -44,6 +51,7 @@ export function BuildingPopupContent({
   onMouseLeave,
   onRemoveFromCollection,
   onAddCandidate,
+  onAddPhoto,
   fullWidth = false,
   hideCardLink = false,
 }: BuildingPopupContentProps) {
@@ -298,6 +306,22 @@ export function BuildingPopupContent({
           <span className="text-xs text-text-secondary">Loading details...</span>
         )}
 
+        {/* Embassy Photography: in-place photo upload (only in gap mode). */}
+        {onAddPhoto && filters.photographyGaps && (
+          <Button
+            size="sm"
+            className="relative z-20 w-full"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              onAddPhoto(buildingId, cluster.name || '');
+            }}
+          >
+            <Camera className="mr-1.5 h-4 w-4" />
+            Add photo
+          </Button>
+        )}
+
         {/* Action Bar */}
         {user && (
           <div
@@ -350,55 +374,13 @@ export function BuildingPopupContent({
           </div>
         )}
 
-        {/* Post-Interaction Rating UI */}
-        {justInteracted && (
-           <div
-             className="flex justify-center items-center gap-3 pt-3 pb-1 border-t animate-in fade-in slide-in-from-top-1 duration-300 relative z-20"
-             onClick={(e) => e.stopPropagation()}
-             onTouchStart={(e) => e.stopPropagation()}
-           >
-              {/* Status Indicator Circle */}
-              <div className="h-8 w-8 rounded-full bg-brand-primary flex items-center justify-center text-brand-primary-foreground">
-                  {justInteracted === 'saved' ? (
-                      <Bookmark className="h-4 w-4 fill-current" />
-                  ) : (
-                      <Check className="h-5 w-5 stroke-[3px]" />
-                  )}
-              </div>
-
-              {/* Rating Circles */}
-              {[1, 2, 3].map((rating) => {
-                  const activeRating = hoverRating !== null ? hoverRating : currentRating;
-                  const isFilled = activeRating >= rating;
-
-                  return (
-                      <div
-                          key={rating}
-                          className="p-1 -m-1 cursor-pointer"
-                          onClick={(e) => {
-                              e.stopPropagation();
-                              handleRate(rating);
-                          }}
-                          onMouseEnter={() => setHoverRating(rating)}
-                          onMouseLeave={() => setHoverRating(null)}
-                      >
-                          <div
-                              className={`
-                                  h-8 w-8 rounded-full transition-all duration-200
-                                  flex items-center justify-center border
-                                  ${isFilled
-                                      ? "bg-text-primary border-text-primary"
-                                      : "bg-transparent border-border-default hover:border-border-strong"
-                                  }
-                              `}
-                          >
-                              {/* Inner dot logic if needed, or just fill. Requirement says "fill into black". */}
-                          </div>
-                      </div>
-                  );
-              })}
-           </div>
-        )}
+        <PopupRatingBar
+          justInteracted={justInteracted}
+          currentRating={currentRating}
+          hoverRating={hoverRating}
+          setHoverRating={setHoverRating}
+          onRate={handleRate}
+        />
       </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
