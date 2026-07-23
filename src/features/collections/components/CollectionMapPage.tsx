@@ -40,7 +40,6 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
 import { getBoundsFromBuildings, isLngLatInBounds, type Bounds } from "@/utils/map";
-import { getBuildingUrl } from "@/utils/url";
 import { getBuildingImageUrl } from "@/utils/image";
 import { collectionStructuredData, SITE_URL } from "@/features/buildings/utils/structuredData";
 import { Loader2, Settings, Plus, ExternalLink, Star, ListFilter, MapPinPlus, Building2 } from "lucide-react";
@@ -77,12 +76,13 @@ import { useToast } from "@/components/ui/use-toast";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
 import { useGooglePlacePhotos } from "@/hooks/useGooglePlacePhotos";
 import { primaryBuildingCreditsToSummaries } from "@/features/credits/api/credits";
+import { CollectionItemRow } from "./CollectionItemRow";
+import { useCollectionMapSelection } from "../hooks/useCollectionMapSelection";
 
 const CollectionSettingsDialog = lazyWithRetry(() => import("@/features/collections/components/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
 const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("@/features/collections/components/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
 const PlanRouteDialog = lazyWithRetry(() => import("@/features/collections/components/PlanRouteDialog").then(module => ({ default: module.PlanRouteDialog })));
 const CollectionMapGL = lazyWithRetry(() => import("@/features/maps/components/CollectionMapGL").then(module => ({ default: module.CollectionMapGL })));
-const CollectionBuildingCard = lazyWithRetry(() => import("@/features/collections/components/CollectionBuildingCard").then(module => ({ default: module.CollectionBuildingCard })));
 const CollectionMarkerCard = lazyWithRetry(() => import("@/features/collections/components/CollectionMarkerCard").then(module => ({ default: module.CollectionMarkerCard })));
 
 const SHOW_SAVED_CANDIDATES_STORAGE = "plano:collection-map:showSavedPlaces" as const;
@@ -239,6 +239,9 @@ export default function CollectionMap() {
   const { toast } = useToast();
 
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  // Selection-mode detail drawer (parity with /search) — opens from pin or row.
+  const { selectedCluster, setSelectedCluster, selectItem, closeDetail, clearIfBuilding } =
+    useCollectionMapSelection();
   const [showSettings, setShowSettings] = useState(false);
   const [hasSettingsOpened, setHasSettingsOpened] = useState(false);
   const [showAddBuildings, setShowAddBuildings] = useState(false);
@@ -1037,6 +1040,8 @@ export default function CollectionMap() {
       refetchItems();
       // Invalidate saved candidates so it reappears as a candidate if applicable
       queryClient.invalidateQueries({ queryKey: ["saved_candidates"] });
+      // Close the detail drawer if it was showing the just-removed building.
+      clearIfBuilding(itemToRemove.building.id);
     }
     setShowRemoveConfirm(false);
     setItemToRemove(null);
@@ -1250,33 +1255,22 @@ toast({
                     <TabsContent value="items" className="mt-0 flex-1 overflow-hidden m-0 p-0 min-h-0 flex flex-col justify-start data-[state=inactive]:hidden">
                         <div className="flex-1 overflow-y-auto">
                             <div className="p-4 space-y-3 pb-24 lg:pb-4">
-                                {items && items.filter(i => !i.is_hidden).length > 0 && (
-                                    <Suspense fallback={
-                                        <div className="flex items-center justify-center p-8">
-                                            <Loader2 className="h-6 w-6 animate-spin text-text-secondary" />
-                                        </div>
-                                    }>
-                                        {items.filter(i => !i.is_hidden).map(item => (
-                                            <CollectionBuildingCard
-                                                key={item.id}
-                                                item={item}
-                                                isHighlighted={highlightedId === item.building.id}
-                                                setHighlightedId={setHighlightedId}
-                                                canEdit={canEdit}
-                                                onUpdateNote={(note) => handleUpdateNote(item.id, note)}
-                                                onNavigate={() => {
-                                                    // Locality URL not available: CollectionItemWithBuilding.building does not include locality_country_code/city_slug — requires collection items query to join localities table
-                                                    window.open(getBuildingUrl(item.building.id, item.building.slug, item.building.short_id), '_blank');
-                                                }}
-                                                categorizationMethod={collection.categorization_method}
-                                                customCategories={collection.custom_categories}
-                                                onUpdateCategory={(catId) => handleUpdateCategory(item.id, catId)}
-                                                showImages={collection.show_community_images ?? true}
-                                                onRemove={() => handleRemoveItem(item.building.id)}
-                                            />
-                                        ))}
-                                    </Suspense>
-                                )}
+                                {items && items.filter(i => !i.is_hidden).map(item => (
+                                    <CollectionItemRow
+                                        key={item.id}
+                                        item={item}
+                                        isHighlighted={highlightedId === item.building.id}
+                                        setHighlightedId={setHighlightedId}
+                                        canEdit={canEdit}
+                                        onUpdateNote={(note) => handleUpdateNote(item.id, note)}
+                                        onSelect={() => selectItem(item)}
+                                        categorizationMethod={collection.categorization_method}
+                                        customCategories={collection.custom_categories}
+                                        onUpdateCategory={(catId) => handleUpdateCategory(item.id, catId)}
+                                        showImages={collection.show_community_images ?? true}
+                                        onRemove={() => handleRemoveItem(item.building.id)}
+                                    />
+                                ))}
 
                                 {markers && markers.length > 0 && (
                                     <div className="mt-4 border-t pt-2">
@@ -1374,6 +1368,10 @@ toast({
                     buildings={allMapBuildings}
                     highlightedId={highlightedId}
                     setHighlightedId={setHighlightedId}
+                    selectedCluster={selectedCluster}
+                    onSelectBuilding={setSelectedCluster}
+                    onCloseDetail={closeDetail}
+                    onRemoveFromCollection={canEdit ? handleRemoveItem : undefined}
                     onAddCandidate={handleAddToCollection}
                     onRemoveItem={canEdit ? handleRemoveItem : undefined}
                     onUpdateMarkerNote={canEdit ? handleUpdateMarkerNote : undefined}

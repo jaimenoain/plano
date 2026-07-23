@@ -27,20 +27,34 @@ interface BuildingDetailDrawerProps {
   /** The selected building, or null when nothing is selected (drawer closed). */
   cluster: ClusterResponse | null;
   onClose: () => void;
+  /** Collection context: remove this building from the collection (owner/contributor). */
+  onRemoveFromCollection?: (buildingId: string) => void;
+  /** Collection context: promote a saved candidate into the collection. */
+  onAddCandidate?: (id: string) => void;
 }
 
 /** Legacy card path — custom markers & candidates keep the compact popup card. */
 function LegacyDetailBody({
   cluster,
   onClose,
+  onRemoveFromCollection,
+  onAddCandidate,
 }: {
   cluster: ClusterResponse;
   onClose: () => void;
+  onRemoveFromCollection?: (buildingId: string) => void;
+  onAddCandidate?: (id: string) => void;
 }) {
   const fullUrl = getBuildingUrl(String(cluster.id), cluster.slug);
   return (
     <>
-      <BuildingPopupContent cluster={cluster} fullWidth hideCardLink />
+      <BuildingPopupContent
+        cluster={cluster}
+        fullWidth
+        hideCardLink
+        onRemoveFromCollection={onRemoveFromCollection}
+        onAddCandidate={onAddCandidate}
+      />
       {!cluster.is_custom_marker && (
         <div className="p-4 border-t border-border-default">
           <Link
@@ -57,7 +71,12 @@ function LegacyDetailBody({
   );
 }
 
-export function BuildingDetailDrawer({ cluster, onClose }: BuildingDetailDrawerProps) {
+export function BuildingDetailDrawer({
+  cluster,
+  onClose,
+  onRemoveFromCollection,
+  onAddCandidate,
+}: BuildingDetailDrawerProps) {
   const isMobile = useIsMobile();
   const isSpecial = !!(cluster?.is_custom_marker || cluster?.is_candidate);
 
@@ -71,10 +90,20 @@ export function BuildingDetailDrawer({ cluster, onClose }: BuildingDetailDrawerP
           {cluster &&
             (isSpecial ? (
               <div className="overflow-y-auto max-h-[75vh] pb-8">
-                <LegacyDetailBody cluster={cluster} onClose={onClose} />
+                <LegacyDetailBody
+                  cluster={cluster}
+                  onClose={onClose}
+                  onRemoveFromCollection={onRemoveFromCollection}
+                  onAddCandidate={onAddCandidate}
+                />
               </div>
             ) : (
-              <BuildingDrawerBody cluster={cluster} onClose={onClose} layout="sheet" />
+              <BuildingDrawerBody
+                cluster={cluster}
+                onClose={onClose}
+                layout="sheet"
+                onRemoveFromCollection={onRemoveFromCollection}
+              />
             ))}
         </DrawerContent>
       </Drawer>
@@ -102,7 +131,12 @@ export function BuildingDetailDrawer({ cluster, onClose }: BuildingDetailDrawerP
           </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <LegacyDetailBody cluster={cluster} onClose={onClose} />
+          <LegacyDetailBody
+            cluster={cluster}
+            onClose={onClose}
+            onRemoveFromCollection={onRemoveFromCollection}
+            onAddCandidate={onAddCandidate}
+          />
         </div>
       </div>
     );
@@ -114,7 +148,12 @@ export function BuildingDetailDrawer({ cluster, onClose }: BuildingDetailDrawerP
       role="dialog"
       aria-label={cluster.name || "Building details"}
     >
-      <BuildingDrawerBody cluster={cluster} onClose={onClose} layout="panel" />
+      <BuildingDrawerBody
+        cluster={cluster}
+        onClose={onClose}
+        layout="panel"
+        onRemoveFromCollection={onRemoveFromCollection}
+      />
     </div>
   );
 }
