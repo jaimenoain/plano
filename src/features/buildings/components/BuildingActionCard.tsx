@@ -178,18 +178,11 @@ export function BuildingActionCard({
 
       {/* Rating */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="text-[11px] font-medium uppercase tracking-widest text-text-disabled">
-            My Rating
-          </label>
-          {myRating > 0 && (
-            <span className="font-mono text-[10px] tracking-[0.08em] text-text-disabled">
-              {myRating}/3
-            </span>
-          )}
-        </div>
+        <label className="text-[11px] font-medium uppercase tracking-widest text-text-disabled">
+          My Rating
+        </label>
         <PersonalRatingButton
-          variant="inline"
+          variant="collapsible"
           buildingId={building.id}
           initialRating={myRating}
           onRate={onRate}

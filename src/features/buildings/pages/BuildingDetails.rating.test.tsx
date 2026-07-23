@@ -209,9 +209,13 @@ describe('BuildingDetails Rating', () => {
       expect(screen.getByRole("button", { name: /visited/i })).toBeTruthy();
     });
 
-    // The sidebar "My Rating" control is now a discrete four-tier radiogroup
-    // (PersonalRatingButton variant="inline" -> MichelinRatingInput) rather
-    // than the old hand-rolled hover-fill circle picker.
+    // The sidebar "My Rating" control is now collapsed by default
+    // (PersonalRatingButton variant="collapsible"): it shows only a summary
+    // row until clicked. The mocked entry has rating 0 (unrated here), so the
+    // summary is the "Rate this building" prompt — click it to expand the
+    // discrete four-tier radiogroup.
+    fireEvent.click(screen.getByRole("button", { name: /edit rating/i }));
+
     const group = screen.getByRole("radiogroup", { name: /award rating/i });
     expect(group).toBeTruthy();
 
