@@ -51,10 +51,16 @@ productive session; Phase 3 the return loop; Phase 4 holds gated bigger bets.
   into its tool with that item first. New `fetchStartHereTasks` + pure `rankStartHereTasks`
   (unit-tested) in `api/startHere.ts`; new `StartHereQueue` component; no new RPC/migration
   (reuses the existing chapter-scoped fetchers). Item-level auto-select left as follow-up.
-- **2.2 — In-tool photo upload.** Photography map/list items open an in-place upload
-  sheet (reuse `useBuildingInteractions` + `uploadFile`), mark the building done, advance
-  to the next. Extracts `PhotographyTool` from `Contribute.tsx` (extract-on-touch policy,
-  spec §2.5).
+- **2.2 — In-tool photo upload.** Shipped 2026-07-23: Photography list rows and map
+  gap-pins open an in-place `PhotoUploadSheet` (compress → `uploadFile` → `review_images`,
+  mirroring the building-detail save path in a new `api/photoUpload.ts`); on success the
+  building drops out of the gap queue / its pin count updates and the sheet advances to the
+  next. Extract-on-touch (§2.5): `PhotographyTool` pulled out of `Contribute.tsx`
+  (3087 → 2694 lines) with its empty/error states converted to the `embassy-ui` kit; the
+  map "Add photo" action threads one guarded optional prop through the shared
+  `PlanoMap`/`MapMarkers`/`BuildingPopupContent` (invisible outside gap mode). Pure
+  `buildReviewImageRow` + `nextBuildingAfter` unit-tested. No migration (reuses existing
+  tables/RPC). Item-level auto-select on the map is a follow-up.
 - **2.3 — Contribution outcome notifications.** New `contribution_approved` /
   `contribution_flagged` notification types fired from ambassador moderation actions,
   following the `notify-credit-outcome` pattern. Closes the silent-moderation loop.

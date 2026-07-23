@@ -26,9 +26,10 @@ const DEFAULT_GEOLOCATE_ZOOM = 8;
 interface PlanoMapProps {
   showEmptyMessage?: boolean;
   showGapCallout?: boolean;
+  onAddPhoto?: (buildingId: string, name: string) => void; // Embassy Photography gap-pin upload
 }
 
-function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
+function PlanoMapContent({ showEmptyMessage, showGapCallout, onAddPhoto }: PlanoMapProps) {
   const [isSatellite, setIsSatellite] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -322,11 +323,9 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
   const visibleClustersCount = useMemo(() => {
     if (!clusters || !bounds) return 0;
     return clusters.filter(c =>
-      c.lat <= bounds.north && c.lat >= bounds.south &&
-      c.lng <= bounds.east && c.lng >= bounds.west
+      c.lat <= bounds.north && c.lat >= bounds.south && c.lng <= bounds.east && c.lng >= bounds.west
     ).length;
   }, [clusters, bounds]);
-
   const topGapCluster = useMemo(() => {
     if (!showGapCallout || !filters.photographyGaps || !clusters || clusters.length === 0 || viewState.zoom >= 12) return null;
     return clusters
@@ -386,6 +385,7 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
             setHighlightedId={setHighlightedId}
             selectedId={selectedId}
             onSelectBuilding={handleSelectBuilding}
+            onAddPhoto={onAddPhoto}
           />
         )}
       </Map>
@@ -474,10 +474,10 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
   return mapContent;
 }
 
-export function PlanoMap({ showEmptyMessage, showGapCallout }: PlanoMapProps) {
+export function PlanoMap({ showEmptyMessage, showGapCallout, onAddPhoto }: PlanoMapProps) {
   return (
     <MapErrorBoundary>
-      <PlanoMapContent showEmptyMessage={showEmptyMessage} showGapCallout={showGapCallout} />
+      <PlanoMapContent showEmptyMessage={showEmptyMessage} showGapCallout={showGapCallout} onAddPhoto={onAddPhoto} />
     </MapErrorBoundary>
   );
 }
