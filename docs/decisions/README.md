@@ -25,3 +25,4 @@ Format: context → decision → consequences. Keep them under a page.
 | [0017](0017-gitleaks-secret-scan.md) | Gitleaks secret scan on every PR; findings are rotated, never fingerprint-silenced |
 | [0018](0018-types-staleness-gate.md) | Types-staleness gate: a migration must regen `types.ts` or carry a `types-neutral` marker |
 | [0019](0019-risk-based-uat.md) | Risk-based, automation-first UAT: per-phase `X.98` gate only when depended on, plus one Final UAT |
+| [0020](0020-migrations-via-management-api.md) | Apply migrations via the Supabase Management API + `.env.local` PAT, not the single-account MCP connector |

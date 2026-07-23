@@ -281,7 +281,12 @@ export function CollectionSettingsDialog({
     }
 
     setSaving(true);
-    const { error } = await supabase
+    // `.select("id")` is load-bearing: without it a Supabase UPDATE that matches
+    // zero rows (e.g. RLS silently rejects the write) returns `{ data: null,
+    // error: null }` — indistinguishable from success. Requiring a returned row
+    // means a save that changed nothing surfaces as an error instead of a lying
+    // "Collection updated" toast.
+    const { data, error } = await supabase
       .from("collections")
       .update({
         name: parsed.data.name,
@@ -293,10 +298,11 @@ export function CollectionSettingsDialog({
         custom_categories: formData.custom_categories,
         categorization_selected_members: formData.categorization_selected_members
       })
-      .eq("id", collection.id);
+      .eq("id", collection.id)
+      .select("id");
 
     setSaving(false);
-    if (error) {
+    if (error || !data || data.length === 0) {
       toast.error("Failed to update collection");
     } else {
       toast.success("Collection updated");
