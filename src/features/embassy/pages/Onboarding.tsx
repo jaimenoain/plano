@@ -5,16 +5,16 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Search, Camera, CheckCircle2, ArrowRight, Loader2, Landmark, Filter, UserPlus, Check } from "lucide-react";
+import { Search, Camera, CheckCircle2, ArrowRight, Loader2, Landmark, Filter, UserPlus, Check, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate, redirect, type LoaderFunctionArgs } from "react-router";
 import { cn } from "@/lib/utils";
 import { EmbassyPageHeader, EmbassySectionLabel } from "@/features/embassy/components/embassy-ui";
 import { createSupabaseServerClient } from "@/lib/supabase.server";
 import { fetchChapterTeam, type ChapterTeamMember } from "@/features/embassy/api/leadership";
+import { type ToolKey } from "../toolPreferences";
 
 type Step = 1 | 2 | 3;
-type ToolKey = "research" | "photography" | "outreach" | "moderation" | "community";
 
 const TOOLS: { key: ToolKey; title: string; description: string; tip: string; icon: React.ReactNode }[] = [
   {
@@ -39,9 +39,9 @@ const TOOLS: { key: ToolKey; title: string; description: string; tip: string; ic
     icon: <CheckCircle2 className="h-5 w-5" />,
   },
   {
-    key: "moderation",
+    key: "curation",
     title: "Moderation",
-    description: "Review tags, group buildings into collections, and highlight gems.",
+    description: "Review new buildings, photos, videos, and credits before they go live.",
     tip: "The Moderation tool shows the latest contributions from your chapter. Work through the queue regularly — approving or flagging a few items a day keeps the record clean.",
     icon: <Filter className="h-5 w-5" />,
   },
@@ -51,6 +51,13 @@ const TOOLS: { key: ToolKey; title: string; description: string; tip: string; ic
     description: "Invite architects and firms in your area to join Plano.",
     tip: "The best leads are architects and firms whose work is already in Plano but who haven't joined yet. A personal introduction from a local ambassador converts far better than a cold invite.",
     icon: <UserPlus className="h-5 w-5" />,
+  },
+  {
+    key: "events",
+    title: "Events",
+    description: "Review architecture events found by AI in your locality and publish the good ones.",
+    tip: "The Events tool surfaces architecture events discovered for your locality. Check the details, fix anything that's off, and publish the ones worth sharing — or discard the noise.",
+    icon: <CalendarClock className="h-5 w-5" />,
   },
 ];
 
