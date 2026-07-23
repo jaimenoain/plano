@@ -57,7 +57,9 @@ export default function EmbassyLayout() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ambassador_memberships")
-        .select("role, status, onboarded_at, chapter_id, chapter:ambassador_chapters(name)")
+        // Keep this select identical to MyGoals' so both share the cache entry
+        // (same queryKey). `preferred_tools` feeds the dashboard "Start here" queue.
+        .select("role, status, onboarded_at, chapter_id, preferred_tools, chapter:ambassador_chapters(name)")
         .eq("user_id", user!.id)
         .eq("status", "active")
         .order("joined_at", { ascending: false })

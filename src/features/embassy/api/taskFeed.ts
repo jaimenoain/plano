@@ -64,10 +64,11 @@ export async function fetchAmbassadorBuildingsMissingMetadata(
 
 export async function fetchAmbassadorUnclaimedFirms(
   chapterId: string,
+  limit = EMBASSY_SEARCH_FEED_LIMIT,
 ): Promise<AmbassadorUnclaimedFirm[]> {
   const { data, error } = await supabase.rpc("get_ambassador_unclaimed_firms", {
     p_chapter_id: chapterId,
-    p_limit: EMBASSY_SEARCH_FEED_LIMIT,
+    p_limit: limit,
   });
   if (error) throw error;
   return data ?? [];

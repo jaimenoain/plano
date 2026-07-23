@@ -24,6 +24,7 @@ import {
   EmbassyEmptyState,
   EMBASSY_SKELETON_ROUNDED,
 } from "@/features/embassy/components/embassy-ui";
+import { StartHereQueue } from "@/features/embassy/components/StartHereQueue";
 
 type Goal = {
   id: string;
@@ -107,7 +108,7 @@ export default function MyGoalsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ambassador_memberships")
-        .select("role, status, onboarded_at, chapter_id, chapter:ambassador_chapters(name)")
+        .select("role, status, onboarded_at, chapter_id, preferred_tools, chapter:ambassador_chapters(name)")
         .eq("user_id", user!.id)
         .eq("status", "active")
         .order("joined_at", { ascending: false })
@@ -203,6 +204,11 @@ export default function MyGoalsPage() {
           </Button>
         }
       />
+
+      {/* ─── Start here (aggregated ready tasks) ─── */}
+      {chapterId && (
+        <StartHereQueue chapterId={chapterId} preferredTools={membership?.preferred_tools} />
+      )}
 
       {/* ─── Open Tasks ─── */}
       {(loadingTasks || openTasks.length > 0) && (

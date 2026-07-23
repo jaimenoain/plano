@@ -43,10 +43,13 @@ productive session; Phase 3 the return loop; Phase 4 holds gated bigger bets.
 
 ## [ ] Phase 2 — Friction killers (the productive session)
 
-- **2.1 — "Start here" task queue.** Dashboard (and `/embassy` landing) opens with 3–5
-  ready tasks aggregated from the existing queues (research, moderation backlog, photo
-  gaps, unclaimed firms, event discoveries), ranked by saved tool preference + chapter
-  need, each deep-linking to the exact item. Extends `src/features/embassy/api/taskFeed.ts`.
+- **2.1 — "Start here" task queue.** Shipped 2026-07-23: the Dashboard (and, via the
+  existing redirect, the `/embassy` landing) opens with up to 5 ready tasks — the top live
+  item of each queue (research, moderation, photo gaps, unclaimed firms, event
+  discoveries) — ranked by saved tool preference then chapter backlog, each deep-linking
+  into its tool with that item first. New `fetchStartHereTasks` + pure `rankStartHereTasks`
+  (unit-tested) in `api/startHere.ts`; new `StartHereQueue` component; no new RPC/migration
+  (reuses the existing chapter-scoped fetchers). Item-level auto-select left as follow-up.
 - **2.2 — In-tool photo upload.** Photography map/list items open an in-place upload
   sheet (reuse `useBuildingInteractions` + `uploadFile`), mark the building done, advance
   to the next. Extracts `PhotographyTool` from `Contribute.tsx` (extract-on-touch policy,
