@@ -48,7 +48,7 @@ describe("VerifyCompanyClaim (QA 7.2)", () => {
     renderPage();
     expect(screen.getByRole("heading", { name: /sign in to continue/i })).toBeInTheDocument();
     const login = screen.getByRole("link", { name: /^log in\b/i });
-    expect(login.getAttribute("href")).toContain("/auth?");
+    expect(login.getAttribute("href")).toContain("/login?");
     expect(login.getAttribute("href")).toContain(encodeURIComponent(TOKEN_PATH));
   });
 

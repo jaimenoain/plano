@@ -98,7 +98,7 @@ export function MobileTopBar() {
                 variant="ghost"
                 size="sm"
                 className="h-9 px-2 text-xs font-semibold text-text-primary"
-                onClick={() => navigate("/auth")}
+                onClick={() => navigate("/login")}
               >
                 Log in
               </Button>

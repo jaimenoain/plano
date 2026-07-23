@@ -281,7 +281,7 @@ describe("CompanyDetails (QA 4.1 unclaimed)", () => {
     renderPage();
     expect(screen.getByRole("link", { name: /Log in to claim/i })).toHaveAttribute(
       "href",
-      expect.stringContaining("/auth?"),
+      expect.stringContaining("/login?"),
     );
   });
 

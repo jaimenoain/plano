@@ -62,7 +62,7 @@ export default function Post() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth");
+      navigate("/login");
     }
   }, [user, authLoading, navigate]);
 

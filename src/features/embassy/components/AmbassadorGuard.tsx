@@ -13,7 +13,7 @@ export function AmbassadorGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      navigate(`/auth?redirect=${encodeURIComponent(location.pathname)}`, { replace: true });
+      navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true });
       return;
     }
     let cancelled = false;

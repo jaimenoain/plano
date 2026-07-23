@@ -165,7 +165,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const { data: { user } } = await supabaseServer.auth.getUser();
   if (!user) {
-    return redirect("/auth?redirect=/embassy/leadership", { headers: responseHeaders });
+    return redirect("/login?redirect=/embassy/leadership", { headers: responseHeaders });
   }
 
   const { data: membership } = await supabaseServer

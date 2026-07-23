@@ -66,7 +66,7 @@ describe('MapModeToggle', () => {
 
     fireEvent.click(screen.getByText('My Library'));
 
-    expect(navigateMock).toHaveBeenCalledWith('/auth');
+    expect(navigateMock).toHaveBeenCalledWith('/login');
     expect(switchMode).not.toHaveBeenCalled();
   });
 

@@ -400,7 +400,7 @@ export default function Profile() {
 
   // ── Effects ──
   useEffect(() => {
-    if (!authLoading && !currentUser && !routeUsername) navigate("/auth");
+    if (!authLoading && !currentUser && !routeUsername) navigate("/login");
   }, [currentUser, authLoading, navigate, routeUsername]);
 
   useEffect(() => {

@@ -148,7 +148,7 @@ export default function CompanyDashboard() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
-      navigate("/auth");
+      navigate("/login");
       return;
     }
     if (stewardsQuery.isError) {

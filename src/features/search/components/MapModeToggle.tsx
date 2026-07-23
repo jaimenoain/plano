@@ -23,7 +23,7 @@ export function MapModeToggle({ name, className }: { name: string; className?: s
   const handleChange = (value: string) => {
     if (value !== 'all' && value !== 'discover' && value !== 'library') return;
     if (value === 'library' && !user) {
-      navigate('/auth');
+      navigate('/login');
       return;
     }
     if (value === (mode ?? 'all')) return;

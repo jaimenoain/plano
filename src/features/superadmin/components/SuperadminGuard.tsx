@@ -16,7 +16,7 @@ export function SuperadminGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!authLoading && !session) {
-      navigate("/auth");
+      navigate("/login");
       return;
     }
 

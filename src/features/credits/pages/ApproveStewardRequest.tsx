@@ -64,7 +64,7 @@ export default function ApproveStewardRequest() {
               Sign in with a Plano account that is an owner of this company, then open the link
               again.
             </TokenFlowMessage>
-            <TokenFlowPrimaryLink to={`/auth?redirect=${encodeURIComponent(d.returnPath)}`}>
+            <TokenFlowPrimaryLink to={`/login?redirect=${encodeURIComponent(d.returnPath)}`}>
               Log in →
             </TokenFlowPrimaryLink>
           </>
