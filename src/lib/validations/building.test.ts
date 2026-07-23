@@ -85,6 +85,28 @@ describe('buildingSchema', () => {
         expect(result.success).toBe(true);
     });
 
+    it('requires a non-empty name', async () => {
+        const result = await buildingSchema.safeParseAsync({ ...validBaseData, name: '' });
+        expect(result.success).toBe(false);
+        if (!result.success) {
+            const issue = result.error.issues.find(i => i.path[0] === 'name');
+            expect(issue?.message).toBe('Please enter a building name');
+        }
+    });
+
+    it('rejects a whitespace-only name', async () => {
+        const result = await buildingSchema.safeParseAsync({ ...validBaseData, name: '   ' });
+        expect(result.success).toBe(false);
+    });
+
+    it('trims surrounding whitespace from the name', async () => {
+        const result = await buildingSchema.safeParseAsync({ ...validBaseData, name: '  Villa Savoye  ' });
+        expect(result.success).toBe(true);
+        if (result.success) {
+            expect(result.data.name).toBe('Villa Savoye');
+        }
+    });
+
     it('accepts Lost for status field', async () => {
         const result = await buildingSchema.safeParseAsync({ ...validBaseData, status: 'Lost' });
         expect(result.success).toBe(true);

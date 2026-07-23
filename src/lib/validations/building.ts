@@ -3,7 +3,7 @@ import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 
 export const buildingSchema = z.object({
-  name: z.string(),
+  name: z.string().trim().min(1, "Please enter a building name"),
   slug: z.string().optional(),
   alt_name: z.string().nullable().optional(),
   aliases: z.array(z.string()).optional().default([]),

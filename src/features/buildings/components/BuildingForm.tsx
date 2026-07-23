@@ -1,8 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useHoneypot } from "@/hooks/useHoneypot";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { BuildingFormLabel, BuildingFormSection } from "@/features/buildings/components/building-form-ui";
+import {
+  BuildingFormLabel,
+  BuildingFormSection,
+  BuildingFormActions,
+  OptionalDetailsSkipBanner,
+} from "@/features/buildings/components/building-form-ui";
 import { buildingSchema, editBuildingSchema } from "@/lib/validations/building";
 import { Loader2, Plus, X, Check, Info } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -85,6 +90,7 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const { profile } = useUserProfile();
 
   const [name, setName] = useState(initialValues.name);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const [alt_name, setAltName] = useState(initialValues.alt_name || "");
   const [aliases, setAliases] = useState<string[]>(initialValues.aliases || []);
   const [year_completed, setYear] = useState<string>(initialValues.year_completed?.toString() || "");
@@ -354,6 +360,12 @@ toast.error("Failed to add attribute");
         validationResult.error.errors.forEach((err) => {
           toast.error(err.message);
         });
+        // Point the user straight at the one required field if that's what failed
+        // (e.g. clicking "Skip for now" without a name).
+        if (validationResult.error.errors.some((err) => err.path[0] === "name")) {
+          nameInputRef.current?.focus();
+          nameInputRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+        }
         return;
       }
 
@@ -370,11 +382,15 @@ toast.error("Failed to add attribute");
 
   return (
     <form onSubmit={handleSubmit} className="space-y-2">
+      {mode === 'create' && <OptionalDetailsSkipBanner isSubmitting={isSubmitting} />}
       <BuildingFormSection title="Basics">
         <div className="space-y-2">
-          <BuildingFormLabel htmlFor="name">Name</BuildingFormLabel>
+          <BuildingFormLabel htmlFor="name">
+            Name {mode === 'create' && <span className="text-feedback-error">*</span>}
+          </BuildingFormLabel>
           <Input
             id="name"
+            ref={nameInputRef}
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Sydney Opera House"
@@ -911,30 +927,13 @@ toast.error("Failed to add attribute");
 
       <input {...honeypotProps} />
 
-      <div className="sticky bottom-0 z-10 -mx-4 mt-6 flex items-center justify-end gap-3 border-t border-border-default bg-surface-default/95 px-4 py-3 backdrop-blur-xs">
-        {mode === 'edit' && !isDirty && (
-          <span className="mr-auto text-xs text-text-secondary">No changes to save</span>
-        )}
-        {onCancel && (
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
-            Cancel
-          </Button>
-        )}
-        <Button
-          type="submit"
-          variant="default"
-          disabled={isSubmitting || (mode === 'edit' && !isDirty)}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin text-text-secondary" />
-              Saving...
-            </>
-          ) : (
-            submitLabel
-          )}
-        </Button>
-      </div>
+      <BuildingFormActions
+        mode={mode}
+        isDirty={isDirty}
+        onCancel={onCancel}
+        isSubmitting={isSubmitting}
+        submitLabel={submitLabel}
+      />
     </form>
   );
 }
