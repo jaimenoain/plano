@@ -38,6 +38,8 @@ interface CollectionItemRowProps {
   customCategories?: { id: string; label: string; color: string }[] | null;
   onUpdateCategory?: (categoryId: string) => void;
   showImages?: boolean;
+  /** When true, surface an "Added by @username" attribution line (collaborator collections). */
+  showAddedBy?: boolean;
   onRemove?: () => void;
 }
 
@@ -52,6 +54,7 @@ export function CollectionItemRow({
   customCategories,
   onUpdateCategory,
   showImages = true,
+  showAddedBy = false,
   onRemove,
 }: CollectionItemRowProps) {
   const [isEditingNote, setIsEditingNote] = useState(false);
@@ -203,6 +206,14 @@ export function CollectionItemRow({
               </div>
             ) : null}
           </div>
+
+          {/* Collaborator attribution — only when the collection has enabled it and
+              the adder is known (pre-attribution rows leave added_by_user null). */}
+          {showAddedBy && item.added_by_user && (
+            <div className="mt-2 text-xs text-text-secondary">
+              Added by @{item.added_by_user.username}
+            </div>
+          )}
         </>
       }
     />

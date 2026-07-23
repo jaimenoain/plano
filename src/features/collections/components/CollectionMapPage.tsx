@@ -39,6 +39,7 @@ import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
+import { mapCollectionItem } from "../mapCollectionItem";
 import { getBoundsFromBuildings, isLngLatInBounds, type Bounds } from "@/utils/map";
 import { getBuildingImageUrl } from "@/utils/image";
 import { collectionStructuredData, SITE_URL } from "@/features/buildings/utils/structuredData";
@@ -429,6 +430,8 @@ export default function CollectionMap() {
           note,
           custom_category_id,
           is_hidden,
+          added_by,
+          added_by_user:profiles!collection_items_added_by_fkey(id, username),
           building:buildings(
             id,
             name,
@@ -461,26 +464,10 @@ export default function CollectionMap() {
       if (itemsResult.error) throw itemsResult.error;
       if (markersResult.error) throw markersResult.error;
 
-      // Transform and parse location for items
+      // Transform + parse location for items (drops rows with deleted buildings).
       const items = itemsResult.data
-        .filter(item => item.building) // Filter out items with deleted buildings
-        .map((item) => {
-          const b = item.building!;
-          const location = parseLocation(b.location);
-          return {
-            id: item.id,
-            building_id: item.building_id,
-            note: item.note,
-            custom_category_id: item.custom_category_id,
-            is_hidden: item.is_hidden,
-            building: {
-              ...b,
-              location_lat: location?.lat || 0,
-              location_lng: location?.lng || 0,
-              building_credits: b.building_credits || [],
-            }
-          };
-        }) as CollectionItemWithBuilding[];
+        .map(mapCollectionItem)
+        .filter((item): item is CollectionItemWithBuilding => item !== null);
 
       return {
         items,
@@ -1267,6 +1254,7 @@ toast({
                                         customCategories={collection.custom_categories}
                                         onUpdateCategory={(catId) => handleUpdateCategory(item.id, catId)}
                                         showImages={collection.show_community_images ?? true}
+                                        showAddedBy={collection.show_added_by ?? false}
                                         onRemove={() => handleRemoveItem(item.building.id)}
                                     />
                                 ))}
