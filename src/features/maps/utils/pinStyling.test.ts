@@ -350,4 +350,27 @@ describe('getPinStyle', () => {
       expect(style.classes).not.toContain('opacity-50');
     });
   });
+
+  describe('Suite 7: Custom-colour override (standalone markers + categorised buildings)', () => {
+    // A light face (the quietest muted step every standalone marker gets, and the
+    // "not visited"/"unrated" categorisation buckets) needs a DARK ring + dark
+    // content, or it disappears on the light positron basemap. Regression guard for
+    // the near-invisible "Other markers" pins.
+    it('gives a light face a dark ring and dark inner content', () => {
+      const style = getPinStyle(createMockBuilding({ color: MAP_MARKER_FILL.surfaceMuted80 }));
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
+      expect(style.classes).toContain('border-text-primary');
+      expect(style.classes).toContain('text-brand-primary');
+      expect(style.classes).not.toContain('border-white');
+      expect(style.innerMarkColor).toBe(MAP_MARKER_FILL.brandPrimary);
+    });
+
+    it('keeps the white ring and white content on the solid dark face', () => {
+      const style = getPinStyle(createMockBuilding({ color: MAP_MARKER_FILL.brandPrimary }));
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
+      expect(style.classes).toContain('border-white');
+      expect(style.classes).toContain('text-white');
+      expect(style.innerMarkColor).toBe(MAP_MARKER_FILL.white);
+    });
+  });
 });
