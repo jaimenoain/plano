@@ -175,6 +175,7 @@ export function CollectionSettingsDialog({
     is_public: boolean;
     external_link: string;
     show_community_images: boolean;
+    show_added_by: boolean;
     categorization_method: 'default' | 'custom' | 'status' | 'rating_member' | 'uniform';
     custom_categories: { id: string; label: string; color: string }[];
     categorization_selected_members: string[] | null;
@@ -184,6 +185,7 @@ export function CollectionSettingsDialog({
     is_public: collection.is_public,
     external_link: collection.external_link || "",
     show_community_images: collection.show_community_images,
+    show_added_by: collection.show_added_by ?? false,
     categorization_method: collection.categorization_method || 'uniform',
     custom_categories: collection.custom_categories || [],
     categorization_selected_members: collection.categorization_selected_members || null
@@ -234,6 +236,7 @@ export function CollectionSettingsDialog({
         is_public: collection.is_public,
         external_link: collection.external_link || "",
         show_community_images: collection.show_community_images,
+        show_added_by: collection.show_added_by ?? false,
         categorization_method: collection.categorization_method || 'uniform',
         custom_categories: collection.custom_categories || [],
         categorization_selected_members: collection.categorization_selected_members || null
@@ -294,6 +297,7 @@ export function CollectionSettingsDialog({
         is_public: parsed.data.is_public,
         external_link: parsed.data.external_link ?? null,
         show_community_images: formData.show_community_images,
+        show_added_by: formData.show_added_by,
         categorization_method: formData.categorization_method,
         custom_categories: formData.custom_categories,
         categorization_selected_members: formData.categorization_selected_members
@@ -495,6 +499,21 @@ export function CollectionSettingsDialog({
                   id="community-images"
                   checked={formData.show_community_images}
                   onCheckedChange={(c) => setFormData({...formData, show_community_images: c})}
+                />
+              </div>
+            )}
+
+            {/* Attribution is only meaningful once the collection has collaborators. */}
+            {canEdit && contributors.length > 0 && (
+              <div className="flex items-center justify-between space-x-2">
+                <Label htmlFor="show-added-by" className="flex flex-col space-y-1">
+                  <span>Show who added each building</span>
+                  <span className="font-normal text-xs text-text-secondary">Label each building in the list with the collaborator who added it</span>
+                </Label>
+                <Switch
+                  id="show-added-by"
+                  checked={formData.show_added_by}
+                  onCheckedChange={(c) => setFormData({...formData, show_added_by: c})}
                 />
               </div>
             )}

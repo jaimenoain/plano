@@ -2098,6 +2098,7 @@ export type Database = {
       }
       collection_items: {
         Row: {
+          added_by: string | null
           building_id: string
           collection_id: string
           created_at: string
@@ -2108,6 +2109,7 @@ export type Database = {
           order_index: number
         }
         Insert: {
+          added_by?: string | null
           building_id: string
           collection_id: string
           created_at?: string
@@ -2118,6 +2120,7 @@ export type Database = {
           order_index?: number
         }
         Update: {
+          added_by?: string | null
           building_id?: string
           collection_id?: string
           created_at?: string
@@ -2128,6 +2131,13 @@ export type Database = {
           order_index?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "collection_items_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "collection_items_building_id_fkey"
             columns: ["building_id"]
@@ -2215,6 +2225,7 @@ export type Database = {
           owner_id: string
           rating_mode: string | null
           rating_source_user_id: string | null
+          show_added_by: boolean
           show_community_images: boolean
           slug: string
           updated_at: string
@@ -2233,6 +2244,7 @@ export type Database = {
           owner_id: string
           rating_mode?: string | null
           rating_source_user_id?: string | null
+          show_added_by?: boolean
           show_community_images?: boolean
           slug: string
           updated_at?: string
@@ -2251,6 +2263,7 @@ export type Database = {
           owner_id?: string
           rating_mode?: string | null
           rating_source_user_id?: string | null
+          show_added_by?: boolean
           show_community_images?: boolean
           slug?: string
           updated_at?: string

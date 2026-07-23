@@ -7,6 +7,7 @@ export interface Collection {
   external_link: string | null;
   slug: string;
   show_community_images: boolean;
+  show_added_by: boolean;
   categorization_method: 'default' | 'custom' | 'status' | 'rating_member' | 'uniform';
   custom_categories: { id: string; label: string; color: string }[] | null;
   categorization_selected_members: string[] | null;
@@ -61,6 +62,11 @@ export interface CollectionItemWithBuilding {
   note: string | null;
   custom_category_id: string | null;
   is_hidden?: boolean;
+  /** User who added this building to the collection (null for pre-attribution rows;
+   *  omitted for synthetic itinerary items that never carry attribution). */
+  added_by?: string | null;
+  /** Resolved profile for `added_by`, used to render "Added by @username". */
+  added_by_user?: { id: string; username: string } | null;
   building: {
     id: string;
     name: string;
