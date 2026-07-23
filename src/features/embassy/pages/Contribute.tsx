@@ -69,6 +69,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapProvider, useMapContext } from "@/features/maps/providers/MapContext";
 import { PlanoMap } from "@/features/maps/components/PlanoMap";
+import { normalizeToolPreferences } from "../toolPreferences";
 
 interface OutreachLogRow {
   id: string;
@@ -132,13 +133,12 @@ const ALL_TOOLS: ToolDefinition[] = [
 ];
 
 function sortToolsByPreference(preferred: string[] | null | undefined): ToolDefinition[] {
-  if (!preferred || preferred.length === 0) return ALL_TOOLS;
-  const preferredSet = new Set(preferred);
-  const ordered = preferred
+  const normalized = normalizeToolPreferences(preferred);
+  if (normalized.length === 0) return ALL_TOOLS;
+  const ordered = normalized
     .map((key) => ALL_TOOLS.find((t) => t.key === key))
     .filter((t): t is ToolDefinition => t !== undefined);
-  const rest = ALL_TOOLS.filter((t) => !preferredSet.has(t.key));
-  return [...ordered, ...rest];
+  return [...ordered, ...ALL_TOOLS.filter((t) => !normalized.includes(t.key))];
 }
 
 export default function ContributePage() {
