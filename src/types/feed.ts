@@ -154,6 +154,7 @@ export interface RawFeedRow {
   views_count?: number | null;
   is_liked: boolean;
   review_images?: RawFeedReviewImageRow[] | null;
+  video_url?: string | null;
   is_suggested?: boolean;
   suggestion_reason?: string | null;
   group_id?: string | null;

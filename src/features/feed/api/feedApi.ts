@@ -107,6 +107,7 @@ export function mapRawFeedRow(review: RawFeedRow): FeedReview {
       likes_count: img.likes_count ?? 0,
       is_liked: img.is_liked ?? false,
     })),
+    video_url: review.video_url ?? null,
     is_suggested: review.is_suggested,
     suggestion_reason: review.suggestion_reason ?? undefined,
     ring: review.ring ?? undefined,

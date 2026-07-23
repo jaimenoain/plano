@@ -5473,6 +5473,7 @@ export type Database = {
           tags: string[]
           user_data: Json
           user_id: string
+          video_url: string
           views_count: number
         }[]
       }
@@ -5549,6 +5550,7 @@ export type Database = {
           tags: string[]
           user_data: Json
           user_id: string
+          video_url: string
           views_count: number
         }[]
       }
