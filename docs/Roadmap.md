@@ -83,9 +83,16 @@ productive session; Phase 3 the return loop; Phase 4 holds gated bigger bets.
 
 ## [ ] Phase 3 — Personal progress & return loops
 
-- **3.1 — "My impact" page with streaks.** Every ambassador sees their totals by
-  contribution type, weekly streak, and timeline (leader activity view scoped to self;
-  streak computed in the RPC).
+- **3.1 — "My impact" page with streaks.** Shipped 2026-07-24: new `/embassy/impact`
+  route, added to the workspace tab bar for every ambassador (not leader-gated, unlike
+  `/embassy/leadership`). Backed by new `get_my_ambassador_impact()` — unions all 8
+  contribution sources `get_my_ambassador_goals()` already knows how to count into one
+  self-scoped row: all-time totals per type, a server-computed weekly streak (consecutive
+  weeks with any activity, one week's grace), and a recent timeline. New
+  `api/impact.ts` (`fetchMyImpact` + pure `summarizeImpactTotals`, unit-tested) and
+  `pages/MyImpact.tsx`. Migration `20271185000000_embassy_my_impact.sql`. Same
+  pre-existing gap as 2.4: video approvals aren't tagged as moderation anywhere, so they
+  don't count here either.
 - **3.2 — Weekly digest.** In-app + email ("you did X, chapter did Y, 3 tasks
   waiting"), opt-out via notification preferences, auto-skips members inactive ≥4 weeks.
   pg_cron + edge function following `send-welcome-email`.

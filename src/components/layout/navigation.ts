@@ -3,6 +3,7 @@ import {
   BookOpen,
   CalendarDays,
   CheckSquare,
+  Flame,
   Folder,
   Landmark,
   LayoutDashboard,
@@ -116,6 +117,7 @@ export type EmbassyNavItem = {
 
 export const embassyNavItems: EmbassyNavItem[] = [
   { label: "Dashboard", path: "/embassy/goals", icon: Target },
+  { label: "My impact", path: "/embassy/impact", icon: Flame },
   { label: "Contribute", path: "/embassy/contribute", icon: LayoutDashboard },
   { label: "Chapter Projects", path: "/embassy/projects", icon: Users },
   { label: "Team", path: "/embassy/team", icon: UsersRound },
