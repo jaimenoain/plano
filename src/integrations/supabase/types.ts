@@ -5863,6 +5863,21 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_my_ambassador_impact: {
+        Args: { p_timeline_limit?: number }
+        Returns: {
+          edits_count: number
+          events_count: number
+          firms_claimed_count: number
+          moderation_count: number
+          outreach_count: number
+          photos_count: number
+          research_count: number
+          timeline: Json
+          visits_count: number
+          weekly_streak: number
+        }[]
+      }
       get_my_group_ids: { Args: never; Returns: string[] }
       get_national_chapter_overview: {
         Args: { p_national_chapter_id: string }
