@@ -15,6 +15,7 @@
  * tested BuildingPopupContent card (LegacyDetailBody below).
  */
 import { Link } from "react-router";
+import { useEffect, useRef } from "react";
 import { X, ArrowRight } from "lucide-react";
 import { ClusterResponse } from "../hooks/useMapData";
 import { BuildingPopupContent } from "./BuildingPopupContent";
@@ -31,6 +32,8 @@ interface BuildingDetailDrawerProps {
   onRemoveFromCollection?: (buildingId: string) => void;
   /** Collection context: promote a saved candidate into the collection. */
   onAddCandidate?: (id: string) => void;
+  /** Desktop only: close the panel when the user clicks outside of it. */
+  closeOnOutsideClick?: boolean;
 }
 
 /** Legacy card path — custom markers & candidates keep the compact popup card. */
@@ -76,9 +79,24 @@ export function BuildingDetailDrawer({
   onClose,
   onRemoveFromCollection,
   onAddCandidate,
+  closeOnOutsideClick,
 }: BuildingDetailDrawerProps) {
   const isMobile = useIsMobile();
   const isSpecial = !!(cluster?.is_custom_marker || cluster?.is_candidate);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isMobile || !closeOnOutsideClick || !cluster) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [isMobile, closeOnOutsideClick, cluster, onClose]);
 
   if (isMobile) {
     return (
@@ -116,6 +134,7 @@ export function BuildingDetailDrawer({
   if (isSpecial) {
     return (
       <div
+        ref={panelRef}
         className="absolute right-0 top-0 z-70 flex h-full w-full max-w-sm flex-col border-l border-border-default bg-surface-card animate-in slide-in-from-right-8 duration-200"
         role="dialog"
         aria-label={cluster.name || "Building details"}
@@ -144,6 +163,7 @@ export function BuildingDetailDrawer({
 
   return (
     <div
+      ref={panelRef}
       className="absolute right-0 top-0 z-70 flex h-full w-full max-w-md flex-col border-l border-border-default bg-surface-card animate-in slide-in-from-right-8 duration-200"
       role="dialog"
       aria-label={cluster.name || "Building details"}

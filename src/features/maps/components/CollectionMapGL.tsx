@@ -338,6 +338,7 @@ function CollectionMapGLContent({
             onClose={() => onCloseDetail?.()}
             onRemoveFromCollection={onRemoveFromCollection}
             onAddCandidate={handleAddCandidate}
+            closeOnOutsideClick
           />
         )}
     </div>
