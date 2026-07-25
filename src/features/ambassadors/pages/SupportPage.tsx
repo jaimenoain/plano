@@ -1,7 +1,8 @@
-import { Link, type MetaFunction } from "react-router";
+import { Link, redirect, type LoaderFunctionArgs, type MetaFunction } from "react-router";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { SITE_URL } from "@/features/buildings/utils/structuredData";
+import { createSupabaseServerClient } from "@/lib/supabase.server";
 
 const PAGE_TITLE = "Support the mission | Plano";
 const PAGE_DESCRIPTION =
@@ -16,6 +17,29 @@ export const meta: MetaFunction = () => [
   { property: "og:type", content: "website" },
   { property: "og:url", content: `${SITE_URL}/support` },
 ];
+
+// Ambassadors already have a home — send them to their portal instead of
+// the generic programme pitch (mirrors the has_embassy_portal_access RPC gate).
+export async function loader({ request }: LoaderFunctionArgs) {
+  const responseHeaders = new Headers();
+  const supabaseServer = createSupabaseServerClient(request, responseHeaders);
+
+  const { data: { user } } = await supabaseServer.auth.getUser();
+  if (user) {
+    const { data: membership } = await supabaseServer
+      .from("ambassador_memberships")
+      .select("status")
+      .eq("user_id", user.id)
+      .in("status", ["active", "pending_review"])
+      .maybeSingle();
+
+    if (membership) {
+      return redirect("/embassy", { headers: responseHeaders });
+    }
+  }
+
+  return null;
+}
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
