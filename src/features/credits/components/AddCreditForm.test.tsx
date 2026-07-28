@@ -427,13 +427,15 @@ describe("AddCreditForm (QA 6.3)", () => {
     await reachNotifyStep(user, vi.fn());
     const ta = screen.getByLabelText(/^Email addresses$/i);
     await user.type(ta, "good@ok.com not-an-email");
-    expect(screen.getByText(/skipping invalid:\s*not-an-email/i)).toBeInTheDocument();
+    expect(await screen.findByText(/skipping invalid:\s*not-an-email/i)).toBeInTheDocument();
     const send = screen.getByRole("button", { name: /send notifications/i });
     expect(send).toBeDisabled();
 
     await user.clear(ta);
     await user.type(ta, "good@ok.com");
-    expect(screen.queryByText(/skipping invalid/i)).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText(/skipping invalid/i)).not.toBeInTheDocument();
+    });
     expect(send).not.toBeDisabled();
     await user.click(send);
     await waitFor(() => {
