@@ -4,3 +4,4 @@
  */
 export { useUserSearch } from "./hooks/useUserSearch";
 export type { UserSearchResult } from "./hooks/useUserSearch";
+export type { DiscoveryBuilding } from "./components/types";

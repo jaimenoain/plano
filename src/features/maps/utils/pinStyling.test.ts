@@ -373,4 +373,35 @@ describe('getPinStyle', () => {
       expect(style.innerMarkColor).toBe(MAP_MARKER_FILL.white);
     });
   });
+
+  describe('Suite 8: Discovery layer (collection map)', () => {
+    // Discovery pins are buildings the collection does NOT contain. They must
+    // read as background: faded, no library marks, and always under a collection
+    // pin — the lowest collection rank sits at z=5.
+    it('fades a discovery pin and drops it below the whole pin ladder', () => {
+      const style = getPinStyle(createMockBuilding({ tier_rank_label: 'Top 1%', is_discovery: true }));
+      expect(style.rank).toBe(5);
+      expect(style.classes).toContain('opacity-60');
+      expect(style.zIndex).toBeLessThan(5);
+    });
+
+    it('keeps discovery pins ordered among themselves', () => {
+      const top = getPinStyle(createMockBuilding({ tier_rank_label: 'Top 1%', is_discovery: true }));
+      const rest = getPinStyle(createMockBuilding({ tier_rank_label: null, is_discovery: true }));
+      expect(top.zIndex).toBeGreaterThan(rest.zIndex);
+      expect(rest.zIndex).toBeGreaterThanOrEqual(1);
+    });
+
+    it('never shows the saved mark on a discovery pin', () => {
+      const style = getPinStyle(createMockBuilding({ status: 'saved', rating: 3, is_discovery: true }));
+      expect(style.savedMark).toBe(false);
+      expect(style.dots).toBe(0);
+    });
+
+    it('leaves ordinary pins untouched', () => {
+      const style = getPinStyle(createMockBuilding({ tier_rank_label: 'Top 1%' }));
+      expect(style.classes).not.toContain('opacity-60');
+      expect(style.zIndex).toBe(36);
+    });
+  });
 });

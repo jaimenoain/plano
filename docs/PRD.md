@@ -466,6 +466,15 @@ A scrollable sidebar shall display a list of buildings visible in the current ma
 **FR-8.7.1 Collection Map View**
 Collections shall have a dedicated map view displaying all buildings and markers in the collection, with itinerary route overlays and the standard filter/sidebar functionality.
 
+**FR-8.7.2 Discovery View**
+The collection owner and editor collaborators shall be able to switch the collection map into a
+discovery view from Collection Settings → Map View: **Show All Buildings** draws every building in
+the current viewport (de-emphasized, and excluding the ones already collected), and **Hide
+buildings already in this collection** removes the collection's own pins so only additions remain
+visible. Selecting a discovered building shall open the standard building panel with a single
+**Add to this collection** action. Both switches are per-viewer preferences stored on the viewer's
+device — they never change what anyone else sees, and they do not apply to the item list.
+
 ---
 
 ## 9. Search & Discovery

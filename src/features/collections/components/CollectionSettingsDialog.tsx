@@ -34,6 +34,7 @@ import { AddToFolderDialog } from "@/features/profile/components/AddToFolderDial
 import { collectionSchema } from "@/lib/validations/collection";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PendingCollaborationRequestsList } from "./PendingCollaborationRequestsList";
+import { CollectionDiscoverySettings } from "./CollectionDiscoverySettings";
 import { notifyCollaboratorByEmail } from "../api/collaboration";
 
 interface CollectionSettingsDialogProps {
@@ -47,6 +48,11 @@ interface CollectionSettingsDialogProps {
   onSavedPlacesDotFilterChange?: (filter: SavedPlacesDotFilter) => void;
   savedPlacesStatusFilter?: SavedPlacesStatusFilter;
   onSavedPlacesStatusFilterChange?: (filter: SavedPlacesStatusFilter) => void;
+  /** Discovery view — draw every building in view so the map can grow the collection. */
+  showAllBuildings?: boolean;
+  onShowAllBuildingsChange?: (show: boolean) => void;
+  hideCollectionPins?: boolean;
+  onHideCollectionPinsChange?: (hide: boolean) => void;
   isOwner?: boolean;
   canEdit?: boolean;
   initialTab?: "map" | "general" | "markers" | "collaborators";
@@ -161,6 +167,10 @@ export function CollectionSettingsDialog({
   onSavedPlacesDotFilterChange,
   savedPlacesStatusFilter = 'all',
   onSavedPlacesStatusFilterChange,
+  showAllBuildings = false,
+  onShowAllBuildingsChange,
+  hideCollectionPins = false,
+  onHideCollectionPinsChange,
   isOwner = false,
   canEdit = true,
   initialTab = "map",
@@ -566,6 +576,16 @@ export function CollectionSettingsDialog({
                   </div>
                 )}
               </div>
+            )}
+
+            {/* Discovery view — only meaningful for people who can add buildings. */}
+            {canEdit && onShowAllBuildingsChange && onHideCollectionPinsChange && (
+              <CollectionDiscoverySettings
+                showAllBuildings={showAllBuildings}
+                onShowAllBuildingsChange={onShowAllBuildingsChange}
+                hideCollectionPins={hideCollectionPins}
+                onHideCollectionPinsChange={onHideCollectionPinsChange}
+              />
             )}
 
           </TabsContent>
