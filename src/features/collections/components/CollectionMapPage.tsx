@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, Suspense } from "react";
-import { useParams, useNavigate, useSearchParams, Link, type MetaFunction } from "react-router";
+import { useParams, useNavigate, useSearchParams, type MetaFunction } from "react-router";
 import {
   collectionMapPageLoader,
   type CollectionMapPageLoaderData,
@@ -41,9 +41,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
 import { mapCollectionItem } from "../mapCollectionItem";
 import { getBoundsFromBuildings, isLngLatInBounds, type Bounds } from "@/utils/map";
-import { getBuildingImageUrl } from "@/utils/image";
 import { collectionStructuredData, SITE_URL } from "@/features/buildings/utils/structuredData";
-import { Loader2, ExternalLink, ListFilter, MapPinPlus, Building2 } from "lucide-react";
+import { Loader2, ListFilter, MapPinPlus, Building2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -78,103 +77,28 @@ import { lazyWithRetry } from "@/utils/lazyWithRetry";
 import { useGooglePlacePhotos } from "@/hooks/useGooglePlacePhotos";
 import { primaryBuildingCreditsToSummaries } from "@/features/credits/api/credits";
 import { CollectionItemRow } from "./CollectionItemRow";
-import { CollectionAccessActions } from "./CollectionAccessActions";
+import { CollectionRailHeader } from "./CollectionRailHeader";
+import { CollectionSearchBar } from "./CollectionSearchBar";
 import { useCollectionMapSelection } from "../hooks/useCollectionMapSelection";
+import { useCollectionSearch } from "../hooks/useCollectionSearch";
+import { EmptyState } from "@/components/ui/empty-state";
+import { filterDiscoveryBuildings } from "../filterCollectionItems";
+import {
+  matchesSavedPlacesDotFilter,
+  matchesSavedPlacesStatusFilter,
+  readSavedPlacesDotFilterFromStorage,
+  readSavedPlacesStatusFilterFromStorage,
+  readShowSavedCandidatesFromStorage,
+  writeSavedPlacesDotFilterToStorage,
+  writeSavedPlacesStatusFilterToStorage,
+  writeShowSavedCandidatesToStorage,
+} from "../collectionMapPreferences";
 
 const CollectionSettingsDialog = lazyWithRetry(() => import("@/features/collections/components/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
 const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("@/features/collections/components/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
 const PlanRouteDialog = lazyWithRetry(() => import("@/features/collections/components/PlanRouteDialog").then(module => ({ default: module.PlanRouteDialog })));
 const CollectionMapGL = lazyWithRetry(() => import("@/features/maps/components/CollectionMapGL").then(module => ({ default: module.CollectionMapGL })));
 const CollectionMarkerCard = lazyWithRetry(() => import("@/features/collections/components/CollectionMarkerCard").then(module => ({ default: module.CollectionMarkerCard })));
-
-const SHOW_SAVED_CANDIDATES_STORAGE = "plano:collection-map:showSavedPlaces" as const;
-const SAVED_PLACES_DOT_FILTER_STORAGE = "plano:collection-map:savedPlacesDotFilter" as const;
-const SAVED_PLACES_STATUS_FILTER_STORAGE = "plano:collection-map:savedPlacesStatusFilter" as const;
-
-const SAVED_PLACES_DOT_FILTERS: SavedPlacesDotFilter[] = ['all', '1', '2', '3'];
-const SAVED_PLACES_STATUS_FILTERS: SavedPlacesStatusFilter[] = ['all', 'visited', 'pending'];
-
-function readShowSavedCandidatesFromStorage(userId: string, collectionId: string): boolean {
-  try {
-    return localStorage.getItem(`${SHOW_SAVED_CANDIDATES_STORAGE}:${userId}:${collectionId}`) === "true";
-  } catch {
-    return false;
-  }
-}
-
-function writeShowSavedCandidatesToStorage(userId: string, collectionId: string, value: boolean): void {
-  try {
-    localStorage.setItem(`${SHOW_SAVED_CANDIDATES_STORAGE}:${userId}:${collectionId}`, String(value));
-  } catch {
-    /* ignore quota / private mode */
-  }
-}
-
-function readSavedPlacesDotFilterFromStorage(userId: string, collectionId: string): SavedPlacesDotFilter {
-  try {
-    const raw = localStorage.getItem(`${SAVED_PLACES_DOT_FILTER_STORAGE}:${userId}:${collectionId}`);
-    if (raw && (SAVED_PLACES_DOT_FILTERS as readonly string[]).includes(raw)) {
-      return raw as SavedPlacesDotFilter;
-    }
-  } catch {
-    /* ignore */
-  }
-  return 'all';
-}
-
-function writeSavedPlacesDotFilterToStorage(
-  userId: string,
-  collectionId: string,
-  value: SavedPlacesDotFilter,
-): void {
-  try {
-    localStorage.setItem(`${SAVED_PLACES_DOT_FILTER_STORAGE}:${userId}:${collectionId}`, value);
-  } catch {
-    /* ignore quota / private mode */
-  }
-}
-
-function readSavedPlacesStatusFilterFromStorage(userId: string, collectionId: string): SavedPlacesStatusFilter {
-  try {
-    const raw = localStorage.getItem(`${SAVED_PLACES_STATUS_FILTER_STORAGE}:${userId}:${collectionId}`);
-    if (raw && (SAVED_PLACES_STATUS_FILTERS as readonly string[]).includes(raw)) {
-      return raw as SavedPlacesStatusFilter;
-    }
-  } catch {
-    /* ignore */
-  }
-  return 'all';
-}
-
-function writeSavedPlacesStatusFilterToStorage(
-  userId: string,
-  collectionId: string,
-  value: SavedPlacesStatusFilter,
-): void {
-  try {
-    localStorage.setItem(`${SAVED_PLACES_STATUS_FILTER_STORAGE}:${userId}:${collectionId}`, value);
-  } catch {
-    /* ignore quota / private mode */
-  }
-}
-
-function matchesSavedPlacesDotFilter(
-  rating: number | null | undefined,
-  filter: SavedPlacesDotFilter,
-): boolean {
-  if (filter === 'all') return true;
-  const n = filter === '1' ? 1 : filter === '2' ? 2 : 3;
-  return rating === n;
-}
-
-function matchesSavedPlacesStatusFilter(
-  status: string | null | undefined,
-  filter: SavedPlacesStatusFilter,
-): boolean {
-  if (filter === 'all') return true;
-  if (status == null) return false;
-  return status === filter;
-}
 
 // Note: The shape returned from Supabase for collection items is documented here
 // for reference only. We no longer use this interface directly in code, but keep
@@ -263,6 +187,7 @@ export default function CollectionMap() {
   const [hasPlanRouteOpened, setHasPlanRouteOpened] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [activeTab, setActiveTab] = useState<'items' | 'itinerary'>('items');
+
 
   const [showSavedCandidates, setShowSavedCandidates] = useState(false);
   const [savedPlacesDotFilter, setSavedPlacesDotFilter] = useState<SavedPlacesDotFilter>('all');
@@ -828,26 +753,46 @@ export default function CollectionMap() {
       .slice(0, 4);
   }, [items]);
 
+  const visibleItems = useMemo(() => (items ?? []).filter(item => !item.is_hidden), [items]);
+  const search = useCollectionSearch({
+    visibleItems,
+    markers: markers ?? [],
+    mapBuildings,
+    activeTab,
+  });
+  const { isActive: searchApplies, matchedIds } = search;
+  const searchQuery = searchApplies ? search.appliedQuery : '';
+
   const allMapBuildings = useMemo(() => {
+    // `mapBuildings` stays whole (bounds, stats, itinerary all need it); the
+    // search narrows only what the map actually draws.
+    const searchedMapBuildings = searchApplies
+      ? mapBuildings.filter(b => matchedIds.has(b.id))
+      : mapBuildings;
+
     if (showSavedCandidates && savedCandidates) {
-      const filteredCandidates = savedCandidates.filter(
+      const filteredCandidates = filterDiscoveryBuildings(savedCandidates, searchQuery).filter(
         (c) =>
           !existingBuildingIds.has(c.id) &&
           matchesSavedPlacesDotFilter(c.personal_rating ?? null, savedPlacesDotFilter) &&
           matchesSavedPlacesStatusFilter(c.personal_status ?? null, savedPlacesStatusFilter),
       );
-      const dimmedExisting = mapBuildings.map(b => ({ ...b, isDimmed: true }));
+      const dimmedExisting = searchedMapBuildings.map(b => ({ ...b, isDimmed: true }));
       return [...dimmedExisting, ...filteredCandidates.map(c => ({ ...c, isCandidate: true }))];
     }
-    return mapBuildings;
+    return searchedMapBuildings;
   }, [
     mapBuildings,
+    matchedIds,
+    searchApplies,
+    searchQuery,
     savedCandidates,
     showSavedCandidates,
     existingBuildingIds,
     savedPlacesDotFilter,
     savedPlacesStatusFilter,
   ]);
+
 
   // Calculate bounds only once when buildings are loaded to prevent map movement on updates
   useEffect(() => {
@@ -1182,50 +1127,17 @@ toast({
           viewMode === 'list' ? "order-2 flex h-full lg:order-2" : "hidden lg:flex lg:order-2",
         )}
         >
-            <div className="border-b">
-                {coverMosaicUrls.length >= 4 && (
-                  <div className="grid grid-cols-4 gap-mosaic-gap bg-border-default">
-                    {coverMosaicUrls.map((url, index) => (
-                      <div key={index} className="aspect-4/5 overflow-hidden bg-surface-muted">
-                        <img
-                          src={getBuildingImageUrl(url) ?? url}
-                          alt=""
-                          className="h-full w-full rounded-none object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="flex items-center justify-between gap-4 p-4">
-                <div className="min-w-0 flex-1">
-                    <h1 className="truncate text-2xl font-bold leading-tight tracking-tight">{collection.name}</h1>
-                    <div className="text-sm text-text-secondary mb-1">
-                      By: <Link to={`/profile/${ownerProfile?.username}`} className="hover:underline text-text-primary">{ownerProfile?.username}</Link>
-                    </div>
-                    {collection.description && <p className="text-sm text-text-secondary line-clamp-2">{collection.description}</p>}
-                    {collection.external_link && (
-                        <Button variant="outline" size="sm" className="mt-2 h-8" asChild>
-                            <a href={collection.external_link} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="w-3 h-3 mr-2" />
-                                Visit Link
-                            </a>
-                        </Button>
-                    )}
-                </div>
-                {collection && (
-                    <CollectionAccessActions
-                        canEdit={canEdit}
-                        isLoggedIn={!!user}
-                        collectionId={collection.id}
-                        isFavorite={!!isFavorite}
-                        onToggleFavorite={handleToggleFavorite}
-                        onAdd={() => setShowAddBuildings(true)}
-                        onOpenSettings={() => setShowSettings(true)}
-                    />
-                )}
-                </div>
-            </div>
+            <CollectionRailHeader
+                collection={collection}
+                ownerUsername={ownerProfile?.username}
+                coverMosaicUrls={coverMosaicUrls}
+                canEdit={canEdit}
+                isLoggedIn={!!user}
+                isFavorite={!!isFavorite}
+                onToggleFavorite={handleToggleFavorite}
+                onAdd={() => setShowAddBuildings(true)}
+                onOpenSettings={() => setShowSettings(true)}
+            />
 
             <div className="flex-1 overflow-hidden flex flex-col justify-start">
                 <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'items' | 'itinerary')} className="w-full h-full flex-1 flex flex-col min-h-0 justify-start">
@@ -1239,9 +1151,21 @@ toast({
                     )}
 
                     <TabsContent value="items" className="mt-0 flex-1 overflow-hidden m-0 p-0 min-h-0 flex flex-col justify-start data-[state=inactive]:hidden">
+                        {search.searchableCount > 1 && (
+                            <CollectionSearchBar
+                                value={search.query}
+                                onValueChange={search.setQuery}
+                                matchCount={search.searchedItems.length + search.searchedMarkers.length}
+                                totalCount={search.searchableCount}
+                                isActive={searchApplies}
+                                onZoomToResults={
+                                    search.resultBounds ? search.requestZoomToResults : undefined
+                                }
+                            />
+                        )}
                         <div className="flex-1 overflow-y-auto">
                             <div className="p-4 space-y-3 pb-24 lg:pb-4">
-                                {items && items.filter(i => !i.is_hidden).map(item => (
+                                {search.searchedItems.map(item => (
                                     <CollectionItemRow
                                         key={item.id}
                                         item={item}
@@ -1259,7 +1183,7 @@ toast({
                                     />
                                 ))}
 
-                                {markers && markers.length > 0 && (
+                                {search.searchedMarkers.length > 0 && (
                                     <div className="mt-4 border-t pt-2">
                                         <Accordion type="single" collapsible defaultValue="markers">
                                             <AccordionItem value="markers" className="border-none">
@@ -1269,7 +1193,7 @@ toast({
                                                 <AccordionContent>
                                                     <div className="space-y-3 pt-2">
                                                         <Suspense fallback={<div className="p-2 text-center text-xs text-text-secondary">Loading markers...</div>}>
-                                                            {markers.map(marker => (
+                                                            {search.searchedMarkers.map(marker => (
                                                                 <CollectionMarkerCard
                                                                     key={marker.id}
                                                                     marker={marker}
@@ -1298,10 +1222,22 @@ toast({
                                     </div>
                                 )}
 
-                                {(!items || items.filter(i => !i.is_hidden).length === 0) && (!markers || markers.length === 0) && (
+                                {search.searchableCount === 0 && (
                                     <div className="text-center py-8 text-text-secondary text-sm">
                                         No places in this collection yet.
                                     </div>
+                                )}
+
+                                {search.searchableCount > 0 && searchApplies && matchedIds.size === 0 && (
+                                    <EmptyState
+                                        eyebrow="No matches"
+                                        message={`Nothing in this collection matches “${search.appliedQuery}”.`}
+                                        action={
+                                            <button type="button" onClick={() => search.setQuery("")} className="cta-link">
+                                                Clear search
+                                            </button>
+                                        }
+                                    />
                                 )}
                             </div>
                         </div>
@@ -1366,8 +1302,28 @@ toast({
                     showSavedCandidates={showSavedCandidates}
                     showItinerary={activeTab === 'itinerary'}
                     onViewportBoundsChange={setViewportBounds}
+                    fitBoundsRequest={search.fitBoundsRequest}
                     bottomLeftOverlay={
-                      showSavedCandidates && canEdit ? (
+                      searchApplies || (showSavedCandidates && canEdit) ? (
+                      <>
+                      {/* Why pins are missing. Without this the filter is invisible
+                          on mobile, where the search box lives in the other pane. */}
+                      {searchApplies && (
+                        <div className="flex items-center gap-2 border border-border-default bg-surface-card/90 px-2 py-1.5 backdrop-blur-xs">
+                          <span className="truncate text-xs text-text-secondary">
+                            Filtered: “{search.appliedQuery}”
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => search.setQuery("")}
+                            aria-label="Clear collection search"
+                            className="shrink-0 text-text-disabled transition-colors hover:text-text-primary"
+                          >
+                            <X className="h-3.5 w-3.5" strokeWidth={1.5} />
+                          </button>
+                        </div>
+                      )}
+                      {showSavedCandidates && canEdit ? (
                         <Button
                           type="button"
                           variant="secondary"
@@ -1397,6 +1353,8 @@ toast({
                             </>
                           )}
                         </Button>
+                      ) : null}
+                      </>
                       ) : undefined
                     }
                 />
