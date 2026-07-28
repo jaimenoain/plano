@@ -2,10 +2,11 @@
  * collectionMapPreferences.ts
  *
  * Per-user, per-collection map preferences for the collection detail page —
- * whether the saved-places suggestion overlay is on, and how it is filtered.
- * These live in `localStorage` (not the DB): they are a viewing preference of
- * the *reader*, not state of the collection, and every read is defensive
- * because private mode / quota errors must never take the page down.
+ * whether the saved-places suggestion overlay is on, how it is filtered, and
+ * whether the discovery layer (every building in view, so editors can add from
+ * the map) is on. These live in `localStorage` (not the DB): they are a viewing
+ * preference of the *reader*, not state of the collection, and every read is
+ * defensive because private mode / quota errors must never take the page down.
  *
  * Extracted verbatim from `CollectionMapPage.tsx` — pure functions, no JSX.
  */
@@ -14,24 +15,51 @@ import type { SavedPlacesDotFilter, SavedPlacesStatusFilter } from "./types";
 const SHOW_SAVED_CANDIDATES_STORAGE = "plano:collection-map:showSavedPlaces" as const;
 const SAVED_PLACES_DOT_FILTER_STORAGE = "plano:collection-map:savedPlacesDotFilter" as const;
 const SAVED_PLACES_STATUS_FILTER_STORAGE = "plano:collection-map:savedPlacesStatusFilter" as const;
+const SHOW_ALL_BUILDINGS_STORAGE = "plano:collection-map:showAllBuildings" as const;
+const HIDE_COLLECTION_PINS_STORAGE = "plano:collection-map:hideCollectionPins" as const;
 
 const SAVED_PLACES_DOT_FILTERS: SavedPlacesDotFilter[] = ['all', '1', '2', '3'];
 const SAVED_PLACES_STATUS_FILTERS: SavedPlacesStatusFilter[] = ['all', 'visited', 'pending'];
 
-export function readShowSavedCandidatesFromStorage(userId: string, collectionId: string): boolean {
+/** Every boolean pref defaults to `false` — absent, malformed or unreadable all read as off. */
+function readBoolPref(key: string, userId: string, collectionId: string): boolean {
   try {
-    return localStorage.getItem(`${SHOW_SAVED_CANDIDATES_STORAGE}:${userId}:${collectionId}`) === "true";
+    return localStorage.getItem(`${key}:${userId}:${collectionId}`) === "true";
   } catch {
     return false;
   }
 }
 
-export function writeShowSavedCandidatesToStorage(userId: string, collectionId: string, value: boolean): void {
+function writeBoolPref(key: string, userId: string, collectionId: string, value: boolean): void {
   try {
-    localStorage.setItem(`${SHOW_SAVED_CANDIDATES_STORAGE}:${userId}:${collectionId}`, String(value));
+    localStorage.setItem(`${key}:${userId}:${collectionId}`, String(value));
   } catch {
     /* ignore quota / private mode */
   }
+}
+
+export function readShowSavedCandidatesFromStorage(userId: string, collectionId: string): boolean {
+  return readBoolPref(SHOW_SAVED_CANDIDATES_STORAGE, userId, collectionId);
+}
+
+export function writeShowSavedCandidatesToStorage(userId: string, collectionId: string, value: boolean): void {
+  writeBoolPref(SHOW_SAVED_CANDIDATES_STORAGE, userId, collectionId, value);
+}
+
+export function readShowAllBuildingsFromStorage(userId: string, collectionId: string): boolean {
+  return readBoolPref(SHOW_ALL_BUILDINGS_STORAGE, userId, collectionId);
+}
+
+export function writeShowAllBuildingsToStorage(userId: string, collectionId: string, value: boolean): void {
+  writeBoolPref(SHOW_ALL_BUILDINGS_STORAGE, userId, collectionId, value);
+}
+
+export function readHideCollectionPinsFromStorage(userId: string, collectionId: string): boolean {
+  return readBoolPref(HIDE_COLLECTION_PINS_STORAGE, userId, collectionId);
+}
+
+export function writeHideCollectionPinsToStorage(userId: string, collectionId: string, value: boolean): void {
+  writeBoolPref(HIDE_COLLECTION_PINS_STORAGE, userId, collectionId, value);
 }
 
 export function readSavedPlacesDotFilterFromStorage(userId: string, collectionId: string): SavedPlacesDotFilter {

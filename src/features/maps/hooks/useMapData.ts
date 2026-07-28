@@ -24,6 +24,12 @@ export interface ClusterResponse {
   marker_google_primary_type?: string | null;
   notes?: string | null;
   is_candidate?: boolean;
+  /**
+   * Collection map only: this pin comes from the discovery layer (every building
+   * in view), not from the collection itself. Distinct from `is_candidate` —
+   * discovery pins are ordinary catalogue buildings and open the rich drawer.
+   */
+  is_discovery?: boolean;
   address?: string | null;
   google_place_id?: string | null;
   website?: string | null;

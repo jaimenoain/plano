@@ -175,8 +175,28 @@ function applyConstructionTreatment(
   return { ...style, classes: `${style.classes} ${modifier}` };
 }
 
+/**
+ * De-emphasize the collection map's discovery layer. These are buildings the
+ * collection does *not* contain, drawn only so an editor can find and add them,
+ * so they must never read as members: faded, no library marks, and squashed
+ * below the whole pin ladder (rank 1 sits at z=5) so a collection pin always
+ * wins an overlap. The squash is proportional, keeping discovery pins ordered
+ * among themselves.
+ */
+function applyDiscoveryTreatment(style: PinStyle, item: ClusterResponse): PinStyle {
+  if (!item.is_discovery) return style;
+  return {
+    ...style,
+    zIndex: Math.max(1, Math.round(style.zIndex / 10)),
+    classes: `${style.classes} opacity-60`,
+    dots: 0,
+    savedMark: false,
+  };
+}
+
 export function getPinStyle(item: ClusterResponse, options?: PinOptions): PinStyle {
-  return applyConstructionTreatment(getBasePinStyle(item, options), item, options);
+  const style = applyConstructionTreatment(getBasePinStyle(item, options), item, options);
+  return applyDiscoveryTreatment(style, item);
 }
 
 function isLibraryItem(item: ClusterResponse): boolean {

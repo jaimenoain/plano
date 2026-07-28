@@ -1,11 +1,19 @@
 // @vitest-environment happy-dom
-import { render, waitFor, screen, cleanup } from '@testing-library/react';
+import { render as rtlRender, waitFor, screen, cleanup } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CollectionMapGL } from './CollectionMapGL';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as matchers from '@testing-library/jest-dom/matchers';
 import React from 'react';
 
 expect.extend(matchers);
+
+// The discovery layer runs a react-query bbox query (disabled unless the viewer
+// switched it on), so every render needs a client in scope.
+function render(ui: React.ReactElement) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return rtlRender(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 // Define hoisted mocks
 const {
@@ -26,7 +34,15 @@ const {
     pitch: 0
   }));
   const getMap = vi.fn(() => ({
-    cameraForBounds
+    cameraForBounds,
+    // Read by reportViewportBounds to feed the discovery layer's bbox query.
+    getZoom: () => 12,
+    getBounds: () => ({
+      getNorth: () => 40.8,
+      getSouth: () => 40.6,
+      getEast: () => -73.9,
+      getWest: () => -74.1,
+    }),
   }));
 
   const mapRef = {
@@ -124,6 +140,18 @@ vi.mock('./ItineraryRoutes', async () => {
     ItineraryRoutes: MockItineraryRoutes
   };
 });
+
+// Mock the discovery layer's bbox RPC — no network in unit tests, and a fixed
+// payload so the merge with the collection's own pins is assertable.
+vi.mock('../hooks/useMapData', () => ({
+  useMapData: ({ bounds }: { bounds: { north: number } }) => ({
+    // Zero bounds is how the hook expresses "discovery off"; mirror the real skip.
+    clusters: bounds.north === 0 ? [] : [{ id: 'discovered-1', lat: 40.7, lng: -74, is_cluster: false, count: 1, rating: null, status: null }],
+    isLoading: false,
+    isFetching: false,
+    error: null,
+  }),
+}));
 
 // Mock useStableMapUpdate
 vi.mock('@/features/maps/hooks/useStableMapUpdate', () => ({
@@ -280,5 +308,48 @@ describe('CollectionMapGL - Viewport Fitting Logic', () => {
      // Sequence is 1-based (index + 1) -> 1.
      expect(clusters[0].itinerary_sequence).toBe(1);
      expect(clusters[0].itinerary_day_index).toBe(0);
+  });
+
+  describe('discovery layer', () => {
+    const renderWithDiscovery = (props: Record<string, unknown>) =>
+      render(
+        <CollectionMapGL
+          buildings={mockBuildings}
+          highlightedId={null}
+          setHighlightedId={vi.fn()}
+          {...props}
+        />
+      );
+
+    const lastClusters = () => {
+      const calls = MockMapMarkers.mock.calls;
+      return calls[calls.length - 1][0].clusters;
+    };
+
+    it('draws only the collection when discovery is off', () => {
+      renderWithDiscovery({ discoveryEnabled: false });
+
+      expect(lastClusters()).toHaveLength(1);
+      expect(lastClusters()[0].id).toBe('1');
+    });
+
+    // Collection pins go first: MapMarkers de-duplicates by key keeping the first
+    // occurrence, so a building in both layers keeps its collection identity.
+    it('appends discovery pins after the collection pins', async () => {
+      renderWithDiscovery({ discoveryEnabled: true });
+
+      await waitFor(() => expect(lastClusters()).toHaveLength(2));
+      const clusters = lastClusters();
+      expect(clusters[0].id).toBe('1');
+      expect(clusters[0].is_discovery).toBeUndefined();
+      expect(clusters[1]).toMatchObject({ id: 'discovered-1', is_discovery: true });
+    });
+
+    it('drops the collection pins when the viewer hides them', async () => {
+      renderWithDiscovery({ discoveryEnabled: true, hideCollectionPins: true });
+
+      await waitFor(() => expect(lastClusters()).toHaveLength(1));
+      expect(lastClusters()[0].id).toBe('discovered-1');
+    });
   });
 });

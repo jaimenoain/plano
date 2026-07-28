@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, Suspense } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useParams, useNavigate, useSearchParams, type MetaFunction } from "react-router";
 import {
   collectionMapPageLoader,
@@ -33,7 +33,7 @@ export const meta: MetaFunction<typeof collectionMapPageLoader> = ({ loaderData:
   return tags;
 };
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MAP_MARKER_FILL } from "@/features/maps";
+import { MAP_MARKER_FILL, type ClusterResponse } from "@/features/maps";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -52,8 +52,6 @@ import {
   CollectionItemWithBuilding,
   CollectionMarker,
   Itinerary,
-  type SavedPlacesDotFilter,
-  type SavedPlacesStatusFilter,
 } from "@/features/collections/types";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ItineraryList } from "@/features/collections/components/ItineraryList";
@@ -86,13 +84,8 @@ import { filterDiscoveryBuildings } from "../filterCollectionItems";
 import {
   matchesSavedPlacesDotFilter,
   matchesSavedPlacesStatusFilter,
-  readSavedPlacesDotFilterFromStorage,
-  readSavedPlacesStatusFilterFromStorage,
-  readShowSavedCandidatesFromStorage,
-  writeSavedPlacesDotFilterToStorage,
-  writeSavedPlacesStatusFilterToStorage,
-  writeShowSavedCandidatesToStorage,
 } from "../collectionMapPreferences";
+import { useCollectionMapPreferences } from "../hooks/useCollectionMapPreferences";
 
 const CollectionSettingsDialog = lazyWithRetry(() => import("@/features/collections/components/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
 const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("@/features/collections/components/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
@@ -189,10 +182,6 @@ export default function CollectionMap() {
   const [activeTab, setActiveTab] = useState<'items' | 'itinerary'>('items');
 
 
-  const [showSavedCandidates, setShowSavedCandidates] = useState(false);
-  const [savedPlacesDotFilter, setSavedPlacesDotFilter] = useState<SavedPlacesDotFilter>('all');
-  const [savedPlacesStatusFilter, setSavedPlacesStatusFilter] = useState<SavedPlacesStatusFilter>('all');
-
   // New States for Removal
   const [itemToRemove, setItemToRemove] = useState<CollectionItemWithBuilding | null>(null);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
@@ -261,42 +250,20 @@ export default function CollectionMap() {
     enabled: !!ownerProfile?.id && !!slug
   });
 
-  useLayoutEffect(() => {
-    if (!user?.id || !collection?.id) return;
-    setShowSavedCandidates(readShowSavedCandidatesFromStorage(user.id, collection.id));
-    setSavedPlacesDotFilter(readSavedPlacesDotFilterFromStorage(user.id, collection.id));
-    setSavedPlacesStatusFilter(readSavedPlacesStatusFilterFromStorage(user.id, collection.id));
-  }, [user?.id, collection?.id]);
-
-  const handleShowSavedCandidatesChange = useCallback(
-    (show: boolean) => {
-      setShowSavedCandidates(show);
-      if (user?.id && collection?.id) {
-        writeShowSavedCandidatesToStorage(user.id, collection.id, show);
-      }
-    },
-    [user?.id, collection?.id],
-  );
-
-  const handleSavedPlacesDotFilterChange = useCallback(
-    (filter: SavedPlacesDotFilter) => {
-      setSavedPlacesDotFilter(filter);
-      if (user?.id && collection?.id) {
-        writeSavedPlacesDotFilterToStorage(user.id, collection.id, filter);
-      }
-    },
-    [user?.id, collection?.id],
-  );
-
-  const handleSavedPlacesStatusFilterChange = useCallback(
-    (filter: SavedPlacesStatusFilter) => {
-      setSavedPlacesStatusFilter(filter);
-      if (user?.id && collection?.id) {
-        writeSavedPlacesStatusFilterToStorage(user.id, collection.id, filter);
-      }
-    },
-    [user?.id, collection?.id],
-  );
+  // Per-viewer map display state (saved-places overlay + discovery view), stored
+  // per (user, collection) in localStorage — never on the collection itself.
+  const {
+    showSavedCandidates,
+    setShowSavedCandidates: handleShowSavedCandidatesChange,
+    savedPlacesDotFilter,
+    setSavedPlacesDotFilter: handleSavedPlacesDotFilterChange,
+    savedPlacesStatusFilter,
+    setSavedPlacesStatusFilter: handleSavedPlacesStatusFilterChange,
+    showAllBuildings,
+    setShowAllBuildings: handleShowAllBuildingsChange,
+    hideCollectionPins,
+    setHideCollectionPins: handleHideCollectionPinsChange,
+  } = useCollectionMapPreferences(user?.id, collection?.id);
 
   // The current user's contributor role on this collection (null if not a contributor).
   // Only an "editor" contributor may write — this mirrors the RLS policies exactly, so
@@ -864,7 +831,9 @@ export default function CollectionMap() {
       }
   };
 
-  const handleAddToCollection = async (building: DiscoveryBuilding) => {
+  // Accepts anything that can name a building: a saved-place candidate
+  // (DiscoveryBuilding) or a discovery-layer pin (ClusterResponse).
+  const handleAddToCollection = async (building: { id: string; name?: string | null }) => {
     if (!collection?.id) return;
 
     const { error } = await supabase
@@ -1303,8 +1272,20 @@ toast({
                     showItinerary={activeTab === 'itinerary'}
                     onViewportBoundsChange={setViewportBounds}
                     fitBoundsRequest={search.fitBoundsRequest}
+                    discoveryEnabled={showAllBuildings && canEdit}
+                    hideCollectionPins={hideCollectionPins}
+                    collectionBuildingIds={existingBuildingIds}
+                    onAddToCollection={
+                      canEdit
+                        ? (cluster: ClusterResponse) =>
+                            void handleAddToCollection({
+                              id: String(cluster.id),
+                              name: cluster.name ?? "Building",
+                            })
+                        : undefined
+                    }
                     bottomLeftOverlay={
-                      searchApplies || (showSavedCandidates && canEdit) ? (
+                      searchApplies || ((showSavedCandidates || showAllBuildings) && canEdit) ? (
                       <>
                       {/* Why pins are missing. Without this the filter is invisible
                           on mobile, where the search box lives in the other pane. */}
@@ -1353,6 +1334,24 @@ toast({
                             </>
                           )}
                         </Button>
+                      ) : null}
+                      {/* The discovery layer changes what the map means; say so, and
+                          make it one tap to leave — especially once the collection's
+                          own pins are hidden. */}
+                      {showAllBuildings && canEdit ? (
+                        <div className="flex items-center gap-2 border border-border-default bg-surface-card/90 px-2 py-1.5 backdrop-blur-xs">
+                          <span className="truncate text-xs text-text-secondary">
+                            {hideCollectionPins ? "Discovery · collection hidden" : "Discovery view"}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleShowAllBuildingsChange(false)}
+                            aria-label="Turn off discovery view"
+                            className="shrink-0 text-text-disabled transition-colors hover:text-text-primary"
+                          >
+                            <X className="h-3.5 w-3.5" strokeWidth={1.5} />
+                          </button>
+                        </div>
                       ) : null}
                       </>
                       ) : undefined
@@ -1418,6 +1417,10 @@ toast({
                 onSavedPlacesDotFilterChange={handleSavedPlacesDotFilterChange}
                 savedPlacesStatusFilter={savedPlacesStatusFilter}
                 onSavedPlacesStatusFilterChange={handleSavedPlacesStatusFilterChange}
+                showAllBuildings={showAllBuildings}
+                onShowAllBuildingsChange={handleShowAllBuildingsChange}
+                hideCollectionPins={hideCollectionPins}
+                onHideCollectionPinsChange={handleHideCollectionPinsChange}
                 isOwner={isOwner}
                 canEdit={canEdit}
                 initialTab={settingsInitialTab}

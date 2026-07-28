@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, useMemo, type ReactNode } from 'react';
+import { useEffect, useState, useCallback, useRef, type ReactNode } from 'react';
 import { createPortal } from "react-dom";
 import { useSearchParams } from 'react-router';
 import MapGL, { NavigationControl, ViewStateChangeEvent, GeolocateControl, MapRef } from 'react-map-gl/maplibre';
@@ -16,9 +16,10 @@ import { MapChromeButton } from './MapChromeButton';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { DiscoveryBuilding } from '@/features/search/components/types';
 import { ClusterResponse } from '../hooks/useMapData';
-import { useCollectionClusters } from '../hooks/useCollectionClusters';
+import { useCollectionMapClusters } from '../hooks/useCollectionMapClusters';
+import { useMapClusterViewport } from '../hooks/useMapClusterViewport';
+import { DiscoveryAddAction } from './DiscoveryAddAction';
 import { getBoundsFromBuildings, type Bounds } from '@/utils/map';
-import { useItineraryStore } from '@/features/itinerary/stores/useItineraryStore';
 import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
 
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
@@ -27,6 +28,9 @@ const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 const MAP_CONTROL_SAFE_AREA_STYLE = {
   marginBottom: "env(safe-area-inset-bottom, 0px)",
 } as const;
+
+/** Stable empty set — a fresh one per render would re-run the discovery memo. */
+const EMPTY_BUILDING_IDS: Set<string> = new Set();
 
 interface CollectionMapGLProps {
   buildings: DiscoveryBuilding[];
@@ -54,6 +58,17 @@ interface CollectionMapGLProps {
   /** Drawer action — remove the open building from the collection (owner/contributor). */
   onRemoveFromCollection?: (buildingId: string) => void;
   /**
+   * Discovery view (owner/editor only): also draw every building in the current
+   * viewport, de-emphasized, so the collection can be built from the map.
+   * `hideCollectionPins` then drops the collection's own pins to leave only what
+   * could still be added, and `onAddToCollection` is the drawer's add action.
+   */
+  discoveryEnabled?: boolean;
+  hideCollectionPins?: boolean;
+  /** Buildings already collected — de-duplicates and disarms the discovery layer. */
+  collectionBuildingIds?: Set<string>;
+  onAddToCollection?: (cluster: ClusterResponse) => void;
+  /**
    * On-demand re-frame (e.g. "Zoom to results" after a collection search). The
    * camera moves only when `token` changes, so re-renders and filtered building
    * lists never move it on their own — that stays the one-shot auto-fit's job.
@@ -77,6 +92,10 @@ function CollectionMapGLContent({
   onSelectBuilding,
   onCloseDetail,
   onRemoveFromCollection,
+  discoveryEnabled,
+  hideCollectionPins,
+  collectionBuildingIds,
+  onAddToCollection,
   fitBoundsRequest,
 }: CollectionMapGLProps) {
   const { lat, lng, zoom, setMapURL } = useURLMapState();
@@ -84,28 +103,9 @@ function CollectionMapGLContent({
   const mapRef = useRef<MapRef>(null);
   const isMobile = useIsMobile();
 
-  const days = useItineraryStore((state) => state.days);
-
-  // Map building IDs to their itinerary sequence and day index
-  const itineraryMap = useMemo(() => {
-    if (!showItinerary) return new Map();
-
-    const map = new Map<string, { dayIndex: number; sequence: number }>();
-    if (days) {
-      days.forEach((day, dayIndex) => {
-          day.stops?.forEach((stop, index) => {
-              const key = stop.referenceId || stop.id;
-              if (!map.has(key)) {
-                  map.set(key, {
-                      dayIndex: dayIndex,
-                      sequence: index + 1
-                  });
-              }
-          });
-      });
-    }
-    return map;
-  }, [days, showItinerary]);
+  // Live viewport for the discovery layer's bbox RPC: throttled during pan,
+  // immediate on a zoom-level change (the collection's own pins need neither).
+  const { viewport, scheduleViewportUpdate, flushPendingViewport } = useMapClusterViewport();
 
   const [searchParams] = useSearchParams();
   // Determine if we should auto-fit bounds on mount (only if no explicit URL params provided)
@@ -204,16 +204,20 @@ function CollectionMapGLContent({
 
   const onMove = useCallback((evt: ViewStateChangeEvent) => {
     setViewState(evt.viewState);
+    const map = mapRef.current?.getMap();
+    if (map) scheduleViewportUpdate(map, evt.viewState.zoom);
     updateMapState({
       lat: evt.viewState.latitude,
       lng: evt.viewState.longitude,
       zoom: evt.viewState.zoom
     }, false);
-  }, [updateMapState]);
+  }, [updateMapState, scheduleViewportUpdate]);
 
   const reportViewportBounds = useCallback(() => {
     const map = mapRef.current?.getMap();
-    if (!map || !onViewportBoundsChange) return;
+    if (!map) return;
+    flushPendingViewport(map, map.getZoom());
+    if (!onViewportBoundsChange) return;
     const b = map.getBounds();
     onViewportBoundsChange({
       north: b.getNorth(),
@@ -221,7 +225,7 @@ function CollectionMapGLContent({
       east: b.getEast(),
       west: b.getWest(),
     });
-  }, [onViewportBoundsChange]);
+  }, [onViewportBoundsChange, flushPendingViewport]);
 
   const onMoveEnd = useCallback((evt: ViewStateChangeEvent) => {
     updateMapState({
@@ -234,16 +238,26 @@ function CollectionMapGLContent({
 
   // Programmatic fit-to-bounds does not always emit onMoveEnd; refresh viewport after fit.
   useEffect(() => {
-    if (!isMapLoaded || !hasFittedBounds || !onViewportBoundsChange) return;
+    if (!isMapLoaded || !hasFittedBounds) return;
     const id = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         reportViewportBounds();
       });
     });
     return () => cancelAnimationFrame(id);
-  }, [hasFittedBounds, isMapLoaded, onViewportBoundsChange, reportViewportBounds]);
+  }, [hasFittedBounds, isMapLoaded, reportViewportBounds]);
 
-  const clusters = useCollectionClusters(buildings, itineraryMap, viewState.zoom);
+  const clusters = useCollectionMapClusters({
+    buildings,
+    showItinerary,
+    zoom: viewState.zoom,
+    discovery: {
+      enabled: !!discoveryEnabled,
+      hideCollectionPins: !!hideCollectionPins,
+      viewport,
+      collectionBuildingIds: collectionBuildingIds ?? EMPTY_BUILDING_IDS,
+    },
+  });
 
   const handleAddCandidate = useCallback((id: string) => {
       if (onAddCandidate) {
@@ -363,6 +377,15 @@ function CollectionMapGLContent({
             onRemoveFromCollection={onRemoveFromCollection}
             onAddCandidate={handleAddCandidate}
             closeOnOutsideClick
+            footerAction={
+              selectedCluster?.is_discovery && onAddToCollection ? (
+                <DiscoveryAddAction
+                  cluster={selectedCluster}
+                  isInCollection={!!collectionBuildingIds?.has(String(selectedCluster.id))}
+                  onAdd={onAddToCollection}
+                />
+              ) : undefined
+            }
           />
         )}
     </div>
