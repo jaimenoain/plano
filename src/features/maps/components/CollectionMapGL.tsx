@@ -53,6 +53,12 @@ interface CollectionMapGLProps {
   onCloseDetail?: () => void;
   /** Drawer action — remove the open building from the collection (owner/contributor). */
   onRemoveFromCollection?: (buildingId: string) => void;
+  /**
+   * On-demand re-frame (e.g. "Zoom to results" after a collection search). The
+   * camera moves only when `token` changes, so re-renders and filtered building
+   * lists never move it on their own — that stays the one-shot auto-fit's job.
+   */
+  fitBoundsRequest?: { bounds: Bounds; token: number } | null;
 }
 
 function CollectionMapGLContent({
@@ -71,6 +77,7 @@ function CollectionMapGLContent({
   onSelectBuilding,
   onCloseDetail,
   onRemoveFromCollection,
+  fitBoundsRequest,
 }: CollectionMapGLProps) {
   const { lat, lng, zoom, setMapURL } = useURLMapState();
   const { updateMapState } = useStableMapUpdate(setMapURL);
@@ -177,6 +184,23 @@ function CollectionMapGLContent({
           }
       }
   }, [buildings, hasFittedBounds, shouldAutoFit, isMapLoaded, updateMapState]);
+
+  // On-demand re-frame. Keyed on the token so only an explicit request moves the
+  // camera; `onMove`/`onMoveEnd` then reconcile viewState and the URL as usual.
+  const lastFitToken = useRef(0);
+  useEffect(() => {
+    if (!fitBoundsRequest || !isMapLoaded) return;
+    if (fitBoundsRequest.token === lastFitToken.current) return;
+    lastFitToken.current = fitBoundsRequest.token;
+    const { bounds } = fitBoundsRequest;
+    mapRef.current?.getMap().fitBounds(
+      [
+        [bounds.west, bounds.south],
+        [bounds.east, bounds.north],
+      ],
+      { padding: 60, maxZoom: 16, duration: 600 },
+    );
+  }, [fitBoundsRequest, isMapLoaded]);
 
   const onMove = useCallback((evt: ViewStateChangeEvent) => {
     setViewState(evt.viewState);
