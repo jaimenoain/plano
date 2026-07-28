@@ -187,6 +187,15 @@ describe("promoteFirstMediaEntry", () => {
     expect(out).toBe(input);
   });
 
+  it("ignores building imagery — only the note's own photos/video count", () => {
+    // Every fixture building carries a main_image_url; a note about a
+    // well-photographed building is still a media-less note.
+    const textOnly = visit({ id: "a", content: "Lovely." });
+    expect(textOnly.building?.main_image_url).toBeTruthy();
+    const out = promoteFirstMediaEntry([textOnly, photo("p")]);
+    expect(out.map((e) => e.id)).toEqual(["p", "a"]);
+  });
+
   it("does not treat an event-attendance row as media", () => {
     const out = promoteFirstMediaEntry([
       visit({ id: "a" }),
