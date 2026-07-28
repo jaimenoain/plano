@@ -23,6 +23,10 @@
 -- Nothing else changes — scoring weights, ring, discovery extras and the
 -- RETURNS TABLE column lists are identical to 20271178000000, so `types.ts`
 -- is unaffected. Return types are unchanged, hence plain CREATE OR REPLACE.
+--
+-- types-neutral: function bodies + ORDER BY only; both RETURNS TABLE column
+-- lists are byte-identical to 20271178000000, so gen-types is a no-op
+-- (verified against prod after applying: zero diff in types.ts).
 -- =============================================================================
 
 BEGIN;
