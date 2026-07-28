@@ -234,8 +234,15 @@ function Feed() {
   const community = useCommunityFeed();
 
   // Each section must lead with a media card (photo or video), and no two consecutive
-  // large (non-activity) cards should both be text-only. So float each section's first
-  // photo/video entry to the front, then break up any adjacent text-only large cards.
+  // large (non-activity) cards should both be text-only. "Media" is the note's own
+  // photos/video — never the building's imagery.
+  //
+  // The lead is guaranteed server-side: both rankers sort their highest-scoring
+  // media-bearing post to the front of the whole result set (migration 20271186),
+  // so it lands on page 1 even when the page's own top-ranked posts are text-only.
+  // `promoteFirstMediaEntry` stays as the client-side backstop — it also covers the
+  // direct-table fallback in `useHomeFeed` when the RPC is unavailable. Then
+  // `spaceOutNoMediaLargeEntries` breaks up any adjacent text-only large cards.
   // Whichever section renders first (§01, or §02 when §01 is empty) is therefore the
   // page's first card — always media-led when the section has any media at all.
   const followingReviews = useMemo(
