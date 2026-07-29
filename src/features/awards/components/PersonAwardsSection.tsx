@@ -1,44 +1,46 @@
 import { useState } from "react";
 import { useAwardsByPerson } from "../hooks/useAwards";
 import { AwardRecipientCard } from "./AwardRecipientCard";
-import { Trophy } from "lucide-react";
 import { SuggestAwardButton } from "./SuggestAwardButton";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface PersonAwardsSectionProps {
   personId: string;
   personName: string;
 }
 
+/** Awards tab body on the person page — a divided recipient list, or the canonical empty state. */
 export function PersonAwardsSection({ personId, personName }: PersonAwardsSectionProps) {
   const { data: awards = [], isLoading } = useAwardsByPerson(personId);
   const [showAll, setShowAll] = useState(false);
-  const { user } = useAuth();
 
-  // For Phase 2, show only person-type recipients
   const personAwards = awards.filter(a => a.recipientType === 'person');
 
   if (isLoading) return null;
-  if (personAwards.length === 0 && !user) return null;
+
+  if (personAwards.length === 0) {
+    return (
+      <EmptyState
+        eyebrow="No awards yet"
+        message="Awards and honors this person receives will appear here."
+        action={
+          <SuggestAwardButton recipientType="person" recipientId={personId} recipientName={personName} />
+        }
+      />
+    );
+  }
 
   const displayedAwards = showAll ? personAwards : personAwards.slice(0, 5);
   const hasMore = personAwards.length > 5;
 
   return (
-    <section className="mt-12 border-t border-border-default pt-10">
-      <div className="mb-6 flex items-center gap-3">
-        <h2 className="text-xs font-medium uppercase tracking-widest text-text-secondary">
-          Awards
-        </h2>
-        <Trophy className="w-3.5 h-3.5 text-text-secondary" />
-      </div>
-
+    <section>
       <div className="divide-y divide-border-default">
         {displayedAwards.map((award) => (
-          <AwardRecipientCard 
-            key={award.id} 
-            recipient={award} 
-            showAwardName 
+          <AwardRecipientCard
+            key={award.id}
+            recipient={award}
+            showAwardName
           />
         ))}
       </div>
@@ -54,10 +56,10 @@ export function PersonAwardsSection({ personId, personName }: PersonAwardsSectio
       )}
 
       <div className="mt-8">
-        <SuggestAwardButton 
-          recipientType="person" 
-          recipientId={personId} 
-          recipientName={personName} 
+        <SuggestAwardButton
+          recipientType="person"
+          recipientId={personId}
+          recipientName={personName}
         />
       </div>
     </section>

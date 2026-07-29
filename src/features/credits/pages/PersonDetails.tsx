@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Link,
   useLoaderData,
@@ -10,23 +10,21 @@ import {
   type MetaFunction,
 } from "react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, ChevronDown, Pencil, BadgeCheck } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { cn } from "@/lib/utils";
-import type { Person, PersonCreditWithBuilding } from "@/features/credits/types";
-import { PersonCreditCard } from "@/features/credits/components/PersonCreditCard";
-import { EditPersonForm } from "@/features/credits/components/EditPersonForm";
+import { EntityStatsBand } from "@/components/entity/EntityStatsBand";
+import { EntityTabs, type EntityTab } from "@/components/entity/EntityTabs";
+import type { Person } from "../types";
+import { EditPersonForm } from "../components/EditPersonForm";
 import { getPerson, personQueryKey } from "@/features/credits/api/people";
-import { ClaimPersonDialog } from "@/features/credits/components/ClaimPersonDialog";
-import { PersonAwardsSection } from "@/features/awards/components/PersonAwardsSection";
+import { ClaimPersonDialog } from "../components/ClaimPersonDialog";
+import { PersonHero } from "../components/PersonHero";
+import { PersonPortfolioSection } from "../components/PersonPortfolioSection";
+import { PersonAboutSection } from "../components/PersonAboutSection";
+import { PersonAwardsSection, useAwardsByPerson } from "@/features/awards";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { personDetailsLoader, type PersonDetailsLoaderData } from "./PersonDetails.loader";
-import { EntityMetaEyebrow } from "../components/EntityMetaEyebrow";
 
 export { personDetailsLoader as loader } from "./PersonDetails.loader";
 
@@ -52,32 +50,23 @@ export const meta: MetaFunction<typeof personDetailsLoader> = ({ loaderData: dat
   ];
 };
 
-function tierLabel(tier: "primary" | "contributor" | "ancillary"): string {
-  if (tier === "primary") return "Primary";
-  if (tier === "contributor") return "Contributor";
-  return "Additional";
-}
+type SectionKey = "portfolio" | "awards" | "about";
 
-function groupByTier(credits: PersonCreditWithBuilding[]) {
-  const primary: PersonCreditWithBuilding[] = [];
-  const contributor: PersonCreditWithBuilding[] = [];
-  const ancillary: PersonCreditWithBuilding[] = [];
-  for (const c of credits) {
-    if (c.creditTier === "primary") primary.push(c);
-    else if (c.creditTier === "contributor") contributor.push(c);
-    else ancillary.push(c);
-  }
-  return { primary, contributor, ancillary };
-}
+const SECTION_KEYS: SectionKey[] = ["portfolio", "awards", "about"];
 
 export function HydrateFallback() {
   return (
-    <AppLayout showBack title="Loading…">
-      <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
-        <Skeleton className="mb-8 h-32 w-32 rounded-full" />
-        <Skeleton className="mb-4 h-10 w-2/3 max-w-md" />
-        <Skeleton className="mb-8 h-20 w-full" />
-        <Skeleton className="h-40 w-full" />
+    <AppLayout showBack title="Loading…" showLogo={false} fullWidth>
+      <div className="mx-auto max-w-[1120px] px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-6 pt-10 pb-2 sm:flex-row sm:items-start sm:gap-8">
+          <Skeleton className="size-20 shrink-0 rounded-full sm:size-26" />
+          <div className="min-w-0 flex-1 pt-6">
+            <Skeleton className="mb-4 h-10 w-2/3 max-w-md" />
+            <Skeleton className="h-16 w-full max-w-lg" />
+          </div>
+        </div>
+        <Skeleton className="mt-12 h-24 w-full" />
+        <Skeleton className="mt-16 h-40 w-full" />
       </div>
     </AppLayout>
   );
@@ -126,40 +115,16 @@ export function ErrorBoundary() {
   );
 }
 
-function CreditTierSection({
-  tier,
-  credits,
-}: {
-  tier: "primary" | "contributor" | "ancillary";
-  credits: PersonCreditWithBuilding[];
-}) {
-  if (credits.length === 0) return null;
-  return (
-    <section className="mt-16 first:mt-0">
-      <h2 className="eyebrow mb-6 flex items-center justify-between border-b border-border-default pb-3 tracking-widest">
-        <span>{tierLabel(tier)} credits</span>
-        <span className="meta-code text-text-disabled">{String(credits.length).padStart(2, "0")}</span>
-      </h2>
-      <div className="grid grid-cols-1 gap-x-10 lg:grid-cols-2">
-        {credits.map((c) => (
-          <PersonCreditCard key={c.id} credit={c} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
 export default function PersonDetails() {
   const loaderData = useLoaderData() as PersonDetailsLoaderData;
   const { slug: slugParam } = useParams();
   const slug = slugParam?.trim() ?? "";
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const revalidator = useRevalidator();
   const { user } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [claimOpen, setClaimOpen] = useState(false);
-  const [ancillaryOpen, setAncillaryOpen] = useState(false);
 
   const { data: queryData } = useQuery({
     queryKey: personQueryKey(slug),
@@ -193,7 +158,39 @@ export default function PersonDetails() {
     setEditOpen(true);
   };
 
-  const { primary, contributor, ancillary } = useMemo(() => groupByTier(credits), [credits]);
+  // Awards drive a stats cell and the Awards tab count; the section body
+  // shares the same query, so this costs no extra fetch.
+  const { data: awards = [], isLoading: awardsLoading } = useAwardsByPerson(person.id);
+  const awardCount = awards.filter((a) => a.recipientType === "person").length;
+
+  const { buildingCount, roleCount } = useMemo(() => {
+    const buildings = new Set<string>();
+    const roles = new Set<string>();
+    for (const c of credits) {
+      buildings.add(c.building.id);
+      roles.add(c.role === "other" && c.roleCustom ? c.roleCustom : c.role);
+    }
+    return { buildingCount: buildings.size, roleCount: roles.size };
+  }, [credits]);
+
+  const sectionParam = searchParams.get("section") as SectionKey | null;
+  const activeSection: SectionKey =
+    sectionParam && SECTION_KEYS.includes(sectionParam) ? sectionParam : "portfolio";
+
+  const handleSectionChange = useCallback(
+    (section: SectionKey) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (section === "portfolio") next.delete("section");
+          else next.set("section", section);
+          return next;
+        },
+        { replace: true, preventScrollReset: true },
+      );
+    },
+    [setSearchParams],
+  );
 
   const lifeSpan =
     person.birthYear != null || person.deathYear != null
@@ -202,89 +199,53 @@ export default function PersonDetails() {
 
   const showUnclaimedBanner = person.claimStatus === "unclaimed";
 
-  return (
-    <AppLayout showBack>
-      <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
-        {isOwner ? (
-          <EditPersonForm
-            open={editOpen}
-            onOpenChange={setEditOpen}
-            person={person}
-            onSaved={handlePersonSaved}
-          />
-        ) : null}
-        {user && person.claimStatus === "unclaimed" ? (
-          <ClaimPersonDialog
-            personId={person.id}
-            personSlug={slug}
-            personName={person.name}
-            open={claimOpen}
-            onOpenChange={setClaimOpen}
-            onClaimed={handlePersonClaimed}
-          />
-        ) : null}
-        <header className="border-b border-border-default pb-10">
-          <div className="flex flex-col-reverse gap-8 sm:flex-row sm:items-start sm:gap-12 lg:gap-20">
-            <div className="min-w-0 flex-1 space-y-4">
-              <div className="space-y-2">
-                <EntityMetaEyebrow items={[person.nationality, lifeSpan, person.locationNote]} />
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="flex min-w-0 flex-wrap items-center gap-3">
-                    <h1 className="headline">{person.name}</h1>
-                    {person.claimStatus === "verified" ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="inline-flex shrink-0 text-text-primary" tabIndex={0}>
-                            <BadgeCheck className="h-8 w-8 md:h-9 md:w-9" aria-label="Identity verified by Plano" />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom">Identity verified by Plano</TooltipContent>
-                      </Tooltip>
-                    ) : null}
-                  </div>
-                  {isOwner ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="shrink-0 border-border-default"
-                      onClick={() => setEditOpen(true)}
-                    >
-                      <Pencil className="mr-2 h-4 w-4" aria-hidden />
-                      Edit
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-              {person.website?.trim() ? (
-                <a
-                  href={person.website.trim().startsWith("http") ? person.website.trim() : `https://${person.website.trim()}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-widest text-text-primary hover:underline"
-                >
-                  Website
-                  <ExternalLink className="h-3 w-3" aria-hidden />
-                </a>
-              ) : null}
-              {person.bio?.trim() ? (
-                <p className="body-relaxed max-w-[60ch] text-base">{person.bio.trim()}</p>
-              ) : null}
-            </div>
-            {person.avatarUrl ? (
-              <div className="shrink-0 self-start">
-                {/* A person is drawn round; a practice is drawn square (see CompanyDetails). */}
-                <Avatar className="h-32 w-32 shrink-0 rounded-full border border-border-default sm:h-40 sm:w-40">
-                  <AvatarImage src={person.avatarUrl} alt={person.name} />
-                  <AvatarFallback className="rounded-full" />
-                </Avatar>
-              </div>
-            ) : null}
-          </div>
-        </header>
+  const tabs: EntityTab<SectionKey>[] = [
+    { key: "portfolio", label: "Portfolio", count: credits.length },
+    { key: "awards", label: "Awards", count: awardsLoading ? null : awardCount },
+    { key: "about", label: "About", count: null },
+  ];
 
-        {showUnclaimedBanner ? (
-          <div className="mt-10 rounded-none border border-border-default bg-surface-muted px-4 py-4 sm:px-5">
+  return (
+    <AppLayout title={person.name} showLogo={false} showBack fullWidth>
+      {isOwner ? (
+        <EditPersonForm
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          person={person}
+          onSaved={handlePersonSaved}
+        />
+      ) : null}
+      {user && person.claimStatus === "unclaimed" ? (
+        <ClaimPersonDialog
+          personId={person.id}
+          personSlug={slug}
+          personName={person.name}
+          open={claimOpen}
+          onOpenChange={setClaimOpen}
+          onClaimed={handlePersonClaimed}
+        />
+      ) : null}
+
+      <div className="mx-auto max-w-[1120px] px-4 sm:px-6 lg:px-8">
+        <PersonHero
+          person={person}
+          lifeSpan={lifeSpan}
+          isOwner={isOwner}
+          onEdit={() => setEditOpen(true)}
+        />
+
+        <EntityStatsBand
+          cells={[
+            { key: "buildings", value: buildingCount, label: "Buildings" },
+            { key: "awards", value: awardsLoading ? "—" : awardCount, label: "Awards" },
+            { key: "roles", value: roleCount, label: "Roles" },
+          ]}
+        />
+      </div>
+
+      {showUnclaimedBanner ? (
+        <div className="mx-auto max-w-[1120px] px-4 pt-12 sm:px-6 lg:px-8">
+          <div className="rounded-none border border-border-default bg-surface-muted px-4 py-4 sm:px-5">
             <p className="mb-2 text-sm font-medium text-text-primary">This profile hasn&apos;t been claimed yet</p>
             <p className="mb-3 text-sm text-text-secondary">
               If this is you or you represent this person, you can link this profile to your Plano account.
@@ -306,47 +267,20 @@ export default function PersonDetails() {
               </Link>
             )}
           </div>
-        ) : null}
+        </div>
+      ) : null}
 
-        <PersonAwardsSection personId={person.id} personName={person.name} />
+      <div className="mt-16">
+        <EntityTabs tabs={tabs} activeKey={activeSection} onChange={handleSectionChange} />
+      </div>
 
-        <div className="mt-16">
-          {credits.length === 0 ? (
-            <>
-              <h2 className="eyebrow mb-2 tracking-widest">Credits</h2>
-              <p className="mt-4 text-sm text-text-secondary">No public credits on Plano yet.</p>
-            </>
-          ) : (
-            <>
-              <CreditTierSection tier="primary" credits={primary} />
-              <CreditTierSection tier="contributor" credits={contributor} />
-              {ancillary.length > 0 ? (
-                <section className="mt-16">
-                  <Collapsible open={ancillaryOpen} onOpenChange={setAncillaryOpen}>
-                    <CollapsibleTrigger
-                      type="button"
-                      className="flex min-h-[44px] w-full items-center justify-between border-b border-border-default py-3 text-left text-xs font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary"
-                    >
-                      <span>
-                        Additional credits ({ancillary.length})
-                      </span>
-                      <ChevronDown
-                        className={cn("h-4 w-4 shrink-0 transition-transform", ancillaryOpen && "rotate-180")}
-                        aria-hidden
-                      />
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <div className="pt-4">
-                        {ancillary.map((c) => (
-                          <PersonCreditCard key={c.id} credit={c} />
-                        ))}
-                      </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                </section>
-              ) : null}
-            </>
+      <div className="mx-auto max-w-[1120px] px-4 sm:px-6 lg:px-8">
+        <div className="min-h-[60vh] pt-16 pb-10">
+          {activeSection === "portfolio" && <PersonPortfolioSection credits={credits} />}
+          {activeSection === "awards" && (
+            <PersonAwardsSection personId={person.id} personName={person.name} />
           )}
+          {activeSection === "about" && <PersonAboutSection person={person} lifeSpan={lifeSpan} />}
         </div>
       </div>
     </AppLayout>
