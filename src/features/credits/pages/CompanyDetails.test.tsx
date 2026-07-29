@@ -71,7 +71,7 @@ vi.mock("react-router", async (importOriginal) => {
     ...actual,
     useLoaderData: () => mocks.loaderData,
     useParams: () => ({ slug: "structco" }),
-    useSearchParams: () => [new URLSearchParams(), vi.fn()],
+    // useSearchParams stays REAL — tab state round-trips through ?section=.
     useRevalidator: () => ({ revalidate: mocks.revalidate, state: "idle" as const }),
   };
 });
@@ -219,12 +219,12 @@ function buildClaimedLoaderData(claimStatus: "claimed" | "verified"): CompanyDet
   };
 }
 
-function renderPage() {
+function renderPage(initialEntry = "/company/structco") {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
       <TooltipProvider>
-        <MemoryRouter initialEntries={["/company/structco"]}>
+        <MemoryRouter initialEntries={[initialEntry]}>
           <Routes>
             <Route path="/company/:slug" element={<CompanyDetails />} />
           </Routes>
@@ -232,6 +232,11 @@ function renderPage() {
       </TooltipProvider>
     </QueryClientProvider>,
   );
+}
+
+/** The steward roster moved behind a tab with the profile-aligned layout. */
+async function openStewardsTab() {
+  fireEvent.click(await screen.findByRole("button", { name: /^Stewards/ }));
 }
 
 describe("CompanyDetails (QA 4.1 unclaimed)", () => {
@@ -253,7 +258,7 @@ describe("CompanyDetails (QA 4.1 unclaimed)", () => {
     mocks.revalidate.mockReset();
   });
 
-  it("renders company fields, website link, and logo initial fallback", () => {
+  it("renders company fields, website link, and the square logo fallback", () => {
     renderPage();
 
     expect(screen.getByRole("heading", { level: 1, name: "StructCo GmbH" })).toBeInTheDocument();
@@ -261,13 +266,14 @@ describe("CompanyDetails (QA 4.1 unclaimed)", () => {
     // Country · year-span render as one mono eyebrow above the name.
     expect(screen.getByText("Germany · 1990–—")).toBeInTheDocument();
 
-    const website = screen.getByRole("link", { name: /website/i });
+    // The hero link shows the bare domain (EntityHero grammar), not the word "Website".
+    const website = screen.getByRole("link", { name: /structco\.example/i });
     expect(website).toHaveAttribute("href", "https://structco.example");
 
-    // No logoUrl: the company logo (and its initial fallback) is not rendered.
-    // The initial fallback was removed in commit 8ee1047c — logos show only when
-    // an image URL exists.
+    // No logoUrl: no <img>, but the shared hero still draws the square initial
+    // mark so the header geometry matches the person and profile pages.
     expect(screen.queryByRole("img", { name: /StructCo GmbH logo/i })).not.toBeInTheDocument();
+    expect(screen.getByText("S")).toBeInTheDocument();
   });
 
   it("shows unclaimed banner and Claim this company when logged in", () => {
@@ -390,10 +396,11 @@ describe("CompanyDetails (QA 4.2 claimed)", () => {
     mocks.user = { id: "owner-1", email: "owner@test.com" };
     renderPage();
 
-    const editButtons = await screen.findAllByRole("button", { name: /^Edit$/i });
+    const editButtons = await screen.findAllByRole("button", { name: /Edit company/i });
     expect(editButtons.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByTestId("edit-company-form")).toBeInTheDocument();
 
+    await openStewardsTab();
     expect(screen.getByRole("region", { name: /Company stewards/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Invite a steward/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Remove" })).toBeInTheDocument();
@@ -403,15 +410,17 @@ describe("CompanyDetails (QA 4.2 claimed)", () => {
     mocks.user = { id: "stew-2", email: "stew@test.com" };
     renderPage();
 
-    const editButtons = await screen.findAllByRole("button", { name: /^Edit$/i });
+    const editButtons = await screen.findAllByRole("button", { name: /Edit company/i });
     expect(editButtons.length).toBeGreaterThanOrEqual(1);
+
+    await openStewardsTab();
     expect(screen.getByRole("region", { name: /Company stewards/i })).toBeInTheDocument();
 
     expect(screen.queryByRole("button", { name: /Invite a steward/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Remove" })).not.toBeInTheDocument();
   });
 
-  it("authenticated non-steward sees no Edit, stewards section, or invite/remove", async () => {
+  it("authenticated non-steward sees no Edit, Stewards tab, or invite/remove", async () => {
     mocks.user = { id: "stranger", email: "s@test.com" };
     mocks.stewards = [
       stewardRow("stew-row-owner", "owner-1", "owner", "owner_co"),
@@ -420,21 +429,33 @@ describe("CompanyDetails (QA 4.2 claimed)", () => {
     renderPage();
 
     await waitFor(() => {
-      expect(screen.queryAllByRole("button", { name: /^Edit$/i })).toHaveLength(0);
+      expect(screen.queryAllByRole("button", { name: /Edit company/i })).toHaveLength(0);
     });
     expect(screen.queryByTestId("edit-company-form")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Stewards/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: /Company stewards/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Invite a steward/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Remove" })).not.toBeInTheDocument();
   });
 
-  it("logged-out visitor sees no Edit, stewards section, or invite/remove", () => {
+  it("logged-out visitor sees no Edit, Stewards tab, or invite/remove", () => {
     mocks.user = null;
     renderPage();
 
-    expect(screen.queryAllByRole("button", { name: /^Edit$/i })).toHaveLength(0);
+    expect(screen.queryAllByRole("button", { name: /Edit company/i })).toHaveLength(0);
     expect(screen.queryByTestId("edit-company-form")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Stewards/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: /Company stewards/i })).not.toBeInTheDocument();
+  });
+
+  it("a ?section=stewards deep link falls back to Portfolio for a non-steward", async () => {
+    mocks.user = { id: "stranger", email: "s@test.com" };
+    renderPage("/company/structco?section=stewards");
+
+    await waitFor(() => {
+      expect(screen.queryByRole("region", { name: /Company stewards/i })).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole("heading", { name: /Primary credits/i })).toBeInTheDocument();
   });
 
   it("shows verified badge only when claim_status is verified", async () => {
@@ -461,6 +482,7 @@ describe("CompanyDetails (QA 4.2 claimed)", () => {
     mocks.user = { id: "owner-1", email: "owner@test.com" };
     renderPage();
 
+    await openStewardsTab();
     fireEvent.click(await screen.findByRole("button", { name: "Remove" }));
 
     const dialog = await screen.findByRole("alertdialog");
@@ -477,7 +499,7 @@ describe("CompanyDetails (QA 4.2 claimed)", () => {
     renderPage();
 
     await waitFor(() => {
-      expect(screen.queryAllByRole("button", { name: /^Edit$/i })).toHaveLength(0);
+      expect(screen.queryAllByRole("button", { name: /Edit company/i })).toHaveLength(0);
     });
     expect(screen.queryByTestId("edit-company-form")).not.toBeInTheDocument();
   });
