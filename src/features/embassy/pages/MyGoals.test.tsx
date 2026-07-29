@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { cleanup, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test/utils";
 import { mockSupabaseQuery } from "@/test/mocks/supabase";
 
@@ -56,15 +57,53 @@ const CHAPTER_TASKS = [
   },
 ];
 
+// One active goal on the photos metric — enough to render a GoalCard and to
+// suppress the photos suggestion chip below.
+const PHOTOS_GOAL = {
+  id: "g-photos",
+  user_id: "me",
+  title: "Photo sprint",
+  target_value: 12,
+  current_value: 3,
+  metric: "photos",
+  status: "active",
+  due_date: null,
+  created_at: "2026-07-01T00:00:00Z",
+};
+
 const rpc = vi.fn(async (name: string) => {
   if (name === "get_chapter_tasks") return { data: CHAPTER_TASKS, error: null };
-  if (name === "get_my_ambassador_goals") return { data: [], error: null };
+  if (name === "get_my_ambassador_goals") return { data: [PHOTOS_GOAL], error: null };
   return { data: null, error: null };
 });
 
+// Goal removal is a plain table delete (RLS scopes it to the owner), so record
+// the ids it targets rather than asserting on a fluent-chain spy.
+const deletedGoalIds: string[] = [];
+
+type GoalsTableChain = {
+  delete: () => GoalsTableChain;
+  eq: (column: string, value: string) => Promise<{ error: null }>;
+};
+
+function goalsTableMock(): GoalsTableChain {
+  const chain: GoalsTableChain = {
+    delete: () => chain,
+    eq: (_column, value) => {
+      deletedGoalIds.push(value);
+      return Promise.resolve({ error: null });
+    },
+  };
+  return chain;
+}
+
+const from = vi.fn((table: string) =>
+  table === "ambassador_goals" ? goalsTableMock() : mockSupabaseQuery(MEMBERSHIP),
+);
+
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    from: vi.fn(() => mockSupabaseQuery(MEMBERSHIP)),
+    from: (table: string) => from(table),
     rpc: (name: string) => rpc(name),
   },
 }));
@@ -90,8 +129,14 @@ vi.mock("@/features/embassy/api/startHere", () => ({
   ]),
 }));
 
-vi.mock("@/features/embassy/api/suggestedGoals", () => ({
-  fetchSuggestedGoals: vi.fn(async () => []),
+// Only the fetch is stubbed — SuggestedGoalChips also imports the real
+// filterSuggestedGoals from this module, which is what the dedupe test exercises.
+vi.mock("@/features/embassy/api/suggestedGoals", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/features/embassy/api/suggestedGoals")>()),
+  fetchSuggestedGoals: vi.fn(async () => [
+    { metric: "research" as const, title: "Review 3 pending research items", target: 3 },
+    { metric: "photos" as const, title: "Upload 12 missing photos", target: 12 },
+  ]),
 }));
 
 import MyGoalsPage from "./MyGoals";
@@ -99,7 +144,13 @@ import MyGoalsPage from "./MyGoals";
 describe("MyGoalsPage (ambassador dashboard)", () => {
   beforeEach(() => {
     rpc.mockClear();
+    from.mockClear();
+    deletedGoalIds.length = 0;
   });
+
+  // vitest runs without `globals`, so RTL's auto-cleanup afterEach never
+  // registers — without this, one test's cards and chips leak into the next.
+  afterEach(cleanup);
 
   it("leads with open tasks, above the suggested 'Start here' queue", async () => {
     renderWithProviders(<MyGoalsPage />);
@@ -120,5 +171,37 @@ describe("MyGoalsPage (ambassador dashboard)", () => {
     const theirs = screen.getByText("Someone else's task");
 
     expect(mine.compareDocumentPosition(theirs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("removes an active goal once the confirmation is accepted", async () => {
+    renderWithProviders(<MyGoalsPage />);
+
+    const remove = await screen.findByRole("button", { name: "Remove goal: Photo sprint" });
+    await userEvent.click(remove);
+
+    await screen.findByRole("heading", { name: "Remove goal" });
+    await userEvent.click(screen.getByRole("button", { name: "Remove" }));
+
+    await waitFor(() => expect(deletedGoalIds).toEqual(["g-photos"]));
+  });
+
+  it("keeps the goal when the confirmation is cancelled", async () => {
+    renderWithProviders(<MyGoalsPage />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Remove goal: Photo sprint" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Cancel" }));
+
+    expect(deletedGoalIds).toEqual([]);
+    expect(screen.getByText("Photo sprint")).toBeInTheDocument();
+  });
+
+  it("hides the suggested chip for a metric that already has an active goal", async () => {
+    renderWithProviders(<MyGoalsPage />);
+
+    // research has no goal yet, so its chip stays; photos is already covered.
+    await screen.findByRole("button", { name: "Review 3 pending research items" });
+    expect(
+      screen.queryByRole("button", { name: "Upload 12 missing photos" }),
+    ).not.toBeInTheDocument();
   });
 });
