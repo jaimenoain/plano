@@ -2,21 +2,22 @@ import { cn } from "@/lib/utils";
 
 /**
  * Quiet text tabs — a label, a mono count beside it, a 2px rule under the active one.
- * Never pills.
+ * Never pills. Shared by profile and entity (person/company) pages; the sticky bar is
+ * full-bleed, so mount it outside any max-width container.
  */
-export interface ProfileTab<K extends string> {
+export interface EntityTab<K extends string> {
   key: K;
   label: string;
   count: number | null;
 }
 
-interface ProfileTabsProps<K extends string> {
-  tabs: ProfileTab<K>[];
+interface EntityTabsProps<K extends string> {
+  tabs: EntityTab<K>[];
   activeKey: K;
   onChange: (key: K) => void;
 }
 
-export function ProfileTabs<K extends string>({ tabs, activeKey, onChange }: ProfileTabsProps<K>) {
+export function EntityTabs<K extends string>({ tabs, activeKey, onChange }: EntityTabsProps<K>) {
   return (
     <div className="sticky top-0 z-20 border-b border-border-default bg-surface-default">
       <div className="mx-auto max-w-[1120px] px-4 sm:px-6 lg:px-8">

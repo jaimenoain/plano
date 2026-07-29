@@ -77,8 +77,8 @@ import { ProfileKanbanView } from "@/features/profile/components/ProfileKanbanVi
 import { handleDragEndLogic } from "@/utils/kanbanLogic";
 import { ProfileListView } from "@/features/profile/components/ProfileListView";
 import { ProfileHero } from "../components/ProfileHero";
-import { ProfileStatsBand } from "../components/ProfileStatsBand";
-import { ProfileTabs } from "../components/ProfileTabs";
+import { EntityStatsBand } from "@/components/entity/EntityStatsBand";
+import { EntityTabs } from "@/components/entity/EntityTabs";
 import { EditorialBuildingCard } from "../components/EditorialBuildingCard";
 import { profileLoader } from "./Profile.loader";
 import {
@@ -917,13 +917,12 @@ export default function Profile() {
             onSignOut={handleSignOut}
           />
 
-          <ProfileStatsBand
-            buildings={stats.reviews}
-            collections={stats.maps}
-            followers={stats.followers}
-            following={stats.following}
-            onOpenUserList={openUserList}
-          />
+          <EntityStatsBand cells={[
+            { key: "buildings", value: stats.reviews, label: "Buildings" },
+            { key: "collections", value: stats.maps, label: "Collections" },
+            { key: "followers", value: stats.followers, label: "Followers", onClick: () => openUserList("followers") },
+            { key: "following", value: stats.following, label: "Following", onClick: () => openUserList("following") },
+          ]} />
         </div>
 
         {isOwnProfile && claimedPersonForProfile ? (
@@ -944,7 +943,7 @@ export default function Profile() {
 
         {/* ══ QUIET TEXT TABS ══════════════════════════════════════════════ */}
         <div className="mt-16">
-          <ProfileTabs tabs={tabs} activeKey={activeSection} onChange={handleSectionChange} />
+          <EntityTabs tabs={tabs} activeKey={activeSection} onChange={handleSectionChange} />
         </div>
 
         {/* ══ CONTENT BODY ═════════════════════════════════════════════════ */}

@@ -24,6 +24,10 @@ vi.mock("@/features/credits/components/ClaimPersonDialog", () => ({
   ClaimPersonDialog: () => null,
 }));
 
+vi.mock("@/features/awards/hooks/useAwards", () => ({
+  useAwardsByPerson: () => ({ data: [], isLoading: false }),
+}));
+
 const mocks = vi.hoisted(() => ({
   getPerson: vi.fn(),
   user: null as { id: string; email: string } | null,
@@ -200,7 +204,8 @@ describe("PersonDetails (QA 3.1 unclaimed)", () => {
     // Nationality · lifespan · place render as one mono eyebrow above the name.
     expect(screen.getByText("British · 1970–— · London")).toBeInTheDocument();
 
-    const website = screen.getByRole("link", { name: /website/i });
+    // Website renders as the bare hostname in the profile hero's quiet link style.
+    const website = screen.getByRole("link", { name: /example\.com/i });
     expect(website).toHaveAttribute("href", "https://example.com");
 
     // No avatarUrl: the component renders no avatar image (initials fallback was
@@ -282,7 +287,7 @@ describe("PersonDetails (QA 3.2 claimed)", () => {
 
     mocks.user = { id: "owner-1", email: "owner@test.com" };
     const { unmount } = renderPage();
-    const editButtons = screen.getAllByRole("button", { name: /^Edit$/i });
+    const editButtons = screen.getAllByRole("button", { name: /Edit profile/i });
     expect(editButtons.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByTestId("edit-person-form")).toBeInTheDocument();
     expect(screen.queryByText(/This profile hasn't been claimed yet/i)).not.toBeInTheDocument();
@@ -290,13 +295,13 @@ describe("PersonDetails (QA 3.2 claimed)", () => {
 
     mocks.user = { id: "stranger", email: "s@test.com" };
     renderPage();
-    expect(screen.queryAllByRole("button", { name: /^Edit$/i })).toHaveLength(0);
+    expect(screen.queryAllByRole("button", { name: /Edit profile/i })).toHaveLength(0);
     expect(screen.queryByTestId("edit-person-form")).not.toBeInTheDocument();
     cleanup();
 
     mocks.user = null;
     renderPage();
-    expect(screen.queryAllByRole("button", { name: /^Edit$/i })).toHaveLength(0);
+    expect(screen.queryAllByRole("button", { name: /Edit profile/i })).toHaveLength(0);
     expect(screen.queryByTestId("edit-person-form")).not.toBeInTheDocument();
   });
 

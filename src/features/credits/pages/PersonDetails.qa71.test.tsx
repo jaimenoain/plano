@@ -21,6 +21,10 @@ vi.mock("@/features/credits/components/EditPersonForm", () => ({
   EditPersonForm: () => <div data-testid="edit-person-form" />,
 }));
 
+vi.mock("@/features/awards/hooks/useAwards", () => ({
+  useAwardsByPerson: () => ({ data: [], isLoading: false }),
+}));
+
 const mocks = vi.hoisted(() => ({
   getPerson: vi.fn(),
   claimPerson: vi.fn(),
@@ -199,7 +203,7 @@ describe("PersonDetails (QA 7.1 claim flow)", () => {
     await waitFor(() => {
       expect(screen.queryByText(/This profile hasn't been claimed yet/i)).not.toBeInTheDocument();
     });
-    expect(screen.getByRole("button", { name: /^Edit$/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Edit profile/i })).toBeInTheDocument();
     expect(screen.getByTestId("edit-person-form")).toBeInTheDocument();
   });
 
@@ -229,6 +233,6 @@ describe("PersonDetails (QA 7.1 claim flow)", () => {
     renderPage();
     expect(screen.queryByText(/This profile hasn't been claimed yet/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Claim this profile/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^Edit$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Edit profile/i })).not.toBeInTheDocument();
   });
 });
