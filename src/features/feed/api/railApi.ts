@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { parseLocation } from "@/utils/location";
 
 /**
  * Data access for the feed's sidebar rail modules. Components in
@@ -80,6 +81,72 @@ export async function fetchBucketList(userId: string): Promise<BucketRow[]> {
   return ((data ?? []) as unknown as BucketRow[])
     .filter((row) => row.building && !row.building.is_deleted)
     .slice(0, 3);
+}
+
+export type LibraryPin = {
+  /** `null` when the building has no coordinates — it still counts, it just can't be plotted. */
+  lat: number | null;
+  lng: number | null;
+  city: string | null;
+  country: string | null;
+};
+
+type LibraryPinRow = {
+  building: {
+    city: string | null;
+    country: string | null;
+    location: unknown;
+    is_deleted: boolean | null;
+  } | null;
+};
+
+/**
+ * Ceiling on the rail's snapshot. `location` is a chunky column and this runs
+ * on the feed's first paint, so a runaway library degrades to its most recent
+ * slice rather than stalling the rail.
+ */
+const LIBRARY_PIN_LIMIT = 4000;
+
+/**
+ * The member's whole library — everything `/search?mode=library` maps —
+ * reduced to what the rail's density plate needs: a coordinate and a place
+ * name per building. `location` is PostGIS geography, so PostgREST hands it
+ * back as WKB/GeoJSON and `parseLocation` normalises it (the same route the
+ * localities API takes).
+ *
+ * `'saved'` is presentation vocabulary: the DB's status CHECK allows only
+ * `pending | visited | ignored`, so the library is `pending` + `visited`.
+ */
+export async function fetchLibraryPins(userId: string): Promise<LibraryPin[]> {
+  const { data, error } = await supabase
+    .from("user_buildings")
+    .select(
+      `
+      building:buildings!user_buildings_building_id_fkey(
+        city, country, location, is_deleted
+      )
+    `,
+    )
+    .eq("user_id", userId)
+    .in("status", ["pending", "visited"])
+    .limit(LIBRARY_PIN_LIMIT);
+
+  if (error) throw error;
+
+  return ((data ?? []) as unknown as LibraryPinRow[])
+    .map((row) => row.building)
+    .filter((building): building is NonNullable<LibraryPinRow["building"]> =>
+      building !== null && !building.is_deleted,
+    )
+    .map((building) => {
+      const coords = parseLocation(building.location);
+      return {
+        lat: coords?.lat ?? null,
+        lng: coords?.lng ?? null,
+        city: building.city,
+        country: building.country,
+      };
+    });
 }
 
 export type TrendingArchitect = {
