@@ -28,6 +28,20 @@ vi.mock("@/features/awards/hooks/useAwards", () => ({
   useAwardsByPerson: () => ({ data: [], isLoading: false }),
 }));
 
+vi.mock("@/features/profile", () => ({
+  FollowButton: () => <div data-testid="user-follow-button" />,
+}));
+
+vi.mock("@/features/credits/api/personFollows", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/features/credits/api/personFollows")>();
+  return {
+    ...actual,
+    getPersonFollowerCount: async () => 0,
+    getPersonFollowState: async () => false,
+    listPersonFollowers: async () => [],
+  };
+});
+
 const mocks = vi.hoisted(() => ({
   getPerson: vi.fn(),
   user: null as { id: string; email: string } | null,
@@ -303,6 +317,27 @@ describe("PersonDetails (QA 3.2 claimed)", () => {
     renderPage();
     expect(screen.queryAllByRole("button", { name: /Edit profile/i })).toHaveLength(0);
     expect(screen.queryByTestId("edit-person-form")).not.toBeInTheDocument();
+  });
+
+  it("stranger on a claimed person sees the user FollowButton; unclaimed shows FollowPersonButton", async () => {
+    mocks.loaderData = buildClaimedLoaderData({ claimStatus: "claimed", ownerUserId: "owner-1" });
+    mocks.getPerson.mockImplementation(async () => ({
+      person: mocks.loaderData.person,
+      credits: mocks.loaderData.credits,
+    }));
+    mocks.user = { id: "stranger", email: "s@test.com" };
+    renderPage();
+    expect(screen.getByTestId("user-follow-button")).toBeInTheDocument();
+    cleanup();
+
+    mocks.loaderData = buildLoaderData(); // unclaimed
+    mocks.getPerson.mockImplementation(async () => ({
+      person: mocks.loaderData.person,
+      credits: mocks.loaderData.credits,
+    }));
+    renderPage();
+    expect(screen.queryByTestId("user-follow-button")).not.toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /^Follow$/i })).toBeInTheDocument();
   });
 
   it("shows verified badge only when claim_status is verified", () => {

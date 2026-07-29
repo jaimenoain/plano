@@ -193,6 +193,9 @@ export default function Notifications() {
     ) {
       const buildingId = notification.metadata?.building_id;
       if (buildingId) navigate(`/building/${buildingId}`);
+    } else if (notification.type === "person_claimed") {
+      const personSlug = notification.metadata?.person_slug;
+      if (personSlug) navigate(`/person/${personSlug}`);
     } else if (notification.resource?.id) {
       navigate(`/review/${notification.resource.id}`);
     }

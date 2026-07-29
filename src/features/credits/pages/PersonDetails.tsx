@@ -22,7 +22,11 @@ import { ClaimPersonDialog } from "../components/ClaimPersonDialog";
 import { PersonHero } from "../components/PersonHero";
 import { PersonPortfolioSection } from "../components/PersonPortfolioSection";
 import { PersonAboutSection } from "../components/PersonAboutSection";
+import { FollowPersonButton } from "../components/FollowPersonButton";
+import { PersonFollowersDialog } from "../components/PersonFollowersDialog";
+import { getPersonFollowerCount, personFollowKeys } from "../api/personFollows";
 import { PersonAwardsSection, useAwardsByPerson } from "@/features/awards";
+import { FollowButton } from "@/features/profile";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { personDetailsLoader, type PersonDetailsLoaderData } from "./PersonDetails.loader";
 
@@ -125,6 +129,7 @@ export default function PersonDetails() {
   const { user } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [claimOpen, setClaimOpen] = useState(false);
+  const [followersOpen, setFollowersOpen] = useState(false);
 
   const { data: queryData } = useQuery({
     queryKey: personQueryKey(slug),
@@ -162,6 +167,13 @@ export default function PersonDetails() {
   // shares the same query, so this costs no extra fetch.
   const { data: awards = [], isLoading: awardsLoading } = useAwardsByPerson(person.id);
   const awardCount = awards.filter((a) => a.recipientType === "person").length;
+
+  // Follower count branches on claim state inside the api fn; keyed per person.
+  const { data: followerCount } = useQuery({
+    queryKey: personFollowKeys.count(person.id, person.claimedByUserId),
+    queryFn: () => getPersonFollowerCount(person),
+    staleTime: 60_000,
+  });
 
   const { buildingCount, roleCount } = useMemo(() => {
     const buildings = new Set<string>();
@@ -232,15 +244,38 @@ export default function PersonDetails() {
           lifeSpan={lifeSpan}
           isOwner={isOwner}
           onEdit={() => setEditOpen(true)}
+          visitorActions={
+            person.claimedByUserId ? (
+              // Claimed: following the person IS following the claiming user.
+              <FollowButton
+                userId={person.claimedByUserId}
+                className="min-h-11 px-5 text-xs sm:h-7 sm:min-h-0 sm:px-4"
+              />
+            ) : (
+              <FollowPersonButton
+                personId={person.id}
+                personName={person.name}
+                className="min-h-11 px-5 text-xs sm:h-7 sm:min-h-0 sm:px-4"
+              />
+            )
+          }
         />
 
         <EntityStatsBand
           cells={[
             { key: "buildings", value: buildingCount, label: "Buildings" },
             { key: "awards", value: awardsLoading ? "—" : awardCount, label: "Awards" },
+            {
+              key: "followers",
+              value: followerCount ?? "—",
+              label: "Followers",
+              onClick: () => setFollowersOpen(true),
+            },
             { key: "roles", value: roleCount, label: "Roles" },
           ]}
         />
+
+        <PersonFollowersDialog person={person} open={followersOpen} onOpenChange={setFollowersOpen} />
       </div>
 
       {showUnclaimedBanner ? (

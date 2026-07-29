@@ -30,6 +30,20 @@ vi.mock("@/features/awards/hooks/useAwards", () => ({
   useAwardsByPerson: () => ({ data: [], isLoading: false }),
 }));
 
+vi.mock("@/features/profile", () => ({
+  FollowButton: () => <div data-testid="user-follow-button" />,
+}));
+
+vi.mock("@/features/credits/api/personFollows", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/features/credits/api/personFollows")>();
+  return {
+    ...actual,
+    getPersonFollowerCount: async () => 3,
+    getPersonFollowState: async () => false,
+    listPersonFollowers: async () => [],
+  };
+});
+
 const mocks = vi.hoisted(() => ({
   getPerson: vi.fn(),
   loaderData: {} as unknown,

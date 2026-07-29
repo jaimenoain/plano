@@ -3295,7 +3295,22 @@ Migration `20270828000000_claim_person_rpc.sql` (Roadmap Phase 7 Task 7.1). **`S
 - **Idempotent:** if the row already has `claimed_by_user_id = auth.uid()` and `claim_status = 'claimed'`, returns `{ "ok": true, "person_id": "<uuid>" }` without error.
 - Otherwise requires `claim_status = 'unclaimed'` and `claimed_by_user_id IS NULL`; else `{ "ok": false, "error": "not_claimable" }`.
 - **Not found:** `{ "ok": false, "error": "not_found" }`.
-- On success: sets `claimed_by_user_id`, `claim_status = 'claimed'`, `updated_at`.
+- On success: sets `claimed_by_user_id`, `claim_status = 'claimed'`, `updated_at`, then (migration `20271187000000_person_follows.sql`) **converts person followers into user followers**: inserts `follows (follower_id → auth.uid())` for every `person_follows` row of this person (self-follow excluded, `ON CONFLICT DO NOTHING`), inserts one `person_claimed` notification per converted follower (`metadata: { person_id, person_name, person_slug }`; per-type opt-out applies via the notifications before-insert trigger), and deletes the person's `person_follows` rows. The conversion sits after all guards/early-returns, so an idempotent re-claim never re-fires it.
+
+### Component 4b: Table `person_follows` (follow an unclaimed person)
+
+Migration `20271187000000_person_follows.sql` (person ↔ user page alignment PR 2).
+
+```sql
+CREATE TABLE public.person_follows (
+  follower_user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  person_id        uuid NOT NULL REFERENCES public.people(id)   ON DELETE CASCADE,
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (follower_user_id, person_id)
+);
+```
+
+Holds follows of **unclaimed** people only — `claim_person` converts and deletes (one-way; see above). Once a person is claimed, the person page renders the ordinary user `FollowButton` against `claimed_by_user_id`, so the live graph is always `follows`. RLS mirrors `follows`: `SELECT USING (true)` (publicly countable), INSERT/DELETE to `authenticated` scoped to `follower_user_id = auth.uid()`, no UPDATE. Client access via `src/features/credits/api/personFollows.ts`.
 
 ### Component 5: Edge Function `notify-entity-claimed`
 
