@@ -24,7 +24,8 @@ export interface Notification {
     | "collection_collab_rejected"
     | "collection_collab_added"
     | "contribution_approved"
-    | "contribution_flagged";
+    | "contribution_flagged"
+    | "person_claimed";
   is_read: boolean;
   actor_id: string;
   recommendation_id?: string | null;
@@ -66,6 +67,9 @@ export interface Notification {
     building_slug?: string;
     building_short_id?: number;
     reason?: string;
+    person_id?: string;
+    person_name?: string;
+    person_slug?: string;
   };
   recommendation?: {
     id?: string;

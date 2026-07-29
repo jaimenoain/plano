@@ -49,6 +49,8 @@ export function notificationIcon(type: Notification["type"]): ReactNode {
     case "contribution_approved":
     case "contribution_flagged":
       return <ShieldCheck className="h-3.5 w-3.5 text-text-secondary" />;
+    case "person_claimed":
+      return <ShieldCheck className="h-3.5 w-3.5 text-text-secondary" />;
     default:
       return <Bell className="h-3.5 w-3.5 text-text-disabled" />;
   }
@@ -117,6 +119,8 @@ export function notificationTitle(n: Notification): string {
       return "Contribution Approved";
     case "contribution_flagged":
       return "Flagged for Review";
+    case "person_claimed":
+      return "Profile Claimed";
     default:
       return "Notification";
   }
@@ -354,6 +358,16 @@ export function notificationText(n: Notification): ReactNode {
               . Reason: <span className="italic">{reason}</span>
             </>
           ) : null}
+        </span>
+      );
+    }
+    case "person_claimed": {
+      const personName = n.metadata?.person_name?.trim();
+      return (
+        <span>
+          <span className="font-medium">{actorName}</span> claimed the profile{" "}
+          <span className="italic">{personName || "of a person you follow"}</span> — you now follow
+          them directly
         </span>
       );
     }

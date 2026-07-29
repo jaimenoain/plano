@@ -3749,6 +3749,39 @@ export type Database = {
           },
         ]
       }
+      person_follows: {
+        Row: {
+          created_at: string
+          follower_user_id: string
+          person_id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_user_id: string
+          person_id: string
+        }
+        Update: {
+          created_at?: string
+          follower_user_id?: string
+          person_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "person_follows_follower_user_id_fkey"
+            columns: ["follower_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "person_follows_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plano_updates: {
         Row: {
           author_id: string
