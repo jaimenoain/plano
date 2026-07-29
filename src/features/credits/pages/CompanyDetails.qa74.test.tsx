@@ -204,7 +204,8 @@ describe("CompanyDetails (QA 7.4 company claim dispute)", () => {
     renderPage();
 
     expect(await screen.findByRole("heading", { name: "StructCo GmbH" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /^Credits$/i })).toBeInTheDocument();
+    // Credits moved under the Portfolio tab with the profile-aligned layout.
+    expect(screen.getByRole("button", { name: /^Portfolio/ })).toBeInTheDocument();
     const disputeLink = await screen.findByRole("link", { name: /Dispute this claim/i });
     expect(disputeLink).toHaveAttribute("href", "/company/structco/dispute");
   });

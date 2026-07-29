@@ -7,5 +7,6 @@
  * Pages are deliberately NOT exported: routes reference them by file path in
  * `app/routes.ts`.
  */
-export { useAwardsByPerson } from "./hooks/useAwards";
+export { useAwardsByPerson, useAwardsByCompany } from "./hooks/useAwards";
 export { PersonAwardsSection } from "./components/PersonAwardsSection";
+export { CompanyAwardsSection } from "./components/CompanyAwardsSection";
