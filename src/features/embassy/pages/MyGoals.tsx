@@ -164,7 +164,12 @@ export default function MyGoalsPage() {
     staleTime: 30_000,
   });
 
-  const openTasks = allTasks.filter((t) => t.status === "todo" || t.status === "in_progress");
+  // The dashboard only shows the first 5, so surface the ones actually assigned
+  // to me before the rest of the chapter's. The RPC already orders by status
+  // then due date, and that order is preserved within each group.
+  const openTasks = allTasks
+    .filter((t) => t.status === "todo" || t.status === "in_progress")
+    .sort((a, b) => Number(b.assigned_to === user?.id) - Number(a.assigned_to === user?.id));
 
   // Fetch personal activity timeline
   const { data: timeline, isLoading: loadingTimeline } = useQuery({
@@ -226,12 +231,8 @@ export default function MyGoalsPage() {
         }
       />
 
-      {/* ─── Start here (aggregated ready tasks) ─── */}
-      {chapterId && (
-        <StartHereQueue chapterId={chapterId} preferredTools={membership?.preferred_tools} />
-      )}
-
-      {/* ─── Open Tasks ─── */}
+      {/* ─── Open Tasks — first, since these are assigned commitments with due
+           dates; the "Start here" queue below is only suggested work. ─── */}
       {(loadingTasks || openTasks.length > 0) && (
         <section className="space-y-4">
           <div className="flex items-center justify-between gap-4">
@@ -268,6 +269,11 @@ export default function MyGoalsPage() {
             </div>
           )}
         </section>
+      )}
+
+      {/* ─── Start here (aggregated ready tasks) ─── */}
+      {chapterId && (
+        <StartHereQueue chapterId={chapterId} preferredTools={membership?.preferred_tools} />
       )}
 
       <div className="space-y-8">

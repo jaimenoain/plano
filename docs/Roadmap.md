@@ -51,6 +51,9 @@ productive session; Phase 3 the return loop; Phase 4 holds gated bigger bets.
   into its tool with that item first. New `fetchStartHereTasks` + pure `rankStartHereTasks`
   (unit-tested) in `api/startHere.ts`; new `StartHereQueue` component; no new RPC/migration
   (reuses the existing chapter-scoped fetchers). Item-level auto-select left as follow-up.
+  Amended 2026-07-29: the queue sits *below* "Open tasks" on the Dashboard — assigned
+  chapter tasks with due dates are commitments and outrank suggested work; the open-tasks
+  list also puts tasks assigned to the viewer ahead of the rest of the chapter's.
 - **2.2 — In-tool photo upload.** Shipped 2026-07-23: Photography list rows and map
   gap-pins open an in-place `PhotoUploadSheet` (compress → `uploadFile` → `review_images`,
   mirroring the building-detail save path in a new `api/photoUpload.ts`); on success the

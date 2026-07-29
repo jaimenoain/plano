@@ -144,10 +144,12 @@ misconfiguration as a clear in-tool state.
 
 ### Phase 2 — Friction killers (the productive session)
 
-- **"Start here" task queue** at the top of the dashboard (and as the `/embassy` landing):
+- **"Start here" task queue** near the top of the dashboard (and as the `/embassy` landing):
   3–5 ready tasks aggregated from the existing queues, ranked by the (now-working) saved
   tool preference and chapter need, each deep-linking into the exact item. Extension of
-  `src/features/embassy/api/taskFeed.ts`; no new task types.
+  `src/features/embassy/api/taskFeed.ts`; no new task types. It sits directly below the
+  "Open tasks" list, which leads the dashboard: assigned tasks with due dates are
+  commitments, suggested work is not.
 - **In-tool photo upload:** upload sheet directly on Photography map/list items (reuse
   `useBuildingInteractions` + `uploadFile`), mark done, advance to next.
 - **Contribution outcome notifications:** new `contribution_approved` /
