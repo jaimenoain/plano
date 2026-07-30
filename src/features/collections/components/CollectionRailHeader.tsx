@@ -2,17 +2,22 @@
  * CollectionRailHeader.tsx
  *
  * The masthead at the top of the collection rail: a four-up cover mosaic when
- * the collection has enough imagery, then the name, owner, description, an
- * optional external link, and the permission-aware action cluster.
+ * the collection has enough imagery, then the name, owner, description and the
+ * labelled relationship actions.
  *
- * Extracted from `CollectionMapPage.tsx` unchanged — presentational only, every
- * decision (who may edit, what the actions do) still belongs to the page.
+ * This block scrolls away with the list — it is the collection's introduction,
+ * read once. The controls a reader keeps using (add, settings, tabs, search)
+ * live in `CollectionRailToolbar`, which stays pinned above it, so the title now
+ * has the full rail width to itself in every permission state.
+ *
+ * Presentational only; every decision (who may edit, what the actions do) still
+ * belongs to the page.
  */
 import { Link } from "react-router";
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getBuildingImageUrl } from "@/utils/image";
-import { CollectionAccessActions } from "./CollectionAccessActions";
+import { CollectionRelationshipActions } from "./CollectionAccessActions";
 import type { Collection } from "../types";
 
 interface CollectionRailHeaderProps {
@@ -24,8 +29,6 @@ interface CollectionRailHeaderProps {
   isLoggedIn: boolean;
   isFavorite: boolean;
   onToggleFavorite: () => void;
-  onAdd: () => void;
-  onOpenSettings: () => void;
 }
 
 export function CollectionRailHeader({
@@ -36,9 +39,10 @@ export function CollectionRailHeader({
   isLoggedIn,
   isFavorite,
   onToggleFavorite,
-  onAdd,
-  onOpenSettings,
 }: CollectionRailHeaderProps) {
+  // Editors get no labelled actions, so the row would otherwise render empty.
+  const hasActionRow = !canEdit || !!collection.external_link;
+
   return (
     <div className="border-b">
       {coverMosaicUrls.length >= 4 && (
@@ -55,38 +59,42 @@ export function CollectionRailHeader({
           ))}
         </div>
       )}
-      <div className="flex items-center justify-between gap-4 p-4">
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-2xl font-bold leading-tight tracking-tight">
+      <div className="space-y-3 p-4">
+        <div className="space-y-1">
+          <h1 className="wrap-break-word line-clamp-2 pb-[0.15em] text-2xl font-bold leading-tight tracking-tight">
             {collection.name}
           </h1>
-          <div className="text-sm text-text-secondary mb-1">
+          <p className="text-sm text-text-secondary">
             By:{" "}
-            <Link to={`/profile/${ownerUsername}`} className="hover:underline text-text-primary">
+            <Link to={`/profile/${ownerUsername}`} className="text-text-primary hover:underline">
               {ownerUsername}
             </Link>
-          </div>
-          {collection.description && (
-            <p className="text-sm text-text-secondary line-clamp-2">{collection.description}</p>
-          )}
-          {collection.external_link && (
-            <Button variant="outline" size="sm" className="mt-2 h-8" asChild>
-              <a href={collection.external_link} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="w-3 h-3 mr-2" />
-                Visit Link
-              </a>
-            </Button>
-          )}
+          </p>
         </div>
-        <CollectionAccessActions
-          canEdit={canEdit}
-          isLoggedIn={isLoggedIn}
-          collectionId={collection.id}
-          isFavorite={isFavorite}
-          onToggleFavorite={onToggleFavorite}
-          onAdd={onAdd}
-          onOpenSettings={onOpenSettings}
-        />
+
+        {collection.description && (
+          <p className="line-clamp-2 text-sm text-text-secondary">{collection.description}</p>
+        )}
+
+        {hasActionRow && (
+          <div className="flex flex-wrap items-center gap-2">
+            <CollectionRelationshipActions
+              canEdit={canEdit}
+              isLoggedIn={isLoggedIn}
+              collectionId={collection.id}
+              isFavorite={isFavorite}
+              onToggleFavorite={onToggleFavorite}
+            />
+            {collection.external_link && (
+              <Button variant="ghost" size="sm" asChild>
+                <a href={collection.external_link} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink />
+                  Visit link
+                </a>
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

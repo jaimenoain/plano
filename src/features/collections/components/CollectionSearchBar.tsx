@@ -1,7 +1,11 @@
 /**
  * CollectionSearchBar.tsx
  *
- * The "search within this collection" row at the top of the All Items tab.
+ * The "search within this collection" row, hosted by `CollectionRailToolbar` so
+ * it stays pinned while the list scrolls under it.
+ *
+ * Draws no border of its own: the toolbar owns the hairline that closes the
+ * pinned chrome, and two adjacent borders read as a double rule.
  *
  * Purely presentational — the page owns the query, the filtering and the map.
  * The result count is announced politely because the thing it describes (rows
@@ -35,7 +39,7 @@ export function CollectionSearchBar({
   onZoomToResults,
 }: CollectionSearchBarProps) {
   return (
-    <div role="search" className="shrink-0 border-b border-border-default px-4 py-3">
+    <div role="search" className="px-4 pb-3 pt-1">
       <SearchInput
         value={value}
         onValueChange={onValueChange}

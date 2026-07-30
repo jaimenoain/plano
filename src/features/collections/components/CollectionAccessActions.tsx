@@ -1,12 +1,17 @@
 /**
  * CollectionAccessActions.tsx
  *
- * The right-hand action cluster in the collection detail header. Renders one of
- * three honest permission states so a control is never shown that the database
- * would reject:
+ * The permission-aware controls in the collection detail header. Renders only
+ * what the database would actually accept, so a viewer never meets a button
+ * that fails:
  *   • owner / editor  → Add buildings + Settings (full edit)
- *   • logged-in guest → Favorite + Request to collaborate + View options
- *   • logged-out      → View options + Log in to collaborate
+ *   • logged-in guest → Favourite (primary) + Request to collaborate
+ *   • logged-out      → Favourite (routed through login) + Log in to collaborate
+ *
+ * Two exports because the header needs the title *between* them: the
+ * fixed-width icon cluster sits beside the collection name (it can only ever
+ * steal ~40–80px), while every labelled action lives in a wrapping row
+ * underneath, where a long CTA can never squeeze the title.
  */
 import { Link, useLocation } from "react-router";
 import { Plus, Settings, Star, SlidersHorizontal, UserPlus, LogIn, Clock } from "lucide-react";
@@ -18,90 +23,117 @@ import {
 } from "../hooks/useCollectionCollaboration";
 import { collaborationCtaState } from "../collaborationCopy";
 
-interface CollectionAccessActionsProps {
+interface UtilityActionsProps {
   canEdit: boolean;
-  isLoggedIn: boolean;
-  collectionId: string;
-  isFavorite: boolean;
-  onToggleFavorite: () => void;
   onAdd: () => void;
   /** Opens the settings sheet — full settings for editors, display-only for others. */
   onOpenSettings: () => void;
 }
 
-export function CollectionAccessActions({
+/**
+ * Icon-only controls that sit to the right of the collection name. Kept narrow
+ * and label-free on purpose: this is the only cluster the title competes with.
+ */
+export function CollectionHeaderUtilityActions({
   canEdit,
-  isLoggedIn,
-  collectionId,
-  isFavorite,
-  onToggleFavorite,
   onAdd,
   onOpenSettings,
-}: CollectionAccessActionsProps) {
-  const location = useLocation();
-  const redirectTarget = encodeURIComponent(`${location.pathname}${location.search}`);
-
-  const { data: requestStatus } = useMyCollaborationRequest(
-    collectionId,
-    isLoggedIn && !canEdit,
-  );
-  const requestCollaboration = useRequestCollaboration(collectionId);
-
-  // ── Owner / editor: full edit controls ──
+}: UtilityActionsProps) {
   if (canEdit) {
     return (
-      <div className="flex items-center gap-2 shrink-0">
-        <Button variant="ghost" size="icon" onClick={onAdd} aria-label="Add buildings">
-          <Plus className="h-5 w-5 text-text-secondary" />
+      <div className="flex shrink-0 items-center gap-1">
+        <Button variant="ghost" size="icon-sm" onClick={onAdd} aria-label="Add buildings">
+          <Plus className="text-text-secondary" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={onOpenSettings} aria-label="Collection settings">
-          <Settings className="h-5 w-5 text-text-secondary" />
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={onOpenSettings}
+          aria-label="Collection settings"
+        >
+          <Settings className="text-text-secondary" />
         </Button>
       </div>
     );
   }
 
   // The "view options" sheet is display-only for non-editors (map preferences, saved locally).
-  const viewOptionsButton = (
-    <Button variant="ghost" size="icon" onClick={onOpenSettings} aria-label="View options">
-      <SlidersHorizontal className="h-5 w-5 text-text-secondary" />
-    </Button>
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      <Button variant="ghost" size="icon-sm" onClick={onOpenSettings} aria-label="View options">
+        <SlidersHorizontal className="text-text-secondary" />
+      </Button>
+    </div>
   );
+}
 
-  // ── Logged out: invite to sign in ──
+interface RelationshipActionsProps {
+  canEdit: boolean;
+  isLoggedIn: boolean;
+  collectionId: string;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
+}
+
+/**
+ * The labelled actions a visitor can take on someone else's collection.
+ * Returns a fragment, not a wrapper — the header owns the wrapping row so it
+ * can sit the external-link button alongside these.
+ */
+export function CollectionRelationshipActions({
+  canEdit,
+  isLoggedIn,
+  collectionId,
+  isFavorite,
+  onToggleFavorite,
+}: RelationshipActionsProps) {
+  const location = useLocation();
+  const redirectTarget = encodeURIComponent(`${location.pathname}${location.search}`);
+
+  const { data: requestStatus } = useMyCollaborationRequest(collectionId, isLoggedIn && !canEdit);
+  const requestCollaboration = useRequestCollaboration(collectionId);
+
+  // Owners and editors have no relationship to form with their own collection.
+  if (canEdit) return null;
+
+  // ── Logged out: the primary action is still offered, routed through login ──
   if (!isLoggedIn) {
     return (
-      <div className="flex items-center gap-2 shrink-0">
-        {viewOptionsButton}
-        <Button asChild variant="outline" size="sm">
+      <>
+        <Button asChild size="sm">
           <Link to={`/login?redirect=${redirectTarget}`}>
-            <LogIn className="h-4 w-4 sm:mr-2" />
-            <span className="hidden sm:inline">Log in to collaborate</span>
+            <Star />
+            Add to favourites
           </Link>
         </Button>
-      </div>
+        <Button asChild variant="outline" size="sm">
+          <Link to={`/login?redirect=${redirectTarget}`}>
+            <LogIn />
+            Log in to collaborate
+          </Link>
+        </Button>
+      </>
     );
   }
 
-  // ── Logged-in non-collaborator: request to collaborate ──
+  // ── Logged-in non-collaborator: favourite first, collaboration second ──
   const ctaState = collaborationCtaState(requestStatus);
 
   return (
-    <div className="flex items-center gap-2 shrink-0">
+    <>
       <Button
-        variant="ghost"
-        size="icon"
+        size="sm"
+        variant={isFavorite ? "outline" : "default"}
         onClick={onToggleFavorite}
-        aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
-        className="text-text-secondary hover:text-feedback-warning"
+        aria-label={isFavorite ? "Remove from favourites" : "Add to favourites"}
       >
-        <Star className={cn("h-5 w-5", isFavorite && "fill-feedback-warning text-feedback-warning")} />
+        <Star className={cn(isFavorite && "fill-current")} />
+        {isFavorite ? "Favourited" : "Add to favourites"}
       </Button>
-      {viewOptionsButton}
       {ctaState.kind === "pending" ? (
         <Button variant="outline" size="sm" disabled aria-label="Collaboration request pending">
-          <Clock className="h-4 w-4 sm:mr-2" />
-          <span className="hidden sm:inline">Request pending</span>
+          <Clock />
+          Request pending
         </Button>
       ) : (
         <Button
@@ -110,10 +142,10 @@ export function CollectionAccessActions({
           onClick={() => requestCollaboration.mutate(undefined)}
           disabled={requestCollaboration.isPending}
         >
-          <UserPlus className="h-4 w-4 sm:mr-2" />
-          <span className="hidden sm:inline">{ctaState.label}</span>
+          <UserPlus />
+          {ctaState.label}
         </Button>
       )}
-    </div>
+    </>
   );
 }
