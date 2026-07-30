@@ -11,12 +11,45 @@
 --   3. After applying, run `npm run gen-types` and commit the regenerated
 --      src/integrations/supabase/types.ts in the SAME PR (see docs/migrations.md).
 --
--- Why this template exists — three recurring incident classes it prevents:
+-- Why this template exists — four recurring incident classes it prevents:
 --   * GRANT loss on DROP+CREATE: re-creating a function resets its privileges,
 --     causing 403/500s. ALWAYS re-REVOKE/GRANT after defining the function.
+--   * REVOKE ... FROM PUBLIC is NOT enough on this project. See below.
 --   * search_path hijacking: pin `set search_path = ''` (schema-qualify names).
 --   * statement_timeout on per-row SECURITY DEFINER loops: prefer SET-BASED
 --     bodies (one INSERT/UPDATE ... SELECT) over row-by-row PL/pgSQL loops.
+--
+-- ---------------------------------------------------------------------------
+-- REVOKE FROM PUBLIC DOES NOT LOCK A FUNCTION DOWN HERE. REVOKE anon AND
+-- authenticated BY NAME.
+-- ---------------------------------------------------------------------------
+-- Supabase configures this project with
+--
+--   ALTER DEFAULT PRIVILEGES IN SCHEMA public
+--     GRANT EXECUTE ON FUNCTIONS TO anon, authenticated;
+--
+-- so every function created in `public` gets a DIRECT grant to `anon` and
+-- `authenticated` the moment it is created. `revoke ... from public` drops only
+-- the PUBLIC pseudo-role and leaves those direct grants untouched — the
+-- function stays callable by anyone holding the publishable anon key.
+--
+-- This shipped a live hole: an anonymous `POST /rest/v1/rpc/run_weekly_digest`
+-- returned 200 and ran the function (fixed in #1671; the rest of the schema was
+-- swept in 20271194000000). ALWAYS name the roles:
+--
+--   revoke all on function public.fn(args) from public, anon, authenticated;
+--
+-- then GRANT back only the roles that genuinely need it.
+--
+-- BEFORE YOU REVOKE AN EXISTING FUNCTION, check three things — each has a live
+-- example in 20271194000000's header:
+--   1. Is it referenced by an RLS policy? Policy expressions are evaluated as
+--      the QUERYING role, and Postgres checks that role's EXECUTE privilege.
+--      Revoking breaks every read of the protected table.
+--   2. Is it called from a SECURITY INVOKER function that anon can reach? The
+--      caller's own privileges apply to nested calls. (Inside a SECURITY
+--      DEFINER function the owner's privileges apply, so those are safe.)
+--   3. Does the client call it? Grep `src/` for the name before deciding.
 -- ============================================================================
 
 create or replace function public.<fn_name>(<arg_name> <arg_type>)
@@ -32,6 +65,10 @@ as $$
 $$;
 
 -- Re-assert privileges every time (DROP/CREATE resets them). Default-deny, then grant narrowly.
-revoke execute on function public.<fn_name>(<arg_type>) from public;
+-- `public` alone is NOT default-deny here — anon and authenticated hold DIRECT
+-- grants from ALTER DEFAULT PRIVILEGES, so they must be named. See the header.
+revoke all on function public.<fn_name>(<arg_type>) from public, anon, authenticated;
 grant  execute on function public.<fn_name>(<arg_type>) to authenticated;
 -- grant execute on function public.<fn_name>(<arg_type>) to anon;   -- only if truly public
+-- Internal helper or privileged job? Grant nothing: `postgres` and `service_role`
+-- keep EXECUTE via their own grants, and pg_cron runs as `postgres`.

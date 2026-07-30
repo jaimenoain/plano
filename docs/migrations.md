@@ -24,16 +24,72 @@ stays a manual, deliberate step.**
 ## Writing an RPC (database function)
 
 Copy `supabase/migrations/_TEMPLATE_rpc.sql.txt` to a new timestamped `.sql` file. The template
-encodes three rules that have caused production incidents:
+encodes four rules that have caused production incidents:
 
 - **Always re-`REVOKE`/`GRANT EXECUTE`** after a `create or replace function` — re-creating a
   function resets its privileges (causes 403/500s otherwise).
+- **Revoke `anon` and `authenticated` by name**, not just `PUBLIC` — see below.
 - **Pin `set search_path = ''`** and schema-qualify object names.
 - **Prefer set-based bodies** over per-row `SECURITY DEFINER` loops (those hit the 8s
   `statement_timeout`).
 
-The migration check warns (non-blocking) if a changed migration defines a function with no
-`revoke ... from public`.
+The migration check warns (non-blocking) if a changed migration defines a function without
+re-asserting grants, or re-asserts them without naming `anon` and `authenticated`.
+
+### `REVOKE ... FROM PUBLIC` does not lock a function down
+
+Supabase configures this project with
+
+```sql
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated;
+```
+
+so **every function created in `public` receives a direct grant to `anon` and `authenticated` at
+creation time.** `revoke ... from public` drops only the `PUBLIC` pseudo-role; the direct grants
+survive and the function stays callable by anyone holding the publishable anon key.
+
+This was live: an anonymous `POST /rest/v1/rpc/run_weekly_digest` returned 200 and executed the
+function (fixed in #1671; the rest of the schema was audited and swept in
+`20271194000000_revoke_anon_execute_internal_rpcs.sql`). Always write:
+
+```sql
+revoke all on function public.fn(args) from public, anon, authenticated;
+grant execute on function public.fn(args) to authenticated;   -- only the roles that need it
+```
+
+Internal helpers and privileged jobs should grant nothing back: `postgres` and `service_role` keep
+`EXECUTE` through their own grants, and pg_cron jobs run as `postgres`.
+
+Verify with `has_function_privilege`, which accounts for both grant paths:
+
+```sql
+select has_function_privilege('anon', 'public.fn(uuid)', 'EXECUTE');
+```
+
+### Before revoking an *existing* function
+
+Three checks, each of which has caught a real would-be breakage:
+
+1. **Is it referenced by an RLS policy?** A policy's `USING`/`WITH CHECK` expression is evaluated as
+   the *querying* role, and Postgres checks that role's `EXECUTE` privilege on any function it
+   calls. Revoking turns every read of the protected table into
+   `ERROR: permission denied for function ...`. Find them with:
+
+   ```sql
+   select c.relname, pol.polname from pg_policy pol join pg_class c on c.oid = pol.polrelid
+   where coalesce(pg_get_expr(pol.polqual, pol.polrelid), '') ||
+         coalesce(pg_get_expr(pol.polwithcheck, pol.polrelid), '') ~ '\mfn_name\M';
+   ```
+
+2. **Is it called from a `SECURITY INVOKER` function that anon can reach?** Nested calls are checked
+   against the *caller's* privileges. Inside a `SECURITY DEFINER` function the owner's privileges
+   apply instead, so definer callers are safe.
+
+3. **Does the client call it?** Grep `src/`, `supabase/functions/` and `e2e/` for the bare name —
+   not just `.rpc("name"`, since call sites are often wrapped across lines.
+
+Trigger functions need no grant at all: Postgres does not check `EXECUTE` when firing a trigger, and
+PostgREST cannot invoke a `returns trigger` function directly.
 
 ## After applying a schema migration: regenerate types
 
