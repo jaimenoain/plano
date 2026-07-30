@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, type RefObject } from 'react';
 
 interface UseInfiniteScrollSentinelOptions {
   /** Wire the observer only while true (e.g. browse mode with rows present). */
@@ -10,6 +10,18 @@ interface UseInfiniteScrollSentinelOptions {
   fetchNextPage: () => void;
   /** Changes when a page settles (e.g. `data.pages.length`) — re-runs auto-fill. */
   pageCount: number | undefined;
+  /**
+   * The scroll viewport when the caller doesn't own it — e.g. the collection
+   * rail, where masthead, toolbar and list share ONE scroller owned by the page.
+   * When supplied the observer roots here and the returned `rootRef` goes unused.
+   *
+   * Be aware the geometric auto-fill probe measures whatever root it is given: a
+   * shared scroller that already overflows for reasons of its own (a masthead,
+   * say) reads as "a scroll is possible" and the probe stays silent even if the
+   * list itself is empty. Callers in that position need a content-level top-up
+   * of their own — see `useCollectionDiscoverInView`.
+   */
+  scrollRootRef?: RefObject<HTMLElement | null>;
 }
 
 /**
@@ -34,9 +46,14 @@ export function useInfiniteScrollSentinel({
   isFetching,
   fetchNextPage,
   pageCount,
+  scrollRootRef,
 }: UseInfiniteScrollSentinelOptions) {
   const targetRef = useRef<HTMLDivElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  // A caller-supplied scroller wins. Both sides are ref objects, so this holder
+  // is stable across renders and the observer effect keeps its narrow deps.
+  const viewportRef = useRef<RefObject<HTMLElement | null>>(rootRef);
+  viewportRef.current = scrollRootRef ?? rootRef;
 
   const loadMore = useCallback(() => {
     if (enabled && hasNextPage && !isFetchingNextPage) fetchNextPage();
@@ -50,7 +67,7 @@ export function useInfiniteScrollSentinel({
     if (!target) return;
     const observer = new IntersectionObserver(
       (entries) => { if (entries[0].isIntersecting) loadMoreRef.current(); },
-      { root: rootRef.current ?? null, rootMargin: '400px', threshold: 0 }
+      { root: viewportRef.current.current ?? null, rootMargin: '400px', threshold: 0 }
     );
     observer.observe(target);
     return () => observer.disconnect();
@@ -62,7 +79,7 @@ export function useInfiniteScrollSentinel({
   // (clientHeight 0 — e.g. the off-screen mobile sidebar) so it can't runaway.
   useEffect(() => {
     if (!enabled || !hasNextPage || isFetchingNextPage || isFetching) return;
-    const viewport = rootRef.current;
+    const viewport = viewportRef.current.current;
     if (!viewport || viewport.clientHeight === 0) return;
     if (viewport.scrollHeight <= viewport.clientHeight + 1) fetchNextPage();
   }, [enabled, hasNextPage, isFetchingNextPage, isFetching, fetchNextPage, pageCount]);

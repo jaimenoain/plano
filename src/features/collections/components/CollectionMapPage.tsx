@@ -40,9 +40,12 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
 import { mapCollectionItem } from "../mapCollectionItem";
+import { railTabCount, resolveRailTab, shouldShowRailTabs, type CollectionRailTab } from "../railTabs";
+import { CollectionDiscoverPanel } from "./CollectionDiscoverPanel";
+import { CollectionMapOverlays } from "./CollectionMapOverlays";
 import { getBoundsFromBuildings, isLngLatInBounds, type Bounds } from "@/utils/map";
 import { collectionStructuredData, SITE_URL } from "@/features/buildings/utils/structuredData";
-import { Loader2, ListFilter, MapPinPlus, Building2, X } from "lucide-react";
+import { Loader2, ListFilter, MapPinPlus, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SearchModeToggle } from "@/features/search/components/SearchModeToggle";
@@ -180,7 +183,7 @@ export default function CollectionMap() {
   const [showPlanRoute, setShowPlanRoute] = useState(false);
   const [hasPlanRouteOpened, setHasPlanRouteOpened] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
-  const [activeTab, setActiveTab] = useState<'items' | 'itinerary'>('items');
+  const [railTab, setRailTab] = useState<CollectionRailTab>('items');
 
   // The rail scrolls as one column; the toolbar sticks once the masthead is gone.
   const railScrollRef = useRef<HTMLDivElement>(null);
@@ -294,6 +297,13 @@ export default function CollectionMap() {
   // Write access = exactly what RLS permits: owner or editor contributor. Admins have no
   // RLS bypass on collections, so they are treated as ordinary viewers here (no failing UI).
   const canEdit = isOwner || isEditorContributor;
+
+  // The rail's tab strip is conditional twice over, so the rendered tab is
+  // derived rather than corrected: switch discovery off while standing on
+  // Discover and the next render is already back on the collection.
+  const discoveryEnabled = showAllBuildings && canEdit;
+  const railTabCtx = { hasItinerary: !!collection?.itinerary, discoveryEnabled };
+  const activeTab = resolveRailTab(railTab, railTabCtx);
 
   // Consume-once deep links (owner/editor only): ?settings=collaborators opens the settings sheet on
   // the Collaborators tab; ?addBuildings=1&createdBuilding=<id> is the "Create new building" return
@@ -1067,7 +1077,7 @@ toast({
           viewMode === 'list' ? "order-2 flex h-full lg:order-2" : "hidden lg:flex lg:order-2",
         )}
         >
-            <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'items' | 'itinerary')} className="flex min-h-0 w-full flex-1 flex-col">
+            <Tabs value={activeTab} onValueChange={(val) => { setRailTab(val as CollectionRailTab); railScrollRef.current?.scrollTo({ top: 0 }); }} className="flex min-h-0 w-full flex-1 flex-col">
                 <div ref={railScrollRef} className="min-h-0 flex-1 overflow-y-auto">
                     <CollectionRailHeader
                         collection={collection}
@@ -1104,10 +1114,11 @@ toast({
                             />
                         )}
                     >
-                        {collection.itinerary && (
-                            <TabsList className="w-full grid grid-cols-2">
+                        {shouldShowRailTabs(railTabCtx) && (
+                            <TabsList className={cn("w-full grid", railTabCount(railTabCtx) === 3 ? "grid-cols-3" : "grid-cols-2")}>
                                 <TabsTrigger value="items">All Items</TabsTrigger>
-                                <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
+                                {collection.itinerary && <TabsTrigger value="itinerary">Itinerary</TabsTrigger>}
+                                {discoveryEnabled && <TabsTrigger value="discover">Discover</TabsTrigger>}
                             </TabsList>
                         )}
                     </CollectionRailToolbar>
@@ -1169,6 +1180,15 @@ toast({
                             )}
                         </div>
                     </TabsContent>
+
+                    <TabsContent value="discover" className="m-0 mt-0 p-0 data-[state=inactive]:hidden">
+                        <CollectionDiscoverPanel
+                            collectionId={collection.id}
+                            bounds={viewportBounds}
+                            excludeBuildingIds={existingBuildingIds}
+                            scrollRootRef={railScrollRef}
+                        />
+                    </TabsContent>
                 </div>
             </Tabs>
         </div>
@@ -1200,7 +1220,7 @@ toast({
                     showItinerary={activeTab === 'itinerary'}
                     onViewportBoundsChange={setViewportBounds}
                     fitBoundsRequest={search.fitBoundsRequest}
-                    discoveryEnabled={showAllBuildings && canEdit}
+                    discoveryEnabled={discoveryEnabled}
                     hideCollectionPins={hideCollectionPins}
                     collectionBuildingIds={existingBuildingIds}
                     onAddToCollection={
@@ -1213,75 +1233,24 @@ toast({
                         : undefined
                     }
                     bottomLeftOverlay={
+                      // The guard stays here: the map wraps whatever it is handed
+                      // in a spaced container, so an always-truthy element would
+                      // cost an empty row even when every chip renders nothing.
                       searchApplies || ((showSavedCandidates || showAllBuildings) && canEdit) ? (
-                      <>
-                      {/* Why pins are missing. Without this the filter is invisible
-                          on mobile, where the search box lives in the other pane. */}
-                      {searchApplies && (
-                        <div className="flex items-center gap-2 border border-border-default bg-surface-card/90 px-2 py-1.5 backdrop-blur-xs">
-                          <span className="truncate text-xs text-text-secondary">
-                            Filtered: “{search.appliedQuery}”
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => search.setQuery("")}
-                            aria-label="Clear collection search"
-                            className="shrink-0 text-text-disabled transition-colors hover:text-text-primary"
-                          >
-                            <X className="h-3.5 w-3.5" strokeWidth={1.5} />
-                          </button>
-                        </div>
-                      )}
-                      {showSavedCandidates && canEdit ? (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          className="w-full shadow-none border border-border-default bg-surface-card/95 backdrop-blur-xs"
-                          disabled={
-                            visibleSavedCandidatesToAdd.length === 0 ||
-                            !viewportBounds ||
-                            isAddingVisibleCandidates
-                          }
-                          onClick={handleOpenAddVisibleConfirm}
-                        >
-                          {isAddingVisibleCandidates ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 shrink-0 animate-spin" />
-                              Adding…
-                            </>
-                          ) : (
-                            <>
-                              <MapPinPlus className="h-4 w-4 mr-2 shrink-0" />
-                              <span className="truncate">
-                                Add in view
-                                {visibleSavedCandidatesToAdd.length > 0
-                                  ? ` (${visibleSavedCandidatesToAdd.length})`
-                                  : ""}
-                              </span>
-                            </>
-                          )}
-                        </Button>
-                      ) : null}
-                      {/* The discovery layer changes what the map means; say so, and
-                          make it one tap to leave — especially once the collection's
-                          own pins are hidden. */}
-                      {showAllBuildings && canEdit ? (
-                        <div className="flex items-center gap-2 border border-border-default bg-surface-card/90 px-2 py-1.5 backdrop-blur-xs">
-                          <span className="truncate text-xs text-text-secondary">
-                            {hideCollectionPins ? "Discovery · collection hidden" : "Discovery view"}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleShowAllBuildingsChange(false)}
-                            aria-label="Turn off discovery view"
-                            className="shrink-0 text-text-disabled transition-colors hover:text-text-primary"
-                          >
-                            <X className="h-3.5 w-3.5" strokeWidth={1.5} />
-                          </button>
-                        </div>
-                      ) : null}
-                      </>
+                      <CollectionMapOverlays
+                        canEdit={canEdit}
+                        searchApplies={searchApplies}
+                        appliedQuery={search.appliedQuery}
+                        onClearSearch={() => search.setQuery("")}
+                        showSavedCandidates={showSavedCandidates}
+                        addInViewCount={visibleSavedCandidatesToAdd.length}
+                        isAddInViewDisabled={!viewportBounds || isAddingVisibleCandidates}
+                        isAddingInView={isAddingVisibleCandidates}
+                        onAddInView={handleOpenAddVisibleConfirm}
+                        showAllBuildings={showAllBuildings}
+                        hideCollectionPins={hideCollectionPins}
+                        onExitDiscovery={() => handleShowAllBuildingsChange(false)}
+                      />
                       ) : undefined
                     }
                 />
@@ -1295,7 +1264,7 @@ toast({
                         <Button
                             variant="secondary"
                             className="shadow-none rounded-full"
-                            onClick={() => setActiveTab('itinerary')}
+                            onClick={() => setRailTab('itinerary')}
                         >
                             <ListFilter className="w-4 h-4 mr-2" />
                             Itinerary
@@ -1318,9 +1287,9 @@ toast({
                   refetchItems();
                   queryClient.invalidateQueries({ queryKey: ["collection", slug, ownerProfile?.id] });
                   if (action === 'created') {
-                    setActiveTab('itinerary');
+                    setRailTab('itinerary');
                   } else if (action === 'removed') {
-                    setActiveTab('items');
+                    setRailTab('items');
                   }
               }}
             />

@@ -8,4 +8,5 @@ export { MAP_MARKER_FILL } from "./constants/mapMarkerFills";
 export { BuildingListRow } from "./components/BuildingListRow";
 export { PlanoMap } from "./components/PlanoMap";
 export { MapProvider, useMapContext, useOptionalMapContext } from "./providers/MapContext";
+export { useInfiniteScrollSentinel } from "./hooks/useInfiniteScrollSentinel";
 export type { ClusterResponse } from "./hooks/useMapData";
