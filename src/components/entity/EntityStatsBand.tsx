@@ -22,6 +22,15 @@ const GRID_BY_COUNT: Record<number, string> = {
   4: "grid-cols-2 sm:grid-cols-4",
 };
 
+// The band is flush with the page's content column, so a cell that opens a row
+// takes no left inset — only the ones sitting against a hairline do. Four cells
+// wrap 2×2 (see GRID_BY_COUNT), so cell 3 opens a row on phones but not sm+.
+function leftInset(index: number, count: number) {
+  if (index === 0) return "pl-0";
+  if (count === 4 && index === 2) return "pl-0 sm:pl-5";
+  return "pl-4 sm:pl-5";
+}
+
 function StatValue({ value }: { value: number | string }) {
   return (
     <span className="block text-4xl font-bold tabular-nums leading-none tracking-tight text-text-primary">
@@ -35,29 +44,31 @@ function StatLabel({ children }: { children: string }) {
 }
 
 export function EntityStatsBand({ cells }: EntityStatsBandProps) {
-  const cellClass = "bg-surface-default px-1 pt-6 pb-5 text-left";
+  const cellClass = "bg-surface-default pr-4 pt-6 pb-5 text-left sm:pr-5";
   const gridClass = GRID_BY_COUNT[cells.length] ?? GRID_BY_COUNT[4];
 
   return (
     <div className={`mt-12 grid gap-px border-y border-border-default bg-border-default ${gridClass}`}>
-      {cells.map((cell) =>
-        cell.onClick ? (
+      {cells.map((cell, index) => {
+        const padClass = `${cellClass} ${leftInset(index, cells.length)}`;
+
+        return cell.onClick ? (
           <button
             key={cell.key}
             type="button"
             onClick={cell.onClick}
-            className={`${cellClass} transition-opacity hover:opacity-60 active:opacity-60`}
+            className={`${padClass} transition-opacity hover:opacity-60 active:opacity-60`}
           >
             <StatValue value={cell.value} />
             <StatLabel>{cell.label}</StatLabel>
           </button>
         ) : (
-          <div key={cell.key} className={cellClass}>
+          <div key={cell.key} className={padClass}>
             <StatValue value={cell.value} />
             <StatLabel>{cell.label}</StatLabel>
           </div>
-        ),
-      )}
+        );
+      })}
     </div>
   );
 }

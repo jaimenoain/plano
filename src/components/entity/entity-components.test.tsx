@@ -53,6 +53,34 @@ describe("EntityStatsBand", () => {
     expect(four.firstElementChild?.className).toContain("sm:grid-cols-4");
   });
 
+  it("drops the left inset on cells that open a row, at each breakpoint", () => {
+    const { container } = render(
+      <EntityStatsBand
+        cells={[
+          { key: "a", value: 1, label: "A" },
+          { key: "b", value: 2, label: "B" },
+          { key: "c", value: 3, label: "C" },
+          { key: "d", value: 4, label: "D" },
+        ]}
+      />,
+    );
+    const cellClasses = Array.from(container.firstElementChild?.children ?? []).map(
+      (cell) => cell.className,
+    );
+
+    // Cell 1 opens a row at every width; cell 3 only on phones, where 4 cells
+    // wrap 2×2 — so it keeps a left inset from `sm:` up.
+    expect(cellClasses[0]).toContain("pl-0");
+    expect(cellClasses[0]).not.toContain("sm:pl-5");
+    expect(cellClasses[2]).toContain("pl-0");
+    expect(cellClasses[2]).toContain("sm:pl-5");
+
+    // Cells sitting against a hairline clear it at both widths.
+    expect(cellClasses[1]).toContain("pl-4");
+    expect(cellClasses[3]).toContain("pl-4");
+    expect(cellClasses.every((c) => c.includes("pr-4"))).toBe(true);
+  });
+
   it("renders string values verbatim and formats numbers", () => {
     render(
       <EntityStatsBand
