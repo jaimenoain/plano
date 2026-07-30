@@ -2,13 +2,23 @@
  * CollectionRailHeader.tsx
  *
  * The masthead at the top of the collection rail: a four-up cover mosaic when
- * the collection has enough imagery, then the name, owner, description and the
- * labelled relationship actions.
+ * the collection has enough imagery, then the title, a byline, the description
+ * and the labelled relationship actions.
  *
  * This block scrolls away with the list — it is the collection's introduction,
  * read once. The controls a reader keeps using (add, settings, tabs, search)
- * live in `CollectionRailToolbar`, which stays pinned above it, so the title now
- * has the full rail width to itself in every permission state.
+ * live in `CollectionRailToolbar`, which stays pinned below it, so the title has
+ * the full rail width to itself in every permission state.
+ *
+ * Design pre-flight
+ * - Byline: one line carrying two facts — who made this, and how big it is —
+ *   in the editorial `author · count` form. It used to read "By: <name>" and
+ *   spend a whole line on a label; the position under a title already says
+ *   "by", and the size of a collection is the first thing a reader wants and
+ *   was previously only visible mid-search.
+ * - Rules: none of its own. The masthead is the introduction, the toolbar below
+ *   it closes the chrome with a single hairline; a second rule here boxed the
+ *   title in and made the rail read as a stack of panels rather than one column.
  *
  * Presentational only; every decision (who may edit, what the actions do) still
  * belongs to the page.
@@ -25,6 +35,8 @@ interface CollectionRailHeaderProps {
   ownerUsername?: string | null;
   /** Up to four image URLs; the mosaic renders only at a full row of four. */
   coverMosaicUrls: string[];
+  /** Entries in the collection — the second half of the byline. */
+  entryCount?: number;
   canEdit: boolean;
   isLoggedIn: boolean;
   isFavorite: boolean;
@@ -35,6 +47,7 @@ export function CollectionRailHeader({
   collection,
   ownerUsername,
   coverMosaicUrls,
+  entryCount,
   canEdit,
   isLoggedIn,
   isFavorite,
@@ -44,7 +57,7 @@ export function CollectionRailHeader({
   const hasActionRow = !canEdit || !!collection.external_link;
 
   return (
-    <div className="border-b">
+    <div>
       {coverMosaicUrls.length >= 4 && (
         <div className="grid grid-cols-4 gap-mosaic-gap bg-border-default">
           {coverMosaicUrls.map((url, index) => (
@@ -59,25 +72,36 @@ export function CollectionRailHeader({
           ))}
         </div>
       )}
-      <div className="space-y-3 p-4">
-        <div className="space-y-1">
-          <h1 className="wrap-break-word line-clamp-2 pb-[0.15em] text-2xl font-bold leading-tight tracking-tight">
-            {collection.name}
-          </h1>
-          <p className="text-sm text-text-secondary">
-            By:{" "}
+      <div className="px-4 pb-2 pt-4">
+        <h1 className="wrap-break-word line-clamp-2 pb-[0.15em] text-2xl font-bold leading-tight tracking-tight">
+          {collection.name}
+        </h1>
+        <p className="mt-1 text-sm text-text-secondary">
+          {ownerUsername && (
             <Link to={`/profile/${ownerUsername}`} className="text-text-primary hover:underline">
               {ownerUsername}
             </Link>
-          </p>
-        </div>
+          )}
+          {ownerUsername && entryCount !== undefined && (
+            <span aria-hidden className="px-1.5 text-text-disabled">
+              ·
+            </span>
+          )}
+          {entryCount !== undefined && (
+            <span>
+              {entryCount} {entryCount === 1 ? "entry" : "entries"}
+            </span>
+          )}
+        </p>
 
         {collection.description && (
-          <p className="line-clamp-2 text-sm text-text-secondary">{collection.description}</p>
+          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-text-secondary">
+            {collection.description}
+          </p>
         )}
 
         {hasActionRow && (
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <CollectionRelationshipActions
               canEdit={canEdit}
               isLoggedIn={isLoggedIn}
