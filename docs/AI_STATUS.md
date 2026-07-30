@@ -8,6 +8,30 @@
 **Rollout ≠ refinement:** The May 2026 rollout (Phases 0–7) wired semantic tokens, removed raw palette classes, and connected real data (e.g. `get_feed` on the home feed). That work is **complete**. The refinement programme ([ROADMAP.md](ROADMAP.md), Phases R0–R9) delivered editorial layout, typography rhythm, kit fidelity, and per-page audit evidence across shell, editorial spine, discovery, identity, events, auth/token flows, embassy, and admin. Tracking: all families `refined` or `complete` in [DESIGN_SYSTEM_SCREEN_INVENTORY.md](DESIGN_SYSTEM_SCREEN_INVENTORY.md).
 
 ## CURRENT_ARCHITECTURE_SNAPSHOT
+- **A building is now findable by its architect (2026-07-30):** `buildings.search_vector` is built by
+  the `buildings_search_vector_update` trigger from six of the building's *own* columns and has never
+  held credits, so `search_buildings_v2` — the authoritative text search behind `/search` Find mode
+  and the collection "not in this collection" suggestions — could not find a building by its
+  architect. Against prod, `zaha` returned *Hanaha* and *Zazzle*; `zaha hadid` returned *Hanaha*
+  alone. Two other surfaces already matched credits (`get_buildings_list` ILIKEs credit names; the
+  client-side `filterCollectionItems.ts` folds them into its haystack), so an item findable *inside* a
+  collection by its architect was unfindable in the database. Migration
+  `20271192000000_search_buildings_v2_credit_name_search.sql` (**applied + verified 2026-07-30**)
+  adds a `credit_hits` CTE resolving `people`/`companies` names through `building_credits`, qualifying
+  on `strict_word_similarity(query, name) >= 0.6` behind two index-driven predicates
+  (`ILIKE` + `<<%`) over the existing `people_name_trgm_idx`/`companies_name_trgm_idx`, and adds
+  `0.35 × sim` to `rank_score`. Folding credits *into* `search_vector` was rejected — it would
+  write-amplify all 31,563 `building_credits` rows and fan a company rename across its whole
+  portfolio; see [ADR 0023](decisions/0023-architect-name-search.md). Verified on prod: `zaha` → 20
+  hits led by Zaha Hadid Architects buildings at ~0.42; `oma`, `renzo piano` put the literally-named
+  building first; the typo `zha hadid` still finds her work. **No measurable cost** — warm timings are
+  ~310–370ms with or without credit hits (the RPC's pre-existing per-row cost dominates). Gotchas
+  worth keeping: plain `word_similarity` is far too loose (`ar` matched 4,938 of 16,447 companies) and
+  whole-string `similarity` far too tight (`'Zaha Hadid Architects'` vs `zaha` = 0.227, under the
+  RPC's own 0.2 floor); and a function-level `SET pg_trgm.strict_word_similarity_threshold` **cannot
+  be used** — Supabase's `postgres` role may only put an extension GUC in a function's SET clause
+  while that extension's library happens to be loaded in the backend, so `CREATE FUNCTION` fails with
+  *"permission denied to set parameter"* on some pooled connections and succeeds on others.
 - **Circular building merges fixed — "Farnsworth House" was unfindable (2026-07-30):** `/search`
   returned zero results for the first building ever added, because the catalogue held two Farnsworth
   rows and `admin_audit_logs` shows the same admin merging them **twice in opposite directions**

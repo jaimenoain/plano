@@ -27,3 +27,5 @@ Format: context → decision → consequences. Keep them under a page.
 | [0019](0019-risk-based-uat.md) | Risk-based, automation-first UAT: per-phase `X.98` gate only when depended on, plus one Final UAT |
 | [0020](0020-migrations-via-management-api.md) | Apply migrations via the Supabase Management API + `.env.local` PAT, not the single-account MCP connector |
 | [0021](0021-collection-map-two-cluster-sources.md) | The collection map merges two cluster sources: client-side for the collection, `get_map_clusters_v3` for the discovery layer |
+| [0022](0022-building-merge-invariants.md) | Building merges hold three invariants (live rows carry no `merged_into_id`, pointers resolve in one hop, one survivor owns all content) |
+| [0023](0023-architect-name-search.md) | Architect/firm names are searched at query time in `search_buildings_v2`, not folded into `buildings.search_vector` |
