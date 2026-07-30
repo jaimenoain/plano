@@ -6,12 +6,25 @@
 //
 // AUTH: this function is deliberately absent from supabase/config.toml, so the platform's
 // verify_jwt=true is the outer gate. That alone is NOT sufficient — verify_jwt accepts any
-// logged-in user's JWT, not just the service role — so the bearer token is compared against
-// SUPABASE_SERVICE_ROLE_KEY below. There is no browser caller, hence no CORS/OPTIONS block.
+// logged-in user's JWT, not just the service role.
+//
+// The real gate is Postgres: we run get_pending_weekly_digest_emails with the CALLER's
+// token, and only service_role holds EXECUTE on it. Anyone else gets SQLSTATE 42501 and we
+// return 403. This is deliberately not a string comparison against
+// SUPABASE_SERVICE_ROLE_KEY — this project has both a legacy service-role JWT (what the
+// pg_net caller sends, from vault.decrypted_secrets) and a newer opaque sb_secret_ key, and
+// matching the wrong one silently 403s the weekly cron run. Letting the database decide is
+// format-agnostic and cannot drift.
+//
+// There is no browser caller, hence no CORS/OPTIONS block.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.43.0'
 import { Resend } from 'https://esm.sh/resend@2.0.0'
 import React from 'https://esm.sh/react@18.3.1'
+// Render to HTML here and send `html:` rather than handing Resend a React element via
+// `react:` — that path uses Resend's own bundled @react-email/render, whose React copy
+// we do not control, and a mismatch surfaces only at send time as React error #31.
+import { render } from 'https://esm.sh/@react-email/render@0.0.9?deps=react@18.3.1,react-dom@18.2.0'
 import { WeeklyDigestEmail } from '../_shared/emails/WeeklyDigestEmail.tsx'
 import {
   chapterName,
@@ -58,7 +71,7 @@ Deno.serve(async (req) => {
   }
 
   const bearer = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '').trim()
-  if (bearer !== serviceRoleKey) {
+  if (!bearer) {
     return json(403, { error: 'Forbidden' })
   }
 
@@ -70,7 +83,11 @@ Deno.serve(async (req) => {
   }
 
   const siteUrl = (Deno.env.get('SITE_URL') ?? 'https://plano.app').replace(/\/$/, '')
-  const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false } })
+  // Acts with the CALLER's authority, not ours — this client is the auth gate.
+  const admin = createClient(supabaseUrl, bearer, {
+    auth: { persistSession: false },
+    global: { headers: { Authorization: `Bearer ${bearer}` } },
+  })
   const resend = new Resend(resendApiKey)
 
   const { data, error } = await admin.rpc('get_pending_weekly_digest_emails', {
@@ -79,6 +96,11 @@ Deno.serve(async (req) => {
   })
 
   if (error) {
+    // 42501 = insufficient_privilege. Only service_role holds EXECUTE on this function,
+    // so anything else lands here and is rejected by the database, not by us.
+    if (error.code === '42501') {
+      return json(403, { error: 'Forbidden' })
+    }
     console.error('send_weekly_digest: could not read pending digests', error)
     return json(500, { error: 'Could not read pending digests' })
   }
@@ -105,11 +127,8 @@ Deno.serve(async (req) => {
     }
 
     try {
-      await resend.emails.send({
-        from: 'PLANO <hello@plano.app>',
-        to: row.email,
-        subject: digestSubject(chapter),
-        react: React.createElement(WeeklyDigestEmail, {
+      const html = await render(
+        React.createElement(WeeklyDigestEmail, {
           recipientName: row.username || 'Ambassador',
           chapterName: chapter,
           weekLabel: formatWeekLabel(payload.weekStart, payload.weekEnd),
@@ -126,6 +145,13 @@ Deno.serve(async (req) => {
           settingsUrl: `${siteUrl}/notifications`,
           siteUrl,
         }),
+      )
+
+      await resend.emails.send({
+        from: 'PLANO <hello@plano.app>',
+        to: row.email,
+        subject: digestSubject(chapter),
+        html,
       })
 
       await admin

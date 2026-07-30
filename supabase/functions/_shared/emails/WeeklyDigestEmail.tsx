@@ -1,17 +1,30 @@
 import React from 'https://esm.sh/react@18.3.1'
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Hr,
-  Html,
-  Link,
-  Preview,
-  Section,
-  Text,
-} from 'https://esm.sh/@react-email/components@1.0.8'
+
+// Imported per-subpackage with `?deps=react@18.3.1`, NOT from the
+// `@react-email/components` barrel. Two separate failures forced this shape:
+//
+//  1. The barrel side-effect-imports `@react-email/render`, which pulls in `prettier`,
+//     which throws at module load under Deno ("The argument 'filename' must be a file
+//     URL object…"). That kills the function at boot with a WORKER_ERROR before any
+//     request is served — verified by deploying it and getting 500 on every call.
+//  2. Without `?deps=`, each subpackage bundles its OWN React copy, so their elements
+//     cross instances and rendering dies with React error #31 ("Objects are not valid
+//     as a React child"). `?deps=` makes esm.sh share one React.
+//
+// Versions below are the exact ones `@react-email/components@1.0.8` resolves to.
+// NOTE: every other template in _shared/emails/ still imports the barrel and therefore
+// cannot boot — audited separately.
+import { Body } from 'https://esm.sh/@react-email/body@0.2.1?deps=react@18.3.1'
+import { Button } from 'https://esm.sh/@react-email/button@0.2.1?deps=react@18.3.1'
+import { Container } from 'https://esm.sh/@react-email/container@0.0.16?deps=react@18.3.1'
+import { Head } from 'https://esm.sh/@react-email/head@0.0.13?deps=react@18.3.1'
+import { Heading } from 'https://esm.sh/@react-email/heading@0.0.16?deps=react@18.3.1'
+import { Hr } from 'https://esm.sh/@react-email/hr@0.0.12?deps=react@18.3.1'
+import { Html } from 'https://esm.sh/@react-email/html@0.0.12?deps=react@18.3.1'
+import { Link } from 'https://esm.sh/@react-email/link@0.0.13?deps=react@18.3.1'
+import { Preview } from 'https://esm.sh/@react-email/preview@0.0.14?deps=react@18.3.1'
+import { Section } from 'https://esm.sh/@react-email/section@0.0.17?deps=react@18.3.1'
+import { Text } from 'https://esm.sh/@react-email/text@0.1.6?deps=react@18.3.1'
 
 export interface WeeklyDigestRow {
   label: string
