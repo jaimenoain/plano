@@ -1,6 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { Resend } from 'https://esm.sh/resend@2.0.0'
 import React from 'https://esm.sh/react@18.3.1'
+// Render to HTML here and send `html:` rather than handing Resend a React element via
+// `react:` — that path uses Resend's own bundled @react-email/render, whose React copy
+// we do not control, and a mismatch surfaces only at send time as React error #31.
+import { render } from 'https://esm.sh/@react-email/render@0.0.9?deps=react@18.3.1,react-dom@18.2.0'
 import { EntityClaimedEmail } from '../_shared/emails/EntityClaimedEmail.tsx'
 
 const corsHeaders = {
@@ -144,10 +148,12 @@ Deno.serve(async (req) => {
         from: 'PLANO <hello@plano.app>',
         to: [to],
         subject,
-        react: React.createElement(EntityClaimedEmail, {
-          personName,
-          siteUrl,
-        }),
+        html: await render(
+          React.createElement(EntityClaimedEmail, {
+            personName,
+            siteUrl,
+          })
+        ),
       })
       sent += 1
     } catch (e) {
