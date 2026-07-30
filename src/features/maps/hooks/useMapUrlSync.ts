@@ -57,13 +57,11 @@ export function useMapUrlSync(
     const committed = searchParams.toString();
     if (committed === lastFlushedRef.current) return; // our own echo → ignore
     lastFlushedRef.current = committed;
-    const parsed = parseMapStateFromParams(searchParams);
-    // hydrateFromURL sets mode unconditionally and a mode-less URL parses to
-    // null — without this override every echo would silently reset a forced
-    // mode and /map would fall back to global ranking.
-    store.getState().hydrateFromURL(
-      forcedMode ? { ...parsed, mode: forcedMode } : parsed
-    );
+    // The forced mode goes INTO the parser: hydrateFromURL replaces mode AND
+    // filters wholesale, and a mode-less URL parses to null. Patching only
+    // `mode` afterwards would leave /map falling back to global ranking (mode)
+    // and, until useBuildingSearch writes `status`, to an unfiltered catalogue.
+    store.getState().hydrateFromURL(parseMapStateFromParams(searchParams, forcedMode));
   }, [searchParams, store, forcedMode]);
 
   // OUTPUT — synchronous, output-only writer.

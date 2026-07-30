@@ -1,11 +1,8 @@
 import { useSearchParams } from 'react-router';
 import { z } from 'zod';
 import { useMemo, useCallback } from 'react';
-import {
-  getShowLostFromUrlParams,
-  normalizeConstructionStatuses,
-} from '@/lib/buildingStatus';
-import { MapMode, MapFilters, type MichelinRating } from '@/types/plano-map';
+import { parseMapFilters } from '../utils/parseMapFilters';
+import { MapMode, MapFilters } from '@/types/plano-map';
 
 // Constants
 export const DEFAULT_LAT = 20;
@@ -239,82 +236,27 @@ export function syncFilterParams(newParams: URLSearchParams, filters: MapFilters
  * Parse the full map state (lat/lng/zoom/mode + all filters) out of a
  * URLSearchParams. Extracted so the store's URL-sync (useMapUrlSync) and the
  * legacy useURLMapState hook share ONE parser — no logic fork.
+ *
+ * `forcedMode` is the route-implied mode (/map = library). It is passed IN
+ * rather than patched onto the result because the mode implies its companion
+ * filters: without it the first parse yields an empty filter set and the map's
+ * opening cluster fetch is the whole catalogue, not the member's library —
+ * `status` only arrives once useBuildingSearch has written it to the URL, an
+ * effect (and a paint) later.
  */
-export function parseMapStateFromParams(searchParams: URLSearchParams): MapState {
+export function parseMapStateFromParams(
+  searchParams: URLSearchParams,
+  forcedMode?: Exclude<MapMode, null>
+): MapState {
     // specific construct to handle standard params
     const raw = {
       lat: searchParams.get('lat'),
       lng: searchParams.get('lng'),
       zoom: searchParams.get('zoom'),
-      mode: searchParams.get('mode'),
+      mode: forcedMode ?? searchParams.get('mode'),
     };
     const parsed = MapStateSchema.parse(raw);
-
-    // Parse filters from URL for map consumption
-    const getArrayParam = (param: string | null) => param ? param.split(",") : undefined;
-    const getBoolParam = (param: string | null) => param === "true" ? true : undefined;
-    const getNumParam = (param: string | null) => param ? parseInt(param, 10) : undefined;
-    const getIdListParam = (param: string | null) => param ? param.split(",").map(id => ({ id, name: id })) : undefined;
-
-    const parseMichelin = (param: string | null): MichelinRating | undefined => {
-      const n = param ? parseInt(param, 10) : NaN;
-      return n === 0 || n === 1 || n === 2 || n === 3 ? n : undefined;
-    };
-
-    const legacyPeopleUrlKey = "arch" + "itects";
-    const peopleFromUrl = getIdListParam(searchParams.get("people"));
-    const peopleLegacy = getIdListParam(searchParams.get(legacyPeopleUrlKey));
-
-    const filters: MapFilters = {
-       query: searchParams.get("q") || undefined,
-       status: getArrayParam(searchParams.get("status")),
-       hideVisited: getBoolParam(searchParams.get("hideVisited")),
-       hideSaved: getBoolParam(searchParams.get("hideSaved")),
-       hideHidden: searchParams.get("hideHidden") === "false" ? false : true,
-       hideWithoutImages: getBoolParam(searchParams.get("hideWithoutImages")),
-       personalMinRating: getNumParam(searchParams.get("minRating")),
-       minRating: parseMichelin(searchParams.get("globalMinRating")) ?? parseMichelin(searchParams.get("min_rating")),
-       contactMinRating: parseMichelin(searchParams.get("contactMinRating")),
-       category: searchParams.get("category") || undefined,
-       typologies: getArrayParam(searchParams.get("typologies")),
-       attributes: getArrayParam(searchParams.get("attributes")),
-       people: peopleFromUrl ?? peopleLegacy,
-       collections: getIdListParam(searchParams.get("collections")),
-       folderIds: getArrayParam(searchParams.get("folders")),
-       accessLevels: getArrayParam(searchParams.get("accessLevels")),
-       accessLogistics: getArrayParam(searchParams.get("accessLogistics")),
-       accessCosts: getArrayParam(searchParams.get("accessCosts")),
-       ratedBy: getArrayParam(searchParams.get("rated_by")),
-       filterContacts: getBoolParam(searchParams.get("filterContacts")),
-       creditCompany: (() => {
-         const id = searchParams.get("creditCompany");
-         if (!id) return undefined;
-         return { id, name: id };
-       })(),
-       creditRoles: getArrayParam(searchParams.get("creditRoles")),
-       constructionStatuses: (() => {
-         const raw = getArrayParam(searchParams.get("constructionStatuses"));
-         return raw ? normalizeConstructionStatuses(raw) : undefined;
-       })(),
-       showLost: getShowLostFromUrlParams((key) => searchParams.get(key)) || undefined,
-       photographyGaps: getBoolParam(searchParams.get("photographyGaps")),
-       gapPhotoCounts: searchParams.get("gapPhotoCounts") ? searchParams.get("gapPhotoCounts")!.split(",").map(Number) : undefined,
-       awardId: searchParams.get("awardId") || undefined,
-       awardOutcome: searchParams.get("awardOutcome") || undefined,
-       awardYearFrom: getNumParam(searchParams.get("awardYearFrom")),
-       awardYearTo: getNumParam(searchParams.get("awardYearTo")),
-       sizeCategories: getArrayParam(searchParams.get("sizeCategories")),
-       minSizeSqm: getNumParam(searchParams.get("minSizeSqm")),
-       maxSizeSqm: getNumParam(searchParams.get("maxSizeSqm")),
-       minStoreys: getNumParam(searchParams.get("minStoreys")),
-       maxStoreys: getNumParam(searchParams.get("maxStoreys")),
-       centuries: (() => {
-         const raw = searchParams.get("centuries");
-         if (!raw) return undefined;
-         const parsed = raw.split(",").map((s) => parseInt(s, 10)).filter((n) => Number.isInteger(n) && (n >= 1 || n === 0));
-         return parsed.length > 0 ? parsed : undefined;
-       })(),
-    };
+    const filters = parseMapFilters(searchParams, parsed.mode);
 
     return { ...parsed, filters } as MapState;
 }

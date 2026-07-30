@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { resolveConstructionStatuses } from '@/lib/buildingStatus';
@@ -152,11 +152,6 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
     });
   }, [filters, statusFilter]);
 
-  // AbortController ref — cancels in-flight RPC calls when the map pans /
-  // filters change. Without this, fast panning queues up requests and freezes
-  // the UI when they all resolve at once.
-  const abortRef = useRef<AbortController | null>(null);
-
   // Skip the RPC when the bounds are the all-zero fallback passed by PlanoMap
   // before the map has loaded. A real viewport always has non-zero extent.
   const isDegenerateBounds =
@@ -168,11 +163,15 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
   const { data: clusters, isLoading, isFetching, error } = useQuery({
     queryKey: ['map-clusters-v3', fetchBox, zoomLevel, filterKey, mode],
     enabled: !isDegenerateBounds,
-    queryFn: async () => {
-      abortRef.current?.abort();
-      const controller = new AbortController();
-      abortRef.current = controller;
-
+    // React Query owns cancellation via `signal`: it aborts a fetch when that
+    // query is superseded (pan/filter change) and treats the result as a
+    // CANCELLATION — no error state, no retry. The previous hand-rolled
+    // AbortController was shared across every query this hook ever ran, so a
+    // retry of an already-aborted stale query would abort the *current* one;
+    // the live result then errored and `keepPreviousData` kept showing the
+    // stale pins — on /map that meant the whole catalogue staying on screen
+    // while the SERP list showed the (correct) library results.
+    queryFn: async ({ signal }) => {
       const allAttributeIds = [
         ...(filters.attributes || []),
         ...(filters.materials || []),
@@ -243,7 +242,7 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
       };
       const promise =
         typeof maybeBuilder.abortSignal === 'function'
-          ? (maybeBuilder.abortSignal(controller.signal) as Promise<{ data: unknown; error: unknown }>)
+          ? (maybeBuilder.abortSignal(signal) as Promise<{ data: unknown; error: unknown }>)
           : (builder as unknown as Promise<{ data: unknown; error: unknown }>);
 
       const { data, error } = await promise;
