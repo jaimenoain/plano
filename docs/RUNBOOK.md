@@ -131,6 +131,41 @@ fires one `pg_net` POST to the `send-weekly-digest` edge function, which sends t
   `supabase/config.toml` (it relies on the default `verify_jwt = true` plus an in-code
   service-role check). It needs `RESEND_API_KEY` and `SITE_URL` in the function secrets.
 
+## Templated notification emails (react-email under Deno)
+
+Seven templates live in `supabase/functions/_shared/emails/`. Six edge functions render
+them: `send-welcome-email`, `notify-collection-collaborator`, `notify-credited-entities`,
+`notify-credit-outcome`, `notify-entity-claimed`, `send-weekly-digest`. (The other
+email-sending functions — `invite-company-steward`, `notify-admin-dispute`,
+`notify-steward-request*`, `verify-company-claim` — build HTML strings inline and are not
+part of this stack.)
+
+Two dependency rules are load-bearing, and CI cannot check either by execution because it
+has no Deno:
+
+- **Never import `@react-email/components`** (the barrel). It side-effect-imports
+  `@react-email/render` → `prettier`, which throws at module load under Deno and kills the
+  worker at **boot** with a 500 `WORKER_ERROR`. There are **no function logs** in this
+  state — only edge 500s — so it looks like the function was never called. Import from
+  `_shared/emails/reactEmail.ts` instead.
+- **Every react-email subpackage needs `?deps=react@18.3.1`.** Without it esm.sh gives each
+  subpackage its own React copy and rendering dies with React error #31. This one boots
+  fine and fails only at send time.
+
+Functions must also `render()` to HTML themselves and pass `html:` to Resend, never
+`react:` — that path uses Resend's own bundled render, whose React copy we do not control.
+
+- **Before deploying, run the real check** (needs Deno, `~/.deno/bin/deno`):
+  `~/.deno/bin/deno run -A --no-check scripts/check-email-edge-functions.tsx`
+  It boots every function module and renders every template.
+  `tests/unit/email-templates-no-barrel.test.ts` asserts the same rules statically in CI.
+- **Deploy** (manual, no workflow):
+  `npx supabase functions deploy <name> --project-ref lnqxtomyucnnrgeapnzt --use-api`
+- **Smoke-test without emailing anyone:** POST `{}` to the function. A booted worker
+  answers with its own JSON error (`{"error":"Unauthorized"}`); a worker that died at boot
+  answers `WORKER_ERROR`. To exercise rendering and the Resend call, send to
+  `delivered@resend.dev` (Resend's sink address — no human receives it).
+
 ## When things break
 
 | Symptom | Do this |
@@ -144,4 +179,6 @@ fires one `pg_net` POST to the `send-weekly-digest` edge function, which sends t
 | A building exists in the DB but no search, map, or list returns it | Check whether a merge orphaned it: `psql "$SUPABASE_DB_URL" -f scripts/verify_merge_chains.sql`. Every discovery RPC filters `is_deleted`, so a merge that leaves a group with no live survivor hides all of its members at once — see [ADR 0022](decisions/0022-building-merge-invariants.md) |
 | An RPC behaves like an older version than the repo's latest migration | Don't trust `supabase_migrations.schema_migrations` (it records only a fraction of applied migrations) — probe the object: `psql "$SUPABASE_DB_URL" -Atc "select pg_get_functiondef(oid) from pg_proc where proname='<fn>'"` and diff against the newest migration that defines it |
 | Need to see a production runtime error | Check Sentry (see [Observability](#observability--production-errors)); if nothing is captured, confirm `VITE_SENTRY_DSN` is set in Vercel Production and the app was redeployed after it was set |
+| An edge function returns 500 `WORKER_ERROR` with **no function logs at all** | It died at boot, before serving. For the email functions this is almost always a `@react-email/components` barrel import — see [Templated notification emails](#templated-notification-emails-react-email-under-deno). Reproduce locally: `~/.deno/bin/deno run -A --no-check scripts/check-email-edge-functions.tsx` |
+| A notification email 403s with `The plano.app domain is not verified` | Resend has no verified `plano.app` domain, so it only accepts sends to the Resend account owner's own address. Verify the domain at https://resend.com/domains (DNS records) — no code change helps |
 | Something in the code contradicts the docs | Don't silently pick one: check `docs/AI_STATUS.md` (known issues, drift log) and log the drift there per `AGENTS.md` |

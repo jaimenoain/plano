@@ -1,4 +1,6 @@
 import React from 'https://esm.sh/react@18.3.1'
+// Components come from ./reactEmail.ts, never from the react-email barrel — see that
+// file for why the barrel cannot boot under Deno.
 import {
   Body,
   Button,
@@ -10,7 +12,7 @@ import {
   Preview,
   Section,
   Text,
-} from 'https://esm.sh/@react-email/components@1.0.8'
+} from './reactEmail.ts'
 
 export interface EntityClaimedEmailProps {
   personName: string
