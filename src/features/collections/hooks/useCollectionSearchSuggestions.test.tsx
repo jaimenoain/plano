@@ -112,6 +112,23 @@ describe("useCollectionSearchSuggestions", () => {
     expect(result.current.buildings[0].name).toBe("Casa da Música");
   });
 
+  it("keeps a building matched only by its architect", async () => {
+    // search_buildings_v2 scores a credit-name match at 0.35 × strict word
+    // similarity plus the popularity term — ~0.42 for a firm the user named
+    // outright (measured on production). That has to clear the noise floor,
+    // otherwise the architect search the RPC gained in 20271192000000 would be
+    // thrown away right here.
+    searchBuildingsV2Mock.mockResolvedValue([
+      hit("dongdaemun", "Dongdaemun Design Plaza", 0.418),
+      hit("noise", "Hanaha", 0.126),
+    ]);
+
+    const { result } = renderSuggestions();
+
+    await waitFor(() => expect(result.current.buildings).toHaveLength(1));
+    expect(result.current.buildings[0].name).toBe("Dongdaemun Design Plaza");
+  });
+
   it("reports emptiness only once a search has settled", async () => {
     searchBuildingsV2Mock.mockResolvedValue([]);
     const { result } = renderSuggestions();

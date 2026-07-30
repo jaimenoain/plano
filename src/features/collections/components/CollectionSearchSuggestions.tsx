@@ -50,10 +50,11 @@ export function CollectionSearchSuggestions({
   if (isEmpty) {
     return (
       <section className="mt-2 border-t border-border-default" aria-label="Buildings elsewhere in Plano">
-        {/* "by name" is not hedging: the database search reads names, aliases and
-            places, never the credits — so an architect's name lands here too. */}
+        {/* The eyebrow avoids "by name": the database search reads credits too,
+            so an architect's name reaching this state means Plano has nothing
+            of theirs either. */}
         <EmptyState
-          eyebrow="Nothing by that name"
+          eyebrow="Nothing in Plano either"
           message={`No building in Plano matches “${query}” either. Add it, and it joins this collection.`}
           action={createButton}
         />

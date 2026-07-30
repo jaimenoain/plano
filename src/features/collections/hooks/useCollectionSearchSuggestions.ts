@@ -9,9 +9,10 @@
  * the dead end becomes an offer: add one of these, or create the building.
  *
  * Search goes through `search_buildings_v2` — the authoritative ranked text
- * search. It covers a building's name, alt name, aliases, address and place, but
- * NOT its credits: unlike the in-collection haystack, an architect's name finds
- * nothing here. The empty-state copy says "by name" for exactly that reason.
+ * search. It covers a building's name, alt name, aliases, address, place and its
+ * credited architects and firms, so the query that matched an item inside the
+ * collection by its architect finds buildings out here too (migration
+ * 20271192000000). Credit matches score ~0.42 against the floor below.
  *
  * Buildings already in the collection (including ones hidden from suggestions)
  * are dropped, so every row on screen is genuinely addable.

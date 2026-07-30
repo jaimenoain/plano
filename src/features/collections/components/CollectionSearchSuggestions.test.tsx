@@ -106,7 +106,9 @@ describe("CollectionSearchSuggestions", () => {
     const user = userEvent.setup();
     renderSuggestions();
 
-    expect(screen.getByText("Nothing by that name")).toBeInTheDocument();
+    // Not "nothing by that name": the search reads credits too, so an
+    // architect's query reaching this state means Plano has nothing of theirs.
+    expect(screen.getByText("Nothing in Plano either")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /Create new building/ }));
 
     expect(navigateMock).toHaveBeenCalledWith(
