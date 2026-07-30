@@ -8,8 +8,13 @@
  * Extracted from `CollectionMapPage.tsx` unchanged. Presentational only — the
  * page still owns the data, the permissions and every mutation; it also owns the
  * scroll container, which is now the rail as a whole rather than this panel.
+ *
+ * The one exception is `CollectionSearchSuggestions`, which owns its own search
+ * and its own insert: it hangs off the no-match empty state and is invisible to
+ * everyone who cannot edit, so threading it through the page would have bought
+ * nothing.
  */
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -19,6 +24,7 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
 import { CollectionItemRow } from "./CollectionItemRow";
+import { CollectionSearchSuggestions } from "./CollectionSearchSuggestions";
 import type { Collection, CollectionItemWithBuilding, CollectionMarker } from "../types";
 
 const CollectionMarkerCard = lazyWithRetry(() =>
@@ -28,6 +34,7 @@ const CollectionMarkerCard = lazyWithRetry(() =>
 );
 
 interface CollectionItemsPanelProps {
+  collectionId: string;
   items: CollectionItemWithBuilding[];
   markers: CollectionMarker[];
   highlightedId: string | null;
@@ -52,9 +59,12 @@ interface CollectionItemsPanelProps {
   /** Entries matching the current query, across both buildings and markers. */
   matchCount: number;
   onClearSearch: () => void;
+  /** Every building already in the collection, hidden ones included. */
+  excludeBuildingIds: Set<string>;
 }
 
 export function CollectionItemsPanel({
+  collectionId,
   items,
   markers,
   highlightedId,
@@ -74,7 +84,18 @@ export function CollectionItemsPanel({
   appliedQuery,
   matchCount,
   onClearSearch,
+  excludeBuildingIds,
 }: CollectionItemsPanelProps) {
+  const noMatches = searchableCount > 0 && isSearchActive && matchCount === 0;
+
+  // Adding the first suggestion makes the query match, which would otherwise
+  // pull the rest of the list out from under the cursor. Once suggestions are up
+  // for a query they stay up until the query itself changes, so an editor can
+  // add two or three in a row.
+  const [suggestingFor, setSuggestingFor] = useState<string | null>(null);
+  if (canEdit && noMatches && suggestingFor !== appliedQuery) setSuggestingFor(appliedQuery);
+  const showSuggestions = canEdit && isSearchActive && suggestingFor === appliedQuery;
+
   return (
     <div className="space-y-3 p-4 pb-24 lg:pb-4">
       {items.map((item) => (
@@ -141,7 +162,7 @@ export function CollectionItemsPanel({
         </div>
       )}
 
-      {searchableCount > 0 && isSearchActive && matchCount === 0 && (
+      {noMatches && (
         <EmptyState
           eyebrow="No matches"
           message={`Nothing in this collection matches “${appliedQuery}”.`}
@@ -150,6 +171,16 @@ export function CollectionItemsPanel({
               Clear search
             </button>
           }
+        />
+      )}
+
+      {/* A search with no match is where an editor most wants the rest of the
+          database — so the same query keeps going, into buildings they can add. */}
+      {showSuggestions && (
+        <CollectionSearchSuggestions
+          collectionId={collectionId}
+          query={appliedQuery}
+          excludeBuildingIds={excludeBuildingIds}
         />
       )}
     </div>

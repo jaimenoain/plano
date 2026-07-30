@@ -78,6 +78,7 @@ import { CollectionItemsPanel } from "./CollectionItemsPanel";
 import { CollectionRailHeader } from "./CollectionRailHeader";
 import { CollectionRailToolbar } from "./CollectionRailToolbar";
 import { CollectionSearchBar } from "./CollectionSearchBar";
+import { useCollectionItemEdits } from "../hooks/useCollectionItemEdits";
 import { useCollectionMapSelection } from "../hooks/useCollectionMapSelection";
 import { useCollectionSearch } from "../hooks/useCollectionSearch";
 import { useScrolledPast } from "@/hooks/useScrolledPast";
@@ -797,44 +798,8 @@ export default function CollectionMap() {
     savedPlacesStatusFilter,
   ]);
 
-  const handleUpdateNote = async (itemId: string, newNote: string) => {
-      const { error } = await supabase
-          .from("collection_items")
-          .update({ note: newNote })
-          .eq("id", itemId);
-
-      if (!error) {
-          refetchItems();
-      }
-  };
-
-  const handleUpdateCategory = async (itemId: string, categoryId: string) => {
-    const { error } = await supabase
-        .from("collection_items")
-        .update({ custom_category_id: categoryId || null })
-        .eq("id", itemId);
-
-    if (!error) {
-        refetchItems();
-    }
-  };
-
-  const handleUpdateMarkerNote = async (markerId: string, newNote: string) => {
-      const { error } = await supabase
-          .from("collection_markers")
-          .update({ notes: newNote })
-          .eq("id", markerId);
-
-      if (!error) {
-          refetchItems();
-      } else {
-        toast({
-            title: "Error",
-            description: "Failed to update note.",
-            variant: "destructive"
-        });
-      }
-  };
+  const { handleUpdateNote, handleUpdateCategory, handleUpdateMarkerNote } =
+    useCollectionItemEdits({ onChanged: refetchItems });
 
   // Accepts anything that can name a building: a saved-place candidate
   // (DiscoveryBuilding) or a discovery-layer pin (ClusterResponse).
@@ -1151,8 +1116,10 @@ toast({
 
                     <TabsContent value="items" className="m-0 mt-0 p-0 data-[state=inactive]:hidden">
                         <CollectionItemsPanel
+                            collectionId={collection.id}
                             items={search.searchedItems}
                             markers={search.searchedMarkers}
+                            excludeBuildingIds={existingBuildingIds}
                             highlightedId={highlightedId}
                             setHighlightedId={setHighlightedId}
                             canEdit={canEdit}
