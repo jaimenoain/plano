@@ -5522,6 +5522,10 @@ export type Database = {
           views_count: number
         }[]
       }
+      get_country_guide: {
+        Args: { p_country_code: string }
+        Returns: Json
+      }
       get_discovery_feed: {
         Args: {
           p_architect_ids?: string[]

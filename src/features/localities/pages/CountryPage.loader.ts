@@ -1,12 +1,12 @@
 import { data, type LoaderFunctionArgs } from "react-router";
 import { createSupabaseServerClient } from "~/lib/supabase.server";
 import { SITE_URL, countryPageStructuredData } from "@/features/buildings/utils/structuredData";
-import { getCountryLocalities } from "@/features/localities/api/localitiesApi";
-import type { LocalityDTO } from "@/features/localities/types";
+import { getCountryGuide, type CountryGuide } from "@/features/localities/api/countryGuideApi";
 import { getCountryUrl } from "@/utils/url";
+import { getBuildingImageUrl } from "@/utils/image";
 
 export type CountryPageLoaderData = {
-  localities: LocalityDTO[];
+  guide: CountryGuide;
   countryName: string;
   countryCode: string;
   totalBuildings: number;
@@ -27,24 +27,31 @@ export async function countryPageLoader({ request, params }: LoaderFunctionArgs)
   const cc = params.cc?.trim().toUpperCase();
   if (!cc) throw new Response("Not found", { status: 404 });
 
-  const localities = await getCountryLocalities(supabase, cc);
+  // One RPC carries the whole guide: counts, cities, essential buildings, the
+  // era spread, practices, contributors and collections.
+  const guide = await getCountryGuide(supabase, cc);
 
-  if (localities.length === 0) throw new Response("Not found", { status: 404 });
+  // No localities for this code means no country page — same 404 as before.
+  if (!guide || guide.cities.length === 0) throw new Response("Not found", { status: 404 });
 
-  // Derive country-level stats from the localities already in hand instead of a
-  // second round-trip to the same table (getCountryStats re-scanned `localities`
-  // for `country, buildings_count`, both present on every LocalityDTO). Localities
-  // are ordered buildings_count desc, so [0].country is the canonical name.
-  const countryName = localities[0]?.country ?? "";
-  const totalBuildings = localities.reduce((sum, l) => sum + (l.buildings_count ?? 0), 0);
+  const countryName = guide.country.name ?? cc;
+  const totalBuildings = guide.country.buildings;
   const canonical = `${SITE_URL}${getCountryUrl(cc)}`;
-  const metaTitle = `Architecture in ${countryName} — ${totalBuildings} Buildings on Plano`;
-  const metaDescription = `Explore ${totalBuildings} buildings across ${localities.length} cities in ${countryName} on Plano — the world's architecture, cataloged.`;
-  const heroImageUrl = localities.find((l) => l.hero_image_url)?.hero_image_url ?? null;
-  const ogImage = heroImageUrl ?? `${SITE_URL}/cover.jpg`;
+
+  const metaTitle = `Architecture in ${countryName} — ${totalBuildings.toLocaleString("en")} Buildings on Plano`;
+  const metaDescription = `Where to go, what to see and who to ask: ${totalBuildings.toLocaleString(
+    "en",
+  )} buildings across ${guide.country.cities.toLocaleString(
+    "en",
+  )} towns and cities in ${countryName}, cataloged by the Plano community.`;
+
+  // The share image is the photograph the page itself leads with.
+  const ogImage =
+    getBuildingImageUrl(guide.essentials.find((b) => b.image_url)?.image_url ?? null) ??
+    `${SITE_URL}/cover.jpg`;
 
   const body: CountryPageLoaderData = {
-    localities,
+    guide,
     countryName,
     countryCode: cc,
     totalBuildings,
@@ -55,7 +62,7 @@ export async function countryPageLoader({ request, params }: LoaderFunctionArgs)
     structuredData: countryPageStructuredData(
       cc,
       countryName,
-      localities,
+      guide.cities.map((c) => ({ city: c.city, country_code: cc, city_slug: c.city_slug })),
       canonical,
     ) as Record<string, unknown>,
   };

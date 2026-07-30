@@ -6,16 +6,26 @@ import {
   isRouteErrorResponse,
   type MetaFunction,
 } from "react-router";
-import { Building2, MapPin } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientOnly } from "@/components/common/ClientOnly";
-import { getBuildingImageUrl } from "@/utils/image";
-import { getLocalityUrl } from "@/utils/url";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
+import { findContinent } from "@/features/guides";
+import { CountryHero } from "../components/country/CountryHero";
+import { CountryStats } from "../components/country/CountryStats";
+import { CountryActions } from "../components/country/CountryActions";
+import { CountryEssentials } from "../components/country/CountryEssentials";
+import { CountryCities } from "../components/country/CountryCities";
+import { CountryEras } from "../components/country/CountryEras";
+import { CountryPractices } from "../components/country/CountryPractices";
+import { CountryContributors } from "../components/country/CountryContributors";
+import { LocalityCityGuides } from "../components/LocalityCityGuides";
+import { SectionLabel } from "../components/SectionLabel";
+import { buildCountryLead } from "../utils/countryLead";
+import { buildCountryMapUrl, geolocatedCities } from "../utils/countryMapUrl";
 import { countryPageLoader, type CountryPageLoaderData } from "./CountryPage.loader";
+import type { CountryCity } from "../api/countryGuideApi";
 import type { DiscoveryBuilding } from "@/features/search/components/types";
 
 export { countryPageLoader as loader } from "./CountryPage.loader";
@@ -45,6 +55,7 @@ export const meta: MetaFunction<typeof countryPageLoader> = ({ loaderData: data 
 export function HydrateFallback() {
   return (
     <AppLayout showBack title="Loading…">
+      <Skeleton className="h-[clamp(300px,55vh,650px)] w-full" />
       <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
         <Skeleton className="mb-4 h-12 w-2/3 max-w-sm" />
         <Skeleton className="mb-8 h-6 w-40" />
@@ -99,105 +110,42 @@ export function ErrorBoundary() {
 // ---------------------------------------------------------------------------
 // Lazy map import
 // ---------------------------------------------------------------------------
-const CollectionMapGL = lazyWithRetry(
-  () =>
-    import("@/features/maps/components/CollectionMapGL").then((m) => ({
-      default: m.CollectionMapGL,
-    })),
+const CollectionMapGL = lazyWithRetry(() =>
+  import("@/features/maps/components/CollectionMapGL").then((m) => ({
+    default: m.CollectionMapGL,
+  })),
 );
 
-// ---------------------------------------------------------------------------
-// LocalityCard
-// ---------------------------------------------------------------------------
-function LocalityCard({
-  city,
-  country,
-  countryCode,
-  citySlug,
-  buildingsCount,
-  heroImageUrl,
-}: {
-  city: string;
-  country: string;
-  countryCode: string;
-  citySlug: string;
-  buildingsCount: number;
-  heroImageUrl: string | null;
-}) {
-  const absoluteUrl = getBuildingImageUrl(heroImageUrl) ?? null;
-  const href = getLocalityUrl(countryCode, citySlug);
-
-  return (
-    <Link
-      to={href}
-      className="group flex flex-col overflow-hidden rounded-none border border-border-default bg-surface-default transition-colors hover:border-text-primary"
-    >
-      {absoluteUrl ? (
-        <div className="h-36 w-full overflow-hidden bg-surface-muted">
-          <img
-            src={absoluteUrl}
-            alt={`${city}, ${country}`}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
-          />
-        </div>
-      ) : (
-        <div className="flex h-36 w-full items-center justify-center bg-surface-muted">
-          <Building2 className="h-10 w-10 text-text-secondary" aria-hidden />
-        </div>
-      )}
-      <div className="flex flex-col gap-1 p-4">
-        <p className="font-semibold text-text-primary">{city}</p>
-        <div className="flex items-center gap-2 text-sm text-text-secondary">
-          <MapPin className="h-3.5 w-3.5" aria-hidden />
-          <span>{country}</span>
-          <Badge variant="secondary" className="ml-auto font-normal">
-            <Building2 className="mr-1 h-3 w-3" aria-hidden />
-            {buildingsCount.toLocaleString()}
-          </Badge>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// CountryMap
-// ---------------------------------------------------------------------------
-function CountryMap({ localities }: { localities: CountryPageLoaderData["localities"] }) {
+/** One pin per city, so the shape of the whole country reads at a glance. */
+function CountryMap({ cities }: { cities: CountryCity[] }) {
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
-  const mapPoints = localities
-    .filter((l) => l.lat != null && l.lng != null)
-    .map((l) => ({
-      id: l.id,
-      name: l.city,
-      location_lat: l.lat as number,
-      location_lng: l.lng as number,
-    }));
+  const mapPoints = geolocatedCities(cities).map((c) => ({
+    id: c.city_slug,
+    name: c.city,
+    location_lat: c.lat as number,
+    location_lng: c.lng as number,
+  }));
 
   if (mapPoints.length === 0) return null;
 
+  const mapFallback = (
+    <div className="flex h-full w-full items-center justify-center bg-surface-muted">
+      <Skeleton className="h-full w-full" />
+    </div>
+  );
+
   return (
-    <section className="mt-12">
-      <h2 className="mb-4 text-xs font-medium uppercase tracking-widest text-text-secondary">
-        Map
-      </h2>
-      <div className="h-[360px] overflow-hidden rounded-sm border border-border-default md:h-[480px]">
-        <ClientOnly
-          fallback={
-            <div className="flex h-full w-full items-center justify-center bg-surface-muted">
-              <Skeleton className="h-full w-full" />
-            </div>
-          }
-        >
-          <Suspense
-            fallback={
-              <div className="flex h-full w-full items-center justify-center bg-surface-muted">
-                <Skeleton className="h-full w-full" />
-              </div>
-            }
-          >
+    <section className="mt-16 border-t border-border-default pt-12">
+      <SectionLabel>On the map</SectionLabel>
+      <p className="mt-2 max-w-xl text-sm text-text-secondary">
+        {`${mapPoints.length.toLocaleString("en")} located ${
+          mapPoints.length === 1 ? "city" : "cities"
+        }.`}
+      </p>
+      <div className="mt-6 h-[360px] overflow-hidden rounded-sm border border-border-default md:h-[480px]">
+        <ClientOnly fallback={mapFallback}>
+          <Suspense fallback={mapFallback}>
             <CollectionMapGL
               buildings={mapPoints as unknown as DiscoveryBuilding[]}
               highlightedId={highlightedId}
@@ -214,55 +162,85 @@ function CountryMap({ localities }: { localities: CountryPageLoaderData["localit
 // Page
 // ---------------------------------------------------------------------------
 export default function CountryPage() {
-  const { localities, countryName, countryCode, totalBuildings } =
+  const { guide, countryName, countryCode, totalBuildings } =
     useLoaderData() as CountryPageLoaderData;
+
+  const { country, cities, essentials, eras, practices, contributors, collections } = guide;
+
+  // The hero band borrows the best-photographed essential; "Start here" then
+  // skips it rather than showing the same photo twice on one screen.
+  const lead = essentials.find((b) => b.image_url) ?? null;
+
+  const leadParagraph = buildCountryLead({ country, cities, eras }).join(" ");
 
   return (
     <AppLayout showBack>
-      <header className="border-b border-border-default pb-10">
-        <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight text-text-primary md:text-5xl lg:text-6xl">
-              {countryName}
-            </h1>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-text-secondary">
-              <span className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" aria-hidden />
-                {countryCode}
-              </span>
-              <Badge variant="secondary" className="font-normal">
-                <Building2 className="mr-1 h-3 w-3" aria-hidden />
-                {totalBuildings.toLocaleString()}{" "}
-                {totalBuildings === 1 ? "building" : "buildings"}
-              </Badge>
-            </div>
-          </div>
+      <CountryHero
+        countryName={countryName}
+        countryCode={countryCode}
+        continent={findContinent(countryCode)}
+        lead={lead}
+      />
+
+      <div className="mx-auto max-w-[1120px] px-4 sm:px-6 lg:px-8">
+        <div className="mt-8">
+          <CountryStats country={country} />
         </div>
-      </header>
 
-      <div className="mx-auto max-w-[1120px] px-4 py-8 sm:px-6 lg:px-8">
-        <section>
-          <h2 className="mb-6 text-xs font-medium uppercase tracking-[0.15em] text-text-secondary">
-            Cities
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {localities.map((loc) => (
-              <LocalityCard
-                key={loc.id}
-                city={loc.city}
-                country={loc.country}
-                countryCode={loc.country_code}
-                citySlug={loc.city_slug}
-                buildingsCount={loc.buildings_count}
-                heroImageUrl={loc.hero_image_url}
-              />
-            ))}
-          </div>
-        </section>
+        {/* Editorial lead — derived from the catalogue, not authored per country. */}
+        {leadParagraph ? (
+          <p className="mt-10 max-w-2xl text-lg leading-relaxed text-text-secondary md:text-xl md:leading-relaxed">
+            {leadParagraph}
+          </p>
+        ) : null}
 
-        <CountryMap localities={localities} />
+        <CountryActions
+          countryName={countryName}
+          exploreMapHref={buildCountryMapUrl(countryName, cities)}
+        />
 
-        <div className="h-12" />
+        <CountryEssentials
+          buildings={essentials}
+          countryCode={countryCode}
+          totalCount={totalBuildings}
+          heroBuildingId={lead?.id ?? null}
+        />
+
+        <CountryCities cities={cities} countryCode={countryCode} />
+
+        <CountryEras eras={eras} country={country} />
+
+        <CountryPractices practices={practices} country={country} />
+
+        <LocalityCityGuides
+          title="Collections to follow"
+          description={`Community-curated routes with pins in ${countryName}.`}
+          collections={collections.map((c) => ({
+            id: c.id,
+            slug: c.slug,
+            name: c.name,
+            ownerUsername: c.owner_username,
+            buildingCount: c.building_count,
+            previewImageUrls: c.preview_image_urls,
+            contributorAvatarUrls: c.owner_avatar_url ? [c.owner_avatar_url] : [],
+          }))}
+        />
+
+        <CountryContributors contributors={contributors} countryName={countryName} />
+
+        <CountryMap cities={cities} />
+
+        <div className="mt-16 flex items-center justify-between border-t border-border-default pb-12 pt-10">
+          <Link
+            to="/guides"
+            className="group inline-flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-text-secondary transition-colors hover:text-text-primary"
+          >
+            <span className="transition-transform group-hover:-translate-x-0.5" aria-hidden>
+              ←
+            </span>
+            Back to guides
+          </Link>
+        </div>
       </div>
     </AppLayout>
   );

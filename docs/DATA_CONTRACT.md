@@ -770,6 +770,28 @@ CREATE OR REPLACE FUNCTION public.make_locality_slug(p_city text, p_country_code
 - Sets `buildings.locality_id`.
 - Recalculates `localities.buildings_count` for both the new and old locality (on city change).
 
+### RPC: `get_country_guide(p_country_code text)`
+
+Whole-page payload for the `/architecture/:cc` country guide, in one round trip. Migration `20271189000000_country_guide.sql`; validated client-side by `CountryGuideSchema` in `src/features/localities/api/countryGuideApi.ts`.
+
+**Country membership:** a building counts when **either** `buildings.country_code` **or** its locality's `country_code` matches — neither column alone covers the catalogue (~2.7k live buildings have no `country_code`; some rows have a `country_code` but no locality).
+
+**Returns** one `jsonb` object:
+
+| Key | Shape |
+|---|---|
+| `country` | `code`, `name` (null for an unknown code), `cities`, `buildings`, `dated` (buildings with a `year_completed`), `first_year`, `last_year`, `practices` (distinct credited companies), `contributors`, `photos` |
+| `cities` | every locality **with at least one building** (`buildings_count > 0` — this drops 127 orphan rows repo-wide, 121 of them Spanish, whose buildings were since renamed/moved/deleted), `buildings_count` desc: `city`, `city_slug`, `buildings_count`, `lat`/`lng` (rounded to 4 dp), plus `preview_image_url` + up to 3 `highlights` for the **top 8 only** (the tail renders as links, so its photo/highlight fields stay null/empty to keep the payload small) |
+| `essentials` | top 7 buildings, photographed ones first then `popularity_score`: `id`, `name`, `slug`, `short_id`, `city`, `city_slug`, `year_completed`, `image_url` |
+| `eras` | completion-date bands (`<1900`, 1900–44, 1945–74, 1975–99, `2000+`) as `from_year`/`to_year`/`count`; an open bound is null. Non-empty bands only |
+| `practices` | top 8 companies by credited buildings (`status = 'active'`, `role = 'design_architecture'`): `id`, `name`, `slug`, `buildings` |
+| `contributors` | top 8 by `buildings_logged * 3 + photos_uploaded`: `user_id`, `username`, `avatar_url`, `buildings_logged`, `photos_uploaded`, `is_ambassador` (active membership of any chapter in the country) |
+| `collections` | up to 6 public collections with **≥2** pins in the country (same rule as `get_locality_collections`): `id`, `slug`, `name`, `owner_username`, `owner_avatar_url`, `building_count`, `preview_image_urls` (≤3) |
+
+An unknown country code returns zeroed counts and `cities: []`; the loader turns that into a 404.
+
+**SECURITY INVOKER** — every table read is publicly readable by policy, so no elevation is warranted. This is also why no rating/visit aggregate is exposed: `user_buildings` is private per member. **`GRANT EXECUTE`** to **`anon`** and **`authenticated`** (public SEO page). Supporting index: `idx_buildings_country_code`.
+
 **Building ↔ credited entities:** The only junction from `buildings` to professionals is **`building_credits`** (§9d), referencing **`people`** and/or **`companies`** (§9a / §9b). Map filters, discovery, and `is_verified_architect_for_building` use those rows.
 
 ```sql

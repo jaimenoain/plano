@@ -73,16 +73,26 @@ function CollectionPreviewMosaic({
 
 export function LocalityCityGuides({
   collections,
+  /** Section heading; the country guide reuses this list under its own label. */
+  title = "City guides",
+  description,
 }: {
   collections: LocalityCollection[];
+  title?: string;
+  description?: string;
 }) {
   if (collections.length === 0) return null;
 
   return (
     <section className="mt-16 border-t border-border-default pt-12">
-      <div className="mb-6 flex items-center justify-between gap-2">
-        <SectionLabel>City guides</SectionLabel>
-        <Link to={`/explore`} className="cta-link">
+      <div className="mb-6 flex items-end justify-between gap-4">
+        <div>
+          <SectionLabel>{title}</SectionLabel>
+          {description ? (
+            <p className="mt-2 max-w-xl text-sm text-text-secondary">{description}</p>
+          ) : null}
+        </div>
+        <Link to={`/explore`} className="cta-link shrink-0">
           Browse collections
         </Link>
       </div>
