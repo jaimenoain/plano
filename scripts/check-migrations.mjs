@@ -9,7 +9,9 @@
  *     cause of several production incidents.
  *   - HARD FAIL on a NEW non-conforming filename (not YYYYMMDDHHmmss_desc.sql and not baselined).
  *   - WARN ONLY (never fails) on soft SQL sanity issues in *changed* files: empty file,
- *     unbalanced `$$` dollar-quotes, or a `create ... function` with no `revoke ... from public`
+ *     unbalanced `$$` dollar-quotes, or a `create ... function` whose grants are not re-asserted
+ *     with `revoke ... from public, anon, authenticated` (naming the roles is required —
+ *     `from public` alone leaves Supabase's direct anon/authenticated grants in place)
  *     (the RPC grant-discipline nudge). These are best-effort hints, not a gate.
  *
  * The 33 colliding prefixes + 2 non-conforming names that are already applied to production are
@@ -94,10 +96,31 @@ function softSanity(name) {
     warnings.push(`unbalanced $$ dollar-quotes (${dollarPairs} occurrences)`);
   }
   // RPC grant discipline: a function definition should re-assert grants.
-  if (/create\s+(or\s+replace\s+)?function/i.test(sql) && !/revoke[\s\S]*?from\s+public/i.test(sql)) {
-    warnings.push(
-      "defines a function but has no `revoke ... from public` — see supabase/migrations/_TEMPLATE_rpc.sql.txt"
-    );
+  if (/create\s+(or\s+replace\s+)?function/i.test(sql)) {
+    const revokes = sql.match(/revoke[\s\S]*?from\s+[^;]+;/gi) ?? [];
+    if (revokes.length === 0) {
+      warnings.push(
+        "defines a function but has no `revoke ... from public, anon, authenticated` — see supabase/migrations/_TEMPLATE_rpc.sql.txt"
+      );
+    } else {
+      // `from public` alone does NOT lock a function down on this project: Supabase's
+      // ALTER DEFAULT PRIVILEGES grants EXECUTE to anon + authenticated DIRECTLY at
+      // creation, and revoking the PUBLIC pseudo-role leaves those grants in place.
+      const namesAnon = revokes.some((r) => /\banon\b/i.test(r));
+      const namesAuthenticated = revokes.some((r) => /\bauthenticated\b/i.test(r));
+      const missing = [
+        !namesAnon ? "anon" : null,
+        !namesAuthenticated ? "authenticated" : null,
+      ].filter(Boolean);
+      if (missing.length > 0) {
+        warnings.push(
+          `revokes privileges but never names ${missing.join(" or ")} — \`from public\` alone leaves the ` +
+            "direct grants Supabase's ALTER DEFAULT PRIVILEGES creates, so the function stays callable " +
+            "with the anon key. Use `from public, anon, authenticated` then grant back what is needed " +
+            "(see supabase/migrations/_TEMPLATE_rpc.sql.txt)"
+        );
+      }
+    }
   }
   return warnings;
 }

@@ -32,6 +32,27 @@ supabase/migrations/20240901120000_add_user_profiles.sql
 
 Never expose `password_hash`, `stripe_customer_id`, or any internal field in a DTO.
 
+## Function grants: RLS is only half the door
+
+RLS protects tables. A `SECURITY DEFINER` function bypasses RLS by design, so its **grants** are the
+only thing standing between an anonymous caller and whatever it does.
+
+`REVOKE ALL ON FUNCTION ... FROM PUBLIC` is **not** enough on this project. Supabase sets
+`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated`, so
+every new function is granted to those roles **directly** at creation; revoking the `PUBLIC`
+pseudo-role leaves the direct grants in place and the function stays callable with the anon key.
+Always name the roles:
+
+```sql
+revoke all on function public.fn(args) from public, anon, authenticated;
+grant execute on function public.fn(args) to authenticated;  -- only what is needed; omit for helpers
+```
+
+Verify with `has_function_privilege('anon', 'public.fn(args)', 'EXECUTE')` — it accounts for both
+grant paths. Full guidance, and the traps to check before revoking an *existing* function (RLS
+policies evaluate their expressions as the querying role and require that role's `EXECUTE`), are in
+[`docs/migrations.md`](../../docs/migrations.md#writing-an-rpc-database-function).
+
 ## RLS: The Non-Negotiable Rules
 
 ### 1. Default Deny

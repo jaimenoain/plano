@@ -8,6 +8,34 @@
 **Rollout ≠ refinement:** The May 2026 rollout (Phases 0–7) wired semantic tokens, removed raw palette classes, and connected real data (e.g. `get_feed` on the home feed). That work is **complete**. The refinement programme ([ROADMAP.md](ROADMAP.md), Phases R0–R9) delivered editorial layout, typography rhythm, kit fidelity, and per-page audit evidence across shell, editorial spine, discovery, identity, events, auth/token flows, embassy, and admin. Tracking: all families `refined` or `complete` in [DESIGN_SYSTEM_SCREEN_INVENTORY.md](DESIGN_SYSTEM_SCREEN_INVENTORY.md).
 
 ## CURRENT_ARCHITECTURE_SNAPSHOT
+- **`REVOKE ... FROM PUBLIC` never locked our RPCs down — 33 functions swept (2026-07-30):** Supabase
+  configures this project with `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS
+  TO anon, authenticated`, so every function created in `public` gets a **direct** grant to both roles
+  at creation. The `revoke ... from public` line in this repo's template and ~all its migrations drops
+  only the `PUBLIC` pseudo-role and leaves those direct grants intact. Found live while shipping the
+  weekly digest: an anonymous `POST /rest/v1/rpc/run_weekly_digest` returned 200 and ran the function
+  (fixed #1671). The audit found **227** project-owned functions anon-executable; migration
+  `20271194000000_revoke_anon_execute_internal_rpcs.sql` (**applied + verified 2026-07-30**) revokes
+  `anon`+`authenticated` from the **33** `SECURITY DEFINER` ones that are internal helpers
+  (`_building_in_ambassador_chapter_scope`, `building_matches_*`), privileged mutators
+  (`rls_auto_enable`, `refresh_locality_hero_images`, `send_session_reminders`,
+  `migrate_tags_to_collections`), superseded cross-user readers (`get_main_feed`,
+  `get_explorer_feed`, `get_admin_dashboard_stats`), or orphans from the forked film-club codebase
+  (`is_group_member`, `update_group_stats`, `search_films_debug` — the `group*` tables do not exist).
+  **The trap to know:** an RLS policy's `USING`/`WITH CHECK` expression is evaluated as the *querying*
+  role and Postgres checks that role's `EXECUTE` privilege, so revoking a policy helper turns every
+  read of the protected table into `permission denied for function` — verified empirically before
+  writing the migration. Nine helpers are therefore deliberately left granted (`is_admin`,
+  `_ambassador_can_access_chapter`, `is_collection_admin`, `plano_auth_is_company_steward`, …), several
+  of whose policies are `TO PUBLIC` so `anon` must keep `EXECUTE` too. Also left alone: helpers reached
+  from a `SECURITY INVOKER` caller anon can hit (`is_ambassador`, `get_locality_collections` via
+  `get_country_guide`; `main_image_url`), all `SECURITY INVOKER` functions (they run with the caller's
+  own rights, RLS applies, so no escalation is possible), and trigger functions (Postgres skips the
+  `EXECUTE` check when firing a trigger and PostgREST cannot call them). `postgres`/`service_role` keep
+  `EXECUTE` throughout and the four pg_cron jobs run as `postgres`. Guardrails: the template, `AGENTS.md`,
+  `.cursor/rules/01-database.mdc` and `docs/migrations.md` now require naming the roles, and
+  `scripts/check-migrations.mjs` warns when a migration re-asserts grants without naming
+  `anon`/`authenticated`.
 - **A building is now findable by its architect (2026-07-30):** `buildings.search_vector` is built by
   the `buildings_search_vector_update` trigger from six of the building's *own* columns and has never
   held credits, so `search_buildings_v2` — the authoritative text search behind `/search` Find mode
