@@ -1,12 +1,10 @@
-import React, { useMemo, useRef, useEffect, useCallback } from 'react';
+import { useMemo, useRef, useEffect, useCallback } from 'react';
 import { Marker, useMap, Popup } from 'react-map-gl/maplibre';
 import { ClusterResponse } from '../hooks/useMapData';
 import { BuildingPopupContent } from './BuildingPopupContent';
 import { getPinStyle } from '../utils/pinStyling';
-import { MapPin } from './MapPin';
-import { MAP_MARKER_FILL } from '@/features/maps/constants/mapMarkerFills';
-import { getCollectionMarkerLucideIcon } from '@/features/collections/markerPlaceDisplay';
-import type { CollectionMarkerCategory } from '@/features/collections/types';
+import { MapMarkerFace } from './MapMarkerFace';
+import { MAP_MARKER_FILL } from '../constants/mapMarkerFills';
 import '../../../App.css';
 import { getBuildingUrl } from '@/utils/url';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -223,45 +221,13 @@ export function MapMarkers({
           ? MAP_MARKER_Z_HOVER
           : Math.min(pinStyle.zIndex, MAP_MARKER_Z_MAX);
 
-        // Icon logic for custom markers (Google primary type refines dining/transport/etc.)
-        let MarkerIcon: React.ComponentType<{ className?: string }> | null = null;
-        if (cluster.is_custom_marker && cluster.marker_category) {
-          MarkerIcon = getCollectionMarkerLucideIcon(
-            cluster.marker_category as CollectionMarkerCategory,
-            cluster.marker_google_primary_type,
-          );
-        }
-
         const content = (
-          <MapPin
-              style={pinStyle}
-              isHovered={isHovered}
-          >
-              {/* Logic for children */}
-              {cluster.is_cluster ? (
-                  <span>{cluster.count}</span>
-              ) : (
-                  MarkerIcon ? (
-                     <span style={{ color: pinStyle.innerMarkColor }}>
-                        <MarkerIcon className="w-3.5 h-3.5" />
-                     </span>
-                  ) : itinerarySequence !== undefined ? (
-                      <span>{itinerarySequence}</span>
-                  ) : (
-                      pinStyle.showContent && (
-                        /* Rating dots / saved marks are rendered by MapPin from
-                           the PinStyle itself; the children slot only carries
-                           the candidate dot. */
-                        cluster.is_candidate ? (
-                            <div
-                              className="h-2 w-2 shrink-0 rounded-full"
-                              style={{ backgroundColor: MAP_MARKER_FILL.brandPrimary }}
-                            />
-                        ) : null
-                      )
-                  )
-              )}
-          </MapPin>
+          <MapMarkerFace
+            cluster={cluster}
+            style={pinStyle}
+            isHovered={isHovered}
+            itinerarySequence={itinerarySequence}
+          />
         );
 
         // Wrap non-cluster content with mouse handlers for hover effect

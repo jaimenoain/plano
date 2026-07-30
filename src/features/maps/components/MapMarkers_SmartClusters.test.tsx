@@ -262,7 +262,7 @@ describe('MapMarkers - Smart Clusters', () => {
       is_cluster: false,
       count: 1,
       is_custom_marker: true,
-      marker_category: 'other',
+      marker_category: 'dining',
       color: MAP_MARKER_FILL.surfaceMuted80,
       ...overrides,
     } as ClusterResponse);
@@ -280,6 +280,38 @@ describe('MapMarkers - Smart Clusters', () => {
       const icon = pin.querySelector('svg');
       expect(icon).not.toBeNull();
       expect((icon!.parentElement as HTMLElement).style.color).toBe(MAP_MARKER_FILL.brandPrimary);
+    });
+
+    // Regression guard: an unclassified place used to fall back to lucide's MapPin
+    // glyph, i.e. a teardrop pin drawn inside our teardrop pin shell.
+    it('gives an unclassified place a quiet dot, never a nested pin glyph', () => {
+      render(
+        <MapMarkers
+          clusters={[marker({ marker_category: 'other' })]}
+          setHighlightedId={setHighlightedId}
+          highlightedId={null}
+        />
+      );
+
+      const pin = screen.getByTestId('map-pin-container');
+      expect(pin.querySelector('svg')).toBeNull();
+
+      const dot = screen.getByTestId('map-pin-generic-mark');
+      expect(dot.style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
+    });
+
+    // A numbered stop still reads as its numeral — the dot must not swallow it.
+    it('keeps the sequence numeral on an unclassified itinerary stop', () => {
+      render(
+        <MapMarkers
+          clusters={[marker({ marker_category: 'other', itinerary_sequence: 3 })]}
+          setHighlightedId={setHighlightedId}
+          highlightedId={null}
+        />
+      );
+
+      expect(screen.getByText('3')).toBeTruthy();
+      expect(screen.queryByTestId('map-pin-generic-mark')).toBeNull();
     });
   });
 });
