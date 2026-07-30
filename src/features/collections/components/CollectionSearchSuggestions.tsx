@@ -14,11 +14,10 @@
  * and adds the new building on arrival.
  */
 import { useParams } from "react-router";
-import { Loader2, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DiscoveryList } from "@/features/search";
 import { useCollectionSearchSuggestions } from "../hooks/useCollectionSearchSuggestions";
+import { AddToCollectionButton } from "./AddToCollectionButton";
 import { CreateNewBuildingButton } from "./CreateNewBuildingButton";
 
 interface CollectionSearchSuggestionsProps {
@@ -87,22 +86,12 @@ export function CollectionSearchSuggestions({
           </div>
         }
         renderAction={(building) => (
-          <Button
-            size="sm"
-            className="h-8 w-8 shrink-0 p-0"
-            aria-label={`Add ${building.name} to this collection`}
+          <AddToCollectionButton
+            buildingName={building.name}
+            isAdding={addingId === building.id}
             disabled={addingId !== null}
-            onClick={(event) => {
-              event.stopPropagation();
-              addBuilding(building);
-            }}
-          >
-            {addingId === building.id ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="h-4 w-4" />
-            )}
-          </Button>
+            onAdd={() => addBuilding(building)}
+          />
         )}
       />
     </section>

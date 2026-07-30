@@ -8,9 +8,10 @@
  * returns one `matchedIds` set that BOTH panes filter by, which is what keeps
  * the rail list and the map pins from ever disagreeing.
  *
- * Only the All Items tab is searchable: filtering pins underneath a rendered
- * itinerary would break the day sequence, so on the Itinerary tab the query is
- * kept but not applied.
+ * Only the All Items tab is searchable. Filtering pins underneath a rendered
+ * itinerary would break the day sequence, and the Discover tab lists buildings
+ * the collection does *not* hold, which this query says nothing about — so on
+ * both the query is kept but not applied.
  */
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
@@ -22,6 +23,7 @@ import {
   filterCollectionMarkers,
   isSearchActive,
 } from "../filterCollectionItems";
+import type { CollectionRailTab } from "../railTabs";
 import type { CollectionItemWithBuilding, CollectionMarker } from "../types";
 
 interface UseCollectionSearchArgs {
@@ -30,7 +32,7 @@ interface UseCollectionSearchArgs {
   markers: CollectionMarker[];
   /** Every pin the map could draw — used only to locate matches for the re-frame. */
   mapBuildings: DiscoveryBuilding[];
-  activeTab: 'items' | 'itinerary';
+  activeTab: CollectionRailTab;
 }
 
 export interface CollectionSearchState {

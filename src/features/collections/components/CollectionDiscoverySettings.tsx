@@ -59,7 +59,8 @@ export function CollectionDiscoverySettings({
                   Hide buildings already in this collection
                 </span>
                 <span className="font-normal text-xs text-text-secondary">
-                  Show only what you could still add. The list keeps the full collection.
+                  Leave only what you could still add on the map. The rail keeps the full
+                  collection on its own tab either way.
                 </span>
               </Label>
               <Switch
