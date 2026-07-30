@@ -63,19 +63,29 @@ const MapContext = createContext<MapContextValue | null>(null);
  * MapMarkers, BuildingPopupContent, PhotographyTool, etc.), so nothing else
  * changes. The `hydratedContacts` cache (ratedBy → profile) is preserved.
  */
-export const MapProvider = ({ children }: { children: ReactNode }) => {
+export const MapProvider = ({
+  children,
+  forcedMode,
+}: {
+  children: ReactNode;
+  /** Pin the store to one mode (the /map route); the URL never carries `mode`. */
+  forcedMode?: Exclude<MapMode, null>;
+}) => {
   const [searchParams] = useSearchParams();
 
   // One store instance per provider (search vs PhotographyTool must not share a
   // viewport). Seeded once from the URL.
   const storeRef = useRef<MapStore | null>(null);
   if (storeRef.current === null) {
-    storeRef.current = createMapStore(parseMapStateFromParams(searchParams));
+    const seeded = parseMapStateFromParams(searchParams);
+    storeRef.current = createMapStore(
+      forcedMode ? { ...seeded, mode: forcedMode } : seeded,
+    );
   }
   const store = storeRef.current;
 
   // The one URL sync unit (mounted once).
-  useMapUrlSync(store);
+  useMapUrlSync(store, { forcedMode });
 
   // Reactive view of the store.
   const s = useStore(store);

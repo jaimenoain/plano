@@ -147,11 +147,11 @@ function UserMenu() {
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
               <Link
-                to="/search?mode=library"
+                to="/map"
                 className="flex items-center gap-2 cursor-pointer text-white/80 hover:text-white focus:text-white focus:bg-white/10"
               >
                 <Bookmark className="h-4 w-4" />
-                My Library
+                My Map
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>

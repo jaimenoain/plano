@@ -13,8 +13,15 @@ type BuildingSearchState = ReturnType<typeof useBuildingSearch>;
 
 const BuildingSearchContext = createContext<BuildingSearchState | null>(null);
 
-export function BuildingSearchProvider({ children }: { children: ReactNode }) {
-  const search = useBuildingSearch();
+export function BuildingSearchProvider({
+  children,
+  forcedMode,
+}: {
+  children: ReactNode;
+  /** Pin the search state to one mode (the /map route); never serialized to the URL. */
+  forcedMode?: 'library';
+}) {
+  const search = useBuildingSearch({ forcedMode });
   return (
     <BuildingSearchContext.Provider value={search}>
       {children}

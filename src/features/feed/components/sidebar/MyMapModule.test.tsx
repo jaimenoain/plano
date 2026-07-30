@@ -3,7 +3,7 @@ import { render, screen, cleanup } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { MyLibraryModule } from "./MyLibraryModule";
+import { MyMapModule } from "./MyMapModule";
 
 const mocks = vi.hoisted(() => ({ rows: [] as unknown[] }));
 
@@ -32,7 +32,7 @@ function renderModule(userId: string | null = "u1") {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <MyLibraryModule userId={userId ?? undefined} />
+        <MyMapModule userId={userId ?? undefined} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -59,7 +59,7 @@ const londonEwkb = {
   is_deleted: false,
 };
 
-describe("MyLibraryModule", () => {
+describe("MyMapModule", () => {
   it("renders the library total, its busiest cities and the map CTA", async () => {
     mocks.rows = [
       libraryRow("Madrid", [-3.7038, 40.4168]),
@@ -79,9 +79,9 @@ describe("MyLibraryModule", () => {
     expect(screen.queryByText("Paris")).toBeNull();
     expect(screen.getByText("+ 1 more city")).toBeInTheDocument();
 
-    expect(screen.getByText("Open My Library").closest("a")).toHaveAttribute(
+    expect(screen.getByText("Open My Map").closest("a")).toHaveAttribute(
       "href",
-      "/search?mode=library",
+      "/map",
     );
   });
 
@@ -109,7 +109,7 @@ describe("MyLibraryModule", () => {
 
     expect(await screen.findByText("Madrid")).toBeInTheDocument();
     expect(screen.queryByRole("img")).toBeNull();
-    expect(screen.getByText("Open My Library")).toBeInTheDocument();
+    expect(screen.getByText("Open My Map")).toBeInTheDocument();
   });
 
   it("plots the EWKB hex PostgREST actually sends for a geography column", async () => {
@@ -144,9 +144,9 @@ describe("MyLibraryModule", () => {
     mocks.rows = [];
     renderModule();
 
-    expect(await screen.findByText("Your library is empty")).toBeInTheDocument();
+    expect(await screen.findByText("Your map is empty")).toBeInTheDocument();
     expect(screen.getByText("Explore buildings")).toBeInTheDocument();
-    expect(screen.queryByText("Open My Library")).toBeNull();
+    expect(screen.queryByText("Open My Map")).toBeNull();
   });
 
   it("renders nothing when logged out", () => {

@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { Link } from "react-router";
-import { useQuery } from "@tanstack/react-query";
 
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -13,24 +12,19 @@ import {
   RailModule,
   RailSkeletonRows,
 } from "@/components/ui/rail";
+import { useLibraryEntries } from "@/features/mymap";
 
-import { fetchLibraryPins } from "../../api/railApi";
 import { isPlottable, rollUpPlaces } from "../../utils/libraryAtlas";
 import { LibraryAtlasPlate } from "./LibraryAtlasPlate";
 
 /**
- * "My Library" — the member's personal map (`/search?mode=library`) previewed
- * as a density plate: where they've actually been collecting, plus the cities
- * they've collected most. Auth-gated like the destination, so it renders only
- * for signed-in members.
+ * "My Map" — the member's personal map (`/map`) previewed as a density
+ * plate: where they've actually been collecting, plus the cities they've
+ * collected most. Auth-gated like the destination, so it renders only for
+ * signed-in members.
  */
-export function MyLibraryModule({ userId }: { userId?: string }) {
-  const { data, isLoading } = useQuery({
-    queryKey: ["feed-sidebar", "library-atlas", userId],
-    queryFn: () => fetchLibraryPins(userId!),
-    enabled: !!userId,
-    staleTime: 5 * 60 * 1000,
-  });
+export function MyMapModule({ userId }: { userId?: string }) {
+  const { data, isLoading } = useLibraryEntries(userId);
 
   const pins = useMemo(() => data ?? [], [data]);
   const plottable = useMemo(() => pins.filter(isPlottable), [pins]);
@@ -42,7 +36,7 @@ export function MyLibraryModule({ userId }: { userId?: string }) {
 
   return (
     <RailModule>
-      <RailHeader label="My Library" meta={pins.length > 0 ? String(pins.length) : undefined} />
+      <RailHeader label="My Map" meta={pins.length > 0 ? String(pins.length) : undefined} />
 
       {isLoading ? (
         <>
@@ -54,7 +48,7 @@ export function MyLibraryModule({ userId }: { userId?: string }) {
       ) : pins.length === 0 ? (
         <EmptyState
           className="items-start gap-2 px-0 py-2 text-left"
-          eyebrow="Your library is empty"
+          eyebrow="Your map is empty"
           message="Save or log buildings and they'll map out here."
           action={
             <Link to="/explore" className="cta-link">
@@ -65,7 +59,7 @@ export function MyLibraryModule({ userId }: { userId?: string }) {
       ) : (
         <>
           {plottable.length > 0 && (
-            <Link to="/search?mode=library" className="block transition-opacity hover:opacity-80">
+            <Link to="/map" className="block transition-opacity hover:opacity-80">
               <LibraryAtlasPlate pins={plottable} topPlaceName={places[0]?.name} />
             </Link>
           )}
@@ -92,8 +86,8 @@ export function MyLibraryModule({ userId }: { userId?: string }) {
           )}
 
           <div className="mt-4">
-            <Link to="/search?mode=library" className="cta-link">
-              Open My Library
+            <Link to="/map" className="cta-link">
+              Open My Map
             </Link>
           </div>
         </>

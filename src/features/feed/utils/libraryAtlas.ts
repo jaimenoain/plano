@@ -1,5 +1,5 @@
 /**
- * Geometry for the feed rail's "My Library" density plate.
+ * Geometry for the feed rail's "My Map" density plate.
  *
  * Pure functions — no React, no data access — so the projection, the binning
  * and the scale bar are testable without rendering anything. The plate is a

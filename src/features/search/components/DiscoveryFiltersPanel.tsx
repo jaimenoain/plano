@@ -100,7 +100,7 @@ export interface DiscoveryFiltersPanelProps {
   onShowLostChange?: (next: boolean) => void;
   selectedContacts?: UserSearchResult[];
   onContactsChange?: (contacts: UserSearchResult[]) => void;
-  /** When false, Curators & Friends is omitted (e.g. map My Library mode). */
+  /** When false, Curators & Friends is omitted (e.g. the /map library mode). */
   showContactPicker?: boolean;
   showResetRow?: boolean;
   onResetGlobalFilters?: () => void;

@@ -7,6 +7,7 @@ import {
   Folder,
   Landmark,
   LayoutDashboard,
+  Map,
   Play,
   Search,
   Settings2,
@@ -36,16 +37,25 @@ export const appNavItems: AppNavItem[] = [
     surfaces: ["top", "sidebar", "bottom"],
   },
   {
+    // Events keeps top + sidebar; its bottom-bar slot went to My Map.
     label: "Events",
     path: "/events",
     icon: CalendarDays,
-    surfaces: ["top", "sidebar", "bottom"],
+    surfaces: ["top", "sidebar"],
     isActive: (pathname) => pathname === "/events" || pathname.startsWith("/events/"),
   },
   {
     label: "Explore",
     path: "/explore",
     icon: Play,
+    surfaces: ["top", "sidebar", "bottom"],
+  },
+  {
+    // The member's own library as a first-class destination — beside
+    // Explore/Search as the third leg of the map triad (world / discover / mine).
+    label: "My Map",
+    path: "/map",
+    icon: Map,
     surfaces: ["top", "sidebar", "bottom"],
   },
   {
