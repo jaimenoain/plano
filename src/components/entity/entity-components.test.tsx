@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { EntityStatsBand } from "./EntityStatsBand";
 import { EntityHero } from "./EntityHero";
 import { EntityTabs } from "./EntityTabs";
@@ -28,6 +29,45 @@ describe("EntityStatsBand", () => {
     expect(screen.queryByRole("button", { name: /12 Buildings/i })).not.toBeInTheDocument();
   });
 
+  it("renders a cell with `to` as a link that keeps the current path", () => {
+    render(
+      <MemoryRouter initialEntries={["/profile/jane?section=about"]}>
+        <EntityStatsBand
+          cells={[
+            { key: "a", value: 12, label: "Buildings", to: "?section=visited" },
+            { key: "b", value: 4, label: "Collections", to: "?section=collections" },
+          ]}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("link", { name: /12 Buildings/i })).toHaveAttribute(
+      "href",
+      "/profile/jane?section=visited",
+    );
+    expect(screen.getByRole("link", { name: /4 Collections/i })).toHaveAttribute(
+      "href",
+      "/profile/jane?section=collections",
+    );
+    // A navigating stat must not double as a tab button — see EntityStatsBand's docblock.
+    expect(screen.queryByRole("button", { name: /Collections/i })).not.toBeInTheDocument();
+  });
+
+  it("prefers `to` over `onClick` when a cell has both", () => {
+    const onClick = vi.fn();
+    render(
+      <MemoryRouter initialEntries={["/profile/jane"]}>
+        <EntityStatsBand cells={[
+          { key: "a", value: 1, label: "Buildings", to: "?section=visited", onClick },
+          { key: "b", value: 2, label: "Followers", onClick },
+        ]} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("link", { name: /1 Buildings/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /2 Followers/i })).toBeInTheDocument();
+  });
+
   it("derives the grid column class from the cell count", () => {
     const { container: three } = render(
       <EntityStatsBand
@@ -51,6 +91,34 @@ describe("EntityStatsBand", () => {
       />,
     );
     expect(four.firstElementChild?.className).toContain("sm:grid-cols-4");
+  });
+
+  it("drops the left inset on cells that open a row, at each breakpoint", () => {
+    const { container } = render(
+      <EntityStatsBand
+        cells={[
+          { key: "a", value: 1, label: "A" },
+          { key: "b", value: 2, label: "B" },
+          { key: "c", value: 3, label: "C" },
+          { key: "d", value: 4, label: "D" },
+        ]}
+      />,
+    );
+    const cellClasses = Array.from(container.firstElementChild?.children ?? []).map(
+      (cell) => cell.className,
+    );
+
+    // Cell 1 opens a row at every width; cell 3 only on phones, where 4 cells
+    // wrap 2×2 — so it keeps a left inset from `sm:` up.
+    expect(cellClasses[0]).toContain("pl-0");
+    expect(cellClasses[0]).not.toContain("sm:pl-5");
+    expect(cellClasses[2]).toContain("pl-0");
+    expect(cellClasses[2]).toContain("sm:pl-5");
+
+    // Cells sitting against a hairline clear it at both widths.
+    expect(cellClasses[1]).toContain("pl-4");
+    expect(cellClasses[3]).toContain("pl-4");
+    expect(cellClasses.every((c) => c.includes("pr-4"))).toBe(true);
   });
 
   it("renders string values verbatim and formats numbers", () => {

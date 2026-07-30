@@ -918,8 +918,8 @@ export default function Profile() {
           />
 
           <EntityStatsBand cells={[
-            { key: "buildings", value: stats.reviews, label: "Buildings" },
-            { key: "collections", value: stats.maps, label: "Collections" },
+            { key: "buildings", value: stats.reviews, label: "Buildings", to: "?section=visited" },
+            { key: "collections", value: stats.maps, label: "Collections", to: "?section=collections" },
             { key: "followers", value: stats.followers, label: "Followers", onClick: () => openUserList("followers") },
             { key: "following", value: stats.following, label: "Following", onClick: () => openUserList("following") },
           ]} />

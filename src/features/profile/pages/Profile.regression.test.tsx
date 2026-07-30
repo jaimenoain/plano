@@ -320,6 +320,25 @@ describe('Profile Regression Tests', () => {
       expect(mocks.mockChain.eq).toHaveBeenCalledWith('status', 'pending');
   });
 
+  it('links the Buildings and Collections stats to their own tabs', async () => {
+      renderProfileWithUrl();
+      await screen.findByTestId('review-card-review-1');
+
+      // Stats band cells navigate within the profile being viewed — never to the
+      // viewer's own library — so the path is preserved and only ?section= changes.
+      expect(screen.getByRole('link', { name: /Buildings/i })).toHaveAttribute(
+        'href',
+        '/profile/testuser?section=visited',
+      );
+      expect(screen.getByRole('link', { name: /Collections/i })).toHaveAttribute(
+        'href',
+        '/profile/testuser?section=collections',
+      );
+
+      // Followers/Following stay dialog buttons, and the tabs stay buttons.
+      expect(screen.getByRole('button', { name: /Followers/i })).toBeInTheDocument();
+  });
+
   it('should not show portfolio dashboard link without a claimed person profile', async () => {
       renderProfileWithUrl();
 
