@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useRef, useState, type FocusEvent } from "react";
 import { CollectionMarker } from "@/features/collections/types";
 import { cn } from "@/lib/utils";
-import { Check, GripVertical, MessageSquarePlus, Save } from "lucide-react";
+import { GripVertical, MessageSquarePlus, Save, Trash2 } from "lucide-react";
 import { getCollectionMarkerLucideIcon } from "@/features/collections/markerPlaceDisplay";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -70,17 +70,16 @@ export const CollectionMarkerCard = forwardRef<HTMLDivElement, CollectionMarkerC
         >
             {canEdit && onRemove && (
                 <div
-                    className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <Button
-                        variant="secondary"
-                        size="icon"
-                        className="h-7 w-7 rounded-sm shadow-none"
+                        variant="destructive"
+                        size="icon-sm"
                         onClick={onRemove}
-                        title="Remove from map"
+                        title="Remove from collection"
                     >
-                        <Check className="h-3 w-3" />
+                        <Trash2 className="h-3 w-3" />
                     </Button>
                 </div>
             )}

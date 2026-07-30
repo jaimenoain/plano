@@ -2,7 +2,7 @@ import { forwardRef, useState, useRef, useEffect } from "react";
 import { CollectionItemWithBuilding } from "@/features/collections/types";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, MessageSquarePlus, Check, GripVertical, Medal } from "lucide-react";
+import { Save, MessageSquarePlus, GripVertical, Medal, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -99,8 +99,8 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                     className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <Button variant="destructive" size="icon-sm" onClick={onRemove} title="Remove from map">
-                        <Check className="h-3 w-3" />
+                    <Button variant="destructive" size="icon-sm" onClick={onRemove} title="Remove from collection">
+                        <Trash2 className="h-3 w-3" />
                     </Button>
                 </div>
             )}
