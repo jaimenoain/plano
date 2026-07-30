@@ -15,6 +15,12 @@ export default tseslint.config(
       "repomix-output.xml",
       ".react-router/types/**",
       "**/*.timestamp-*.mjs",
+      // Agent tooling. `.claude/worktrees/*` holds full git worktrees of this very
+      // repo, so without this every source file is linted once per worktree — the
+      // duplicates read as brand-new violations to the warning ratchet, and the
+      // nested copies of scripts/ and supabase/ escape the root-relative ignores
+      // above and surface as hard lint errors.
+      ".claude/**",
       // Design-sync tool I/O (cache, review output, generated config, vendored
       // bundles) — not app source. .ds-sync/ and ds-bundle/ are also gitignored.
       ".design-sync/**",
