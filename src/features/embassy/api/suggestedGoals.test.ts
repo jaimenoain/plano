@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildSuggestedGoals, type BacklogCounts } from "./suggestedGoals";
+import { buildSuggestedGoals, filterSuggestedGoals, type BacklogCounts } from "./suggestedGoals";
 
 const ZERO_COUNTS: BacklogCounts = { research: 0, moderation: 0, photos: 0, outreach: 0, events: 0 };
 
@@ -44,5 +44,36 @@ describe("buildSuggestedGoals", () => {
   it("sets the suggested target to the raw backlog count", () => {
     const suggestions = buildSuggestedGoals({ ...ZERO_COUNTS, events: 7 });
     expect(suggestions[0].target).toBe(7);
+  });
+});
+
+describe("filterSuggestedGoals", () => {
+  const ALL = buildSuggestedGoals({ research: 4, moderation: 1, photos: 12, outreach: 2, events: 1 });
+
+  it("passes every suggestion through when nothing is excluded", () => {
+    expect(filterSuggestedGoals(ALL, [])).toEqual(ALL);
+  });
+
+  it("drops the suggestion for a metric the user already has a goal for", () => {
+    const visible = filterSuggestedGoals(ALL, ["photos"]);
+    expect(visible.map((s) => s.metric)).not.toContain("photos");
+    expect(visible).toHaveLength(ALL.length - 1);
+  });
+
+  it("preserves the order of the surviving suggestions", () => {
+    expect(filterSuggestedGoals(ALL, ["moderation", "outreach"]).map((s) => s.metric)).toEqual([
+      "research",
+      "photos",
+      "events",
+    ]);
+  });
+
+  it("ignores excluded metrics that are never suggested", () => {
+    // edits/visits/firms_claimed are valid goal metrics with no backlog queue.
+    expect(filterSuggestedGoals(ALL, ["edits", "visits"])).toEqual(ALL);
+  });
+
+  it("returns nothing when every suggested metric is already a goal", () => {
+    expect(filterSuggestedGoals(ALL, ALL.map((s) => s.metric))).toEqual([]);
   });
 });

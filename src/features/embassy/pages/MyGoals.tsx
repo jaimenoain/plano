@@ -10,12 +10,22 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Target, History, Plus, Loader2, ArrowUpRight, TrendingUp, CheckSquare, Circle, Clock, CheckCircle2, CalendarDays, FolderOpen, Building2, Eye, EyeOff, Users } from "lucide-react";
+import { Target, History, Plus, Loader2, ArrowUpRight, TrendingUp, CheckSquare, Circle, Clock, CheckCircle2, CalendarDays, FolderOpen, Building2, Eye, EyeOff, Users, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow, isPast, isToday, parseISO } from "date-fns";
@@ -111,6 +121,7 @@ export default function MyGoalsPage() {
   const [target, setTarget] = useState("10");
   const [metric, setMetric] = useState<GoalMetric>("edits");
   const [pendingChipMetric, setPendingChipMetric] = useState<SuggestedGoalMetric | null>(null);
+  const [removeGoalId, setRemoveGoalId] = useState<string | null>(null);
 
   // Reuse the membership query already fired by EmbassyLayout (same queryKey).
   // When this component mounts the cache is already populated, so chapterId
@@ -192,11 +203,15 @@ export default function MyGoalsPage() {
         });
       if (error) throw error;
     },
-    onSuccess: () => {
+    // Awaited so onSettled (which clears the chip spinner) doesn't run until the
+    // goals list actually contains the new goal — otherwise the chip re-enables
+    // for a beat before the metric filter hides it, and a fast second click
+    // creates a duplicate.
+    onSuccess: async () => {
       toast.success("Goal set! Go get 'em.");
       setIsGoalOpen(false);
       resetForm();
-      queryClient.invalidateQueries({ queryKey: ["ambassador-goals", user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ["ambassador-goals", user?.id] });
     },
     onError: () => {
       toast.error("Couldn't set that goal — try again in a moment.");
@@ -206,11 +221,28 @@ export default function MyGoalsPage() {
     },
   });
 
+  const deleteGoalMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("ambassador_goals").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Goal removed.");
+      setRemoveGoalId(null);
+      queryClient.invalidateQueries({ queryKey: ["ambassador-goals", user?.id] });
+    },
+    onError: () => {
+      toast.error("Couldn't remove that goal — try again in a moment.");
+    },
+  });
+
   const resetForm = () => {
     setTitle("");
     setTarget("10");
     setMetric("edits");
   };
+
+  const activeGoals = goals?.filter((g) => g.status === "active") ?? [];
 
   const handlePickSuggestedGoal = (suggestion: { metric: SuggestedGoalMetric; title: string; target: number }) => {
     setPendingChipMetric(suggestion.metric);
@@ -287,6 +319,7 @@ export default function MyGoalsPage() {
             <SuggestedGoalChips
               chapterId={chapterId}
               pendingMetric={pendingChipMetric}
+              excludeMetrics={activeGoals.map((g) => g.metric)}
               onPick={handlePickSuggestedGoal}
             />
           )}
@@ -295,7 +328,7 @@ export default function MyGoalsPage() {
             <div className="grid gap-4">
               {[0, 1].map(i => <Skeleton key={i} className={cn("h-32 w-full", EMBASSY_SKELETON_ROUNDED)} />)}
             </div>
-          ) : goals?.filter(g => g.status === 'active').length === 0 ? (
+          ) : activeGoals.length === 0 ? (
             <EmbassyEmptyState
               title="No active goals"
               description="Set a target to keep yourself motivated."
@@ -304,8 +337,8 @@ export default function MyGoalsPage() {
             </EmbassyEmptyState>
           ) : (
             <div className="grid gap-4">
-              {goals?.filter(g => g.status === 'active').map((goal) => (
-                <GoalCard key={goal.id} goal={goal} />
+              {activeGoals.map((goal) => (
+                <GoalCard key={goal.id} goal={goal} onRemove={() => setRemoveGoalId(goal.id)} />
               ))}
             </div>
           )}
@@ -508,6 +541,35 @@ export default function MyGoalsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ─── Remove goal confirmation ─── */}
+      <AlertDialog
+        open={Boolean(removeGoalId)}
+        onOpenChange={(o) => !o && setRemoveGoalId(null)}
+      >
+        <AlertDialogContent className="border-border-default bg-surface-overlay">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove goal</AlertDialogTitle>
+            <AlertDialogDescription>
+              The target disappears from your dashboard. The contributions you've
+              already made stay on your record.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteGoalMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteGoalMutation.isPending}
+              onClick={(ev) => {
+                ev.preventDefault();
+                if (removeGoalId) deleteGoalMutation.mutate(removeGoalId);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -542,7 +604,7 @@ function OpenTaskRow({ task, onClick }: { task: ChapterTask; onClick: () => void
   );
 }
 
-function GoalCard({ goal }: { goal: Goal }) {
+function GoalCard({ goal, onRemove }: { goal: Goal; onRemove: () => void }) {
   const progress = Math.min(100, (goal.current_value / goal.target_value) * 100);
   
   const metricLabels: Record<GoalMetric, string> = {
@@ -557,7 +619,7 @@ function GoalCard({ goal }: { goal: Goal }) {
   };
 
   return (
-    <Card className="space-y-4 border-border-default p-6 transition-colors hover:border-border-strong">
+    <Card className="group space-y-4 border-border-default p-6 transition-colors hover:border-border-strong">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <h3 className="text-lg font-semibold text-text-primary">{goal.title}</h3>
@@ -565,8 +627,23 @@ function GoalCard({ goal }: { goal: Goal }) {
             {goal.current_value} / {goal.target_value} {metricLabels[goal.metric]}
           </p>
         </div>
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-border-default bg-surface-muted text-text-secondary">
-          <TrendingUp className="h-5 w-5" aria-hidden />
+        <div className="flex shrink-0 items-center gap-2">
+          {/* Always reachable on touch, hover-revealed on pointer devices. */}
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={`Remove goal: ${goal.title}`}
+            onClick={onRemove}
+            className={cn(
+              "h-7 w-7 text-feedback-destructive hover:text-feedback-destructive",
+              "transition-opacity focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100",
+            )}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-border-default bg-surface-muted text-text-secondary">
+            <TrendingUp className="h-5 w-5" aria-hidden />
+          </div>
         </div>
       </div>
 

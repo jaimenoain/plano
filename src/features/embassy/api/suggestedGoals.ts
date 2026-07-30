@@ -82,6 +82,25 @@ export function buildSuggestedGoals(counts: BacklogCounts): SuggestedGoal[] {
 }
 
 /**
+ * Drop suggestions for metrics the user is already chasing, so picking a chip
+ * can't create a second goal for the same metric (the table has no uniqueness
+ * constraint on (user_id, metric), and progress is derived per-metric anyway,
+ * so duplicates would just be two identical cards).
+ *
+ * `excludeMetrics` is a plain string list rather than SuggestedGoalMetric[]
+ * because callers pass goal metrics from the wider eight-value goal union.
+ * Exported for unit testing.
+ */
+export function filterSuggestedGoals(
+  suggestions: SuggestedGoal[],
+  excludeMetrics: readonly string[],
+): SuggestedGoal[] {
+  if (excludeMetrics.length === 0) return suggestions;
+  const excluded = new Set(excludeMetrics);
+  return suggestions.filter((s) => !excluded.has(s.metric));
+}
+
+/**
  * Fetch the same five contribution queues startHere.ts uses, reduce each to a
  * backlog count, and build suggested goals. A queue that errors counts as 0
  * rather than failing the whole feed.

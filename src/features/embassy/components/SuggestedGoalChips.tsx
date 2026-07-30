@@ -1,7 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Search, Filter, Camera, CheckCircle2, CalendarClock, Loader2, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchSuggestedGoals, type SuggestedGoal, type SuggestedGoalMetric } from "../api/suggestedGoals";
+import {
+  fetchSuggestedGoals,
+  filterSuggestedGoals,
+  type SuggestedGoal,
+  type SuggestedGoalMetric,
+} from "../api/suggestedGoals";
 import { EmbassySectionLabel } from "./embassy-ui";
 
 // Same icon language as StartHereQueue's TOOL_ICON, so a chip reads as its
@@ -53,17 +58,21 @@ function SuggestedGoalChip({
  * loading or when the backlog is empty; it's a supplementary shortcut, not a
  * layout-shifting section on its own.
  *
- * `pendingMetric` is owned by the caller (it tracks the create-goal mutation's
- * lifecycle) rather than this component, since only the caller knows when that
- * mutation actually settles.
+ * `pendingMetric` and `excludeMetrics` are both owned by the caller — only it
+ * knows when the create-goal mutation actually settles, and which goals the
+ * user already has active. A chip whose metric is already an active goal is
+ * hidden (and comes back if that goal is removed), so the row only ever offers
+ * work the user hasn't committed to yet.
  */
 export function SuggestedGoalChips({
   chapterId,
   pendingMetric,
+  excludeMetrics,
   onPick,
 }: {
   chapterId?: string;
   pendingMetric: SuggestedGoalMetric | null;
+  excludeMetrics: readonly string[];
   onPick: (suggestion: SuggestedGoal) => void;
 }) {
   const { data: suggestions } = useQuery({
@@ -73,7 +82,9 @@ export function SuggestedGoalChips({
     staleTime: 30_000,
   });
 
-  if (!suggestions || suggestions.length === 0) {
+  const visible = filterSuggestedGoals(suggestions ?? [], excludeMetrics);
+
+  if (visible.length === 0) {
     return null;
   }
 
@@ -81,7 +92,7 @@ export function SuggestedGoalChips({
     <div className="space-y-2">
       <EmbassySectionLabel>Suggested</EmbassySectionLabel>
       <div className="flex flex-wrap gap-2">
-        {suggestions.map((suggestion) => (
+        {visible.map((suggestion) => (
           <SuggestedGoalChip
             key={suggestion.metric}
             suggestion={suggestion}
