@@ -734,7 +734,7 @@ CREATE TABLE public.localities (
   hero_image_url   text,
   meta_title       text,          -- SEO override; null falls back to generated defaults
   meta_description text,
-  lat              double precision,  -- Geographic centre for map viewport; populated manually
+  lat              double precision,  -- Geographic centre for map viewport. Backfilled from the MEDIAN of the locality's geolocated buildings (migration 20271188000000); null only where no building has a location. Manual/curated values are never overwritten.
   lng              double precision,
   buildings_count  integer       NOT NULL DEFAULT 0,  -- Cached count; kept in sync by sync_building_locality trigger
   created_at       timestamptz   NOT NULL DEFAULT now(),
