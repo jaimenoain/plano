@@ -74,21 +74,6 @@ export async function getLocalityByCountryCity(
   return mapLocalityRowToDto(data);
 }
 
-/** Server-side: fetch all localities for a country, ordered by buildings_count desc. */
-export async function getCountryLocalities(
-  supabaseClient: AppSupabaseClient,
-  countryCode: string,
-): Promise<LocalityDTO[]> {
-  const { data, error } = await supabaseClient
-    .from("localities")
-    .select("*")
-    .eq("country_code", countryCode.toUpperCase())
-    .order("buildings_count", { ascending: false });
-
-  if (error || !data) return [];
-  return data.map(mapLocalityRowToDto);
-}
-
 /** Server-side: fetch a locality by its slug. Returns null if not found. */
 export async function getLocalityBySlug(
   supabaseClient: AppSupabaseClient,

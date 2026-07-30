@@ -11,3 +11,7 @@
 export { usePopularCollections } from "./useGuides";
 export { CollectionGuideCard } from "./CollectionGuideCard";
 export type { PopularCollection } from "./guidesApi";
+// Leaf lookup table (no component graph behind it) — the country guide labels
+// itself with its continent.
+export { findContinent } from "./continents";
+export type { Continent } from "./continents";

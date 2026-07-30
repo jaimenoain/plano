@@ -55,3 +55,12 @@ const COUNTRY_TO_CONTINENT: Record<string, Continent> = {
 export function getContinent(countryCode: string): Continent {
   return COUNTRY_TO_CONTINENT[countryCode.toUpperCase()] ?? 'Europe';
 }
+
+/**
+ * Like {@link getContinent} but honest about a miss — `getContinent` buckets
+ * every unmapped code into Europe, which is fine for grouping a tab list and
+ * wrong for labelling one country's own page.
+ */
+export function findContinent(countryCode: string): Continent | null {
+  return COUNTRY_TO_CONTINENT[countryCode.toUpperCase()] ?? null;
+}
