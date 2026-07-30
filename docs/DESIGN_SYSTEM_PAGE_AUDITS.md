@@ -1,6 +1,6 @@
 # Design System Page Audits
 
-Per-page audit log for the design refinement programme ([Roadmap.md](Roadmap.md), R0–R9) and the successor **remaining surfaces** programme ([REMAINING_SURFACES_ROADMAP.md](REMAINING_SURFACES_ROADMAP.md), P0–P10). Each entry records intent, deltas, and rationale. Written by the agent during refinement phases; no human sign-off required.
+Per-page audit log for the design refinement programme ([the archived roadmaps](roadmaps/), R0–R9) and the successor **remaining surfaces** programme ([REMAINING_SURFACES_ROADMAP.md](REMAINING_SURFACES_ROADMAP.md), P0–P10). Each entry records intent, deltas, and rationale. Written by the agent during refinement phases; no human sign-off required.
 
 ## Agent workflow (kit comparison)
 
@@ -256,4 +256,4 @@ When refining a page with a website kit reference:
 
 ## Phases 2–7 (rollout) and R1–R8 (refinement)
 
-Audits for remaining route families are recorded as each phase batch completes. See completion tracker in [DESIGN_SYSTEM_SCREEN_INVENTORY.md](DESIGN_SYSTEM_SCREEN_INVENTORY.md) and phase checklist in [Roadmap.md](Roadmap.md).
+Audits for remaining route families are recorded as each phase batch completes. See completion tracker in [DESIGN_SYSTEM_SCREEN_INVENTORY.md](DESIGN_SYSTEM_SCREEN_INVENTORY.md) and phase checklist in [the archived roadmaps](roadmaps/).
