@@ -141,6 +141,11 @@ vi.mock("@/features/embassy/api/suggestedGoals", async (importOriginal) => ({
 
 import MyGoalsPage from "./MyGoals";
 
+// The dashboard chains membership → chapter tasks → suggestions, so the last
+// assertion in a test can be several query round-trips deep. RTL's 1s default
+// is tight enough to flake when the whole suite runs in parallel.
+const SLOW = { timeout: 10_000 };
+
 describe("MyGoalsPage (ambassador dashboard)", () => {
   beforeEach(() => {
     rpc.mockClear();
@@ -155,8 +160,8 @@ describe("MyGoalsPage (ambassador dashboard)", () => {
   it("leads with open tasks, above the suggested 'Start here' queue", async () => {
     renderWithProviders(<MyGoalsPage />);
 
-    const openTasks = await screen.findByRole("heading", { name: /open tasks/i });
-    const startHere = await screen.findByRole("heading", { name: /start here/i });
+    const openTasks = await screen.findByRole("heading", { name: /open tasks/i }, SLOW);
+    const startHere = await screen.findByRole("heading", { name: /start here/i }, SLOW);
 
     // DOCUMENT_POSITION_FOLLOWING (4) — "Start here" comes after "Open tasks".
     expect(openTasks.compareDocumentPosition(startHere) & Node.DOCUMENT_POSITION_FOLLOWING)
@@ -166,7 +171,7 @@ describe("MyGoalsPage (ambassador dashboard)", () => {
   it("puts tasks assigned to the viewer ahead of the rest of the chapter's", async () => {
     renderWithProviders(<MyGoalsPage />);
 
-    await waitFor(() => expect(screen.getByText("My assigned task")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("My assigned task")).toBeInTheDocument(), SLOW);
     const mine = screen.getByText("My assigned task");
     const theirs = screen.getByText("Someone else's task");
 
@@ -176,20 +181,22 @@ describe("MyGoalsPage (ambassador dashboard)", () => {
   it("removes an active goal once the confirmation is accepted", async () => {
     renderWithProviders(<MyGoalsPage />);
 
-    const remove = await screen.findByRole("button", { name: "Remove goal: Photo sprint" });
+    const remove = await screen.findByRole("button", { name: "Remove goal: Photo sprint" }, SLOW);
     await userEvent.click(remove);
 
-    await screen.findByRole("heading", { name: "Remove goal" });
+    await screen.findByRole("heading", { name: "Remove goal" }, SLOW);
     await userEvent.click(screen.getByRole("button", { name: "Remove" }));
 
-    await waitFor(() => expect(deletedGoalIds).toEqual(["g-photos"]));
+    await waitFor(() => expect(deletedGoalIds).toEqual(["g-photos"]), SLOW);
   });
 
   it("keeps the goal when the confirmation is cancelled", async () => {
     renderWithProviders(<MyGoalsPage />);
 
-    await userEvent.click(await screen.findByRole("button", { name: "Remove goal: Photo sprint" }));
-    await userEvent.click(await screen.findByRole("button", { name: "Cancel" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Remove goal: Photo sprint" }, SLOW),
+    );
+    await userEvent.click(await screen.findByRole("button", { name: "Cancel" }, SLOW));
 
     expect(deletedGoalIds).toEqual([]);
     expect(screen.getByText("Photo sprint")).toBeInTheDocument();
@@ -199,7 +206,7 @@ describe("MyGoalsPage (ambassador dashboard)", () => {
     renderWithProviders(<MyGoalsPage />);
 
     // research has no goal yet, so its chip stays; photos is already covered.
-    await screen.findByRole("button", { name: "Review 3 pending research items" });
+    await screen.findByRole("button", { name: "Review 3 pending research items" }, SLOW);
     expect(
       screen.queryByRole("button", { name: "Upload 12 missing photos" }),
     ).not.toBeInTheDocument();
