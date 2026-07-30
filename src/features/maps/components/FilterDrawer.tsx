@@ -297,7 +297,7 @@ export function FilterDrawer({ compact = false }: { compact?: boolean }) {
           )}
         </SheetHeader>
         <div className="grid gap-6 py-6">
-          {/* Mode-specific settings — the Discover / My Library switch itself
+          {/* Mode-specific settings — the All / Discover switch itself
               lives on the page (MapModeToggle), not in the drawer */}
           {effectiveMode === 'discover' && (
             <div className="space-y-4">
@@ -338,7 +338,7 @@ export function FilterDrawer({ compact = false }: { compact?: boolean }) {
           {effectiveMode === 'library' && (
             <div className="space-y-4">
               <h3 className="eyebrow tracking-widest">
-                {isContactMode ? 'Contact Filters' : 'Library Settings'}
+                {isContactMode ? 'Contact Filters' : 'My Map Settings'}
               </h3>
 
               {/* Status */}

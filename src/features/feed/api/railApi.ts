@@ -89,9 +89,15 @@ export type LibraryPin = {
   lng: number | null;
   city: string | null;
   country: string | null;
+  /** Library membership: `pending` reads as "Saved" everywhere user-facing. */
+  status: "pending" | "visited";
+  /** The 0–3 Masterpiece award on the same `user_buildings` row; null = unrated. */
+  rating: number | null;
 };
 
 type LibraryPinRow = {
+  status: "pending" | "visited";
+  rating: number | null;
   building: {
     city: string | null;
     country: string | null;
@@ -108,7 +114,7 @@ type LibraryPinRow = {
 const LIBRARY_PIN_LIMIT = 4000;
 
 /**
- * The member's whole library — everything `/search?mode=library` maps —
+ * The member's whole library — everything `/map` maps —
  * reduced to what the rail's density plate needs: a coordinate and a place
  * name per building. `location` is PostGIS geography, so PostgREST hands it
  * back as WKB/GeoJSON and `parseLocation` normalises it (the same route the
@@ -122,6 +128,8 @@ export async function fetchLibraryPins(userId: string): Promise<LibraryPin[]> {
     .from("user_buildings")
     .select(
       `
+      status,
+      rating,
       building:buildings!user_buildings_building_id_fkey(
         city, country, location, is_deleted
       )
@@ -134,17 +142,19 @@ export async function fetchLibraryPins(userId: string): Promise<LibraryPin[]> {
   if (error) throw error;
 
   return ((data ?? []) as unknown as LibraryPinRow[])
-    .map((row) => row.building)
-    .filter((building): building is NonNullable<LibraryPinRow["building"]> =>
-      building !== null && !building.is_deleted,
+    .filter(
+      (row): row is LibraryPinRow & { building: NonNullable<LibraryPinRow["building"]> } =>
+        row.building !== null && !row.building.is_deleted,
     )
-    .map((building) => {
-      const coords = parseLocation(building.location);
+    .map((row) => {
+      const coords = parseLocation(row.building.location);
       return {
         lat: coords?.lat ?? null,
         lng: coords?.lng ?? null,
-        city: building.city,
-        country: building.country,
+        city: row.building.city,
+        country: row.building.country,
+        status: row.status,
+        rating: row.rating,
       };
     });
 }

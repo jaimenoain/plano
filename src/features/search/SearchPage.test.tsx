@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
-import SearchPage from "./SearchPage";
+import SearchPage, { SearchPageShell } from "./SearchPage";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 /**
@@ -83,6 +83,7 @@ vi.mock("@/lib/googleMapsGeocoding", () => ({
 
 vi.mock("react-router", () => ({
   useNavigate: () => vi.fn(),
+  redirect: vi.fn(),
 }));
 
 describe("SearchPage — single FilterDrawer owner", () => {
@@ -110,7 +111,7 @@ describe("SearchPage — single FilterDrawer owner", () => {
     expect(screen.getAllByTestId("map-controls")).toHaveLength(1);
   });
 
-  it("renders the Discover / My Library toggle in the desktop sidebar", () => {
+  it("renders the All / Discover toggle in the desktop sidebar", () => {
     (useIsMobile as Mock).mockReturnValue(false);
 
     render(<SearchPage />);
@@ -130,5 +131,19 @@ describe("SearchPage — single FilterDrawer owner", () => {
       .map((el) => el.getAttribute("data-name"));
     expect(names).toContain("map-mode-mobile");
     expect(names).toContain("map-mode-desktop");
+  });
+
+  it("drops every mode toggle and renders the masthead slot when the mode is forced (/map)", () => {
+    (useIsMobile as Mock).mockReturnValue(true);
+
+    render(
+      <SearchPageShell
+        forcedMode="library"
+        masthead={<div data-testid="my-map-masthead" />}
+      />,
+    );
+
+    expect(screen.queryAllByTestId("map-mode-toggle")).toHaveLength(0);
+    expect(screen.getByTestId("my-map-masthead")).toBeInTheDocument();
   });
 });

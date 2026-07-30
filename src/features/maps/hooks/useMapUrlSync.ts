@@ -29,29 +29,42 @@ import type { MapStore, MapStoreState } from '../stores/useMapStore';
  */
 function serializeStoreToParams(
   state: Pick<MapStoreState, 'lat' | 'lng' | 'zoom' | 'mode' | 'filters'>,
-  base: URLSearchParams
+  base: URLSearchParams,
+  forcedMode?: MapStoreState['mode']
 ): URLSearchParams {
   const p = new URLSearchParams(base);
   p.set('lat', String(state.lat));
   p.set('lng', String(state.lng));
   p.set('zoom', String(state.zoom));
-  if (state.mode) p.set('mode', state.mode);
+  // A forced mode is implied by the route (/map) and never written to the URL.
+  if (forcedMode) p.delete('mode');
+  else if (state.mode) p.set('mode', state.mode);
   else p.delete('mode');
   syncFilterParams(p, state.filters);
   return p;
 }
 
-export function useMapUrlSync(store: MapStore) {
+export function useMapUrlSync(
+  store: MapStore,
+  opts?: { forcedMode?: Exclude<MapStoreState['mode'], null> }
+) {
   const [searchParams, setSearchParams] = useSearchParams();
   const lastFlushedRef = useRef<string | null>(null);
+  const forcedMode = opts?.forcedMode;
 
   // INPUT — adopt external URL changes (mount, popstate, transitional writers).
   useEffect(() => {
     const committed = searchParams.toString();
     if (committed === lastFlushedRef.current) return; // our own echo → ignore
     lastFlushedRef.current = committed;
-    store.getState().hydrateFromURL(parseMapStateFromParams(searchParams));
-  }, [searchParams, store]);
+    const parsed = parseMapStateFromParams(searchParams);
+    // hydrateFromURL sets mode unconditionally and a mode-less URL parses to
+    // null — without this override every echo would silently reset a forced
+    // mode and /map would fall back to global ranking.
+    store.getState().hydrateFromURL(
+      forcedMode ? { ...parsed, mode: forcedMode } : parsed
+    );
+  }, [searchParams, store, forcedMode]);
 
   // OUTPUT — synchronous, output-only writer.
   useEffect(() => {
@@ -68,12 +81,12 @@ export function useMapUrlSync(store: MapStore) {
       }
       const live = typeof window !== 'undefined' ? window.location.search : '';
       const liveStr = new URLSearchParams(live).toString();
-      const next = serializeStoreToParams(state, new URLSearchParams(live));
+      const next = serializeStoreToParams(state, new URLSearchParams(live), forcedMode);
       const nextStr = next.toString();
       if (nextStr === liveStr) return; // nothing to write (already reflected)
       lastFlushedRef.current = nextStr;
       setSearchParams(next, { replace: true });
     });
     return unsub;
-  }, [store, setSearchParams]);
+  }, [store, setSearchParams, forcedMode]);
 }

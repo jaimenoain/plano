@@ -2,18 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import { MapModeToggle } from './MapModeToggle';
-import { useAuth } from '@/features/auth';
 import { useBuildingSearchContext } from '../context/BuildingSearchContext';
-
-const navigateMock = vi.fn();
-
-vi.mock('react-router', () => ({
-  useNavigate: () => navigateMock,
-}));
-
-vi.mock('@/features/auth', () => ({
-  useAuth: vi.fn(),
-}));
 
 vi.mock('../context/BuildingSearchContext', () => ({
   useBuildingSearchContext: vi.fn(),
@@ -24,7 +13,6 @@ describe('MapModeToggle', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAuth as Mock).mockReturnValue({ user: { id: 'me' } });
     (useBuildingSearchContext as Mock).mockReturnValue({ mode: null, switchMode });
   });
 
@@ -40,6 +28,21 @@ describe('MapModeToggle', () => {
     expect(all.className).toContain('text-text-primary');
   });
 
+  it('offers no library segment — My Map is its own destination at /map', () => {
+    render(<MapModeToggle name="test" />);
+
+    expect(screen.queryByText(/library/i)).toBeNull();
+    expect(screen.queryByText(/my map/i)).toBeNull();
+  });
+
+  it('switches to Discover', () => {
+    render(<MapModeToggle name="test" />);
+
+    fireEvent.click(screen.getByText('Discover'));
+
+    expect(switchMode).toHaveBeenCalledWith('discover');
+  });
+
   it('returns to All (null) when the All segment is clicked', () => {
     (useBuildingSearchContext as Mock).mockReturnValue({ mode: 'discover', switchMode });
 
@@ -50,32 +53,12 @@ describe('MapModeToggle', () => {
     expect(switchMode).toHaveBeenCalledWith(null);
   });
 
-  it('switches to My Library for a signed-in user', () => {
-    render(<MapModeToggle name="test" />);
-
-    fireEvent.click(screen.getByText('My Library'));
-
-    expect(switchMode).toHaveBeenCalledWith('library');
-    expect(navigateMock).not.toHaveBeenCalled();
-  });
-
-  it('sends signed-out visitors to log in instead of an empty library', () => {
-    (useAuth as Mock).mockReturnValue({ user: null });
-
-    render(<MapModeToggle name="test" />);
-
-    fireEvent.click(screen.getByText('My Library'));
-
-    expect(navigateMock).toHaveBeenCalledWith('/login');
-    expect(switchMode).not.toHaveBeenCalled();
-  });
-
   it('does not re-apply the mode baseline when the active option is clicked again', () => {
-    (useBuildingSearchContext as Mock).mockReturnValue({ mode: 'library', switchMode });
+    (useBuildingSearchContext as Mock).mockReturnValue({ mode: 'discover', switchMode });
 
     render(<MapModeToggle name="test" />);
 
-    fireEvent.click(screen.getByText('My Library'));
+    fireEvent.click(screen.getByText('Discover'));
 
     expect(switchMode).not.toHaveBeenCalled();
   });
