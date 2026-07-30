@@ -7,7 +7,8 @@ import {
   isBuildingHeroEligibleSize,
   pickFirstHeroEligibleStoragePath,
 } from "@/lib/building-hero-image";
-import { getBuildingLocalityUrl, getBuildingUrl } from "@/utils/url";
+import { getBuildingLocalityUrl, getBuildingUrl, resolveBuildingUrl } from "@/utils/url";
+import { getBuildingWithLocality } from "@/features/buildings/api/buildingsApi";
 
 export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
   const headers = new Headers();
@@ -27,6 +28,37 @@ export async function buildingLoader({ request, params }: LoaderFunctionArgs) {
       throw new Response("Not found", { status: 404 });
     }
     throw e;
+  }
+
+  // -------------------------------------------------------------------------
+  // Merged duplicates redirect to their survivor.
+  //
+  // A merge soft-deletes the source and points `merged_into_id` at the keeper,
+  // but the row stays readable — so without this, every old or shared link to a
+  // merged duplicate rendered a hollow page whose content had moved away.
+  //
+  // Resolution is deliberately ONE hop: 20271191000000_harden_merge_buildings
+  // re-points inbound pointers on every merge, so a chain is always flat. If a
+  // malformed chain ever survives that, fall through and render instead of
+  // walking (or looping) — degrading to the old behaviour beats a redirect loop.
+  // -------------------------------------------------------------------------
+  const mergedIntoId =
+    (building as { merged_into_id?: string | null }).merged_into_id ?? null;
+
+  if (mergedIntoId && mergedIntoId !== building.id) {
+    const survivor = await getBuildingWithLocality(supabase, mergedIntoId);
+    if (survivor && survivor.id !== building.id) {
+      throw redirect(
+        resolveBuildingUrl({
+          id: survivor.id,
+          slug: survivor.slug,
+          short_id: survivor.short_id,
+          locality_country_code: survivor.locality?.country_code ?? null,
+          locality_city_slug: survivor.locality?.city_slug ?? null,
+        }),
+        { status: 301, headers },
+      );
+    }
   }
 
   const canonicalSlug =

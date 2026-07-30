@@ -8,6 +8,43 @@
 **Rollout ≠ refinement:** The May 2026 rollout (Phases 0–7) wired semantic tokens, removed raw palette classes, and connected real data (e.g. `get_feed` on the home feed). That work is **complete**. The refinement programme ([ROADMAP.md](ROADMAP.md), Phases R0–R9) delivered editorial layout, typography rhythm, kit fidelity, and per-page audit evidence across shell, editorial spine, discovery, identity, events, auth/token flows, embassy, and admin. Tracking: all families `refined` or `complete` in [DESIGN_SYSTEM_SCREEN_INVENTORY.md](DESIGN_SYSTEM_SCREEN_INVENTORY.md).
 
 ## CURRENT_ARCHITECTURE_SNAPSHOT
+- **Circular building merges fixed — "Farnsworth House" was unfindable (2026-07-30):** `/search`
+  returned zero results for the first building ever added, because the catalogue held two Farnsworth
+  rows and `admin_audit_logs` shows the same admin merging them **twice in opposite directions**
+  (2026-02-03 short_id 3745 → 3342, 2026-02-19 short_id 3342 → 3745). The second merge absorbed a
+  record into an already-deleted one, so both rows ended up `is_deleted = true` pointing at each
+  other — and since every discovery RPC filters `is_deleted`, the building vanished everywhere at
+  once while its content (2 notes, 1 credit, 1 style, 5 attributes) still hung off 3745. **The search
+  stack was not at fault:** across all 18,129 live buildings there are zero rows with a null
+  `location`, `search_vector`, or `name`. Three invariants now hold (I1 a live row never carries
+  `merged_into_id`; I2 pointers resolve to a live row in one hop; I3 every component has exactly one
+  live survivor) — see [ADR 0022](decisions/0022-building-merge-invariants.md) and
+  `scripts/verify_merge_chains.sql`. Migration `20271190000000_repair_orphaned_merge_chains.sql`
+  (cycle-safe recursive walk with a `path uuid[]` guard + 64-hop bound; **resurrected 1 row — 3745,
+  chosen by dependent-row count — and flattened 3 chains**: 16067→17543, 17125→17670, 15714→17670)
+  and `20271191000000_harden_merge_buildings.sql` (state + cycle guards under `FOR UPDATE` locks,
+  inbound `merged_into_id` re-point, and re-pointing for the **ten tables the old body silently
+  orphaned**: `building_attributes`, `building_styles`, `building_functional_typologies`,
+  `event_buildings`, `collection_items` — which has *no* unique `(collection_id, building_id)` index,
+  so at most one source row is promoted per collection — `ambassador_building_research_queue`,
+  `award_recipients`, `award_recipient_suggestions`, `building_audit_logs`,
+  `building_duplicate_dismissals`). Both **APPLIED to prod**. `BuildingDetails.loader.ts` now 301s a
+  merged building to its survivor (reusing `getBuildingWithLocality` + `resolveBuildingUrl`), fixing
+  112 dead URLs; the admin merge page gained `mergeState.ts` + `MergeStateWarning.tsx`, badges, a
+  `handleSwap`/`handleMerge` guard and a disabled confirm button. Gotchas: **there is no `min(uuid)`**
+  in Postgres (use `ORDER BY … LIMIT 1`); `admin_audit_logs.admin_id` is `NOT NULL`, so a migration
+  must not write there and a psql-driven `merge_buildings` test needs
+  `SET LOCAL request.jwt.claims` to give `auth.uid()` a value; `BuildingRedirect.tsx` is unrouted
+  dead code. Merging deliberately **stays open to all authenticated users** (owner decision).
+- **Stranded migration `20271175000000` applied (2026-07-30):** the "authoritative name search" fix
+  (PR #1579), whose own header names the *"Farnsworth House is missing"* report, was merged to `main`
+  in July but **never applied to the database**. Prod was still running the older bodies:
+  `search_buildings_v2` kept its `location IS NOT NULL` gate, and `get_buildings_list` kept
+  `similarity > 0.3` plus a server-side `Demolished/Lost/Under Construction/Unbuilt` default that the
+  client was supposed to own. Now applied and verified. Every other recent migration
+  (`20271183`, `20271186`–`20271189`) was already applied — a single contained gap, not general
+  drift. Reminder that `supabase_migrations.schema_migrations` holds only 23 rows against 503
+  migration files, so **it cannot be trusted to tell you what is applied — probe the DB objects.**
 - **Embassy in-tool photo upload (roadmap 2.2, 2026-07-23):** The Photography tool no longer
   bounces to the building page to add a photo. New `PhotoUploadSheet` (opened from list rows
   and from map gap-pin popups) picks + compresses photos and uploads them via new
@@ -56,6 +93,8 @@
   - Admin sidebar: "Updates" item added under Content group
 
 ## SCHEMA_DRIFT_LOG
+- [2026-07-30] **`20271175000000_search_buildings_v2_authoritative_name_search.sql` was merged but never applied.** Prod still had the pre-#1579 bodies: `search_buildings_v2` with its `location IS NOT NULL` gate, and `get_buildings_list` with `similarity > 0.3` plus the server-side `Demolished/Lost/Under Construction/Unbuilt` default the client was meant to own. Found while investigating the Farnsworth zero-results report — whose earlier occurrence is what that very migration was written to fix. Status: **applied 2026-07-30** and verified by probing `pg_get_functiondef`. Note the definition still *contains* the string `location IS NOT NULL` in an explanatory comment, so grep for `AND b.location IS NOT NULL` when checking. All other recent migrations (`20271183`, `20271186`–`20271189`) were already live.
+- [2026-07-30] `docs/DATA_CONTRACT.md` omitted `user_buildings`' `UNIQUE (user_id, building_id)` constraint (live since `20260704000000`) and described `merge_buildings` as admin-only in three places, when its `is_admin()` check was removed by `20261118000000`. Both corrected in the contract; no DB change.
 - [2026-07-06] **Full drift audit — every "needs apply" migration was already live.** Probed the live DB for every object created by migrations `20271026`–`20271170` (61 existence/definition checks on functions, tables, columns, policies, constraints, enum labels, indexes): all present. Every migration this file marked "needs apply" had in fact already been applied (the Supabase migration-history table only records MCP-applied migrations, so SQL-Editor applies never showed up there — do not trust `list_migrations` alone for this repo). `src/integrations/supabase/types.ts` regenerated from the live schema (4,989 → 7,229 lines) and all `(supabase as any)` casts removed. Note: `npm run gen-types` needs `SUPABASE_ACCESS_TOKEN`/`supabase login`; this pass used the Supabase MCP type generator instead.
 - [2026-07-01] Full `npm run gen-types` (run after the /search filter-parity migrations) surfaces **pre-existing** drift unrelated to that work: the live `events` table has `city_slug`, `country_code`, and `locality_id` columns not in the committed `src/integrations/supabase/types.ts`, so a fresh regen breaks `src/features/events/api/eventsApi.ts` (273, 426) and `src/features/embassy/pages/Leadership.tsx` (283, 313, nullability) at typecheck. The committed types.ts was left as-is (the app compiles against it; `get_map_clusters_v3`/`search_buildings_v2` are already cast-through-unknown by design, and the two new filter helpers are internal-only). Resolution: regenerate types and reconcile `eventsApi.ts` + `Leadership.tsx` in a dedicated types-hygiene task. Status: **fixed 2026-07-06** — types regenerated; `eventsApi.ts` card-row typing narrowed to the selected column set; `Leadership.tsx`/`Embassy.tsx`/`AmbassadorApplications.tsx` reviewer-note args switched from `null` to omit/`undefined` (JSON-equivalent).
 - [2026-05-25] `find_nearby_buildings` did not return `tier_rank_label` or `location_approximate`, so nearby building markers on the building detail map tab rendered as plain text labels instead of the standard popularity-tier pins used on the search page. Migration `20271151000000_add_tier_rank_to_find_nearby_buildings.sql` extends the RPC to also return `b.tier_rank::text as tier_rank_label` and `(b.location_precision = 'approximate') as location_approximate`. `BuildingDetails.tsx` updated to render nearby markers using `MapPin` + `getPinStyle`. Pins render as tier-C (standard) until the migration is applied. Status: **applied** (verified against the live DB 2026-07-06).

@@ -37,6 +37,13 @@ import { getBuildingImageUrl } from "@/utils/image";
 import { getBuildingUrl } from "@/utils/url";
 import { EntityType } from "../types/merge";
 import { motion } from "framer-motion";
+import {
+  deriveMergeBlockers,
+  mapSurvivorRows,
+  type MergeBlocker,
+  type MergeSurvivor,
+} from "../utils/mergeState";
+import { MergeStateWarning } from "../components/MergeStateWarning";
 
 const BuildingMap = lazy(() =>
   import("@/features/admin/components/BuildingMap").then((m) => ({ default: m.BuildingMap })),
@@ -73,6 +80,13 @@ export default function MergeComparisonEntities() {
     // Building Specifics
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [reviewImages, setReviewImages] = useState<any[]>([]);
+
+    // Records that are already deleted or already merged. Merging one of those
+    // again leaves the whole group with no live survivor, which hides every
+    // member from search — the "Farnsworth House" incident. `merge_buildings`
+    // rejects it server-side; this lets the UI say so first.
+    const [blockers, setBlockers] = useState<MergeBlocker[]>([]);
+    const [survivors, setSurvivors] = useState<Record<string, MergeSurvivor>>({});
 
     useEffect(() => {
         if (targetPointer && sourcePointer && entityType) {
@@ -130,6 +144,36 @@ export default function MergeComparisonEntities() {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const targetRow = data.find((e: any) => e.id === targetPointer) ?? data[0];
             setEdits(buildEditsFromEntity(targetRow));
+
+            // Deliberately no `is_deleted` filter on the query above: an
+            // already-merged record has to load so the page can explain it and
+            // link to the survivor. Only buildings carry `merged_into_id`.
+            if (entityType === "building") {
+              const rows = data as unknown as Array<{
+                id: string;
+                is_deleted?: boolean | null;
+                merged_into_id?: string | null;
+              }>;
+              const nextBlockers = deriveMergeBlockers(rows, targetPointer);
+              setBlockers(nextBlockers);
+
+              const survivorIds = nextBlockers
+                .map((b) => b.survivorId)
+                .filter((v): v is string => Boolean(v));
+
+              if (survivorIds.length > 0) {
+                const { data: survivorRows } = await supabase
+                  .from("buildings")
+                  .select("id, slug, short_id, locality:localities(country_code, city_slug)")
+                  .in("id", survivorIds);
+                setSurvivors(mapSurvivorRows(survivorRows));
+              } else {
+                setSurvivors({});
+              }
+            } else {
+              setBlockers([]);
+              setSurvivors({});
+            }
         } catch (error) {
             toast.error("Failed to load records");
             void error;
@@ -185,6 +229,12 @@ export default function MergeComparisonEntities() {
     };
 
     const handleSwap = () => {
+        // Promoting an already-merged record to survivor is precisely how the
+        // Farnsworth pair ended up with both rows deleted.
+        if (blockers.some((b) => b.entityId === sourcePointer)) {
+          toast.error("That record is deleted or already merged — it cannot be the surviving record.");
+          return;
+        }
         const temp = targetPointer;
         setTargetPointer(sourcePointer);
         setSourcePointer(temp);
@@ -195,6 +245,13 @@ export default function MergeComparisonEntities() {
 
     const handleMerge = async () => {
         if (!targetPointer || !sourcePointer || !user || !entityType) return;
+
+        // Matches the merge_buildings guards, so the user sees a plain sentence
+        // instead of a raw Postgres exception.
+        if (blockers.length > 0) {
+          toast.error("Merge blocked: one of these records is already deleted or merged.");
+          return;
+        }
 
         setMerging(true);
         try {
@@ -303,6 +360,17 @@ export default function MergeComparisonEntities() {
     const targetEntity = entities.find(e => e.id === targetPointer);
     const sourceEntity = entities.find(e => e.id === sourcePointer);
 
+    const targetBlocker = blockers.find(b => b.entityId === targetPointer) ?? null;
+    const sourceBlocker = blockers.find(b => b.entityId === sourcePointer) ?? null;
+    const mergeBlocked = blockers.length > 0;
+
+    const blockerBadge = (blocker: MergeBlocker | null) =>
+      blocker ? (
+        <Badge variant="destructive" className="border-none">
+          {blocker.reason === "merged" ? "Already merged" : "Deleted"}
+        </Badge>
+      ) : null;
+
     // Surviving-record name, reflecting any live edits (falls back to stored values).
     const targetDisplayName = edits.name || edits.city || targetEntity?.name || targetEntity?.city;
 
@@ -388,7 +456,10 @@ export default function MergeComparisonEntities() {
                   <Card className="overflow-hidden rounded-sm border-2 border-feedback-success/20 bg-surface-card shadow-none">
                       <div className="bg-feedback-success/10 p-4 text-text-primary font-semibold flex justify-between items-center border-b border-feedback-success/10">
                           <span className="flex items-center gap-2 uppercase tracking-wide text-sm"><Check className="h-5 w-5 text-feedback-success" /> Surviving Record</span>
-                          <Badge className="bg-feedback-success text-white border-none">Target</Badge>
+                          <span className="flex items-center gap-2">
+                            {blockerBadge(targetBlocker)}
+                            <Badge className="bg-feedback-success text-white border-none">Target</Badge>
+                          </span>
                       </div>
                       
                       <CardContent className="p-8 space-y-6">
@@ -476,6 +547,7 @@ export default function MergeComparisonEntities() {
                           variant="outline"
                           className="group h-16 w-16 rounded-sm border-2 border-border-default bg-surface-card transition-colors hover:border-text-primary"
                           onClick={handleSwap}
+                          aria-label="Swap direction"
                       >
                           <ArrowLeftRight className="h-8 w-8 transition-transform group-hover:rotate-180 duration-500" />
                       </Button>
@@ -488,7 +560,10 @@ export default function MergeComparisonEntities() {
                   <Card className="overflow-hidden rounded-sm border-2 border-feedback-destructive/20 bg-surface-card opacity-80 shadow-none transition-opacity hover:opacity-100">
                       <div className="bg-feedback-destructive/10 p-4 text-text-primary font-semibold flex justify-between items-center border-b border-feedback-destructive/10">
                           <span className="flex items-center gap-2 uppercase tracking-wide text-sm"><Trash2 className="h-5 w-5 text-feedback-destructive" /> Records to Purge</span>
-                          <Badge variant="destructive" className="border-none">Source</Badge>
+                          <span className="flex items-center gap-2">
+                            {blockerBadge(sourceBlocker)}
+                            <Badge variant="destructive" className="border-none">Source</Badge>
+                          </span>
                       </div>
                       
                       <CardContent className="p-8 space-y-6">
@@ -568,8 +643,10 @@ export default function MergeComparisonEntities() {
                 </motion.div>
             </div>
 
+            <MergeStateWarning blockers={blockers} survivors={survivors} />
+
             {/* IMPACT & ACTIONS */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 40 }} 
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -646,7 +723,7 @@ export default function MergeComparisonEntities() {
                                             size="lg"
                                             variant="destructive"
                                             className="h-16 rounded-sm px-12 text-base font-semibold disabled:opacity-50"
-                                            disabled={merging || impactLoading}
+                                            disabled={merging || impactLoading || mergeBlocked}
                                         >
                                             {merging ? (
                                               <>
