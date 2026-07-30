@@ -107,6 +107,16 @@ Then load the domain rule file for the work at hand:
 
 **The test to apply every time:** if the parts are incoherent apart (each meaningless without the others) and none deploys on its own → ONE concern → ONE PR. Reserve extra PRs only for parts that genuinely stand alone.
 
+### One session, one worktree
+
+Concurrent agent sessions must **never share the primary checkout** at `/Users/jaime/Documents/projects/plano`. Two sessions in one tree means one branch, one working set: a `git checkout` in session A silently swaps the branch and file contents under session B, and A's `git commit -a` sweeps in B's unrelated edits — which is exactly how a padding refinement shipped inside PR #1667 ("profile stats link to tabs") on 2026-07-30, breaking *one PR = one complete feature* and forcing the correctly-scoped PR #1668 to be closed.
+
+1. **Create a sibling worktree, one per session.** `git worktree add /Users/jaime/Documents/projects/plano-<topic> -b <branch>` — a **sibling** of the repo, never nested inside it (a worktree under `.claude/` gets scanned by the lint and ratchet gates and breaks `npm run check`).
+2. **Symlink, don't reinstall:** `ln -s` the primary checkout's `node_modules`, `.env`, and `.env.local` into the new worktree. No `npm install` (which needs owner permission anyway).
+3. **Commit promptly.** Uncommitted work in a shared tree can be committed, stashed, or checked out from under you. Don't leave a finished edit sitting on disk.
+4. **Re-read before you trust.** A file you read earlier may have changed — re-read it before editing or reasoning about it. If `git status` shows modifications you did not make, **stop**: find out whose they are before committing anything. Never `git commit -a` past unexplained changes.
+5. **Clean up on merge:** `git worktree remove <path>` once the PR lands.
+
 ## Supabase Edge Functions & Security
 
 ### Security Policy: The "Manual Gatekeeper" Pattern
