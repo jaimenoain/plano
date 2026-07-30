@@ -8,6 +8,24 @@
 **Rollout ≠ refinement:** The May 2026 rollout (Phases 0–7) wired semantic tokens, removed raw palette classes, and connected real data (e.g. `get_feed` on the home feed). That work is **complete**. The refinement programme ([ROADMAP.md](ROADMAP.md), Phases R0–R9) delivered editorial layout, typography rhythm, kit fidelity, and per-page audit evidence across shell, editorial spine, discovery, identity, events, auth/token flows, embassy, and admin. Tracking: all families `refined` or `complete` in [DESIGN_SYSTEM_SCREEN_INVENTORY.md](DESIGN_SYSTEM_SCREEN_INVENTORY.md).
 
 ## CURRENT_ARCHITECTURE_SNAPSHOT
+- **Ambassador approvals live in `building_audit_logs.operation`, never `table_name` (2026-07-30):**
+  every Embassy moderation metric was written as
+  `table_name IN ('ambassador_approval', 'ambassador_photo_approval', 'ambassador_credit_approval')`,
+  but `table_name` records the table the approval *touched* (`review_images`,
+  `building_credits`, `building_posts`) and the marker goes in `operation`. On prod the old
+  predicate matched **0** rows against **1508** carrying those values in `operation`, so
+  "buildings moderated" read 0 for every ambassador since the metric existed and all 1508
+  approvals were tallied as plain edits. Found while verifying roadmap 3.3, whose
+  "50 moderations" badge could never have been earned. Migration
+  `20271196000000_fix_moderation_metric_predicate.sql` (**applied + verified 2026-07-30**)
+  moves the predicate to `operation` in all three functions that carry it —
+  `get_my_ambassador_impact`, `get_my_ambassador_goals`, `compute_weekly_digest_payloads` —
+  and adds `ambassador_video_approval`, closing the gap three earlier migration headers had
+  each documented as known-and-unfixed. **The trap to know:** these three functions are the
+  same metric shown to the same reader on three surfaces, so this predicate must never be
+  fixed in one of them alone; and the digest's `NOT IN` legs need
+  `COALESCE(al.operation, '')` because `NULL NOT IN (...)` is NULL, which would drop every
+  audit row with no operation from the edits bucket.
 - **`REVOKE ... FROM PUBLIC` never locked our RPCs down — 33 functions swept (2026-07-30):** Supabase
   configures this project with `ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS
   TO anon, authenticated`, so every function created in `public` gets a **direct** grant to both roles

@@ -66,7 +66,8 @@ export interface Notification {
     | "contribution_approved"
     | "contribution_flagged"
     | "person_claimed"
-    | "weekly_digest";
+    | "weekly_digest"
+    | "milestone_earned";
   is_read: boolean;
   actor_id: string;
   recommendation_id?: string | null;
@@ -112,6 +113,11 @@ export interface Notification {
     person_name?: string;
     person_slug?: string;
     digest?: WeeklyDigestMetadata;
+    /** Milestone notifications (roadmap 3.3) — see sync_my_ambassador_milestones(). */
+    milestone_key?: string;
+    milestone_label?: string;
+    milestone_progress?: number;
+    milestone_target?: number;
   };
   recommendation?: {
     id?: string;

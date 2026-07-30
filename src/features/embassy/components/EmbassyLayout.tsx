@@ -11,6 +11,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { createSupabaseServerClient } from "@/lib/supabase.server";
+import { useMilestones } from "../hooks/useMilestones";
 
 // Module-level caches so the same SPA session doesn't re-fire on every layout remount.
 const searchTriggeredForChapters = new Set<string>();
@@ -72,6 +73,11 @@ export default function EmbassyLayout() {
   });
 
   const isLeader = ["exco", "president", "global_team", "global_leaders", "global_president"].includes(membership?.role ?? "");
+
+  // Award and announce milestones on any Embassy visit, not just /embassy/impact —
+  // a notification that only fires for people already looking at the page is no return
+  // loop at all. Idempotent and cache-shared with the My impact shelf; result unused here.
+  useMilestones();
 
   // Server enforces the 4-day gate. This is opportunistic — never block the layout on it.
   useEffect(() => {

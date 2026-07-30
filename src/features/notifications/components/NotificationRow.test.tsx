@@ -153,4 +153,33 @@ describe("NotificationRow", () => {
       expect(screen.queryByText(/jaime/)).toBeNull();
     });
   });
+
+  /** Same three-switch guard for the milestone type (roadmap 3.3). */
+  describe("milestone_earned", () => {
+    const milestoneRow = {
+      type: "milestone_earned" as const,
+      actor_id: "u1",
+      actor: { username: "jaime", avatar_url: null },
+      metadata: { milestone_key: "photos_10", milestone_label: "10 photos" },
+    };
+
+    it("uses the award icon rather than falling through to the bell", () => {
+      const { container } = renderRow(milestoneRow);
+      expect(container.querySelector("svg.lucide-award")).not.toBeNull();
+      expect(container.querySelector("svg.lucide-bell")).toBeNull();
+    });
+
+    it("titles the notification and names the milestone", () => {
+      renderRow(milestoneRow);
+      expect(screen.getByText("Milestone Reached")).toBeInTheDocument();
+      expect(screen.getByText(/You reached/)).toBeInTheDocument();
+      expect(screen.getByText("10 photos")).toBeInTheDocument();
+    });
+
+    /** Self-actored like the digest — never address the recipient by their own username. */
+    it("never renders the actor's username", () => {
+      renderRow(milestoneRow);
+      expect(screen.queryByText(/jaime/)).toBeNull();
+    });
+  });
 });
