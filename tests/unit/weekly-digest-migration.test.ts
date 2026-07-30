@@ -131,14 +131,20 @@ describe("weekly digest migration", () => {
 
 describe("send-weekly-digest edge function", () => {
   /**
-   * The platform's verify_jwt=true accepts ANY logged-in user's JWT, so the in-code
-   * service-role comparison is the actual gate. Both halves are asserted because either
-   * one alone leaves the mailer triggerable by any signed-in user.
+   * The platform's verify_jwt=true accepts ANY logged-in user's JWT, so it is not the
+   * gate. The gate is Postgres: the RPC runs with the CALLER's token and only
+   * service_role holds EXECUTE, so anyone else gets 42501 and a 403.
+   *
+   * Asserting the *absence* of a string comparison is deliberate: this project has both
+   * a legacy service-role JWT (what pg_net sends, from the vault) and a newer opaque
+   * sb_secret_ key, so matching against SUPABASE_SERVICE_ROLE_KEY silently 403s the
+   * weekly cron run — which is exactly what happened before this shape.
    */
-  it("compares the bearer token against the service role key", () => {
-    expect(edgeFunction).toContain("SUPABASE_SERVICE_ROLE_KEY");
-    expect(edgeFunction).toMatch(/bearer\s*!==\s*serviceRoleKey/);
+  it("lets Postgres enforce authority instead of string-matching a key", () => {
+    expect(edgeFunction).toMatch(/createClient\(\s*supabaseUrl,\s*bearer/);
+    expect(edgeFunction).toMatch(/error\.code === ['"]42501['"]/);
     expect(edgeFunction).toContain("403");
+    expect(edgeFunction).not.toMatch(/bearer\s*!==\s*serviceRoleKey/);
   });
 
   it("is absent from config.toml, so verify_jwt stays on", () => {
