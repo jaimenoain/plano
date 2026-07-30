@@ -11,13 +11,19 @@
  * document viewport. Same hand-rolled idiom as the building-detail tab bar,
  * with the root made explicit.
  */
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useState, type RefObject } from "react";
 
 export function useScrolledPast<T extends HTMLElement = HTMLDivElement>(
   /** The `overflow-y-auto` element the sentinel scrolls inside. */
   rootRef: RefObject<HTMLElement | null>,
 ) {
-  const sentinelRef = useRef<T>(null);
+  // A callback ref, not a `useRef` object, because the sentinel usually mounts
+  // *later* than the hook: a page that renders a loading state first has no
+  // sentinel on the effect's only pass, and a ref object mutating from null to
+  // a node re-runs nothing — the observer would never be created and the chrome
+  // would stay at rest forever. Holding the node in state re-runs the effect the
+  // moment it appears.
+  const [sentinel, setSentinel] = useState<T | null>(null);
   const [hasScrolledPast, setHasScrolledPast] = useState(false);
 
   useEffect(() => {
@@ -25,16 +31,18 @@ export function useScrolledPast<T extends HTMLElement = HTMLDivElement>(
     // on hydration.
     if (typeof IntersectionObserver === "undefined") return;
 
-    const sentinel = sentinelRef.current;
     if (!sentinel) return;
 
+    // Read the root here rather than in the ref callback: refs attach
+    // children-first, so the scroller (the sentinel's parent) is still null at
+    // that point, and rooting on the viewport would fire at the wrong moment.
     const observer = new IntersectionObserver(
       ([entry]) => setHasScrolledPast(!entry.isIntersecting),
       { root: rootRef.current, threshold: 0 },
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [rootRef]);
+  }, [sentinel, rootRef]);
 
-  return { sentinelRef, hasScrolledPast };
+  return { sentinelRef: setSentinel, hasScrolledPast };
 }
