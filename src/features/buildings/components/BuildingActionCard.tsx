@@ -118,7 +118,7 @@ export function BuildingActionCard({
                     ? "Visited"
                     : userStatus === "pending"
                       ? "Saved"
-                      : "Add to list"}
+                      : "Save"}
                 </div>
                 <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
               </Button>
@@ -140,7 +140,7 @@ export function BuildingActionCard({
               >
                 <Bookmark className="mr-3 h-4 w-4 shrink-0" />
                 <div>
-                  <p className="font-bold text-xs uppercase tracking-wider">Wishlist</p>
+                  <p className="font-bold text-xs uppercase tracking-wider">Saved</p>
                   <p className="text-[10px] text-text-secondary">I want to visit this</p>
                 </div>
               </DropdownMenuItem>

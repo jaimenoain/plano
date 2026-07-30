@@ -350,7 +350,7 @@ export function FilterDrawer({ compact = false }: { compact?: boolean }) {
                   options={[
                     { label: 'All', value: 'all' },
                     { label: 'Visited', value: 'visited' },
-                    { label: 'Bucket List', value: 'saved' },
+                    { label: 'Saved', value: 'saved' },
                   ]}
                   value={currentSegmentedStatus}
                   onValueChange={handleStatusChange}

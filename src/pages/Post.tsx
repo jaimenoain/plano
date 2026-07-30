@@ -133,7 +133,7 @@ export default function Post() {
       }
       */
 
-      toast({ title: isReview ? "Review posted!" : "Added to bucket list!" });
+      toast({ title: isReview ? "Review posted!" : "Saved!" });
       navigate("/", { state: isReview ? { reviewPosted: true } : undefined });
     } catch (error: unknown) {
       toast({ variant: "destructive", title: "Error", description: error instanceof Error ? error.message : "Something went wrong" });
@@ -168,7 +168,7 @@ export default function Post() {
       <header className="fixed top-0 left-0 right-0 z-50 glass safe-area-pt">
         <div className="flex items-center justify-between h-14 px-4 max-w-lg mx-auto">
           <button onClick={() => navigate(-1)} className="p-2 -ml-2"><X className="h-5 w-5" /></button>
-          <span className="text-sm font-medium">{postType === "review" ? "Rate & Review" : "Add to Bucket List"}</span>
+          <span className="text-sm font-medium">{postType === "review" ? "Rate & Review" : "Save"}</span>
           {/* Save button moved to bottom */}
           <div className="w-5" /> 
         </div>
@@ -199,7 +199,7 @@ export default function Post() {
             <div className="flex gap-2 py-4">
               {(["review", "bucket_list"] as PostType[]).map((type) => (
                 <button key={type} onClick={() => setPostType(type)} className={cn("flex-1 py-2 rounded-sm text-sm font-medium capitalize", postType === type ? "bg-brand-primary text-brand-primary-foreground" : "bg-surface-muted text-text-secondary")}>
-                  {type === "bucket_list" ? "Bucket List" : "Review"}
+                  {type === "bucket_list" ? "Saved" : "Review"}
                 </button>
               ))}
             </div>

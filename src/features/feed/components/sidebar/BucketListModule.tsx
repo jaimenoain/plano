@@ -7,7 +7,7 @@ import { fetchBucketList } from "../../api/railApi";
 import { RailHeader, RailModule, RailSkeletonRows } from "@/components/ui/rail";
 
 /**
- * "Your bucket list" — the member's next buildings to visit: the three most
+ * "Saved" — the member's next buildings to visit: the three most
  * recent pending saves. The rail's contextual widget per the feed redesign
  * brief (§5.4).
  */
@@ -23,7 +23,7 @@ export function BucketListModule({ userId }: { userId?: string }) {
 
   return (
     <RailModule>
-      <RailHeader label="Your bucket list" />
+      <RailHeader label="Saved" />
       {isLoading ? (
         <RailSkeletonRows rows={3} withThumb />
       ) : !data || data.length === 0 ? (

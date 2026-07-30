@@ -396,7 +396,7 @@ toast({ variant: "destructive", description: "Failed to save highlights." });
           escapeCsvCell(item.rating),
           escapeCsvCell(item.content),
           escapeCsvCell(item.tags ? item.tags.join("|") : ""),
-          escapeCsvCell(item.status === "pending" ? "Bucket List" : "Visited"),
+          escapeCsvCell(item.status === "pending" ? "Saved" : "Visited"),
           escapeCsvCell(formatDate(item.visited_at || item.created_at))
         ].join(",");
       });
@@ -648,7 +648,7 @@ toast({
                 <div className="min-w-0 flex-1">
                   <h3 className="font-medium text-text-primary">Download my data</h3>
                   <p className="text-sm text-text-secondary">
-                    Export your ratings, reviews, and bucket list to a CSV file.
+                    Export your ratings, reviews, and saved buildings to a CSV file.
                   </p>
                 </div>
                 <Button

@@ -235,11 +235,10 @@ describe('BuildingDetails Interaction', () => {
     });
 
     // Open the status dropdown (trigger shows "Visited") and pick the pending
-    // option. That option is now labelled "Wishlist" (was "Save"); it still
-    // calls handleStatusChange("pending").
+    // option, labelled "Saved"; it still calls handleStatusChange("pending").
     await user.click(screen.getByRole("button", { name: /visited/i }));
-    const wishlistItem = await screen.findByRole("menuitem", { name: /wishlist/i });
-    await user.click(wishlistItem);
+    const savedItem = await screen.findByRole("menuitem", { name: /saved/i });
+    await user.click(savedItem);
 
     // Verify Supabase upsert call
     await waitFor(() => {
