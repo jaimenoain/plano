@@ -1093,7 +1093,7 @@ export default function Profile() {
                   <EmptyState eyebrow="No visited buildings yet" />
                 ) : (
                   <EmptyState
-                    eyebrow="Bucket list is empty"
+                    eyebrow="No saved buildings yet"
                     message={isOwnProfile ? "Never forget a recommendation again. Add buildings here to build your personal queue." : undefined}
                     action={isOwnProfile ? (
                       <Link to="/search" className="cta-link">

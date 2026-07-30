@@ -52,7 +52,7 @@ export function AddBuildingDialog({ onBuildingAdded, className }: AddBuildingDia
       if (error) throw error;
 
       toast({
-        title: status === 'visited' ? "Marked as Visited" : "Added to Bucket List",
+        title: status === 'visited' ? "Marked as Visited" : "Saved",
         description: `${buildingName} has been saved to your profile.`
       });
 
@@ -138,7 +138,7 @@ toast({ variant: "destructive", title: "Failed to add building" });
                           e.stopPropagation();
                           handleAdd(building.id, "pending", building.name);
                         }}
-                        title="Add to Bucket List"
+                        title="Save"
                       >
                         <Bookmark className="h-4 w-4" />
                       </Button>

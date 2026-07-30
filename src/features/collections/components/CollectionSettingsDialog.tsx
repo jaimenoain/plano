@@ -141,7 +141,7 @@ function SavedPlacesStatusToggle({
       variant="outline"
       size="sm"
       className="flex-wrap justify-start gap-1"
-      aria-label="Filter saved places by visited or bucket list"
+      aria-label="Filter saved places by visited or saved"
     >
       <ToggleGroupItem value="all" className="min-h-[44px] min-w-12 items-center justify-center px-2 md:min-h-9">
         All
@@ -150,7 +150,7 @@ function SavedPlacesStatusToggle({
         Visited
       </ToggleGroupItem>
       <ToggleGroupItem value="pending" className="min-h-[44px] min-w-22 items-center justify-center px-2 md:min-h-9">
-        Bucket list
+        Saved
       </ToggleGroupItem>
     </ToggleGroup>
   );
@@ -556,7 +556,7 @@ export function CollectionSettingsDialog({
                       <div className="space-y-2">
                         <Label className="text-sm font-medium text-text-primary">Show by list</Label>
                         <p className="text-xs text-text-secondary">
-                          Visited and Bucket list match your library. All shows both. You can combine this with the rating filter below.
+                          Visited and Saved match your library. All shows both. You can combine this with the rating filter below.
                         </p>
                         <SavedPlacesStatusToggle
                           value={savedPlacesStatusFilter}

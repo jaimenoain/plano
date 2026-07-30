@@ -149,7 +149,7 @@ export function RecommendationCard({ recommendation, interaction, onDismiss, onR
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Add to Bucket List</p>
+                <p>Save</p>
               </TooltipContent>
             </Tooltip>
 
