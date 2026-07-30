@@ -23,6 +23,7 @@ import {
 } from "../components/LocalityActivityStream";
 import { LocalityVolunteerTeam } from "../components/LocalityVolunteerTeam";
 import type { LocalityVolunteerTeamMember } from "../api/localitiesApi";
+import { buildLocalityMapUrl } from "../utils/localityMapUrl";
 import { localityPageLoader, type LocalityPageLoaderData } from "./LocalityPage.loader";
 
 export { localityPageLoader as loader } from "./LocalityPage.loader";
@@ -169,6 +170,16 @@ export default function LocalityPage() {
   const citySlug: string = loaderData.citySlug;
   const countryCode: string = loaderData.countryCode;
 
+  // "Explore map" opens the real search map over this city. Prefer the
+  // locality's own coordinate; fall back to the centre of the buildings this
+  // page already loaded when it has none.
+  const exploreMapHref = buildLocalityMapUrl({
+    city: locality.city,
+    lat: locality.lat,
+    lng: locality.lng,
+    buildings: initialBuildings,
+  });
+
   return (
     <AppLayout showBack>
       {/* ── Hero — full-bleed ── */}
@@ -197,11 +208,7 @@ export default function LocalityPage() {
         ) : null}
 
         {/* ── Quick Actions ── */}
-        <QuickActions
-          city={locality.city}
-          citySlug={citySlug}
-          countryCode={countryCode}
-        />
+        <QuickActions city={locality.city} exploreMapHref={exploreMapHref} />
 
         {/* ── Top Buildings — editorial showcase ── */}
         <LocalityTopBuildings

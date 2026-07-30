@@ -7,16 +7,18 @@ import { cn } from "@/lib/utils";
 // ---------------------------------------------------------------------------
 export function QuickActions({
   city,
-  citySlug,
-  countryCode,
+  exploreMapHref,
 }: {
   city: string;
-  citySlug: string;
-  countryCode: string;
+  /**
+   * The search map, pre-centred on this city — built by `buildLocalityMapUrl`
+   * so the page owns the coordinate lookup and this stays a dumb nav.
+   */
+  exploreMapHref: string;
 }) {
   const actions = [
     {
-      to: `/map?locality=${citySlug}&cc=${countryCode}`,
+      to: exploreMapHref,
       icon: Map,
       label: "Explore map",
       emphasize: true,
