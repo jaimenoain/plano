@@ -3,7 +3,8 @@
  *
  * The body of the collection rail's All Items tab: every building row, the
  * collapsible "Trip Logistics" group of non-building markers, and the two empty
- * states (an untouched collection versus a query that matched nothing).
+ * states (an untouched collection versus a query that matched nothing — a query
+ * wins, since an untouched collection matches nothing either).
  *
  * Extracted from `CollectionMapPage.tsx` unchanged. Presentational only — the
  * page still owns the data, the permissions and every mutation; it also owns the
@@ -86,7 +87,10 @@ export function CollectionItemsPanel({
   onClearSearch,
   excludeBuildingIds,
 }: CollectionItemsPanelProps) {
-  const noMatches = searchableCount > 0 && isSearchActive && matchCount === 0;
+  // An empty collection counts as a dead-end search too: the bar is always up, so
+  // a query typed into one has to land somewhere, and for an editor that
+  // somewhere is the suggestions below.
+  const noMatches = isSearchActive && matchCount === 0;
 
   // Adding the first suggestion makes the query match, which would otherwise
   // pull the rest of the list out from under the cursor. Once suggestions are up
@@ -156,7 +160,7 @@ export function CollectionItemsPanel({
         </div>
       )}
 
-      {searchableCount === 0 && (
+      {searchableCount === 0 && !isSearchActive && (
         <div className="py-8 text-center text-sm text-text-secondary">
           No places in this collection yet.
         </div>

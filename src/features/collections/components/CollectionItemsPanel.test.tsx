@@ -85,4 +85,21 @@ describe("CollectionItemsPanel — search dead end", () => {
     expect(screen.getByText("No places in this collection yet.")).toBeInTheDocument();
     expect(screen.queryByTestId("suggestions")).toBeNull();
   });
+
+  // The search bar is up even before the first building lands, so a query typed
+  // into an empty collection has to go somewhere better than "nothing here yet".
+  it("sends a search in an empty collection straight to the suggestions", () => {
+    render(<CollectionItemsPanel {...baseProps} searchableCount={0} />);
+
+    expect(screen.queryByText("No places in this collection yet.")).toBeNull();
+    expect(screen.getByText("No matches")).toBeInTheDocument();
+    expect(screen.getByTestId("suggestions")).toHaveTextContent("serpentine");
+  });
+
+  it("still leaves a viewer of an empty collection with the empty state alone", () => {
+    render(<CollectionItemsPanel {...baseProps} searchableCount={0} canEdit={false} />);
+
+    expect(screen.getByText("No matches")).toBeInTheDocument();
+    expect(screen.queryByTestId("suggestions")).toBeNull();
+  });
 });

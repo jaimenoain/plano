@@ -1100,7 +1100,7 @@ toast({
                                 </TabsList>
                             </div>
                         )}
-                        {activeTab === 'items' && search.searchableCount > 1 && (
+                        {activeTab === 'items' && (
                             <CollectionSearchBar
                                 value={search.query}
                                 onValueChange={search.setQuery}
