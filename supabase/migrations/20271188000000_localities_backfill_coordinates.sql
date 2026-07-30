@@ -15,6 +15,10 @@
 -- set later always wins over this derived value. Localities with no geolocated
 -- buildings stay NULL; the UI falls back to deriving a centre from whatever
 -- buildings it has loaded.
+--
+-- types-neutral: data-only backfill. A single UPDATE of two existing nullable
+-- columns — no table, column, type, function or constraint changes — so the
+-- generated Supabase types are unaffected.
 
 UPDATE localities AS l
 SET lat = m.med_lat,
