@@ -215,10 +215,16 @@ const PRIMARY_TYPE_ICONS: Record<string, LucideIcon> = {
   gas_station: Fuel,
 };
 
-export function getCollectionMarkerLucideIcon(
+/**
+ * The place glyph, or `null` when we cannot say what kind of place this is.
+ *
+ * Callers that draw the icon *inside* a map pin need the null: a generic
+ * fallback pin glyph nested in the pin shell reads as a pin inside a pin.
+ */
+export function resolveCollectionMarkerIcon(
   category: CollectionMarkerCategory,
   googlePrimaryType: string | null | undefined,
-): LucideIcon {
+): LucideIcon | null {
   const pt = googlePrimaryType?.trim().toLowerCase() ?? "";
   if (pt) {
     const direct = PRIMARY_TYPE_ICONS[pt];
@@ -236,6 +242,17 @@ export function getCollectionMarkerLucideIcon(
     case "attraction":
       return Camera;
     default:
-      return MapPin;
+      return null;
   }
+}
+
+/**
+ * The place glyph for text surfaces (cards, list rows), where a plain pin is a
+ * fine "somewhere on the map" affordance and nothing nests it.
+ */
+export function getCollectionMarkerLucideIcon(
+  category: CollectionMarkerCategory,
+  googlePrimaryType: string | null | undefined,
+): LucideIcon {
+  return resolveCollectionMarkerIcon(category, googlePrimaryType) ?? MapPin;
 }
