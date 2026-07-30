@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { DiscoveryBuilding } from "../components/types";
 
 export interface BuildingSearchHit {
   id: string;
@@ -76,4 +77,33 @@ export async function searchBuildingsV2(
 
   if (error) throw error;
   return ((data as unknown[]) ?? []) as BuildingSearchHit[];
+}
+
+/**
+ * Adapt a ranked search hit to the row shape the discovery/SERP components draw
+ * (`DiscoveryList`, `DiscoveryBuildingCard`). The RPC returns credits as bare
+ * names, so each credit gets its own name as its id — the card only ever reads
+ * `credits[0].name`, and nothing keys off a credit id in these lists.
+ */
+export function discoveryBuildingFromSearchHit(hit: BuildingSearchHit): DiscoveryBuilding {
+  return {
+    id: hit.id,
+    name: hit.name,
+    slug: hit.slug,
+    short_id: hit.short_id ?? null,
+    alt_name: hit.alt_name,
+    main_image_url: hit.hero_image_url,
+    // A hit without coordinates still lists (search_buildings_v2 has no location
+    // gate); 0/0 is the shape's existing "no pin" sentinel.
+    location_lat: hit.lat ?? 0,
+    location_lng: hit.lng ?? 0,
+    city: hit.city,
+    country: hit.country,
+    year_completed: hit.year_completed,
+    credits: hit.credit_names.map((name) => ({ id: name, name })),
+    styles: [],
+    status: (hit.construction_status ?? null) as DiscoveryBuilding["status"],
+    locality_country_code: hit.locality_country_code ?? null,
+    locality_city_slug: hit.locality_city_slug ?? null,
+  };
 }
