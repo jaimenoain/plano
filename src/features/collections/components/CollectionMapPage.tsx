@@ -45,7 +45,6 @@ import { collectionStructuredData, SITE_URL } from "@/features/buildings/utils/s
 import { Loader2, ListFilter, MapPinPlus, Building2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { SearchModeToggle } from "@/features/search/components/SearchModeToggle";
 import {
   Collection,
@@ -74,12 +73,14 @@ import { useToast } from "@/components/ui/use-toast";
 import { lazyWithRetry } from "@/utils/lazyWithRetry";
 import { useGooglePlacePhotos } from "@/hooks/useGooglePlacePhotos";
 import { primaryBuildingCreditsToSummaries } from "@/features/credits/api/credits";
-import { CollectionItemRow } from "./CollectionItemRow";
+import { CollectionHeaderUtilityActions } from "./CollectionAccessActions";
+import { CollectionItemsPanel } from "./CollectionItemsPanel";
 import { CollectionRailHeader } from "./CollectionRailHeader";
+import { CollectionRailToolbar } from "./CollectionRailToolbar";
 import { CollectionSearchBar } from "./CollectionSearchBar";
 import { useCollectionMapSelection } from "../hooks/useCollectionMapSelection";
 import { useCollectionSearch } from "../hooks/useCollectionSearch";
-import { EmptyState } from "@/components/ui/empty-state";
+import { useScrolledPast } from "@/hooks/useScrolledPast";
 import { filterDiscoveryBuildings } from "../filterCollectionItems";
 import {
   matchesSavedPlacesDotFilter,
@@ -91,7 +92,6 @@ const CollectionSettingsDialog = lazyWithRetry(() => import("@/features/collecti
 const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("@/features/collections/components/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
 const PlanRouteDialog = lazyWithRetry(() => import("@/features/collections/components/PlanRouteDialog").then(module => ({ default: module.PlanRouteDialog })));
 const CollectionMapGL = lazyWithRetry(() => import("@/features/maps/components/CollectionMapGL").then(module => ({ default: module.CollectionMapGL })));
-const CollectionMarkerCard = lazyWithRetry(() => import("@/features/collections/components/CollectionMarkerCard").then(module => ({ default: module.CollectionMarkerCard })));
 
 // Note: The shape returned from Supabase for collection items is documented here
 // for reference only. We no longer use this interface directly in code, but keep
@@ -180,6 +180,11 @@ export default function CollectionMap() {
   const [hasPlanRouteOpened, setHasPlanRouteOpened] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [activeTab, setActiveTab] = useState<'items' | 'itinerary'>('items');
+
+  // The rail scrolls as one column; the toolbar sticks once the masthead is gone.
+  const railScrollRef = useRef<HTMLDivElement>(null);
+  const { sentinelRef: railSentinelRef, hasScrolledPast: isRailScrolled } =
+    useScrolledPast(railScrollRef);
 
 
   // New States for Removal
@@ -552,10 +557,10 @@ export default function CollectionMap() {
 
     if (isFavorite) {
        const { error } = await supabase.from("collection_favorites").delete().eq("collection_id", collection.id).eq("user_id", user.id);
-       if (!error) toast({ title: "Removed from favorites" });
+       if (!error) toast({ title: "Removed from favourites" });
     } else {
        const { error } = await supabase.from("collection_favorites").insert({ collection_id: collection.id, user_id: user.id });
-       if (!error) toast({ title: "Added to favorites" });
+       if (!error) toast({ title: "Added to favourites" });
     }
     refetchFavorite();
   };
@@ -1090,37 +1095,47 @@ toast({
           />
         </div>
 
-        {/* Sidebar List */}
+        {/* Sidebar List — one scroller for the whole rail, so the masthead can
+            scroll away and leave the list the room it used to be denied. */}
         <div className={cn(
-          "w-full shrink-0 flex-col border-t border-border-default bg-surface-card lg:flex lg:h-full lg:w-collection-rail-narrow lg:min-h-0 lg:border-l lg:border-t-0 xl:w-collection-rail",
+          "w-full shrink-0 min-h-0 flex-col border-t border-border-default bg-surface-card lg:flex lg:h-full lg:w-collection-rail-narrow lg:min-h-0 lg:border-l lg:border-t-0 xl:w-collection-rail",
           viewMode === 'list' ? "order-2 flex h-full lg:order-2" : "hidden lg:flex lg:order-2",
         )}
         >
-            <CollectionRailHeader
-                collection={collection}
-                ownerUsername={ownerProfile?.username}
-                coverMosaicUrls={coverMosaicUrls}
-                canEdit={canEdit}
-                isLoggedIn={!!user}
-                isFavorite={!!isFavorite}
-                onToggleFavorite={handleToggleFavorite}
-                onAdd={() => setShowAddBuildings(true)}
-                onOpenSettings={() => setShowSettings(true)}
-            />
+            <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'items' | 'itinerary')} className="flex min-h-0 w-full flex-1 flex-col">
+                <div ref={railScrollRef} className="min-h-0 flex-1 overflow-y-auto">
+                    <CollectionRailHeader
+                        collection={collection}
+                        ownerUsername={ownerProfile?.username}
+                        coverMosaicUrls={coverMosaicUrls}
+                        canEdit={canEdit}
+                        isLoggedIn={!!user}
+                        isFavorite={!!isFavorite}
+                        onToggleFavorite={handleToggleFavorite}
+                    />
+                    {/* Sentinel — the toolbar is stuck once this leaves the rail. */}
+                    <div ref={railSentinelRef} aria-hidden className="h-0" />
 
-            <div className="flex-1 overflow-hidden flex flex-col justify-start">
-                <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as 'items' | 'itinerary')} className="w-full h-full flex-1 flex flex-col min-h-0 justify-start">
-                    {collection.itinerary && (
-                        <div className="px-4 pt-2 shrink-0">
-                            <TabsList className="w-full grid grid-cols-2">
-                                <TabsTrigger value="items">All Items</TabsTrigger>
-                                <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
-                            </TabsList>
-                        </div>
-                    )}
-
-                    <TabsContent value="items" className="mt-0 flex-1 overflow-hidden m-0 p-0 min-h-0 flex flex-col justify-start data-[state=inactive]:hidden">
-                        {search.searchableCount > 1 && (
+                    <CollectionRailToolbar
+                        collectionName={collection.name}
+                        isStuck={isRailScrolled}
+                        actions={
+                            <CollectionHeaderUtilityActions
+                                canEdit={canEdit}
+                                onAdd={() => setShowAddBuildings(true)}
+                                onOpenSettings={() => setShowSettings(true)}
+                            />
+                        }
+                    >
+                        {collection.itinerary && (
+                            <div className="px-4 pb-1">
+                                <TabsList className="w-full grid grid-cols-2">
+                                    <TabsTrigger value="items">All Items</TabsTrigger>
+                                    <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
+                                </TabsList>
+                            </div>
+                        )}
+                        {activeTab === 'items' && search.searchableCount > 1 && (
                             <CollectionSearchBar
                                 value={search.query}
                                 onValueChange={search.setQuery}
@@ -1132,117 +1147,65 @@ toast({
                                 }
                             />
                         )}
-                        <div className="flex-1 overflow-y-auto">
-                            <div className="p-4 space-y-3 pb-24 lg:pb-4">
-                                {search.searchedItems.map(item => (
-                                    <CollectionItemRow
-                                        key={item.id}
-                                        item={item}
-                                        isHighlighted={highlightedId === item.building.id}
-                                        setHighlightedId={setHighlightedId}
-                                        canEdit={canEdit}
-                                        onUpdateNote={(note) => handleUpdateNote(item.id, note)}
-                                        onSelect={() => selectItem(item)}
-                                        categorizationMethod={collection.categorization_method}
-                                        customCategories={collection.custom_categories}
-                                        onUpdateCategory={(catId) => handleUpdateCategory(item.id, catId)}
-                                        showImages={collection.show_community_images ?? true}
-                                        showAddedBy={collection.show_added_by ?? false}
-                                        onRemove={() => handleRemoveItem(item.building.id)}
-                                    />
-                                ))}
+                    </CollectionRailToolbar>
 
-                                {search.searchedMarkers.length > 0 && (
-                                    <div className="mt-4 border-t pt-2">
-                                        <Accordion type="single" collapsible defaultValue="markers">
-                                            <AccordionItem value="markers" className="border-none">
-                                                <AccordionTrigger className="py-2 hover:no-underline text-sm font-semibold text-text-secondary">
-                                                    Trip Logistics
-                                                </AccordionTrigger>
-                                                <AccordionContent>
-                                                    <div className="space-y-3 pt-2">
-                                                        <Suspense fallback={<div className="p-2 text-center text-xs text-text-secondary">Loading markers...</div>}>
-                                                            {search.searchedMarkers.map(marker => (
-                                                                <CollectionMarkerCard
-                                                                    key={marker.id}
-                                                                    marker={marker}
-                                                                    isHighlighted={highlightedId === marker.id}
-                                                                    setHighlightedId={setHighlightedId}
-                                                                    canEdit={canEdit}
-                                                                    onRemove={() => handleRemoveItem(marker.id)}
-                                                                    onNavigate={() => {
-                                                                        // Just highlight
-                                                                        setHighlightedId(marker.id);
-                                                                    }}
-                                                                    onUpdateNote={
-                                                                      canEdit
-                                                                        ? (note) => {
-                                                                            void handleUpdateMarkerNote(marker.id, note);
-                                                                          }
-                                                                        : undefined
-                                                                    }
-                                                                />
-                                                            ))}
-                                                        </Suspense>
-                                                    </div>
-                                                </AccordionContent>
-                                            </AccordionItem>
-                                        </Accordion>
-                                    </div>
-                                )}
+                    <TabsContent value="items" className="m-0 mt-0 p-0 data-[state=inactive]:hidden">
+                        <CollectionItemsPanel
+                            items={search.searchedItems}
+                            markers={search.searchedMarkers}
+                            highlightedId={highlightedId}
+                            setHighlightedId={setHighlightedId}
+                            canEdit={canEdit}
+                            categorizationMethod={collection.categorization_method}
+                            customCategories={collection.custom_categories}
+                            showImages={collection.show_community_images ?? true}
+                            showAddedBy={collection.show_added_by ?? false}
+                            onUpdateNote={(itemId, note) => { void handleUpdateNote(itemId, note); }}
+                            onUpdateCategory={(itemId, catId) => { void handleUpdateCategory(itemId, catId); }}
+                            onUpdateMarkerNote={
+                              canEdit
+                                ? (markerId, note) => { void handleUpdateMarkerNote(markerId, note); }
+                                : undefined
+                            }
+                            onSelect={selectItem}
+                            onRemove={handleRemoveItem}
+                            searchableCount={search.searchableCount}
+                            isSearchActive={searchApplies}
+                            appliedQuery={search.appliedQuery}
+                            matchCount={matchedIds.size}
+                            onClearSearch={() => search.setQuery("")}
+                        />
+                    </TabsContent>
 
-                                {search.searchableCount === 0 && (
-                                    <div className="text-center py-8 text-text-secondary text-sm">
-                                        No places in this collection yet.
-                                    </div>
-                                )}
-
-                                {search.searchableCount > 0 && searchApplies && matchedIds.size === 0 && (
-                                    <EmptyState
-                                        eyebrow="No matches"
-                                        message={`Nothing in this collection matches “${search.appliedQuery}”.`}
-                                        action={
-                                            <button type="button" onClick={() => search.setQuery("")} className="cta-link">
-                                                Clear search
-                                            </button>
-                                        }
-                                    />
-                                )}
-                            </div>
+                    <TabsContent value="itinerary" className="m-0 mt-0 p-0 data-[state=inactive]:hidden">
+                        <div className="p-4 pb-24 lg:pb-4">
+                            <ItineraryList
+                                highlightedId={highlightedId}
+                                setHighlightedId={setHighlightedId}
+                                onUpdateItinerary={canEdit ? handleUpdateItinerary : undefined}
+                                canEdit={canEdit}
+                                onUpdateNote={handleUpdateNote}
+                                onUpdateMarkerNote={canEdit ? handleUpdateMarkerNote : undefined}
+                                markerPlacePhotos={photos}
+                            />
+                            {!collection.itinerary && (
+                                <div className="text-center py-8 text-text-secondary">
+                                    <p>No itinerary generated yet.</p>
+                                    {canEdit && (
+                                        <Button
+                                            variant="outline"
+                                            className="mt-4"
+                                            onClick={() => setShowPlanRoute(true)}
+                                        >
+                                            Generate Itinerary
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </TabsContent>
-
-                    <TabsContent value="itinerary" className="mt-0 flex-1 overflow-hidden m-0 p-0 min-h-0 flex flex-col justify-start data-[state=inactive]:hidden">
-                         <div className="flex-1 overflow-y-auto">
-                            <div className="p-4 pb-24 lg:pb-4">
-                                <ItineraryList
-                                    highlightedId={highlightedId}
-                                    setHighlightedId={setHighlightedId}
-                                    onUpdateItinerary={canEdit ? handleUpdateItinerary : undefined}
-                                    canEdit={canEdit}
-                                    onUpdateNote={handleUpdateNote}
-                                    onUpdateMarkerNote={canEdit ? handleUpdateMarkerNote : undefined}
-                                    markerPlacePhotos={photos}
-                                />
-                                {!collection.itinerary && (
-                                    <div className="text-center py-8 text-text-secondary">
-                                        <p>No itinerary generated yet.</p>
-                                        {canEdit && (
-                                            <Button
-                                                variant="outline"
-                                                className="mt-4"
-                                                onClick={() => setShowPlanRoute(true)}
-                                            >
-                                                Generate Itinerary
-                                            </Button>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                         </div>
-                    </TabsContent>
-                </Tabs>
-            </div>
+                </div>
+            </Tabs>
         </div>
 
         {/* Map */}
