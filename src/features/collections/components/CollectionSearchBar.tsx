@@ -1,16 +1,20 @@
 /**
  * CollectionSearchBar.tsx
  *
- * The "search within this collection" row, hosted by `CollectionRailToolbar` so
- * it stays pinned while the list scrolls under it.
+ * The "search within this collection" field, hosted by `CollectionRailToolbar`
+ * so it stays pinned while the list scrolls under it.
  *
- * Draws no border of its own: the toolbar owns the hairline that closes the
- * pinned chrome, and two adjacent borders read as a double rule.
+ * Owns no padding and no border: the toolbar sits this field in a row beside
+ * the edit controls and owns both the inset and the hairline that closes the
+ * pinned chrome. Two adjacent borders read as a double rule, and a field that
+ * carried its own inset could not share a row with anything.
  *
  * Purely presentational — the page owns the query, the filtering and the map.
  * The result count is announced politely because the thing it describes (rows
  * appearing and disappearing further down, pins vanishing from the map) is
- * otherwise invisible to a screen reader.
+ * otherwise invisible to a screen reader. It wraps rather than shares a line at
+ * any cost: sharing the field's column with the edit controls leaves a phone
+ * about 250px, and the count broke mid-phrase rather than let the CTA drop.
  */
 import { SearchInput } from "@/components/ui/search-input";
 
@@ -39,7 +43,7 @@ export function CollectionSearchBar({
   onZoomToResults,
 }: CollectionSearchBarProps) {
   return (
-    <div role="search" className="px-4 pb-3 pt-1">
+    <div role="search">
       <SearchInput
         value={value}
         onValueChange={onValueChange}
@@ -47,7 +51,7 @@ export function CollectionSearchBar({
         placeholder="Search name, architect, place…"
       />
       {isActive && (
-        <div className="mt-2 flex items-center justify-between gap-3">
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <p className="eyebrow tracking-widest" aria-live="polite">
             {matchCount} of {totalCount} {totalCount === 1 ? "entry" : "entries"}
           </p>

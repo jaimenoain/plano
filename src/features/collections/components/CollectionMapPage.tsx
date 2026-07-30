@@ -1073,6 +1073,7 @@ toast({
                         collection={collection}
                         ownerUsername={ownerProfile?.username}
                         coverMosaicUrls={coverMosaicUrls}
+                        entryCount={search.searchableCount}
                         canEdit={canEdit}
                         isLoggedIn={!!user}
                         isFavorite={!!isFavorite}
@@ -1082,7 +1083,6 @@ toast({
                     <div ref={railSentinelRef} aria-hidden className="h-0" />
 
                     <CollectionRailToolbar
-                        collectionName={collection.name}
                         isStuck={isRailScrolled}
                         actions={
                             <CollectionHeaderUtilityActions
@@ -1091,16 +1091,7 @@ toast({
                                 onOpenSettings={() => setShowSettings(true)}
                             />
                         }
-                    >
-                        {collection.itinerary && (
-                            <div className="px-4 pb-1">
-                                <TabsList className="w-full grid grid-cols-2">
-                                    <TabsTrigger value="items">All Items</TabsTrigger>
-                                    <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
-                                </TabsList>
-                            </div>
-                        )}
-                        {activeTab === 'items' && (
+                        search={activeTab === 'items' && (
                             <CollectionSearchBar
                                 value={search.query}
                                 onValueChange={search.setQuery}
@@ -1111,6 +1102,13 @@ toast({
                                     search.resultBounds ? search.requestZoomToResults : undefined
                                 }
                             />
+                        )}
+                    >
+                        {collection.itinerary && (
+                            <TabsList className="w-full grid grid-cols-2">
+                                <TabsTrigger value="items">All Items</TabsTrigger>
+                                <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
+                            </TabsList>
                         )}
                     </CollectionRailToolbar>
 

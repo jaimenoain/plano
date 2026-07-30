@@ -1,8 +1,9 @@
 /**
  * The toolbar is the only part of the collection rail that stays put, so these
- * tests guard the two things that make that safe: the controls a reader keeps
- * using are always rendered, and the condensed name never becomes a second
- * title for a screen reader.
+ * tests guard what makes that safe and what makes it worth its height: the
+ * controls a reader keeps using are always rendered, they share the search
+ * field's row rather than occupying a band of their own, and nothing about the
+ * box changes when it sticks.
  *
  * Stickiness itself is not asserted — jsdom cannot compute `position: sticky`.
  * What is asserted is the state that drives it.
@@ -14,42 +15,70 @@ import { CollectionRailToolbar } from "./CollectionRailToolbar";
 afterEach(cleanup);
 
 const baseProps = {
-  collectionName: "Brutalist Madrid",
   isStuck: false,
   actions: <button type="button">Add buildings</button>,
+  search: <input aria-label="Search this collection" />,
 };
 
+/** The flex row holding the field and the actions. */
+const searchRow = () => screen.getByLabelText("Search this collection").closest("div")!.parentElement!;
+
 describe("CollectionRailToolbar", () => {
-  it("keeps the actions and the slotted controls reachable at rest", () => {
-    render(
-      <CollectionRailToolbar {...baseProps}>
-        <input aria-label="Search this collection" />
-      </CollectionRailToolbar>,
-    );
+  it("keeps the actions and the search field reachable at rest", () => {
+    render(<CollectionRailToolbar {...baseProps} />);
 
     expect(screen.getByRole("button", { name: "Add buildings" })).toBeInTheDocument();
     expect(screen.getByLabelText("Search this collection")).toBeInTheDocument();
   });
 
-  it("hides the condensed name from the accessibility tree so the masthead heading stands alone", () => {
-    render(<CollectionRailToolbar {...baseProps} isStuck />);
+  it("sits the actions in the search field's row instead of a band of their own", () => {
+    render(<CollectionRailToolbar {...baseProps} />);
 
-    // Present for sighted readers…
-    const name = screen.getByText("Brutalist Madrid");
-    expect(name).toBeInTheDocument();
-    // …but never announced: the masthead `<h1>` is still in the DOM below.
-    expect(name).toHaveAttribute("aria-hidden", "true");
-    expect(screen.queryByRole("heading", { name: "Brutalist Madrid" })).toBeNull();
+    // Stacked, the actions row was empty at the scroll position every reader
+    // starts at — 44px of the rail spent on nothing.
+    expect(screen.getByRole("button", { name: "Add buildings" }).closest("div")!.parentElement).toBe(
+      searchRow(),
+    );
   });
 
-  it("reserves the name's row before it is stuck, so nothing shifts mid-scroll", () => {
-    const { rerender } = render(<CollectionRailToolbar {...baseProps} />);
+  it("moves the actions onto the tab row when the tab cannot be searched", () => {
+    render(
+      <CollectionRailToolbar {...baseProps} search={undefined}>
+        <div>Itinerary</div>
+      </CollectionRailToolbar>,
+    );
 
-    // Rendered but invisible — a conditional render here would grow the sticky
-    // box mid-scroll and jump the list.
-    expect(screen.getByText("Brutalist Madrid")).toBeInTheDocument();
+    // The itinerary hides the field; the actions join the tabs rather than open
+    // a row of their own.
+    expect(screen.getByText("Itinerary").parentElement!.parentElement).toBe(
+      screen.getByRole("button", { name: "Add buildings" }).closest("div")!.parentElement,
+    );
+    expect(screen.queryByLabelText("Search this collection")).toBeNull();
+  });
+
+  it("still carries the actions with neither a field nor tabs", () => {
+    render(<CollectionRailToolbar {...baseProps} search={undefined} />);
+
+    expect(screen.getByRole("button", { name: "Add buildings" })).toBeInTheDocument();
+  });
+
+  it("changes nothing but its lift when it sticks, so the list never jumps", () => {
+    const { container, rerender } = render(<CollectionRailToolbar {...baseProps} />);
+    const rowAtRest = searchRow().className;
+    expect(container.firstElementChild!.className).not.toContain("shadow-xs");
 
     rerender(<CollectionRailToolbar {...baseProps} isStuck />);
-    expect(screen.getByText("Brutalist Madrid")).toBeInTheDocument();
+
+    // Same row, same height — only the shadow separating the bar from the list.
+    expect(searchRow().className).toBe(rowAtRest);
+    expect(container.firstElementChild!.className).toContain("shadow-xs");
+  });
+
+  it("does not repeat the collection title a screen reader has already met", () => {
+    render(<CollectionRailToolbar {...baseProps} isStuck />);
+
+    // The masthead `<h1>` stays in the DOM above; a condensed copy here was
+    // `aria-hidden` decoration that cost a whole row.
+    expect(screen.queryByRole("heading")).toBeNull();
   });
 });

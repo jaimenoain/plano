@@ -50,6 +50,28 @@ describe("CollectionRailHeader", () => {
     expect(screen.getByRole("button", { name: /request to collaborate/i })).toBeInTheDocument();
   });
 
+  it("bylines the owner with the size of the collection, in one line", () => {
+    renderWithProviders(<CollectionRailHeader {...baseProps} entryCount={24} />);
+
+    expect(screen.getByRole("link", { name: "jaime" })).toHaveAttribute("href", "/profile/jaime");
+    expect(screen.getByText("24 entries")).toBeInTheDocument();
+    // The label spent a line saying what the position already says.
+    expect(screen.queryByText(/^By:/)).toBeNull();
+  });
+
+  it("uses the singular for a one-entry collection", () => {
+    renderWithProviders(<CollectionRailHeader {...baseProps} entryCount={1} />);
+
+    expect(screen.getByText("1 entry")).toBeInTheDocument();
+  });
+
+  it("draws no rule of its own — the pinned toolbar below closes the chrome", () => {
+    const { container } = renderWithProviders(<CollectionRailHeader {...baseProps} />);
+
+    // Two hairlines boxed the title in and made the rail read as stacked panels.
+    expect(container.firstElementChild!.className).not.toContain("border-b");
+  });
+
   it("keeps the title readable instead of truncating it against the actions", () => {
     const longName =
       "The Definitive Guide to Post-War Concrete Housing Estates of Greater Madrid and Beyond";
