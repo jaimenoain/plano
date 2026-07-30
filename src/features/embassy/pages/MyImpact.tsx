@@ -28,6 +28,9 @@ import {
   type ImpactMetric,
   type ImpactTimelineEntry,
 } from "@/features/embassy/api/impact";
+// Relative, not "@/features/embassy/...": the alias form trips the deep-feature
+// import ratchet even inside the owning feature.
+import { MilestoneShelf } from "../components/MilestoneShelf";
 
 const TIMELINE_ICONS: Record<ImpactMetric, LucideIcon> = {
   edits: History,
@@ -86,6 +89,10 @@ export default function MyImpactPage() {
       ) : (
         <>
           <StreakBanner weeklyStreak={impact.weeklyStreak} />
+
+          {/* Inside the has-activity branch on purpose: an all-zero shelf is noise for an
+              ambassador who hasn't started yet — the empty state above is the better ask. */}
+          <MilestoneShelf />
 
           <section className="space-y-4" aria-labelledby="my-impact-totals-heading">
             <h2 id="my-impact-totals-heading" className="text-lg font-semibold text-text-primary">

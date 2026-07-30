@@ -84,7 +84,7 @@ productive session; Phase 3 the return loop; Phase 4 holds gated bigger bets.
   Known pre-existing gap, not fixed here: video approvals aren't tagged as moderation
   anywhere in the app, so they don't count toward a moderation goal either.
 
-## [ ] Phase 3 — Personal progress & return loops
+## [x] Phase 3 — Personal progress & return loops
 
 - **3.1 — "My impact" page with streaks.** Shipped 2026-07-24: new `/embassy/impact`
   route, added to the workspace tab bar for every ambassador (not leader-gated, unlike
@@ -119,9 +119,39 @@ productive session; Phase 3 the return loop; Phase 4 holds gated bigger bets.
   it silences 1 of 3 active ambassadors. Backlog counts are capped at 200 per queue and
   render as "200+"; the in-app half works today, the email half needs the edge function
   deployed.
-- **3.3 — Milestone recognition.** First contribution / 10 photos / 50 moderations /
-  4-week streak, shown on My impact + as notifications. No public rankings (owner
-  decision).
+- **3.3 — Milestone recognition.** Shipped 2026-07-30: the four badges the phase names —
+  `first_contribution`, `photos_10`, `moderations_50`, `streak_4` — are awarded by new
+  `sync_my_ambassador_milestones()` into the new `ambassador_milestones` ledger
+  (PK `(user_id, key)`), announced once each as a new `milestone_earned` notification
+  (self-actor, per 3.2's convention; opt-out toggle in notification settings), and shown
+  as a shelf on `/embassy/impact` with live progress toward the unearned ones
+  (`3 / 10`). The client calls it on any Embassy visit — not just the impact page, or the
+  notification could only reach someone who had already looked — via one shared query key,
+  and it is idempotent (`ON CONFLICT DO NOTHING`), so re-calls award nothing.
+  Migration `20271195000000_embassy_milestones.sql`. Two decisions worth remembering:
+  (a) **The function counts nothing itself** — it reads one row from
+  `get_my_ambassador_impact(0)`, so a badge is judged on the exact numbers the page
+  renders. `auth.uid()` reads the per-request JWT GUC and survives the nested
+  SECURITY DEFINER call.
+  (b) **Thresholds live only in SQL** — the RPC returns `target` + `progress`, so the UI
+  cannot drift from the rule that awards the badge.
+- **3.3a — Moderation counted zero everywhere (found while verifying 3.3, fixed).**
+  Every Embassy moderation metric tested
+  `building_audit_logs.table_name IN ('ambassador_approval', …)`, but those markers are
+  written to `operation`; `table_name` holds the table the approval touched. On prod: **0**
+  rows matched the old predicate against **1508** carrying those values in `operation`, so
+  moderation read 0 for every ambassador and all 1508 approvals were tallied as plain
+  edits. The `moderations_50` badge could never have been earned. Migration
+  `20271196000000_fix_moderation_metric_predicate.sql` moves the predicate to `operation`
+  in all three functions that carry it — `get_my_ambassador_impact` (3.1),
+  `get_my_ambassador_goals` (2.4), `compute_weekly_digest_payloads` (3.2) — together,
+  because they quote the same metric at the reader and fixing one would put two Embassy
+  pages in open contradiction. It also closes the gap 2.4/3.1/3.2 had each documented as
+  known-and-unfixed: `ambassador_video_approval` joins the list, so approving a video now
+  counts like approving a photo. Owner decision 2026-07-30: fix everywhere. User-visible
+  effect — moderation numbers jump from 0 to their true values (owner's own account: 161)
+  on My impact, in goal progress, and in the next weekly digest email, where the "edits"
+  number drops by the same amount.
 
 ## [ ] Phase 4 — Bigger bets (gated: revisit after Phase 3 with metrics from spec §4)
 

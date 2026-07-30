@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 import { Link } from "react-router";
-import { Heart, MessageCircle, UserPlus, Bell, Sparkles, Users, ShieldCheck, Trophy, CalendarDays } from "lucide-react";
+import { Heart, MessageCircle, UserPlus, Bell, Sparkles, Users, ShieldCheck, Trophy, CalendarDays, Award } from "lucide-react";
 import type { Notification } from "../types";
 import { formatWeeklyDigestSummary } from "../weeklyDigest";
 
@@ -54,6 +54,8 @@ export function notificationIcon(type: Notification["type"]): ReactNode {
       return <ShieldCheck className="h-3.5 w-3.5 text-text-secondary" />;
     case "weekly_digest":
       return <CalendarDays className="h-3.5 w-3.5 text-text-secondary" />;
+    case "milestone_earned":
+      return <Award className="h-3.5 w-3.5 text-text-secondary" />;
     default:
       return <Bell className="h-3.5 w-3.5 text-text-disabled" />;
   }
@@ -126,6 +128,8 @@ export function notificationTitle(n: Notification): string {
       return "Profile Claimed";
     case "weekly_digest":
       return "Your Week in Review";
+    case "milestone_earned":
+      return "Milestone Reached";
     default:
       return "Notification";
   }
@@ -380,6 +384,14 @@ export function notificationText(n: Notification): ReactNode {
     // interpolating `actorName` would address the recipient by their own username.
     case "weekly_digest":
       return <span>{formatWeeklyDigestSummary(n.metadata?.digest)}</span>;
+    // Self-actored too (see above) — the milestone is the recipient's own.
+    case "milestone_earned":
+      return (
+        <span>
+          You reached{" "}
+          <span className="italic">{n.metadata?.milestone_label?.trim() || "a new milestone"}</span>
+        </span>
+      );
     default:
       return <span>New notification</span>;
   }

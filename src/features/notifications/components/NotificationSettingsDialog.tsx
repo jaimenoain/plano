@@ -38,7 +38,10 @@ const NOTIFICATION_GROUPS = [
 // shown to everyone as a permanently inert toggle.
 const EMBASSY_GROUP = {
   title: "Embassy",
-  types: [{ id: "weekly_digest", label: "Weekly digest (in-app and email)" }],
+  types: [
+    { id: "weekly_digest", label: "Weekly digest (in-app and email)" },
+    { id: "milestone_earned", label: "Milestones you earn" },
+  ],
 };
 
 export function NotificationSettingsDialog({ open, onOpenChange }: NotificationSettingsDialogProps) {

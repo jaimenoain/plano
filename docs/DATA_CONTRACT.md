@@ -395,6 +395,26 @@ SECURITY DEFINER. Called from the Events tool "Discard" button. Same scope guard
 
 **Migration:** `supabase/migrations/20271141000000_embassy_event_search_rpcs.sql` — needs apply in Supabase SQL Editor.
 
+### Database: `ambassador_milestones`
+
+Ledger of earned milestones (Roadmap 3.3), one row per `(ambassador, milestone)` written the moment it is first earned.
+
+| Column | Type | Notes |
+|---|---|---|
+| `user_id` | uuid | FK → `profiles.id`, **ON DELETE CASCADE**; part of the PK |
+| `key` | text | One of `first_contribution` \| `photos_10` \| `moderations_50` \| `streak_4`; part of the PK |
+| `earned_at` | timestamptz | Default `timezone('utc', now())` |
+
+**RLS (summary):** `SELECT` — own rows only (`user_id = auth.uid()`). No `INSERT` / `UPDATE` / `DELETE` policy: awarding is not a client assertion, only a conclusion `sync_my_ambassador_milestones()` draws. The row's existence is what stops a milestone notification from firing twice.
+
+### RPC: `sync_my_ambassador_milestones()`
+
+SECURITY DEFINER, self-scoped on `auth.uid()`. Called on any `/embassy` visit and by the My impact shelf (one shared TanStack query). Reads one row from **`get_my_ambassador_impact(0)`** — it re-counts nothing, so a badge is always judged on the same numbers the page renders — evaluates the four milestones, inserts newly-earned keys into `ambassador_milestones` (`ON CONFLICT DO NOTHING`), and announces each newly-inserted one exactly once as a **`milestone_earned`** notification (self-actor `actor_id = user_id`; metadata `milestone_key`, `milestone_label`, `milestone_progress`, `milestone_target`). Idempotent.
+
+**Returns** one row per milestone: `milestone_key text`, `milestone_target integer`, `milestone_progress integer`, `earned_at timestamptz` (null while unearned), `is_new boolean`. Thresholds live only here, so the UI cannot drift from the awarding rule. Numbers inherit `get_my_ambassador_impact`'s semantics: global and all-time, **not** chapter-scoped or week-windowed like the weekly digest. `GRANT EXECUTE` to `authenticated` only (revoked from `PUBLIC, anon, authenticated` first).
+
+**Migration:** `supabase/migrations/20271195000000_embassy_milestones.sql` — applied to prod 2026-07-30.
+
 ---
 
 ## Auth Domain — profiles, allowed_emails

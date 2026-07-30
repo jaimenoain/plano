@@ -485,6 +485,32 @@ export type Database = {
           },
         ]
       }
+      ambassador_milestones: {
+        Row: {
+          earned_at: string
+          key: string
+          user_id: string
+        }
+        Insert: {
+          earned_at?: string
+          key: string
+          user_id: string
+        }
+        Update: {
+          earned_at?: string
+          key?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ambassador_milestones_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_request_logs: {
         Row: {
           cost_usd: number | null
@@ -5590,10 +5616,7 @@ export type Database = {
           views_count: number
         }[]
       }
-      get_country_guide: {
-        Args: { p_country_code: string }
-        Returns: Json
-      }
+      get_country_guide: { Args: { p_country_code: string }; Returns: Json }
       get_discovery_feed: {
         Args: {
           p_architect_ids?: string[]
@@ -5997,6 +6020,16 @@ export type Database = {
           president_name: string
         }[]
       }
+      get_pending_weekly_digest_emails: {
+        Args: { p_limit?: number; p_week_start?: string }
+        Returns: {
+          email: string
+          payload: Json
+          user_id: string
+          username: string
+          week_start: string
+        }[]
+      }
       get_people_you_may_know: {
         Args: { p_limit?: number }
         Returns: {
@@ -6006,16 +6039,6 @@ export type Database = {
           is_follows_me: boolean
           mutual_count: number
           username: string
-        }[]
-      }
-      get_pending_weekly_digest_emails: {
-        Args: { p_limit?: number; p_week_start?: string }
-        Returns: {
-          email: string
-          payload: Json
-          user_id: string
-          username: string
-          week_start: string
         }[]
       }
       get_person_award_leaderboard: {
@@ -7132,6 +7155,16 @@ export type Database = {
       sync_ambassador_membership_after_profile_geography: {
         Args: never
         Returns: Json
+      }
+      sync_my_ambassador_milestones: {
+        Args: never
+        Returns: {
+          earned_at: string
+          is_new: boolean
+          milestone_key: string
+          milestone_progress: number
+          milestone_target: number
+        }[]
       }
       toggle_broadcast_pin: {
         Args: { p_broadcast_id: string; p_pinned: boolean }
