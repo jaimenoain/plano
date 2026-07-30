@@ -3,7 +3,11 @@
 > This file is the cross-session status ledger (known issues, schema drift, completed work). Structural facts about the stack live in `AGENTS.md` — read that first.
 
 ## Current Phase
-**Remaining surfaces refinement — complete** (2026-05-24). All phases P0–P10 delivered per [REMAINING_SURFACES_ROADMAP.md](REMAINING_SURFACES_ROADMAP.md). Predecessor **design refinement** is **complete** (R0–R9). Programme platform remains shipped.
+**No active roadmap** (2026-07-30). `docs/Roadmap.md` is the blank scaffold; the next body of work is generated into it per `docs/project_start/04-writing-the-roadmap.md` in subsequent-roadmap mode.
+
+Most recently closed: **Embassy ambassador experience** — archived as [`docs/roadmaps/0003-embassy-ambassador-experience.md`](roadmaps/0003-embassy-ambassador-experience.md) (installed 2026-07-23, closed 2026-07-30). Phases 0–3 complete; Phase 4 opened for **4.3 field mode only** — **4.1 pre-publish moderation and 4.2 missions were closed unstarted by owner decision, not dropped on merit**, and are the obvious candidates for a future roadmap. The Final UAT in that file records what was verified against prod and the one claim that is only partially verified (a real photo upload was never exercised end-to-end on production data).
+
+Earlier programmes, still complete: **Remaining surfaces refinement** (2026-05-24, P0–P10 per [REMAINING_SURFACES_ROADMAP.md](REMAINING_SURFACES_ROADMAP.md)), **design refinement** (R0–R9), **Design Precision Programme** ([0001](roadmaps/0001-design-precision-programme.md)), **Principles alignment** ([0002](roadmaps/0002-principles-alignment.md)). Programme platform remains shipped.
 
 **Rollout ≠ refinement:** The May 2026 rollout (Phases 0–7) wired semantic tokens, removed raw palette classes, and connected real data (e.g. `get_feed` on the home feed). That work is **complete**. The refinement programme ([ROADMAP.md](ROADMAP.md), Phases R0–R9) delivered editorial layout, typography rhythm, kit fidelity, and per-page audit evidence across shell, editorial spine, discovery, identity, events, auth/token flows, embassy, and admin. Tracking: all families `refined` or `complete` in [DESIGN_SYSTEM_SCREEN_INVENTORY.md](DESIGN_SYSTEM_SCREEN_INVENTORY.md).
 
