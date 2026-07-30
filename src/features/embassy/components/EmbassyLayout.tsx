@@ -138,7 +138,10 @@ export default function EmbassyLayout() {
                       key={item.path}
                       to={item.path}
                       className={cn(
-                        "flex items-center gap-2 transition-colors hover:text-text-primary py-4 border-b-2",
+                        // shrink-0 + nowrap: the bar is a horizontal scroller, so tabs must
+                        // keep their width and scroll rather than compress into two lines
+                        // (visible at 375px once the bar reached eight items).
+                        "flex shrink-0 items-center gap-2 whitespace-nowrap transition-colors hover:text-text-primary py-4 border-b-2",
                         isActive
                           ? "border-text-primary text-text-primary"
                           : "border-transparent text-text-secondary"

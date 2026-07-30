@@ -5283,6 +5283,26 @@ export type Database = {
           table_name: string
         }[]
       }
+      get_ambassador_nearby_photo_gaps: {
+        Args: {
+          p_chapter_id: string
+          p_lat: number
+          p_limit?: number
+          p_lng: number
+          p_radius_meters?: number
+        }
+        Returns: {
+          city: string
+          dist_meters: number
+          id: string
+          lat: number
+          lng: number
+          name: string
+          popularity_score: number
+          short_id: number
+          slug: string
+        }[]
+      }
       get_ambassador_recent_buildings: {
         Args: { p_chapter_id: string; p_limit?: number }
         Returns: {

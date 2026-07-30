@@ -153,14 +153,43 @@ productive session; Phase 3 the return loop; Phase 4 holds gated bigger bets.
   on My impact, in goal progress, and in the next weekly digest email, where the "edits"
   number drops by the same amount.
 
-## [ ] Phase 4 — Bigger bets (gated: revisit after Phase 3 with metrics from spec §4)
+## [ ] Phase 4 — Bigger bets (opened 2026-07-30 for 4.3 only)
 
-- **4.1 — Pre-publish moderation for new buildings** from non-trusted contributors
-  (pending → chapter approval → publish; requires 2.3 live so pending isn't a black hole).
-- **4.2 — Missions.** Curated task bundles with progress + finish line, assembled by
-  chapter leads on `programme_campaigns`.
-- **4.3 — Field mode for photography.** Mobile-first nearest-gaps flow with camera
-  capture — only if 2.2 measurably lifts photo contributions.
+Owner decision 2026-07-30: open Phase 4 with **4.3 alone**. 4.1 and 4.2 stay closed — not
+dropped, just not started. 4.3's own gate ("only if 2.2 measurably lifts photo contributions")
+was waived: the owner opened it without waiting for that metric.
+
+- **4.1 — Pre-publish moderation for new buildings** — NOT OPENED. From non-trusted
+  contributors (pending → chapter approval → publish; requires 2.3 live so pending isn't a
+  black hole).
+- **4.2 — Missions** — NOT OPENED. Curated task bundles with progress + finish line, assembled
+  by chapter leads on `programme_campaigns`.
+- **4.3 — Field mode for photography.** Shipped 2026-07-30: new `/embassy/field` (its own tab
+  in the workspace bar, plus a link from the Photography tool) asks for the ambassador's
+  location and lists their chapter's photo gaps **nearest first**, each row one tap from the
+  camera. Backed by new `get_ambassador_nearby_photo_gaps()` — chapter scope inlined, not the
+  per-row helper; radius and limit clamped; 3.8 ms on prod for a 2 km London query against
+  `buildings_location_idx`. New `api/fieldMode.ts` (`fetchNearbyPhotoGaps` + pure unit-tested
+  `formatDistance` / `nextRadiusAfter`); `PhotoUploadSheet` gained an opt-in `cameraFirst`
+  which adds a second input carrying `capture="environment"` — the first use of that attribute
+  in the repo, so the desktop tool is untouched. Migration `20271197000000`.
+  Three decisions worth remembering:
+  (a) **Chapter-scoped** (owner decision) — outside your chapter you get an honest empty state,
+  because photos there wouldn't count toward your chapter.
+  (b) **Radius ladder, not an unbounded query** — 2 km, then one tap to 10 km. Around the
+  Barbican that is 6 gaps vs 45, so the step matters.
+  (c) **No `watchPosition`** — a Recentre button instead; continuous tracking costs battery and
+  the list re-queries after every upload anyway. If location is refused the page falls back to
+  the chapter's centre and *says so on screen* rather than silently pretending.
+- **4.3a — The gap predicate never excluded anything (found while building 4.3, fixed).**
+  `get_ambassador_buildings_without_photos` tested `NOT EXISTS (… user_buildings ub JOIN
+  review_images ri ON ri.review_id = ub.id …)`, but `review_images.review_id` is a foreign key
+  to `building_posts.id`. It matched only by accident — 18009 of 18021 `building_posts` rows
+  carry the same uuid as their `user_buildings` row, a legacy 1:1 artefact — and was blind to
+  every post written by current code, including 2.2's in-tool uploads. Field mode would have
+  broken on its most important beat: photograph a building and it never leaves the list. Both
+  functions now join through `building_posts` (same migration). User-visible effect: buildings
+  that already have photos stop being offered as gaps (3 on prod today).
 
 ## Final UAT
 

@@ -37,16 +37,28 @@ export function PhotoUploadSheet({
   open,
   onOpenChange,
   onUploaded,
+  cameraFirst = false,
+  invalidateKeys,
 }: {
   building: PhotoUploadTarget | null;
   chapterId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUploaded: (buildingId: string) => void;
+  /**
+   * Field mode (roadmap 4.3): lead with the camera instead of the photo library.
+   * Adds a second input carrying `capture="environment"`, which asks a phone to open
+   * the rear camera directly. Desktop browsers ignore the attribute and fall back to a
+   * file picker, so it is opt-in rather than the default.
+   */
+  cameraFirst?: boolean;
+  /** Extra query keys to invalidate on success, on top of the gap queue and map clusters. */
+  invalidateKeys?: string[][];
 }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [pendingImages, setPendingImages] = useState<PendingUploadImage[]>([]);
 
   const clearPending = useCallback(() => {
@@ -110,6 +122,9 @@ export function PhotoUploadSheet({
       clearPending();
       queryClient.invalidateQueries({ queryKey: ["embassy-buildings-no-photo", chapterId] });
       queryClient.invalidateQueries({ queryKey: ["map-clusters-v3"] });
+      for (const queryKey of invalidateKeys ?? []) {
+        queryClient.invalidateQueries({ queryKey });
+      }
       onUploaded(completedId);
     },
     onError: (error) => {
@@ -143,13 +158,36 @@ export function PhotoUploadSheet({
             onChange={handleImageSelect}
           />
 
+          {cameraFirst && (
+            <>
+              {/* Separate input: `capture` and a library picker are mutually exclusive on
+                  a phone, so the two affordances cannot share one element. */}
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleImageSelect}
+              />
+              <Button
+                className="w-full min-h-12"
+                onClick={() => cameraInputRef.current?.click()}
+                disabled={isUploading}
+              >
+                <Camera className="mr-2 h-4 w-4" />
+                {pendingImages.length > 0 ? "Take another" : "Take photo"}
+              </Button>
+            </>
+          )}
+
           <Button
             variant="outline"
             className="w-full min-h-11"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
           >
-            <Camera className="mr-2 h-4 w-4" />
+            {!cameraFirst && <Camera className="mr-2 h-4 w-4" />}
             {pendingImages.length > 0 ? "Add more photos" : "Choose photos"}
           </Button>
 
@@ -162,7 +200,9 @@ export function PhotoUploadSheet({
 
           {pendingImages.length === 0 && (
             <p className="text-sm text-text-secondary text-center">
-              Pick one or more photos to get started.
+              {cameraFirst
+                ? "Point, shoot, save. One good photo is enough."
+                : "Pick one or more photos to get started."}
             </p>
           )}
 

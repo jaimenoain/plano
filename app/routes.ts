@@ -128,6 +128,7 @@ export default [
       route("contribute", "features/embassy/pages/Contribute.tsx", {
         id: "embassy-contribute",
       }),
+      route("field", "features/embassy/pages/FieldMode.tsx"),
       route("goals", "features/embassy/pages/MyGoals.tsx"),
       route("impact", "features/embassy/pages/MyImpact.tsx"),
       route("projects", "features/embassy/pages/ChapterProjects.tsx"),
