@@ -77,10 +77,7 @@ export const MapProvider = ({
   // viewport). Seeded once from the URL.
   const storeRef = useRef<MapStore | null>(null);
   if (storeRef.current === null) {
-    const seeded = parseMapStateFromParams(searchParams);
-    storeRef.current = createMapStore(
-      forcedMode ? { ...seeded, mode: forcedMode } : seeded,
-    );
+    storeRef.current = createMapStore(parseMapStateFromParams(searchParams, forcedMode));
   }
   const store = storeRef.current;
 

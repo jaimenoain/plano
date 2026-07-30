@@ -37,7 +37,6 @@
     "src/features/maps/components/CollectionMapGL.tsx": 408,
     "src/features/maps/components/FilterDrawer.tsx": 445,
     "src/features/maps/components/PlanoMap.tsx": 483,
-    "src/features/maps/hooks/useURLMapState.ts": 357,
     "src/features/posts/components/DiscoveryCard.tsx": 765,
     "src/features/posts/hooks/useDiscoveryFeed.ts": 301,
     "src/features/profile/components/ManageFoldersDialog.tsx": 521,
