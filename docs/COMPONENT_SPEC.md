@@ -187,13 +187,14 @@ Responsive: below 900px the rail collapses and horizontal padding reduces to 24p
 | Nav link (default) | color | text-secondary | text-text-secondary |
 | Nav link (active) | color | text-primary | text-text-primary |
 | Nav link active underline | — | text-primary | 1px `::after` flush with header bottom |
-| Primary CTA ("Log a visit") | background | brand-primary | bg-brand-primary text-text-inverse |
 | Bell icon | color | text-secondary → text-primary | hover:text-text-primary |
 | Bell notification dot | color | brand-accent | bg-brand-accent |
 | Avatar | background | brand-primary | bg-brand-primary text-text-inverse |
 | Center column | border-right | border-default | border-r border-border-default |
 | Right rail | background | surface-default | bg-surface-default |
 | Right rail | padding | — | px-8 pt-9 pb-8 |
+
+**No header primary CTA.** The desktop header carries a search icon, the bell and the avatar — nothing else. Visit logging is building-scoped and lives where the building is (the building page's My Status control, the map drawer, and rating). The `design-system/` mocks still show a "Log a visit" CTA; that is a known, intentional deviation — do not restore it in a conformance pass.
 
 ### Interaction Design Notes
 
@@ -620,9 +621,6 @@ Each nav link is `text-sm font-medium px-[14px] py-2 rounded-sm`. The active lin
 | Search field | background | surface-default | bg-surface-default |
 | Search field text | color | text-disabled | text-text-disabled |
 | Search field (hover) | border | border-strong | hover:border-border-strong |
-| Primary CTA ("Log a visit") | background | brand-primary | bg-brand-primary |
-| Primary CTA | color | text-inverse | text-text-inverse |
-| Primary CTA (hover) | background | brand-primary-hover | hover:bg-brand-primary-hover |
 | Bell icon | color | text-secondary | text-text-secondary |
 | Bell icon (hover) | color | text-primary | hover:text-text-primary |
 | Bell notification dot | color | brand-accent | bg-brand-accent |
@@ -634,7 +632,7 @@ Each nav link is `text-sm font-medium px-[14px] py-2 rounded-sm`. The active lin
 
 ### Interaction Design Notes
 
-**Action representation:** Nav links use text labels only — no icons in the top nav. The logo is on the far left, separated from nav links by the gap.
+**Action representation:** Nav links use text labels only — no icons in the top nav. The logo is on the far left, separated from nav links by the gap. The action cluster on the right has no primary CTA — see "No header primary CTA" above.
 
 **Search field:** Renders as a `<button>` (not an actual `<input>`). Clicking it opens the command palette (⌘K). The `kbd` shortcut hint uses `font-mono text-[10px]`.
 

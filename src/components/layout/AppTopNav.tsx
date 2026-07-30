@@ -226,22 +226,16 @@ export function AppTopNav() {
         </Link>
 
         {user ? (
-          <>
-            <Button asChild variant="ghost" size="sm" className="text-sm font-medium">
-              <Link to="/post">Log a visit</Link>
-            </Button>
-
-            <Link
-              to="/notifications"
-              className="relative h-9 w-9 flex items-center justify-center rounded-sm text-text-secondary hover:text-text-primary transition-colors"
-              aria-label="Notifications"
-            >
-              <Bell className="h-4 w-4" />
-              {showBadge && (
-                <span className="absolute top-2 right-2 h-[7px] w-[7px] rounded-full bg-brand-accent border-[1.5px] border-surface-default" />
-              )}
-            </Link>
-          </>
+          <Link
+            to="/notifications"
+            className="relative h-9 w-9 flex items-center justify-center rounded-sm text-text-secondary hover:text-text-primary transition-colors"
+            aria-label="Notifications"
+          >
+            <Bell className="h-4 w-4" />
+            {showBadge && (
+              <span className="absolute top-2 right-2 h-[7px] w-[7px] rounded-full bg-brand-accent border-[1.5px] border-surface-default" />
+            )}
+          </Link>
         ) : (
           <Button
             type="button"
