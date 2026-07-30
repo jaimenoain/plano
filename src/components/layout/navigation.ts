@@ -2,6 +2,7 @@ import {
   Activity,
   BookOpen,
   CalendarDays,
+  Camera,
   CheckSquare,
   Flame,
   Folder,
@@ -129,6 +130,9 @@ export const embassyNavItems: EmbassyNavItem[] = [
   { label: "Dashboard", path: "/embassy/goals", icon: Target },
   { label: "My impact", path: "/embassy/impact", icon: Flame },
   { label: "Contribute", path: "/embassy/contribute", icon: LayoutDashboard },
+  // Roadmap 4.3. Sits next to Contribute because it is the on-foot half of the same job;
+  // kept in the tab bar rather than buried in the Photography tool so it is one tap on a phone.
+  { label: "Field mode", path: "/embassy/field", icon: Camera },
   { label: "Chapter Projects", path: "/embassy/projects", icon: Users },
   { label: "Team", path: "/embassy/team", icon: UsersRound },
   { label: "Tasks", path: "/embassy/tasks", icon: CheckSquare },

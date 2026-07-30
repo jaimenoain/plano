@@ -8,6 +8,19 @@
 **Rollout ≠ refinement:** The May 2026 rollout (Phases 0–7) wired semantic tokens, removed raw palette classes, and connected real data (e.g. `get_feed` on the home feed). That work is **complete**. The refinement programme ([ROADMAP.md](ROADMAP.md), Phases R0–R9) delivered editorial layout, typography rhythm, kit fidelity, and per-page audit evidence across shell, editorial spine, discovery, identity, events, auth/token flows, embassy, and admin. Tracking: all families `refined` or `complete` in [DESIGN_SYSTEM_SCREEN_INVENTORY.md](DESIGN_SYSTEM_SCREEN_INVENTORY.md).
 
 ## CURRENT_ARCHITECTURE_SNAPSHOT
+- **`review_images.review_id` points at `building_posts.id`, and the two id spaces overlap by
+  accident (2026-07-30):** 18009 of 18021 `building_posts` rows carry the *same uuid* as their
+  `user_buildings` row — a legacy 1:1 artefact — so a join written as
+  `review_images ri ON ri.review_id = ub.id` (user_buildings) appears to work against historical
+  data and silently misses **every** row written by current code, which allocates a fresh
+  `building_posts.id`. That is what the ambassador photo-gap queue did: it never excluded a
+  building photographed through 2.2's in-tool sheet. Fixed in
+  `20271197000000_embassy_field_mode.sql` (**applied + verified**) for both
+  `get_ambassador_buildings_without_photos` and the new `get_ambassador_nearby_photo_gaps`.
+  **The trap to know:** anything counting or excluding photos must join
+  `review_images → building_posts → buildings`; a `user_buildings` join will pass review, pass
+  eyeballing against prod, and still be wrong for anything recent. `tests/unit/field-mode-migration.test.ts`
+  fails if the old join shape returns.
 - **Ambassador approvals live in `building_audit_logs.operation`, never `table_name` (2026-07-30):**
   every Embassy moderation metric was written as
   `table_name IN ('ambassador_approval', 'ambassador_photo_approval', 'ambassador_credit_approval')`,

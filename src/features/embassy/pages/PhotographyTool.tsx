@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { ArrowLeft, Camera, List, Map, SlidersHorizontal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -184,7 +184,16 @@ export function PhotographyTool({
           </div>
         </div>
 
-        <div className="flex items-center bg-muted p-1 rounded-sm">
+        <div className="flex items-center gap-3">
+          {/* The on-foot half of this tool (roadmap 4.3) — same queue, ordered by distance. */}
+          <Button variant="outline" size="sm" className="gap-2 shrink-0" asChild>
+            <Link to="/embassy/field">
+              <Camera className="h-4 w-4" />
+              Field mode
+            </Link>
+          </Button>
+
+          <div className="flex items-center bg-muted p-1 rounded-sm">
           <Button
             variant="ghost"
             size="sm"
@@ -203,6 +212,7 @@ export function PhotographyTool({
             <List className="h-4 w-4" />
             List
           </Button>
+          </div>
         </div>
       </div>
 

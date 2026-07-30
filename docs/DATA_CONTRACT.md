@@ -160,6 +160,16 @@ The `notifications.type` check (live DB) includes:
 
 **SECURITY DEFINER.** Requires **`_ambassador_can_access_chapter(p_chapter_id)`**. **`GRANT EXECUTE`** to **`authenticated`**.
 
+**"No review images" changed meaning in `20271197000000`.** The predicate used to join **`review_images.review_id`** to **`user_buildings.id`**, but that column is a foreign key to **`building_posts.id`**; the two id spaces coincide for 18009 legacy rows, so the join matched history and silently missed every post written by current code. It now joins through **`building_posts`**, so a building with any photo is excluded regardless of when the photo was added.
+
+### RPC: `get_ambassador_nearby_photo_gaps(p_chapter_id uuid, p_lat double precision, p_lng double precision, p_radius_meters int default 2000, p_limit int default 30)`
+
+**Returns:** rows `id`, `short_id`, `slug`, `name`, `city`, `lat`, `lng`, `dist_meters`, `popularity_score` — buildings in the chapter with **no photo at all** (`hero_image_url IS NULL` and no `review_images` via `building_posts`) within `p_radius_meters` of the given position, ordered by **distance ascending**. Coordinates are derived with `st_y`/`st_x` because **`buildings`** stores a PostGIS `location`, not scalar lat/lng.
+
+Backs `/embassy/field` (Roadmap 4.3). Chapter scope is **inlined** from the chapter row (local → `locality_id`; national → `country_code` directly or via `localities`) rather than calling the per-row **`_building_in_ambassador_chapter_scope`**, whose per-row use blew the statement timeout in `20271151000000`. `p_radius_meters` is clamped to `[100, 50000]` and `p_limit` to `[1, 100]`.
+
+**SECURITY DEFINER.** Requires **`_ambassador_can_access_chapter(p_chapter_id)`**; returns empty (not an error) otherwise. Revoked from `PUBLIC, anon, authenticated`, then **`GRANT EXECUTE`** to **`authenticated`**.
+
 ### RPC: `get_ambassador_buildings_missing_metadata(p_chapter_id uuid, p_limit int default 20)`
 
 **Returns:** rows `id`, `short_id`, `slug`, `name`, `city`, `country`, `popularity_score`, `year_completed`, `has_styles`, `has_architect_credit` — only buildings in scope where **`year_completed`** is null and/or no **`building_styles`** rows and/or no **`building_credits`** row with **`status IN ('active','verified')`**, **`credit_tier = 'primary'`**, **`role = 'design_architect'`**; ordered by **`popularity_score`** descending.
