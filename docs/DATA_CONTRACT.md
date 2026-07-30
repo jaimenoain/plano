@@ -719,6 +719,26 @@ CREATE TABLE public.buildings (
 );
 ```
 
+#### Merge invariants (`is_deleted` + `merged_into_id`)
+
+A merge soft-deletes the duplicate and points it at the keeper. Three invariants hold, enforced by
+`merge_buildings` and checked by `scripts/verify_merge_chains.sql`:
+
+| | Invariant |
+|---|---|
+| **I1** | `merged_into_id IS NOT NULL` ⇒ `is_deleted = true`. A live building never carries a pointer. |
+| **I2** | `merged_into_id` resolves to a **live** row in **one hop** — chains stay flat. |
+| **I3** | Every merge component has exactly one live survivor, and that survivor owns all dependent content. |
+
+These matter because **every discovery surface filters `is_deleted`** (`search_buildings_v2`,
+`get_buildings_list`, `get_map_clusters_v3`, `find_nearby_buildings`). Break I3 and the building
+disappears from search, the map, and every list at once while its content stays in the database —
+which is what happened when the same pair was merged twice in opposite directions and left both rows
+deleted. See [ADR 0022](decisions/0022-building-merge-invariants.md).
+
+I2 is relied upon by `BuildingDetails.loader.ts`, which 301s a merged building to its survivor with a
+single lookup and no chain walk.
+
 ### Localities table
 
 One row per distinct city/country combination that has at least one building. Auto-created by the `sync_building_locality` trigger on buildings insert/update. Enriched manually with `description`, `hero_image_url`, and SEO fields.
@@ -1425,6 +1445,10 @@ CREATE TABLE public.user_buildings (
   edited_at   timestamptz DEFAULT now(),
 
   CONSTRAINT user_buildings_pkey PRIMARY KEY (id),
+  -- One row per user per building. Live since 20260704000000; this line was
+  -- missing from the contract until 2026-07-30. merge_buildings relies on it to
+  -- resolve rating conflicts when a user has logged both buildings.
+  CONSTRAINT user_buildings_user_id_building_id_key UNIQUE (user_id, building_id),
   CONSTRAINT user_buildings_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
   CONSTRAINT user_buildings_building_id_fkey FOREIGN KEY (building_id) REFERENCES public.buildings(id)
 );
@@ -4184,7 +4208,7 @@ CREATE POLICY "deletion_jobs_update" ON deletion_jobs
 | GET | (RPC) get_admin_retention | Retention analysis | supabase (RPC, admin-only) |
 | GET | (RPC) get_admin_notifications | Notification analytics | supabase (RPC, admin-only) |
 | GET | (RPC) get_photo_heatmap_data | Photo geographic density | supabase (RPC, admin-only) |
-| POST | (RPC) merge_buildings | Merge duplicate buildings | supabase (RPC, admin-only) |
+| POST | (RPC) merge_buildings | Merge duplicate buildings. **Any authenticated user** — not admin-only (`is_admin()` check removed in `20261118000000`; ambassadors merge duplicates from `/embassy/contribute`). Refuses a deleted or already-merged source or target, and any merge that would close a cycle; re-points inbound `merged_into_id` plus all 14 dependent tables. Migration `20271191000000_harden_merge_buildings.sql`, [ADR 0022](decisions/0022-building-merge-invariants.md) | supabase (RPC, `SECURITY DEFINER`) |
 | POST | (RPC) admin_merge_people | Merge duplicate `people` rows (credits → target, delete source) | supabase (RPC, admin-only; migration `20270833000000_admin_merge_people_companies.sql`) |
 | POST | (RPC) admin_merge_companies | Merge duplicate `companies` rows (credits, affiliations, stewards → target, delete source) | supabase (RPC, admin-only; same migration) |
 | POST | (RPC) revert_building_change | Undo a building edit | supabase (RPC, admin-only) |
@@ -4305,7 +4329,7 @@ CREATE TABLE public.spatial_ref_sys (
 | Buildings | `calculate_building_score` | admin | Compute popularity score |
 | Buildings | `update_building_tiers` | admin | Assign tier ranks |
 | Buildings | `check_slug_availability` | authenticated | Verify slug uniqueness |
-| Buildings | `merge_buildings` | admin | Merge duplicate records |
+| Buildings | `merge_buildings` | authenticated | Merge duplicate records. Not admin-gated (see [ADR 0022](decisions/0022-building-merge-invariants.md)); guards reject deleted / already-merged / circular merges |
 | Buildings | `get_potential_duplicate_buildings` | ambassador | Chapter-scoped name-similarity pairs (threshold 0.75), excluding the caller's dismissed pairs — see `building_duplicate_dismissals` |
 | Buildings | `dismiss_building_duplicate_pair` | ambassador | Records a per-user "not a duplicate" dismissal for a pair into `building_duplicate_dismissals` |
 | Collections | `get_collection_stats` | authenticated | Collection analytics |
