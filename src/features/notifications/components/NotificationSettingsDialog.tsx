@@ -34,12 +34,20 @@ const NOTIFICATION_GROUPS = [
   },
 ];
 
+// Only meaningful to ambassadors, so it is appended for chapter members only rather than
+// shown to everyone as a permanently inert toggle.
+const EMBASSY_GROUP = {
+  title: "Embassy",
+  types: [{ id: "weekly_digest", label: "Weekly digest (in-app and email)" }],
+};
+
 export function NotificationSettingsDialog({ open, onOpenChange }: NotificationSettingsDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [preferences, setPreferences] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
+  const [isAmbassador, setIsAmbassador] = useState(false);
 
   useEffect(() => {
     if (open && user) {
@@ -62,6 +70,14 @@ export function NotificationSettingsDialog({ open, onOpenChange }: NotificationS
       // We only store disabled preferences as false.
       const prefs = (data.notification_preferences as Record<string, boolean>) || {};
       setPreferences(prefs);
+
+      // The weekly digest toggle only exists for active chapter members.
+      const { data: membership } = await supabase
+        .from("ambassador_memberships")
+        .select("status")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      setIsAmbassador(membership?.status === "active");
     } catch (_error) {
 toast({
         title: "Error",
@@ -136,7 +152,7 @@ toast({
               Choose which notifications you want to receive. Changes will apply to future notifications.
             </p>
 
-            {NOTIFICATION_GROUPS.map((group) => (
+            {(isAmbassador ? [...NOTIFICATION_GROUPS, EMBASSY_GROUP] : NOTIFICATION_GROUPS).map((group) => (
               <div key={group.title} className="space-y-3">
                 <h4 className="text-sm font-medium text-text-primary border-b pb-1">
                   {group.title}

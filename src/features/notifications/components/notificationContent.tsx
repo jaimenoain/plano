@@ -1,7 +1,8 @@
 import { type ReactNode } from "react";
 import { Link } from "react-router";
-import { Heart, MessageCircle, UserPlus, Bell, Sparkles, Users, ShieldCheck, Trophy } from "lucide-react";
+import { Heart, MessageCircle, UserPlus, Bell, Sparkles, Users, ShieldCheck, Trophy, CalendarDays } from "lucide-react";
 import type { Notification } from "../types";
+import { formatWeeklyDigestSummary } from "../weeklyDigest";
 
 /**
  * Badge icon — Lucide, `currentColor`, never lime. Two signal colours only: the heart is red
@@ -51,6 +52,8 @@ export function notificationIcon(type: Notification["type"]): ReactNode {
       return <ShieldCheck className="h-3.5 w-3.5 text-text-secondary" />;
     case "person_claimed":
       return <ShieldCheck className="h-3.5 w-3.5 text-text-secondary" />;
+    case "weekly_digest":
+      return <CalendarDays className="h-3.5 w-3.5 text-text-secondary" />;
     default:
       return <Bell className="h-3.5 w-3.5 text-text-disabled" />;
   }
@@ -121,6 +124,8 @@ export function notificationTitle(n: Notification): string {
       return "Flagged for Review";
     case "person_claimed":
       return "Profile Claimed";
+    case "weekly_digest":
+      return "Your Week in Review";
     default:
       return "Notification";
   }
@@ -371,6 +376,10 @@ export function notificationText(n: Notification): ReactNode {
         </span>
       );
     }
+    // No actor name here: the digest is self-actored (actor_id = user_id), so
+    // interpolating `actorName` would address the recipient by their own username.
+    case "weekly_digest":
+      return <span>{formatWeeklyDigestSummary(n.metadata?.digest)}</span>;
     default:
       return <span>New notification</span>;
   }

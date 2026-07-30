@@ -111,4 +111,46 @@ describe("NotificationRow", () => {
     expect(screen.getByText(/flagged for review/)).toBeInTheDocument();
     expect(screen.getByText("Incorrect role")).toBeInTheDocument();
   });
+
+  /**
+   * Regression guard for the three switches in notificationContent. A type missing from
+   * any of them degrades *silently* — a grey `Bell` and the copy "Notification" /
+   * "New notification" — which reads as a bug in the feed rather than a missing case.
+   */
+  describe("weekly_digest", () => {
+    const digestRow = {
+      type: "weekly_digest" as const,
+      actor_id: "u1",
+      actor: { username: "jaime", avatar_url: null },
+      metadata: {
+        digest: {
+          chapterName: "London",
+          you: { total: 3 },
+          chapter: { total: 9, activeMembers: 2 },
+          tasks: { total: 12, capped: false },
+        },
+      },
+    };
+
+    it("uses the calendar icon rather than falling through to the bell", () => {
+      const { container } = renderRow(digestRow);
+      expect(container.querySelector("svg.lucide-calendar-days")).not.toBeNull();
+      expect(container.querySelector("svg.lucide-bell")).toBeNull();
+    });
+
+    it("titles and summarises the digest", () => {
+      renderRow(digestRow);
+      expect(screen.getByText("Your Week in Review")).toBeInTheDocument();
+      expect(
+        screen.getByText(/3 contributions from you in London this week/),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/12 tasks waiting/)).toBeInTheDocument();
+    });
+
+    /** The digest is self-actored, so the recipient must never be addressed by name. */
+    it("never renders the actor's username", () => {
+      renderRow(digestRow);
+      expect(screen.queryByText(/jaime/)).toBeNull();
+    });
+  });
 });

@@ -1,3 +1,43 @@
+/** Contribution counts for one ambassador, or for their whole chapter, over one week. */
+export interface WeeklyDigestCounts {
+  edits?: number;
+  photos?: number;
+  visits?: number;
+  moderation?: number;
+  outreach?: number;
+  events?: number;
+  research?: number;
+  firmsClaimed?: number;
+  total?: number;
+  /** Chapter blocks only: members with at least one contribution that week. */
+  activeMembers?: number;
+}
+
+/** Chapter task backlog. `capped` means each count is a floor, not an exact total. */
+export interface WeeklyDigestTasks {
+  research?: number;
+  curation?: number;
+  photography?: number;
+  outreach?: number;
+  events?: number;
+  total?: number;
+  capped?: boolean;
+}
+
+/**
+ * Payload written by `public.compute_weekly_digest_payloads`. Numbers are chapter-scoped
+ * and week-windowed, so they intentionally differ from `/embassy/impact` (global, all-time).
+ */
+export interface WeeklyDigestMetadata {
+  weekStart?: string;
+  weekEnd?: string;
+  chapterId?: string;
+  chapterName?: string;
+  you?: WeeklyDigestCounts;
+  chapter?: WeeklyDigestCounts;
+  tasks?: WeeklyDigestTasks;
+}
+
 /** One row of `public.notifications`, joined with its actor / resource / recommendation. */
 export interface Notification {
   id: string;
@@ -25,7 +65,8 @@ export interface Notification {
     | "collection_collab_added"
     | "contribution_approved"
     | "contribution_flagged"
-    | "person_claimed";
+    | "person_claimed"
+    | "weekly_digest";
   is_read: boolean;
   actor_id: string;
   recommendation_id?: string | null;
@@ -70,6 +111,7 @@ export interface Notification {
     person_id?: string;
     person_name?: string;
     person_slug?: string;
+    digest?: WeeklyDigestMetadata;
   };
   recommendation?: {
     id?: string;
