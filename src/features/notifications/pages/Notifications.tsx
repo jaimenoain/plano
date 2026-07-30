@@ -156,6 +156,8 @@ export default function Notifications() {
       notification.type === "project_idea_submitted"
     ) {
       navigate("/embassy");
+    } else if (notification.type === "weekly_digest") {
+      navigate("/embassy/impact");
     } else if (notification.type === "award_win") {
       if (notification.resource?.id) {
         navigate(`/building/${notification.resource.id}`);

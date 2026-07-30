@@ -96,9 +96,29 @@ productive session; Phase 3 the return loop; Phase 4 holds gated bigger bets.
   `pages/MyImpact.tsx`. Migration `20271185000000_embassy_my_impact.sql`. Same
   pre-existing gap as 2.4: video approvals aren't tagged as moderation anywhere, so they
   don't count here either.
-- **3.2 — Weekly digest.** In-app + email ("you did X, chapter did Y, 3 tasks
-  waiting"), opt-out via notification preferences, auto-skips members inactive ≥4 weeks.
-  pg_cron + edge function following `send-welcome-email`.
+- **3.2 — Weekly digest.** Shipped 2026-07-30: `embassy-weekly-digest` (pg_cron, Mondays
+  09:00 UTC) calls new `run_weekly_digest()`, which snapshots one payload per active
+  ambassador into the new `embassy_digest_deliveries` ledger, writes a `weekly_digest`
+  in-app notification, and fires one `pg_net` call to the new `send-weekly-digest` edge
+  function for the email. Migration `20271193000000_embassy_weekly_digest.sql`.
+  Three decisions worth remembering:
+  (a) **The numbers are chapter-scoped and week-windowed, so they deliberately do not
+  match `/embassy/impact` (global, all-time) or the leaderboard.** `building_audit_logs`
+  is split into three mutually exclusive buckets — edits / moderation / research — so
+  `you.total` is a real sum; `get_my_ambassador_impact.edits_count` counts moderation and
+  research rows as edits too, which would have made the email contradict itself.
+  (b) **Self-actor convention**: `notifications.actor_id` is NOT NULL and there is no
+  system profile, so system notifications use `actor_id = user_id`. 3.3 should reuse it.
+  (c) **`REVOKE ... FROM PUBLIC` does not block anon on Supabase** — `ALTER DEFAULT
+  PRIVILEGES` grants EXECUTE to `anon`/`authenticated` directly at creation. Caught live
+  (an anonymous `rpc/run_weekly_digest` returned 200 and ran); every function here is now
+  revoked from `PUBLIC, anon, authenticated` by name. The same hazard likely affects
+  other RPCs in this repo — audited separately.
+  The ≥4-week inactivity skip is implemented as `p_inactive_weeks DEFAULT 4`, so it can be
+  reversed with a one-line `cron.schedule` change and no migration. On current prod data
+  it silences 1 of 3 active ambassadors. Backlog counts are capped at 200 per queue and
+  render as "200+"; the in-app half works today, the email half needs the edge function
+  deployed.
 - **3.3 — Milestone recognition.** First contribution / 10 photos / 50 moderations /
   4-week streak, shown on My impact + as notifications. No public rankings (owner
   decision).

@@ -2778,6 +2778,54 @@ export type Database = {
         }
         Relationships: []
       }
+      embassy_digest_deliveries: {
+        Row: {
+          chapter_id: string | null
+          created_at: string
+          email_error: string | null
+          emailed_at: string | null
+          notified_at: string | null
+          payload: Json
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          chapter_id?: string | null
+          created_at?: string
+          email_error?: string | null
+          emailed_at?: string | null
+          notified_at?: string | null
+          payload: Json
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          chapter_id?: string | null
+          created_at?: string
+          email_error?: string | null
+          emailed_at?: string | null
+          notified_at?: string | null
+          payload?: Json
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "embassy_digest_deliveries_chapter_id_fkey"
+            columns: ["chapter_id"]
+            isOneToOne: false
+            referencedRelation: "ambassador_chapters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "embassy_digest_deliveries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       embassy_event_discoveries: {
         Row: {
           address: string | null
@@ -4570,6 +4618,18 @@ export type Database = {
         Args: { p_building_id: string; p_chapter_id: string }
         Returns: boolean
       }
+      _digest_chapter_backlog: {
+        Args: { p_cap?: number; p_chapter_id: string }
+        Returns: {
+          capped: boolean
+          curation: number
+          events: number
+          outreach: number
+          photography: number
+          research: number
+          total: number
+        }[]
+      }
       _postgis_deprecate: {
         Args: { newname: string; oldname: string; version: string }
         Returns: undefined
@@ -4826,6 +4886,14 @@ export type Database = {
       complete_ambassador_onboarding:
         | { Args: { p_contributor_type: string }; Returns: undefined }
         | { Args: { p_preferred_tools: string[] }; Returns: undefined }
+      compute_weekly_digest_payloads: {
+        Args: { p_inactive_weeks?: number; p_week_start: string }
+        Returns: {
+          chapter_id: string
+          payload: Json
+          user_id: string
+        }[]
+      }
       country_name_to_code: { Args: { p_country: string }; Returns: string }
       disablelongtransactions: { Args: never; Returns: string }
       discover_companies: {
@@ -5940,6 +6008,16 @@ export type Database = {
           username: string
         }[]
       }
+      get_pending_weekly_digest_emails: {
+        Args: { p_limit?: number; p_week_start?: string }
+        Returns: {
+          email: string
+          payload: Json
+          user_id: string
+          username: string
+          week_start: string
+        }[]
+      }
       get_person_award_leaderboard: {
         Args: { p_award_id?: string; p_limit?: number }
         Returns: {
@@ -6276,6 +6354,10 @@ export type Database = {
       review_collection_collaboration: {
         Args: { p_approve: boolean; p_note?: string; p_request_id: string }
         Returns: undefined
+      }
+      run_weekly_digest: {
+        Args: { p_inactive_weeks?: number; p_week_start?: string }
+        Returns: Json
       }
       search_buildings:
         | {

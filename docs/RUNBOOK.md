@@ -102,6 +102,35 @@ Runtime errors real users hit go to **Sentry** (`@sentry/react`; [ADR 0014](deci
 - **Verify it's live:** load production, trigger a client error (e.g. in the console: `setTimeout(() => { throw new Error("sentry-test") }, 0)`), and confirm a request to `…ingest.…sentry.io/api/<project>/envelope/` fires (DevTools Network) and the event appears in Sentry.
 - **Scope:** client-side only, **errors only** — no performance tracing or session replay (all sample rates `0`, by design). SSR-side capture is not wired.
 
+## Scheduled jobs — the embassy weekly digest
+
+`embassy-weekly-digest` runs `public.run_weekly_digest()` every **Monday 09:00 UTC**
+(pg_cron). It snapshots one payload per active ambassador into
+`public.embassy_digest_deliveries`, writes a `weekly_digest` in-app notification, and
+fires one `pg_net` POST to the `send-weekly-digest` edge function, which sends the email.
+
+- **Check a run:**
+  `SELECT jobname, status, return_message, start_time FROM cron.job_run_details WHERE jobname = 'embassy-weekly-digest' ORDER BY start_time DESC LIMIT 5;`
+  and for the HTTP leg `SELECT status_code, created FROM net._http_response ORDER BY created DESC LIMIT 5;`
+- **Check delivery:**
+  `SELECT user_id, week_start, notified_at, emailed_at, email_error FROM public.embassy_digest_deliveries WHERE week_start = date_trunc('week', now())::date - 7;`
+  `notified_at` set with no notification row means the recipient opted out (the
+  `before_insert_notifications` trigger drops it) — that is expected, not a fault.
+- **Re-run a week safely:** `SELECT public.run_weekly_digest('2026-07-20');` — idempotent.
+  The ledger's per-step gates mean it inserts nothing already delivered and re-fires the
+  email dispatch only if rows still have `emailed_at IS NULL`.
+- **Retry only the emails:** POST to `/functions/v1/send-weekly-digest` with the
+  **service-role** bearer and `{"weekStart":"2026-07-20"}`. Add `"dryRun":true` to list
+  recipients without sending, or `"onlyUserId":"<uuid>"` to send exactly one.
+- **Dry-run the whole thing without side effects:** `BEGIN; SELECT public.run_weekly_digest('2026-07-20'); … ROLLBACK;` — `net.http_post` is transactional, so a rollback sends nothing.
+- **Opt-out** is one key for both channels: `profiles.notification_preferences->>'weekly_digest' = 'false'` (UI: `/notifications` → settings → Embassy).
+- **Turn off the ≥4-week inactivity skip** without a migration:
+  re-schedule the job with `$$SELECT public.run_weekly_digest(NULL, 999)$$`.
+- **Deploying the edge function** is manual — there is no deploy workflow:
+  `npx supabase functions deploy send-weekly-digest --use-api`. It must NOT be added to
+  `supabase/config.toml` (it relies on the default `verify_jwt = true` plus an in-code
+  service-role check). It needs `RESEND_API_KEY` and `SITE_URL` in the function secrets.
+
 ## When things break
 
 | Symptom | Do this |
