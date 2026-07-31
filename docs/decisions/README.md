@@ -29,3 +29,5 @@ Format: context → decision → consequences. Keep them under a page.
 | [0021](0021-collection-map-two-cluster-sources.md) | The collection map merges two cluster sources: client-side for the collection, `get_map_clusters_v3` for the discovery layer |
 | [0022](0022-building-merge-invariants.md) | Building merges hold three invariants (live rows carry no `merged_into_id`, pointers resolve in one hop, one survivor owns all content) |
 | [0023](0023-architect-name-search.md) | Architect/firm names are searched at query time in `search_buildings_v2`, not folded into `buildings.search_vector` |
+| [0024](0024-collection-discover-rail-list.md) | The collection rail's Discover list reads `get_buildings_list`, not the cluster layer, and carries no count badge |
+| [0025](0025-my-map-as-mode-and-route.md) | My Map is both the third mode on `/search` and the `/map` route; `/map` pins the mode and its other segments navigate |

@@ -187,6 +187,27 @@ describe('FilterDrawer', () => {
     expect(screen.getByTestId('contact-picker')).toBeDefined();
   });
 
+  it('swaps Discovery Settings for My Map Settings when the My map tab is selected', () => {
+    (MapContext.useMapContext as Mock).mockReturnValue(defaultMapContext);
+
+    render(<FilterDrawer />);
+    expect(screen.getByText('Discovery Settings')).toBeDefined();
+    expect(screen.queryByText('My Map Settings')).toBeNull();
+
+    cleanup();
+    (BuildingSearch.useBuildingSearchContext as Mock).mockReturnValue({
+      ...defaultBuildingSearch,
+      mode: 'library',
+    });
+
+    render(<FilterDrawer />);
+    expect(screen.getByText('My Map Settings')).toBeDefined();
+    expect(screen.queryByText('Discovery Settings')).toBeNull();
+    // The personal filters the mode owns.
+    expect(screen.getByText('Your Rating')).toBeDefined();
+    expect(screen.getByText('Folders & Collections')).toBeDefined();
+  });
+
   it('hides "Curators & Friends" section in Library mode', () => {
     (MapContext.useMapContext as Mock).mockReturnValue(defaultMapContext);
 

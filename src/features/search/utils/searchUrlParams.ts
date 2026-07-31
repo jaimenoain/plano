@@ -28,13 +28,36 @@ export const getIdListParam = (param: string | null): { id: string; name: string
 const CREDIT_ROLE_SET = new Set<string>(CREDIT_ROLES);
 
 /**
+ * The filters a mode implies. A mode is only meaningful with them — library is
+ * the member's own pins, discover is the world minus what they already have,
+ * All is everything — so the toggle and the URL parser share one policy.
+ *
+ * `keepsPersonalFilters` marks the one mode whose drawer offers Your Rating,
+ * folders and collections: carried anywhere else they would go on narrowing the
+ * results with no control on screen to explain it.
+ */
+export function companionFiltersForMode(mode: MapMode): {
+  statusFilters: string[];
+  hideVisited: boolean;
+  hideSaved: boolean;
+  keepsPersonalFilters: boolean;
+} {
+  const isDiscover = mode === 'discover';
+  const isLibrary = mode === 'library';
+  return {
+    statusFilters: isLibrary ? ['visited', 'saved', 'pending'] : [],
+    hideVisited: isDiscover,
+    hideSaved: isDiscover,
+    keepsPersonalFilters: isLibrary,
+  };
+}
+
+/**
  * Parse the initial mode and its companion filters from URL params.
  *
  * `mode` is a first-class destination — /map pins `library` via the caller's
  * getParam shim, and a `?mode=discover` link works bare — so the mode implies
- * its companion filters as defaults (library = all personal statuses;
- * discover = hide what you already saved/visited). Explicit params always
- * win over the implied defaults.
+ * its companion filters as defaults. Explicit params always win over them.
  */
 export function parseModeParams(getParam: (key: string) => string | null): {
   mode: MapMode;
@@ -44,28 +67,34 @@ export function parseModeParams(getParam: (key: string) => string | null): {
 } {
   const m = getParam("mode");
   const mode: MapMode = m === 'discover' || m === 'library' ? m : null;
+  const implied = companionFiltersForMode(mode);
   const statusFromUrl = getArrayParam(getParam("status"));
   return {
     mode,
-    statusFilters: statusFromUrl.length > 0
-      ? statusFromUrl
-      : mode === 'library' ? ['visited', 'saved', 'pending'] : [],
-    hideVisited: getBoolParam(getParam("hideVisited"), mode === 'discover'),
-    hideSaved: getBoolParam(getParam("hideSaved"), mode === 'discover'),
+    statusFilters: statusFromUrl.length > 0 ? statusFromUrl : implied.statusFilters,
+    hideVisited: getBoolParam(getParam("hideVisited"), implied.hideVisited),
+    hideSaved: getBoolParam(getParam("hideSaved"), implied.hideSaved),
   };
 }
 
 /**
- * `/search?mode=library` is now `/map` — the library's first-class address.
- * Returns the `/map` URL preserving every other param (bbox, filters, view),
- * or null when no redirect applies.
+ * Filters that only My Map offers a control for. Carried into another mode they
+ * would keep narrowing the results with nothing on screen to explain it.
  */
-export function libraryModeRedirectUrl(requestUrl: string): string | null {
-  const url = new URL(requestUrl);
-  if (url.searchParams.get("mode") !== "library") return null;
-  url.searchParams.delete("mode");
-  const qs = url.searchParams.toString();
-  return `/map${qs ? `?${qs}` : ""}`;
+const LIBRARY_ONLY_PARAMS = ["status", "rated_by", "minRating", "folders", "collections"];
+
+/**
+ * The /search URL for a mode picked while on /map. That route pins its mode to
+ * the path, so the other two segments are a destination change: keep the
+ * viewport and the global filters, drop the library's own.
+ */
+export function modeSwitchUrl(params: URLSearchParams, next: MapMode): string {
+  const p = new URLSearchParams(params);
+  if (next) p.set("mode", next);
+  else p.delete("mode");
+  for (const key of LIBRARY_ONLY_PARAMS) p.delete(key);
+  const qs = p.toString();
+  return `/search${qs ? `?${qs}` : ""}`;
 }
 
 export function parseCreditRolesParam(param: string | null): CreditRole[] {

@@ -30,15 +30,21 @@ vi.mock("@/features/search/context/BuildingSearchContext", () => ({
 }));
 
 vi.mock("@/features/search/components/MapModeToggle", () => ({
-  MapModeToggle: ({ name }: { name: string }) => (
-    <div data-testid="map-mode-toggle" data-name={name} />
+  MapModeToggle: ({ name, routeMode }: { name: string; routeMode?: string }) => (
+    <div data-testid="map-mode-toggle" data-name={name} data-route-mode={routeMode ?? ""} />
   ),
 }));
+
+vi.mock("@/features/mymap", () => ({
+  MyMapChrome: () => <div data-testid="my-map-masthead" />,
+}));
+
+const { mapState } = vi.hoisted(() => ({ mapState: { mode: null as string | null } }));
 
 vi.mock("@/features/maps/providers/MapContext", () => ({
   MapProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useMapContext: () => ({
-    state: { bounds: null, filters: {} },
+    state: { bounds: null, filters: {}, mode: mapState.mode },
     methods: {
       setFilter: vi.fn(),
       moveMap: vi.fn(),
@@ -89,6 +95,7 @@ vi.mock("react-router", () => ({
 describe("SearchPage — single FilterDrawer owner", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mapState.mode = null;
   });
 
   afterEach(() => {
@@ -111,7 +118,7 @@ describe("SearchPage — single FilterDrawer owner", () => {
     expect(screen.getAllByTestId("map-controls")).toHaveLength(1);
   });
 
-  it("renders the All / Discover toggle in the desktop sidebar", () => {
+  it("renders the mode toggle in the desktop sidebar", () => {
     (useIsMobile as Mock).mockReturnValue(false);
 
     render(<SearchPage />);
@@ -119,6 +126,7 @@ describe("SearchPage — single FilterDrawer owner", () => {
     const toggles = screen.getAllByTestId("map-mode-toggle");
     expect(toggles).toHaveLength(1);
     expect(toggles[0].getAttribute("data-name")).toBe("map-mode-desktop");
+    expect(toggles[0].getAttribute("data-route-mode")).toBe("");
   });
 
   it("renders the mobile toggle in the floating bar (desktop copy stays CSS-hidden but shares state via the provider)", () => {
@@ -133,17 +141,29 @@ describe("SearchPage — single FilterDrawer owner", () => {
     expect(names).toContain("map-mode-desktop");
   });
 
-  it("drops every mode toggle and renders the masthead slot when the mode is forced (/map)", () => {
+  it("keeps the toggle when the mode is forced (/map) and tells it the route owns the mode", () => {
     (useIsMobile as Mock).mockReturnValue(true);
+    mapState.mode = "library";
 
-    render(
-      <SearchPageShell
-        forcedMode="library"
-        masthead={<div data-testid="my-map-masthead" />}
-      />,
-    );
+    render(<SearchPageShell forcedMode="library" />);
 
-    expect(screen.queryAllByTestId("map-mode-toggle")).toHaveLength(0);
+    const routeModes = screen
+      .getAllByTestId("map-mode-toggle")
+      .map((el) => el.getAttribute("data-route-mode"));
+    expect(routeModes.length).toBeGreaterThan(0);
+    expect(routeModes.every((m) => m === "library")).toBe(true);
+  });
+
+  it("renders the My Map masthead from library mode, on /search as well as /map", () => {
+    (useIsMobile as Mock).mockReturnValue(false);
+
+    mapState.mode = "library";
+    render(<SearchPage />);
     expect(screen.getByTestId("my-map-masthead")).toBeInTheDocument();
+
+    cleanup();
+    mapState.mode = null;
+    render(<SearchPage />);
+    expect(screen.queryByTestId("my-map-masthead")).toBeNull();
   });
 });
