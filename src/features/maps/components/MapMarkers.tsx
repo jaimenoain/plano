@@ -2,7 +2,7 @@ import { useMemo, useRef, useEffect, useCallback } from 'react';
 import { Marker, useMap, Popup } from 'react-map-gl/maplibre';
 import { ClusterResponse } from '../hooks/useMapData';
 import { BuildingPopupContent } from './BuildingPopupContent';
-import { getPinStyle } from '../utils/pinStyling';
+import { getPinStyle, withConstructionTreatment } from '../utils/pinStyling';
 import { MapMarkerFace } from './MapMarkerFace';
 import { MAP_MARKER_FILL } from '../constants/mapMarkerFills';
 import '../../../App.css';
@@ -190,22 +190,22 @@ export function MapMarkers({
 
         if (itinerarySequence !== undefined && itineraryDayIndex !== undefined) {
              // Kit `.pin .num`: black face, white 2px ring, white numeral. The day is
-             // carried by the route's opacity, not the marker's hue. Rebuild `classes`
-             // rather than append — the tier's own `border-border-strong` would otherwise
-             // race `border-white` in the stylesheet, since Tailwind resolves conflicts
-             // by rule order, not by class-attribute order. The construction treatment
-             // is the one modifier worth carrying over.
-             const constructionModifier =
-                 pinStyle.classes.match(/\b(?:opacity-50|border-dashed)\b/)?.[0] ?? '';
-             pinStyle = {
-                 ...pinStyle,
-                 backgroundColor: MAP_MARKER_FILL.brandPrimary,
-                 showContent: true,
-                 classes: `border-white border-2 text-white font-bold text-sm shadow-xs ${constructionModifier}`.trim(),
-                 zIndex: 100, // High priority but below hover
-                 dots: 0, // The sequence numeral replaces any rating/saved mark
-                 savedMark: false
-             };
+             // carried by the route's opacity, not the marker's hue. Rebuild the style
+             // rather than append to it, then re-run the construction treatment so a lost
+             // or unbuilt stop keeps its ghost fill / dashed ring on the new face.
+             pinStyle = withConstructionTreatment(
+                 {
+                     ...pinStyle,
+                     backgroundColor: MAP_MARKER_FILL.brandPrimary,
+                     showContent: true,
+                     ringClasses: 'border-white border-2',
+                     classes: 'text-white font-bold text-sm',
+                     zIndex: 100, // High priority but below hover
+                     dots: 0, // The sequence numeral replaces any rating/saved mark
+                     savedMark: false
+                 },
+                 cluster,
+             );
         }
 
         const isSelected = selectedId != null && String(selectedId) === String(cluster.id);
@@ -221,6 +221,10 @@ export function MapMarkers({
           ? MAP_MARKER_Z_HOVER
           : Math.min(pinStyle.zIndex, MAP_MARKER_Z_MAX);
 
+        // A 16px rank-1 pin is a poor target with a mouse, never mind a thumb. Pad the
+        // hit area out to ~32px for every small pin, not just on touch devices.
+        const padHitArea = isMobile || pinStyle.size < 24;
+
         const content = (
           <MapMarkerFace
             cluster={cluster}
@@ -235,7 +239,7 @@ export function MapMarkers({
           <div
             onMouseEnter={() => !isCluster && handleMouseEnter(String(cluster.id))}
             onMouseLeave={() => !isCluster && handleMouseLeave()}
-            className={cn("cursor-pointer", isMobile && "p-2 -m-2")}
+            className={cn("cursor-pointer", padHitArea && "p-2 -m-2")}
           >
             {content}
           </div>
@@ -268,7 +272,7 @@ export function MapMarkers({
             ) : onSelectBuilding ? (
                 <button
                   type="button"
-                  className={cn("block text-inherit cursor-pointer", isMobile && "p-2 -m-2")}
+                  className={cn("block text-inherit cursor-pointer", padHitArea && "p-2 -m-2")}
                   aria-label={`View details for ${cluster.name || 'Building'}`}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -284,7 +288,7 @@ export function MapMarkers({
                   href={buildingUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={cn("block text-inherit no-underline", isMobile && "p-2 -m-2")}
+                  className={cn("block text-inherit no-underline", padHitArea && "p-2 -m-2")}
                   aria-label={`View details for ${cluster.name || 'Building'}`}
                   onClick={(e) => {
                       // If it's a custom marker, prevent navigation and just select (highlight)

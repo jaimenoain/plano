@@ -1,6 +1,6 @@
 import type { ClusterResponse } from '../hooks/useMapData';
 import type { MapMode } from '@/types/plano-map';
-import { MAP_MARKER_FILL } from '../constants/mapMarkerFills';
+import { MAP_MARKER_FILL, ghostFill } from '../constants/mapMarkerFills';
 import { getConstructionTreatment } from '@/lib/buildingStatus';
 
 /**
@@ -24,8 +24,23 @@ export interface PinStyle {
   shape: PinShape;
   zIndex: number;
   size: number;
+  /**
+   * Ring utilities only, kept apart from `classes` so a treatment can REPLACE the ring
+   * instead of appending to it. Tailwind resolves conflicting utilities by stylesheet
+   * order, never by the order they appear in the class attribute, so appending
+   * `border-dashed border-2` to a rank's own `border` is a coin toss.
+   */
+  ringClasses: string;
+  /** Everything that is not the ring: content colour, weight, size. */
   classes: string;
   backgroundColor?: string;
+  /**
+   * Applied inline; 1 = fully opaque. De-emphasis lives here rather than in an
+   * `opacity-*` class so treatments compose by multiplication instead of racing each
+   * other in the stylesheet (a lost discovery pin used to carry both `opacity-50` and
+   * `opacity-60`, with the winner decided by Tailwind's own rule order).
+   */
+  opacity: number;
   /** Personal code only: the user's award dots rendered inside the pin (0 = none). */
   dots: 0 | 1 | 2 | 3;
   /** Global code only: subtle centre dot marking a building in the user's library. */
@@ -80,77 +95,109 @@ export function getPersonalTierRank(
 
 interface RankVisual {
   size: number;
+  ringClasses: string;
   classes: string;
   backgroundColor: string;
   zIndex: number;
 }
 
-// z values stay under MapMarkers' MAP_MARKER_Z_MAX (38) so the cap never
-// flattens the ladder; hover/selected pins jump to 39, map chrome sits at 40+.
+/**
+ * The ladder is carried by ring weight and size, not by fill.
+ *
+ * `#F5F5F5` and `#FFFFFF` are the same colour at 16–30px, so the muted fills the lower
+ * ranks used to wear said nothing — and the translucent one said less than nothing on the
+ * pale positron basemap. Every face is now opaque, and the four light ranks separate by
+ * how dark and how thick their ring is (`border-strong` → `text-secondary` →
+ * `text-primary` → `text-primary` 2px), with the top rank inverting to a black face.
+ *
+ * z values stay under MapMarkers' MAP_MARKER_Z_MAX (38) so the cap never flattens the
+ * ladder; hover/selected pins jump to 39, map chrome sits at 40+.
+ */
 const PIN_RANK_VISUALS: Record<PinRank, RankVisual> = {
   5: {
     size: 30,
     // The ring inverts with the fill — `border-text-primary` on the black face
     // would be black-on-black.
-    classes: 'border-white border-2 text-brand-primary-foreground',
+    ringClasses: 'border-white border-2',
+    classes: 'text-brand-primary-foreground',
     backgroundColor: MAP_MARKER_FILL.brandPrimary,
     zIndex: 36,
   },
   4: {
     size: 26,
-    classes: 'border-text-primary border-2',
+    ringClasses: 'border-text-primary border-2',
+    classes: '',
     backgroundColor: MAP_MARKER_FILL.white,
     zIndex: 32,
   },
   3: {
     size: 22,
-    classes: 'border-border-strong border',
+    ringClasses: 'border-text-primary border',
+    classes: '',
     backgroundColor: MAP_MARKER_FILL.white,
     zIndex: 28,
   },
   2: {
-    size: 18,
-    classes: 'border-border-strong border',
-    backgroundColor: MAP_MARKER_FILL.surfaceMuted,
+    size: 19,
+    ringClasses: 'border-text-secondary border',
+    classes: '',
+    backgroundColor: MAP_MARKER_FILL.white,
     zIndex: 20,
   },
   1: {
-    size: 14,
-    classes: 'border-border-default border',
-    backgroundColor: MAP_MARKER_FILL.surfaceMuted80,
+    size: 16,
+    ringClasses: 'border-border-strong border',
+    classes: '',
+    backgroundColor: MAP_MARKER_FILL.white,
     zIndex: 5,
   },
 };
 
 // Clusters mirror the pin ladder: a cluster wears a rank's face iff it contains
 // at least one building of that rank (max_tier carries the best rank inside).
+// One notch heavier at the bottom than the pin ladder — a cluster stands for many
+// buildings and always outranks a lone rank-1 pin next to it.
 const CLUSTER_RANK_VISUALS: Record<PinRank, Omit<RankVisual, 'size'>> = {
   5: {
-    classes: 'font-bold text-white border-white border-2',
+    ringClasses: 'border-white border-2',
+    classes: 'font-bold text-white',
     backgroundColor: MAP_MARKER_FILL.brandPrimary,
     zIndex: 36,
   },
   4: {
-    classes: 'font-bold text-black border-text-primary border-2',
+    ringClasses: 'border-text-primary border-2',
+    classes: 'font-bold text-text-primary',
     backgroundColor: MAP_MARKER_FILL.white,
     zIndex: 32,
   },
   3: {
-    classes: 'font-bold text-black border-border-strong border',
+    ringClasses: 'border-text-primary border',
+    classes: 'font-bold text-text-primary',
     backgroundColor: MAP_MARKER_FILL.white,
     zIndex: 28,
   },
   2: {
-    classes: 'font-bold text-black border-border-strong border',
-    backgroundColor: MAP_MARKER_FILL.surfaceMuted,
+    ringClasses: 'border-text-secondary border',
+    classes: 'font-bold text-text-primary',
+    backgroundColor: MAP_MARKER_FILL.white,
     zIndex: 20,
   },
   1: {
-    classes: 'font-bold text-black border-border-default border',
-    backgroundColor: MAP_MARKER_FILL.surfaceMuted80,
+    ringClasses: 'border-text-secondary border',
+    classes: 'font-bold text-text-primary',
+    backgroundColor: MAP_MARKER_FILL.white,
     zIndex: 10,
   },
 };
+
+/**
+ * The count label, sized to the disc that holds it. It carried no font-size at all before,
+ * so a four-digit count inherited whatever the ambient page size happened to be.
+ */
+function getClusterLabelClasses(size: number): string {
+  const scale = size >= 64 ? 'text-sm' : size >= 48 ? 'text-xs' : 'text-2xs';
+  return `${scale} leading-none tabular-nums`;
+}
 
 /**
  * Overlay a de-emphasized treatment for non-standing / not-yet-standing
@@ -158,11 +205,16 @@ const CLUSTER_RANK_VISUALS: Record<PinRank, Omit<RankVisual, 'size'>> = {
  * rated keeps its rank shape/size but reads as historic. Standing buildings
  * (Built / Temporary / NULL) and clusters are returned unchanged.
  *
- *   lost               → faded ghost pin
+ *   lost               → ghost face: the FILL fades, the ring and marks do not
  *   unbuilt            → dashed outline (proposed / never realized)
  *   under-construction → dashed outline (in progress)
+ *
+ * Both treatments used to be a class appended to the rank's own: `opacity-50` took the
+ * ring, dots and icon down with the face until a lost rank-1 pin was gone from the map,
+ * and a `border-dashed` appended to a 1px hairline dashed a line nobody could see. The
+ * ghost now fades only the fill, and the dash brings its own 2px dark ring.
  */
-function applyConstructionTreatment(
+export function withConstructionTreatment(
   style: PinStyle,
   item: ClusterResponse,
   options?: PinOptions,
@@ -170,9 +222,17 @@ function applyConstructionTreatment(
   if (item.is_cluster || options?.photographyGaps) return style;
   const treatment = getConstructionTreatment(item.construction_status);
   if (!treatment || treatment === 'temporary') return style;
-  const modifier =
-    treatment === 'lost' ? 'opacity-50' : 'border-dashed';
-  return { ...style, classes: `${style.classes} ${modifier}` };
+  if (treatment === 'lost') {
+    return style.backgroundColor
+      ? { ...style, backgroundColor: ghostFill(style.backgroundColor) }
+      : style;
+  }
+  // The dash needs 2px to read at all, and the ring keeps whichever polarity the face
+  // already chose — a dark ring on the black rank-5 (or itinerary) face would be invisible.
+  const ringColor = style.ringClasses.includes('border-white')
+    ? 'border-white'
+    : 'border-text-primary';
+  return { ...style, ringClasses: `${ringColor} border-2 border-dashed` };
 }
 
 /**
@@ -188,14 +248,14 @@ function applyDiscoveryTreatment(style: PinStyle, item: ClusterResponse): PinSty
   return {
     ...style,
     zIndex: Math.max(1, Math.round(style.zIndex / 10)),
-    classes: `${style.classes} opacity-60`,
+    opacity: style.opacity * 0.6,
     dots: 0,
     savedMark: false,
   };
 }
 
 export function getPinStyle(item: ClusterResponse, options?: PinOptions): PinStyle {
-  const style = applyConstructionTreatment(getBasePinStyle(item, options), item, options);
+  const style = withConstructionTreatment(getBasePinStyle(item, options), item, options);
   return applyDiscoveryTreatment(style, item);
 }
 
@@ -227,8 +287,10 @@ function getBasePinStyle(item: ClusterResponse, options?: PinOptions): PinStyle 
       shape,
       zIndex: 30,
       size: 24,
-      classes: 'border-white border-2 shadow-xs',
+      ringClasses: 'border-white border-2',
+      classes: '',
       backgroundColor,
+      opacity: 1,
       dots: 0,
       savedMark: false,
       innerMarkColor: MAP_MARKER_FILL.brandPrimary,
@@ -248,8 +310,10 @@ function getBasePinStyle(item: ClusterResponse, options?: PinOptions): PinStyle 
       shape: 'circle',
       zIndex: visual.zIndex,
       size,
-      classes: visual.classes,
+      ringClasses: visual.ringClasses,
+      classes: `${visual.classes} ${getClusterLabelClasses(size)}`,
       backgroundColor: visual.backgroundColor,
+      opacity: 1,
       dots: 0,
       savedMark: false,
       innerMarkColor: rank === 5 ? MAP_MARKER_FILL.white : MAP_MARKER_FILL.brandPrimary,
@@ -270,10 +334,10 @@ function getBasePinStyle(item: ClusterResponse, options?: PinOptions): PinStyle 
       shape,
       zIndex: 20,
       size: 28,
-      classes: isDarkFace
-        ? 'border-white border-2 text-white'
-        : 'border-text-primary border-2 text-brand-primary',
+      ringClasses: isDarkFace ? 'border-white border-2' : 'border-text-primary border-2',
+      classes: isDarkFace ? 'text-white' : 'text-brand-primary',
       backgroundColor: item.color,
+      opacity: 1,
       dots: 0,
       savedMark: false,
       innerMarkColor: isDarkFace ? MAP_MARKER_FILL.white : MAP_MARKER_FILL.brandPrimary,
@@ -299,8 +363,10 @@ function getBasePinStyle(item: ClusterResponse, options?: PinOptions): PinStyle 
     shape,
     zIndex: visual.zIndex,
     size: visual.size,
+    ringClasses: visual.ringClasses,
     classes: visual.classes,
     backgroundColor: visual.backgroundColor,
+    opacity: 1,
     dots,
     savedMark,
     innerMarkColor: rank === 5 ? MAP_MARKER_FILL.white : MAP_MARKER_FILL.brandPrimary,
