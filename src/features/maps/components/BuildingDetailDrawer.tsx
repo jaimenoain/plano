@@ -28,18 +28,17 @@ interface BuildingDetailDrawerProps {
   /** The selected building, or null when nothing is selected (drawer closed). */
   cluster: ClusterResponse | null;
   onClose: () => void;
-  /** Collection context: remove this building from the collection (owner/contributor). */
+  /** Legacy card path only: remove a custom marker / candidate from the collection. */
   onRemoveFromCollection?: (buildingId: string) => void;
   /** Collection context: promote a saved candidate into the collection. */
   onAddCandidate?: (id: string) => void;
   /** Desktop only: close the panel when the user clicks outside of it. */
   closeOnOutsideClick?: boolean;
   /**
-   * Pinned below the standard body — the collection map's "Add to this
-   * collection" for a discovery pin. Ignored by the legacy card path, which
-   * carries its own actions.
+   * The collection map's single add/remove action, rendered inside the standard
+   * body. Ignored by the legacy card path, which carries its own actions.
    */
-  footerAction?: ReactNode;
+  collectionAction?: ReactNode;
 }
 
 /** Legacy card path — custom markers & candidates keep the compact popup card. */
@@ -86,7 +85,7 @@ export function BuildingDetailDrawer({
   onRemoveFromCollection,
   onAddCandidate,
   closeOnOutsideClick,
-  footerAction,
+  collectionAction,
 }: BuildingDetailDrawerProps) {
   const isMobile = useIsMobile();
   const isSpecial = !!(cluster?.is_custom_marker || cluster?.is_candidate);
@@ -123,19 +122,12 @@ export function BuildingDetailDrawer({
                 />
               </div>
             ) : (
-              <>
-                <BuildingDrawerBody
-                  cluster={cluster}
-                  onClose={onClose}
-                  layout="sheet"
-                  onRemoveFromCollection={onRemoveFromCollection}
-                />
-                {footerAction && (
-                  <div className="shrink-0 border-t border-border-default p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-                    {footerAction}
-                  </div>
-                )}
-              </>
+              <BuildingDrawerBody
+                cluster={cluster}
+                onClose={onClose}
+                layout="sheet"
+                collectionAction={collectionAction}
+              />
             ))}
         </DrawerContent>
       </Drawer>
@@ -186,11 +178,8 @@ export function BuildingDetailDrawer({
         cluster={cluster}
         onClose={onClose}
         layout="panel"
-        onRemoveFromCollection={onRemoveFromCollection}
+        collectionAction={collectionAction}
       />
-      {footerAction && (
-        <div className="shrink-0 border-t border-border-default p-4">{footerAction}</div>
-      )}
     </div>
   );
 }

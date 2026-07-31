@@ -2,6 +2,7 @@
 import { render as rtlRender, waitFor, screen, cleanup } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CollectionMapGL } from './CollectionMapGL';
+import type { ClusterResponse } from '../hooks/useMapData';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as matchers from '@testing-library/jest-dom/matchers';
 import React from 'react';
@@ -132,6 +133,16 @@ vi.mock('./MapMarkers', async () => {
     return {
         MapMarkers: MockMapMarkers
     }
+});
+
+// Mock the detail drawer down to the one thing under test here — the collection
+// action node it is handed. The real body would need Supabase, auth and images.
+vi.mock('./BuildingDetailDrawer', async () => {
+  const React = await import('react');
+  return {
+    BuildingDetailDrawer: (props: any) =>
+      React.createElement('div', { 'data-testid': 'detail-drawer' }, props.collectionAction),
+  };
 });
 
 // Mock ItineraryRoutes
@@ -350,6 +361,49 @@ describe('CollectionMapGL - Viewport Fitting Logic', () => {
 
       await waitFor(() => expect(lastClusters()).toHaveLength(1));
       expect(lastClusters()[0].id).toBe('discovered-1');
+    });
+  });
+
+  // The drawer's collection action follows membership, not how it was opened:
+  // a building outside the collection must never offer a remove that no-ops.
+  describe('drawer collection action', () => {
+    const clusterFor = (id: string): ClusterResponse => ({
+      id,
+      lat: 40.7,
+      lng: -74,
+      is_cluster: false,
+      count: 1,
+      rating: null,
+      status: null,
+      construction_status: null,
+    });
+
+    const renderWithSelection = (id: string) =>
+      render(
+        <CollectionMapGL
+          buildings={mockBuildings}
+          highlightedId={null}
+          setHighlightedId={vi.fn()}
+          onSelectBuilding={vi.fn()}
+          selectedCluster={clusterFor(id)}
+          collectionBuildingIds={new Set(['1'])}
+          onAddToCollection={vi.fn()}
+          onRemoveFromCollection={vi.fn()}
+        />
+      );
+
+    it('offers Remove for a building already in the collection', () => {
+      renderWithSelection('1');
+
+      expect(screen.getByText('Remove from collection')).toBeInTheDocument();
+      expect(screen.queryByText('Add to this collection')).toBeNull();
+    });
+
+    it('offers Add for a building that is not in the collection', () => {
+      renderWithSelection('discovered-1');
+
+      expect(screen.getByText('Add to this collection')).toBeInTheDocument();
+      expect(screen.queryByText('Remove from collection')).toBeNull();
     });
   });
 });

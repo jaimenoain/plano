@@ -475,6 +475,14 @@ visible. Selecting a discovered building shall open the standard building panel 
 **Add to this collection** action. Both switches are per-viewer preferences stored on the viewer's
 device — they never change what anyone else sees, and they do not apply to the item list.
 
+**FR-8.7.3 Collection Action in the Building Panel**
+The building panel opened from a collection map shall offer exactly one collection action, chosen
+by membership: **Remove from collection** for a building the collection already holds, **Add to
+this collection** for one it does not. The action shall be shown only to the owner and editor
+collaborators, and shall sit with the panel's other building actions rather than in a separate
+pinned bar. Adding shall not close the panel — the action flips to remove in place, so a
+mistaken add can be undone where it happened.
+
 ---
 
 ## 9. Search & Discovery

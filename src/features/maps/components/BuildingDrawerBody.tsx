@@ -12,7 +12,7 @@
  * parent sizes it: `panel` (desktop right rail, fills height) or `sheet`
  * (mobile bottom sheet, capped at 85vh).
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import {
   X,
@@ -27,7 +27,6 @@ import {
   MessageSquare,
   MapPin,
   Loader2,
-  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -69,11 +68,10 @@ interface BuildingDrawerBodyProps {
   onClose: () => void;
   layout: 'panel' | 'sheet';
   /**
-   * Collection context only: remove this building from the current collection.
-   * When provided (owner/contributor), a dedicated destructive action renders.
-   * The caller owns the confirm dialog + refetch + closing the drawer.
+   * Collection context only: the one add/remove action for the open collection,
+   * rendered under the secondary actions. The caller decides which it is.
    */
-  onRemoveFromCollection?: (buildingId: string) => void;
+  collectionAction?: ReactNode;
 }
 
 const SECTION_LABEL = 'eyebrow tracking-widest';
@@ -82,7 +80,7 @@ export function BuildingDrawerBody({
   cluster,
   onClose,
   layout,
-  onRemoveFromCollection,
+  collectionAction,
 }: BuildingDrawerBodyProps) {
   const buildingId = String(cluster.id);
 
@@ -393,20 +391,9 @@ export function BuildingDrawerBody({
                 </div>
               )}
 
-              {/* Collection context — remove this building from the open collection.
-                  The caller owns the confirm dialog, refetch and closing the drawer. */}
-              {onRemoveFromCollection && (
-                <div className="mt-4 border-t border-border-default pt-4">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-9 w-full justify-center gap-1.5 border-feedback-destructive/40 text-xs text-feedback-destructive hover:bg-feedback-destructive hover:text-feedback-destructive-foreground"
-                    onClick={() => onRemoveFromCollection(buildingId)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    Remove from collection
-                  </Button>
-                </div>
+              {/* Collection context — add to / remove from the open collection. */}
+              {collectionAction && (
+                <div className="mt-4 border-t border-border-default pt-4">{collectionAction}</div>
               )}
             </>
           ) : (
