@@ -18,7 +18,7 @@ import { DiscoveryBuilding } from '@/features/search/components/types';
 import { ClusterResponse } from '../hooks/useMapData';
 import { useCollectionMapClusters } from '../hooks/useCollectionMapClusters';
 import { useMapClusterViewport } from '../hooks/useMapClusterViewport';
-import { DiscoveryAddAction } from './DiscoveryAddAction';
+import { CollectionMembershipAction } from './CollectionMembershipAction';
 import { getBoundsFromBuildings, type Bounds } from '@/utils/map';
 import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
 
@@ -377,14 +377,13 @@ function CollectionMapGLContent({
             onRemoveFromCollection={onRemoveFromCollection}
             onAddCandidate={handleAddCandidate}
             closeOnOutsideClick
-            footerAction={
-              selectedCluster?.is_discovery && onAddToCollection ? (
-                <DiscoveryAddAction
-                  cluster={selectedCluster}
-                  isInCollection={!!collectionBuildingIds?.has(String(selectedCluster.id))}
-                  onAdd={onAddToCollection}
-                />
-              ) : undefined
+            collectionAction={
+              <CollectionMembershipAction
+                cluster={selectedCluster ?? null}
+                inCollection={!!collectionBuildingIds?.has(String(selectedCluster?.id))}
+                onAdd={onAddToCollection}
+                onRemove={onRemoveFromCollection}
+              />
             }
           />
         )}
