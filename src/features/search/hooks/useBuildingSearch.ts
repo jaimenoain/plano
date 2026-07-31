@@ -24,6 +24,7 @@ import {
   getNumParam,
   getIdListParam,
   parseModeParams,
+  companionFiltersForMode,
   parseCreditRolesParam,
   getCreditCompanyParam,
 } from "../utils/searchUrlParams";
@@ -426,16 +427,15 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12, for
   const [viewMode, setViewMode] = useState<'list' | 'map'>((searchParams.get("view") as 'list' | 'map') || 'map');
   const [mode, setMode] = useState<MapMode>(modeImplied.mode);
 
-  // Switch mode with its companion filters — the mode is only meaningful with
-  // them (library = your pins via status filters; discover hides what you saved;
-  // All / null = the whole world, saved/visited included). Single entry point
-  // for the page toggle and for Clear-all restoring the current mode's baseline.
+  // Single entry point for the page toggle and Clear-all: a mode is only meaningful with its
+  // companions, and leaving My Map drops the filters only its drawer block can explain.
   const switchMode = useCallback((newMode: MapMode) => {
     setMode(newMode);
-    const isDiscover = newMode === 'discover';
-    setStatusFilters(newMode === 'library' ? ['visited', 'saved', 'pending'] : []);
-    setHideSaved(isDiscover);
-    setHideVisited(isDiscover);
+    const companions = companionFiltersForMode(newMode);
+    setStatusFilters(companions.statusFilters);
+    setHideSaved(companions.hideSaved);
+    setHideVisited(companions.hideVisited);
+    if (!companions.keepsPersonalFilters) { setPersonalMinRating(0); setSelectedFolders([]); setSelectedCollections([]); }
   }, []);
 
   // Adopt mode deep-links that arrive while already mounted (e.g. a

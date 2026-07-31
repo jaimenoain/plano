@@ -2,14 +2,14 @@
  * /map — My Map, the member's personal library as a first-class address.
  *
  * Reuses the whole search/map surface (SearchPageShell) pinned to library
- * mode: the mode is implied by the route and never appears in the URL, the
- * All/Discover switch is dropped, and a stats masthead + first-run state
- * (MyMapChrome) render over the map.
+ * mode: the mode is implied by the route and never appears in the URL. The
+ * mode toggle still renders with My map selected — its other two segments
+ * navigate to /search — and the stats masthead + first-run state (MyMapChrome)
+ * come with library mode itself, wherever it is shown.
  */
 import { redirect, type LoaderFunctionArgs } from "react-router";
 import { createSupabaseServerClient } from "@/lib/supabase.server";
 import { SearchPageShell } from "@/features/search";
-import { MyMapChrome } from "./components/MyMapChrome";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const responseHeaders = new Headers();
@@ -35,5 +35,5 @@ export function shouldRevalidate() {
 }
 
 export default function MyMapPage() {
-  return <SearchPageShell forcedMode="library" masthead={<MyMapChrome />} />;
+  return <SearchPageShell forcedMode="library" />;
 }
