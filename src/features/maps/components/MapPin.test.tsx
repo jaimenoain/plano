@@ -2,7 +2,7 @@ import { render, screen, cleanup } from '@testing-library/react';
 import { afterEach, describe, it, expect } from 'vitest';
 import { MapPin } from './MapPin';
 import { PinStyle } from '../utils/pinStyling';
-import { MAP_MARKER_FILL } from '../constants/mapMarkerFills';
+import { MAP_MARKER_FILL, MAP_MARKER_SHADOW } from '../constants/mapMarkerFills';
 
 // @vitest-environment happy-dom
 
@@ -16,8 +16,10 @@ describe('MapPin Component', () => {
     shape: 'circle',
     zIndex: 5,
     size: 20,
-    classes: 'border-white/50 border',
-    backgroundColor: MAP_MARKER_FILL.surfaceMuted80,
+    ringClasses: 'border-border-strong border',
+    classes: '',
+    backgroundColor: MAP_MARKER_FILL.white,
+    opacity: 1,
     dots: 0,
     savedMark: false,
     innerMarkColor: MAP_MARKER_FILL.brandPrimary,
@@ -105,5 +107,30 @@ describe('MapPin Component', () => {
     render(<MapPin style={defaultStyle} isHovered={false} />);
     expect(screen.queryByTestId('map-pin-dots')).toBeNull();
     expect(screen.queryByTestId('map-pin-saved-mark')).toBeNull();
+  });
+
+  // A white pin on the pale positron basemap has nothing else to separate it, and the
+  // shadow cannot be a `shadow-*` utility: markers are portaled, and .ds-rollout strips
+  // those utilities from every descendant.
+  it('carries the resting separation shadow inline', () => {
+    render(<MapPin style={defaultStyle} isHovered={false} />);
+    expect(screen.getByTestId('map-pin-container').style.boxShadow).toBe(MAP_MARKER_SHADOW);
+  });
+
+  it('applies de-emphasis as an inline opacity, not a utility class', () => {
+    render(<MapPin style={{ ...defaultStyle, opacity: 0.6 }} isHovered={false} />);
+    const pin = screen.getByTestId('map-pin-container');
+    expect(pin.style.opacity).toBe('0.6');
+    expect(pin.className).not.toContain('opacity-');
+  });
+
+  it('renders the ring classes alongside the content classes', () => {
+    render(
+      <MapPin
+        style={{ ...defaultStyle, ringClasses: 'border-text-primary border-2 border-dashed' }}
+        isHovered={false}
+      />
+    );
+    expect(screen.getByTestId('map-pin-container').className).toContain('border-dashed');
   });
 });

@@ -73,14 +73,16 @@ describe('MapMarkers - Smart Clusters', () => {
     });
 
     it('does not let the tier ring race the white ring', () => {
-      // A quiet stop's own `border-border-default` must not survive alongside `border-white`:
+      // A quiet stop's own `border-border-strong` must not survive alongside `border-white`:
       // Tailwind resolves that conflict by rule order, not class-attribute order.
       render(<MapMarkers clusters={[stop()]} setHighlightedId={setHighlightedId} highlightedId={null} />);
 
-      expect(screen.getByTestId('map-pin-container').className).not.toContain('border-border-default');
+      expect(screen.getByTestId('map-pin-container').className).not.toContain('border-border-strong');
     });
 
     it('keeps the construction treatment on an itinerary stop', () => {
+      // The override rebuilds the whole style, so the treatment has to be re-applied to
+      // the new black face rather than scraped off the old class string.
       render(
         <MapMarkers
           clusters={[stop({ construction_status: 'Lost' })]}
@@ -89,7 +91,21 @@ describe('MapMarkers - Smart Clusters', () => {
         />
       );
 
-      expect(screen.getByTestId('map-pin-container').className).toContain('opacity-50');
+      expect(screen.getByTestId('map-pin-container').style.backgroundColor).toContain('rgba');
+    });
+
+    it('keeps a dashed itinerary ring white, not black-on-black', () => {
+      render(
+        <MapMarkers
+          clusters={[stop({ construction_status: 'Unbuilt' })]}
+          setHighlightedId={setHighlightedId}
+          highlightedId={null}
+        />
+      );
+
+      const pin = screen.getByTestId('map-pin-container');
+      expect(pin.className).toContain('border-dashed');
+      expect(pin.className).toContain('border-white');
     });
 
     it('suppresses the saved mark under the sequence numeral', () => {
@@ -138,7 +154,7 @@ describe('MapMarkers - Smart Clusters', () => {
     expect(screen.getByTestId('marker-container').style.zIndex).toBe('32');
   });
 
-  it('renders a rank-3 cluster (white face, strong border)', () => {
+  it('renders a rank-3 cluster (white face, black hairline ring)', () => {
     render(
       <MapMarkers
         clusters={[{ ...baseCluster, max_tier: 3 }]}
@@ -149,11 +165,11 @@ describe('MapMarkers - Smart Clusters', () => {
 
     const pin = screen.getByTestId('map-pin-container');
     expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.white);
-    expect(pin.className).toContain('border-border-strong');
+    expect(pin.className).toContain('border-text-primary');
     expect(screen.getByTestId('marker-container').style.zIndex).toBe('28');
   });
 
-  it('renders a rank-2 cluster (muted face)', () => {
+  it('renders a rank-2 cluster (white face, secondary ring)', () => {
     render(
       <MapMarkers
         clusters={[{ ...baseCluster, max_tier: 2 }]}
@@ -163,12 +179,12 @@ describe('MapMarkers - Smart Clusters', () => {
     );
 
     const pin = screen.getByTestId('map-pin-container');
-    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted);
-    expect(pin.className).toContain('border-border-strong');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.white);
+    expect(pin.className).toContain('border-text-secondary');
     expect(screen.getByTestId('marker-container').style.zIndex).toBe('20');
   });
 
-  it('renders a rank-1 cluster (quietest face)', () => {
+  it('renders a rank-1 cluster (quietest face — still opaque)', () => {
     render(
       <MapMarkers
         clusters={[{ ...baseCluster, max_tier: 1 }]}
@@ -178,8 +194,8 @@ describe('MapMarkers - Smart Clusters', () => {
     );
 
     const pin = screen.getByTestId('map-pin-container');
-    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
-    expect(pin.className).toContain('border-border-default');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.white);
+    expect(pin.className).toContain('border-text-secondary');
     expect(screen.getByTestId('marker-container').style.zIndex).toBe('10');
   });
 
@@ -193,8 +209,8 @@ describe('MapMarkers - Smart Clusters', () => {
     );
 
     const pin = screen.getByTestId('map-pin-container');
-    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
-    expect(pin.className).toContain('border-border-default');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.white);
+    expect(pin.className).toContain('border-text-secondary');
     expect(screen.getByTestId('marker-container').style.zIndex).toBe('10');
   });
 
@@ -232,7 +248,8 @@ describe('MapMarkers - Smart Clusters', () => {
       );
 
       const pin = screen.getByTestId('map-pin-container');
-      expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
+      expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.white);
+      expect(pin.className).toContain('border-border-strong');
       expect(screen.queryByTestId('map-pin-dots')).toBeNull();
     });
 
@@ -263,7 +280,7 @@ describe('MapMarkers - Smart Clusters', () => {
       count: 1,
       is_custom_marker: true,
       marker_category: 'dining',
-      color: MAP_MARKER_FILL.surfaceMuted80,
+      color: MAP_MARKER_FILL.surfaceMuted,
       ...overrides,
     } as ClusterResponse);
 
@@ -271,7 +288,7 @@ describe('MapMarkers - Smart Clusters', () => {
       render(<MapMarkers clusters={[marker()]} setHighlightedId={setHighlightedId} highlightedId={null} />);
 
       const pin = screen.getByTestId('map-pin-container');
-      expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
+      expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted);
       expect(pin.className).toContain('border-text-primary');
       expect(pin.className).not.toContain('border-white');
 

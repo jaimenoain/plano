@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { getPinStyle, getGlobalTierRank, getPersonalTierRank } from './pinStyling';
 import { ClusterResponse } from '../hooks/useMapData';
-import { MAP_MARKER_FILL } from '../constants/mapMarkerFills';
+import { MAP_MARKER_FILL, ghostFill } from '../constants/mapMarkerFills';
 
 // Helper to create mock items
 const createMockBuilding = (overrides: Partial<ClusterResponse>): ClusterResponse => ({
@@ -31,6 +31,15 @@ describe('MAP_MARKER_FILL', () => {
 
   it('resolves brandPrimary to the near-black brand token, not lime', () => {
     expect(MAP_MARKER_FILL.brandPrimary).toBe('#171717');
+  });
+
+  // The retired `surfaceMuted80` (rgba(245,245,245,0.8)) was the default pin face: on the
+  // pale positron basemap it read as nothing at all. De-emphasis belongs in `ghostFill()`
+  // or `PinStyle.opacity`, never baked into a face.
+  it('keeps every marker face opaque', () => {
+    for (const [key, value] of Object.entries(MAP_MARKER_FILL)) {
+      expect(value, `MAP_MARKER_FILL.${key} is translucent`).not.toMatch(/rgba|hsla|color-mix/);
+    }
   });
 });
 
@@ -72,48 +81,62 @@ describe('getPinStyle', () => {
       expect(style.size).toBe(30);
       expect(style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
       // The ring inverts with the fill — a black ring on a black face is invisible.
-      expect(style.classes).toContain('border-white');
+      expect(style.ringClasses).toContain('border-white');
       expect(style.classes).toContain('text-brand-primary-foreground');
       expect(style.zIndex).toBe(36);
     });
 
-    it("renders rank 4 (26px white, black ring) for 'Top 5%'", () => {
+    it("renders rank 4 (26px white, black 2px ring) for 'Top 5%'", () => {
       const style = getPinStyle(createMockBuilding({ tier_rank_label: 'Top 5%' }));
       expect(style.rank).toBe(4);
       expect(style.size).toBe(26);
       expect(style.backgroundColor).toBe(MAP_MARKER_FILL.white);
-      expect(style.classes).toContain('border-text-primary');
-      expect(style.classes).toContain('border-2');
+      expect(style.ringClasses).toContain('border-text-primary');
+      expect(style.ringClasses).toContain('border-2');
       expect(style.zIndex).toBe(32);
     });
 
-    it("renders rank 3 (22px white, strong border) for 'Top 10%'", () => {
+    it("renders rank 3 (22px white, black hairline ring) for 'Top 10%'", () => {
       const style = getPinStyle(createMockBuilding({ tier_rank_label: 'Top 10%' }));
       expect(style.rank).toBe(3);
       expect(style.size).toBe(22);
       expect(style.backgroundColor).toBe(MAP_MARKER_FILL.white);
-      expect(style.classes).toContain('border-border-strong');
+      expect(style.ringClasses).toContain('border-text-primary');
+      expect(style.ringClasses).not.toContain('border-2');
       expect(style.zIndex).toBe(28);
     });
 
-    it("renders rank 2 (18px muted) for 'Top 20%' and legacy 'Top 25%'", () => {
+    it("renders rank 2 (19px white, secondary ring) for 'Top 20%' and legacy 'Top 25%'", () => {
       for (const label of ['Top 20%', 'Top 25%']) {
         const style = getPinStyle(createMockBuilding({ tier_rank_label: label }));
         expect(style.rank, label).toBe(2);
-        expect(style.size, label).toBe(18);
-        expect(style.backgroundColor, label).toBe(MAP_MARKER_FILL.surfaceMuted);
-        expect(style.classes, label).toContain('border-border-strong');
+        expect(style.size, label).toBe(19);
+        expect(style.backgroundColor, label).toBe(MAP_MARKER_FILL.white);
+        expect(style.ringClasses, label).toContain('border-text-secondary');
       }
     });
 
-    it("renders rank 1 (14px quietest) for 'Standard' / unknown", () => {
+    it("renders rank 1 (16px white, strong ring) for 'Standard' / unknown", () => {
       for (const label of ['Standard', null, undefined]) {
         const style = getPinStyle(createMockBuilding({ tier_rank_label: label }));
         expect(style.rank).toBe(1);
-        expect(style.size).toBe(14);
-        expect(style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
-        expect(style.classes).toContain('border-border-default');
+        expect(style.size).toBe(16);
+        expect(style.backgroundColor).toBe(MAP_MARKER_FILL.white);
+        expect(style.ringClasses).toContain('border-border-strong');
         expect(style.zIndex).toBe(5);
+      }
+    });
+
+    // The bug this whole ladder was rebuilt for: the DEFAULT pin (everything outside the
+    // Top 20%) was a 14px translucent near-white disc with an #E5E5E5 hairline, invisible
+    // on the positron basemap. Every rank must now be opaque and at least 16px.
+    it('never renders a translucent or sub-16px face at any rank', () => {
+      for (const label of ['Top 1%', 'Top 5%', 'Top 10%', 'Top 20%', null]) {
+        const style = getPinStyle(createMockBuilding({ tier_rank_label: label }));
+        expect(style.backgroundColor, `${label}`).not.toMatch(/rgba|color-mix/);
+        expect(style.opacity, `${label}`).toBe(1);
+        expect(style.size, `${label}`).toBeGreaterThanOrEqual(16);
+        expect(style.ringClasses, `${label}`).not.toContain('border-border-default');
       }
     });
 
@@ -216,7 +239,8 @@ describe('getPinStyle', () => {
           library,
         );
         expect(style.rank).toBe(2);
-        expect(style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted);
+        expect(style.backgroundColor).toBe(MAP_MARKER_FILL.white);
+        expect(style.ringClasses).toContain('border-text-secondary');
         expect(style.dots).toBe(0);
       }
     });
@@ -228,8 +252,8 @@ describe('getPinStyle', () => {
         library,
       );
       expect(style.rank).toBe(1);
-      expect(style.size).toBe(14);
-      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
+      expect(style.size).toBe(16);
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.white);
       expect(style.dots).toBe(0);
       expect(style.savedMark).toBe(false);
     });
@@ -264,39 +288,44 @@ describe('getPinStyle', () => {
       expect(style.rank).toBe(5);
       expect(style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
       expect(style.classes).toContain('text-white');
-      expect(style.classes).toContain('border-white');
-      expect(style.classes).toContain('border-2');
+      expect(style.ringClasses).toContain('border-white');
+      expect(style.ringClasses).toContain('border-2');
       expect(style.zIndex).toBe(36);
     });
 
-    it('renders a rank-4 cluster white with a black ring', () => {
+    it('renders a rank-4 cluster white with a black 2px ring', () => {
       const style = getPinStyle(cluster(4));
       expect(style.rank).toBe(4);
       expect(style.backgroundColor).toBe(MAP_MARKER_FILL.white);
-      expect(style.classes).toContain('border-text-primary');
-      expect(style.classes).toContain('border-2');
+      expect(style.ringClasses).toContain('border-text-primary');
+      expect(style.ringClasses).toContain('border-2');
     });
 
-    it('renders a rank-3 cluster white with a strong border', () => {
+    it('renders a rank-3 cluster white with a black hairline ring', () => {
       const style = getPinStyle(cluster(3));
       expect(style.rank).toBe(3);
       expect(style.backgroundColor).toBe(MAP_MARKER_FILL.white);
-      expect(style.classes).toContain('border-border-strong');
-      expect(style.classes).not.toContain('border-2');
+      expect(style.ringClasses).toContain('border-text-primary');
+      expect(style.ringClasses).not.toContain('border-2');
     });
 
-    it('renders a rank-2 cluster muted', () => {
-      const style = getPinStyle(cluster(2));
-      expect(style.rank).toBe(2);
-      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted);
-      expect(style.classes).toContain('border-border-strong');
+    it('renders ranks 2 and 1 white with a secondary ring — never translucent', () => {
+      for (const rank of [2, 1]) {
+        const style = getPinStyle(cluster(rank));
+        expect(style.rank, `rank ${rank}`).toBe(rank);
+        expect(style.backgroundColor, `rank ${rank}`).toBe(MAP_MARKER_FILL.white);
+        expect(style.ringClasses, `rank ${rank}`).toContain('border-text-secondary');
+      }
     });
 
-    it('renders a rank-1 cluster quietest', () => {
-      const style = getPinStyle(cluster(1));
-      expect(style.rank).toBe(1);
-      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
-      expect(style.classes).toContain('border-border-default');
+    // The count used to inherit whatever font-size the ambient page happened to set.
+    it('sizes the count label to the disc that holds it', () => {
+      const label = (count: number) =>
+        getPinStyle(createMockBuilding({ is_cluster: true, max_tier: 1, count })).classes;
+      expect(label(10)).toContain('text-2xs');
+      expect(label(500)).toContain('text-xs');
+      expect(label(2000)).toContain('text-sm');
+      expect(label(10)).toContain('tabular-nums');
     });
 
     it('defaults to rank 1 when max_tier is missing and clamps out-of-range values', () => {
@@ -313,41 +342,65 @@ describe('getPinStyle', () => {
   });
 
   describe('Suite 6: Construction Status Treatment', () => {
-    it('fades Lost pins (and legacy Demolished)', () => {
-      expect(getPinStyle(createMockBuilding({ construction_status: 'Lost' })).classes).toContain('opacity-50');
-      expect(getPinStyle(createMockBuilding({ construction_status: 'Demolished' })).classes).toContain('opacity-50');
+    // A ghost fades the FACE only. The blanket `opacity-50` this replaced took the ring,
+    // the dots and the icon with it, and a lost rank-1 pin simply left the map.
+    it('ghosts the face of Lost pins (and legacy Demolished) without touching the ring', () => {
+      for (const status of ['Lost', 'Demolished']) {
+        const style = getPinStyle(createMockBuilding({ construction_status: status }));
+        expect(style.backgroundColor, status).toBe(ghostFill(MAP_MARKER_FILL.white));
+        expect(style.opacity, status).toBe(1);
+        expect(style.ringClasses, status).toBe(
+          getPinStyle(createMockBuilding({})).ringClasses,
+        );
+      }
     });
 
-    it('dashes Unbuilt and Under Construction pins', () => {
-      expect(getPinStyle(createMockBuilding({ construction_status: 'Unbuilt' })).classes).toContain('border-dashed');
-      expect(getPinStyle(createMockBuilding({ construction_status: 'Under Construction' })).classes).toContain('border-dashed');
+    it('gives Unbuilt and Under Construction a legible 2px dashed ring', () => {
+      for (const status of ['Unbuilt', 'Under Construction']) {
+        const style = getPinStyle(createMockBuilding({ construction_status: status }));
+        // Replaced, not appended: Tailwind would otherwise arbitrate `border` vs
+        // `border-2` by stylesheet order.
+        expect(style.ringClasses, status).toBe('border-text-primary border-2 border-dashed');
+        expect(style.backgroundColor, status).toBe(MAP_MARKER_FILL.white);
+      }
+    });
+
+    it('keeps the dashed ring white on a dark face', () => {
+      const style = getPinStyle(
+        createMockBuilding({ tier_rank_label: 'Top 1%', construction_status: 'Unbuilt' }),
+      );
+      expect(style.ringClasses).toBe('border-white border-2 border-dashed');
     });
 
     it('leaves standing / Temporary / unknown pins unmodified', () => {
-      const base = getPinStyle(createMockBuilding({})).classes;
-      expect(getPinStyle(createMockBuilding({ construction_status: 'Built' })).classes).toBe(base);
-      expect(getPinStyle(createMockBuilding({ construction_status: 'Temporary' })).classes).toBe(base);
-      expect(getPinStyle(createMockBuilding({ construction_status: null })).classes).toBe(base);
+      const base = getPinStyle(createMockBuilding({}));
+      for (const status of ['Built', 'Temporary', null]) {
+        const style = getPinStyle(createMockBuilding({ construction_status: status }));
+        expect(style.ringClasses, `${status}`).toBe(base.ringClasses);
+        expect(style.backgroundColor, `${status}`).toBe(base.backgroundColor);
+      }
     });
 
-    it('preserves the underlying rank when fading (rated Lost building keeps rank 5)', () => {
+    it('preserves the underlying rank when ghosting (rated Lost building keeps rank 5)', () => {
       const style = getPinStyle(
         createMockBuilding({ rating: 3, status: 'visited', construction_status: 'Lost' }),
         { mode: 'library' },
       );
       expect(style.rank).toBe(5);
-      expect(style.classes).toContain('opacity-50');
+      expect(style.size).toBe(30);
+      expect(style.dots).toBe(3);
+      expect(style.backgroundColor).toBe(ghostFill(MAP_MARKER_FILL.brandPrimary));
     });
 
     it('never modifies clusters, even with a construction status present', () => {
       const style = getPinStyle(createMockBuilding({ is_cluster: true, max_tier: 5, count: 12, construction_status: 'Lost' }));
-      expect(style.classes).not.toContain('opacity-50');
-      expect(style.classes).not.toContain('border-dashed');
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
+      expect(style.ringClasses).not.toContain('border-dashed');
     });
 
     it('does not apply the treatment in photography-gap mode', () => {
       const style = getPinStyle(createMockBuilding({ construction_status: 'Lost' }), { photographyGaps: true });
-      expect(style.classes).not.toContain('opacity-50');
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.feedbackDestructive);
     });
   });
 
@@ -357,20 +410,30 @@ describe('getPinStyle', () => {
     // content, or it disappears on the light positron basemap. Regression guard for
     // the near-invisible "Other markers" pins.
     it('gives a light face a dark ring and dark inner content', () => {
-      const style = getPinStyle(createMockBuilding({ color: MAP_MARKER_FILL.surfaceMuted80 }));
-      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
-      expect(style.classes).toContain('border-text-primary');
+      const style = getPinStyle(createMockBuilding({ color: MAP_MARKER_FILL.surfaceMuted }));
+      expect(style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted);
+      expect(style.ringClasses).toContain('border-text-primary');
       expect(style.classes).toContain('text-brand-primary');
-      expect(style.classes).not.toContain('border-white');
+      expect(style.ringClasses).not.toContain('border-white');
       expect(style.innerMarkColor).toBe(MAP_MARKER_FILL.brandPrimary);
     });
 
     it('keeps the white ring and white content on the solid dark face', () => {
       const style = getPinStyle(createMockBuilding({ color: MAP_MARKER_FILL.brandPrimary }));
       expect(style.backgroundColor).toBe(MAP_MARKER_FILL.brandPrimary);
-      expect(style.classes).toContain('border-white');
+      expect(style.ringClasses).toContain('border-white');
       expect(style.classes).toContain('text-white');
       expect(style.innerMarkColor).toBe(MAP_MARKER_FILL.white);
+    });
+
+    // Member-chosen collection colours go through the same ghost, so the expression has
+    // to hold for an arbitrary CSS colour, not just our ladder hexes.
+    it('ghosts an arbitrary member colour when the building is lost', () => {
+      const style = getPinStyle(
+        createMockBuilding({ color: MAP_MARKER_FILL.surfaceMuted, construction_status: 'Lost' }),
+      );
+      expect(style.backgroundColor).toBe(ghostFill(MAP_MARKER_FILL.surfaceMuted));
+      expect(style.backgroundColor).toBe('rgba(245, 245, 245, 0.55)');
     });
   });
 
@@ -381,8 +444,19 @@ describe('getPinStyle', () => {
     it('fades a discovery pin and drops it below the whole pin ladder', () => {
       const style = getPinStyle(createMockBuilding({ tier_rank_label: 'Top 1%', is_discovery: true }));
       expect(style.rank).toBe(5);
-      expect(style.classes).toContain('opacity-60');
+      expect(style.opacity).toBe(0.6);
       expect(style.zIndex).toBeLessThan(5);
+    });
+
+    // Lost + discovery used to emit `opacity-50 opacity-60` in one class string, with the
+    // winner decided by Tailwind's stylesheet order rather than by us. The two axes are
+    // now independent: the ghost is in the fill, the dim is a number.
+    it('composes with the ghost treatment deterministically', () => {
+      const style = getPinStyle(
+        createMockBuilding({ is_discovery: true, construction_status: 'Lost' }),
+      );
+      expect(style.opacity).toBe(0.6);
+      expect(style.backgroundColor).toContain('rgba');
     });
 
     it('keeps discovery pins ordered among themselves', () => {
@@ -400,7 +474,7 @@ describe('getPinStyle', () => {
 
     it('leaves ordinary pins untouched', () => {
       const style = getPinStyle(createMockBuilding({ tier_rank_label: 'Top 1%' }));
-      expect(style.classes).not.toContain('opacity-60');
+      expect(style.opacity).toBe(1);
       expect(style.zIndex).toBe(36);
     });
   });

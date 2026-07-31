@@ -477,7 +477,7 @@ convention.
 | Caption / timestamp | `font-size-xs` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-secondary` |
 | Code / monospace | `font-size-sm` (font-mono) | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-primary` |
 | Building ID / short_id | `font-size-xs` (font-mono) | `font-weight-normal` | `letter-spacing-wide` | `line-height-normal` | `text-secondary` |
-| Map pin label | `font-size-xs` | `font-weight-medium` | `letter-spacing-normal` | `line-height-tight` | `text-primary` |
+| Map cluster count | `font-size-2xs` / `xs` / `sm` by disc size (32 / 48 / 64px) | `font-weight-bold` | `letter-spacing-normal` | `leading-none`, `tabular-nums` | `text-primary` (inverted on the rank-5 black face) |
 | Empty state heading | `font-size-lg` | `font-weight-semibold` | `letter-spacing-normal` | `line-height-tight` | `text-primary` |
 | Empty state body | `font-size-sm` | `font-weight-normal` | `letter-spacing-normal` | `line-height-normal` | `text-secondary` |
 | | | | | | |
@@ -563,7 +563,23 @@ context — never a raw palette value.**
 
 **`brand-accent`** (`#BEFF00`) is the lime accent — the one bright colour in the system. It is **rationed to four sanctioned UI uses**: (1) primary-CTA button fills (the Button `accent` variant), (2) focus rings (`focus-visible`, 2px + a 2px white offset), (3) the hover `→` arrow on editorial CTAs, and (4) one `.accent-tag` status pill per view. The `::selection` highlight and the bell unread dot are also lime. If `brand-accent` appears anywhere outside those uses it is an error — it must not appear as section accent bars, tab indicators, bookmark fills, verified-badge colours, icon or map-marker fills, the reward rating dots, or a decorative surface fill.
 
-**Map markers are monochrome, and the rule is enforced.** Marker faces are set through inline `backgroundColor` because MapLibre portals markers outside the cascade that resolves our CSS custom properties, so every marker colour is a literal. Those literals live in exactly one file — `src/features/maps/constants/mapMarkerFills.ts` — which mirrors the semantic tokens and carries a documented `eslint-disable`; the raw-hex guard covers the rest of `src/features/maps/**` as **`.ts` and `.tsx`**. Prominence is expressed by **fill value and size, never by hue**: a black face with a white ring is the top tier, a white face with a dark ring the next, muted below that. The lone exception is the photography-gap overlay, a data-coverage heatmap that keeps `--feedback-*` colours because it encodes a measurement rather than a place. (This file once held `brandPrimary: "#BEFF00"` — written when `--brand-primary` *was* lime, never updated when the brand flipped to black. Keep it in sync, or the next redesign rots it again.)
+**Map markers are monochrome, and the rule is enforced.** Marker faces are set through inline `backgroundColor` because MapLibre portals markers outside the cascade that resolves our CSS custom properties, so every marker colour is a literal. Those literals live in exactly one file — `src/features/maps/constants/mapMarkerFills.ts` — which mirrors the semantic tokens and carries a documented `eslint-disable`; the raw-hex guard covers the rest of `src/features/maps/**` as **`.ts` and `.tsx`**. Prominence is expressed by **ring weight and size, never by hue**. The lone exception is the photography-gap overlay, a data-coverage heatmap that keeps `--feedback-*` colours because it encodes a measurement rather than a place. (This file once held `brandPrimary: "#BEFF00"` — written when `--brand-primary` *was* lime, never updated when the brand flipped to black. Keep it in sync, or the next redesign rots it again.)
+
+The five-rank ladder (`src/features/maps/utils/pinStyling.ts`) — clusters mirror it, one notch heavier at the bottom:
+
+| Rank | Size | Face | Ring |
+|---|---|---|---|
+| 5 — Top 1% / 3 pts | 30px | `brand-primary` | `border-white`, 2px |
+| 4 — Top 5% / 2 pts | 26px | `surface-card` | `border-text-primary`, 2px |
+| 3 — Top 10% / 1 pt | 22px | `surface-card` | `border-text-primary`, 1px |
+| 2 — Top 20% / saved | 19px | `surface-card` | `border-text-secondary`, 1px |
+| 1 — everything else | 16px | `surface-card` | `border-border-strong`, 1px |
+
+Three rules hold that ladder up, and each one exists because breaking it made pins disappear:
+
+- **No marker face is ever translucent.** The default pin — every building outside the Top 20%, which is most of them — used to be a 14px disc of `rgba(245,245,245,0.8)` behind an `#E5E5E5` hairline, and on the pale positron basemap it was not there at all. `#F5F5F5` and `#FFFFFF` are the same colour at pin scale anyway, which is why fill stopped carrying the ladder.
+- **Every marker carries a resting separation shadow** (`MAP_MARKER_SHADOW`, applied inline by `MapPin`). This is the one sanctioned exception to §11's flat-shadow doctrine: a pin sits on arbitrary cartography, not on our own canvas, so a white face has nothing else to separate it. It is inline rather than a `shadow-*` utility because markers are portaled and because the `.ds-rollout` guardrail `!important`-strips those utilities.
+- **De-emphasis never rides on the pin as a whole.** A lost/demolished building gets a **ghost face** — `ghostFill()` fades the fill to 55%, the ring, rating dots and glyph stay at full strength — and unbuilt / under-construction get a **2px dashed ring** in the face's own polarity (white on the black rank-5 face, `text-primary` otherwise). Both treatments *replace* the ring rather than appending to it, because Tailwind arbitrates conflicting utilities by stylesheet order and an appended `border-dashed border-2` is a coin toss. The collection map's discovery layer dims via the numeric `PinStyle.opacity`, so the two axes compose by multiplication instead of racing (`opacity-50 opacity-60` in one class string was a real bug).
 
 **`RatingDots` accepts `tone="inverse"`** for white dots on a dark surface — the kit's `.rdot.inv`, used by the Explore card's black stage. The default tone is `brand-primary` black. Neither tone is ever lime: it has poor contrast on white and the dots are a reward, not an accent.
 

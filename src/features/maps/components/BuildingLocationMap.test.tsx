@@ -85,26 +85,27 @@ describe('BuildingLocationMap', () => {
     expect(pin.className).toContain('border-text-primary');
   });
 
-  it("renders the rank-3 face (white, strong border) for 'Top 10%'", () => {
+  it("renders the rank-3 face (white, black hairline ring) for 'Top 10%'", () => {
     render(<BuildingLocationMap {...defaultProps} tierRank="Top 10%" />);
+
+    const pin = screen.getByTestId('map-pin-container');
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.white);
+    expect(pin.className).toContain('border-text-primary');
+  });
+
+  it('renders the quietest rank-1 face for Standard rank — opaque, with a strong ring', () => {
+    render(<BuildingLocationMap {...defaultProps} rating={0} tierRank="Standard" />);
 
     const pin = screen.getByTestId('map-pin-container');
     expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.white);
     expect(pin.className).toContain('border-border-strong');
   });
 
-  it('renders the quietest rank-1 face for Standard rank', () => {
-    render(<BuildingLocationMap {...defaultProps} rating={0} tierRank="Standard" />);
-
-    const pin = screen.getByTestId('map-pin-container');
-    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
-  });
-
   it('shows the saved mark for a rated building without changing its global rank', () => {
     render(<BuildingLocationMap {...defaultProps} rating={3} tierRank="Standard" />);
 
     const pin = screen.getByTestId('map-pin-container');
-    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.surfaceMuted80);
+    expect(pin.style.backgroundColor).toBe(MAP_MARKER_FILL.white);
     expect(screen.getByTestId('map-pin-saved-mark')).toBeTruthy();
   });
 

@@ -649,19 +649,19 @@ export default function CollectionMap() {
 
             if (collection.categorization_method === 'status') {
                 if (!stat || stat.visitedCount === 0) {
-                    color = MAP_MARKER_FILL.surfaceMuted80; // Not visited
+                    color = MAP_MARKER_FILL.surfaceMuted; // Not visited
                 } else if (stat.visitedCount >= targetCount && targetCount > 0) {
                     color = MAP_MARKER_FILL.brandPrimary; // Visited by all
                 } else {
                     color = MAP_MARKER_FILL.white; // Visited by some
                 }
             } else if (collection.categorization_method === 'rating_member') {
-                if (!stat || !stat.hasSaved) {
-                    color = MAP_MARKER_FILL.surfaceMuted80; // No rating on record
-                } else if (stat.maxRating === 3) color = MAP_MARKER_FILL.brandPrimary;
-                else if (stat.maxRating === 2) color = MAP_MARKER_FILL.white;
-                else if (stat.maxRating === 1) color = MAP_MARKER_FILL.surfaceMuted;
-                else color = MAP_MARKER_FILL.surfaceMuted80; // Saved, unrated
+                if (stat?.hasSaved && stat.maxRating === 3) color = MAP_MARKER_FILL.brandPrimary;
+                else if (stat?.hasSaved && stat.maxRating === 2) color = MAP_MARKER_FILL.white;
+                // 1 pt, saved-unrated and no-record all share the quietest face. The step
+                // below white has to stay opaque — a translucent face lets the basemap
+                // through and the pin stops being a pin.
+                else color = MAP_MARKER_FILL.surfaceMuted;
             }
         }
 
@@ -707,7 +707,7 @@ export default function CollectionMap() {
             google_place_id: marker.google_place_id,
             website: marker.website,
             // Standalone (non-building) markers sit at the quietest step of the ladder
-            color: MAP_MARKER_FILL.surfaceMuted80,
+            color: MAP_MARKER_FILL.surfaceMuted,
             main_image_url: photos[marker.id]?.url || null,
             image_attribution: photos[marker.id]?.attribution || null
         } as DiscoveryBuilding));

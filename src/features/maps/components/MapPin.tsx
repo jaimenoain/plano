@@ -1,5 +1,6 @@
 import React from 'react';
 import { PinStyle } from '../utils/pinStyling';
+import { MAP_MARKER_SHADOW } from '../constants/mapMarkerFills';
 
 interface MapPinProps {
   style: PinStyle;
@@ -23,9 +24,15 @@ export const MapPin: React.FC<MapPinProps> = ({ style, children, isHovered }) =>
   const containerStyle: React.CSSProperties = {
     width: `${style.size}px`,
     height: `${style.size}px`,
+    // The edge that separates a white pin from the pale basemap. Inline, because the
+    // marker is portaled and because .ds-rollout strips the shadow-* utilities.
+    boxShadow: MAP_MARKER_SHADOW,
   };
   if (style.backgroundColor) {
     containerStyle.backgroundColor = style.backgroundColor;
+  }
+  if (style.opacity < 1) {
+    containerStyle.opacity = style.opacity;
   }
 
   return (
@@ -33,6 +40,7 @@ export const MapPin: React.FC<MapPinProps> = ({ style, children, isHovered }) =>
       className={`
         relative flex items-center justify-center
         transition-[transform,filter] duration-150 ease-out
+        ${style.ringClasses}
         ${style.classes}
         ${shapeClasses}
         ${hoverClasses}
