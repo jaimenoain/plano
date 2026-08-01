@@ -51,8 +51,6 @@ interface CollectionSettingsDialogProps {
   /** Discovery view — draw every building in view so the map can grow the collection. */
   showAllBuildings?: boolean;
   onShowAllBuildingsChange?: (show: boolean) => void;
-  hideCollectionPins?: boolean;
-  onHideCollectionPinsChange?: (hide: boolean) => void;
   isOwner?: boolean;
   canEdit?: boolean;
   initialTab?: "map" | "general" | "markers" | "collaborators";
@@ -169,8 +167,6 @@ export function CollectionSettingsDialog({
   onSavedPlacesStatusFilterChange,
   showAllBuildings = false,
   onShowAllBuildingsChange,
-  hideCollectionPins = false,
-  onHideCollectionPinsChange,
   isOwner = false,
   canEdit = true,
   initialTab = "map",
@@ -579,12 +575,10 @@ export function CollectionSettingsDialog({
             )}
 
             {/* Discovery view — only meaningful for people who can add buildings. */}
-            {canEdit && onShowAllBuildingsChange && onHideCollectionPinsChange && (
+            {canEdit && onShowAllBuildingsChange && (
               <CollectionDiscoverySettings
                 showAllBuildings={showAllBuildings}
                 onShowAllBuildingsChange={onShowAllBuildingsChange}
-                hideCollectionPins={hideCollectionPins}
-                onHideCollectionPinsChange={onHideCollectionPinsChange}
               />
             )}
 

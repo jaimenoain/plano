@@ -1,7 +1,7 @@
 /**
  * useCollectionDiscoverInView.ts
  *
- * The Discover tab's data: catalogue buildings inside the collection map's
+ * The catalogue half of the Discover view's data: catalogue buildings inside the collection map's
  * current viewport that the collection doesn't already hold.
  *
  * Pins and rows come from two different RPCs over the same bbox — the split

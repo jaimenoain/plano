@@ -14,6 +14,14 @@
  */
 import { Loader2, MapPinPlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { CollectionRailView } from "../railView";
+
+/** What the discovery chip says the map is currently drawing. */
+const VIEW_LABEL: Record<CollectionRailView, string> = {
+  collection: "Discovery available",
+  discover: "Discovery · collection hidden",
+  all: "Discovery view",
+};
 
 interface CollectionMapOverlaysProps {
   canEdit: boolean;
@@ -29,7 +37,8 @@ interface CollectionMapOverlaysProps {
   onAddInView: () => void;
   /** The discovery layer is on. */
   showAllBuildings: boolean;
-  hideCollectionPins: boolean;
+  /** Which of the available layers the rail toggle is showing. */
+  view: CollectionRailView;
   onExitDiscovery: () => void;
 }
 
@@ -44,7 +53,7 @@ export function CollectionMapOverlays({
   isAddingInView,
   onAddInView,
   showAllBuildings,
-  hideCollectionPins,
+  view,
   onExitDiscovery,
 }: CollectionMapOverlaysProps) {
   return (
@@ -97,9 +106,7 @@ export function CollectionMapOverlays({
           tap to leave — especially once the collection's own pins are hidden. */}
       {showAllBuildings && canEdit ? (
         <div className="flex items-center gap-2 border border-border-default bg-surface-card/90 px-2 py-1.5 backdrop-blur-xs">
-          <span className="truncate text-xs text-text-secondary">
-            {hideCollectionPins ? "Discovery · collection hidden" : "Discovery view"}
-          </span>
+          <span className="truncate text-xs text-text-secondary">{VIEW_LABEL[view]}</span>
           <button
             type="button"
             onClick={onExitDiscovery}

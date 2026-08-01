@@ -1,7 +1,7 @@
 /**
  * CollectionItemRow.tsx
  *
- * A collection "All Items" list row, composed from the shared editorial
+ * A collection roster list row, composed from the shared editorial
  * BuildingListRow (same look/behaviour as the /search SERP) with the
  * collection-specific affordances layered on via slots:
  *   - actionSlot  → remove-from-collection (owner/contributor, on hover)

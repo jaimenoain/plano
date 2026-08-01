@@ -4,7 +4,10 @@
  * Per-user, per-collection map preferences for the collection detail page —
  * whether the saved-places suggestion overlay is on, how it is filtered, and
  * whether the discovery layer (every building in view, so editors can add from
- * the map) is on. These live in `localStorage` (not the DB): they are a viewing
+ * the map) is on. They enable *sources*; the rail's Collection / Discover / All
+ * view picks between them and is session state, not a preference (ADR 0026).
+ *
+ * These live in `localStorage` (not the DB): they are a viewing
  * preference of the *reader*, not state of the collection, and every read is
  * defensive because private mode / quota errors must never take the page down.
  *
@@ -16,7 +19,6 @@ const SHOW_SAVED_CANDIDATES_STORAGE = "plano:collection-map:showSavedPlaces" as 
 const SAVED_PLACES_DOT_FILTER_STORAGE = "plano:collection-map:savedPlacesDotFilter" as const;
 const SAVED_PLACES_STATUS_FILTER_STORAGE = "plano:collection-map:savedPlacesStatusFilter" as const;
 const SHOW_ALL_BUILDINGS_STORAGE = "plano:collection-map:showAllBuildings" as const;
-const HIDE_COLLECTION_PINS_STORAGE = "plano:collection-map:hideCollectionPins" as const;
 
 const SAVED_PLACES_DOT_FILTERS: SavedPlacesDotFilter[] = ['all', '1', '2', '3'];
 const SAVED_PLACES_STATUS_FILTERS: SavedPlacesStatusFilter[] = ['all', 'visited', 'pending'];
@@ -52,14 +54,6 @@ export function readShowAllBuildingsFromStorage(userId: string, collectionId: st
 
 export function writeShowAllBuildingsToStorage(userId: string, collectionId: string, value: boolean): void {
   writeBoolPref(SHOW_ALL_BUILDINGS_STORAGE, userId, collectionId, value);
-}
-
-export function readHideCollectionPinsFromStorage(userId: string, collectionId: string): boolean {
-  return readBoolPref(HIDE_COLLECTION_PINS_STORAGE, userId, collectionId);
-}
-
-export function writeHideCollectionPinsToStorage(userId: string, collectionId: string, value: boolean): void {
-  writeBoolPref(HIDE_COLLECTION_PINS_STORAGE, userId, collectionId, value);
 }
 
 export function readSavedPlacesDotFilterFromStorage(userId: string, collectionId: string): SavedPlacesDotFilter {

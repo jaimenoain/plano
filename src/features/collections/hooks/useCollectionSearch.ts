@@ -8,10 +8,12 @@
  * returns one `matchedIds` set that BOTH panes filter by, which is what keeps
  * the rail list and the map pins from ever disagreeing.
  *
- * Only the All Items tab is searchable. Filtering pins underneath a rendered
- * itinerary would break the day sequence, and the Discover tab lists buildings
- * the collection does *not* hold, which this query says nothing about — so on
- * both the query is kept but not applied.
+ * Only the Collection view is searchable. Filtering pins underneath a rendered
+ * itinerary would break the day sequence, and the Discover and All views list
+ * buildings the collection does *not* hold — which this query says nothing
+ * about, and narrowing one band of a multi-band list while the others ignored
+ * the query would put the rail and the map back in disagreement. On all of
+ * those the query is kept but not applied.
  */
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
@@ -23,7 +25,6 @@ import {
   filterCollectionMarkers,
   isSearchActive,
 } from "../filterCollectionItems";
-import type { CollectionRailTab } from "../railTabs";
 import type { CollectionItemWithBuilding, CollectionMarker } from "../types";
 
 interface UseCollectionSearchArgs {
@@ -32,7 +33,8 @@ interface UseCollectionSearchArgs {
   markers: CollectionMarker[];
   /** Every pin the map could draw — used only to locate matches for the re-frame. */
   mapBuildings: DiscoveryBuilding[];
-  activeTab: CollectionRailTab;
+  /** The current view supports searching — see the header note. */
+  isSearchable: boolean;
 }
 
 export interface CollectionSearchState {
@@ -40,7 +42,9 @@ export interface CollectionSearchState {
   setQuery: (value: string) => void;
   /** The settled query — what the filtering and the on-screen chips reflect. */
   appliedQuery: string;
-  /** True when a usable query is active on a tab that supports searching. */
+  /** The current view supports searching — whether or not a query is typed. */
+  isSearchable: boolean;
+  /** True when a usable query is active on a view that supports searching. */
   isActive: boolean;
   searchedItems: CollectionItemWithBuilding[];
   searchedMarkers: CollectionMarker[];
@@ -58,7 +62,7 @@ export function useCollectionSearch({
   visibleItems,
   markers,
   mapBuildings,
-  activeTab,
+  isSearchable,
 }: UseCollectionSearchArgs): CollectionSearchState {
   const [searchParams, setSearchParams] = useSearchParams();
   // Seeded from ?q= so a filtered view survives reload and can be shared.
@@ -81,7 +85,7 @@ export function useCollectionSearch({
     );
   }, [debouncedQuery, setSearchParams]);
 
-  const isActive = activeTab === 'items' && isSearchActive(debouncedQuery);
+  const isActive = isSearchable && isSearchActive(debouncedQuery);
   const effectiveQuery = isActive ? debouncedQuery : '';
 
   const searchedItems = useMemo(
@@ -115,6 +119,7 @@ export function useCollectionSearch({
     query,
     setQuery,
     appliedQuery: debouncedQuery,
+    isSearchable,
     isActive,
     searchedItems,
     searchedMarkers,

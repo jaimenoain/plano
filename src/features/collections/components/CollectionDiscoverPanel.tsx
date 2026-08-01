@@ -1,12 +1,17 @@
 /**
  * CollectionDiscoverPanel.tsx
  *
- * The rail's Discover tab: catalogue buildings in the current map view that this
- * collection doesn't hold yet, each one addable in a tap.
+ * The catalogue half of the rail's Discover view: buildings in the current map
+ * view that this collection doesn't hold yet, each one addable in a tap.
  *
  * It follows the map rather than the collection, which is the whole point — the
- * Collection tab next door still holds the roster, so an editor scouting in
+ * Collection view next door still holds the roster, so an editor scouting in
  * discovery mode can compare the two instead of losing one of them.
+ *
+ * It renders two ways. `standalone` is the whole Discover view and carries its
+ * own lead-in; `section` is one labelled band inside a view that already has
+ * others (All, or a Discover that also lists saved places), where a second
+ * lead-in would only repeat the heading sitting above it.
  *
  * Rows are `BuildingListRow`, the same row /search's browse list draws from the
  * same RPC. They are plain links: a discovered building is usually inside a
@@ -31,6 +36,8 @@ interface CollectionDiscoverPanelProps {
   excludeBuildingIds: Set<string>;
   /** The rail's shared scroll viewport: the infinite-scroll observer's root. */
   scrollRootRef: RefObject<HTMLDivElement | null>;
+  /** `section` drops the lead-in and the trailing gutter; a heading supplies both. */
+  variant?: "standalone" | "section";
 }
 
 function DiscoverSkeletons() {
@@ -54,6 +61,7 @@ export function CollectionDiscoverPanel({
   bounds,
   excludeBuildingIds,
   scrollRootRef,
+  variant = "standalone",
 }: CollectionDiscoverPanelProps) {
   const {
     buildings,
@@ -157,13 +165,16 @@ export function CollectionDiscoverPanel({
     );
   }
 
+  // The rail's own wrapper owns the bottom gutter, so both variants end flush.
   return (
-    <div className="pb-24 lg:pb-4">
-      <p className="border-b border-border-default px-4 py-3 text-xs leading-relaxed text-text-secondary">
-        Buildings in this map view that aren’t in the collection yet. Move the map to change the
-        list.
-      </p>
+    <>
+      {variant === "standalone" && (
+        <p className="border-b border-border-default px-4 py-3 text-xs leading-relaxed text-text-secondary">
+          Buildings in this map view that aren’t in the collection yet. Move the map to change the
+          list.
+        </p>
+      )}
       {renderBody()}
-    </div>
+    </>
   );
 }
