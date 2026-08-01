@@ -1,11 +1,14 @@
 /**
  * useCollectionMapPreferences.ts
  *
- * The collection map's per-viewer display state: the saved-places suggestion
- * overlay (+ its two filters) and the discovery layer (show every building in
- * view / hide the ones already collected). None of these belong to the
+ * The collection map's per-viewer display state: which *sources* the page may
+ * draw beyond the collection itself — the saved-places suggestion overlay (+ its
+ * two filters) and the catalogue discovery layer. None of these belong to the
  * collection — they are how *this* person is working on it right now — so they
  * persist to `localStorage` per (user, collection) rather than to the DB.
+ *
+ * Which of the enabled sources is on screen is *not* here: that is the rail's
+ * Collection / Discover / All view, session state on the page (ADR 0026).
  *
  * Hydration runs in a layout effect so the first painted frame already reflects
  * the stored values; writes go through the setters, never through an effect on
@@ -13,12 +16,10 @@
  */
 import { useCallback, useLayoutEffect, useState } from "react";
 import {
-  readHideCollectionPinsFromStorage,
   readSavedPlacesDotFilterFromStorage,
   readSavedPlacesStatusFilterFromStorage,
   readShowAllBuildingsFromStorage,
   readShowSavedCandidatesFromStorage,
-  writeHideCollectionPinsToStorage,
   writeSavedPlacesDotFilterToStorage,
   writeSavedPlacesStatusFilterToStorage,
   writeShowAllBuildingsToStorage,
@@ -35,8 +36,6 @@ export interface CollectionMapPreferences {
   setSavedPlacesStatusFilter: (value: SavedPlacesStatusFilter) => void;
   showAllBuildings: boolean;
   setShowAllBuildings: (value: boolean) => void;
-  hideCollectionPins: boolean;
-  setHideCollectionPins: (value: boolean) => void;
 }
 
 export function useCollectionMapPreferences(
@@ -48,7 +47,6 @@ export function useCollectionMapPreferences(
   const [savedPlacesStatusFilter, setSavedPlacesStatusFilterState] =
     useState<SavedPlacesStatusFilter>("all");
   const [showAllBuildings, setShowAllBuildingsState] = useState(false);
-  const [hideCollectionPins, setHideCollectionPinsState] = useState(false);
 
   useLayoutEffect(() => {
     if (!userId || !collectionId) return;
@@ -56,7 +54,6 @@ export function useCollectionMapPreferences(
     setSavedPlacesDotFilterState(readSavedPlacesDotFilterFromStorage(userId, collectionId));
     setSavedPlacesStatusFilterState(readSavedPlacesStatusFilterFromStorage(userId, collectionId));
     setShowAllBuildingsState(readShowAllBuildingsFromStorage(userId, collectionId));
-    setHideCollectionPinsState(readHideCollectionPinsFromStorage(userId, collectionId));
   }, [userId, collectionId]);
 
   const setShowSavedCandidates = useCallback(
@@ -87,20 +84,6 @@ export function useCollectionMapPreferences(
     (value: boolean) => {
       setShowAllBuildingsState(value);
       if (userId && collectionId) writeShowAllBuildingsToStorage(userId, collectionId, value);
-      // "Hide the collection" only ever makes sense while discovery is on; leaving
-      // it armed would blank the map the next time discovery is switched back on.
-      if (!value) {
-        setHideCollectionPinsState(false);
-        if (userId && collectionId) writeHideCollectionPinsToStorage(userId, collectionId, false);
-      }
-    },
-    [userId, collectionId],
-  );
-
-  const setHideCollectionPins = useCallback(
-    (value: boolean) => {
-      setHideCollectionPinsState(value);
-      if (userId && collectionId) writeHideCollectionPinsToStorage(userId, collectionId, value);
     },
     [userId, collectionId],
   );
@@ -114,7 +97,5 @@ export function useCollectionMapPreferences(
     setSavedPlacesStatusFilter,
     showAllBuildings,
     setShowAllBuildings,
-    hideCollectionPins,
-    setHideCollectionPins,
   };
 }

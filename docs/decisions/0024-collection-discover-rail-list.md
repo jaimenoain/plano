@@ -1,6 +1,9 @@
 # 0024 — The rail's Discover list reads the list RPC, not the cluster layer
 
-**Status:** accepted (2026-07-31)
+**Status:** accepted (2026-07-31); amended by [ADR 0026](0026-collection-rail-view-drives-the-map.md)
+(2026-08-01) — the Discover **tab** became one of three **views** that drive the map as well as the
+rail, and its content became the union of the enabled sources rather than the catalogue alone. The
+list contract below is unchanged.
 
 **Context.** [ADR 0021](0021-collection-map-two-cluster-sources.md) gave the collection map a
 discovery view, but only the *map*. The rail went on listing the collection roster whatever the map

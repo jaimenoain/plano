@@ -60,8 +60,8 @@ interface CollectionMapGLProps {
   /**
    * Discovery view (owner/editor only): also draw every building in the current
    * viewport, de-emphasized, so the collection can be built from the map.
-   * `hideCollectionPins` then drops the collection's own pins to leave only what
-   * could still be added, and `onAddToCollection` is the drawer's add action.
+   * `onAddToCollection` is the drawer's add action; `hideCollectionPins` drops the
+   * collection's own pins, derived from the rail's view, never stored (ADR 0026).
    */
   discoveryEnabled?: boolean;
   hideCollectionPins?: boolean;

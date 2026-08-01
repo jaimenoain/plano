@@ -3,7 +3,7 @@
  *
  * The "+" on a row that isn't in the collection yet. Shared by the two lists
  * that offer buildings from outside it — the search suggestions under a dead-end
- * query, and the Discover tab's viewport list — so the two can't drift on the
+ * query, and the Discover view's viewport list — so the two can't drift on the
  * label a screen reader hears or on what a click does to the row underneath.
  */
 import { Loader2, Plus } from "lucide-react";

@@ -1,13 +1,17 @@
 /**
  * CollectionDiscoverySettings.tsx
  *
- * The Map View tab's discovery controls: draw every building in view so the
- * collection can be built straight from the map, and optionally step the
- * collection's own pins aside to leave only what could still be added.
+ * The Map View tab's discovery control: draw every building in view so the
+ * collection can be built straight from the map.
  *
- * Like the Saved Places controls beside it, these are per-viewer preferences
- * that apply the moment they are switched — they are deliberately NOT part of
- * the dialog's `formData` and must not wait for "Save Changes".
+ * It switches the *source* on. Whether the collection's own pins step aside to
+ * leave only what could still be added is no longer a second switch buried
+ * here — it is the rail's Collection / Discover / All toggle, which says it in
+ * one place and applies to the list at the same time (ADR 0026).
+ *
+ * Like the Saved Places controls beside it, this is a per-viewer preference
+ * that applies the moment it is switched — deliberately NOT part of the
+ * dialog's `formData`, and it must not wait for "Save Changes".
  */
 import { Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -17,15 +21,11 @@ import { Switch } from "@/components/ui/switch";
 interface CollectionDiscoverySettingsProps {
   showAllBuildings: boolean;
   onShowAllBuildingsChange: (value: boolean) => void;
-  hideCollectionPins: boolean;
-  onHideCollectionPinsChange: (value: boolean) => void;
 }
 
 export function CollectionDiscoverySettings({
   showAllBuildings,
   onShowAllBuildingsChange,
-  hideCollectionPins,
-  onHideCollectionPinsChange,
 }: CollectionDiscoverySettingsProps) {
   return (
     <div className="space-y-3">
@@ -44,33 +44,14 @@ export function CollectionDiscoverySettings({
       </div>
 
       {showAllBuildings && (
-        <>
-          <Alert className="py-3">
-            <Info className="size-4 shrink-0" aria-hidden />
-            <AlertDescription className="text-xs">
-              These buildings are not part of this collection. Tap one to see it and add it.
-              Only you see this view.
-            </AlertDescription>
-          </Alert>
-          <div className="rounded-none border border-border-default bg-surface-muted/40 p-3">
-            <div className="flex items-center justify-between space-x-2">
-              <Label htmlFor="hide-collection-pins" className="flex flex-col space-y-1">
-                <span className="text-sm font-medium text-text-primary">
-                  Hide buildings already in this collection
-                </span>
-                <span className="font-normal text-xs text-text-secondary">
-                  Leave only what you could still add on the map. The rail keeps the full
-                  collection on its own tab either way.
-                </span>
-              </Label>
-              <Switch
-                id="hide-collection-pins"
-                checked={hideCollectionPins}
-                onCheckedChange={onHideCollectionPinsChange}
-              />
-            </div>
-          </div>
-        </>
+        <Alert className="py-3">
+          <Info className="size-4 shrink-0" aria-hidden />
+          <AlertDescription className="text-xs">
+            These buildings are not part of this collection. Tap one to see it and add it. Use the
+            Collection / Discover / All toggle above the list to choose which of them you see.
+            Only you see this view.
+          </AlertDescription>
+        </Alert>
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 /**
  * CollectionItemsPanel.tsx
  *
- * The body of the collection rail's All Items tab: every building row, the
+ * The roster band of the collection rail — the Collection and All views: every building row, the
  * collapsible "Trip Logistics" group of non-building markers, and the two empty
  * states (an untouched collection versus a query that matched nothing — a query
  * wins, since an untouched collection matches nothing either).

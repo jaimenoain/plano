@@ -1,10 +1,8 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
-  readHideCollectionPinsFromStorage,
   readShowAllBuildingsFromStorage,
   readShowSavedCandidatesFromStorage,
-  writeHideCollectionPinsToStorage,
   writeShowAllBuildingsToStorage,
   writeShowSavedCandidatesToStorage,
 } from "./collectionMapPreferences";
@@ -26,15 +24,14 @@ describe("collectionMapPreferences — boolean prefs", () => {
   it("defaults every switch to off before anything is stored", () => {
     expect(readShowSavedCandidatesFromStorage(USER, COLLECTION)).toBe(false);
     expect(readShowAllBuildingsFromStorage(USER, COLLECTION)).toBe(false);
-    expect(readHideCollectionPinsFromStorage(USER, COLLECTION)).toBe(false);
   });
 
   it("round-trips each switch", () => {
     writeShowAllBuildingsToStorage(USER, COLLECTION, true);
-    writeHideCollectionPinsToStorage(USER, COLLECTION, true);
+    writeShowSavedCandidatesToStorage(USER, COLLECTION, true);
 
     expect(readShowAllBuildingsFromStorage(USER, COLLECTION)).toBe(true);
-    expect(readHideCollectionPinsFromStorage(USER, COLLECTION)).toBe(true);
+    expect(readShowSavedCandidatesFromStorage(USER, COLLECTION)).toBe(true);
 
     writeShowAllBuildingsToStorage(USER, COLLECTION, false);
     expect(readShowAllBuildingsFromStorage(USER, COLLECTION)).toBe(false);
@@ -45,7 +42,6 @@ describe("collectionMapPreferences — boolean prefs", () => {
     writeShowAllBuildingsToStorage(USER, COLLECTION, true);
 
     expect(readShowSavedCandidatesFromStorage(USER, COLLECTION)).toBe(false);
-    expect(readHideCollectionPinsFromStorage(USER, COLLECTION)).toBe(false);
     expect(readShowAllBuildingsFromStorage(USER, "other-collection")).toBe(false);
     expect(readShowAllBuildingsFromStorage("other-user", COLLECTION)).toBe(false);
   });

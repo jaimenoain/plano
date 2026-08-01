@@ -40,8 +40,6 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
 import { mapCollectionItem } from "../mapCollectionItem";
-import { railTabCount, resolveRailTab, shouldShowRailTabs, type CollectionRailTab } from "../railTabs";
-import { CollectionDiscoverPanel } from "./CollectionDiscoverPanel";
 import { CollectionMapOverlays } from "./CollectionMapOverlays";
 import { getBoundsFromBuildings, isLngLatInBounds, type Bounds } from "@/utils/map";
 import { collectionStructuredData, SITE_URL } from "@/features/buildings/utils/structuredData";
@@ -55,8 +53,6 @@ import {
   CollectionMarker,
   Itinerary,
 } from "@/features/collections/types";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ItineraryList } from "@/features/collections/components/ItineraryList";
 import { useItineraryStore } from "@/features/itinerary/stores/useItineraryStore";
 
 import { DiscoveryBuilding, type StyleSummary } from "@/features/search/components/types";
@@ -77,9 +73,10 @@ import { lazyWithRetry } from "@/utils/lazyWithRetry";
 import { useGooglePlacePhotos } from "@/hooks/useGooglePlacePhotos";
 import { primaryBuildingCreditsToSummaries } from "@/features/credits/api/credits";
 import { CollectionHeaderUtilityActions } from "./CollectionAccessActions";
-import { CollectionItemsPanel } from "./CollectionItemsPanel";
 import { CollectionRailHeader } from "./CollectionRailHeader";
+import { CollectionRailPanels } from "./CollectionRailPanels";
 import { CollectionRailToolbar } from "./CollectionRailToolbar";
+import { CollectionRailViewToggle } from "./CollectionRailViewToggle";
 import { CollectionSearchBar } from "./CollectionSearchBar";
 import { useCollectionItemEdits } from "../hooks/useCollectionItemEdits";
 import { useCollectionMapSelection } from "../hooks/useCollectionMapSelection";
@@ -91,6 +88,7 @@ import {
   matchesSavedPlacesStatusFilter,
 } from "../collectionMapPreferences";
 import { useCollectionMapPreferences } from "../hooks/useCollectionMapPreferences";
+import { useCollectionRailView } from "../hooks/useCollectionRailView";
 
 const CollectionSettingsDialog = lazyWithRetry(() => import("@/features/collections/components/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
 const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("@/features/collections/components/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
@@ -183,7 +181,6 @@ export default function CollectionMap() {
   const [showPlanRoute, setShowPlanRoute] = useState(false);
   const [hasPlanRouteOpened, setHasPlanRouteOpened] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
-  const [railTab, setRailTab] = useState<CollectionRailTab>('items');
 
   // The rail scrolls as one column; the toolbar sticks once the masthead is gone.
   const railScrollRef = useRef<HTMLDivElement>(null);
@@ -270,8 +267,6 @@ export default function CollectionMap() {
     setSavedPlacesStatusFilter: handleSavedPlacesStatusFilterChange,
     showAllBuildings,
     setShowAllBuildings: handleShowAllBuildingsChange,
-    hideCollectionPins,
-    setHideCollectionPins: handleHideCollectionPinsChange,
   } = useCollectionMapPreferences(user?.id, collection?.id);
 
   // The current user's contributor role on this collection (null if not a contributor).
@@ -298,12 +293,15 @@ export default function CollectionMap() {
   // RLS bypass on collections, so they are treated as ordinary viewers here (no failing UI).
   const canEdit = isOwner || isEditorContributor;
 
-  // The rail's tab strip is conditional twice over, so the rendered tab is
-  // derived rather than corrected: switch discovery off while standing on
-  // Discover and the next render is already back on the collection.
-  const discoveryEnabled = showAllBuildings && canEdit;
-  const railTabCtx = { hasItinerary: !!collection?.itinerary, discoveryEnabled };
-  const activeTab = resolveRailTab(railTab, railTabCtx);
+  // Settings decides which layers exist; the rail toggle decides which of them
+  // you are looking at, in the list and on the map at once (ADR 0026).
+  const catalogueLayer = showAllBuildings && canEdit;
+  const rail = useCollectionRailView({
+    hasSavedPlacesLayer: showSavedCandidates,
+    hasDiscoveryLayer: catalogueLayer,
+    hasItinerary: !!collection?.itinerary,
+  });
+  const discoveryEnabled = catalogueLayer && rail.showsDiscovery;
 
   // Consume-once deep links (owner/editor only): ?settings=collaborators opens the settings sheet on
   // the Collaborators tab; ?addBuildings=1&createdBuilding=<id> is the "Create new building" return
@@ -741,7 +739,7 @@ export default function CollectionMap() {
     visibleItems,
     markers: markers ?? [],
     mapBuildings,
-    activeTab,
+    isSearchable: rail.view === 'collection' && !rail.showItinerary,
   });
   const { isActive: searchApplies, matchedIds } = search;
   const searchQuery = searchApplies ? search.appliedQuery : '';
@@ -749,11 +747,13 @@ export default function CollectionMap() {
   const allMapBuildings = useMemo(() => {
     // `mapBuildings` stays whole (bounds, stats, itinerary all need it); the
     // search narrows only what the map actually draws.
+    // Discover is the view minus the collection, so its own pins step aside.
+    const collectionPins = rail.showsCollection ? mapBuildings : [];
     const searchedMapBuildings = searchApplies
-      ? mapBuildings.filter(b => matchedIds.has(b.id))
-      : mapBuildings;
+      ? collectionPins.filter(b => matchedIds.has(b.id))
+      : collectionPins;
 
-    if (showSavedCandidates && savedCandidates) {
+    if (showSavedCandidates && rail.showsDiscovery && savedCandidates) {
       const filteredCandidates = filterDiscoveryBuildings(savedCandidates, searchQuery).filter(
         (c) =>
           !existingBuildingIds.has(c.id) &&
@@ -771,6 +771,8 @@ export default function CollectionMap() {
     searchQuery,
     savedCandidates,
     showSavedCandidates,
+    rail.showsCollection,
+    rail.showsDiscovery,
     existingBuildingIds,
     savedPlacesDotFilter,
     savedPlacesStatusFilter,
@@ -1077,7 +1079,7 @@ toast({
           viewMode === 'list' ? "order-2 flex h-full lg:order-2" : "hidden lg:flex lg:order-2",
         )}
         >
-            <Tabs value={activeTab} onValueChange={(val) => { setRailTab(val as CollectionRailTab); railScrollRef.current?.scrollTo({ top: 0 }); }} className="flex min-h-0 w-full flex-1 flex-col">
+            <div className="flex min-h-0 w-full flex-1 flex-col">
                 <div ref={railScrollRef} className="min-h-0 flex-1 overflow-y-auto">
                     <CollectionRailHeader
                         collection={collection}
@@ -1101,7 +1103,7 @@ toast({
                                 onOpenSettings={() => setShowSettings(true)}
                             />
                         }
-                        search={activeTab === 'items' && (
+                        search={search.isSearchable && (
                             <CollectionSearchBar
                                 value={search.query}
                                 onValueChange={search.setQuery}
@@ -1114,83 +1116,74 @@ toast({
                             />
                         )}
                     >
-                        {shouldShowRailTabs(railTabCtx) && (
-                            <TabsList className={cn("w-full grid", railTabCount(railTabCtx) === 3 ? "grid-cols-3" : "grid-cols-2")}>
-                                <TabsTrigger value="items">All Items</TabsTrigger>
-                                {collection.itinerary && <TabsTrigger value="itinerary">Itinerary</TabsTrigger>}
-                                {discoveryEnabled && <TabsTrigger value="discover">Discover</TabsTrigger>}
-                            </TabsList>
+                        {(rail.showToggle || collection.itinerary) && (
+                            <CollectionRailViewToggle
+                                showViewToggle={rail.showToggle}
+                                view={rail.view}
+                                onViewChange={(next) => {
+                                    rail.setView(next);
+                                    railScrollRef.current?.scrollTo({ top: 0 });
+                                }}
+                                hasItinerary={!!collection.itinerary}
+                                itineraryView={rail.itineraryView}
+                                onItineraryViewChange={rail.setItineraryView}
+                            />
                         )}
                     </CollectionRailToolbar>
 
-                    <TabsContent value="items" className="m-0 mt-0 p-0 data-[state=inactive]:hidden">
-                        <CollectionItemsPanel
-                            collectionId={collection.id}
-                            items={search.searchedItems}
-                            markers={search.searchedMarkers}
-                            excludeBuildingIds={existingBuildingIds}
-                            highlightedId={highlightedId}
-                            setHighlightedId={setHighlightedId}
-                            canEdit={canEdit}
-                            categorizationMethod={collection.categorization_method}
-                            customCategories={collection.custom_categories}
-                            showImages={collection.show_community_images ?? true}
-                            showAddedBy={collection.show_added_by ?? false}
-                            onUpdateNote={(itemId, note) => { void handleUpdateNote(itemId, note); }}
-                            onUpdateCategory={(itemId, catId) => { void handleUpdateCategory(itemId, catId); }}
-                            onUpdateMarkerNote={
-                              canEdit
+                    <CollectionRailPanels
+                        view={rail.view}
+                        itineraryView={rail.showItinerary}
+                        itineraryProps={{
+                            highlightedId,
+                            setHighlightedId,
+                            onUpdateItinerary: canEdit ? handleUpdateItinerary : undefined,
+                            canEdit,
+                            onUpdateNote: handleUpdateNote,
+                            onUpdateMarkerNote: canEdit ? handleUpdateMarkerNote : undefined,
+                            markerPlacePhotos: photos,
+                        }}
+                        itemsPanelProps={{
+                            collectionId: collection.id,
+                            items: search.searchedItems,
+                            markers: search.searchedMarkers,
+                            excludeBuildingIds: existingBuildingIds,
+                            highlightedId,
+                            setHighlightedId,
+                            canEdit,
+                            categorizationMethod: collection.categorization_method,
+                            customCategories: collection.custom_categories,
+                            showImages: collection.show_community_images ?? true,
+                            showAddedBy: collection.show_added_by ?? false,
+                            onUpdateNote: (itemId, note) => { void handleUpdateNote(itemId, note); },
+                            onUpdateCategory: (itemId, catId) => { void handleUpdateCategory(itemId, catId); },
+                            onUpdateMarkerNote: canEdit
                                 ? (markerId, note) => { void handleUpdateMarkerNote(markerId, note); }
-                                : undefined
-                            }
-                            onSelect={selectItem}
-                            onRemove={handleRemoveItem}
-                            searchableCount={search.searchableCount}
-                            isSearchActive={searchApplies}
-                            appliedQuery={search.appliedQuery}
-                            matchCount={matchedIds.size}
-                            onClearSearch={() => search.setQuery("")}
-                        />
-                    </TabsContent>
-
-                    <TabsContent value="itinerary" className="m-0 mt-0 p-0 data-[state=inactive]:hidden">
-                        <div className="p-4 pb-24 lg:pb-4">
-                            <ItineraryList
-                                highlightedId={highlightedId}
-                                setHighlightedId={setHighlightedId}
-                                onUpdateItinerary={canEdit ? handleUpdateItinerary : undefined}
-                                canEdit={canEdit}
-                                onUpdateNote={handleUpdateNote}
-                                onUpdateMarkerNote={canEdit ? handleUpdateMarkerNote : undefined}
-                                markerPlacePhotos={photos}
-                            />
-                            {!collection.itinerary && (
-                                <div className="text-center py-8 text-text-secondary">
-                                    <p>No itinerary generated yet.</p>
-                                    {canEdit && (
-                                        <Button
-                                            variant="outline"
-                                            className="mt-4"
-                                            onClick={() => setShowPlanRoute(true)}
-                                        >
-                                            Generate Itinerary
-                                        </Button>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </TabsContent>
-
-                    <TabsContent value="discover" className="m-0 mt-0 p-0 data-[state=inactive]:hidden">
-                        <CollectionDiscoverPanel
-                            collectionId={collection.id}
-                            bounds={viewportBounds}
-                            excludeBuildingIds={existingBuildingIds}
-                            scrollRootRef={railScrollRef}
-                        />
-                    </TabsContent>
+                                : undefined,
+                            onSelect: selectItem,
+                            onRemove: handleRemoveItem,
+                            searchableCount: search.searchableCount,
+                            isSearchActive: searchApplies,
+                            appliedQuery: search.appliedQuery,
+                            matchCount: matchedIds.size,
+                            onClearSearch: () => search.setQuery(""),
+                        }}
+                        discover={{
+                            collectionId: collection.id,
+                            bounds: viewportBounds,
+                            excludeBuildingIds: existingBuildingIds,
+                            scrollRootRef: railScrollRef,
+                            hasCatalogue: catalogueLayer,
+                            hasSavedPlaces: showSavedCandidates,
+                            savedPlaces: visibleSavedCandidatesToAdd,
+                            canEdit,
+                            onAddSavedPlace: handleAddToCollection,
+                            onAddAllSavedPlaces: handleOpenAddVisibleConfirm,
+                            isAddingAllSavedPlaces: isAddingVisibleCandidates,
+                        }}
+                    />
                 </div>
-            </Tabs>
+            </div>
         </div>
 
         {/* Map */}
@@ -1217,11 +1210,11 @@ toast({
                     onUpdateMarkerNote={canEdit ? handleUpdateMarkerNote : undefined}
                     onRemoveMarker={canEdit ? handleRemoveItem : undefined}
                     showSavedCandidates={showSavedCandidates}
-                    showItinerary={activeTab === 'itinerary'}
+                    showItinerary={rail.showItinerary}
                     onViewportBoundsChange={setViewportBounds}
                     fitBoundsRequest={search.fitBoundsRequest}
                     discoveryEnabled={discoveryEnabled}
-                    hideCollectionPins={hideCollectionPins}
+                    hideCollectionPins={rail.hideCollectionPins}
                     collectionBuildingIds={existingBuildingIds}
                     onAddToCollection={
                       canEdit
@@ -1248,7 +1241,7 @@ toast({
                         isAddingInView={isAddingVisibleCandidates}
                         onAddInView={handleOpenAddVisibleConfirm}
                         showAllBuildings={showAllBuildings}
-                        hideCollectionPins={hideCollectionPins}
+                        view={rail.view}
                         onExitDiscovery={() => handleShowAllBuildingsChange(false)}
                       />
                       ) : undefined
@@ -1259,12 +1252,12 @@ toast({
             {/* Mobile Itinerary Toggle */}
             {collection.itinerary && (
             <div className="lg:hidden">
-                 {activeTab !== 'itinerary' && viewMode === 'map' && (
+                 {!rail.showItinerary && viewMode === 'map' && (
                     <div className="absolute top-4 right-4 z-40">
                         <Button
                             variant="secondary"
                             className="shadow-none rounded-full"
-                            onClick={() => setRailTab('itinerary')}
+                            onClick={() => { rail.setView('collection'); rail.setItineraryView(true); }}
                         >
                             <ListFilter className="w-4 h-4 mr-2" />
                             Itinerary
@@ -1287,9 +1280,10 @@ toast({
                   refetchItems();
                   queryClient.invalidateQueries({ queryKey: ["collection", slug, ownerProfile?.id] });
                   if (action === 'created') {
-                    setRailTab('itinerary');
+                    rail.setView('collection');
+                    rail.setItineraryView(true);
                   } else if (action === 'removed') {
-                    setRailTab('items');
+                    rail.setItineraryView(false);
                   }
               }}
             />
@@ -1316,8 +1310,6 @@ toast({
                 onSavedPlacesStatusFilterChange={handleSavedPlacesStatusFilterChange}
                 showAllBuildings={showAllBuildings}
                 onShowAllBuildingsChange={handleShowAllBuildingsChange}
-                hideCollectionPins={hideCollectionPins}
-                onHideCollectionPinsChange={handleHideCollectionPinsChange}
                 isOwner={isOwner}
                 canEdit={canEdit}
                 initialTab={settingsInitialTab}

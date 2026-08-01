@@ -16,7 +16,7 @@ const baseProps = {
   isAddingInView: false,
   onAddInView: vi.fn(),
   showAllBuildings: false,
-  hideCollectionPins: false,
+  view: "collection" as const,
   onExitDiscovery: vi.fn(),
 } satisfies React.ComponentProps<typeof CollectionMapOverlays>;
 
@@ -79,13 +79,18 @@ describe("CollectionMapOverlays", () => {
 
   describe("the discovery chip", () => {
     it("says the map is showing the whole catalogue", () => {
-      render(<CollectionMapOverlays {...baseProps} showAllBuildings />);
+      render(<CollectionMapOverlays {...baseProps} showAllBuildings view="all" />);
       expect(screen.getByText("Discovery view")).toBeInTheDocument();
     });
 
     it("says so differently once the collection's own pins are hidden", () => {
-      render(<CollectionMapOverlays {...baseProps} showAllBuildings hideCollectionPins />);
+      render(<CollectionMapOverlays {...baseProps} showAllBuildings view="discover" />);
       expect(screen.getByText("Discovery · collection hidden")).toBeInTheDocument();
+    });
+
+    it("says the layer is merely available while the view is the collection alone", () => {
+      render(<CollectionMapOverlays {...baseProps} showAllBuildings view="collection" />);
+      expect(screen.getByText("Discovery available")).toBeInTheDocument();
     });
 
     it("is one tap out of discovery", async () => {
