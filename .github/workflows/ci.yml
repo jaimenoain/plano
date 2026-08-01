@@ -119,6 +119,12 @@ jobs:
         run: node scripts/check-file-sizes.mjs
       - name: Strict-allowlist ratchet
         run: node scripts/check-strict-allowlist.mjs
+      # Deliberately a STEP on this existing job, not a job of its own: a new job
+      # means a new runner and a new billed-minute floor, and this is a sub-second
+      # tree walk with no dependencies (ADR-0027). Fails when src/ or app/ reads an
+      # env var that .env.example does not document.
+      - name: .env.example drift
+        run: node scripts/check-env-example.mjs
 
   secret-scan:
     name: Secret scan

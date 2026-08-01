@@ -32,3 +32,4 @@ Format: context → decision → consequences. Keep them under a page.
 | [0024](0024-collection-discover-rail-list.md) | The collection rail's Discover list reads `get_buildings_list`, not the cluster layer, and carries no count badge |
 | [0025](0025-my-map-as-mode-and-route.md) | My Map is both the third mode on `/search` and the `/map` route; `/map` pins the mode and its other segments navigate |
 | [0026](0026-collection-rail-view-drives-the-map.md) | The collection rail's Collection / Discover / All view drives the map too, retiring the "hide collection pins" switch; Settings enables sources, the view picks between them |
+| [0027](0027-ai-review-batched-and-routed.md) | The scheduled AI review leaves the nightly tier: own baseline, batched, model-routed, capped |

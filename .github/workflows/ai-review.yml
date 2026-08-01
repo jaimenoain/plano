@@ -2,9 +2,11 @@ name: AI review
 
 # On-demand reviewer ONLY: comment "@claude <request>" on a PR to get a review
 # of the current state. Never blocks merge (not in the required checks). The
-# scheduled review of everything that lands on main lives in nightly.yml —
-# per-PR automatic reviews were removed to cut Anthropic API cost
-# (docs/decisions/0006-nightly-heavy-tier.md).
+# scheduled review of everything that lands on main lives in
+# ai-review-scheduled.yml — per-PR automatic reviews were removed to cut
+# Anthropic API cost (docs/decisions/0006-nightly-heavy-tier.md), and that
+# scheduled review was later batched and model-routed (ADR-0027). This workflow
+# is the escape hatch when you want a review NOW rather than at the next batch.
 on:
   issue_comment:
     types: [created]
