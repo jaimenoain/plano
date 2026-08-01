@@ -1,0 +1,393 @@
+# Scheduled AI review of everything that lands on `main`
+# (docs/decisions/0027-ai-review-batched-and-routed.md).
+#
+# Extracted from the nightly heavy tier (ADR-0006) so its baseline is INDEPENDENT
+# of whether Playwright passed. Under the old shape the guard resolved "the last
+# successful *nightly run*", so a flaky E2E suite pinned the baseline and the AI
+# re-reviewed the same (growing) diff at full Sonnet price every night until main
+# was fixed forward — observed for six of the eight nights to 2026-08-01, where
+# the `review` job succeeded and `E2E` failed.
+#
+# Shape: guard → review → alert.
+# - guard resolves a baseline that only advances when a review ACTUALLY RAN,
+#   drops noise-only paths, batches small change, and routes the model.
+# - review is one pass with a hard dollar ceiling.
+# - alert is advisory: it opens an `ai-review-broken` issue only on the THIRD
+#   consecutive failure, so a one-off API blip stays silent while a genuinely
+#   broken reviewer still surfaces.
+#
+# NAMING: this repo's `ai-review.yml` is the on-demand "@claude" PR responder,
+# so the scheduled review lives here under a distinct filename.
+#
+# Known trade-offs:
+# - GitHub auto-disables this cron after ~60 days of repo inactivity; any commit
+#   or manual dispatch revives it.
+# - The guard queries runs by WORKFLOW FILE NAME and matches on the job name
+#   `review` and the step name `Run AI review` — renaming any of the three resets
+#   the baseline (one redundant full review; harmless).
+# - A failed review does not advance the baseline, so the diff is re-reviewed
+#   next night. That is deliberate: an errored review reviewed nothing.
+name: AI review (scheduled)
+
+on:
+  schedule:
+    # Staggered against the rest of the fleet AND this repo's own crons
+    # (nightly 29 3, backup 41 2, branch sweep 17 4). Minute is derived from the
+    # repo name: sum of the char codes of "plano" mod 60 = 58.
+    - cron: '58 5 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Review even when the batching threshold has not been reached'
+        type: boolean
+        # Deliberately false: `true` made every manual dispatch bypass the guard.
+        # `force` skips the BATCHING threshold only — an empty or noise-only diff
+        # still skips, because reviewing nothing costs money and finds nothing.
+        default: false
+
+concurrency:
+  group: ai-review-scheduled
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+      base: ${{ steps.decide.outputs.base }}
+      signal_paths: ${{ steps.decide.outputs.signal_paths }}
+      model: ${{ steps.decide.outputs.model }}
+      extra_args: ${{ steps.decide.outputs.extra_args }}
+    steps:
+      # API-ONLY step: no checkout yet, so an idle night costs ~1 billed minute.
+      - name: Resolve the last actually-reviewed commit
+        id: baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # NOT `?status=success`: a run whose review step was SKIPPED (no API
+          # key, or the guard said "not enough change") still concludes success,
+          # which would advance the baseline over a diff nobody reviewed. Walk
+          # runs newest-first and take the first whose review STEP succeeded.
+          base=""
+          created=""
+          # `gh api` prints its error BODY to stdout, so a 404 (this workflow has
+          # no runs yet) would otherwise fill $ids with JSON fragments and send
+          # the loop off making junk calls. Capture, then parse defensively.
+          runs='{}'
+          if out="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ai-review-scheduled.yml/runs?branch=main&per_page=20" 2>/dev/null)"; then
+            runs="$out"
+          fi
+          ids="$(printf '%s' "$runs" | jq -r '.workflow_runs[]?.id // empty')"
+          for id in $ids; do
+            jobs='{}'
+            if out="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$id/jobs" 2>/dev/null)"; then
+              jobs="$out"
+            fi
+            ok="$(printf '%s' "$jobs" \
+                    | jq -r '[.jobs[]? | select(.name=="review") | .steps[]?
+                              | select(.name=="Run AI review") | .conclusion] | first // empty')"
+            if [ "$ok" = "success" ]; then
+              line="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$id" --jq '[.head_sha, .created_at] | @tsv')"
+              base="$(printf '%s' "$line" | cut -f1)"
+              created="$(printf '%s' "$line" | cut -f2)"
+              break
+            fi
+          done
+          echo "base_api=$base" >> "$GITHUB_OUTPUT"
+          echo "base_created=$created" >> "$GITHUB_OUTPUT"
+
+          # Nothing has landed since the last review — stop before checking out.
+          if [ -n "$base" ] && [ "$base" = "$GITHUB_SHA" ]; then
+            echo "stop=true" >> "$GITHUB_OUTPUT"
+            echo "### AI review skipped" >> "$GITHUB_STEP_SUMMARY"
+            echo "\`main\` is unchanged since the last reviewed commit \`${base:0:7}\` — no checkout, no review." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "stop=false" >> "$GITHUB_OUTPUT"
+            echo "baseline: ${base:-'(none — first run or no successful review in the last 20 runs)'}"
+          fi
+
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        if: steps.baseline.outputs.stop != 'true'
+        with:
+          fetch-depth: 0
+
+      - name: Compute the signal set, batching decision, and model
+        id: decide
+        if: steps.baseline.outputs.stop != 'true'
+        env:
+          BASE_API: ${{ steps.baseline.outputs.base_api }}
+          BASE_CREATED: ${{ steps.baseline.outputs.base_created }}
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && inputs.force }}
+        run: |
+          set -euo pipefail
+          base="$BASE_API"
+          created="$BASE_CREATED"
+          # First run ever, or the baseline is no longer reachable (force-push):
+          # fall back to main as of 7 days ago, then to the root commit. With no
+          # baseline run there is no `created_at`, so the age threshold is treated
+          # as "overdue" and the review runs.
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            base="$(git rev-list -1 --before='7 days ago' HEAD || true)"
+            [ -z "$base" ] && base="$(git rev-list --max-parents=0 HEAD | tail -1)"
+            created=""
+          fi
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+
+          # One `--numstat` pass gives paths AND line counts together: no second
+          # `git diff -- <paths>` that could blow ARG_MAX on a large batch.
+          # `--no-renames` keeps the path column a plain path.
+          git diff --numstat --no-renames "$base"..HEAD > /tmp/numstat.tsv || true
+
+          # Noise: paths that cannot carry a defect this reviewer could catch.
+          # Ratchet/baseline JSON is deliberately NOT noise — a raised baseline
+          # violates ADR-0003 and is exactly what a reviewer should see.
+          : > /tmp/signal.txt
+          signal_lines=0
+          while IFS=$'\t' read -r add del path; do
+            [ -z "${path:-}" ] && continue
+            case "$path" in
+              .github/*|docs/*|*.md|*.lock|package-lock.json|\
+              .gitignore|.prettierignore|.gitleaksignore|.nvmrc|CODEOWNERS) continue ;;
+            esac
+            printf '%s\n' "$path" >> /tmp/signal.txt
+            [ "$add" = "-" ] && add=0   # binary file
+            [ "$del" = "-" ] && del=0
+            signal_lines=$(( signal_lines + add + del ))
+          done < /tmp/numstat.tsv
+
+          signal_files="$(wc -l < /tmp/signal.txt | tr -d ' ')"
+          signal_commits="$(git rev-list --count "$base"..HEAD)"
+          if [ -n "$created" ]; then
+            days=$(( ( $(date -u +%s) - $(date -u -d "$created" +%s) ) / 86400 ))
+          else
+            days=999   # no baseline run to age from — treat as overdue
+          fi
+
+          # --- the decision -------------------------------------------------
+          if [ "$signal_files" -eq 0 ]; then
+            run=false
+            why="no signal paths — everything since \`${base:0:7}\` is noise (docs/CI/lockfile). The baseline deliberately does not advance; the noise rides along in a later diff."
+          elif [ "$FORCE" = "true" ]; then
+            run=true
+            why="forced via workflow_dispatch — batching threshold bypassed."
+          elif [ "$signal_commits" -ge 3 ] || [ "$signal_lines" -ge 200 ] || [ "$days" -ge 7 ]; then
+            run=true
+            why="threshold met."
+          else
+            run=false
+            why="below the batching threshold (needs 3+ commits, 200+ lines, or 7+ days) — change accumulates and is reviewed in one pass instead of five."
+          fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
+          # --- model routing ------------------------------------------------
+          # Haiku by default; Sonnet + effort only where a mistake is expensive.
+          # Patterns match THIS repo's layout (.cursor/rules/00-architecture.mdc):
+          # migrations and edge functions, the generated Supabase client/types,
+          # the auth feature, server-only modules, resource routes and SSR
+          # loaders, and every feature data-layer module.
+          model=claude-haiku-4-5
+          extra_args=""
+          risk=""
+          while IFS= read -r path; do
+            case "$path" in
+              supabase/migrations/*|supabase/functions/*|src/integrations/supabase/*|\
+              src/features/auth/*|src/features/*/api/*|*.server.ts|*.route.ts|*.loader.ts|\
+              *rls*|*polic*) risk="$risk $path" ;;
+            esac
+          done < /tmp/signal.txt
+          if [ -n "$risk" ] || [ "$signal_lines" -gt 800 ]; then
+            model=claude-sonnet-5
+            # --effort is only valid on current-generation models; it ERRORS on
+            # Haiku 4.5, which is why it rides in extra_args and not the static
+            # claude_args block.
+            extra_args="--effort medium"
+          fi
+          echo "model=$model" >> "$GITHUB_OUTPUT"
+          echo "extra_args=$extra_args" >> "$GITHUB_OUTPUT"
+
+          # --- signal paths for the prompt ----------------------------------
+          # Cap the list so a very large batch cannot produce an unusable prompt.
+          # A cap is never silent: it is stated here and in the step summary.
+          capped=""
+          if [ "$signal_files" -gt 200 ]; then
+            paths="$(head -200 /tmp/signal.txt | tr '\n' ' ')"
+            capped=" (prompt lists the first 200 of $signal_files)"
+          else
+            paths="$(tr '\n' ' ' < /tmp/signal.txt)"
+          fi
+          echo "signal_paths=$paths" >> "$GITHUB_OUTPUT"
+
+          # --- self-explaining summary --------------------------------------
+          {
+            echo "### AI review: \`run=$run\`"
+            echo ""
+            echo "$why"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| base | \`$base\` |"
+            echo "| signal_commits | $signal_commits |"
+            echo "| signal_lines | $signal_lines |"
+            echo "| days since baseline | $([ "$days" = "999" ] && echo 'n/a (no baseline run)' || echo "$days") |"
+            echo "| signal files | ${signal_files}${capped} |"
+            echo "| model | \`$model\` $extra_args |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  review:
+    name: review
+    needs: guard
+    if: needs.guard.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
+      # claude-code-action@v1 exchanges an OIDC token for its GitHub token;
+      # without this the job fails at startup ("Could not fetch an OIDC token").
+      id-token: write
+    env:
+      # secrets.* is not allowed in step `if:` expressions; mirror presence here
+      HAS_ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+      # Runners do not export GITHUB_TOKEN to processes — the agent's
+      # `gh issue` calls need it explicitly.
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        if: env.HAS_ANTHROPIC_KEY == 'true'
+        with:
+          fetch-depth: 0
+      - name: Ensure the ai-review label exists
+        if: env.HAS_ANTHROPIC_KEY == 'true'
+        run: |
+          gh label create ai-review --repo "$GITHUB_REPOSITORY" \
+            --color 1D76DB --description "Findings from the scheduled AI review" --force
+      # This step's NAME is load-bearing: the guard advances the baseline only
+      # when a step called exactly "Run AI review" concluded success. It carries
+      # NO continue-on-error — with it, a credit-exhausted step reports a
+      # non-failure conclusion and the baseline would advance over a diff nobody
+      # reviewed. The `alert` job below is what keeps a broken key from paging
+      # like a broken build (supersedes ADR-0013's continue-on-error mechanism).
+      - name: Run AI review
+        if: env.HAS_ANTHROPIC_KEY == 'true'
+        uses: anthropics/claude-code-action@ba0aafd4308cbba7165f9f2cdb0cfbed5a3c99ce # v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ github.token }}
+          # Lets the scheduled github-actions trigger past the action's bot-actor
+          # gate — without it the scheduled review never runs at all (ADR-0013).
+          allowed_bots: '*'
+          prompt: |
+            Review of everything merged to main since the last reviewed commit.
+            There is NO pull request context.
+
+            BASE: ${{ needs.guard.outputs.base }}
+            HEAD: ${{ github.sha }}
+            FILES TO REVIEW: ${{ needs.guard.outputs.signal_paths }}
+
+            1. Run `git diff BASE..HEAD -- FILES` and `git log --oneline BASE..HEAD`.
+               Review ONLY those files. If the diff is empty, stop and post nothing.
+
+            2. Do NOT report anything the deterministic gates already block. CI fails
+               the PR on all of these, so flagging them is pure noise:
+               ESLint errors and any growth in the warning baseline, `tsc` type
+               errors, failing vitest specs, coverage regressions, new `as any` /
+               `@ts-ignore` / `eslint-disable` past the baseline, files over 600
+               lines, raw hex colours in swept design surfaces (design tokens),
+               secrets in the diff or in git history, known high/critical CVEs in
+               production dependencies, importing the Supabase browser client
+               outside `src/features/*/api/**` or `*.loader.ts` (the ESLint
+               data-layer boundary), a migration filename collision or malformed
+               timestamp, a public table created without RLS enabled, a migration
+               without regenerated `src/integrations/supabase/types.ts`, an env var
+               read in `src/` but missing from `.env.example`, and hand-edited
+               generated database types.
+
+            3. Look ONLY for what no script can catch:
+               - Row-level security: a new table or policy whose USING/WITH CHECK
+                 expression leaves rows reachable across users, or the service-role
+                 key reachable from client-side code. `check-rls-coverage.mjs` only
+                 proves RLS is *enabled*, never that a policy is *correct*.
+               - Authorization logic that is wrong even though the import boundary
+                 is respected — in particular `getSession()` standing in for
+                 `getUser()` on a decision, or an owner check that trusts a
+                 client-supplied id.
+               - Tests that exist but assert nothing meaningful, or a new critical
+                 user path shipped with no e2e coverage.
+               - Money, date, timezone, and rounding arithmetic.
+               - Swallowed errors and silent failure paths.
+               - SSR-unsafe code: `window` / `document` / `localStorage` touched at
+                 module scope in a file that renders on the server.
+               - Semantic drift from docs/DATA_CONTRACT.md beyond the mechanical
+                 migration↔types pairing CI already checks.
+               Use Read/Grep on the checked-out repo to confirm each suspicion
+               against surrounding code before reporting it.
+
+            4. At most 5 findings, most severe first. ONLY if you find real problems:
+               run `gh issue list --state open --label ai-review` first — comment on
+               the existing open issue if there is one, otherwise create ONE issue
+               with `gh issue create --label ai-review` titled
+               "AI review: <short summary>". For each finding give the file path,
+               what looks wrong, severity, confidence, and the commit that
+               introduced it. These are flags to investigate, not confirmed facts —
+               you may be wrong.
+
+            If nothing is wrong, exit without posting anything.
+          # --max-budget-usd is the real ceiling. --max-turns is set high so it is
+          # NOT the binding constraint: running out of turns is a hard failure
+          # (error_max_turns), and a sibling repo recorded two nightly failures at
+          # --max-turns 25. Do not go back below ~60.
+          claude_args: |
+            --model ${{ needs.guard.outputs.model }}
+            --max-turns 60
+            --max-budget-usd 2
+            ${{ needs.guard.outputs.extra_args }}
+            --allowedTools "Bash(git diff:*),Bash(git log:*),Bash(gh issue list:*),Bash(gh issue create:*),Bash(gh issue comment:*),Read,Grep,Glob"
+          # Surface Claude's output in the run log; without this an execution
+          # error is invisible.
+          show_full_output: true
+
+  # The review is ADVISORY: a broken or unfunded API key must not masquerade as a
+  # broken build (that is what `nightly-failure` means), but it must not be silent
+  # either. So this pages on the third consecutive failure and no sooner, under its
+  # own amber label. Skipped upstream jobs do NOT trip failure(), so a guard that
+  # said "not enough change" stays quiet.
+  alert:
+    needs: [guard, review]
+    if: failure()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    steps:
+      - name: Open (or comment on) the ai-review-broken issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          prev="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ai-review-scheduled.yml/runs?branch=main&per_page=3" \
+                    --jq '[.workflow_runs[] | select(.id != ${{ github.run_id }}) | .conclusion] | .[0:2] | join(",")')"
+          [ "$prev" = "failure,failure" ] || { echo "first or second consecutive failure — staying quiet"; exit 0; }
+
+          gh label create ai-review-broken --repo "$GITHUB_REPOSITORY" \
+            --color FBCA04 --description "The scheduled AI review has failed three nights running" --force
+          BODY="The **AI review (scheduled)** workflow has failed three runs in a row on \`main\`, most recently at \`${GITHUB_SHA}\`.
+
+          Run: $RUN_URL
+
+          This is **advisory** — it does not mean \`main\` is broken (see the \`nightly-failure\` label for that). The usual causes are an exhausted or rotated \`ANTHROPIC_API_KEY\`, or the action rejecting the scheduled bot trigger. Check the run log (\`show_full_output\` is on) before assuming a code problem. Close once a subsequent run posts a review."
+          EXISTING=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
+            --label ai-review-broken --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --repo "$GITHUB_REPOSITORY" --body "$BODY"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" \
+              --title "🟡 The scheduled AI review has been failing for three nights" \
+              --body "$BODY" --label ai-review-broken
+          fi

@@ -59,7 +59,7 @@ If a **ratchet** fails (ESLint warnings, `as any`, file size, strict-TS allowlis
 ## Ship
 
 1. Branch, commit, push — direct pushes to `main` are blocked.
-2. Open a PR; the 10 required checks must pass (see [`CONTRIBUTING.md`](../CONTRIBUTING.md)). Want an AI review? Comment `@claude <request>` on the PR; a scheduled review of everything on `main` also runs nightly ([ADR 0006](decisions/0006-nightly-heavy-tier.md)).
+2. Open a PR; the 10 required checks must pass (see [`CONTRIBUTING.md`](../CONTRIBUTING.md)). Want an AI review? Comment `@claude <request>` on the PR; a scheduled review of everything on `main` also runs on its own cron, batched so it only spends a pass once 3+ commits, 200+ changed lines, or 7 days have accumulated ([ADR 0027](decisions/0027-ai-review-batched-and-routed.md)). Findings land on an `ai-review`-labelled issue; an `ai-review-broken` issue means the reviewer itself is failing, not that `main` is.
 3. Merge → **Vercel deploys `main` automatically** (`@vercel/react-router`; config in [`vercel.json`](../vercel.json), details in [`LAUNCH_HOSTING.md`](LAUNCH_HOSTING.md)).
 
 Schema changes never go through the Supabase dashboard: write a timestamped migration in `supabase/migrations/`, apply it via the Supabase MCP `apply_migration`, run `npm run gen-types`, and commit both in the same PR — full workflow in [`migrations.md`](migrations.md). **If the migration is destructive or irreversible** (drops/renames a column or table, deletes rows, rewrites data), take a restore point first — see [Data safety](#data-safety--backups--restore).

@@ -18,10 +18,10 @@ Auto-merge is armed automatically for every ready (non-draft) PR by [`.github/wo
 - **Warning ratchet** — `node scripts/check-eslint-ratchet.mjs`; no ESLint-warning bucket may grow
 - **Secret scan** — gitleaks over the working tree
 - **Types staleness** — a migration in the PR requires regenerated `types.ts` in the same PR
-- **Debt ratchet** — `as any`/`@ts-ignore` count, file-size budgets, strict-TS allowlist (`scripts/check-*-ratchet.mjs`, `check-file-sizes.mjs`, `check-strict-allowlist.mjs`)
+- **Debt ratchet** — `as any`/`@ts-ignore` count, file-size budgets, strict-TS allowlist, `.env.example` drift (`scripts/check-*-ratchet.mjs`, `check-file-sizes.mjs`, `check-strict-allowlist.mjs`, `check-env-example.mjs`)
 - **RLS coverage** — `node scripts/check-rls-coverage.mjs`; every public table created in migrations must enable row-level security (promoted from advisory 2026-07-09)
 
-Advisory (non-blocking, promoted once stable): dependency audit, dependency review, strict typecheck. The Playwright E2E suite and the AI review run nightly against `main` instead of per PR ([ADR 0006](docs/decisions/0006-nightly-heavy-tier.md)); comment `@claude <request>` on a PR for an on-demand review. Human PR reviews are **not required** — merges to `main` are gated solely on the required checks above, and PRs auto-merge once green. See [ADR 0005](docs/decisions/0005-auto-merge-on-green.md) for the rationale.
+Advisory (non-blocking, promoted once stable): dependency audit, dependency review, strict typecheck. The Playwright E2E suite runs nightly against `main` instead of per PR ([ADR 0006](docs/decisions/0006-nightly-heavy-tier.md)). The AI review runs on its own schedule and only once enough has landed to be worth a pass — 3+ commits, 200+ changed lines, or 7 days ([ADR 0027](docs/decisions/0027-ai-review-batched-and-routed.md)); comment `@claude <request>` on a PR for an immediate on-demand review. Human PR reviews are **not required** — merges to `main` are gated solely on the required checks above, and PRs auto-merge once green. See [ADR 0005](docs/decisions/0005-auto-merge-on-green.md) for the rationale.
 
 Every PR must also meet the **Definition of Done** in [`AGENTS.md`](AGENTS.md) — tests and doc updates ship in the same PR as the change.
 
