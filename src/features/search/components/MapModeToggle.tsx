@@ -1,5 +1,5 @@
 /**
- * The page-level All / Discover / My map switch. The mode was once buried as a
+ * The page-level My map / Discover / All switch. The mode was once buried as a
  * "View Mode" section inside the filter drawer; it is really a destination
  * choice (everything, the world minus your own, or only your own), so it lives
  * on the page itself.
@@ -57,9 +57,9 @@ export function MapModeToggle({
     <SegmentedControl
       name={name}
       options={[
-        { label: 'All', value: 'all' },
-        { label: 'Discover', value: 'discover' },
         ...(user ? [{ label: 'My map', value: 'library' }] : []),
+        { label: 'Discover', value: 'discover' },
+        { label: 'All', value: 'all' },
       ]}
       value={mode ?? 'all'}
       onValueChange={handleChange}
