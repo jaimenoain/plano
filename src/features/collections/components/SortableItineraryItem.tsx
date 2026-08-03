@@ -48,7 +48,7 @@ export function SortableItineraryItem({
     if (!marker) return null;
 
     return (
-      <div ref={setNodeRef} style={style} className="mb-2">
+      <div ref={setNodeRef} style={style} className="mb-1">
         <CollectionMarkerCard
           marker={marker}
           isHighlighted={highlightedId === marker.id}
@@ -58,6 +58,7 @@ export function SortableItineraryItem({
           isDraggable={!!canEdit}
           dragHandleProps={canEdit ? { ...attributes, ...listeners } : undefined}
           badgeIndex={badgeIndex}
+          compact
           onUpdateNote={
             canEdit && onUpdateMarkerNote
               ? (note) => {
@@ -107,12 +108,13 @@ export function SortableItineraryItem({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="mb-2">
+    <div ref={setNodeRef} style={style} className="mb-1">
       <CollectionBuildingCard
         item={item}
         isHighlighted={highlightedId === building.id}
         setHighlightedId={setHighlightedId}
         canEdit={!!canEdit}
+        compact
         onUpdateNote={(note) => {
           if (onUpdateNote && building.collection_item_id) {
             onUpdateNote(building.collection_item_id, note);

@@ -251,7 +251,7 @@ function ItinerarySegment({
 
   if (!canEdit) {
     return (
-      <div className="relative flex items-center justify-center h-6 my-1 group">
+      <div className="relative flex items-center justify-center h-5 my-0.5 group">
         <div className="absolute top-0 bottom-0 w-px bg-border group-hover:bg-brand-primary/50 transition-colors" />
 
         <div className="relative z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity w-full px-4">
@@ -504,7 +504,7 @@ function ItineraryDayColumn({
                     {description}
                 </div>
              )}
-             <div ref={setNodeRef} className="p-2 min-h-[50px] space-y-2">
+             <div ref={setNodeRef} className="p-1.5 min-h-[50px] space-y-1">
                 <SortableContext
                     items={stops.map(s => s.id)}
                     strategy={verticalListSortingStrategy}
@@ -847,6 +847,7 @@ export function ItineraryList({
                             onNavigate={() => {}}
                             isDraggable={true}
                             badgeIndex={0}
+                            compact
                          />
                      </div>
                 ) : activeMarker ? (
@@ -859,6 +860,7 @@ export function ItineraryList({
                             onNavigate={() => {}}
                             isDraggable={true}
                             badgeIndex={0}
+                            compact
                          />
                      </div>
                 ) : null}
