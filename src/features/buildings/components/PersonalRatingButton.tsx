@@ -28,6 +28,7 @@ export function PersonalRatingButton({
   buildingId,
   initialRating,
   onRate,
+  status,
   isLoading = false,
   label = "Rate",
   variant = 'popover',
@@ -42,6 +43,11 @@ export function PersonalRatingButton({
 
   // If initialRating is provided, display it.
   const hasRated = initialRating !== null && initialRating > 0;
+
+  // Saved/Visited buildings always carry an award: the DB stores tier 0 as NULL,
+  // but 0 is "Interesting" — a real earned tier, never an unrated state. So once
+  // a building is tracked, the summary shows its tier instead of a rate prompt.
+  const isTracked = status === 'pending' || status === 'visited';
 
   // MichelinRatingInput's four tiers are discrete choices (0 = "Interesting" is a
   // real earned tier, not "unrated"), so there is no toggle-off-on-reclick affordance
@@ -69,7 +75,8 @@ export function PersonalRatingButton({
   // selected MichelinRatingInput row; clicking it expands the full four-tier
   // picker inline (no floating dropdown), and selecting collapses it again.
   if (variant === 'collapsible') {
-    const selectedTier = AWARD_TIERS.find((t) => t.value === initialRating);
+    const showsTier = hasRated || isTracked;
+    const selectedTier = AWARD_TIERS.find((t) => t.value === (initialRating ?? 0));
 
     return (
       <div className="relative">
@@ -111,12 +118,12 @@ export function PersonalRatingButton({
                 "group flex w-full items-center justify-between gap-4 rounded-sm border px-3 py-2 text-left transition-colors",
                 "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2",
                 "disabled:cursor-not-allowed disabled:opacity-50",
-                hasRated
+                showsTier
                   ? "border-border-strong bg-surface-muted hover:bg-surface-muted"
                   : "border-dashed border-border-default bg-surface-card hover:bg-surface-muted",
               )}
             >
-              {hasRated && selectedTier ? (
+              {showsTier && selectedTier ? (
                 <>
                   <span className="flex flex-col">
                     <span className="text-sm font-medium text-text-primary">
