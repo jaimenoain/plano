@@ -846,8 +846,7 @@ export function ItineraryList({
                             }}
                             onNavigate={() => {}}
                             isDraggable={true}
-                            badgeIndex={0}
-                            compact
+                            badgeIndex={0} compact
                          />
                      </div>
                 ) : activeMarker ? (
@@ -859,8 +858,7 @@ export function ItineraryList({
                             canEdit={false}
                             onNavigate={() => {}}
                             isDraggable={true}
-                            badgeIndex={0}
-                            compact
+                            badgeIndex={0} compact
                          />
                      </div>
                 ) : null}
