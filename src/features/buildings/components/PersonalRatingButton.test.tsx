@@ -128,7 +128,7 @@ describe("PersonalRatingButton", () => {
       expect(screen.queryByRole("radiogroup")).toBeNull();
     });
 
-    it("unrated: shows a prompt to rate rather than a tier summary", () => {
+    it("untracked: shows a prompt to rate rather than a tier summary", () => {
       render(
         <PersonalRatingButton
           buildingId="123"
@@ -141,6 +141,44 @@ describe("PersonalRatingButton", () => {
       const summary = screen.getByRole("button", { name: /edit rating/i });
       expect(summary.textContent).toContain("Rate this building");
       expect(screen.queryByRole("radiogroup")).toBeNull();
+    });
+
+    // A Saved/Visited building always has an award: the DB stores tier 0 as
+    // NULL, but 0 is "Interesting", not "unrated". The summary must say so.
+    it.each([["pending"], ["visited"]] as const)(
+      "%s: tier 0 reads as Interesting, never a rate prompt",
+      (status) => {
+        render(
+          <PersonalRatingButton
+            buildingId="123"
+            initialRating={0}
+            status={status}
+            onRate={mockOnRate}
+            variant="collapsible"
+          />
+        );
+
+        const summary = screen.getByRole("button", { name: /edit rating/i });
+        expect(summary.textContent).toContain("Interesting");
+        expect(summary.textContent).toContain("Worth a look");
+        expect(summary.textContent).not.toContain("Rate this building");
+      },
+    );
+
+    it("tracked with a null rating still reads as Interesting", () => {
+      render(
+        <PersonalRatingButton
+          buildingId="123"
+          initialRating={null}
+          status="pending"
+          onRate={mockOnRate}
+          variant="collapsible"
+        />
+      );
+
+      const summary = screen.getByRole("button", { name: /edit rating/i });
+      expect(summary.textContent).toContain("Interesting");
+      expect(summary.textContent).not.toContain("Rate this building");
     });
   });
 });

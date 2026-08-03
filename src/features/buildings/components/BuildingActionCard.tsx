@@ -185,6 +185,7 @@ export function BuildingActionCard({
           variant="collapsible"
           buildingId={building.id}
           initialRating={myRating}
+          status={userStatus}
           onRate={onRate}
         />
       </div>

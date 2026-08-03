@@ -209,12 +209,17 @@ describe('BuildingDetails Rating', () => {
       expect(screen.getByRole("button", { name: /visited/i })).toBeTruthy();
     });
 
-    // The sidebar "My Rating" control is now collapsed by default
+    // The sidebar "My Rating" control is collapsed by default
     // (PersonalRatingButton variant="collapsible"): it shows only a summary
-    // row until clicked. The mocked entry has rating 0 (unrated here), so the
-    // summary is the "Rate this building" prompt — click it to expand the
-    // discrete four-tier radiogroup.
-    fireEvent.click(screen.getByRole("button", { name: /edit rating/i }));
+    // row until clicked. The mocked entry is Visited with rating 0, which is
+    // the "Interesting" tier — a tracked building is never unrated, so the
+    // summary must name the tier and never prompt "Rate this building".
+    const summary = screen.getByRole("button", { name: /edit rating/i });
+    expect(summary.textContent).toContain("Interesting");
+    expect(summary.textContent).not.toContain("Rate this building");
+
+    // Click it to expand the discrete four-tier radiogroup.
+    fireEvent.click(summary);
 
     const group = screen.getByRole("radiogroup", { name: /award rating/i });
     expect(group).toBeTruthy();
