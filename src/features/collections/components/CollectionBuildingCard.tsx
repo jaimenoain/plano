@@ -2,7 +2,7 @@ import { forwardRef, useState, useRef, useEffect } from "react";
 import { CollectionItemWithBuilding } from "@/features/collections/types";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
-import { Save, MessageSquarePlus, GripVertical, Medal, Trash2 } from "lucide-react";
+import { Save, MessageSquarePlus, GripVertical, Medal, Trash2, Building2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,8 @@ interface CollectionBuildingCardProps {
   isDraggable?: boolean;
   dragHandleProps?: Record<string, unknown>;
   badgeIndex?: number;
+  /** Tighter row for the itinerary drag-and-drop list: small side thumbnail instead of a full-width image, condensed spacing. */
+  compact?: boolean;
 }
 
 export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuildingCardProps>(
@@ -48,7 +50,8 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
     onRemove,
     isDraggable,
     dragHandleProps,
-    badgeIndex
+    badgeIndex,
+    compact = false,
   }, ref) => {
     const [isEditingNote, setIsEditingNote] = useState(false);
     const [noteValue, setNoteValue] = useState(item.note || "");
@@ -96,7 +99,10 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
         >
             {canEdit && onRemove && (
                 <div
-                    className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                    className={cn(
+                        "absolute right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150",
+                        compact ? "top-1" : "top-2"
+                    )}
                     onClick={(e) => e.stopPropagation()}
                 >
                     <Button variant="destructive" size="icon-sm" onClick={onRemove} title="Remove from collection">
@@ -104,12 +110,15 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                     </Button>
                 </div>
             )}
-            <div className="flex flex-col min-h-28">
+            <div className={cn("flex flex-col", !compact && "min-h-28")}>
                 {/* Drag Handle + Content */}
                 <div className="flex items-stretch">
                     {isDraggable && (
                         <div
-                            className="flex items-center justify-center px-2 cursor-grab active:cursor-grabbing text-text-secondary hover:text-text-primary hover:bg-surface-muted/50 transition-colors border-r border-border-default"
+                            className={cn(
+                                "flex items-center justify-center cursor-grab active:cursor-grabbing text-text-secondary hover:text-text-primary hover:bg-surface-muted/50 transition-colors border-r border-border-default",
+                                compact ? "px-1.5" : "px-2"
+                            )}
                             {...dragHandleProps}
                             onClick={(e) => e.stopPropagation()}
                         >
@@ -117,19 +126,42 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                         </div>
                     )}
 
-                    <div className="flex-1 p-3 min-w-0 flex flex-col justify-between">
+                    {compact && showImages && (
+                        <div className="w-10 h-10 shrink-0 self-center ml-2 rounded-sm overflow-hidden bg-surface-muted">
+                            {imageUrl ? (
+                                <img
+                                    src={imageUrl}
+                                    alt=""
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-text-secondary">
+                                    <Building2 className="h-4 w-4" />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <div className={cn("flex-1 min-w-0 flex flex-col justify-between", compact ? "p-2" : "p-3")}>
                     <div>
                         <div className="flex justify-between items-start gap-2 min-w-0">
                              <div className="flex items-start gap-2 min-w-0">
                                 {badgeIndex !== undefined && (
-                                    <div className="flex items-center justify-center min-w-5 h-5 rounded-sm bg-brand-primary text-[10px] font-bold text-brand-primary-foreground mt-0.5 px-1">
+                                    <div className={cn(
+                                        "flex items-center justify-center min-w-5 h-5 rounded-sm bg-brand-primary text-[10px] font-bold text-brand-primary-foreground px-1",
+                                        compact ? "mt-px" : "mt-0.5"
+                                    )}>
                                         {badgeIndex}
                                     </div>
                                 )}
-                                <h3 className="font-semibold text-sm leading-tight line-clamp-2 text-text-primary">
+                                <h3 className={cn(
+                                    "font-semibold leading-tight text-text-primary",
+                                    compact ? "text-xs line-clamp-1" : "text-sm line-clamp-2"
+                                )}>
                                     {item.building.name}
                                 </h3>
-                                {item.building.winner_award_name && (
+                                {item.building.winner_award_name && !compact && (
                                     <Badge variant="secondary" className="bg-amber-500/10 text-amber-600 border-amber-500/20 px-1.5 py-0 h-4 text-[9px] uppercase tracking-wider font-bold shrink-0">
                                         <Medal className="h-2.5 w-2.5 mr-1" />
                                         Winner
@@ -138,18 +170,20 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                              </div>
                         </div>
 
-                        <div className="text-xs text-text-secondary mt-1 line-clamp-1">
-                             <span>{creditNames || "—"}</span>
-                             {item.building.year_completed && (
-                                <>
-                                  <span className="mx-1">•</span>
-                                  <span>{item.building.year_completed}</span>
-                                </>
-                             )}
-                        </div>
+                        {!compact && (
+                            <div className="text-xs text-text-secondary mt-1 line-clamp-1">
+                                 <span>{creditNames || "—"}</span>
+                                 {item.building.year_completed && (
+                                    <>
+                                      <span className="mx-1">•</span>
+                                      <span>{item.building.year_completed}</span>
+                                    </>
+                                 )}
+                            </div>
+                        )}
 
                         {/* Category Badge (only for custom method) */}
-                        {categorizationMethod === 'custom' && (
+                        {categorizationMethod === 'custom' && !compact && (
                             <div className="mt-2" onClick={(e) => e.stopPropagation()}>
                                 {canEdit ? (
                                     <Select
@@ -198,7 +232,7 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                     </div>
 
                     {/* Note Section */}
-                    <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                    <div className={cn(compact ? "mt-0.5" : "mt-2")} onClick={(e) => e.stopPropagation()}>
                         {canEdit ? (
                             isEditingNote ? (
                                 <div className="relative group/note">
@@ -208,40 +242,61 @@ export const CollectionBuildingCard = forwardRef<HTMLDivElement, CollectionBuild
                                         value={noteValue}
                                         onChange={(e) => setNoteValue(e.target.value)}
                                         onBlur={handleNoteBlur}
-                                        className="resize-none text-xs min-h-[40px] bg-surface-muted/30 border-transparent focus:border-border-default focus:bg-surface-default transition-colors p-2"
-                                        rows={3}
+                                        className={cn(
+                                            "resize-none text-xs bg-surface-muted/30 border-transparent focus:border-border-default focus:bg-surface-default transition-colors p-2",
+                                            compact ? "min-h-[32px]" : "min-h-[40px]"
+                                        )}
+                                        rows={compact ? 2 : 3}
                                     />
                                     <div className="absolute bottom-1 right-1 opacity-50 pointer-events-none">
                                         <Save className="h-3 w-3" />
                                     </div>
                                 </div>
                             ) : noteValue ? (
-                                <div
-                                    className="text-xs text-text-secondary italic bg-surface-muted/30 p-2 rounded-sm line-clamp-3 cursor-text hover:bg-surface-muted/50 transition-colors"
-                                    onClick={() => setIsEditingNote(true)}
-                                >
-                                    "{noteValue}"
-                                </div>
+                                compact ? (
+                                    <div
+                                        className="text-[11px] text-text-secondary italic line-clamp-1 cursor-text hover:text-text-primary transition-colors"
+                                        onClick={() => setIsEditingNote(true)}
+                                    >
+                                        "{noteValue}"
+                                    </div>
+                                ) : (
+                                    <div
+                                        className="text-xs text-text-secondary italic bg-surface-muted/30 p-2 rounded-sm line-clamp-3 cursor-text hover:bg-surface-muted/50 transition-colors"
+                                        onClick={() => setIsEditingNote(true)}
+                                    >
+                                        "{noteValue}"
+                                    </div>
+                                )
                             ) : (
                                <button
                                    onClick={() => setIsEditingNote(true)}
-                                   className="text-xs text-text-secondary hover:text-text-primary flex items-center gap-1 px-1 py-0.5 rounded-sm hover:bg-surface-muted/50 transition-colors opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                                   className={cn(
+                                       "text-text-secondary hover:text-text-primary flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150",
+                                       compact ? "text-[11px]" : "text-xs px-1 py-0.5 rounded-sm hover:bg-surface-muted/50 transition-colors"
+                                   )}
                                >
-                                   <MessageSquarePlus className="h-3 w-3" />
+                                   <MessageSquarePlus className={compact ? "h-2.5 w-2.5" : "h-3 w-3"} />
                                    Add note
                                </button>
                             )
                         ) : item.note ? (
-                            <div className="text-xs text-text-secondary italic bg-surface-muted/30 p-2 rounded-sm line-clamp-3">
-                                "{item.note}"
-                            </div>
+                            compact ? (
+                                <div className="text-[11px] text-text-secondary italic line-clamp-1">
+                                    "{item.note}"
+                                </div>
+                            ) : (
+                                <div className="text-xs text-text-secondary italic bg-surface-muted/30 p-2 rounded-sm line-clamp-3">
+                                    "{item.note}"
+                                </div>
+                            )
                         ) : null}
                     </div>
                     </div>
                 </div>
 
                 {/* Image Section */}
-                {showImages && (
+                {showImages && !compact && (
                     <div className="relative w-full border-t border-border-default bg-surface-muted">
                         {imageUrl ? (
                             <img
