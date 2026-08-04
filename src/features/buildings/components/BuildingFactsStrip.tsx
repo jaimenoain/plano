@@ -79,7 +79,7 @@ export function BuildingFactsStrip({
     <div className={cn("overflow-hidden border-y border-border-default", className)}>
       <dl className={cn("-mr-px grid grid-cols-2 sm:grid-cols-3", COLS_AT_LG[facts.length])}>
         {facts.map(({ label, value, mono }) => (
-          <div key={label} className="min-w-0 border-r border-border-default py-5 pr-5">
+          <div key={label} className="min-w-0 border-r border-border-default py-5 px-5">
             <dt className="text-[10px] font-medium uppercase tracking-[0.15em] text-text-secondary">
               {label}
             </dt>
