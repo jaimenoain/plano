@@ -7,6 +7,7 @@ import { ClientOnly } from "@/components/common/ClientOnly";
 import { leadAttributionFromCredits } from "../../credits/buildingCreditDisplay";
 import { formatBuildingStatusForDisplay, isLostStatus } from "@/lib/buildingStatus";
 import { ArchitectStatement } from "./ArchitectStatement";
+import { BuildingActivity } from "./BuildingActivitySection";
 import { StreamBlockView } from "./BuildingStreamBlocks";
 import { RelatedByArchitectSection, RelatedByCitySection } from "./RelatedBuildings";
 import { OVERVIEW_STREAM_CHUNK_SIZE, type StreamBlock } from "../utils/streamBlocks";
@@ -161,6 +162,11 @@ export function BuildingOverviewTab({
           />
         )}
       </section>
+
+      {/* Who saved or visited — the record the notes/photos stream cannot hold */}
+      <ClientOnly>
+        <BuildingActivity buildingId={building.id} />
+      </ClientOnly>
 
       {/* Related buildings */}
       <ClientOnly>

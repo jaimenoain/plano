@@ -12,6 +12,11 @@ vi.mock("./RelatedBuildings", () => ({
   RelatedByCitySection: () => null,
 }));
 
+// Same reason: the "Saved & visited" section fetches; it has its own test file.
+vi.mock("./BuildingActivitySection", () => ({
+  BuildingActivity: () => null,
+}));
+
 // Must be a real constructor so `new IntersectionObserver(...)` works under Vitest v4.
 window.IntersectionObserver = vi.fn(function (this: IntersectionObserver) {
   this.observe = () => null;

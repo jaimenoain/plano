@@ -30,6 +30,7 @@ import {
   type DisplayImage,
 } from "./buildingCommunityData";
 import { fetchCommunityPage, fetchLikedImageIds } from "../api/buildingReviews";
+import { invalidateBuildingCaches } from "@/lib/buildingCacheInvalidation";
 
 /** Minimal profile shape the hook needs — avoids importing the full Profile type. */
 type ProfileForHook = { role?: string | null } | null | undefined;
@@ -687,10 +688,7 @@ export function useBuildingInteractions({
             : newStatus === "ignored"
             ? "Building Hidden"
             : "Added to Pending";
-        queryClient.invalidateQueries({
-          queryKey: ["user-building-statuses"],
-        });
-        queryClient.invalidateQueries({ queryKey: ["map-clusters-v3"] });
+        invalidateBuildingCaches(queryClient, building.id);
         toast({ title });
       } catch (_error) {
         toast({ variant: "destructive", title: "Failed to save status" });
@@ -728,10 +726,7 @@ export function useBuildingInteractions({
         );
         if (error) throw error;
         setNoteEditorOpen(true);
-        queryClient.invalidateQueries({
-          queryKey: ["user-building-statuses"],
-        });
-        queryClient.invalidateQueries({ queryKey: ["map-clusters-v3"] });
+        invalidateBuildingCaches(queryClient, building.id);
         if (rating >= 2)
           toast({
             title: "You just boosted this building's rank!",
@@ -939,8 +934,7 @@ export function useBuildingInteractions({
       });
 
       toast({ title: "Note saved" });
-      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-      queryClient.invalidateQueries({ queryKey: ["map-clusters-v3"] });
+      invalidateBuildingCaches(queryClient, building.id);
       void fetchUserSpecificData();
     } catch (error: unknown) {
       console.error("handleSaveNote failed", error);
@@ -1004,8 +998,7 @@ export function useBuildingInteractions({
         prev.forEach((img) => URL.revokeObjectURL(img.preview));
         return [];
       });
-      queryClient.invalidateQueries({ queryKey: ["user-building-statuses"] });
-      queryClient.invalidateQueries({ queryKey: ["map-clusters-v3"] });
+      invalidateBuildingCaches(queryClient, building.id);
       toast({ title: "Removed from list" });
     } catch (_error) {
       toast({ variant: "destructive", title: "Failed to remove" });

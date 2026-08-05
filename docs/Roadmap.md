@@ -46,7 +46,7 @@
   Dependencies:    None
   CSV ref:         #12
 
-[ ] Task 1.3 — Overview tab shows saved/visited activity
+[x] Task 1.3 — Overview tab shows saved/visited activity
 
   Goal:            The building detail Overview tab also surfaces users who
                    merely saved or visited the building (not only reviewers) —

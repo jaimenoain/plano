@@ -4856,6 +4856,11 @@ export type Database = {
         }
         Returns: undefined
       }
+      building_audit_ignored_columns: { Args: never; Returns: string[] }
+      building_audit_reduce: {
+        Args: { p_other: Json; p_subject: Json }
+        Returns: Json
+      }
       building_matches_contact_filters: {
         Args: {
           p_building_id: string
@@ -5399,6 +5404,10 @@ export type Database = {
           president_username: string
           read_at: string
         }[]
+      }
+      get_building_activity: {
+        Args: { p_building_id: string; p_limit?: number }
+        Returns: Json
       }
       get_building_leaderboards: { Args: never; Returns: Json }
       get_building_reviews: {
