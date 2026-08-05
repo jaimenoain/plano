@@ -35,7 +35,7 @@
   Dependencies:    None
   CSV ref:         #1, #5
 
-[ ] Task 1.2 — Overview tab empty-state copy
+[x] Task 1.2 — Overview tab empty-state copy
 
   Goal:            Replace the building detail Overview tab's "No photos yet"
                    empty state with copy that matches what the section actually

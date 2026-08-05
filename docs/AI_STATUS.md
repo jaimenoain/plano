@@ -3,7 +3,7 @@
 > This file is the cross-session status ledger (known issues, schema drift, completed work). Structural facts about the stack live in `AGENTS.md` — read that first.
 
 ## Current Phase
-**No active roadmap** (2026-07-30). `docs/Roadmap.md` is the blank scaffold; the next body of work is generated into it per `docs/project_start/04-writing-the-roadmap.md` in subsequent-roadmap mode.
+**UX Refinement Round** (installed 2026-08-05, [`docs/Roadmap.md`](Roadmap.md)) — 35 tasks across 8 phases generated from the owner's 34-prompt task list, plus a Final UAT. Phase 1 in progress: Tasks 1.1 (My log block) and 1.2 (Overview empty state) done.
 
 Most recently closed: **Embassy ambassador experience** — archived as [`docs/roadmaps/0003-embassy-ambassador-experience.md`](roadmaps/0003-embassy-ambassador-experience.md) (installed 2026-07-23, closed 2026-07-30). Phases 0–3 complete; Phase 4 opened for **4.3 field mode only** — **4.1 pre-publish moderation and 4.2 missions were closed unstarted by owner decision, not dropped on merit**, and are the obvious candidates for a future roadmap. The Final UAT in that file records what was verified against prod and the one claim that is only partially verified (a real photo upload was never exercised end-to-end on production data).
 
