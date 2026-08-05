@@ -236,24 +236,14 @@ export function syncFilterParams(newParams: URLSearchParams, filters: MapFilters
  * Parse the full map state (lat/lng/zoom/mode + all filters) out of a
  * URLSearchParams. Extracted so the store's URL-sync (useMapUrlSync) and the
  * legacy useURLMapState hook share ONE parser — no logic fork.
- *
- * `forcedMode` is the route-implied mode (/map = library). It is passed IN
- * rather than patched onto the result because the mode implies its companion
- * filters: without it the first parse yields an empty filter set and the map's
- * opening cluster fetch is the whole catalogue, not the member's library —
- * `status` only arrives once useBuildingSearch has written it to the URL, an
- * effect (and a paint) later.
  */
-export function parseMapStateFromParams(
-  searchParams: URLSearchParams,
-  forcedMode?: Exclude<MapMode, null>
-): MapState {
+export function parseMapStateFromParams(searchParams: URLSearchParams): MapState {
     // specific construct to handle standard params
     const raw = {
       lat: searchParams.get('lat'),
       lng: searchParams.get('lng'),
       zoom: searchParams.get('zoom'),
-      mode: forcedMode ?? searchParams.get('mode'),
+      mode: searchParams.get('mode'),
     };
     const parsed = MapStateSchema.parse(raw);
     const filters = parseMapFilters(searchParams, parsed.mode);

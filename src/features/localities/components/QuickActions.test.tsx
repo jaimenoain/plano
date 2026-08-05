@@ -13,21 +13,21 @@ describe("QuickActions", () => {
       <MemoryRouter>
         <QuickActions
           city="London"
-          exploreMapHref="/search?lat=51.515&lng=-0.1252&zoom=12"
+          exploreMapHref="/map?lat=51.515&lng=-0.1252&zoom=12"
         />
       </MemoryRouter>,
     );
 
     expect(screen.getByRole("link", { name: /explore map/i })).toHaveAttribute(
       "href",
-      "/search?lat=51.515&lng=-0.1252&zoom=12",
+      "/map?lat=51.515&lng=-0.1252&zoom=12",
     );
   });
 
   it("still offers the itinerary and add-building actions", () => {
     render(
       <MemoryRouter>
-        <QuickActions city="São Paulo" exploreMapHref="/search?q=S%C3%A3o%20Paulo" />
+        <QuickActions city="São Paulo" exploreMapHref="/map?q=S%C3%A3o%20Paulo" />
       </MemoryRouter>,
     );
 

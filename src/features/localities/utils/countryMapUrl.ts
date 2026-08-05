@@ -20,7 +20,7 @@ export function geolocatedCities(cities: CountryCity[]): CountryCity[] {
  * The country guide's "Explore the map" destination: the search map, opened
  * over the country.
  *
- * `/search` reads `lat`/`lng`/`zoom` straight into the map store, and supplying
+ * `/map` reads `lat`/`lng`/`zoom` straight into the map store, and supplying
  * a coordinate also suppresses the page's silent geolocation prompt — so the
  * visitor lands on the country instead of the zoom-2 world view or their own
  * GPS position.
@@ -31,7 +31,7 @@ export function geolocatedCities(cities: CountryCity[]): CountryCity[] {
  */
 export function buildCountryMapUrl(countryName: string, cities: CountryCity[]): string {
   const located = geolocatedCities(cities);
-  if (located.length === 0) return `/search?q=${encodeURIComponent(countryName)}`;
+  if (located.length === 0) return `/map?q=${encodeURIComponent(countryName)}`;
 
   // The busiest cities define the frame; a lone outlying territory shouldn't
   // drag the viewport off the mainland the visitor is actually going to.
@@ -44,5 +44,5 @@ export function buildCountryMapUrl(countryName: string, cities: CountryCity[]): 
     lng: String((Math.min(...lngs) + Math.max(...lngs)) / 2),
     zoom: String(COUNTRY_MAP_ZOOM),
   });
-  return `/search?${params.toString()}`;
+  return `/map?${params.toString()}`;
 }

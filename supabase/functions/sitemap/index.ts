@@ -107,7 +107,7 @@ async function buildBuildingsSitemap(supabase: ReturnType<typeof createClient>):
     { loc: "/explore", priority: "0.9", changefreq: "daily" },
     { loc: "/architecture", priority: "0.9", changefreq: "weekly" },
     { loc: "/guides", priority: "0.8", changefreq: "weekly" },
-    { loc: "/search", priority: "0.8", changefreq: "daily" },
+    { loc: "/map", priority: "0.8", changefreq: "daily" },
     { loc: "/terms", priority: "0.2", changefreq: "yearly" },
   ];
   for (const page of staticPages) {

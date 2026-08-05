@@ -45,7 +45,7 @@ export function deriveLocalityCenter(
  * The city guide's "Explore map" destination: the real search map, opened with
  * its viewport already sitting over this city.
  *
- * `/search` reads `lat`/`lng`/`zoom` straight into the map store
+ * `/map` reads `lat`/`lng`/`zoom` straight into the map store
  * (`parseMapStateFromParams`), and supplying `lat`/`lng` also suppresses the
  * page's silent geolocation prompt — so the member lands on their city rather
  * than on the zoom-2 world view or wherever their GPS puts them.
@@ -68,12 +68,12 @@ export function buildLocalityMapUrl({
     ? { lat: lat as number, lng: lng as number }
     : deriveLocalityCenter(buildings);
 
-  if (!center) return `/search?q=${encodeURIComponent(city)}`;
+  if (!center) return `/map?q=${encodeURIComponent(city)}`;
 
   const params = new URLSearchParams({
     lat: String(center.lat),
     lng: String(center.lng),
     zoom: String(LOCALITY_MAP_ZOOM),
   });
-  return `/search?${params.toString()}`;
+  return `/map?${params.toString()}`;
 }

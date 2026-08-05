@@ -8,7 +8,7 @@ test.describe("search", () => {
   });
 
   test("finds buildings and opens the detail drawer", async ({ page }) => {
-    await page.goto("/search");
+    await page.goto("/map");
 
     const input = page.getByPlaceholder("Search buildings, people, companies...");
     await input.fill("museum");
@@ -28,7 +28,7 @@ test.describe("search", () => {
   // 20271192000000 `buildings.search_vector` held no credits, so this query
   // returned one trigram neighbour ("Hanaha") and none of Zaha Hadid's work.
   test("finds a building by its architect", async ({ page }) => {
-    await page.goto("/search");
+    await page.goto("/map");
 
     const input = page.getByPlaceholder("Search buildings, people, companies...");
     await input.fill("Zaha Hadid");
@@ -42,5 +42,19 @@ test.describe("search", () => {
       .filter({ hasText: /Zaha Hadid/i })
       .first();
     await expect(creditedRow).toBeVisible({ timeout: 30_000 });
+  });
+
+  // /search is a legacy address kept alive as a redirect (the merge into
+  // /map, see docs/decisions) — old links and the sitemap must keep working.
+  test("/search redirects to /map, preserving params", async ({ page }) => {
+    await page.goto("/search?q=museum");
+    await expect(page).toHaveURL(/\/map\?q=museum/);
+  });
+
+  // My map (?mode=library) is a dead end signed out — the loader bounces to
+  // /login and back rather than rendering an empty personal map.
+  test("signed-out ?mode=library redirects to /login", async ({ page }) => {
+    await page.goto("/map?mode=library");
+    await expect(page).toHaveURL(/\/login\?redirect=/);
   });
 });

@@ -54,10 +54,12 @@ export const appNavItems: AppNavItem[] = [
   {
     // The member's own library as a first-class destination — beside
     // Explore/Search as the third leg of the map triad (world / discover / mine).
+    // /map and /search are the same route now; this pins the My map mode.
     label: "My Map",
-    path: "/map",
+    path: "/map?mode=library",
     icon: Map,
     surfaces: ["top", "sidebar", "bottom"],
+    isActive: (pathname) => pathname === "/map",
   },
   {
     label: "Guides",
@@ -74,7 +76,7 @@ export const appNavItems: AppNavItem[] = [
   },
   {
     label: "Search",
-    path: "/search",
+    path: "/map",
     icon: Search,
     surfaces: ["top", "sidebar", "bottom"],
   },

@@ -182,7 +182,7 @@ describe("CountryPage", () => {
 
     const explore = screen.getByRole("link", { name: /Explore the map/ });
     const href = explore.getAttribute("href") ?? "";
-    expect(href.startsWith("/search?")).toBe(true);
+    expect(href.startsWith("/map?")).toBe(true);
     expect(new URLSearchParams(href.split("?")[1]).get("zoom")).toBe("6");
   });
 

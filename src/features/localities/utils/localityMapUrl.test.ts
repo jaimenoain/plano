@@ -11,19 +11,19 @@ function point(lat: number, lng: number): Pick<LocalityBuildingDTO, "location_la
 }
 
 describe("buildLocalityMapUrl", () => {
-  it("points at the search map, centred on the locality's coordinate", () => {
+  it("points at the map, centred on the locality's coordinate", () => {
     const href = buildLocalityMapUrl({ city: "London", lat: 51.515, lng: -0.1252 });
 
     const url = new URL(href, "https://plano.test");
-    expect(url.pathname).toBe("/search");
+    expect(url.pathname).toBe("/map");
     expect(url.searchParams.get("lat")).toBe("51.515");
     expect(url.searchParams.get("lng")).toBe("-0.1252");
     expect(url.searchParams.get("zoom")).toBe(String(LOCALITY_MAP_ZOOM));
   });
 
-  it("never links to the /map route, which does not exist", () => {
+  it("links to /map", () => {
     const href = buildLocalityMapUrl({ city: "London", lat: 51.515, lng: -0.1252 });
-    expect(href.startsWith("/search?")).toBe(true);
+    expect(href.startsWith("/map?")).toBe(true);
   });
 
   it("falls back to the centre of the loaded buildings when the locality has no coordinate", () => {
@@ -42,18 +42,18 @@ describe("buildLocalityMapUrl", () => {
   it("falls back to a city text search when no coordinate exists anywhere", () => {
     expect(
       buildLocalityMapUrl({ city: "São Paulo", lat: null, lng: null, buildings: [] }),
-    ).toBe("/search?q=S%C3%A3o%20Paulo");
+    ).toBe("/map?q=S%C3%A3o%20Paulo");
   });
 
   it("ignores out-of-range and non-finite coordinates", () => {
-    expect(buildLocalityMapUrl({ city: "Nowhere", lat: 99, lng: 12 })).toBe("/search?q=Nowhere");
-    expect(buildLocalityMapUrl({ city: "Nowhere", lat: 40, lng: 999 })).toBe("/search?q=Nowhere");
-    expect(buildLocalityMapUrl({ city: "Nowhere", lat: NaN, lng: 12 })).toBe("/search?q=Nowhere");
+    expect(buildLocalityMapUrl({ city: "Nowhere", lat: 99, lng: 12 })).toBe("/map?q=Nowhere");
+    expect(buildLocalityMapUrl({ city: "Nowhere", lat: 40, lng: 999 })).toBe("/map?q=Nowhere");
+    expect(buildLocalityMapUrl({ city: "Nowhere", lat: NaN, lng: 12 })).toBe("/map?q=Nowhere");
   });
 
   it("treats (0, 0) as 'no location' rather than Null Island", () => {
     expect(buildLocalityMapUrl({ city: "Nowhere", lat: 0, lng: 0, buildings: [point(0, 0)] })).toBe(
-      "/search?q=Nowhere",
+      "/map?q=Nowhere",
     );
   });
 });

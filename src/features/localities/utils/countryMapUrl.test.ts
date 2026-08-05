@@ -52,9 +52,9 @@ describe("buildCountryMapUrl", () => {
 
   it("falls back to a name search when nothing is geolocated", () => {
     expect(buildCountryMapUrl("Côte d'Ivoire", [city({ lat: null, lng: null })])).toBe(
-      "/search?q=C%C3%B4te%20d'Ivoire",
+      "/map?q=C%C3%B4te%20d'Ivoire",
     );
-    expect(buildCountryMapUrl("Spain", [])).toBe("/search?q=Spain");
+    expect(buildCountryMapUrl("Spain", [])).toBe("/map?q=Spain");
   });
 
   it("frames on the leading cities so an outlying territory can't drag the viewport", () => {

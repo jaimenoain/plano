@@ -77,26 +77,6 @@ export function parseModeParams(getParam: (key: string) => string | null): {
   };
 }
 
-/**
- * Filters that only My Map offers a control for. Carried into another mode they
- * would keep narrowing the results with nothing on screen to explain it.
- */
-const LIBRARY_ONLY_PARAMS = ["status", "rated_by", "minRating", "folders", "collections"];
-
-/**
- * The /search URL for a mode picked while on /map. That route pins its mode to
- * the path, so the other two segments are a destination change: keep the
- * viewport and the global filters, drop the library's own.
- */
-export function modeSwitchUrl(params: URLSearchParams, next: MapMode): string {
-  const p = new URLSearchParams(params);
-  if (next) p.set("mode", next);
-  else p.delete("mode");
-  for (const key of LIBRARY_ONLY_PARAMS) p.delete(key);
-  const qs = p.toString();
-  return `/search${qs ? `?${qs}` : ""}`;
-}
-
 export function parseCreditRolesParam(param: string | null): CreditRole[] {
   if (!param) return [];
   return param

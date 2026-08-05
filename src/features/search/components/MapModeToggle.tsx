@@ -8,49 +8,38 @@
  * world, saved/visited included), so All is active by default and is itself
  * selectable to return there.
  *
- * On /map the mode is pinned to the route (`routeMode`), which is what keeps the
- * very first cluster fetch filtered to the member's pins. There the two other
- * segments navigate to /search rather than switching in place: leaving your own
- * map for the whole catalogue is a destination change, and the viewport and
- * global filters travel with it (modeSwitchUrl).
+ * All three segments switch in place — /map and /search are the same route
+ * now, with mode always in the URL. `switchMode` (useBuildingSearch) drops the
+ * library-only filters (status, rated_by, minRating, folders, collections)
+ * whenever the destination stops keeping personal filters, so leaving My map
+ * never silently narrows the other modes.
  */
 import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
-import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useAuth } from '@/features/auth';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useBuildingSearchContext } from '../context/BuildingSearchContext';
-import { modeSwitchUrl } from '../utils/searchUrlParams';
 
 export function MapModeToggle({
   name,
   className,
-  routeMode,
 }: {
   name: string;
   className?: string;
-  /** The route's pinned mode (/map) — its other segments navigate instead. */
-  routeMode?: 'library';
 }) {
   const { mode, switchMode } = useBuildingSearchContext();
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
 
   // A personal library is a dead end signed out: the segment is hidden, so a
-  // ?mode=library deep-link would strand the visitor in a mode with no control.
+  // ?mode=library deep-link would strand the visitor in a mode with no
+  // control. (The route loader also redirects this case to /login.)
   useEffect(() => {
-    if (!user && !routeMode && mode === 'library') switchMode(null);
-  }, [user, routeMode, mode, switchMode]);
+    if (!user && mode === 'library') switchMode(null);
+  }, [user, mode, switchMode]);
 
   const handleChange = (value: string) => {
     if (value !== 'all' && value !== 'discover' && value !== 'library') return;
     if (value === (mode ?? 'all')) return;
-    const next = value === 'all' ? null : value;
-    if (routeMode) {
-      navigate(modeSwitchUrl(searchParams, next));
-      return;
-    }
-    switchMode(next);
+    switchMode(value === 'all' ? null : value);
   };
 
   return (
