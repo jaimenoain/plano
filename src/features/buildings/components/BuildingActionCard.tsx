@@ -1,24 +1,10 @@
-import {
-  Bookmark,
-  Check,
-  ChevronDown,
-  Circle,
-  EyeOff,
-  Loader2,
-  Plus,
-} from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { CollectionSelector } from "@/features/collections";
 import { PendingPhotosQueue } from "./PendingPhotosQueue";
-import { PersonalRatingButton } from "./PersonalRatingButton";
+import { MyBuildingStatusBlock } from "./MyBuildingStatusBlock";
 import { BuildingNotesList, type UserPost } from "./BuildingNotesList";
 import type { DisplayImage } from "../hooks/buildingCommunityData";
 import type { BuildingDetails } from "../pages/BuildingDetails";
@@ -89,107 +75,17 @@ export function BuildingActionCard({
   return (
     <section className="space-y-5 pb-1 border-t border-border-default pt-9 lg:border-t-0 lg:pt-0">
 
-      {/* Status */}
-      <div className="space-y-2">
-        <label className="text-[11px] font-medium uppercase tracking-widest text-text-disabled">
-          My Status
-        </label>
-        {userStatus === "ignored" ? (
-          <div className="flex items-center gap-2 h-10 px-3 border border-border-default bg-surface-muted text-sm font-medium text-text-disabled">
-            <EyeOff className="h-4 w-4 shrink-0" />
-            <span>Hidden</span>
-          </div>
-        ) : (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="accent"
-                className="w-full justify-between h-10 px-3 text-sm font-medium"
-              >
-                <div className="flex items-center gap-2">
-                  {userStatus === "visited" ? (
-                    <Check className="h-4 w-4 text-feedback-success" />
-                  ) : userStatus === "pending" ? (
-                    <Bookmark className="h-4 w-4 text-text-primary fill-current" />
-                  ) : (
-                    <Circle className="h-4 w-4 text-text-disabled" />
-                  )}
-                  {userStatus === "visited"
-                    ? "Visited"
-                    : userStatus === "pending"
-                      ? "Saved"
-                      : "Save"}
-                </div>
-                <ChevronDown className="h-4 w-4 opacity-50 shrink-0" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[220px] p-2 rounded-none">
-              <DropdownMenuItem
-                className="rounded-none py-2.5"
-                onSelect={() => void onStatusChange("visited")}
-              >
-                <Check className="mr-3 h-4 w-4 shrink-0" />
-                <div>
-                  <p className="font-bold text-xs uppercase tracking-wider">Visited</p>
-                  <p className="text-[10px] text-text-secondary">I've seen this in person</p>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="rounded-none py-2.5"
-                onSelect={() => void onStatusChange("pending")}
-              >
-                <Bookmark className="mr-3 h-4 w-4 shrink-0" />
-                <div>
-                  <p className="font-bold text-xs uppercase tracking-wider">Saved</p>
-                  <p className="text-[10px] text-text-secondary">I want to visit this</p>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="rounded-none py-2.5"
-                onSelect={() => void onStatusChange("ignored")}
-              >
-                <EyeOff className="mr-3 h-4 w-4 shrink-0" />
-                <div>
-                  <p className="font-bold text-xs uppercase tracking-wider">Hide</p>
-                  <p className="text-[10px] text-text-secondary">Don&apos;t show in my feed</p>
-                </div>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
+      {/* Status + mark — one shared block, identical in the map drawer */}
+      <MyBuildingStatusBlock
+        buildingId={building.id}
+        status={userStatus}
+        rating={myRating}
+        onStatusChange={onStatusChange}
+        onRate={onRate}
+      />
 
-      {userStatus === "ignored" ? (
-        <div className="space-y-3">
-          <p className="text-xs text-text-secondary leading-relaxed">
-            This building is hidden. It won&apos;t appear on the map or be suggested to you.
-          </p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full h-9 text-[10px] font-bold uppercase tracking-wider"
-            onClick={() => void onStatusChange("ignored")}
-          >
-            Unhide
-          </Button>
-        </div>
-      ) : (
+      {userStatus === "ignored" ? null : (
       <>
-
-      {/* Rating */}
-      <div className="space-y-2">
-        <label className="text-[11px] font-medium uppercase tracking-widest text-text-disabled">
-          My Rating
-        </label>
-        <PersonalRatingButton
-          variant="collapsible"
-          buildingId={building.id}
-          initialRating={myRating}
-          status={userStatus}
-          onRate={onRate}
-        />
-      </div>
-
       {/* Secondary actions */}
       <div className="grid grid-cols-2 gap-2">
         <Button

@@ -12,14 +12,11 @@
  * parent sizes it: `panel` (desktop right rail, fills height) or `sheet`
  * (mobile bottom sheet, capped at 85vh).
  */
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import {
   X,
   ArrowRight,
-  Check,
-  Bookmark,
-  EyeOff,
   Pencil,
   FolderPlus,
   Users,
@@ -45,6 +42,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { CollectionSelector } from '@/features/collections/components/CollectionSelector';
 import { ArchitectStatement } from '@/features/buildings/components/ArchitectStatement';
+import { MyBuildingStatusBlock, type MyBuildingStatus } from '@/features/buildings';
 import { ClusterResponse } from '../hooks/useMapData';
 import {
   shouldFlagConstructionStatus,
@@ -116,9 +114,20 @@ export function BuildingDrawerBody({
     .filter(Boolean)
     .join(', ');
 
-  // ── Rating (hover) ──
-  const [hoverRating, setHoverRating] = useState<number | null>(null);
-  const hasStatus = isSaved || isVisited;
+  // ── Status, normalised for the shared block ──
+  const viewerStatus: MyBuildingStatus = isVisited
+    ? 'visited'
+    : isSaved
+      ? 'pending'
+      : isIgnored
+        ? 'ignored'
+        : null;
+
+  const handleStatusChange = (next: 'visited' | 'pending' | 'ignored') => {
+    if (next === 'visited') handleVisit();
+    else if (next === 'pending') handleSave();
+    else handleHide();
+  };
 
   // ── Notes & collections (state + Supabase mutations) ──
   const existingPost = data?.userPosts?.[0] ?? null;
@@ -207,63 +216,20 @@ export function BuildingDrawerBody({
             )}
           </div>
 
-          {/* ── 3. Primary actions ── */}
+          {/* ── 3. Status + mark — the same block the detail page renders ── */}
           {user ? (
             <>
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                <ActionButton
-                  active={isVisited}
-                  disabled={isSaving}
-                  onClick={handleVisit}
-                  icon={<Check className={cn('h-5 w-5', isVisited && 'stroke-[3px]')} />}
-                  label="Visited"
-                  activeClass="bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover"
-                />
-                <ActionButton
-                  active={isSaved}
-                  disabled={isSaving}
-                  onClick={handleSave}
-                  icon={<Bookmark className={cn('h-5 w-5', isSaved && 'fill-current')} />}
-                  label={isSaved ? 'Saved' : 'Save'}
-                  activeClass="bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover"
-                />
-                <ActionButton
-                  active={isIgnored}
-                  disabled={isSaving}
-                  onClick={handleHide}
-                  icon={<EyeOff className="h-5 w-5" />}
-                  label="Hide"
-                  activeClass="bg-feedback-destructive text-feedback-destructive-foreground hover:bg-feedback-destructive/90"
+              <div className="mt-4">
+                <MyBuildingStatusBlock
+                  density="drawer"
+                  buildingId={buildingId}
+                  status={viewerStatus}
+                  rating={currentRating}
+                  isSaving={isSaving}
+                  onStatusChange={handleStatusChange}
+                  onRate={(_id, value) => void handleRate(value)}
                 />
               </div>
-
-              {/* Rating — visible whenever there is a positive status */}
-              {hasStatus && (
-                <div className="mt-3 flex items-center gap-3">
-                  <span className={SECTION_LABEL}>Your rating</span>
-                  <div className="flex items-center gap-2">
-                    {[1, 2, 3].map((r) => {
-                      const active = (hoverRating ?? currentRating) >= r;
-                      return (
-                        <button
-                          key={r}
-                          type="button"
-                          onClick={() => handleRate(r)}
-                          onMouseEnter={() => setHoverRating(r)}
-                          onMouseLeave={() => setHoverRating(null)}
-                          aria-label={`Rate ${r}`}
-                          className={cn(
-                            'h-4 w-4 rounded-full border transition-colors',
-                            active
-                              ? 'border-text-primary bg-text-primary'
-                              : 'border-border-strong bg-transparent hover:border-text-secondary',
-                          )}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
 
               {/* ── 4. Secondary actions ── */}
               <div className="mt-4 grid grid-cols-2 gap-2">
@@ -496,38 +462,5 @@ export function BuildingDrawerBody({
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  );
-}
-
-function ActionButton({
-  active,
-  disabled,
-  onClick,
-  icon,
-  label,
-  activeClass,
-}: {
-  active: boolean;
-  disabled?: boolean;
-  onClick: (e: React.MouseEvent) => void;
-  icon: React.ReactNode;
-  label: string;
-  activeClass: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        'flex h-16 flex-col items-center justify-center gap-1.5 border transition-colors disabled:opacity-50',
-        active
-          ? cn('border-transparent', activeClass)
-          : 'border-border-default text-text-secondary hover:bg-surface-muted hover:text-text-primary',
-      )}
-    >
-      {icon}
-      <span className="text-xs font-medium">{label}</span>
-    </button>
   );
 }

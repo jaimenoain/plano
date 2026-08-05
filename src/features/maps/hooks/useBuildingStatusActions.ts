@@ -177,18 +177,30 @@ export function useBuildingStatusActions(buildingId: string) {
     handleAction('ignored', 'Building hidden', 'Building unhidden');
   };
 
+  /**
+   * Upsert, not update: a plain UPDATE silently no-ops when the viewer has no
+   * user_buildings row yet, so awarding a mark on an untracked building would
+   * look like it worked and vanish on the next refetch. Mirrors the detail page
+   * (useBuildingInteractions.handleRate), which also promotes an untracked
+   * building to `visited` — you only mark what you have seen.
+   */
   const handleRate = async (rating: number) => {
     if (!user) return;
     setOptimisticRating(rating);
     try {
-      const { error } = await supabase
-        .from('user_buildings')
-        .update({ rating })
-        .eq('user_id', user.id)
-        .eq('building_id', buildingId);
+      const { error } = await supabase.from('user_buildings').upsert(
+        {
+          user_id: user.id,
+          building_id: buildingId,
+          status: viewerStatus ?? 'visited',
+          rating,
+        },
+        { onConflict: 'user_id, building_id' },
+      );
 
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['user-building-statuses'] });
+      queryClient.invalidateQueries({ queryKey: ['map-clusters-v3'] });
     } catch {
       toast({ variant: 'destructive', title: 'Failed to update rating' });
       setOptimisticRating(null);
