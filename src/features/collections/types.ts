@@ -61,7 +61,10 @@ export interface CollectionItemWithBuilding {
   building_id: string;
   note: string | null;
   custom_category_id: string | null;
-  is_hidden?: boolean;
+  /** Suppression tombstone: the row exists so the building stops being
+   *  suggested, and it must not render anywhere as a member of the collection.
+   *  Required, so no item shape can omit it and read as visible by accident. */
+  is_hidden: boolean;
   /** User who added this building to the collection (null for pre-attribution rows;
    *  omitted for synthetic itinerary items that never carry attribution). */
   added_by?: string | null;

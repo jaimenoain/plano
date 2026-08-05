@@ -69,9 +69,9 @@ export const useItineraryStore = create<ItineraryState>((set, get) => ({
       set({ daysCount: 0, transportMode: 'walking', days: [], buildingDetails: {}, markerDetails: {} });
       return;
     }
-
     const buildingRecord: Record<string, ItineraryBuilding> = {};
-    availableBuildings.forEach(item => {
+    // Hidden items are not members: no stop, and nothing in the picker this feeds.
+    availableBuildings.filter(item => item.is_hidden !== true).forEach(item => {
       if (item.building) {
         buildingRecord[item.building.id] = {
           id: item.building.id,

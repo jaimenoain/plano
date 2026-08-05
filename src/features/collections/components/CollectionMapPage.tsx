@@ -40,6 +40,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
 import { mapCollectionItem } from "../mapCollectionItem";
+import { visibleCollectionItems } from "../collectionVisibility";
 import { CollectionMapOverlays } from "./CollectionMapOverlays";
 import { getBoundsFromBuildings, isLngLatInBounds, type Bounds } from "@/utils/map";
 import { collectionStructuredData, SITE_URL } from "@/features/buildings/utils/structuredData";
@@ -113,7 +114,7 @@ function itinerarySourceFingerprint(
   const itemPart = [...items]
     .map(
       (i) =>
-        `${i.id}:${i.note ?? ""}:${i.custom_category_id ?? ""}:${i.is_hidden ? "1" : "0"}:${i.building.location_lat}:${i.building.location_lng}:${i.building.name}`,
+        `${i.id}:${i.note ?? ""}:${i.custom_category_id ?? ""}:${i.building.location_lat}:${i.building.location_lng}:${i.building.name}`,
     )
     .sort()
     .join("|");
@@ -383,24 +384,29 @@ export default function CollectionMap() {
     enabled: !!collection?.id
   });
 
+  // `items` is the raw roster, hidden rows included — only the suggestion
+  // machinery (`existingBuildingIds`, `hiddenBuildingIds`) may read it, because
+  // its whole job is to keep offering nothing it has been told to suppress.
+  // Everything the reader can see goes through `visibleItems`.
   const items: CollectionItemWithBuilding[] = collectionData?.items ?? [];
   const markers: CollectionMarker[] = collectionData?.markers ?? [];
+  const visibleItems = useMemo(() => visibleCollectionItems(items), [items]);
 
   const { photos } = useGooglePlacePhotos(markers);
 
   useEffect(() => {
     if (!collection || items === undefined) return;
 
-    const fingerprint = itinerarySourceFingerprint(collection, items, markers);
+    const fingerprint = itinerarySourceFingerprint(collection, visibleItems, markers);
     if (lastItineraryInitFingerprint.current === fingerprint) return;
     lastItineraryInitFingerprint.current = fingerprint;
 
-    initializeItinerary(collection.itinerary, items, markers);
-  }, [collection, items, markers, initializeItinerary]);
+    initializeItinerary(collection.itinerary, visibleItems, markers);
+  }, [collection, visibleItems, markers, initializeItinerary]);
 
   // Inject ItemList JSON-LD for public collections
   useEffect(() => {
-    if (!collection || !collection.is_public || items.length === 0) return;
+    if (!collection || !collection.is_public || visibleItems.length === 0) return;
     const listUrl =
       username != null && username.length > 0
         ? `${SITE_URL}/${username}/map/${collection.slug}`
@@ -410,7 +416,7 @@ export default function CollectionMap() {
       description: collection.description,
       slug: collection.slug,
       ...(listUrl ? { listUrl } : {}),
-      buildings: items.map((item) => ({
+      buildings: visibleItems.map((item) => ({
         id: item.building.id,
         name: item.building.name,
         slug: item.building.slug ?? null,
@@ -425,7 +431,7 @@ export default function CollectionMap() {
     return () => {
       script.remove();
     };
-  }, [collection, items]);
+  }, [collection, visibleItems]);
 
   const existingBuildingIds = useMemo<Set<string>>(() => {
     return new Set<string>(items.map((item) => item.building.id));
@@ -531,7 +537,7 @@ export default function CollectionMap() {
   const { data: statsData } = useQuery({
     queryKey: ["collection_stats", collection?.id, collection?.categorization_method, collection?.categorization_selected_members, memberIds],
     queryFn: async () => {
-       if (!items || items.length === 0 || !memberIds || !collection?.id) return [];
+       if (visibleItems.length === 0 || !memberIds || !collection?.id) return [];
 
        // Use RPC to fetch stats securely, bypassing direct RLS on user_buildings
        // This ensures visitors can see the categorization status (visited/rated)
@@ -542,7 +548,7 @@ export default function CollectionMap() {
        if (error) throw error;
        return data;
     },
-    enabled: !!items && items.length > 0 && !!memberIds && !!shouldFetchStats && !!collection?.id
+    enabled: visibleItems.length > 0 && !!memberIds && !!shouldFetchStats && !!collection?.id
   });
 
   // 6. Check Favorite Status
@@ -578,10 +584,10 @@ export default function CollectionMap() {
 
   // 3c. Fetch User Interactions (Personal Status)
   const { data: userInteractions } = useQuery({
-    queryKey: ["user_interactions", user?.id, collection?.id, items?.length],
+    queryKey: ["user_interactions", user?.id, collection?.id, visibleItems.length],
     queryFn: async () => {
-      if (!user?.id || !items || items.length === 0) return [];
-      const buildingIds = items.map(i => i.building.id);
+      if (!user?.id || visibleItems.length === 0) return [];
+      const buildingIds = visibleItems.map(i => i.building.id);
 
       const { data, error } = await supabase
         .from("user_buildings")
@@ -592,7 +598,7 @@ export default function CollectionMap() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id && !!items && items.length > 0
+    enabled: !!user?.id && visibleItems.length > 0
   });
 
   // Create a map for quick lookup
@@ -608,11 +614,8 @@ export default function CollectionMap() {
   const mapBuildings = useMemo<DiscoveryBuilding[]>(() => {
     const buildingNodes: DiscoveryBuilding[] = [];
 
-    // 1. Process Buildings
-    if (items) {
-        // Filter out hidden items for display
-        const visibleItems = items.filter(item => !item.is_hidden);
-
+    // 1. Process Buildings — hidden ones were already dropped upstream.
+    if (visibleItems.length > 0) {
         // Pre-calculate stats map
         const statsMap = new Map<string, { visitedCount: number, maxRating: number, hasSaved: boolean }>();
 
@@ -723,18 +726,15 @@ export default function CollectionMap() {
     }
 
     return buildingNodes;
-  }, [items, markers, collection, statsData, memberIds, shouldFetchStats, userInteractionMap, photos]);
+  }, [visibleItems, markers, collection, statsData, memberIds, shouldFetchStats, userInteractionMap, photos]);
 
   const coverMosaicUrls = useMemo(() => {
-    if (!items) return [];
-    return items
-      .filter((item) => !item.is_hidden)
+    return visibleItems
       .map((item) => item.building.hero_image_url || item.building.community_preview_url)
       .filter((url): url is string => Boolean(url))
       .slice(0, 4);
-  }, [items]);
+  }, [visibleItems]);
 
-  const visibleItems = useMemo(() => (items ?? []).filter(item => !item.is_hidden), [items]);
   const search = useCollectionSearch({
     visibleItems,
     markers: markers ?? [],
@@ -996,8 +996,7 @@ export default function CollectionMap() {
         const existingIds = new Set(existingUserBuildings?.map(row => row.building_id) || []);
 
         // 2. Identify new buildings to save (exclude hidden ones in the collection)
-        const buildingsToSave = items
-            .filter(item => !item.is_hidden)
+        const buildingsToSave = visibleItems
             .map(item => item.building.id)
             .filter(id => !existingIds.has(id));
 

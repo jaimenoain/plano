@@ -73,6 +73,8 @@ export async function collectionMapPageLoader({
       "building:buildings(hero_image_url, community_preview_url)",
     )
     .eq("collection_id", collectionRow.id)
+    // A hidden row is not a member, so its photo can never be the share image.
+    .eq("is_hidden", false)
     .order("order_index", { ascending: true })
     .limit(1)
     .maybeSingle();

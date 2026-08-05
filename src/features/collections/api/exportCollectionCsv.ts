@@ -43,6 +43,7 @@ export interface CollectionCsvExport {
 export async function buildCollectionCsvExport(
   collection: Pick<Collection, "id" | "name" | "custom_categories">,
 ): Promise<CollectionCsvExport | null> {
+  // Hidden rows are suppression tombstones, not members — they never export.
   const { data, error } = await supabase
     .from("collection_items")
     .select(`
@@ -63,7 +64,8 @@ export async function buildCollectionCsvExport(
         )
       )
     `)
-    .eq("collection_id", collection.id);
+    .eq("collection_id", collection.id)
+    .eq("is_hidden", false);
 
   if (error) throw error;
   if (!data || data.length === 0) return null;

@@ -31,7 +31,9 @@ export function mapCollectionItem(item: unknown): CollectionItemWithBuilding | n
     building_id: row.building_id,
     note: row.note,
     custom_category_id: row.custom_category_id,
-    is_hidden: row.is_hidden,
+    // A row that somehow arrives without the column is treated as visible, but
+    // the value is pinned here so downstream code never sees `undefined`.
+    is_hidden: row.is_hidden === true,
     added_by: row.added_by ?? null,
     added_by_user: (addedByUser as { id: string; username: string } | null) ?? null,
     building: {
