@@ -27,20 +27,35 @@ vi.mock("@/features/credits/components/CreditEntityPicker", () => ({
   }) => {
     const isPerson = allowedKinds?.includes("person");
     return (
-      <button
-        type="button"
-        id={id}
-        disabled={disabled}
-        onClick={() => {
-          if (isPerson) {
-            onChange({ kind: "person", id: "p1", name: "Pat Example", slug: "pat-example" });
-          } else {
-            onChange({ kind: "company", id: "c1", name: "Co Example", slug: "co-example" });
-          }
-        }}
-      >
-        {isPerson ? "Mock pick person" : "Mock pick company"}
-      </button>
+      <>
+        <button
+          type="button"
+          id={id}
+          disabled={disabled}
+          onClick={() => {
+            if (isPerson) {
+              onChange({ kind: "person", id: "p1", name: "Pat Example", slug: "pat-example" });
+            } else {
+              onChange({ kind: "company", id: "c1", name: "Co Example", slug: "co-example" });
+            }
+          }}
+        >
+          {isPerson ? "Mock pick person" : "Mock pick company"}
+        </button>
+        {/* The person box can hand back a company — architects imported into
+            `companies` are offered there so nobody gets duplicated (ADR 0030). */}
+        {isPerson ? (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() =>
+              onChange({ kind: "company", id: "c9", name: "Norman Foster", slug: "norman-foster" })
+            }
+          >
+            Mock pick firm via person box
+          </button>
+        ) : null}
+      </>
     );
   },
 }));
@@ -237,6 +252,19 @@ describe("AddCreditForm (QA 6.2)", () => {
       buildingId: "b1",
       personId: null,
       companyId: "c1",
+    });
+  });
+
+  it("a company chosen from the person box lands in the company slot (Task 2.1)", async () => {
+    const user = userEvent.setup();
+    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onRequestClose={vi.fn()} />);
+    await user.click(screen.getByRole("button", { name: /mock pick firm via person box/i }));
+    await user.click(screen.getByRole("button", { name: /submit \(1\)/i }));
+    await waitFor(() => expect(addBuildingCreditMock).toHaveBeenCalledTimes(1));
+    expect(addBuildingCreditMock.mock.calls[0]?.[0]).toMatchObject({
+      buildingId: "b1",
+      personId: null,
+      companyId: "c9",
     });
   });
 

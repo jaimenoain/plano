@@ -292,6 +292,58 @@ describe("CreditEntityPicker (QA 6.1)", () => {
     expect(screen.queryByText(/Did you mean an existing record/i)).not.toBeInTheDocument();
   });
 
+  it("offers the company record when no person matches (Task 2.1)", async () => {
+    // Every architect was imported into `companies`, so the person box finds
+    // nothing for a real human's name. Rather than dead-end into "Create new
+    // person" (and mint a duplicate), the existing company record is offered.
+    searchPeopleMock.mockResolvedValue([]);
+    searchCompaniesMock.mockResolvedValue([fosterPartnersCo]);
+    const onChange = vi.fn();
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+    wrap(<CreditEntityPicker value={null} onChange={onChange} allowedKinds={["person"]} />);
+    await user.click(screen.getByRole("combobox"));
+    await user.type(screen.getByPlaceholderText("Type at least 2 characters…"), "foster");
+    await act(async () => {
+      vi.advanceTimersByTime(350);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Listed as companies")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("No matches.")).not.toBeInTheDocument();
+
+    await user.click(screen.getByText("Foster + Partners Ltd"));
+
+    await waitFor(() => {
+      expect(onChange).toHaveBeenCalledWith({
+        kind: "company",
+        id: "co-fp",
+        name: "Foster + Partners Ltd",
+        slug: "foster-partners-ltd",
+      });
+    });
+  });
+
+  it("hides the company fallback once a person matches (Task 2.1)", async () => {
+    searchPeopleMock.mockResolvedValue([norman]);
+    searchCompaniesMock.mockResolvedValue([fosterPartnersCo]);
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+    wrap(<CreditEntityPicker value={null} onChange={vi.fn()} allowedKinds={["person"]} />);
+    await user.click(screen.getByRole("combobox"));
+    await user.type(screen.getByPlaceholderText("Type at least 2 characters…"), "foster");
+    await act(async () => {
+      vi.advanceTimersByTime(350);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Norman Foster")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("Listed as companies")).not.toBeInTheDocument();
+    expect(screen.queryByText("Foster + Partners Ltd")).not.toBeInTheDocument();
+  });
+
   it("keeps the results list scroll-contained on a narrow viewport (QA 6.1)", async () => {
     Object.defineProperty(window, "innerWidth", { value: 375, configurable: true });
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });

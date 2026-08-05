@@ -75,7 +75,7 @@
 
 > **Batch submission:** Submit Tasks 2.1 → 2.2 → 2.3 → 2.4 → 2.5 as a single sequential batch.
 
-[ ] Task 2.1 — Fix person search in the Add credits drawer
+[x] Task 2.1 — Fix person search in the Add credits drawer
 
   Goal:            The person dropdown in the "Add credits" drawer finds people
                    when typing their name. Investigate why the search returns
@@ -424,6 +424,11 @@
   Scope boundary:  Classification and reclassification of existing rows only —
                    no importer changes, no schema changes. Ambiguous entries are
                    left as companies and listed in the PR for later review.
+  Also do here:    Delete the "Listed as companies" fallback Task 2.1 added to
+                   the credits Person box (ADR 0030) once people exist, and give
+                   `CreditedEntitiesSelect` the same once-over. The production
+                   evidence for the misfiled import is already recorded in
+                   `docs/AI_STATUS.md` — no need to re-investigate.
   Dependencies:    None
   CSV ref:         #26
 

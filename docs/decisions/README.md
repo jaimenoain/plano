@@ -35,3 +35,4 @@ Format: context → decision → consequences. Keep them under a page.
 | [0027](0027-ai-review-batched-and-routed.md) | The scheduled AI review leaves the nightly tier: own baseline, batched, model-routed, capped |
 | [0028](0028-building-audit-logs-store-deltas.md) | `building_audit_logs` stores per-column deltas, not row snapshots, and skips machine-maintained columns |
 | [0029](0029-building-activity-is-visible-to-members.md) | Who saved or visited a building is readable by signed-in members via one `SECURITY DEFINER` RPC; `'ignored'` never leaves it and `anon` cannot call it |
+| [0030](0030-person-search-falls-back-to-companies.md) | The credits Person box offers matching company records when no person matches, because the import filed every architect in `companies`; retires itself once Task 7.4 reclassifies |
