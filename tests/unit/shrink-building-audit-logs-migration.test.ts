@@ -22,7 +22,16 @@ const migrationPath = resolve(
   "supabase/migrations/20271198000000_shrink_building_audit_logs.sql",
 );
 const migration = readFileSync(migrationPath, "utf8");
-const backfill = readFileSync(resolve(repoRoot, "scripts/shrink-building-audit-logs.sql"), "utf8");
+const backfill = readFileSync(resolve(repoRoot, "scripts/shrink-building-audit-logs.sh"), "utf8");
+
+/**
+ * The script's own header quotes the `DO $$ ... COMMIT $$` pattern it exists to warn
+ * against, so structural assertions must run against executable lines only.
+ */
+const backfillCode = backfill
+  .split("\n")
+  .filter((line) => !line.trimStart().startsWith("#"))
+  .join("\n");
 
 /** Strip comments — every invariant below is about executable SQL, not prose. */
 const stripComments = (source: string) =>
@@ -131,9 +140,22 @@ describe("backfill script", () => {
     expect(backfill).toMatch(/VACUUM \(FULL, ANALYZE\) public\.building_audit_logs/);
   });
 
-  it("commits in batches instead of rewriting the table in one transaction", () => {
-    expect(backfill).toContain("COMMIT;");
-    expect(backfill).toMatch(/LIMIT\s+v_batch/);
+  /**
+   * The original implementation was a `DO $$ ... COMMIT ... $$` block and it failed
+   * in production after 35 batches: Supabase enforces statement_timeout = 2min, the
+   * whole DO block is ONE statement, and COMMITs inside a procedural block do not
+   * reset the statement clock. The loop has to live in the client.
+   */
+  it("drives the batch loop from the client, not a DO block", () => {
+    expect(backfillCode).not.toMatch(/DO\s+\$\$/);
+    expect(backfillCode).toMatch(/for i in \$\(seq 1 "\$MAX_BATCHES"\)/);
+    expect(backfillCode).toMatch(/LIMIT \$\{BATCH\}/);
+  });
+
+  it("lifts the timeout for VACUUM FULL in its own session", () => {
+    // `-c` gets its own implicit transaction, so the SET would not persist and
+    // VACUUM FULL cannot run inside a transaction block — it must go over stdin.
+    expect(backfillCode).toMatch(/SET statement_timeout = 0;\s*\nVACUUM \(FULL, ANALYZE\)/);
   });
 
   it("checks the photo-contribution count survives the rewrite", () => {
