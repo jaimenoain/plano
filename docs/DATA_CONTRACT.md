@@ -840,7 +840,13 @@ Whole-page payload for the `/architecture/:cc` country guide, in one round trip.
 
 An unknown country code returns zeroed counts and `cities: []`; the loader turns that into a 404.
 
-**SECURITY INVOKER** — every table read is publicly readable by policy, so no elevation is warranted. This is also why no rating/visit aggregate is exposed: `user_buildings` is private per member. **`GRANT EXECUTE`** to **`anon`** and **`authenticated`** (public SEO page). Supporting index: `idx_buildings_country_code`.
+**SECURITY INVOKER** — every table read is publicly readable by policy, so no elevation is warranted. This is also why no rating/visit aggregate appears in *this* payload: reading `user_buildings` would require `SECURITY DEFINER` (see `get_building_activity` below, which does exactly that for one building at a time). **`GRANT EXECUTE`** to **`anon`** and **`authenticated`** (public SEO page). Supporting index: `idx_buildings_country_code`.
+
+#### `get_building_activity(p_building_id uuid, p_limit int default 12) → jsonb`
+
+Members who saved or visited one building — the read path behind the building detail Overview tab's "Saved & visited" section. Returns `{ visited: [...], saved: [...], total_visited, total_saved }`; each person is `user_id`, `username`, `avatar_url`, `rating` (0–3 award, null when unmarked), `visited_at`, `is_followed`. Each list is capped at `p_limit`, ordered viewer → followed members → award desc → recency, so the totals can exceed the array lengths.
+
+**SECURITY DEFINER**, deliberately: the SELECT policy on `user_buildings` only exposes another member's row when that member also has a visible `building_posts` row for the same building, so under RLS this returns the caller's own row and nothing else — exactly the silent saves and visits the section exists to show. **`status = 'ignored'` is never returned** (a member's hidden list stays private), the projection is fixed, and **`GRANT EXECUTE` to `authenticated` only** — `anon` is revoked, so logged-out visitors see no names. See [ADR 0029](decisions/0029-building-activity-is-visible-to-members.md).
 
 **Building ↔ credited entities:** The only junction from `buildings` to professionals is **`building_credits`** (§9d), referencing **`people`** and/or **`companies`** (§9a / §9b). Map filters, discovery, and `is_verified_architect_for_building` use those rows.
 
@@ -1465,14 +1471,12 @@ CREATE TABLE public.user_buildings (
   user_id     uuid        NOT NULL,
   building_id uuid        NOT NULL,
   rating      integer     CHECK (rating IS NULL OR (rating >= 1 AND rating <= 3)),
-  content     text,                                -- Review text
-  tags        text[],                              -- Deprecated; retained for legacy data
-  visibility  text        DEFAULT 'public' CHECK (visibility IN ('public', 'contacts', 'private')),
   status      text        NOT NULL DEFAULT 'visited' CHECK (status IN ('pending', 'visited', 'ignored')),
-  video_url   text,
   visited_at  timestamptz,
   created_at  timestamptz NOT NULL DEFAULT timezone('utc', now()),
-  edited_at   timestamptz DEFAULT now(),
+  -- `content`, `tags`, `video_url`, `visibility` and `edited_at` were MOVED to
+  -- building_posts and dropped from this table in 20270872000000. This table is
+  -- now status + award only; visibility lives on building_posts.
 
   CONSTRAINT user_buildings_pkey PRIMARY KEY (id),
   -- One row per user per building. Live since 20260704000000; this line was
@@ -1524,22 +1528,28 @@ CREATE TABLE public.comment_likes (
 
 **Tenancy model:** not tenant-scoped
 
-**SELECT**
+**SELECT** — live policy name `"Users can view user_buildings"`, migration `20270872000000_building_posts.sql`. The `visibility` column was dropped from this table in that same migration, so visibility is read **through `building_posts`**: another member's status row is visible only when they also have a visible post for the same building.
+
 ```sql
-CREATE POLICY "user_buildings_select" ON user_buildings
+CREATE POLICY "Users can view user_buildings" ON public.user_buildings
   FOR SELECT USING (
-    user_id = (SELECT auth.uid())
-    OR visibility = 'public'
-    OR (
-      visibility = 'contacts'
-      AND EXISTS (
-        SELECT 1 FROM follows
-        WHERE follower_id = (SELECT auth.uid())
-        AND following_id = user_buildings.user_id
-      )
+    (SELECT auth.uid()) = user_id
+    OR EXISTS (
+      SELECT 1 FROM public.building_posts bp
+      WHERE bp.user_id = user_buildings.user_id
+        AND bp.building_id = user_buildings.building_id
+        AND (
+          COALESCE(bp.visibility, 'public') = 'public'
+          OR (bp.visibility = 'contacts' AND EXISTS (
+                SELECT 1 FROM public.follows f
+                WHERE f.follower_id = (SELECT auth.uid())
+                  AND f.following_id = user_buildings.user_id))
+        )
     )
   );
 ```
+
+**Consequence:** a *silent* save or visit — no note, no photo — is readable by its owner and admins only. Surfacing those rows requires `SECURITY DEFINER`; the one sanctioned read path is `get_building_activity` (§ RPCs), which never returns `status = 'ignored'` and is revoked from `anon`. See [ADR 0029](decisions/0029-building-activity-is-visible-to-members.md).
 
 **INSERT**
 ```sql

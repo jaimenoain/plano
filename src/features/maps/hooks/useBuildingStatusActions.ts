@@ -22,6 +22,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useUserBuildingStatuses } from '@/features/profile/hooks/useUserBuildingStatuses';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { invalidateBuildingCaches } from '@/lib/buildingCacheInvalidation';
 
 type Status = 'pending' | 'visited' | 'ignored';
 
@@ -84,8 +85,7 @@ export function useBuildingStatusActions(buildingId: string) {
         );
       }
 
-      queryClient.invalidateQueries({ queryKey: ['user-building-statuses'] });
-      queryClient.invalidateQueries({ queryKey: ['map-clusters-v3'] });
+      invalidateBuildingCaches(queryClient, buildingId);
     } catch {
       toast({ variant: 'destructive', title: 'Failed to update status' });
     } finally {
@@ -199,8 +199,7 @@ export function useBuildingStatusActions(buildingId: string) {
       );
 
       if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ['user-building-statuses'] });
-      queryClient.invalidateQueries({ queryKey: ['map-clusters-v3'] });
+      invalidateBuildingCaches(queryClient, buildingId);
     } catch {
       toast({ variant: 'destructive', title: 'Failed to update rating' });
       setOptimisticRating(null);
