@@ -58,7 +58,7 @@
   Dependencies:    1.2
   CSV ref:         #28
 
-[ ] Task 1.4 — Map tab scroll-vs-zoom fix
+[x] Task 1.4 — Map tab scroll-vs-zoom fix
 
   Goal:            On the building detail page's Map tab, page scrolling no
                    longer turns into accidental map zooming. Decide the best UX

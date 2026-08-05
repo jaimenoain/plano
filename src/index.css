@@ -564,3 +564,31 @@
 .plano-map-popup .maplibregl-popup-tip {
   display: none;
 }
+
+/* Cooperative gestures (building-detail maps): plain scroll belongs to the page.
+   This is the hint MapLibre flashes when it blocks a gesture — restyled from its
+   stock black scrim + 1.4em white text to the editorial chrome convention
+   (frosted card, hairline border, sharp corners, uppercase-tracked label).
+   The stock z-index is 99999, and `.maplibregl-map` sets no z-index of its own,
+   so that value escapes the map and paints over app chrome — hence the reset.
+   Selectors carry the `.maplibregl-map` prefix on purpose: MapLibre's own
+   stylesheet is injected after this one, so equal specificity would lose. */
+.maplibregl-map .maplibregl-cooperative-gesture-screen {
+  z-index: 40;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--surface-inverse) 35%, transparent);
+}
+.maplibregl-map .maplibregl-cooperative-gesture-screen .maplibregl-desktop-message,
+.maplibregl-map .maplibregl-cooperative-gesture-screen .maplibregl-mobile-message {
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--border-default);
+  background: color-mix(in srgb, var(--surface-card) 92%, transparent);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  backdrop-filter: blur(2px);
+}

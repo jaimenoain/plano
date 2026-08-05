@@ -4,6 +4,7 @@ import { Loader2, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import MapGL, { Marker, NavigationControl, GeolocateControl } from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { MapPin as MapPinMarker } from "@/features/maps/components/MapPin";
 import { getPinStyle } from "@/features/maps/utils/pinStyling";
 import type { ClusterResponse } from "@/features/maps/hooks/useMapData";
@@ -82,6 +83,9 @@ export function BuildingMapTab({
         style={{ width: "100%", height: "100%" }}
         mapStyle={DEFAULT_MAP_STYLE}
         attributionControl={false}
+        // Reading the page must never turn into zooming: plain wheel/one-finger
+        // drag scrolls the page; Ctrl/⌘+wheel or two fingers move the map.
+        cooperativeGestures
       >
         <NavigationControl position="bottom-right" />
         <GeolocateControl position="bottom-right" trackUserLocation showUserLocation />
