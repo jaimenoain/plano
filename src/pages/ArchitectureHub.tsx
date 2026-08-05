@@ -213,7 +213,7 @@ export default function ArchitectureHub() {
             Thousands of buildings across {totalCountries} countries — catalogued,
             rated, and reviewed by architects and enthusiasts.
           </p>
-          <Link to="/search" className="cta-link">
+          <Link to="/map" className="cta-link">
             Start exploring
           </Link>
         </section>

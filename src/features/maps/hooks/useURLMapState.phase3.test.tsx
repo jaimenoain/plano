@@ -35,7 +35,7 @@ describe("useURLMapState — show lost buildings", () => {
       <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
           <Route
-            path="/search"
+            path="/map"
             element={
               <MapProvider>
                 <ShowLostProbe />
@@ -47,26 +47,26 @@ describe("useURLMapState — show lost buildings", () => {
     );
 
   it("hydrates showLost=true from showLost URL param", () => {
-    renderProbe("/search?showLost=true");
+    renderProbe("/map?showLost=true");
     expect(screen.getByTestId("show-lost")).toHaveTextContent("true");
   });
 
   it("hydrates showLost=true from legacy showDemolished URL param", () => {
-    renderProbe("/search?showDemolished=true");
+    renderProbe("/map?showDemolished=true");
     expect(screen.getByTestId("show-lost")).toHaveTextContent("true");
   });
 
   it("defaults showLost to false when param is absent", () => {
-    renderProbe("/search");
+    renderProbe("/map");
     expect(screen.getByTestId("show-lost")).toHaveTextContent("false");
   });
 
   it("writes showLost=true to URL when toggled on, removes legacy param when toggled off", () => {
     render(
-      <MemoryRouter initialEntries={["/search"]}>
+      <MemoryRouter initialEntries={["/map"]}>
         <Routes>
           <Route
-            path="/search"
+            path="/map"
             element={
               <MapProvider>
                 <ShowLostProbe />

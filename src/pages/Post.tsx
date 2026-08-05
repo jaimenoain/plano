@@ -68,7 +68,7 @@ export default function Post() {
 
   useEffect(() => {
     if (!buildingId) {
-      navigate("/search");
+      navigate("/map");
       return;
     }
     if (user) {

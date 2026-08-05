@@ -218,7 +218,7 @@ export function AppTopNav() {
       {/* Right: actions */}
       <div className="flex items-center gap-2 shrink-0">
         <Link
-          to="/search"
+          to="/map"
           className="h-9 w-9 flex items-center justify-center rounded-sm text-text-secondary hover:text-text-primary transition-colors"
           aria-label="Search"
         >

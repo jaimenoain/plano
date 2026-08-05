@@ -55,16 +55,7 @@ function MapLoadingPlaceholder() {
   );
 }
 
-export type SearchShellProps = {
-  /**
-   * Pin the page to one mode — `/map` is the library as a first-class address,
-   * so the mode is implied by the path and never serialized to the URL. The
-   * toggle still renders (My map selected); its other segments navigate.
-   */
-  forcedMode?: "library";
-};
-
-export function SearchPageContent({ forcedMode }: SearchShellProps) {
+export function SearchPageContent() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const {
@@ -284,7 +275,7 @@ export function SearchPageContent({ forcedMode }: SearchShellProps) {
             {/* No shadow — frosted glass border is sufficient over the map */}
             <div className="border border-border-default bg-surface-card/95 p-1 backdrop-blur-sm supports-backdrop-filter:bg-surface-card/90 focus-within:border-brand-primary">
               {mobileSearchBar}
-              <MapModeToggle name="map-mode-mobile" className="mt-1" routeMode={forcedMode} />
+              <MapModeToggle name="map-mode-mobile" className="mt-1" />
             </div>
           </div>
         )}
@@ -318,7 +309,7 @@ export function SearchPageContent({ forcedMode }: SearchShellProps) {
             </div>
 
             {/* All / Discover / My map — page-level destination switch */}
-            <MapModeToggle name="map-mode-desktop" routeMode={forcedMode} />
+            <MapModeToggle name="map-mode-desktop" />
           </div>
 
           <div className="relative min-h-0 flex-1 overflow-hidden">
@@ -333,8 +324,7 @@ export function SearchPageContent({ forcedMode }: SearchShellProps) {
 
         {/* ── Map ── */}
         <div className="relative h-full min-h-0 flex-1 transition-all duration-300 md:ml-search-serp">
-          {/* My Map's stats band belongs to the mode, not the route — /search's
-              My map tab is the same view and must not drift from /map. */}
+          {/* My Map's stats band belongs to the mode, not the route. */}
           {mode === "library" && <MyMapChrome />}
           <ClientOnly fallback={<MapLoadingPlaceholder />}>
             <PlanoMap showEmptyMessage={true} />

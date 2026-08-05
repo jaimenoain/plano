@@ -5,14 +5,6 @@ import { MapModeToggle } from './MapModeToggle';
 import { useBuildingSearchContext } from '../context/BuildingSearchContext';
 import { useAuth } from '@/features/auth';
 
-const { navigate } = vi.hoisted(() => ({ navigate: vi.fn() }));
-let currentParams = new URLSearchParams();
-
-vi.mock('react-router', () => ({
-  useNavigate: () => navigate,
-  useSearchParams: () => [currentParams, vi.fn()],
-}));
-
 vi.mock('../context/BuildingSearchContext', () => ({
   useBuildingSearchContext: vi.fn(),
 }));
@@ -26,7 +18,6 @@ describe('MapModeToggle', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    currentParams = new URLSearchParams();
     (useBuildingSearchContext as Mock).mockReturnValue({ mode: null, switchMode });
     (useAuth as Mock).mockReturnValue({ user: { id: 'u1' } });
   });
@@ -51,13 +42,12 @@ describe('MapModeToggle', () => {
     expect(switchMode).toHaveBeenCalledWith('discover');
   });
 
-  it('switches to My map in place — no navigation away from /search', () => {
+  it('switches to My map in place', () => {
     render(<MapModeToggle name="test" />);
 
     fireEvent.click(screen.getByText('My map'));
 
     expect(switchMode).toHaveBeenCalledWith('library');
-    expect(navigate).not.toHaveBeenCalled();
   });
 
   it('returns to All (null) when the All segment is clicked', () => {
@@ -80,35 +70,21 @@ describe('MapModeToggle', () => {
     expect(switchMode).not.toHaveBeenCalled();
   });
 
-  describe('on /map (routeMode="library")', () => {
-    beforeEach(() => {
-      (useBuildingSearchContext as Mock).mockReturnValue({ mode: 'library', switchMode });
-    });
+  it('renders My map as the active segment when mode is library', () => {
+    (useBuildingSearchContext as Mock).mockReturnValue({ mode: 'library', switchMode });
 
-    it('renders My map as the active segment', () => {
-      render(<MapModeToggle name="test" routeMode="library" />);
+    render(<MapModeToggle name="test" />);
 
-      expect(screen.getByText('My map').className).toContain('text-text-primary');
-    });
+    expect(screen.getByText('My map').className).toContain('text-text-primary');
+  });
 
-    it('navigates to /search for the other segments, keeping the viewport and dropping the library filters', () => {
-      currentParams = new URLSearchParams(
-        'lat=51.5&lng=-0.12&zoom=13&status=visited,saved,pending&rated_by=jaime&minRating=2&category=museum',
-      );
+  it('switches away from My map in place, dropping the library filters (handled by switchMode)', () => {
+    (useBuildingSearchContext as Mock).mockReturnValue({ mode: 'library', switchMode });
 
-      render(<MapModeToggle name="test" routeMode="library" />);
-      fireEvent.click(screen.getByText('Discover'));
+    render(<MapModeToggle name="test" />);
+    fireEvent.click(screen.getByText('Discover'));
 
-      expect(switchMode).not.toHaveBeenCalled();
-      const to = navigate.mock.calls[0][0] as string;
-      expect(to).toContain('/search?');
-      expect(to).toContain('mode=discover');
-      expect(to).toContain('lat=51.5');
-      expect(to).toContain('category=museum');
-      expect(to).not.toContain('status=');
-      expect(to).not.toContain('rated_by=');
-      expect(to).not.toContain('minRating=');
-    });
+    expect(switchMode).toHaveBeenCalledWith('discover');
   });
 
   describe('signed out', () => {

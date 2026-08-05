@@ -147,7 +147,7 @@ export function RelatedByCitySection({
 
   const viewAllHref = locality
     ? getLocalityUrl(locality.country_code, locality.city_slug)
-    : `/search?q=${encodeURIComponent(city)}`;
+    : `/map?q=${encodeURIComponent(city)}`;
 
   return (
     <RelatedBuildingRow

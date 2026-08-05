@@ -52,7 +52,7 @@ describe("LandingHero", () => {
 
     const links = container.querySelectorAll("a.cta-link");
     expect(links).toHaveLength(1);
-    expect(links[0]).toHaveAttribute("href", "/search");
+    expect(links[0]).toHaveAttribute("href", "/map");
     // The arrow is injected by .cta-link::after — it must not be in the markup.
     expect(links[0].textContent).toBe("See the map");
   });

@@ -7,33 +7,27 @@ import {
   DEFAULT_ZOOM,
 } from './useURLMapState';
 
-describe('parseMapStateFromParams — forced (route-implied) mode', () => {
-  // Regression: /map seeds the map store from the URL before useBuildingSearch
+describe('parseMapStateFromParams — mode', () => {
+  // Regression: the map store is seeded from the URL before useBuildingSearch
   // has written `status`. Without the mode's implied statuses the opening
   // get_map_clusters_v3 call is unfiltered, so My Map paints the entire
   // catalogue while the SERP list (which never runs unfiltered) shows the
   // member's own — a handful of buildings against hundreds of pins.
   it('implies the library statuses when the URL carries no status yet', () => {
-    const state = parseMapStateFromParams(new URLSearchParams(''), 'library');
+    const state = parseMapStateFromParams(new URLSearchParams('mode=library'));
     expect(state.mode).toBe('library');
     expect(state.filters.status).toEqual(['visited', 'saved', 'pending']);
   });
 
   it('lets an explicit status param win over the implied default', () => {
-    const state = parseMapStateFromParams(new URLSearchParams('status=visited'), 'library');
+    const state = parseMapStateFromParams(new URLSearchParams('mode=library&status=visited'));
     expect(state.filters.status).toEqual(['visited']);
   });
 
-  it('leaves status unset with no forced mode and no status param (/search browses everything)', () => {
+  it('leaves status unset with no mode and no status param (/map browses everything)', () => {
     const state = parseMapStateFromParams(new URLSearchParams(''));
     expect(state.mode).toBeNull();
     expect(state.filters.status).toBeUndefined();
-  });
-
-  it('a forced mode overrides a conflicting `mode` param (the route owns the mode)', () => {
-    const state = parseMapStateFromParams(new URLSearchParams('mode=discover'), 'library');
-    expect(state.mode).toBe('library');
-    expect(state.filters.status).toEqual(['visited', 'saved', 'pending']);
   });
 });
 

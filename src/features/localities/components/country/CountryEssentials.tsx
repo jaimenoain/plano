@@ -66,7 +66,7 @@ export function CountryEssentials({
             The buildings members visit and photograph most in this country.
           </p>
         </div>
-        <Link to="/search" className="cta-link shrink-0">
+        <Link to="/map" className="cta-link shrink-0">
           All {totalCount.toLocaleString("en")}
         </Link>
       </div>

@@ -1025,7 +1025,7 @@ export default function Profile() {
                     <button
                       type="button"
                       className="h-11 shrink-0 px-3 border border-border-default text-text-disabled hover:text-text-primary hover:border-border-strong transition-colors inline-flex items-center justify-center sm:h-7 sm:px-2.5"
-                      onClick={() => navigate(isOwnProfile ? `/map` : `/search?rated_by=${profile?.username || ""}`)}
+                      onClick={() => navigate(isOwnProfile ? `/map` : `/map?rated_by=${profile?.username || ""}`)}
                       title="View on map"
                     >
                       <MapIcon className="h-3.5 w-3.5" />
@@ -1096,7 +1096,7 @@ export default function Profile() {
                     eyebrow="No saved buildings yet"
                     message={isOwnProfile ? "Never forget a recommendation again. Add buildings here to build your personal queue." : undefined}
                     action={isOwnProfile ? (
-                      <Link to="/search" className="cta-link">
+                      <Link to="/map" className="cta-link">
                         Search buildings
                       </Link>
                     ) : undefined}

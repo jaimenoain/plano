@@ -117,8 +117,8 @@ export default [
   layout("components/layout/MainLayout.tsx", [
     index("features/feed/pages/Index.tsx"),
     route("/explore", "features/explore/pages/Explore.tsx"),
-    route("/search", "features/search/SearchPage.tsx"),
-    route("/map", "features/mymap/MyMapPage.tsx"),
+    route("/map", "features/search/SearchPage.tsx"),
+    route("/search", "features/search/SearchRedirect.tsx"),
     route("/post", "pages/Post.tsx"),
     route("/notifications", "features/notifications/pages/Notifications.tsx"),
     route("/support", "features/ambassadors/pages/SupportPage.tsx"),

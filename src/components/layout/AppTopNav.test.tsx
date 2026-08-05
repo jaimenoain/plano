@@ -89,7 +89,7 @@ describe("AppTopNav", () => {
     it("renders the action cluster: search, notifications, account menu", () => {
       renderNav();
 
-      expect(screen.getByLabelText("Search")).toHaveAttribute("href", "/search");
+      expect(screen.getByLabelText("Search")).toHaveAttribute("href", "/map");
       expect(screen.getByLabelText("Notifications")).toHaveAttribute(
         "href",
         "/notifications",
@@ -108,7 +108,7 @@ describe("AppTopNav", () => {
 
       expect(screen.getByRole("button", { name: /join the waiting list/i })).toBeTruthy();
       expect(screen.queryByLabelText("Notifications")).toBeNull();
-      expect(screen.getByLabelText("Search")).toHaveAttribute("href", "/search");
+      expect(screen.getByLabelText("Search")).toHaveAttribute("href", "/map");
     });
   });
 });

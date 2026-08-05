@@ -202,7 +202,7 @@ function RecentTab() {
         <p className="text-xs text-text-secondary">
           Know of a missing award?{" "}
           <Link
-            to="/search"
+            to="/map"
             className="underline underline-offset-2 hover:opacity-70 transition-opacity"
           >
             Find the building or person →

@@ -54,7 +54,7 @@ export const LandingHero = () => {
             Join the waiting list
           </Button>
           {/* The → is injected by .cta-link::after — never write it into the markup. */}
-          <Link to="/search" className="cta-link">
+          <Link to="/map" className="cta-link">
             See the map
           </Link>
         </motion.div>

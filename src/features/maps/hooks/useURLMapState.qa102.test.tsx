@@ -41,11 +41,11 @@ describe("useURLMapState (QA 10.2 — credit filter URL params)", () => {
     render(
       <MemoryRouter
         initialEntries={[
-          "/search?creditCompany=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee&creditRoles=structural_engineering,mep_engineering",
+          "/map?creditCompany=aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee&creditRoles=structural_engineering,mep_engineering",
         ]}
       >
         <Routes>
-          <Route path="/search" element={<CreditFiltersProbe />} />
+          <Route path="/map" element={<CreditFiltersProbe />} />
         </Routes>
       </MemoryRouter>,
     );
@@ -56,9 +56,9 @@ describe("useURLMapState (QA 10.2 — credit filter URL params)", () => {
 
   it("leaves credit filters empty when params absent", () => {
     render(
-      <MemoryRouter initialEntries={["/search"]}>
+      <MemoryRouter initialEntries={["/map"]}>
         <Routes>
-          <Route path="/search" element={<CreditFiltersProbe />} />
+          <Route path="/map" element={<CreditFiltersProbe />} />
         </Routes>
       </MemoryRouter>,
     );
@@ -69,9 +69,9 @@ describe("useURLMapState (QA 10.2 — credit filter URL params)", () => {
 
   it("persists query filter when setMapURL receives filters", () => {
     render(
-      <MemoryRouter initialEntries={["/search"]}>
+      <MemoryRouter initialEntries={["/map"]}>
         <Routes>
-          <Route path="/search" element={<QuerySyncProbe />} />
+          <Route path="/map" element={<QuerySyncProbe />} />
         </Routes>
       </MemoryRouter>,
     );

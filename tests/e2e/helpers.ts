@@ -31,13 +31,13 @@ export async function login(page: Page, email: string, password: string) {
 }
 
 /**
- * Search from /search and open the first building result's full detail page.
+ * Search from /map and open the first building result's full detail page.
  * Returns the building name as shown in the result list.
  */
 export async function openFirstSearchResult(page: Page, query: string): Promise<string> {
-  await page.goto("/search");
+  await page.goto("/map");
   const input = page.getByPlaceholder("Search buildings, people, companies...");
-  // /search is map-heavy and slow to become interactive against production;
+  // /map is map-heavy and slow to become interactive against production;
   // wait for the input explicitly so a slow first paint fails clearly here
   // rather than as an opaque fill() timeout.
   await expect(input).toBeVisible({ timeout: 30_000 });
@@ -54,7 +54,7 @@ export async function openFirstSearchResult(page: Page, query: string): Promise<
   const drawer = page.getByRole("dialog", { name });
   await expect(drawer).toBeVisible();
   // …and its "Open full profile" link points at /building/:id. Navigate via
-  // href rather than clicking: the map continuously rewrites the /search URL
+  // href rather than clicking: the map continuously rewrites the /map URL
   // params, which makes click-navigation racy.
   const href = await drawer
     .getByRole("link", { name: "Open full profile" })

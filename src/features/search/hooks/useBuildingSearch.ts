@@ -385,7 +385,7 @@ async function fetchBuildingIdsMatchingCreditFilters(
   return byCompany ?? byRole ?? null;
 }
 
-export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12, forcedMode }: { searchTriggerVersion?: number, bounds?: Bounds | null, zoom?: number, forcedMode?: 'library' } = {}) {
+export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12 }: { searchTriggerVersion?: number, bounds?: Bounds | null, zoom?: number } = {}) {
   const { user } = useAuth();
   // Canonical username lives in `profiles` — the JWT user_metadata copy goes
   // stale on rename, which made the rated_by self-entry match nobody.
@@ -396,8 +396,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12, for
   const debouncedQuery = useDebounce(searchQuery, 300);
   const debouncedBounds = useDebounce(bounds, 300);
 
-  // `mode` implies its companion filters (parseModeParams); on /map the route owns the mode via the shim.
-  const modeImplied = parseModeParams((key) => (forcedMode && key === "mode" ? forcedMode : searchParams.get(key)));
+  // `mode` implies its companion filters (parseModeParams).
+  const modeImplied = parseModeParams((key) => searchParams.get(key));
 
   // New Filters State
   const [statusFilters, setStatusFilters] = useState<string[]>(modeImplied.statusFilters);
@@ -439,11 +439,10 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12, for
   }, []);
 
   // Adopt mode deep-links that arrive while already mounted (e.g. a
-  // ?mode=discover link clicked from within /search). The URL writer
+  // ?mode=discover link clicked from within /map). The URL writer
   // below re-serializes the companion filters on the state change.
   const urlModeParam = searchParams.get("mode");
   useEffect(() => {
-    if (forcedMode) return; // the route owns the mode; URL params can't move it
     const m = urlModeParam === 'discover' || urlModeParam === 'library' ? urlModeParam : null;
     if (m && m !== mode) switchMode(m);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- react only to URL changes; `mode` here would refire on internal toggles
@@ -713,8 +712,8 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12, for
       if (viewMode !== 'map') params.set("view", viewMode);
       else params.delete("view");
 
-      // Map Mode — a forced mode is implied by the route (/map), never the URL
-      if (mode !== null && !forcedMode) params.set("mode", mode);
+      // Map Mode
+      if (mode !== null) params.set("mode", mode);
       else params.delete("mode");
 
       // Filters
@@ -840,7 +839,7 @@ export function useBuildingSearch({ searchTriggerVersion, bounds, zoom = 12, for
     profileLoading,
     userLocation,
     viewMode,
-    mode, forcedMode,
+    mode,
     statusFilters,
     hideVisited,
     hideSaved,

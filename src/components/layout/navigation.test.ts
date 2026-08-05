@@ -4,9 +4,9 @@ import { appNavItems, navItemsFor } from "./navigation";
 describe("appNavItems — My Map is a first-class destination", () => {
   const myMap = appNavItems.find((item) => item.label === "My Map");
 
-  it("routes My Map to /map on every surface", () => {
+  it("routes My Map to /map?mode=library on every surface", () => {
     expect(myMap).toBeDefined();
-    expect(myMap!.path).toBe("/map");
+    expect(myMap!.path).toBe("/map?mode=library");
     expect(myMap!.surfaces).toEqual(["top", "sidebar", "bottom"]);
   });
 

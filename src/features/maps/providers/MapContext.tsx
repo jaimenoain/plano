@@ -65,11 +65,8 @@ const MapContext = createContext<MapContextValue | null>(null);
  */
 export const MapProvider = ({
   children,
-  forcedMode,
 }: {
   children: ReactNode;
-  /** Pin the store to one mode (the /map route); the URL never carries `mode`. */
-  forcedMode?: Exclude<MapMode, null>;
 }) => {
   const [searchParams] = useSearchParams();
 
@@ -77,12 +74,12 @@ export const MapProvider = ({
   // viewport). Seeded once from the URL.
   const storeRef = useRef<MapStore | null>(null);
   if (storeRef.current === null) {
-    storeRef.current = createMapStore(parseMapStateFromParams(searchParams, forcedMode));
+    storeRef.current = createMapStore(parseMapStateFromParams(searchParams));
   }
   const store = storeRef.current;
 
   // The one URL sync unit (mounted once).
-  useMapUrlSync(store, { forcedMode });
+  useMapUrlSync(store);
 
   // Reactive view of the store.
   const s = useStore(store);
