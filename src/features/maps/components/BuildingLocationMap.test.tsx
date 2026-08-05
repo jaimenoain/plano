@@ -4,9 +4,27 @@ import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/re
 import { BuildingLocationMap } from './BuildingLocationMap';
 import { MAP_MARKER_FILL } from '../constants/mapMarkerFills';
 
-// Mock react-map-gl/maplibre
-vi.mock('react-map-gl/maplibre', () => {
-  const Map = ({ children }: any) => <div data-testid="map-container">{children}</div>;
+// Mock react-map-gl/maplibre. The Map forwards a ref exposing the cooperative
+// gesture handler, because the component drives it imperatively on expand, and
+// mirrors interaction options as data attributes (a plain mock swallows props).
+const cooperativeGestures = vi.hoisted(() => ({
+  enable: vi.fn(),
+  disable: vi.fn(),
+  isEnabled: vi.fn(() => true),
+}));
+
+vi.mock('react-map-gl/maplibre', async () => {
+  const React = await import('react');
+  const Map = React.forwardRef(({ children, cooperativeGestures: gate }: any, ref: any) => {
+    React.useImperativeHandle(ref, () => ({
+      getMap: () => ({ cooperativeGestures }),
+    }));
+    return (
+      <div data-testid="map-container" data-cooperative-gestures={String(Boolean(gate))}>
+        {children}
+      </div>
+    );
+  });
   return {
     __esModule: true,
     default: Map,
@@ -147,6 +165,37 @@ describe('BuildingLocationMap', () => {
     fireEvent.click(innerContainer);
 
     expect(onToggleExpand).not.toHaveBeenCalled();
+  });
+
+  // Inline in the rail the map must hand plain scroll back to the page; expanded
+  // it fills the viewport, so the gate would be friction with nothing behind to
+  // scroll.
+  it('gates map zoom behind cooperative gestures when inline', () => {
+    render(<BuildingLocationMap {...defaultProps} />);
+
+    expect(screen.getByTestId('map-container')).toHaveAttribute(
+      'data-cooperative-gestures',
+      'true',
+    );
+    expect(cooperativeGestures.enable).toHaveBeenCalled();
+    expect(cooperativeGestures.disable).not.toHaveBeenCalled();
+  });
+
+  it('lifts the gate while expanded and restores it on collapse', () => {
+    const { rerender } = render(
+      <BuildingLocationMap {...defaultProps} isExpanded={false} onToggleExpand={vi.fn()} />,
+    );
+    cooperativeGestures.enable.mockClear();
+
+    rerender(
+      <BuildingLocationMap {...defaultProps} isExpanded={true} onToggleExpand={vi.fn()} />,
+    );
+    expect(cooperativeGestures.disable).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <BuildingLocationMap {...defaultProps} isExpanded={false} onToggleExpand={vi.fn()} />,
+    );
+    expect(cooperativeGestures.enable).toHaveBeenCalledTimes(1);
   });
 
   it('shows fallback when coordinates are not finite', async () => {

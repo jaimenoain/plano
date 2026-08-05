@@ -42,6 +42,20 @@ export function BuildingLocationMap({
     setIsClient(true);
   }, []);
 
+  // Inline in the rail the map must not steal the page's scroll (Ctrl/⌘+wheel or
+  // two fingers to move it). Expanded it owns the whole viewport and there is
+  // nothing behind to scroll, so the gate would be pure friction — lift it.
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    const handler = map?.cooperativeGestures;
+    if (typeof handler?.enable !== 'function' || typeof handler?.disable !== 'function') return;
+    if (isExpanded) {
+      handler.disable();
+    } else {
+      handler.enable();
+    }
+  }, [isExpanded, isClient]);
+
   const isApproximate = locationPrecision === 'approximate';
 
   // Construct a partial ClusterResponse object to feed into getPinStyle
@@ -128,6 +142,7 @@ export function BuildingLocationMap({
           style={{ width: "100%", height: "100%" }}
           mapStyle={isSatellite ? SATELLITE_MAP_STYLE : DEFAULT_MAP_STYLE}
           attributionControl={false}
+          cooperativeGestures
         >
           <NavigationControl position="bottom-right" />
           <GeolocateControl position="bottom-right" trackUserLocation={true} showUserLocation={true} />
