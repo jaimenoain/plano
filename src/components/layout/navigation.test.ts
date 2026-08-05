@@ -27,3 +27,14 @@ describe("appNavItems — My Map is a first-class destination", () => {
     expect(top).toContain("Events");
   });
 });
+
+describe("appNavItems — Search is icon-only on the desktop header", () => {
+  it("drops the Search text item from the top nav (the magnifier covers it)", () => {
+    expect(navItemsFor("top").map((item) => item.label)).not.toContain("Search");
+  });
+
+  it("keeps Search in the mobile surfaces, which have no magnifier", () => {
+    expect(navItemsFor("sidebar").map((item) => item.label)).toContain("Search");
+    expect(navItemsFor("bottom").map((item) => item.label)).toContain("Search");
+  });
+});
