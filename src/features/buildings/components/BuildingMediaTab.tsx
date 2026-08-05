@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
-import { GalleryVertical, LayoutDashboard, LayoutGrid, Plus } from "lucide-react";
+import { ExternalLink, GalleryVertical, LayoutDashboard, LayoutGrid, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -46,6 +46,12 @@ interface BuildingMediaTabProps {
   hasMore?: boolean;
   /** Fetch and append the next page once the loaded set is scrolled through. */
   onLoadMore?: () => void;
+  /** Building name — drives the Google Images search link below the gallery. */
+  buildingName?: string | null;
+  /** City, appended to the Google Images query for disambiguation. */
+  buildingCity?: string | null;
+  /** Primary architect/company, appended to the Google Images query. */
+  architectName?: string | null;
 }
 
 /**
@@ -64,6 +70,9 @@ export function BuildingMediaTab({
   children,
   hasMore = false,
   onLoadMore,
+  buildingName,
+  buildingCity,
+  architectName,
 }: BuildingMediaTabProps) {
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
   const [visibleCount, setVisibleCount] = useState(MEDIA_CHUNK_SIZE);
@@ -129,6 +138,15 @@ export function BuildingMediaTab({
     observer.observe(el);
     return () => observer.disconnect();
   }, [filteredImages.length, visibleCount, hasMore, onLoadMore]);
+
+  // Most buildings have few community photos; offer a way out to Google Images
+  // (`udm=2` is the images vertical) qualified by architect + city.
+  const googleImagesHref = useMemo(() => {
+    const name = buildingName?.trim();
+    if (!name) return null;
+    const query = [name, architectName?.trim(), buildingCity?.trim()].filter(Boolean).join(" ");
+    return `https://www.google.com/search?udm=2&q=${encodeURIComponent(query)}`;
+  }, [buildingName, architectName, buildingCity]);
 
   const visibleImages = useMemo(
     () => filteredImages.slice(0, visibleCount),
@@ -222,6 +240,27 @@ export function BuildingMediaTab({
               </Button>
             }
           />
+        )}
+
+        {googleImagesHref && (
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border border-border-default bg-surface-muted px-4 py-3">
+            <p className="text-[11px] text-text-secondary">
+              Looking for more photos of this building?
+            </p>
+            <Button asChild variant="outline" size="sm" className="rounded-none">
+              <a
+                href={googleImagesHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="google-images-search"
+              >
+                <span className="text-[10px] font-medium uppercase tracking-[0.15em]">
+                  Search on Google Images
+                </span>
+                <ExternalLink className="ml-1.5 h-3 w-3" aria-hidden />
+              </a>
+            </Button>
+          </div>
         )}
 
         {children}
