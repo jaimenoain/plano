@@ -1,6 +1,9 @@
 -- ============================================================================
 -- Credit edits open to signed-in members (roadmap Task 2.2)
 -- ============================================================================
+-- types-neutral: RLS policies and a trigger function only — no table, column or
+-- callable-signature change. `npm run gen-types` against the live schema after
+-- applying this produced a zero diff (trigger functions are not emitted).
 -- Until now `building_credits_update` (20270822000000) granted UPDATE to three
 -- principals only: `is_admin()`, the user who claimed the credited *person*,
 -- and a steward of the credited *company*. Every other member could ADD a
