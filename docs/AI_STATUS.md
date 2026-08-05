@@ -12,6 +12,23 @@ Earlier programmes, still complete: **Remaining surfaces refinement** (2026-05-2
 **Rollout ≠ refinement:** The May 2026 rollout (Phases 0–7) wired semantic tokens, removed raw palette classes, and connected real data (e.g. `get_feed` on the home feed). That work is **complete**. The refinement programme ([ROADMAP.md](ROADMAP.md), Phases R0–R9) delivered editorial layout, typography rhythm, kit fidelity, and per-page audit evidence across shell, editorial spine, discovery, identity, events, auth/token flows, embassy, and admin. Tracking: all families `refined` or `complete` in [DESIGN_SYSTEM_SCREEN_INVENTORY.md](DESIGN_SYSTEM_SCREEN_INVENTORY.md).
 
 ## CURRENT_ARCHITECTURE_SNAPSHOT
+- **Explore's feed is a controlled pager, not a scroller, and must never be refetched
+  mid-session (2026-08-05):** `/explore` used `snap-y snap-mandatory`. iOS momentum can't be
+  cancelled once released, so one iPad flick crossed three or four snap children — and since a
+  card leaving frame wrote `user_buildings.status = 'ignored'`, and `get_discovery_feed` excludes
+  every building with such a row, each flick permanently destroyed buildings the user never saw.
+  Three compounding faults sat on top: `invalidateQueries(["discovery_feed"])` after a save/hide
+  re-ran every page and returned a completely different queue under the user's finger (the
+  reported "flash then jump"); optimistically splicing the swiped card out shortened the list
+  under the scroll offset; and `OFFSET = pages * LIMIT` paged over rows that had dropped out of a
+  shrinking result set. Now: `useVerticalPager` owns an index and translates the track itself
+  (`resolvePagerCommit` returns ±1, never ±2), swiped cards stay in the array wearing a badge,
+  the feed query is never invalidated while browsing, and pagination is a
+  `(save_count, id)` keyset cursor (`20271200000000_discovery_feed_keyset_pagination.sql`).
+  **The traps to know:** any effect keyed on a pager callback must get a *stable* callback — the
+  hook reads `count` through a ref precisely so a landing page can't re-fire the reset effect and
+  throw the user back to building one; and DiscoveryCard is `touch-none` unconditionally, because
+  leaving the browser `pan-y` is what let momentum run.
 - **`review_images.review_id` points at `building_posts.id`, and the two id spaces overlap by
   accident (2026-07-30):** 18009 of 18021 `building_posts` rows carry the *same uuid* as their
   `user_buildings` row — a legacy 1:1 artefact — so a join written as
@@ -180,6 +197,21 @@ Earlier programmes, still complete: **Remaining surfaces refinement** (2026-05-2
   - Admin sidebar: "Updates" item added under Content group
 
 ## SCHEMA_DRIFT_LOG
+
+- 2026-08-05 `20271200000000_discovery_feed_keyset_pagination.sql` — **applied + verified** on
+  prod. Adds `p_after_save_count` / `p_after_id` to `get_discovery_feed`. Two things bit here and
+  will bite again: (1) **adding parameters creates a new overload, it does not replace the old
+  one** — the first apply left two live signatures, which makes the RPC ambiguous to PostgREST;
+  the migration now drops the 19-arg signature explicitly (same cleanup 20270863000000 had to
+  do). (2) **`npm run gen-types` served a stale schema for minutes after the DDL landed**, while
+  the REST API already accepted the new args (verified with a direct `curl` → 200). Don't
+  conclude a migration didn't apply because the generated types lack it — probe `pg_proc` or the
+  REST endpoint. `src/integrations/supabase/types.ts` therefore still shows the pre-migration
+  `Args` for this RPC — `check-types-staleness` passes and the call site works (verified 200 over
+  REST and by the `tests/e2e/explore.spec.ts` run), and the next `npm run gen-types` on any
+  branch will fold the two new args in. Verified against prod: keyset page 2 equals rows 11–20 of an unpaged read with
+  zero overlap, and after simulating a session's worth of `ignored` writes, OFFSET paging skipped
+  all 10 of page 2's buildings where the cursor skipped none.
 
 <details>
 <summary>Earlier entries (9) — moved to <a href="archive/AI_STATUS-ARCHIVE.md">the archive</a></summary>

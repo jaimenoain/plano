@@ -13,6 +13,8 @@
 export interface MoveSample {
   t: number;
   x: number;
+  /** Present only for samples captured during a vertical (pager) drag. */
+  y?: number;
 }
 
 export type SwipeAxis = "undecided" | "horizontal" | "vertical";
@@ -141,6 +143,22 @@ export function computeVelocity(
   const dt = (last.t - first.t) / 1000;
   if (dt <= dtGate) return 0;
   return (last.x - first.x) / dt;
+}
+
+/**
+ * Vertical fling velocity (px/s) from recent move samples. Mirrors `computeVelocity`
+ * but reads the `y` component, which is only recorded once the axis locks to vertical.
+ */
+export function computeVerticalVelocity(
+  samples: MoveSample[],
+  dtGate = 0.04
+): number {
+  if (samples.length < 2) return 0;
+  const last = samples[samples.length - 1];
+  const first = samples[0];
+  const dt = (last.t - first.t) / 1000;
+  if (dt <= dtGate) return 0;
+  return ((last.y ?? 0) - (first.y ?? 0)) / dt;
 }
 
 /** Whether a completed swipe commits, given the final pull and fling velocity. */
