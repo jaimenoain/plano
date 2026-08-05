@@ -499,8 +499,9 @@
 [ ] Final UAT — UX Refinement Round
 
   [MANUAL TASK — the agent presents these checks to the human, collects the
-  results in chat, and marks this task complete. This is the roadmap's last
-  task; once it is checked off, the roadmap is complete.]
+  results in chat, and marks this task complete. Once it is checked off, the
+  UX Refinement Round (Phases 1–8) is complete; the roadmap continues with
+  the Contributor Acknowledgements phases below.]
   Estimated time: 10 minutes (9 checks × ~45s, rounded up to nearest 5)
 
   Sign in before starting. Test on the live production site; do the mobile
@@ -540,5 +541,207 @@
     unpolished.
   - Still on the phone, open a collection: does it start in List view, and is
     the navigation comfortable throughout?
+
+  When you have been through every check, reply with the results.
+
+---
+
+# Contributor Acknowledgements (added 2026-08-05)
+
+> Phased build plan for the contributor-acknowledgements feature, from the
+> strategic proposal approved by the owner in chat on 2026-08-05. These
+> phases follow the UX Refinement Round above and share its conventions
+> (one task = one branch = one PR, executor works top to bottom, batch
+> submission per phase). Tasks carry no CSV ref — scope comes from the
+> proposal, restated in full in each task so no chat context is needed.
+>
+> Binding design decisions for every task below:
+>
+> - **Badges are derived, never granted.** They recompute from live,
+>   moderation-surviving data. Content removed by moderation stops counting
+>   and badges downgrade silently on the next recompute — no manual revoke
+>   step exists, and losing a tier never notifies.
+> - **No recognition for raw building edits.** Building edits are direct and
+>   unreviewed today, so edit-count badges would invite fabricated changes.
+>   Edit/correction recognition is explicitly deferred (see the Deferred
+>   list) until a suggest-edit or review mechanism exists.
+> - **Corrections never transfer recognition.** A user correcting data
+>   changes the data, nothing else; recognition moves only when a moderator
+>   confirms a removal (which flows through the recompute automatically).
+>   There is no "corrector" badge.
+
+## Phase 9 — Building-page recognition
+
+> **Batch submission:** Submit Tasks 9.1 → 9.2 as a single sequential batch.
+
+[ ] Task 9.1 — Per-building contributor surfaces
+
+  Goal:            The building detail Overview tab shows a quiet attribution
+                   line — "Added to Plano by @username · <month year>" (from
+                   the building's creator; omitted when unknown) — and the
+                   existing "Community contributors" grid (already built but
+                   mounted nowhere) renders at the bottom of the Overview
+                   tab, each contributor linking to their profile. The "Page
+                   contributors" rail module appears on all tabs instead of
+                   only Credits. Contributor roles keep their current
+                   text-label presentation ("First photos", "Top
+                   photographer", …) — contextual honours, deliberately not
+                   badges.
+  Scope boundary:  Surfaces the existing per-building contributor roles only
+                   — no new roles, no badges, no schema changes. New UI goes
+                   in extracted components (the building details page is at
+                   its frozen line cap). The contributor queries may be
+                   consolidated into one RPC for performance, but no new
+                   tables (so no new RLS).
+  Dependencies:    None
+
+[ ] Task 9.2 — Attribution privacy opt-out
+
+  Goal:            A profile setting lets a user decline public attribution.
+                   When enabled, their name and avatar are omitted from all
+                   public contributor surfaces (building attribution line,
+                   contributors rail/grid, locality "Who knows" lists) while
+                   their contributions still count privately toward their own
+                   stats and future badges. Mirrors the existing collections
+                   "show who added this" precedent.
+  Scope boundary:  The setting, its storage (one migration), and the read
+                   paths that must respect it. Collections keep their own
+                   per-collection attribution toggle.
+  Dependencies:    9.1
+
+## Phase 10 — Contributor badges
+
+> **Batch submission:** Submit Tasks 10.1 → 10.2 → 10.3 as a single
+> sequential batch.
+
+[ ] Task 10.1 — Badge ledger, recompute, and profile badge row
+
+  Goal:            Four badge families, three tiers each, earned from
+                   lifetime totals of live content: Founder (buildings added
+                   — 1/10/50), Photographer (photos — 5/50/250), Reviewer
+                   (written reviews — 3/25/100), Historian (architect/firm
+                   credits linked — 5/25/100). Calibrate the final thresholds
+                   against production data before shipping: tier I must be
+                   achievable in a first session, tier III genuinely rare.
+                   Storage is a thin ledger (user, badge key, tier, earned
+                   date) plus one idempotent recompute routine modelled on
+                   the ambassador-milestones sync: it evaluates from live,
+                   moderation-surviving data, awards AND downgrades, and
+                   returns progress. Recompute runs on the user's own profile
+                   visit and after their own contribution events — never on
+                   other users' page views. The profile hero renders earned
+                   badges beside the existing ambassador/verified-architect
+                   badges: small monochrome glyphs with tier marked I/II/III
+                   per design tokens (editorial, not bronze/silver/gold
+                   medals); tapping opens a sheet listing all badges, earned
+                   and locked, with progress toward the next tier.
+  Scope boundary:  No edit-count badges (deliberately excluded — see the
+                   binding decisions above). Only moderation-surviving
+                   content counts (credits: active or verified status).
+                   Notifications are Task 10.3; the public contributions
+                   list is Task 10.2.
+  Dependencies:    None
+
+[ ] Task 10.2 — Contributions on the profile
+
+  Goal:            The profile stats band gains a "Contributions" cell, and a
+                   new profile section lists the user's contributions
+                   (buildings added, photos, reviews, credits linked) with
+                   links to each building — the transparency layer showing
+                   what earned the badges. Needs a new public-safe
+                   server-side query: the existing ambassador impact stats
+                   are self-scoped and the audit log is admin-only, so
+                   neither can be exposed as-is.
+  Scope boundary:  Read-only display plus the query that powers it — no
+                   changes to how contributions are recorded.
+  Dependencies:    10.1
+
+[ ] Task 10.3 — Badge-earned notifications
+
+  Goal:            Earning a badge tier notifies the user exactly once,
+                   following the existing milestone pattern (the same
+                   conflict-guarded insert that stamps the ledger creates the
+                   notification; badge details travel in notification
+                   metadata). Badge news joins the existing weekly digest
+                   email; there is no per-badge email. Losing a tier is
+                   always silent.
+  Scope boundary:  One new notification type end-to-end (in-app rendering,
+                   digest inclusion, notification-preference respect) — no
+                   other notification changes.
+  Dependencies:    10.1
+
+## Phase 11 — Integrity & reporting
+
+> **Batch submission:** Submit Tasks 11.1 → 11.2 as a single sequential batch.
+
+[ ] Task 11.1 — Reporting open to all users
+
+  Goal:            Any signed-in user can report a photo, video, or building
+                   from the building page (credits already have public
+                   flagging), reusing the existing reports pipeline and
+                   reason lists; reports land in the existing admin
+                   moderation queue. The ambassador flagging surface is
+                   unchanged.
+  Scope boundary:  Report-submission entry points only — report handling
+                   stays manual; no automated sanctions of any kind.
+  Dependencies:    None
+
+[ ] Task 11.2 — Moderation-aware recompute + repeat-offender view
+
+  Goal:            When moderation removes or hides content, the affected
+                   user's badges recompute promptly and downgrade silently.
+                   A new admin view lists users with repeated upheld reports
+                   in the last 90 days and offers one manual control: freeze
+                   an account's badge computation (further sanctions stay
+                   with existing admin tooling — nothing automated). Reminder
+                   of the binding rule: user-made corrections never move
+                   recognition; only moderator-confirmed removals do.
+  Scope boundary:  Recompute triggers, the admin view, and the freeze flag —
+                   no automated banning, no thresholds that act on their own.
+  Dependencies:    10.1, 11.1
+
+## Deferred — explicitly not scheduled
+
+- Edit/correction recognition, and a possible Cartographer (locations / map
+  fixes) badge family — blocked until building edits gain a
+  suggest-and-approve or review mechanism; revisit after Phase 11.
+- Unifying Embassy ambassador milestones with these public badges — the two
+  systems stay separate for now, but their numbers must be computed from the
+  same definitions so an ambassador's counts never disagree between the
+  Embassy impact page and the public profile.
+
+## Final UAT — Contributor Acknowledgements
+
+[ ] Final UAT — Contributor Acknowledgements
+
+  [MANUAL TASK — the agent presents these checks to the human, collects the
+  results in chat, and marks this task complete. This is the roadmap's last
+  task; once it is checked off, the roadmap is complete.]
+  Estimated time: 10 minutes (5 checks × ~2min)
+
+  Sign in before starting. Test on the live production site.
+
+  ── If a check fails ──────────────────────────────────────────────────
+  Report it in chat in plain language:
+    "Acknowledgements UAT: [describe what you saw vs. what you expected]"
+  The agent fixes it (new branch + PR) and asks you to re-check. The agent
+  marks this task complete only when every check is passing or explicitly
+  deferred with a reason noted.
+  ──────────────────────────────────────────────────────────────────────
+
+  - Open a building you added to Plano: does the Overview show "Added to
+    Plano by" with your name, and the Community contributors section at the
+    bottom, with working profile links?
+  - Open your profile: is the badge row visible next to your existing
+    badges, and does tapping it show earned and locked badges with progress
+    toward the next tier?
+  - Upload enough photos to cross a Photographer threshold: do you receive
+    exactly one notification, and does the new tier appear on your profile?
+  - Turn on the attribution opt-out in settings: does your name disappear
+    from the building-page contributor surfaces while your own profile
+    stats stay intact?
+  - Report a photo while signed in as a regular (non-ambassador) test user:
+    does it appear in the admin moderation queue? Hide it as admin: does
+    the uploader's photo count drop on their next profile recompute?
 
   When you have been through every check, reply with the results.
