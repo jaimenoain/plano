@@ -16,7 +16,8 @@ Earlier programmes, still complete: **Remaining surfaces refinement** (2026-05-2
   `current_user` not `auth.uid()` (2026-08-05):** `building_credits_update` admitted only
   `is_admin()`, a claimed person's owner, and a company steward — so the member who mistyped a
   credit could not fix it, and the bulk-imported credits (all `added_by_user_id IS NULL`) were
-  admin-only forever. Migration `20271202000000_building_credits_member_edits.sql` adds a fourth
+  admin-only forever. Migration `20271202000000_building_credits_member_edits.sql`
+  (**applied + verified 2026-08-05**) adds a fourth
   branch: any authenticated user on `status = 'active'` rows, with `WITH CHECK` pinning the new
   row to `'active'` (no self-verifying) and requiring an entity. Matches `canEditOfficialData`,
   which has always been `!!user`. [ADR 0031](decisions/0031-credit-edits-open-to-members.md).
@@ -30,7 +31,11 @@ Earlier programmes, still complete: **Remaining surfaces refinement** (2026-05-2
   to be added to the `entity_audit_logs_actor_insert` whitelist in the same migration — otherwise
   the credit saves and the audit insert then throws. `tests/unit/building-credits-member-edits-migration.test.ts`
   fails if any of that is loosened; `canEditCredit` in `BuildingCredits.tsx` is the client mirror
-  and moves with it.
+  and moves with it. Verified on prod as `SET LOCAL ROLE authenticated`: a member edits an active
+  credit's notes (`UPDATE 1`), is refused on `building_id` (42501 from the guard), on
+  `status = 'verified'` and on blanking both entities (RLS), while `flag_building_credit` called by
+  that same member still flips the row to `flagged` — the `current_user` discriminator proven, not
+  assumed.
 - **`public.people` is effectively empty — every architect was imported as a *company*
   (2026-08-05):** Roadmap Task 2.1 was filed as a broken person dropdown in the Add-credits drawer.
   It is not a query, RPC or filtering bug. On production, `foster`, `renzo`, `zaha`, `john` and
