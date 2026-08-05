@@ -17,6 +17,7 @@ import { BuildingDetailPanel } from "@/features/collections/components/BuildingD
 import { DiscoveryList } from "@/features/search/components/DiscoveryList";
 import { DiscoveryBuilding, type StyleSummary } from "@/features/search/components/types";
 import { useDebounce } from "@/hooks/useDebounce";
+import { hideBuildingFromCollection } from "../api/collectionItems";
 import { searchBuildingsRpc } from "@/utils/supabaseFallback";
 import { parseLocation } from "@/utils/location";
 
@@ -219,17 +220,7 @@ export function AddBuildingsToCollectionDialog({
   }, [buildings, hiddenBuildingIds, existingBuildings, debouncedSearchQuery]);
 
   const hideMutation = useMutation({
-      mutationFn: async (buildingId: string) => {
-          const { error } = await supabase
-              .from("collection_items")
-              .insert({
-                  collection_id: collectionId,
-                  building_id: buildingId,
-                  is_hidden: true
-              });
-
-          if (error) throw error;
-      },
+      mutationFn: (buildingId: string) => hideBuildingFromCollection(collectionId, buildingId),
       onSuccess: () => {
           toast.success("Building hidden from suggestions");
           queryClient.invalidateQueries({ queryKey: ["collection_items", collectionId] });

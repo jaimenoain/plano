@@ -36,6 +36,39 @@ export async function addBuildingToCollection(
   if (error) throw error;
 }
 
+/**
+ * Mark a building hidden for this collection: it stops being suggested, and it
+ * stops appearing as a member anywhere a reader can see.
+ *
+ * `collection_items` has no unique (collection_id, building_id), so a plain
+ * insert on a building the collection already holds would leave the visible row
+ * standing beside a new hidden one and the building would go on showing in the
+ * list, on the map and in the itinerary. Flip whatever rows exist first; write a
+ * fresh tombstone only when there was nothing to flip.
+ */
+export async function hideBuildingFromCollection(
+  collectionId: string,
+  buildingId: string,
+): Promise<void> {
+  const { data: flipped, error: updateError } = await supabase
+    .from("collection_items")
+    .update({ is_hidden: true })
+    .eq("collection_id", collectionId)
+    .eq("building_id", buildingId)
+    .select("id");
+
+  if (updateError) throw updateError;
+  if (flipped && flipped.length > 0) return;
+
+  const { error } = await supabase.from("collection_items").insert({
+    collection_id: collectionId,
+    building_id: buildingId,
+    is_hidden: true,
+  });
+
+  if (error) throw error;
+}
+
 /** The member's note on one collection entry. */
 export async function updateCollectionItemNote(itemId: string, note: string): Promise<void> {
   const { error } = await supabase.from("collection_items").update({ note }).eq("id", itemId);

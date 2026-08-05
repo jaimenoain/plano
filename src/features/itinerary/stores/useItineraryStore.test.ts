@@ -60,6 +60,25 @@ describe('useItineraryStore', () => {
         }
     ];
 
+    it('never offers a hidden item as an available building', () => {
+        const hidden = {
+            ...mockBuildings[0],
+            id: 'item3',
+            building_id: 'b3',
+            is_hidden: true,
+            building: { ...mockBuildings[0].building, id: 'b3', name: 'Hidden Building' },
+        } as CollectionItemWithBuilding;
+
+        useItineraryStore.getState().initializeItinerary(
+            { days: 1, defaultTransportMode: 'walking' as const, routes: [] },
+            [...mockBuildings, hidden],
+        );
+
+        const { buildingDetails } = useItineraryStore.getState();
+        expect(Object.keys(buildingDetails).sort()).toEqual(['b1', 'b2']);
+        expect(buildingDetails['b3']).toBeUndefined();
+    });
+
     it('should initialize itinerary correctly with new schema (ItineraryDay)', () => {
         const itinerary = {
             days: 2,
