@@ -75,10 +75,12 @@ export const appNavItems: AppNavItem[] = [
     isActive: (pathname) => pathname === "/collections",
   },
   {
+    // No "top" surface: the desktop header carries a magnifying-glass icon
+    // linking to /map, so a text item beside "My Map" would be redundant.
     label: "Search",
     path: "/map",
     icon: Search,
-    surfaces: ["top", "sidebar", "bottom"],
+    surfaces: ["sidebar", "bottom"],
   },
   {
     label: "Connect",
