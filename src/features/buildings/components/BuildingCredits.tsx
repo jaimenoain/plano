@@ -1,40 +1,29 @@
 import { useCallback, useReducer, useMemo, useState } from "react";
 import { Link } from "react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, ChevronDown, BadgeCheck, Flag, NotebookPen, ImageIcon } from "lucide-react";
-import type { BuildingCreditWithEntities, CreditRole, CreditTier, FlagReason } from "@/features/credits/types";
-import { creditRoleGroup, formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
-import { visiblePrimaryCredits } from "@/features/credits/buildingCreditDisplay";
-import { AddCreditForm } from "@/features/credits/components/AddCreditForm";
-import { CreditNoteSheet } from "@/features/credits/components/CreditNoteSheet";
-import { flagCredit, buildingCreditsQueryKey } from "@/features/credits/api/credits";
-import { markCreditFlaggedInSession, readSessionFlaggedCreditIds } from "@/features/credits/creditFlagSession";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useToast } from "@/hooks/use-toast";
+import { ExternalLink, ChevronDown, BadgeCheck, NotebookPen, ImageIcon, Pencil } from "lucide-react";
+import {
+  AddCreditForm,
+  CreditNoteSheet,
+  creditRoleGroup,
+  EditCreditForm,
+  formatCreditRoleLabel,
+  markCreditFlaggedInSession,
+  NotifyCreditedEntitiesStep,
+  readSessionFlaggedCreditIds,
+  visiblePrimaryCredits,
+  type BuildingCreditWithEntities,
+  type CreditRole,
+  type CreditTier,
+} from "@/features/credits";
+import { CreditFlagTrigger } from "./CreditFlagTrigger";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getStorageAssetUrl } from "@/utils/image";
 import { cn } from "@/lib/utils";
-
-const FLAG_REASON_OPTIONS: { value: FlagReason; label: string }[] = [
-  { value: "wrong_person", label: "Wrong person" },
-  { value: "never_involved", label: "Never involved" },
-  { value: "wrong_role", label: "Wrong role" },
-  { value: "other", label: "Other" },
-];
 
 function useSessionFlaggedCreditBump() {
   const [version, bump] = useReducer((n: number) => n + 1, 0);
@@ -50,6 +39,28 @@ function useSessionFlaggedCreditBump() {
     [],
   );
   return { sessionIds, markAndBump };
+}
+
+/**
+ * Who may correct this credit — the client-side mirror of the
+ * `building_credits_update` policy's open branch (20271202000000).
+ *
+ * Any signed-in member may edit an `active` credit, the same openness the rest
+ * of the building record already has. A `verified` credit was confirmed by the
+ * credited party and a `flagged`/`hidden` one is under moderation: those stay
+ * with admins (and, via their own surfaces, claimed people and company
+ * stewards, whom the client cannot identify from a credit row alone).
+ *
+ * The rule is necessarily stated twice — here and in SQL. If it changes, both
+ * move together; `BuildingCredits.test.tsx` and the migration guard pin each side.
+ */
+export function canEditCredit(
+  credit: BuildingCreditWithEntities,
+  viewer: { currentUserId?: string | null; isAdmin?: boolean },
+): boolean {
+  if (viewer.isAdmin) return true;
+  if (!viewer.currentUserId) return false;
+  return credit.status === "active";
 }
 
 function tierHeadingLabel(tier: CreditTier): string {
@@ -163,212 +174,6 @@ function EntityLinks({
   );
 }
 
-function CreditFlagFormFields({
-  reason,
-  onReasonChange,
-  notes,
-  onNotesChange,
-  disabled,
-}: {
-  reason: FlagReason | null;
-  onReasonChange: (r: FlagReason) => void;
-  notes: string;
-  onNotesChange: (v: string) => void;
-  disabled: boolean;
-}) {
-  return (
-    <div className="space-y-4">
-      <fieldset className="space-y-2">
-        <legend className="mb-2 text-sm font-medium text-text-primary">Reason</legend>
-        <div className="space-y-2">
-          {FLAG_REASON_OPTIONS.map(({ value, label }) => (
-            <label
-              key={value}
-              className="flex cursor-pointer items-center gap-2 text-sm text-text-primary"
-            >
-              <input
-                type="radio"
-                name="credit-flag-reason"
-                value={value}
-                checked={reason === value}
-                disabled={disabled}
-                onChange={() => onReasonChange(value)}
-                className="h-4 w-4 shrink-0 accent-brand-primary"
-              />
-              {label}
-            </label>
-          ))}
-        </div>
-      </fieldset>
-      <div className="space-y-2">
-        <Label htmlFor="credit-flag-notes" className="text-text-primary">
-          Notes <span className="font-normal text-text-secondary">(optional)</span>
-        </Label>
-        <Textarea
-          id="credit-flag-notes"
-          value={notes}
-          disabled={disabled}
-          onChange={(e) => onNotesChange(e.target.value)}
-          placeholder="Add context for reviewers"
-          maxLength={10000}
-          className="min-h-20 resize-y"
-        />
-      </div>
-    </div>
-  );
-}
-
-function CreditFlagTrigger({
-  creditId,
-  buildingId,
-  show,
-  onReported,
-}: {
-  creditId: string;
-  buildingId: string;
-  show: boolean;
-  onReported: () => void;
-}) {
-  const isMobile = useIsMobile();
-  const [open, setOpen] = useState(false);
-  const [reason, setReason] = useState<FlagReason | null>(null);
-  const [notes, setNotes] = useState("");
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const mutation = useMutation({
-    mutationFn: () => {
-      if (reason == null) {
-        throw new Error("CreditFlagTrigger: missing reason");
-      }
-      return flagCredit(creditId, reason, notes.trim() || null);
-    },
-    onSuccess: () => {
-      onReported();
-      void queryClient.invalidateQueries({ queryKey: buildingCreditsQueryKey(buildingId) });
-      toast({ title: "Credit reported — we'll review it" });
-      setOpen(false);
-      setNotes("");
-      setReason(null);
-    },
-    onError: () => {
-      toast({ variant: "destructive", title: "Could not send report" });
-    },
-  });
-
-  if (!show) return null;
-
-  const fields = (
-    <CreditFlagFormFields
-      reason={reason}
-      onReasonChange={setReason}
-      notes={notes}
-      onNotesChange={setNotes}
-      disabled={mutation.isPending}
-    />
-  );
-
-  const actions = (
-    <div className="mt-4 flex justify-end gap-2">
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={mutation.isPending}
-        onClick={() => setOpen(false)}
-      >
-        Cancel
-      </Button>
-      <Button
-        type="button"
-        size="sm"
-        disabled={mutation.isPending}
-        onClick={() => {
-          if (reason == null) {
-            toast({ variant: "destructive", description: "Select a reason before submitting." });
-            return;
-          }
-          mutation.mutate();
-        }}
-      >
-        {mutation.isPending ? "Sending…" : "Submit report"}
-      </Button>
-    </div>
-  );
-
-  const triggerButton = (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      className="h-7 w-7 shrink-0 text-text-disabled hover:text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity"
-      aria-label="Report issue with this credit"
-    >
-      <Flag className="h-3.5 w-3.5" aria-hidden />
-    </Button>
-  );
-
-  if (isMobile) {
-    return (
-      <>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 shrink-0 text-text-disabled hover:text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity"
-          aria-label="Report issue with this credit"
-          onClick={() => setOpen(true)}
-        >
-          <Flag className="h-3.5 w-3.5" aria-hidden />
-        </Button>
-        <Sheet
-          open={open}
-          onOpenChange={(next) => {
-            setOpen(next);
-            if (!next) {
-              setNotes("");
-              setReason(null);
-            }
-          }}
-        >
-          <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto rounded-none [&_button]:rounded-none!">
-            <SheetHeader>
-              <SheetTitle>Report credit</SheetTitle>
-              <SheetDescription>
-                Flag incorrect information. We review every report.
-              </SheetDescription>
-            </SheetHeader>
-            <div className="mt-6">
-              {fields}
-              {actions}
-            </div>
-          </SheetContent>
-        </Sheet>
-      </>
-    );
-  }
-
-  return (
-    <Popover
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (!next) {
-          setNotes("");
-          setReason(null);
-        }
-      }}
-    >
-      <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
-      <PopoverContent className="w-80 rounded-none [&_button]:rounded-none!" align="end" sideOffset={8}>
-        <p className="mb-4 text-sm text-text-secondary">Flag incorrect information. We review every report.</p>
-        {fields}
-        {actions}
-      </PopoverContent>
-    </Popover>
-  );
-}
-
 function CreditLedgerEntry({
   credit,
   buildingId,
@@ -376,6 +181,8 @@ function CreditLedgerEntry({
   sessionFlaggedIds,
   onFlagSessionMarked,
   currentUserId,
+  isAdmin,
+  allCredits,
 }: {
   credit: BuildingCreditWithEntities;
   buildingId: string;
@@ -383,8 +190,12 @@ function CreditLedgerEntry({
   sessionFlaggedIds: Set<string>;
   onFlagSessionMarked: (creditId: string) => void;
   currentUserId?: string | null;
+  isAdmin?: boolean;
+  allCredits: BuildingCreditWithEntities[];
 }) {
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
+  const [editSheetOpen, setEditSheetOpen] = useState(false);
+  const canEdit = canEditCredit(credit, { currentUserId, isAdmin });
   const years = yearRangeText(credit);
   const project = credit.projectUrl?.trim() ?? "";
   const showFlag =
@@ -460,6 +271,23 @@ function CreditLedgerEntry({
                   </TooltipContent>
                 </Tooltip>
               ) : null}
+              {canEdit ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0 text-text-disabled hover:text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity"
+                      aria-label="Edit this credit"
+                      onClick={() => setEditSheetOpen(true)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" aria-hidden />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Edit this credit</TooltipContent>
+                </Tooltip>
+              ) : null}
           <CreditFlagTrigger
             creditId={credit.id}
             buildingId={buildingId}
@@ -525,6 +353,25 @@ function CreditLedgerEntry({
         </div>
       ) : null}
 
+      {/* Credit edit sheet */}
+      {canEdit ? (
+        <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
+          <SheetContent
+            side="right"
+            className="flex w-full flex-col overflow-hidden rounded-none sm:max-w-lg sm:px-6 [&_button]:rounded-none! [&_input]:rounded-none! [&_textarea]:rounded-none!"
+          >
+            {editSheetOpen ? (
+              <EditCreditForm
+                credit={credit}
+                buildingId={buildingId}
+                existingCredits={allCredits}
+                onRequestClose={() => setEditSheetOpen(false)}
+              />
+            ) : null}
+          </SheetContent>
+        </Sheet>
+      ) : null}
+
       {/* Note edit sheet */}
       {isOwner ? (
         <Sheet open={noteSheetOpen} onOpenChange={setNoteSheetOpen}>
@@ -558,6 +405,8 @@ function TierLedger({
   sessionFlaggedIds,
   onFlagSessionMarked,
   currentUserId,
+  isAdmin,
+  allCredits,
   showTierEyebrow = true,
 }: {
   tier: CreditTier;
@@ -567,6 +416,8 @@ function TierLedger({
   sessionFlaggedIds: Set<string>;
   onFlagSessionMarked: (creditId: string) => void;
   currentUserId?: string | null;
+  isAdmin?: boolean;
+  allCredits: BuildingCreditWithEntities[];
   showTierEyebrow?: boolean;
 }) {
   if (credits.length === 0) return null;
@@ -599,6 +450,8 @@ function TierLedger({
                   sessionFlaggedIds={sessionFlaggedIds}
                   onFlagSessionMarked={onFlagSessionMarked}
                   currentUserId={currentUserId}
+                  isAdmin={isAdmin}
+                  allCredits={allCredits}
                 />
               ))}
             </dd>
@@ -672,6 +525,9 @@ export function BuildingCredits({
   const [addOpenInternal, setAddOpenInternal] = useState(false);
   const addOpen = addOpenProp !== undefined ? addOpenProp : addOpenInternal;
   const setAddOpen = onAddOpenChange ?? setAddOpenInternal;
+  // Non-null while the optional "email the people you credited" step is showing.
+  // Reached from the success toast, never in the way of the save itself.
+  const [notifyCreditIds, setNotifyCreditIds] = useState<string[] | null>(null);
   const visibleCredits = useMemo(
     () => (isAdmin ? credits : credits.filter((c) => c.status !== "flagged")),
     [credits, isAdmin],
@@ -728,6 +584,8 @@ export function BuildingCredits({
               sessionFlaggedIds={sessionIds}
               onFlagSessionMarked={markAndBump}
               currentUserId={currentUserId}
+              isAdmin={isAdmin}
+              allCredits={visibleCredits}
               showTierEyebrow={multiTier}
             />
             <TierLedger
@@ -738,6 +596,8 @@ export function BuildingCredits({
               sessionFlaggedIds={sessionIds}
               onFlagSessionMarked={markAndBump}
               currentUserId={currentUserId}
+              isAdmin={isAdmin}
+              allCredits={visibleCredits}
               showTierEyebrow={multiTier}
             />
           </div>
@@ -769,6 +629,8 @@ export function BuildingCredits({
                       sessionFlaggedIds={sessionIds}
                       onFlagSessionMarked={markAndBump}
                       currentUserId={currentUserId}
+                      isAdmin={isAdmin}
+                      allCredits={visibleCredits}
                       showTierEyebrow={false}
                     />
                   </div>
@@ -781,21 +643,47 @@ export function BuildingCredits({
       )}
 
       {isAuthenticated ? (
-        <Sheet open={addOpen} onOpenChange={setAddOpen}>
-          <SheetContent
-            side="right"
-            className="flex w-full flex-col overflow-hidden rounded-none sm:max-w-lg sm:px-6 [&_button]:rounded-none! [&_input]:rounded-none! [&_textarea]:rounded-none!"
+        <>
+          <Sheet open={addOpen} onOpenChange={setAddOpen}>
+            <SheetContent
+              side="right"
+              className="flex w-full flex-col overflow-hidden rounded-none sm:max-w-lg sm:px-6 [&_button]:rounded-none! [&_input]:rounded-none! [&_textarea]:rounded-none!"
+            >
+              {addOpen ? (
+                <AddCreditForm
+                  buildingId={buildingId}
+                  existingCredits={credits}
+                  onSaved={() => setAddOpen(false)}
+                  onRequestNotify={(creditIds) => {
+                    setAddOpen(false);
+                    setNotifyCreditIds(creditIds);
+                  }}
+                />
+              ) : null}
+            </SheetContent>
+          </Sheet>
+
+          <Sheet
+            open={notifyCreditIds !== null}
+            onOpenChange={(next) => {
+              if (!next) setNotifyCreditIds(null);
+            }}
           >
-            {addOpen ? (
-              <AddCreditForm
-                buildingId={buildingId}
-                buildingName={buildingName}
-                existingCredits={credits}
-                onRequestClose={() => setAddOpen(false)}
-              />
-            ) : null}
-          </SheetContent>
-        </Sheet>
+            <SheetContent
+              side="right"
+              className="flex w-full flex-col overflow-hidden rounded-none sm:max-w-lg sm:px-6 [&_button]:rounded-none! [&_input]:rounded-none! [&_textarea]:rounded-none!"
+            >
+              {notifyCreditIds !== null ? (
+                <NotifyCreditedEntitiesStep
+                  creditIds={notifyCreditIds}
+                  buildingId={buildingId}
+                  buildingName={buildingName}
+                  onRequestClose={() => setNotifyCreditIds(null)}
+                />
+              ) : null}
+            </SheetContent>
+          </Sheet>
+        </>
       ) : null}
     </section>
   );

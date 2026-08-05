@@ -6,7 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { BrowserRouter } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BuildingCredits } from "./BuildingCredits";
+import { BuildingCredits, canEditCredit } from "./BuildingCredits";
 import type { BuildingCreditWithEntities } from "@/features/credits/types";
 
 const { flagCreditMock, toastMock, useIsMobileMock } = vi.hoisted(() => ({
@@ -556,5 +556,122 @@ describe("BuildingCredits flag flow (QA 5.3)", () => {
     sessionStorage.clear();
     wrap(<BuildingCredits buildingId="b1" credits={credits} isAuthenticated={false} />);
     expect(screen.getByRole("button", { name: /report issue with this credit/i })).toBeInTheDocument();
+  });
+});
+
+describe("BuildingCredits — add and edit from the Credits tab (Task 2.2)", () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+    flagCreditMock.mockReset();
+    toastMock.mockReset();
+    useIsMobileMock.mockReturnValue(false);
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  const withCredits = (over: Partial<BuildingCreditWithEntities> = {}) => [
+    baseCredit({
+      id: "c-edit",
+      person: { id: "p1", name: "Renzo Piano", slug: "renzo-piano" },
+      ...over,
+    }),
+  ];
+
+  it("keeps the Add a credit entry point once credits exist", () => {
+    wrap(<BuildingCredits buildingId="b1" credits={withCredits()} isAuthenticated currentUserId="u1" />);
+    // The empty state is gone, so this footer link is the in-page way to add another.
+    expect(screen.getByRole("link", { name: "Renzo Piano" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /add a credit/i })).toBeInTheDocument();
+  });
+
+  it("offers Edit on an active credit to any signed-in member", () => {
+    wrap(<BuildingCredits buildingId="b1" credits={withCredits()} isAuthenticated currentUserId="u1" />);
+    expect(screen.getByRole("button", { name: /edit this credit/i })).toBeInTheDocument();
+  });
+
+  it("offers no Edit to a signed-out visitor", () => {
+    wrap(<BuildingCredits buildingId="b1" credits={withCredits()} isAuthenticated={false} />);
+    expect(screen.queryByRole("button", { name: /edit this credit/i })).toBeNull();
+  });
+
+  it("offers no Edit on a verified credit — the credited party confirmed it", () => {
+    wrap(
+      <BuildingCredits
+        buildingId="b1"
+        credits={withCredits({ status: "verified" })}
+        isAuthenticated
+        currentUserId="u1"
+      />,
+    );
+    expect(screen.queryByRole("button", { name: /edit this credit/i })).toBeNull();
+  });
+
+  it("offers Edit on a verified credit to an admin", () => {
+    wrap(
+      <BuildingCredits
+        buildingId="b1"
+        credits={withCredits({ status: "verified" })}
+        isAuthenticated
+        isAdmin
+        currentUserId="u1"
+      />,
+    );
+    expect(screen.getByRole("button", { name: /edit this credit/i })).toBeInTheDocument();
+  });
+
+  it("offers Edit on a flagged credit to an admin only", () => {
+    wrap(
+      <BuildingCredits
+        buildingId="b1"
+        credits={withCredits({ status: "flagged" })}
+        isAuthenticated
+        isAdmin
+        currentUserId="u1"
+      />,
+    );
+    expect(screen.getByRole("button", { name: /edit this credit/i })).toBeInTheDocument();
+  });
+
+  it("opens the edit drawer seeded with the credit", async () => {
+    const user = userEvent.setup();
+    wrap(
+      <BuildingCredits
+        buildingId="b1"
+        credits={withCredits({ contributionNotes: "Lead designer" })}
+        isAuthenticated
+        currentUserId="u1"
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: /edit this credit/i }));
+    expect(await screen.findByRole("heading", { name: /edit credit/i })).toBeInTheDocument();
+    expect((screen.getByLabelText(/contribution notes/i) as HTMLTextAreaElement).value).toBe(
+      "Lead designer",
+    );
+  });
+});
+
+describe("canEditCredit (Task 2.2 — mirrors the RLS open branch)", () => {
+  const credit = (status: BuildingCreditWithEntities["status"]) => baseCredit({ status });
+
+  it("lets any signed-in member edit an active credit", () => {
+    expect(canEditCredit(credit("active"), { currentUserId: "u1" })).toBe(true);
+  });
+
+  it("refuses a signed-out visitor", () => {
+    expect(canEditCredit(credit("active"), { currentUserId: null })).toBe(false);
+  });
+
+  it("refuses a member on verified, flagged and hidden credits", () => {
+    expect(canEditCredit(credit("verified"), { currentUserId: "u1" })).toBe(false);
+    expect(canEditCredit(credit("flagged"), { currentUserId: "u1" })).toBe(false);
+    expect(canEditCredit(credit("hidden"), { currentUserId: "u1" })).toBe(false);
+  });
+
+  it("lets an admin edit any status", () => {
+    for (const s of ["active", "verified", "flagged", "hidden"] as const) {
+      expect(canEditCredit(credit(s), { currentUserId: "u1", isAdmin: true })).toBe(true);
+    }
   });
 });

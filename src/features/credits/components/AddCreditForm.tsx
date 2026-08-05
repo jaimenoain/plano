@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Copy, X } from "lucide-react";
 import { ZodError } from "zod";
 import {
   createEmptyRow,
@@ -14,7 +13,6 @@ import {
   buildingCreditsQueryKey,
   CREDIT_ROLES,
   CREDIT_TIERS,
-  notifyCreditedEntities,
 } from "@/features/credits/api/credits";
 import { CreditEntityPicker } from "@/features/credits/components/CreditEntityPicker";
 import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
@@ -33,47 +31,31 @@ import {
 } from "@/components/ui/select";
 import { SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  CREDIT_NOTIFY_MAX_RECIPIENTS,
-  parseCreditNotifyEmails,
-} from "@/lib/parse-credit-notify-emails";
+import { ToastAction } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
-import { getBuildingUrl } from "@/utils/url";
 
 export interface AddCreditFormProps {
   buildingId: string;
-  buildingName?: string | null;
   existingCredits: BuildingCreditWithEntities[];
-  onRequestClose: () => void;
+  /**
+   * Every row saved. The host closes the drawer; the success toast offers the
+   * optional email step, which the host reopens with these ids.
+   */
+  onSaved: (creditIds: string[]) => void;
+  /** Reopens the drawer on the notify step. */
+  onRequestNotify: (creditIds: string[]) => void;
 }
 
 export function AddCreditForm({
   buildingId,
-  buildingName,
   existingCredits,
-  onRequestClose,
+  onSaved,
+  onRequestNotify,
 }: AddCreditFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [step, setStep] = useState<"form" | "notify">("form");
   const [rows, setRows] = useState<CreditEntryRow[]>(() => [createEmptyRow()]);
   const [batchSubmitting, setBatchSubmitting] = useState(false);
-  const [notifyDraft, setNotifyDraft] = useState("");
-  const [notifyRemovedEmails, setNotifyRemovedEmails] = useState<string[]>([]);
-  const [notifySending, setNotifySending] = useState(false);
-
-  const parsedNotify = useMemo(() => parseCreditNotifyEmails(notifyDraft), [notifyDraft]);
-  const visibleNotifyEmails = useMemo(
-    () => parsedNotify.accepted.filter((e) => !notifyRemovedEmails.includes(e)),
-    [parsedNotify.accepted, notifyRemovedEmails],
-  );
-  const sessionCreditIds = useMemo(
-    () =>
-      rows
-        .map((r) => r.submittedCreditId)
-        .filter((id): id is string => typeof id === "string" && id.length > 0),
-    [rows],
-  );
 
   const updateRow = useCallback((key: string, patch: Partial<CreditEntryRow>) => {
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
@@ -87,10 +69,37 @@ export function AddCreditForm({
     setRows((prev) => (prev.length <= 1 ? prev : prev.filter((r) => r.key !== key)));
   }, []);
 
+  /**
+   * A save is finished when the drawer is gone and the list has the new rows.
+   * Emailing the people credited is a separate, optional errand, so it rides on
+   * the confirmation rather than standing between the user and the page.
+   */
+  const finish = useCallback(
+    (creditIds: string[]) => {
+      toast({
+        title: creditIds.length > 1 ? "Credits added" : "Credit added",
+        action:
+          creditIds.length > 0 ? (
+            <ToastAction altText="Notify the people you credited" onClick={() => onRequestNotify(creditIds)}>
+              Notify them
+            </ToastAction>
+          ) : undefined,
+      });
+      onSaved(creditIds);
+    },
+    [onRequestNotify, onSaved, toast],
+  );
+
   const handleSubmit = useCallback(async () => {
+    const savedIdsOf = (list: CreditEntryRow[]) =>
+      list
+        .map((r) => r.submittedCreditId)
+        .filter((id): id is string => typeof id === "string" && id.length > 0);
+
+    // Everything already saved: nothing left to do but confirm and get out of the way.
     const toSubmit = rows.filter((r) => r.submitStatus !== "success");
     if (toSubmit.length === 0) {
-      setStep("notify");
+      finish(savedIdsOf(rows));
       return;
     }
 
@@ -115,7 +124,7 @@ export function AddCreditForm({
 
     setBatchSubmitting(true);
     let apiFailures = 0;
-    let anyApiSuccess = false;
+    const createdIds: string[] = [];
 
     for (const row of toSubmit) {
       const built = rowToPayload(buildingId, row);
@@ -127,7 +136,7 @@ export function AddCreditForm({
 
       try {
         const created = await addBuildingCredit(built.data);
-        anyApiSuccess = true;
+        createdIds.push(created.id);
         setRows((prev) => {
           return prev.map((r) =>
             r.key === row.key
@@ -157,192 +166,23 @@ export function AddCreditForm({
       }
     }
 
-    if (anyApiSuccess) {
+    if (createdIds.length > 0) {
       void queryClient.invalidateQueries({ queryKey: buildingCreditsQueryKey(buildingId) });
     }
 
     setBatchSubmitting(false);
 
+    // A partial failure keeps the drawer open on the rows that still need fixing.
     if (apiFailures === 0) {
-      setStep("notify");
+      finish([...savedIdsOf(rows), ...createdIds]);
     }
-  }, [buildingId, queryClient, rows, toast]);
+  }, [buildingId, finish, queryClient, rows, toast]);
 
   const pendingCount = useMemo(() => rows.filter((r) => r.submitStatus !== "success").length, [rows]);
   const allRowsSaved = useMemo(
     () => rows.length > 0 && rows.every((r) => r.submitStatus === "success"),
     [rows],
   );
-
-  const handleNotifySend = useCallback(async () => {
-    if (visibleNotifyEmails.length === 0) {
-      toast({ variant: "destructive", title: "Add an email", description: "Enter at least one valid address." });
-      return;
-    }
-    if (sessionCreditIds.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "Nothing to send",
-        description: "No saved credits were found for this session.",
-      });
-      return;
-    }
-    setNotifySending(true);
-    try {
-      await notifyCreditedEntities({ creditIds: sessionCreditIds, emails: visibleNotifyEmails });
-      toast({ title: "Notifications sent", description: "Recipients will receive an email from Plano." });
-      onRequestClose();
-    } catch (e) {
-      const message = e instanceof Error && e.message ? e.message : "Could not send notifications";
-      toast({ variant: "destructive", title: "Send failed", description: message });
-    } finally {
-      setNotifySending(false);
-    }
-  }, [onRequestClose, sessionCreditIds, toast, visibleNotifyEmails]);
-
-  const removeNotifyPill = useCallback((email: string) => {
-    setNotifyRemovedEmails((prev) => (prev.includes(email) ? prev : [...prev, email]));
-  }, []);
-
-  const handleCopyInvitation = useCallback(() => {
-    const url = window.location.origin + getBuildingUrl(buildingId);
-    const name = buildingName?.trim() || "this building";
-    const text = `I've credited your work at ${name}, take a look here\n${url}`;
-
-    void navigator.clipboard.writeText(text);
-    toast({ title: "Message and link copied" });
-  }, [buildingId, buildingName, toast]);
-
-  if (step === "notify") {
-    return (
-      <>
-        <SheetHeader>
-          <SheetTitle>Notify credited people</SheetTitle>
-          <SheetDescription>
-            Notify the people you have credited — paste their email addresses below. This step is optional.
-          </SheetDescription>
-        </SheetHeader>
-        <div className="mt-6 flex flex-col gap-4">
-          {sessionCreditIds.length === 0 ? (
-            <p className="text-sm text-text-secondary" role="alert">
-              No credits from this session were found. You can close this sheet.
-            </p>
-          ) : null}
-
-          <div className="space-y-2">
-            <Label htmlFor="add-credit-notify-emails" className="text-text-primary">
-              Email addresses
-            </Label>
-            <Textarea
-              id="add-credit-notify-emails"
-              value={notifyDraft}
-              disabled={notifySending}
-              onChange={(e) => {
-                setNotifyDraft(e.target.value);
-                setNotifyRemovedEmails([]);
-              }}
-              className="min-h-24 resize-y"
-              placeholder={"one@example.com, other@example.com\nor one address per line"}
-              autoComplete="off"
-            />
-            <p className="text-2xs text-text-secondary">
-              Separate with commas or new lines. Up to {CREDIT_NOTIFY_MAX_RECIPIENTS} addresses; duplicates are merged.
-            </p>
-          </div>
-
-          {parsedNotify.invalid.length > 0 ? (
-            <p className="text-sm text-destructive" role="alert">
-              Skipping invalid: {parsedNotify.invalid.slice(0, 5).join(", ")}
-              {parsedNotify.invalid.length > 5 ? "…" : ""}
-            </p>
-          ) : null}
-          {parsedNotify.truncated > 0 ? (
-            <p className="text-sm text-text-secondary" role="status">
-              Only the first {CREDIT_NOTIFY_MAX_RECIPIENTS} valid addresses will be used ({parsedNotify.truncated}{" "}
-              ignored).
-            </p>
-          ) : null}
-
-          {visibleNotifyEmails.length > 0 ? (
-            <div className="space-y-2">
-              <span className="text-xs font-medium uppercase tracking-widest text-text-secondary">Sending to</span>
-              <div className="flex flex-wrap gap-2">
-                {visibleNotifyEmails.map((email) => (
-                  <div
-                    key={email}
-                    className="flex items-center gap-1 rounded-none border border-border-default bg-surface-muted py-1 pl-2 pr-1"
-                  >
-                    <span className="max-w-search-serp-alt truncate text-sm text-text-primary">{email}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 shrink-0 p-0 text-text-secondary"
-                      disabled={notifySending}
-                      onClick={() => removeNotifyPill(email)}
-                      aria-label={`Remove ${email}`}
-                    >
-                      <X className="h-4 w-4" aria-hidden />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          <div className="space-y-3 rounded-none border border-border-default bg-surface-card p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-secondary">
-                Share manually
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 gap-2 text-text-primary hover:bg-surface-muted"
-                onClick={handleCopyInvitation}
-              >
-                <Copy className="h-3.5 w-3.5" />
-                Copy link
-              </Button>
-            </div>
-            <div className="rounded-none border border-border-tertiary bg-surface-muted p-3 text-sm leading-relaxed text-text-primary">
-              <p>I&apos;ve credited your work at {buildingName?.trim() || "this building"}, take a look here:</p>
-              <p className="mt-1 break-all text-text-secondary underline">
-                {window.location.origin + getBuildingUrl(buildingId)}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 border-t border-border-default pt-4">
-            <Button
-              type="button"
-              size="sm"
-              className="w-full uppercase tracking-widest"
-              disabled={
-                notifySending ||
-                sessionCreditIds.length === 0 ||
-                visibleNotifyEmails.length === 0 ||
-                parsedNotify.invalid.length > 0
-              }
-              onClick={() => void handleNotifySend()}
-            >
-              {notifySending ? "Sending…" : "Send notifications"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="w-full uppercase tracking-widest"
-              disabled={notifySending}
-              onClick={onRequestClose}
-            >
-              Skip
-            </Button>
-          </div>
-        </div>
-      </>
-    );
-  }
 
   return (
     <>
@@ -591,7 +431,7 @@ export function AddCreditForm({
             disabled={batchSubmitting || (pendingCount === 0 && !allRowsSaved)}
             onClick={() => void handleSubmit()}
           >
-            {batchSubmitting ? "Saving…" : allRowsSaved ? "Continue" : `Submit (${pendingCount})`}
+            {batchSubmitting ? "Saving…" : allRowsSaved ? "Done" : `Submit (${pendingCount})`}
           </Button>
         </div>
       </div>

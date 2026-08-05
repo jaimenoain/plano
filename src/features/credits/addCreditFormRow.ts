@@ -1,4 +1,7 @@
-import type { AddBuildingCreditInput } from "@/features/credits/api/credits";
+import type {
+  AddBuildingCreditInput,
+  UpdateBuildingCreditInput,
+} from "@/features/credits/api/credits";
 import type { CreditEntitySelection } from "./components/CreditEntityPicker";
 import type { BuildingCreditWithEntities, CreditRole, CreditTier } from "./types";
 
@@ -28,6 +31,13 @@ function newRowKey(): string {
   return crypto.randomUUID();
 }
 
+/**
+ * `rowToPayload` validates the whole row including the building it belongs to, and
+ * an update patch carries no building. This stand-in satisfies the shared uuid
+ * validation and is dropped before the patch leaves `rowToUpdatePayload`.
+ */
+const PLACEHOLDER_BUILDING_ID = "00000000-0000-0000-0000-000000000000";
+
 export function createEmptyRow(): CreditEntryRow {
   return {
     key: newRowKey(),
@@ -45,6 +55,40 @@ export function createEmptyRow(): CreditEntryRow {
     submitError: null,
     validationError: null,
     submittedCreditId: null,
+  };
+}
+
+/**
+ * Seed a form row from a credit that already exists — the inverse of
+ * `createEmptyRow`. Add and edit share one row model so the field set only has to
+ * be laid out once.
+ */
+export function rowFromCredit(credit: BuildingCreditWithEntities): CreditEntryRow {
+  return {
+    key: newRowKey(),
+    person: credit.person
+      ? { kind: "person", id: credit.person.id, name: credit.person.name, slug: credit.person.slug }
+      : null,
+    company: credit.company
+      ? {
+          kind: "company",
+          id: credit.company.id,
+          name: credit.company.name,
+          slug: credit.company.slug,
+        }
+      : null,
+    role: credit.role,
+    roleOtherText: credit.role === "other" ? (credit.roleCustom ?? "") : "",
+    creditTier: credit.creditTier,
+    isLead: credit.isLead,
+    contributionNotes: credit.contributionNotes ?? "",
+    yearFrom: credit.yearFrom != null ? String(credit.yearFrom) : "",
+    yearTo: credit.yearTo != null ? String(credit.yearTo) : "",
+    projectUrl: credit.projectUrl ?? "",
+    submitStatus: "idle",
+    submitError: null,
+    validationError: null,
+    submittedCreditId: credit.id,
   };
 }
 
@@ -123,6 +167,21 @@ export function rowToPayload(
       projectUrl,
     },
   };
+}
+
+/**
+ * Validate an edited row and shape it for `updateBuildingCredit`. Same rules and
+ * same wording as `rowToPayload` — an edit that would be rejected as an add must
+ * be rejected here too, and the user must not have to learn two vocabularies.
+ */
+export function rowToUpdatePayload(
+  row: CreditEntryRow,
+): { ok: true; data: UpdateBuildingCreditInput } | { ok: false; message: string } {
+  const built = rowToPayload(PLACEHOLDER_BUILDING_ID, row);
+  if (!built.ok) return built;
+
+  const { buildingId: _buildingId, ...rest } = built.data;
+  return { ok: true, data: rest };
 }
 
 /** Non-blocking hint when this row claims a lead already taken for the same role. */

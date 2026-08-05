@@ -3,7 +3,7 @@
 > This file is the cross-session status ledger (known issues, schema drift, completed work). Structural facts about the stack live in `AGENTS.md` — read that first.
 
 ## Current Phase
-**UX Refinement Round** (installed 2026-08-05, [`docs/Roadmap.md`](Roadmap.md)) — 35 tasks across 8 phases generated from the owner's 34-prompt task list, plus a Final UAT. Phase 1 complete: Tasks 1.1 (My log block), 1.2 (Overview empty state), 1.3 ("Saved & visited" — savers/visitors on the Overview tab, [ADR 0029](decisions/0029-building-activity-is-visible-to-members.md)) and 1.4 (building-detail maps gated behind MapLibre `cooperativeGestures` so page scroll never zooms) done. Phase 2 started: Task 2.1 (the "broken" person search is an empty `people` table — [ADR 0030](decisions/0030-person-search-falls-back-to-companies.md)) done.
+**UX Refinement Round** (installed 2026-08-05, [`docs/Roadmap.md`](Roadmap.md)) — 35 tasks across 8 phases generated from the owner's 34-prompt task list, plus a Final UAT. Phase 1 complete: Tasks 1.1 (My log block), 1.2 (Overview empty state), 1.3 ("Saved & visited" — savers/visitors on the Overview tab, [ADR 0029](decisions/0029-building-activity-is-visible-to-members.md)) and 1.4 (building-detail maps gated behind MapLibre `cooperativeGestures` so page scroll never zooms) done. Phase 2 started: Task 2.1 (the "broken" person search is an empty `people` table — [ADR 0030](decisions/0030-person-search-falls-back-to-companies.md)) and Task 2.2 (credits are editable from the Credits tab; saving closes with a toast — [ADR 0031](decisions/0031-credit-edits-open-to-members.md)) done.
 
 Most recently closed: **Embassy ambassador experience** — archived as [`docs/roadmaps/0003-embassy-ambassador-experience.md`](roadmaps/0003-embassy-ambassador-experience.md) (installed 2026-07-23, closed 2026-07-30). Phases 0–3 complete; Phase 4 opened for **4.3 field mode only** — **4.1 pre-publish moderation and 4.2 missions were closed unstarted by owner decision, not dropped on merit**, and are the obvious candidates for a future roadmap. The Final UAT in that file records what was verified against prod and the one claim that is only partially verified (a real photo upload was never exercised end-to-end on production data).
 
@@ -12,6 +12,25 @@ Earlier programmes, still complete: **Remaining surfaces refinement** (2026-05-2
 **Rollout ≠ refinement:** The May 2026 rollout (Phases 0–7) wired semantic tokens, removed raw palette classes, and connected real data (e.g. `get_feed` on the home feed). That work is **complete**. The refinement programme ([ROADMAP.md](ROADMAP.md), Phases R0–R9) delivered editorial layout, typography rhythm, kit fidelity, and per-page audit evidence across shell, editorial spine, discovery, identity, events, auth/token flows, embassy, and admin. Tracking: all families `refined` or `complete` in [DESIGN_SYSTEM_SCREEN_INVENTORY.md](DESIGN_SYSTEM_SCREEN_INVENTORY.md).
 
 ## CURRENT_ARCHITECTURE_SNAPSHOT
+- **Credit edits are now as open as building edits, and the guard trigger keys on
+  `current_user` not `auth.uid()` (2026-08-05):** `building_credits_update` admitted only
+  `is_admin()`, a claimed person's owner, and a company steward — so the member who mistyped a
+  credit could not fix it, and the bulk-imported credits (all `added_by_user_id IS NULL`) were
+  admin-only forever. Migration `20271202000000_building_credits_member_edits.sql` adds a fourth
+  branch: any authenticated user on `status = 'active'` rows, with `WITH CHECK` pinning the new
+  row to `'active'` (no self-verifying) and requiring an entity. Matches `canEditOfficialData`,
+  which has always been `!!user`. [ADR 0031](decisions/0031-credit-edits-open-to-members.md).
+  **The trap to know:** the provenance trigger that pins `building_id`/`added_by_user_id` must
+  discriminate on `current_user`, never `auth.uid()`. Inside a SECURITY DEFINER RPC —
+  `flag_building_credit`, `redeem_credit_removal_token`, `merge_buildings`, the ambassador
+  approval batches — `auth.uid()` is still the *member* who called it, so an `auth.uid()` guard
+  fires on the app's own moderation flows; `current_user` is `authenticated` only for a direct
+  PostgREST write and becomes `postgres` inside those functions. The trigger function is therefore
+  SECURITY **INVOKER** on purpose. Second trap: the edit's audit row is `credit_edited`, which had
+  to be added to the `entity_audit_logs_actor_insert` whitelist in the same migration — otherwise
+  the credit saves and the audit insert then throws. `tests/unit/building-credits-member-edits-migration.test.ts`
+  fails if any of that is loosened; `canEditCredit` in `BuildingCredits.tsx` is the client mirror
+  and moves with it.
 - **`public.people` is effectively empty — every architect was imported as a *company*
   (2026-08-05):** Roadmap Task 2.1 was filed as a broken person dropdown in the Add-credits drawer.
   It is not a query, RPC or filtering bug. On production, `foster`, `renzo`, `zaha`, `john` and
