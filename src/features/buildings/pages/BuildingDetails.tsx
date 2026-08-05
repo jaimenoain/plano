@@ -72,6 +72,7 @@ import { BuildingOverviewTab } from "../components/BuildingOverviewTab";
 import { BuildingActionCard } from "../components/BuildingActionCard";
 import { StreamBlockView } from "../components/BuildingStreamBlocks";
 import { buildStreamBlocks } from "../utils/streamBlocks";
+import { buildingHeroAlt } from "../utils/heroAlt";
 
 export { buildingLoader as loader } from "./BuildingDetails.loader";
 
@@ -473,14 +474,7 @@ export default function BuildingDetails() {
 
   const primaryCredit = visiblePrimaryCredits(buildingCredits)[0] ?? null;
   const primaryName = primaryCredit?.person?.name ?? primaryCredit?.company?.name ?? null;
-  const heroAlt = [
-    building.name,
-    primaryName ? `by ${primaryName}` : null,
-    building.year_completed ? `(${building.year_completed})` : null,
-    building.city && building.country ? `— ${building.city}, ${building.country}` : null,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const heroAlt = buildingHeroAlt(building, primaryName);
 
   const isStatusBuilding =
     isLostStatus(building.status) ||
@@ -644,6 +638,9 @@ export default function BuildingDetails() {
                   }}
                   hasMore={hasMoreCommunity}
                   onLoadMore={loadMoreCommunity}
+                  buildingName={building.name}
+                  buildingCity={building.city}
+                  architectName={primaryName}
                 >
                   {/* Text-only reviews */}
                   {streamBlocks.filter((b) => b.blockType === "text-only").length > 0 && (

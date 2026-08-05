@@ -59,11 +59,17 @@ function renderTab({
   images = IMAGES,
   onSelectImage = vi.fn(),
   onUploadPhoto = vi.fn(),
+  buildingName,
+  buildingCity,
+  architectName,
 }: {
   initialEntry?: string;
   images?: DisplayImage[];
   onSelectImage?: (img: DisplayImage) => void;
   onUploadPhoto?: () => void;
+  buildingName?: string | null;
+  buildingCity?: string | null;
+  architectName?: string | null;
 } = {}) {
   render(
     <MemoryRouter initialEntries={[initialEntry]}>
@@ -73,6 +79,9 @@ function renderTab({
         onSelectImage={onSelectImage}
         onUploadPhoto={onUploadPhoto}
         onWriteNote={vi.fn()}
+        buildingName={buildingName}
+        buildingCity={buildingCity}
+        architectName={architectName}
       />
       <LocationProbe />
     </MemoryRouter>,
@@ -158,5 +167,41 @@ describe("BuildingMediaTab view switcher", () => {
     expect(screen.getByText("No photos yet")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Upload photo" }));
     expect(onUploadPhoto).toHaveBeenCalled();
+  });
+});
+
+describe("BuildingMediaTab Google Images link", () => {
+  const BUILDING = {
+    buildingName: "Tour Eiffel",
+    architectName: "Gustave Eiffel",
+    buildingCity: "Paris",
+  };
+
+  it("links to the Google Images vertical, qualified by architect and city, in a new tab", () => {
+    renderTab(BUILDING);
+    const link = screen.getByTestId("google-images-search") as HTMLAnchorElement;
+    expect(link.getAttribute("href")).toBe(
+      "https://www.google.com/search?udm=2&q=Tour%20Eiffel%20Gustave%20Eiffel%20Paris",
+    );
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+  });
+
+  it("falls back to the name alone when architect and city are unknown", () => {
+    renderTab({ buildingName: "Tour Eiffel" });
+    expect(screen.getByTestId("google-images-search").getAttribute("href")).toBe(
+      "https://www.google.com/search?udm=2&q=Tour%20Eiffel",
+    );
+  });
+
+  it("still renders when the building has no photos", () => {
+    renderTab({ ...BUILDING, images: [] });
+    expect(screen.getByText("No photos yet")).toBeTruthy();
+    expect(screen.getByTestId("google-images-search")).toBeTruthy();
+  });
+
+  it("renders nothing without a building name", () => {
+    renderTab();
+    expect(screen.queryByTestId("google-images-search")).toBeNull();
   });
 });
