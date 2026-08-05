@@ -147,3 +147,24 @@ exactly what it had to. The predicate reads zero because every `hero_image_url` 
 is a URL→URL change, never NULL→URL: no row ever records a building *gaining* its first hero image.
 That is a pre-existing defect in the six RPCs listed above — the same silent-zero class as
 `20271196000000` — and is deliberately left for separate work rather than folded in here.
+
+**Correction (2026-08-05, follow-up):** the root cause of point 3 is not that hero images are set
+rarely — it's that they are essentially never set the way the predicate assumes. Ambassadors add
+photos through the "save note" flow, which inserts directly into `review_images`; that path never
+touches `buildings.hero_image_url` at all and never fires the buildings audit trigger, so no
+`building_audit_logs` row is written for a photo upload, full stop. `hero_image_url` is a separate,
+rarely-used curation field (admin building editor only), and even an admin setting it typically
+overwrites an existing URL rather than filling a NULL, because `community_preview_url` — populated
+automatically from `review_images` by the trigger in `20261102000000_optimize_building_thumbnails.sql`
+— is what actually keeps building thumbnails populated day to day.
+Two of the six RPCs (`get_chapter_metrics`, `get_chapter_ambassador_activity`) had already been fixed
+for this independently, before this ADR was written, by counting `review_images` directly
+(`20271128000000_count_real_photo_uploads_in_chapter_activity.sql`), and three more
+(`get_my_ambassador_impact`, `get_my_ambassador_goals`, `compute_weekly_digest_payloads`) were already
+on `review_images` by the time this ADR landed. Querying `pg_get_functiondef` across every function in
+the live `public` schema found exactly two still on the dead predicate —
+`get_programme_health_summary` and `get_national_chapter_overview` — fixed the same way in
+`20271199000000_fix_ambassador_photos_added_predicate.sql`. The lesson generalizes: `building_audit_logs`
+can only ever answer "did a tracked column on `buildings` change value" — it is structurally the wrong
+table for "did a user perform this action," because plenty of user actions (photo uploads among them)
+never touch `buildings` at all.
