@@ -234,11 +234,9 @@ describe('BuildingDetails Interaction', () => {
         expect(screen.getByRole("button", { name: /visited/i })).toBeTruthy();
     });
 
-    // Open the status dropdown (trigger shows "Visited") and pick the pending
-    // option, labelled "Saved"; it still calls handleStatusChange("pending").
-    await user.click(screen.getByRole("button", { name: /visited/i }));
-    const savedItem = await screen.findByRole("menuitem", { name: /saved/i });
-    await user.click(savedItem);
+    // MyBuildingStatusBlock exposes Save and Visited as two toggles, not a
+    // dropdown: pressing Save calls handleStatusChange("pending") directly.
+    await user.click(screen.getByRole("button", { name: /^save$/i }));
 
     // Verify Supabase upsert call
     await waitFor(() => {

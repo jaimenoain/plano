@@ -21,32 +21,32 @@ test.describe("save to wishlist", () => {
     await suppressConsentBanner(page);
   });
 
-  const statusTrigger = (page: Page) =>
-    page.getByRole("button", { name: /^(Add to list|Saved|Visited)$/ }).first();
+  // MyBuildingStatusBlock renders Save and Visited as two aria-pressed toggles
+  // (no dropdown). Re-pressing the active one removes the status via a confirm.
+  const saveToggle = (page: Page) =>
+    page.getByRole("button", { name: /^(Save|Saved)$/ }).first();
+  const visitedToggle = (page: Page) =>
+    page.getByRole("button", { name: "Visited", exact: true }).first();
 
-  /** Open the "My Status" dropdown; one retry absorbs a hydration race. */
-  async function openStatusMenu(page: Page) {
-    const trigger = statusTrigger(page);
-    await trigger.click();
-    const anyItem = page.getByRole("menuitem").first();
-    try {
-      await expect(anyItem).toBeVisible({ timeout: 3_000 });
-    } catch {
-      await trigger.click();
-      await expect(anyItem).toBeVisible({ timeout: 10_000 });
-    }
-  }
-
-  /** Remove whatever status is active (menu item matching the trigger label). */
+  /** Remove whatever status is active by re-pressing its toggle. */
   async function removeStatus(page: Page) {
-    const label = (await statusTrigger(page).textContent())?.trim() ?? "";
-    const activeItem = label.includes("Visited") ? "Visited" : "Wishlist";
-    await openStatusMenu(page);
-    await page.getByRole("menuitem", { name: activeItem }).click();
+    const active = (await visitedToggle(page).getAttribute("aria-pressed")) === "true"
+      ? visitedToggle(page)
+      : saveToggle(page);
+    await active.click();
     const confirm = page.getByRole("alertdialog", { name: "Remove from list?" });
     await expect(confirm).toBeVisible();
     await confirm.getByRole("button", { name: "Remove" }).click();
-    await expect(statusTrigger(page)).toHaveText(/Add to list/, { timeout: 15_000 });
+    await expect(saveToggle(page)).toHaveText(/^Save$/, { timeout: 15_000 });
+  }
+
+  /** True when neither toggle is pressed — the building is untracked. */
+  async function isUntracked(page: Page) {
+    const [saved, visited] = await Promise.all([
+      saveToggle(page).getAttribute("aria-pressed"),
+      visitedToggle(page).getAttribute("aria-pressed"),
+    ]);
+    return saved !== "true" && visited !== "true";
   }
 
   test("save, verify on profile, unsave", async ({ page }) => {
@@ -56,18 +56,16 @@ test.describe("save to wishlist", () => {
     expect(name).toContain("Art Gallery");
     const buildingUrl = page.url();
 
-    const trigger = statusTrigger(page);
-    await expect(trigger).toBeVisible();
+    await expect(saveToggle(page)).toBeVisible();
 
     // Self-heal: a crashed previous run may have left a status behind.
-    if (!((await trigger.textContent()) ?? "").includes("Add to list")) {
+    if (!(await isUntracked(page))) {
       await removeStatus(page);
     }
 
-    // Save: "Add to list" → Wishlist → trigger flips to "Saved".
-    await openStatusMenu(page);
-    await page.getByRole("menuitem", { name: "Wishlist" }).click();
-    await expect(statusTrigger(page)).toHaveText(/Saved/, { timeout: 15_000 });
+    // Save: press the Save toggle → it flips to the pressed "Saved" state.
+    await saveToggle(page).click();
+    await expect(saveToggle(page)).toHaveText(/^Saved$/, { timeout: 15_000 });
 
     try {
       // Persistence: a fresh page load still shows the saved status (DB write,
@@ -75,13 +73,13 @@ test.describe("save to wishlist", () => {
       // shows saves that have a note (known bug — count/list mismatch in
       // Profile.tsx), so this spec asserts persistence on the building page.
       await page.reload();
-      await expect(statusTrigger(page)).toHaveText(/Saved/, { timeout: 20_000 });
+      await expect(saveToggle(page)).toHaveText(/^Saved$/, { timeout: 20_000 });
     } finally {
       // Cleanup: remove the row again so test data never accumulates.
       await page.goto(buildingUrl);
       await removeStatus(page);
       await page.reload();
-      await expect(statusTrigger(page)).toHaveText(/Add to list/, { timeout: 20_000 });
+      await expect(saveToggle(page)).toHaveText(/^Save$/, { timeout: 20_000 });
     }
   });
 });

@@ -191,10 +191,20 @@ describe('BuildingPopupContent Rating UI', () => {
         throw new Error("Rating circle not found");
     }
 
+    // Rating upserts rather than updates: a bare UPDATE no-ops when the viewer
+    // has no user_buildings row yet, so the mark would silently fail to save.
+    // An untracked building is promoted to `visited`, matching the detail page.
     await waitFor(() => {
-        expect(mockUpdate).toHaveBeenCalledWith({ rating: 3 });
-        // Verify eq calls: user_id and building_id (via chain)
-        expect(mockUpdateEq).toHaveBeenCalledTimes(2);
+        expect(mockUpsert).toHaveBeenCalledWith(
+            expect.objectContaining({
+                user_id: 'test-user-id',
+                building_id: '123',
+                status: 'visited',
+                rating: 3,
+            }),
+            expect.objectContaining({ onConflict: 'user_id, building_id' }),
+        );
+        expect(mockUpdate).not.toHaveBeenCalled();
     });
   });
 });

@@ -6,6 +6,10 @@ export { default as ReviewDetails } from './pages/ReviewDetails';
 
 // Components used by other features
 export { PersonalRatingButton, type BuildingStatus } from './components/PersonalRatingButton';
+export {
+  MyBuildingStatusBlock,
+  type MyBuildingStatus,
+} from './components/MyBuildingStatusBlock';
 export { PopularityBadge } from './components/PopularityBadge';
 export { ImageDetailsDialog } from './components/ImageDetailsDialog';
 export { BuildingImageCard } from './components/BuildingImageCard';
