@@ -100,7 +100,7 @@ need both the before and after value of `hero_image_url`, not merely the fact th
   proportional to real human edits.
 - `VACUUM FULL` is required to return the bytes — a plain UPDATE only marks tuples dead and moves
   nothing on Supabase's meter. It takes an ACCESS EXCLUSIVE lock, so the backfill
-  (`scripts/shrink-building-audit-logs.sql`) is a manual psql step run in a quiet window, not a
+  (`scripts/shrink-building-audit-logs.sh`) is a manual step run in a quiet window, not a
   migration. Supabase wraps migrations in a transaction and `VACUUM FULL` cannot run inside one.
 - Historical rows lose their `search_vector`, `updated_at`, `popularity_score` and `tier_rank` values.
   Nothing reads them; this is accepted and irreversible.
@@ -109,3 +109,41 @@ need both the before and after value of `hero_image_url`, not merely the fact th
 - This ADR covers `building_audit_logs` only. The other unbounded log tables — `api_request_logs`,
   `admin_diagnostic_logs`, `login_logs`, `embassy_event_search_runs`, `embassy_digest_deliveries` —
   and pg_net's `net._http_response` still have no retention policy. They are follow-up work.
+
+## Outcome (applied to production 2026-08-05)
+
+| | Before | After |
+|---|---|---|
+| `building_audit_logs` | 1093 MB | **99 MB** |
+| Database total | 1224 MB | **230 MB** |
+| Rows | 429,255 | 429,255 (none lost) |
+| Average payload (`old_data` + `new_data`) | ~2.5 KB | **70 bytes** |
+
+Measured on a live building: a `tier_rank` change now writes **no** audit row at all, and a real name
+edit writes one row of 81 bytes where the equivalent pre-migration row was 2,534.
+
+Three things were learned in the process and are recorded here so they are not rediscovered:
+
+**1. The quota lock is a catch-22.** Supabase did not merely warn — it restricted the project
+(`exceed_db_size_quota`), and the restriction blocks psql, the dashboard SQL editor, *and* the
+Management API's `/database/query` endpoint alike. The database could not be shrunk because it was
+locked for being too big. Upgrading the plan cleared the violation, but the enforcement flag was
+sticky and only lifted after `POST /v1/projects/{ref}/restart`.
+
+**2. `statement_timeout` defeats a `DO` block.** The backfill was first written as a
+`DO $$ ... LOOP ... COMMIT; END LOOP $$` block. It failed in production after 35 batches: Supabase
+enforces `statement_timeout = 2min`, the entire block is a **single statement**, and `COMMIT`s inside
+a procedural block do not reset the statement clock. `PGOPTIONS=-c statement_timeout=0` does not help
+because the Supavisor pooler ignores it. The loop now lives in the client
+(`scripts/shrink-building-audit-logs.sh`), one batch per statement. `VACUUM FULL` still needs the
+timeout lifted, which requires a persistent session over stdin — each `psql -c` gets its own implicit
+transaction, so a `SET` in one `-c` does not survive into the next.
+
+**3. The Embassy "photos added" metric was already broken, and this change did not break it.**
+Replaying the pre-backfill restore point into a local Postgres and running the leaderboards' own
+predicate gave **0 matches before the change and 0 after** — while the number of rows carrying a
+non-empty `new_data -> hero_image_url` was **783 in both**, confirming the reduction preserved
+exactly what it had to. The predicate reads zero because every `hero_image_url` write in the audit log
+is a URL→URL change, never NULL→URL: no row ever records a building *gaining* its first hero image.
+That is a pre-existing defect in the six RPCs listed above — the same silent-zero class as
+`20271196000000` — and is deliberately left for separate work rather than folded in here.
