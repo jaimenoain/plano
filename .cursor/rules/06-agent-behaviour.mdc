@@ -303,7 +303,7 @@ wrong behaviour. It must be visible and resolvable on its own track.
 
 **Rotation — the file has a size budget:**
 
-`docs/AI_STATUS.md` stays under **1,000 lines** (roughly 50 KB). Past
+`docs/AI_STATUS.md` stays under **1,000 lines**. Past
 that it no longer fits in a single read, and a session told to check
 `KNOWN_ISSUES` and `SCHEMA_DRIFT_LOG` silently gets neither — it reads
 whatever happens to sit in the first 2,000 lines and stops.
