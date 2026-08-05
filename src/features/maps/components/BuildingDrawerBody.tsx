@@ -12,7 +12,7 @@
  * parent sizes it: `panel` (desktop right rail, fills height) or `sheet`
  * (mobile bottom sheet, capped at 85vh).
  */
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import {
   X,
@@ -32,14 +32,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-  type CarouselApi,
-} from '@/components/ui/carousel';
+import { BuildingDrawerGallery } from './BuildingDrawerGallery';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -115,18 +108,6 @@ export function BuildingDrawerBody({
     return heroUrl ? [{ id: 'hero', url: heroUrl }] : [];
   }, [data?.gallery, heroUrl]);
 
-  const [api, setApi] = useState<CarouselApi>();
-  const [slideIndex, setSlideIndex] = useState(0);
-  useEffect(() => {
-    if (!api) return;
-    setSlideIndex(api.selectedScrollSnap());
-    const onSelect = () => setSlideIndex(api.selectedScrollSnap());
-    api.on('select', onSelect);
-    return () => {
-      api.off('select', onSelect);
-    };
-  }, [api]);
-
   // ── Meta line ──
   const architect = data?.architect ?? null;
   const year = data?.year ?? null;
@@ -190,39 +171,7 @@ export function BuildingDrawerBody({
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {/* ── 1. Photo gallery ── */}
-        <div className="relative w-full bg-surface-muted">
-          {slides.length > 0 ? (
-            <Carousel opts={{ align: 'start' }} setApi={setApi} className="w-full">
-              <CarouselContent className="ml-0!">
-                {slides.map((img) => (
-                  <CarouselItem key={img.id} className="pl-0!">
-                    <div className="h-64 w-full bg-surface-muted sm:h-72">
-                      <img
-                        src={img.url}
-                        alt={cluster.name || 'Building'}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              {slides.length > 1 && (
-                <>
-                  <CarouselPrevious className="left-2 h-8 w-8 border border-border-default bg-surface-card/80 text-text-primary backdrop-blur-sm hover:bg-surface-card" />
-                  <CarouselNext className="right-2 h-8 w-8 border border-border-default bg-surface-card/80 text-text-primary backdrop-blur-sm hover:bg-surface-card" />
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full border border-border-default bg-surface-card/80 px-2.5 py-0.5 text-2xs text-text-secondary backdrop-blur-sm">
-                    {slideIndex + 1} / {slides.length}
-                  </div>
-                </>
-              )}
-            </Carousel>
-          ) : (
-            <div className="flex h-64 w-full items-center justify-center text-xs text-text-secondary sm:h-72">
-              No image
-            </div>
-          )}
-        </div>
+        <BuildingDrawerGallery slides={slides} name={cluster.name} city={cluster.city} />
 
         <div className="p-4">
           {/* ── 2. Identity ── */}
