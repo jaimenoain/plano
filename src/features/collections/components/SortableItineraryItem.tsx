@@ -13,6 +13,8 @@ interface SortableItineraryItemProps {
   canEdit?: boolean;
   onUpdateNote?: (itemId: string, note: string) => void;
   onUpdateMarkerNote?: (markerId: string, note: string) => void;
+  /** Open the detail drawer on a building stop, as the list view's rows do. */
+  onSelect?: (item: CollectionItemWithBuilding) => void;
 }
 
 export function SortableItineraryItem({
@@ -23,6 +25,7 @@ export function SortableItineraryItem({
   canEdit,
   onUpdateNote,
   onUpdateMarkerNote,
+  onSelect,
 }: SortableItineraryItemProps) {
   const buildingDetails = useItineraryStore((state) => state.buildingDetails);
   const markerDetails = useItineraryStore((state) => state.markerDetails);
@@ -130,7 +133,7 @@ export function SortableItineraryItem({
             }));
           }
         }}
-        onNavigate={() => {}}
+        onNavigate={() => onSelect?.(item)}
         isDraggable={!!canEdit}
         dragHandleProps={canEdit ? { ...attributes, ...listeners } : undefined}
         badgeIndex={badgeIndex}

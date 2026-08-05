@@ -11,6 +11,10 @@
  * right. Plain click calls `onSelect` (open the detail drawer); modified clicks
  * (⌘/ctrl/shift/alt) fall through to the `href` <Link> for "open in new tab".
  *
+ * `onSelect` is optional, and its absence must stay meaningful: a row with no
+ * handler navigates like the plain link it looks like. Swallowing the click and
+ * calling a no-op instead is how these rows were silently dead for a release.
+ *
  * Slots:
  *   leadingSlot — before the text column (e.g. itinerary drag handle).
  *   footerSlot  — inside the text column, below the status line (e.g. note
@@ -41,8 +45,8 @@ interface BuildingListRowProps {
   constructionStatus?: string | null;
   /** Subtle cross-highlight (list ↔ map). Off by default so /search is unchanged. */
   isHighlighted?: boolean;
-  /** Plain-click handler — opens the detail drawer. */
-  onSelect: () => void;
+  /** Plain-click handler — opens the detail drawer. Omit to let the row navigate. */
+  onSelect?: () => void;
   onHoverEnter?: () => void;
   onHoverLeave?: () => void;
   /** Before the text column (e.g. itinerary drag handle). */
@@ -93,6 +97,9 @@ export function BuildingListRow({
         // building page. Modified clicks (⌘/ctrl/shift/alt) fall through so
         // "open in new tab" still works.
         if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        // No handler means no drawer to open: let the link do its job rather
+        // than cancelling the navigation in favour of nothing.
+        if (!onSelect) return;
         e.preventDefault();
         onSelect();
       }}

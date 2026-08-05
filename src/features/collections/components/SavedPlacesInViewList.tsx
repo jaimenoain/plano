@@ -12,7 +12,8 @@
  *
  * Rows are `BuildingListRow` with `AddToCollectionButton` in `actionSlot`, the
  * same pairing `CollectionDiscoverPanel` uses, so the two sections of one view
- * are one list to the eye.
+ * are one list to the eye — and, like that section, a plain click opens the
+ * detail drawer rather than leaving the collection.
  *
  * Presentational apart from which button is spinning: the page owns the data
  * (it is already computing this set for the map) and both mutations.
@@ -36,6 +37,8 @@ interface SavedPlacesInViewListProps {
   /** Adds every row at once, behind the page's confirm step. */
   onAddAll: () => void;
   isAddingAll: boolean;
+  /** Plain-click handler — opens the page's detail drawer on this building. */
+  onSelect: (building: DiscoveryBuilding) => void;
 }
 
 export function SavedPlacesInViewList({
@@ -45,6 +48,7 @@ export function SavedPlacesInViewList({
   onAdd,
   onAddAll,
   isAddingAll,
+  onSelect,
 }: SavedPlacesInViewListProps) {
   const [addingId, setAddingId] = useState<string | null>(null);
 
@@ -107,9 +111,7 @@ export function SavedPlacesInViewList({
           imageUrl={building.main_image_url}
           rating={building.personal_rating}
           status={building.personal_status}
-          // These rows do have a pin, but it is the map's candidate layer rather
-          // than a collection item, so there is no drawer for the rail to open.
-          onSelect={() => {}}
+          onSelect={() => onSelect(building)}
           actionSlot={
             canEdit ? (
               <div className="absolute right-3 top-3 z-10">

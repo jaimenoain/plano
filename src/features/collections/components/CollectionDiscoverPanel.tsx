@@ -14,9 +14,9 @@
  * lead-in would only repeat the heading sitting above it.
  *
  * Rows are `BuildingListRow`, the same row /search's browse list draws from the
- * same RPC. They are plain links: a discovered building is usually inside a
- * server-side cluster, so there is no pin to cross-highlight and pretending
- * otherwise would be a gesture that silently does nothing (ADR 0024).
+ * same RPC. A plain click opens the detail drawer, exactly as in the Collection
+ * band above: the row carries its own coordinates, so the drawer never needs the
+ * pin that the server-side clustering may have swallowed (ADR 0024).
  */
 import type { RefObject } from "react";
 import { Loader2 } from "lucide-react";
@@ -25,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BuildingListRow, useInfiniteScrollSentinel } from "@/features/maps";
 import type { Bounds } from "@/utils/map";
 import { resolveBuildingUrl } from "@/utils/url";
+import type { DiscoverInViewRow } from "../api/discoverInView";
 import { useCollectionDiscoverInView } from "../hooks/useCollectionDiscoverInView";
 import { AddToCollectionButton } from "./AddToCollectionButton";
 
@@ -38,6 +39,8 @@ interface CollectionDiscoverPanelProps {
   scrollRootRef: RefObject<HTMLDivElement | null>;
   /** `section` drops the lead-in and the trailing gutter; a heading supplies both. */
   variant?: "standalone" | "section";
+  /** Plain-click handler — opens the page's detail drawer on this building. */
+  onSelect: (row: DiscoverInViewRow) => void;
 }
 
 function DiscoverSkeletons() {
@@ -62,6 +65,7 @@ export function CollectionDiscoverPanel({
   excludeBuildingIds,
   scrollRootRef,
   variant = "standalone",
+  onSelect,
 }: CollectionDiscoverPanelProps) {
   const {
     buildings,
@@ -136,9 +140,7 @@ export function CollectionDiscoverPanel({
             rating={building.rating}
             status={building.status}
             constructionStatus={building.construction_status}
-            // A plain click follows the link to the building: the row has no pin
-            // of its own, so there is no drawer to open instead.
-            onSelect={() => {}}
+            onSelect={() => onSelect(building)}
             actionSlot={
               <div className="absolute right-3 top-3 z-10">
                 <AddToCollectionButton

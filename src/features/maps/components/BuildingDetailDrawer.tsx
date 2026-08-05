@@ -35,6 +35,14 @@ interface BuildingDetailDrawerProps {
   /** Desktop only: close the panel when the user clicks outside of it. */
   closeOnOutsideClick?: boolean;
   /**
+   * Render the portalled bottom sheet even above the mobile breakpoint. The
+   * desktop panel is absolutely positioned inside the map container, so a caller
+   * that hides that container (the collection page's list view, below `lg`) must
+   * say so — otherwise the drawer opens inside `display:none` and the click looks
+   * like it did nothing.
+   */
+  forceSheet?: boolean;
+  /**
    * The collection map's single add/remove action, rendered inside the standard
    * body. Ignored by the legacy card path, which carries its own actions.
    */
@@ -85,14 +93,16 @@ export function BuildingDetailDrawer({
   onRemoveFromCollection,
   onAddCandidate,
   closeOnOutsideClick,
+  forceSheet = false,
   collectionAction,
 }: BuildingDetailDrawerProps) {
-  const isMobile = useIsMobile();
+  /** Sheet vs anchored panel — not "is this a phone". */
+  const useSheet = useIsMobile() || forceSheet;
   const isSpecial = !!(cluster?.is_custom_marker || cluster?.is_candidate);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (isMobile || !closeOnOutsideClick || !cluster) return;
+    if (useSheet || !closeOnOutsideClick || !cluster) return;
 
     const handlePointerDown = (event: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
@@ -102,9 +112,9 @@ export function BuildingDetailDrawer({
 
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [isMobile, closeOnOutsideClick, cluster, onClose]);
+  }, [useSheet, closeOnOutsideClick, cluster, onClose]);
 
-  if (isMobile) {
+  if (useSheet) {
     return (
       <Drawer open={!!cluster} onOpenChange={(open) => !open && onClose()}>
         <DrawerContent className="border-none">

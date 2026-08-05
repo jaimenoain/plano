@@ -1,15 +1,27 @@
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { vi, describe, it, expect, afterEach } from "vitest";
 import type { ReactNode } from "react";
 import { CollectionItemRow } from "./CollectionItemRow";
 import type { CollectionItemWithBuilding } from "../types";
 
-// BuildingListRow is the shared editorial row; here we only care that the
-// footerSlot (where the "Added by" attribution lives) is rendered.
+// BuildingListRow is the shared editorial row (its own click behaviour is
+// covered in BuildingListRow.test.tsx); here we care that the footerSlot — where
+// the "Added by" attribution lives — is rendered, and that the row's onSelect is
+// actually forwarded rather than dropped on the way down.
 vi.mock("@/features/maps", () => ({
-  BuildingListRow: ({ name, footerSlot }: { name: string; footerSlot: ReactNode }) => (
+  BuildingListRow: ({
+    name,
+    footerSlot,
+    onSelect,
+  }: {
+    name: string;
+    footerSlot: ReactNode;
+    onSelect?: () => void;
+  }) => (
     <div>
-      <span>{name}</span>
+      <button type="button" onClick={onSelect}>
+        {name}
+      </button>
       <div>{footerSlot}</div>
     </div>
   ),
@@ -47,7 +59,11 @@ function makeItem(overrides: Partial<CollectionItemWithBuilding> = {}): Collecti
   };
 }
 
-function renderRow(item: CollectionItemWithBuilding, showAddedBy: boolean) {
+function renderRow(
+  item: CollectionItemWithBuilding,
+  showAddedBy: boolean,
+  onSelect: () => void = () => {},
+) {
   render(
     <CollectionItemRow
       item={item}
@@ -55,7 +71,7 @@ function renderRow(item: CollectionItemWithBuilding, showAddedBy: boolean) {
       setHighlightedId={() => {}}
       canEdit={false}
       onUpdateNote={() => {}}
-      onSelect={() => {}}
+      onSelect={onSelect}
       showAddedBy={showAddedBy}
     />,
   );
@@ -77,5 +93,14 @@ describe("CollectionItemRow — added-by attribution", () => {
   it("shows no attribution for pre-attribution rows (unknown adder)", () => {
     renderRow(makeItem({ added_by: null, added_by_user: null }), true);
     expect(screen.queryByText(/Added by/)).not.toBeInTheDocument();
+  });
+
+  it("forwards the row's select handler, so a click can open the drawer", () => {
+    const onSelect = vi.fn();
+    renderRow(makeItem(), false, onSelect);
+
+    fireEvent.click(screen.getByRole("button", { name: "Villa Savoye" }));
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
   });
 });

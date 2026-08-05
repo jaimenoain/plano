@@ -58,6 +58,7 @@ const baseProps = {
   bounds: { north: 51.6, south: 51.4, east: 0.1, west: -0.2 },
   excludeBuildingIds: new Set<string>(),
   scrollRootRef: createRef<HTMLDivElement>(),
+  onSelect: vi.fn(),
 } satisfies React.ComponentProps<typeof CollectionDiscoverPanel>;
 
 const renderPanel = (props: Partial<React.ComponentProps<typeof CollectionDiscoverPanel>> = {}) =>
@@ -96,6 +97,35 @@ describe("CollectionDiscoverPanel", () => {
     await userEvent.click(screen.getByLabelText("Add Barbican to this collection"));
 
     expect(addBuilding).toHaveBeenCalledWith({ id: "2", name: "Barbican" });
+  });
+
+  // These rows once cancelled their own navigation and called a no-op handler,
+  // so a plain click did nothing whatsoever.
+  it("opens the detail drawer on the clicked building", async () => {
+    const onSelect = vi.fn();
+    useDiscoverMock.mockReturnValue(
+      hookState({ buildings: [row("1", "Serpentine Pavilion"), row("2", "Barbican")] }),
+    );
+    renderPanel({ onSelect });
+
+    await userEvent.click(screen.getByText("Barbican"));
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect.mock.calls[0][0]).toMatchObject({ id: "2", name: "Barbican" });
+  });
+
+  it("adds without opening the drawer when the row's + is pressed", async () => {
+    const onSelect = vi.fn();
+    const addBuilding = vi.fn();
+    useDiscoverMock.mockReturnValue(
+      hookState({ buildings: [row("2", "Barbican")], addBuilding }),
+    );
+    renderPanel({ onSelect });
+
+    await userEvent.click(screen.getByLabelText("Add Barbican to this collection"));
+
+    expect(addBuilding).toHaveBeenCalled();
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it("spins the row being added and locks the rest", () => {

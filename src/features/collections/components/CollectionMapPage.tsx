@@ -37,6 +37,7 @@ import { MAP_MARKER_FILL, type ClusterResponse } from "@/features/maps";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
 import { mapCollectionItem } from "../mapCollectionItem";
@@ -170,8 +171,8 @@ export default function CollectionMap() {
 
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   // Selection-mode detail drawer (parity with /search) — opens from pin or row.
-  const { selectedCluster, setSelectedCluster, selectItem, closeDetail, clearIfBuilding } =
-    useCollectionMapSelection();
+  const { selectedCluster, setSelectedCluster, selectItem, selectDiscoverRow,
+    selectSavedPlace, closeDetail, clearIfBuilding } = useCollectionMapSelection();
   const [showSettings, setShowSettings] = useState(false);
   const [hasSettingsOpened, setHasSettingsOpened] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] =
@@ -182,6 +183,9 @@ export default function CollectionMap() {
   const [showPlanRoute, setShowPlanRoute] = useState(false);
   const [hasPlanRouteOpened, setHasPlanRouteOpened] = useState(false);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  // List view hides the map column below `lg`, and the drawer's desktop panel
+  // lives inside it — so below 1024 (the column's `lg:flex`) it must be a sheet.
+  const forceSheetDetail = useIsMobile(1024) && viewMode === 'list';
 
   // The rail scrolls as one column; the toolbar sticks once the masthead is gone.
   const railScrollRef = useRef<HTMLDivElement>(null);
@@ -778,7 +782,6 @@ export default function CollectionMap() {
     savedPlacesStatusFilter,
   ]);
 
-
   // Calculate bounds only once when buildings are loaded to prevent map movement on updates
   useEffect(() => {
     if (!initialBounds && mapBuildings.length > 0) {
@@ -801,14 +804,8 @@ export default function CollectionMap() {
         matchesSavedPlacesStatusFilter(c.personal_status ?? null, savedPlacesStatusFilter) &&
         isLngLatInBounds(c.location_lat, c.location_lng, viewportBounds),
     );
-  }, [
-    showSavedCandidates,
-    savedCandidates,
-    viewportBounds,
-    existingBuildingIds,
-    savedPlacesDotFilter,
-    savedPlacesStatusFilter,
-  ]);
+  }, [showSavedCandidates, savedCandidates, viewportBounds, existingBuildingIds,
+      savedPlacesDotFilter, savedPlacesStatusFilter]);
 
   const { handleUpdateNote, handleUpdateCategory, handleUpdateMarkerNote } =
     useCollectionItemEdits({ onChanged: refetchItems });
@@ -858,7 +855,6 @@ export default function CollectionMap() {
         building_id: b.id,
       }));
       const { error } = await supabase.from("collection_items").insert(rows);
-
       if (error) throw error;
 
       const n = bulkAddPreviewBuildings.length;
@@ -884,7 +880,6 @@ export default function CollectionMap() {
     }
   };
 
-
   const handleUpdateItinerary = async (newItinerary: Itinerary) => {
       if (!collection?.id) return;
 
@@ -900,9 +895,8 @@ export default function CollectionMap() {
               variant: "destructive"
           });
       } else {
-          // No toast for quiet saves
-          // We don't refetch the whole collection to avoid resetting the store unexpectedly,
-          // but we might want to invalidate queries eventually.
+          // Saves are quiet, and deliberately do not refetch the collection: that
+          // would reset the itinerary store mid-edit.
           queryClient.invalidateQueries({ queryKey: ["collection", slug, ownerProfile?.id] });
       }
   };
@@ -915,10 +909,9 @@ export default function CollectionMap() {
       return;
     }
     const marker = markers?.find(m => m.id === buildingId);
-    if (marker) {
-        setMarkerToRemove(marker);
-        setShowRemoveMarkerConfirm(true);
-    }
+    if (!marker) return;
+    setMarkerToRemove(marker);
+    setShowRemoveMarkerConfirm(true);
   };
 
   const handleConfirmRemove = async () => {
@@ -1140,6 +1133,7 @@ toast({
                             canEdit,
                             onUpdateNote: handleUpdateNote,
                             onUpdateMarkerNote: canEdit ? handleUpdateMarkerNote : undefined,
+                            onSelect: selectItem,
                             markerPlacePhotos: photos,
                         }}
                         itemsPanelProps={{
@@ -1179,6 +1173,8 @@ toast({
                             onAddSavedPlace: handleAddToCollection,
                             onAddAllSavedPlaces: handleOpenAddVisibleConfirm,
                             isAddingAllSavedPlaces: isAddingVisibleCandidates,
+                            onSelectSavedPlace: selectSavedPlace,
+                            onSelectCatalogueBuilding: selectDiscoverRow,
                         }}
                     />
                 </div>
@@ -1203,6 +1199,7 @@ toast({
                     selectedCluster={selectedCluster}
                     onSelectBuilding={setSelectedCluster}
                     onCloseDetail={closeDetail}
+                    forceSheetDetail={forceSheetDetail}
                     onRemoveFromCollection={canEdit ? handleRemoveItem : undefined}
                     onAddCandidate={handleAddToCollection}
                     onRemoveItem={canEdit ? handleRemoveItem : undefined}
