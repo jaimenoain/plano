@@ -1,5 +1,15 @@
 /**
- * Explore — vertical discovery feed (snap scroll + swipe gestures).
+ * Explore — vertical discovery feed (controlled pager + swipe gestures).
+ *
+ * Navigation: one gesture moves exactly one building. This used to be a native
+ * `snap-y snap-mandatory` scroller, but iOS momentum can't be cancelled once released,
+ * so a hard flick on iPad carried past three or four cards — and since passing a card
+ * wrote `user_buildings.status = 'ignored'`, those buildings were gone for good. The
+ * feed no longer scrolls: `useVerticalPager` owns the index (see that file).
+ *
+ * The feed is also never refetched mid-session. `get_discovery_feed` excludes every
+ * building the user has an interaction row for, so invalidating it after a save/hide
+ * re-ran all pages and returned entirely different buildings under the user's finger.
  *
  * Layout: While the first-run tutorial is visible, MainLayout shows MobileTopBar +
  * AppTopNav; the feed + tutorial sit below that chrome. After the tutorial is
@@ -14,7 +24,6 @@ import {
   useMemo,
   useRef,
   useCallback,
-  type RefCallback,
 } from "react";
 import type { CreditRole } from "@/features/credits/types";
 import type { UserSearchResult } from "@/features/search/hooks/useUserSearch";
@@ -23,7 +32,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useDiscoveryFeed } from "@/features/posts/hooks/useDiscoveryFeed";
 import { DiscoveryCard } from "@/features/posts/components/DiscoveryCard";
-import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import { useVerticalPager } from "../hooks/useVerticalPager";
+import { motion } from "framer-motion";
 import { Loader2, MapPin, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -148,7 +158,7 @@ export default function Explore() {
     if (!hasActiveFilters) setFilterDismissed(true);
   }, [hasActiveFilters]);
   const [searchValue, setSearchValue] = useState("");
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const feedRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     if (showTutorial === null) {
@@ -216,15 +226,28 @@ export default function Explore() {
         constructionStatuses.length > 0 ? constructionStatuses : undefined,
     });
 
-  const { containerRef, isVisible } = useIntersectionObserver();
+  const allBuildings = useMemo(() => data?.pages.flat() ?? [], [data]);
+
+  const pager = useVerticalPager({
+    count: allBuildings.length,
+    containerRef: feedRef,
+  });
+  const { index: currentIndex, goToNext, reset: resetPager } = pager;
+
+  /**
+   * Prefetch by index instead of a bottom sentinel. The old observer only fired once
+   * the user had scrolled past the very last card, so the next page started loading
+   * exactly when it was already needed.
+   */
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return;
+    if (currentIndex >= allBuildings.length - 3) fetchNextPage();
+  }, [currentIndex, allBuildings.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   useEffect(() => {
-    if (isVisible && hasNextPage && !isFetchingNextPage) fetchNextPage();
-  }, [isVisible, hasNextPage, isFetchingNextPage]);
-
-  useEffect(() => {
-    scrollContainerRef.current?.scrollTo({ top: 0 });
+    resetPager();
   }, [
+    resetPager,
     locationFilter.localityId,
     locationFilter.viewportBounds,
     locationFilter.city,
@@ -240,42 +263,18 @@ export default function Explore() {
     constructionStatuses,
   ]);
 
-  /** Hysteresis avoids flicker when snap/elastic scroll oscillates near the threshold (touch). */
-  const FILTER_BAR_SHOW_BELOW_PX = 28;
-  const FILTER_BAR_HIDE_ABOVE_PX = 80;
-
   /**
-   * On 120Hz tablets the native scroll fires many more events per gesture than React
-   * can reconcile cheaply. Coalesce into rAF so we only re-evaluate visibility once
-   * per frame.
+   * The pill is an invitation on the first building only. With a discrete index this
+   * is simply "are we still on building one" — no scroll-offset hysteresis needed.
    */
-  const scrollRafRef = useRef<number | null>(null);
   useEffect(() => {
-    return () => {
-      if (scrollRafRef.current != null) {
-        cancelAnimationFrame(scrollRafRef.current);
-        scrollRafRef.current = null;
-      }
-    };
-  }, []);
-
-  const handleScroll = () => {
-    if (scrollRafRef.current != null) return;
-    scrollRafRef.current = requestAnimationFrame(() => {
-      scrollRafRef.current = null;
-      const el = scrollContainerRef.current;
-      if (!el) return;
-      const top = el.scrollTop;
-      // Scrolling past the first building counts as swiping onward — the pill
-      // invitation is over unless a filter is already applied.
-      if (top >= FILTER_BAR_HIDE_ABOVE_PX) dismissFilterOnSwipe();
-      setIsFilterVisible((prev) => {
-        if (top <= FILTER_BAR_SHOW_BELOW_PX) return true;
-        if (top >= FILTER_BAR_HIDE_ABOVE_PX) return false;
-        return prev;
-      });
-    });
-  };
+    if (currentIndex === 0) {
+      setIsFilterVisible(true);
+      return;
+    }
+    setIsFilterVisible(false);
+    dismissFilterOnSwipe();
+  }, [currentIndex, dismissFilterOnSwipe]);
 
   const handlePlaceDetails = async (details: google.maps.GeocoderResult) => {
     const { city, country, countryCode } = extractLocationDetails(details);
@@ -325,10 +324,9 @@ export default function Explore() {
     });
     setIsLocationSheetOpen(false);
     setSearchValue("");
-
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 0;
-    }
+    // The filter change also resets the pager via the effect above; this makes the
+    // jump immediate rather than waiting for the new query key to settle.
+    resetPager();
   };
 
   const clearFilter = (e: React.MouseEvent) => {
@@ -355,23 +353,34 @@ export default function Explore() {
     setSelectedCreditRoles([]);
   }, []);
 
-  const allBuildings = data?.pages.flat() || [];
-  const [hiddenBuildingIds, setHiddenBuildingIds] = useState<Set<string>>(
-    new Set()
-  );
-  const buildings = useMemo(
-    () => allBuildings.filter((b) => !hiddenBuildingIds.has(b.id)),
-    [allBuildings, hiddenBuildingIds]
-  );
+  const buildings = allBuildings;
 
-  // Undo a save/hide: return the card to the feed and clear its user_buildings row.
-  const undoBuildingAction = useCallback(
-    async (buildingId: string) => {
-      setHiddenBuildingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(buildingId);
+  /**
+   * What the user has already decided about each card in this session. Resolved cards
+   * stay *in the list*: removing one used to shorten the feed under the user, which is
+   * what produced the flash-then-jump on iPad. The card just renders a confirmation.
+   */
+  const [resolvedBuildings, setResolvedBuildings] = useState<
+    Map<string, "saved" | "hidden">
+  >(new Map());
+
+  const markResolved = useCallback(
+    (buildingId: string, as: "saved" | "hidden" | null) => {
+      setResolvedBuildings((prev) => {
+        const next = new Map(prev);
+        if (as === null) next.delete(buildingId);
+        else next.set(buildingId, as);
         return next;
       });
+    },
+    []
+  );
+
+  // Undo a save/hide: clear the confirmation and the user_buildings row. No feed
+  // invalidation — the card never left the list, so there is nothing to restore.
+  const undoBuildingAction = useCallback(
+    async (buildingId: string) => {
+      markResolved(buildingId, null);
       if (!user) return;
       try {
         const { error } = await supabase
@@ -380,16 +389,16 @@ export default function Explore() {
           .eq("user_id", user.id)
           .eq("building_id", buildingId);
         if (error) throw error;
-        queryClient.invalidateQueries({ queryKey: ["discovery_feed"] });
+        queryClient.invalidateQueries({ queryKey: ["user_buildings"] });
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error("Failed to undo:", error);
       }
     },
-    [user, queryClient]
+    [user, queryClient, markResolved]
   );
 
-  const handleSkip = async (buildingId: string) => {
+  const handleSkip = useCallback(async (buildingId: string) => {
     if (!user) return;
     try {
       const { error } = await supabase.from("user_buildings").upsert(
@@ -402,29 +411,40 @@ export default function Explore() {
       );
       if (error) throw error;
     } catch (error) {
-      // "Skip" is a passive gesture — it fires when a viewed card scrolls out of
-      // frame (see DiscoveryCard), not from an explicit user action — so we don't
-      // interrupt scrolling with a toast. The write is best-effort: a failed skip
-      // just means the building may resurface in a later session. We still log it so
-      // the failure is captured for diagnostics (see ConsoleErrorInterceptor) rather
-      // than vanishing silently.
+      // "Skip" is a passive gesture — it fires when the user pages forward off a
+      // building, not from an explicit action — so we don't interrupt them with a
+      // toast. The write is best-effort: a failed skip just means the building may
+      // resurface in a later session. We still log it so the failure is captured for
+      // diagnostics (see ConsoleErrorInterceptor) rather than vanishing silently.
       // eslint-disable-next-line no-console
       console.warn("Failed to persist skip:", error);
     }
-  };
+  }, [user]);
+
+  /**
+   * Mark the building the user just paged *forward* off as seen — exactly one per
+   * gesture, and never when paging back. Cards the user explicitly saved or hid
+   * already wrote their own row, so they're left alone.
+   */
+  const prevIndexRef = useRef(0);
+  useEffect(() => {
+    const prev = prevIndexRef.current;
+    prevIndexRef.current = currentIndex;
+    if (currentIndex <= prev) return;
+    for (let i = prev; i < currentIndex; i++) {
+      const left = buildings[i];
+      if (left && !resolvedBuildings.has(left.id)) void handleSkip(left.id);
+    }
+  }, [currentIndex, buildings, resolvedBuildings, handleSkip]);
 
   const handleSwipeSave = async (buildingId: string) => {
     if (!user) return;
-    // A completed swipe on the first card never crosses the scroll threshold
-    // (the next card replaces it at the same offset), so retire the pill here too.
     dismissFilterOnSwipe();
-    // Optimistically hide the card so the swipe feels instant; roll back below if the
-    // write fails so we never claim success for a building that wasn't actually saved.
-    setHiddenBuildingIds((prev) => {
-      const next = new Set(prev);
-      next.add(buildingId);
-      return next;
-    });
+    // Confirm optimistically so the swipe feels instant, then glide to the next
+    // building. The card stays in the list, so nothing shifts under the user; roll
+    // back below if the write fails so we never claim a save that didn't happen.
+    markResolved(buildingId, "saved");
+    goToNext();
     try {
       const { error } = await supabase.from("user_buildings").upsert(
         {
@@ -438,15 +458,14 @@ export default function Explore() {
       toast.success("Saved to your list", {
         action: { label: "Undo", onClick: () => undoBuildingAction(buildingId) },
       });
-      queryClient.invalidateQueries({ queryKey: ["discovery_feed"] });
+      // Deliberately NOT invalidating ["discovery_feed"]: the RPC excludes every
+      // building with a user_buildings row, so refetching mid-session replaces the
+      // whole queue with different buildings under the user's finger.
+      queryClient.invalidateQueries({ queryKey: ["user_buildings"] });
     } catch (error) {
-      // Persist failed: un-hide the card so the building returns to the feed instead of
-      // being silently dropped, and tell the user the save didn't take.
-      setHiddenBuildingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(buildingId);
-        return next;
-      });
+      // Persist failed: clear the confirmation so the card doesn't claim a save that
+      // didn't take.
+      markResolved(buildingId, null);
       // eslint-disable-next-line no-console
       console.error("Failed to save building:", error);
       toast.error("Failed to save");
@@ -455,16 +474,10 @@ export default function Explore() {
 
   const handleSwipeHide = async (buildingId: string) => {
     if (!user) return;
-    // Same as handleSwipeSave: a swipe on the first card doesn't scroll, so the
-    // scroll-threshold dismissal never fires for it.
     dismissFilterOnSwipe();
-    // Optimistically hide the card so the swipe feels instant; roll back below if the
-    // write fails so a building that wasn't actually hidden isn't lost from the feed.
-    setHiddenBuildingIds((prev) => {
-      const next = new Set(prev);
-      next.add(buildingId);
-      return next;
-    });
+    // Same as handleSwipeSave: confirm in place and advance, never mutate the list.
+    markResolved(buildingId, "hidden");
+    goToNext();
     try {
       const { error } = await supabase.from("user_buildings").upsert(
         {
@@ -478,15 +491,12 @@ export default function Explore() {
       toast("Building hidden", {
         action: { label: "Undo", onClick: () => undoBuildingAction(buildingId) },
       });
-      queryClient.invalidateQueries({ queryKey: ["discovery_feed"] });
+      // See handleSwipeSave — the feed query is never invalidated mid-session.
+      queryClient.invalidateQueries({ queryKey: ["user_buildings"] });
     } catch (error) {
-      // Persist failed: un-hide the card so the building returns to the feed instead of
-      // being silently dropped, and tell the user the action didn't take.
-      setHiddenBuildingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(buildingId);
-        return next;
-      });
+      // Persist failed: clear the confirmation so the card doesn't claim an action
+      // that didn't take.
+      markResolved(buildingId, null);
       // eslint-disable-next-line no-console
       console.error("Failed to hide building:", error);
       toast.error("Failed to hide building");
@@ -640,15 +650,14 @@ export default function Explore() {
           </div>
           </div>
 
-          {/* ── Snap scroll feed ── */}
+          {/* ── Pager feed — one building per gesture, never a native scroll ── */}
           <div
-            ref={scrollContainerRef}
-            onScroll={handleScroll}
-            className="min-h-0 flex-1 w-full touch-pan-y overflow-y-scroll overscroll-y-contain overscroll-x-contain snap-y snap-mandatory no-scrollbar"
+            ref={feedRef}
+            className="relative min-h-0 flex-1 w-full overflow-hidden overscroll-none touch-none"
           >
           {/* Loading */}
           {status === "pending" && (
-            <div className="h-full w-full flex items-center justify-center snap-center">
+            <div className="h-full w-full flex items-center justify-center">
               <Loader2 className="h-5 w-5 animate-spin text-white/20" />
             </div>
           )}
@@ -656,7 +665,7 @@ export default function Explore() {
           {/* Error */}
           {status === "error" && (
             <EmptyState
-              className="h-full w-full snap-center"
+              className="h-full w-full"
               tone="inverse"
               eyebrow="Error"
               message="Failed to load feed."
@@ -677,41 +686,58 @@ export default function Explore() {
           {/* Empty */}
           {status !== "pending" && status !== "error" && buildings.length === 0 && (
             <EmptyState
-              className="h-full w-full snap-center"
+              className="h-full w-full"
               tone="inverse"
               eyebrow={locationFilter.label || "No results"}
               message="No buildings found here. Try widening your location filter, or check back later."
             />
           )}
 
-          {/* Cards — full-bleed, cinematic, at every breakpoint. */}
-          {buildings.map((building) => (
-            <div
-              key={building.id}
-              className="h-full w-full snap-start snap-always"
-              style={{ contain: "layout paint" }}
-            >
-              <div className="relative h-full w-full">
-                <DiscoveryCard
-                  building={building}
-                  onSwipeSave={() => handleSwipeSave(building.id)}
-                  onSwipeHide={() => handleSwipeHide(building.id)}
-                  onSkip={() => handleSkip(building.id)}
-                  onInteractionStart={() => setIsFilterVisible(false)}
-                />
-              </div>
-            </div>
-          ))}
+          {/*
+            Cards — full-bleed, cinematic, at every breakpoint. Each sits one viewport
+            height below the last inside a track we translate ourselves. Only the
+            neighbours of the current card are mounted: the pager can never travel
+            further than one step, so nothing else can come into view.
+          */}
+          <motion.div
+            className="absolute inset-x-0 top-0 h-full"
+            style={{ y: pager.y, willChange: "transform" }}
+          >
+            {buildings.map((building, i) =>
+              Math.abs(i - currentIndex) > 1 ? null : (
+                <div
+                  key={building.id}
+                  className="absolute inset-x-0 h-full"
+                  style={{ top: `${i * 100}%` }}
+                  // The neighbouring cards are mounted but off-frame. `inert` alongside
+                  // `aria-hidden` keeps their buttons and links out of the tab order —
+                  // aria-hidden alone on a container with focusable children is a trap.
+                  aria-hidden={i !== currentIndex}
+                  inert={i !== currentIndex}
+                  // Stable identity for the feed's E2E paging assertions — building
+                  // names are not unique, so the visible name can't stand in for it.
+                  data-building-id={building.id}
+                  data-active={i === currentIndex ? "true" : undefined}
+                >
+                  <DiscoveryCard
+                    building={building}
+                    isActive={i === currentIndex}
+                    resolvedAs={resolvedBuildings.get(building.id) ?? null}
+                    onSwipeSave={() => handleSwipeSave(building.id)}
+                    onSwipeHide={() => handleSwipeHide(building.id)}
+                    onVerticalDrag={pager.onDrag}
+                    onVerticalRelease={pager.onRelease}
+                    onInteractionStart={() => setIsFilterVisible(false)}
+                  />
+                </div>
+              )
+            )}
+          </motion.div>
 
-          {/* Infinite scroll trigger */}
-          {(hasNextPage || isFetchingNextPage) && (
-            <div
-              ref={containerRef as RefCallback<HTMLDivElement>}
-              className="h-20 w-full flex justify-center items-center p-4 snap-end"
-            >
-              {isFetchingNextPage && (
-                <Loader2 className="h-4 w-4 animate-spin text-white/20" />
-              )}
+          {/* Next-page spinner — the fetch itself is triggered by the pager index. */}
+          {isFetchingNextPage && (
+            <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">
+              <Loader2 className="h-4 w-4 animate-spin text-white/20" />
             </div>
           )}
           </div>

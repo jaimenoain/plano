@@ -1,33 +1,17 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import type { ContactInteraction, ContactRater } from "@/features/search/components/types";
 import type { CreditRole } from "@/features/credits/types";
 import type { ExploreViewportBounds } from "@/features/explore/exploreLocationFilter";
+import {
+  hydrateDiscoveryBuildings,
+  type ContactInteraction,
+  type BuildingCreditEmbedRow,
+  type DiscoveryFeedImageRow,
+  type UserBuildingInteractionRow,
+} from "../utils/discoveryFeedHydration";
 
-export interface DiscoveryFeedImageRow {
-  id: string;
-  storage_path: string;
-  likes_count?: number | null;
-  created_at?: string | null;
-  building_posts?: {
-    building_id: string;
-    user: ContactRater | ContactRater[];
-  } | null;
-}
-
-interface BuildingCreditEmbedRow {
-  building_id: string;
-  person: { id: string; name: string } | null;
-  company: { id: string; name: string } | null;
-}
-
-interface UserBuildingInteractionRow {
-  building_id: string;
-  status: string;
-  rating: number | null;
-  user: ContactRater | ContactRater[];
-}
+export type { DiscoveryFeedImageRow };
 
 export interface DiscoveryFeedItem {
   id: string;
@@ -62,6 +46,19 @@ export interface DiscoveryFilters {
   creditRoles?: CreditRole[];
   contactUserIds?: string[];
   buildingStatuses?: string[];
+}
+
+/**
+ * Keyset cursor into the feed, matching the RPC's `(save_count DESC, id ASC)` order.
+ *
+ * Not an offset: `get_discovery_feed` hides every building the user has interacted
+ * with, and Explore records one for each building paged past, so the result set
+ * shrinks as it is read. An offset computed from pages-so-far therefore landed past
+ * buildings that were never shown — they vanished from the feed without being seen.
+ */
+export interface DiscoveryCursor {
+  saveCount: number;
+  id: string;
 }
 
 export function useDiscoveryFeed(filters: DiscoveryFilters) {
@@ -119,8 +116,9 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
       contactUserIds,
       buildingStatuses,
     ],
-    queryFn: async ({ pageParam = 0 }) => {
+    queryFn: async ({ pageParam }) => {
       if (!user) return [];
+      const cursor = pageParam as DiscoveryCursor | null;
 
       // Always send extended-only array params (even as []) so PostgREST picks the
       // canonical function when a legacy get_discovery_feed(uuid,int,int,text) overload
@@ -128,7 +126,11 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
       const { data, error } = await supabase.rpc("get_discovery_feed", {
         p_user_id: user.id,
         p_limit: LIMIT,
-        p_offset: pageParam,
+        // Legacy positional arg the RPC still declares; the cursor supersedes it.
+        p_offset: 0,
+        ...(cursor
+          ? { p_after_save_count: cursor.saveCount, p_after_id: cursor.id }
+          : {}),
         ...(city ? { p_city_filter: city } : {}),
         ...(country ? { p_country_filter: country } : {}),
         ...(countryCode ? { p_country_code_filter: countryCode } : {}),
@@ -224,77 +226,20 @@ export function useDiscoveryFeed(filters: DiscoveryFilters) {
           : Promise.resolve({ data: [] as UserBuildingInteractionRow[] }),
       ]);
 
-      // --- Process Credits ---
-      if (creditsRes.data) {
-        const creditsMap: Record<string, { id: string; name: string }[]> = {};
-        (creditsRes.data as unknown as BuildingCreditEmbedRow[]).forEach((item) => {
-          const p = item.person;
-          const c = item.company;
-          let entry: { id: string; name: string } | null = null;
-          if (p && c) entry = { id: p.id, name: `${p.name} @ ${c.name}` };
-          else if (p) entry = { id: p.id, name: p.name };
-          else if (c) entry = { id: c.id, name: c.name };
-          if (entry) {
-            if (!creditsMap[item.building_id]) creditsMap[item.building_id] = [];
-            creditsMap[item.building_id].push(entry);
-          }
-        });
-        buildings.forEach((building) => {
-          building.credits = creditsMap[building.id] || [];
-        });
-      }
-
-      // --- Process Images ---
-      if (imagesRes.data) {
-        const imagesMap: Record<string, DiscoveryFeedImageRow[]> = {};
-        (imagesRes.data as unknown as DiscoveryFeedImageRow[]).forEach((item) => {
-          const buildingId = item.building_posts?.building_id;
-          if (buildingId) {
-            if (!imagesMap[buildingId]) imagesMap[buildingId] = [];
-            if (imagesMap[buildingId].length < 10) {
-              imagesMap[buildingId].push(item);
-            }
-          }
-        });
-        buildings.forEach((building) => {
-          building.images = imagesMap[building.id] || [];
-        });
-      }
-
-      // --- Process Interactions ---
-      const interactions = (interactionsRes as { data: UserBuildingInteractionRow[] | null }).data;
-      if (interactions && interactions.length > 0) {
-        const interactionsMap: Record<string, ContactInteraction[]> = {};
-        interactions.forEach((item) => {
-          const userProfile = Array.isArray(item.user) ? item.user[0] : item.user;
-          const interaction: ContactInteraction = {
-            user: {
-              id: userProfile.id,
-              username: userProfile.username ?? null,
-              avatar_url: userProfile.avatar_url,
-              first_name: null,
-              last_name: null,
-            },
-            status: item.status as ContactInteraction["status"],
-            rating: item.rating,
-          };
-          if (!interactionsMap[item.building_id]) {
-            interactionsMap[item.building_id] = [];
-          }
-          interactionsMap[item.building_id].push(interaction);
-        });
-        buildings.forEach((building) => {
-          building.contact_interactions = interactionsMap[building.id] || [];
-        });
-      }
-
-      return buildings;
+      return hydrateDiscoveryBuildings(buildings, {
+        credits: creditsRes.data as unknown as BuildingCreditEmbedRow[] | null,
+        images: imagesRes.data as unknown as DiscoveryFeedImageRow[] | null,
+        interactions: (
+          interactionsRes as { data: UserBuildingInteractionRow[] | null }
+        ).data,
+      });
     },
-    getNextPageParam: (lastPage, allPages) => {
+    getNextPageParam: (lastPage): DiscoveryCursor | undefined => {
       if (lastPage.length < LIMIT) return undefined;
-      return allPages.length * LIMIT;
+      const last = lastPage[lastPage.length - 1];
+      return { saveCount: last.save_count ?? 0, id: last.id };
     },
     enabled: !!user,
-    initialPageParam: 0,
+    initialPageParam: null as DiscoveryCursor | null,
   });
 }

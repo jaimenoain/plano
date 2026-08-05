@@ -56,34 +56,38 @@ import {
 import { cn } from "@/lib/utils";
 import { ContactFacepile } from "./ContactFacepile";
 import { DiscoveryAwardOverlay } from "./DiscoveryAwardOverlay";
+import { computeRotationDeg, computeStampOpacity } from "../utils/swipeGesture";
 import {
-  applyElasticPull,
-  computeElasticLimit,
-  computeRotationDeg,
-  computeStampOpacity,
-  computeSwipeThresholds,
-  computeVelocity,
-  decideAxis,
-  resolveSwipeCommit,
-  type MoveSample,
-} from "../utils/swipeGesture";
-
-/** Fallback card width before the first pointerdown captures a real measurement. */
-const FALLBACK_CARD_WIDTH = 375;
-/**
- * Lower than the old hard-coded 0.04s so a fast, short flick still registers a
- * velocity instead of springing back and feeling dead (see computeVelocity).
- */
-const VELOCITY_DT_GATE = 0.016;
+  useDiscoveryCardGesture,
+  FALLBACK_CARD_WIDTH,
+} from "../hooks/useDiscoveryCardGesture";
 
 interface DiscoveryCardProps {
   building: DiscoveryBuilding | DiscoveryFeedItem;
   onSave?: (e: React.MouseEvent) => void;
   onSwipeSave?: () => void;
   onSwipeHide?: () => void;
-  onSkip?: () => void;
   /** Fires on the first drag gesture — used by Explore to collapse the sidebar */
   onInteractionStart?: () => void;
+  /**
+   * True when this card is the one the pager is parked on. Only the active card
+   * responds to the keyboard; previously this was inferred from a 60%-visibility
+   * observer, which several cards could satisfy at once mid-momentum.
+   */
+  isActive?: boolean;
+  /**
+   * Vertical drag forwarded to the feed pager. The card owns pointer capture and
+   * axis gating, but the feed owns navigation — so once the axis locks vertical the
+   * card just relays the finger delta (px, negative = pulling the next card up).
+   */
+  onVerticalDrag?: (dy: number) => void;
+  onVerticalRelease?: (dy: number, vy: number) => void;
+  /**
+   * The decision already recorded for this building. Swiped cards used to be spliced
+   * out of the feed, which shifted every card below them; they now stay in place and
+   * wear this badge instead, so the feed's geometry never changes under a gesture.
+   */
+  resolvedAs?: "saved" | "hidden" | null;
 }
 
 export function DiscoveryCard({
@@ -91,17 +95,17 @@ export function DiscoveryCard({
   onSave: _onSave,
   onSwipeSave,
   onSwipeHide,
-  onSkip,
   onInteractionStart,
+  isActive = true,
+  onVerticalDrag,
+  onVerticalRelease,
+  resolvedAs = null,
 }: DiscoveryCardProps) {
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
   const [showRating, setShowRating] = useState(false);
   const [rating, setRating] = useState<number | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  const [hasBeenViewed, setHasBeenViewed] = useState(false);
-  const prevVisible = useRef(false);
 
   // Lazy loading setup (hook returns a callback ref, not RefObject)
   const { containerRef: setLazyObserveTarget, isVisible: _isVisible } =
@@ -118,21 +122,10 @@ export function DiscoveryCard({
     [setLazyObserveTarget]
   );
 
-  // View tracking setup
-  const { containerRef: viewTrackerRef, isVisible: isViewVisible } =
-    useIntersectionObserver({ threshold: 0.6 });
-
-  useEffect(() => {
-    if (isViewVisible) {
-      setHasBeenViewed(true);
-    }
-    if (prevVisible.current && !isViewVisible) {
-      if (hasBeenViewed && !isSaved && onSkip) {
-        onSkip();
-      }
-    }
-    prevVisible.current = isViewVisible;
-  }, [isViewVisible, hasBeenViewed, isSaved, onSkip]);
+  // "Seen" is no longer inferred from visibility. A 60%-threshold observer fired for
+  // every card a momentum flick crossed, and each one was written as `ignored` —
+  // permanently removing buildings the user never looked at. The feed pager now tells
+  // Explore which single card was left behind (see useVerticalPager).
 
   const additionalImages = (building as DiscoveryFeedItem).images || [];
   const mainImageUrl = getBuildingImageUrl(building.main_image_url);
@@ -190,6 +183,9 @@ export function DiscoveryCard({
     }
   };
 
+  /** Explore's record wins; `isSaved` covers the frame before the parent hears back. */
+  const decision = resolvedAs ?? (isSaved ? "saved" : null);
+
   const prefersReducedMotion = useReducedMotion() ?? false;
 
   // Detect a fine, hovering pointer (mouse/trackpad) — these devices get explicit
@@ -240,68 +236,32 @@ export function DiscoveryCard({
     };
   }, []);
 
-  // After 5s with no rating, advance (keeping the save). With motion the card
-  // slides up first; with reduced motion we skip the slide but still auto-save.
+  /**
+   * Advance after the save is settled. The card no longer animates itself off-screen:
+   * the feed pager owns navigation now, so sliding here as well would mean two
+   * competing motions for one gesture. We just dismiss the rating overlay and let the
+   * pager glide to the next building.
+   */
+  const finishSave = useCallback(() => {
+    if (!mountedRef.current) return;
+    setShowRating(false);
+    y.set(0);
+    onSwipeSave?.();
+  }, [onSwipeSave, y]);
+
+  // After 5s with no rating, advance anyway (keeping the save).
   useEffect(() => {
     if (!showRating || rating !== null) return;
-    const timer = setTimeout(async () => {
-      if (!prefersReducedMotion) {
-        await animate(y, -(typeof window !== "undefined" ? window.innerHeight : 800), {
-          duration: 0.55,
-          ease: [0.4, 0, 0.6, 1],
-        });
-      }
-      if (mountedRef.current && onSwipeSave) onSwipeSave();
-    }, 5000);
-    return () => {
-      clearTimeout(timer);
-      animate(y, 0, { duration: 0 });
-    };
-  }, [showRating, rating, onSwipeSave, y, prefersReducedMotion]);
+    const timer = setTimeout(finishSave, 5000);
+    return () => clearTimeout(timer);
+  }, [showRating, rating, finishSave]);
 
   const handleRate = async (value: number | null, e: React.MouseEvent) => {
     e.stopPropagation();
     setRating(value);
     await saveToSupabase("pending", value);
-    setTimeout(() => {
-      if (onSwipeSave) onSwipeSave();
-    }, 500);
+    setTimeout(finishSave, 500);
   };
-
-  /**
-   * Custom pointer swipe (replaces Framer `drag="x"` + `dragDirectionLock`).
-   * Framer's direction lock + `touch-pan-y` fights iPad Safari: vertical feed scroll and
-   * horizontal save/hide were misclassified (worse in portrait). We only move `x` after
-   * explicit horizontal dominance; vertical dominance yields to the parent scroller.
-   */
-  const [horizontalSwipeActive, setHorizontalSwipeActive] = useState(false);
-  /**
-   * Mirror of `horizontalSwipeActive` for the permanently-attached touchmove blocker.
-   * State-driven attachment leaves a 1-frame gap on iPad Safari during which native
-   * snap scroll can commit before we lock horizontal — using a ref closes that gap.
-   */
-  const horizontalSwipeActiveRef = useRef(false);
-  const blockImageTapRef = useRef(false);
-  const swipeSessionRef = useRef<{
-    activePointerId: number | null;
-    /** undecided → first axis wins for the rest of the pointer */
-    axis: "undecided" | "horizontal" | "vertical";
-    originX: number;
-    originY: number;
-    /** timeStamp of pointerdown — seeds the velocity baseline for fast flicks. */
-    originT: number;
-    moveSamples: MoveSample[];
-    /** Card width captured at gesture start — feeds the scaled commit thresholds. */
-    width: number;
-  }>({
-    activePointerId: null,
-    axis: "undecided",
-    originX: 0,
-    originY: 0,
-    originT: 0,
-    moveSamples: [],
-    width: 0,
-  });
 
   /**
    * Shared save/hide commit paths, called by both the swipe gesture and the
@@ -334,162 +294,39 @@ export function DiscoveryCard({
         type: "tween",
         duration: 0.22,
         ease: [0.4, 0, 1, 1],
-      }).then(() => onSwipeHide());
+      }).then(() => {
+        onSwipeHide();
+        // The card stays mounted (the pager just moves past it), so bring it back to
+        // rest — otherwise it would still be parked off-frame if the user pages back.
+        x.set(0);
+      });
     },
     [onSwipeHide, prefersReducedMotion, x]
   );
 
-  const finishHorizontalSwipe = useCallback(
-    (el: HTMLElement) => {
-      const s = swipeSessionRef.current;
-      const pull = x.get();
-      const width = s.width || el.clientWidth || FALLBACK_CARD_WIDTH;
-      const vx = computeVelocity(s.moveSamples, VELOCITY_DT_GATE);
-      const commit = resolveSwipeCommit(pull, vx, computeSwipeThresholds(width));
-
-      if (Math.abs(pull) > 12) blockImageTapRef.current = true;
-
-      if (commit === "right") {
-        triggerSave();
-      } else if (commit === "left" && onSwipeHide) {
-        triggerHide(el);
-      } else if (prefersReducedMotion) {
-        x.set(0);
-      } else {
-        void animate(x, 0, { type: "spring", stiffness: 520, damping: 38 });
-      }
-
-      const pid = s.activePointerId;
-      if (pid != null && el.hasPointerCapture(pid)) {
-        try {
-          el.releasePointerCapture(pid);
-        } catch {
-          /* already released */
-        }
-      }
-      s.activePointerId = null;
-      s.axis = "undecided";
-      s.moveSamples = [];
-      s.width = 0;
-      horizontalSwipeActiveRef.current = false;
-      setHorizontalSwipeActive(false);
-    },
-    [onSwipeHide, prefersReducedMotion, triggerHide, triggerSave, x]
-  );
-
-  const onPointerDown = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      if (showRating) return;
-      if (e.button !== 0) return;
-      if (e.pointerType === "touch" && !e.isPrimary) return;
-
-      const s = swipeSessionRef.current;
-      s.activePointerId = e.pointerId;
-      s.axis = "undecided";
-      s.originX = e.clientX;
-      s.originY = e.clientY;
-      s.originT = e.timeStamp;
-      s.moveSamples = [{ t: e.timeStamp, x: e.clientX }];
-      s.width = e.currentTarget.clientWidth;
-      cardWidthRef.current = e.currentTarget.clientWidth || FALLBACK_CARD_WIDTH;
-      blockImageTapRef.current = false;
-    },
-    [showRating]
-  );
-
-  const onPointerMove = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      const s = swipeSessionRef.current;
-      if (s.activePointerId == null || e.pointerId !== s.activePointerId) return;
-      if (showRating) return;
-
-      const dx = e.clientX - s.originX;
-      const dy = e.clientY - s.originY;
-      const elasticLimit = computeElasticLimit(s.width || FALLBACK_CARD_WIDTH);
-
-      if (s.axis === "vertical") return;
-
-      if (s.axis === "undecided") {
-        const axis = decideAxis({ dx, dy, pointerType: e.pointerType });
-        if (axis === "vertical") {
-          s.axis = "vertical";
-          return;
-        }
-        if (axis === "horizontal") {
-          s.axis = "horizontal";
-          onInteractionStart?.();
-          horizontalSwipeActiveRef.current = true;
-          setHorizontalSwipeActive(true);
-          e.currentTarget.setPointerCapture(e.pointerId);
-          // Seed the velocity buffer from the gesture origin so a fast, short flick
-          // still has two timestamped samples to measure against.
-          s.moveSamples = [
-            { t: s.originT, x: s.originX },
-            { t: e.timeStamp, x: e.clientX },
-          ];
-          e.preventDefault();
-          x.set(applyElasticPull(dx, elasticLimit));
-        }
-        return;
-      }
-
-      e.preventDefault();
-      s.moveSamples.push({ t: e.timeStamp, x: e.clientX });
-      if (s.moveSamples.length > 8) s.moveSamples.shift();
-      x.set(applyElasticPull(dx, elasticLimit));
-    },
-    [onInteractionStart, showRating, x]
-  );
-
-  const onPointerEnd = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
-      const s = swipeSessionRef.current;
-      if (s.activePointerId == null || e.pointerId !== s.activePointerId) return;
-
-      if (s.axis === "horizontal") {
-        finishHorizontalSwipe(e.currentTarget);
-        return;
-      }
-
-      s.activePointerId = null;
-      s.axis = "undecided";
-      s.moveSamples = [];
-      s.width = 0;
-      horizontalSwipeActiveRef.current = false;
-      setHorizontalSwipeActive(false);
-    },
-    [finishHorizontalSwipe]
-  );
+  const { onPointerDown, onPointerMove, onPointerEnd, blockImageTapRef } =
+    useDiscoveryCardGesture({
+      x,
+      cardWidthRef,
+      prefersReducedMotion,
+      disabled: showRating,
+      onInteractionStart,
+      onCommitSave: triggerSave,
+      onCommitHide: onSwipeHide ? triggerHide : undefined,
+      onVerticalDrag,
+      onVerticalRelease,
+      rootRef: cardRootRef,
+    });
 
   /**
-   * iPad Safari can commit a snap-scroll step in the gap between a state update and
-   * the effect that attaches a non-passive `touchmove` blocker. Attach the listener
-   * once on mount and read the ref so the block engages on the same frame the axis
-   * locks to horizontal.
-   */
-  useEffect(() => {
-    const el = cardRootRef.current;
-    if (!el) return;
-    const preventTouchScroll = (ev: TouchEvent) => {
-      if (horizontalSwipeActiveRef.current && ev.cancelable) {
-        ev.preventDefault();
-      }
-    };
-    el.addEventListener("touchmove", preventTouchScroll, { passive: false });
-    return () => {
-      el.removeEventListener("touchmove", preventTouchScroll);
-    };
-  }, []);
-
-  /**
-   * Keyboard control for the in-view card — the accessible/desktop equivalent of the
-   * swipe, since keyboard/AT users can't drag. Exactly one card is ≥60% visible at a
-   * time (isViewVisible), so only it responds. ArrowRight/S → save, ArrowLeft/H → hide,
+   * Keyboard control for the active card — the accessible/desktop equivalent of the
+   * swipe, since keyboard/AT users can't drag. The pager guarantees exactly one active
+   * card, so only it responds. ArrowRight/S → save, ArrowLeft/H → hide,
    * Escape → dismiss the rating overlay (advancing, not navigating away). Typing in a
    * form field is ignored.
    */
   useEffect(() => {
-    if (!isViewVisible) return;
+    if (!isActive) return;
     const onKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       if (
@@ -517,7 +354,7 @@ export function DiscoveryCard({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isViewVisible, showRating, onSwipeSave, triggerSave, triggerHide]);
+  }, [isActive, showRating, onSwipeSave, triggerSave, triggerHide]);
 
   const nextImage = (e: React.MouseEvent) => {
     if (blockImageTapRef.current) {
@@ -580,8 +417,10 @@ export function DiscoveryCard({
       aria-roledescription="Discovery card"
       aria-label={`${building.name}. Press arrow right to save, arrow left to hide.`}
       className={cn(
-        "group/card relative w-full h-full overflow-hidden min-w-0 select-none bg-surface-inverse overscroll-x-contain",
-        horizontalSwipeActive ? "touch-none" : "touch-pan-y",
+        // `touch-none` unconditionally: the feed is a controlled pager now, so there
+        // is no native scroll to hand the vertical axis over to. Letting the browser
+        // keep `pan-y` is what allowed a flick's momentum to run past several cards.
+        "group/card relative w-full h-full overflow-hidden min-w-0 select-none bg-surface-inverse overscroll-none touch-none",
         hasFinePointer && "cursor-grab active:cursor-grabbing"
       )}
       style={{ x, y, rotate, willChange: "transform" }}
@@ -590,12 +429,6 @@ export function DiscoveryCard({
       onPointerUp={onPointerEnd}
       onPointerCancel={onPointerEnd}
     >
-      {/* View tracker */}
-      <div
-        ref={viewTrackerRef as RefCallback<HTMLDivElement>}
-        className="absolute inset-0 pointer-events-none"
-      />
-
       {/* ── Main image — full-bleed, cropping to fill the frame (object-cover) ── */}
       <div className="absolute inset-0 z-10">
         {uniqueImages.length > 0 ? (
@@ -657,6 +490,15 @@ export function DiscoveryCard({
           Hide
         </p>
       </motion.div>
+
+      {/* ── Decision badge — the card stays put once saved/hidden, and says so ── */}
+      {decision && !showRating && (
+        <div className="absolute top-4 left-4 z-40 pt-10 md:pt-4">
+          <span className="bg-white/10 px-3 py-1 text-[0.625rem] font-medium uppercase tracking-widest text-white backdrop-blur-sm">
+            {decision === "saved" ? "Saved" : "Hidden"}
+          </span>
+        </div>
+      )}
 
       {/* ── Pagination dots — top right, minimal ── */}
       {uniqueImages.length > 1 && (
