@@ -3,7 +3,7 @@
 > This file is the cross-session status ledger (known issues, schema drift, completed work). Structural facts about the stack live in `AGENTS.md` — read that first.
 
 ## Current Phase
-**UX Refinement Round** (installed 2026-08-05, [`docs/Roadmap.md`](Roadmap.md)) — 35 tasks across 8 phases generated from the owner's 34-prompt task list, plus a Final UAT. Phase 1 complete: Tasks 1.1 (My log block), 1.2 (Overview empty state), 1.3 ("Saved & visited" — savers/visitors on the Overview tab, [ADR 0029](decisions/0029-building-activity-is-visible-to-members.md)) and 1.4 (building-detail maps gated behind MapLibre `cooperativeGestures` so page scroll never zooms) done.
+**UX Refinement Round** (installed 2026-08-05, [`docs/Roadmap.md`](Roadmap.md)) — 35 tasks across 8 phases generated from the owner's 34-prompt task list, plus a Final UAT. Phase 1 complete: Tasks 1.1 (My log block), 1.2 (Overview empty state), 1.3 ("Saved & visited" — savers/visitors on the Overview tab, [ADR 0029](decisions/0029-building-activity-is-visible-to-members.md)) and 1.4 (building-detail maps gated behind MapLibre `cooperativeGestures` so page scroll never zooms) done. Phase 2 started: Task 2.1 (the "broken" person search is an empty `people` table — [ADR 0030](decisions/0030-person-search-falls-back-to-companies.md)) done.
 
 Most recently closed: **Embassy ambassador experience** — archived as [`docs/roadmaps/0003-embassy-ambassador-experience.md`](roadmaps/0003-embassy-ambassador-experience.md) (installed 2026-07-23, closed 2026-07-30). Phases 0–3 complete; Phase 4 opened for **4.3 field mode only** — **4.1 pre-publish moderation and 4.2 missions were closed unstarted by owner decision, not dropped on merit**, and are the obvious candidates for a future roadmap. The Final UAT in that file records what was verified against prod and the one claim that is only partially verified (a real photo upload was never exercised end-to-end on production data).
 
@@ -12,6 +12,18 @@ Earlier programmes, still complete: **Remaining surfaces refinement** (2026-05-2
 **Rollout ≠ refinement:** The May 2026 rollout (Phases 0–7) wired semantic tokens, removed raw palette classes, and connected real data (e.g. `get_feed` on the home feed). That work is **complete**. The refinement programme ([ROADMAP.md](ROADMAP.md), Phases R0–R9) delivered editorial layout, typography rhythm, kit fidelity, and per-page audit evidence across shell, editorial spine, discovery, identity, events, auth/token flows, embassy, and admin. Tracking: all families `refined` or `complete` in [DESIGN_SYSTEM_SCREEN_INVENTORY.md](DESIGN_SYSTEM_SCREEN_INVENTORY.md).
 
 ## CURRENT_ARCHITECTURE_SNAPSHOT
+- **`public.people` is effectively empty — every architect was imported as a *company*
+  (2026-08-05):** Roadmap Task 2.1 was filed as a broken person dropdown in the Add-credits drawer.
+  It is not a query, RPC or filtering bug. On production, `foster`, `renzo`, `zaha`, `john` and
+  `maria` each return **People (0)** with a full page of company hits, and Centre Pompidou's credited
+  humans — Renzo Piano, Richard Rogers, Peter Rice, Su Rogers, Mike Davies, Gianfranco Franchini —
+  every one links to `/company/…`. "Norman Foster" holds 28 credits as a company. `search_people_v2`
+  and `CreditEntityPicker` both work; there is nobody to find. **Task 7.4 owns the cure** (reclassify
+  companies → people) and inherits this evidence — do not re-investigate. Until then the Person box
+  offers the matching company record under a `Listed as companies` heading so nobody creates a
+  duplicate human ([ADR 0030](decisions/0030-person-search-falls-back-to-companies.md)); the group is
+  conditional on zero person hits, so it disappears by itself the day 7.4 lands. The same dead end
+  still exists in `CreditedEntitiesSelect` (Add/Edit building) — left for Task 2.5.
 - **Explore's feed is a controlled pager, not a scroller, and must never be refetched
   mid-session (2026-08-05):** `/explore` used `snap-y snap-mandatory`. iOS momentum can't be
   cancelled once released, so one iPad flick crossed three or four snap children — and since a

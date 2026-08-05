@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Building2, ChevronsUpDown, Loader2, User } from "lucide-react";
 import { createCompany, searchCompanies } from "@/features/credits/api/companies";
 import { createPerson, searchPeople } from "@/features/credits/api/people";
+import { CreditEntityHitRow, hitKey, type MergedHit } from "./CreditEntityHitRow";
 import type { CompanySummary, PersonSummary } from "@/features/credits/types";
 import { trigramSimilarity } from "@/lib/trigram-similarity";
 import { useToast } from "@/hooks/use-toast";
@@ -48,10 +49,6 @@ export interface CreditEntityPickerProps {
   "aria-labelledby"?: string;
 }
 
-type MergedHit =
-  | { kind: "person"; data: PersonSummary }
-  | { kind: "company"; data: CompanySummary };
-
 function normalizeName(s: string): string {
   return s.trim().toLowerCase();
 }
@@ -63,22 +60,6 @@ function mergeHits(people: PersonSummary[], companies: CompanySummary[]): Merged
   ];
   merged.sort((a, b) => a.data.name.localeCompare(b.data.name, undefined, { sensitivity: "base" }));
   return merged;
-}
-
-function personSubtitle(p: PersonSummary): string {
-  const parts: string[] = [];
-  if (p.associatedCompanies.length > 0) {
-    parts.push(p.associatedCompanies.slice(0, 3).join(", ") + (p.associatedCompanies.length > 3 ? "…" : ""));
-  }
-  if (p.knownBuilding) parts.push(p.knownBuilding);
-  return parts.join(" · ") || "Person";
-}
-
-function companySubtitle(c: CompanySummary): string {
-  const parts: string[] = [];
-  if (c.country) parts.push(c.country);
-  parts.push(`${c.creditCount} credit${c.creditCount === 1 ? "" : "s"}`);
-  return parts.join(" · ");
 }
 
 export function findSimilarEntityCandidates(
@@ -147,7 +128,18 @@ export function CreditEntityPicker({
     setPendingSimilarity(null);
   }, [createNameDraft]);
 
-  const kindsKey = useMemo(() => [...allowedKinds].sort().join(","), [allowedKinds]);
+  // The bulk architect import filed every human in `companies`, so a person-only
+  // picker finds nothing for names like "Norman Foster" — `people` is empty, not
+  // broken. Search companies alongside people and offer the matches under their
+  // own heading, so the user credits the record that already exists instead of
+  // minting a duplicate human. The group only renders when the person search came
+  // back empty, so it retires itself once the reclassification lands (ADR 0030).
+  const personOnly = allowedKinds.includes("person") && !allowedKinds.includes("company");
+  const fetchKinds = useMemo<CreditEntityKind[]>(
+    () => (personOnly ? ["person", "company"] : [...allowedKinds]),
+    [personOnly, allowedKinds],
+  );
+  const kindsKey = useMemo(() => [...fetchKinds].sort().join(","), [fetchKinds]);
 
   const searchEnabled = open && debouncedQuery.length >= MIN_QUERY_LEN;
 
@@ -158,14 +150,17 @@ export function CreditEntityPicker({
     refetch,
   } = useQuery({
     queryKey: ["credit-entity-search", debouncedQuery, kindsKey] as const,
-    queryFn: () => searchCreditEntities(debouncedQuery, allowedKinds),
+    queryFn: () => searchCreditEntities(debouncedQuery, fetchKinds),
     enabled: searchEnabled,
     staleTime: 20_000,
   });
 
   const people = searchData?.people ?? [];
   const companies = searchData?.companies ?? [];
-  const merged = useMemo(() => mergeHits(people, companies), [people, companies]);
+  /** Companies belong in the main list only when the caller asked for them. */
+  const resultCompanies = personOnly ? [] : companies;
+  const merged = useMemo(() => mergeHits(people, resultCompanies), [people, resultCompanies]);
+  const showCompanyFallback = personOnly && people.length === 0 && companies.length > 0;
 
   const qNorm = normalizeName(query);
   const exactPersonHit = useMemo(
@@ -242,7 +237,9 @@ export function CreditEntityPicker({
     if (!name || !createKind) return;
 
     if (!similarityOverride) {
-      const fresh = await searchCreditEntities(name, allowedKinds);
+      // fetchKinds, not allowedKinds: a person-only picker must still warn that
+      // "Norman Foster" already exists as a company before creating him again.
+      const fresh = await searchCreditEntities(name, fetchKinds);
       const candidates = findSimilarEntityCandidates(name, fresh.people, fresh.companies);
       if (candidates.length > 0) {
         setPendingSimilarity(candidates);
@@ -260,7 +257,7 @@ export function CreditEntityPicker({
     createKind,
     createNameDraft,
     similarityOverride,
-    allowedKinds,
+    fetchKinds,
     createPersonMutation,
     createCompanyMutation,
   ]);
@@ -345,7 +342,7 @@ export function CreditEntityPicker({
                 Searching…
               </CommandItem>
             )}
-            {!isError && searchEnabled && !isFetching && merged.length === 0 && (
+            {!isError && searchEnabled && !isFetching && merged.length === 0 && !showCompanyFallback && (
               <CommandEmpty>No matches.</CommandEmpty>
             )}
             {!isError && open && query.trim().length > 0 && query.trim().length < MIN_QUERY_LEN && (
@@ -419,28 +416,29 @@ export function CreditEntityPicker({
 
             {merged.length > 0 && (
               <CommandGroup heading="Results">
-                {merged.map((hit) => {
-                  const key = hit.kind === "person" ? `person-${hit.data.id}` : `company-${hit.data.id}`;
-                  const subtitle = hit.kind === "person" ? personSubtitle(hit.data) : companySubtitle(hit.data);
-                  return (
-                    <CommandItem key={key} value={key} onSelect={() => selectHit(hit)}>
-                      <div className="flex flex-col gap-0.5 min-w-0">
-                        <div className="flex items-center gap-2 min-w-0">
-                          {hit.kind === "person" ? (
-                            <User className="h-4 w-4 shrink-0 text-text-secondary" aria-hidden />
-                          ) : (
-                            <Building2 className="h-4 w-4 shrink-0 text-text-secondary" aria-hidden />
-                          )}
-                          <span className="font-medium truncate">{hit.data.name}</span>
-                          <span className="text-2xs text-text-secondary shrink-0 uppercase tracking-wide">
-                            {hit.kind === "person" ? "Person" : "Company"}
-                          </span>
-                        </div>
-                        <span className="text-2xs text-text-secondary pl-6 line-clamp-2">{subtitle}</span>
-                      </div>
-                    </CommandItem>
-                  );
-                })}
+                {merged.map((hit) => (
+                  <CommandItem key={hitKey(hit)} value={hitKey(hit)} onSelect={() => selectHit(hit)}>
+                    <CreditEntityHitRow hit={hit} />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+
+            {showCompanyFallback && (
+              <CommandGroup heading="Listed as companies">
+                <p className="px-2 pb-2 text-2xs text-text-secondary">
+                  No person matches. These records are filed as companies — pick one to credit it
+                  as the company.
+                </p>
+                {companies.map((c) => (
+                  <CommandItem
+                    key={`fallback-company-${c.id}`}
+                    value={`fallback-company-${c.id}`}
+                    onSelect={() => selectHit({ kind: "company", data: c })}
+                  >
+                    <CreditEntityHitRow hit={{ kind: "company", data: c }} />
+                  </CommandItem>
+                ))}
               </CommandGroup>
             )}
 
