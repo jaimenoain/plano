@@ -234,14 +234,14 @@ describe('BuildingDetails Gallery', () => {
       // (The old "Reviews & photography" header component is no longer used;
       // the stream now renders each review/photo block inline.) Proving the
       // mocked get_building_reviews data flowed through: the review content
-      // appears and the "No photos yet" empty state is gone.
+      // appears and the "No notes or photos yet" empty state is gone.
       await waitFor(
         () => {
           expect(screen.getByText(/Review 1/)).toBeTruthy();
         },
         { timeout: 10_000 },
       );
-      expect(screen.queryByText("No photos yet")).toBeNull();
+      expect(screen.queryByText("No notes or photos yet")).toBeNull();
     },
     15_000,
   );

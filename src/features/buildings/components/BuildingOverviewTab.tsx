@@ -147,12 +147,15 @@ export function BuildingOverviewTab({
             ) : null}
           </>
         ) : (
+          // The stream aggregates notes/reviews AND photos (see buildStreamBlocks),
+          // and the populated header counts them as "entries" — so an empty state
+          // that only mentions photos misnames three quarters of the section.
           <EmptyState
-            eyebrow="No photos yet"
-            message="Be the first to share this building with the community."
+            eyebrow="No notes or photos yet"
+            message="Add a note or a photo to start this building's record."
             action={
               <Button size="sm" onClick={onAddNote}>
-                Add Note
+                Add note or photo
               </Button>
             }
           />
