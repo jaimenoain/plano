@@ -47,14 +47,16 @@ interface CollectionMapGLProps {
   /** Extra control below Satellite (top-left); kept out of bottom UI (nav / map-list toggle). */
   bottomLeftOverlay?: ReactNode;
   /**
-   * Selection-mode (parity with /search). When `onSelectBuilding` is provided,
-   * pins open the right-side BuildingDetailDrawer instead of the hover popup +
-   * open-in-new-tab. `selectedCluster` is the currently-open payload (retained
-   * by the parent so the drawer survives cluster recompute / panning).
+   * Selection-mode (parity with /search). With `onSelectBuilding`, pins open the
+   * BuildingDetailDrawer instead of the hover popup + open-in-new-tab.
+   * `selectedCluster` is the open payload, retained by the parent so the drawer
+   * survives cluster recompute / panning.
    */
   selectedCluster?: ClusterResponse | null;
   onSelectBuilding?: (cluster: ClusterResponse) => void;
   onCloseDetail?: () => void;
+  /** Set when this map's container is hidden: the anchored panel would open invisibly. */
+  forceSheetDetail?: boolean;
   /** Drawer action — remove the open building from the collection (owner/contributor). */
   onRemoveFromCollection?: (buildingId: string) => void;
   /**
@@ -82,15 +84,14 @@ function CollectionMapGLContent({
   setHighlightedId,
   onRemoveItem,
   onAddCandidate,
-  onUpdateMarkerNote: _onUpdateMarkerNote,
-  onRemoveMarker: _onRemoveMarker,
-  showSavedCandidates: _showSavedCandidates,
+  // onUpdateMarkerNote / onRemoveMarker / showSavedCandidates: contract-only, unused here.
   showItinerary,
   onViewportBoundsChange,
   bottomLeftOverlay,
   selectedCluster,
   onSelectBuilding,
   onCloseDetail,
+  forceSheetDetail,
   onRemoveFromCollection,
   discoveryEnabled,
   hideCollectionPins,
@@ -260,12 +261,8 @@ function CollectionMapGLContent({
   });
 
   const handleAddCandidate = useCallback((id: string) => {
-      if (onAddCandidate) {
-          const building = buildings.find(b => b.id === id);
-          if (building) {
-             onAddCandidate(building);
-          }
-      }
+      const building = buildings.find(b => b.id === id);
+      if (building) onAddCandidate?.(building);
   }, [onAddCandidate, buildings]);
 
   const handleRemove = onRemoveItem;
@@ -367,9 +364,8 @@ function CollectionMapGLContent({
             className="absolute top-2 right-2 z-40"
         />
 
-        {/* Selection-mode detail drawer (parity with /search). Desktop: a
-            non-modal panel anchored to this map container; mobile: a bottom
-            sheet that portals to <body>, so it shows even in list view. */}
+        {/* Selection-mode detail drawer (parity with /search): a panel anchored
+            to this container, or a portalled sheet on mobile / `forceSheetDetail`. */}
         {onSelectBuilding && (
           <BuildingDetailDrawer
             cluster={selectedCluster ?? null}
@@ -377,6 +373,7 @@ function CollectionMapGLContent({
             onRemoveFromCollection={onRemoveFromCollection}
             onAddCandidate={handleAddCandidate}
             closeOnOutsideClick
+            forceSheet={forceSheetDetail}
             collectionAction={
               <CollectionMembershipAction
                 cluster={selectedCluster ?? null}

@@ -73,10 +73,9 @@ function resolveSegmentDestinationPreview(
     };
   }
   const m = markerDetails[nextStop.referenceId];
-  const photo = markerPlacePhotos?.[nextStop.referenceId];
   return {
     name: m?.name ?? "Next stop",
-    imageUrl: photo?.url ?? undefined,
+    imageUrl: markerPlacePhotos?.[nextStop.referenceId]?.url ?? undefined,
   };
 }
 
@@ -118,21 +117,14 @@ function AddStopPopover({ dayIndex, onUpdateItinerary }: AddStopPopoverProps) {
   const handleSelect = (type: 'building' | 'marker', referenceId: string) => {
     const dayStops = days[dayIndex]?.stops || [];
 
-    const newStop: ItineraryStop = {
-      id: crypto.randomUUID(),
-      referenceId,
-      type
-    };
+    const newStop: ItineraryStop = { id: crypto.randomUUID(), referenceId, type };
 
-    const newStops = [...dayStops, newStop];
-    reorderStops(dayIndex, newStops);
+    reorderStops(dayIndex, [...dayStops, newStop]);
     calculateRouteForDay(dayIndex);
 
     // Defer the save slightly so store state has updated from reorderStops
     setTimeout(() => {
-        if (onUpdateItinerary) {
-            onUpdateItinerary(useItineraryStore.getState().getStoreAsItinerary());
-        }
+        onUpdateItinerary?.(useItineraryStore.getState().getStoreAsItinerary());
     }, 0);
 
     setOpen(false);
@@ -413,6 +405,8 @@ interface ItineraryDayColumnProps {
   canEdit?: boolean;
   onUpdateNote?: (itemId: string, note: string) => void;
   onUpdateMarkerNote?: (markerId: string, note: string) => void;
+  /** Open the detail drawer on a building stop, as the list view's rows do. */
+  onSelect?: (item: CollectionItemWithBuilding) => void;
   markerPlacePhotos?: MarkerPlacePhotosMap;
 }
 
@@ -429,6 +423,7 @@ function ItineraryDayColumn({
   canEdit,
   onUpdateNote,
   onUpdateMarkerNote,
+  onSelect,
   markerPlacePhotos,
 }: ItineraryDayColumnProps) {
   const buildingDetails = useItineraryStore((s) => s.buildingDetails);
@@ -525,6 +520,7 @@ function ItineraryDayColumn({
                                 canEdit={canEdit}
                                 onUpdateNote={onUpdateNote}
                                 onUpdateMarkerNote={onUpdateMarkerNote}
+                                onSelect={onSelect}
                             />
                             {index < stops.length - 1 && (
                                 <ItinerarySegment
@@ -598,6 +594,7 @@ interface ItineraryListProps {
     canEdit?: boolean;
     onUpdateNote?: (itemId: string, note: string) => void;
     onUpdateMarkerNote?: (markerId: string, note: string) => void;
+    onSelect?: (item: CollectionItemWithBuilding) => void;
     /** Google Places photo URLs keyed by `collection_markers.id` (same as `useGooglePlacePhotos`). */
     markerPlacePhotos?: MarkerPlacePhotosMap;
 }
@@ -609,6 +606,7 @@ export function ItineraryList({
   canEdit,
   onUpdateNote,
   onUpdateMarkerNote,
+  onSelect,
   markerPlacePhotos,
 }: ItineraryListProps) {
     const days = useItineraryStore((state) => state.days);
@@ -826,6 +824,7 @@ export function ItineraryList({
                         canEdit={canEdit}
                         onUpdateNote={onUpdateNote}
                         onUpdateMarkerNote={onUpdateMarkerNote}
+                        onSelect={onSelect}
                         markerPlacePhotos={markerPlacePhotos}
                     />
                 ))}
