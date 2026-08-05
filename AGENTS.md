@@ -45,7 +45,7 @@ There is no `turbo`, no workspace filtering. Run everything from the repo root.
 
 ## Session Start — Do This First
 
-1. Read `docs/AI_STATUS.md` — check `KNOWN_ISSUES` and `SCHEMA_DRIFT_LOG` before touching code.
+1. Read `docs/AI_STATUS.md` — check `KNOWN_ISSUES` and `SCHEMA_DRIFT_LOG` before touching code. It holds current state only and is capped at 1,000 lines so it fits in a single read; rotated history lives in `docs/archive/AI_STATUS-ARCHIVE.md` and is **not** read at session start (rotation rules: `.cursor/rules/06-agent-behaviour.mdc` §9).
 2. Read `.cursor/rules/06-agent-behaviour.mdc` — conduct, pre-flight checks, challenge protocol. Always active.
 3. Read `.cursor/rules/00-architecture.mdc` — stack, forbidden patterns, state, caching. Always active.
 4. Read `.cursor/rules/05-vertical-slice.mdc` — task sequencing and slice limits. Always active.

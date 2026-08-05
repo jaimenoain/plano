@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-**This file intentionally defers to [`AGENTS.md`](AGENTS.md) — the single source of truth for agent conduct in this repo.** Read it first, then `docs/AI_STATUS.md`, then the relevant `.cursor/rules/*.mdc` files.
+**This file intentionally defers to [`AGENTS.md`](AGENTS.md) — the single source of truth for agent conduct in this repo.** Read it first, then `docs/AI_STATUS.md` (current state only — rotated history is in `docs/archive/AI_STATUS-ARCHIVE.md` and is not read at session start), then the relevant `.cursor/rules/*.mdc` files.
 
 Quick facts so a lazy context window can't get them wrong: this is a **single-app React Router v7 SSR project** (Vite 7, React 19, Supabase). It is NOT a monorepo, NOT Next.js, and there is no `turbo` — build/typecheck/lint/test run via plain `npm run` scripts from the repo root.
 

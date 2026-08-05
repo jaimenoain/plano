@@ -258,6 +258,11 @@ you're doing, do it, and move on.
 Read `docs/AI_STATUS.md` at the start of every new session before
 taking any action. If it does not exist, create it before proceeding.
 
+`docs/AI_STATUS.md` holds **only current state**. Superseded history
+lives in `docs/archive/AI_STATUS-ARCHIVE.md`, which is **not** read at
+session start — open it only when investigating a specific past
+decision, via the pointer left behind in `AI_STATUS.md`.
+
 After every completed task, update it with:
 
 ```markdown
@@ -295,6 +300,25 @@ wrong behaviour. It must be visible and resolvable on its own track.
 3. Any drift entry deferred for more than two consecutive phases is
    surfaced as a blocker at the start of the next phase. Long-lived
    unresolved drift produces compounding inconsistency.
+
+**Rotation — the file has a size budget:**
+
+`docs/AI_STATUS.md` stays under **1,000 lines**. Past
+that it no longer fits in a single read, and a session told to check
+`KNOWN_ISSUES` and `SCHEMA_DRIFT_LOG` silently gets neither — it reads
+whatever happens to sit in the first 2,000 lines and stops.
+
+1. **Never delete an entry — archive it.** Anything rotated out is
+   appended verbatim to `docs/archive/AI_STATUS-ARCHIVE.md` with a
+   pointer left behind, so the trail stays intact and findable.
+2. When a task completes, the previous task's full entry rotates out.
+   Keep roughly the **last five** in full.
+3. When an issue or drift entry is resolved, rotate it out in the same
+   commit that resolves it. `KNOWN_ISSUES` and `SCHEMA_DRIFT_LOG` list
+   open items only — that is what makes them cheap to read every session.
+   An entry that is *partly* resolved stays, rewritten to describe only
+   the part still open.
+4. At phase close, rotate the whole phase out.
 
 Keep `AI_STATUS.md` accurate. This file is the only persistent memory
 between sessions. It is also the audit trail: when something breaks
