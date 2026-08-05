@@ -206,10 +206,14 @@ Earlier programmes, still complete: **Remaining surfaces refinement** (2026-05-2
   do). (2) **`npm run gen-types` served a stale schema for minutes after the DDL landed**, while
   the REST API already accepted the new args (verified with a direct `curl` → 200). Don't
   conclude a migration didn't apply because the generated types lack it — probe `pg_proc` or the
-  REST endpoint. `src/integrations/supabase/types.ts` therefore still shows the pre-migration
-  `Args` for this RPC — `check-types-staleness` passes and the call site works (verified 200 over
-  REST and by the `tests/e2e/explore.spec.ts` run), and the next `npm run gen-types` on any
-  branch will fold the two new args in. Verified against prod: keyset page 2 equals rows 11–20 of an unpaged read with
+  REST endpoint. `gen-types` was still serving the pre-migration `Args` for this RPC an hour
+  later, across ~10 runs and two `NOTIFY pgrst, 'reload schema'`; `--db-url` is not an escape
+  hatch (it needs Docker). The two args were therefore written into
+  `src/integrations/supabase/types.ts` by hand, matching the generator exactly — it sorts `Args`
+  alphabetically and renders `bigint`→`number`, `uuid`→`string`, `DEFAULT NULL`→`?`. That is safe
+  *only* because repeated `gen-types` runs reproduced the committed file byte-for-byte, so those
+  two lines were provably the whole pending delta. If you hit this again, verify the same way
+  before hand-editing. Verified against prod: keyset page 2 equals rows 11–20 of an unpaged read with
   zero overlap, and after simulating a session's worth of `ignored` writes, OFFSET paging skipped
   all 10 of page 2's buildings where the cursor skipped none.
 
