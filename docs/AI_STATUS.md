@@ -3,7 +3,7 @@
 > This file is the cross-session status ledger (known issues, schema drift, completed work). Structural facts about the stack live in `AGENTS.md` — read that first.
 
 ## Current Phase
-**UX Refinement Round** (installed 2026-08-05, [`docs/Roadmap.md`](Roadmap.md)) — 35 tasks across 8 phases generated from the owner's 34-prompt task list, plus a Final UAT. Phase 1 complete: Tasks 1.1 (My log block), 1.2 (Overview empty state), 1.3 ("Saved & visited" — savers/visitors on the Overview tab, [ADR 0029](decisions/0029-building-activity-is-visible-to-members.md)) and 1.4 (building-detail maps gated behind MapLibre `cooperativeGestures` so page scroll never zooms) done. Phase 2 started: Task 2.1 (the "broken" person search is an empty `people` table — [ADR 0030](decisions/0030-person-search-falls-back-to-companies.md)) Task 2.2 (credits are editable from the Credits tab; saving closes with a toast — [ADR 0031](decisions/0031-credit-edits-open-to-members.md)), Task 2.3 (credit tier, lead, notes, years and project URL folded behind one "Show more details" trigger, shared by the add and edit forms as `CreditDetailsDisclosure`) and Task 2.4 (`withRoleDefaults` pre-fills that folded pair: the first credit for a role arrives Primary + lead, a later one for a role already spoken for arrives Contributor) done.
+**UX Refinement Round** (installed 2026-08-05, [`docs/Roadmap.md`](Roadmap.md)) — 35 tasks across 8 phases generated from the owner's 34-prompt task list, plus a Final UAT. Phase 1 complete: Tasks 1.1 (My log block), 1.2 (Overview empty state), 1.3 ("Saved & visited" — savers/visitors on the Overview tab, [ADR 0029](decisions/0029-building-activity-is-visible-to-members.md)) and 1.4 (building-detail maps gated behind MapLibre `cooperativeGestures` so page scroll never zooms) done. Phase 2 started: Task 2.1 (the "broken" person search is an empty `people` table — [ADR 0030](decisions/0030-person-search-falls-back-to-companies.md)) Task 2.2 (credits are editable from the Credits tab; saving closes with a toast — [ADR 0031](decisions/0031-credit-edits-open-to-members.md)), Task 2.3 (credit tier, lead, notes, years and project URL folded behind one "Show more details" trigger, shared by the add and edit forms as `CreditDetailsDisclosure`) and Task 2.4 (`withRoleDefaults` pre-fills that folded pair: the first credit for a role arrives Primary + lead, a later one for a role already spoken for arrives Contributor) done. Phase 2 closed with Task 2.5 (the Edit building page grows its own Credits section, which saves inline — the old `showDesignCreditsField` picker is off there). Phase 3 started: Task 3.1 (address-only edits now enable "Update Building") done.
 
 Most recently closed: **Embassy ambassador experience** — archived as [`docs/roadmaps/0003-embassy-ambassador-experience.md`](roadmaps/0003-embassy-ambassador-experience.md) (installed 2026-07-23, closed 2026-07-30). Phases 0–3 complete; Phase 4 opened for **4.3 field mode only** — **4.1 pre-publish moderation and 4.2 missions were closed unstarted by owner decision, not dropped on merit**, and are the obvious candidates for a future roadmap. The Final UAT in that file records what was verified against prod and the one claim that is only partially verified (a real photo upload was never exercised end-to-end on production data).
 
@@ -12,6 +12,23 @@ Earlier programmes, still complete: **Remaining surfaces refinement** (2026-05-2
 **Rollout ≠ refinement:** The May 2026 rollout (Phases 0–7) wired semantic tokens, removed raw palette classes, and connected real data (e.g. `get_feed` on the home feed). That work is **complete**. The refinement programme ([ROADMAP.md](ROADMAP.md), Phases R0–R9) delivered editorial layout, typography rhythm, kit fidelity, and per-page audit evidence across shell, editorial spine, discovery, identity, events, auth/token flows, embassy, and admin. Tracking: all families `refined` or `complete` in [DESIGN_SYSTEM_SCREEN_INVENTORY.md](DESIGN_SYSTEM_SCREEN_INVENTORY.md).
 
 ## CURRENT_ARCHITECTURE_SNAPSHOT
+- **The Edit building page owns two dirty states, and only one of them reached the button
+  (2026-08-06):** Roadmap Task 3.1 — moving the pin, picking a new address or ticking
+  "Approximate location" left "Update Building" disabled under "No changes to save", so an
+  address-only edit could not be saved at all. `EditBuilding.tsx` already computed the right
+  answer (`formDirty || locationDirty`) but spent it on `<NavigationBlocker>` only, while the
+  button's `disabled` was decided inside `BuildingForm` by `useBuildingFormDirty`, whose tracked
+  field list has no lat/lng/address/precision — hence the page warning about unsaved changes it
+  refused to let you save. `BuildingForm` now takes `externalDirty`, OR'd into the flag it hands
+  `BuildingFormActions`; `onDirtyChange` still emits the **fields-only** value, or the page would
+  be fed back its own signal. **The bug this exposed:** `BuildingLocationPicker` had no
+  `countryCode` in its `initialLocation` prop and hardcoded `countryCode: null` when seeding
+  `locationDetails`, so every emit that reuses that state — the precision toggle above all —
+  reported a null code, and `handleSubmit` writes it straight to `buildings.country_code`.
+  Enabling the button without that fix would have shipped a one-click way to blank a building's
+  country. The prop is optional; the admin dialog (`admin/pages/Buildings.tsx`) neither has the
+  field nor saves it, so it stays as it was. Still true and deliberate: the precision toggle emits
+  nothing when the building has no coordinates at all — that save is refused upstream anyway.
 - **Credit edits are now as open as building edits, and the guard trigger keys on
   `current_user` not `auth.uid()` (2026-08-05):** `building_credits_update` admitted only
   `is_admin()`, a claimed person's owner, and a company steward — so the member who mistyped a

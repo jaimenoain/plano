@@ -286,4 +286,34 @@ describe('BuildingForm', () => {
       expect(textarea).toBeTruthy();
     });
   });
+
+  describe('externalDirty (Task 3.1)', () => {
+    const renderEdit = (externalDirty?: boolean) =>
+      render(
+        <QueryClientProvider client={queryClient}>
+          <BuildingForm
+            initialValues={initialValues}
+            onSubmit={async () => {}}
+            isSubmitting={false}
+            submitLabel="Update Building"
+            mode="edit"
+            externalDirty={externalDirty}
+          />
+        </QueryClientProvider>
+      );
+
+    it('leaves submit disabled when neither the fields nor the page are dirty', () => {
+      renderEdit();
+
+      expect(screen.getByRole('button', { name: /Update Building/i }).hasAttribute('disabled')).toBe(true);
+      expect(screen.getByText('No changes to save')).toBeTruthy();
+    });
+
+    it('enables submit when the page reports dirty state of its own', () => {
+      renderEdit(true);
+
+      expect(screen.getByRole('button', { name: /Update Building/i }).hasAttribute('disabled')).toBe(false);
+      expect(screen.queryByText('No changes to save')).toBeNull();
+    });
+  });
 });

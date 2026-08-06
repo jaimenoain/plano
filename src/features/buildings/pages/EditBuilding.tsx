@@ -376,7 +376,8 @@ toast.error("Unexpected error");
                         lng: locationData.lng,
                         address: locationData.address,
                         city: locationData.city,
-                        country: locationData.country
+                        country: locationData.country,
+                        countryCode: locationData.countryCode
                     }}
                     initialPrecision={locationData.precision}
                     onLocationChange={(newLoc) => setLocationData({
@@ -439,6 +440,7 @@ toast.error("Unexpected error");
           shortId={buildingShortId}
           onCancel={handleCancel}
           onDirtyChange={setFormDirty}
+          externalDirty={!justSaved && locationDirty}
           showDesignCreditsField={false}
           verifiedCreditClaim={verifiedCreditClaim}
         />

@@ -143,7 +143,7 @@
 
 > **Batch submission:** Submit Tasks 3.1 → 3.2 as a single sequential batch.
 
-[ ] Task 3.1 — Address-only edits enable "Update building"
+[x] Task 3.1 — Address-only edits enable "Update building"
 
   Goal:            On the Edit building page, editing only the address (e.g.
                    toggling "approximate location" or moving the pin) enables
