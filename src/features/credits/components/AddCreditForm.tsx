@@ -3,23 +3,22 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ZodError } from "zod";
 import {
   createEmptyRow,
+  errorIsInDetails,
   leadWarningForRow,
   rowToPayload,
-  tierLabel,
   type CreditEntryRow,
 } from "../addCreditFormRow";
 import {
   addBuildingCredit,
   buildingCreditsQueryKey,
   CREDIT_ROLES,
-  CREDIT_TIERS,
 } from "@/features/credits/api/credits";
+import { CreditDetailsDisclosure } from "./CreditDetailsDisclosure";
 import { CreditEntityPicker } from "@/features/credits/components/CreditEntityPicker";
 import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
-import type { BuildingCreditWithEntities, CreditRole, CreditTier } from "@/features/credits/types";
+import type { BuildingCreditWithEntities, CreditRole } from "@/features/credits/types";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -30,7 +29,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Textarea } from "@/components/ui/textarea";
 import { ToastAction } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +54,14 @@ export function AddCreditForm({
   const queryClient = useQueryClient();
   const [rows, setRows] = useState<CreditEntryRow[]>(() => [createEmptyRow()]);
   const [batchSubmitting, setBatchSubmitting] = useState(false);
+  /** Row keys whose "Show more details" section is expanded. Every row starts folded. */
+  const [openDetailKeys, setOpenDetailKeys] = useState<string[]>([]);
+
+  const setDetailsOpen = useCallback((key: string, open: boolean) => {
+    setOpenDetailKeys((prev) =>
+      open ? (prev.includes(key) ? prev : [...prev, key]) : prev.filter((k) => k !== key),
+    );
+  }, []);
 
   const updateRow = useCallback((key: string, patch: Partial<CreditEntryRow>) => {
     setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
@@ -117,6 +123,8 @@ export function AddCreditForm({
         setRows((prev) =>
           prev.map((r) => (r.key === row.key ? { ...r, validationError: built.message } : r)),
         );
+        // Never reject a value the user cannot see — unfold the section holding it.
+        if (errorIsInDetails(built.message)) setDetailsOpen(row.key, true);
         toast({ variant: "destructive", title: "Check your entries", description: built.message });
         return;
       }
@@ -176,7 +184,7 @@ export function AddCreditForm({
     if (apiFailures === 0) {
       finish([...savedIdsOf(rows), ...createdIds]);
     }
-  }, [buildingId, finish, queryClient, rows, toast]);
+  }, [buildingId, finish, queryClient, rows, setDetailsOpen, toast]);
 
   const pendingCount = useMemo(() => rows.filter((r) => r.submitStatus !== "success").length, [rows]);
   const allRowsSaved = useMemo(
@@ -306,97 +314,15 @@ export function AddCreditForm({
                   </div>
                 ) : null}
 
-                <div className="space-y-2">
-                  <Label htmlFor={`add-credit-tier-${row.key}`} className="text-text-primary">
-                    Credit tier
-                  </Label>
-                  <Select
-                    value={row.creditTier}
-                    disabled={disabled}
-                    onValueChange={(v) => updateRow(row.key, { creditTier: v as CreditTier })}
-                  >
-                    <SelectTrigger id={`add-credit-tier-${row.key}`}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CREDIT_TIERS.map((tier) => (
-                        <SelectItem key={tier} value={tier}>
-                          {tierLabel(tier)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id={`add-credit-lead-${row.key}`}
-                    checked={row.isLead}
-                    disabled={disabled}
-                    onCheckedChange={(c) => updateRow(row.key, { isLead: c === true })}
-                  />
-                  <Label htmlFor={`add-credit-lead-${row.key}`} className="cursor-pointer text-sm font-normal text-text-primary">
-                    Lead for this role on this building
-                  </Label>
-                </div>
-                {leadHint ? <p className="text-sm text-text-secondary">{leadHint}</p> : null}
-
-                <div className="space-y-2">
-                  <Label htmlFor={`add-credit-notes-${row.key}`} className="text-text-primary">
-                    Contribution notes <span className="font-normal text-text-secondary">(max 500)</span>
-                  </Label>
-                  <Textarea
-                    id={`add-credit-notes-${row.key}`}
-                    value={row.contributionNotes}
-                    disabled={disabled}
-                    onChange={(e) => updateRow(row.key, { contributionNotes: e.target.value })}
-                    maxLength={500}
-                    className="min-h-20 resize-y"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label htmlFor={`add-credit-yf-${row.key}`} className="text-text-primary">
-                      Year from
-                    </Label>
-                    <Input
-                      id={`add-credit-yf-${row.key}`}
-                      inputMode="numeric"
-                      value={row.yearFrom}
-                      disabled={disabled}
-                      onChange={(e) => updateRow(row.key, { yearFrom: e.target.value })}
-                      placeholder="e.g. 2018"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`add-credit-yt-${row.key}`} className="text-text-primary">
-                      Year to
-                    </Label>
-                    <Input
-                      id={`add-credit-yt-${row.key}`}
-                      inputMode="numeric"
-                      value={row.yearTo}
-                      disabled={disabled}
-                      onChange={(e) => updateRow(row.key, { yearTo: e.target.value })}
-                      placeholder="e.g. 2020"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor={`add-credit-url-${row.key}`} className="text-text-primary">
-                    Project URL <span className="font-normal text-text-secondary">(optional)</span>
-                  </Label>
-                  <Input
-                    id={`add-credit-url-${row.key}`}
-                    value={row.projectUrl}
-                    disabled={disabled}
-                    onChange={(e) => updateRow(row.key, { projectUrl: e.target.value })}
-                    placeholder="https://…"
-                    maxLength={2000}
-                  />
-                </div>
+                <CreditDetailsDisclosure
+                  idPrefix={`add-credit-${row.key}`}
+                  row={row}
+                  disabled={disabled}
+                  leadHint={leadHint}
+                  open={openDetailKeys.includes(row.key)}
+                  onOpenChange={(open) => setDetailsOpen(row.key, open)}
+                  onPatch={(next) => updateRow(row.key, next)}
+                />
 
                 {row.validationError ? (
                   <p className="text-sm text-destructive" role="alert">

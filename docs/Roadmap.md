@@ -99,7 +99,7 @@
   Dependencies:    2.1
   CSV ref:         #20
 
-[ ] Task 2.3 — Simplified credits form (Person + Company first)
+[x] Task 2.3 — Simplified credits form (Person + Company first)
 
   Goal:            The credits form initially shows only the Person and Company
                    fields, with a "show more details" disclosure for the
