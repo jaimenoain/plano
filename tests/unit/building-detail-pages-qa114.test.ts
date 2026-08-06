@@ -42,10 +42,20 @@ describe("QA 11.4 — building detail pages (automated)", () => {
     expect(text).toContain("getBuildingCredits");
   });
 
-  it("BuildingForm uses CreditedEntitiesSelect for design credits, not legacy architect UI", () => {
-    const path = join(BUILDINGS_SRC, "components/BuildingForm.tsx");
+  // The design-credits section moved out of BuildingForm in Task 2.5.
+  it("the design-credits section uses CreditedEntitiesSelect, not legacy architect UI", () => {
+    const path = join(BUILDINGS_SRC, "components/DesignCreditsSection.tsx");
     const text = readFileSync(path, "utf8");
     expect(text).toContain("CreditedEntitiesSelect");
     expect(text).not.toContain("ArchitectSelect");
+    expect(readFileSync(join(BUILDINGS_SRC, "components/BuildingForm.tsx"), "utf8")).toContain(
+      "DesignCreditsSection",
+    );
+  });
+
+  it("EditBuilding mounts the credits ledger instead of the design-credit picker (Task 2.5)", () => {
+    const text = readFileSync(join(BUILDINGS_SRC, "pages/EditBuilding.tsx"), "utf8");
+    expect(text).toContain("BuildingCredits");
+    expect(text).toContain("showDesignCreditsField={false}");
   });
 });

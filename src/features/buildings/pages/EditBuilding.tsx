@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, type MetaFunction } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { NavigationBlocker } from "@/components/common/NavigationBlocker";
@@ -9,12 +10,13 @@ import {
 } from "@/features/buildings/components/building-form-ui";
 import { BuildingForm, BuildingFormData } from "../components/BuildingForm";
 import { BuildingLocationPicker } from "../components/BuildingLocationPicker";
+import { BuildingCredits } from "../components/BuildingCredits";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-import type { CreditedEntityTag } from "@/features/credits/components/CreditedEntitiesSelect";
-import { replacePrimaryDesignCredits } from "@/features/credits/api/credits";
+import { buildingCreditsQueryKey, getBuildingCredits } from "@/features/credits";
 import { parseLocation } from "@/utils/location";
 import { getBuildingUrl } from "@/utils/url";
 import { classifyBuildingPathIdSegment } from "@/utils/buildingPathId";
@@ -63,6 +65,7 @@ export default function EditBuilding() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
+  const { profile } = useUserProfile();
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialValues, setInitialValues] = useState<BuildingFormData | null>(null);
@@ -72,10 +75,28 @@ export default function EditBuilding() {
   const [buildingId, setBuildingId] = useState<string | null>(null);
   const [buildingSlug, setBuildingSlug] = useState<string | null>(null);
   const [buildingShortId, setBuildingShortId] = useState<number | null>(null);
-  const [primaryDesignCreditRowIds, setPrimaryDesignCreditRowIds] = useState<string[]>([]);
   const [formDirty, setFormDirty] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const locationSnapshotRef = useRef<string | null>(null);
+
+  // Credits are managed inline by `BuildingCredits` — each add/edit saves on its
+  // own and invalidates this key, so the list is live without the Update button.
+  const { data: credits } = useQuery({
+    queryKey: buildingCreditsQueryKey(buildingId ?? ""),
+    queryFn: () => getBuildingCredits(buildingId as string),
+    enabled: !!buildingId,
+    staleTime: 60_000,
+  });
+  const creditRows = credits ?? [];
+
+  const isCreditsAdmin = profile?.role === "admin" || profile?.role === "app_admin";
+  const verifiedCreditClaim =
+    !!profile?.verified_architect_id &&
+    creditRows.some(
+      (c) =>
+        (c.status === "active" || c.status === "verified") &&
+        c.person?.id === profile.verified_architect_id,
+    );
 
   const locationDirty =
     !!locationData &&
@@ -103,7 +124,6 @@ export default function EditBuilding() {
       setBuildingId(null);
       setBuildingSlug(null);
       setBuildingShortId(null);
-      setPrimaryDesignCreditRowIds([]);
       setDuplicates([]);
       setFormDirty(false);
       setJustSaved(false);
@@ -136,41 +156,6 @@ export default function EditBuilding() {
       setBuildingId(data.id);
       setBuildingSlug(data.slug);
       setBuildingShortId(data.short_id);
-
-      const { data: creditRows, error: creditErr } = await supabase
-        .from("building_credits")
-        .select(
-          `
-          id,
-          person_id,
-          company_id,
-          person:people(id, name),
-          company:companies(id, name)
-        `,
-        )
-        .eq("building_id", data.id)
-        .eq("role", "design_architecture")
-        .eq("credit_tier", "primary")
-        .in("status", ["active", "verified"])
-        .order("display_order", { ascending: true });
-
-      const designTags: CreditedEntityTag[] = [];
-      const rowIds: string[] = [];
-      if (!creditErr && creditRows) {
-        for (const row of creditRows) {
-          rowIds.push(row.id as string);
-          const p = row.person as { id: string; name: string } | null;
-          const c = row.company as { id: string; name: string } | null;
-          if (p && c) {
-            designTags.push({ id: p.id, name: `${p.name} @ ${c.name}`, kind: "person" });
-          } else if (p) {
-            designTags.push({ id: p.id, name: p.name, kind: "person" });
-          } else if (c) {
-            designTags.push({ id: c.id, name: c.name, kind: "company" });
-          }
-        }
-      }
-      setPrimaryDesignCreditRowIds(rowIds);
 
       // Fetch Typologies
       const { data: typologies } = await supabase
@@ -205,7 +190,8 @@ export default function EditBuilding() {
         size_sqm: typeof row.size_sqm === "number" ? row.size_sqm : null,
         height_m: typeof row.height_m === "number" ? row.height_m : null,
         storeys: typeof row.storeys === "number" ? row.storeys : null,
-        designCreditEntities: designTags,
+        // Credits live in their own section on this page, not in the form.
+        designCreditEntities: [],
         functional_category_id:
           (typeof row.functional_category_id === "string" ? row.functional_category_id : "") || "",
         functional_typology_ids: typologyIds,
@@ -336,12 +322,6 @@ toast.error("Failed to update building");
         return;
       }
 
-      await replacePrimaryDesignCredits(
-        buildingId,
-        primaryDesignCreditRowIds,
-        formData.designCreditEntities.map((e) => ({ kind: e.kind, id: e.id })),
-      );
-
       // Handle Typologies Junction Table
       await supabase.from('building_functional_typologies').delete().eq('building_id', buildingId);
       if (formData.functional_typology_ids.length > 0) {
@@ -435,6 +415,20 @@ toast.error("Unexpected error");
                 )}
         </BuildingFormSection>
 
+        <BuildingFormSection
+          title="Credits"
+          description="Architects and everyone else credited on this building. Credits save as soon as you add or edit them — the Update button below covers the rest of the page."
+        >
+          <BuildingCredits
+            buildingId={buildingId ?? ""}
+            buildingName={initialValues.name}
+            credits={creditRows}
+            isAuthenticated={!!user}
+            isAdmin={isCreditsAdmin}
+            currentUserId={user?.id ?? null}
+          />
+        </BuildingFormSection>
+
         <BuildingForm
           initialValues={initialValues}
           onSubmit={handleSubmit}
@@ -445,6 +439,8 @@ toast.error("Unexpected error");
           shortId={buildingShortId}
           onCancel={handleCancel}
           onDirtyChange={setFormDirty}
+          showDesignCreditsField={false}
+          verifiedCreditClaim={verifiedCreditClaim}
         />
       </div>
     </AppLayout>

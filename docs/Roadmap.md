@@ -126,7 +126,7 @@
   Dependencies:    2.3
   CSV ref:         #22
 
-[ ] Task 2.5 — Credits section on the Edit building page
+[x] Task 2.5 — Credits section on the Edit building page
 
   Goal:            The "Edit building" page gains a credits section (reusing
                    the simplified form/flow from Tasks 2.2–2.4), so users who

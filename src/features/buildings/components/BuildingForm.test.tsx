@@ -147,6 +147,84 @@ describe('BuildingForm', () => {
     expect(screen.queryByRole('button', { name: /Skip for now/i })).toBeNull();
   });
 
+  describe('design credits field (Task 2.5)', () => {
+    const withCredit: BuildingFormData = {
+      ...initialValues,
+      designCreditEntities: [{ id: 'p1', name: 'Ada Arch', kind: 'person' as const }],
+    };
+
+    it('renders the picker by default so the create and admin flows keep it', () => {
+      render(
+        <QueryClientProvider client={queryClient}>
+          <BuildingForm
+            initialValues={withCredit}
+            onSubmit={async () => {}}
+            isSubmitting={false}
+            submitLabel="Save"
+            mode="edit"
+          />
+        </QueryClientProvider>
+      );
+
+      expect(screen.getByText('Design credits')).toBeTruthy();
+      expect(screen.getByPlaceholderText(/Search people or companies/i)).toBeTruthy();
+    });
+
+    it('offers "Add design credits" by default when the building has none', () => {
+      render(
+        <QueryClientProvider client={queryClient}>
+          <BuildingForm
+            initialValues={initialValues}
+            onSubmit={async () => {}}
+            isSubmitting={false}
+            submitLabel="Save"
+            mode="edit"
+          />
+        </QueryClientProvider>
+      );
+
+      expect(screen.getByRole('button', { name: /Add design credits/i })).toBeTruthy();
+    });
+
+    it('hides the picker and its reveal button when the host opts out', () => {
+      render(
+        <QueryClientProvider client={queryClient}>
+          <BuildingForm
+            initialValues={withCredit}
+            onSubmit={async () => {}}
+            isSubmitting={false}
+            submitLabel="Save"
+            mode="edit"
+            showDesignCreditsField={false}
+          />
+        </QueryClientProvider>
+      );
+
+      expect(screen.queryByText('Design credits')).toBeNull();
+      expect(screen.queryByPlaceholderText(/Search people or companies/i)).toBeNull();
+      expect(screen.queryByRole('button', { name: /Add design credits/i })).toBeNull();
+    });
+
+    it('still shows the architect statement when the host reports a verified claim', () => {
+      render(
+        <QueryClientProvider client={queryClient}>
+          <BuildingForm
+            initialValues={initialValues}
+            onSubmit={async () => {}}
+            isSubmitting={false}
+            submitLabel="Save"
+            mode="edit"
+            showDesignCreditsField={false}
+            verifiedCreditClaim
+          />
+        </QueryClientProvider>
+      );
+
+      expect(screen.getByText('Architect statement')).toBeTruthy();
+      expect(screen.queryByPlaceholderText(/Search people or companies/i)).toBeNull();
+    });
+  });
+
   describe('Access Notes Placeholder', () => {
     it('shows default placeholder when cost is free and logistics is walk-in', () => {
       render(
