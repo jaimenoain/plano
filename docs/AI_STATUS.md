@@ -316,7 +316,9 @@ Earlier programmes, still complete: **Remaining surfaces refinement** (2026-05-2
 ## SCHEMA_DRIFT_LOG
 
 - 2026-08-06 `20271203000000_map_clusters_v3_exact_viewport.sql` +
-  `20271204000000_buildings_list_always_bbox.sql` — **NOT YET APPLIED.** Both are pure
+  `20271204000000_buildings_list_always_bbox.sql` — **applied + verified 2026-08-06**:
+  for central London at zoom 14, `count(get_buildings_list) = sum(get_map_clusters_v3.count)
+  = 686 = 686` — the Task 4.1 contract proven on prod. Both are pure
   `CREATE OR REPLACE` of an existing signature (no `DROP`, so no overload hazard) and both
   are types-neutral: the `RETURNS TABLE` is unchanged and neither RPC is in the generated
   types (they are cast-through-unknown), so `gen-types` is a no-op. Until they are applied,
@@ -344,10 +346,16 @@ Earlier programmes, still complete: **Remaining surfaces refinement** (2026-05-2
   `.env.local`, restores the Management-API path older sessions used. (4) No psql
   credential exists outside `.env.local` (no `~/.pgpass`, no service file). (5) The
   Claude-in-Chrome extension is not installed in the owner's browser, and the in-app
-  browser pane was classifier-blocked from opening the dashboard. Resolution: owner
-  applied via the dashboard SQL editor (one paste — both migrations + a final self-proving
-  `list_rows = pin_total` SELECT preloaded on the clipboard). Update this entry to
-  **applied + verified** with the two numbers once confirmed.
+  browser pane was classifier-blocked from opening the dashboard. **Resolution:** the
+  owner re-ran the MCP OAuth from an interactive `claude` terminal and it succeeded on
+  retry (the "Unrecognized client_id" was transient at Supabase's end) — but a session
+  that predates the approval never gains the tools, so THAT interactive session applied
+  both migrations and returned the 686 = 686 proof. Lesson for future sessions: if the
+  supabase MCP is unauthenticated at session start, have the owner authenticate FIRST,
+  then start the work session; and `scripts/apply-migration.mjs` is the no-MCP fallback
+  (owner-run: reads `.env.local` itself and validates each token with `select 1` before
+  trusting it — `SUPABASE_ACCESS_TOKEN` there is stale, `SUPABASE_PERSONAL_ACCESS_TOKEN`
+  is the good sbp_ PAT).
 
 - 2026-08-05 `20271200000000_discovery_feed_keyset_pagination.sql` — **applied + verified** on
   prod. Adds `p_after_save_count` / `p_after_id` to `get_discovery_feed`. Two things bit here and
