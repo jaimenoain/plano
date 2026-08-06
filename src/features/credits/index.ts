@@ -17,10 +17,14 @@ export { visiblePrimaryCredits } from "./buildingCreditDisplay";
 export { markCreditFlaggedInSession, readSessionFlaggedCreditIds } from "./creditFlagSession";
 
 // Data access
-export { flagCredit, buildingCreditsQueryKey } from "./api/credits";
+export { flagCredit, buildingCreditsQueryKey, getBuildingCredits } from "./api/credits";
 
 // Components used by other features
 export { AddCreditForm } from "./components/AddCreditForm";
 export { EditCreditForm } from "./components/EditCreditForm";
 export { NotifyCreditedEntitiesStep } from "./components/NotifyCreditedEntitiesStep";
 export { CreditNoteSheet } from "./components/CreditNoteSheet";
+export {
+  CreditedEntitiesSelect,
+  type CreditedEntityTag,
+} from "./components/CreditedEntitiesSelect";

@@ -12,10 +12,7 @@ import { buildingSchema, editBuildingSchema } from "@/lib/validations/building";
 import { Loader2, Plus, X, Check, Info } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import {
-  CreditedEntitiesSelect,
-  type CreditedEntityTag,
-} from "@/features/credits/components/CreditedEntitiesSelect";
+import type { CreditedEntityTag } from "@/features/credits";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { slugify } from "@/utils/url";
@@ -79,13 +76,25 @@ interface BuildingFormProps {
   onCancel?: () => void;
   /** Emits whether the form fields differ from their initial values. */
   onDirtyChange?: (dirty: boolean) => void;
+  /**
+   * Whether to render the "Design credits" picker. The Edit building page opts
+   * out (Task 2.5): it manages every credit through the full credits ledger
+   * instead, so the two surfaces can never disagree.
+   */
+  showDesignCreditsField?: boolean;
+  /**
+   * Overrides the verified-architect check that reveals the architect
+   * statement. Needed when the design-credit picker is hidden and the claim has
+   * to be derived from the building's credits instead of the picker selection.
+   */
+  verifiedCreditClaim?: boolean;
 }
 
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
-import { ArchitectStatement } from "./ArchitectStatement";
+import { DesignCreditsSection } from "./DesignCreditsSection";
 import { useBuildingFormDirty } from "./useBuildingFormDirty";
 
-export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode = 'create', buildingId, shortId, onCancel, onDirtyChange }: BuildingFormProps) {
+export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode = 'create', buildingId, shortId, onCancel, onDirtyChange, showDesignCreditsField = true, verifiedCreditClaim }: BuildingFormProps) {
   const { honeypotProps, isBot } = useHoneypot();
   const { profile } = useUserProfile();
 
@@ -210,8 +219,9 @@ return true; // Fallback to true on error to avoid blocking UX unnecessarily
   });
 
   const isVerifiedCreditClaim =
-    !!profile?.verified_architect_id &&
-    designCreditEntities.some((e) => e.id === profile.verified_architect_id);
+    verifiedCreditClaim ??
+    (!!profile?.verified_architect_id &&
+      designCreditEntities.some((e) => e.id === profile.verified_architect_id));
 
   const { data: attributes, isLoading: isLoadingAttributes } = useQuery({
     queryKey: ["attributes"],
@@ -645,33 +655,18 @@ toast.error("Failed to add attribute");
         </BuildingFormSection>
       )}
 
-        {(showDesignCredits || isVerifiedCreditClaim) && (
-          <BuildingFormSection title="Design credits">
-            <div className="space-y-2">
-              <BuildingFormLabel>Primary credits</BuildingFormLabel>
-              <CreditedEntitiesSelect
-                selected={designCreditEntities}
-                onChange={setDesignCreditEntities}
-                placeholder="Search people or companies…"
-              />
-              <p className="text-xs text-text-secondary">
-                Add everyone who should appear as a primary design credit. Create a new person or company if needed.
-              </p>
-            </div>
-
-            {isVerifiedCreditClaim && (
-              <div className="space-y-2 border border-border-default rounded-sm p-4 bg-surface-muted/30">
-                <ArchitectStatement
-                  statement={architect_statement}
-                  isEditing={true}
-                  onChange={setArchitectStatement}
-                />
-              </div>
-            )}
-          </BuildingFormSection>
+        {((showDesignCreditsField && showDesignCredits) || isVerifiedCreditClaim) && (
+          <DesignCreditsSection
+            showPicker={showDesignCreditsField}
+            selected={designCreditEntities}
+            onSelectedChange={setDesignCreditEntities}
+            isVerifiedCreditClaim={isVerifiedCreditClaim}
+            architectStatement={architect_statement}
+            onArchitectStatementChange={setArchitectStatement}
+          />
         )}
 
-        {mode !== "create" && (!showYear || !showDesignCredits || !showAliases) && (
+        {mode !== "create" && (!showYear || (showDesignCreditsField && !showDesignCredits) || !showAliases) && (
             <div className="flex gap-2 flex-wrap">
                 {!showAliases && (
                     <Button
@@ -695,7 +690,7 @@ toast.error("Failed to add attribute");
                         <Plus className="h-3 w-3 mr-1" /> Add Year
                     </Button>
                 )}
-                {!showDesignCredits && (
+                {showDesignCreditsField && !showDesignCredits && (
                     <Button
                         type="button"
                         variant="outline"
