@@ -363,7 +363,7 @@ toast.error("Unexpected error");
   return (
     <AppLayout title="Edit Building" showBack>
       <NavigationBlocker isDirty={isDirty} />
-      <div className="w-full min-w-0 max-w-2xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+      <div className="w-full min-w-0 max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-12">
         <BuildingPageHeader
           title="Edit Building"
           description="Update location and catalogue details for this building."
@@ -396,7 +396,7 @@ toast.error("Unexpected error");
                             Changing the location here puts it very close to these existing buildings:
                             <ul className="mt-2 space-y-2">
                                 {duplicates.slice(0, 3).map(d => (
-                                    <li key={d.id} className="flex items-center justify-between gap-2 bg-surface-default/80 p-2 rounded-sm text-sm">
+                                    <li key={d.id} className="flex flex-col items-start gap-2 bg-surface-default/80 p-2 rounded-sm text-sm sm:flex-row sm:items-center sm:justify-between">
                                         <span>{d.name} ({d.dist_meters.toFixed(0)}m away)</span>
                                         <Button
                                             variant="outline"
@@ -416,6 +416,12 @@ toast.error("Unexpected error");
                 )}
         </BuildingFormSection>
 
+        {/*
+          `hideHeading` because BuildingCredits renders its own "Credits" h2 for
+          the building detail tab. Without it this page stacks two h2s with the
+          same text at different scales — the section header wins here so all
+          nine sections read at one level.
+        */}
         <BuildingFormSection
           title="Credits"
           description="Architects and everyone else credited on this building. Credits save as soon as you add or edit them — the Update button below covers the rest of the page."
@@ -427,6 +433,7 @@ toast.error("Unexpected error");
             isAuthenticated={!!user}
             isAdmin={isCreditsAdmin}
             currentUserId={user?.id ?? null}
+            hideHeading
           />
         </BuildingFormSection>
 

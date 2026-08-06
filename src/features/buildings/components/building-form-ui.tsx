@@ -1,3 +1,19 @@
+/**
+ * Design pre-flight (.cursor/rules/03-frontend.mdc) — shared add/edit building kit.
+ *
+ * 1. Content width: the kit sets no measure of its own; the host page owns it
+ *    (Edit and Add building both use `max-w-4xl`) because both embed a map
+ *    picker alongside field groups. Individual inputs keep their own
+ *    content-type caps at the call sites. See COMPONENT_SPEC.md §5.
+ * 2. Action density: one action row per form, rendered once — text labels
+ *    ("Cancel", "Update Building") are correct here, not icon-only buttons.
+ * 3. Destructive actions: none in this kit. Credit removal lives in
+ *    BuildingCredits and keeps its own hover-reveal treatment.
+ * 4. Input width discipline: no inputs are declared here. `BuildingFormSection`
+ *    applies no width to its children, so it can never stretch a field.
+ * 5. Status signals: none. "No changes to save" is inline helper text in the
+ *    action row, not a Badge — it describes the form, not a list item.
+ */
 import type { ReactNode } from "react";
 import { Info, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,13 +40,26 @@ export function BuildingPageHeader({
   );
 }
 
+/**
+ * One logical section of an add/edit building form.
+ *
+ * The title is a real sub-header, not an `.eyebrow` — nine 10px uppercase
+ * whispers down one column is why these pages read as undifferentiated. Sizing
+ * follows the "Card title (h3)" row of the DESIGN_TOKENS.md §9 matrix, the
+ * nearest sanctioned pairing for a subsection header; the matrix's `text-3xl`
+ * "Section heading" is a display size and would be absurd repeated nine times.
+ *
+ * `title` is optional: a section whose child already renders its own heading
+ * (BuildingCredits) passes only a description, so the page never stacks two
+ * headings with the same text.
+ */
 export function BuildingFormSection({
   title,
   description,
   children,
   className,
 }: {
-  title: string;
+  title?: string;
   description?: string;
   children: ReactNode;
   className?: string;
@@ -42,10 +71,16 @@ export function BuildingFormSection({
         className,
       )}
     >
-      <div className="space-y-1">
-        <h2 className="eyebrow tracking-widest">{title}</h2>
-        {description ? <p className="text-sm text-text-secondary">{description}</p> : null}
-      </div>
+      {title || description ? (
+        <div className="space-y-1">
+          {title ? (
+            <h2 className="text-xl font-semibold tracking-tight leading-snug text-text-primary md:text-2xl">
+              {title}
+            </h2>
+          ) : null}
+          {description ? <p className="text-sm text-text-secondary">{description}</p> : null}
+        </div>
+      ) : null}
       {children}
     </section>
   );
@@ -106,7 +141,19 @@ export function OptionalDetailsSkipBanner({ isSubmitting }: { isSubmitting: bool
   );
 }
 
-/** Sticky action bar (Cancel + submit) shared by the add/edit building forms. */
+/**
+ * Sticky action bar (Cancel + submit) shared by the add/edit building forms.
+ *
+ * The bar deliberately does NOT bleed past its container. It used to pull out
+ * with `-mx-4`, which silently assumed every host padded by exactly `p-4`:
+ * true for Add building (`px-4`), false for Edit building (`p-4 sm:p-6 lg:p-8`),
+ * where the bar ended up inset by 8–16px and aligned with nothing. Tracking the
+ * ladder instead just moves the bug to whichever host pads differently, so the
+ * bar now spans its content column and is correct under any host padding.
+ *
+ * `flex-wrap` keeps the hint and both buttons on screen at 320px.
+ * `justify-end` is fixed by COMPONENT_SPEC.md §5 and must not vary.
+ */
 export function BuildingFormActions({
   mode,
   isDirty,
@@ -121,7 +168,7 @@ export function BuildingFormActions({
   submitLabel: string;
 }) {
   return (
-    <div className="sticky bottom-0 z-10 -mx-4 mt-6 flex items-center justify-end gap-3 border-t border-border-default bg-surface-default/95 px-4 py-3 backdrop-blur-xs">
+    <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-3 gap-y-2 border-t border-border-default bg-surface-default/95 py-3 backdrop-blur-xs">
       {mode === "edit" && !isDirty && (
         <span className="mr-auto text-xs text-text-secondary">No changes to save</span>
       )}

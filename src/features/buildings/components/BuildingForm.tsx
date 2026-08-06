@@ -376,52 +376,51 @@ toast.error("Failed to add attribute");
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-2">
+    <form onSubmit={handleSubmit} className="space-y-12">
       {mode === 'create' && <OptionalDetailsSkipBanner isSubmitting={isSubmitting} />}
       <BuildingFormSection title="Basics">
-        <div className="space-y-2">
-          <BuildingFormLabel htmlFor="name">
-            Name {mode === 'create' && <span className="text-feedback-error">*</span>}
-          </BuildingFormLabel>
-          <Input
-            id="name"
-            ref={nameInputRef}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Sydney Opera House"
-            autoComplete="off"
-            className="max-w-md"
-          />
-          {isSlugCollision && (
-            <div className="flex items-center gap-1.5 mt-1 text-xs text-feedback-warning">
-              <Info className="h-3.5 w-3.5" />
-              <span>
-                A building with this name already exists — a unique suffix will be appended to its URL.
-                {isCheckingSlug && <span className="ml-2 animate-pulse opacity-50">...</span>}
-              </span>
-            </div>
-          )}
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-2">
+            <BuildingFormLabel htmlFor="name">
+              Name {mode === 'create' && <span className="text-feedback-error">*</span>}
+            </BuildingFormLabel>
+            <Input
+              id="name"
+              ref={nameInputRef}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Sydney Opera House"
+              autoComplete="off"
+              className="max-w-md"
+            />
+            {isSlugCollision && (
+              <div className="flex items-center gap-1.5 mt-1 text-xs text-feedback-warning">
+                <Info className="h-3.5 w-3.5" />
+                <span>
+                  A building with this name already exists — a unique suffix will be appended to its URL.
+                  {isCheckingSlug && <span className="ml-2 animate-pulse opacity-50">...</span>}
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="space-y-2">
+            <BuildingFormLabel>Status</BuildingFormLabel>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((opt) => (
+                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-
-
-        <div className="space-y-2">
-          <BuildingFormLabel>Status</BuildingFormLabel>
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_OPTIONS.map((opt) => (
-                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
       </BuildingFormSection>
 
       <BuildingFormSection title="Access & entry">
-          <div className="flex flex-col gap-6">
+          <div className="grid gap-6 md:grid-cols-3">
             <div className="space-y-2">
               <BuildingFormLabel>Level</BuildingFormLabel>
               <SegmentedControl
