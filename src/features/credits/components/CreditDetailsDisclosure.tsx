@@ -40,6 +40,16 @@ export interface CreditDetailsDisclosureProps {
  *
  * Shared by `AddCreditForm` and `EditCreditForm` so the two forms cannot drift.
  */
+/**
+ * What the folded section is currently holding, in the trigger. The tier and the
+ * lead flag are pre-filled for the user (Roadmap Task 2.4) and they decide how
+ * the credit reads on the building page — a value set on someone's behalf must
+ * not also be invisible to them.
+ */
+function tierSummary(row: CreditEntryRow): string {
+  return row.isLead ? `${tierLabel(row.creditTier)} · Lead` : tierLabel(row.creditTier);
+}
+
 export function CreditDetailsDisclosure({
   idPrefix,
   row,
@@ -58,13 +68,18 @@ export function CreditDetailsDisclosure({
         <span className="text-[11px] font-medium uppercase tracking-[0.15em] text-text-secondary transition-colors group-hover:text-text-primary">
           {open ? "Hide details" : "Show more details"}
         </span>
-        <ChevronDown
-          className={cn(
-            "h-4 w-4 shrink-0 text-text-secondary transition-transform",
-            open && "rotate-180",
+        <span className="flex min-w-0 items-center gap-2">
+          {open ? null : (
+            <span className="truncate text-xs text-text-secondary">{tierSummary(row)}</span>
           )}
-          aria-hidden
-        />
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 shrink-0 text-text-secondary transition-transform",
+              open && "rotate-180",
+            )}
+            aria-hidden
+          />
+        </span>
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="space-y-4 pt-2">
