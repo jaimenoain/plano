@@ -2,24 +2,20 @@ import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ZodError } from "zod";
 import {
+  errorIsInDetails,
   leadWarningForRow,
   rowFromCredit,
+  rowHasDetailContent,
   rowToUpdatePayload,
-  tierLabel,
   type CreditEntryRow,
 } from "../addCreditFormRow";
-import {
-  buildingCreditsQueryKey,
-  CREDIT_ROLES,
-  CREDIT_TIERS,
-  updateBuildingCredit,
-} from "../api/credits";
+import { buildingCreditsQueryKey, CREDIT_ROLES, updateBuildingCredit } from "../api/credits";
+import { CreditDetailsDisclosure } from "./CreditDetailsDisclosure";
 import { CreditEntityPicker } from "./CreditEntityPicker";
 import { formatCreditRoleLabel } from "../formatCreditRole";
-import type { BuildingCreditWithEntities, CreditRole, CreditTier } from "../types";
+import type { BuildingCreditWithEntities, CreditRole } from "../types";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -30,7 +26,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Textarea } from "@/components/ui/textarea";
 
 export interface EditCreditFormProps {
   credit: BuildingCreditWithEntities;
@@ -42,8 +37,8 @@ export interface EditCreditFormProps {
 
 /**
  * Correct one existing credit. Same field set, order and wording as a row of
- * `AddCreditForm` — the two are deliberately the same form seen twice, so
- * Task 2.3's progressive disclosure has one shape to restructure, not two.
+ * `AddCreditForm` — the two are deliberately the same form seen twice, and the
+ * folded half of it is literally the same component, `CreditDetailsDisclosure`.
  */
 export function EditCreditForm({
   credit,
@@ -55,6 +50,15 @@ export function EditCreditForm({
   const queryClient = useQueryClient();
   const [row, setRow] = useState<CreditEntryRow>(() => rowFromCredit(credit));
   const [validationError, setValidationError] = useState<string | null>(null);
+  // A credit that already carries tier/lead/notes/years/URL opens expanded —
+  // otherwise the edit form would look like it had lost them.
+  const [detailsOpen, setDetailsOpen] = useState(() => rowHasDetailContent(row));
+
+  /** Surface a rejected value even when its field is folded away. */
+  const failValidation = useCallback((message: string) => {
+    setValidationError(message);
+    if (errorIsInDetails(message)) setDetailsOpen(true);
+  }, []);
 
   const patch = useCallback(
     (next: Partial<CreditEntryRow>) => {
@@ -89,7 +93,7 @@ export function EditCreditForm({
       } else if (err instanceof Error && err.message) {
         message = err.message;
       }
-      setValidationError(message);
+      failValidation(message);
       toast({ variant: "destructive", title: "Could not save your changes", description: message });
     },
   });
@@ -173,97 +177,15 @@ export function EditCreditForm({
             </div>
           ) : null}
 
-          <div className="space-y-2">
-            <Label htmlFor="edit-credit-tier" className="text-text-primary">
-              Credit tier
-            </Label>
-            <Select
-              value={row.creditTier}
-              disabled={disabled}
-              onValueChange={(v) => patch({ creditTier: v as CreditTier })}
-            >
-              <SelectTrigger id="edit-credit-tier">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CREDIT_TIERS.map((tier) => (
-                  <SelectItem key={tier} value={tier}>
-                    {tierLabel(tier)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="edit-credit-lead"
-              checked={row.isLead}
-              disabled={disabled}
-              onCheckedChange={(c) => patch({ isLead: c === true })}
-            />
-            <Label htmlFor="edit-credit-lead" className="cursor-pointer text-sm font-normal text-text-primary">
-              Lead for this role on this building
-            </Label>
-          </div>
-          {leadHint ? <p className="text-sm text-text-secondary">{leadHint}</p> : null}
-
-          <div className="space-y-2">
-            <Label htmlFor="edit-credit-notes" className="text-text-primary">
-              Contribution notes <span className="font-normal text-text-secondary">(max 500)</span>
-            </Label>
-            <Textarea
-              id="edit-credit-notes"
-              value={row.contributionNotes}
-              disabled={disabled}
-              onChange={(e) => patch({ contributionNotes: e.target.value })}
-              maxLength={500}
-              className="min-h-20 resize-y"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <Label htmlFor="edit-credit-yf" className="text-text-primary">
-                Year from
-              </Label>
-              <Input
-                id="edit-credit-yf"
-                inputMode="numeric"
-                value={row.yearFrom}
-                disabled={disabled}
-                onChange={(e) => patch({ yearFrom: e.target.value })}
-                placeholder="e.g. 2018"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-credit-yt" className="text-text-primary">
-                Year to
-              </Label>
-              <Input
-                id="edit-credit-yt"
-                inputMode="numeric"
-                value={row.yearTo}
-                disabled={disabled}
-                onChange={(e) => patch({ yearTo: e.target.value })}
-                placeholder="e.g. 2020"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="edit-credit-url" className="text-text-primary">
-              Project URL <span className="font-normal text-text-secondary">(optional)</span>
-            </Label>
-            <Input
-              id="edit-credit-url"
-              value={row.projectUrl}
-              disabled={disabled}
-              onChange={(e) => patch({ projectUrl: e.target.value })}
-              placeholder="https://…"
-              maxLength={2000}
-            />
-          </div>
+          <CreditDetailsDisclosure
+            idPrefix="edit-credit"
+            row={row}
+            disabled={disabled}
+            leadHint={leadHint}
+            open={detailsOpen}
+            onOpenChange={setDetailsOpen}
+            onPatch={patch}
+          />
 
           {validationError ? (
             <p className="text-sm text-destructive" role="alert">
@@ -281,7 +203,7 @@ export function EditCreditForm({
             onClick={() => {
               const built = rowToUpdatePayload(row);
               if (!built.ok) {
-                setValidationError(built.message);
+                failValidation(built.message);
                 toast({ variant: "destructive", title: "Check your entries", description: built.message });
                 return;
               }

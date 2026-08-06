@@ -92,6 +92,33 @@ export function rowFromCredit(credit: BuildingCreditWithEntities): CreditEntryRo
   };
 }
 
+/** The two messages raised by fields that stay visible above the disclosure. */
+const VISIBLE_FIELD_MESSAGES = [
+  "Choose a person and/or a company",
+  "Describe the role when selecting Other",
+];
+
+/**
+ * True when the row carries anything in the fields folded behind "Show more
+ * details" (Roadmap Task 2.3). Editing such a credit opens the section, so no
+ * stored value is ever hidden from the person correcting it.
+ */
+export function rowHasDetailContent(row: CreditEntryRow): boolean {
+  return (
+    row.creditTier !== "contributor" ||
+    row.isLead ||
+    row.contributionNotes.trim().length > 0 ||
+    row.yearFrom.trim().length > 0 ||
+    row.yearTo.trim().length > 0 ||
+    row.projectUrl.trim().length > 0
+  );
+}
+
+/** True when a validation message points at a field inside the folded section. */
+export function errorIsInDetails(message: string): boolean {
+  return !VISIBLE_FIELD_MESSAGES.includes(message);
+}
+
 function rolesMatchForLead(
   a: { role: CreditRole; roleCustom: string | null },
   b: { role: CreditRole; roleCustom: string | null },

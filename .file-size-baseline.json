@@ -21,7 +21,6 @@
     "src/features/credits/api/companies.ts": 1154,
     "src/features/credits/api/credits.ts": 836,
     "src/features/credits/api/people.ts": 572,
-    "src/features/credits/components/AddCreditForm.tsx": 441,
     "src/features/credits/components/CompanyPortfolioManageSection.tsx": 733,
     "src/features/credits/components/CreditEntityPicker.tsx": 467,
     "src/features/embassy/api/event-search.route.ts": 628,

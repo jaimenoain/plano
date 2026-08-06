@@ -237,3 +237,83 @@ describe("EditCreditForm", () => {
     ).toBeInTheDocument();
   });
 });
+
+/** A credit carrying nothing in the folded half of the form. */
+const bareCredit = () =>
+  baseCredit({
+    creditTier: "contributor",
+    isLead: false,
+    contributionNotes: null,
+    yearFrom: null,
+    yearTo: null,
+    projectUrl: null,
+  });
+
+describe("EditCreditForm progressive disclosure", () => {
+  beforeEach(() => {
+    Element.prototype.hasPointerCapture = vi.fn(() => false);
+    Element.prototype.setPointerCapture = vi.fn();
+    Element.prototype.releasePointerCapture = vi.fn();
+    toastMock.mockReset();
+    updateBuildingCreditMock.mockReset();
+    updateBuildingCreditMock.mockImplementation(async () => baseCredit());
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("folds tier, lead, notes, years and URL away on a credit that has none of them", () => {
+    mount(bareCredit());
+
+    // Person, Company and Role stay in the open — naming an architect is the common errand.
+    expect(screen.getByLabelText(/^role$/i)).toBeTruthy();
+    expect(screen.queryByLabelText(/credit tier/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: /lead for this role/i })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/contribution notes/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/year from/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/project url/i)).not.toBeInTheDocument();
+  });
+
+  it("reveals the folded fields when the disclosure is opened", async () => {
+    const user = userEvent.setup();
+    mount(bareCredit());
+
+    await user.click(screen.getByRole("button", { name: /show more details/i }));
+
+    expect(screen.getByLabelText(/credit tier/i)).toBeTruthy();
+    expect(screen.getByLabelText(/year from/i)).toBeTruthy();
+    expect(screen.getByLabelText(/project url/i)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /hide details/i })).toBeTruthy();
+  });
+
+  it("starts expanded when the credit already carries details, so nothing looks lost", () => {
+    // `baseCredit` has tier primary, isLead, notes, years and a URL.
+    mount();
+    expect(screen.getByLabelText(/contribution notes/i)).toBeTruthy();
+    expect(screen.getByLabelText(/year from/i)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /hide details/i })).toBeTruthy();
+  });
+
+  it("saves an untouched bare credit without ever opening the disclosure", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    mount(bareCredit(), onClose);
+
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+    await waitFor(() => expect(updateBuildingCreditMock).toHaveBeenCalledTimes(1));
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("unfolds the section when a folded field fails validation", async () => {
+    const user = userEvent.setup();
+    updateBuildingCreditMock.mockRejectedValue(new Error("Year must be between 1000 and 2100"));
+    mount(bareCredit());
+
+    await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+    expect(await screen.findByText(/year must be between 1000 and 2100/i)).toBeTruthy();
+    expect(screen.getByLabelText(/year from/i)).toBeTruthy();
+  });
+});

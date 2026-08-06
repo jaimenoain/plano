@@ -204,6 +204,7 @@ describe("AddCreditForm", () => {
       <AddCreditForm buildingId="b1" existingCredits={existing} onSaved={vi.fn()} onRequestNotify={vi.fn()} />,
     );
     await user.click(screen.getByRole("button", { name: /mock pick person/i }));
+    await user.click(screen.getByRole("button", { name: /show more details/i }));
     await user.click(screen.getByRole("checkbox", { name: /lead for this role/i }));
     expect(
       screen.getByText(/this building already has a lead credit for this role/i),
@@ -313,6 +314,10 @@ describe("AddCreditForm (QA 6.2)", () => {
     const pickPerson = screen.getAllByRole("button", { name: /mock pick person/i });
     await user.click(pickPerson[0]!);
     await user.click(pickPerson[1]!);
+    // Each row folds its own details away — open both before reaching the checkboxes.
+    const disclosures = screen.getAllByRole("button", { name: /show more details/i });
+    await user.click(disclosures[0]!);
+    await user.click(disclosures[1]!);
     const leadBoxes = screen.getAllByRole("checkbox", { name: /lead for this role/i });
     await user.click(leadBoxes[0]!);
     await user.click(leadBoxes[1]!);
@@ -393,5 +398,63 @@ describe("AddCreditForm (QA 6.2)", () => {
     // A partial failure must not confirm success or close over the row that failed.
     expect(onClose).not.toHaveBeenCalled();
     expect(toastMock.mock.calls.map((c) => (c[0] as { title?: string }).title)).not.toContain("Credit added");
+  });
+
+  it("opens with only Person, Company and Role — the rest is folded away", () => {
+    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onSaved={vi.fn()} onRequestNotify={vi.fn()} />);
+
+    expect(screen.getByLabelText(/^role$/i)).toBeTruthy();
+    expect(screen.getByRole("button", { name: /mock pick person/i })).toBeTruthy();
+    expect(screen.queryByLabelText(/credit tier/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: /lead for this role/i })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/contribution notes/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/year from/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/project url/i)).not.toBeInTheDocument();
+  });
+
+  it("reveals the folded fields when the disclosure is opened", async () => {
+    const user = userEvent.setup();
+    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onSaved={vi.fn()} onRequestNotify={vi.fn()} />);
+
+    await user.click(screen.getByRole("button", { name: /show more details/i }));
+
+    expect(screen.getByLabelText(/credit tier/i)).toBeTruthy();
+    expect(screen.getByLabelText(/year from/i)).toBeTruthy();
+    expect(screen.getByLabelText(/project url/i)).toBeTruthy();
+  });
+
+  it("submits a person-only credit without the disclosure ever being opened", async () => {
+    const user = userEvent.setup();
+    const onSaved = vi.fn();
+    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onSaved={onSaved} onRequestNotify={vi.fn()} />);
+
+    await user.click(screen.getByRole("button", { name: /mock pick person/i }));
+    await user.click(screen.getByRole("button", { name: /submit \(1\)/i }));
+
+    await waitFor(() => expect(addBuildingCreditMock).toHaveBeenCalledTimes(1));
+    expect(addBuildingCreditMock.mock.calls[0]?.[0]).toMatchObject({
+      role: "design_architecture",
+      creditTier: "contributor",
+      isLead: false,
+    });
+    expect(onSaved).toHaveBeenCalled();
+  });
+
+  it("unfolds a row's details when one of its folded fields fails validation", async () => {
+    const user = userEvent.setup();
+    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onSaved={vi.fn()} onRequestNotify={vi.fn()} />);
+
+    await user.click(screen.getByRole("button", { name: /mock pick person/i }));
+    await user.click(screen.getByRole("button", { name: /show more details/i }));
+    await user.type(screen.getByLabelText(/year from/i), "12");
+    // Fold it back up: the rejected year is now out of sight until submit reopens it.
+    await user.click(screen.getByRole("button", { name: /hide details/i }));
+    expect(screen.queryByLabelText(/year from/i)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /submit \(1\)/i }));
+
+    expect(await screen.findByText(/year must be between 1000 and 2100/i)).toBeTruthy();
+    expect(screen.getByLabelText(/year from/i)).toBeTruthy();
+    expect(addBuildingCreditMock).not.toHaveBeenCalled();
   });
 });
