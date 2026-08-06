@@ -3,11 +3,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { resizeImage } from "@/lib/image-compression";
-import {
-  upsertCreditNote,
-  deleteCreditNote,
-  buildingCreditsQueryKey,
-} from "@/features/credits/api/credits";
+import { upsertCreditNote, deleteCreditNote } from "@/features/credits/api/credit-notes";
+import { buildingCreditsQueryKey } from "@/features/credits/api/credits";
 import { formatCreditRoleLabel } from "@/features/credits/formatCreditRole";
 import type { CreditNote, CreditRole } from "@/features/credits/types";
 import { Button } from "@/components/ui/button";

@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import type { ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -9,8 +9,9 @@ import * as creditsApi from "@/features/credits/api/credits";
 import { AddCreditForm } from "./AddCreditForm";
 import type { BuildingCreditWithEntities } from "@/features/credits/types";
 
+const toastMock = vi.hoisted(() => vi.fn());
 vi.mock("@/hooks/use-toast", () => ({
-  useToast: () => ({ toast: vi.fn() }),
+  useToast: () => ({ toast: toastMock }),
 }));
 
 vi.mock("@/features/credits/components/CreditEntityPicker", () => ({
@@ -110,6 +111,7 @@ describe("AddCreditForm", () => {
     Element.prototype.hasPointerCapture = vi.fn(() => false);
     Element.prototype.setPointerCapture = vi.fn();
     Element.prototype.releasePointerCapture = vi.fn();
+    toastMock.mockReset();
     addBuildingCreditMock.mockReset();
     notifyCreditedEntitiesMock.mockReset();
     notifyCreditedEntitiesMock.mockResolvedValue({ ok: true });
@@ -139,17 +141,18 @@ describe("AddCreditForm", () => {
   it("shows validation when neither person nor company is selected", async () => {
     const user = userEvent.setup();
     wrap(
-      <AddCreditForm buildingId="b1" existingCredits={[]} onRequestClose={vi.fn()} />,
+      <AddCreditForm buildingId="b1" existingCredits={[]} onSaved={vi.fn()} onRequestNotify={vi.fn()} />,
     );
     await user.click(screen.getByRole("button", { name: /submit \(1\)/i }));
     expect(await screen.findByText(/choose a person and\/or a company/i)).toBeTruthy();
     expect(addBuildingCreditMock).not.toHaveBeenCalled();
   });
 
-  it("submits one row and advances to the notification step", async () => {
+  it("submits one row, then hands the saved id back and gets out of the way (Task 2.2)", async () => {
     const user = userEvent.setup();
+    const onSaved = vi.fn();
     wrap(
-      <AddCreditForm buildingId="b1" existingCredits={[]} onRequestClose={vi.fn()} />,
+      <AddCreditForm buildingId="b1" existingCredits={[]} onSaved={onSaved} onRequestNotify={vi.fn()} />,
     );
     await user.click(screen.getByRole("button", { name: /mock pick person/i }));
     await user.click(screen.getByRole("button", { name: /submit \(1\)/i }));
@@ -162,27 +165,29 @@ describe("AddCreditForm", () => {
       companyId: null,
       role: "design_architecture",
     });
-    expect(await screen.findByRole("heading", { name: /notify credited people/i })).toBeTruthy();
+    await waitFor(() => expect(onSaved).toHaveBeenCalledWith(["new-credit"]));
+    // The email step used to sit between the user and the page; it is now an
+    // offer on the confirmation, not a mandatory stop.
+    expect(screen.queryByRole("heading", { name: /notify credited people/i })).not.toBeInTheDocument();
   });
 
-  it("sends notifications with parsed emails on the notify step", async () => {
+  it("confirms with a success toast whose action reopens the email step", async () => {
     const user = userEvent.setup();
+    const onRequestNotify = vi.fn();
     wrap(
-      <AddCreditForm buildingId="b1" existingCredits={[]} onRequestClose={vi.fn()} />,
+      <AddCreditForm buildingId="b1" existingCredits={[]} onSaved={vi.fn()} onRequestNotify={onRequestNotify} />,
     );
     await user.click(screen.getByRole("button", { name: /mock pick person/i }));
     await user.click(screen.getByRole("button", { name: /submit \(1\)/i }));
-    await screen.findByRole("heading", { name: /notify credited people/i });
+    await waitFor(() => expect(toastMock).toHaveBeenCalled());
 
-    await user.type(screen.getByLabelText(/email addresses/i), "one@test.com, two@test.com");
-    await user.click(screen.getByRole("button", { name: /send notifications/i }));
-
-    await waitFor(() => {
-      expect(notifyCreditedEntitiesMock).toHaveBeenCalledWith({
-        creditIds: ["new-credit"],
-        emails: ["one@test.com", "two@test.com"],
-      });
-    });
+    const call = toastMock.mock.calls.at(-1)?.[0] as { title?: string; action?: ReactElement };
+    expect(call?.title).toBe("Credit added");
+    // Rendered outside the open Sheet, which puts `pointer-events: none` on body —
+    // fireEvent sidesteps the pointer check userEvent would fail on.
+    render(<>{call?.action}</>);
+    fireEvent.click(screen.getByRole("button", { name: /notify them/i }));
+    expect(onRequestNotify).toHaveBeenCalledWith(["new-credit"]);
   });
 
   it("shows non-blocking lead warning when an existing credit is already lead for the same role", async () => {
@@ -196,7 +201,7 @@ describe("AddCreditForm", () => {
       }),
     ];
     wrap(
-      <AddCreditForm buildingId="b1" existingCredits={existing} onRequestClose={vi.fn()} />,
+      <AddCreditForm buildingId="b1" existingCredits={existing} onSaved={vi.fn()} onRequestNotify={vi.fn()} />,
     );
     await user.click(screen.getByRole("button", { name: /mock pick person/i }));
     await user.click(screen.getByRole("checkbox", { name: /lead for this role/i }));
@@ -211,6 +216,7 @@ describe("AddCreditForm (QA 6.2)", () => {
     Element.prototype.hasPointerCapture = vi.fn(() => false);
     Element.prototype.setPointerCapture = vi.fn();
     Element.prototype.releasePointerCapture = vi.fn();
+    toastMock.mockReset();
     addBuildingCreditMock.mockReset();
     notifyCreditedEntitiesMock.mockReset();
     notifyCreditedEntitiesMock.mockResolvedValue({ ok: true });
@@ -238,13 +244,13 @@ describe("AddCreditForm (QA 6.2)", () => {
   });
 
   it("shows Add credits in the sheet (entry point for the form)", () => {
-    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onRequestClose={vi.fn()} />);
+    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onSaved={vi.fn()} onRequestNotify={vi.fn()} />);
     expect(screen.getByRole("heading", { name: /add credits/i })).toBeInTheDocument();
   });
 
   it("submits company only: company_id set, person_id null", async () => {
     const user = userEvent.setup();
-    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onRequestClose={vi.fn()} />);
+    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onSaved={vi.fn()} onRequestNotify={vi.fn()} />);
     await user.click(screen.getByRole("button", { name: /mock pick company/i }));
     await user.click(screen.getByRole("button", { name: /submit \(1\)/i }));
     await waitFor(() => expect(addBuildingCreditMock).toHaveBeenCalledTimes(1));
@@ -257,7 +263,7 @@ describe("AddCreditForm (QA 6.2)", () => {
 
   it("a company chosen from the person box lands in the company slot (Task 2.1)", async () => {
     const user = userEvent.setup();
-    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onRequestClose={vi.fn()} />);
+    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onSaved={vi.fn()} onRequestNotify={vi.fn()} />);
     await user.click(screen.getByRole("button", { name: /mock pick firm via person box/i }));
     await user.click(screen.getByRole("button", { name: /submit \(1\)/i }));
     await waitFor(() => expect(addBuildingCreditMock).toHaveBeenCalledTimes(1));
@@ -270,7 +276,7 @@ describe("AddCreditForm (QA 6.2)", () => {
 
   it("submits person and company together on one row", async () => {
     const user = userEvent.setup();
-    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onRequestClose={vi.fn()} />);
+    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onSaved={vi.fn()} onRequestNotify={vi.fn()} />);
     await user.click(screen.getByRole("button", { name: /mock pick person/i }));
     await user.click(screen.getByRole("button", { name: /mock pick company/i }));
     await user.click(screen.getByRole("button", { name: /submit \(1\)/i }));
@@ -283,7 +289,7 @@ describe("AddCreditForm (QA 6.2)", () => {
 
   it("role Other requires description; submit sends role other and roleCustom", async () => {
     const user = userEvent.setup();
-    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onRequestClose={vi.fn()} />);
+    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onSaved={vi.fn()} onRequestNotify={vi.fn()} />);
     await user.click(screen.getByLabelText(/^Role$/i));
     await user.click(await screen.findByRole("option", { name: /^Other$/i }));
     await user.click(screen.getByRole("button", { name: /mock pick person/i }));
@@ -302,7 +308,7 @@ describe("AddCreditForm (QA 6.2)", () => {
 
   it("warns when two in-form rows both mark lead for the same role", async () => {
     const user = userEvent.setup();
-    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onRequestClose={vi.fn()} />);
+    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onSaved={vi.fn()} onRequestNotify={vi.fn()} />);
     await user.click(screen.getByRole("button", { name: /add another/i }));
     const pickPerson = screen.getAllByRole("button", { name: /mock pick person/i });
     await user.click(pickPerson[0]!);
@@ -336,17 +342,19 @@ describe("AddCreditForm (QA 6.2)", () => {
       });
     });
 
-    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onRequestClose={vi.fn()} />);
+    const onSaved = vi.fn();
+    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onSaved={onSaved} onRequestNotify={vi.fn()} />);
     await user.click(screen.getByRole("button", { name: /add another/i }));
     const pickPerson = screen.getAllByRole("button", { name: /mock pick person/i });
     await user.click(pickPerson[0]!);
     await user.click(pickPerson[1]!);
     await user.click(screen.getByRole("button", { name: /submit \(2\)/i }));
     await waitFor(() => expect(addBuildingCreditMock).toHaveBeenCalledTimes(2));
-    expect(await screen.findByRole("heading", { name: /notify credited people/i })).toBeInTheDocument();
+    await waitFor(() => expect(onSaved).toHaveBeenCalledWith(["credit-1", "credit-2"]));
+    expect(toastMock.mock.calls.at(-1)?.[0]).toMatchObject({ title: "Credits added" });
   });
 
-  it("first row success and second API failure keeps form step, shows Saved and Error per row", async () => {
+  it("first row success and second API failure keeps the drawer open, shows Saved and Error per row", async () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     let callCount = 0;
@@ -370,7 +378,7 @@ describe("AddCreditForm (QA 6.2)", () => {
       });
     });
 
-    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onRequestClose={onClose} />);
+    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onSaved={onClose} onRequestNotify={vi.fn()} />);
     await user.click(screen.getByRole("button", { name: /add another/i }));
     const pickPerson = screen.getAllByRole("button", { name: /mock pick person/i });
     await user.click(pickPerson[0]!);
@@ -382,104 +390,8 @@ describe("AddCreditForm (QA 6.2)", () => {
     expect(screen.getByText("Error")).toBeInTheDocument();
     expect(screen.getByText(/second failed/i)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /add credits/i })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: /notify credited people/i })).not.toBeInTheDocument();
+    // A partial failure must not confirm success or close over the row that failed.
     expect(onClose).not.toHaveBeenCalled();
-  });
-});
-
-describe("AddCreditForm (QA 6.3)", () => {
-  beforeEach(() => {
-    Element.prototype.hasPointerCapture = vi.fn(() => false);
-    Element.prototype.setPointerCapture = vi.fn();
-    Element.prototype.releasePointerCapture = vi.fn();
-    addBuildingCreditMock.mockReset();
-    notifyCreditedEntitiesMock.mockReset();
-    notifyCreditedEntitiesMock.mockResolvedValue({ ok: true });
-    addBuildingCreditMock.mockImplementation(async (input) =>
-      baseCredit({
-        id: "new-credit",
-        personId: input.personId ?? null,
-        companyId: input.companyId ?? null,
-        role: input.role,
-        roleCustom: input.roleCustom ?? null,
-        creditTier: input.creditTier ?? "contributor",
-        isLead: input.isLead ?? false,
-        contributionNotes: input.contributionNotes ?? null,
-        yearFrom: input.yearFrom ?? null,
-        yearTo: input.yearTo ?? null,
-        projectUrl: input.projectUrl ?? null,
-        person: input.personId ? { id: input.personId, name: "Pat Example", slug: "pat-example" } : null,
-        company: input.companyId ? { id: input.companyId, name: "Co Example", slug: "co-example" } : null,
-      }),
-    );
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  async function reachNotifyStep(user: ReturnType<typeof userEvent.setup>, onClose: () => void) {
-    wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onRequestClose={onClose} />);
-    await user.click(screen.getByRole("button", { name: /mock pick person/i }));
-    await user.click(screen.getByRole("button", { name: /submit \(1\)/i }));
-    await screen.findByRole("heading", { name: /notify credited people/i });
-  }
-
-  it("parses three comma-separated addresses into pills under Sending to", async () => {
-    const user = userEvent.setup();
-    await reachNotifyStep(user, vi.fn());
-    await user.type(
-      screen.getByLabelText(/^Email addresses$/i),
-      "one@a.com, two@b.com, three@c.com",
-    );
-    expect(screen.getByText("Sending to")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /remove one@a\.com/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /remove two@b\.com/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /remove three@c\.com/i })).toBeInTheDocument();
-  });
-
-  it("accepts at most 15 addresses and shows truncation status for 16", async () => {
-    const user = userEvent.setup();
-    await reachNotifyStep(user, vi.fn());
-    const bulk = Array.from({ length: 16 }, (_, i) => `u${i}@example.com`).join(", ");
-    await user.type(screen.getByLabelText(/^Email addresses$/i), bulk);
-    expect(
-      screen.getByText(/only the first 15 valid addresses will be used \(1 ignored\)/i),
-    ).toBeInTheDocument();
-    const removeBtns = screen.getAllByRole("button", { name: /^Remove u\d+@example\.com$/i });
-    expect(removeBtns).toHaveLength(15);
-  });
-
-  it("shows invalid-token alert and disables Send until the draft has no invalid tokens", async () => {
-    const user = userEvent.setup();
-    await reachNotifyStep(user, vi.fn());
-    const ta = screen.getByLabelText(/^Email addresses$/i);
-    await user.type(ta, "good@ok.com not-an-email");
-    expect(await screen.findByText(/skipping invalid:\s*not-an-email/i)).toBeInTheDocument();
-    const send = screen.getByRole("button", { name: /send notifications/i });
-    expect(send).toBeDisabled();
-
-    await user.clear(ta);
-    await user.type(ta, "good@ok.com");
-    await waitFor(() => {
-      expect(screen.queryByText(/skipping invalid/i)).not.toBeInTheDocument();
-    });
-    expect(send).not.toBeDisabled();
-    await user.click(send);
-    await waitFor(() => {
-      expect(notifyCreditedEntitiesMock).toHaveBeenCalledWith({
-        creditIds: ["new-credit"],
-        emails: ["good@ok.com"],
-      });
-    });
-  });
-
-  it("Skip closes via onRequestClose without calling notifyCreditedEntities", async () => {
-    const user = userEvent.setup();
-    const onClose = vi.fn();
-    await reachNotifyStep(user, onClose);
-    await user.click(screen.getByRole("button", { name: /^skip$/i }));
-    expect(onClose).toHaveBeenCalledTimes(1);
-    expect(notifyCreditedEntitiesMock).not.toHaveBeenCalled();
+    expect(toastMock.mock.calls.map((c) => (c[0] as { title?: string }).title)).not.toContain("Credit added");
   });
 });

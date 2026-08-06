@@ -86,7 +86,7 @@
   Dependencies:    None
   CSV ref:         #21
 
-[ ] Task 2.2 — Add and edit credits from the Credits tab
+[x] Task 2.2 — Add and edit credits from the Credits tab
 
   Goal:            On the building detail page's Credits tab, an "Add credit"
                    button is available even when credits already exist, and each

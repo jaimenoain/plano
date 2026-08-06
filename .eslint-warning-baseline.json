@@ -1,10 +1,10 @@
 {
   "comment": "ESLint warning ceiling per bucket (with per-file detail so regressions name the exact new files). CI fails if any bucket EXCEEDS its count. Only lower numbers via --update after a cleanup; never raise one to make CI pass.",
   "counts": {
-    "no-restricted-imports/deep-feature": 611,
+    "no-restricted-imports/deep-feature": 605,
     "no-restricted-imports/supabase-client": 132,
     "other": 5,
-    "react-hooks/exhaustive-deps": 61
+    "react-hooks/exhaustive-deps": 56
   },
   "files": {
     "no-restricted-imports/deep-feature": {
@@ -89,7 +89,6 @@
       "src/features/buildings/components/BuildingContributorsInline.tsx": 1,
       "src/features/buildings/components/BuildingContributorsSection.tsx": 1,
       "src/features/buildings/components/BuildingCredits.test.tsx": 1,
-      "src/features/buildings/components/BuildingCredits.tsx": 6,
       "src/features/buildings/components/BuildingForm.tsx": 3,
       "src/features/buildings/components/BuildingImageCard.tsx": 1,
       "src/features/buildings/components/BuildingLocationPicker.tsx": 2,
@@ -246,8 +245,9 @@
       "src/features/posts/components/FeedCardB.tsx": 4,
       "src/features/posts/components/FeedCardC.tsx": 3,
       "src/features/posts/components/ReviewCardFeed.tsx": 2,
-      "src/features/posts/hooks/useDiscoveryFeed.ts": 4,
+      "src/features/posts/hooks/useDiscoveryFeed.ts": 3,
       "src/features/posts/hooks/useTrackNoteView.ts": 1,
+      "src/features/posts/utils/discoveryFeedHydration.ts": 1,
       "src/features/profile/components/AddToFolderDialog.tsx": 1,
       "src/features/profile/components/CommonFollowersFacepile.tsx": 1,
       "src/features/profile/components/DisconnectLegacyClaimDialog.tsx": 1,
@@ -460,7 +460,7 @@
       "src/features/buildings/pages/EditBuilding.tsx": 2,
       "src/features/buildings/pages/EditNote.tsx": 1,
       "src/features/buildings/pages/ReviewDetails.tsx": 1,
-      "src/features/collections/components/CollectionMapPage.tsx": 9,
+      "src/features/collections/components/CollectionMapPage.tsx": 6,
       "src/features/collections/components/CollectionSelector.tsx": 1,
       "src/features/collections/components/CollectionSettingsDialog.tsx": 1,
       "src/features/collections/components/CollectionsGrid.tsx": 1,
@@ -469,7 +469,6 @@
       "src/features/credits/components/CreditEntityPicker.tsx": 4,
       "src/features/embassy/components/AmbassadorGuard.tsx": 1,
       "src/features/events/pages/Events.tsx": 1,
-      "src/features/explore/pages/Explore.tsx": 2,
       "src/features/guides/GuidesPage.tsx": 1,
       "src/features/maps/components/FilterDrawer.tsx": 1,
       "src/features/maps/components/filters/FolderAndCollectionMultiSelect.tsx": 1,

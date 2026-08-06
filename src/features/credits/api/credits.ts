@@ -5,7 +5,6 @@ import { insertEntityAuditLog } from "@/features/credits/api/entity-audit-log";
 import type { TablesUpdate } from "@/integrations/supabase/types";
 import type {
   BuildingCreditWithEntities,
-  CreditNote,
   CreditRole,
   CreditStatus,
   CreditTier,
@@ -83,6 +82,8 @@ export type AddBuildingCreditInput = z.infer<typeof AddBuildingCreditSchema>;
 
 const UpdateBuildingCreditSchema = z
   .object({
+    personId: z.string().uuid().nullable().optional(),
+    companyId: z.string().uuid().nullable().optional(),
     role: z.enum(CREDIT_ROLES).optional(),
     roleCustom: z.string().max(500).nullable().optional(),
     creditTier: z.enum(CREDIT_TIERS).optional(),
@@ -101,6 +102,16 @@ const UpdateBuildingCreditSchema = z
       d.role !== "other" ||
       (typeof d.roleCustom === "string" && d.roleCustom.trim().length > 0),
     { message: "Describe the role when selecting Other", path: ["roleCustom"] },
+  )
+  // Mirrors the insert rule: a credit must always name a person and/or a company.
+  // Only checked when the caller touches the entity columns at all — a patch that
+  // leaves them alone cannot orphan the row.
+  .refine(
+    (d) =>
+      (d.personId === undefined && d.companyId === undefined) ||
+      d.personId != null ||
+      d.companyId != null,
+    { message: "At least one of personId or companyId is required", path: ["personId"] },
   );
 
 export type UpdateBuildingCreditInput = z.infer<typeof UpdateBuildingCreditSchema>;
@@ -453,6 +464,8 @@ export async function updateBuildingCredit(
   const data = UpdateBuildingCreditSchema.parse(input);
 
   const patch: Record<string, unknown> = {};
+  if (data.personId !== undefined) patch.person_id = data.personId;
+  if (data.companyId !== undefined) patch.company_id = data.companyId;
   if (data.role !== undefined) patch.role = data.role;
   if (data.roleCustom !== undefined) patch.role_custom = data.roleCustom;
   if (data.creditTier !== undefined) patch.credit_tier = data.creditTier;
@@ -480,7 +493,27 @@ export async function updateBuildingCredit(
   if (error) throw error;
   if (!row) throw new Error("Credit not found or not permitted to update");
 
-  return mapCreditRow(row as CreditRow);
+  const mapped = mapCreditRow(row as CreditRow);
+
+  // A rank-only patch is the company portfolio drag-reorder, which fires once per
+  // row per drop. That is bookkeeping, not an edit to the credit — logging it would
+  // bury the real edits and write a row per card moved.
+  const editorialKeys = Object.keys(data).filter((k) => k !== "companyPortfolioRank");
+  if (editorialKeys.length === 0) return mapped;
+
+  await insertEntityAuditLog({
+    actionType: "credit_edited",
+    targetType: "credit",
+    targetId: mapped.id,
+    details: {
+      building_id: mapped.buildingId,
+      role: mapped.role,
+      credit_tier: mapped.creditTier,
+      person_id: mapped.personId,
+      company_id: mapped.companyId,
+    },
+  });
+  return mapped;
 }
 
 export type PrimaryCreditFormEntity = { kind: "person" | "company"; id: string };
@@ -799,76 +832,4 @@ export async function notifyCreditedEntities(input: NotifyCreditedEntitiesInput)
   }
 
   return { ok: true };
-}
-
-// ─── Credit Notes ────────────────────────────────────────────────────────────
-
-const UpsertCreditNoteSchema = z
-  .object({
-    content: z.string().min(1, "Note cannot be empty").max(5000),
-    imageUrls: z.array(z.string().url()).optional(),
-  })
-  .strict();
-
-export type UpsertCreditNoteInput = z.infer<typeof UpsertCreditNoteSchema>;
-
-export function creditNoteQueryKey(creditId: string) {
-  return ["credit-note", creditId] as const;
-}
-
-export async function upsertCreditNote(
-  creditId: string,
-  input: UpsertCreditNoteInput,
-): Promise<CreditNote> {
-  const {
-    data: { user },
-    error: authErr,
-  } = await supabase.auth.getUser();
-  if (authErr) throw authErr;
-  if (!user) throw new Error("Authentication required");
-
-  const parsed = UpsertCreditNoteSchema.parse(input);
-
-  const { data: row, error } = await supabase
-    .from("building_credit_notes")
-    .upsert(
-      {
-        credit_id: creditId,
-        user_id: user.id,
-        content: parsed.content,
-        image_urls: parsed.imageUrls ?? [],
-      },
-      { onConflict: "credit_id" },
-    )
-    .select("id, credit_id, user_id, content, image_urls, created_at, updated_at")
-    .single();
-
-  if (error) throw error;
-
-  return {
-    id: row.id,
-    creditId: row.credit_id,
-    userId: row.user_id,
-    content: row.content,
-    imageUrls: row.image_urls as string[],
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
-
-export async function deleteCreditNote(creditId: string): Promise<void> {
-  const {
-    data: { user },
-    error: authErr,
-  } = await supabase.auth.getUser();
-  if (authErr) throw authErr;
-  if (!user) throw new Error("Authentication required");
-
-  const { error } = await supabase
-    .from("building_credit_notes")
-    .delete()
-    .eq("credit_id", creditId)
-    .eq("user_id", user.id);
-
-  if (error) throw error;
 }

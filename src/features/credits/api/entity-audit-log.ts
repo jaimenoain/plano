@@ -3,7 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 
 /** Values written from the app client (RLS `entity_audit_logs_actor_insert`). */
-export const CLIENT_ENTITY_AUDIT_ACTION_TYPES = ["credit_added", "credit_status_changed", "steward_removed"] as const;
+export const CLIENT_ENTITY_AUDIT_ACTION_TYPES = [
+  "credit_added",
+  "credit_edited",
+  "credit_status_changed",
+  "steward_removed",
+] as const;
 export type ClientEntityAuditActionType = (typeof CLIENT_ENTITY_AUDIT_ACTION_TYPES)[number];
 
 /** Includes RPC-written types (claim / steward flows). */

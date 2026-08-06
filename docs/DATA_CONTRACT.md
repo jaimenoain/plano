@@ -3796,7 +3796,11 @@ CREATE POLICY "building_credits_insert" ON public.building_credits
   );
 ```
 
-**UPDATE** — admin; or the person row’s `claimed_by_user_id` (= auth user) when `person_id` is set; or any steward of `company_id` when `company_id` is set. Same `USING` and `WITH CHECK`.
+**UPDATE** — admin; or the person row’s `claimed_by_user_id` (= auth user) when `person_id` is set; or any steward of `company_id` when `company_id` is set; **or any authenticated user when `status = 'active'`** (migration **`20271202000000_building_credits_member_edits.sql`**, roadmap Task 2.2, [ADR 0031](decisions/0031-credit-edits-open-to-members.md)). Credit edits now match the openness the rest of the building record already has (`canEditOfficialData` is `!!user`), and it is the only rule that reaches the bulk-imported credits, which carry `added_by_user_id IS NULL`.
+
+The member branch is bounded: `WITH CHECK` pins the new row to `status = 'active'` (so it cannot be used to self-verify or self-hide) and requires `person_id IS NOT NULL OR company_id IS NOT NULL` (the invariant INSERT always had and UPDATE never did). `verified`, `flagged` and `hidden` rows stay with the original three principals.
+
+**Provenance guard** — trigger `building_credits_guard_protected_columns` (`BEFORE UPDATE`, SECURITY **INVOKER**) rejects any change to `building_id` or `added_by_user_id` when `current_user IN ('authenticated', 'anon')`. It discriminates on `current_user`, **not** `auth.uid()`: inside a SECURITY DEFINER RPC (`flag_building_credit`, `redeem_credit_removal_token`, `merge_buildings`, the ambassador approval batches) `auth.uid()` is still the calling member, so an `auth.uid()` guard would fire on the app's own moderation flows.
 
 **DELETE** — admin or `buildings.created_by` = auth user for the credit’s `building_id`.
 
@@ -3808,7 +3812,7 @@ Browser Supabase client wrappers live in `src/features/credits/api/credits.ts`. 
 |----------|-----------|
 | `getBuildingCredits(buildingId)` | All credits for the building joined with `people` / `companies` summaries; RLS omits `hidden` for non-admins. Sorted by `credit_tier`, `display_order`, `is_lead` descending. |
 | `addBuildingCredit(input)` | Zod-validated insert; requires at least one of `personId`, `companyId`; `added_by_user_id` from `auth.getUser()` (not client-supplied). `contribution_notes` max **500** characters; `role = other` requires non-empty `role_custom`. When `companyId` is set, sets `company_portfolio_rank` to the next integer after the current max for that company (or `0`). |
-| `updateBuildingCredit(creditId, input)` | Zod partial update of `role`, `roleCustom`, `creditTier`, `isLead`, `contributionNotes`, `yearFrom`, `yearTo`, `projectUrl`, `companyPortfolioRank` (maps to `company_portfolio_rank`). Does not change `building_id`, `person_id`, or `company_id`. RLS as for other credit updates. |
+| `updateBuildingCredit(creditId, input)` | Zod partial update of `personId`, `companyId`, `role`, `roleCustom`, `creditTier`, `isLead`, `contributionNotes`, `yearFrom`, `yearTo`, `projectUrl`, `companyPortfolioRank` (maps to `company_portfolio_rank`). Never changes `building_id` (pinned by trigger). When either entity column is supplied the patch must leave at least one non-null. Writes an `admin_audit_logs` row with `action_type = 'credit_edited'`, **except** for a rank-only patch (the company portfolio drag-reorder, which fires once per row per drop). RLS as above. |
 | `flagCredit(creditId, reason, notes)` | Calls RPC `flag_building_credit` (SECURITY DEFINER). Sets `status = flagged`, `flagged_from_status` to the prior `active` / `verified` value, `flag_reason`, `flag_notes`, `flagged_at`; `flagged_by_user_id` is `auth.uid()` when signed in, else `NULL`. Only transitions `active` / `verified` → `flagged`. Refetches the row after RPC success. |
 | `updateCreditStatus(creditId, { status })` | Status-only patch; RLS applies (admin / claim owner / steward per policies). |
 | `getFlaggedCreditsForAdmin()` | Admin queue: `status = flagged`, ordered by `flagged_at` descending. Select joins `people` / `companies` (incl. `claim_status`), `buildings` (`id`, `name`, `slug`, `short_id`), `profiles` for `added_by_user_id` → `username`. Returns `FlaggedCreditModerationItem[]`. |
