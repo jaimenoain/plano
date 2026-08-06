@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useHoneypot } from "@/hooks/useHoneypot";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,6 +77,12 @@ interface BuildingFormProps {
   /** Emits whether the form fields differ from their initial values. */
   onDirtyChange?: (dirty: boolean) => void;
   /**
+   * Dirty state owned by the page outside this form — the Edit building page
+   * tracks its location picker separately. OR'd into the form's own flag so the
+   * submit button reflects the whole page, not just these fields (Task 3.1).
+   */
+  externalDirty?: boolean;
+  /**
    * Whether to render the "Design credits" picker. The Edit building page opts
    * out (Task 2.5): it manages every credit through the full credits ledger
    * instead, so the two surfaces can never disagree.
@@ -93,8 +99,9 @@ interface BuildingFormProps {
 import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { DesignCreditsSection } from "./DesignCreditsSection";
 import { useBuildingFormDirty } from "./useBuildingFormDirty";
+import { useBuildingSlugAvailability } from "./useBuildingSlugAvailability";
 
-export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode = 'create', buildingId, shortId, onCancel, onDirtyChange, showDesignCreditsField = true, verifiedCreditClaim }: BuildingFormProps) {
+export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabel, mode = 'create', buildingId, shortId, onCancel, onDirtyChange, externalDirty = false, showDesignCreditsField = true, verifiedCreditClaim }: BuildingFormProps) {
   const { honeypotProps, isBot } = useHoneypot();
   const { profile } = useUserProfile();
 
@@ -129,37 +136,11 @@ export function BuildingForm({ initialValues, onSubmit, isSubmitting, submitLabe
   const [newAttributeName, setNewAttributeName] = useState("");
   const [isAddingAttributeLoading, setIsAddingAttributeLoading] = useState(false);
 
-  const [debouncedName, setDebouncedName] = useState(name);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedName(name);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [name]);
-
-  const { data: isSlugAvailable, isLoading: isCheckingSlug } = useQuery({
-    queryKey: ['slug_availability', debouncedName, buildingId],
-    queryFn: async () => {
-      const baseSlug = slugify(debouncedName);
-      if (!baseSlug) return true;
-
-      const { data, error } = await supabase.rpc('check_slug_availability', {
-        target_slug: baseSlug,
-        ...(buildingId ? { exclude_id: buildingId } : {}),
-      });
-
-      if (error) {
-return true; // Fallback to true on error to avoid blocking UX unnecessarily
-      }
-      return data;
-    },
-    enabled: !!debouncedName,
-  });
-
-  const baseSlug = slugify(debouncedName);
-  const isSlugCollision = isSlugAvailable === false;
-  const finalSlug = isSlugCollision ? `${baseSlug}-${shortId || '1'}` : baseSlug;
+  const { finalSlug, isSlugCollision, isCheckingSlug } = useBuildingSlugAvailability(
+    name,
+    buildingId,
+    shortId,
+  );
 
   const queryClient = useQueryClient();
 
@@ -171,7 +152,10 @@ return true; // Fallback to true on error to avoid blocking UX unnecessarily
     mode === 'create' ? true : (!!initialValues.alt_name || (initialValues.aliases?.length ?? 0) > 0)
   );
 
-  const isDirty = useBuildingFormDirty(
+  // `onDirtyChange` reports these fields only — the page OR's its own outside
+  // state back in via `externalDirty`, so emitting the combined value here would
+  // feed the page its own signal.
+  const fieldsDirty = useBuildingFormDirty(
     initialValues,
     {
       name, alt_name, aliases, year_completed, century_manual, status,
@@ -181,6 +165,7 @@ return true; // Fallback to true on error to avoid blocking UX unnecessarily
     },
     onDirtyChange,
   );
+  const isDirty = fieldsDirty || externalDirty;
 
   const { data: categories, isLoading: isLoadingCategories } = useQuery({
     queryKey: ["functional_categories"],

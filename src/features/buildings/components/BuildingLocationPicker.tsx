@@ -18,6 +18,7 @@ interface BuildingLocationPickerProps {
     address: string;
     city?: string | null;
     country?: string | null;
+    countryCode?: string | null;
   };
   initialPrecision?: 'exact' | 'approximate';
   onLocationChange: (location: {
@@ -47,7 +48,9 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
   const [locationDetails, setLocationDetails] = useState<{city: string | null, country: string | null, countryCode: string | null}>({
       city: initialLocation.city || null,
       country: initialLocation.country || null,
-      countryCode: null
+      // Seeded from the caller: emits that reuse this state (the precision
+      // toggle) would otherwise report a null code and wipe it on save.
+      countryCode: initialLocation.countryCode || null
   });
 
   const [viewState, setViewState] = useState({
@@ -74,7 +77,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
         setLocationDetails({
             city: initialLocation.city || null,
             country: initialLocation.country || null,
-            countryCode: null
+            countryCode: initialLocation.countryCode || null
         });
     }
 
@@ -107,7 +110,7 @@ export function BuildingLocationPicker({ initialLocation, initialPrecision = 'ex
 
       attemptGeocode();
     }
-  }, [initialLocation.lat, initialLocation.lng, initialLocation.address, initialLocation.city, initialLocation.country]);
+  }, [initialLocation.lat, initialLocation.lng, initialLocation.address, initialLocation.city, initialLocation.country, initialLocation.countryCode]);
 
   // Handle precision change specifically
   const handlePrecisionChange = (checked: boolean) => {

@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -92,9 +92,45 @@ vi.mock("@/components/layout/AppLayout", () => ({
   AppLayout: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-// The location picker pulls in Google Maps; the credits section is what matters here.
+// The real picker pulls in Google Maps and maplibre. This stub keeps the two
+// things the page actually depends on: what it feeds the picker, and the change
+// callback the picker fires (address search, pin drag, precision toggle).
 vi.mock("../components/BuildingLocationPicker", () => ({
-  BuildingLocationPicker: () => <div data-testid="location-picker" />,
+  BuildingLocationPicker: ({
+    initialLocation,
+    onLocationChange,
+  }: {
+    initialLocation: { countryCode?: string | null };
+    onLocationChange: (loc: {
+      lat: number;
+      lng: number;
+      address: string;
+      city: string | null;
+      country: string | null;
+      countryCode: string | null;
+      precision: "exact" | "approximate";
+    }) => void;
+  }) => (
+    <div data-testid="location-picker">
+      <span data-testid="picker-country-code">{String(initialLocation.countryCode)}</span>
+      <button
+        type="button"
+        onClick={() =>
+          onLocationChange({
+            lat: 38.7,
+            lng: -9.1,
+            address: "2 New St",
+            city: "Lisbon",
+            country: "Portugal",
+            countryCode: "PT",
+            precision: "approximate",
+          })
+        }
+      >
+        emit-location-change
+      </button>
+    </div>
+  ),
 }));
 
 const credit = (over: Partial<BuildingCreditWithEntities> = {}): BuildingCreditWithEntities => ({
@@ -192,5 +228,50 @@ describe("EditBuilding — credits section (Task 2.5)", () => {
     renderPage();
 
     expect(await screen.findByText("Architect statement")).toBeTruthy();
+  });
+});
+
+describe("EditBuilding — address-only dirty state (Task 3.1)", () => {
+  beforeEach(() => {
+    getBuildingCreditsMock.mockReset();
+    getBuildingCreditsMock.mockResolvedValue([]);
+    profileMock.mockReturnValue({
+      profile: { id: "u1", role: "user", verified_architect_id: null },
+      loading: false,
+      refetch: vi.fn(),
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  const submitButton = () => screen.getByRole("button", { name: /Update Building/i });
+
+  it("keeps the submit button disabled while nothing has changed", async () => {
+    renderPage();
+
+    await waitFor(() => expect(submitButton().hasAttribute("disabled")).toBe(true));
+    expect(screen.getByText("No changes to save")).toBeTruthy();
+  });
+
+  it("enables the submit button when only the location changed", async () => {
+    renderPage();
+
+    const emit = await screen.findByRole("button", { name: "emit-location-change" });
+    await waitFor(() => expect(submitButton().hasAttribute("disabled")).toBe(true));
+
+    fireEvent.click(emit);
+
+    await waitFor(() => expect(submitButton().hasAttribute("disabled")).toBe(false));
+    expect(screen.queryByText("No changes to save")).toBeNull();
+  });
+
+  it("passes the building's country code down to the location picker", async () => {
+    renderPage();
+
+    // Without it the picker re-emits a null code on its next change, which would
+    // wipe `country_code` on save.
+    expect((await screen.findByTestId("picker-country-code")).textContent).toBe("PT");
   });
 });
