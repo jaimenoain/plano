@@ -6,6 +6,7 @@ import {
   errorIsInDetails,
   leadWarningForRow,
   rowToPayload,
+  withRoleDefaults,
   type CreditEntryRow,
 } from "../addCreditFormRow";
 import {
@@ -52,7 +53,9 @@ export function AddCreditForm({
 }: AddCreditFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [rows, setRows] = useState<CreditEntryRow[]>(() => [createEmptyRow()]);
+  const [rows, setRows] = useState<CreditEntryRow[]>(() =>
+    withRoleDefaults([createEmptyRow()], existingCredits),
+  );
   const [batchSubmitting, setBatchSubmitting] = useState(false);
   /** Row keys whose "Show more details" section is expanded. Every row starts folded. */
   const [openDetailKeys, setOpenDetailKeys] = useState<string[]>([]);
@@ -63,13 +66,26 @@ export function AddCreditForm({
     );
   }, []);
 
-  const updateRow = useCallback((key: string, patch: Partial<CreditEntryRow>) => {
-    setRows((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
-  }, []);
+  const updateRow = useCallback(
+    (key: string, patch: Partial<CreditEntryRow>) => {
+      // Touching either field by hand retires the smart defaults for that row.
+      const chosenByHand = "creditTier" in patch || "isLead" in patch;
+      // A role change anywhere can free or claim a role further down the list.
+      const rolesMoved = "role" in patch || "roleOtherText" in patch;
+
+      setRows((prev) => {
+        const next = prev.map((r) =>
+          r.key === key ? { ...r, ...patch, ...(chosenByHand ? { defaultsOverridden: true } : null) } : r,
+        );
+        return rolesMoved ? withRoleDefaults(next, existingCredits) : next;
+      });
+    },
+    [existingCredits],
+  );
 
   const addRow = useCallback(() => {
-    setRows((prev) => [...prev, createEmptyRow()]);
-  }, []);
+    setRows((prev) => withRoleDefaults([...prev, createEmptyRow()], existingCredits));
+  }, [existingCredits]);
 
   const removeRow = useCallback((key: string) => {
     setRows((prev) => (prev.length <= 1 ? prev : prev.filter((r) => r.key !== key)));

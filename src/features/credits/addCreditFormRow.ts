@@ -25,6 +25,11 @@ export interface CreditEntryRow {
   validationError: string | null;
   /** Set when this row was saved successfully in this session (for the notify step). */
   submittedCreditId: string | null;
+  /**
+   * True once `creditTier` / `isLead` carry a value the user chose, or one read
+   * back from a stored credit. `withRoleDefaults` leaves such a row alone.
+   */
+  defaultsOverridden: boolean;
 }
 
 function newRowKey(): string {
@@ -55,6 +60,7 @@ export function createEmptyRow(): CreditEntryRow {
     submitError: null,
     validationError: null,
     submittedCreditId: null,
+    defaultsOverridden: false,
   };
 }
 
@@ -89,6 +95,9 @@ export function rowFromCredit(credit: BuildingCreditWithEntities): CreditEntryRo
     submitError: null,
     validationError: null,
     submittedCreditId: credit.id,
+    // What is already stored is the user's answer, whoever gave it. Never let
+    // the role dropdown rewrite a tier or a lead flag someone chose before.
+    defaultsOverridden: true,
   };
 }
 
@@ -242,4 +251,60 @@ export function leadWarningForRow(
   }
 
   return null;
+}
+
+/** The role a row is claiming, in the shape `rolesMatchForLead` compares. */
+function roleClaimOf(row: CreditEntryRow): { role: CreditRole; roleCustom: string | null } {
+  return {
+    role: row.role,
+    roleCustom: row.role === "other" ? row.roleOtherText.trim() || null : null,
+  };
+}
+
+/** True when this row or credit stands as the role's headline entry. */
+function claimsRole(entry: { isLead: boolean; creditTier: CreditTier }): boolean {
+  return entry.isLead || entry.creditTier === "primary";
+}
+
+/**
+ * Fill in `creditTier` and `isLead` for the rows the user has not set them on
+ * (Roadmap Task 2.4). Naming a building's architect is the common errand, and it
+ * should not also require expanding "Show more details" to say that the architect
+ * is the primary, lead credit — so the first entry for a role arrives as
+ * Primary + lead, and any later entry for a role that is already spoken for
+ * arrives as Contributor, unticked.
+ *
+ * Rows are resolved in order, each seeing the ones above it, so a second row for
+ * the same role steps down behind the first.
+ *
+ * A role counts as claimed regardless of the claiming credit's status: this set
+ * must stay a superset of what `leadWarningForRow` looks at, or the form could
+ * tick "Lead" and then warn about the value it just set.
+ */
+export function withRoleDefaults(
+  rows: CreditEntryRow[],
+  existingCredits: BuildingCreditWithEntities[],
+): CreditEntryRow[] {
+  const settled: CreditEntryRow[] = [];
+
+  for (const row of rows) {
+    if (row.defaultsOverridden || row.submitStatus === "success") {
+      settled.push(row);
+      continue;
+    }
+
+    const self = roleClaimOf(row);
+    const taken =
+      existingCredits.some(
+        (c) => claimsRole(c) && rolesMatchForLead(self, { role: c.role, roleCustom: c.roleCustom }),
+      ) || settled.some((r) => claimsRole(r) && rolesMatchForLead(self, roleClaimOf(r)));
+
+    settled.push(
+      taken
+        ? { ...row, creditTier: "contributor", isLead: false }
+        : { ...row, creditTier: "primary", isLead: true },
+    );
+  }
+
+  return settled;
 }

@@ -318,8 +318,9 @@ describe("AddCreditForm (QA 6.2)", () => {
     const disclosures = screen.getAllByRole("button", { name: /show more details/i });
     await user.click(disclosures[0]!);
     await user.click(disclosures[1]!);
+    // Row 1 already leads by default (Task 2.4); the clash starts when row 2 claims it too.
     const leadBoxes = screen.getAllByRole("checkbox", { name: /lead for this role/i });
-    await user.click(leadBoxes[0]!);
+    expect(leadBoxes[0]!).toBeChecked();
     await user.click(leadBoxes[1]!);
     const hints = screen.getAllByText(/another entry in this form is already marked lead for this role/i);
     expect(hints.length).toBe(2);
@@ -432,10 +433,12 @@ describe("AddCreditForm (QA 6.2)", () => {
     await user.click(screen.getByRole("button", { name: /submit \(1\)/i }));
 
     await waitFor(() => expect(addBuildingCreditMock).toHaveBeenCalledTimes(1));
+    // The first architect on a building is its primary, lead credit without the
+    // user having to say so (Task 2.4).
     expect(addBuildingCreditMock.mock.calls[0]?.[0]).toMatchObject({
       role: "design_architecture",
-      creditTier: "contributor",
-      isLead: false,
+      creditTier: "primary",
+      isLead: true,
     });
     expect(onSaved).toHaveBeenCalled();
   });
@@ -456,5 +459,91 @@ describe("AddCreditForm (QA 6.2)", () => {
     expect(await screen.findByText(/year must be between 1000 and 2100/i)).toBeTruthy();
     expect(screen.getByLabelText(/year from/i)).toBeTruthy();
     expect(addBuildingCreditMock).not.toHaveBeenCalled();
+  });
+
+  describe("smart defaults for tier and lead (Task 2.4)", () => {
+    const existingLead = () =>
+      baseCredit({ id: "c-lead", role: "design_architecture", creditTier: "primary", isLead: true });
+
+    it("names the pre-filled tier and lead on the folded trigger", () => {
+      wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onSaved={vi.fn()} onRequestNotify={vi.fn()} />);
+
+      expect(screen.getByRole("button", { name: /show more details/i })).toHaveTextContent(
+        "Primary · Lead",
+      );
+      // The summary reports the values; it does not put the fields back on screen.
+      expect(screen.queryByLabelText(/credit tier/i)).not.toBeInTheDocument();
+    });
+
+    it("steps a second credit for a taken role down to Contributor", async () => {
+      const user = userEvent.setup();
+      wrap(
+        <AddCreditForm
+          buildingId="b1"
+          existingCredits={[existingLead()]}
+          onSaved={vi.fn()}
+          onRequestNotify={vi.fn()}
+        />,
+      );
+
+      expect(screen.getByRole("button", { name: /show more details/i })).toHaveTextContent(
+        "Contributor",
+      );
+
+      await user.click(screen.getByRole("button", { name: /mock pick person/i }));
+      await user.click(screen.getByRole("button", { name: /submit \(1\)/i }));
+
+      await waitFor(() => expect(addBuildingCreditMock).toHaveBeenCalledTimes(1));
+      expect(addBuildingCreditMock.mock.calls[0]?.[0]).toMatchObject({
+        creditTier: "contributor",
+        isLead: false,
+      });
+      // A default must never be one the form immediately argues with.
+      expect(screen.queryByText(/already has a lead credit for this role/i)).not.toBeInTheDocument();
+    });
+
+    it("re-reads the defaults when the role changes", async () => {
+      const user = userEvent.setup();
+      wrap(
+        <AddCreditForm
+          buildingId="b1"
+          existingCredits={[existingLead()]}
+          onSaved={vi.fn()}
+          onRequestNotify={vi.fn()}
+        />,
+      );
+
+      await user.click(screen.getByLabelText(/^role$/i));
+      await user.click(await screen.findByRole("option", { name: /structural engineering/i }));
+
+      expect(screen.getByRole("button", { name: /show more details/i })).toHaveTextContent(
+        "Primary · Lead",
+      );
+    });
+
+    it("keeps a hand-set lead flag through a role change", async () => {
+      const user = userEvent.setup();
+      wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onSaved={vi.fn()} onRequestNotify={vi.fn()} />);
+
+      await user.click(screen.getByRole("button", { name: /show more details/i }));
+      await user.click(screen.getByRole("checkbox", { name: /lead for this role/i }));
+      expect(screen.getByRole("checkbox", { name: /lead for this role/i })).not.toBeChecked();
+
+      await user.click(screen.getByLabelText(/^role$/i));
+      await user.click(await screen.findByRole("option", { name: /structural engineering/i }));
+
+      expect(screen.getByRole("checkbox", { name: /lead for this role/i })).not.toBeChecked();
+    });
+
+    it("demotes a second row that repeats the first row's role", async () => {
+      const user = userEvent.setup();
+      wrap(<AddCreditForm buildingId="b1" existingCredits={[]} onSaved={vi.fn()} onRequestNotify={vi.fn()} />);
+
+      await user.click(screen.getByRole("button", { name: /add another/i }));
+
+      const triggers = screen.getAllByRole("button", { name: /show more details/i });
+      expect(triggers[0]).toHaveTextContent("Primary · Lead");
+      expect(triggers[1]).toHaveTextContent("Contributor");
+    });
   });
 });

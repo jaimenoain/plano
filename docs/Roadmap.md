@@ -111,7 +111,7 @@
   Dependencies:    2.2
   CSV ref:         #13
 
-[ ] Task 2.4 — Smart defaults for Credit tier and lead checkbox
+[x] Task 2.4 — Smart defaults for Credit tier and lead checkbox
 
   Goal:            When adding the first credit for a given Role on a building,
                    the form pre-populates Credit tier = "Primary" and ticks
