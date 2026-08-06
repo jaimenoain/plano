@@ -35,7 +35,7 @@
  * CTAs: Button variant="outline" → bare text-xs uppercase tracking-widest CTA.
  * Infinite scroll loader: h-4 w-4 text-text-secondary (unchanged — already minimal).
  */
-import { useEffect, useRef, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useInfiniteQuery, keepPreviousData } from '@tanstack/react-query';
 import { useMapContext } from '../providers/MapContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,7 +53,6 @@ import type { CompanySummary, PersonSummary } from '@/features/credits/types';
 import type { BuildingSearchHit } from '@/features/search/api/searchBuildingsV2';
 import type { ClusterResponse } from '../hooks/useMapData';
 import { useInfiniteScrollSentinel } from '../hooks/useInfiniteScrollSentinel';
-import { getBoundsFromBuildings } from '@/utils/map';
 import { cn } from '@/lib/utils';
 import { resolveBuildingUrl } from '@/utils/url';
 import { resolveConstructionStatuses } from '@/lib/buildingStatus';
@@ -128,9 +127,8 @@ export function BuildingSidebar({
 }: BuildingSidebarProps = {}) {
   const {
     state: { bounds, filters },
-    methods: { setHighlightedId, selectBuilding, fitMapBounds },
+    methods: { setHighlightedId, selectBuilding },
   } = useMapContext();
-  const lastZoomedQuery = useRef<string | null>(null);
   // Controlled when the parent supplies resultTab + onResultTabChange (so the
   // tab survives the mobile List↔Map remount and stays in sync across the two
   // mounted sidebars); otherwise falls back to internal state.
@@ -156,7 +154,12 @@ export function BuildingSidebar({
     queryFn: async ({ pageParam = 1 }) => {
       if (!bounds) return [];
       const filterCriteria = {
-        query: filters.query,
+        // NO `query`. Browse mode must filter by exactly what the map pins
+        // filter by, and get_map_clusters_v3 deliberately ignores the text
+        // query. Text search is Find mode's job (search_buildings_v2, >= 2
+        // chars), which supplies both the list AND the pins, so the two panes
+        // agree there by construction. Sending it here made a sub-threshold or
+        // programmatically-set query silently widen the list past the viewport.
         category_id: filters.category,
         typology_ids: filters.typologies,
         attribute_ids: filters.attributes,
@@ -230,27 +233,11 @@ export function BuildingSidebar({
     pageCount: data?.pages.length,
   });
 
-  // Auto-zoom on Browse-mode query (Find mode handles its own fit via SearchPage)
-  useEffect(() => {
-    if (findModeBuildings) return;
-    if (filters.query && !isFetching && data && data.pages?.[0]?.length) {
-      if (filters.query !== lastZoomedQuery.current) {
-        const allBuildings = data.pages.flat();
-        const mappedBuildings = allBuildings.map(b => ({
-          location_lat: b.lat,
-          location_lng: b.lng,
-        }));
-        const newBounds = getBoundsFromBuildings(mappedBuildings);
-        if (newBounds) {
-          fitMapBounds(newBounds);
-          lastZoomedQuery.current = filters.query;
-        }
-      }
-    } else if (!filters.query) {
-      lastZoomedQuery.current = null;
-    }
-  }, [filters.query, isFetching, data, fitMapBounds, findModeBuildings]);
-
+  // No auto-zoom-to-results here. It existed to re-frame the map on a
+  // Browse-mode query, but the browse list no longer applies the query at all —
+  // and the effect was half of a feedback loop: an unbounded list result set
+  // yanked the camera, which changed `bounds`, which re-ran the list. Find mode
+  // still fits its own results, in SearchPageContent.
   // buildings — either Find-mode hits adapted to the Building shape, or Browse-mode rows
   const buildings = useMemo<Building[]>(() => {
     if (findModeBuildings) {

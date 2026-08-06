@@ -3,7 +3,7 @@
 > This file is the cross-session status ledger (known issues, schema drift, completed work). Structural facts about the stack live in `AGENTS.md` — read that first.
 
 ## Current Phase
-**UX Refinement Round** (installed 2026-08-05, [`docs/Roadmap.md`](Roadmap.md)) — 35 tasks across 8 phases generated from the owner's 34-prompt task list, plus a Final UAT. Phase 1 complete: Tasks 1.1 (My log block), 1.2 (Overview empty state), 1.3 ("Saved & visited" — savers/visitors on the Overview tab, [ADR 0029](decisions/0029-building-activity-is-visible-to-members.md)) and 1.4 (building-detail maps gated behind MapLibre `cooperativeGestures` so page scroll never zooms) done. Phase 2 started: Task 2.1 (the "broken" person search is an empty `people` table — [ADR 0030](decisions/0030-person-search-falls-back-to-companies.md)) Task 2.2 (credits are editable from the Credits tab; saving closes with a toast — [ADR 0031](decisions/0031-credit-edits-open-to-members.md)), Task 2.3 (credit tier, lead, notes, years and project URL folded behind one "Show more details" trigger, shared by the add and edit forms as `CreditDetailsDisclosure`) and Task 2.4 (`withRoleDefaults` pre-fills that folded pair: the first credit for a role arrives Primary + lead, a later one for a role already spoken for arrives Contributor) done. Phase 2 closed with Task 2.5 (the Edit building page grows its own Credits section, which saves inline — the old `showDesignCreditsField` picker is off there). **Phase 3 complete:** Task 3.1 (address-only edits now enable "Update Building") and Task 3.2 (Edit building design refresh + responsive pass — section sub-headers, one Credits heading, `max-w-4xl`, host-independent action bar) done.
+**UX Refinement Round** (installed 2026-08-05, [`docs/Roadmap.md`](Roadmap.md)) — 35 tasks across 8 phases generated from the owner's 34-prompt task list, plus a Final UAT. Phase 1 complete: Tasks 1.1 (My log block), 1.2 (Overview empty state), 1.3 ("Saved & visited" — savers/visitors on the Overview tab, [ADR 0029](decisions/0029-building-activity-is-visible-to-members.md)) and 1.4 (building-detail maps gated behind MapLibre `cooperativeGestures` so page scroll never zooms) done. Phase 2 started: Task 2.1 (the "broken" person search is an empty `people` table — [ADR 0030](decisions/0030-person-search-falls-back-to-companies.md)) Task 2.2 (credits are editable from the Credits tab; saving closes with a toast — [ADR 0031](decisions/0031-credit-edits-open-to-members.md)), Task 2.3 (credit tier, lead, notes, years and project URL folded behind one "Show more details" trigger, shared by the add and edit forms as `CreditDetailsDisclosure`) and Task 2.4 (`withRoleDefaults` pre-fills that folded pair: the first credit for a role arrives Primary + lead, a later one for a role already spoken for arrives Contributor) done. Phase 2 closed with Task 2.5 (the Edit building page grows its own Credits section, which saves inline — the old `showDesignCreditsField` picker is off there). **Phase 3 complete:** Task 3.1 (address-only edits now enable "Update Building") and Task 3.2 (Edit building design refresh + responsive pass — section sub-headers, one Credits heading, `max-w-4xl`, host-independent action bar) done. Phase 4 started: Task 4.1 (the SERP list and the map pins now cover one identical box — [ADR 0032](decisions/0032-viewport-list-contract.md)) done.
 
 Most recently closed: **Embassy ambassador experience** — archived as [`docs/roadmaps/0003-embassy-ambassador-experience.md`](roadmaps/0003-embassy-ambassador-experience.md) (installed 2026-07-23, closed 2026-07-30). Phases 0–3 complete; Phase 4 opened for **4.3 field mode only** — **4.1 pre-publish moderation and 4.2 missions were closed unstarted by owner decision, not dropped on merit**, and are the obvious candidates for a future roadmap. The Final UAT in that file records what was verified against prod and the one claim that is only partially verified (a real photo upload was never exercised end-to-end on production data).
 
@@ -12,6 +12,44 @@ Earlier programmes, still complete: **Remaining surfaces refinement** (2026-05-2
 **Rollout ≠ refinement:** The May 2026 rollout (Phases 0–7) wired semantic tokens, removed raw palette classes, and connected real data (e.g. `get_feed` on the home feed). That work is **complete**. The refinement programme ([ROADMAP.md](ROADMAP.md), Phases R0–R9) delivered editorial layout, typography rhythm, kit fidelity, and per-page audit evidence across shell, editorial spine, discovery, identity, events, auth/token flows, embassy, and admin. Tracking: all families `refined` or `complete` in [DESIGN_SYSTEM_SCREEN_INVENTORY.md](DESIGN_SYSTEM_SCREEN_INVENTORY.md).
 
 ## CURRENT_ARCHITECTURE_SNAPSHOT
+- **The map queried ~3.7x the AREA the list did, and the list threw the viewport away
+  entirely the moment you typed (2026-08-06):** Roadmap Task 4.1, filed as one bug, was
+  **nine** divergences with no shared definition of what the two panes owed each other.
+  Geometry: the list used the settled `map.getBounds()` while the pins used that box padded
+  **30% per side** by `useMapData.calculateFetchBox` and then a **further 10% of the span
+  per side** inside `get_map_clusters_v3` — ~1.9x the linear span. Since a cluster's count
+  is a `GROUP BY st_snaptogrid` over whatever the `WHERE` admitted, a bubble well inside the
+  viewport counted buildings the list could never page to. SQL: `get_buildings_list`
+  short-circuited its bbox predicate to TRUE whenever `filter_criteria->>'query'` was
+  non-empty (from `20270509000000`), so the list went **global** while the pins stayed
+  viewport-bound and ignored the query entirely. Both buffers are now 0
+  (`20271203000000_map_clusters_v3_exact_viewport.sql`), the bbox is unconditional
+  (`20271204000000_buildings_list_always_bbox.sql`), and
+  [ADR 0032](decisions/0032-viewport-list-contract.md) states the contract:
+  **at rest the list's universe is exactly the set inside `map.getBounds()`.**
+  **The traps to know:** (1) the live `get_buildings_list` body is the one in
+  **`20271175000000`**, NOT the higher-looking narrative in `20271174000000` — 175 sorts
+  later, was applied 2026-07-30, and already carries 174's `b.id` tiebreaker; basing a
+  recreate on 174 would have silently reverted the `similarity >= 0.2` floor and
+  re-imposed a server-side construction-status default the client owns. (2) You cannot keep
+  the prefetch buffer and clip on the client — a cluster bubble is pre-aggregated, so there
+  is no way to subtract the members that fell outside, and the count stays wrong. (3)
+  `hydrateFromURL` moved lat/lng/zoom but never `bounds`, so every deep link and
+  back/forward hop left the SERP list on the *previous* viewport until `onMoveEnd` fired.
+  (4) Removing `filters.query` from the browse list also had to retire `BuildingSidebar`'s
+  auto-fit effect, which was half of a loop: an unbounded result set re-framed the camera,
+  which changed `bounds`, which re-ran the list. Also fixed in parity: `get_buildings_list`
+  never excluded `ub.status = 'ignored'` though the cluster RPC always has, so a building
+  the user hid sat in the list forever without ever drawing a pin (owner's call: honour the
+  hide on both). On the collection page the roster was an unbounded fetch of every
+  `collection_items` row — two hundred rows against four pins when zoomed to a city; it now
+  narrows through `useCollectionItemsInView` with a counted "N more outside this view"
+  footer, exempting the itinerary (dropping a stop renumbers the day) and the pre-settle
+  state (filtering against null bounds flashes an empty rail). **Known residual, recorded
+  not fixed:** the collection map's own bubbles come from a client-side Supercluster index
+  over the whole collection, so their `point_count` still ignores the viewport — exactness
+  there would mean re-indexing on every pan. `tests/unit/viewport-list-contract-migration.test.ts`
+  fails if either buffer or the short-circuit returns.
 - **A sticky bar that bleeds with a negative margin is guessing its host's padding, and it
   can only ever be right for one host (2026-08-06):** Roadmap Task 3.2. `BuildingFormActions`
   pulled out with `-mx-4 px-4`, which is exactly correct for Add building (`px-4 py-8`) and
@@ -276,6 +314,19 @@ Earlier programmes, still complete: **Remaining surfaces refinement** (2026-05-2
   - Admin sidebar: "Updates" item added under Content group
 
 ## SCHEMA_DRIFT_LOG
+
+- 2026-08-06 `20271203000000_map_clusters_v3_exact_viewport.sql` +
+  `20271204000000_buildings_list_always_bbox.sql` — **NOT YET APPLIED.** Both are pure
+  `CREATE OR REPLACE` of an existing signature (no `DROP`, so no overload hazard) and both
+  are types-neutral: the `RETURNS TABLE` is unchanged and neither RPC is in the generated
+  types (they are cast-through-unknown), so `gen-types` is a no-op. Until they are applied,
+  the client-side half of Task 4.1 is live but the server still pads the cluster bbox by 10%
+  of the span and still drops the list's bbox on a text query — the two panes stay closer
+  than before but not exact. **Apply both, then verify numerically** for one fixed bbox:
+  `SELECT count(*) FROM get_buildings_list(<bbox>, '{}'::jsonb, 1, 100000)` must equal
+  `SELECT sum(count) FROM get_map_clusters_v3(<bbox>, <zoom>, '{}')`. Probe
+  `pg_get_functiondef` to confirm, not `supabase_migrations.schema_migrations` (23 rows
+  against 518 files).
 
 - 2026-08-05 `20271200000000_discovery_feed_keyset_pagination.sql` — **applied + verified** on
   prod. Adds `p_after_save_count` / `p_after_id` to `get_discovery_feed`. Two things bit here and

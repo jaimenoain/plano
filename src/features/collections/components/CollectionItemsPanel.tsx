@@ -62,6 +62,14 @@ interface CollectionItemsPanelProps {
   onClearSearch: () => void;
   /** Every building already in the collection, hidden ones included. */
   excludeBuildingIds: Set<string>;
+  /**
+   * Entries the map viewport is hiding right now (0 when the list is not
+   * narrowed). The roster follows the map, so this is the counter that keeps
+   * that honest — without it, zooming in reads as the collection losing rows.
+   */
+  outOfViewCount: number;
+  /** Re-frames the map on the whole collection. Omitted when there is nothing to fit. */
+  onZoomToCollection?: () => void;
 }
 
 export function CollectionItemsPanel({
@@ -86,6 +94,8 @@ export function CollectionItemsPanel({
   matchCount,
   onClearSearch,
   excludeBuildingIds,
+  outOfViewCount,
+  onZoomToCollection,
 }: CollectionItemsPanelProps) {
   // An empty collection counts as a dead-end search too: the bar is always up, so
   // a query typed into one has to land somewhere, and for an editor that
@@ -99,6 +109,16 @@ export function CollectionItemsPanel({
   const [suggestingFor, setSuggestingFor] = useState<string | null>(null);
   if (canEdit && noMatches && suggestingFor !== appliedQuery) setSuggestingFor(appliedQuery);
   const showSuggestions = canEdit && isSearchActive && suggestingFor === appliedQuery;
+
+  // The viewport, not the query, emptied the list — a different dead end, and
+  // one the user fixes by moving the map rather than by clearing anything.
+  const emptiedByViewport =
+    !noMatches && outOfViewCount > 0 && items.length === 0 && markers.length === 0;
+  const zoomOutAction = onZoomToCollection ? (
+    <button type="button" onClick={onZoomToCollection} className="cta-link">
+      Zoom out to the whole collection
+    </button>
+  ) : undefined;
 
   return (
     <div className="space-y-3 p-4 pb-24 lg:pb-4">
@@ -163,6 +183,24 @@ export function CollectionItemsPanel({
       {searchableCount === 0 && !isSearchActive && (
         <div className="py-8 text-center text-sm text-text-secondary">
           No places in this collection yet.
+        </div>
+      )}
+
+      {emptiedByViewport && (
+        <EmptyState
+          eyebrow="Nothing in view"
+          message={`${outOfViewCount} ${outOfViewCount === 1 ? "place is" : "places are"} outside this view.`}
+          action={zoomOutAction}
+        />
+      )}
+
+      {/* The list follows the map, so say what the map is leaving out. */}
+      {outOfViewCount > 0 && !emptiedByViewport && (
+        <div className="mt-4 border-t border-border-default pt-3 text-center text-xs text-text-secondary">
+          <span>
+            {outOfViewCount} more outside this view
+          </span>
+          {zoomOutAction && <div className="mt-1">{zoomOutAction}</div>}
         </div>
       )}
 

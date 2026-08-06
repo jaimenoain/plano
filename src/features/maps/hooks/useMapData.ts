@@ -53,13 +53,24 @@ export interface UseMapDataProps {
   mode?: MapMode;
 }
 
-// 30% buffer
-const BUFFER_RATIO = 0.3;
+// No prefetch buffer. The viewport↔list contract (Task 4.1) is that at rest the
+// pins aggregate EXACTLY the buildings the SERP list pages over, and the list
+// queries the settled `map.getBounds()`. A padded fetch box put buildings the
+// list could never show inside cluster counts near the viewport edge — a bubble
+// reading "12" over a list holding 8. The matching `± span * 0.1` inflation
+// inside get_map_clusters_v3 was removed in the same PR.
+//
+// Losing the prefetch costs edge staleness, not a blank: this query keeps
+// `placeholderData: keepPreviousData`, so the previous pins stay painted while
+// the new box resolves — which is already what happened for any pan wider than
+// 30% of the viewport.
+const BUFFER_RATIO = 0;
 const MAX_LAT = 85;
 const MIN_LAT = -85;
 const MAX_LNG = 180;
 const MIN_LNG = -180;
 
+/** Clamp the viewport to the queryable globe. With BUFFER_RATIO 0 this is the caller's box. */
 function calculateFetchBox(bounds: Bounds): Bounds {
   const latSpan = bounds.north - bounds.south;
   const lngSpan = bounds.east - bounds.west;
