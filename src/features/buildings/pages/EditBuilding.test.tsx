@@ -219,6 +219,24 @@ describe("EditBuilding — credits section (Task 2.5)", () => {
     expect(screen.queryByRole("button", { name: /Add design credits/i })).toBeNull();
   });
 
+  // Task 3.2: the section wrapper and BuildingCredits each used to render their
+  // own "Credits" h2, at 10px and 28px. `hideHeading` leaves exactly one.
+  it("renders exactly one Credits heading", async () => {
+    renderPage();
+
+    await screen.findByText("Ada Arch");
+    expect(screen.getAllByRole("heading", { name: "Credits" }).length).toBe(1);
+  });
+
+  it("gives every section a level-2 heading", async () => {
+    renderPage();
+
+    await screen.findByText("Ada Arch");
+    for (const name of ["Location", "Credits", "Basics", "Access & entry", "Size"]) {
+      expect(screen.getByRole("heading", { level: 2, name })).toBeTruthy();
+    }
+  });
+
   it("still offers the architect statement to the credited verified architect", async () => {
     profileMock.mockReturnValue({
       profile: { id: "u1", role: "user", verified_architect_id: "p1" },

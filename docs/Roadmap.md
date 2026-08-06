@@ -154,7 +154,7 @@
   Dependencies:    None
   CSV ref:         #23
 
-[ ] Task 3.2 — Edit Building design refresh + responsive pass
+[x] Task 3.2 — Edit Building design refresh + responsive pass
 
   Goal:            Refresh the Edit building page so its sections are clearly
                    distinguishable (e.g. larger sub-headers, clearer grouping)

@@ -3,7 +3,7 @@
 > This file is the cross-session status ledger (known issues, schema drift, completed work). Structural facts about the stack live in `AGENTS.md` — read that first.
 
 ## Current Phase
-**UX Refinement Round** (installed 2026-08-05, [`docs/Roadmap.md`](Roadmap.md)) — 35 tasks across 8 phases generated from the owner's 34-prompt task list, plus a Final UAT. Phase 1 complete: Tasks 1.1 (My log block), 1.2 (Overview empty state), 1.3 ("Saved & visited" — savers/visitors on the Overview tab, [ADR 0029](decisions/0029-building-activity-is-visible-to-members.md)) and 1.4 (building-detail maps gated behind MapLibre `cooperativeGestures` so page scroll never zooms) done. Phase 2 started: Task 2.1 (the "broken" person search is an empty `people` table — [ADR 0030](decisions/0030-person-search-falls-back-to-companies.md)) Task 2.2 (credits are editable from the Credits tab; saving closes with a toast — [ADR 0031](decisions/0031-credit-edits-open-to-members.md)), Task 2.3 (credit tier, lead, notes, years and project URL folded behind one "Show more details" trigger, shared by the add and edit forms as `CreditDetailsDisclosure`) and Task 2.4 (`withRoleDefaults` pre-fills that folded pair: the first credit for a role arrives Primary + lead, a later one for a role already spoken for arrives Contributor) done. Phase 2 closed with Task 2.5 (the Edit building page grows its own Credits section, which saves inline — the old `showDesignCreditsField` picker is off there). Phase 3 started: Task 3.1 (address-only edits now enable "Update Building") done.
+**UX Refinement Round** (installed 2026-08-05, [`docs/Roadmap.md`](Roadmap.md)) — 35 tasks across 8 phases generated from the owner's 34-prompt task list, plus a Final UAT. Phase 1 complete: Tasks 1.1 (My log block), 1.2 (Overview empty state), 1.3 ("Saved & visited" — savers/visitors on the Overview tab, [ADR 0029](decisions/0029-building-activity-is-visible-to-members.md)) and 1.4 (building-detail maps gated behind MapLibre `cooperativeGestures` so page scroll never zooms) done. Phase 2 started: Task 2.1 (the "broken" person search is an empty `people` table — [ADR 0030](decisions/0030-person-search-falls-back-to-companies.md)) Task 2.2 (credits are editable from the Credits tab; saving closes with a toast — [ADR 0031](decisions/0031-credit-edits-open-to-members.md)), Task 2.3 (credit tier, lead, notes, years and project URL folded behind one "Show more details" trigger, shared by the add and edit forms as `CreditDetailsDisclosure`) and Task 2.4 (`withRoleDefaults` pre-fills that folded pair: the first credit for a role arrives Primary + lead, a later one for a role already spoken for arrives Contributor) done. Phase 2 closed with Task 2.5 (the Edit building page grows its own Credits section, which saves inline — the old `showDesignCreditsField` picker is off there). **Phase 3 complete:** Task 3.1 (address-only edits now enable "Update Building") and Task 3.2 (Edit building design refresh + responsive pass — section sub-headers, one Credits heading, `max-w-4xl`, host-independent action bar) done.
 
 Most recently closed: **Embassy ambassador experience** — archived as [`docs/roadmaps/0003-embassy-ambassador-experience.md`](roadmaps/0003-embassy-ambassador-experience.md) (installed 2026-07-23, closed 2026-07-30). Phases 0–3 complete; Phase 4 opened for **4.3 field mode only** — **4.1 pre-publish moderation and 4.2 missions were closed unstarted by owner decision, not dropped on merit**, and are the obvious candidates for a future roadmap. The Final UAT in that file records what was verified against prod and the one claim that is only partially verified (a real photo upload was never exercised end-to-end on production data).
 
@@ -12,6 +12,32 @@ Earlier programmes, still complete: **Remaining surfaces refinement** (2026-05-2
 **Rollout ≠ refinement:** The May 2026 rollout (Phases 0–7) wired semantic tokens, removed raw palette classes, and connected real data (e.g. `get_feed` on the home feed). That work is **complete**. The refinement programme ([ROADMAP.md](ROADMAP.md), Phases R0–R9) delivered editorial layout, typography rhythm, kit fidelity, and per-page audit evidence across shell, editorial spine, discovery, identity, events, auth/token flows, embassy, and admin. Tracking: all families `refined` or `complete` in [DESIGN_SYSTEM_SCREEN_INVENTORY.md](DESIGN_SYSTEM_SCREEN_INVENTORY.md).
 
 ## CURRENT_ARCHITECTURE_SNAPSHOT
+- **A sticky bar that bleeds with a negative margin is guessing its host's padding, and it
+  can only ever be right for one host (2026-08-06):** Roadmap Task 3.2. `BuildingFormActions`
+  pulled out with `-mx-4 px-4`, which is exactly correct for Add building (`px-4 py-8`) and
+  wrong for Edit building (`p-4 sm:p-6 lg:p-8`) — measured on prod-shaped data at 1440, the
+  bar sat at 400→1040 inside a container spanning 384→1056, i.e. **inset 16px on each side
+  and aligned with nothing**. The first fix — tracking the ladder with
+  `sm:-mx-6 lg:-mx-8` — passed on Edit and silently **broke Add building**, where the bar
+  then overhung its container by 16px a side (368→1072 vs 384→1056). That regression was
+  only caught by driving `/add-building` through to step 2 and measuring; the section
+  restyle looked perfect there. The bar now spans its content column with no bleed at all,
+  which is correct under any host padding, and `COMPONENT_SPEC.md` §5 records the rule.
+  **The trap to know:** three surfaces mount `BuildingForm` — Edit building, Add building
+  step 2 (`max-w-2xl px-4 py-8`, reachable only after a pin is dropped) and the admin
+  dialog (`admin/pages/Buildings.tsx`) — so anything in `building-form-ui.tsx` that assumes
+  a container must be checked on all three, not just the page you are editing.
+- **Two `<h2>Credits</h2>` were stacked on the Edit page, at 10px and 28px (2026-08-06):**
+  Task 2.5 wrapped `BuildingCredits` in a `BuildingFormSection title="Credits"` while the
+  component renders its own heading for the building-detail Credits tab. Measured before/
+  after on a real page: nine section labels at `10px w500` plus a stray `28px w600 Credits`
+  → eight labels at `24px w600`, one Credits. `BuildingCredits` gained `hideHeading` (and
+  drops its `aria-labelledby` with it, or the section would point at a removed id); the
+  count pill goes with the header, which is the one deliberate information loss — the
+  credits list sits directly below it and the detail tab still shows the count.
+  **Both `BuildingCredits.tsx` and `BuildingForm.tsx` sit one line under their frozen caps**
+  (833 / 920), so the prop was paid for by compacting the header block in the same file —
+  never by touching `.file-size-baseline.json`.
 - **The Edit building page owns two dirty states, and only one of them reached the button
   (2026-08-06):** Roadmap Task 3.1 — moving the pin, picking a new address or ticking
   "Approximate location" left "Update Building" disabled under "No changes to save", so an

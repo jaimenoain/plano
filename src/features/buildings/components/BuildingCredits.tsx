@@ -476,6 +476,8 @@ export interface BuildingCreditsProps {
   /** Controlled open state for the add-credit sheet (optional; internal state used if omitted). */
   addOpen?: boolean;
   onAddOpenChange?: (open: boolean) => void;
+  /** Suppress the built-in "Credits" heading when the host already renders one (Edit building). */
+  hideHeading?: boolean;
 }
 
 function CreditsEmptyState({
@@ -520,6 +522,7 @@ export function BuildingCredits({
   currentUserId,
   addOpen: addOpenProp,
   onAddOpenChange,
+  hideHeading = false,
 }: BuildingCreditsProps) {
   const [ancillaryOpen, setAncillaryOpen] = useState(false);
   const [addOpenInternal, setAddOpenInternal] = useState(false);
@@ -551,21 +554,18 @@ export function BuildingCredits({
     <section
       id="full-credits"
       className="scroll-mt-24"
-      aria-labelledby="building-credits-heading"
+      aria-labelledby={hideHeading ? undefined : "building-credits-heading"}
     >
-      <header className="mb-8 flex items-baseline justify-between gap-6 border-b border-border-default pb-4">
-        <h2
-          id="building-credits-heading"
-          className="text-2xl font-semibold tracking-[-0.02em] text-text-primary md:text-[28px]"
-        >
-          Credits
-        </h2>
-        {visibleCredits.length > 0 ? (
-          <span className="eyebrow tracking-[0.15em]">
-            {visibleCredits.length} {visibleCredits.length === 1 ? "credit" : "credits"}
-          </span>
-        ) : null}
-      </header>
+      {hideHeading ? null : (
+        <header className="mb-8 flex items-baseline justify-between gap-6 border-b border-border-default pb-4">
+          <h2 id="building-credits-heading" className="text-2xl font-semibold tracking-[-0.02em] text-text-primary md:text-[28px]">
+            Credits
+          </h2>
+          {visibleCredits.length > 0 ? (
+            <span className="eyebrow tracking-[0.15em]">{visibleCredits.length} {visibleCredits.length === 1 ? "credit" : "credits"}</span>
+          ) : null}
+        </header>
+      )}
 
       {visibleCredits.length === 0 ? (
         <CreditsEmptyState
@@ -688,7 +688,6 @@ export function BuildingCredits({
     </section>
   );
 }
-
 
 export interface BuildingCreditsPreviewProps {
   credits: BuildingCreditWithEntities[];

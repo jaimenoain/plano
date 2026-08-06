@@ -417,6 +417,10 @@ Form-level actions (Submit, Cancel) sit at the bottom in `flex items-center just
 
 For constrained-width forms (settings, single-record editing), the entire form wrapper uses `max-w-2xl`.
 
+**Exception — a form that hosts a non-field surface uses `max-w-4xl`.** When a page is a form *plus* an embedded management surface (a map picker, a credits ledger), `max-w-2xl` is too narrow for the embedded child, not for the fields. On Edit building the content column is 608px once `lg:p-8` is subtracted, and the location picker's own `md:grid-cols-[350px_1fr]` was left rendering a 234px-wide map. Field groups keep their content-type caps (Principle 3), so widening the wrapper does not stretch a single input. Add building already used `max-w-4xl` for the same picker. A form made only of field groups stays at `max-w-2xl`.
+
+**Sticky action bars do not bleed past the content column.** A bar that pulls out with a negative margin has to guess the host's padding, which is only ever right for one host — `-mx-4` was correct for Add building (`px-4`) and left the bar inset by 8–16px on Edit building (`p-4 sm:p-6 lg:p-8`). Tracking a padding ladder moves the same bug to the next host. The bar spans its content column instead, which is correct under any host padding.
+
 ### Token Assembly
 
 | Part | Property | Token | Tailwind class |
