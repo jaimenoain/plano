@@ -270,4 +270,8 @@ BEGIN
 END;
 $function$;
 
+-- Revoke by name before granting back — `revoke ... from public` alone leaves the
+-- direct anon/authenticated grants Supabase's ALTER DEFAULT PRIVILEGES creates.
+-- Both roles are then granted back on purpose: this is the public SERP list: anonymous visitors read it beside the map.
+REVOKE ALL ON FUNCTION public.get_buildings_list(double precision, double precision, double precision, double precision, jsonb, integer, integer) FROM public, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_buildings_list(double precision, double precision, double precision, double precision, jsonb, integer, integer) TO anon, authenticated, service_role;
