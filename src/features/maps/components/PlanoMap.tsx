@@ -15,7 +15,8 @@ import { getGlobalTierRank } from '../utils/pinStyling';
 import { MapMarkers } from './MapMarkers';
 import { BuildingDetailDrawer } from './BuildingDetailDrawer';
 import { MapChromeButton } from './MapChromeButton';
-import { EmptyState } from '@/components/ui/empty-state';
+import { MapEmptyAreaNotice } from './MapEmptyAreaNotice';
+import { useEmptyAreaNotice } from '../hooks/useEmptyAreaNotice';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { SATELLITE_MAP_STYLE } from "@/features/maps/constants/satelliteMapStyle";
 
@@ -326,6 +327,15 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout, onAddPhoto }: Plano
       c.lat <= bounds.north && c.lat >= bounds.south && c.lng <= bounds.east && c.lng >= bounds.west
     ).length;
   }, [clusters, bounds]);
+
+  // "Nothing here" vs "nothing *yet*" are different states: the notice waits for
+  // a settled empty view, and only real results retire it (see the hook).
+  const emptyNotice = useEmptyAreaNotice({
+    enabled: !!showEmptyMessage,
+    isEmpty: !isLoading && !isFetching && !!bounds && visibleClustersCount === 0,
+    hasResults: visibleClustersCount > 0,
+  });
+
   const topGapCluster = useMemo(() => {
     if (!showGapCallout || !filters.photographyGaps || !clusters || clusters.length === 0 || viewState.zoom >= 12) return null;
     return clusters
@@ -393,22 +403,11 @@ function PlanoMapContent({ showEmptyMessage, showGapCallout, onAddPhoto }: Plano
       {/* Detail drawer — slides from the right (desktop) / bottom (mobile) on pin click */}
       <BuildingDetailDrawer cluster={selectedCluster} onClose={handleCloseDetail} />
 
-      {showEmptyMessage && !isLoading && !isFetching && bounds && visibleClustersCount === 0 && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 max-w-xs bg-surface-card/95 backdrop-blur-xs border border-border-default animate-in fade-in zoom-in duration-300">
-          <EmptyState
-            className="px-6 py-8"
-            eyebrow="No buildings in this area"
-            action={
-              <button
-                type="button"
-                onClick={() => mapRef.current?.zoomOut()}
-                className="text-xs font-medium uppercase tracking-widest text-text-primary hover:opacity-60 transition-opacity"
-              >
-                Zoom out →
-              </button>
-            }
-          />
-        </div>
+      {emptyNotice.visible && (
+        <MapEmptyAreaNotice
+          onZoomOut={() => mapRef.current?.zoomOut()}
+          onDismiss={emptyNotice.dismiss}
+        />
       )}
 
       {/* ── Top-left: Satellite toggle & Gap Callout ── */}
