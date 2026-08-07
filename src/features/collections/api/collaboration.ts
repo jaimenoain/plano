@@ -37,6 +37,25 @@ export async function fetchMyCollaborationRequestStatus(
   return (data?.status as CollaborationRequestStatus | undefined) ?? null;
 }
 
+export interface CollectionOwnerProfile {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+}
+
+/** Profile (with avatar) for the Collaborators tab's owner row. */
+export async function fetchCollectionOwnerProfile(
+  ownerId: string,
+): Promise<CollectionOwnerProfile> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, username, avatar_url")
+    .eq("id", ownerId)
+    .single();
+  if (error) throw error;
+  return data as CollectionOwnerProfile;
+}
+
 /** Owner-side: pending requests awaiting accept/reject for a collection. */
 export async function fetchPendingCollaborationRequests(
   collectionId: string,

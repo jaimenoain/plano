@@ -4,6 +4,7 @@ export { CollectionsGrid } from './components/CollectionsGrid';
 export { CreateCollectionDialog } from './components/CreateCollectionDialog';
 export { CollectionCard } from './components/CollectionCard';
 export { CollectionSettingsDialog } from './components/CollectionSettingsDialog';
+export { CollaboratorsList, type Contributor } from './components/CollaboratorsList';
 export {
   collaborationCtaState,
   friendlyRequestError,
