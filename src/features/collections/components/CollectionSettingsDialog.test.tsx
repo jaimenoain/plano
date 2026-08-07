@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/re
 import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import type { ComponentProps, ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { CollectionSettingsDialog } from "./CollectionSettingsDialog";
+import { CollectionSettingsDialog, SavedPlacesStatusToggle, SavedPlacesDotToggle } from "./CollectionSettingsDialog";
 
 type DialogProps = ComponentProps<typeof CollectionSettingsDialog>;
 
@@ -120,5 +120,25 @@ describe("CollectionSettingsDialog — save", () => {
     expect(mockToast.error).not.toHaveBeenCalled();
     expect(onUpdate).toHaveBeenCalledTimes(1);
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+});
+
+describe("Show-by toggles — selected-state affordance (Task 5.6)", () => {
+  afterEach(cleanup);
+
+  it("SavedPlacesStatusToggle marks only the active option as data-state=on", () => {
+    render(<SavedPlacesStatusToggle value="visited" onChange={vi.fn()} />);
+
+    expect(screen.getByRole("radio", { name: "Visited" })).toHaveAttribute("data-state", "on");
+    expect(screen.getByRole("radio", { name: "All" })).toHaveAttribute("data-state", "off");
+    expect(screen.getByRole("radio", { name: "Saved" })).toHaveAttribute("data-state", "off");
+  });
+
+  it("SavedPlacesDotToggle marks only the active option as data-state=on", () => {
+    render(<SavedPlacesDotToggle value="2" onChange={vi.fn()} />);
+
+    expect(screen.getByRole("radio", { name: "Show only 2-dot rated places" })).toHaveAttribute("data-state", "on");
+    expect(screen.getByRole("radio", { name: "All" })).toHaveAttribute("data-state", "off");
+    expect(screen.getByRole("radio", { name: "Show only 1-dot rated places" })).toHaveAttribute("data-state", "off");
   });
 });

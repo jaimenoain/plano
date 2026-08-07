@@ -83,7 +83,12 @@ const METHOD_DESCRIPTIONS = {
   custom: "Create custom categories with your own colors to organize locations."
 };
 
-function SavedPlacesDotToggle({
+const SHOW_BY_ITEM_SELECTED =
+  "data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground " +
+  "data-[state=on]:border-brand-primary data-[state=on]:font-semibold " +
+  "data-[state=on]:ring-1 data-[state=on]:ring-brand-primary data-[state=on]:hover:bg-brand-primary";
+
+export function SavedPlacesDotToggle({
   value,
   onChange,
 }: {
@@ -102,19 +107,19 @@ function SavedPlacesDotToggle({
       className="flex-wrap justify-start gap-1"
       aria-label="Filter saved places by dot rating"
     >
-      <ToggleGroupItem value="all" className="min-h-[44px] min-w-12 items-center justify-center px-2 md:min-h-9">
+      <ToggleGroupItem value="all" className={`min-h-[44px] min-w-12 items-center justify-center px-2 md:min-h-9 ${SHOW_BY_ITEM_SELECTED}`}>
         All
       </ToggleGroupItem>
       {[1, 2, 3].map((n) => (
         <ToggleGroupItem
           key={n}
           value={String(n) as SavedPlacesDotFilter}
-          className="min-h-[44px] min-w-11 items-center justify-center gap-0.5 px-2 md:min-h-9"
+          className={`min-h-[44px] min-w-11 items-center justify-center gap-0.5 px-2 md:min-h-9 ${SHOW_BY_ITEM_SELECTED}`}
           aria-label={n === 1 ? "Show only 1-dot rated places" : `Show only ${n}-dot rated places`}
         >
           <span className="flex items-center gap-0.5" aria-hidden>
             {Array.from({ length: n }).map((_, i) => (
-              <span key={i} className="h-1.5 w-1.5 rounded-full bg-text-primary" />
+              <span key={i} className="h-1.5 w-1.5 rounded-full bg-current" />
             ))}
           </span>
         </ToggleGroupItem>
@@ -123,7 +128,7 @@ function SavedPlacesDotToggle({
   );
 }
 
-function SavedPlacesStatusToggle({
+export function SavedPlacesStatusToggle({
   value,
   onChange,
 }: {
@@ -142,13 +147,13 @@ function SavedPlacesStatusToggle({
       className="flex-wrap justify-start gap-1"
       aria-label="Filter saved places by visited or saved"
     >
-      <ToggleGroupItem value="all" className="min-h-[44px] min-w-12 items-center justify-center px-2 md:min-h-9">
+      <ToggleGroupItem value="all" className={`min-h-[44px] min-w-12 items-center justify-center px-2 md:min-h-9 ${SHOW_BY_ITEM_SELECTED}`}>
         All
       </ToggleGroupItem>
-      <ToggleGroupItem value="visited" className="min-h-[44px] min-w-18 items-center justify-center px-2 md:min-h-9">
+      <ToggleGroupItem value="visited" className={`min-h-[44px] min-w-18 items-center justify-center px-2 md:min-h-9 ${SHOW_BY_ITEM_SELECTED}`}>
         Visited
       </ToggleGroupItem>
-      <ToggleGroupItem value="pending" className="min-h-[44px] min-w-22 items-center justify-center px-2 md:min-h-9">
+      <ToggleGroupItem value="pending" className={`min-h-[44px] min-w-22 items-center justify-center px-2 md:min-h-9 ${SHOW_BY_ITEM_SELECTED}`}>
         Saved
       </ToggleGroupItem>
     </ToggleGroup>

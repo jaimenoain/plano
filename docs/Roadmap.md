@@ -273,7 +273,7 @@
   Dependencies:    None
   CSV ref:         #19
 
-[ ] Task 5.6 — Map View: obvious selected state for Show-by options
+[x] Task 5.6 — Map View: obvious selected state for Show-by options
 
   Goal:            In the Collection Settings drawer's Map View tab, with "Show
                    Saved Places" active, the selected "Show by list" / "Show by
