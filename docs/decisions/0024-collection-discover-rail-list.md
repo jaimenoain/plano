@@ -3,7 +3,10 @@
 **Status:** accepted (2026-07-31); amended by [ADR 0026](0026-collection-rail-view-drives-the-map.md)
 (2026-08-01) — the Discover **tab** became one of three **views** that drive the map as well as the
 rail, and its content became the union of the enabled sources rather than the catalogue alone. The
-list contract below is unchanged.
+list contract below is unchanged. Amended again by
+[ADR 0032](0032-viewport-list-contract.md) (2026-08-06): the bbox half of the first consequence
+below is **obsolete** — both bbox buffers were removed, so the list and the pins now cover the same
+box. The ordering half stands, and with it the no-count-badge decision.
 
 **Context.** [ADR 0021](0021-collection-map-two-cluster-sources.md) gave the collection map a
 discovery view, but only the *map*. The rail went on listing the collection roster whatever the map
@@ -29,6 +32,10 @@ Consequences we accept:
   its bbox ~30% via `calculateFetchBox` while the list uses the settled bounds; and
   `get_buildings_list` takes no `ranking_preference`, so ordering differs from the map's global
   discover ranking. The two panes answer the same question at different resolutions.
+  *(Superseded in part by [ADR 0032](0032-viewport-list-contract.md): the bbox inflation is gone —
+  `BUFFER_RATIO` is 0 and `get_map_clusters_v3` no longer pads either — so the two panes now cover
+  the identical box. Only the ordering difference remains, which is still enough to withhold a
+  count badge.)*
 - **Therefore the Discover tab carries no count badge.** There is no honest number available: the
   map's is an approximate cluster count that can include collected buildings (ADR 0021), the list
   is paged so we only ever know how many we have *loaded*, and the two cover different areas. The

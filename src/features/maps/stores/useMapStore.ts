@@ -185,6 +185,12 @@ export function createMapStore(initial: SerializableMapState) {
         mode: parsed.mode,
         filters: parsed.filters,
         query: parsed.filters.query ?? '',
+        // Bounds must move with the camera. Leaving them alone meant a deep
+        // link or a back/forward hop kept the SERP list on the PREVIOUS
+        // viewport until the map settled and fired onMoveEnd — the list showing
+        // one city while the map showed another. Same approximation the store
+        // is seeded with; the map overwrites it with the real box on onLoad.
+        bounds: approximateBoundsFromCenter(parsed.lat, parsed.lng, parsed.zoom),
       }),
   }));
 }

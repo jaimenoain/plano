@@ -43,7 +43,7 @@ import { parseLocation } from "@/utils/location";
 import { mapCollectionItem } from "../mapCollectionItem";
 import { visibleCollectionItems } from "../collectionVisibility";
 import { CollectionMapOverlays } from "./CollectionMapOverlays";
-import { getBoundsFromBuildings, isLngLatInBounds, type Bounds } from "@/utils/map";
+import { getBoundsFromBuildings, type Bounds } from "@/utils/map";
 import { collectionStructuredData, SITE_URL } from "@/features/buildings/utils/structuredData";
 import { Loader2, ListFilter, MapPinPlus, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -83,6 +83,7 @@ import { CollectionSearchBar } from "./CollectionSearchBar";
 import { useCollectionItemEdits } from "../hooks/useCollectionItemEdits";
 import { useCollectionMapSelection } from "../hooks/useCollectionMapSelection";
 import { useCollectionSearch } from "../hooks/useCollectionSearch";
+import { useCollectionItemsInView, useCollectionMapFit } from "../hooks/useCollectionItemsInView";
 import { useScrolledPast } from "@/hooks/useScrolledPast";
 import { filterDiscoveryBuildings } from "../filterCollectionItems";
 import {
@@ -748,6 +749,15 @@ export default function CollectionMap() {
   const { isActive: searchApplies, matchedIds } = search;
   const searchQuery = searchApplies ? search.appliedQuery : '';
 
+  // Everything this page narrows to the map viewport (Task 4.1) — see the hook.
+  const { itemsInView, markersInView, outOfViewCount, savedPlacesInView } = useCollectionItemsInView({
+    items: search.searchedItems, markers: search.searchedMarkers,
+    bounds: viewportBounds, enabled: !rail.showItinerary,
+    savedPlaces: showSavedCandidates ? savedCandidates : null, excludeBuildingIds: existingBuildingIds,
+    dotFilter: savedPlacesDotFilter, statusFilter: savedPlacesStatusFilter,
+  });
+  const { fitRequest, fitToCollection } = useCollectionMapFit(search.fitBoundsRequest, initialBounds);
+
   const allMapBuildings = useMemo(() => {
     // `mapBuildings` stays whole (bounds, stats, itinerary all need it); the
     // search narrows only what the map actually draws.
@@ -795,18 +805,6 @@ export default function CollectionMap() {
     setViewportBounds(null);
   }, [slug]);
 
-  const visibleSavedCandidatesToAdd = useMemo(() => {
-    if (!showSavedCandidates || !savedCandidates?.length || !viewportBounds) return [];
-    return savedCandidates.filter(
-      (c) =>
-        !existingBuildingIds.has(c.id) &&
-        matchesSavedPlacesDotFilter(c.personal_rating ?? null, savedPlacesDotFilter) &&
-        matchesSavedPlacesStatusFilter(c.personal_status ?? null, savedPlacesStatusFilter) &&
-        isLngLatInBounds(c.location_lat, c.location_lng, viewportBounds),
-    );
-  }, [showSavedCandidates, savedCandidates, viewportBounds, existingBuildingIds,
-      savedPlacesDotFilter, savedPlacesStatusFilter]);
-
   const { handleUpdateNote, handleUpdateCategory, handleUpdateMarkerNote } =
     useCollectionItemEdits({ onChanged: refetchItems });
 
@@ -840,10 +838,10 @@ export default function CollectionMap() {
   };
 
   const handleOpenAddVisibleConfirm = useCallback(() => {
-    if (visibleSavedCandidatesToAdd.length === 0) return;
-    setBulkAddPreviewBuildings([...visibleSavedCandidatesToAdd]);
+    if (savedPlacesInView.length === 0) return;
+    setBulkAddPreviewBuildings([...savedPlacesInView]);
     setShowAddVisibleConfirm(true);
-  }, [visibleSavedCandidatesToAdd]);
+  }, [savedPlacesInView]);
 
   const handleConfirmAddVisibleSavedCandidates = async () => {
     if (!collection?.id || bulkAddPreviewBuildings.length === 0) return;
@@ -1138,8 +1136,10 @@ toast({
                         }}
                         itemsPanelProps={{
                             collectionId: collection.id,
-                            items: search.searchedItems,
-                            markers: search.searchedMarkers,
+                            items: itemsInView,
+                            markers: markersInView,
+                            outOfViewCount,
+                            onZoomToCollection: fitToCollection,
                             excludeBuildingIds: existingBuildingIds,
                             highlightedId,
                             setHighlightedId,
@@ -1168,7 +1168,7 @@ toast({
                             scrollRootRef: railScrollRef,
                             hasCatalogue: catalogueLayer,
                             hasSavedPlaces: showSavedCandidates,
-                            savedPlaces: visibleSavedCandidatesToAdd,
+                            savedPlaces: savedPlacesInView,
                             canEdit,
                             onAddSavedPlace: handleAddToCollection,
                             onAddAllSavedPlaces: handleOpenAddVisibleConfirm,
@@ -1208,7 +1208,7 @@ toast({
                     showSavedCandidates={showSavedCandidates}
                     showItinerary={rail.showItinerary}
                     onViewportBoundsChange={setViewportBounds}
-                    fitBoundsRequest={search.fitBoundsRequest}
+                    fitBoundsRequest={fitRequest}
                     discoveryEnabled={discoveryEnabled}
                     hideCollectionPins={rail.hideCollectionPins}
                     collectionBuildingIds={existingBuildingIds}
@@ -1232,7 +1232,7 @@ toast({
                         appliedQuery={search.appliedQuery}
                         onClearSearch={() => search.setQuery("")}
                         showSavedCandidates={showSavedCandidates}
-                        addInViewCount={visibleSavedCandidatesToAdd.length}
+                        addInViewCount={savedPlacesInView.length}
                         isAddInViewDisabled={!viewportBounds || isAddingVisibleCandidates}
                         isAddingInView={isAddingVisibleCandidates}
                         onAddInView={handleOpenAddVisibleConfirm}

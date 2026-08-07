@@ -119,4 +119,36 @@ describe('useMapData — Phase 3 (get_map_clusters_v3)', () => {
     expect(fc.min_popularity_score).toBeUndefined();
     expect(fc.popularity_floor).toBeUndefined();
   });
+
+  // Task 4.1 — the viewport↔list contract. The SERP list queries the settled
+  // `map.getBounds()`; if the pins query a padded box, a cluster bubble inside
+  // the viewport counts buildings the list can never show.
+  it('sends the caller bounds VERBATIM — no prefetch buffer', async () => {
+    const filters: MapFilters = {};
+    const { result } = renderHook(() => useMapData({ bounds, zoom, filters }), {
+      wrapper: createWrapper(),
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const args = rpcMock.mock.calls[0][1];
+    expect(args.min_lat).toBe(bounds.south);
+    expect(args.max_lat).toBe(bounds.north);
+    expect(args.min_lng).toBe(bounds.west);
+    expect(args.max_lng).toBe(bounds.east);
+  });
+
+  it('still clamps a viewport that overruns the queryable globe', async () => {
+    const filters: MapFilters = {};
+    const overrun = { north: 92, south: -92, east: 190, west: -190 };
+    const { result } = renderHook(() => useMapData({ bounds: overrun, zoom, filters }), {
+      wrapper: createWrapper(),
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const args = rpcMock.mock.calls[0][1];
+    expect(args.max_lat).toBe(85);
+    expect(args.min_lat).toBe(-85);
+    expect(args.max_lng).toBe(180);
+    expect(args.min_lng).toBe(-180);
+  });
 });

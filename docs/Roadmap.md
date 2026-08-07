@@ -170,7 +170,7 @@
 
 > **Batch submission:** Submit Tasks 4.1 → 4.2 → 4.3 as a single sequential batch.
 
-[ ] Task 4.1 — SERP list matches the visible map
+[x] Task 4.1 — SERP list matches the visible map
 
   Goal:            On the search page and the collection detail page, the SERP
                    list shows exactly the items within the visible map viewport.
@@ -182,7 +182,7 @@
   Dependencies:    None
   CSV ref:         #2
 
-[ ] Task 4.2 — "No buildings in this area" notice refinement
+[x] Task 4.2 — "No buildings in this area" notice refinement
 
   Goal:            The empty-area notice on the map no longer nags while
                    panning: it appears only after a short settle delay (~1s),

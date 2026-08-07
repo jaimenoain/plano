@@ -207,8 +207,12 @@ export function SearchPageContent() {
     location_lat?: number | null;
     location_lng?: number | null;
   }) => {
+    // Fly to the building; do NOT set filters.query. Setting it put the browse
+    // list into a name search the map pins knew nothing about — and, because
+    // isFindMode reads searchValue (just cleared) rather than filters.query,
+    // that search ran unbounded while the map stayed on this viewport. Moving
+    // the camera onto the building is what puts it in the list.
     setSearchValue("");
-    setFilter("query", building.name);
     if (building.location_lat != null && building.location_lng != null) {
       moveMap(building.location_lat, building.location_lng, 16);
     }
