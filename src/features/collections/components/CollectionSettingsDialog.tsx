@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,6 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { buildCollectionCsvExport } from "../api/exportCollectionCsv";
 import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,7 +35,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PendingCollaborationRequestsList } from "./PendingCollaborationRequestsList";
 import { CollaboratorsList } from "./CollaboratorsList";
 import { CollectionDiscoverySettings } from "./CollectionDiscoverySettings";
-import { notifyCollaboratorByEmail } from "../api/collaboration";
+import { CollectionMemberFilter } from "./CollectionMemberFilter";
+import { notifyCollaboratorByEmail, fetchCollectionOwnerProfile } from "../api/collaboration";
 
 interface CollectionSettingsDialogProps {
   collection: Collection;
@@ -182,6 +183,7 @@ export function CollectionSettingsDialog({
     external_link: string;
     show_community_images: boolean;
     show_added_by: boolean;
+    show_top_rating: boolean;
     categorization_method: 'default' | 'custom' | 'status' | 'rating_member' | 'uniform';
     custom_categories: { id: string; label: string; color: string }[];
     categorization_selected_members: string[] | null;
@@ -192,6 +194,7 @@ export function CollectionSettingsDialog({
     external_link: collection.external_link || "",
     show_community_images: collection.show_community_images,
     show_added_by: collection.show_added_by ?? false,
+    show_top_rating: collection.show_top_rating ?? false,
     categorization_method: collection.categorization_method || 'uniform',
     custom_categories: collection.custom_categories || [],
     categorization_selected_members: collection.categorization_selected_members || null
@@ -201,6 +204,12 @@ export function CollectionSettingsDialog({
   const [showDeleteAlert, setShowDeleteAlert] = useState(false);
   const [contributors, setContributors] = useState<Contributor[]>([]);
   const [loadingContributors, setLoadingContributors] = useState(false);
+  // Shares its cache with CollaboratorsList's identical query — one fetch per owner per open.
+  const { data: ownerProfile } = useQuery({
+    queryKey: ["profile-by-id", collection.owner_id],
+    queryFn: () => fetchCollectionOwnerProfile(collection.owner_id),
+    enabled: !!collection.owner_id,
+  });
 
   // Non-editors only ever have the Map View tab, so clamp any deep-linked tab to "map".
   const [activeTab, setActiveTab] = useState<string>(canEdit ? initialTab : "map");
@@ -243,6 +252,7 @@ export function CollectionSettingsDialog({
         external_link: collection.external_link || "",
         show_community_images: collection.show_community_images,
         show_added_by: collection.show_added_by ?? false,
+        show_top_rating: collection.show_top_rating ?? false,
         categorization_method: collection.categorization_method || 'uniform',
         custom_categories: collection.custom_categories || [],
         categorization_selected_members: collection.categorization_selected_members || null
@@ -304,6 +314,7 @@ export function CollectionSettingsDialog({
         external_link: parsed.data.external_link ?? null,
         show_community_images: formData.show_community_images,
         show_added_by: formData.show_added_by,
+        show_top_rating: formData.show_top_rating,
         categorization_method: formData.categorization_method,
         custom_categories: formData.custom_categories,
         categorization_selected_members: formData.categorization_selected_members
@@ -745,49 +756,33 @@ export function CollectionSettingsDialog({
                 {/* Sub-options for Status/Rating */}
                 {(formData.categorization_method === 'status' || formData.categorization_method === 'rating_member') && (
                     <div className="pl-6 space-y-3 border-l-2 ml-1 mt-2">
-                         <div className="space-y-1">
-                             <Label className="text-xs font-semibold">Member Filter</Label>
-                             <div className="flex items-center space-x-2 mt-1">
-                                 <Checkbox
-                                    id="specific-members"
-                                    checked={formData.categorization_selected_members !== null}
-                                    onCheckedChange={(checked) => {
-                                        if (checked) {
-                                            setFormData({...formData, categorization_selected_members: []});
-                                        } else {
-                                            setFormData({...formData, categorization_selected_members: null});
-                                        }
-                                    }}
-                                 />
-                                 <Label htmlFor="specific-members" className="text-sm font-normal cursor-pointer">Apply to specific members only</Label>
-                             </div>
-                         </div>
+                        <CollectionMemberFilter
+                            ownerId={collection.owner_id}
+                            owner={ownerProfile}
+                            contributors={contributors}
+                            selectedMemberIds={formData.categorization_selected_members}
+                            onToggleScope={(applyToSpecific) =>
+                                setFormData({
+                                    ...formData,
+                                    categorization_selected_members: applyToSpecific ? [] : null,
+                                })
+                            }
+                            onToggleMember={toggleMemberSelection}
+                        />
 
-                         {formData.categorization_selected_members !== null && (
-                             <ScrollArea className="h-[150px] border rounded-none p-2 bg-surface-muted/5">
-                                 {contributors.length > 0 ? (
-                                     <div className="space-y-2">
-                                         {contributors.map(c => {
-                                             if (!c.user) return null;
-                                             return (
-                                                 <div key={c.user.id} className="flex items-center space-x-2">
-                                                     <Checkbox
-                                                         id={`member-${c.user.id}`}
-                                                         checked={formData.categorization_selected_members?.includes(c.user.id)}
-                                                         onCheckedChange={() => toggleMemberSelection(c.user.id)}
-                                                     />
-                                                     <Label htmlFor={`member-${c.user.id}`} className="font-normal cursor-pointer text-sm">
-                                                         {c.user.username}
-                                                     </Label>
-                                                 </div>
-                                             );
-                                         })}
-                                     </div>
-                                 ) : (
-                                     <div className="text-xs text-text-secondary py-4 text-center">No collaborators found.</div>
-                                 )}
-                             </ScrollArea>
-                         )}
+                        {formData.categorization_method === 'rating_member' && (
+                            <div className="flex items-center justify-between space-x-2 pt-2">
+                                <Label htmlFor="show-top-rating" className="flex flex-col space-y-1">
+                                    <span className="text-sm font-normal">Show the building's top rating</span>
+                                    <span className="font-normal text-xs text-text-secondary">List results show the highest rating and who gave it</span>
+                                </Label>
+                                <Switch
+                                    id="show-top-rating"
+                                    checked={formData.show_top_rating}
+                                    onCheckedChange={(c) => setFormData({...formData, show_top_rating: c})}
+                                />
+                            </div>
+                        )}
                     </div>
                 )}
 

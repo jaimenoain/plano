@@ -56,6 +56,19 @@ export async function fetchCollectionOwnerProfile(
   return data as CollectionOwnerProfile;
 }
 
+/** Usernames for a set of user ids — used to label the collection list's "top rating" line. */
+export async function fetchProfileUsernames(
+  userIds: string[],
+): Promise<{ id: string; username: string }[]> {
+  if (userIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, username")
+    .in("id", userIds);
+  if (error) throw error;
+  return (data ?? []).filter((p): p is { id: string; username: string } => !!p.username);
+}
+
 /** Owner-side: pending requests awaiting accept/reject for a collection. */
 export async function fetchPendingCollaborationRequests(
   collectionId: string,

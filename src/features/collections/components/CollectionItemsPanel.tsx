@@ -27,6 +27,7 @@ import { lazyWithRetry } from "@/utils/lazyWithRetry";
 import { CollectionItemRow } from "./CollectionItemRow";
 import { CollectionSearchSuggestions } from "./CollectionSearchSuggestions";
 import type { Collection, CollectionItemWithBuilding, CollectionMarker } from "../types";
+import type { CollectionTopRating } from "../hooks/useCollectionTopRatings";
 
 const CollectionMarkerCard = lazyWithRetry(() =>
   import("@/features/collections/components/CollectionMarkerCard").then((module) => ({
@@ -46,6 +47,8 @@ interface CollectionItemsPanelProps {
   customCategories: Collection["custom_categories"];
   showImages: boolean;
   showAddedBy: boolean;
+  /** Winning member rating per building, keyed by building id — only when the collection has opted in (Member Ratings method + toggle on). */
+  topRatings?: Map<string, CollectionTopRating>;
   onUpdateNote: (itemId: string, note: string) => void;
   onUpdateCategory: (itemId: string, categoryId: string) => void;
   /** Omitted for viewers who may not edit — the row then hides its note editor. */
@@ -83,6 +86,7 @@ export function CollectionItemsPanel({
   customCategories,
   showImages,
   showAddedBy,
+  topRatings,
   onUpdateNote,
   onUpdateCategory,
   onUpdateMarkerNote,
@@ -136,6 +140,7 @@ export function CollectionItemsPanel({
           onUpdateCategory={(categoryId) => onUpdateCategory(item.id, categoryId)}
           showImages={showImages}
           showAddedBy={showAddedBy}
+          topRating={topRatings?.get(item.building.id)}
           onRemove={() => onRemove(item.building.id)}
         />
       ))}

@@ -24,7 +24,9 @@ import {
 import { getBuildingUrl } from '@/utils/url';
 import { primaryBuildingCreditsToSummaries } from '@/features/credits/api/credits';
 import { BuildingListRow } from '@/features/maps';
+import { CollectionTopRatingLine } from './CollectionTopRatingLine';
 import type { CollectionItemWithBuilding } from '../types';
+import type { CollectionTopRating } from '../hooks/useCollectionTopRatings';
 
 interface CollectionItemRowProps {
   item: CollectionItemWithBuilding;
@@ -40,6 +42,8 @@ interface CollectionItemRowProps {
   showImages?: boolean;
   /** When true, surface an "Added by @username" attribution line (collaborator collections). */
   showAddedBy?: boolean;
+  /** Winning member rating for this building — only set when the collection has opted in. */
+  topRating?: CollectionTopRating;
   onRemove?: () => void;
 }
 
@@ -55,6 +59,7 @@ export function CollectionItemRow({
   onUpdateCategory,
   showImages = true,
   showAddedBy = false,
+  topRating,
   onRemove,
 }: CollectionItemRowProps) {
   const [isEditingNote, setIsEditingNote] = useState(false);
@@ -213,6 +218,10 @@ export function CollectionItemRow({
             <div className="mt-2 text-xs text-text-secondary">
               Added by @{item.added_by_user.username}
             </div>
+          )}
+
+          {topRating && (
+            <CollectionTopRatingLine username={topRating.username} rating={topRating.rating} />
           )}
         </>
       }

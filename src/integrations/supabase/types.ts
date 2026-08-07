@@ -2253,6 +2253,7 @@ export type Database = {
           rating_source_user_id: string | null
           show_added_by: boolean
           show_community_images: boolean
+          show_top_rating: boolean
           slug: string
           updated_at: string
         }
@@ -2272,6 +2273,7 @@ export type Database = {
           rating_source_user_id?: string | null
           show_added_by?: boolean
           show_community_images?: boolean
+          show_top_rating?: boolean
           slug: string
           updated_at?: string
         }
@@ -2291,6 +2293,7 @@ export type Database = {
           rating_source_user_id?: string | null
           show_added_by?: boolean
           show_community_images?: boolean
+          show_top_rating?: boolean
           slug?: string
           updated_at?: string
         }
