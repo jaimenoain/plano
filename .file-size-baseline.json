@@ -10,7 +10,7 @@
     "src/features/buildings/components/BuildingCredits.tsx": 832,
     "src/features/buildings/components/BuildingForm.tsx": 919,
     "src/features/buildings/components/ImageDetailsDialog.tsx": 447,
-    "src/features/buildings/hooks/useBuildingInteractions.ts": 1262,
+    "src/features/buildings/hooks/useBuildingInteractions.tsx": 1259,
     "src/features/buildings/pages/BuildingDetails.tsx": 850,
     "src/features/buildings/pages/ReviewDetails.tsx": 1099,
     "src/features/buildings/utils/structuredData.ts": 455,

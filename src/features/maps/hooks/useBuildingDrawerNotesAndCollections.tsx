@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { AddedToCollectionToast, type Collection } from '@/features/collections';
 
 interface Params {
   buildingId: string;
@@ -85,7 +86,7 @@ export function useBuildingDrawerNotesAndCollections({
     }
   };
 
-  const onCollectionsChange = async (newIds: string[]) => {
+  const onCollectionsChange = async (newIds: string[], addedCollections: Collection[]) => {
     if (!user) return;
     const prev = collectionIds;
     const added = newIds.filter((id) => !prev.includes(id));
@@ -107,6 +108,15 @@ export function useBuildingDrawerNotesAndCollections({
         if (error) throw error;
       }
       queryClient.invalidateQueries({ queryKey: ['building-drawer', buildingId] });
+      const confirmedAdditions = addedCollections
+        .filter((c) => added.includes(c.id) && c.owner?.username)
+        .map((c) => ({ id: c.id, name: c.name, slug: c.slug, ownerUsername: c.owner!.username }));
+      if (confirmedAdditions.length > 0) {
+        toast({
+          title: confirmedAdditions.length === 1 ? 'Added to collection' : 'Added to collections',
+          description: <AddedToCollectionToast collections={confirmedAdditions} />,
+        });
+      }
     } catch {
       toast({ variant: 'destructive', title: 'Failed to update collection' });
       setCollectionIds(prev); // revert

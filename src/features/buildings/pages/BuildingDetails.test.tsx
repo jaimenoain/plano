@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => {
     toast: vi.fn(),
     update: vi.fn(),
     upsert: vi.fn(),
+    collectionItemsInsertError: null as { message: string } | null,
     user: { id: 'user-123', email: 'test@example.com' }, // Stable user object
     /** Mirrors loader output — BuildingDetails reads `useLoaderData`, not `fetchBuildingDetails` in the client. */
     loaderData: {
@@ -118,6 +119,19 @@ vi.mock('@/integrations/supabase/client', () => {
     } else if (table === 'collection_items') {
        listResult = { data: [], error: null };
        singleResult = { data: null, error: null };
+    } else if (table === 'collections') {
+       // CollectionSelector's owned-collections fetch.
+       listResult = {
+         data: [{ id: 'c1', name: 'Brutalist favourites', slug: 'brutalist', owner: { username: 'testuser' } }],
+         error: null,
+       };
+       singleResult = { data: null, error: null };
+    } else if (table === 'collection_contributors') {
+       listResult = { data: [], error: null };
+       singleResult = { data: null, error: null };
+    } else if (table === 'building_posts') {
+       listResult = { data: [], error: null };
+       singleResult = { data: { id: 'post-1' }, error: null };
     } else if (table === 'review_links') {
        listResult = { data: [], error: null };
        singleResult = { data: null, error: null };
@@ -144,11 +158,17 @@ vi.mock('@/integrations/supabase/client', () => {
     builder.order = vi.fn().mockReturnThis();
     builder.limit = vi.fn().mockReturnThis();
     builder.maybeSingle = vi.fn().mockResolvedValue(singleResult);
+    // building_posts' insert is chained with `.select("id").single()`; collection_items'
+    // insert is awaited directly (no further chaining) — see handleSaveNote.
+    builder.single = vi.fn().mockResolvedValue(singleResult);
 
     // Update/Upsert setup
     builder.upsert = mocks.upsert.mockResolvedValue({ data: null, error: null });
-    builder.insert = vi.fn().mockResolvedValue({ data: null, error: null });
-    builder.delete = vi.fn().mockResolvedValue({ data: null, error: null });
+    builder.insert =
+      table === 'collection_items'
+        ? vi.fn().mockImplementation(() => Promise.resolve({ data: null, error: mocks.collectionItemsInsertError }))
+        : vi.fn().mockReturnThis();
+    builder.delete = vi.fn().mockReturnThis();
 
     return builder;
   };
@@ -203,6 +223,7 @@ describe('BuildingDetails Interaction', () => {
     mocks.loaderData.building = building;
     mocks.loaderData.heroImageUrl = null;
     mocks.loaderData.buildingCredits = [];
+    mocks.collectionItemsInsertError = null;
   });
 
   afterEach(() => {
@@ -337,5 +358,82 @@ describe('BuildingDetails Interaction', () => {
     // (The "Navigate to Site" wording now lives only inside the approximate-
     // location confirmation dialog; the always-visible CTA is "Directions".)
     expect(screen.getByRole("button", { name: /Directions/i })).toBeTruthy();
+  });
+
+  it('confirms which collection a building was added to when saving a note', async () => {
+    const user = userEvent.setup();
+    render(
+      <TooltipProvider>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <SidebarProvider>
+              <BuildingDetails />
+            </SidebarProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </TooltipProvider>
+    );
+
+    await waitFor(async () => {
+      const elements = await screen.findAllByText('Test Building.');
+      expect(elements.length).toBeGreaterThan(0);
+    }, { timeout: 3000 });
+
+    // Open the collection selector and select the one seeded collection.
+    await user.click(screen.getByRole('button', { name: /collection/i }));
+    await waitFor(() => screen.getByText('Brutalist favourites'));
+    await user.click(screen.getByText('Brutalist favourites'));
+
+    // Open the note editor and save — collection membership syncs as part of
+    // the note save (Task 5.1 scope: confirmation UI only, not the add flow).
+    await user.click(screen.getByRole('button', { name: /^note$/i }));
+    const saveButtons = screen.getAllByRole('button', { name: /^save$/i });
+    await user.click(saveButtons[saveButtons.length - 1]);
+
+    await waitFor(() => {
+      expect(mocks.toast).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Note saved' }),
+      );
+    });
+    const [{ description }] = mocks.toast.mock.calls.at(-1)!;
+    expect(description).toBeTruthy();
+  });
+
+  it('does not claim a collection was added when the insert fails', async () => {
+    mocks.collectionItemsInsertError = { message: 'boom' };
+    const user = userEvent.setup();
+    render(
+      <TooltipProvider>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <SidebarProvider>
+              <BuildingDetails />
+            </SidebarProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </TooltipProvider>
+    );
+
+    await waitFor(async () => {
+      const elements = await screen.findAllByText('Test Building.');
+      expect(elements.length).toBeGreaterThan(0);
+    }, { timeout: 3000 });
+
+    await user.click(screen.getByRole('button', { name: /collection/i }));
+    await waitFor(() => screen.getByText('Brutalist favourites'));
+    await user.click(screen.getByText('Brutalist favourites'));
+
+    await user.click(screen.getByRole('button', { name: /^note$/i }));
+    const saveButtons = screen.getAllByRole('button', { name: /^save$/i });
+    await user.click(saveButtons[saveButtons.length - 1]);
+
+    await waitFor(() => {
+      expect(mocks.toast).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'destructive', title: 'Failed to save note' }),
+      );
+    });
+    expect(mocks.toast).not.toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Note saved' }),
+    );
   });
 });

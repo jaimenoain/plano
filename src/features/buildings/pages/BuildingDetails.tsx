@@ -346,7 +346,7 @@ export default function BuildingDetails() {
     showCollections,
     setShowCollections,
     selectedCollectionIds,
-    setSelectedCollectionIds,
+    onCollectionSelectionChange,
     noteEditorOpen,
     setNoteEditorOpen,
     showDeleteAlert,
@@ -737,7 +737,7 @@ export default function BuildingDetails() {
                   showCollections={showCollections}
                   setShowCollections={setShowCollections}
                   selectedCollectionIds={selectedCollectionIds}
-                  setSelectedCollectionIds={setSelectedCollectionIds}
+                  onCollectionSelectionChange={onCollectionSelectionChange}
                   onSelectImage={setSelectedImage}
                 />
 

@@ -9,10 +9,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Label } from "@/components/ui/label";
 import { slugify } from "@/utils/url";
 
-interface Collection {
+export interface Collection {
   id: string;
   name: string;
   slug: string;
+  owner?: { username: string } | null;
 }
 
 type SharedCollectionRow = { collection: Collection | Collection[] | null };
@@ -20,7 +21,7 @@ type SharedCollectionRow = { collection: Collection | Collection[] | null };
 interface CollectionSelectorProps {
   userId: string;
   selectedCollectionIds: string[];
-  onChange: (ids: string[]) => void;
+  onChange: (ids: string[], added: Collection[]) => void;
   className?: string;
 }
 
@@ -44,13 +45,13 @@ export function CollectionSelector({ userId, selectedCollectionIds, onChange, cl
       const [owned, shared] = await Promise.all([
         supabase
           .from("collections")
-          .select("id, name, slug")
+          .select("id, name, slug, owner:profiles!collections_owner_id_fkey(username)")
           .eq("owner_id", userId)
           .order("created_at", { ascending: false }),
 
         supabase
           .from("collection_contributors")
-          .select("collection:collections(id, name, slug)")
+          .select("collection:collections(id, name, slug, owner:profiles!collections_owner_id_fkey(username))")
           .eq("user_id", userId)
       ]);
 
@@ -101,14 +102,15 @@ export function CollectionSelector({ userId, selectedCollectionIds, onChange, cl
           is_public: true, // Default to public
           slug: slug
         })
-        .select("id, name, slug")
+        .select("id, name, slug, owner:profiles!collections_owner_id_fkey(username)")
         .single();
 
       if (error) throw error;
 
-      setCollections(prev => [data, ...prev]);
+      const created = data as Collection;
+      setCollections(prev => [created, ...prev]);
       // Automatically select the new collection
-      onChange([...selectedCollectionIds, data.id]);
+      onChange([...selectedCollectionIds, created.id], [created]);
       setNewCollectionName("");
       toast.success("Collection created");
 
@@ -121,9 +123,10 @@ toast.error("Failed to create collection");
 
   const toggleCollection = (id: string) => {
     if (selectedCollectionIds.includes(id)) {
-      onChange(selectedCollectionIds.filter(cId => cId !== id));
+      onChange(selectedCollectionIds.filter(cId => cId !== id), []);
     } else {
-      onChange([...selectedCollectionIds, id]);
+      const added = collections.filter((c) => c.id === id);
+      onChange([...selectedCollectionIds, id], added);
     }
   };
 
