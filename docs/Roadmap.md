@@ -238,7 +238,7 @@
   Dependencies:    None
   CSV ref:         #8
 
-[ ] Task 5.3 — Collaborators tab shows the owner
+[x] Task 5.3 — Collaborators tab shows the owner
 
   Goal:            In the Collection Settings drawer's Collaborators tab, the
                    collection owner appears in the list, labelled "Owner" (or

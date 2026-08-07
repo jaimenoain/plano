@@ -8,11 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Trash2, Plus, X, AlertTriangle, Download, Bookmark, LogOut, Sparkles, FolderPlus, Folder, Info } from "lucide-react";
+import { Loader2, Plus, X, AlertTriangle, Download, Bookmark, Sparkles, FolderPlus, Folder, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserSearch } from "@/features/profile/components/UserSearch";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collection, type SavedPlacesDotFilter, type SavedPlacesStatusFilter } from "@/features/collections/types";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -34,6 +33,7 @@ import { AddToFolderDialog } from "@/features/profile/components/AddToFolderDial
 import { collectionSchema } from "@/lib/validations/collection";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PendingCollaborationRequestsList } from "./PendingCollaborationRequestsList";
+import { CollaboratorsList } from "./CollaboratorsList";
 import { CollectionDiscoverySettings } from "./CollectionDiscoverySettings";
 import { notifyCollaboratorByEmail } from "../api/collaboration";
 
@@ -870,62 +870,15 @@ export function CollectionSettingsDialog({
                </div>
              )}
 
-             <div className="space-y-2">
-                <Label>Current Collaborators</Label>
-                {loadingContributors ? (
-                    <div className="flex justify-center py-4">
-                        <Loader2 className="h-4 w-4 animate-spin text-text-secondary" />
-                    </div>
-                ) : contributors.length === 0 ? (
-                    <p className="text-center py-8 text-text-secondary text-sm">
-                        No collaborators yet.
-                    </p>
-                ) : (
-                    <ScrollArea className="h-[200px] border rounded-none">
-                        <div className="divide-y">
-                            {contributors.map(contributor => {
-                                if (!contributor.user) return null;
-                                const isMe = currentUserId === contributor.user.id;
-                                return (
-                                <div key={contributor.user.id} className="flex items-center justify-between p-3">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar className="h-8 w-8">
-                                            <AvatarImage src={contributor.user.avatar_url || undefined} />
-                                            <AvatarFallback>{contributor.user.username?.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <span className="text-sm font-medium">
-                                          {contributor.user.username}
-                                          {isMe && <span className="ml-2 text-xs text-text-secondary">(You)</span>}
-                                        </span>
-                                    </div>
-                                    {isOwner && !isMe && (
-                                      <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-8 w-8 text-text-secondary hover:text-feedback-destructive"
-                                          onClick={() => handleRemoveContributor(contributor.user.id)}
-                                      >
-                                          <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    )}
-                                    {isMe && !isOwner && (
-                                      <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-8 w-8 text-text-secondary hover:text-feedback-destructive"
-                                          onClick={handleLeaveCollection}
-                                          title="Leave Collection"
-                                      >
-                                          <LogOut className="h-4 w-4" />
-                                      </Button>
-                                    )}
-                                </div>
-                            );
-                            })}
-                        </div>
-                    </ScrollArea>
-                )}
-             </div>
+             <CollaboratorsList
+                ownerId={collection.owner_id}
+                contributors={contributors}
+                loading={loadingContributors}
+                currentUserId={currentUserId}
+                isOwner={isOwner}
+                onRemove={handleRemoveContributor}
+                onLeave={handleLeaveCollection}
+             />
           </TabsContent>
         </Tabs>
 
