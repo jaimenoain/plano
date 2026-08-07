@@ -182,7 +182,7 @@
   Dependencies:    None
   CSV ref:         #2
 
-[ ] Task 4.2 — "No buildings in this area" notice refinement
+[x] Task 4.2 — "No buildings in this area" notice refinement
 
   Goal:            The empty-area notice on the map no longer nags while
                    panning: it appears only after a short settle delay (~1s),
