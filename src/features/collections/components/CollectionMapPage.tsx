@@ -92,6 +92,7 @@ import {
 } from "../collectionMapPreferences";
 import { useCollectionMapPreferences } from "../hooks/useCollectionMapPreferences";
 import { useCollectionRailView } from "../hooks/useCollectionRailView";
+import { useCollectionViewMode } from "../hooks/useCollectionViewMode";
 
 const CollectionSettingsDialog = lazyWithRetry(() => import("@/features/collections/components/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
 const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("@/features/collections/components/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
@@ -183,7 +184,7 @@ export default function CollectionMap() {
   const [justCreatedBuildingId, setJustCreatedBuildingId] = useState<string | null>(null);
   const [showPlanRoute, setShowPlanRoute] = useState(false);
   const [hasPlanRouteOpened, setHasPlanRouteOpened] = useState(false);
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [viewMode, setViewMode] = useCollectionViewMode();
   // List view hides the map column below `lg`, and the drawer's desktop panel
   // lives inside it — so below 1024 (the column's `lg:flex`) it must be a sheet.
   const forceSheetDetail = useIsMobile(1024) && viewMode === 'list';
@@ -192,7 +193,6 @@ export default function CollectionMap() {
   const railScrollRef = useRef<HTMLDivElement>(null);
   const { sentinelRef: railSentinelRef, hasScrolledPast: isRailScrolled } =
     useScrolledPast(railScrollRef);
-
 
   // New States for Removal
   const [itemToRemove, setItemToRemove] = useState<CollectionItemWithBuilding | null>(null);

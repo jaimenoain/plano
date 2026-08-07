@@ -248,7 +248,7 @@
   Dependencies:    None
   CSV ref:         #11
 
-[ ] Task 5.4 — Collection detail defaults to List on mobile
+[x] Task 5.4 — Collection detail defaults to List on mobile
 
   Goal:            Opening a collection detail page on a mobile viewport shows
                    the List view by default (desktop default unchanged). An
