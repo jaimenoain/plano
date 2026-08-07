@@ -9,7 +9,7 @@
 import { useMemo } from 'react';
 import Supercluster from 'supercluster';
 import type { DiscoveryBuilding } from '@/features/search/components/types';
-import { getGlobalTierRank } from '../utils/pinStyling';
+import { getEffectivePinRank } from '../utils/pinStyling';
 import type { ClusterResponse } from './useMapData';
 
 type ItineraryMap = Map<string, { dayIndex: number; sequence: number }>;
@@ -37,7 +37,23 @@ export function useCollectionClusters(
       .map((b) => {
         const itineraryInfo = itineraryMap.get(b.id);
         const tierLabel = typeof b.tier_rank === 'string' ? b.tier_rank : null;
-        const tierRank = getGlobalTierRank(tierLabel);
+        // The rank a cluster aggregates must agree with the rank the pin itself
+        // would render — itinerary stops and colour-override faces (custom
+        // category / member status) don't carry a percentile label at all, so a
+        // plain getGlobalTierRank(tierLabel) would silently flatten every
+        // collection cluster to rank 1. getEffectivePinRank mirrors the same
+        // precedence getBasePinStyle uses for an individual pin.
+        const tierRank = getEffectivePinRank(
+          {
+            color: b.color ?? null,
+            rating: b.personal_rating ?? null,
+            status: b.personal_status ?? null,
+            tier_rank_label: tierLabel,
+            itinerary_sequence: itineraryInfo?.sequence,
+            itinerary_day_index: itineraryInfo?.dayIndex,
+          },
+          { mode: 'discover' },
+        );
 
         return {
           type: 'Feature' as const,

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getPinStyle, getGlobalTierRank, getPersonalTierRank } from './pinStyling';
+import { getPinStyle, getGlobalTierRank, getPersonalTierRank, getEffectivePinRank } from './pinStyling';
 import { ClusterResponse } from '../hooks/useMapData';
 import { MAP_MARKER_FILL, ghostFill } from '../constants/mapMarkerFills';
 
@@ -70,6 +70,44 @@ describe('getPersonalTierRank', () => {
     expect(getPersonalTierRank(0, 'pending')).toBe(2);
     expect(getPersonalTierRank(0, 'none')).toBe(1);
     expect(getPersonalTierRank(null, null)).toBe(1);
+  });
+});
+
+describe('getEffectivePinRank', () => {
+  // Task 4.3: a cluster's max_tier is built by aggregating this function over its
+  // points, so it must agree with the rank getPinStyle would give each point on
+  // its own — otherwise a cluster full of black pins could render white.
+  it('reports an itinerary stop as rank 5, regardless of its own rating', () => {
+    expect(
+      getEffectivePinRank({
+        rating: null,
+        status: null,
+        tier_rank_label: null,
+        color: null,
+        itinerary_sequence: 2,
+        itinerary_day_index: 0,
+      }),
+    ).toBe(5);
+  });
+
+  it('maps a colour-override face back onto the ladder', () => {
+    const base = { rating: null, status: null, tier_rank_label: null, itinerary_sequence: undefined, itinerary_day_index: undefined };
+    expect(getEffectivePinRank({ ...base, color: MAP_MARKER_FILL.brandPrimary })).toBe(5);
+    expect(getEffectivePinRank({ ...base, color: MAP_MARKER_FILL.white })).toBe(3);
+    expect(getEffectivePinRank({ ...base, color: MAP_MARKER_FILL.surfaceMuted })).toBe(2);
+  });
+
+  it('falls back to the mode-selected ladder code when there is no override', () => {
+    const point = { rating: 3, status: 'visited', tier_rank_label: null, color: null, itinerary_sequence: undefined, itinerary_day_index: undefined };
+    expect(getEffectivePinRank(point, { mode: 'library' })).toBe(5);
+    expect(getEffectivePinRank({ ...point, tier_rank_label: 'Top 5%' })).toBe(4);
+  });
+
+  it('agrees with getPinStyle on every ladder rank (pin and cluster can never diverge)', () => {
+    for (const label of ['Top 1%', 'Top 5%', 'Top 10%', 'Top 20%', 'Standard'] as const) {
+      const item = createMockBuilding({ tier_rank_label: label });
+      expect(getEffectivePinRank(item)).toBe(getPinStyle(item).rank);
+    }
   });
 });
 

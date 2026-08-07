@@ -153,6 +153,42 @@ const PIN_RANK_VISUALS: Record<PinRank, RankVisual> = {
   },
 };
 
+// A colour-override face (custom category / member status) doesn't carry a ladder
+// rank of its own — it's a bespoke style. This maps its resolved fill back onto the
+// ladder so a cluster aggregating such pins can still report a meaningful max_tier.
+// Mirrors the isDarkFace split in getBasePinStyle: brandPrimary is the one dark
+// face, everything else (white, muted) reads as a mid/low rank.
+function colorOverrideRank(color: string): PinRank {
+  if (color === MAP_MARKER_FILL.brandPrimary) return 5;
+  if (color === MAP_MARKER_FILL.white) return 3;
+  return 2;
+}
+
+/** The subset of a point's fields the ladder rank actually depends on. */
+export type PinRankInput = Pick<
+  ClusterResponse,
+  'rating' | 'status' | 'tier_rank_label' | 'color' | 'itinerary_sequence' | 'itinerary_day_index'
+>;
+
+/**
+ * The ladder rank a point's own face would express, independent of whether it is
+ * rendered directly or folded into a cluster aggregate. Used both by getBasePinStyle
+ * (to style an individual pin) and by client-side cluster builders (to compute
+ * max_tier), so a cluster can never disagree with the pins it contains.
+ */
+export function getEffectivePinRank(item: PinRankInput, options?: PinOptions): PinRank {
+  if (item.itinerary_sequence !== undefined && item.itinerary_day_index !== undefined) {
+    return 5;
+  }
+  if (item.color) {
+    return colorOverrideRank(item.color);
+  }
+  const personal = options?.mode === 'library';
+  return personal
+    ? getPersonalTierRank(item.rating, item.status)
+    : getGlobalTierRank(item.tier_rank_label);
+}
+
 // Clusters mirror the pin ladder: a cluster wears a rank's face iff it contains
 // at least one building of that rank (max_tier carries the best rank inside).
 // One notch heavier at the bottom than the pin ladder — a cluster stands for many
@@ -349,9 +385,7 @@ function getBasePinStyle(item: ClusterResponse, options?: PinOptions): PinStyle 
   // (discover, contextless surfaces) → the global percentile bands, with a
   // subtle centre dot marking buildings already in the user's library.
   const personal = options?.mode === 'library';
-  const rank = personal
-    ? getPersonalTierRank(item.rating, item.status)
-    : getGlobalTierRank(item.tier_rank_label);
+  const rank = getEffectivePinRank(item, options);
   const visual = PIN_RANK_VISUALS[rank];
 
   const dots = personal && rank >= 3 ? ((rank - 2) as 1 | 2 | 3) : 0;

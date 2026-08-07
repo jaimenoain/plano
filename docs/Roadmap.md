@@ -196,7 +196,7 @@
   Dependencies:    None
   CSV ref:         #3
 
-[ ] Task 4.3 — Cluster colour reflects its highest-rated pin
+[x] Task 4.3 — Cluster colour reflects its highest-rated pin
 
   Goal:            On the collection detail map, a cluster circle takes its
                    colour from the highest-rated pin it contains (e.g. a cluster

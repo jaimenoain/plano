@@ -575,6 +575,8 @@ The five-rank ladder (`src/features/maps/utils/pinStyling.ts`) — clusters mirr
 | 2 — Top 20% / saved | 19px | `surface-card` | `border-text-secondary`, 1px |
 | 1 — everything else | 16px | `surface-card` | `border-border-strong`, 1px |
 
+A cluster's rank is the **max of the effective rank each of its pins would render** — including pins styled by a colour override (custom category / member status) or an itinerary numeral, not just the percentile/points code. `getEffectivePinRank()` in `pinStyling.ts` is the one function both an individual pin and a client-side cluster aggregator (`useCollectionClusters`) call, so a cluster can never disagree with the pins it contains: a cluster holding one black (`brand-primary`) pin always renders the rank-5 black face, even if every other pin inside it is muted.
+
 Three rules hold that ladder up, and each one exists because breaking it made pins disappear:
 
 - **No marker face is ever translucent.** The default pin — every building outside the Top 20%, which is most of them — used to be a 14px disc of `rgba(245,245,245,0.8)` behind an `#E5E5E5` hairline, and on the pale positron basemap it was not there at all. `#F5F5F5` and `#FFFFFF` are the same colour at pin scale anyway, which is why fill stopped carrying the ladder.
