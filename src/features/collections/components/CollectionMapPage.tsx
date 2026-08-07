@@ -84,6 +84,8 @@ import { useCollectionItemEdits } from "../hooks/useCollectionItemEdits";
 import { useCollectionMapSelection } from "../hooks/useCollectionMapSelection";
 import { useCollectionSearch } from "../hooks/useCollectionSearch";
 import { useCollectionItemsInView, useCollectionMapFit } from "../hooks/useCollectionItemsInView";
+import { useCollectionTopRatings } from "../hooks/useCollectionTopRatings";
+import { buildStatsMap, type CollectionStatRow } from "../collectionTopRatings";
 import { useScrolledPast } from "@/hooks/useScrolledPast";
 import { filterDiscoveryBuildings } from "../filterCollectionItems";
 import {
@@ -556,6 +558,11 @@ export default function CollectionMap() {
     enabled: visibleItems.length > 0 && !!memberIds && !!shouldFetchStats && !!collection?.id
   });
 
+  const topRatingMap = useCollectionTopRatings(
+    statsData as unknown as CollectionStatRow[] | undefined,
+    collection?.categorization_method === 'rating_member' && !!collection?.show_top_rating,
+  );
+
   // 6. Check Favorite Status
   const { data: isFavorite, refetch: refetchFavorite } = useQuery({
     queryKey: ["collection_favorite", collection?.id, user?.id],
@@ -622,25 +629,7 @@ export default function CollectionMap() {
     // 1. Process Buildings — hidden ones were already dropped upstream.
     if (visibleItems.length > 0) {
         // Pre-calculate stats map
-        const statsMap = new Map<string, { visitedCount: number, maxRating: number, hasSaved: boolean }>();
-
-        if (statsData) {
-            // Group by building
-            const statRows = statsData as unknown as {
-              building_id: string;
-              status: string | null;
-              rating: number | null;
-            }[];
-            statRows.forEach((row) => {
-                if (!statsMap.has(row.building_id)) {
-                    statsMap.set(row.building_id, { visitedCount: 0, maxRating: 0, hasSaved: false });
-                }
-                const stat = statsMap.get(row.building_id)!;
-                if (row.status === 'visited') stat.visitedCount++;
-                if (row.rating && row.rating > stat.maxRating) stat.maxRating = row.rating;
-                stat.hasSaved = true; // Present in user_buildings implies saved/interested
-            });
-        }
+        const statsMap = buildStatsMap(statsData as unknown as CollectionStatRow[] | undefined);
 
         const mappedBuildings: DiscoveryBuilding[] = visibleItems.map((item) => {
         let color: string | null = null;
@@ -1148,6 +1137,9 @@ toast({
                             customCategories: collection.custom_categories,
                             showImages: collection.show_community_images ?? true,
                             showAddedBy: collection.show_added_by ?? false,
+                            topRatings: collection.categorization_method === 'rating_member' && collection.show_top_rating
+                                ? topRatingMap
+                                : undefined,
                             onUpdateNote: (itemId, note) => { void handleUpdateNote(itemId, note); },
                             onUpdateCategory: (itemId, catId) => { void handleUpdateCategory(itemId, catId); },
                             onUpdateMarkerNote: canEdit

@@ -259,7 +259,7 @@
   Dependencies:    None
   CSV ref:         #16
 
-[ ] Task 5.5 — Member Ratings: creator in filter + top-rating display
+[x] Task 5.5 — Member Ratings: creator in filter + top-rating display
 
   Goal:            In the Collection Settings drawer's Markers tab, with "Member
                    Ratings" selected: (1) the Member Filter includes the

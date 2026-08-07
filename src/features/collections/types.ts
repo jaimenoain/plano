@@ -8,6 +8,7 @@ export interface Collection {
   slug: string;
   show_community_images: boolean;
   show_added_by: boolean;
+  show_top_rating: boolean;
   categorization_method: 'default' | 'custom' | 'status' | 'rating_member' | 'uniform';
   custom_categories: { id: string; label: string; color: string }[] | null;
   categorization_selected_members: string[] | null;

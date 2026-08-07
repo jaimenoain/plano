@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import type { ComponentProps, ReactNode } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CollectionSettingsDialog } from "./CollectionSettingsDialog";
 
 type DialogProps = ComponentProps<typeof CollectionSettingsDialog>;
@@ -69,17 +70,20 @@ const collection = {
 function renderDialog(overrides: Partial<DialogProps> = {}) {
   const onUpdate = vi.fn();
   const onOpenChange = vi.fn();
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
-    <CollectionSettingsDialog
-      collection={collection}
-      open
-      onOpenChange={onOpenChange}
-      onUpdate={onUpdate}
-      isOwner
-      canEdit
-      currentUserId="owner-1"
-      {...overrides}
-    />,
+    <QueryClientProvider client={queryClient}>
+      <CollectionSettingsDialog
+        collection={collection}
+        open
+        onOpenChange={onOpenChange}
+        onUpdate={onUpdate}
+        isOwner
+        canEdit
+        currentUserId="owner-1"
+        {...overrides}
+      />
+    </QueryClientProvider>,
   );
   return { onUpdate, onOpenChange };
 }

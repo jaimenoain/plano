@@ -63,6 +63,7 @@ function renderRow(
   item: CollectionItemWithBuilding,
   showAddedBy: boolean,
   onSelect: () => void = () => {},
+  topRating?: { username: string; rating: number },
 ) {
   render(
     <CollectionItemRow
@@ -73,6 +74,7 @@ function renderRow(
       onUpdateNote={() => {}}
       onSelect={onSelect}
       showAddedBy={showAddedBy}
+      topRating={topRating}
     />,
   );
 }
@@ -102,5 +104,30 @@ describe("CollectionItemRow — added-by attribution", () => {
     fireEvent.click(screen.getByRole("button", { name: "Villa Savoye" }));
 
     expect(onSelect).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("CollectionItemRow — top rating", () => {
+  afterEach(cleanup);
+
+  it("shows the rater's name and award tier when a top rating is supplied", () => {
+    renderRow(makeItem(), false, () => {}, { username: "jaimenoain", rating: 3 });
+    expect(screen.getByText(/jaimenoain: Masterpiece/)).toBeInTheDocument();
+  });
+
+  it("shows nothing when no top rating is supplied", () => {
+    renderRow(makeItem(), false);
+    expect(screen.queryByText(/Masterpiece|Essential|Impressive|Interesting/)).not.toBeInTheDocument();
+  });
+
+  it("coexists with the 'Added by' line", () => {
+    renderRow(
+      makeItem({ added_by: "u-1", added_by_user: { id: "u-1", username: "corbusier" } }),
+      true,
+      () => {},
+      { username: "jaimenoain", rating: 2 },
+    );
+    expect(screen.getByText(/Added by @corbusier/)).toBeInTheDocument();
+    expect(screen.getByText(/jaimenoain: Essential/)).toBeInTheDocument();
   });
 });
