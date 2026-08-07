@@ -37,6 +37,22 @@ export function friendlyReviewError(message: string): string {
   }
 }
 
+/** Maps a raw withdraw RPC error message to friendly copy. */
+export function friendlyWithdrawError(message: string): string {
+  switch (message) {
+    case "request_not_found":
+      return "This request no longer exists.";
+    case "already_reviewed":
+      return "The owner already responded — your request can't be undone.";
+    case "not_authorized":
+      return "You can only withdraw your own request.";
+    case "not_authenticated":
+      return "Please sign in.";
+    default:
+      return "Couldn't undo your request. Please try again.";
+  }
+}
+
 /**
  * The header CTA state for a logged-in non-collaborator, given their latest
  * request status. "pending"/"accepted" show a disabled pending button (an

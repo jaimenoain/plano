@@ -51,14 +51,23 @@ export async function fetchPendingCollaborationRequests(
   return (data ?? []) as unknown as PendingCollaborationRequest[];
 }
 
-/** Submit a request to collaborate. Throws Error(rpcMessage) on failure. */
+/** Submit a request to collaborate. Returns the new request id. Throws Error(rpcMessage) on failure. */
 export async function requestCollectionCollaboration(
   collectionId: string,
   message?: string,
-): Promise<void> {
-  const { error } = await supabase.rpc("request_collection_collaboration", {
+): Promise<string> {
+  const { data, error } = await supabase.rpc("request_collection_collaboration", {
     p_collection_id: collectionId,
     p_message: message,
+  });
+  if (error) throw new Error(error.message);
+  return data as string;
+}
+
+/** Withdraw a still-pending request (undo). Throws Error(rpcMessage) on failure. */
+export async function withdrawCollectionCollaboration(requestId: string): Promise<void> {
+  const { error } = await supabase.rpc("withdraw_collection_collaboration", {
+    p_request_id: requestId,
   });
   if (error) throw new Error(error.message);
 }

@@ -225,7 +225,7 @@
   Dependencies:    None
   CSV ref:         #4
 
-[ ] Task 5.2 — Undo for collaboration requests
+[x] Task 5.2 — Undo for collaboration requests
 
   Goal:            After requesting to collaborate on a collection, the user can
                    undo for a few seconds (e.g. the button becomes "Requested —
