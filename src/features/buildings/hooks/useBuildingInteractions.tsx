@@ -31,6 +31,8 @@ import {
 } from "./buildingCommunityData";
 import { fetchCommunityPage, fetchLikedImageIds } from "../api/buildingReviews";
 import { invalidateBuildingCaches } from "@/lib/buildingCacheInvalidation";
+import { AddedToCollectionToast, type Collection } from "@/features/collections";
+import { useTrackedCollectionSelection } from "./useTrackedCollectionSelection";
 
 /** Minimal profile shape the hook needs — avoids importing the full Profile type. */
 type ProfileForHook = { role?: string | null } | null | undefined;
@@ -133,6 +135,7 @@ export interface BuildingInteractions {
   setShowCollections: (v: boolean) => void;
   selectedCollectionIds: string[];
   setSelectedCollectionIds: (ids: string[]) => void;
+  onCollectionSelectionChange: (ids: string[], added: Collection[]) => void;
   initialCollectionIds: string[];
 
   // Visit-with
@@ -295,12 +298,9 @@ export function useBuildingInteractions({
 
   // ── Collections ──────────────────────────────────────────────────────────
   const [showCollections, setShowCollections] = useState(false);
-  const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>(
-    [],
-  );
-  const [initialCollectionIds, setInitialCollectionIds] = useState<string[]>(
-    [],
-  );
+  const [initialCollectionIds, setInitialCollectionIds] = useState<string[]>([]);
+  const { selectedCollectionIds, setSelectedCollectionIds, onCollectionSelectionChange, confirmAdditions, resetCollectionSelection } =
+    useTrackedCollectionSelection();
 
   // ── Visit-with ───────────────────────────────────────────────────────────
   const [showVisitWith, setShowVisitWith] = useState(false);
@@ -577,7 +577,7 @@ export function useBuildingInteractions({
     } finally {
       setLoading(false);
     }
-  }, [building?.id, buildingCreditsFingerprint, fetchTopLinks, toast, userId]);
+  }, [building?.id, buildingCreditsFingerprint, fetchTopLinks, setSelectedCollectionIds, toast, userId]);
 
   useEffect(() => {
     void fetchUserSpecificData();
@@ -851,28 +851,20 @@ export function useBuildingInteractions({
       }
 
       // 3. Sync collection membership
-      const addedIds = selectedCollectionIds.filter(
-        (id) => !initialCollectionIds.includes(id),
-      );
-      const removedIds = initialCollectionIds.filter(
-        (id) => !selectedCollectionIds.includes(id),
-      );
-      if (addedIds.length > 0)
-        await supabase
-          .from("collection_items")
-          .insert(
-            addedIds.map((cId) => ({
-              collection_id: cId,
-              building_id: building.id,
-            })),
-          );
-      if (removedIds.length > 0)
-        await supabase
-          .from("collection_items")
-          .delete()
-          .in("collection_id", removedIds)
-          .eq("building_id", building.id);
+      const addedIds = selectedCollectionIds.filter((id) => !initialCollectionIds.includes(id));
+      const removedIds = initialCollectionIds.filter((id) => !selectedCollectionIds.includes(id));
+      if (addedIds.length > 0) {
+        const { error } = await supabase.from("collection_items")
+          .insert(addedIds.map((cId) => ({ collection_id: cId, building_id: building.id })));
+        if (error) throw error;
+      }
+      if (removedIds.length > 0) {
+        const { error } = await supabase.from("collection_items")
+          .delete().in("collection_id", removedIds).eq("building_id", building.id);
+        if (error) throw error;
+      }
       setInitialCollectionIds(selectedCollectionIds);
+      const confirmedAdditions = confirmAdditions(addedIds);
 
       // 4. Sync review links (keyed to building_posts.id)
       await supabase.from("review_links").delete().eq("review_id", postId);
@@ -933,7 +925,10 @@ export function useBuildingInteractions({
         ];
       });
 
-      toast({ title: "Note saved" });
+      toast({
+        title: "Note saved",
+        description: confirmedAdditions.length > 0 ? <AddedToCollectionToast collections={confirmedAdditions} /> : undefined,
+      });
       invalidateBuildingCaches(queryClient, building.id);
       void fetchUserSpecificData();
     } catch (error: unknown) {
@@ -955,6 +950,7 @@ export function useBuildingInteractions({
     activePostId,
     selectedCollectionIds,
     initialCollectionIds,
+    confirmAdditions,
     userLinks,
     pendingImages,
     fetchUserSpecificData,
@@ -992,7 +988,7 @@ export function useBuildingInteractions({
       setActivePostId(null);
       setUserPosts([]);
       setNoteEditorOpen(false);
-      setSelectedCollectionIds([]);
+      resetCollectionSelection();
       setInitialCollectionIds([]);
       setPendingImages((prev) => {
         prev.forEach((img) => URL.revokeObjectURL(img.preview));
@@ -1003,7 +999,7 @@ export function useBuildingInteractions({
     } catch (_error) {
       toast({ variant: "destructive", title: "Failed to remove" });
     }
-  }, [user, building, initialCollectionIds, queryClient, toast]);
+  }, [user, building, initialCollectionIds, queryClient, resetCollectionSelection, toast]);
 
   /** Load an existing post into the editor. Fetches its links from DB. */
   const handleSelectPost = useCallback(
@@ -1225,6 +1221,7 @@ export function useBuildingInteractions({
     setShowCollections,
     selectedCollectionIds,
     setSelectedCollectionIds,
+    onCollectionSelectionChange,
     initialCollectionIds,
     showVisitWith,
     setShowVisitWith,

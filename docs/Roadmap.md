@@ -214,7 +214,7 @@
 
 > **Batch submission:** Submit Tasks 5.1 → 5.2 → 5.3 → 5.4 → 5.5 → 5.6 → 5.7 → 5.8 → 5.9 as a single sequential batch.
 
-[ ] Task 5.1 — "Open collection" link after adding a building
+[x] Task 5.1 — "Open collection" link after adding a building
 
   Goal:            When a building is added to a collection from any surface
                    other than that collection's own page, the confirmation shows

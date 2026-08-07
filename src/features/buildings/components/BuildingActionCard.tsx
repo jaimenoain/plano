@@ -2,7 +2,7 @@ import { Loader2, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { CollectionSelector } from "@/features/collections";
+import { CollectionSelector, type Collection } from "@/features/collections";
 import { PendingPhotosQueue } from "./PendingPhotosQueue";
 import { MyBuildingStatusBlock } from "./MyBuildingStatusBlock";
 import { BuildingNotesList, type UserPost } from "./BuildingNotesList";
@@ -35,7 +35,7 @@ interface BuildingActionCardProps {
   showCollections: boolean;
   setShowCollections: (open: boolean) => void;
   selectedCollectionIds: string[];
-  setSelectedCollectionIds: (ids: string[]) => void;
+  onCollectionSelectionChange: (ids: string[], added: Collection[]) => void;
   onSelectImage: (img: DisplayImage) => void;
 }
 
@@ -69,7 +69,7 @@ export function BuildingActionCard({
   showCollections,
   setShowCollections,
   selectedCollectionIds,
-  setSelectedCollectionIds,
+  onCollectionSelectionChange,
   onSelectImage,
 }: BuildingActionCardProps) {
   return (
@@ -217,7 +217,7 @@ export function BuildingActionCard({
             <CollectionSelector
               userId={currentUser?.id ?? ""}
               selectedCollectionIds={selectedCollectionIds}
-              onChange={setSelectedCollectionIds}
+              onChange={onCollectionSelectionChange}
             />
           </motion.div>
         )}
