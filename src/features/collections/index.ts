@@ -8,5 +8,6 @@ export {
   collaborationCtaState,
   friendlyRequestError,
   friendlyReviewError,
+  friendlyWithdrawError,
   type CollaborationCtaState,
 } from './collaborationCopy';

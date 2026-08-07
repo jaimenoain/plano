@@ -3,6 +3,7 @@ import {
   collaborationCtaState,
   friendlyRequestError,
   friendlyReviewError,
+  friendlyWithdrawError,
 } from "@/features/collections";
 
 describe("collaborationCtaState", () => {
@@ -55,5 +56,18 @@ describe("friendlyReviewError", () => {
 
   it("falls back to a generic message for unknown errors", () => {
     expect(friendlyReviewError("boom")).toMatch(/try again/i);
+  });
+});
+
+describe("friendlyWithdrawError", () => {
+  it("maps known withdraw errors to human copy", () => {
+    expect(friendlyWithdrawError("request_not_found")).toMatch(/no longer exists/i);
+    expect(friendlyWithdrawError("already_reviewed")).toMatch(/already responded/i);
+    expect(friendlyWithdrawError("not_authorized")).toMatch(/your own request/i);
+    expect(friendlyWithdrawError("not_authenticated")).toMatch(/sign in/i);
+  });
+
+  it("falls back to a generic message for unknown errors", () => {
+    expect(friendlyWithdrawError("boom")).toMatch(/try again/i);
   });
 });

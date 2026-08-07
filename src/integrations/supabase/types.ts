@@ -7225,6 +7225,10 @@ export type Database = {
         }
         Returns: string
       }
+      withdraw_collection_collaboration: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       award_edition_event_type:

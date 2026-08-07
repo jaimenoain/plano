@@ -14,10 +14,15 @@ import {
   notifyCollaboratorByEmail,
   requestCollectionCollaboration,
   reviewCollectionCollaboration,
+  withdrawCollectionCollaboration,
   type CollaborationRequestStatus,
   type PendingCollaborationRequest,
 } from "../api/collaboration";
-import { friendlyRequestError, friendlyReviewError } from "../collaborationCopy";
+import {
+  friendlyRequestError,
+  friendlyReviewError,
+  friendlyWithdrawError,
+} from "../collaborationCopy";
 
 export type { CollaborationRequestStatus, PendingCollaborationRequest };
 
@@ -42,16 +47,50 @@ export function usePendingCollaborationRequests(collectionId: string | undefined
   });
 }
 
-/** Submit a request to collaborate. Shows a toast on success/failure. */
+/**
+ * Withdraw a still-pending request (undo). Shows a toast on success/failure and
+ * refreshes both the requester's own status and the owner's pending list, in case
+ * the owner has that collection's settings open at the same time.
+ */
+export function useWithdrawCollaboration(collectionId: string | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (requestId: string) => withdrawCollectionCollaboration(requestId),
+    onSuccess: () => {
+      toast.success("Request withdrawn.");
+      void queryClient.invalidateQueries({
+        queryKey: ["collection_collab_request", "mine", collectionId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["collection_collab_request", "pending", collectionId],
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(friendlyWithdrawError(error.message));
+    },
+  });
+}
+
+/**
+ * Submit a request to collaborate. On success, shows a toast with an "Undo" action
+ * (a few seconds to change your mind) that withdraws the just-created request.
+ */
 export function useRequestCollaboration(collectionId: string | undefined) {
   const queryClient = useQueryClient();
+  const withdraw = useWithdrawCollaboration(collectionId);
   return useMutation({
     mutationFn: async (message?: string) => {
       if (!collectionId) throw new Error("collection_not_found");
-      await requestCollectionCollaboration(collectionId, message);
+      return requestCollectionCollaboration(collectionId, message);
     },
-    onSuccess: () => {
-      toast.success("Request sent to the owner.");
+    onSuccess: (requestId) => {
+      toast.success("Request sent to the owner.", {
+        duration: 8000,
+        action: {
+          label: "Undo",
+          onClick: () => withdraw.mutate(requestId),
+        },
+      });
       void queryClient.invalidateQueries({
         queryKey: ["collection_collab_request", "mine", collectionId],
       });
