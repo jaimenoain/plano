@@ -313,7 +313,7 @@
   Dependencies:    5.5
   CSV ref:         #32
 
-[ ] Task 5.9 — Better icons for "Other markers"
+[x] Task 5.9 — Better icons for "Other markers"
 
   Goal:            Review how "Other markers" (non-building places, e.g. an
                    airport currently shown as a bus) get their icon; improve the

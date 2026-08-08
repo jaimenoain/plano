@@ -1,28 +1,43 @@
 import {
   type LucideIcon,
+  Banknote,
   Bed,
   Beer,
+  BookOpen,
+  Building2,
   Bus,
   Camera,
   Candy,
   Car,
   Coffee,
   Croissant,
+  Dumbbell,
+  Film,
   Fuel,
+  GraduationCap,
   Hospital,
   IceCream,
   Landmark,
+  Mail,
   MapPin,
   Music,
+  Navigation,
   Pill,
   Plane,
   Sandwich,
+  Scissors,
+  School,
+  Shirt,
   Ship,
+  ShoppingBag,
   ShoppingBasket,
+  Sparkles,
   SquareParking,
+  Store,
   TrainFront,
   Trees,
   Utensils,
+  WashingMachine,
   Wine,
 } from "lucide-react";
 import type { CollectionMarkerCategory } from "@/features/collections/types";
@@ -126,12 +141,15 @@ export function mapGoogleTypesToCollectionCategory(types: string[] = []): Collec
         "national_park",
         "stadium",
         "performing_arts_theater",
+        "movie_theater",
         "library",
         "church",
         "hindu_temple",
         "mosque",
         "synagogue",
         "shrine",
+        "place_of_worship",
+        "casino",
         "point_of_interest",
       ].includes(t),
     )
@@ -200,11 +218,14 @@ const PRIMARY_TYPE_ICONS: Record<string, LucideIcon> = {
   national_park: Trees,
   stadium: Camera,
   performing_arts_theater: Camera,
+  movie_theater: Film,
+  casino: Sparkles,
   church: Landmark,
   hindu_temple: Landmark,
   mosque: Landmark,
   synagogue: Landmark,
   shrine: Landmark,
+  place_of_worship: Landmark,
 
   pharmacy: Pill,
   drugstore: Pill,
@@ -213,6 +234,38 @@ const PRIMARY_TYPE_ICONS: Record<string, LucideIcon> = {
   dentist: Hospital,
   veterinary_care: Hospital,
   gas_station: Fuel,
+  gym: Dumbbell,
+  spa: Sparkles,
+  beauty_salon: Scissors,
+  hair_care: Scissors,
+  laundry: WashingMachine,
+
+  bank: Banknote,
+  atm: Banknote,
+  post_office: Mail,
+  school: School,
+  primary_school: School,
+  secondary_school: School,
+  university: GraduationCap,
+  courthouse: Building2,
+  city_hall: Building2,
+  local_government_office: Building2,
+  embassy: Building2,
+
+  shopping_mall: Store,
+  department_store: Store,
+  clothing_store: Shirt,
+  shoe_store: Shirt,
+  book_store: BookOpen,
+  jewelry_store: ShoppingBag,
+  electronics_store: ShoppingBag,
+  furniture_store: ShoppingBag,
+  home_goods_store: ShoppingBag,
+  hardware_store: ShoppingBag,
+  florist: ShoppingBag,
+  car_rental: Car,
+  car_repair: Car,
+  car_wash: Car,
 };
 
 /**
@@ -238,7 +291,10 @@ export function resolveCollectionMarkerIcon(
     case "dining":
       return Utensils;
     case "transport":
-      return Bus;
+      // Neutral wayfinding glyph, not a specific vehicle: this only fires when
+      // `google_primary_type` is missing/unrecognized, so a literal `Bus` would
+      // misrepresent e.g. an airport or train station as a bus stop.
+      return Navigation;
     case "attraction":
       return Camera;
     default:
