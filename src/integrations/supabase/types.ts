@@ -6044,6 +6044,16 @@ export type Database = {
         }[]
       }
       get_my_group_ids: { Args: never; Returns: string[] }
+      get_my_map_summary: {
+        Args: never
+        Returns: {
+          kind: string
+          label: string
+          lat: number
+          lng: number
+          weight: number
+        }[]
+      }
       get_national_chapter_overview: {
         Args: { p_national_chapter_id: string }
         Returns: {

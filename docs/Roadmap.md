@@ -329,7 +329,7 @@
 
 > **Batch submission:** Submit Tasks 6.1 → 6.2 → 6.3 as a single sequential batch.
 
-[ ] Task 6.1 — "My map" feed-sidebar widget redesign
+[x] Task 6.1 — "My map" feed-sidebar widget redesign
 
   Goal:            Replace the pixelated, hard-to-read "My map" widget in the
                    feed's right sidebar with a design people understand at a
