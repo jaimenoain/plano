@@ -6,6 +6,7 @@
  */
 import { useEffect, useState } from "react";
 import { useNavigate, type MetaFunction } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,7 @@ import { Loader2, Settings } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { NotificationSettingsDialog } from "../components/NotificationSettingsDialog";
 import { NotificationRow } from "../components/NotificationRow";
+import { unreadNotificationsQueryKey } from "../hooks/useUnreadNotifications";
 import type { Notification } from "../types";
 
 const NOTIFICATION_QUERY = `
@@ -40,6 +42,7 @@ export const meta: MetaFunction = () => [
 export default function Notifications() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -94,6 +97,9 @@ export default function Notifications() {
           .eq("user_id", user!.id)
           .eq("is_read", false);
         if (updateError) throw updateError;
+        // The bell's unread count is a shared query cache entry (useUnreadNotifications) —
+        // invalidate it now so navigating away doesn't race a stale badge back into view.
+        void queryClient.invalidateQueries({ queryKey: unreadNotificationsQueryKey(user!.id) });
       }
     } catch (error) {
       void error;

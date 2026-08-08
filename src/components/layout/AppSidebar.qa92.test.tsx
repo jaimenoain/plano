@@ -49,6 +49,10 @@ vi.mock("@/features/ambassadors/hooks/useAmbassadorNavAccess", () => ({
   useAmbassadorNavAccess: () => ({ data: false }),
 }));
 
+vi.mock("@/features/notifications/hooks/useUnreadNotifications", () => ({
+  useUnreadNotifications: () => ({ count: 0, hasUnread: false, isLoading: false, error: null }),
+}));
+
 vi.mock("@/components/ui/dropdown-menu", () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

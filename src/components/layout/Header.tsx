@@ -1,13 +1,12 @@
-import { Bell, ArrowLeft, Search } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useEffect, useState, ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { ArrowLeft, Search } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import { ReactNode } from "react";
 import { PlanoLogo } from "@/components/common/PlanoLogo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { useUnreadNotifications, NotificationBell } from "@/features/notifications";
 
 interface HeaderProps {
   title?: string;
@@ -31,28 +30,8 @@ export function Header({
   showLogo = true,
   action
 }: HeaderProps) {
-  const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [hasUnread, setHasUnread] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const checkUnread = async () => {
-      const { count } = await supabase
-        .from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .eq('is_read', false);
-      
-      setHasUnread(!!count && count > 0);
-    };
-
-    checkUnread();
-  }, [user, location.pathname]);
-
-  const showBadge = hasUnread && location.pathname !== "/notifications";
+  const { count: unreadCount } = useUnreadNotifications();
 
   // Resolve Variant and Compatibility
   // If variant is default, but showLogo is true (and it's not overridden),
@@ -121,12 +100,9 @@ export function Header({
     <Link
       to="/notifications"
       className="relative h-10 w-10 flex items-center justify-center rounded-sm text-text-primary hover:text-brand-primary hover:bg-brand-secondary transition-all"
-      aria-label="Notifications"
+      aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
     >
-      <Bell className="h-6 w-6" />
-      {showBadge && (
-        <span className="absolute top-2 right-2 h-[7px] w-[7px] rounded-full bg-brand-accent border-[1.5px] border-surface-default" />
-      )}
+      <NotificationBell count={unreadCount} iconClassName="h-6 w-6" />
     </Link>
   );
 

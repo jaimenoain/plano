@@ -353,7 +353,7 @@
   Dependencies:    None
   CSV ref:         #7
 
-[ ] Task 6.3 — Notifications bell indicator fix
+[x] Task 6.3 — Notifications bell indicator fix
 
   Goal:            The bell reliably indicates unread notifications. Audit the
                    unread count/badge pipeline (query, realtime/refresh
