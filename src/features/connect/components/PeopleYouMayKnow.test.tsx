@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { PeopleYouMayKnow } from "./PeopleYouMayKnow";
 
 const mocks = vi.hoisted(() => ({
@@ -44,13 +45,21 @@ afterEach(() => {
 
 describe("PeopleYouMayKnow limit", () => {
   it("renders up to 4 suggestions by default (the /connect behavior)", async () => {
-    render(<PeopleYouMayKnow />);
+    render(
+      <MemoryRouter>
+        <PeopleYouMayKnow />
+      </MemoryRouter>,
+    );
     const rows = await screen.findAllByTestId("user-row");
     expect(rows).toHaveLength(4);
   });
 
   it("caps suggestions at the given limit", async () => {
-    render(<PeopleYouMayKnow layout="stacked" limit={2} heading="People to follow" />);
+    render(
+      <MemoryRouter>
+        <PeopleYouMayKnow layout="stacked" limit={2} heading="People to follow" />
+      </MemoryRouter>,
+    );
     const rows = await screen.findAllByTestId("user-row");
     expect(rows).toHaveLength(2);
     expect(screen.getByText("People to follow")).toBeInTheDocument();

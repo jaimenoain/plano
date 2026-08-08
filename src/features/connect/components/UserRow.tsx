@@ -1,9 +1,10 @@
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Star, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FollowButton } from "@/features/profile/components/FollowButton";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { RAIL_ROW_META, RAIL_ROW_TITLE } from "@/components/ui/rail";
 import { MutualFacepile } from "./MutualFacepile";
 
 interface UserRowProps {
@@ -14,6 +15,8 @@ interface UserRowProps {
   };
   showFollowButton?: boolean;
   isFollower?: boolean; // Is the user following me? (For "Follow Back" logic)
+  /** Skips FollowButton's self-fetch when the caller already knows the state (e.g. a pre-filtered suggestion list). */
+  initialIsFollowing?: boolean;
   isCloseFriend?: boolean;
   onToggleCloseFriend?: () => void;
   onHide?: () => void;
@@ -23,7 +26,7 @@ interface UserRowProps {
     avatar_url: string | null;
   }[];
   /**
-   * `stacked` — identity block uses full width; actions on a second row (narrow sidebars, e.g. feed PYMK rail).
+   * `stacked` — compact rail row, single line, trailing actions (feed PYMK rail).
    * `default` — single horizontal row with trailing actions.
    */
   layout?: "default" | "stacked";
@@ -33,6 +36,7 @@ export function UserRow({
   user,
   showFollowButton = false,
   isFollower = false,
+  initialIsFollowing,
   isCloseFriend,
   onToggleCloseFriend,
   onHide,
@@ -125,50 +129,46 @@ export function UserRow({
 
   if (layout === "stacked") {
     return (
-      <div
-        className="group relative flex flex-col gap-3 border-b border-border-default p-4 transition-colors hover:bg-surface-muted cursor-pointer"
-        onClick={() => navigate(`/profile/${user.username?.toLowerCase() || user.id}`)}
-      >
-        {onHide && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onHide();
-            }}
-            className="absolute right-2 top-2 rounded-sm p-1 text-text-disabled opacity-0 transition-opacity hover:bg-surface-muted group-hover:opacity-100 focus:outline-hidden focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-border-strong"
-            title="Hide suggestion"
-          >
-            <X className="h-4 w-4" aria-hidden />
-          </button>
-        )}
-
-        <div className="flex min-w-0 items-start gap-3">
-          <Avatar className="h-12 w-12 shrink-0 border border-border-default">
+      <div className="flex items-center gap-3 py-3">
+        <Link
+          to={`/profile/${user.username?.toLowerCase() || user.id}`}
+          className="flex min-w-0 flex-1 items-center gap-3"
+        >
+          <Avatar className="h-9 w-9 shrink-0 border border-border-default">
             <AvatarImage src={avatarUrl} />
             <AvatarFallback>{user.username?.charAt(0).toUpperCase() || "?"}</AvatarFallback>
           </Avatar>
-          <div className="min-w-0 flex-1 pr-5">
-            <span
-              className="block text-sm font-medium text-text-primary line-clamp-2"
-              title={displayName}
-            >
+          <div className="min-w-0 flex-1">
+            <div className={cn(RAIL_ROW_TITLE, "truncate")} title={displayName}>
               {displayName}
-            </span>
+            </div>
             {mutualFollows && mutualFollows.length > 0 ? (
-              <MutualFacepile users={mutualFollows} />
+              <MutualFacepile users={mutualFollows} className={RAIL_ROW_META} />
             ) : null}
           </div>
-        </div>
+        </Link>
 
-        {showFollowButton && (
-          <FollowButton
-            userId={user.id}
-            isFollower={isFollower}
-            variant="primary"
-            className="w-full h-9 text-2xs"
-          />
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {showFollowButton && (
+            <FollowButton
+              userId={user.id}
+              isFollower={isFollower}
+              initialIsFollowing={initialIsFollowing}
+              variant="outline"
+              className="h-7 text-2xs px-2.5"
+            />
+          )}
+          {onHide && (
+            <button
+              type="button"
+              onClick={onHide}
+              className="-m-1 shrink-0 rounded-sm p-1 text-text-disabled opacity-60 transition-opacity hover:bg-surface-muted hover:opacity-100 focus:outline-hidden focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-border-strong"
+              title="Hide suggestion"
+            >
+              <X className="h-4 w-4" aria-hidden />
+            </button>
+          )}
+        </div>
       </div>
     );
   }
