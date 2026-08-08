@@ -159,6 +159,49 @@ export async function fetchLibraryPins(userId: string): Promise<LibraryPin[]> {
     });
 }
 
+export type MapSummaryCell = { lat: number; lng: number; weight: number };
+export type MapSummaryCity = { name: string; count: number };
+
+export type MyMapSummary = {
+  /** Whole library, mappable or not — drives the header count and empty state. */
+  libraryCount: number;
+  /** Places distinct enough to appear in "+ N more cities". */
+  placeCount: number;
+  cities: MapSummaryCity[];
+  cells: MapSummaryCell[];
+};
+
+const EMPTY_MY_MAP_SUMMARY: MyMapSummary = {
+  libraryCount: 0,
+  placeCount: 0,
+  cities: [],
+  cells: [],
+};
+
+/**
+ * Pre-aggregated "My Map" widget data — binning and roll-up happen in
+ * Postgres (`get_my_map_summary`) so the feed never pulls a member's whole
+ * library (which can run into the thousands) just to draw a 320px thumbnail.
+ */
+export async function fetchMyMapSummary(): Promise<MyMapSummary> {
+  const { data, error } = await supabase.rpc("get_my_map_summary");
+  if (error) throw error;
+
+  const summary: MyMapSummary = { ...EMPTY_MY_MAP_SUMMARY, cities: [], cells: [] };
+
+  for (const row of data ?? []) {
+    if (row.kind === "total" && row.label === "library") summary.libraryCount = row.weight ?? 0;
+    else if (row.kind === "total" && row.label === "places") summary.placeCount = row.weight ?? 0;
+    else if (row.kind === "city" && row.label) {
+      summary.cities.push({ name: row.label, count: row.weight ?? 0 });
+    } else if (row.kind === "cell" && row.lat !== null && row.lng !== null) {
+      summary.cells.push({ lat: row.lat, lng: row.lng, weight: row.weight ?? 0 });
+    }
+  }
+
+  return summary;
+}
+
 export type TrendingArchitect = {
   id: string;
   name: string;

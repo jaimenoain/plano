@@ -1,0 +1,165 @@
+#!/usr/bin/env node
+/**
+ * One-off generator for src/features/feed/data/worldLand.ts.
+ *
+ * The feed's "My Map" widget (Roadmap Task 6.1) needs a recognisable world
+ * silhouette without pulling MapLibre (or any mapping library) onto the
+ * feed's bundle. Rather than ship a runtime dependency, this script runs
+ * ONCE, fetches the public-domain Natural Earth 110m land dataset (via the
+ * `world-atlas` npm package's CDN-hosted JSON — no install required), and
+ * bakes the result into a plain committed TS module: an SVG path string plus
+ * a handful of continent label positions, both in a fixed
+ * `viewBox="0 0 720 360"` equirectangular frame (x = (lng+180)*2,
+ * y = (90-lat)*2 — a linear map, so the widget can just plot lat/lng blobs
+ * directly into the same space with no projection code at runtime).
+ *
+ * Re-run only if the outline itself needs to change:
+ *   node scripts/build-world-outline.mjs
+ *
+ * TopoJSON is decoded by hand (arc delta-decoding + quantization transform)
+ * so this script has zero dependencies of its own.
+ */
+
+const SOURCE_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json";
+const OUT_PATH = new URL("../src/features/feed/data/worldLand.ts", import.meta.url);
+
+/**
+ * Optional local override — pass a path to an already-downloaded copy of
+ * SOURCE_URL's JSON (e.g. `curl -sL "$SOURCE_URL" -o land-110m.json`) when
+ * the environment can't reach the CDN directly via `fetch`:
+ *   node scripts/build-world-outline.mjs --source ./land-110m.json
+ */
+const sourceArgIndex = process.argv.indexOf("--source");
+const localSourcePath = sourceArgIndex !== -1 ? process.argv[sourceArgIndex + 1] : null;
+
+const VIEW_WIDTH = 720;
+const VIEW_HEIGHT = 360;
+
+/** Equirectangular: linear in both lat and lng. */
+function project([lng, lat]) {
+  const x = (lng + 180) * (VIEW_WIDTH / 360);
+  const y = (90 - lat) * (VIEW_HEIGHT / 180);
+  return [x, y];
+}
+
+/** Decode one TopoJSON arc (delta-encoded, quantized) into [lng, lat] pairs. */
+function decodeArc(arc, transform) {
+  const { scale, translate } = transform;
+  let x = 0;
+  let y = 0;
+  const points = [];
+  for (const [dx, dy] of arc) {
+    x += dx;
+    y += dy;
+    points.push([x * scale[0] + translate[0], y * scale[1] + translate[1]]);
+  }
+  return points;
+}
+
+/** A TopoJSON arc index can be negative, meaning "reversed arc ~i". */
+function resolveArc(index, arcs, transform) {
+  const points = index < 0 ? decodeArc(arcs[~index], transform).reverse() : decodeArc(arcs[index], transform);
+  return points;
+}
+
+/**
+ * Drop points that don't move the line more than `minDelta` units in the
+ * 720x360 viewBox — free simplification for a thumbnail that never renders
+ * larger than ~320px wide, cuts the committed path string substantially.
+ */
+function decimate(points, minDelta = 1.4) {
+  const kept = [points[0]];
+  for (const point of points.slice(1)) {
+    const [px, py] = kept[kept.length - 1];
+    if (Math.hypot(point[0] - px, point[1] - py) >= minDelta) kept.push(point);
+  }
+  return kept.length >= 3 ? kept : points;
+}
+
+function ringToPath(ring) {
+  const [start, ...rest] = decimate(ring.map(project));
+  const commands = [`M${start[0].toFixed(1)},${start[1].toFixed(1)}`];
+  for (const [x, y] of rest) commands.push(`L${x.toFixed(1)},${y.toFixed(1)}`);
+  commands.push("Z");
+  return commands.join(" ");
+}
+
+async function main() {
+  const fs = await import("node:fs/promises");
+  const topology = localSourcePath
+    ? JSON.parse(await fs.readFile(localSourcePath, "utf8"))
+    : await fetch(SOURCE_URL).then((res) => {
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
+        return res.json();
+      });
+
+  const { transform, objects, arcs } = topology;
+  const land = objects.land;
+
+  const rings = [];
+  for (const geometry of land.geometries) {
+    const polygons = geometry.type === "Polygon" ? [geometry.arcs] : geometry.arcs;
+    for (const polygon of polygons) {
+      for (const arcIndices of polygon) {
+        const points = arcIndices.flatMap((i) => resolveArc(i, arcs, transform));
+        // Drop slivers too small to register at a 720x360 scale.
+        if (points.length >= 4) rings.push(points);
+      }
+    }
+  }
+
+  const path = rings.map(ringToPath).join(" ");
+
+  // Hand-placed at the rough visual centre of each landmass in the same
+  // viewBox — good enough for a 320px-wide thumbnail, not survey-grade.
+  const labels = [
+    { name: "N. AMERICA", lng: -100, lat: 45 },
+    { name: "S. AMERICA", lng: -60, lat: -18 },
+    { name: "EUROPE", lng: 15, lat: 52 },
+    { name: "AFRICA", lng: 20, lat: 2 },
+    { name: "ASIA", lng: 90, lat: 42 },
+    { name: "OCEANIA", lng: 135, lat: -25 },
+  ].map(({ name, lng, lat }) => {
+    const [x, y] = project([lng, lat]);
+    return { name, x: Number(x.toFixed(1)), y: Number(y.toFixed(1)) };
+  });
+
+  const output = `/**
+ * Committed world-outline asset for the feed's "My Map" widget.
+ *
+ * Generated by scripts/build-world-outline.mjs from the public-domain
+ * Natural Earth 110m land dataset (via world-atlas) — do not hand-edit.
+ * Re-run the script to regenerate.
+ *
+ * Equirectangular projection in a 0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT} viewBox:
+ * x = (lng + 180) * ${(VIEW_WIDTH / 360).toFixed(4)}, y = (90 - lat) * ${(VIEW_HEIGHT / 180).toFixed(4)}.
+ * Callers project their own lat/lng points into this same space with plain
+ * arithmetic — no projection library at runtime.
+ */
+
+export const WORLD_VIEW_WIDTH = ${VIEW_WIDTH};
+export const WORLD_VIEW_HEIGHT = ${VIEW_HEIGHT};
+
+export const WORLD_LAND_PATH =
+  "${path}";
+
+export type ContinentLabel = { name: string; x: number; y: number };
+
+export const CONTINENT_LABELS: ContinentLabel[] = ${JSON.stringify(labels, null, 2)};
+
+export function projectLngLat(lng: number, lat: number): { x: number; y: number } {
+  return {
+    x: (lng + 180) * (WORLD_VIEW_WIDTH / 360),
+    y: (90 - lat) * (WORLD_VIEW_HEIGHT / 180),
+  };
+}
+`;
+
+  await fs.writeFile(OUT_PATH, output);
+  console.log(`Wrote ${OUT_PATH.pathname} (${rings.length} rings, ${path.length} chars of path data)`);
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

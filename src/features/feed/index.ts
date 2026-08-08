@@ -3,5 +3,3 @@
  * from here (`@/features/feed`) rather than reaching into internal modules.
  * (Data access lives in `./api/*`, which is importable directly by rule.)
  */
-export { rollUpPlaces, isPlottable, buildAtlas } from "./utils/libraryAtlas";
-export type { AtlasPin, AtlasPlace } from "./utils/libraryAtlas";

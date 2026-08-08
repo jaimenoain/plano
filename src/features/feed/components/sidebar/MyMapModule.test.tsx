@@ -9,15 +9,7 @@ const mocks = vi.hoisted(() => ({ rows: [] as unknown[] }));
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    from: vi.fn(() => {
-      const chain = {
-        select: () => chain,
-        eq: () => chain,
-        in: () => chain,
-        limit: () => Promise.resolve({ data: mocks.rows, error: null }),
-      };
-      return chain;
-    }),
+    rpc: vi.fn(() => Promise.resolve({ data: mocks.rows, error: null })),
   },
 }));
 
@@ -38,35 +30,37 @@ function renderModule(userId: string | null = "u1") {
   );
 }
 
-const libraryRow = (
-  city: string | null,
-  coords: [number, number] | null,
-  overrides: Record<string, unknown> = {},
-) => ({
-  building: {
-    city,
-    country: "Spain",
-    location: coords ? { type: "Point", coordinates: coords } : null,
-    is_deleted: false,
-    ...overrides,
-  },
+const totals = (library: number, plottable: number, places: number) => [
+  { kind: "total", label: "library", lat: null, lng: null, weight: library },
+  { kind: "total", label: "plottable", lat: null, lng: null, weight: plottable },
+  { kind: "total", label: "places", lat: null, lng: null, weight: places },
+];
+const city = (name: string, count: number) => ({
+  kind: "city",
+  label: name,
+  lat: null,
+  lng: null,
+  weight: count,
 });
-
-const londonEwkb = {
-  city: "London",
-  country: "United Kingdom",
-  location: "0101000020E61000005B069CA56439B9BFDA5548F949C14940",
-  is_deleted: false,
-};
+const cell = (lat: number, lng: number, weight: number) => ({
+  kind: "cell",
+  label: null,
+  lat,
+  lng,
+  weight,
+});
 
 describe("MyMapModule", () => {
   it("renders the library total, its busiest cities and the map CTA", async () => {
     mocks.rows = [
-      libraryRow("Madrid", [-3.7038, 40.4168]),
-      libraryRow("Madrid", [-3.7, 40.42]),
-      libraryRow("Barcelona", [2.1686, 41.3874]),
-      libraryRow("London", [-0.1276, 51.5072]),
-      libraryRow("Paris", [2.3522, 48.8566]),
+      ...totals(5, 5, 4),
+      city("Madrid", 2),
+      city("Barcelona", 1),
+      city("London", 1),
+      cell(40.4168, -3.7038, 2),
+      cell(41.3874, 2.1686, 1),
+      cell(51.5072, -0.1276, 1),
+      cell(48.8566, 2.3522, 1),
     ];
     renderModule();
 
@@ -87,9 +81,11 @@ describe("MyMapModule", () => {
 
   it("plots only the buildings that have coordinates, but counts them all", async () => {
     mocks.rows = [
-      libraryRow("Madrid", [-3.7038, 40.4168]),
-      libraryRow("Madrid", null),
-      libraryRow("Tokyo", [139.6503, 35.6762]),
+      ...totals(3, 2, 2),
+      city("Madrid", 2),
+      city("Tokyo", 1),
+      cell(40.4168, -3.7038, 1),
+      cell(35.6762, 139.6503, 1),
     ];
     renderModule();
 
@@ -99,12 +95,12 @@ describe("MyMapModule", () => {
     // ...while the plate only draws what it can place.
     expect(screen.getByRole("img")).toHaveAttribute(
       "aria-label",
-      "Density map of 2 buildings in your library, concentrated around Madrid.",
+      "World map of 3 buildings in your library, concentrated around Madrid.",
     );
   });
 
   it("drops the plate but keeps the cities when nothing has coordinates", async () => {
-    mocks.rows = [libraryRow("Madrid", null), libraryRow("Barcelona", null)];
+    mocks.rows = [...totals(2, 0, 2), city("Madrid", 1), city("Barcelona", 1)];
     renderModule();
 
     expect(await screen.findByText("Madrid")).toBeInTheDocument();
@@ -112,36 +108,8 @@ describe("MyMapModule", () => {
     expect(screen.getByText("Open My Map")).toBeInTheDocument();
   });
 
-  it("plots the EWKB hex PostgREST actually sends for a geography column", async () => {
-    // Verbatim wire values from the catalogue: London 51.51007,-0.098532 and
-    // Milan 45.4754495,9.2215154. PostgREST hands `location` back as an EWKB
-    // hex string, not GeoJSON — the plate has to survive the real format.
-    mocks.rows = [
-      { building: londonEwkb },
-      { building: { ...londonEwkb, city: "Milan", location: "0101000020E6100000E71E6D776A71224025B37A87DBBC4640" } },
-    ];
-    renderModule();
-
-    expect(await screen.findByText("London")).toBeInTheDocument();
-    expect(screen.getByRole("img")).toHaveAttribute(
-      "aria-label",
-      "Density map of 2 buildings in your library, concentrated around London.",
-    );
-  });
-
-  it("skips deleted buildings", async () => {
-    mocks.rows = [
-      libraryRow("Madrid", [-3.7038, 40.4168]),
-      libraryRow("Atlantis", [-30, 30], { is_deleted: true }),
-    ];
-    renderModule();
-
-    expect(await screen.findByText("Madrid")).toBeInTheDocument();
-    expect(screen.queryByText("Atlantis")).toBeNull();
-  });
-
   it("renders the quiet empty state with a single Explore CTA when the library is empty", async () => {
-    mocks.rows = [];
+    mocks.rows = totals(0, 0, 0);
     renderModule();
 
     expect(await screen.findByText("Your map is empty")).toBeInTheDocument();

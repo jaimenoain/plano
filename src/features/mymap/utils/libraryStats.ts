@@ -4,7 +4,6 @@
  * five figures the masthead shows.
  */
 import type { LibraryPin } from "@/features/feed/api/railApi";
-import { rollUpPlaces } from "@/features/feed";
 
 export type LibraryStats = {
   visited: number;
@@ -15,6 +14,21 @@ export type LibraryStats = {
   /** Sum of the member's 0–3 Masterpiece awards. */
   points: number;
 };
+
+/**
+ * Distinct places by city, falling back to country when the city is
+ * missing — the masthead's "cities" figure. Counts every pin, mappable or
+ * not: a building with no coordinates still belongs to a city.
+ */
+function countDistinctPlaces(pins: LibraryPin[]): number {
+  const names = new Set<string>();
+  for (const pin of pins) {
+    const city = pin.city?.trim();
+    const name = city || pin.country?.trim();
+    if (name) names.add(name.toLowerCase());
+  }
+  return names.size;
+}
 
 export function computeLibraryStats(pins: LibraryPin[]): LibraryStats {
   let visited = 0;
@@ -33,7 +47,7 @@ export function computeLibraryStats(pins: LibraryPin[]): LibraryStats {
   return {
     visited,
     saved,
-    cities: rollUpPlaces(pins).placeCount,
+    cities: countDistinctPlaces(pins),
     countries: countries.size,
     points,
   };
