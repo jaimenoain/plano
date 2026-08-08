@@ -2470,6 +2470,7 @@ CREATE TABLE public.collections (
                                   CHECK (categorization_method IN ('default', 'custom', 'status', 'rating_member', 'uniform')),
   custom_categories               jsonb DEFAULT '[]',
   categorization_selected_members uuid[],
+  marker_styles                   jsonb,          -- owner-chosen colour+size per method/bucket (ADR 0033); parse with src/features/collections/markerStyles.ts, never trust raw
   external_link                   text,
   itinerary                       jsonb,          -- AI-generated itinerary data
   created_at                      timestamptz NOT NULL DEFAULT now(),

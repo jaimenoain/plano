@@ -12,6 +12,10 @@ export interface Collection {
   categorization_method: 'default' | 'custom' | 'status' | 'rating_member' | 'uniform';
   custom_categories: { id: string; label: string; color: string }[] | null;
   categorization_selected_members: string[] | null;
+  /** Owner-chosen marker colour+size per Categorization Method bucket (ADR 0033).
+   *  Raw and unvalidated — always read through `parseMarkerStyles()`
+   *  (`./markerStyles`) before use. */
+  marker_styles: unknown | null;
   itinerary: Itinerary | null;
 }
 

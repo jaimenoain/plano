@@ -18,6 +18,8 @@ export interface DiscoveryBuildingMapPin {
   status?: string | null;
   isCandidate?: boolean;
   color?: string | null;
+  /** Owner-chosen marker size token when `color` is a marker_styles override (ADR 0033). */
+  markerSize?: "sm" | "md" | "lg" | null;
   // Optional for map pins
   name?: string;
   main_image_url?: string | null;

@@ -2247,6 +2247,7 @@ export type Database = {
           id: string
           is_public: boolean
           itinerary: Json | null
+          marker_styles: Json | null
           name: string
           owner_id: string
           rating_mode: string | null
@@ -2267,6 +2268,7 @@ export type Database = {
           id?: string
           is_public?: boolean
           itinerary?: Json | null
+          marker_styles?: Json | null
           name: string
           owner_id: string
           rating_mode?: string | null
@@ -2287,6 +2289,7 @@ export type Database = {
           id?: string
           is_public?: boolean
           itinerary?: Json | null
+          marker_styles?: Json | null
           name?: string
           owner_id?: string
           rating_mode?: string | null

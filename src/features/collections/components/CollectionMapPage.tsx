@@ -42,6 +42,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
 import { mapCollectionItem } from "../mapCollectionItem";
 import { visibleCollectionItems } from "../collectionVisibility";
+import { itinerarySourceFingerprint, withoutSearchParams } from "./CollectionMapPage.helpers";
 import { CollectionMapOverlays } from "./CollectionMapOverlays";
 import { getBoundsFromBuildings, type Bounds } from "@/utils/map";
 import { collectionStructuredData, SITE_URL } from "@/features/buildings/utils/structuredData";
@@ -95,6 +96,7 @@ import {
 import { useCollectionMapPreferences } from "../hooks/useCollectionMapPreferences";
 import { useCollectionRailView } from "../hooks/useCollectionRailView";
 import { useCollectionViewMode } from "../hooks/useCollectionViewMode";
+import { parseMarkerStyles, resolveCollectionItemMarkerStyle } from "../markerStyles";
 
 const CollectionSettingsDialog = lazyWithRetry(() => import("@/features/collections/components/CollectionSettingsDialog").then(module => ({ default: module.CollectionSettingsDialog })));
 const AddBuildingsToCollectionDialog = lazyWithRetry(() => import("@/features/collections/components/AddBuildingsToCollectionDialog").then(module => ({ default: module.AddBuildingsToCollectionDialog })));
@@ -105,33 +107,6 @@ const CollectionMapGL = lazyWithRetry(() => import("@/features/maps/components/C
 // for reference only. We no longer use this interface directly in code, but keep
 // it for developments working with the underlying SQL/selects.
 // type CollectionItemResponse = { ... }
-
-/**
- * Only re-run itinerary store initialization when collection/items/markers meaningfully change.
- * TanStack Query refetches often return new array references with identical data; without this,
- * `initializeItinerary` wipes client state and feels like an unsolicited refresh.
- */
-function itinerarySourceFingerprint(
-  collection: Collection,
-  items: CollectionItemWithBuilding[],
-  markers: CollectionMarker[],
-): string {
-  const itemPart = [...items]
-    .map(
-      (i) =>
-        `${i.id}:${i.note ?? ""}:${i.custom_category_id ?? ""}:${i.building.location_lat}:${i.building.location_lng}:${i.building.name}`,
-    )
-    .sort()
-    .join("|");
-  const markerPart = [...markers]
-    .map(
-      (m) =>
-        `${m.id}:${m.lat}:${m.lng}:${m.name}:${m.notes ?? ""}:${m.category}`,
-    )
-    .sort()
-    .join("|");
-  return `${collection.id}:${JSON.stringify(collection.itinerary)}:${itemPart}:${markerPart}`;
-}
 
 interface SavedCandidateResponse {
   building_id: string;
@@ -156,13 +131,6 @@ interface SavedCandidateResponse {
       company: { id: string; name: string } | null;
     }[];
   } | null;
-}
-
-/** Returns a copy of the search params with the given keys removed (for consume-once deep links). */
-function withoutSearchParams(prev: URLSearchParams, ...keys: string[]): URLSearchParams {
-  const next = new URLSearchParams(prev);
-  keys.forEach((key) => next.delete(key));
-  return next;
 }
 
 export default function CollectionMap() {
@@ -627,6 +595,15 @@ export default function CollectionMap() {
     return map;
   }, [userInteractions]);
 
+  // Owner-chosen marker colour+size per Categorization Method bucket (ADR 0033).
+  // A never-touched collection has `marker_styles: null`, which parses to `{}` —
+  // every `resolveMarkerStyle` call then falls through to its hardcoded default,
+  // so the map renders byte-identical to before this task.
+  const markerStyles = useMemo(
+    () => parseMarkerStyles(collection?.marker_styles ?? null),
+    [collection?.marker_styles],
+  );
+
   // Prepare map buildings
   const mapBuildings = useMemo<DiscoveryBuilding[]>(() => {
     const buildingNodes: DiscoveryBuilding[] = [];
@@ -637,42 +614,37 @@ export default function CollectionMap() {
         const statsMap = buildStatsMap(statsData as unknown as CollectionStatRow[] | undefined);
 
         const mappedBuildings: DiscoveryBuilding[] = visibleItems.map((item) => {
-        let color: string | null = null;
         const interaction = userInteractionMap.get(item.building.id);
 
-        // Markers are monochrome. Categorisation is carried by a light-to-dark value
-        // ladder (black → white → muted), never by hue: gold/silver/bronze and
-        // green/orange both broke the design system's "markers are currentColor" rule.
-        if (collection?.categorization_method === 'custom') {
-            // A member-chosen category colour cannot survive a monochrome map, so every
-            // custom category now renders identically. The colour picker in
-            // CollectionSettingsDialog is consequently inert — see docs/Roadmap.md PR 7.
-            color = MAP_MARKER_FILL.brandPrimary;
-        } else if (collection?.categorization_method === 'uniform') {
-            color = MAP_MARKER_FILL.brandPrimary;
-        } else if (shouldFetchStats && statsData && memberIds) {
-            const stat = statsMap.get(item.building.id);
-            const targetUserIds = collection?.categorization_selected_members && collection.categorization_selected_members.length > 0
+        // Markers are monochrome by default; a collection owner may override colour
+        // and size per method/bucket (ADR 0033) — see resolveCollectionItemMarkerStyle
+        // for the bucketing rules (unchanged from pre-5.8 per method). Guards mirror
+        // the pre-5.8 branches exactly: status/rating_member need stats loaded, and
+        // `default` only resolves once the owner has actually styled it — otherwise
+        // color/markerSize stay null and the item falls through to the ladder.
+        let color: string | null = null;
+        let markerSize: "sm" | "md" | "lg" | null = null;
+        const isStatsMethod = collection?.categorization_method === 'status' || collection?.categorization_method === 'rating_member';
+        if (
+          collection &&
+          (collection.categorization_method === 'custom' ||
+            collection.categorization_method === 'uniform' ||
+            (isStatsMethod && shouldFetchStats && statsData && memberIds) ||
+            (collection.categorization_method === 'default' && markerStyles.default))
+        ) {
+            const targetUserIds = collection.categorization_selected_members && collection.categorization_selected_members.length > 0
                 ? collection.categorization_selected_members
                 : memberIds;
-            const targetCount = targetUserIds.length;
-
-            if (collection.categorization_method === 'status') {
-                if (!stat || stat.visitedCount === 0) {
-                    color = MAP_MARKER_FILL.surfaceMuted; // Not visited
-                } else if (stat.visitedCount >= targetCount && targetCount > 0) {
-                    color = MAP_MARKER_FILL.brandPrimary; // Visited by all
-                } else {
-                    color = MAP_MARKER_FILL.white; // Visited by some
-                }
-            } else if (collection.categorization_method === 'rating_member') {
-                if (stat?.hasSaved && stat.maxRating === 3) color = MAP_MARKER_FILL.brandPrimary;
-                else if (stat?.hasSaved && stat.maxRating === 2) color = MAP_MARKER_FILL.white;
-                // 1 pt, saved-unrated and no-record all share the quietest face. The step
-                // below white has to stay opaque — a translucent face lets the basemap
-                // through and the pin stops being a pin.
-                else color = MAP_MARKER_FILL.surfaceMuted;
-            }
+            const resolved = resolveCollectionItemMarkerStyle({
+                method: collection.categorization_method,
+                styles: markerStyles,
+                customCategoryId: item.custom_category_id,
+                stat: statsMap.get(item.building.id),
+                targetMemberCount: targetUserIds?.length ?? 0,
+                personalStatus: interaction?.status,
+            });
+            color = resolved.color;
+            markerSize = resolved.size;
         }
 
         return {
@@ -690,6 +662,7 @@ export default function CollectionMap() {
             credits: primaryBuildingCreditsToSummaries(item.building.building_credits ?? []),
             styles: null as StyleSummary[] | null,
             color: color,
+            markerSize: markerSize,
             personal_rating: interaction?.rating || null,
             personal_status: interaction?.status || null,
         };
@@ -725,7 +698,7 @@ export default function CollectionMap() {
     }
 
     return buildingNodes;
-  }, [visibleItems, markers, collection, statsData, memberIds, shouldFetchStats, userInteractionMap, photos]);
+  }, [visibleItems, markers, collection, statsData, memberIds, shouldFetchStats, userInteractionMap, photos, markerStyles]);
 
   const coverMosaicUrls = useMemo(() => {
     return visibleItems

@@ -44,12 +44,15 @@ vi.mock("@/components/ui/tabs", () => ({
   TabsContent: () => null,
 }));
 
+let builders: Record<string, unknown>[] = [];
+
 function makeBuilder() {
   const builder: Record<string, unknown> = {};
   for (const m of ["update", "select", "insert", "delete", "eq", "maybeSingle", "single", "order", "in"]) {
     builder[m] = vi.fn(() => builder);
   }
   builder.then = (resolve: (v: unknown) => unknown) => resolve(queryResult);
+  builders.push(builder);
   return builder;
 }
 
@@ -92,10 +95,43 @@ describe("CollectionSettingsDialog — save", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     queryResult = { data: [], error: null };
+    builders = [];
     mockFrom.mockImplementation(() => makeBuilder());
   });
 
   afterEach(cleanup);
+
+  it("saves an empty marker_styles override for an untouched collection (Task 5.8)", async () => {
+    queryResult = { data: [{ id: "col-1" }], error: null };
+    renderDialog();
+
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+
+    await waitFor(() => expect(mockToast.success).toHaveBeenCalled());
+    const updateCall = builders
+      .flatMap((b) => (b.update as ReturnType<typeof vi.fn>).mock.calls)
+      .find((call) => call.length > 0);
+    expect(updateCall?.[0]).toMatchObject({ marker_styles: {} });
+  });
+
+  it("saves the owner's marker_styles override untouched (Task 5.8)", async () => {
+    queryResult = { data: [{ id: "col-1" }], error: null };
+    const styledCollection = {
+      ...collection,
+      marker_styles: { uniform: { all: { color: "#00ff00", size: "sm" } } },
+    } as unknown as DialogProps["collection"];
+    renderDialog({ collection: styledCollection });
+
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+
+    await waitFor(() => expect(mockToast.success).toHaveBeenCalled());
+    const updateCall = builders
+      .flatMap((b) => (b.update as ReturnType<typeof vi.fn>).mock.calls)
+      .find((call) => call.length > 0);
+    expect(updateCall?.[0]).toMatchObject({
+      marker_styles: { uniform: { all: { color: "#00ff00", size: "sm" } } },
+    });
+  });
 
   it("treats a zero-row update as a failure (no silent false success)", async () => {
     // RLS silently rejects: Supabase returns { data: [], error: null }.

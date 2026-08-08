@@ -38,7 +38,10 @@ import { CollaboratorsList } from "./CollaboratorsList";
 import { CollectionDiscoverySettings } from "./CollectionDiscoverySettings";
 import { SHOW_BY_ITEM_SELECTED } from "./mapViewToggleStyles";
 import { CollectionMemberFilter } from "./CollectionMemberFilter";
+import { MarkerStyleEditor } from "./MarkerStyleEditor";
 import { notifyCollaboratorByEmail, fetchCollectionOwnerProfile } from "../api/collaboration";
+import { parseMarkerStyles, type MarkerStyleMap } from "../markerStyles";
+import type { Json } from "@/integrations/supabase/types";
 
 interface CollectionSettingsDialogProps {
   collection: Collection;
@@ -202,6 +205,7 @@ export function CollectionSettingsDialog({
     categorization_method: 'default' | 'custom' | 'status' | 'rating_member' | 'uniform';
     custom_categories: { id: string; label: string; color: string }[];
     categorization_selected_members: string[] | null;
+    marker_styles: MarkerStyleMap;
   }>({
     name: collection.name,
     description: collection.description || "",
@@ -212,7 +216,8 @@ export function CollectionSettingsDialog({
     show_top_rating: collection.show_top_rating ?? false,
     categorization_method: collection.categorization_method || 'uniform',
     custom_categories: collection.custom_categories || [],
-    categorization_selected_members: collection.categorization_selected_members || null
+    categorization_selected_members: collection.categorization_selected_members || null,
+    marker_styles: parseMarkerStyles(collection.marker_styles),
   });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -270,7 +275,8 @@ export function CollectionSettingsDialog({
         show_top_rating: collection.show_top_rating ?? false,
         categorization_method: collection.categorization_method || 'uniform',
         custom_categories: collection.custom_categories || [],
-        categorization_selected_members: collection.categorization_selected_members || null
+        categorization_selected_members: collection.categorization_selected_members || null,
+        marker_styles: parseMarkerStyles(collection.marker_styles),
       });
             fetchContributors();
       fetchCollectionFolders();
@@ -332,7 +338,11 @@ export function CollectionSettingsDialog({
         show_top_rating: formData.show_top_rating,
         categorization_method: formData.categorization_method,
         custom_categories: formData.custom_categories,
-        categorization_selected_members: formData.categorization_selected_members
+        categorization_selected_members: formData.categorization_selected_members,
+        // MarkerStyleMap's keys are a closed union (Partial<Record<method, ...>>), which
+        // isn't structurally an index signature — this is a shape cast, not an escape
+        // from validation (parseMarkerStyles already did that on the way in).
+        marker_styles: formData.marker_styles as unknown as Json,
       })
       .eq("id", collection.id)
       .select("id");
@@ -774,6 +784,18 @@ export function CollectionSettingsDialog({
                     {METHOD_DESCRIPTIONS[formData.categorization_method]}
                 </div>
 
+                {/* Marker colour + size, per method/bucket (Task 5.8, ADR 0033). Custom
+                    Categories gets its editor below the category list instead, since a
+                    bucket only exists once a category does. */}
+                {formData.categorization_method !== 'custom' && (
+                    <MarkerStyleEditor
+                        method={formData.categorization_method}
+                        customCategories={formData.custom_categories}
+                        value={formData.marker_styles}
+                        onChange={(next) => setFormData({ ...formData, marker_styles: next })}
+                    />
+                )}
+
                 {/* Sub-options for Status/Rating */}
                 {(formData.categorization_method === 'status' || formData.categorization_method === 'rating_member') && (
                     <div className="pl-6 space-y-3 border-l-2 ml-1 mt-2">
@@ -861,6 +883,13 @@ export function CollectionSettingsDialog({
                                 </div>
                             )}
                         </ScrollArea>
+
+                        <MarkerStyleEditor
+                            method="custom"
+                            customCategories={formData.custom_categories}
+                            value={formData.marker_styles}
+                            onChange={(next) => setFormData({ ...formData, marker_styles: next })}
+                        />
                     </div>
                 )}
 
