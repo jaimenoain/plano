@@ -14,9 +14,16 @@
 /**
  * Opaque marker face colors for inline `backgroundColor` on map pins.
  *
- * Markers are monochrome. `brand-accent` (lime, #BEFF00) is rationed to the primary-CTA
- * fill, focus rings, the hover arrow and one `.accent-tag` — a lime marker is a bug.
- * See docs/DESIGN_TOKENS.md and design-system/.../CHECKLIST.md.
+ * These are the *system* faces — the monochrome percentile ladder used on every map
+ * surface, plus the photography-gap heatmap. `brand-accent` (lime, #BEFF00) is
+ * rationed to the primary-CTA fill, focus rings, the hover arrow and one
+ * `.accent-tag` — a lime marker is a bug. See docs/DESIGN_TOKENS.md and
+ * design-system/.../CHECKLIST.md.
+ *
+ * A collection owner's chosen marker colour (ADR 0033) is a *different* thing: it is
+ * member data read from `collections.marker_styles`, validated by
+ * `src/features/collections/markerStyles.ts`, and flows to `backgroundColor` as a
+ * runtime value — never a literal added to this file.
  *
  * Every value here is OPAQUE. A translucent face lets the basemap read through the pin,
  * and on the pale positron style that is the difference between a marker and no marker at
