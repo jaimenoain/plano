@@ -23,6 +23,7 @@ import { Loader2 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BuildingListRow, useInfiniteScrollSentinel } from "@/features/maps";
+import type { MapFilters } from "@/types/plano-map";
 import type { Bounds } from "@/utils/map";
 import { resolveBuildingUrl } from "@/utils/url";
 import type { DiscoverInViewRow } from "../api/discoverInView";
@@ -41,6 +42,8 @@ interface CollectionDiscoverPanelProps {
   variant?: "standalone" | "section";
   /** Plain-click handler — opens the page's detail drawer on this building. */
   onSelect: (row: DiscoverInViewRow) => void;
+  /** Task 5.7 — quality-tier / era / standard filters, mirrored onto the pin layer. */
+  filters?: MapFilters;
 }
 
 function DiscoverSkeletons() {
@@ -66,6 +69,7 @@ export function CollectionDiscoverPanel({
   scrollRootRef,
   variant = "standalone",
   onSelect,
+  filters,
 }: CollectionDiscoverPanelProps) {
   const {
     buildings,
@@ -79,7 +83,7 @@ export function CollectionDiscoverPanel({
     pageCount,
     addBuilding,
     addingId,
-  } = useCollectionDiscoverInView({ collectionId, bounds, excludeBuildingIds });
+  } = useCollectionDiscoverInView({ collectionId, bounds, excludeBuildingIds, filters });
 
   const { targetRef } = useInfiniteScrollSentinel({
     enabled: buildings.length > 0,

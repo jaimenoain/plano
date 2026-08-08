@@ -22,4 +22,35 @@ describe("discoverInViewRpcArgs", () => {
   it("sends no filters, matching what the discovery pin layer draws", () => {
     expect(discoverInViewRpcArgs(bounds, 1).filter_criteria).toEqual({});
   });
+
+  // Task 5.7 — quality-tier / era / standard filters for "Show All Buildings".
+  it("carries the tier and era filters through to filter_criteria", () => {
+    const args = discoverInViewRpcArgs(bounds, 1, { minTierRank: "Top 5%", centuries: [19, 20] });
+    expect(args.filter_criteria).toMatchObject({
+      min_tier_rank: "Top 5%",
+      centuries: [19, 20],
+    });
+  });
+
+  it("carries the standard building filters through to filter_criteria", () => {
+    const args = discoverInViewRpcArgs(bounds, 1, {
+      category: "cat-1",
+      typologies: ["typ-1"],
+      constructionStatuses: ["Built"],
+      awardId: "award-1",
+      minSizeSqm: 100,
+    });
+    expect(args.filter_criteria).toMatchObject({
+      category_id: "cat-1",
+      typology_ids: ["typ-1"],
+      construction_statuses: ["Built"],
+      award_id: "award-1",
+      min_size_sqm: 100,
+    });
+  });
+
+  it("omits keys for unset filters rather than sending them as null/undefined", () => {
+    const args = discoverInViewRpcArgs(bounds, 1, { minTierRank: "Top 1%" });
+    expect(args.filter_criteria).toEqual({ min_tier_rank: "Top 1%" });
+  });
 });

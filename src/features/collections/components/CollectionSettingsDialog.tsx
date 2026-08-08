@@ -14,7 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserSearch } from "@/features/profile/components/UserSearch";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Collection, type SavedPlacesDotFilter, type SavedPlacesStatusFilter } from "@/features/collections/types";
+import { Collection, type DiscoveryTierFilter, type SavedPlacesDotFilter, type SavedPlacesStatusFilter } from "@/features/collections/types";
+import type { MapFilters } from "@/types/plano-map";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { buildCollectionCsvExport } from "../api/exportCollectionCsv";
 import { Separator } from "@/components/ui/separator";
@@ -35,6 +36,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PendingCollaborationRequestsList } from "./PendingCollaborationRequestsList";
 import { CollaboratorsList } from "./CollaboratorsList";
 import { CollectionDiscoverySettings } from "./CollectionDiscoverySettings";
+import { SHOW_BY_ITEM_SELECTED } from "./mapViewToggleStyles";
 import { CollectionMemberFilter } from "./CollectionMemberFilter";
 import { notifyCollaboratorByEmail, fetchCollectionOwnerProfile } from "../api/collaboration";
 
@@ -52,6 +54,13 @@ interface CollectionSettingsDialogProps {
   /** Discovery view — draw every building in view so the map can grow the collection. */
   showAllBuildings?: boolean;
   onShowAllBuildingsChange?: (show: boolean) => void;
+  /** Task 5.7 — "Show All Buildings" filters (tier, era, standard building filters). */
+  discoveryTierFilter?: DiscoveryTierFilter;
+  onDiscoveryTierFilterChange?: (filter: DiscoveryTierFilter) => void;
+  discoveryCenturies?: number[];
+  onDiscoveryCenturiesChange?: (centuries: number[]) => void;
+  discoveryStandardFilters?: Partial<MapFilters>;
+  onDiscoveryStandardFiltersChange?: (filters: Partial<MapFilters>) => void;
   isOwner?: boolean;
   canEdit?: boolean;
   initialTab?: "map" | "general" | "markers" | "collaborators";
@@ -82,11 +91,6 @@ const METHOD_DESCRIPTIONS = {
   rating_member: "Pins highlight the highest rating among members: Masterpiece (Gold), Essential (Silver), Impressive (Bronze), or Saved (Blue).",
   custom: "Create custom categories with your own colors to organize locations."
 };
-
-const SHOW_BY_ITEM_SELECTED =
-  "data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground " +
-  "data-[state=on]:border-brand-primary data-[state=on]:font-semibold " +
-  "data-[state=on]:ring-1 data-[state=on]:ring-brand-primary data-[state=on]:hover:bg-brand-primary";
 
 export function SavedPlacesDotToggle({
   value,
@@ -173,6 +177,12 @@ export function CollectionSettingsDialog({
   onSavedPlacesStatusFilterChange,
   showAllBuildings = false,
   onShowAllBuildingsChange,
+  discoveryTierFilter = 'all',
+  onDiscoveryTierFilterChange,
+  discoveryCenturies = [],
+  onDiscoveryCenturiesChange,
+  discoveryStandardFilters = {},
+  onDiscoveryStandardFiltersChange,
   isOwner = false,
   canEdit = true,
   initialTab = "map",
@@ -595,6 +605,12 @@ export function CollectionSettingsDialog({
               <CollectionDiscoverySettings
                 showAllBuildings={showAllBuildings}
                 onShowAllBuildingsChange={onShowAllBuildingsChange}
+                discoveryTierFilter={discoveryTierFilter}
+                onDiscoveryTierFilterChange={onDiscoveryTierFilterChange}
+                discoveryCenturies={discoveryCenturies}
+                onDiscoveryCenturiesChange={onDiscoveryCenturiesChange}
+                discoveryStandardFilters={discoveryStandardFilters}
+                onDiscoveryStandardFiltersChange={onDiscoveryStandardFiltersChange}
               />
             )}
 

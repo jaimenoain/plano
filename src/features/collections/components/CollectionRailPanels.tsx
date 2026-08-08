@@ -20,6 +20,7 @@
  */
 import type { ComponentProps, ReactNode, RefObject } from "react";
 import type { DiscoveryBuilding } from "@/features/search";
+import type { MapFilters } from "@/types/plano-map";
 import type { Bounds } from "@/utils/map";
 import type { DiscoverInViewRow } from "../api/discoverInView";
 import { showsCollection, showsDiscovery, type CollectionRailView } from "../railView";
@@ -48,6 +49,8 @@ export interface RailDiscoverSources {
   onSelectSavedPlace: (building: DiscoveryBuilding) => void;
   /** Open the detail drawer on a catalogue building in view. */
   onSelectCatalogueBuilding: (row: DiscoverInViewRow) => void;
+  /** Task 5.7 — quality-tier / era / standard filters for the catalogue layer. */
+  filters?: MapFilters;
 }
 
 interface CollectionRailPanelsProps {
@@ -133,6 +136,7 @@ export function CollectionRailPanels({
             scrollRootRef={discover.scrollRootRef}
             variant={labelled ? "section" : "standalone"}
             onSelect={discover.onSelectCatalogueBuilding}
+            filters={discover.filters}
           />
         </>
       )}

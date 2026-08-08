@@ -106,6 +106,13 @@ export interface MapFilters {
    */
   centuries?: number[];
 
+  /**
+   * Minimum quality tier — `buildings.tier_rank` at or above this band.
+   * Collection map's "Show All Buildings" discovery layer (Task 5.7); passed
+   * straight through as `filter_criteria.min_tier_rank` on both map RPCs.
+   */
+  minTierRank?: 'Top 1%' | 'Top 5%' | 'Top 10%' | 'Top 20%';
+
   // Photography Gaps (Phase 2)
   photographyGaps?: boolean;
   gapPhotoCounts?: number[];

@@ -275,6 +275,11 @@ export default function CollectionMap() {
     setSavedPlacesStatusFilter: handleSavedPlacesStatusFilterChange,
     showAllBuildings,
     setShowAllBuildings: handleShowAllBuildingsChange,
+    // Task 5.7 — "Show All Buildings" discovery filters (tier, era, standard building filters).
+    discoveryTierFilter, setDiscoveryTierFilter: handleDiscoveryTierFilterChange,
+    discoveryCenturies, setDiscoveryCenturies: handleDiscoveryCenturiesChange,
+    discoveryStandardFilters, setDiscoveryStandardFilters: handleDiscoveryStandardFiltersChange,
+    discoveryFilters,
   } = useCollectionMapPreferences(user?.id, collection?.id);
 
   // The current user's contributor role on this collection (null if not a contributor).
@@ -1166,7 +1171,7 @@ toast({
                             onAddAllSavedPlaces: handleOpenAddVisibleConfirm,
                             isAddingAllSavedPlaces: isAddingVisibleCandidates,
                             onSelectSavedPlace: selectSavedPlace,
-                            onSelectCatalogueBuilding: selectDiscoverRow,
+                            onSelectCatalogueBuilding: selectDiscoverRow, filters: discoveryFilters,
                         }}
                     />
                 </div>
@@ -1203,7 +1208,7 @@ toast({
                     fitBoundsRequest={fitRequest}
                     discoveryEnabled={discoveryEnabled}
                     hideCollectionPins={rail.hideCollectionPins}
-                    collectionBuildingIds={existingBuildingIds}
+                    collectionBuildingIds={existingBuildingIds} discoveryFilters={discoveryFilters}
                     onAddToCollection={
                       canEdit
                         ? (cluster: ClusterResponse) =>
@@ -1298,6 +1303,9 @@ toast({
                 onSavedPlacesStatusFilterChange={handleSavedPlacesStatusFilterChange}
                 showAllBuildings={showAllBuildings}
                 onShowAllBuildingsChange={handleShowAllBuildingsChange}
+                discoveryTierFilter={discoveryTierFilter} onDiscoveryTierFilterChange={handleDiscoveryTierFilterChange}
+                discoveryCenturies={discoveryCenturies} onDiscoveryCenturiesChange={handleDiscoveryCenturiesChange}
+                discoveryStandardFilters={discoveryStandardFilters} onDiscoveryStandardFiltersChange={handleDiscoveryStandardFiltersChange}
                 isOwner={isOwner}
                 canEdit={canEdit}
                 initialTab={settingsInitialTab}

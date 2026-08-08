@@ -156,6 +156,7 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
       minStoreys: filters.minStoreys ?? null,
       maxStoreys: filters.maxStoreys ?? null,
       centuries: filters.centuries ?? null,
+      minTierRank: filters.minTierRank ?? null,
       constructionStatuses: statusFilter.construction_statuses ?? null,
       excludeConstructionStatuses: statusFilter.exclude_construction_statuses ?? null,
       photographyGaps: filters.photographyGaps ?? null,
@@ -227,6 +228,7 @@ export function useMapData({ bounds, zoom, filters, mode = 'discover' }: UseMapD
         max_storeys: filters.maxStoreys || undefined,
         centuries:
           filters.centuries && filters.centuries.length > 0 ? filters.centuries : undefined,
+        min_tier_rank: filters.minTierRank,
         photography_gaps: filters.photographyGaps,
         gap_photo_counts: filters.gapPhotoCounts,
       };

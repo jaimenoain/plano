@@ -24,7 +24,12 @@ import { useMapData, type ClusterResponse } from './useMapData';
  */
 const DISABLED_BOUNDS: Bounds = { north: 0, south: 0, east: 0, west: 0 };
 
-/** Stable identity: a fresh `{}` each render would re-key the query on every pan. */
+/**
+ * Stable identity: a fresh `{}` each render would re-key the query on every
+ * pan. Callers that pass no filters (or an empty object) get this shared
+ * instance back from `useCollectionMapPreferences`'s memoized filters, so
+ * identity stays stable there too — this is only the hook's own fallback.
+ */
 const NO_FILTERS: MapFilters = {};
 
 export interface UseCollectionDiscoveryClustersProps {
@@ -34,19 +39,26 @@ export interface UseCollectionDiscoveryClustersProps {
   viewport: MapClusterViewport | null;
   /** Buildings already in the collection — never drawn twice. */
   collectionBuildingIds: Set<string>;
+  /**
+   * Task 5.7 — quality-tier / era / standard filters for the discovery layer.
+   * Must be referentially stable across renders (memoized by the caller) or
+   * every pan re-keys the query. Defaults to the shared empty-filters constant.
+   */
+  filters?: MapFilters;
 }
 
 export function useCollectionDiscoveryClusters({
   enabled,
   viewport,
   collectionBuildingIds,
+  filters = NO_FILTERS,
 }: UseCollectionDiscoveryClustersProps): ClusterResponse[] {
   const active = enabled && !!viewport;
 
   const { clusters } = useMapData({
     bounds: active ? viewport!.bounds : DISABLED_BOUNDS,
     zoom: active ? viewport!.zoom : 0,
-    filters: NO_FILTERS,
+    filters,
     mode: 'discover',
   });
 

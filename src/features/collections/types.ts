@@ -21,6 +21,15 @@ export type SavedPlacesDotFilter = 'all' | '1' | '2' | '3';
 /** Filter saved-place suggestions by library status (`user_buildings.status`: visited vs bucket list / pending). */
 export type SavedPlacesStatusFilter = 'all' | 'visited' | 'pending';
 
+/**
+ * Task 5.7 — quality-tier filter for the "Show All Buildings" discovery layer.
+ * Values are the actual `buildings.tier_rank` band labels (not a hard count —
+ * "Top 20" would misrepresent how many buildings that band actually contains),
+ * so no separate mapping table is needed: this doubles as the RPC's
+ * `min_tier_rank` argument.
+ */
+export type DiscoveryTierFilter = 'all' | 'Top 1%' | 'Top 5%' | 'Top 10%' | 'Top 20%';
+
 export type TransportMode = 'walking' | 'driving' | 'cycling' | 'transit';
 
 export interface ItineraryRoute {

@@ -284,7 +284,7 @@
   Dependencies:    None
   CSV ref:         #30
 
-[ ] Task 5.7 — Map View: filters for "Show All Buildings"
+[x] Task 5.7 — Map View: filters for "Show All Buildings"
 
   Goal:            In the Map View tab, activating "Show All Buildings" offers
                    filters analogous to the Saved Places ones: a quantity filter
