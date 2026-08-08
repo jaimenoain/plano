@@ -299,7 +299,7 @@
   Dependencies:    5.6
   CSV ref:         #31
 
-[ ] Task 5.8 — Markers: colour and size per categorization method
+[x] Task 5.8 — Markers: colour and size per categorization method
 
   Goal:            In the Markers tab, every Categorization Method lets the user
                    set marker colour and size — Uniform gets one colour+size;

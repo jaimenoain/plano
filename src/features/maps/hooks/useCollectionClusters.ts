@@ -46,6 +46,7 @@ export function useCollectionClusters(
         const tierRank = getEffectivePinRank(
           {
             color: b.color ?? null,
+            marker_size: b.markerSize ?? null,
             rating: b.personal_rating ?? null,
             status: b.personal_status ?? null,
             tier_rank_label: tierLabel,
@@ -68,6 +69,7 @@ export function useCollectionClusters(
             rating: b.personal_rating ?? null,
             status: b.personal_status ?? null,
             color: b.color ?? null,
+            marker_size: b.markerSize ?? null,
             is_custom_marker: b.isMarker ?? false,
             marker_category: b.markerCategory ?? null,
             marker_google_primary_type: b.markerGooglePrimaryType ?? null,
@@ -127,6 +129,7 @@ export function useCollectionClusters(
         rating: props.rating as number | null,
         status: props.status as string | null,
         color: props.color as string | null,
+        marker_size: props.marker_size as string | null,
         is_custom_marker: props.is_custom_marker as boolean,
         marker_category: (props.marker_category as string | null) ?? undefined,
         marker_google_primary_type: props.marker_google_primary_type as string | null,

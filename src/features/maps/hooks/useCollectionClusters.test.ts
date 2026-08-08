@@ -85,6 +85,21 @@ describe('useCollectionClusters', () => {
     expect(clusters.map((c) => c.id).sort()).toEqual(['far-1', 'far-2']);
   });
 
+  // ADR 0033: a member-chosen colour with an explicit size token ranks by size,
+  // not hue — a large light-coloured pin must still be able to carry rank 5.
+  it('ranks a large member-coloured pin (size lg) above a small one, regardless of hue', () => {
+    const buildings = [
+      building({ id: '1', location_lat: 40.0, location_lng: -3.0, color: '#ffd54f', markerSize: 'sm' }),
+      building({ id: '2', location_lat: 40.001, location_lng: -3.001, color: '#ff00aa', markerSize: 'lg' }),
+    ];
+
+    const { result } = renderHook(() => useCollectionClusters(buildings, emptyItineraryMap, 2));
+    const clusters = result.current;
+
+    expect(clusters).toHaveLength(1);
+    expect(clusters[0].max_tier).toBe(5);
+  });
+
   it('splits a merged cluster back into individual pins at high zoom', () => {
     const buildings = [
       building({ id: '1', location_lat: 40.0, location_lng: -3.0, color: MAP_MARKER_FILL.brandPrimary }),

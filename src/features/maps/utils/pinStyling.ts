@@ -94,21 +94,67 @@ export function getPersonalTierRank(
   return 1;
 }
 
-// A colour-override face (custom category / member status) doesn't carry a ladder
-// rank of its own — it's a bespoke style. This maps its resolved fill back onto the
-// ladder so a cluster aggregating such pins can still report a meaningful max_tier.
-// Mirrors the isDarkFace split in getBasePinStyle: brandPrimary is the one dark
-// face, everything else (white, muted) reads as a mid/low rank.
-function colorOverrideRank(color: string): PinRank {
+/**
+ * Relative luminance (WCAG formula) of an opaque `#rrggbb` hex colour, used to
+ * pick ring/content polarity for an arbitrary member-chosen colour (ADR 0033).
+ * Malformed input reads as light (dark ring), the safer default on the pale
+ * positron basemap.
+ */
+export function relativeLuminance(hex: string): number {
+  const match = /^#([0-9a-f]{6})$/i.exec(hex);
+  if (!match) return 1;
+  const channel = (v: number) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  };
+  const [r, g, b] = [0, 2, 4].map((i) => channel(parseInt(match[1].slice(i, i + 2), 16)));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** Below this luminance a face is dark enough for a white ring + white content. */
+const DARK_FACE_LUMINANCE_THRESHOLD = 0.35;
+
+export function isDarkFill(color: string): boolean {
+  return relativeLuminance(color) < DARK_FACE_LUMINANCE_THRESHOLD;
+}
+
+// A colour-override face (custom category / member status / a member's own hue,
+// ADR 0033) doesn't carry a ladder rank of its own — it's a bespoke style. This
+// maps its resolved fill back onto the ladder so a cluster aggregating such pins
+// can still report a meaningful max_tier. Sized faces (marker_styles set a size
+// token) rank by size, the visual weight the owner actually chose; sizeless faces
+// (the pre-5.8 system overrides: custom category before this task, member
+// status, standalone markers) fall back to the original hue-based mapping so
+// their cluster behaviour is unchanged.
+function colorOverrideRank(color: string, size?: MarkerSizeToken): PinRank {
+  if (size === 'lg') return 5;
+  if (size === 'md') return 3;
+  if (size === 'sm') return 2;
   if (color === MAP_MARKER_FILL.brandPrimary) return 5;
   if (color === MAP_MARKER_FILL.white) return 3;
   return 2;
 }
 
+/** Named marker-size steps a collection owner can pick per categorization bucket
+ *  (ADR 0033). Mirrors `MarkerSizeToken` in `src/features/collections/markerStyles.ts`
+ *  — duplicated rather than imported so `src/features/maps/**` never depends on
+ *  `src/features/collections/**`. */
+export type MarkerSizeToken = 'sm' | 'md' | 'lg';
+
+/** Pixel size for each token; `lg` matches the size the colour-override branch has
+ *  always hardcoded, so an item with no size set renders unchanged. */
+const MARKER_SIZE_PX: Record<MarkerSizeToken, number> = { sm: 20, md: 24, lg: 28 };
+
 /** The subset of a point's fields the ladder rank actually depends on. */
 export type PinRankInput = Pick<
   ClusterResponse,
-  'rating' | 'status' | 'tier_rank_label' | 'color' | 'itinerary_sequence' | 'itinerary_day_index'
+  | 'rating'
+  | 'status'
+  | 'tier_rank_label'
+  | 'color'
+  | 'marker_size'
+  | 'itinerary_sequence'
+  | 'itinerary_day_index'
 >;
 
 /**
@@ -122,7 +168,7 @@ export function getEffectivePinRank(item: PinRankInput, options?: PinOptions): P
     return 5;
   }
   if (item.color) {
-    return colorOverrideRank(item.color);
+    return colorOverrideRank(item.color, item.marker_size as MarkerSizeToken | undefined);
   }
   const personal = options?.mode === 'library';
   return personal
@@ -261,19 +307,22 @@ function getBasePinStyle(item: ClusterResponse, options?: PinOptions): PinStyle 
     };
   }
 
-  // Custom Category / Member Status colour override
+  // Custom Category / Member Status / collection-owner colour override (ADR 0033)
   if (item.color) {
-    // The face arrives already resolved on the monochrome ladder (buildings via
-    // categorisation; standalone markers via the quiet muted step). Only the solid
-    // brand-primary face is dark enough for a white ring + white content; every
-    // lighter face needs a dark ring and dark content or it vanishes on the light
+    // The face arrives resolved: either a step on the monochrome ladder (system
+    // overrides — buildings via categorisation; standalone markers via the quiet
+    // muted step) or an arbitrary member-chosen hex (marker_styles). Ring/content
+    // polarity is computed from luminance rather than equality against the three
+    // known system fills, so it works for both: only a dark-enough face is dark
+    // enough for a white ring + white content, or it vanishes on the light
     // (positron) basemap — the satellite toggle never changes marker styling.
-    const isDarkFace = item.color === MAP_MARKER_FILL.brandPrimary;
+    const isDarkFace = isDarkFill(item.color);
+    const markerSize = item.marker_size as MarkerSizeToken | undefined;
     return {
       rank: null,
       shape,
       zIndex: 20,
-      size: 28,
+      size: markerSize ? MARKER_SIZE_PX[markerSize] : 28,
       ringClasses: isDarkFace ? 'border-white border-2' : 'border-text-primary border-2',
       classes: isDarkFace ? 'text-white' : 'text-brand-primary',
       backgroundColor: item.color,

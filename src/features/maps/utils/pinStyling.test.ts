@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getPinStyle, getGlobalTierRank, getPersonalTierRank, getEffectivePinRank } from './pinStyling';
+import { getPinStyle, getGlobalTierRank, getPersonalTierRank, getEffectivePinRank, isDarkFill } from './pinStyling';
 import { ClusterResponse } from '../hooks/useMapData';
 import { MAP_MARKER_FILL, ghostFill } from '../constants/mapMarkerFills';
 
@@ -472,6 +472,56 @@ describe('getPinStyle', () => {
       );
       expect(style.backgroundColor).toBe(ghostFill(MAP_MARKER_FILL.surfaceMuted));
       expect(style.backgroundColor).toBe('rgba(245, 245, 245, 0.55)');
+    });
+  });
+
+  // ADR 0033: a collection owner may set an arbitrary opaque hex on a member-status /
+  // custom-category / personal-status marker, with a size token (sm/md/lg) alongside it.
+  // Ring/content polarity is derived from luminance so it still works for hues the
+  // three MAP_MARKER_FILL faces never covered, and cluster rank now prefers size over hue.
+  describe('Suite 9: Owner-chosen colour + size (ADR 0033)', () => {
+    it('gives a dark arbitrary hue a white ring, matching the brandPrimary face', () => {
+      const style = getPinStyle(createMockBuilding({ color: '#0A0A2A' }));
+      expect(style.ringClasses).toContain('border-white');
+      expect(style.classes).toContain('text-white');
+      expect(style.innerMarkColor).toBe(MAP_MARKER_FILL.white);
+    });
+
+    it('gives a light arbitrary hue a dark ring, matching the surfaceMuted face', () => {
+      const style = getPinStyle(createMockBuilding({ color: '#FFD54F' }));
+      expect(style.ringClasses).toContain('border-text-primary');
+      expect(style.classes).toContain('text-brand-primary');
+      expect(style.innerMarkColor).toBe(MAP_MARKER_FILL.brandPrimary);
+    });
+
+    it('renders the three system fills with byte-identical polarity to before this task', () => {
+      expect(isDarkFill(MAP_MARKER_FILL.brandPrimary)).toBe(true);
+      expect(isDarkFill(MAP_MARKER_FILL.white)).toBe(false);
+      expect(isDarkFill(MAP_MARKER_FILL.surfaceMuted)).toBe(false);
+    });
+
+    it('sizes a colour-override pin by its marker_size token when present', () => {
+      expect(getPinStyle(createMockBuilding({ color: '#123456', marker_size: 'sm' })).size).toBe(20);
+      expect(getPinStyle(createMockBuilding({ color: '#123456', marker_size: 'md' })).size).toBe(24);
+      expect(getPinStyle(createMockBuilding({ color: '#123456', marker_size: 'lg' })).size).toBe(28);
+    });
+
+    it('falls back to the pre-5.8 hardcoded 28px when marker_size is absent', () => {
+      expect(getPinStyle(createMockBuilding({ color: MAP_MARKER_FILL.surfaceMuted })).size).toBe(28);
+    });
+
+    it('ranks a colour-override pin by its size token, largest first', () => {
+      const base = { rating: null, status: null, tier_rank_label: null, itinerary_sequence: undefined, itinerary_day_index: undefined };
+      expect(getEffectivePinRank({ ...base, color: '#123456', marker_size: 'lg' })).toBe(5);
+      expect(getEffectivePinRank({ ...base, color: '#123456', marker_size: 'md' })).toBe(3);
+      expect(getEffectivePinRank({ ...base, color: '#123456', marker_size: 'sm' })).toBe(2);
+    });
+
+    it('falls back to the pre-5.8 hue-based rank when no size token is present', () => {
+      const base = { rating: null, status: null, tier_rank_label: null, itinerary_sequence: undefined, itinerary_day_index: undefined };
+      expect(getEffectivePinRank({ ...base, color: MAP_MARKER_FILL.brandPrimary })).toBe(5);
+      expect(getEffectivePinRank({ ...base, color: MAP_MARKER_FILL.white })).toBe(3);
+      expect(getEffectivePinRank({ ...base, color: MAP_MARKER_FILL.surfaceMuted })).toBe(2);
     });
   });
 
