@@ -56,6 +56,10 @@ vi.mock('@/features/ambassadors/hooks/useAmbassadorNavAccess', () => ({
   useAmbassadorNavAccess: () => ({ data: false }),
 }));
 
+vi.mock('@/features/notifications/hooks/useUnreadNotifications', () => ({
+  useUnreadNotifications: () => ({ count: 0, hasUnread: false, isLoading: false, error: null }),
+}));
+
 // Mock UI components to avoid Portal issues
 vi.mock('@/components/ui/dropdown-menu', () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

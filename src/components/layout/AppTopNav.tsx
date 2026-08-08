@@ -1,7 +1,5 @@
-import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
-  Bell,
   Bookmark,
   Briefcase,
   Building2,
@@ -28,8 +26,8 @@ import { useUserProfile } from "@/features/profile/hooks/useUserProfile";
 import { useClaimedPersonForNav } from "@/features/credits/hooks/useClaimedPersonForNav";
 import { useStewardCompaniesForNav } from "@/features/credits/hooks/useStewardCompaniesForNav";
 import { useAmbassadorNavAccess } from "@/features/ambassadors/hooks/useAmbassadorNavAccess";
-import { supabase } from "@/integrations/supabase/client";
 import { useWaitlistSignup } from "@/features/waitlist/WaitlistSignupProvider";
+import { useUnreadNotifications, NotificationBell } from "@/features/notifications";
 import { isNavItemActive, navItemsFor } from "./navigation";
 
 function TopNavLink({
@@ -170,22 +168,8 @@ export function AppTopNav() {
   const { user } = useAuth();
   const { openWaitlistDialog } = useWaitlistSignup();
   const location = useLocation();
-  const [hasUnread, setHasUnread] = useState(false);
+  const { count: unreadCount } = useUnreadNotifications();
 
-  useEffect(() => {
-    if (!user) return;
-    const checkUnread = async () => {
-      const { count } = await supabase
-        .from("notifications")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .eq("is_read", false);
-      setHasUnread(!!count && count > 0);
-    };
-    void checkUnread();
-  }, [user, location.pathname]);
-
-  const showBadge = hasUnread && location.pathname !== "/notifications";
   const topNavItems = navItemsFor("top");
 
   return (
@@ -229,12 +213,9 @@ export function AppTopNav() {
           <Link
             to="/notifications"
             className="relative h-9 w-9 flex items-center justify-center rounded-sm text-text-secondary hover:text-text-primary transition-colors"
-            aria-label="Notifications"
+            aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
           >
-            <Bell className="h-4 w-4" />
-            {showBadge && (
-              <span className="absolute top-2 right-2 h-[7px] w-[7px] rounded-full bg-brand-accent border-[1.5px] border-surface-default" />
-            )}
+            <NotificationBell count={unreadCount} />
           </Link>
         ) : (
           <Button

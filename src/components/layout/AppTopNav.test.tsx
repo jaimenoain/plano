@@ -1,12 +1,14 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppTopNav } from "./AppTopNav";
 
 const mocks = vi.hoisted(() => ({
   user: undefined as { id: string; email: string } | undefined,
   openWaitlistDialog: vi.fn(),
+  unreadCount: 0,
 }));
 
 vi.mock("@/features/auth/hooks/useAuth", () => ({
@@ -34,14 +36,16 @@ vi.mock("@/features/ambassadors/hooks/useAmbassadorNavAccess", () => ({
 }));
 
 // The unread-badge effect awaits `.from().select().eq().eq()`; one self-returning
-// thenable satisfies the whole chain.
+// thenable satisfies the whole chain. Also stub the realtime channel the
+// useUnreadNotifications hook subscribes on.
 vi.mock("@/integrations/supabase/client", () => {
   const chain: Record<string, unknown> = {
     select: () => chain,
     eq: () => chain,
-    then: (resolve: (v: { count: number }) => void) => resolve({ count: 0 }),
+    then: (resolve: (v: { count: number }) => void) => resolve({ count: mocks.unreadCount }),
   };
-  return { supabase: { from: () => chain } };
+  const channel = { on: () => channel, subscribe: () => channel };
+  return { supabase: { from: () => chain, channel: () => channel, removeChannel: vi.fn() } };
 });
 
 // Radix portals don't settle in jsdom; render the menu inline.
@@ -54,10 +58,13 @@ vi.mock("@/components/ui/dropdown-menu", () => ({
 }));
 
 function renderNav() {
+  const queryClient = new QueryClient();
   return render(
-    <MemoryRouter>
-      <AppTopNav />
-    </MemoryRouter>,
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>
+        <AppTopNav />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 }
 
@@ -67,6 +74,7 @@ const hrefs = () =>
 describe("AppTopNav", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.unreadCount = 0;
   });
 
   // No `globals` in vitest.config.ts, so RTL never auto-cleans between tests.
@@ -95,6 +103,28 @@ describe("AppTopNav", () => {
         "/notifications",
       );
       expect(screen.getByLabelText("Account menu")).toBeTruthy();
+    });
+
+    // Regression test for the bell reliability fix (roadmap 6.3): the badge must
+    // actually reflect the unread count, not just render statically at 0.
+    it("shows the unread badge with a count when notifications are unread", async () => {
+      mocks.unreadCount = 3;
+      renderNav();
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Notifications (3 unread)")).toBeTruthy();
+      });
+      expect(screen.getByText("3")).toBeInTheDocument();
+    });
+
+    it("renders no badge when there are no unread notifications", async () => {
+      mocks.unreadCount = 0;
+      renderNav();
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Notifications")).toBeTruthy();
+      });
+      expect(screen.queryByText(/unread/)).toBeNull();
     });
   });
 

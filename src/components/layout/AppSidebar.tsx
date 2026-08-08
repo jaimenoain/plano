@@ -38,6 +38,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useClaimedPersonForNav } from "@/features/credits/hooks/useClaimedPersonForNav";
 import { useStewardCompaniesForNav } from "@/features/credits/hooks/useStewardCompaniesForNav";
+import { useUnreadNotifications } from "@/features/notifications";
 import { useAmbassadorNavAccess } from "@/features/ambassadors/hooks/useAmbassadorNavAccess";
 import { isNavItemActive, navItemsFor } from "./navigation";
 
@@ -84,6 +85,7 @@ function UserMenu() {
   const { data: claimedPersonNav } = useClaimedPersonForNav();
   const { data: stewardCompanies = [] } = useStewardCompaniesForNav();
   const { data: isAmbassador } = useAmbassadorNavAccess();
+  const { count: unreadCount } = useUnreadNotifications();
   const ownProfilePath = profile?.username
     ? `/profile/${encodeURIComponent(profile.username)}`
     : "/profile";
@@ -137,6 +139,11 @@ function UserMenu() {
               >
                 <Bell className="h-4 w-4" />
                 Notifications
+                {unreadCount > 0 && (
+                  <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-accent px-1 text-[10px] font-bold leading-none text-brand-accent-foreground">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
