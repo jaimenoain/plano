@@ -13,6 +13,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import type { MapFilters } from "@/types/plano-map";
 import type { Bounds } from "@/utils/map";
 import { addBuildingToCollection } from "../api/collectionItems";
 import {
@@ -61,6 +62,12 @@ interface UseCollectionDiscoverInViewArgs {
   bounds: Bounds | null;
   /** Every building already in the collection — never offered back. */
   excludeBuildingIds: Set<string>;
+  /**
+   * Task 5.7 — quality-tier / era / standard filters, mirrored onto the
+   * discovery pin layer so pins and list agree. Need not be referentially
+   * stable here (it is only stringified into the query key).
+   */
+  filters?: MapFilters;
 }
 
 export interface CollectionDiscoverInView {
@@ -84,6 +91,7 @@ export function useCollectionDiscoverInView({
   collectionId,
   bounds,
   excludeBuildingIds,
+  filters,
 }: UseCollectionDiscoverInViewArgs): CollectionDiscoverInView {
   const queryClient = useQueryClient();
   const [addingId, setAddingId] = useState<string | null>(null);
@@ -91,11 +99,15 @@ export function useCollectionDiscoverInView({
   const isTooWide = !!bounds && isSpanTooWide(bounds);
   const isEnabled = !!bounds && !isTooWide;
 
+  // Stringified rather than passed by reference: this hook doesn't need the
+  // filters object to be stable, only the query key derived from it.
+  const filterKey = useMemo(() => JSON.stringify(filters ?? {}), [filters]);
+
   const query = useInfiniteQuery({
     // Deliberately not keyed on `collectionId`: the collection is subtracted
     // client-side, so adding a building must not throw away fetched pages.
-    queryKey: ["collection-discover-in-view", bounds ? roundBounds(bounds) : null],
-    queryFn: ({ pageParam }) => fetchBuildingsInView(bounds!, pageParam),
+    queryKey: ["collection-discover-in-view", bounds ? roundBounds(bounds) : null, filterKey],
+    queryFn: ({ pageParam }) => fetchBuildingsInView(bounds!, pageParam, filters),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) =>
       lastPage.length === DISCOVER_PAGE_SIZE ? allPages.length + 1 : undefined,

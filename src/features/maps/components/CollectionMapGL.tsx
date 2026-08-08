@@ -69,7 +69,7 @@ interface CollectionMapGLProps {
   hideCollectionPins?: boolean;
   /** Buildings already collected — de-duplicates and disarms the discovery layer. */
   collectionBuildingIds?: Set<string>;
-  onAddToCollection?: (cluster: ClusterResponse) => void;
+  onAddToCollection?: (cluster: ClusterResponse) => void; discoveryFilters?: import('@/types/plano-map').MapFilters;
   /**
    * On-demand re-frame (e.g. "Zoom to results" after a collection search). The
    * camera moves only when `token` changes, so re-renders and filtered building
@@ -97,7 +97,7 @@ function CollectionMapGLContent({
   hideCollectionPins,
   collectionBuildingIds,
   onAddToCollection,
-  fitBoundsRequest,
+  fitBoundsRequest, discoveryFilters,
 }: CollectionMapGLProps) {
   const { lat, lng, zoom, setMapURL } = useURLMapState();
   const { updateMapState } = useStableMapUpdate(setMapURL);
@@ -256,7 +256,7 @@ function CollectionMapGLContent({
       enabled: !!discoveryEnabled,
       hideCollectionPins: !!hideCollectionPins,
       viewport,
-      collectionBuildingIds: collectionBuildingIds ?? EMPTY_BUILDING_IDS,
+      collectionBuildingIds: collectionBuildingIds ?? EMPTY_BUILDING_IDS, filters: discoveryFilters,
     },
   });
 

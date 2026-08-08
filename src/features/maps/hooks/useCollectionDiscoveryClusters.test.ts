@@ -140,4 +140,45 @@ describe('useCollectionDiscoveryClusters', () => {
 
     expect(result.current).toEqual([]);
   });
+
+  // Task 5.7 — quality-tier / era / standard filters passed by the caller.
+  it('forwards caller-supplied filters to useMapData instead of the empty default', () => {
+    const filters = { minTierRank: 'Top 5%' as const, centuries: [19] };
+    renderHook(() =>
+      useCollectionDiscoveryClusters({
+        enabled: true,
+        viewport: VIEWPORT,
+        collectionBuildingIds: new Set<string>(),
+        filters,
+      }),
+    );
+
+    expect(mockUseMapData).toHaveBeenCalledWith({
+      bounds: VIEWPORT.bounds,
+      zoom: VIEWPORT.zoom,
+      filters,
+      mode: 'discover',
+    });
+  });
+
+  // The pan-churn regression this hook's own comment warns about: identical
+  // filters across renders must not re-key useMapData's query.
+  it('does not change the filters object identity across re-renders when the caller passes a stable object', () => {
+    const filters = { minTierRank: 'Top 1%' as const };
+    const { rerender } = renderHook(
+      (props: { filters: typeof filters }) =>
+        useCollectionDiscoveryClusters({
+          enabled: true,
+          viewport: VIEWPORT,
+          collectionBuildingIds: new Set<string>(),
+          filters: props.filters,
+        }),
+      { initialProps: { filters } },
+    );
+
+    rerender({ filters });
+
+    const calls = mockUseMapData.mock.calls;
+    expect(calls[0][0].filters).toBe(calls[calls.length - 1][0].filters);
+  });
 });

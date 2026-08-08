@@ -42,6 +42,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { parseLocation } from "@/utils/location";
 import { mapCollectionItem } from "../mapCollectionItem";
 import { visibleCollectionItems } from "../collectionVisibility";
+import { itinerarySourceFingerprint, withoutSearchParams } from "./CollectionMapPage.helpers";
 import { CollectionMapOverlays } from "./CollectionMapOverlays";
 import { getBoundsFromBuildings, type Bounds } from "@/utils/map";
 import { collectionStructuredData, SITE_URL } from "@/features/buildings/utils/structuredData";
@@ -107,33 +108,6 @@ const CollectionMapGL = lazyWithRetry(() => import("@/features/maps/components/C
 // it for developments working with the underlying SQL/selects.
 // type CollectionItemResponse = { ... }
 
-/**
- * Only re-run itinerary store initialization when collection/items/markers meaningfully change.
- * TanStack Query refetches often return new array references with identical data; without this,
- * `initializeItinerary` wipes client state and feels like an unsolicited refresh.
- */
-function itinerarySourceFingerprint(
-  collection: Collection,
-  items: CollectionItemWithBuilding[],
-  markers: CollectionMarker[],
-): string {
-  const itemPart = [...items]
-    .map(
-      (i) =>
-        `${i.id}:${i.note ?? ""}:${i.custom_category_id ?? ""}:${i.building.location_lat}:${i.building.location_lng}:${i.building.name}`,
-    )
-    .sort()
-    .join("|");
-  const markerPart = [...markers]
-    .map(
-      (m) =>
-        `${m.id}:${m.lat}:${m.lng}:${m.name}:${m.notes ?? ""}:${m.category}`,
-    )
-    .sort()
-    .join("|");
-  return `${collection.id}:${JSON.stringify(collection.itinerary)}:${itemPart}:${markerPart}`;
-}
-
 interface SavedCandidateResponse {
   building_id: string;
   status: string;
@@ -157,13 +131,6 @@ interface SavedCandidateResponse {
       company: { id: string; name: string } | null;
     }[];
   } | null;
-}
-
-/** Returns a copy of the search params with the given keys removed (for consume-once deep links). */
-function withoutSearchParams(prev: URLSearchParams, ...keys: string[]): URLSearchParams {
-  const next = new URLSearchParams(prev);
-  keys.forEach((key) => next.delete(key));
-  return next;
 }
 
 export default function CollectionMap() {
@@ -276,6 +243,11 @@ export default function CollectionMap() {
     setSavedPlacesStatusFilter: handleSavedPlacesStatusFilterChange,
     showAllBuildings,
     setShowAllBuildings: handleShowAllBuildingsChange,
+    // Task 5.7 — "Show All Buildings" discovery filters (tier, era, standard building filters).
+    discoveryTierFilter, setDiscoveryTierFilter: handleDiscoveryTierFilterChange,
+    discoveryCenturies, setDiscoveryCenturies: handleDiscoveryCenturiesChange,
+    discoveryStandardFilters, setDiscoveryStandardFilters: handleDiscoveryStandardFiltersChange,
+    discoveryFilters,
   } = useCollectionMapPreferences(user?.id, collection?.id);
 
   // The current user's contributor role on this collection (null if not a contributor).
@@ -1172,7 +1144,7 @@ toast({
                             onAddAllSavedPlaces: handleOpenAddVisibleConfirm,
                             isAddingAllSavedPlaces: isAddingVisibleCandidates,
                             onSelectSavedPlace: selectSavedPlace,
-                            onSelectCatalogueBuilding: selectDiscoverRow,
+                            onSelectCatalogueBuilding: selectDiscoverRow, filters: discoveryFilters,
                         }}
                     />
                 </div>
@@ -1209,7 +1181,7 @@ toast({
                     fitBoundsRequest={fitRequest}
                     discoveryEnabled={discoveryEnabled}
                     hideCollectionPins={rail.hideCollectionPins}
-                    collectionBuildingIds={existingBuildingIds}
+                    collectionBuildingIds={existingBuildingIds} discoveryFilters={discoveryFilters}
                     onAddToCollection={
                       canEdit
                         ? (cluster: ClusterResponse) =>
@@ -1304,6 +1276,9 @@ toast({
                 onSavedPlacesStatusFilterChange={handleSavedPlacesStatusFilterChange}
                 showAllBuildings={showAllBuildings}
                 onShowAllBuildingsChange={handleShowAllBuildingsChange}
+                discoveryTierFilter={discoveryTierFilter} onDiscoveryTierFilterChange={handleDiscoveryTierFilterChange}
+                discoveryCenturies={discoveryCenturies} onDiscoveryCenturiesChange={handleDiscoveryCenturiesChange}
+                discoveryStandardFilters={discoveryStandardFilters} onDiscoveryStandardFiltersChange={handleDiscoveryStandardFiltersChange}
                 isOwner={isOwner}
                 canEdit={canEdit}
                 initialTab={settingsInitialTab}
