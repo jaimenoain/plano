@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Croissant, MapPin, Utensils } from "lucide-react";
+import { Bus, Croissant, GraduationCap, MapPin, Navigation, Plane, TrainFront, Utensils } from "lucide-react";
 import {
   getCollectionMarkerLucideIcon,
   mapGoogleTypesToCollectionCategory,
@@ -52,5 +52,30 @@ describe("resolveCollectionMarkerIcon", () => {
   it("returns null for an unclassified place", () => {
     expect(resolveCollectionMarkerIcon("other", null)).toBeNull();
     expect(resolveCollectionMarkerIcon("other", "establishment")).toBeNull();
+  });
+
+  it("gives transport types their own apt icon, not a generic bus", () => {
+    expect(resolveCollectionMarkerIcon("transport", "airport")).toBe(Plane);
+    expect(resolveCollectionMarkerIcon("transport", "train_station")).toBe(TrainFront);
+    expect(resolveCollectionMarkerIcon("transport", "bus_station")).toBe(Bus);
+  });
+
+  it("falls back to a neutral wayfinding icon for an unrecognized transport type, never Bus", () => {
+    expect(resolveCollectionMarkerIcon("transport", null)).toBe(Navigation);
+    expect(resolveCollectionMarkerIcon("transport", "some_new_google_type")).toBe(Navigation);
+  });
+
+  it("resolves common non-food, non-transport place types to an apt icon", () => {
+    expect(resolveCollectionMarkerIcon("attraction", "museum")).not.toBeNull();
+    expect(resolveCollectionMarkerIcon("attraction", "movie_theater")).not.toBeNull();
+    expect(resolveCollectionMarkerIcon("other", "university")).toBe(GraduationCap);
+    expect(resolveCollectionMarkerIcon("other", "bank")).not.toBeNull();
+  });
+});
+
+describe("mapGoogleTypesToCollectionCategory — expanded coverage", () => {
+  it("classifies a movie theater and a place of worship as attraction", () => {
+    expect(mapGoogleTypesToCollectionCategory(["movie_theater"])).toBe("attraction");
+    expect(mapGoogleTypesToCollectionCategory(["place_of_worship"])).toBe("attraction");
   });
 });
