@@ -342,7 +342,7 @@
   Dependencies:    None
   CSV ref:         #6
 
-[ ] Task 6.2 — "People to follow" design refinement
+[x] Task 6.2 — "People to follow" design refinement
 
   Goal:            Refine the design of the "People to follow" section in the
                    feed's right sidebar: cleaner layout, clear follow action and

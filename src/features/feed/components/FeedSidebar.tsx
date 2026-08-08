@@ -22,7 +22,7 @@ export function FeedSidebar({ userId }: { userId?: string }) {
       <BucketListModule userId={userId} />
       <BuildingOfTheDay />
       <TrendingArchitectsModule />
-      <PeopleYouMayKnow layout="stacked" limit={2} heading="People to follow" />
+      <PeopleYouMayKnow layout="stacked" limit={3} heading="People to follow" />
       <RailColophon />
     </div>
   );

@@ -5,10 +5,12 @@
  * A24 editorial aesthetic — flat border-separated list, no card chrome,
  * no carousel. Reuses UserRow from the connect feature.
  */
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { UserRow } from "@/features/connect/components/UserRow";
+import { RAIL_LIST_ITEM, RailHeader, RailModule, RailSkeletonRows } from "@/components/ui/rail";
 
 interface SuggestionUser {
   id: string;
@@ -136,54 +138,19 @@ export function PeopleYouMayKnow({
 
   const isStacked = layout === "stacked";
 
-  // In the sidebar rail, the module owns its own top divider so it vanishes (border and all)
-  // when there are no suggestions; on the full page Connect provides the surrounding section.
-  const wrap = (content: ReactNode) =>
-    isStacked ? (
-      <section className="border-t border-border-default pt-9">{content}</section>
-    ) : (
-      content
-    );
-
-  const headingEl = (
-    <p
-      className={
-        isStacked
-          ? "mb-3.5 text-2xs-plus font-medium uppercase tracking-widest text-text-disabled"
-          : "eyebrow tracking-widest mb-4"
-      }
-    >
-      {heading}
-    </p>
-  );
+  const headingEl = <p className="eyebrow tracking-widest mb-4">{heading}</p>;
 
   // ── Loading skeleton — rectangular blocks, no rounded corners ──
   if (loading) {
     if (isStacked) {
-      return wrap(
-        <div className="space-y-4">
-          <div className="h-2.5 w-32 bg-surface-muted animate-pulse" />
-          <div>
-            {Array.from({ length: limit }, (_, i) => i).map((i) => (
-              <div
-                key={i}
-                className="flex flex-col gap-3 p-4 border-b border-border-default last:border-0"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="h-12 w-12 bg-surface-muted animate-pulse shrink-0" />
-                  <div className="flex-1 space-y-2 pr-5">
-                    <div className="h-3 w-28 bg-surface-muted animate-pulse" />
-                    <div className="h-2.5 w-20 bg-surface-muted/60 animate-pulse" />
-                  </div>
-                </div>
-                <div className="h-9 w-full bg-surface-muted animate-pulse" />
-              </div>
-            ))}
-          </div>
-        </div>,
+      return (
+        <RailModule>
+          <RailHeader label={heading} />
+          <RailSkeletonRows rows={limit} withThumb />
+        </RailModule>
       );
     }
-    return wrap(
+    return (
       <div className="space-y-4">
         <div className="h-2.5 w-32 bg-surface-muted animate-pulse" />
         <div>
@@ -201,13 +168,39 @@ export function PeopleYouMayKnow({
             </div>
           ))}
         </div>
-      </div>,
+      </div>
     );
   }
 
   if (suggestions.length === 0) return null;
 
-  return wrap(
+  if (isStacked) {
+    return (
+      <RailModule>
+        <RailHeader label={heading} />
+        <ul>
+          {suggestions.map((u) => (
+            <li key={u.id} className={RAIL_LIST_ITEM}>
+              <UserRow
+                user={u}
+                showFollowButton
+                layout={layout}
+                isFollower={u.is_follows_me}
+                initialIsFollowing={false}
+                mutualFollows={u.mutual_follows}
+                onHide={() => handleHide(u.id)}
+              />
+            </li>
+          ))}
+        </ul>
+        <Link to="/connect" className="cta-link mt-3.5 inline-block">
+          See more people
+        </Link>
+      </RailModule>
+    );
+  }
+
+  return (
     <div>
       {headingEl}
       <div>
@@ -223,6 +216,6 @@ export function PeopleYouMayKnow({
           />
         ))}
       </div>
-    </div>,
+    </div>
   );
 }
